@@ -96,7 +96,7 @@ ifeq (,$(findstring nostrip,$(BABYLON_BUILD_OPTIONS)))
   BUILD_FLAGS += -trimpath
 endif
 
-all: tools build lint test
+all: tools build lint test diagrams
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
@@ -446,3 +446,7 @@ localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
 
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes
+
+.PHONY: diagrams
+diagrams:
+	$(MAKE) -C docs/diagrams
