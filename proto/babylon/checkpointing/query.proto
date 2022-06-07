@@ -1,0 +1,43 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "babylon/checkpointing/params.proto";
+import "babylon/checkpointing/genesis.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // RawCheckpoints queries a list of checkpoints from a range of epochs.
+  rpc RawCheckpoints(QueryRawCheckpointsRequest)
+      returns (QueryRawCheckpointsResponse);
+
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/checkpointing/params";
+  }
+}
+
+// QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsRequest {
+  int64 bottom_epoch = 1;
+  int64 top_epoch = 2;
+}
+
+// QeuryRawCheckpointsResponse is the response type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsResponse {
+  repeated RawCheckpoint raw_checkpoints = 1;
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
