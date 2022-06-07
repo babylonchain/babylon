@@ -98,6 +98,9 @@ import (
 	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonchain/babylon/x/headeroracle"
+	headeroraclekeeper "github.com/babylonchain/babylon/x/headeroracle/keeper"
+	headeroracletypes "github.com/babylonchain/babylon/x/headeroracle/types"
 )
 
 const appName = "BabylonApp"
@@ -128,6 +131,7 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+        headeroracle.AppModuleBasic{},
 		/*
 			TODO: include module
 			testbblmodule.AppModuleBasic{},
@@ -188,6 +192,8 @@ type BabylonApp struct {
 	*/
 	EpochingKeeper epochingkeeper.Keeper
 
+    HeaderOracleKeeper headeroraclekeeper.Keeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -234,6 +240,7 @@ func NewBabylonApp(
 			testbblmoduletypes.StoreKey,
 		*/
 		epochingtypes.StoreKey,
+        headeroracletypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -330,6 +337,7 @@ func NewBabylonApp(
 		testbblModule := testbblmodule.NewAppModule(appCodec, app.TestbblKeeper, app.AccountKeeper, app.BankKeeper)
 	*/
 	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
+	app.HeaderOracleKeeper = *headeroraclekeeper.NewKeeper(appCodec, keys[headeroracletypes.StoreKey], keys[headeroracletypes.MemStoreKey], app.GetSubspace(headeroracletypes.ModuleName),)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -371,6 +379,7 @@ func NewBabylonApp(
 					testbblModule,
 		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
+        headeroracle.NewAppModule(appCodec, app.HeaderOracleKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -389,6 +398,7 @@ func NewBabylonApp(
 			testbblmoduletypes.ModuleName,
 		*/
 		epochingtypes.ModuleName,
+        headeroracletypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -405,6 +415,7 @@ func NewBabylonApp(
 		// - remove stakingtypes.ModuleName from here, and let `epoching.EndBlock` do everything
 		// - call `epoching.EndBlock` first but only to dequeue the delayed staking requests, then let `staking.EndBlock` take care of executing them and return the changeset.
 		epochingtypes.ModuleName,
+        headeroracletypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -423,6 +434,7 @@ func NewBabylonApp(
 			testbblmoduletypes.ModuleName,
 		*/
 		epochingtypes.ModuleName,
+        headeroracletypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -458,6 +470,7 @@ func NewBabylonApp(
 			testbblModule,
 		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
+        headeroracle.NewAppModule(appCodec, app.HeaderOracleKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -660,6 +673,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 		paramsKeeper.Subspace(testbblmoduletypes.ModuleName)
 	*/
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
+    paramsKeeper.Subspace(headeroracletypes.ModuleName)
 
 	return paramsKeeper
 }

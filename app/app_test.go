@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/x/epoching"
+    "github.com/babylonchain/babylon/x/headeroracle"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -188,6 +189,7 @@ func TestRunMigrations(t *testing.T) {
 					   "testbbl":      capability.AppModule{}.ConsensusVersion()
 					*/
 					"epoching": epoching.AppModule{}.ConsensusVersion(),
+                    "headeroracle": headeroracle.AppModule{}.ConsensusVersion(),
 				},
 			)
 			if tc.expRunErr {
@@ -245,6 +247,7 @@ func TestInitGenesisOnMigration(t *testing.T) {
 			   "testbbl":      capability.AppModule{}.ConsensusVersion()
 			*/
 			"epoching": epoching.AppModule{}.ConsensusVersion(),
+            "headeroracle": capability.AppModule{}.ConsensusVersion(),
 		},
 	)
 	require.NoError(t, err)

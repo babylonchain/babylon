@@ -1,0 +1,13 @@
+syntax = "proto3";
+package babylon.headeroracle.v1;
+
+
+import "gogoproto/gogo.proto";
+import "babylon/headeroracle/params.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/headeroracle/types";
+
+// GenesisState defines the headeroracle module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
