@@ -5,8 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
-
-
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
 type AccountKeeper interface {
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
@@ -18,3 +16,5 @@ type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	// Methods imported from bank should be defined here
 }
+
+// TODO: add interfaces of staking, slashing and evidence used in epoching

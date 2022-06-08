@@ -102,6 +102,7 @@ type AppModule struct {
 	keeper        keeper.Keeper
 	accountKeeper types.AccountKeeper
 	bankKeeper    types.BankKeeper
+	// TODO: add dependencies to staking, slashing and evidence
 }
 
 func NewAppModule(
