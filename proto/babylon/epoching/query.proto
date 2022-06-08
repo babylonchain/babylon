@@ -4,7 +4,7 @@ package babylonchain.babylon.epoching;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "epoching/params.proto";
+import "babylon/epoching/params.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";

@@ -2,7 +2,7 @@ syntax = "proto3";
 package babylonchain.babylon.epoching;
 
 import "gogoproto/gogo.proto";
-import "epoching/params.proto";
+import "babylon/epoching/params.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
