@@ -1,0 +1,13 @@
+syntax = "proto3";
+package babylonchain.babylon.rawcheckpoint;
+
+// this line is used by starport scaffolding # proto/tx/import
+
+option go_package = "github.com/babylonchain/babylon/x/rawcheckpoint/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // this line is used by starport scaffolding # proto/tx/rpc
+}
+
+// this line is used by starport scaffolding # proto/tx/message
