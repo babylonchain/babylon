@@ -88,12 +88,12 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
 	/*
-		    TODO: app-specific-module imports
-			"github.com/babylon/test-bbl/docs"
+		TODO: app-specific-module imports
+		"github.com/babylon/test-bbl/docs"
 
-			testbblmodule "github.com/babylon/test-bbl/x/testbbl"
-			testbblmodulekeeper "github.com/babylon/test-bbl/x/testbbl/keeper"
-			testbblmoduletypes "github.com/babylon/test-bbl/x/testbbl/types"
+		testbblmodule "github.com/babylon/test-bbl/x/testbbl"
+		testbblmodulekeeper "github.com/babylon/test-bbl/x/testbbl/keeper"
+		testbblmoduletypes "github.com/babylon/test-bbl/x/testbbl/types"
 	*/
 	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
@@ -183,8 +183,8 @@ type BabylonApp struct {
 	FeeGrantKeeper   feegrantkeeper.Keeper
 
 	/*
-		    TODO: Add custom module keepers here
-			TestbblKeeper testbblmodulekeeper.Keeper
+		TODO: Add custom module keepers here
+		TestbblKeeper testbblmodulekeeper.Keeper
 	*/
 	EpochingKeeper epochingkeeper.Keeper
 
@@ -230,8 +230,8 @@ func NewBabylonApp(
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
 		/*
-			        TODO: add application specific store key
-					testbblmoduletypes.StoreKey,
+			TODO: add application specific store key
+			testbblmoduletypes.StoreKey,
 		*/
 		epochingtypes.StoreKey,
 	)
@@ -320,14 +320,14 @@ func NewBabylonApp(
 	)
 
 	/*
-		    TODO: add Babylon app keeper
-			app.TestbblKeeper = *testbblmodulekeeper.NewKeeper(
-				appCodec,
-				keys[testbblmoduletypes.StoreKey],
-				keys[testbblmoduletypes.MemStoreKey],
-				app.GetSubspace(testbblmoduletypes.ModuleName),
-			)
-			testbblModule := testbblmodule.NewAppModule(appCodec, app.TestbblKeeper, app.AccountKeeper, app.BankKeeper)
+		TODO: add Babylon app keeper
+		app.TestbblKeeper = *testbblmodulekeeper.NewKeeper(
+			appCodec,
+			keys[testbblmoduletypes.StoreKey],
+			keys[testbblmoduletypes.MemStoreKey],
+			app.GetSubspace(testbblmoduletypes.ModuleName),
+		)
+		testbblModule := testbblmodule.NewAppModule(appCodec, app.TestbblKeeper, app.AccountKeeper, app.BankKeeper)
 	*/
 	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
 
@@ -385,8 +385,8 @@ func NewBabylonApp(
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName,
 		/*
-			        TODO: add bbl module
-					testbblmoduletypes.ModuleName,
+			TODO: add bbl module
+			testbblmoduletypes.ModuleName,
 		*/
 		epochingtypes.ModuleName,
 	)
@@ -398,8 +398,8 @@ func NewBabylonApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		/*
-			        TODO: add bbl module
-					testbblmoduletypes.ModuleName,
+			TODO: add bbl module
+			testbblmoduletypes.ModuleName,
 		*/
 		epochingtypes.ModuleName,
 	)
@@ -416,8 +416,8 @@ func NewBabylonApp(
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
 		/*
-			        TODO: add bbl module
-					testbblmoduletypes.ModuleName,
+			TODO: add bbl module
+			testbblmoduletypes.ModuleName,
 		*/
 		epochingtypes.ModuleName,
 	)
@@ -451,8 +451,8 @@ func NewBabylonApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		/*
-			        TODO: add bbl module
-					testbblModule,
+			TODO: add bbl module
+			testbblModule,
 		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
@@ -653,8 +653,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	/*
-		    TODO: add bbl module
-			paramsKeeper.Subspace(testbblmoduletypes.ModuleName)
+		TODO: add bbl module
+		paramsKeeper.Subspace(testbblmoduletypes.ModuleName)
 	*/
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
 
