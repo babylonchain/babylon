@@ -3,7 +3,7 @@ go 1.17
 module github.com/babylonchain/babylon
 
 require (
-	github.com/cosmos/cosmos-sdk v0.45.5
+	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/golang/mock v1.6.0
 	github.com/gorilla/mux v1.8.0
 	github.com/rakyll/statik v0.1.7
