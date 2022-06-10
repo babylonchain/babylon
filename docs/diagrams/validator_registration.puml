@@ -1,0 +1,56 @@
+@startuml Validator Registration
+participant CLI
+actor       User
+queue       Mempool
+control     Tendermint
+participant "Epoching Module" as epoching
+database    "BLS Keys"        as blskeys
+queue       "Delayed Txns"    as delayedtx
+participant "Staking Module"  as staking
+queue       Events
+
+== Create User Transaction ==
+
+User -> CLI ++ : bbld tx staking create-validator --generate-only
+return unsigned_staking_tx.json
+User -> CLI ++ : bbld tx epoching create-validator unsigned_staking_tx.json --bls-key ... --generate-only
+return unsigned_epoching_tx.json
+User -> CLI ++ : bbld tx sign unsigned_epoching_tx.json
+return signed_epoching_tx.json
+User -> CLI    : bbld tx broadcast signed_epoching_tx.json
+
+
+CLI -> Tendermint ++ : signed_epoching_tx
+Tendermint -> epoching ++ : CheckTx
+epoching -> epoching : Validate BLS Proof-of-Possession
+epoching -> blskeys ++ : Validate User-BLS association
+return ok or error if different from existing key
+return success or failure
+Tendermint -> Mempool : Add tx
+return success or failure
+
+... Wait for the transaction to be included in a block ...
+
+== Deliver Transaction in a Block ==
+
+Tendermint -> epoching ++ : DeliverTx
+epoching -> epoching : Validate BLS Proof-of-Possession
+epoching -> blskeys ++ : Add User-BLS association if new
+return ok or error if different from existing key
+epoching -> delayedtx : Append to delayed staking txns
+return result or invalid
+
+== EndBlock ==
+
+Tendermint -> staking !! : EndBlock is prevented from running
+Tendermint -> epoching ++ : EndBlock
+epoching -> delayedtx ++ : Dequeue delayed txns
+return wrapped staking txns
+loop foreach wrapped tx
+  epoching -> staking: runTx wrapped tx
+end
+epoching -> staking ++ : ApplyAndReturnValidatorSetUpdates
+return ValidatorSetUpdates
+return ValidatorSetUpdates
+
+@enduml
