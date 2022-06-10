@@ -401,6 +401,9 @@ func NewBabylonApp(
 			TODO: add bbl module
 			testbblmoduletypes.ModuleName,
 		*/
+		// TODO: BBL doesn't want the staking module to update the validator set at the end of each block. We consider two approaches to fix this:
+		// - remove stakingtypes.ModuleName from here, and let `epoching.EndBlock` do everything
+		// - call `epoching.EndBlock` first but only to dequeue the delayed staking requests, then let `staking.EndBlock` take care of executing them and return the changeset.
 		epochingtypes.ModuleName,
 	)
 
