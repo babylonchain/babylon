@@ -11,9 +11,9 @@ queue       Events
 
 == Create User Transaction ==
 
-User -> CLI ++ : bbld tx staking create-validator --generate-only
+User -> CLI ++ : bbld tx staking create-validator ... \n --generate-only
 return unsigned_staking_tx.json
-User -> CLI ++ : bbld tx epoching create-validator unsigned_staking_tx.json --bls-key ... --generate-only
+User -> CLI ++ : bbld tx epoching create-validator \n ~--wrap unsigned_staking_tx.json \n ~--bls-key ... --generate-only
 return unsigned_epoching_tx.json
 User -> CLI ++ : bbld tx sign unsigned_epoching_tx.json
 return signed_epoching_tx.json
