@@ -8,5 +8,5 @@ import (
 
 // x/btclightclient module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidHeader = sdkerrors.Register(ModuleName, 1100, "invalid header")
 )
