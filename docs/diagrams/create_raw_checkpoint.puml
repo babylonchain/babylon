@@ -1,0 +1,97 @@
+@startuml Creating a Raw Checkpoint
+control     "BLS Signer"      as signer
+control     Tendermint
+queue       Mempool
+participant "Epoching Module" as epoching
+queue       "Delayed Txns"    as delayedtxns
+participant "Staking Module"  as staking
+participant "Checkpointing Module"  as checkpointing
+database    "BLS Keys"        as blskeys
+database    "Raw Checkpoints" as rawckpts
+queue       Events
+
+== Block N: End of the Epoch, execute power transfer ==
+
+Tendermint -> epoching ++ : EndBlock
+epoching -> delayedtxns ++ : Dequeue wrapped staking txns
+return wrapped staking txns
+epoching -> staking
+loop foreach wrapped tx
+  epoching -> staking ++ : runTx wrapped tx
+  return result or invalid
+  epoching -> Events : feedback about delayed tx outcome
+end
+epoching -> staking ++ : ApplyAndReturnValidatorSetUpdates
+return ValidatorSetUpdates
+return ValidatorSetUpdates
+
+== Block N+1: The block to be checkpointed, shows the new validators, signed by the old ==
+
+Tendermint -> checkpointing : BeginBlock
+checkpointing -> rawckpts : Store epoch end block hash
+
+== Block N+2: The block that contains the Quorum Certificate of the old validators over Block N+1 ==
+
+Tendermint -> checkpointing : BeginBlock
+checkpointing -> rawckpts : Store Q.C. bitmap
+note left
+  LastCommit does not contain signatures
+end note
+
+loop on each old validator node
+  Tendermint -> signer ++ : Observe LastCommit
+  note right
+    The full block has the signatures,
+    i.e. the Quorum Certificate (Q.C.)
+  end note
+  signer -> signer : Sign hash of Q.C.
+  signer -> Tendermint : AddBlsSig
+  Tendermint -> checkpointing : CheckTx
+  note right
+    The validator's signature is enough,
+    we can punish for invalid transactions.
+  end note
+  return
+  Tendermint -> Mempool : Add transaction
+  note right
+    Includes the full Q.C.
+  end note
+end
+
+== Block N+i: The next block(s) deliver transactions with BLS signatures ==
+
+loop for each AddBlsSig txn
+  Tendermint -> checkpointing ++ : DeliverTx
+  checkpointing -> blskeys : Get validator BLS key
+  checkpointing -> checkpointing : Check BLS signature over full Q.C.
+  checkpointing -> staking : Get validator power at \n beginning of previous epoch
+  checkpointing -> checkpointing : Check eligibility to sign BLS
+
+  checkpointing -> rawckpts : Get Q.C. hash if exists
+  alt first time we see the full Q.C.
+    checkpointing -> rawckpts : Get Block N+1 hash and Q.C. bitmap
+    checkpointing -> checkpointing : Check Q.C. in txn has valid sigs \n for everyone in the bitmap
+    alt valid full Q.C.
+      checkpointing -> rawckpts : Store Q.C. hash (or full)
+    end
+  else already know the Q.C. hash
+    checkpointing -> checkpointing : Check that Q.C. hash matches the full Q.C.
+  end
+
+  alt valid signature and Q.C.
+    checkpointing -> rawckpts : Get accumulated power, aggregate signature and bitmap
+    alt less than +1/3 power
+      checkpointing -> checkpointing : Aggregate BLS signature
+      checkpointing -> rawckpts : Update aggregate signature and power
+      alt reached +1/3 power
+        checkpointing -> Events : Raw checkpoint available for previous epoch
+      end
+    end
+  else invalid txn
+    checkpointing -> staking : Slash malicious validator
+  end
+
+  return result or invalid
+end
+
+@enduml

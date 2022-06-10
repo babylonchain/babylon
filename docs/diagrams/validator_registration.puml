@@ -1,8 +1,8 @@
 @startuml Validator Registration
-participant CLI
 actor       User
-queue       Mempool
+participant CLI
 control     Tendermint
+queue       Mempool
 participant "Epoching Module" as epoching
 database    "BLS Keys"        as blskeys
 queue       "Delayed Txns"    as delayedtx
@@ -17,8 +17,7 @@ User -> CLI ++ : bbld tx epoching create-validator \n ~--wrap unsigned_staking_t
 return unsigned_epoching_tx.json
 User -> CLI ++ : bbld tx sign unsigned_epoching_tx.json
 return signed_epoching_tx.json
-User -> CLI    : bbld tx broadcast signed_epoching_tx.json
-
+User -> CLI : bbld tx broadcast signed_epoching_tx.json
 
 CLI -> Tendermint ++ : signed_epoching_tx
 Tendermint -> epoching ++ : CheckTx
@@ -27,7 +26,11 @@ epoching -> blskeys ++ : Validate User-BLS association
 return ok or error if different from existing key
 return success or failure
 Tendermint -> Mempool : Add tx
-return success or failure
+deactivate Tendermint
+note left
+  The user can wait for the results as well,
+  but we don't check or lock funds.
+end note
 
 ... Wait for the transaction to be included in a block ...
 
@@ -40,7 +43,7 @@ return ok or error if different from existing key
 epoching -> delayedtx : Append to delayed staking txns
 return result or invalid
 
-== EndBlock ==
+== EndBlock at the end of an Epoch ==
 
 Tendermint -> staking !! : EndBlock is prevented from running
 Tendermint -> epoching ++ : EndBlock
@@ -54,5 +57,7 @@ end
 epoching -> staking ++ : ApplyAndReturnValidatorSetUpdates
 return ValidatorSetUpdates
 return ValidatorSetUpdates
+
+Events --> User : Observe delayed tx outcome
 
 @enduml
