@@ -1,0 +1,8 @@
+syntax = "proto3";
+package babylon.btclightclient.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+
+// Msg defines the Msg service.
+service Msg {
+}
