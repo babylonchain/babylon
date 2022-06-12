@@ -1,0 +1,47 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+import "cosmos_proto/cosmos.proto";
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+// RawCheckpoint wraps the multi sig with meta data.
+message RawCheckpoint {
+  option (gogoproto.equal)            = true;
+  option (gogoproto.goproto_stringer) = false;
+
+  // epoch_num defines the epoch number the raw checkpoint is for
+  int64 epoch_num = 1;
+  // last_commit_hash defines the 'LastCommitHash' that individual bls sigs are signed on
+  bytes last_commit_hash = 2;
+  // bitmap defines the bitmap that indicates the signers of the bls multi sig
+  bytes bitmap = 3;
+  // bls_multi_sig defines the multi sig that is aggregated from individual bls sigs
+  bytes bls_multi_sig = 4;
+  // Status defines the status of the raw checkpoint
+  enum Status {
+    // UNCHECKPOINTED indicates the checkpoint has not appeared on BTC
+    UNCHECKPOINTED = 0;
+    // CHECKPOINTED_NOT_CONFIRMED indicates the checkpoint has been checkpointed on BTC but has insufficent confirmation
+    CHECKPOINTED_NOT_CONFIRMED = 1;
+    // CONFIRMED indicates the checkpoint has sufficient confirmation depth on BTC
+    CONFIRMED = 2;
+  }
+}
+
+// BlsSig wraps the bls sig with meta data.
+message BlsSig {
+  // epoch_num defines the epoch number that the bls sig is signed on
+  int64 epoch_num = 1;
+  // last_commit_hash defines the 'LastCommitHash' that the bls sig is signed on
+  bytes last_commit_hash = 2;
+  // bls_sig defines the actual bls sig
+  bytes bls_sig = 3;
+  google.protobuf.Timestamp time = 4;
+  // can't find cosmos_proto.scalar when compiling
+  // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // the signer_address defines the address of the signer
+  string signer_address = 5;
+}

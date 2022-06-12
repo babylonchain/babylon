@@ -2,29 +2,9 @@ syntax = "proto3";
 package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
 import "babylon/checkpointing/params.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// GenesisState defines the checkpointing module's genesis state.
+// GenesisState defines the checkpoint.proto module's genesis state.
 message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
-
-// RawCheckpoint wraps the multi sig with other meta data.
-// This can go on a separate file.
-message RawCheckpoint {
-  int64 epoch_num = 1;
-  bytes last_commit_hash = 2;
-  bytes bitmap = 3;
-  bytes multi_sig = 4;
-}
-
-// BlsSig wraps the bls sig with other meta data.
-// This can go on a separate file.
-message BlsSig {
-  int64 epoch_num = 1;
-  bytes last_commit_hash = 2;
-  bytes bls_sig = 3;
-  google.protobuf.Timestamp time = 4;
-  string signer = 5;
-}

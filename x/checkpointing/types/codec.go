@@ -14,7 +14,7 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 
 	// Register messages
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgCollectBlsSig{},
+		&MsgAddBlsSig{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }

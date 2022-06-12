@@ -28,24 +28,24 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgCollectBlsSig defines a message to collect a bls signature from a
+// MsgAddBlsSig defines a message to add a bls signature from a
 // validator
-type MsgCollectBlsSig struct {
+type MsgAddBlsSig struct {
 	BlsSig *BlsSig `protobuf:"bytes,1,opt,name=bls_sig,json=blsSig,proto3" json:"bls_sig,omitempty"`
 }
 
-func (m *MsgCollectBlsSig) Reset()         { *m = MsgCollectBlsSig{} }
-func (m *MsgCollectBlsSig) String() string { return proto.CompactTextString(m) }
-func (*MsgCollectBlsSig) ProtoMessage()    {}
-func (*MsgCollectBlsSig) Descriptor() ([]byte, []int) {
+func (m *MsgAddBlsSig) Reset()         { *m = MsgAddBlsSig{} }
+func (m *MsgAddBlsSig) String() string { return proto.CompactTextString(m) }
+func (*MsgAddBlsSig) ProtoMessage()    {}
+func (*MsgAddBlsSig) Descriptor() ([]byte, []int) {
 	return fileDescriptor_24b023a97b92daa6, []int{0}
 }
-func (m *MsgCollectBlsSig) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddBlsSig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCollectBlsSig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddBlsSig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCollectBlsSig.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddBlsSig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -55,34 +55,34 @@ func (m *MsgCollectBlsSig) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *MsgCollectBlsSig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCollectBlsSig.Merge(m, src)
+func (m *MsgAddBlsSig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddBlsSig.Merge(m, src)
 }
-func (m *MsgCollectBlsSig) XXX_Size() int {
+func (m *MsgAddBlsSig) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCollectBlsSig) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCollectBlsSig.DiscardUnknown(m)
+func (m *MsgAddBlsSig) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddBlsSig.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCollectBlsSig proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddBlsSig proto.InternalMessageInfo
 
-// MsgCollectBlsSigResponse defines the MsgCollectBlsSig response type.
-type MsgCollectBlsSigResponse struct {
+// MsgAddBlsSigResponse defines the MsgAddBlsSig response type.
+type MsgAddBlsSigResponse struct {
 }
 
-func (m *MsgCollectBlsSigResponse) Reset()         { *m = MsgCollectBlsSigResponse{} }
-func (m *MsgCollectBlsSigResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgCollectBlsSigResponse) ProtoMessage()    {}
-func (*MsgCollectBlsSigResponse) Descriptor() ([]byte, []int) {
+func (m *MsgAddBlsSigResponse) Reset()         { *m = MsgAddBlsSigResponse{} }
+func (m *MsgAddBlsSigResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddBlsSigResponse) ProtoMessage()    {}
+func (*MsgAddBlsSigResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_24b023a97b92daa6, []int{1}
 }
-func (m *MsgCollectBlsSigResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddBlsSigResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCollectBlsSigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddBlsSigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCollectBlsSigResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddBlsSigResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -92,43 +92,43 @@ func (m *MsgCollectBlsSigResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *MsgCollectBlsSigResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCollectBlsSigResponse.Merge(m, src)
+func (m *MsgAddBlsSigResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddBlsSigResponse.Merge(m, src)
 }
-func (m *MsgCollectBlsSigResponse) XXX_Size() int {
+func (m *MsgAddBlsSigResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCollectBlsSigResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCollectBlsSigResponse.DiscardUnknown(m)
+func (m *MsgAddBlsSigResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddBlsSigResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCollectBlsSigResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddBlsSigResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgCollectBlsSig)(nil), "babylon.checkpointing.v1.MsgCollectBlsSig")
-	proto.RegisterType((*MsgCollectBlsSigResponse)(nil), "babylon.checkpointing.v1.MsgCollectBlsSigResponse")
+	proto.RegisterType((*MsgAddBlsSig)(nil), "babylon.checkpointing.v1.MsgAddBlsSig")
+	proto.RegisterType((*MsgAddBlsSigResponse)(nil), "babylon.checkpointing.v1.MsgAddBlsSigResponse")
 }
 
 func init() { proto.RegisterFile("babylon/checkpointing/tx.proto", fileDescriptor_24b023a97b92daa6) }
 
 var fileDescriptor_24b023a97b92daa6 = []byte{
-	// 255 bytes of a gzipped FileDescriptorProto
+	// 246 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4b, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0xce, 0x48, 0x4d, 0xce, 0x2e, 0xc8, 0xcf, 0xcc, 0x2b, 0xc9, 0xcc,
 	0x4b, 0xd7, 0x2f, 0xa9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92, 0x80, 0xca, 0xeb, 0xa1,
 	0xc8, 0xeb, 0x95, 0x19, 0x4a, 0x89, 0xa4, 0xe7, 0xa7, 0xe7, 0x83, 0x15, 0xe9, 0x83, 0x58, 0x10,
-	0xf5, 0x52, 0xca, 0xd8, 0xcd, 0x4b, 0x4f, 0xcd, 0x4b, 0x2d, 0xce, 0x2c, 0x86, 0x28, 0x52, 0x0a,
-	0xe7, 0x12, 0xf0, 0x2d, 0x4e, 0x77, 0xce, 0xcf, 0xc9, 0x49, 0x4d, 0x2e, 0x71, 0xca, 0x29, 0x0e,
-	0xce, 0x4c, 0x17, 0xb2, 0xe4, 0x62, 0x4f, 0xca, 0x29, 0x8e, 0x2f, 0xce, 0x4c, 0x97, 0x60, 0x54,
-	0x60, 0xd4, 0xe0, 0x36, 0x52, 0xd0, 0xc3, 0x65, 0xb5, 0x1e, 0x44, 0x4b, 0x10, 0x5b, 0x12, 0x98,
-	0xb6, 0xe2, 0xe8, 0x58, 0x20, 0xcf, 0xf0, 0x62, 0x81, 0x3c, 0x83, 0x92, 0x14, 0x97, 0x04, 0xba,
-	0xc1, 0x41, 0xa9, 0xc5, 0x05, 0xf9, 0x79, 0xc5, 0xa9, 0x46, 0x65, 0x5c, 0xcc, 0xbe, 0xc5, 0xe9,
-	0x42, 0xf9, 0x5c, 0xbc, 0xa8, 0x16, 0x6b, 0xe1, 0xb6, 0x07, 0xdd, 0x2c, 0x29, 0x23, 0xe2, 0xd5,
-	0xc2, 0xec, 0x75, 0xf2, 0x3f, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4,
-	0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0xd3,
-	0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xa8, 0xb9, 0xc9, 0x19, 0x89,
-	0x99, 0x79, 0x30, 0x8e, 0x7e, 0x05, 0x7a, 0xac, 0x54, 0x16, 0xa4, 0x16, 0x27, 0xb1, 0x81, 0x03,
-	0xd1, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x37, 0xb8, 0x55, 0xc2, 0xbb, 0x01, 0x00, 0x00,
+	0xf5, 0x52, 0x6a, 0xd8, 0xcd, 0x43, 0xf0, 0x20, 0xea, 0x94, 0x82, 0xb9, 0x78, 0x7c, 0x8b, 0xd3,
+	0x1d, 0x53, 0x52, 0x9c, 0x72, 0x8a, 0x83, 0x33, 0xd3, 0x85, 0x2c, 0xb9, 0xd8, 0x93, 0x72, 0x8a,
+	0xe3, 0x8b, 0x33, 0xd3, 0x25, 0x18, 0x15, 0x18, 0x35, 0xb8, 0x8d, 0x14, 0xf4, 0x70, 0xd9, 0xac,
+	0x07, 0xd1, 0x12, 0xc4, 0x96, 0x04, 0xa6, 0xad, 0x38, 0x3a, 0x16, 0xc8, 0x33, 0xbc, 0x58, 0x20,
+	0xcf, 0xa0, 0x24, 0xc6, 0x25, 0x82, 0x6c, 0x68, 0x50, 0x6a, 0x71, 0x41, 0x7e, 0x5e, 0x71, 0xaa,
+	0x51, 0x16, 0x17, 0xb3, 0x6f, 0x71, 0xba, 0x50, 0x32, 0x17, 0x27, 0xc2, 0x42, 0x35, 0xdc, 0xe6,
+	0x23, 0x9b, 0x21, 0xa5, 0x47, 0x9c, 0x3a, 0x98, 0x5d, 0x4e, 0xfe, 0x27, 0x1e, 0xc9, 0x31, 0x5e,
+	0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c, 0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31,
+	0xdc, 0x78, 0x2c, 0xc7, 0x10, 0x65, 0x9a, 0x9e, 0x59, 0x92, 0x51, 0x9a, 0xa4, 0x97, 0x9c, 0x9f,
+	0xab, 0x0f, 0x35, 0x33, 0x39, 0x23, 0x31, 0x33, 0x0f, 0xc6, 0xd1, 0xaf, 0x40, 0x8f, 0x84, 0xca,
+	0x82, 0xd4, 0xe2, 0x24, 0x36, 0x70, 0x80, 0x19, 0x03, 0x02, 0x00, 0x00, 0xff, 0xff, 0x32, 0xaf,
+	0xd1, 0xd8, 0xaa, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -143,7 +143,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	CollectBlsSig(ctx context.Context, in *MsgCollectBlsSig, opts ...grpc.CallOption) (*MsgCollectBlsSigResponse, error)
+	AddBlsSig(ctx context.Context, in *MsgAddBlsSig, opts ...grpc.CallOption) (*MsgAddBlsSigResponse, error)
 }
 
 type msgClient struct {
@@ -154,9 +154,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) CollectBlsSig(ctx context.Context, in *MsgCollectBlsSig, opts ...grpc.CallOption) (*MsgCollectBlsSigResponse, error) {
-	out := new(MsgCollectBlsSigResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Msg/CollectBlsSig", in, out, opts...)
+func (c *msgClient) AddBlsSig(ctx context.Context, in *MsgAddBlsSig, opts ...grpc.CallOption) (*MsgAddBlsSigResponse, error) {
+	out := new(MsgAddBlsSigResponse)
+	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Msg/AddBlsSig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -165,35 +165,35 @@ func (c *msgClient) CollectBlsSig(ctx context.Context, in *MsgCollectBlsSig, opt
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	CollectBlsSig(context.Context, *MsgCollectBlsSig) (*MsgCollectBlsSigResponse, error)
+	AddBlsSig(context.Context, *MsgAddBlsSig) (*MsgAddBlsSigResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) CollectBlsSig(ctx context.Context, req *MsgCollectBlsSig) (*MsgCollectBlsSigResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CollectBlsSig not implemented")
+func (*UnimplementedMsgServer) AddBlsSig(ctx context.Context, req *MsgAddBlsSig) (*MsgAddBlsSigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddBlsSig not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_CollectBlsSig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgCollectBlsSig)
+func _Msg_AddBlsSig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddBlsSig)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).CollectBlsSig(ctx, in)
+		return srv.(MsgServer).AddBlsSig(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Msg/CollectBlsSig",
+		FullMethod: "/babylon.checkpointing.v1.Msg/AddBlsSig",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).CollectBlsSig(ctx, req.(*MsgCollectBlsSig))
+		return srv.(MsgServer).AddBlsSig(ctx, req.(*MsgAddBlsSig))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -203,15 +203,15 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "CollectBlsSig",
-			Handler:    _Msg_CollectBlsSig_Handler,
+			MethodName: "AddBlsSig",
+			Handler:    _Msg_AddBlsSig_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "babylon/checkpointing/tx.proto",
 }
 
-func (m *MsgCollectBlsSig) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddBlsSig) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -221,12 +221,12 @@ func (m *MsgCollectBlsSig) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCollectBlsSig) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddBlsSig) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCollectBlsSig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddBlsSig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -246,7 +246,7 @@ func (m *MsgCollectBlsSig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCollectBlsSigResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddBlsSigResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -256,12 +256,12 @@ func (m *MsgCollectBlsSigResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCollectBlsSigResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddBlsSigResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCollectBlsSigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddBlsSigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -280,7 +280,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgCollectBlsSig) Size() (n int) {
+func (m *MsgAddBlsSig) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -293,7 +293,7 @@ func (m *MsgCollectBlsSig) Size() (n int) {
 	return n
 }
 
-func (m *MsgCollectBlsSigResponse) Size() (n int) {
+func (m *MsgAddBlsSigResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -308,7 +308,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgCollectBlsSig) Unmarshal(dAtA []byte) error {
+func (m *MsgAddBlsSig) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -331,10 +331,10 @@ func (m *MsgCollectBlsSig) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCollectBlsSig: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddBlsSig: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCollectBlsSig: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddBlsSig: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -394,7 +394,7 @@ func (m *MsgCollectBlsSig) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCollectBlsSigResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgAddBlsSigResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -417,10 +417,10 @@ func (m *MsgCollectBlsSigResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCollectBlsSigResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddBlsSigResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCollectBlsSigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddBlsSigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

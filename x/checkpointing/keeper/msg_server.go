@@ -9,7 +9,7 @@ type msgServer struct {
 	k Keeper
 }
 
-func (m msgServer) CollectBlsSig(ctx context.Context, header *types.MsgCollectBlsSig) (*types.MsgCollectBlsSigResponse, error) {
+func (m msgServer) AddBlsSig(ctx context.Context, header *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }
