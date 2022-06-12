@@ -13,7 +13,7 @@ message RawCheckpoint {
   option (gogoproto.goproto_stringer) = false;
 
   // epoch_num defines the epoch number the raw checkpoint is for
-  int64 epoch_num = 1;
+  uint64 epoch_num = 1;
   // last_commit_hash defines the 'LastCommitHash' that individual bls sigs are signed on
   bytes last_commit_hash = 2;
   // bitmap defines the bitmap that indicates the signers of the bls multi sig
@@ -34,13 +34,12 @@ message RawCheckpoint {
 // BlsSig wraps the bls sig with meta data.
 message BlsSig {
   // epoch_num defines the epoch number that the bls sig is signed on
-  int64 epoch_num = 1;
+  uint64 epoch_num = 1;
   // last_commit_hash defines the 'LastCommitHash' that the bls sig is signed on
   bytes last_commit_hash = 2;
   // bls_sig defines the actual bls sig
   bytes bls_sig = 3;
-  google.protobuf.Timestamp time = 4;
-  // can't find cosmos_proto.scalar when compiling
+  // can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does not support scalar
   // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // the signer_address defines the address of the signer
   string signer_address = 5;

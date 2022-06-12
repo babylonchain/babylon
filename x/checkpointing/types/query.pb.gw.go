@@ -51,7 +51,7 @@ func request_Query_RawCheckpoints_0(ctx context.Context, marshaler runtime.Marsh
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "from_epoch_num")
 	}
 
-	protoReq.FromEpochNum, err = runtime.Int64(val)
+	protoReq.FromEpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "from_epoch_num", err)
@@ -85,7 +85,7 @@ func local_request_Query_RawCheckpoints_0(ctx context.Context, marshaler runtime
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "from_epoch_num")
 	}
 
-	protoReq.FromEpochNum, err = runtime.Int64(val)
+	protoReq.FromEpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "from_epoch_num", err)
@@ -103,10 +103,6 @@ func local_request_Query_RawCheckpoints_0(ctx context.Context, marshaler runtime
 
 }
 
-var (
-	filter_Query_RawCheckpoint_0 = &utilities.DoubleArray{Encoding: map[string]int{"epoch_num": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
-)
-
 func request_Query_RawCheckpoint_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryRawCheckpointRequest
 	var metadata runtime.ServerMetadata
@@ -123,17 +119,10 @@ func request_Query_RawCheckpoint_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
 	}
 
-	protoReq.EpochNum, err = runtime.Int64(val)
+	protoReq.EpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
-	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_RawCheckpoint_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.RawCheckpoint(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -157,17 +146,10 @@ func local_request_Query_RawCheckpoint_0(ctx context.Context, marshaler runtime.
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
 	}
 
-	protoReq.EpochNum, err = runtime.Int64(val)
+	protoReq.EpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
-	}
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_RawCheckpoint_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.RawCheckpoint(ctx, &protoReq)
@@ -175,20 +157,9 @@ func local_request_Query_RawCheckpoint_0(ctx context.Context, marshaler runtime.
 
 }
 
-var (
-	filter_Query_LatestCheckpoint_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
-)
-
 func request_Query_LatestCheckpoint_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryLatestCheckpointRequest
 	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_LatestCheckpoint_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := client.LatestCheckpoint(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -198,13 +169,6 @@ func request_Query_LatestCheckpoint_0(ctx context.Context, marshaler runtime.Mar
 func local_request_Query_LatestCheckpoint_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryLatestCheckpointRequest
 	var metadata runtime.ServerMetadata
-
-	if err := req.ParseForm(); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_LatestCheckpoint_0); err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
-	}
 
 	msg, err := server.LatestCheckpoint(ctx, &protoReq)
 	return msg, metadata, err
@@ -339,7 +303,7 @@ func request_Query_BlsSigs_0(ctx context.Context, marshaler runtime.Marshaler, c
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
 	}
 
-	protoReq.EpochNum, err = runtime.Int64(val)
+	protoReq.EpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
@@ -373,7 +337,7 @@ func local_request_Query_BlsSigs_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
 	}
 
-	protoReq.EpochNum, err = runtime.Int64(val)
+	protoReq.EpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
