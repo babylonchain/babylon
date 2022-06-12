@@ -4,12 +4,12 @@ import sdk "github.com/cosmos/cosmos-sdk/types"
 
 var (
 	// Ensure that MsgInsertHeader implements all functions of the Msg interface
-	_ sdk.Msg = (*MsgCollectBlsSig)(nil)
+	_ sdk.Msg = (*MsgAddBlsSig)(nil)
 )
 
-func (m *MsgCollectBlsSig) ValidateBasic() error {
+func (m *MsgAddBlsSig) ValidateBasic() error {
 	// This function validates stateless message elements
-	_, err := sdk.AccAddressFromBech32(m.BlsSig.Signer)
+	_, err := sdk.AccAddressFromBech32(m.BlsSig.SignerAddress)
 	if err != nil {
 		return err
 	}
@@ -19,8 +19,8 @@ func (m *MsgCollectBlsSig) ValidateBasic() error {
 	return nil
 }
 
-func (m *MsgCollectBlsSig) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.BlsSig.Signer)
+func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.BlsSig.SignerAddress)
 	if err != nil {
 		panic(err)
 	}

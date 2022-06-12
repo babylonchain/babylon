@@ -2,23 +2,23 @@ syntax = "proto3";
 package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
-import "babylon/checkpointing/genesis.proto";
+import "babylon/checkpointing/checkpoint.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// Msg defines the checkpointing Msg service.
+// Msg defines the checkpoint.proto Msg service.
 service Msg {
-  rpc CollectBlsSig(MsgCollectBlsSig) returns (MsgCollectBlsSigResponse);
+  rpc AddBlsSig(MsgAddBlsSig) returns (MsgAddBlsSigResponse);
 }
 
-// MsgCollectBlsSig defines a message to collect a bls signature from a
+// MsgAddBlsSig defines a message to add a bls signature from a
 // validator
-message MsgCollectBlsSig {
+message MsgAddBlsSig {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   BlsSig bls_sig = 1;
 }
 
-// MsgCollectBlsSigResponse defines the MsgCollectBlsSig response type.
-message MsgCollectBlsSigResponse {}
+// MsgAddBlsSigResponse defines the MsgAddBlsSig response type.
+message MsgAddBlsSigResponse {}
