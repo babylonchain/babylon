@@ -56,7 +56,7 @@ service Query {
 // RPC method.
 message QueryRawCheckpointsRequest {
   // from_epoch defines the start epoch of the query, which is inclusive
-  int64 from_epoch_num = 1;
+  uint64 from_epoch_num = 1;
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -65,6 +65,7 @@ message QueryRawCheckpointsRequest {
 // QueryRawCheckpointsResponse is the response type for the Query/RawCheckpoints
 // RPC method.
 message QueryRawCheckpointsResponse {
+  // the order is going from the newest to oldest based on the epoch number
   repeated RawCheckpoint raw_checkpoints = 1;
 
   // pagination defines the pagination in the response.
@@ -75,35 +76,23 @@ message QueryRawCheckpointsResponse {
 // RPC method.
 message QueryRawCheckpointRequest {
   // epoch_num defines the epoch for the queried checkpoint
-  int64 epoch_num = 1;
-
-  // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  uint64 epoch_num = 1;
 }
 
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
 message QueryRawCheckpointResponse {
   RawCheckpoint raw_checkpoint = 1;
-
-  // pagination defines the pagination in the response.
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryLatestCheckpointRequest is the request type for the Query/LatestCheckpoint
 // RPC method.
-message QueryLatestCheckpointRequest {
-  // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
+message QueryLatestCheckpointRequest {}
 
 // QueryLatestCheckpointResponse is the response type for the Query/LatestCheckpoint
 // RPC method.
 message QueryLatestCheckpointResponse {
   RawCheckpoint latest_checkpoint = 1;
-
-  // pagination defines the pagination in the response.
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryUncheckpointedCheckpointsRequest is the request type for the Query/UncheckpointedCheckpoints
@@ -116,6 +105,7 @@ message QueryUncheckpointedCheckpointsRequest {
 // QueryUncheckpointedCheckpointsResponse is the response type for the Query/UncheckpointedCheckpoints
 // RPC method.
 message QueryUncheckpointedCheckpointsResponse {
+  // the order is going from the newest to oldest based on the epoch number
   repeated RawCheckpoint uncheckpointed_checkpoint = 1;
 
   // pagination defines the pagination in the response.
@@ -132,6 +122,7 @@ message QueryUnderconfirmedCheckpointsRequest {
 // QueryUnderconfirmedCheckpointsResponse is the response type for the Query/UnderconfirmedCheckpoints
 // RPC method.
 message QueryUnderconfirmedCheckpointsResponse {
+  // the order is going from the newest to oldest based on the epoch number
   repeated RawCheckpoint underconfirmed_checkpoint = 1;
 
   // pagination defines the pagination in the response.
@@ -148,6 +139,7 @@ message QueryConfirmedCheckpointsRequest {
 // QueryConfirmedCheckpointsResponse is the response type for the Query/ConfirmedCheckpoints
 // RPC method.
 message QueryConfirmedCheckpointsResponse {
+  // the order is going from the newest to oldest based on the epoch number
   repeated RawCheckpoint confirmed_checkpoint = 1;
 
   // pagination defines the pagination in the response.
@@ -158,7 +150,7 @@ message QueryConfirmedCheckpointsResponse {
 // RPC method.
 message QueryBlsSigsRequest {
   // epoch_num defines the epoch for the queried bls sigs
-  int64 epoch_num = 1;
+  uint64 epoch_num = 1;
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
