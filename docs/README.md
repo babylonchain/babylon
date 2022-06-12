@@ -26,3 +26,9 @@ Once the raw checkpoint is available, vigilantes take it and send them to Bitcoi
 paying the BTC fees, for future rewards on Babylon.
 
 ![Submit Checkpoint](diagrams/submit_checkpoint.png)
+
+### BTC Light Client
+
+To be able to confirm checkpoints we need to know how deeply embedded they are into the Bitcoin mainchain. This requires an on-chain light client, which relayers feed each bitcoin header they observe.
+
+![BTC Light Client](diagrams/btc_light_client.png)
