@@ -19,3 +19,10 @@ In order to keep changes to the Cosmos SDK to a minimum and maximize code reuse,
 The next diagram depicts the process of the power transfer that takes place at the end of an epoch, the collection of a Quorum Certificate, and the accumulation of the BLS signatures into a raw checkpoint as soon as the +1/3 of the validators have submitted their signatures.
 
 ![Create Raw Checkpoint](diagrams/create_raw_checkpoint.png)
+
+### Submit Checkpoint
+
+Once the raw checkpoint is available, vigilantes take it and send them to Bitcoin,
+paying the BTC fees, for future rewards on Babylon.
+
+![Submit Checkpoint](diagrams/submit_checkpoint.png)

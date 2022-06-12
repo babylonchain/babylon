@@ -1,0 +1,113 @@
+@startuml Submit Checkpoint
+boundary    Bitcoin
+actor       User
+control     "Checkpoint Submitter / Relayer" as submitter
+participant CLI
+control     Tendermint
+queue       Mempool
+participant "Epoching Module"   as epoching
+participant "Checkpointing Module"  as checkpointing
+participant "BTC Checkpoint Module" as btccheckpoint
+participant "Staking Module"    as staking
+participant "Bank Module"       as bank
+participant "BTC Light Client"  as btclightclient
+database    "Raw Checkpoints"   as rawckpts
+database    "BTC Checkpoints"   as btcckpts
+queue       Events
+
+== Initialize Relayer ==
+
+User -> CLI : bbld tx btccheckpoint \n register --key btc-key.pk
+CLI -> Tendermint : Broadcast tx
+Tendermint -> Mempool : Add register tx
+
+... wait for registration tx to be included in a Babylon block ...
+
+Tendermint -> btccheckpoint ++ : DeliverTx
+btccheckpoint -> btccheckpoint : Verify Proof-of-Possession
+btccheckpoint -> btcckpts : Check if BTC-to-Cosmos association exists
+alt if valid and new
+  btccheckpoint -> btcckpts : Add new BTC-to-Cosmos association
+  btccheckpoint -> Events : New relayer registered
+end
+return result or invalid
+
+Events --> User : Observe self registration
+User -> submitter : Start monitoring Babylon
+User -> submitter : Start monitoring Bitcoin
+
+== Listen For Checkpoint Events ==
+
+Events --> submitter ++ : Raw checkpoint available \n for previous epoch
+submitter -> checkpointing ++ : Query raw checkpoint \n for previous epoch
+checkpointing -> rawckpts : Get raw checkpoint
+return RawCheckpoint
+
+submitter -> submitter : Split raw checkpoint into \n 2 BTC transactions
+submitter -> submitter : Find UTxO to spend \n to pay for fees
+note left
+  Needs BTC wallet
+end note
+submitter -> Bitcoin -- : Broadcast 2 \n checkpoint transactions
+
+... wait for checkpointing tx to be included in a Bitcoin block ...
+
+Bitcoin --> submitter ++ : Observe BTC block \n with BBL checkpoints
+submitter -> submitter : Construct BTC Proof-of-Inclusion
+submitter -> Tendermint --++ : Broadcast InsertProofOfInclusion transaction
+
+Tendermint -> btccheckpoint ++ : CheckTx
+btccheckpoint -> btcckpts : Check if record already exists
+return ok or duplicate
+alt if not a duplicate
+  Tendermint -> Mempool : Add checkpoint tx
+end
+deactivate Tendermint
+
+... wait for checkpointing tx to be included in a Bitcoin block ...
+
+Tendermint -> btccheckpoint ++ : DeliverTx
+btccheckpoint -> btccheckpoint : Verify Proof-of-Inclusion
+btccheckpoint -> btclightclient : Check that BTC header exists
+btccheckpoint -> btcckpts : Add checkpoint transaction
+btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
+checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
+checkpointing -> Events -- : Epoch checkpoint included
+return tx result
+
+... wait for further Bitcoin headers to be relayed ...
+
+Tendermint -> btclightclient ++ : DeliverTx
+btclightclient -> btclightclient : Update longest chain tip
+alt if tip changed
+  btclightclient -> btccheckpoint ++ : Callback on tip change
+  btccheckpoint -> btclightclient : Check checkpoint embedding depth
+  alt if checkpoint stable
+    btccheckpoint -> checkpointing ++ : Callback on checkpoint stable
+    checkpointing -> checkpointing : Change checkpoint status to \n CONFIRMED
+    checkpointing -> Events -- : Epoch checkpoint stable
+  end
+  deactivate btccheckpoint
+end
+return tx result
+
+== At the end of the epoch ==
+
+Tendermint -> epoching ++ : EndBlock
+epoching -> checkpointing : Get previous epoch checkpoint status
+alt if checkpoint stable
+  group Rewards
+    epoching -> btccheckpoint ++ : Payout rewards
+    btccheckpoint -> btcckpts : Get submitted checkpoints
+    btccheckpoint -> btccheckpoint : Select first submitter
+    btccheckpoint -> btcckpts : Get BTC-to-Cosmos key
+    btccheckpoint -> bank -- : Mint reward for submitter
+  end
+  epoching -> staking : Release unbonding tokens
+  epoching -> epoching : Dequeue delayed staking txns
+  epoching -> staking ++ : Perform power transfer
+  return validator set changes
+end
+return validator set changes
+
+@enduml

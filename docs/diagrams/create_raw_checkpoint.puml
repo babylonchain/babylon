@@ -3,7 +3,7 @@ control     "BLS Signer"      as signer
 control     Tendermint
 queue       Mempool
 participant "Epoching Module" as epoching
-queue       "Delayed Txns"    as delayedtxns
+queue       "Delayed Txs"     as delayedtxs
 participant "Staking Module"  as staking
 participant "Checkpointing Module"  as checkpointing
 database    "BLS Keys"        as blskeys
@@ -13,8 +13,8 @@ queue       Events
 == Block N: End of the Epoch, execute power transfer ==
 
 Tendermint -> epoching ++ : EndBlock
-epoching -> delayedtxns ++ : Dequeue wrapped staking txns
-return wrapped staking txns
+epoching -> delayedtxs ++ : Dequeue wrapped staking txs
+return wrapped staking txs
 epoching -> staking
 loop foreach wrapped tx
   epoching -> staking ++ : runTx wrapped tx
@@ -60,7 +60,7 @@ end
 
 == Block N+i: The next block(s) deliver transactions with BLS signatures ==
 
-loop for each AddBlsSig txn
+loop for each AddBlsSig tx
   Tendermint -> checkpointing ++ : DeliverTx
   checkpointing -> blskeys : Get validator BLS key
   checkpointing -> checkpointing : Check BLS signature over full Q.C.
@@ -70,7 +70,7 @@ loop for each AddBlsSig txn
   checkpointing -> rawckpts : Get Q.C. hash if exists
   alt first time we see the full Q.C.
     checkpointing -> rawckpts : Get Block N+1 hash and Q.C. bitmap
-    checkpointing -> checkpointing : Check Q.C. in txn has valid sigs \n for everyone in the bitmap
+    checkpointing -> checkpointing : Check Q.C. in tx has valid sigs \n for everyone in the bitmap
     alt valid full Q.C.
       checkpointing -> rawckpts : Store Q.C. hash (or full)
     end
@@ -87,7 +87,7 @@ loop for each AddBlsSig txn
         checkpointing -> Events : Raw checkpoint available for previous epoch
       end
     end
-  else invalid txn
+  else invalid tx
     checkpointing -> staking : Slash malicious validator
   end
 

@@ -5,7 +5,7 @@ control     Tendermint
 queue       Mempool
 participant "Epoching Module" as epoching
 database    "BLS Keys"        as blskeys
-queue       "Delayed Txns"    as delayedtx
+queue       "Delayed Txs"     as delayedtxs
 participant "Staking Module"  as staking
 queue       Events
 
@@ -40,15 +40,15 @@ Tendermint -> epoching ++ : DeliverTx
 epoching -> epoching : Validate BLS Proof-of-Possession
 epoching -> blskeys ++ : Add User-BLS association if new
 return ok or error if different from existing key
-epoching -> delayedtx : Append to delayed staking txns
+epoching -> delayedtxs : Append to delayed staking txs
 return result or invalid
 
 == EndBlock at the end of an Epoch ==
 
 Tendermint -> staking !! : EndBlock is prevented from running
 Tendermint -> epoching ++ : EndBlock
-epoching -> delayedtx ++ : Dequeue delayed txns
-return wrapped staking txns
+epoching -> delayedtxs ++ : Dequeue delayed txs
+return wrapped staking txs
 loop foreach wrapped tx
   epoching -> staking ++ : runTx wrapped tx
   return result or invalid
