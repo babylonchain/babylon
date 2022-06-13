@@ -15,6 +15,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
+	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -24,7 +25,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-    appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -87,14 +87,17 @@ import (
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
-    /*
-    TODO: app-specific-module imports
-	"github.com/babylon/test-bbl/docs"
+	/*
+		TODO: app-specific-module imports
+		"github.com/babylon/test-bbl/docs"
 
-	testbblmodule "github.com/babylon/test-bbl/x/testbbl"
-	testbblmodulekeeper "github.com/babylon/test-bbl/x/testbbl/keeper"
-	testbblmoduletypes "github.com/babylon/test-bbl/x/testbbl/types"
-    */
+		testbblmodule "github.com/babylon/test-bbl/x/testbbl"
+		testbblmodulekeeper "github.com/babylon/test-bbl/x/testbbl/keeper"
+		testbblmoduletypes "github.com/babylon/test-bbl/x/testbbl/types"
+	*/
+	"github.com/babylonchain/babylon/x/epoching"
+	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 const appName = "BabylonApp"
@@ -125,10 +128,10 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-        /*
-        TODO: include module
-		testbblmodule.AppModuleBasic{},
-        */
+		/*
+			TODO: include module
+			testbblmodule.AppModuleBasic{},
+		*/
 	)
 
 	// module account permissions
@@ -179,10 +182,11 @@ type BabylonApp struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 
-    /*
-    TODO: Add custom module keepers here
-	TestbblKeeper testbblmodulekeeper.Keeper
-    */
+	/*
+		TODO: Add custom module keepers here
+		TestbblKeeper testbblmodulekeeper.Keeper
+	*/
+	EpochingKeeper epochingkeeper.Keeper
 
 	// the module manager
 	mm *module.Manager
@@ -225,10 +229,11 @@ func NewBabylonApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-        /*
-        TODO: add application specific store key
-		testbblmoduletypes.StoreKey,
-        */
+		/*
+			TODO: add application specific store key
+			testbblmoduletypes.StoreKey,
+		*/
+		epochingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -256,7 +261,7 @@ func NewBabylonApp(
 	// their scoped modules in `NewApp` with `ScopeToModule`
 	app.CapabilityKeeper.Seal()
 
-    // TODO: Grant capabilities for the ibc and ibc-transfer modules
+	// TODO: Grant capabilities for the ibc and ibc-transfer modules
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
@@ -294,9 +299,8 @@ func NewBabylonApp(
 
 	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.BaseApp.MsgServiceRouter())
 
-    // ... other modules keepers
-    // TODO: Create IBC keeper
-
+	// ... other modules keepers
+	// TODO: Create IBC keeper
 
 	// register the proposal types
 	govRouter := govtypes.NewRouter()
@@ -315,16 +319,18 @@ func NewBabylonApp(
 		),
 	)
 
-    /*
-    TODO: add Babylon app keeper
-	app.TestbblKeeper = *testbblmodulekeeper.NewKeeper(
-		appCodec,
-		keys[testbblmoduletypes.StoreKey],
-		keys[testbblmoduletypes.MemStoreKey],
-		app.GetSubspace(testbblmoduletypes.ModuleName),
-	)
-	testbblModule := testbblmodule.NewAppModule(appCodec, app.TestbblKeeper, app.AccountKeeper, app.BankKeeper)
-    */
+	/*
+		TODO: add Babylon app keeper
+		app.TestbblKeeper = *testbblmodulekeeper.NewKeeper(
+			appCodec,
+			keys[testbblmoduletypes.StoreKey],
+			keys[testbblmoduletypes.MemStoreKey],
+			app.GetSubspace(testbblmoduletypes.ModuleName),
+		)
+		testbblModule := testbblmodule.NewAppModule(appCodec, app.TestbblKeeper, app.AccountKeeper, app.BankKeeper)
+	*/
+	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
+
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
@@ -360,10 +366,11 @@ func NewBabylonApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-        /*
-        TODO: add bbl module
-		testbblModule,
-        */
+		/*
+			        TODO: add bbl module
+					testbblModule,
+		*/
+		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -377,10 +384,11 @@ func NewBabylonApp(
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName,
-        /*
-        TODO: add bbl module
-		testbblmoduletypes.ModuleName,
-        */
+		/*
+			TODO: add bbl module
+			testbblmoduletypes.ModuleName,
+		*/
+		epochingtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -389,10 +397,14 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
-        /*
-        TODO: add bbl module
-		testbblmoduletypes.ModuleName,
-        */
+		/*
+			TODO: add bbl module
+			testbblmoduletypes.ModuleName,
+		*/
+		// TODO: BBL doesn't want the staking module to update the validator set at the end of each block. We consider two approaches to fix this:
+		// - remove stakingtypes.ModuleName from here, and let `epoching.EndBlock` do everything
+		// - call `epoching.EndBlock` first but only to dequeue the delayed staking requests, then let `staking.EndBlock` take care of executing them and return the changeset.
+		epochingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -406,10 +418,11 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
-        /*
-        TODO: add bbl module
-		testbblmoduletypes.ModuleName,
-        */
+		/*
+			TODO: add bbl module
+			testbblmoduletypes.ModuleName,
+		*/
+		epochingtypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -440,10 +453,11 @@ func NewBabylonApp(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-        /*
-        TODO: add bbl module
-		testbblModule,
-        */
+		/*
+			TODO: add bbl module
+			testbblModule,
+		*/
+		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -592,7 +606,7 @@ func (app *BabylonApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.AP
 	ModuleBasics.RegisterRESTRoutes(clientCtx, apiSvr.Router)
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
-    // TODO: ignite uses OpenAPI, we use swagger
+	// TODO: ignite uses OpenAPI, we use swagger
 	// register swagger API from root so that other applications can override easily
 	if apiConfig.Swagger {
 		RegisterSwaggerAPI(clientCtx, apiSvr.Router)
@@ -641,10 +655,11 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-    /*
-    TODO: add bbl module
-	paramsKeeper.Subspace(testbblmoduletypes.ModuleName)
-    */
+	/*
+		TODO: add bbl module
+		paramsKeeper.Subspace(testbblmoduletypes.ModuleName)
+	*/
+	paramsKeeper.Subspace(epochingtypes.ModuleName)
 
 	return paramsKeeper
 }

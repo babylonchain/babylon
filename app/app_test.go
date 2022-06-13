@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/babylonchain/babylon/x/epoching"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -182,10 +183,11 @@ func TestRunMigrations(t *testing.T) {
 					"crisis":       crisis.AppModule{}.ConsensusVersion(),
 					"genutil":      genutil.AppModule{}.ConsensusVersion(),
 					"capability":   capability.AppModule{}.ConsensusVersion(),
-                    /*
-                    TODO: add babylon module
-                    "testbbl":      capability.AppModule{}.ConsensusVersion()
-                    */
+					/*
+					   TODO: add babylon module
+					   "testbbl":      capability.AppModule{}.ConsensusVersion()
+					*/
+					"epoching": epoching.AppModule{}.ConsensusVersion(),
 				},
 			)
 			if tc.expRunErr {
@@ -238,10 +240,11 @@ func TestInitGenesisOnMigration(t *testing.T) {
 			"crisis":       crisis.AppModule{}.ConsensusVersion(),
 			"genutil":      genutil.AppModule{}.ConsensusVersion(),
 			"capability":   capability.AppModule{}.ConsensusVersion(),
-            /*
-            TODO: add babylon module
-            "testbbl":      capability.AppModule{}.ConsensusVersion()
-            */
+			/*
+			   TODO: add babylon module
+			   "testbbl":      capability.AppModule{}.ConsensusVersion()
+			*/
+			"epoching": epoching.AppModule{}.ConsensusVersion(),
 		},
 	)
 	require.NoError(t, err)
