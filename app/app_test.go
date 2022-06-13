@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/babylonchain/babylon/x/btccheckpoint"
 	"github.com/babylonchain/babylon/x/btclightclient"
 	"github.com/babylonchain/babylon/x/epoching"
 	"github.com/golang/mock/gomock"
@@ -190,6 +191,7 @@ func TestRunMigrations(t *testing.T) {
 					*/
 					"epoching":       epoching.AppModule{}.ConsensusVersion(),
 					"btclightclient": btclightclient.AppModule{}.ConsensusVersion(),
+					"btccheckpoint":  btccheckpoint.AppModule{}.ConsensusVersion(),
 				},
 			)
 			if tc.expRunErr {
@@ -248,6 +250,7 @@ func TestInitGenesisOnMigration(t *testing.T) {
 			*/
 			"epoching":       epoching.AppModule{}.ConsensusVersion(),
 			"btclightclient": btclightclient.AppModule{}.ConsensusVersion(),
+			"btccheckpoint":  btccheckpoint.AppModule{}.ConsensusVersion(),
 		},
 	)
 	require.NoError(t, err)
