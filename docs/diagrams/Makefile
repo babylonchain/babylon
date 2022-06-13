@@ -1,4 +1,4 @@
-PUMLS = $(shell find ./diagrams -type f -name "*.puml")
+PUMLS = $(shell find . -type f -name "*.puml")
 PNGS  = $(PUMLS:.puml=.png)
 
 .PHONY: all

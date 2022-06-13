@@ -96,7 +96,7 @@ ifeq (,$(findstring nostrip,$(BABYLON_BUILD_OPTIONS)))
   BUILD_FLAGS += -trimpath
 endif
 
-all: tools build lint test docs
+all: tools build lint test
 
 # The below include contains the tools and runsim targets.
 include contrib/devtools/Makefile
@@ -158,7 +158,7 @@ godocs:
 # This builds a docs site for each branch/tag in `./docs/versions`
 # and copies each site to a version prefixed path. The last entry inside
 # the `versions` file will be the default root index.html.
-build-docs:
+build-docs: diagrams
 	@cd docs && \
 	while read -r branch path_prefix; do \
 		(git checkout $${branch} && npm install && VUEPRESS_BASE="/$${path_prefix}/" npm run build) ; \
@@ -447,6 +447,6 @@ localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes
 
-.PHONY: docs
-docs:
-	$(MAKE) -C docs
+.PHONY: diagrams
+diagrams:
+	$(MAKE) -C docs/diagrams
