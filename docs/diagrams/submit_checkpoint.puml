@@ -69,10 +69,25 @@ deactivate Tendermint
 Tendermint -> btccheckpoint ++ : DeliverTx
 btccheckpoint -> btccheckpoint : Verify Proof-of-Inclusion
 btccheckpoint -> btclightclient : Check that BTC header exists
-btccheckpoint -> btcckpts : Add checkpoint transaction
-btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
-checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
-checkpointing -> Events -- : Epoch checkpoint included
+alt BTC header exists
+  btccheckpoint -> checkpointing : Check that raw checkpoint exists
+  alt raw checkpoint exists
+    btccheckpoint -> btcckpts : Add checkpoint transaction
+    btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
+    checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
+    checkpointing -> Events -- : Epoch checkpoint included
+  else unknown checkpoint for the same epoch number
+    btccheckpoint -> checkpointing ++ : Verify BLS signature over unknown hash
+    checkpointing -> checkpointing : Look up BLS keys
+    checkpointing -> checkpointing : Look up Validator Power
+    checkpointing -> checkpointing : Calculate group BLS key based on bitmap
+    checkpointing -> checkpointing : Verify BLS signature
+    alt malicious signature from our validators
+      checkpointing -> staking : Slash signing validators
+    end
+    deactivate checkpointing
+  end
+end
 return tx result
 
 ... wait for further Bitcoin headers to be relayed ...
