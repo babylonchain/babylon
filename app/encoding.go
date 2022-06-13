@@ -1,7 +1,7 @@
 package app
 
 import (
-    appparams "github.com/babylonchain/babylon/app/params"
+	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/std"
 )
 

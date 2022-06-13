@@ -13,6 +13,8 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -22,8 +24,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"

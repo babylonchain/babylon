@@ -7,11 +7,11 @@ import (
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-    sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
-    "github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/app"
 )
 
 // Profile with:

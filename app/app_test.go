@@ -5,6 +5,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/babylonchain/babylon/x/btclightclient"
 	"github.com/babylonchain/babylon/x/epoching"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -187,7 +188,8 @@ func TestRunMigrations(t *testing.T) {
 					   TODO: add babylon module
 					   "testbbl":      capability.AppModule{}.ConsensusVersion()
 					*/
-					"epoching": epoching.AppModule{}.ConsensusVersion(),
+					"epoching":       epoching.AppModule{}.ConsensusVersion(),
+					"btclightclient": btclightclient.AppModule{}.ConsensusVersion(),
 				},
 			)
 			if tc.expRunErr {
@@ -244,7 +246,8 @@ func TestInitGenesisOnMigration(t *testing.T) {
 			   TODO: add babylon module
 			   "testbbl":      capability.AppModule{}.ConsensusVersion()
 			*/
-			"epoching": epoching.AppModule{}.ConsensusVersion(),
+			"epoching":       epoching.AppModule{}.ConsensusVersion(),
+			"btclightclient": btclightclient.AppModule{}.ConsensusVersion(),
 		},
 	)
 	require.NoError(t, err)
