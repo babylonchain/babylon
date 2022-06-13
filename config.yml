@@ -1,0 +1,10 @@
+# Copied from https://github.com/osmosis-labs/osmosis/blob/main/config.yml
+version: 1
+accounts:
+  - name: alice
+    coins: ["1000token", "100000000stake"]
+  - name: bob
+    coins: ["500token"]
+validator:
+  name: alice
+  staked: "100000000stake"
