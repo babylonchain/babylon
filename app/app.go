@@ -129,8 +129,8 @@ var (
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		/*
-			        TODO: include module
-					testbblmodule.AppModuleBasic{},
+			TODO: include module
+			testbblmodule.AppModuleBasic{},
 		*/
 	)
 

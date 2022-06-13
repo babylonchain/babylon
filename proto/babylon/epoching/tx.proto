@@ -1,5 +1,5 @@
 syntax = "proto3";
-package babylonchain.babylon.epoching;
+package babylon.epoching;
 
 // this line is used by starport scaffolding # proto/tx/import
 
