@@ -12,13 +12,3 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
 }
-
-// this structure can go on a separate file
-message BitcoinHeader {
-  int32 version = 1;
-  bytes parent_hash = 2;
-  bytes merkle_root = 3;
-  google.protobuf.Timestamp time = 4;
-  uint32 nbits = 5;
-  uint32 nonce = 6;
-}

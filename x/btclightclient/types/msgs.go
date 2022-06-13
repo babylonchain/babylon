@@ -1,43 +1,68 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"errors"
+	"fmt"
+	"github.com/babylonchain/babylon/x/btclightclient"
+	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcutil"
+	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	"time"
 
-var (
-    // Ensure that MsgInsertHeader implements all functions of the Msg interface
-	_ sdk.Msg = (*MsgInsertHeader)(nil)
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (m *MsgInsertHeader) ValidateBasic() error {
-    // This function validates stateless message elements
-	_, err := sdk.AccAddressFromBech32(m.Signer)
+// Ensure that MsgInsertHeader implements all functions of the Msg interface
+var _ sdk.Msg = (*MsgInsertHeader)(nil)
+
+func (msg *MsgInsertHeader) ValidateBasic() error {
+	// This function validates stateless message elements
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		return err
 	}
 
-	if m.Header == nil {
-		return ErrInvalidHeader.Wrap("empty")
+	header, err := btclightclient.ParseBTCHeader(msg.HeaderBytes)
+	if err != nil {
+		return err
 	}
 
-	if len(m.Header.ParentHash) != 32 {
-		return ErrInvalidHeader.Wrap("parent hash size not 32")
+	return ValidateHeaderAttributes(header)
+}
+
+func ValidateHeaderAttributes(header *wire.BlockHeader) error {
+	// Perform the checks that checkBlockHeaderSanity of btcd does
+	// https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430
+	// We skip the "timestamp should not be 2 hours into the future" check
+	// since this might introduce undeterministic behavior
+
+	msgBlock := &wire.MsgBlock{Header: *header}
+	block := btcutil.NewBlock(msgBlock)
+
+	// The upper limit for the power to be spent
+	// Use the one maintained by btcd
+	powLimit := btcchaincfg.MainNetParams.PowLimit
+
+	err := blockchain.CheckProofOfWork(block, powLimit)
+	if err != nil {
+		return err
 	}
 
-	if len(m.Header.MerkleRoot) != 32 {
-		return ErrInvalidHeader.Wrap("merkle root size not 32")
+	if !header.Timestamp.Equal(time.Unix(header.Timestamp.Unix(), 0)) {
+		str := fmt.Sprintf("block timestamp of %v has a higher "+
+			"precision than one second", header.Timestamp)
+		return errors.New(str)
 	}
-
-	// TODO: verify version proper value
-
-	// TODO: verify difficulty
 
 	return nil
 }
 
-func (m *MsgInsertHeader) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
+func (msg *MsgInsertHeader) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
-        // Panic, since the GetSigners method is called after ValidateBasic
-        // which performs the same check.
+		// Panic, since the GetSigners method is called after ValidateBasic
+		// which performs the same check.
 		panic(err)
 	}
 
