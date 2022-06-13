@@ -95,6 +95,9 @@ import (
 		testbblmodulekeeper "github.com/babylon/test-bbl/x/testbbl/keeper"
 		testbblmoduletypes "github.com/babylon/test-bbl/x/testbbl/types"
 	*/
+	"github.com/babylonchain/babylon/x/btccheckpoint"
+	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/btclightclient"
 	btclightclientkeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
@@ -132,6 +135,7 @@ var (
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		btclightclient.AppModuleBasic{},
+		btccheckpoint.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -190,6 +194,8 @@ type BabylonApp struct {
 
 	BTCLightClientKeeper btclightclientkeeper.Keeper
 
+	BtcCheckpointKeeper btccheckpointkeeper.Keeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -237,6 +243,7 @@ func NewBabylonApp(
 		*/
 		epochingtypes.StoreKey,
 		btclightclienttypes.StoreKey,
+		btccheckpointtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -334,6 +341,7 @@ func NewBabylonApp(
 	*/
 	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
 	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
+	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
@@ -375,6 +383,7 @@ func NewBabylonApp(
 		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
+		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -394,6 +403,7 @@ func NewBabylonApp(
 		*/
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
+		btccheckpointtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -411,6 +421,7 @@ func NewBabylonApp(
 		// - call `epoching.EndBlock` first but only to dequeue the delayed staking requests, then let `staking.EndBlock` take care of executing them and return the changeset.
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
+		btccheckpointtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -430,6 +441,7 @@ func NewBabylonApp(
 		*/
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
+		btccheckpointtypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -466,6 +478,7 @@ func NewBabylonApp(
 		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
+		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -669,6 +682,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	*/
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
 	paramsKeeper.Subspace(btclightclienttypes.ModuleName)
+	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
 
 	return paramsKeeper
 }
