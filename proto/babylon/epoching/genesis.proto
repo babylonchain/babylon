@@ -1,5 +1,5 @@
 syntax = "proto3";
-package babylon.epoching;
+package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/epoching/params.proto";
