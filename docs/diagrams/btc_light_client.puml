@@ -18,24 +18,34 @@ relayer -> Bitcoin : Scan chain from highest known header
 
 ... wait for further Bitcoin headers to be observed ...
 
-Bitcoin --> relayer : Observe new header
-relayer -> Tendermint ++ : Broadcast BTC Header transaction
+Bitcoin --> relayer ++ : Observe new header
 
-Tendermint -> btclightclient ++ : CheckTx
-btclightclient -> btclightclient : Check Proof-of-Work
-btclightclient -> btcheaders : Check parent exists
-btclightclient -> btcheaders : Check header is new
-alt if new
-  btclightclient -> btcheaders : Add header
-  note right
-    Only in checkState
-  end note
+relayer -> Tendermint ++ : Broadcast BTC header tx
+
+loop recurse while missing parents
+  Tendermint -> btclightclient ++ : CheckTx
+  btclightclient -> btclightclient : Check Proof-of-Work
+  btclightclient -> btcheaders : Check parent exists
+  btclightclient -> btcheaders : Check header is new
+  alt if new
+    btclightclient -> btcheaders : Add header
+    note right
+      Only in checkState
+    end note
+  end
+  return valid or missing parent or duplicate
+  alt if valid
+    Tendermint -> Mempool : Add header transaction
+  end
+  return check result
+
+  alt if missing parent
+    relayer -> Bitcoin : Get missing parent
+    relayer -> Tendermint : Broadcast BTC header of parent
+    relayer -> Tendermint : Re-broadcast child header
+  end
 end
-return valid or duplicate
-alt if valid
-  Tendermint -> Mempool : Add header transaction
-end
-deactivate Tendermint
+deactivate relayer
 
 ... wait for transaction to be included in Babylon block ...
 
