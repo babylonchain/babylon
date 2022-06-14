@@ -9,11 +9,16 @@ message BTCHeaderBytes {
   bytes header_bytes = 1;
 }
 
-message BitcoinHeader {
+// This structure is going to be used to store converted btcd headers
+// It is mainly used because btcd headers (type *wire.BlockHeader)
+// cannot be inserted into storage since they do not correspond
+// to proto objects.
+message BTCBlockHeader {
   int32 version = 1;
-  bytes parent_hash = 2;
-  bytes merkle_root = 3;
+  string prev_block = 2;
+  string merkle_root = 3;
   google.protobuf.Timestamp time = 4;
-  uint32 nbits = 5;
+  uint32 bits = 5;
   uint32 nonce = 6;
+  string hash = 7;
 }

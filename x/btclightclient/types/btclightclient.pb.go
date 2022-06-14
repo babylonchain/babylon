@@ -67,27 +67,28 @@ func (m *BTCHeaderBytes) GetHeaderBytes() []byte {
 	return nil
 }
 
-type BitcoinHeader struct {
+type BTCBlockHeader struct {
 	Version    int32                  `protobuf:"varint,1,opt,name=version,proto3" json:"version,omitempty"`
-	ParentHash []byte                 `protobuf:"bytes,2,opt,name=parent_hash,json=parentHash,proto3" json:"parent_hash,omitempty"`
-	MerkleRoot []byte                 `protobuf:"bytes,3,opt,name=merkle_root,json=merkleRoot,proto3" json:"merkle_root,omitempty"`
+	PrevBlock  string                 `protobuf:"bytes,2,opt,name=prev_block,json=prevBlock,proto3" json:"prev_block,omitempty"`
+	MerkleRoot string                 `protobuf:"bytes,3,opt,name=merkle_root,json=merkleRoot,proto3" json:"merkle_root,omitempty"`
 	Time       *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=time,proto3" json:"time,omitempty"`
-	Nbits      uint32                 `protobuf:"varint,5,opt,name=nbits,proto3" json:"nbits,omitempty"`
+	Bits       uint32                 `protobuf:"varint,5,opt,name=bits,proto3" json:"bits,omitempty"`
 	Nonce      uint32                 `protobuf:"varint,6,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	Hash       string                 `protobuf:"bytes,7,opt,name=hash,proto3" json:"hash,omitempty"`
 }
 
-func (m *BitcoinHeader) Reset()         { *m = BitcoinHeader{} }
-func (m *BitcoinHeader) String() string { return proto.CompactTextString(m) }
-func (*BitcoinHeader) ProtoMessage()    {}
-func (*BitcoinHeader) Descriptor() ([]byte, []int) {
+func (m *BTCBlockHeader) Reset()         { *m = BTCBlockHeader{} }
+func (m *BTCBlockHeader) String() string { return proto.CompactTextString(m) }
+func (*BTCBlockHeader) ProtoMessage()    {}
+func (*BTCBlockHeader) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3313d955a6cadef2, []int{1}
 }
-func (m *BitcoinHeader) XXX_Unmarshal(b []byte) error {
+func (m *BTCBlockHeader) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *BitcoinHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BTCBlockHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_BitcoinHeader.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BTCBlockHeader.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -97,63 +98,70 @@ func (m *BitcoinHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return b[:n], nil
 	}
 }
-func (m *BitcoinHeader) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BitcoinHeader.Merge(m, src)
+func (m *BTCBlockHeader) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCBlockHeader.Merge(m, src)
 }
-func (m *BitcoinHeader) XXX_Size() int {
+func (m *BTCBlockHeader) XXX_Size() int {
 	return m.Size()
 }
-func (m *BitcoinHeader) XXX_DiscardUnknown() {
-	xxx_messageInfo_BitcoinHeader.DiscardUnknown(m)
+func (m *BTCBlockHeader) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCBlockHeader.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_BitcoinHeader proto.InternalMessageInfo
+var xxx_messageInfo_BTCBlockHeader proto.InternalMessageInfo
 
-func (m *BitcoinHeader) GetVersion() int32 {
+func (m *BTCBlockHeader) GetVersion() int32 {
 	if m != nil {
 		return m.Version
 	}
 	return 0
 }
 
-func (m *BitcoinHeader) GetParentHash() []byte {
+func (m *BTCBlockHeader) GetPrevBlock() string {
 	if m != nil {
-		return m.ParentHash
+		return m.PrevBlock
 	}
-	return nil
+	return ""
 }
 
-func (m *BitcoinHeader) GetMerkleRoot() []byte {
+func (m *BTCBlockHeader) GetMerkleRoot() string {
 	if m != nil {
 		return m.MerkleRoot
 	}
-	return nil
+	return ""
 }
 
-func (m *BitcoinHeader) GetTime() *timestamppb.Timestamp {
+func (m *BTCBlockHeader) GetTime() *timestamppb.Timestamp {
 	if m != nil {
 		return m.Time
 	}
 	return nil
 }
 
-func (m *BitcoinHeader) GetNbits() uint32 {
+func (m *BTCBlockHeader) GetBits() uint32 {
 	if m != nil {
-		return m.Nbits
+		return m.Bits
 	}
 	return 0
 }
 
-func (m *BitcoinHeader) GetNonce() uint32 {
+func (m *BTCBlockHeader) GetNonce() uint32 {
 	if m != nil {
 		return m.Nonce
 	}
 	return 0
 }
 
+func (m *BTCBlockHeader) GetHash() string {
+	if m != nil {
+		return m.Hash
+	}
+	return ""
+}
+
 func init() {
 	proto.RegisterType((*BTCHeaderBytes)(nil), "babylon.btclightclient.v1.BTCHeaderBytes")
-	proto.RegisterType((*BitcoinHeader)(nil), "babylon.btclightclient.v1.BitcoinHeader")
+	proto.RegisterType((*BTCBlockHeader)(nil), "babylon.btclightclient.v1.BTCBlockHeader")
 }
 
 func init() {
@@ -161,27 +169,28 @@ func init() {
 }
 
 var fileDescriptor_3313d955a6cadef2 = []byte{
-	// 316 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x91, 0xb1, 0x6e, 0xea, 0x30,
-	0x14, 0x86, 0xf1, 0xbd, 0x40, 0x25, 0x03, 0x1d, 0xa2, 0x0e, 0x29, 0x43, 0xa0, 0x4c, 0x48, 0x95,
-	0x1c, 0xb5, 0x48, 0x7d, 0x80, 0x74, 0x61, 0xac, 0x22, 0xa6, 0x2e, 0xc8, 0x4e, 0xdd, 0xd8, 0x6a,
-	0xe2, 0x13, 0xc5, 0x07, 0x54, 0xde, 0xa2, 0x6f, 0xd5, 0x8e, 0x8c, 0x1d, 0x2b, 0x78, 0x91, 0x2a,
-	0x36, 0x51, 0x25, 0x96, 0x48, 0xdf, 0x9f, 0xef, 0x58, 0xe7, 0xb7, 0xe9, 0xad, 0xe0, 0x62, 0x57,
-	0x80, 0x89, 0x05, 0x66, 0x85, 0xce, 0x55, 0xf3, 0x95, 0x06, 0xcf, 0x90, 0x55, 0x35, 0x20, 0x04,
-	0xd7, 0x27, 0x99, 0x9d, 0xfd, 0xdd, 0xde, 0x8d, 0x27, 0x39, 0x40, 0x5e, 0xc8, 0xd8, 0x89, 0x62,
-	0xf3, 0x1a, 0xa3, 0x2e, 0xa5, 0x45, 0x5e, 0x56, 0x7e, 0x76, 0xb6, 0xa0, 0x97, 0xc9, 0xea, 0x71,
-	0x29, 0xf9, 0x8b, 0xac, 0x93, 0x1d, 0x4a, 0x1b, 0xdc, 0xd0, 0xa1, 0x72, 0xb8, 0x16, 0x0d, 0x87,
-	0x64, 0x4a, 0xe6, 0xc3, 0x74, 0xa0, 0xfe, 0x94, 0xd9, 0x27, 0xa1, 0xa3, 0x44, 0x63, 0x06, 0xda,
-	0xf8, 0xc9, 0x20, 0xa4, 0x17, 0x5b, 0x59, 0x5b, 0x0d, 0xc6, 0xf9, 0xbd, 0xb4, 0xc5, 0x60, 0x42,
-	0x07, 0x15, 0xaf, 0xa5, 0xc1, 0xb5, 0xe2, 0x56, 0x85, 0xff, 0xdc, 0x69, 0xd4, 0x47, 0x4b, 0x6e,
-	0x55, 0x23, 0x94, 0xb2, 0x7e, 0x2b, 0xe4, 0xba, 0x06, 0xc0, 0xf0, 0xbf, 0x17, 0x7c, 0x94, 0x02,
-	0x60, 0xc0, 0x68, 0xb7, 0xd9, 0x3a, 0xec, 0x4e, 0xc9, 0x7c, 0x70, 0x3f, 0x66, 0xbe, 0x12, 0x6b,
-	0x2b, 0xb1, 0x55, 0x5b, 0x29, 0x75, 0x5e, 0x70, 0x45, 0x7b, 0x46, 0x68, 0xb4, 0x61, 0x6f, 0x4a,
-	0xe6, 0xa3, 0xd4, 0x83, 0x4b, 0xc1, 0x64, 0x32, 0xec, 0x9f, 0xd2, 0x06, 0x92, 0xa7, 0xaf, 0x43,
-	0x44, 0xf6, 0x87, 0x88, 0xfc, 0x1c, 0x22, 0xf2, 0x71, 0x8c, 0x3a, 0xfb, 0x63, 0xd4, 0xf9, 0x3e,
-	0x46, 0x9d, 0xe7, 0x87, 0x5c, 0xa3, 0xda, 0x08, 0x96, 0x41, 0x19, 0x9f, 0xee, 0x37, 0x53, 0x5c,
-	0x9b, 0x16, 0xe2, 0xf7, 0xf3, 0xb7, 0xc1, 0x5d, 0x25, 0xad, 0xe8, 0xbb, 0xbd, 0x16, 0xbf, 0x01,
-	0x00, 0x00, 0xff, 0xff, 0xc9, 0x91, 0xcd, 0x51, 0xc2, 0x01, 0x00, 0x00,
+	// 327 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x91, 0xbf, 0x4e, 0xc3, 0x30,
+	0x10, 0xc6, 0x6b, 0xe8, 0x1f, 0xd5, 0x2d, 0x0c, 0x16, 0x83, 0xa9, 0x44, 0x1a, 0x3a, 0x45, 0x42,
+	0x72, 0x04, 0x95, 0x78, 0x80, 0xb0, 0x30, 0xa2, 0xa8, 0x13, 0x4b, 0x15, 0x07, 0x13, 0x47, 0x4d,
+	0x72, 0x51, 0xe2, 0x56, 0xf4, 0x2d, 0x78, 0x2c, 0xc6, 0x8e, 0x1d, 0x51, 0xfb, 0x22, 0xc8, 0x97,
+	0x46, 0x48, 0x5d, 0xac, 0xfb, 0xee, 0x7e, 0x9f, 0x7c, 0x9f, 0x4d, 0x1f, 0x64, 0x24, 0xb7, 0x19,
+	0x14, 0xbe, 0x34, 0x71, 0x96, 0x26, 0xda, 0x9e, 0xaa, 0x30, 0x67, 0x52, 0x94, 0x15, 0x18, 0x60,
+	0xb7, 0x27, 0x58, 0x9c, 0x4d, 0x37, 0x8f, 0x93, 0x69, 0x02, 0x90, 0x64, 0xca, 0x47, 0x50, 0xae,
+	0x3f, 0x7d, 0x93, 0xe6, 0xaa, 0x36, 0x51, 0x5e, 0x36, 0xde, 0xd9, 0x9c, 0x5e, 0x07, 0x8b, 0x97,
+	0x57, 0x15, 0x7d, 0xa8, 0x2a, 0xd8, 0x1a, 0x55, 0xb3, 0x7b, 0x3a, 0xd6, 0x28, 0x97, 0xd2, 0x6a,
+	0x4e, 0x5c, 0xe2, 0x8d, 0xc3, 0x91, 0xfe, 0x47, 0x66, 0x7b, 0x82, 0xae, 0x20, 0x83, 0x78, 0xd5,
+	0x58, 0x19, 0xa7, 0x83, 0x8d, 0xaa, 0xea, 0x14, 0x0a, 0x34, 0xf4, 0xc2, 0x56, 0xb2, 0x3b, 0x4a,
+	0xcb, 0x4a, 0x6d, 0x96, 0xd2, 0xd2, 0xfc, 0xc2, 0x25, 0xde, 0x30, 0x1c, 0xda, 0x0e, 0xda, 0xd9,
+	0x94, 0x8e, 0x72, 0x55, 0xad, 0x32, 0xb5, 0xac, 0x00, 0x0c, 0xbf, 0xc4, 0x39, 0x6d, 0x5a, 0x21,
+	0x80, 0x61, 0x82, 0x76, 0xed, 0xd2, 0xbc, 0xeb, 0x12, 0x6f, 0xf4, 0x34, 0x11, 0x4d, 0x22, 0xd1,
+	0x26, 0x12, 0x8b, 0x36, 0x51, 0x88, 0x1c, 0x63, 0xb4, 0x2b, 0x53, 0x53, 0xf3, 0x9e, 0x4b, 0xbc,
+	0xab, 0x10, 0x6b, 0x76, 0x43, 0x7b, 0x05, 0x14, 0xb1, 0xe2, 0x7d, 0x6c, 0x36, 0xc2, 0x92, 0x3a,
+	0xaa, 0x35, 0x1f, 0xe0, 0x9d, 0x58, 0x07, 0x6f, 0x3f, 0x07, 0x87, 0xec, 0x0e, 0x0e, 0xf9, 0x3d,
+	0x38, 0xe4, 0xfb, 0xe8, 0x74, 0x76, 0x47, 0xa7, 0xb3, 0x3f, 0x3a, 0x9d, 0xf7, 0xe7, 0x24, 0x35,
+	0x7a, 0x2d, 0x45, 0x0c, 0xb9, 0x7f, 0x7a, 0xf0, 0x58, 0x47, 0x69, 0xd1, 0x0a, 0xff, 0xeb, 0xfc,
+	0xb3, 0xcc, 0xb6, 0x54, 0xb5, 0xec, 0xe3, 0xa6, 0xf3, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0xd1,
+	0x9a, 0xd1, 0x03, 0xd3, 0x01, 0x00, 0x00,
 }
 
 func (m *BTCHeaderBytes) Marshal() (dAtA []byte, err error) {
@@ -214,7 +223,7 @@ func (m *BTCHeaderBytes) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *BitcoinHeader) Marshal() (dAtA []byte, err error) {
+func (m *BTCBlockHeader) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -224,23 +233,30 @@ func (m *BitcoinHeader) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *BitcoinHeader) MarshalTo(dAtA []byte) (int, error) {
+func (m *BTCBlockHeader) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *BitcoinHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BTCBlockHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarintBtclightclient(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x3a
+	}
 	if m.Nonce != 0 {
 		i = encodeVarintBtclightclient(dAtA, i, uint64(m.Nonce))
 		i--
 		dAtA[i] = 0x30
 	}
-	if m.Nbits != 0 {
-		i = encodeVarintBtclightclient(dAtA, i, uint64(m.Nbits))
+	if m.Bits != 0 {
+		i = encodeVarintBtclightclient(dAtA, i, uint64(m.Bits))
 		i--
 		dAtA[i] = 0x28
 	}
@@ -263,10 +279,10 @@ func (m *BitcoinHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x1a
 	}
-	if len(m.ParentHash) > 0 {
-		i -= len(m.ParentHash)
-		copy(dAtA[i:], m.ParentHash)
-		i = encodeVarintBtclightclient(dAtA, i, uint64(len(m.ParentHash)))
+	if len(m.PrevBlock) > 0 {
+		i -= len(m.PrevBlock)
+		copy(dAtA[i:], m.PrevBlock)
+		i = encodeVarintBtclightclient(dAtA, i, uint64(len(m.PrevBlock)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -302,7 +318,7 @@ func (m *BTCHeaderBytes) Size() (n int) {
 	return n
 }
 
-func (m *BitcoinHeader) Size() (n int) {
+func (m *BTCBlockHeader) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -311,7 +327,7 @@ func (m *BitcoinHeader) Size() (n int) {
 	if m.Version != 0 {
 		n += 1 + sovBtclightclient(uint64(m.Version))
 	}
-	l = len(m.ParentHash)
+	l = len(m.PrevBlock)
 	if l > 0 {
 		n += 1 + l + sovBtclightclient(uint64(l))
 	}
@@ -323,11 +339,15 @@ func (m *BitcoinHeader) Size() (n int) {
 		l = m.Time.Size()
 		n += 1 + l + sovBtclightclient(uint64(l))
 	}
-	if m.Nbits != 0 {
-		n += 1 + sovBtclightclient(uint64(m.Nbits))
+	if m.Bits != 0 {
+		n += 1 + sovBtclightclient(uint64(m.Bits))
 	}
 	if m.Nonce != 0 {
 		n += 1 + sovBtclightclient(uint64(m.Nonce))
+	}
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sovBtclightclient(uint64(l))
 	}
 	return n
 }
@@ -422,7 +442,7 @@ func (m *BTCHeaderBytes) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
+func (m *BTCBlockHeader) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -445,10 +465,10 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: BitcoinHeader: wiretype end group for non-group")
+			return fmt.Errorf("proto: BTCBlockHeader: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: BitcoinHeader: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BTCBlockHeader: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -472,9 +492,9 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ParentHash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field PrevBlock", wireType)
 			}
-			var byteLen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBtclightclient
@@ -484,31 +504,29 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthBtclightclient
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthBtclightclient
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ParentHash = append(m.ParentHash[:0], dAtA[iNdEx:postIndex]...)
-			if m.ParentHash == nil {
-				m.ParentHash = []byte{}
-			}
+			m.PrevBlock = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MerkleRoot", wireType)
 			}
-			var byteLen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBtclightclient
@@ -518,25 +536,23 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthBtclightclient
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthBtclightclient
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MerkleRoot = append(m.MerkleRoot[:0], dAtA[iNdEx:postIndex]...)
-			if m.MerkleRoot == nil {
-				m.MerkleRoot = []byte{}
-			}
+			m.MerkleRoot = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
@@ -576,9 +592,9 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 5:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Nbits", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Bits", wireType)
 			}
-			m.Nbits = 0
+			m.Bits = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBtclightclient
@@ -588,7 +604,7 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Nbits |= uint32(b&0x7F) << shift
+				m.Bits |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -612,6 +628,38 @@ func (m *BitcoinHeader) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtclightclient
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthBtclightclient
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtclightclient
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipBtclightclient(dAtA[iNdEx:])
