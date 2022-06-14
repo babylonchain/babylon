@@ -79,7 +79,7 @@ func (s HeadersState) GetHeaderByHash(hash []byte) (*types.BTCBlockHeader, error
 	return s.GetHeader(height, hash)
 }
 
-func (s HeadersState) HeadersByHeight(height uint64, f func(header *types.BTCBlockHeader) (stop bool)) {
+func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCBlockHeader) bool) {
 	// Retrieve headers by their height
 	// func parameter is used for pagination
 	store := prefix.NewStore(s.headers, sdk.Uint64ToBigEndian(height))
@@ -90,6 +90,19 @@ func (s HeadersState) HeadersByHeight(height uint64, f func(header *types.BTCBlo
 		headerRawBytes := iter.Value()
 		header := new(types.BTCBlockHeader)
 		s.cdc.MustUnmarshal(headerRawBytes, header)
+		stop := f(header)
+		if stop {
+			break
+		}
+	}
+}
+
+func (s HeadersState) GetHeaders(f func([]byte) bool) {
+	iter := s.hashToHeight.Iterator(nil, nil)
+	defer iter.Close()
+	for ; iter.Valid(); iter.Next() {
+		// The header is the key of the KV store
+		header := iter.Key()
 		stop := f(header)
 		if stop {
 			break

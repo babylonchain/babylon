@@ -14,6 +14,16 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/btclightclient/params";
   }
+
+  // GetHashes retrieves the hashes maintained by the module.
+  rpc GetHashes(QueryGetHashesRequest) returns (QueryGetHashesResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btclightclient/gethashes";
+  }
+
+  // ContainsHash checks whether a hash is maintained by the module.
+  rpc ContainsHash(QueryContainsHashRequest) returns (QueryContainsHashResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btclightclient/containshash";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -23,4 +33,20 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+// QueryGetHashesRequest is request type for the Query/GetHashes RPC method.
+message QueryGetHashesRequest {}
+
+// QueryGetHashesResponse is response type for the Query/GetHashes RPC method.
+message QueryGetHashesResponse {
+  repeated bytes hashes = 1;
+}
+// QueryContainsHashRequest is request type for the Query/ContainsHash RPC method.
+message QueryContainsHashRequest {
+  bytes hash = 1;
+}
+
+// QueryContainsHashResponse is response type for the Query/ContainsHash RPC method.
+message QueryContainsHashResponse {
+  bool contains_hash = 1;
 }
