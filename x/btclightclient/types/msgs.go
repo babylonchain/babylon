@@ -23,7 +23,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 		return err
 	}
 
-	header, err := btclightclient.ParseBTCHeader(msg.HeaderBytes)
+	header, err := btclightclient.BytesToBtcdHeader(msg.HeaderBytes)
 	if err != nil {
 		return err
 	}

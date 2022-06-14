@@ -4,9 +4,10 @@ import (
 	"bytes"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/wire"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func ParseBTCHeader(headerBytes *types.BTCHeaderBytes) (*wire.BlockHeader, error) {
+func BytesToBtcdHeader(headerBytes *types.BTCHeaderBytes) (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
 	// The Deserialize method expects an io.Reader instance
@@ -18,4 +19,16 @@ func ParseBTCHeader(headerBytes *types.BTCHeaderBytes) (*wire.BlockHeader, error
 		return nil, err
 	}
 	return header, nil
+}
+
+func BtcdHeaderToBTCBlockHeader(btcdHeader *wire.BlockHeader) *types.BTCBlockHeader {
+	return &types.BTCBlockHeader{
+		Version:    btcdHeader.Version,
+		PrevBlock:  btcdHeader.PrevBlock.String(),
+		MerkleRoot: btcdHeader.MerkleRoot.String(),
+		Time:       timestamppb.New(btcdHeader.Timestamp),
+		Bits:       btcdHeader.Bits,
+		Nonce:      btcdHeader.Nonce,
+		Hash:       btcdHeader.BlockHash().String(),
+	}
 }

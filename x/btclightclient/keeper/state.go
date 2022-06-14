@@ -7,57 +7,88 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	headersStateNamespace  = []byte{0x0}                        // reserve this namespace for headers
-	headersObjectNamespace = append(headersStateNamespace, 0x0) // where we save the concrete header bytes
-	hashToHeightNamespace  = append(headersStateNamespace, 0x1) // where we map hash to height
-
-	tipStateNamespace = []byte{0x1}                             // reserve this namespace for the tip
-)
-
-func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
-    // Build the HeadersState storage
-	store := ctx.KVStore(k.storeKey)
-	return HeadersState{
-		cdc:          k.cdc,
-		headers:      prefix.NewStore(store, headersObjectNamespace),
-		hashToHeight: prefix.NewStore(store, hashToHeightNamespace),
-	}
-}
-
-func (k Keeper) TipState(ctx sdk.Context) TipState {
-	panic("implement me")
-}
-
 type HeadersState struct {
 	cdc          codec.BinaryCodec
 	headers      sdk.KVStore
 	hashToHeight sdk.KVStore
 }
 
-func (s HeadersState) Create(height uint64, header *types.BitcoinHeader) {
-    // Method for inserting headers into the store
-
-	// TODO: get the hash of the bitcoin header
-	pk, headerHash := s.getPrimaryKey(height, header)
-
-	// save concrete object
-	s.headers.Set(pk, s.cdc.MustMarshal(header))
-	// map header to height
-	s.hashToHeight.Set(headerHash, sdk.Uint64ToBigEndian(height))
+func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
+	// Build the HeadersState storage
+	store := ctx.KVStore(k.storeKey)
+	return HeadersState{
+		cdc:          k.cdc,
+		headers:      prefix.NewStore(store, types.HeadersObjectPrefix),
+		hashToHeight: prefix.NewStore(store, types.HashToHeightPrefix),
+	}
 }
 
-// TODO: Implement a getter function
+func (s HeadersState) Create(header *types.BTCBlockHeader) {
+	// Insert a header into storage
 
-func (s HeadersState) HeadersByHeight(height uint64, f func(header *types.BitcoinHeader) (stop bool)) {
-    // Method  for retrieving headers by their height
+	height, err := s.GetHeaderHeight(header.PrevBlock)
+	if err != nil {
+		// Parent should always exist
+		panic("Parent does not exist.")
+	}
+
+	headersKey := types.HeadersObjectKey(height+1, header.Hash)
+	heightKey := types.HeadersObjectHeightKey(header.Hash)
+
+	// save concrete object
+	s.headers.Set(headersKey, s.cdc.MustMarshal(header))
+	// map header to height
+	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
+}
+
+func (s HeadersState) GetHeader(height uint64, hash string) (*types.BTCBlockHeader, error) {
+	// Retrieve a header by its height and hash
+
+	headersKey := types.HeadersObjectKey(height, hash)
+	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
+	bz := store.Get(headersKey)
+	if bz == nil {
+		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided height and hash")
+	}
+
+	header := new(types.BTCBlockHeader)
+	s.cdc.MustUnmarshal(bz, header)
+	return header, nil
+}
+
+func (s HeadersState) GetHeaderHeight(hash string) (uint64, error) {
+	// Retrieve the Height of a header
+
+	hashKey := types.HeadersObjectHeightKey(hash)
+	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
+	bz := store.Get(hashKey)
+	if bz == nil {
+		return 0, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
+	}
+	height := sdk.BigEndianToUint64(bz)
+	return height, nil
+}
+
+func (s HeadersState) GetHeaderByHash(hash string) (*types.BTCBlockHeader, error) {
+	// Retrieve a header by its hash
+
+	height, err := s.GetHeaderHeight(hash)
+	if err != nil {
+		return nil, err
+	}
+	return s.GetHeader(height, hash)
+}
+
+func (s HeadersState) HeadersByHeight(height uint64, f func(header *types.BTCBlockHeader) (stop bool)) {
+	// Retrieve headers by their height
+	// func parameter is used for pagination
 	store := prefix.NewStore(s.headers, sdk.Uint64ToBigEndian(height))
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
 		headerRawBytes := iter.Value()
-		header := new(types.BitcoinHeader)
+		header := new(types.BTCBlockHeader)
 		s.cdc.MustUnmarshal(headerRawBytes, header)
 		stop := f(header)
 		if stop {
@@ -66,13 +97,17 @@ func (s HeadersState) HeadersByHeight(height uint64, f func(header *types.Bitcoi
 	}
 }
 
-func (s HeadersState) getPrimaryKey(height uint64, header *types.BitcoinHeader) (primaryKey []byte, headerHash []byte) {
-	// heightPartKey := sdk.Uint64ToBigEndian(height)
-	// headerHashPartKey := hashHeader(header)
-	// primaryKey := append(heightPartKey, headerHashPartKey...)
-	// return primaryKey, headerHashPartKey
-	return []byte("temp"), []byte("hash")
+func (s HeadersState) Exists(hash string) bool {
+	hashKey := types.HeadersObjectHeightKey(hash)
+	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
+	bz := store.Get(hashKey)
+	return bz == nil
+}
+
+func (k Keeper) TipState(ctx sdk.Context) TipState {
+	panic("implement me")
 }
 
 type TipState struct {
+	// TODO
 }

@@ -45,11 +45,15 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// This function manages the state of the InsertHeader method
-func (k Keeper) InsertHeader(ctx sdk.Context, height uint64, header *types.BitcoinHeader) error {
-	// TODO: Check that there is a header in storage with key
-	// 		 (height-1, header.parent_hash)
+func (k Keeper) InsertHeader(ctx sdk.Context, height uint64, header *types.BTCBlockHeader) error {
+	if k.HeadersState(ctx).Exists(header.Hash) {
+		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
+	}
 
-	// TODO: insert block data as (height, hash) -> header (call create)
-	k.HeadersState(ctx).Create(height, header)
+	if !k.HeadersState(ctx).Exists(header.PrevBlock) {
+		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
+	}
+
+	k.HeadersState(ctx).Create(header)
+	return nil
 }
