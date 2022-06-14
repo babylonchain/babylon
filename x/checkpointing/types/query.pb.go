@@ -33,8 +33,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
 // RPC method.
 type QueryRawCheckpointsRequest struct {
-	// from_epoch defines the start epoch of the query, which is inclusive
-	FromEpochNum uint64 `protobuf:"varint,1,opt,name=from_epoch_num,json=fromEpochNum,proto3" json:"from_epoch_num,omitempty"`
+	// status defines the status of the raw checkpoints of the query
+	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -72,11 +72,11 @@ func (m *QueryRawCheckpointsRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryRawCheckpointsRequest proto.InternalMessageInfo
 
-func (m *QueryRawCheckpointsRequest) GetFromEpochNum() uint64 {
+func (m *QueryRawCheckpointsRequest) GetStatus() string {
 	if m != nil {
-		return m.FromEpochNum
+		return m.Status
 	}
-	return 0
+	return ""
 }
 
 func (m *QueryRawCheckpointsRequest) GetPagination() *query.PageRequest {
@@ -142,6 +142,118 @@ func (m *QueryRawCheckpointsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryRecentRawCheckpointsRequest is the request type for the Query/RecentRawCheckpoints
+// RPC method.
+type QueryRecentRawCheckpointsRequest struct {
+	// from_epoch defines the start epoch of the query, which is inclusive
+	FromEpochNum uint64 `protobuf:"varint,1,opt,name=from_epoch_num,json=fromEpochNum,proto3" json:"from_epoch_num,omitempty"`
+	// pagination defines an optional pagination for the request.
+	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryRecentRawCheckpointsRequest) Reset()         { *m = QueryRecentRawCheckpointsRequest{} }
+func (m *QueryRecentRawCheckpointsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryRecentRawCheckpointsRequest) ProtoMessage()    {}
+func (*QueryRecentRawCheckpointsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{2}
+}
+func (m *QueryRecentRawCheckpointsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryRecentRawCheckpointsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryRecentRawCheckpointsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryRecentRawCheckpointsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRecentRawCheckpointsRequest.Merge(m, src)
+}
+func (m *QueryRecentRawCheckpointsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryRecentRawCheckpointsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRecentRawCheckpointsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRecentRawCheckpointsRequest proto.InternalMessageInfo
+
+func (m *QueryRecentRawCheckpointsRequest) GetFromEpochNum() uint64 {
+	if m != nil {
+		return m.FromEpochNum
+	}
+	return 0
+}
+
+func (m *QueryRecentRawCheckpointsRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// QueryRecentRawCheckpointsResponse is the response type for the Query/RecentRawCheckpoints
+// RPC method.
+type QueryRecentRawCheckpointsResponse struct {
+	// the order is going from the newest to oldest based on the epoch number
+	RawCheckpoints []*RawCheckpoint `protobuf:"bytes,1,rep,name=raw_checkpoints,json=rawCheckpoints,proto3" json:"raw_checkpoints,omitempty"`
+	// pagination defines the pagination in the response.
+	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryRecentRawCheckpointsResponse) Reset()         { *m = QueryRecentRawCheckpointsResponse{} }
+func (m *QueryRecentRawCheckpointsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryRecentRawCheckpointsResponse) ProtoMessage()    {}
+func (*QueryRecentRawCheckpointsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{3}
+}
+func (m *QueryRecentRawCheckpointsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryRecentRawCheckpointsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryRecentRawCheckpointsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryRecentRawCheckpointsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRecentRawCheckpointsResponse.Merge(m, src)
+}
+func (m *QueryRecentRawCheckpointsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryRecentRawCheckpointsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRecentRawCheckpointsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryRecentRawCheckpointsResponse proto.InternalMessageInfo
+
+func (m *QueryRecentRawCheckpointsResponse) GetRawCheckpoints() []*RawCheckpoint {
+	if m != nil {
+		return m.RawCheckpoints
+	}
+	return nil
+}
+
+func (m *QueryRecentRawCheckpointsResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
 // QueryRawCheckpointRequest is the request type for the Query/RawCheckpoint
 // RPC method.
 type QueryRawCheckpointRequest struct {
@@ -153,7 +265,7 @@ func (m *QueryRawCheckpointRequest) Reset()         { *m = QueryRawCheckpointReq
 func (m *QueryRawCheckpointRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryRawCheckpointRequest) ProtoMessage()    {}
 func (*QueryRawCheckpointRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{2}
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{4}
 }
 func (m *QueryRawCheckpointRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -199,7 +311,7 @@ func (m *QueryRawCheckpointResponse) Reset()         { *m = QueryRawCheckpointRe
 func (m *QueryRawCheckpointResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryRawCheckpointResponse) ProtoMessage()    {}
 func (*QueryRawCheckpointResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{3}
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{5}
 }
 func (m *QueryRawCheckpointResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -244,7 +356,7 @@ func (m *QueryLatestCheckpointRequest) Reset()         { *m = QueryLatestCheckpo
 func (m *QueryLatestCheckpointRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryLatestCheckpointRequest) ProtoMessage()    {}
 func (*QueryLatestCheckpointRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{4}
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{6}
 }
 func (m *QueryLatestCheckpointRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -283,7 +395,7 @@ func (m *QueryLatestCheckpointResponse) Reset()         { *m = QueryLatestCheckp
 func (m *QueryLatestCheckpointResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryLatestCheckpointResponse) ProtoMessage()    {}
 func (*QueryLatestCheckpointResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{5}
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{7}
 }
 func (m *QueryLatestCheckpointResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -319,340 +431,27 @@ func (m *QueryLatestCheckpointResponse) GetLatestCheckpoint() *RawCheckpoint {
 	return nil
 }
 
-// QueryUncheckpointedCheckpointsRequest is the request type for the Query/UncheckpointedCheckpoints
+// QueryBlsPublicKeysRequest is the request type for the Query/BlsPublicKeys
 // RPC method.
-type QueryUncheckpointedCheckpointsRequest struct {
-	// pagination defines an optional pagination for the request.
-	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryUncheckpointedCheckpointsRequest) Reset()         { *m = QueryUncheckpointedCheckpointsRequest{} }
-func (m *QueryUncheckpointedCheckpointsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryUncheckpointedCheckpointsRequest) ProtoMessage()    {}
-func (*QueryUncheckpointedCheckpointsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{6}
-}
-func (m *QueryUncheckpointedCheckpointsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryUncheckpointedCheckpointsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryUncheckpointedCheckpointsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryUncheckpointedCheckpointsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryUncheckpointedCheckpointsRequest.Merge(m, src)
-}
-func (m *QueryUncheckpointedCheckpointsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryUncheckpointedCheckpointsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryUncheckpointedCheckpointsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryUncheckpointedCheckpointsRequest proto.InternalMessageInfo
-
-func (m *QueryUncheckpointedCheckpointsRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryUncheckpointedCheckpointsResponse is the response type for the Query/UncheckpointedCheckpoints
-// RPC method.
-type QueryUncheckpointedCheckpointsResponse struct {
-	// the order is going from the newest to oldest based on the epoch number
-	UncheckpointedCheckpoint []*RawCheckpoint `protobuf:"bytes,1,rep,name=uncheckpointed_checkpoint,json=uncheckpointedCheckpoint,proto3" json:"uncheckpointed_checkpoint,omitempty"`
-	// pagination defines the pagination in the response.
-	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryUncheckpointedCheckpointsResponse) Reset() {
-	*m = QueryUncheckpointedCheckpointsResponse{}
-}
-func (m *QueryUncheckpointedCheckpointsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryUncheckpointedCheckpointsResponse) ProtoMessage()    {}
-func (*QueryUncheckpointedCheckpointsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{7}
-}
-func (m *QueryUncheckpointedCheckpointsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryUncheckpointedCheckpointsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryUncheckpointedCheckpointsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryUncheckpointedCheckpointsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryUncheckpointedCheckpointsResponse.Merge(m, src)
-}
-func (m *QueryUncheckpointedCheckpointsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryUncheckpointedCheckpointsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryUncheckpointedCheckpointsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryUncheckpointedCheckpointsResponse proto.InternalMessageInfo
-
-func (m *QueryUncheckpointedCheckpointsResponse) GetUncheckpointedCheckpoint() []*RawCheckpoint {
-	if m != nil {
-		return m.UncheckpointedCheckpoint
-	}
-	return nil
-}
-
-func (m *QueryUncheckpointedCheckpointsResponse) GetPagination() *query.PageResponse {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryUnderconfirmedCheckpointsRequest is the request type for the Query/UnderconfirmedCheckpoints
-// RPC method.
-type QueryUnderconfirmedCheckpointsRequest struct {
-	// pagination defines an optional pagination for the request.
-	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryUnderconfirmedCheckpointsRequest) Reset()         { *m = QueryUnderconfirmedCheckpointsRequest{} }
-func (m *QueryUnderconfirmedCheckpointsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryUnderconfirmedCheckpointsRequest) ProtoMessage()    {}
-func (*QueryUnderconfirmedCheckpointsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{8}
-}
-func (m *QueryUnderconfirmedCheckpointsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryUnderconfirmedCheckpointsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryUnderconfirmedCheckpointsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryUnderconfirmedCheckpointsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryUnderconfirmedCheckpointsRequest.Merge(m, src)
-}
-func (m *QueryUnderconfirmedCheckpointsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryUnderconfirmedCheckpointsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryUnderconfirmedCheckpointsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryUnderconfirmedCheckpointsRequest proto.InternalMessageInfo
-
-func (m *QueryUnderconfirmedCheckpointsRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryUnderconfirmedCheckpointsResponse is the response type for the Query/UnderconfirmedCheckpoints
-// RPC method.
-type QueryUnderconfirmedCheckpointsResponse struct {
-	// the order is going from the newest to oldest based on the epoch number
-	UnderconfirmedCheckpoint []*RawCheckpoint `protobuf:"bytes,1,rep,name=underconfirmed_checkpoint,json=underconfirmedCheckpoint,proto3" json:"underconfirmed_checkpoint,omitempty"`
-	// pagination defines the pagination in the response.
-	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryUnderconfirmedCheckpointsResponse) Reset() {
-	*m = QueryUnderconfirmedCheckpointsResponse{}
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryUnderconfirmedCheckpointsResponse) ProtoMessage()    {}
-func (*QueryUnderconfirmedCheckpointsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{9}
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryUnderconfirmedCheckpointsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryUnderconfirmedCheckpointsResponse.Merge(m, src)
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryUnderconfirmedCheckpointsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryUnderconfirmedCheckpointsResponse proto.InternalMessageInfo
-
-func (m *QueryUnderconfirmedCheckpointsResponse) GetUnderconfirmedCheckpoint() []*RawCheckpoint {
-	if m != nil {
-		return m.UnderconfirmedCheckpoint
-	}
-	return nil
-}
-
-func (m *QueryUnderconfirmedCheckpointsResponse) GetPagination() *query.PageResponse {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryConfirmedCheckpointsRequest is the request type for the Query/ConfirmedCheckpoints
-// RPC method.
-type QueryConfirmedCheckpointsRequest struct {
-	// pagination defines an optional pagination for the request.
-	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryConfirmedCheckpointsRequest) Reset()         { *m = QueryConfirmedCheckpointsRequest{} }
-func (m *QueryConfirmedCheckpointsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryConfirmedCheckpointsRequest) ProtoMessage()    {}
-func (*QueryConfirmedCheckpointsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{10}
-}
-func (m *QueryConfirmedCheckpointsRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryConfirmedCheckpointsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryConfirmedCheckpointsRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryConfirmedCheckpointsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryConfirmedCheckpointsRequest.Merge(m, src)
-}
-func (m *QueryConfirmedCheckpointsRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryConfirmedCheckpointsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryConfirmedCheckpointsRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryConfirmedCheckpointsRequest proto.InternalMessageInfo
-
-func (m *QueryConfirmedCheckpointsRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryConfirmedCheckpointsResponse is the response type for the Query/ConfirmedCheckpoints
-// RPC method.
-type QueryConfirmedCheckpointsResponse struct {
-	// the order is going from the newest to oldest based on the epoch number
-	ConfirmedCheckpoint []*RawCheckpoint `protobuf:"bytes,1,rep,name=confirmed_checkpoint,json=confirmedCheckpoint,proto3" json:"confirmed_checkpoint,omitempty"`
-	// pagination defines the pagination in the response.
-	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
-}
-
-func (m *QueryConfirmedCheckpointsResponse) Reset()         { *m = QueryConfirmedCheckpointsResponse{} }
-func (m *QueryConfirmedCheckpointsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryConfirmedCheckpointsResponse) ProtoMessage()    {}
-func (*QueryConfirmedCheckpointsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{11}
-}
-func (m *QueryConfirmedCheckpointsResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryConfirmedCheckpointsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryConfirmedCheckpointsResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryConfirmedCheckpointsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryConfirmedCheckpointsResponse.Merge(m, src)
-}
-func (m *QueryConfirmedCheckpointsResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryConfirmedCheckpointsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryConfirmedCheckpointsResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryConfirmedCheckpointsResponse proto.InternalMessageInfo
-
-func (m *QueryConfirmedCheckpointsResponse) GetConfirmedCheckpoint() []*RawCheckpoint {
-	if m != nil {
-		return m.ConfirmedCheckpoint
-	}
-	return nil
-}
-
-func (m *QueryConfirmedCheckpointsResponse) GetPagination() *query.PageResponse {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
-// QueryBlsSigsRequest is the request type for the Query/BlsSigs
-// RPC method.
-type QueryBlsSigsRequest struct {
-	// epoch_num defines the epoch for the queried bls sigs
+type QueryBlsPublicKeysRequest struct {
+	// epoch_num defines the epoch for the queried bls public keys
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryBlsSigsRequest) Reset()         { *m = QueryBlsSigsRequest{} }
-func (m *QueryBlsSigsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBlsSigsRequest) ProtoMessage()    {}
-func (*QueryBlsSigsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{12}
+func (m *QueryBlsPublicKeysRequest) Reset()         { *m = QueryBlsPublicKeysRequest{} }
+func (m *QueryBlsPublicKeysRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryBlsPublicKeysRequest) ProtoMessage()    {}
+func (*QueryBlsPublicKeysRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{8}
 }
-func (m *QueryBlsSigsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryBlsPublicKeysRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBlsSigsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryBlsPublicKeysRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBlsSigsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryBlsPublicKeysRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -662,52 +461,52 @@ func (m *QueryBlsSigsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return b[:n], nil
 	}
 }
-func (m *QueryBlsSigsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBlsSigsRequest.Merge(m, src)
+func (m *QueryBlsPublicKeysRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBlsPublicKeysRequest.Merge(m, src)
 }
-func (m *QueryBlsSigsRequest) XXX_Size() int {
+func (m *QueryBlsPublicKeysRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBlsSigsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBlsSigsRequest.DiscardUnknown(m)
+func (m *QueryBlsPublicKeysRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBlsPublicKeysRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBlsSigsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryBlsPublicKeysRequest proto.InternalMessageInfo
 
-func (m *QueryBlsSigsRequest) GetEpochNum() uint64 {
+func (m *QueryBlsPublicKeysRequest) GetEpochNum() uint64 {
 	if m != nil {
 		return m.EpochNum
 	}
 	return 0
 }
 
-func (m *QueryBlsSigsRequest) GetPagination() *query.PageRequest {
+func (m *QueryBlsPublicKeysRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryBlsSigsResponse is the response type for the Query/BlsSigs
+// QueryBlsPublicKeysResponse is the response type for the Query/BlsPublicKeys
 // RPC method.
-type QueryBlsSigsResponse struct {
-	BlsSigs []*BlsSig `protobuf:"bytes,1,rep,name=bls_sigs,json=blsSigs,proto3" json:"bls_sigs,omitempty"`
+type QueryBlsPublicKeysResponse struct {
+	BlsPubKeys [][]byte `protobuf:"bytes,1,rep,name=bls_pub_keys,json=blsPubKeys,proto3" json:"bls_pub_keys,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryBlsSigsResponse) Reset()         { *m = QueryBlsSigsResponse{} }
-func (m *QueryBlsSigsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBlsSigsResponse) ProtoMessage()    {}
-func (*QueryBlsSigsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{13}
+func (m *QueryBlsPublicKeysResponse) Reset()         { *m = QueryBlsPublicKeysResponse{} }
+func (m *QueryBlsPublicKeysResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryBlsPublicKeysResponse) ProtoMessage()    {}
+func (*QueryBlsPublicKeysResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{9}
 }
-func (m *QueryBlsSigsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryBlsPublicKeysResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBlsSigsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryBlsPublicKeysResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBlsSigsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryBlsPublicKeysResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -717,26 +516,26 @@ func (m *QueryBlsSigsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte
 		return b[:n], nil
 	}
 }
-func (m *QueryBlsSigsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBlsSigsResponse.Merge(m, src)
+func (m *QueryBlsPublicKeysResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBlsPublicKeysResponse.Merge(m, src)
 }
-func (m *QueryBlsSigsResponse) XXX_Size() int {
+func (m *QueryBlsPublicKeysResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBlsSigsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBlsSigsResponse.DiscardUnknown(m)
+func (m *QueryBlsPublicKeysResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBlsPublicKeysResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBlsSigsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryBlsPublicKeysResponse proto.InternalMessageInfo
 
-func (m *QueryBlsSigsResponse) GetBlsSigs() []*BlsSig {
+func (m *QueryBlsPublicKeysResponse) GetBlsPubKeys() [][]byte {
 	if m != nil {
-		return m.BlsSigs
+		return m.BlsPubKeys
 	}
 	return nil
 }
 
-func (m *QueryBlsSigsResponse) GetPagination() *query.PageResponse {
+func (m *QueryBlsPublicKeysResponse) GetPagination() *query.PageResponse {
 	if m != nil {
 		return m.Pagination
 	}
@@ -751,7 +550,7 @@ func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
 func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsRequest) ProtoMessage()    {}
 func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{14}
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{10}
 }
 func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -790,7 +589,7 @@ func (m *QueryParamsResponse) Reset()         { *m = QueryParamsResponse{} }
 func (m *QueryParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryParamsResponse) ProtoMessage()    {}
 func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a0fdb8f0f85bb51e, []int{15}
+	return fileDescriptor_a0fdb8f0f85bb51e, []int{11}
 }
 func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -829,18 +628,14 @@ func (m *QueryParamsResponse) GetParams() Params {
 func init() {
 	proto.RegisterType((*QueryRawCheckpointsRequest)(nil), "babylon.checkpointing.v1.QueryRawCheckpointsRequest")
 	proto.RegisterType((*QueryRawCheckpointsResponse)(nil), "babylon.checkpointing.v1.QueryRawCheckpointsResponse")
+	proto.RegisterType((*QueryRecentRawCheckpointsRequest)(nil), "babylon.checkpointing.v1.QueryRecentRawCheckpointsRequest")
+	proto.RegisterType((*QueryRecentRawCheckpointsResponse)(nil), "babylon.checkpointing.v1.QueryRecentRawCheckpointsResponse")
 	proto.RegisterType((*QueryRawCheckpointRequest)(nil), "babylon.checkpointing.v1.QueryRawCheckpointRequest")
 	proto.RegisterType((*QueryRawCheckpointResponse)(nil), "babylon.checkpointing.v1.QueryRawCheckpointResponse")
 	proto.RegisterType((*QueryLatestCheckpointRequest)(nil), "babylon.checkpointing.v1.QueryLatestCheckpointRequest")
 	proto.RegisterType((*QueryLatestCheckpointResponse)(nil), "babylon.checkpointing.v1.QueryLatestCheckpointResponse")
-	proto.RegisterType((*QueryUncheckpointedCheckpointsRequest)(nil), "babylon.checkpointing.v1.QueryUncheckpointedCheckpointsRequest")
-	proto.RegisterType((*QueryUncheckpointedCheckpointsResponse)(nil), "babylon.checkpointing.v1.QueryUncheckpointedCheckpointsResponse")
-	proto.RegisterType((*QueryUnderconfirmedCheckpointsRequest)(nil), "babylon.checkpointing.v1.QueryUnderconfirmedCheckpointsRequest")
-	proto.RegisterType((*QueryUnderconfirmedCheckpointsResponse)(nil), "babylon.checkpointing.v1.QueryUnderconfirmedCheckpointsResponse")
-	proto.RegisterType((*QueryConfirmedCheckpointsRequest)(nil), "babylon.checkpointing.v1.QueryConfirmedCheckpointsRequest")
-	proto.RegisterType((*QueryConfirmedCheckpointsResponse)(nil), "babylon.checkpointing.v1.QueryConfirmedCheckpointsResponse")
-	proto.RegisterType((*QueryBlsSigsRequest)(nil), "babylon.checkpointing.v1.QueryBlsSigsRequest")
-	proto.RegisterType((*QueryBlsSigsResponse)(nil), "babylon.checkpointing.v1.QueryBlsSigsResponse")
+	proto.RegisterType((*QueryBlsPublicKeysRequest)(nil), "babylon.checkpointing.v1.QueryBlsPublicKeysRequest")
+	proto.RegisterType((*QueryBlsPublicKeysResponse)(nil), "babylon.checkpointing.v1.QueryBlsPublicKeysResponse")
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.checkpointing.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.checkpointing.v1.QueryParamsResponse")
 }
@@ -848,62 +643,56 @@ func init() {
 func init() { proto.RegisterFile("babylon/checkpointing/query.proto", fileDescriptor_a0fdb8f0f85bb51e) }
 
 var fileDescriptor_a0fdb8f0f85bb51e = []byte{
-	// 872 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x57, 0xcf, 0x53, 0xdb, 0x46,
-	0x18, 0xf5, 0x52, 0x0a, 0x74, 0x29, 0x2e, 0x5d, 0x7c, 0x30, 0x82, 0xba, 0x46, 0xd3, 0x82, 0xa7,
-	0x2d, 0x52, 0xcd, 0xcf, 0x0e, 0x30, 0x6d, 0xc7, 0x4c, 0xdb, 0x4b, 0x87, 0x52, 0xb7, 0x5c, 0xb8,
-	0x78, 0x24, 0x23, 0x64, 0xb5, 0xb6, 0x56, 0x68, 0x25, 0x28, 0x65, 0x72, 0xc9, 0x31, 0x97, 0x64,
-	0x26, 0xd7, 0x1c, 0xf2, 0x67, 0x70, 0xcd, 0xcd, 0x47, 0x66, 0x72, 0x48, 0x0e, 0x99, 0x4c, 0x06,
-	0xf2, 0x7f, 0x24, 0xe3, 0xd5, 0x0a, 0xb3, 0x46, 0x6b, 0xc9, 0xe0, 0x70, 0x13, 0xbb, 0xdf, 0xf7,
-	0xbe, 0xf7, 0x9e, 0x96, 0x7d, 0x32, 0x9c, 0xd1, 0x35, 0xfd, 0xb8, 0x8e, 0x6d, 0xb5, 0x5a, 0x33,
-	0xaa, 0xff, 0x3a, 0xd8, 0xb2, 0x3d, 0xcb, 0x36, 0xd5, 0x03, 0xdf, 0x70, 0x8f, 0x15, 0xc7, 0xc5,
-	0x1e, 0x46, 0x59, 0x56, 0xa2, 0x70, 0x25, 0xca, 0x61, 0x51, 0xfa, 0xa6, 0x8a, 0x49, 0x03, 0x13,
-	0x55, 0xd7, 0x88, 0x11, 0xb4, 0xa8, 0x87, 0x45, 0xdd, 0xf0, 0xb4, 0xa2, 0xea, 0x68, 0xa6, 0x65,
-	0x6b, 0x9e, 0x85, 0xed, 0x00, 0x45, 0xca, 0x98, 0xd8, 0xc4, 0xf4, 0x51, 0x6d, 0x3d, 0xb1, 0xd5,
-	0x69, 0x13, 0x63, 0xb3, 0x6e, 0xa8, 0x9a, 0x63, 0xa9, 0x9a, 0x6d, 0x63, 0x8f, 0xb6, 0x10, 0xb6,
-	0x2b, 0x47, 0x93, 0x73, 0x34, 0x57, 0x6b, 0x84, 0x35, 0xb3, 0xd1, 0x35, 0xed, 0xbf, 0x82, 0x3a,
-	0xf9, 0x01, 0x80, 0xd2, 0x9f, 0x2d, 0x8a, 0x65, 0xed, 0x68, 0xf3, 0x72, 0x93, 0x94, 0x8d, 0x03,
-	0xdf, 0x20, 0x1e, 0xfa, 0x0a, 0xa6, 0xf7, 0x5d, 0xdc, 0xa8, 0x18, 0x0e, 0xae, 0xd6, 0x2a, 0xb6,
-	0xdf, 0xc8, 0x82, 0x3c, 0x28, 0x0c, 0x96, 0x3f, 0x6d, 0xad, 0xfe, 0xd2, 0x5a, 0xdc, 0xf2, 0x1b,
-	0xe8, 0x57, 0x08, 0xdb, 0xc2, 0xb2, 0x03, 0x79, 0x50, 0x18, 0x5d, 0x98, 0x55, 0x02, 0x17, 0x94,
-	0x96, 0x0b, 0x4a, 0x60, 0x1c, 0x73, 0x41, 0xd9, 0xd6, 0x4c, 0x83, 0x4d, 0x28, 0x5f, 0xe9, 0x94,
-	0x4f, 0x01, 0x9c, 0x8a, 0x24, 0x43, 0x1c, 0x6c, 0x13, 0x03, 0x6d, 0xc3, 0xcf, 0x5c, 0xed, 0xa8,
-	0xd2, 0x16, 0x41, 0xb2, 0x20, 0xff, 0x51, 0x61, 0x74, 0x61, 0x4e, 0x11, 0xbd, 0x0c, 0x85, 0x83,
-	0x2a, 0xa7, 0x5d, 0x0e, 0x19, 0xfd, 0x16, 0xc1, 0x7c, 0x2e, 0x96, 0x79, 0x40, 0x87, 0xa3, 0xfe,
-	0x03, 0x9c, 0xbc, 0xce, 0x3c, 0x74, 0x71, 0x0a, 0x7e, 0xd2, 0x69, 0xe0, 0x88, 0xc1, 0xcc, 0x93,
-	0xeb, 0x51, 0x2f, 0xe0, 0x52, 0xf2, 0x16, 0x4c, 0xf3, 0x92, 0x69, 0x7f, 0x0f, 0x8a, 0xc7, 0x38,
-	0xc5, 0x72, 0x0e, 0x4e, 0xd3, 0x69, 0xbf, 0x6b, 0x9e, 0x41, 0xbc, 0x6b, 0x54, 0x65, 0x1f, 0x7e,
-	0x21, 0xd8, 0x67, 0x84, 0xfe, 0x86, 0x9f, 0xd7, 0xe9, 0xde, 0x2d, 0x38, 0x8d, 0xd7, 0x3b, 0xd0,
-	0x65, 0x0c, 0xbf, 0xa6, 0x63, 0x77, 0xec, 0x76, 0xab, 0xb1, 0x17, 0x71, 0x20, 0xf9, 0xa3, 0x06,
-	0x6e, 0x7c, 0xd4, 0x5e, 0x00, 0x38, 0x1b, 0x37, 0x91, 0x29, 0xde, 0x83, 0x93, 0x3e, 0x57, 0xc4,
-	0x2b, 0xef, 0xe9, 0xfc, 0x65, 0x7d, 0xc1, 0xb8, 0xfe, 0x9d, 0xc4, 0xb6, 0x95, 0x7b, 0x86, 0x5b,
-	0xc5, 0xf6, 0xbe, 0xe5, 0x36, 0xee, 0xca, 0x4a, 0xe1, 0xc4, 0xab, 0x56, 0x5e, 0x2d, 0xba, 0x9d,
-	0x95, 0xd1, 0xe3, 0xfa, 0x67, 0xe5, 0x3f, 0x30, 0x4f, 0x85, 0x6d, 0xde, 0x81, 0x8b, 0x4d, 0x00,
-	0x67, 0xba, 0x0c, 0x63, 0x06, 0xee, 0xc2, 0x4c, 0x3f, 0xbc, 0x9b, 0xf8, 0xa0, 0xb6, 0xfd, 0x0f,
-	0x27, 0xa8, 0x92, 0x52, 0x9d, 0xfc, 0x65, 0x99, 0x24, 0xc9, 0x2d, 0xd8, 0xb7, 0x08, 0x79, 0x02,
-	0x60, 0x86, 0x1f, 0xce, 0x9c, 0x5b, 0x87, 0x23, 0x7a, 0x9d, 0x54, 0x88, 0x65, 0x86, 0xa1, 0x91,
-	0x17, 0xbb, 0x15, 0x34, 0x97, 0x87, 0xf5, 0x00, 0xa4, 0x7f, 0xd6, 0x64, 0x20, 0xa2, 0xec, 0xb6,
-	0x69, 0x56, 0x87, 0x97, 0xee, 0x0e, 0x33, 0x2c, 0x5c, 0x65, 0x94, 0x7f, 0x84, 0x43, 0x41, 0xa6,
-	0xb3, 0x63, 0xd5, 0x85, 0x70, 0xd0, 0x59, 0x1a, 0x6c, 0xbe, 0xfe, 0x32, 0x55, 0x66, 0x5d, 0x0b,
-	0xef, 0x46, 0xe1, 0xc7, 0x14, 0x17, 0x3d, 0x03, 0x30, 0xcd, 0x67, 0x2a, 0x5a, 0x12, 0x83, 0x89,
-	0xbf, 0x07, 0xa4, 0xe5, 0x1e, 0xbb, 0x02, 0x25, 0x72, 0xe9, 0xfe, 0xf3, 0xb7, 0x8f, 0x07, 0x36,
-	0xd0, 0x9a, 0x1a, 0xfd, 0x59, 0x72, 0x58, 0x54, 0x3b, 0x82, 0x5d, 0x3d, 0xe1, 0xbf, 0x3b, 0xee,
-	0xa1, 0x53, 0x00, 0xc7, 0x38, 0x78, 0xb4, 0xd8, 0x0b, 0x99, 0x50, 0xc1, 0x52, 0x6f, 0x4d, 0x4c,
-	0xc0, 0x06, 0x15, 0xb0, 0x82, 0x96, 0x92, 0x0a, 0x50, 0x4f, 0x78, 0xea, 0xe3, 0x9d, 0x81, 0x8a,
-	0x56, 0x62, 0x88, 0x08, 0x12, 0x5a, 0x5a, 0xed, 0xb9, 0x8f, 0x69, 0x58, 0xa4, 0x1a, 0xe6, 0xd1,
-	0xb7, 0x62, 0x0d, 0xd7, 0x92, 0x1d, 0xbd, 0x02, 0x70, 0x52, 0x18, 0x91, 0xe8, 0xa7, 0x18, 0x2e,
-	0x71, 0x71, 0x2e, 0xfd, 0x7c, 0x73, 0x80, 0xe4, 0x6f, 0x46, 0x98, 0xde, 0x84, 0xc9, 0x13, 0xc4,
-	0x56, 0x02, 0x79, 0xdd, 0x23, 0x36, 0x81, 0xbc, 0x98, 0xc4, 0x4c, 0x26, 0x4f, 0x90, 0xa8, 0x04,
-	0x35, 0x01, 0xcc, 0x44, 0xe5, 0x09, 0x5a, 0x8b, 0x21, 0xd6, 0x25, 0xf1, 0xa4, 0xf5, 0x1b, 0xf5,
-	0x32, 0x3d, 0xab, 0x54, 0x4f, 0x11, 0xa9, 0x62, 0x3d, 0xd1, 0x52, 0x9e, 0x02, 0x38, 0xcc, 0xee,
-	0x74, 0x34, 0x1f, 0xc3, 0x80, 0x0f, 0x1e, 0x49, 0x49, 0x5a, 0xce, 0x38, 0xae, 0x50, 0x8e, 0xdf,
-	0x23, 0x45, 0xcc, 0x31, 0x8c, 0x12, 0xee, 0xdf, 0xfc, 0x21, 0x80, 0x43, 0xc1, 0x45, 0x8c, 0xbe,
-	0x8b, 0x19, 0xc9, 0xdd, 0xff, 0xd2, 0x7c, 0xc2, 0x6a, 0xc6, 0xaf, 0x40, 0xf9, 0xc9, 0x28, 0x2f,
-	0xe6, 0x17, 0x24, 0x40, 0xe9, 0x8f, 0xe6, 0x79, 0x0e, 0x9c, 0x9d, 0xe7, 0xc0, 0x9b, 0xf3, 0x1c,
-	0x78, 0x74, 0x91, 0x4b, 0x9d, 0x5d, 0xe4, 0x52, 0x2f, 0x2f, 0x72, 0xa9, 0xdd, 0x65, 0xd3, 0xf2,
-	0x6a, 0xbe, 0xae, 0x54, 0x71, 0x23, 0x44, 0xa9, 0xd6, 0x34, 0xcb, 0xbe, 0x84, 0xfc, 0xaf, 0x03,
-	0xd4, 0x3b, 0x76, 0x0c, 0xa2, 0x0f, 0xd1, 0x5f, 0x8d, 0x8b, 0xef, 0x03, 0x00, 0x00, 0xff, 0xff,
-	0xcc, 0x8b, 0x6b, 0xad, 0x20, 0x0f, 0x00, 0x00,
+	// 776 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x56, 0x4f, 0x4f, 0x13, 0x4d,
+	0x1c, 0xee, 0xf0, 0xf2, 0x36, 0x30, 0x40, 0x5f, 0xde, 0x91, 0x18, 0x2c, 0x58, 0xcb, 0xc6, 0x40,
+	0xa3, 0xb2, 0x9b, 0x96, 0x02, 0x06, 0xff, 0x24, 0x42, 0xd4, 0x18, 0x0d, 0xd6, 0x8d, 0x5e, 0xbc,
+	0x34, 0xb3, 0x9b, 0x71, 0xbb, 0x61, 0xbb, 0xb3, 0x74, 0x76, 0xc1, 0x06, 0x49, 0x8c, 0x17, 0x8f,
+	0x92, 0xf8, 0x65, 0xf0, 0xe2, 0x99, 0x23, 0x89, 0x17, 0xe3, 0xc1, 0x18, 0xe0, 0x83, 0x98, 0x9d,
+	0x9d, 0x82, 0xd3, 0xee, 0x52, 0xaa, 0x1c, 0xbc, 0xed, 0xcc, 0xfc, 0x9e, 0xdf, 0x3c, 0xcf, 0x33,
+	0x33, 0x4f, 0x0b, 0xa7, 0x0c, 0x6c, 0x34, 0x1d, 0xea, 0x6a, 0x66, 0x8d, 0x98, 0x6b, 0x1e, 0xb5,
+	0x5d, 0xdf, 0x76, 0x2d, 0x6d, 0x3d, 0x20, 0x8d, 0xa6, 0xea, 0x35, 0xa8, 0x4f, 0xd1, 0xb8, 0x28,
+	0x51, 0xa5, 0x12, 0x75, 0xa3, 0x98, 0xbd, 0x66, 0x52, 0x56, 0xa7, 0x4c, 0x33, 0x30, 0x23, 0x11,
+	0x44, 0xdb, 0x28, 0x1a, 0xc4, 0xc7, 0x45, 0xcd, 0xc3, 0x96, 0xed, 0x62, 0xdf, 0xa6, 0x6e, 0xd4,
+	0x25, 0x3b, 0x66, 0x51, 0x8b, 0xf2, 0x4f, 0x2d, 0xfc, 0x12, 0xb3, 0x93, 0x16, 0xa5, 0x96, 0x43,
+	0x34, 0xec, 0xd9, 0x1a, 0x76, 0x5d, 0xea, 0x73, 0x08, 0x13, 0xab, 0x4a, 0x3c, 0x39, 0x0f, 0x37,
+	0x70, 0xbd, 0x55, 0x33, 0x1d, 0x5f, 0x73, 0x32, 0x8a, 0xea, 0x94, 0x37, 0x30, 0xfb, 0x2c, 0x64,
+	0xa8, 0xe3, 0xcd, 0x95, 0xe3, 0x35, 0xa6, 0x93, 0xf5, 0x80, 0x30, 0x1f, 0x5d, 0x84, 0x69, 0xe6,
+	0x63, 0x3f, 0x60, 0xe3, 0x20, 0x0f, 0x0a, 0x83, 0xba, 0x18, 0xa1, 0x07, 0x10, 0x9e, 0x28, 0x19,
+	0xef, 0xcb, 0x83, 0xc2, 0x50, 0x69, 0x5a, 0x8d, 0x64, 0xab, 0xa1, 0x6c, 0x35, 0x72, 0x4a, 0xc8,
+	0x56, 0x2b, 0xd8, 0x22, 0xa2, 0xa7, 0xfe, 0x0b, 0x52, 0xd9, 0x05, 0x70, 0x22, 0x76, 0x7b, 0xe6,
+	0x51, 0x97, 0x11, 0x54, 0x81, 0xff, 0x35, 0xf0, 0x66, 0xf5, 0x84, 0x75, 0x48, 0xe4, 0x9f, 0xc2,
+	0x50, 0x69, 0x46, 0x4d, 0x72, 0x5f, 0x95, 0x5a, 0xe9, 0x99, 0x86, 0xd4, 0x19, 0x3d, 0x8c, 0x61,
+	0x3e, 0xd3, 0x95, 0x79, 0x44, 0x47, 0xa2, 0xbe, 0x03, 0x60, 0x3e, 0xa2, 0x4e, 0x4c, 0xe2, 0xfa,
+	0xf1, 0xfe, 0x5d, 0x85, 0x99, 0x57, 0x0d, 0x5a, 0xaf, 0x12, 0x8f, 0x9a, 0xb5, 0xaa, 0x1b, 0xd4,
+	0xb9, 0x8f, 0xfd, 0xfa, 0x70, 0x38, 0x7b, 0x3f, 0x9c, 0x5c, 0x0d, 0xea, 0xe7, 0xe6, 0xe6, 0x67,
+	0x00, 0xa7, 0x4e, 0xa1, 0xf4, 0xf7, 0x7b, 0x7a, 0x13, 0x5e, 0xea, 0xbc, 0x0d, 0x2d, 0x2f, 0x27,
+	0xe0, 0x60, 0xbb, 0x8d, 0x03, 0x44, 0x58, 0xa8, 0x38, 0x71, 0xd7, 0xf8, 0x58, 0xf2, 0x2a, 0xcc,
+	0xc8, 0x92, 0x39, 0xbe, 0x07, 0xc5, 0x23, 0x92, 0x62, 0x25, 0x07, 0x27, 0xf9, 0x6e, 0x4f, 0xb0,
+	0x4f, 0x98, 0xdf, 0x41, 0x55, 0x09, 0xe0, 0xe5, 0x84, 0x75, 0x41, 0xe8, 0x39, 0xfc, 0xdf, 0xe1,
+	0x6b, 0x7f, 0xc0, 0x69, 0xd4, 0x69, 0xeb, 0xae, 0xbc, 0x05, 0xc2, 0xbf, 0x65, 0x87, 0x55, 0x02,
+	0xc3, 0xb1, 0xcd, 0xc7, 0xa4, 0xc9, 0xce, 0xe2, 0xdf, 0xb9, 0x5d, 0xc1, 0xf7, 0x40, 0x1c, 0x44,
+	0x1b, 0x05, 0xa1, 0x3b, 0x0f, 0x87, 0x0d, 0x87, 0x55, 0xbd, 0xc0, 0xa8, 0xae, 0x91, 0x66, 0x74,
+	0xf1, 0x86, 0x75, 0x68, 0xf0, 0xe2, 0xb0, 0xf2, 0xfc, 0xee, 0xd2, 0x18, 0x44, 0x9c, 0x48, 0x85,
+	0xa7, 0x62, 0xeb, 0x64, 0x5e, 0xc0, 0x0b, 0xd2, 0xac, 0xe0, 0x75, 0x17, 0xa6, 0xa3, 0xf4, 0x14,
+	0x87, 0x90, 0x4f, 0x3e, 0x84, 0x08, 0xb9, 0xdc, 0xbf, 0xf7, 0xfd, 0x4a, 0x4a, 0x17, 0xa8, 0xd2,
+	0xd1, 0x00, 0xfc, 0x97, 0xf7, 0x45, 0x9f, 0x00, 0xcc, 0xc8, 0x0f, 0x0f, 0x95, 0x93, 0x9b, 0x25,
+	0x47, 0x6f, 0x76, 0xbe, 0x47, 0x54, 0xa4, 0x44, 0x59, 0x7a, 0xf7, 0xe5, 0xe8, 0x63, 0x5f, 0x19,
+	0x95, 0xb4, 0xf8, 0x1f, 0x80, 0x8d, 0xa2, 0xd6, 0xf6, 0xfa, 0xb5, 0xad, 0x28, 0xd4, 0xb7, 0xd1,
+	0x37, 0x00, 0xc7, 0xe2, 0xa2, 0x03, 0x2d, 0x75, 0xe3, 0x92, 0x1c, 0x81, 0xd9, 0x5b, 0xbf, 0x85,
+	0x15, 0x6a, 0x1e, 0x71, 0x35, 0x2b, 0xe8, 0xde, 0x29, 0x6a, 0x38, 0xbe, 0xda, 0x21, 0x4a, 0xce,
+	0xdd, 0x6d, 0xb4, 0x0b, 0xe0, 0x88, 0xb4, 0x0b, 0x9a, 0xeb, 0xc5, 0xe1, 0x96, 0x9c, 0x72, 0x6f,
+	0x20, 0xa1, 0xe3, 0x36, 0xd7, 0xb1, 0x80, 0xca, 0x67, 0x3d, 0x15, 0x6d, 0x4b, 0xa6, 0x3e, 0xda,
+	0x1e, 0x25, 0x68, 0xa1, 0x0b, 0x91, 0x84, 0x6c, 0xca, 0x2e, 0xf6, 0x8c, 0x13, 0x1a, 0xe6, 0xb8,
+	0x86, 0x59, 0x74, 0x3d, 0x59, 0x43, 0x47, 0xa6, 0x85, 0xcf, 0x61, 0x44, 0x8a, 0x82, 0xae, 0xae,
+	0xc7, 0x65, 0x57, 0x57, 0xd7, 0x63, 0xd3, 0x46, 0xb9, 0xc3, 0x19, 0x2f, 0xa2, 0xf9, 0x64, 0xc6,
+	0x22, 0x8d, 0x1c, 0xdb, 0xe4, 0x81, 0x24, 0xd9, 0xfe, 0x01, 0xc0, 0x74, 0xf4, 0xda, 0xd1, 0x8d,
+	0x2e, 0xfb, 0x4b, 0x21, 0x93, 0x9d, 0x3d, 0x63, 0xb5, 0xa0, 0x59, 0xe0, 0x34, 0x15, 0x94, 0x4f,
+	0xa6, 0x19, 0xc5, 0xcc, 0xf2, 0xd3, 0xbd, 0x83, 0x1c, 0xd8, 0x3f, 0xc8, 0x81, 0x1f, 0x07, 0x39,
+	0xb0, 0x73, 0x98, 0x4b, 0xed, 0x1f, 0xe6, 0x52, 0x5f, 0x0f, 0x73, 0xa9, 0x97, 0xf3, 0x96, 0xed,
+	0xd7, 0x02, 0x43, 0x35, 0x69, 0xbd, 0xd5, 0xc5, 0xac, 0x61, 0xdb, 0x3d, 0x6e, 0xf9, 0xba, 0xad,
+	0xa9, 0xdf, 0xf4, 0x08, 0x33, 0xd2, 0xfc, 0x4f, 0xe0, 0xdc, 0xcf, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0xfd, 0x0f, 0x93, 0xf8, 0xef, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -918,20 +707,16 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// RawCheckpoints queries a list of checkpoints starting from a given epoch number to the current epoch number.
+	// RawCheckpoints queries all checkpoints that match the given status.
 	RawCheckpoints(ctx context.Context, in *QueryRawCheckpointsRequest, opts ...grpc.CallOption) (*QueryRawCheckpointsResponse, error)
+	// RawCheckpoints queries a list of checkpoints starting from a given epoch number to the current epoch number.
+	RecentRawCheckpoints(ctx context.Context, in *QueryRecentRawCheckpointsRequest, opts ...grpc.CallOption) (*QueryRecentRawCheckpointsResponse, error)
 	// RawCheckpoint queries a checkpoints at a given epoch number.
 	RawCheckpoint(ctx context.Context, in *QueryRawCheckpointRequest, opts ...grpc.CallOption) (*QueryRawCheckpointResponse, error)
 	// LatestCheckpoint queries the latest checkpoint.
 	LatestCheckpoint(ctx context.Context, in *QueryLatestCheckpointRequest, opts ...grpc.CallOption) (*QueryLatestCheckpointResponse, error)
-	// UncheckpointedCheckpoints queries a list of checkpoints with the status of UNCHECKPOINTED.
-	UncheckpointedCheckpoints(ctx context.Context, in *QueryUncheckpointedCheckpointsRequest, opts ...grpc.CallOption) (*QueryUncheckpointedCheckpointsResponse, error)
-	// UnderconfirmedCheckpoints queries a list of checkpoints with the status of CHECKPOINTED_NOT_CONFIRMED.
-	UnderconfirmedCheckpoints(ctx context.Context, in *QueryUnderconfirmedCheckpointsRequest, opts ...grpc.CallOption) (*QueryUnderconfirmedCheckpointsResponse, error)
-	// ConfirmedCheckpoints queries a list of checkpoints with the status of CONFIRMED.
-	ConfirmedCheckpoints(ctx context.Context, in *QueryConfirmedCheckpointsRequest, opts ...grpc.CallOption) (*QueryConfirmedCheckpointsResponse, error)
-	// BlsSigs queries a list of bls sigs of the validators at a given epoch number.
-	BlsSigs(ctx context.Context, in *QueryBlsSigsRequest, opts ...grpc.CallOption) (*QueryBlsSigsResponse, error)
+	// BlsPublicKeys queries a list of bls public keys of the validators at a given epoch number.
+	BlsPublicKeys(ctx context.Context, in *QueryBlsPublicKeysRequest, opts ...grpc.CallOption) (*QueryBlsPublicKeysResponse, error)
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 }
@@ -947,6 +732,15 @@ func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 func (c *queryClient) RawCheckpoints(ctx context.Context, in *QueryRawCheckpointsRequest, opts ...grpc.CallOption) (*QueryRawCheckpointsResponse, error) {
 	out := new(QueryRawCheckpointsResponse)
 	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/RawCheckpoints", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) RecentRawCheckpoints(ctx context.Context, in *QueryRecentRawCheckpointsRequest, opts ...grpc.CallOption) (*QueryRecentRawCheckpointsResponse, error) {
+	out := new(QueryRecentRawCheckpointsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/RecentRawCheckpoints", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -971,36 +765,9 @@ func (c *queryClient) LatestCheckpoint(ctx context.Context, in *QueryLatestCheck
 	return out, nil
 }
 
-func (c *queryClient) UncheckpointedCheckpoints(ctx context.Context, in *QueryUncheckpointedCheckpointsRequest, opts ...grpc.CallOption) (*QueryUncheckpointedCheckpointsResponse, error) {
-	out := new(QueryUncheckpointedCheckpointsResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/UncheckpointedCheckpoints", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) UnderconfirmedCheckpoints(ctx context.Context, in *QueryUnderconfirmedCheckpointsRequest, opts ...grpc.CallOption) (*QueryUnderconfirmedCheckpointsResponse, error) {
-	out := new(QueryUnderconfirmedCheckpointsResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/UnderconfirmedCheckpoints", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) ConfirmedCheckpoints(ctx context.Context, in *QueryConfirmedCheckpointsRequest, opts ...grpc.CallOption) (*QueryConfirmedCheckpointsResponse, error) {
-	out := new(QueryConfirmedCheckpointsResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/ConfirmedCheckpoints", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *queryClient) BlsSigs(ctx context.Context, in *QueryBlsSigsRequest, opts ...grpc.CallOption) (*QueryBlsSigsResponse, error) {
-	out := new(QueryBlsSigsResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/BlsSigs", in, out, opts...)
+func (c *queryClient) BlsPublicKeys(ctx context.Context, in *QueryBlsPublicKeysRequest, opts ...grpc.CallOption) (*QueryBlsPublicKeysResponse, error) {
+	out := new(QueryBlsPublicKeysResponse)
+	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Query/BlsPublicKeys", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1018,20 +785,16 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// RawCheckpoints queries a list of checkpoints starting from a given epoch number to the current epoch number.
+	// RawCheckpoints queries all checkpoints that match the given status.
 	RawCheckpoints(context.Context, *QueryRawCheckpointsRequest) (*QueryRawCheckpointsResponse, error)
+	// RawCheckpoints queries a list of checkpoints starting from a given epoch number to the current epoch number.
+	RecentRawCheckpoints(context.Context, *QueryRecentRawCheckpointsRequest) (*QueryRecentRawCheckpointsResponse, error)
 	// RawCheckpoint queries a checkpoints at a given epoch number.
 	RawCheckpoint(context.Context, *QueryRawCheckpointRequest) (*QueryRawCheckpointResponse, error)
 	// LatestCheckpoint queries the latest checkpoint.
 	LatestCheckpoint(context.Context, *QueryLatestCheckpointRequest) (*QueryLatestCheckpointResponse, error)
-	// UncheckpointedCheckpoints queries a list of checkpoints with the status of UNCHECKPOINTED.
-	UncheckpointedCheckpoints(context.Context, *QueryUncheckpointedCheckpointsRequest) (*QueryUncheckpointedCheckpointsResponse, error)
-	// UnderconfirmedCheckpoints queries a list of checkpoints with the status of CHECKPOINTED_NOT_CONFIRMED.
-	UnderconfirmedCheckpoints(context.Context, *QueryUnderconfirmedCheckpointsRequest) (*QueryUnderconfirmedCheckpointsResponse, error)
-	// ConfirmedCheckpoints queries a list of checkpoints with the status of CONFIRMED.
-	ConfirmedCheckpoints(context.Context, *QueryConfirmedCheckpointsRequest) (*QueryConfirmedCheckpointsResponse, error)
-	// BlsSigs queries a list of bls sigs of the validators at a given epoch number.
-	BlsSigs(context.Context, *QueryBlsSigsRequest) (*QueryBlsSigsResponse, error)
+	// BlsPublicKeys queries a list of bls public keys of the validators at a given epoch number.
+	BlsPublicKeys(context.Context, *QueryBlsPublicKeysRequest) (*QueryBlsPublicKeysResponse, error)
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 }
@@ -1043,23 +806,17 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) RawCheckpoints(ctx context.Context, req *QueryRawCheckpointsRequest) (*QueryRawCheckpointsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RawCheckpoints not implemented")
 }
+func (*UnimplementedQueryServer) RecentRawCheckpoints(ctx context.Context, req *QueryRecentRawCheckpointsRequest) (*QueryRecentRawCheckpointsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RecentRawCheckpoints not implemented")
+}
 func (*UnimplementedQueryServer) RawCheckpoint(ctx context.Context, req *QueryRawCheckpointRequest) (*QueryRawCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RawCheckpoint not implemented")
 }
 func (*UnimplementedQueryServer) LatestCheckpoint(ctx context.Context, req *QueryLatestCheckpointRequest) (*QueryLatestCheckpointResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LatestCheckpoint not implemented")
 }
-func (*UnimplementedQueryServer) UncheckpointedCheckpoints(ctx context.Context, req *QueryUncheckpointedCheckpointsRequest) (*QueryUncheckpointedCheckpointsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UncheckpointedCheckpoints not implemented")
-}
-func (*UnimplementedQueryServer) UnderconfirmedCheckpoints(ctx context.Context, req *QueryUnderconfirmedCheckpointsRequest) (*QueryUnderconfirmedCheckpointsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UnderconfirmedCheckpoints not implemented")
-}
-func (*UnimplementedQueryServer) ConfirmedCheckpoints(ctx context.Context, req *QueryConfirmedCheckpointsRequest) (*QueryConfirmedCheckpointsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ConfirmedCheckpoints not implemented")
-}
-func (*UnimplementedQueryServer) BlsSigs(ctx context.Context, req *QueryBlsSigsRequest) (*QueryBlsSigsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BlsSigs not implemented")
+func (*UnimplementedQueryServer) BlsPublicKeys(ctx context.Context, req *QueryBlsPublicKeysRequest) (*QueryBlsPublicKeysResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BlsPublicKeys not implemented")
 }
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
@@ -1083,6 +840,24 @@ func _Query_RawCheckpoints_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(QueryServer).RawCheckpoints(ctx, req.(*QueryRawCheckpointsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_RecentRawCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRecentRawCheckpointsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).RecentRawCheckpoints(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.checkpointing.v1.Query/RecentRawCheckpoints",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).RecentRawCheckpoints(ctx, req.(*QueryRecentRawCheckpointsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1123,74 +898,20 @@ func _Query_LatestCheckpoint_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_UncheckpointedCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryUncheckpointedCheckpointsRequest)
+func _Query_BlsPublicKeys_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryBlsPublicKeysRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).UncheckpointedCheckpoints(ctx, in)
+		return srv.(QueryServer).BlsPublicKeys(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Query/UncheckpointedCheckpoints",
+		FullMethod: "/babylon.checkpointing.v1.Query/BlsPublicKeys",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).UncheckpointedCheckpoints(ctx, req.(*QueryUncheckpointedCheckpointsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_UnderconfirmedCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryUnderconfirmedCheckpointsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).UnderconfirmedCheckpoints(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Query/UnderconfirmedCheckpoints",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).UnderconfirmedCheckpoints(ctx, req.(*QueryUnderconfirmedCheckpointsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_ConfirmedCheckpoints_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryConfirmedCheckpointsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).ConfirmedCheckpoints(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Query/ConfirmedCheckpoints",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ConfirmedCheckpoints(ctx, req.(*QueryConfirmedCheckpointsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Query_BlsSigs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBlsSigsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).BlsSigs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Query/BlsSigs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BlsSigs(ctx, req.(*QueryBlsSigsRequest))
+		return srv.(QueryServer).BlsPublicKeys(ctx, req.(*QueryBlsPublicKeysRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1222,6 +943,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_RawCheckpoints_Handler,
 		},
 		{
+			MethodName: "RecentRawCheckpoints",
+			Handler:    _Query_RecentRawCheckpoints_Handler,
+		},
+		{
 			MethodName: "RawCheckpoint",
 			Handler:    _Query_RawCheckpoint_Handler,
 		},
@@ -1230,20 +955,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_LatestCheckpoint_Handler,
 		},
 		{
-			MethodName: "UncheckpointedCheckpoints",
-			Handler:    _Query_UncheckpointedCheckpoints_Handler,
-		},
-		{
-			MethodName: "UnderconfirmedCheckpoints",
-			Handler:    _Query_UnderconfirmedCheckpoints_Handler,
-		},
-		{
-			MethodName: "ConfirmedCheckpoints",
-			Handler:    _Query_ConfirmedCheckpoints_Handler,
-		},
-		{
-			MethodName: "BlsSigs",
-			Handler:    _Query_BlsSigs_Handler,
+			MethodName: "BlsPublicKeys",
+			Handler:    _Query_BlsPublicKeys_Handler,
 		},
 		{
 			MethodName: "Params",
@@ -1286,10 +999,12 @@ func (m *QueryRawCheckpointsRequest) MarshalToSizedBuffer(dAtA []byte) (int, err
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.FromEpochNum != 0 {
-		i = encodeVarintQuery(dAtA, i, uint64(m.FromEpochNum))
+	if len(m.Status) > 0 {
+		i -= len(m.Status)
+		copy(dAtA[i:], m.Status)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Status)))
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1310,6 +1025,95 @@ func (m *QueryRawCheckpointsResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *QueryRawCheckpointsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.RawCheckpoints) > 0 {
+		for iNdEx := len(m.RawCheckpoints) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.RawCheckpoints[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryRecentRawCheckpointsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRecentRawCheckpointsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryRecentRawCheckpointsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.FromEpochNum != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.FromEpochNum))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryRecentRawCheckpointsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryRecentRawCheckpointsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryRecentRawCheckpointsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1464,7 +1268,7 @@ func (m *QueryLatestCheckpointResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryUncheckpointedCheckpointsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryBlsPublicKeysRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1474,264 +1278,12 @@ func (m *QueryUncheckpointedCheckpointsRequest) Marshal() (dAtA []byte, err erro
 	return dAtA[:n], nil
 }
 
-func (m *QueryUncheckpointedCheckpointsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryBlsPublicKeysRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryUncheckpointedCheckpointsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryUncheckpointedCheckpointsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryUncheckpointedCheckpointsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryUncheckpointedCheckpointsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.UncheckpointedCheckpoint) > 0 {
-		for iNdEx := len(m.UncheckpointedCheckpoint) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.UncheckpointedCheckpoint[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryUnderconfirmedCheckpointsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryUnderconfirmedCheckpointsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryUnderconfirmedCheckpointsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryUnderconfirmedCheckpointsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryUnderconfirmedCheckpointsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryUnderconfirmedCheckpointsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.UnderconfirmedCheckpoint) > 0 {
-		for iNdEx := len(m.UnderconfirmedCheckpoint) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.UnderconfirmedCheckpoint[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryConfirmedCheckpointsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryConfirmedCheckpointsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryConfirmedCheckpointsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryConfirmedCheckpointsResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryConfirmedCheckpointsResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryConfirmedCheckpointsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.ConfirmedCheckpoint) > 0 {
-		for iNdEx := len(m.ConfirmedCheckpoint) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.ConfirmedCheckpoint[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0xa
-		}
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryBlsSigsRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryBlsSigsRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryBlsSigsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryBlsPublicKeysRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1756,7 +1308,7 @@ func (m *QueryBlsSigsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBlsSigsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryBlsPublicKeysResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1766,12 +1318,12 @@ func (m *QueryBlsSigsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBlsSigsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryBlsPublicKeysResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBlsSigsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryBlsPublicKeysResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1788,16 +1340,11 @@ func (m *QueryBlsSigsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.BlsSigs) > 0 {
-		for iNdEx := len(m.BlsSigs) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.BlsSigs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintQuery(dAtA, i, uint64(size))
-			}
+	if len(m.BlsPubKeys) > 0 {
+		for iNdEx := len(m.BlsPubKeys) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.BlsPubKeys[iNdEx])
+			copy(dAtA[i:], m.BlsPubKeys[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.BlsPubKeys[iNdEx])))
 			i--
 			dAtA[i] = 0xa
 		}
@@ -1878,6 +1425,42 @@ func (m *QueryRawCheckpointsRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Status)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryRawCheckpointsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.RawCheckpoints) > 0 {
+		for _, e := range m.RawCheckpoints {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryRecentRawCheckpointsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
 	if m.FromEpochNum != 0 {
 		n += 1 + sovQuery(uint64(m.FromEpochNum))
 	}
@@ -1888,7 +1471,7 @@ func (m *QueryRawCheckpointsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryRawCheckpointsResponse) Size() (n int) {
+func (m *QueryRecentRawCheckpointsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1954,103 +1537,7 @@ func (m *QueryLatestCheckpointResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryUncheckpointedCheckpointsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryUncheckpointedCheckpointsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.UncheckpointedCheckpoint) > 0 {
-		for _, e := range m.UncheckpointedCheckpoint {
-			l = e.Size()
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryUnderconfirmedCheckpointsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryUnderconfirmedCheckpointsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.UnderconfirmedCheckpoint) > 0 {
-		for _, e := range m.UnderconfirmedCheckpoint {
-			l = e.Size()
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryConfirmedCheckpointsRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryConfirmedCheckpointsResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if len(m.ConfirmedCheckpoint) > 0 {
-		for _, e := range m.ConfirmedCheckpoint {
-			l = e.Size()
-			n += 1 + l + sovQuery(uint64(l))
-		}
-	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryBlsSigsRequest) Size() (n int) {
+func (m *QueryBlsPublicKeysRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2066,15 +1553,15 @@ func (m *QueryBlsSigsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryBlsSigsResponse) Size() (n int) {
+func (m *QueryBlsPublicKeysResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.BlsSigs) > 0 {
-		for _, e := range m.BlsSigs {
-			l = e.Size()
+	if len(m.BlsPubKeys) > 0 {
+		for _, b := range m.BlsPubKeys {
+			l = len(b)
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
@@ -2141,10 +1628,10 @@ func (m *QueryRawCheckpointsRequest) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FromEpochNum", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
 			}
-			m.FromEpochNum = 0
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQuery
@@ -2154,11 +1641,24 @@ func (m *QueryRawCheckpointsRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.FromEpochNum |= uint64(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Status = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
@@ -2243,6 +1743,231 @@ func (m *QueryRawCheckpointsResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: QueryRawCheckpointsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RawCheckpoints", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RawCheckpoints = append(m.RawCheckpoints, &RawCheckpoint{})
+			if err := m.RawCheckpoints[len(m.RawCheckpoints)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRecentRawCheckpointsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRecentRawCheckpointsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRecentRawCheckpointsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FromEpochNum", wireType)
+			}
+			m.FromEpochNum = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FromEpochNum |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryRecentRawCheckpointsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryRecentRawCheckpointsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryRecentRawCheckpointsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2627,7 +2352,7 @@ func (m *QueryLatestCheckpointResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryUncheckpointedCheckpointsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryBlsPublicKeysRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2650,628 +2375,10 @@ func (m *QueryUncheckpointedCheckpointsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryUncheckpointedCheckpointsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryBlsPublicKeysRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryUncheckpointedCheckpointsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryUncheckpointedCheckpointsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryUncheckpointedCheckpointsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryUncheckpointedCheckpointsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UncheckpointedCheckpoint", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.UncheckpointedCheckpoint = append(m.UncheckpointedCheckpoint, &RawCheckpoint{})
-			if err := m.UncheckpointedCheckpoint[len(m.UncheckpointedCheckpoint)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryUnderconfirmedCheckpointsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryUnderconfirmedCheckpointsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryUnderconfirmedCheckpointsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryUnderconfirmedCheckpointsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryUnderconfirmedCheckpointsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryUnderconfirmedCheckpointsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UnderconfirmedCheckpoint", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.UnderconfirmedCheckpoint = append(m.UnderconfirmedCheckpoint, &RawCheckpoint{})
-			if err := m.UnderconfirmedCheckpoint[len(m.UnderconfirmedCheckpoint)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryConfirmedCheckpointsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryConfirmedCheckpointsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryConfirmedCheckpointsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryConfirmedCheckpointsResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryConfirmedCheckpointsResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryConfirmedCheckpointsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ConfirmedCheckpoint", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ConfirmedCheckpoint = append(m.ConfirmedCheckpoint, &RawCheckpoint{})
-			if err := m.ConfirmedCheckpoint[len(m.ConfirmedCheckpoint)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryBlsSigsRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBlsSigsRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBlsSigsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryBlsPublicKeysRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3350,7 +2457,7 @@ func (m *QueryBlsSigsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBlsSigsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryBlsPublicKeysResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3373,17 +2480,17 @@ func (m *QueryBlsSigsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBlsSigsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryBlsPublicKeysResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBlsSigsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryBlsPublicKeysResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BlsSigs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BlsPubKeys", wireType)
 			}
-			var msglen int
+			var byteLen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQuery
@@ -3393,25 +2500,23 @@ func (m *QueryBlsSigsResponse) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			if byteLen < 0 {
 				return ErrInvalidLengthQuery
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + byteLen
 			if postIndex < 0 {
 				return ErrInvalidLengthQuery
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BlsSigs = append(m.BlsSigs, &BlsSig{})
-			if err := m.BlsSigs[len(m.BlsSigs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.BlsPubKeys = append(m.BlsPubKeys, make([]byte, postIndex-iNdEx))
+			copy(m.BlsPubKeys[len(m.BlsPubKeys)-1], dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
