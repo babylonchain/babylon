@@ -15,10 +15,10 @@ message BTCHeaderBytes {
 // to proto objects.
 message BTCBlockHeader {
   int32 version = 1;
-  string prev_block = 2;
-  string merkle_root = 3;
+  bytes prev_block = 2;
+  bytes merkle_root = 3;
   google.protobuf.Timestamp time = 4;
   uint32 bits = 5;
   uint32 nonce = 6;
-  string hash = 7;
+  bytes hash = 7;
 }

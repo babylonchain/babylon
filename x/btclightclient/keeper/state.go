@@ -41,7 +41,7 @@ func (s HeadersState) Create(header *types.BTCBlockHeader) {
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
 }
 
-func (s HeadersState) GetHeader(height uint64, hash string) (*types.BTCBlockHeader, error) {
+func (s HeadersState) GetHeader(height uint64, hash []byte) (*types.BTCBlockHeader, error) {
 	// Retrieve a header by its height and hash
 
 	headersKey := types.HeadersObjectKey(height, hash)
@@ -56,7 +56,7 @@ func (s HeadersState) GetHeader(height uint64, hash string) (*types.BTCBlockHead
 	return header, nil
 }
 
-func (s HeadersState) GetHeaderHeight(hash string) (uint64, error) {
+func (s HeadersState) GetHeaderHeight(hash []byte) (uint64, error) {
 	// Retrieve the Height of a header
 
 	hashKey := types.HeadersObjectHeightKey(hash)
@@ -69,7 +69,7 @@ func (s HeadersState) GetHeaderHeight(hash string) (uint64, error) {
 	return height, nil
 }
 
-func (s HeadersState) GetHeaderByHash(hash string) (*types.BTCBlockHeader, error) {
+func (s HeadersState) GetHeaderByHash(hash []byte) (*types.BTCBlockHeader, error) {
 	// Retrieve a header by its hash
 
 	height, err := s.GetHeaderHeight(hash)
@@ -97,7 +97,7 @@ func (s HeadersState) HeadersByHeight(height uint64, f func(header *types.BTCBlo
 	}
 }
 
-func (s HeadersState) Exists(hash string) bool {
+func (s HeadersState) Exists(hash []byte) bool {
 	hashKey := types.HeadersObjectHeightKey(hash)
 	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
 	bz := store.Get(hashKey)

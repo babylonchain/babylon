@@ -24,11 +24,11 @@ func BytesToBtcdHeader(headerBytes *types.BTCHeaderBytes) (*wire.BlockHeader, er
 func BtcdHeaderToBTCBlockHeader(btcdHeader *wire.BlockHeader) *types.BTCBlockHeader {
 	return &types.BTCBlockHeader{
 		Version:    btcdHeader.Version,
-		PrevBlock:  btcdHeader.PrevBlock.String(),
-		MerkleRoot: btcdHeader.MerkleRoot.String(),
+		PrevBlock:  []byte(btcdHeader.PrevBlock.String()),
+		MerkleRoot: []byte(btcdHeader.MerkleRoot.String()),
 		Time:       timestamppb.New(btcdHeader.Timestamp),
 		Bits:       btcdHeader.Bits,
 		Nonce:      btcdHeader.Nonce,
-		Hash:       btcdHeader.BlockHash().String(),
+		Hash:       []byte(btcdHeader.BlockHash().String()),
 	}
 }
