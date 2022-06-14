@@ -58,7 +58,7 @@ alt valid and new
   btclightclient -> btcheaders : Update longest chain tip
   alt if tip changed
     btclightclient -> btccheckpoint : Callback on tip change
-    btclightclient -> Events : BTC Chain Extended
+    btclightclient -> Events : Emit BTC Chain Extended
   end
 end
 return tx result

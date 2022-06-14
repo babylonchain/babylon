@@ -20,7 +20,7 @@ epoching -> staking
 loop foreach wrapped tx
   epoching -> staking ++ : runTx wrapped tx
   return result or invalid
-  epoching -> Events : feedback about delayed tx outcome
+  epoching -> Events : Emit feedback about delayed tx outcome
 end
 epoching -> staking ++ : ApplyAndReturnValidatorSetUpdates
 return ValidatorSetUpdates
@@ -82,7 +82,7 @@ loop for each AddBlsSig tx
       checkpointing -> checkpointing : Aggregate BLS signature
       checkpointing -> rawckpts : Update aggregate signature and power
       alt reached +1/3 power
-        checkpointing -> Events : Raw checkpoint available for previous epoch
+        checkpointing -> Events : Emit raw checkpoint available for previous epoch
       end
     end
   else invalid tx

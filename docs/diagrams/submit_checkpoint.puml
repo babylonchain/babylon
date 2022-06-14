@@ -28,7 +28,7 @@ btccheckpoint -> btccheckpoint : Verify Proof-of-Possession
 btccheckpoint -> btcckpts : Check if BTC-to-Cosmos association exists
 alt if valid and new
   btccheckpoint -> btcckpts : Add new BTC-to-Cosmos association
-  btccheckpoint -> Events : New relayer registered
+  btccheckpoint -> Events : Emit new relayer registered
 end
 return result or invalid
 
@@ -71,21 +71,25 @@ deactivate Tendermint
 Tendermint -> btccheckpoint ++ : DeliverTx
 btccheckpoint -> btccheckpoint : Verify Proof-of-Inclusion
 btccheckpoint -> checkpointing : Check that raw checkpoint exists
+note left
+  If the checkpoint is for a hidden fork,
+  it might be for a different epoch number.
+end note
 alt raw checkpoint exists
   btccheckpoint -> btclightclient : Check that BTC header exists
   alt BTC header exists
     btccheckpoint -> btcckpts : Add checkpoint transaction
     btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
     checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
-    checkpointing -> Events -- : Epoch checkpoint included
+    checkpointing -> Events -- : Emit epoch checkpoint included
   end
-else if same epoch number then this is a checkpoint for an unknown hash
+else a checkpoint for an unknown Q.C. hash
   btccheckpoint -> checkpointing ++ : Verify BLS signature over unknown hash
   checkpointing -> checkpointing : Look up BLS keys
   checkpointing -> checkpointing : Look up Validator Power
   checkpointing -> checkpointing : Calculate group BLS key based on bitmap
   checkpointing -> checkpointing : Verify BLS signature
-  alt malicious signature from our validators
+  alt valid signature from our validators
     checkpointing -> staking : Slash signing validators
     checkpointing -> Events : Emit evidence of data availability attack \n or panic to stall consensus.
     note left
@@ -104,30 +108,35 @@ return tx result
 Tendermint -> btclightclient ++ : DeliverTx
 btclightclient -> btclightclient : Update longest chain tip
 alt if tip changed
-  btclightclient -> btccheckpoint ++ : Callback on tip change
-  btccheckpoint -> btclightclient : Check checkpoint embedding depth
-  alt if checkpoint stable
-    btccheckpoint -> checkpointing ++ : Callback on checkpoint stable
-    checkpointing -> checkpointing : Change checkpoint status to \n CONFIRMED
-    checkpointing -> Events -- : Epoch checkpoint stable
+  btclightclient -> btccheckpoint --++ : Callback on tip change
+  btccheckpoint -> btcckpts : Get unstable checkpoints
+  btccheckpoint -> btccheckpoint : Sort unstable checkpoints \n by BTC height and tx index
+
+  loop foreach unstable checkpoint tx
+    btccheckpoint -> btclightclient ++: Check including block embedding depth
+    return block depth if on main chain
+
+    alt if checkpoint tx became stable
+      btccheckpoint -> checkpointing ++ : Callback on checkpoint stable
+      checkpointing -> checkpointing : Change checkpoint status to \n CONFIRMED
+      checkpointing -> Events : Emit epoch checkpoint stable
+      return true if just became CONFIRMED
+
+      alt checkpoint/epoch just became CONFIRMED
+        btccheckpoint -> btcckpts : Get BTC-to-Cosmos key of tx submitter
+        btccheckpoint -> bank : Mint reward for submitter
+        btccheckpoint -> staking : Release unbonding tokens for epoch
+      end
+    end
   end
   deactivate btccheckpoint
 end
-return tx result
 
 == At the end of the epoch ==
 
 Tendermint -> epoching ++ : EndBlock
 epoching -> checkpointing : Get previous epoch checkpoint status
 alt if checkpoint stable
-  group Rewards
-    epoching -> btccheckpoint ++ : Payout rewards
-    btccheckpoint -> btcckpts : Get submitted checkpoints
-    btccheckpoint -> btccheckpoint : Select first submitter
-    btccheckpoint -> btcckpts : Get BTC-to-Cosmos key
-    btccheckpoint -> bank -- : Mint reward for submitter
-  end
-  epoching -> staking : Release unbonding tokens
   epoching -> epoching : Dequeue delayed staking txns
   epoching -> staking ++ : Perform power transfer
   return validator set changes

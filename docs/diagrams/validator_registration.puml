@@ -52,7 +52,7 @@ return wrapped staking txs
 loop foreach wrapped tx
   epoching -> staking ++ : runTx wrapped tx
   return result or invalid
-  epoching -> Events : feedback about delayed tx outcome
+  epoching -> Events : Emit feedback about delayed tx outcome
 end
 epoching -> staking ++ : ApplyAndReturnValidatorSetUpdates
 return ValidatorSetUpdates
