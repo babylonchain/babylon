@@ -56,6 +56,8 @@ Bitcoin --> submitter ++ : Observe BTC block \n with BBL checkpoints
 submitter -> submitter : Construct BTC Proof-of-Inclusion
 submitter -> Tendermint --++ : Broadcast InsertProofOfInclusion transaction
 
+== Handle BTC checkpoint tx relayed by vigilante BTC scanner ==
+
 Tendermint -> btccheckpoint ++ : CheckTx
 btccheckpoint -> btcckpts : Check if record already exists
 return ok or duplicate
@@ -64,29 +66,36 @@ alt if not a duplicate
 end
 deactivate Tendermint
 
-... wait for checkpointing tx to be included in a Bitcoin block ...
+... wait for checkpointing tx to be included in a Babylon block ...
 
 Tendermint -> btccheckpoint ++ : DeliverTx
 btccheckpoint -> btccheckpoint : Verify Proof-of-Inclusion
-btccheckpoint -> btclightclient : Check that BTC header exists
-alt BTC header exists
-  btccheckpoint -> checkpointing : Check that raw checkpoint exists
-  alt raw checkpoint exists
+btccheckpoint -> checkpointing : Check that raw checkpoint exists
+alt raw checkpoint exists
+  btccheckpoint -> btclightclient : Check that BTC header exists
+  alt BTC header exists
     btccheckpoint -> btcckpts : Add checkpoint transaction
     btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
     checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
     checkpointing -> Events -- : Epoch checkpoint included
-  else unknown checkpoint for the same epoch number
-    btccheckpoint -> checkpointing ++ : Verify BLS signature over unknown hash
-    checkpointing -> checkpointing : Look up BLS keys
-    checkpointing -> checkpointing : Look up Validator Power
-    checkpointing -> checkpointing : Calculate group BLS key based on bitmap
-    checkpointing -> checkpointing : Verify BLS signature
-    alt malicious signature from our validators
-      checkpointing -> staking : Slash signing validators
-    end
-    deactivate checkpointing
   end
+else if same epoch number then this is a checkpoint for an unknown hash
+  btccheckpoint -> checkpointing ++ : Verify BLS signature over unknown hash
+  checkpointing -> checkpointing : Look up BLS keys
+  checkpointing -> checkpointing : Look up Validator Power
+  checkpointing -> checkpointing : Calculate group BLS key based on bitmap
+  checkpointing -> checkpointing : Verify BLS signature
+  alt malicious signature from our validators
+    checkpointing -> staking : Slash signing validators
+    checkpointing -> Events : Emit evidence of data availability attack \n or panic to stall consensus.
+    note left
+      A monitoring process can shut down Tendermint if it sees this event.
+      The block is produced by the current validator set but the BLS signatures
+      are from the old, so the old validators can't necessarily censor this
+      transaction.
+    end note
+  end
+  deactivate checkpointing
 end
 return tx result
 

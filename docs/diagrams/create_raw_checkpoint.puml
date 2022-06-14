@@ -38,9 +38,9 @@ end note
 Tendermint -> checkpointing : BeginBlock
 checkpointing -> rawckpts : Store header.LastCommitHash
 note left
-  LastCommit does not contain signatures,
-  but we are signing the hash, and it has
-  that, the Merkle root of signatures.
+  LastCommitInfo in BeginBlock does not contain signatures,
+  but we are signing the LastCommitHash, the Merkle root of
+  signatures, and that is available in the Header.
 end note
 
 loop on each old validator node
