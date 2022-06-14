@@ -1,8 +1,6 @@
 syntax = "proto3";
 package babylon.btclightclient.v1;
 
-import "google/protobuf/timestamp.proto";
-
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 message BTCHeaderBytes {
@@ -17,8 +15,9 @@ message BTCBlockHeader {
   int32 version = 1;
   bytes prev_block = 2;
   bytes merkle_root = 3;
-  google.protobuf.Timestamp time = 4;
-  uint32 bits = 5;
-  uint32 nonce = 6;
-  bytes hash = 7;
+  // Removed since not used and this protobuf leads to compilation errors
+  // google.protobuf.Timestamp time = 4;
+  uint32 bits = 4;
+  uint32 nonce = 5;
+  bytes hash = 6;
 }

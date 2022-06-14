@@ -3,7 +3,6 @@ package types
 import (
 	"bytes"
 	"github.com/btcsuite/btcd/wire"
-	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func BytesToBtcdHeader(headerBytes *BTCHeaderBytes) (*wire.BlockHeader, error) {
@@ -25,7 +24,6 @@ func BtcdHeaderToBTCBlockHeader(btcdHeader *wire.BlockHeader) *BTCBlockHeader {
 		Version:    btcdHeader.Version,
 		PrevBlock:  []byte(btcdHeader.PrevBlock.String()),
 		MerkleRoot: []byte(btcdHeader.MerkleRoot.String()),
-		Time:       timestamppb.New(btcdHeader.Timestamp),
 		Bits:       btcdHeader.Bits,
 		Nonce:      btcdHeader.Nonce,
 		Hash:       []byte(btcdHeader.BlockHash().String()),

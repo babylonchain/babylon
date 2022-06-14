@@ -9,7 +9,7 @@ import (
 // x/btclightclient module sentinel errors
 var (
 	ErrHeaderDoesNotExist       = sdkerrors.Register(ModuleName, 1100, "header does not exist")
-	ErrDuplicateHeader          = sdkerrors.Register(ModuleName, 1100, "duplicate header")
-	ErrHeaderParentDoesNotExist = sdkerrors.Register(ModuleName, 1100, "header parent does not exist")
-	ErrInvalidDifficulty        = sdkerrors.Register(ModuleName, 1100, "invalid difficulty bits")
+	ErrDuplicateHeader          = sdkerrors.Register(ModuleName, 1101, "duplicate header")
+	ErrHeaderParentDoesNotExist = sdkerrors.Register(ModuleName, 1102, "header parent does not exist")
+	ErrInvalidDifficulty        = sdkerrors.Register(ModuleName, 1103, "invalid difficulty bits")
 )
