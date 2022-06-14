@@ -7,7 +7,7 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
 // QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
 message QueuedMessage {
-  option (gogoproto.equal)            = true;
+  option (gogoproto.equal) = true;
   
   // MsgType is the type of this queued message
   enum MsgType {
