@@ -6,7 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/types/query"
+	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
@@ -113,35 +113,333 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
+// QueryCurrentEpochRequest is request type for the Query/CurrentEpoch RPC method
+type QueryCurrentEpochRequest struct {
+}
+
+func (m *QueryCurrentEpochRequest) Reset()         { *m = QueryCurrentEpochRequest{} }
+func (m *QueryCurrentEpochRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryCurrentEpochRequest) ProtoMessage()    {}
+func (*QueryCurrentEpochRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{2}
+}
+func (m *QueryCurrentEpochRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryCurrentEpochRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryCurrentEpochRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryCurrentEpochRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCurrentEpochRequest.Merge(m, src)
+}
+func (m *QueryCurrentEpochRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryCurrentEpochRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCurrentEpochRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryCurrentEpochRequest proto.InternalMessageInfo
+
+// QueryCurrentEpochResponse is response type for the Query/CurrentEpoch RPC method
+type QueryCurrentEpochResponse struct {
+	CurrentEpoch int64 `protobuf:"varint,1,opt,name=current_epoch,json=currentEpoch,proto3" json:"current_epoch,omitempty"`
+}
+
+func (m *QueryCurrentEpochResponse) Reset()         { *m = QueryCurrentEpochResponse{} }
+func (m *QueryCurrentEpochResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryCurrentEpochResponse) ProtoMessage()    {}
+func (*QueryCurrentEpochResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{3}
+}
+func (m *QueryCurrentEpochResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryCurrentEpochResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryCurrentEpochResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryCurrentEpochResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryCurrentEpochResponse.Merge(m, src)
+}
+func (m *QueryCurrentEpochResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryCurrentEpochResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryCurrentEpochResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryCurrentEpochResponse proto.InternalMessageInfo
+
+func (m *QueryCurrentEpochResponse) GetCurrentEpoch() int64 {
+	if m != nil {
+		return m.CurrentEpoch
+	}
+	return 0
+}
+
+// QueryEpochMsgsRequest is request type for the Query/EpochMsgs RPC method
+type QueryEpochMsgsRequest struct {
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
+}
+
+func (m *QueryEpochMsgsRequest) Reset()         { *m = QueryEpochMsgsRequest{} }
+func (m *QueryEpochMsgsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryEpochMsgsRequest) ProtoMessage()    {}
+func (*QueryEpochMsgsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{4}
+}
+func (m *QueryEpochMsgsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryEpochMsgsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryEpochMsgsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryEpochMsgsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEpochMsgsRequest.Merge(m, src)
+}
+func (m *QueryEpochMsgsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryEpochMsgsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryEpochMsgsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryEpochMsgsRequest proto.InternalMessageInfo
+
+func (m *QueryEpochMsgsRequest) GetEpochNum() uint64 {
+	if m != nil {
+		return m.EpochNum
+	}
+	return 0
+}
+
+// QueryEpochMsgsResponse is response type for the Query/EpochMsgs RPC method
+type QueryEpochMsgsResponse struct {
+	// msgs is the list of messages queued in the given epoch
+	Msgs []*QueuedMessage `protobuf:"bytes,1,rep,name=msgs,proto3" json:"msgs,omitempty"`
+	// pagination defines the pagination in the response
+	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryEpochMsgsResponse) Reset()         { *m = QueryEpochMsgsResponse{} }
+func (m *QueryEpochMsgsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryEpochMsgsResponse) ProtoMessage()    {}
+func (*QueryEpochMsgsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{5}
+}
+func (m *QueryEpochMsgsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryEpochMsgsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryEpochMsgsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryEpochMsgsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEpochMsgsResponse.Merge(m, src)
+}
+func (m *QueryEpochMsgsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryEpochMsgsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryEpochMsgsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryEpochMsgsResponse proto.InternalMessageInfo
+
+func (m *QueryEpochMsgsResponse) GetMsgs() []*QueuedMessage {
+	if m != nil {
+		return m.Msgs
+	}
+	return nil
+}
+
+func (m *QueryEpochMsgsResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// QueryValidatorBLSPKRequest is request type for the Query/ValidatorBLSPK RPC method
+type QueryValidatorBLSPKRequest struct {
+	Ed25519Pk []byte `protobuf:"bytes,1,opt,name=ed25519_pk,json=ed25519Pk,proto3" json:"ed25519_pk,omitempty"`
+}
+
+func (m *QueryValidatorBLSPKRequest) Reset()         { *m = QueryValidatorBLSPKRequest{} }
+func (m *QueryValidatorBLSPKRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryValidatorBLSPKRequest) ProtoMessage()    {}
+func (*QueryValidatorBLSPKRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{6}
+}
+func (m *QueryValidatorBLSPKRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryValidatorBLSPKRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryValidatorBLSPKRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryValidatorBLSPKRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryValidatorBLSPKRequest.Merge(m, src)
+}
+func (m *QueryValidatorBLSPKRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryValidatorBLSPKRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryValidatorBLSPKRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryValidatorBLSPKRequest proto.InternalMessageInfo
+
+func (m *QueryValidatorBLSPKRequest) GetEd25519Pk() []byte {
+	if m != nil {
+		return m.Ed25519Pk
+	}
+	return nil
+}
+
+// QueryValidatorBLSPKResponse is response type for the Query/ValidatorBLSPK RPC method
+type QueryValidatorBLSPKResponse struct {
+	BlsPk []byte `protobuf:"bytes,1,opt,name=bls_pk,json=blsPk,proto3" json:"bls_pk,omitempty"`
+}
+
+func (m *QueryValidatorBLSPKResponse) Reset()         { *m = QueryValidatorBLSPKResponse{} }
+func (m *QueryValidatorBLSPKResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryValidatorBLSPKResponse) ProtoMessage()    {}
+func (*QueryValidatorBLSPKResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{7}
+}
+func (m *QueryValidatorBLSPKResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryValidatorBLSPKResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryValidatorBLSPKResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryValidatorBLSPKResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryValidatorBLSPKResponse.Merge(m, src)
+}
+func (m *QueryValidatorBLSPKResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryValidatorBLSPKResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryValidatorBLSPKResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryValidatorBLSPKResponse proto.InternalMessageInfo
+
+func (m *QueryValidatorBLSPKResponse) GetBlsPk() []byte {
+	if m != nil {
+		return m.BlsPk
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.epoching.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.epoching.v1.QueryParamsResponse")
+	proto.RegisterType((*QueryCurrentEpochRequest)(nil), "babylon.epoching.v1.QueryCurrentEpochRequest")
+	proto.RegisterType((*QueryCurrentEpochResponse)(nil), "babylon.epoching.v1.QueryCurrentEpochResponse")
+	proto.RegisterType((*QueryEpochMsgsRequest)(nil), "babylon.epoching.v1.QueryEpochMsgsRequest")
+	proto.RegisterType((*QueryEpochMsgsResponse)(nil), "babylon.epoching.v1.QueryEpochMsgsResponse")
+	proto.RegisterType((*QueryValidatorBLSPKRequest)(nil), "babylon.epoching.v1.QueryValidatorBLSPKRequest")
+	proto.RegisterType((*QueryValidatorBLSPKResponse)(nil), "babylon.epoching.v1.QueryValidatorBLSPKResponse")
 }
 
 func init() { proto.RegisterFile("babylon/epoching/v1/query.proto", fileDescriptor_1821b530f2ec2711) }
 
 var fileDescriptor_1821b530f2ec2711 = []byte{
-	// 307 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x90, 0x31, 0x4b, 0x03, 0x31,
-	0x14, 0xc7, 0x2f, 0xa2, 0x1d, 0xce, 0x2d, 0xed, 0x20, 0x55, 0xd2, 0x52, 0x90, 0x16, 0xc1, 0xc4,
-	0xab, 0x93, 0x6b, 0x47, 0xa7, 0xda, 0xd1, 0x2d, 0x39, 0x42, 0x1a, 0x68, 0xf3, 0xd2, 0x26, 0x2d,
-	0x76, 0x75, 0x74, 0x12, 0xf4, 0x43, 0x75, 0x2c, 0xb8, 0x38, 0x89, 0xf4, 0xfc, 0x20, 0xd2, 0x4b,
-	0x44, 0xa4, 0x07, 0x6e, 0xc7, 0x7b, 0xbf, 0xff, 0xef, 0xfe, 0x79, 0x69, 0x4b, 0x70, 0xb1, 0x9a,
-	0x80, 0x61, 0xd2, 0x42, 0x3e, 0xd6, 0x46, 0xb1, 0x65, 0xc6, 0x66, 0x0b, 0x39, 0x5f, 0x51, 0x3b,
-	0x07, 0x0f, 0xb8, 0x1e, 0x01, 0xfa, 0x03, 0xd0, 0x65, 0xd6, 0x6c, 0x28, 0x50, 0x50, 0xee, 0xd9,
-	0xee, 0x2b, 0xa0, 0xcd, 0x33, 0x05, 0xa0, 0x26, 0x92, 0x71, 0xab, 0x19, 0x37, 0x06, 0x3c, 0xf7,
-	0x1a, 0x8c, 0x8b, 0xdb, 0x8b, 0x1c, 0xdc, 0x14, 0x1c, 0x13, 0xdc, 0xc9, 0xf0, 0x07, 0xb6, 0xcc,
-	0x84, 0xf4, 0x3c, 0x63, 0x96, 0x2b, 0x6d, 0x4a, 0x38, 0xb2, 0xed, 0xaa, 0x56, 0x96, 0xcf, 0xf9,
-	0x34, 0xda, 0x3a, 0x8d, 0x14, 0xdf, 0xed, 0x1c, 0xc3, 0x72, 0x38, 0x92, 0xb3, 0x85, 0x74, 0xbe,
-	0x33, 0x4c, 0xeb, 0x7f, 0xa6, 0xce, 0x82, 0x71, 0x12, 0xdf, 0xa4, 0xb5, 0x10, 0x3e, 0x41, 0x6d,
-	0xd4, 0x3b, 0xee, 0x9f, 0xd2, 0x8a, 0x47, 0xd1, 0x10, 0x1a, 0x1c, 0xae, 0x3f, 0x5a, 0xc9, 0x28,
-	0x06, 0xfa, 0xaf, 0x28, 0x3d, 0x2a, 0x95, 0xf8, 0x09, 0xa5, 0xb5, 0x80, 0xe0, 0x6e, 0x65, 0x7e,
-	0xbf, 0x4f, 0xb3, 0xf7, 0x3f, 0x18, 0x2a, 0x76, 0x2e, 0x1f, 0xdf, 0xbe, 0x5e, 0x0e, 0xba, 0xf8,
-	0x9c, 0xc5, 0x44, 0x3e, 0xe6, 0xda, 0xb0, 0xbd, 0x3b, 0x84, 0x5a, 0x83, 0xdb, 0xf5, 0x96, 0xa0,
-	0xcd, 0x96, 0xa0, 0xcf, 0x2d, 0x41, 0xcf, 0x05, 0x49, 0x36, 0x05, 0x49, 0xde, 0x0b, 0x92, 0xdc,
-	0x5f, 0x29, 0xed, 0xc7, 0x0b, 0x41, 0x73, 0x98, 0x56, 0xab, 0x1e, 0x7e, 0x65, 0x7e, 0x65, 0xa5,
-	0x13, 0xb5, 0xf2, 0xa2, 0xd7, 0xdf, 0x01, 0x00, 0x00, 0xff, 0xff, 0x5d, 0xf5, 0x43, 0x37, 0x0b,
-	0x02, 0x00, 0x00,
+	// 628 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x54, 0xcd, 0x6e, 0xd3, 0x4e,
+	0x1c, 0x8c, 0xfb, 0x11, 0xfd, 0xbb, 0xed, 0x9f, 0xc3, 0xb6, 0x45, 0xc5, 0x05, 0xb7, 0x32, 0x87,
+	0x46, 0x45, 0x78, 0xeb, 0xd0, 0x02, 0x85, 0x03, 0xa5, 0x08, 0x55, 0x02, 0x8a, 0x5c, 0x23, 0x71,
+	0xe0, 0x12, 0xad, 0xdd, 0x95, 0x6b, 0x25, 0xf6, 0xba, 0x5e, 0x3b, 0x22, 0x42, 0xbd, 0x70, 0x47,
+	0x42, 0xe2, 0xc4, 0x0b, 0x20, 0x1e, 0x82, 0x07, 0xe8, 0xb1, 0x12, 0x17, 0x4e, 0x08, 0x25, 0x3c,
+	0x08, 0xf2, 0xee, 0x3a, 0x5f, 0xb2, 0x95, 0xdc, 0x92, 0xdd, 0x99, 0x9d, 0x99, 0xdf, 0x6f, 0x12,
+	0xb0, 0xe1, 0x60, 0xa7, 0xd3, 0xa2, 0x21, 0x22, 0x11, 0x75, 0xcf, 0xfc, 0xd0, 0x43, 0x6d, 0x13,
+	0x9d, 0xa7, 0x24, 0xee, 0x18, 0x51, 0x4c, 0x13, 0x0a, 0x97, 0x25, 0xc0, 0xc8, 0x01, 0x46, 0xdb,
+	0x54, 0x57, 0x3c, 0xea, 0x51, 0x7e, 0x8f, 0xb2, 0x4f, 0x02, 0xaa, 0xde, 0xf4, 0x28, 0xf5, 0x5a,
+	0x04, 0xe1, 0xc8, 0x47, 0x38, 0x0c, 0x69, 0x82, 0x13, 0x9f, 0x86, 0x4c, 0xde, 0x6e, 0xbb, 0x94,
+	0x05, 0x94, 0x21, 0x07, 0x33, 0x22, 0x14, 0x50, 0xdb, 0x74, 0x48, 0x82, 0x4d, 0x14, 0x61, 0xcf,
+	0x0f, 0x39, 0x58, 0x62, 0x37, 0x8b, 0x5c, 0x45, 0x38, 0xc6, 0x41, 0xfe, 0x5a, 0xad, 0xc4, 0x77,
+	0x4a, 0x4e, 0x1b, 0x01, 0x61, 0x0c, 0x7b, 0x44, 0x20, 0xf5, 0x15, 0x00, 0x4f, 0x32, 0x35, 0x8b,
+	0xd3, 0x6d, 0x72, 0x9e, 0x12, 0x96, 0xe8, 0x16, 0x58, 0x1e, 0x39, 0x65, 0x11, 0x0d, 0x19, 0x81,
+	0xfb, 0xa0, 0x2a, 0x64, 0xd6, 0x94, 0x4d, 0xa5, 0xb6, 0x58, 0x5f, 0x37, 0x0a, 0xe2, 0x1b, 0x82,
+	0x74, 0x38, 0x77, 0xf9, 0x7b, 0xa3, 0x62, 0x4b, 0x82, 0xae, 0x82, 0x35, 0xfe, 0xe2, 0xb3, 0x34,
+	0x8e, 0x49, 0x98, 0x3c, 0xcf, 0xf0, 0xb9, 0xda, 0x01, 0xb8, 0x51, 0x70, 0x27, 0x35, 0x6f, 0x83,
+	0xff, 0x5d, 0x71, 0xde, 0xe0, 0x22, 0x5c, 0x7a, 0xd6, 0x5e, 0x72, 0x87, 0xc0, 0xfa, 0x2e, 0x58,
+	0xe5, 0x2f, 0xf0, 0x6f, 0xc7, 0xcc, 0xcb, 0x83, 0xc0, 0x75, 0xb0, 0xc0, 0x59, 0x8d, 0x30, 0x0d,
+	0x38, 0x73, 0xce, 0xfe, 0x8f, 0x1f, 0xbc, 0x4e, 0x03, 0xfd, 0xab, 0x02, 0xae, 0x8f, 0xd3, 0xa4,
+	0xea, 0x7d, 0x30, 0x17, 0x30, 0x2f, 0xcb, 0x39, 0x5b, 0x5b, 0xac, 0xeb, 0x85, 0x39, 0x4f, 0xf8,
+	0x3c, 0x8f, 0xc5, 0x38, 0x6d, 0x8e, 0x87, 0x47, 0x00, 0x0c, 0xd6, 0xb5, 0x36, 0xc3, 0xa7, 0xb4,
+	0x65, 0x88, 0xdd, 0x1a, 0xd9, 0x6e, 0x0d, 0xd1, 0x1e, 0xb9, 0x5b, 0xc3, 0xca, 0xa8, 0x52, 0xd4,
+	0x1e, 0xa2, 0xea, 0x8f, 0x81, 0xca, 0xad, 0xbd, 0xc5, 0x2d, 0xff, 0x14, 0x27, 0x34, 0x3e, 0x7c,
+	0xf5, 0xc6, 0x7a, 0x99, 0xc7, 0xba, 0x05, 0x00, 0x39, 0xad, 0xef, 0xed, 0x99, 0xfb, 0x8d, 0xa8,
+	0xc9, 0x73, 0x2d, 0xd9, 0x0b, 0xf2, 0xc4, 0x6a, 0xea, 0xbb, 0x60, 0xbd, 0x90, 0x2c, 0xc3, 0xad,
+	0x82, 0xaa, 0xd3, 0x62, 0x03, 0xe6, 0xbc, 0xd3, 0x62, 0x56, 0xb3, 0xfe, 0x7d, 0x1e, 0xcc, 0x73,
+	0x1a, 0xfc, 0xa4, 0x80, 0xaa, 0xd8, 0x22, 0xdc, 0x2a, 0x8b, 0x3e, 0x56, 0x19, 0xb5, 0x36, 0x19,
+	0x28, 0xe4, 0xf5, 0x9d, 0x8f, 0x3f, 0xff, 0x7e, 0x99, 0xd9, 0x86, 0x35, 0x24, 0x19, 0xee, 0x19,
+	0xf6, 0x43, 0x54, 0x5e, 0x6a, 0xf8, 0x4d, 0x01, 0x4b, 0xc3, 0xe5, 0x80, 0x77, 0xcb, 0xc5, 0x0a,
+	0x0a, 0xa6, 0x1a, 0xd3, 0xc2, 0xa5, 0xc3, 0x07, 0xdc, 0xa1, 0x09, 0xd1, 0x64, 0x87, 0x23, 0xdd,
+	0xcc, 0x8c, 0x2e, 0xf4, 0xcb, 0x04, 0xb7, 0xcb, 0x65, 0xc7, 0x8b, 0xaa, 0xde, 0x99, 0x0a, 0x2b,
+	0xfd, 0x1d, 0x70, 0x7f, 0x8f, 0xe0, 0xc3, 0x09, 0xfe, 0x44, 0xf5, 0xb3, 0x62, 0x66, 0x56, 0x3f,
+	0xf4, 0x7f, 0x09, 0x17, 0xf0, 0x87, 0x02, 0xae, 0x8d, 0xb6, 0x03, 0xa2, 0x72, 0x07, 0x85, 0x25,
+	0x54, 0x77, 0xa6, 0x27, 0x48, 0xdf, 0x47, 0xdc, 0xf7, 0x53, 0xf8, 0x64, 0xd2, 0x5c, 0x73, 0x7a,
+	0x43, 0xf4, 0x54, 0xb8, 0xef, 0x17, 0xfe, 0xe2, 0xf0, 0xc5, 0x65, 0x57, 0x53, 0xae, 0xba, 0x9a,
+	0xf2, 0xa7, 0xab, 0x29, 0x9f, 0x7b, 0x5a, 0xe5, 0xaa, 0xa7, 0x55, 0x7e, 0xf5, 0xb4, 0xca, 0xbb,
+	0x1d, 0xcf, 0x4f, 0xce, 0x52, 0xc7, 0x70, 0x69, 0x50, 0x2c, 0xf2, 0x7e, 0x20, 0x93, 0x74, 0x22,
+	0xc2, 0x9c, 0x2a, 0xff, 0x23, 0xbc, 0xf7, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xa6, 0x7b, 0x0d, 0x2c,
+	0xec, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -156,8 +454,14 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// Parameters queries the parameters of the module.
+	// Params queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
+	// CurrentEpoch queries the current epoch
+	CurrentEpoch(ctx context.Context, in *QueryCurrentEpochRequest, opts ...grpc.CallOption) (*QueryCurrentEpochResponse, error)
+	// EpochMsgs queries the messages of a given epoch
+	EpochMsgs(ctx context.Context, in *QueryEpochMsgsRequest, opts ...grpc.CallOption) (*QueryEpochMsgsResponse, error)
+	// ValidatorBLSPK queries the BLS PK of a given validator
+	ValidatorBLSPK(ctx context.Context, in *QueryValidatorBLSPKRequest, opts ...grpc.CallOption) (*QueryValidatorBLSPKResponse, error)
 }
 
 type queryClient struct {
@@ -177,10 +481,43 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
+func (c *queryClient) CurrentEpoch(ctx context.Context, in *QueryCurrentEpochRequest, opts ...grpc.CallOption) (*QueryCurrentEpochResponse, error) {
+	out := new(QueryCurrentEpochResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Query/CurrentEpoch", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) EpochMsgs(ctx context.Context, in *QueryEpochMsgsRequest, opts ...grpc.CallOption) (*QueryEpochMsgsResponse, error) {
+	out := new(QueryEpochMsgsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Query/EpochMsgs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ValidatorBLSPK(ctx context.Context, in *QueryValidatorBLSPKRequest, opts ...grpc.CallOption) (*QueryValidatorBLSPKResponse, error) {
+	out := new(QueryValidatorBLSPKResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Query/ValidatorBLSPK", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// Parameters queries the parameters of the module.
+	// Params queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
+	// CurrentEpoch queries the current epoch
+	CurrentEpoch(context.Context, *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error)
+	// EpochMsgs queries the messages of a given epoch
+	EpochMsgs(context.Context, *QueryEpochMsgsRequest) (*QueryEpochMsgsResponse, error)
+	// ValidatorBLSPK queries the BLS PK of a given validator
+	ValidatorBLSPK(context.Context, *QueryValidatorBLSPKRequest) (*QueryValidatorBLSPKResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -189,6 +526,15 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+}
+func (*UnimplementedQueryServer) CurrentEpoch(ctx context.Context, req *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CurrentEpoch not implemented")
+}
+func (*UnimplementedQueryServer) EpochMsgs(ctx context.Context, req *QueryEpochMsgsRequest) (*QueryEpochMsgsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EpochMsgs not implemented")
+}
+func (*UnimplementedQueryServer) ValidatorBLSPK(ctx context.Context, req *QueryValidatorBLSPKRequest) (*QueryValidatorBLSPKResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ValidatorBLSPK not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -213,6 +559,60 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_CurrentEpoch_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryCurrentEpochRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).CurrentEpoch(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Query/CurrentEpoch",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).CurrentEpoch(ctx, req.(*QueryCurrentEpochRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_EpochMsgs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryEpochMsgsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).EpochMsgs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Query/EpochMsgs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).EpochMsgs(ctx, req.(*QueryEpochMsgsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ValidatorBLSPK_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryValidatorBLSPKRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ValidatorBLSPK(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Query/ValidatorBLSPK",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ValidatorBLSPK(ctx, req.(*QueryValidatorBLSPKRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.epoching.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -220,6 +620,18 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Params",
 			Handler:    _Query_Params_Handler,
+		},
+		{
+			MethodName: "CurrentEpoch",
+			Handler:    _Query_CurrentEpoch_Handler,
+		},
+		{
+			MethodName: "EpochMsgs",
+			Handler:    _Query_EpochMsgs_Handler,
+		},
+		{
+			MethodName: "ValidatorBLSPK",
+			Handler:    _Query_ValidatorBLSPK_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -282,6 +694,194 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryCurrentEpochRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryCurrentEpochRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryCurrentEpochRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryCurrentEpochResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryCurrentEpochResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryCurrentEpochResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.CurrentEpoch != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.CurrentEpoch))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryEpochMsgsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryEpochMsgsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryEpochMsgsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.EpochNum != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.EpochNum))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryEpochMsgsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryEpochMsgsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryEpochMsgsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Msgs) > 0 {
+		for iNdEx := len(m.Msgs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Msgs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryValidatorBLSPKRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryValidatorBLSPKRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryValidatorBLSPKRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Ed25519Pk) > 0 {
+		i -= len(m.Ed25519Pk)
+		copy(dAtA[i:], m.Ed25519Pk)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Ed25519Pk)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryValidatorBLSPKResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryValidatorBLSPKResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryValidatorBLSPKResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.BlsPk) > 0 {
+		i -= len(m.BlsPk)
+		copy(dAtA[i:], m.BlsPk)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BlsPk)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -310,6 +910,84 @@ func (m *QueryParamsResponse) Size() (n int) {
 	_ = l
 	l = m.Params.Size()
 	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
+func (m *QueryCurrentEpochRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryCurrentEpochResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.CurrentEpoch != 0 {
+		n += 1 + sovQuery(uint64(m.CurrentEpoch))
+	}
+	return n
+}
+
+func (m *QueryEpochMsgsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EpochNum != 0 {
+		n += 1 + sovQuery(uint64(m.EpochNum))
+	}
+	return n
+}
+
+func (m *QueryEpochMsgsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.Msgs) > 0 {
+		for _, e := range m.Msgs {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryValidatorBLSPKRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Ed25519Pk)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryValidatorBLSPKResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BlsPk)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
 	return n
 }
 
@@ -429,6 +1107,482 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 			}
 			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryCurrentEpochRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryCurrentEpochRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryCurrentEpochRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryCurrentEpochResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryCurrentEpochResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryCurrentEpochResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CurrentEpoch", wireType)
+			}
+			m.CurrentEpoch = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.CurrentEpoch |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryEpochMsgsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryEpochMsgsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryEpochMsgsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
+			}
+			m.EpochNum = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochNum |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryEpochMsgsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryEpochMsgsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryEpochMsgsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Msgs", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Msgs = append(m.Msgs, &QueuedMessage{})
+			if err := m.Msgs[len(m.Msgs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryValidatorBLSPKRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryValidatorBLSPKRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryValidatorBLSPKRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ed25519Pk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Ed25519Pk = append(m.Ed25519Pk[:0], dAtA[iNdEx:postIndex]...)
+			if m.Ed25519Pk == nil {
+				m.Ed25519Pk = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryValidatorBLSPKResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryValidatorBLSPKResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryValidatorBLSPKResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlsPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BlsPk = append(m.BlsPk[:0], dAtA[iNdEx:postIndex]...)
+			if m.BlsPk == nil {
+				m.BlsPk = []byte{}
 			}
 			iNdEx = postIndex
 		default:
