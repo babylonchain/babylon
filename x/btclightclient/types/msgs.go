@@ -3,7 +3,6 @@ package types
 import (
 	"errors"
 	"fmt"
-	"github.com/babylonchain/babylon/x/btclightclient"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
@@ -23,7 +22,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 		return err
 	}
 
-	header, err := btclightclient.BytesToBtcdHeader(msg.HeaderBytes)
+	header, err := BytesToBtcdHeader(msg.HeaderBytes)
 	if err != nil {
 		return err
 	}

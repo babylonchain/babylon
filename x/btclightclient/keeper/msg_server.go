@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"github.com/babylonchain/babylon/x/btclightclient"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,13 +22,13 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	// 		 that will get rejected.
 
 	// Get Btcd header from bytes
-	btcdHeader, err := btclightclient.BytesToBtcdHeader(msg.HeaderBytes)
+	btcdHeader, err := types.BytesToBtcdHeader(msg.HeaderBytes)
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert it into our own header structure
-	header := btclightclient.BtcdHeaderToBTCBlockHeader(btcdHeader)
+	header := types.BtcdHeaderToBTCBlockHeader(btcdHeader)
 
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
