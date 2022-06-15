@@ -10,11 +10,25 @@ import (
 // type BlsMultiSig = blst.P2Aggregate
 // type BlsMultiPubKey = blst.P1Aggregate
 
+// Domain Separation Tag for signatures on G2 (minimal-pubkey-size)
+//var dst = []byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_")
+
 // For minimal-signature-size operations:
 type BlsPubKey = blst.P2Affine
 type BlsSig = blst.P1Affine
 type BlsMultiSig = blst.P1Aggregate
 type BlsMultiPubKey = blst.P2Aggregate
 
-// default domain
+// Domain Separation Tag for signatures on G1 (minimal-signature-size)
 var dst = []byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_")
+
+type Signature []byte
+type PublicKey []byte
+
+func (sig Signature) ToByte() []byte {
+	return sig
+}
+
+func (pk PublicKey) ToByte() []byte {
+	return pk
+}

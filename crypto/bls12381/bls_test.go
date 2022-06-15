@@ -13,14 +13,14 @@ func TestVerifyBlsSig(t *testing.T) {
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
 	sk, pk := genRandomKeyPair()
-	sig := SignMsg(sk, msga)
+	sig := Sign(sk, msga)
 	// a byte size of a sig (compressed) is 48
 	require.Equal(t, 48, len(sig))
 	// a byte size of a public key (compressed) is 96
 	require.Equal(t, 96, len(pk))
-	res := VerifyBlsSig(sig, pk, msga)
+	res := Verify(sig, pk, msga)
 	require.True(t, res)
-	res = VerifyBlsSig(sig, pk, msgb)
+	res = Verify(sig, pk, msgb)
 	require.False(t, res)
 }
 
@@ -30,15 +30,15 @@ func TestVerifyBlsMultiSig(t *testing.T) {
 	msgb := []byte("bbbbbbbb")
 	n := 100
 	sks, pks := generateBatchTestKeyPairs(n)
-	sigs := make([][]byte, n)
+	sigs := make([]Signature, n)
 	for i := 0; i < n; i++ {
-		sigs[i] = SignMsg(sks[i], msga)
+		sigs[i] = Sign(sks[i], msga)
 	}
-	multiSig, aggregated := AggregateBlsSigs(sigs)
+	multiSig, aggregated := AggrSigs(sigs)
 	require.True(t, aggregated)
-	res := VerifyBlsMultiSig(multiSig, pks, msga)
+	res := VerifyMultiSig(multiSig, pks, msga)
 	require.True(t, res)
-	res = VerifyBlsMultiSig(multiSig, pks, msgb)
+	res = VerifyMultiSig(multiSig, pks, msgb)
 	require.False(t, res)
 }
 
@@ -49,28 +49,28 @@ func TestVerifyBlsMultiSig2(t *testing.T) {
 	msgb := []byte("bbbbbbbb")
 	n := 100
 	sks, pks := generateBatchTestKeyPairs(n)
-	sigs := make([][]byte, n)
+	sigs := make([]Signature, n)
 	for i := 0; i < n-1; i++ {
-		sigs[i] = SignMsg(sks[i], msga)
+		sigs[i] = Sign(sks[i], msga)
 	}
-	sigs[n-1] = SignMsg(sks[n-1], msgb)
-	multiSig, aggregated := AggregateBlsSigs(sigs)
+	sigs[n-1] = Sign(sks[n-1], msgb)
+	multiSig, aggregated := AggrSigs(sigs)
 	require.True(t, aggregated)
-	res := VerifyBlsMultiSig(multiSig, pks, msga)
+	res := VerifyMultiSig(multiSig, pks, msga)
 	require.False(t, res)
-	res = VerifyBlsMultiSig(multiSig, pks, msgb)
+	res = VerifyMultiSig(multiSig, pks, msgb)
 	require.False(t, res)
 }
 
 func genRandomKeyPair() (*blst.SecretKey, []byte) {
 	var ikm [32]byte
 	_, _ = rand.Read(ikm[:])
-	return GenerateBlsKeyPair(ikm[:])
+	return GeneKeyPair(ikm[:])
 }
 
-func generateBatchTestKeyPairs(n int) ([]*blst.SecretKey, [][]byte) {
+func generateBatchTestKeyPairs(n int) ([]*blst.SecretKey, []PublicKey) {
 	sks := make([]*blst.SecretKey, n)
-	pubks := make([][]byte, n)
+	pubks := make([]PublicKey, n)
 	for i := 0; i < n; i++ {
 		sk, pk := genRandomKeyPair()
 		sks[i] = sk
