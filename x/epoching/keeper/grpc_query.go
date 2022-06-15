@@ -32,7 +32,3 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (*types.QueryEpochMsgsResponse, error) {
 	panic("TODO: unimplemented")
 }
-
-func (k Keeper) ValidatorBLSPK(c context.Context, req *types.QueryValidatorBLSPKRequest) (*types.QueryValidatorBLSPKResponse, error) {
-	panic("TODO: unimplemented")
-}

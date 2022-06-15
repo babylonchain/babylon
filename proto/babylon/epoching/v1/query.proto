@@ -25,11 +25,6 @@ service Query {
   rpc EpochMsgs(QueryEpochMsgsRequest) returns (QueryEpochMsgsResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs/{epoch_num}";
   }
-
-  // ValidatorBLSPK queries the BLS PK of a given validator
-  rpc ValidatorBLSPK(QueryValidatorBLSPKRequest) returns (QueryValidatorBLSPKResponse) {
-    option (google.api.http).get = "/babylon/epoching/v1/validator_bls_pk/{ed25519_pk}";
-  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -62,9 +57,3 @@ message QueryEpochMsgsResponse {
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
-
-// QueryValidatorBLSPKRequest is request type for the Query/ValidatorBLSPK RPC method
-message QueryValidatorBLSPKRequest { bytes ed25519_pk = 1; }
-
-// QueryValidatorBLSPKResponse is response type for the Query/ValidatorBLSPK RPC method
-message QueryValidatorBLSPKResponse { bytes bls_pk = 1; }
