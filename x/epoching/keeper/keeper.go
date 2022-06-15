@@ -42,18 +42,3 @@ func NewKeeper(
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
-
-// GetCurrentEpoch returns the current epoch number
-func (k Keeper) GetCurrentEpoch(ctx sdk.Context) sdk.Uint {
-	panic("TODO: unimplemented")
-}
-
-// GetEpochMsgs returns the set of messages queued of a given uncheckpointed epoch
-func (k Keeper) GetEpochMsgs(ctx sdk.Context, epoch sdk.Uint) []sdk.Msg {
-	panic("TODO: unimplemented")
-}
-
-// EnqueueMsg enqueues a message to the queue of the current epoch
-func (k Keeper) EnqueueMsg(ctx sdk.Context, msg sdk.Msg) error {
-	panic("TODO: unimplemented")
-}
