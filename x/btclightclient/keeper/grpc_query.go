@@ -8,7 +8,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) GetHashes(ctx context.Context, req *types.QueryGetHashesRequest) (*types.QueryGetHashesResponse, error) {
+func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*types.QueryHashesResponse, error) {
 	var hashes [][]byte
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -19,11 +19,11 @@ func (k Keeper) GetHashes(ctx context.Context, req *types.QueryGetHashesRequest)
 		return false
 	})
 
-	return &types.QueryGetHashesResponse{Hashes: hashes}, nil
+	return &types.QueryHashesResponse{Hashes: hashes}, nil
 }
 
-func (k Keeper) ContainsHash(ctx context.Context, req *types.QueryContainsHashRequest) (*types.QueryContainsHashResponse, error) {
+func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (*types.QueryContainsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	containsHash := k.HeadersState(sdkCtx).Exists(req.Hash)
-	return &types.QueryContainsHashResponse{ContainsHash: containsHash}, nil
+	contains := k.HeadersState(sdkCtx).Exists(req.Hash)
+	return &types.QueryContainsResponse{Contains: contains}, nil
 }
