@@ -4,8 +4,8 @@
 package types
 
 import (
-	bytes "bytes"
 	fmt "fmt"
+	types "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
@@ -24,45 +24,14 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgType is the type of this queued message
-type QueuedMessage_MsgType int32
-
-const (
-	QueuedMessage_MSG_CREATE_VALIDATOR            QueuedMessage_MsgType = 0
-	QueuedMessage_MSG_DELEGATE                    QueuedMessage_MsgType = 1
-	QueuedMessage_MSG_UNDELEGATE                  QueuedMessage_MsgType = 2
-	QueuedMessage_MSG_BEGIN_REDELEGATE            QueuedMessage_MsgType = 3
-	QueuedMessage_MSG_CANCEL_UNBONDING_DELEGATION QueuedMessage_MsgType = 4
-)
-
-var QueuedMessage_MsgType_name = map[int32]string{
-	0: "MSG_CREATE_VALIDATOR",
-	1: "MSG_DELEGATE",
-	2: "MSG_UNDELEGATE",
-	3: "MSG_BEGIN_REDELEGATE",
-	4: "MSG_CANCEL_UNBONDING_DELEGATION",
-}
-
-var QueuedMessage_MsgType_value = map[string]int32{
-	"MSG_CREATE_VALIDATOR":            0,
-	"MSG_DELEGATE":                    1,
-	"MSG_UNDELEGATE":                  2,
-	"MSG_BEGIN_REDELEGATE":            3,
-	"MSG_CANCEL_UNBONDING_DELEGATION": 4,
-}
-
-func (x QueuedMessage_MsgType) String() string {
-	return proto.EnumName(QueuedMessage_MsgType_name, int32(x))
-}
-
-func (QueuedMessage_MsgType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_dbb081aaacd53c75, []int{0, 0}
-}
-
 // QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
 type QueuedMessage struct {
-	// msg_data is the serialised form of this queued message
-	MsgData []byte `protobuf:"bytes,1,opt,name=msg_data,json=msgData,proto3" json:"msg_data,omitempty"`
+	// Types that are valid to be assigned to Msg:
+	//	*QueuedMessage_MsgCreateValidator
+	//	*QueuedMessage_MsgDelegate
+	//	*QueuedMessage_MsgUndelegate
+	//	*QueuedMessage_MsgBeginRedelegate
+	Msg isQueuedMessage_Msg `protobuf_oneof:"msg"`
 }
 
 func (m *QueuedMessage) Reset()         { *m = QueuedMessage{} }
@@ -98,15 +67,77 @@ func (m *QueuedMessage) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueuedMessage proto.InternalMessageInfo
 
-func (m *QueuedMessage) GetMsgData() []byte {
+type isQueuedMessage_Msg interface {
+	isQueuedMessage_Msg()
+	Equal(interface{}) bool
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+
+type QueuedMessage_MsgCreateValidator struct {
+	MsgCreateValidator *types.MsgCreateValidator `protobuf:"bytes,1,opt,name=msg_create_validator,json=msgCreateValidator,proto3,oneof" json:"msg_create_validator,omitempty"`
+}
+type QueuedMessage_MsgDelegate struct {
+	MsgDelegate *types.MsgDelegate `protobuf:"bytes,2,opt,name=msg_delegate,json=msgDelegate,proto3,oneof" json:"msg_delegate,omitempty"`
+}
+type QueuedMessage_MsgUndelegate struct {
+	MsgUndelegate *types.MsgUndelegate `protobuf:"bytes,3,opt,name=msg_undelegate,json=msgUndelegate,proto3,oneof" json:"msg_undelegate,omitempty"`
+}
+type QueuedMessage_MsgBeginRedelegate struct {
+	MsgBeginRedelegate *types.MsgBeginRedelegate `protobuf:"bytes,4,opt,name=msg_begin_redelegate,json=msgBeginRedelegate,proto3,oneof" json:"msg_begin_redelegate,omitempty"`
+}
+
+func (*QueuedMessage_MsgCreateValidator) isQueuedMessage_Msg() {}
+func (*QueuedMessage_MsgDelegate) isQueuedMessage_Msg()        {}
+func (*QueuedMessage_MsgUndelegate) isQueuedMessage_Msg()      {}
+func (*QueuedMessage_MsgBeginRedelegate) isQueuedMessage_Msg() {}
+
+func (m *QueuedMessage) GetMsg() isQueuedMessage_Msg {
 	if m != nil {
-		return m.MsgData
+		return m.Msg
 	}
 	return nil
 }
 
+func (m *QueuedMessage) GetMsgCreateValidator() *types.MsgCreateValidator {
+	if x, ok := m.GetMsg().(*QueuedMessage_MsgCreateValidator); ok {
+		return x.MsgCreateValidator
+	}
+	return nil
+}
+
+func (m *QueuedMessage) GetMsgDelegate() *types.MsgDelegate {
+	if x, ok := m.GetMsg().(*QueuedMessage_MsgDelegate); ok {
+		return x.MsgDelegate
+	}
+	return nil
+}
+
+func (m *QueuedMessage) GetMsgUndelegate() *types.MsgUndelegate {
+	if x, ok := m.GetMsg().(*QueuedMessage_MsgUndelegate); ok {
+		return x.MsgUndelegate
+	}
+	return nil
+}
+
+func (m *QueuedMessage) GetMsgBeginRedelegate() *types.MsgBeginRedelegate {
+	if x, ok := m.GetMsg().(*QueuedMessage_MsgBeginRedelegate); ok {
+		return x.MsgBeginRedelegate
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*QueuedMessage) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*QueuedMessage_MsgCreateValidator)(nil),
+		(*QueuedMessage_MsgDelegate)(nil),
+		(*QueuedMessage_MsgUndelegate)(nil),
+		(*QueuedMessage_MsgBeginRedelegate)(nil),
+	}
+}
+
 func init() {
-	proto.RegisterEnum("babylon.epoching.v1.QueuedMessage_MsgType", QueuedMessage_MsgType_name, QueuedMessage_MsgType_value)
 	proto.RegisterType((*QueuedMessage)(nil), "babylon.epoching.v1.QueuedMessage")
 }
 
@@ -115,26 +146,29 @@ func init() {
 }
 
 var fileDescriptor_dbb081aaacd53c75 = []byte{
-	// 302 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x48, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2d, 0xc8, 0x4f, 0xce, 0xc8, 0xcc, 0x4b, 0xd7, 0x2f, 0x33, 0xd4,
-	0x2f, 0x2c, 0x4d, 0x2d, 0x4d, 0x4d, 0x89, 0xcf, 0x4d, 0x2d, 0x2e, 0x4e, 0x4c, 0x4f, 0xd5, 0x2b,
-	0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x86, 0xaa, 0xd4, 0x83, 0xa9, 0xd4, 0x2b, 0x33, 0x94, 0x12,
-	0x49, 0xcf, 0x4f, 0xcf, 0x07, 0xcb, 0xeb, 0x83, 0x58, 0x10, 0xa5, 0x4a, 0xbb, 0x19, 0xb9, 0x78,
-	0x03, 0xc1, 0x66, 0xf8, 0x42, 0x8c, 0x10, 0x92, 0xe4, 0xe2, 0xc8, 0x2d, 0x4e, 0x8f, 0x4f, 0x49,
-	0x2c, 0x49, 0x94, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x09, 0x62, 0xcf, 0x2d, 0x4e, 0x77, 0x49, 0x2c,
-	0x49, 0x54, 0xea, 0x60, 0xe4, 0x62, 0xf7, 0x2d, 0x4e, 0x0f, 0xa9, 0x2c, 0x48, 0x15, 0x92, 0xe0,
-	0x12, 0xf1, 0x0d, 0x76, 0x8f, 0x77, 0x0e, 0x72, 0x75, 0x0c, 0x71, 0x8d, 0x0f, 0x73, 0xf4, 0xf1,
-	0x74, 0x71, 0x0c, 0xf1, 0x0f, 0x12, 0x60, 0x10, 0x12, 0xe0, 0xe2, 0x01, 0xc9, 0xb8, 0xb8, 0xfa,
-	0xb8, 0xba, 0x3b, 0x86, 0xb8, 0x0a, 0x30, 0x0a, 0x09, 0x71, 0xf1, 0x81, 0x44, 0x42, 0xfd, 0xe0,
-	0x62, 0x4c, 0x30, 0xfd, 0x4e, 0xae, 0xee, 0x9e, 0x7e, 0xf1, 0x41, 0xae, 0x70, 0x19, 0x66, 0x21,
-	0x65, 0x2e, 0x79, 0xb0, 0xc9, 0x8e, 0x7e, 0xce, 0xae, 0x3e, 0xf1, 0xa1, 0x7e, 0x4e, 0xfe, 0x7e,
-	0x2e, 0x9e, 0x7e, 0x70, 0x03, 0x3d, 0xfd, 0xfd, 0x04, 0x58, 0xac, 0x58, 0x5e, 0x2c, 0x90, 0x67,
-	0x74, 0xf2, 0x3a, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27,
-	0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6, 0x63, 0x39, 0x86, 0x28, 0x83, 0xf4, 0xcc,
-	0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0x68, 0x68, 0x24, 0x67, 0x24, 0x66, 0xe6,
-	0xc1, 0x38, 0xfa, 0x15, 0x88, 0x60, 0x2c, 0xa9, 0x2c, 0x48, 0x2d, 0x4e, 0x62, 0x03, 0x07, 0x88,
-	0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x23, 0xf5, 0x90, 0x15, 0x67, 0x01, 0x00, 0x00,
+	// 342 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x92, 0xbd, 0x4e, 0xc3, 0x30,
+	0x10, 0x80, 0x93, 0xb6, 0x30, 0xa4, 0x94, 0x21, 0x74, 0xa8, 0x3a, 0xa4, 0x08, 0x84, 0x54, 0x31,
+	0xd8, 0x14, 0x36, 0xc6, 0xc2, 0x10, 0x21, 0x15, 0x89, 0x48, 0x30, 0x30, 0x10, 0x39, 0xe9, 0xc9,
+	0x8d, 0xa8, 0xe3, 0x12, 0x3b, 0x55, 0xfb, 0x16, 0x3c, 0x02, 0x8f, 0xc3, 0xd8, 0x91, 0x11, 0xb5,
+	0x0b, 0x4f, 0xc0, 0x8c, 0xec, 0xfc, 0xb4, 0x02, 0xa9, 0x6c, 0xbe, 0xbb, 0xef, 0xbe, 0xd3, 0xe9,
+	0x6c, 0x75, 0x03, 0x12, 0xcc, 0xc7, 0x3c, 0xc6, 0x30, 0xe1, 0xe1, 0x28, 0x8a, 0x29, 0x9e, 0xf6,
+	0xf0, 0x4b, 0x0a, 0x29, 0x0c, 0x7d, 0x06, 0x42, 0x10, 0x0a, 0x68, 0x92, 0x70, 0xc9, 0xed, 0x83,
+	0x9c, 0x44, 0x05, 0x89, 0xa6, 0xbd, 0x76, 0x93, 0x72, 0xca, 0x75, 0x1d, 0xab, 0x57, 0x86, 0xb6,
+	0x3b, 0x21, 0x17, 0x8c, 0x0b, 0x2c, 0x24, 0x79, 0xce, 0x94, 0x01, 0x48, 0xd2, 0xc3, 0x72, 0x96,
+	0x01, 0x47, 0xdf, 0x15, 0xab, 0x71, 0xa7, 0x87, 0x0c, 0xb2, 0x19, 0xf6, 0x93, 0xd5, 0x64, 0x82,
+	0xfa, 0x61, 0x02, 0x44, 0x82, 0x3f, 0x25, 0xe3, 0x68, 0x48, 0x24, 0x4f, 0x5a, 0xe6, 0xa1, 0xd9,
+	0xad, 0x9f, 0x9f, 0xa2, 0xcc, 0x88, 0x72, 0x23, 0xca, 0x8d, 0x68, 0x20, 0xe8, 0x95, 0x6e, 0x79,
+	0x28, 0x3a, 0x5c, 0xc3, 0xb3, 0xd9, 0x9f, 0xac, 0xed, 0x5a, 0x7b, 0xca, 0x3f, 0x84, 0x31, 0x50,
+	0x22, 0xa1, 0x55, 0xd1, 0xde, 0xe3, 0x2d, 0xde, 0xeb, 0x1c, 0x75, 0x0d, 0xaf, 0xce, 0xd6, 0xa1,
+	0x7d, 0x6b, 0xed, 0x2b, 0x53, 0x1a, 0x97, 0xae, 0xaa, 0x76, 0x9d, 0x6c, 0x71, 0xdd, 0x97, 0xb0,
+	0x6b, 0x78, 0x0d, 0xb6, 0x99, 0x28, 0x36, 0x0f, 0x80, 0x46, 0xb1, 0x9f, 0x40, 0x69, 0xad, 0xfd,
+	0xbb, 0x79, 0x5f, 0xb5, 0x78, 0xb0, 0xa1, 0x56, 0x9b, 0xff, 0xca, 0x5e, 0xd6, 0xbe, 0xde, 0x3a,
+	0x66, 0x7f, 0xc7, 0xaa, 0xaa, 0xda, 0xcd, 0xfb, 0xd2, 0x31, 0x17, 0x4b, 0xc7, 0xfc, 0x5c, 0x3a,
+	0xe6, 0xeb, 0xca, 0x31, 0x16, 0x2b, 0xc7, 0xf8, 0x58, 0x39, 0xc6, 0xe3, 0x19, 0x8d, 0xe4, 0x28,
+	0x0d, 0x50, 0xc8, 0x19, 0xce, 0x2f, 0x1d, 0x8e, 0x48, 0x14, 0x17, 0x01, 0x9e, 0xad, 0xbf, 0x88,
+	0x9c, 0x4f, 0x40, 0x04, 0xbb, 0xfa, 0x96, 0x17, 0x3f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x8b, 0xc7,
+	0x9a, 0xd6, 0x43, 0x02, 0x00, 0x00,
 }
 
 func (this *QueuedMessage) Equal(that interface{}) bool {
@@ -156,7 +190,109 @@ func (this *QueuedMessage) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if !bytes.Equal(this.MsgData, that1.MsgData) {
+	if that1.Msg == nil {
+		if this.Msg != nil {
+			return false
+		}
+	} else if this.Msg == nil {
+		return false
+	} else if !this.Msg.Equal(that1.Msg) {
+		return false
+	}
+	return true
+}
+func (this *QueuedMessage_MsgCreateValidator) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*QueuedMessage_MsgCreateValidator)
+	if !ok {
+		that2, ok := that.(QueuedMessage_MsgCreateValidator)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.MsgCreateValidator.Equal(that1.MsgCreateValidator) {
+		return false
+	}
+	return true
+}
+func (this *QueuedMessage_MsgDelegate) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*QueuedMessage_MsgDelegate)
+	if !ok {
+		that2, ok := that.(QueuedMessage_MsgDelegate)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.MsgDelegate.Equal(that1.MsgDelegate) {
+		return false
+	}
+	return true
+}
+func (this *QueuedMessage_MsgUndelegate) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*QueuedMessage_MsgUndelegate)
+	if !ok {
+		that2, ok := that.(QueuedMessage_MsgUndelegate)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.MsgUndelegate.Equal(that1.MsgUndelegate) {
+		return false
+	}
+	return true
+}
+func (this *QueuedMessage_MsgBeginRedelegate) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*QueuedMessage_MsgBeginRedelegate)
+	if !ok {
+		that2, ok := that.(QueuedMessage_MsgBeginRedelegate)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.MsgBeginRedelegate.Equal(that1.MsgBeginRedelegate) {
 		return false
 	}
 	return true
@@ -181,16 +317,102 @@ func (m *QueuedMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.MsgData) > 0 {
-		i -= len(m.MsgData)
-		copy(dAtA[i:], m.MsgData)
-		i = encodeVarintQueuedMessage(dAtA, i, uint64(len(m.MsgData)))
+	if m.Msg != nil {
+		{
+			size := m.Msg.Size()
+			i -= size
+			if _, err := m.Msg.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueuedMessage_MsgCreateValidator) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueuedMessage_MsgCreateValidator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.MsgCreateValidator != nil {
+		{
+			size, err := m.MsgCreateValidator.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQueuedMessage(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
+func (m *QueuedMessage_MsgDelegate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
 
+func (m *QueuedMessage_MsgDelegate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.MsgDelegate != nil {
+		{
+			size, err := m.MsgDelegate.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQueuedMessage(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+func (m *QueuedMessage_MsgUndelegate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueuedMessage_MsgUndelegate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.MsgUndelegate != nil {
+		{
+			size, err := m.MsgUndelegate.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQueuedMessage(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	return len(dAtA) - i, nil
+}
+func (m *QueuedMessage_MsgBeginRedelegate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueuedMessage_MsgBeginRedelegate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.MsgBeginRedelegate != nil {
+		{
+			size, err := m.MsgBeginRedelegate.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQueuedMessage(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	return len(dAtA) - i, nil
+}
 func encodeVarintQueuedMessage(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQueuedMessage(v)
 	base := offset
@@ -208,8 +430,56 @@ func (m *QueuedMessage) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.MsgData)
-	if l > 0 {
+	if m.Msg != nil {
+		n += m.Msg.Size()
+	}
+	return n
+}
+
+func (m *QueuedMessage_MsgCreateValidator) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MsgCreateValidator != nil {
+		l = m.MsgCreateValidator.Size()
+		n += 1 + l + sovQueuedMessage(uint64(l))
+	}
+	return n
+}
+func (m *QueuedMessage_MsgDelegate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MsgDelegate != nil {
+		l = m.MsgDelegate.Size()
+		n += 1 + l + sovQueuedMessage(uint64(l))
+	}
+	return n
+}
+func (m *QueuedMessage_MsgUndelegate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MsgUndelegate != nil {
+		l = m.MsgUndelegate.Size()
+		n += 1 + l + sovQueuedMessage(uint64(l))
+	}
+	return n
+}
+func (m *QueuedMessage_MsgBeginRedelegate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.MsgBeginRedelegate != nil {
+		l = m.MsgBeginRedelegate.Size()
 		n += 1 + l + sovQueuedMessage(uint64(l))
 	}
 	return n
@@ -252,9 +522,9 @@ func (m *QueuedMessage) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MsgData", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field MsgCreateValidator", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQueuedMessage
@@ -264,25 +534,131 @@ func (m *QueuedMessage) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthQueuedMessage
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthQueuedMessage
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.MsgData = append(m.MsgData[:0], dAtA[iNdEx:postIndex]...)
-			if m.MsgData == nil {
-				m.MsgData = []byte{}
+			v := &types.MsgCreateValidator{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
+			m.Msg = &QueuedMessage_MsgCreateValidator{v}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MsgDelegate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQueuedMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQueuedMessage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQueuedMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &types.MsgDelegate{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Msg = &QueuedMessage_MsgDelegate{v}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MsgUndelegate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQueuedMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQueuedMessage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQueuedMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &types.MsgUndelegate{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Msg = &QueuedMessage_MsgUndelegate{v}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MsgBeginRedelegate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQueuedMessage
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQueuedMessage
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQueuedMessage
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &types.MsgBeginRedelegate{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Msg = &QueuedMessage_MsgBeginRedelegate{v}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

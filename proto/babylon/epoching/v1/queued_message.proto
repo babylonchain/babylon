@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
@@ -9,15 +10,10 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 message QueuedMessage {
   option (gogoproto.equal) = true;
   
-  // MsgType is the type of this queued message
-  enum MsgType {
-    MSG_CREATE_VALIDATOR = 0;
-    MSG_DELEGATE = 1;
-    MSG_UNDELEGATE = 2;
-    MSG_BEGIN_REDELEGATE = 3;
-    MSG_CANCEL_UNBONDING_DELEGATION = 4;
+  oneof msg {
+    cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 1;
+    cosmos.staking.v1beta1.MsgDelegate msg_delegate = 2;
+    cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 3;
+    cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 4;
   }
-
-  // msg_data is the serialised form of this queued message
-  bytes msg_data = 1;
 }

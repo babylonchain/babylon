@@ -386,13 +386,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"babylonchain", "babylon", "epoching", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "epoching", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_CurrentEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"babylonchain", "babylon", "epoching", "v1", "current_epoch"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_CurrentEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "epoching", "v1", "current_epoch"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EpochMsgs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"babylonchain", "babylon", "epoching", "epoch_msgs", "v1", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EpochMsgs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "epoching", "v1", "epoch_msgs", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ValidatorBLSPK_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"babylonchain", "babylon", "epoching", "validator_bls_pk", "v1", "ed25519_pk"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ValidatorBLSPK_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "epoching", "v1", "validator_bls_pk", "ed25519_pk"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
