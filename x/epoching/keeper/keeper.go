@@ -16,6 +16,7 @@ type (
 		cdc        codec.BinaryCodec
 		storeKey   sdk.StoreKey
 		memKey     sdk.StoreKey
+		hooks      types.EpochingHooks
 		paramstore paramtypes.Subspace
 	}
 )
@@ -36,9 +37,21 @@ func NewKeeper(
 		storeKey:   storeKey,
 		memKey:     memKey,
 		paramstore: ps,
+		hooks:      nil,
 	}
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// Set the validator hooks
+func (k *Keeper) SetHooks(sh types.EpochingHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set validator hooks twice")
+	}
+
+	k.hooks = sh
+
+	return k
 }
