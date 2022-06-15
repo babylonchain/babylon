@@ -9,7 +9,7 @@ import (
 var _ types.EpochingHooks = Keeper{}
 
 // BeginEpoch - call hook if registered
-func (k Keeper) BeginEpoch(ctx sdk.Context, epoch uint64) error {
+func (k Keeper) BeginEpoch(ctx sdk.Context, epoch sdk.Uint) error {
 	if k.hooks != nil {
 		return k.hooks.BeginEpoch(ctx, epoch)
 	}
@@ -17,7 +17,7 @@ func (k Keeper) BeginEpoch(ctx sdk.Context, epoch uint64) error {
 }
 
 // EndEpoch - call hook if registered
-func (k Keeper) EndEpoch(ctx sdk.Context, epoch uint64) error {
+func (k Keeper) EndEpoch(ctx sdk.Context, epoch sdk.Uint) error {
 	if k.hooks != nil {
 		return k.hooks.BeginEpoch(ctx, epoch)
 	}

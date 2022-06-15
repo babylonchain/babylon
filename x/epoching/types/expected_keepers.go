@@ -27,6 +27,6 @@ type BankKeeper interface {
 
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
-	BeginEpoch(ctx sdk.Context, epoch uint64) error // Must be called when an epoch begins
-	EndEpoch(ctx sdk.Context, epoch uint64) error   // Must be called when an epoch ends
+	BeginEpoch(ctx sdk.Context, epoch sdk.Uint) error // Must be called when an epoch begins
+	EndEpoch(ctx sdk.Context, epoch sdk.Uint) error   // Must be called when an epoch ends
 }
