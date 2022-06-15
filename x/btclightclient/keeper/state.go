@@ -23,9 +23,8 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 	}
 }
 
+// Create Insert a header into storage
 func (s HeadersState) Create(header *types.BTCBlockHeader) {
-	// Insert a header into storage
-
 	height, err := s.GetHeaderHeight(header.PrevBlock)
 	if err != nil {
 		// Parent should always exist
@@ -41,9 +40,8 @@ func (s HeadersState) Create(header *types.BTCBlockHeader) {
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
 }
 
+// GetHeader Retrieve a header by its height and hash
 func (s HeadersState) GetHeader(height uint64, hash types.BlockHash) (*types.BTCBlockHeader, error) {
-	// Retrieve a header by its height and hash
-
 	headersKey := types.HeadersObjectKey(height, hash)
 	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
 	bz := store.Get(headersKey)
@@ -56,9 +54,8 @@ func (s HeadersState) GetHeader(height uint64, hash types.BlockHash) (*types.BTC
 	return header, nil
 }
 
+// GetHeaderHeight Retrieve the Height of a header
 func (s HeadersState) GetHeaderHeight(hash types.BlockHash) (uint64, error) {
-	// Retrieve the Height of a header
-
 	hashKey := types.HeadersObjectHeightKey(hash)
 	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
 	bz := store.Get(hashKey)
@@ -69,9 +66,8 @@ func (s HeadersState) GetHeaderHeight(hash types.BlockHash) (uint64, error) {
 	return height, nil
 }
 
+// GetHeaderByHash Retrieve a header by its hash
 func (s HeadersState) GetHeaderByHash(hash types.BlockHash) (*types.BTCBlockHeader, error) {
-	// Retrieve a header by its hash
-
 	height, err := s.GetHeaderHeight(hash)
 	if err != nil {
 		return nil, err
@@ -79,9 +75,8 @@ func (s HeadersState) GetHeaderByHash(hash types.BlockHash) (*types.BTCBlockHead
 	return s.GetHeader(height, hash)
 }
 
+// GetHeadersByHeight Retrieve headers by their height
 func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCBlockHeader) bool) {
-	// Retrieve headers by their height
-	// func parameter is used for pagination
 	store := prefix.NewStore(s.headers, sdk.Uint64ToBigEndian(height))
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
@@ -97,6 +92,7 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCBlockHe
 	}
 }
 
+// GetBlockHashes Retrieve all block hashes
 func (s HeadersState) GetBlockHashes(f func(types.BlockHash) bool) {
 	iter := s.hashToHeight.Iterator(nil, nil)
 	defer iter.Close()
@@ -110,6 +106,7 @@ func (s HeadersState) GetBlockHashes(f func(types.BlockHash) bool) {
 	}
 }
 
+// Exists Check whether a hash is maintained in storage
 func (s HeadersState) Exists(hash types.BlockHash) bool {
 	hashKey := types.HeadersObjectHeightKey(hash)
 	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
