@@ -7,11 +7,11 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) RawCheckpoints(c context.Context, req *types.QueryRawCheckpointsRequest) (*types.QueryRawCheckpointsResponse, error) {
+func (k Keeper) RawCheckpointList(c context.Context, req *types.QueryRawCheckpointListRequest) (*types.QueryRawCheckpointListResponse, error) {
 	panic("TODO: implement this")
 }
 
-func (k Keeper) RecentRawCheckpoints(c context.Context, req *types.QueryRecentRawCheckpointsRequest) (*types.QueryRecentRawCheckpointsResponse, error) {
+func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {
 	panic("TODO: implement this")
 }
 
