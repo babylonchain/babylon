@@ -27,14 +27,14 @@ var (
 	TipPrefix = []byte{0x1} // reserve this namespace for the tip
 )
 
-func HeadersObjectKey(height uint64, hash []byte) []byte {
+func HeadersObjectKey(height uint64, hash BlockHash) []byte {
 	he := sdk.Uint64ToBigEndian(height)
 
 	heightPrefix := append(HeadersObjectPrefix, he...)
 	return append(heightPrefix, hash...)
 }
 
-func HeadersObjectHeightKey(hash []byte) []byte {
+func HeadersObjectHeightKey(hash BlockHash) []byte {
 	return append(HashToHeightPrefix, hash...)
 }
 

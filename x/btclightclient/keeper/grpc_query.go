@@ -13,7 +13,7 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	k.HeadersState(sdkCtx).GetHeaders(func(hash []byte) bool {
+	k.HeadersState(sdkCtx).GetBlockHashes(func(hash types.BlockHash) bool {
 		hashes = append(hashes, hash)
 		// Return false which means that we want to continue receiving hashes
 		return false
