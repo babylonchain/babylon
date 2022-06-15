@@ -8,8 +8,6 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
 // QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
 message QueuedMessage {
-  option (gogoproto.equal) = true;
-  
   oneof msg {
     cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 1;
     cosmos.staking.v1beta1.MsgDelegate msg_delegate = 2;
