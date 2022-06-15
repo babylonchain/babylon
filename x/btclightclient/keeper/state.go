@@ -43,8 +43,7 @@ func (s HeadersState) Create(header *types.BTCBlockHeader) {
 // GetHeader Retrieve a header by its height and hash
 func (s HeadersState) GetHeader(height uint64, hash types.BlockHash) (*types.BTCBlockHeader, error) {
 	headersKey := types.HeadersObjectKey(height, hash)
-	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
-	bz := store.Get(headersKey)
+	bz := s.headers.Get(headersKey)
 	if bz == nil {
 		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided height and hash")
 	}
@@ -57,8 +56,7 @@ func (s HeadersState) GetHeader(height uint64, hash types.BlockHash) (*types.BTC
 // GetHeaderHeight Retrieve the Height of a header
 func (s HeadersState) GetHeaderHeight(hash types.BlockHash) (uint64, error) {
 	hashKey := types.HeadersObjectHeightKey(hash)
-	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
-	bz := store.Get(hashKey)
+	bz := s.hashToHeight.Get(hashKey)
 	if bz == nil {
 		return 0, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
 	}
@@ -108,10 +106,8 @@ func (s HeadersState) GetBlockHashes(f func(types.BlockHash) bool) {
 
 // Exists Check whether a hash is maintained in storage
 func (s HeadersState) Exists(hash types.BlockHash) bool {
-	hashKey := types.HeadersObjectHeightKey(hash)
-	store := prefix.NewStore(s.headers, types.HashToHeightPrefix)
-	bz := store.Get(hashKey)
-	return bz == nil
+	_, err := s.GetHeaderHeight(hash)
+	return err != nil
 }
 
 func (k Keeper) TipState(ctx sdk.Context) TipState {
