@@ -20,15 +20,8 @@ message RawCheckpoint {
   bytes bitmap = 3;
   // bls_multi_sig defines the multi sig that is aggregated from individual bls sigs
   bytes bls_multi_sig = 4;
-  // Status defines the status of the raw checkpoint
-  enum Status {
-    // UNCHECKPOINTED indicates the checkpoint has not appeared on BTC
-    UNCHECKPOINTED = 0;
-    // CHECKPOINTED_NOT_CONFIRMED indicates the checkpoint has been checkpointed on BTC but has insufficent confirmation
-    CHECKPOINTED_NOT_CONFIRMED = 1;
-    // CONFIRMED indicates the checkpoint has sufficient confirmation depth on BTC
-    CONFIRMED = 2;
-  }
+  // status defines the status of the checkpoint
+  RawCheckpointStatus status = 5;
 }
 
 // BlsSig wraps the bls sig with meta data.
@@ -43,4 +36,14 @@ message BlsSig {
   // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // the signer_address defines the address of the signer
   string signer_address = 5;
+}
+
+// RawCheckpointStatus defines the status of the raw checkpoint
+enum RawCheckpointStatus {
+    // UNCHECKPOINTED indicates the checkpoint has not appeared on BTC
+    UNCHECKPOINTED = 0;
+    // CHECKPOINTED_NOT_CONFIRMED indicates the checkpoint has been checkpointed on BTC but has insufficent confirmation
+    CHECKPOINTED_NOT_CONFIRMED = 1;
+    // CONFIRMED indicates the checkpoint has sufficient confirmation depth on BTC
+    CONFIRMED = 2;
 }
