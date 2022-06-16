@@ -91,20 +91,6 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCBlockHe
 	}
 }
 
-// GetBlockHashes Retrieve all block hashes
-func (s HeadersState) GetBlockHashes(f func(types.BlockHash) bool) {
-	iter := s.hashToHeight.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		// The header is the key of the KV store
-		header := iter.Key()
-		stop := f(header)
-		if stop {
-			break
-		}
-	}
-}
-
 // Exists Check whether a hash is maintained in storage
 func (s HeadersState) Exists(hash types.BlockHash) bool {
 	_, err := s.GetHeaderHeight(hash)

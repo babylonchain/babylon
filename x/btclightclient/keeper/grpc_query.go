@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -24,13 +25,19 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	k.HeadersState(sdkCtx).GetBlockHashes(func(hash types.BlockHash) bool {
-		hashes = append(hashes, hash)
-		// Return false which means that we want to continue receiving hashes
-		return false
+	store := k.HeadersState(sdkCtx).hashToHeight
+	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			hashes = append(hashes, key)
+		}
+		return true, nil
 	})
 
-	return &types.QueryHashesResponse{Hashes: hashes}, nil
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryHashesResponse{Hashes: hashes, Pagination: pageRes}, nil
 }
 
 func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (*types.QueryContainsResponse, error) {

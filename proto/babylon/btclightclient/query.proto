@@ -35,13 +35,19 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 // QueryHashesRequest is request type for the Query/Hashes RPC method.
-message QueryHashesRequest {}
+// It involves retrieving all hashes that are maintained by the module.
+message QueryHashesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 
 // QueryHashesResponse is response type for the Query/Hashes RPC method.
 message QueryHashesResponse {
   repeated bytes hashes = 1;
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 // QueryContainsRequest is request type for the Query/Contains RPC method.
+// It involves checking whether a hash is maintained by the module.
 message QueryContainsRequest {
   bytes hash = 1;
 }
