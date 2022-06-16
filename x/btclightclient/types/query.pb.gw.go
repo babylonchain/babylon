@@ -274,11 +274,11 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btclightclient", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btclightclient", "v1", "params"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Hashes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btclightclient", "v1", "hashes"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Hashes_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btclightclient", "v1", "hashes"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Query_Contains_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btclightclient", "v1", "contains"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Contains_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btclightclient", "v1", "contains"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (

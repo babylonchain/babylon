@@ -61,6 +61,7 @@ func (s HeadersState) GetHeaderHeight(hash types.BlockHash) (uint64, error) {
 		return 0, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
 	}
 	height := sdk.BigEndianToUint64(bz)
+	panic(height)
 	return height, nil
 }
 
@@ -107,7 +108,7 @@ func (s HeadersState) GetBlockHashes(f func(types.BlockHash) bool) {
 // Exists Check whether a hash is maintained in storage
 func (s HeadersState) Exists(hash types.BlockHash) bool {
 	_, err := s.GetHeaderHeight(hash)
-	return err != nil
+	return err == nil
 }
 
 func (k Keeper) TipState(ctx sdk.Context) TipState {
