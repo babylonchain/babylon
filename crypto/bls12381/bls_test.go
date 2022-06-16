@@ -8,7 +8,7 @@ import (
 	blst "github.com/supranational/blst/bindings/go"
 )
 
-// Tests single bls sig verification
+// Tests single BLS sig verification
 func TestVerifyBlsSig(t *testing.T) {
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
@@ -26,7 +26,7 @@ func TestVerifyBlsSig(t *testing.T) {
 	require.Nil(t, err)
 }
 
-// Tests bls multi sig verification
+// Tests BLS multi sig verification
 func TestVerifyBlsMultiSig(t *testing.T) {
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
@@ -46,8 +46,8 @@ func TestVerifyBlsMultiSig(t *testing.T) {
 	require.Nil(t, err)
 }
 
-// Tests bls multi sig verification
-// insert an invalid bls sig in aggregation
+// Tests BLS multi sig verification
+// insert an invalid BLS sig in aggregation
 func TestVerifyBlsMultiSig2(t *testing.T) {
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
