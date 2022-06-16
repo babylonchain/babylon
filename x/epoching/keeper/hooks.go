@@ -8,18 +8,18 @@ import (
 // Implements EpochingHooks interface
 var _ types.EpochingHooks = Keeper{}
 
-// BeginEpoch - call hook if registered
-func (k Keeper) BeginEpoch(ctx sdk.Context, epoch sdk.Uint) error {
+// AfterEpochBegins - call hook if registered
+func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error {
 	if k.hooks != nil {
-		return k.hooks.BeginEpoch(ctx, epoch)
+		return k.hooks.AfterEpochBegins(ctx, epoch)
 	}
 	return nil
 }
 
-// EndEpoch - call hook if registered
-func (k Keeper) EndEpoch(ctx sdk.Context, epoch sdk.Uint) error {
+// AfterEpochEnds - call hook if registered
+func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error {
 	if k.hooks != nil {
-		return k.hooks.BeginEpoch(ctx, epoch)
+		return k.hooks.AfterEpochEnds(ctx, epoch)
 	}
 	return nil
 }

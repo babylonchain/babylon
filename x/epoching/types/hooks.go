@@ -13,9 +13,9 @@ func NewMultiEpochingHooks(hooks ...EpochingHooks) MultiEpochingHooks {
 	return hooks
 }
 
-func (h MultiEpochingHooks) BeginEpoch(ctx sdk.Context, epoch sdk.Uint) error {
+func (h MultiEpochingHooks) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error {
 	for i := range h {
-		if err := h[i].BeginEpoch(ctx, epoch); err != nil {
+		if err := h[i].AfterEpochBegins(ctx, epoch); err != nil {
 			return err
 		}
 	}
@@ -23,9 +23,9 @@ func (h MultiEpochingHooks) BeginEpoch(ctx sdk.Context, epoch sdk.Uint) error {
 	return nil
 }
 
-func (h MultiEpochingHooks) EndEpoch(ctx sdk.Context, epoch sdk.Uint) error {
+func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error {
 	for i := range h {
-		if err := h[i].EndEpoch(ctx, epoch); err != nil {
+		if err := h[i].AfterEpochEnds(ctx, epoch); err != nil {
 			return err
 		}
 	}
