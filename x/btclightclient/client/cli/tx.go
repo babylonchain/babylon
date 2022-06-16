@@ -2,22 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"time"
-
-	"github.com/spf13/cobra"
-
-	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-)
-
-var (
-	DefaultRelativePacketTimeoutTimestamp = uint64((time.Duration(10) * time.Minute).Nanoseconds())
-)
-
-const (
-	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
-	listSeparator              = ","
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/spf13/cobra"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -29,6 +18,31 @@ func GetTxCmd() *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
+
+	cmd.AddCommand(CmdTxInsertHeader())
+
+	return cmd
+}
+
+func CmdTxInsertHeader() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "insert-header [header-bytes]",
+		Short: "shows the parameters of the module",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			headerBytes := []byte(args[0])
+			msg := types.NewMsgInsertHeader(clientCtx.GetFromName(), headerBytes)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }

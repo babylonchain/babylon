@@ -15,6 +15,11 @@ import (
 // Ensure that MsgInsertHeader implements all functions of the Msg interface
 var _ sdk.Msg = (*MsgInsertHeader)(nil)
 
+func NewMsgInsertHeader(signer string, header []byte) *MsgInsertHeader {
+	headerBytes := &BTCHeader{Header: header}
+	return &MsgInsertHeader{Signer: signer, Header: headerBytes}
+}
+
 func (msg *MsgInsertHeader) ValidateBasic() error {
 	// This function validates stateless message elements
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
@@ -22,7 +27,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 		return err
 	}
 
-	header, err := BytesToBtcdHeader(msg.HeaderBytes)
+	header, err := BytesToBtcdHeader(msg.Header)
 	if err != nil {
 		return err
 	}

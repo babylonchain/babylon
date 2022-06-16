@@ -13,6 +13,6 @@ service Msg {
 
 message MsgInsertHeader {
   string signer = 1;
-  BTCHeaderBytes header_bytes = 2;
+  BTCHeader header = 2;
 }
 message MsgInsertHeaderResponse {}

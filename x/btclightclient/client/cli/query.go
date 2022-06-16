@@ -3,15 +3,10 @@ package cli
 import (
 	"context"
 	"fmt"
-
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-)
-
-const (
-	FlagHash = "hash"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -102,7 +97,6 @@ func CmdContains() *cobra.Command {
 		},
 	}
 
-	cmd.Flags().String(FlagHash, "", "The hash to check for inclusion")
 	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd

@@ -3,8 +3,8 @@ package babylon.btclightclient.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
-message BTCHeaderBytes {
-  bytes header_bytes = 1;
+message BTCHeader {
+  bytes header = 1;
 }
 
 // This structure is going to be used to store converted btcd headers

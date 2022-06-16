@@ -5,11 +5,11 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func BytesToBtcdHeader(headerBytes *BTCHeaderBytes) (*wire.BlockHeader, error) {
+func BytesToBtcdHeader(headerBytes *BTCHeader) (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
 	// The Deserialize method expects an io.Reader instance
-	reader := bytes.NewReader(headerBytes.HeaderBytes)
+	reader := bytes.NewReader(headerBytes.Header)
 	// Decode the header bytes
 	err := header.Deserialize(reader)
 	// There was a parsing error
