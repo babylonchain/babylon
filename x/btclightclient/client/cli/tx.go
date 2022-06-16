@@ -36,13 +36,13 @@ func CmdTxInsertHeader() *cobra.Command {
 			}
 
 			headerBytes := []byte(args[0])
-			msg := types.NewMsgInsertHeader(clientCtx.GetFromName(), headerBytes)
+			msg := types.NewMsgInsertHeader(clientCtx.GetFromAddress(), headerBytes)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
 	}
 
-	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

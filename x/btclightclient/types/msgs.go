@@ -15,9 +15,9 @@ import (
 // Ensure that MsgInsertHeader implements all functions of the Msg interface
 var _ sdk.Msg = (*MsgInsertHeader)(nil)
 
-func NewMsgInsertHeader(signer string, header []byte) *MsgInsertHeader {
+func NewMsgInsertHeader(signer sdk.AccAddress, header []byte) *MsgInsertHeader {
 	headerBytes := &BTCHeader{Header: header}
-	return &MsgInsertHeader{Signer: signer, Header: headerBytes}
+	return &MsgInsertHeader{Signer: signer.String(), Header: headerBytes}
 }
 
 func (msg *MsgInsertHeader) ValidateBasic() error {
