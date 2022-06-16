@@ -10,7 +10,6 @@ option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 // RawCheckpoint wraps the multi sig with meta data.
 message RawCheckpoint {
   option (gogoproto.equal)            = true;
-  option (gogoproto.goproto_stringer) = false;
 
   // epoch_num defines the epoch number the raw checkpoint is for
   uint64 epoch_num = 1;
