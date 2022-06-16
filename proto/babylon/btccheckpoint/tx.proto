@@ -7,7 +7,7 @@ option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
 
 // Msg defines the Msg service.
 service Msg {
-  rpc InsertBtcSpvProof(InsertBtcSpvProofRequest) returns (InsertBtcSpvProofResponse);
+  rpc InsertBTCSpvProof(InsertBTCSpvProofRequest) returns (InsertBTCSpvProofResponse);
 }
 
 // Consider we have a Merkle tree with following structure:
@@ -25,13 +25,13 @@ service Msg {
 // - merkle_nodes we'd have H4 || H12 || H5555
 // By looking at 010 we would know that H4 is a right sibling,
 // H12 is left, H5555 is right again.
-message BtcSpvProof {
+message BTCSpvProof {
   // Valid bitcoin transaction containing OP_RETURN opcode.
   bytes btc_transaction = 1;
   // Index of transaction within the block. Index is needed to determine if
   // currently hashed node is left or right.
   uint32 btc_transaction_index = 2;
-  // List of concatenated intermediate merkele tree nodes, without root node and leaf node
+  // List of concatenated intermediate merkle tree nodes, without root node and leaf node
   // against which we calculate the proof.
   // Each node has 32 byte length.
   // Example proof can look like: 32_bytes_of_node1 || 32_bytes_of_node2 ||  32_bytes_of_node3
@@ -42,10 +42,10 @@ message BtcSpvProof {
   bytes confirming_btc_header = 4;
 }
 
-message InsertBtcSpvProofRequest {
-  repeated BtcSpvProof proofs = 1;
+message InsertBTCSpvProofRequest {
+  repeated BTCSpvProof proofs = 1;
 }
 
-message InsertBtcSpvProofResponse {}
+message InsertBTCSpvProofResponse {}
 
 // this line is used by starport scaffolding # proto/tx/message
