@@ -18,10 +18,12 @@ func TestVerifyBlsSig(t *testing.T) {
 	require.Equal(t, 48, len(sig))
 	// a byte size of a public key (compressed) is 96
 	require.Equal(t, 96, len(pk))
-	res := Verify(sig, pk, msga)
+	res, err := Verify(sig, pk, msga)
 	require.True(t, res)
-	res = Verify(sig, pk, msgb)
+	require.Nil(t, err)
+	res, err = Verify(sig, pk, msgb)
 	require.False(t, res)
+	require.Nil(t, err)
 }
 
 // Tests bls multi sig verification
@@ -34,12 +36,14 @@ func TestVerifyBlsMultiSig(t *testing.T) {
 	for i := 0; i < n; i++ {
 		sigs[i] = Sign(sks[i], msga)
 	}
-	multiSig, aggregated := AggrSigs(sigs)
-	require.True(t, aggregated)
-	res := VerifyMultiSig(multiSig, pks, msga)
+	multiSig, err := AggrSigs(sigs)
+	require.Nil(t, err)
+	res, err := VerifyMultiSig(multiSig, pks, msga)
 	require.True(t, res)
-	res = VerifyMultiSig(multiSig, pks, msgb)
+	require.Nil(t, err)
+	res, err = VerifyMultiSig(multiSig, pks, msgb)
 	require.False(t, res)
+	require.Nil(t, err)
 }
 
 // Tests bls multi sig verification
@@ -54,18 +58,20 @@ func TestVerifyBlsMultiSig2(t *testing.T) {
 		sigs[i] = Sign(sks[i], msga)
 	}
 	sigs[n-1] = Sign(sks[n-1], msgb)
-	multiSig, aggregated := AggrSigs(sigs)
-	require.True(t, aggregated)
-	res := VerifyMultiSig(multiSig, pks, msga)
+	multiSig, err := AggrSigs(sigs)
+	require.Nil(t, err)
+	res, err := VerifyMultiSig(multiSig, pks, msga)
 	require.False(t, res)
-	res = VerifyMultiSig(multiSig, pks, msgb)
+	require.Nil(t, err)
+	res, err = VerifyMultiSig(multiSig, pks, msgb)
 	require.False(t, res)
+	require.Nil(t, err)
 }
 
 func genRandomKeyPair() (*blst.SecretKey, []byte) {
 	var ikm [32]byte
 	_, _ = rand.Read(ikm[:])
-	return GeneKeyPair(ikm[:])
+	return GenKeyPair(ikm[:])
 }
 
 func generateBatchTestKeyPairs(n int) ([]*blst.SecretKey, []PublicKey) {
