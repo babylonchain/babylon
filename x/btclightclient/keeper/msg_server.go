@@ -29,6 +29,7 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
 	// Retrieve parent
 	parent, err := m.k.HeadersState(sdkCtx).GetHeaderByHash(&btcdHeader.PrevBlock)
 	// parent does not exist

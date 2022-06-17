@@ -34,7 +34,6 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-
 		cdc:        cdc,
 		storeKey:   storeKey,
 		memKey:     memKey,
@@ -46,12 +45,14 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// InsertHeader inserts a btcd header into the header state
 func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	headerHash := header.BlockHash()
 	if k.HeadersState(ctx).Exists(&headerHash) {
 		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
 	}
 
+	// Only check if this is not the base BTC header
 	if !k.HeadersState(ctx).Exists(&header.PrevBlock) {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}

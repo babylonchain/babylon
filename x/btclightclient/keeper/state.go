@@ -32,9 +32,13 @@ func (s HeadersState) Create(header *wire.BlockHeader) {
 		// Parent should always exist
 		panic("Parent does not exist.")
 	}
+	s.InsertHeader(header, height+1)
+}
 
+// InsertHeader Insert the header into the hash->height and (height, hash)->header storage
+func (s HeadersState) InsertHeader(header *wire.BlockHeader, height uint64) {
 	headerHash := header.BlockHash()
-	headersKey := types.HeadersObjectKey(height+1, &headerHash)
+	headersKey := types.HeadersObjectKey(height, &headerHash)
 	heightKey := types.HeadersObjectHeightKey(&headerHash)
 
 	headerRawBytes := types.BtcdHeaderToBytes(header)
@@ -58,6 +62,41 @@ func (s HeadersState) GetHeader(height uint64, hash *chainhash.Hash) (*wire.Bloc
 		return nil, err
 	}
 	return header, nil
+}
+
+// GetBaseBTCHeader retrieves the BTC header with the minimum height
+func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
+	// Initialize iteration variables
+	var minHeight uint64 = 0
+	var baseBlock *wire.BlockHeader = nil
+
+	iter := s.hashToHeight.Iterator(nil, nil)
+	defer iter.Close()
+
+	// Iterate through all hashes and their heights
+	for ; iter.Valid(); iter.Next() {
+		hash := iter.Key()
+		height := sdk.BigEndianToUint64(iter.Value())
+
+		encodedHash, err := types.BytesToChainhash(hash)
+		if err != nil {
+			return nil, err
+		}
+
+		if minHeight == 0 {
+			minHeight = height
+		}
+
+		// A hash with a new minimum height has been found
+		if height <= minHeight {
+			baseBlock, err = s.GetHeaderByHash(encodedHash)
+			if err != nil {
+				return nil, err
+			}
+			minHeight = height
+		}
+	}
+	return baseBlock, nil
 }
 
 // GetHeaderHeight Retrieve the Height of a header
