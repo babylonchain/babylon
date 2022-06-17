@@ -27,7 +27,7 @@ func GetTxCmd() *cobra.Command {
 func CmdTxInsertHeader() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "insert-header [header-bytes]",
-		Short: "shows the parameters of the module",
+		Short: "submit BTC header bytes",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
