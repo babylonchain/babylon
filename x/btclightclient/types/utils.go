@@ -31,6 +31,7 @@ func BtcdHeaderToBTCBlockHeader(btcdHeader *wire.BlockHeader) *BTCBlockHeader {
 		Version:    btcdHeader.Version,
 		PrevBlock:  BlockHash(btcdHeader.PrevBlock.String()),
 		MerkleRoot: []byte(btcdHeader.MerkleRoot.String()),
+		Time:       btcdHeader.Timestamp.Unix(),
 		Bits:       btcdHeader.Bits,
 		Nonce:      btcdHeader.Nonce,
 		Hash:       BlockHash(btcdHeader.BlockHash().String()),

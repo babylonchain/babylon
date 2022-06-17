@@ -11,6 +11,7 @@ service Msg {
   rpc InsertHeader(MsgInsertHeader) returns (MsgInsertHeaderResponse) {};
 }
 
+// MsgInsertHeader defines the message for incoming header bytes
 message MsgInsertHeader {
   string signer = 1;
   BTCHeader header = 2;

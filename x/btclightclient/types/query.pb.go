@@ -114,6 +114,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 }
 
 // QueryHashesRequest is request type for the Query/Hashes RPC method.
+// It involves retrieving all hashes that are maintained by the module.
 type QueryHashesRequest struct {
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -212,6 +213,7 @@ func (m *QueryHashesResponse) GetPagination() *query.PageResponse {
 }
 
 // QueryContainsRequest is request type for the Query/Contains RPC method.
+// It involves checking whether a hash is maintained by the module.
 type QueryContainsRequest struct {
 	Hash []byte `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 }

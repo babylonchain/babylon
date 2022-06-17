@@ -27,6 +27,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgInsertHeader defines the message for incoming header bytes
 type MsgInsertHeader struct {
 	Signer string     `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	Header *BTCHeader `protobuf:"bytes,2,opt,name=header,proto3" json:"header,omitempty"`
