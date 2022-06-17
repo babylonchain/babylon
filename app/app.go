@@ -496,6 +496,8 @@ func NewBabylonApp(
 		NewAnteHandler(
 			appOpts,
 			app.AccountKeeper,
+			app.BankKeeper,
+			app.FeeGrantKeeper,
 			ante.DefaultSigVerificationGasConsumer,
 			encodingConfig.TxConfig.SignModeHandler(),
 			&app.EpochingKeeper,
