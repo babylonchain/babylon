@@ -1,6 +1,9 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 const (
 	// ModuleName defines the module name
@@ -27,15 +30,18 @@ var (
 	TipPrefix = []byte{0x1} // reserve this namespace for the tip
 )
 
-func HeadersObjectKey(height uint64, hash BlockHash) []byte {
+func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
 	he := sdk.Uint64ToBigEndian(height)
 
+	hashBytes := ChainhashToBytes(hash)
+
 	heightPrefix := append(HeadersObjectPrefix, he...)
-	return append(heightPrefix, hash...)
+	return append(heightPrefix, hashBytes...)
 }
 
-func HeadersObjectHeightKey(hash BlockHash) []byte {
-	return append(HashToHeightPrefix, hash...)
+func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
+	hashBytes := ChainhashToBytes(hash)
+	return append(HashToHeightPrefix, hashBytes...)
 }
 
 func KeyPrefix(p string) []byte {

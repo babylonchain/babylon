@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"github.com/btcsuite/btcd/wire"
 
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -45,12 +46,13 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) InsertHeader(ctx sdk.Context, height uint64, header *types.BTCBlockHeader) error {
-	if k.HeadersState(ctx).Exists(header.Hash) {
+func (k Keeper) InsertHeader(ctx sdk.Context, height uint64, header *wire.BlockHeader) error {
+	headerHash := header.BlockHash()
+	if k.HeadersState(ctx).Exists(&headerHash) {
 		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
 	}
 
-	if !k.HeadersState(ctx).Exists(header.PrevBlock) {
+	if !k.HeadersState(ctx).Exists(&header.PrevBlock) {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}
 

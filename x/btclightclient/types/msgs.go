@@ -16,7 +16,7 @@ import (
 var _ sdk.Msg = (*MsgInsertHeader)(nil)
 
 func NewMsgInsertHeader(signer sdk.AccAddress, header []byte) *MsgInsertHeader {
-	headerBytes := &BTCHeader{Header: header}
+	headerBytes := &BTCHeaderBytes{HeaderBytes: header}
 	return &MsgInsertHeader{Signer: signer.String(), Header: headerBytes}
 }
 

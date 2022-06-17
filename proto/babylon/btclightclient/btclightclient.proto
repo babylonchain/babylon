@@ -6,28 +6,6 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 import "google/protobuf/timestamp.proto";
 
 // BTCHeader defines the structure of the incoming message bytes
-message BTCHeader {
-  bytes header = 1;
-}
-
-// This structure is going to be used to store converted btcd headers
-// It is mainly used because btcd headers (type *wire.BlockHeader)
-// cannot be inserted into storage since they do not correspond
-// to proto objects.
-message BTCBlockHeader {
-  // Version of the header
-  int32 version = 1;
-  // Hash of the parent header
-  bytes prev_block = 2;
-  // The merkle root for the header
-  bytes merkle_root = 3;
-  // The timestamp for the header
-  google.protobuf.Timestamp time = 4;
-  // The difficulty of the header
-  uint32 bits = 5;
-  // Nonce that was used to generate a hash that satisfies difficulty
-  uint32 nonce = 6;
-  // The hash of the header.
-  // Not part of the BTC header structure, but useful for other operations.
-  bytes hash = 7;
+message BTCHeaderBytes {
+  bytes header_bytes = 1;
 }

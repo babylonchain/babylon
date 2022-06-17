@@ -42,6 +42,10 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 
 func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (*types.QueryContainsResponse, error) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	contains := k.HeadersState(sdkCtx).Exists(req.Hash)
+	chHash, err := types.BytesToChainhash(req.Hash)
+	if err != nil {
+		return nil, err
+	}
+	contains := k.HeadersState(sdkCtx).Exists(chHash)
 	return &types.QueryContainsResponse{Contains: contains}, nil
 }
