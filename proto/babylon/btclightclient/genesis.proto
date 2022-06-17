@@ -4,7 +4,6 @@ package babylon.btclightclient.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/btclightclient/params.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 

@@ -51,7 +51,10 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	}
 
 	// All good, insert the header
-	m.k.HeadersState(sdkCtx).Create(btcdHeader)
+	err = m.k.InsertHeader(sdkCtx, btcdHeader)
+	if err != nil {
+		return nil, err
+	}
 	return &types.MsgInsertHeaderResponse{}, nil
 }
 

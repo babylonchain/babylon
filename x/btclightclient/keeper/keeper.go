@@ -46,7 +46,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) InsertHeader(ctx sdk.Context, height uint64, header *wire.BlockHeader) error {
+func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	headerHash := header.BlockHash()
 	if k.HeadersState(ctx).Exists(&headerHash) {
 		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")

@@ -21,6 +21,9 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 }
 
 func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*types.QueryHashesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	var hashes [][]byte
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -41,6 +44,9 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 }
 
 func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (*types.QueryContainsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	chHash, err := types.BytesToChainhash(req.Hash)
 	if err != nil {
