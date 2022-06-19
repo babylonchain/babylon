@@ -59,6 +59,7 @@ submitter -> Tendermint --++ : Broadcast InsertProofOfInclusion transaction
 == Handle BTC checkpoint tx relayed by vigilante BTC scanner ==
 
 Tendermint -> btccheckpoint ++ : CheckTx
+btccheckpoint -> btccheckpoint : Validate basic checkpoint structure
 btccheckpoint -> btcckpts : Check if record already exists
 return ok or duplicate
 alt if not a duplicate
@@ -78,7 +79,7 @@ end note
 alt raw checkpoint exists
   btccheckpoint -> btclightclient : Check that BTC header exists
   alt BTC header exists
-    btccheckpoint -> btcckpts : Add checkpoint transaction
+    btccheckpoint -> btcckpts : Add BTC checkpoint transaction
     btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
     checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
     checkpointing -> Events -- : Emit epoch checkpoint included

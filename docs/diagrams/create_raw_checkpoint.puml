@@ -30,7 +30,7 @@ return ValidatorSetUpdates
 
 Tendermint -> checkpointing : BeginBlock
 note right
-  There is nothing to do, we are waiting for the Quorumc Certificate.
+  There is nothing to do, we are waiting for the Quorum Certificate.
 end note
 
 == Block N+2: The block that contains the Quorum Certificate of the old validators over Block N+1 ==
