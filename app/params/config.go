@@ -10,7 +10,7 @@ import (
 const (
 	HumanCoinUnit = "bbl"
 	BaseCoinUnit  = "ubbl"
-	BblExponent  = 6
+	BblExponent   = 6
 
 	DefaultBondDenom = BaseCoinUnit
 

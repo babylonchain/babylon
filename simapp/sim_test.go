@@ -11,7 +11,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-    "github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/app"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"

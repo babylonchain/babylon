@@ -23,8 +23,6 @@ Mgoogle/protobuf/any.proto=github.com/cosmos/cosmos-sdk/codec/types:. \
 
 done
 
-go mod tidy
-
 # move proto files to the right places
 cp -r github.com/babylonchain/babylon/* ./
 rm -rf github.com

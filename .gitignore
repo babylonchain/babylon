@@ -38,6 +38,10 @@ build
 
 # Generated files
 .idea/**/contentModel.xml
+.idea/**/.gitignore
+.idea/**/babylon.iml
+.idea/**/modules.xml
+.idea/**/vcs.xml
 
 # Sensitive or high-churn files
 .idea/**/dataSources/
