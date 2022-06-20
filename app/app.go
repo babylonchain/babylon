@@ -500,7 +500,7 @@ func NewBabylonApp(
 			app.FeeGrantKeeper,
 			ante.DefaultSigVerificationGasConsumer,
 			encodingConfig.TxConfig.SignModeHandler(),
-			&app.EpochingKeeper,
+			app.EpochingKeeper,
 		),
 	)
 

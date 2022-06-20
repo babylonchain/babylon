@@ -20,9 +20,9 @@ func NewAnteHandler(
 	feegrantKeeper ante.FeegrantKeeper,
 	sigGasConsumer ante.SignatureVerificationGasConsumer,
 	signModeHandler signing.SignModeHandler,
-	epochingKeeper *epochingkeeper.Keeper,
+	epochingKeeper epochingkeeper.Keeper,
 ) sdk.AnteHandler {
-	queueMsgDecorator := epochingkeeper.NewQueueMsgDecorator(*epochingKeeper)
+	queueMsgDecorator := epochingkeeper.NewQueueMsgDecorator(epochingKeeper)
 	return sdk.ChainAnteDecorators(
 		ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
 		ante.NewRejectExtensionOptionsDecorator(),
