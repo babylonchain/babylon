@@ -117,11 +117,7 @@ message QueryBlsPublicKeyListRequest {
 // QueryBlsPublicKeyListResponse is the response type for the Query/BlsPublicKeys
 // RPC method.
 message QueryBlsPublicKeyListResponse {
-  repeated bytes bls_pub_keys = 1;
-  // the signer_address defines the address of the signer
-  // will change to use cosmos_proto.scalar when we use cosmos v0.46.x
-  // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-  string signer_address = 5;
+  repeated ValidatorWithBlsKey validator_with_bls_keys = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -134,4 +130,10 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// ValidatorWithBlsKey couples validator address and its bls public key
+message ValidatorWithBlsKey {
+  string validator_address = 1;
+  bytes bls_pub_key = 2;
 }
