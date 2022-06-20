@@ -6,5 +6,5 @@ import "babylon/checkpointing/params.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// GenesisState defines the checkpoint.proto module's genesis state.
+// GenesisState defines the checkpointing module's genesis state.
 message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
