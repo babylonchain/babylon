@@ -1,0 +1,147 @@
+@startuml Submit Checkpoint
+boundary    Bitcoin
+actor       User
+control     "Checkpoint Submitter / Relayer" as submitter
+participant CLI
+control     Tendermint
+queue       Mempool
+participant "Epoching Module"   as epoching
+participant "Checkpointing Module"  as checkpointing
+participant "BTC Checkpoint Module" as btccheckpoint
+participant "Staking Module"    as staking
+participant "Bank Module"       as bank
+participant "BTC Light Client"  as btclightclient
+database    "Raw Checkpoints"   as rawckpts
+database    "BTC Checkpoints"   as btcckpts
+queue       Events
+
+== Initialize Relayer ==
+
+User -> CLI : bbld tx btccheckpoint \n register --key btc-key.pk
+CLI -> Tendermint : Broadcast tx
+Tendermint -> Mempool : Add register tx
+
+... wait for registration tx to be included in a Babylon block ...
+
+Tendermint -> btccheckpoint ++ : DeliverTx
+btccheckpoint -> btccheckpoint : Verify Proof-of-Possession
+btccheckpoint -> btcckpts : Check if BTC-to-Cosmos association exists
+alt if valid and new
+  btccheckpoint -> btcckpts : Add new BTC-to-Cosmos association
+  btccheckpoint -> Events : Emit new relayer registered
+end
+return result or invalid
+
+Events --> User : Observe self registration
+User -> submitter : Start monitoring Babylon
+User -> submitter : Start monitoring Bitcoin
+
+== Listen For Checkpoint Events ==
+
+Events --> submitter ++ : Raw checkpoint available \n for previous epoch
+submitter -> checkpointing ++ : Query raw checkpoint \n for previous epoch
+checkpointing -> rawckpts : Get raw checkpoint
+return RawCheckpoint
+
+submitter -> submitter : Split raw checkpoint into \n 2 BTC transactions
+submitter -> submitter : Find UTxO to spend \n to pay for fees
+note left
+  Needs BTC wallet
+end note
+submitter -> Bitcoin -- : Broadcast 2 \n checkpoint transactions
+
+... wait for checkpointing tx to be included in a Bitcoin block ...
+
+Bitcoin --> submitter ++ : Observe BTC block \n with BBL checkpoints
+submitter -> submitter : Construct BTC Proof-of-Inclusion
+submitter -> Tendermint --++ : Broadcast InsertProofOfInclusion transaction
+
+== Handle BTC checkpoint tx relayed by vigilante BTC scanner ==
+
+Tendermint -> btccheckpoint ++ : CheckTx
+btccheckpoint -> btccheckpoint : Validate basic checkpoint structure
+btccheckpoint -> btcckpts : Check if record already exists
+return ok or duplicate
+alt if not a duplicate
+  Tendermint -> Mempool : Add checkpoint tx
+end
+deactivate Tendermint
+
+... wait for checkpointing tx to be included in a Babylon block ...
+
+Tendermint -> btccheckpoint ++ : DeliverTx
+btccheckpoint -> btccheckpoint : Verify Proof-of-Inclusion
+btccheckpoint -> checkpointing : Check that raw checkpoint exists
+note left
+  If the checkpoint is for a hidden fork,
+  it might be for a different epoch number.
+end note
+alt raw checkpoint exists
+  btccheckpoint -> btclightclient : Check that BTC header exists
+  alt BTC header exists
+    btccheckpoint -> btcckpts : Add BTC checkpoint transaction
+    btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
+    checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
+    checkpointing -> Events -- : Emit epoch checkpoint included
+  end
+else a checkpoint for an unknown Q.C. hash
+  btccheckpoint -> checkpointing ++ : Verify BLS signature over unknown hash
+  checkpointing -> checkpointing : Look up BLS keys
+  checkpointing -> checkpointing : Look up Validator Power
+  checkpointing -> checkpointing : Calculate group BLS key based on bitmap
+  checkpointing -> checkpointing : Verify BLS signature
+  alt valid signature from our validators
+    checkpointing -> staking : Slash signing validators
+    checkpointing -> Events : Emit evidence of data availability attack \n or panic to stall consensus.
+    note left
+      A monitoring process can shut down Tendermint if it sees this event.
+      The block is produced by the current validator set but the BLS signatures
+      are from the old, so the old validators can't necessarily censor this
+      transaction.
+    end note
+  end
+  deactivate checkpointing
+end
+return tx result
+
+... wait for further Bitcoin headers to be relayed ...
+
+Tendermint -> btclightclient ++ : DeliverTx
+btclightclient -> btclightclient : Update longest chain tip
+alt if tip changed
+  btclightclient -> btccheckpoint --++ : Callback on tip change
+  btccheckpoint -> btcckpts : Get unstable checkpoints
+  btccheckpoint -> btccheckpoint : Sort unstable checkpoints \n by BTC height and tx index
+
+  loop foreach unstable checkpoint tx
+    btccheckpoint -> btclightclient ++: Check including block embedding depth
+    return block depth if on main chain
+
+    alt if checkpoint tx became stable
+      btccheckpoint -> checkpointing ++ : Callback on checkpoint stable
+      checkpointing -> checkpointing : Change checkpoint status to \n CONFIRMED
+      checkpointing -> Events : Emit epoch checkpoint stable
+      return true if just became CONFIRMED
+
+      alt checkpoint/epoch just became CONFIRMED
+        btccheckpoint -> btcckpts : Get BTC-to-Cosmos key of tx submitter
+        btccheckpoint -> bank : Mint reward for submitter
+        btccheckpoint -> staking : Release unbonding tokens for epoch
+      end
+    end
+  end
+  deactivate btccheckpoint
+end
+
+== At the end of the epoch ==
+
+Tendermint -> epoching ++ : EndBlock
+epoching -> checkpointing : Get previous epoch checkpoint status
+alt if checkpoint stable
+  epoching -> epoching : Dequeue delayed staking txns
+  epoching -> staking ++ : Perform power transfer
+  return validator set changes
+end
+return validator set changes
+
+@enduml

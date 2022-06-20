@@ -1,0 +1,21 @@
+syntax = "proto3";
+package babylon.epoching.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/staking/v1beta1/tx.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/epoching/types";
+
+// QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
+message QueuedMessage {
+  // msg_id is the original message ID
+  bytes msg_id = 1;
+  // msg is the actual message that is sent by a user and is queued by the epoching module
+  oneof msg {
+    cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 2;
+    cosmos.staking.v1beta1.MsgDelegate msg_delegate = 3;
+    cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 4;
+    cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 5;
+    // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+  }
+}
