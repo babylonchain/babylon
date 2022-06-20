@@ -2,7 +2,7 @@ package types
 
 const (
 	// ModuleName defines the module name
-	ModuleName = "checkpoint.proto"
+	ModuleName = "checkpointing"
 
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
