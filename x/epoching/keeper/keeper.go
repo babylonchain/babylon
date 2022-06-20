@@ -61,12 +61,12 @@ func (k Keeper) GetCurrentEpoch(ctx sdk.Context) sdk.Uint {
 	panic("TODO: unimplemented")
 }
 
-// GetEpochMsgs returns the set of messages queued of a given uncheckpointed epoch
-func (k Keeper) GetEpochMsgs(ctx sdk.Context, epoch sdk.Uint) []sdk.Msg {
+// GetEpochMsgs returns the set of messages queued of the current epoch
+func (k Keeper) GetEpochMsgs(ctx sdk.Context) []types.QueuedMessage {
 	panic("TODO: unimplemented")
 }
 
 // EnqueueMsg enqueues a message to the queue of the current epoch
-func (k Keeper) EnqueueMsg(ctx sdk.Context, msg sdk.Msg) error {
+func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) error {
 	panic("TODO: unimplemented")
 }
