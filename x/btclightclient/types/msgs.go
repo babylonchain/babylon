@@ -46,6 +46,7 @@ func ValidateHeaderAttributes(header *wire.BlockHeader) error {
 
 	// The upper limit for the power to be spent
 	// Use the one maintained by btcd
+	// TODO: get this from a configuration file
 	powLimit := btcchaincfg.MainNetParams.PowLimit
 
 	err := blockchain.CheckProofOfWork(block, powLimit)
