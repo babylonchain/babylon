@@ -1,0 +1,66 @@
+@startuml Submit Checkpoint
+boundary    Bitcoin
+control     "BTC Header Relayer" as relayer
+control     Tendermint
+queue       Mempool
+participant "BTC Light Client"  as btclightclient
+participant "BTC Checkpoint Module" as btccheckpoint
+database    "BTC Headers" as btcheaders
+queue       Events
+
+== Initialize Relayer ==
+
+relayer -> btclightclient ++ : Query BTC Header hashes
+btclightclient -> btcheaders : Get headers at all heights
+return BTC Header hashes
+
+relayer -> Bitcoin : Scan chain from highest known header
+
+... wait for further Bitcoin headers to be observed ...
+
+Bitcoin --> relayer ++ : Observe new header
+
+relayer -> Tendermint ++ : Broadcast BTC header tx
+
+loop recurse while missing parents
+  Tendermint -> btclightclient ++ : CheckTx
+  btclightclient -> btclightclient : Check Proof-of-Work
+  btclightclient -> btcheaders : Check parent exists
+  btclightclient -> btcheaders : Check header is new
+  alt if new
+    btclightclient -> btcheaders : Add header
+    note right
+      Only in checkState
+    end note
+  end
+  return valid or missing parent or duplicate
+  alt if valid
+    Tendermint -> Mempool : Add header transaction
+  end
+  return check result
+
+  alt if missing parent
+    relayer -> Bitcoin : Get missing parent
+    relayer -> Tendermint : Broadcast BTC header of parent
+    relayer -> Tendermint : Re-broadcast child header
+  end
+end
+deactivate relayer
+
+... wait for transaction to be included in Babylon block ...
+
+Tendermint -> btclightclient ++ : DeliverTx
+btclightclient -> btclightclient : Check Proof-of-Work
+btclightclient -> btcheaders : Check parent exists
+btclightclient -> btcheaders : Check header is new
+alt valid and new
+  btclightclient -> btcheaders : Add header
+  btclightclient -> btcheaders : Update longest chain tip
+  alt if tip changed
+    btclightclient -> btccheckpoint : Callback on tip change
+    btclightclient -> Events : Emit BTC Chain Extended
+  end
+end
+return tx result
+
+@enduml
