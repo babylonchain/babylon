@@ -67,6 +67,8 @@ func (m *BTCHeaderBytes) GetHeaderBytes() []byte {
 	return nil
 }
 
+// BaseBTCHeader corresponds to the oldest BTC header maintained in storage
+// It is denoted by the header bytes and the height
 type BaseBTCHeader struct {
 	Header *BTCHeaderBytes `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 	Height uint64          `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`

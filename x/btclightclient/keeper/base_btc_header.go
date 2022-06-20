@@ -16,7 +16,7 @@ func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) types.BaseBTCHeader {
 	height, err := k.HeadersState(ctx).GetHeaderHeight(&baseHash)
 
 	if err != nil {
-		panic("Stored base BTC Header is not btcd compatible")
+		return types.BaseBTCHeader{}
 	}
 
 	headerBytes := types.BtcdHeaderToBytes(baseBtcdHeader)

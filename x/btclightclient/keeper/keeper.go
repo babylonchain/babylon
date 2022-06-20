@@ -52,7 +52,6 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
 	}
 
-	// Only check if this is not the base BTC header
 	if !k.HeadersState(ctx).Exists(&header.PrevBlock) {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}
