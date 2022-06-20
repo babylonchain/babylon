@@ -70,7 +70,10 @@ func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
 	var minHeight uint64 = 0
 	var baseBlock *wire.BlockHeader = nil
 
-	iter := s.hashToHeight.Iterator(nil, nil)
+	// Use NewStore in order to avoid keys having the 0x01 prefix (i.e. types.HashToHeightPrefix)
+	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
+
+	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
 	// Iterate through all hashes and their heights

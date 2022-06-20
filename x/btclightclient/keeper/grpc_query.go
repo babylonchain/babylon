@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -28,7 +29,7 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	store := k.HeadersState(sdkCtx).hashToHeight
+	store := prefix.NewStore(k.HeadersState(sdkCtx).hashToHeight, types.HashToHeightPrefix)
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			hashes = append(hashes, key)

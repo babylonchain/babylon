@@ -12,6 +12,10 @@ func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) types.BaseBTCHeader {
 		return types.BaseBTCHeader{}
 	}
 
+	if baseBtcdHeader == nil {
+		return types.BaseBTCHeader{}
+	}
+
 	baseHash := baseBtcdHeader.BlockHash()
 	height, err := k.HeadersState(ctx).GetHeaderHeight(&baseHash)
 
