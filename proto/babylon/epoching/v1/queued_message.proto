@@ -8,8 +8,8 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
 // QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
 message QueuedMessage {
-  // id is the original message ID
-  bytes id = 1;
+  // msg_id is the original message ID
+  bytes msg_id = 1;
   // msg is the actual message that is sent by a user and is queued by the epoching module
   oneof msg {
     cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 2;
