@@ -100,6 +100,28 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*wire.BlockHeader
 	return nil
 }
 
+// GetDescendingHeaders returns a collection of descending headers according to their height
+func (s HeadersState) GetDescendingHeaders() ([]*wire.BlockHeader, error) {
+	var headers []*wire.BlockHeader
+
+	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	// TODO: This assumes that the ReverseIterator will return
+	// 		 the blocks in a descending height manner.
+	//		 Need to verify.
+	for ; iter.Valid(); iter.Next() {
+		headerBytes := iter.Value()
+		header, err := types.BytesToBtcdHeader(&types.BTCHeaderBytes{HeaderBytes: headerBytes})
+		if err != nil {
+			return nil, err
+		}
+		headers = append(headers, header)
+	}
+	return headers, nil
+}
+
 // HeaderExists Check whether a hash is maintained in storage
 func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 	hashBytes := types.ChainhashToBytes(hash)
@@ -108,20 +130,30 @@ func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 
 // GetBaseBTCHeader retrieves the BTC header with the minimum height
 func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
+	// If there is no tip, there is no base header
 	if !s.TipExists() {
 		return nil, nil
 	}
-	tip := s.GetTip()
+	currentHeader := s.GetTip()
 
-	for s.HeaderExists(&tip.PrevBlock) {
-		newTip, err := s.GetHeaderByHash(&tip.PrevBlock)
-		if err != nil {
-			return nil, err
-		}
-		// Hack so that the for loop doesn't initialize a new tip variable
-		tip = newTip
+	// Retrieve a collection of headers along with their heights
+	headers, err := s.GetDescendingHeaders()
+	if err != nil {
+		return nil, err
 	}
-	return tip, nil
+
+	// Set the current header to be that of the tip
+	// Iterate through the collection and:
+	// 		- Discard anything with a higher height from the current header
+	// 		- Find the parent of the header and set the current header to it
+	// Return the current header
+	for _, header := range headers {
+		if header.BlockHash().String() == currentHeader.PrevBlock.String() {
+			currentHeader = header
+		}
+	}
+
+	return currentHeader, nil
 }
 
 // CreateTip sets the provided header as the tip
