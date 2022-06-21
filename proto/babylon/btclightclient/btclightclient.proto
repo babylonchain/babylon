@@ -1,0 +1,16 @@
+syntax = "proto3";
+package babylon.btclightclient.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+
+// BTCHeader defines the structure of the incoming message bytes
+message BTCHeaderBytes {
+  bytes header_bytes = 1;
+}
+
+// BaseBTCHeader corresponds to the oldest BTC header maintained in storage
+// It is denoted by the header bytes and the height
+message BaseBTCHeader {
+  BTCHeaderBytes header = 1;
+  uint64 height = 2;
+}
