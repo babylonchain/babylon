@@ -1,6 +1,7 @@
 package btclightclient_test
 
 import (
+	"encoding/hex"
 	"testing"
 
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
@@ -11,8 +12,10 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
+	headerBytes, _ := hex.DecodeString(types.DefaultBaseHeaderHex)
 	genesisState := types.GenesisState{
-		Params: types.DefaultParams(),
+		Params:        types.DefaultParams(),
+		BaseBtcHeader: types.DefaultBaseBTCHeader(headerBytes, types.DefaultBaseHeaderHeight),
 	}
 
 	k, ctx := keepertest.BTCLightClientKeeper(t)
