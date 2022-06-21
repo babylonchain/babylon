@@ -186,10 +186,6 @@ func TestRunMigrations(t *testing.T) {
 					"crisis":       crisis.AppModule{}.ConsensusVersion(),
 					"genutil":      genutil.AppModule{}.ConsensusVersion(),
 					"capability":   capability.AppModule{}.ConsensusVersion(),
-					/*
-					   TODO: add babylon module
-					   "testbbl":      capability.AppModule{}.ConsensusVersion()
-					*/
 					"epoching":       epoching.AppModule{}.ConsensusVersion(),
 					"btclightclient": btclightclient.AppModule{}.ConsensusVersion(),
 					"btccheckpoint":  btccheckpoint.AppModule{}.ConsensusVersion(),
@@ -246,10 +242,6 @@ func TestInitGenesisOnMigration(t *testing.T) {
 			"crisis":       crisis.AppModule{}.ConsensusVersion(),
 			"genutil":      genutil.AppModule{}.ConsensusVersion(),
 			"capability":   capability.AppModule{}.ConsensusVersion(),
-			/*
-			   TODO: add babylon module
-			   "testbbl":      capability.AppModule{}.ConsensusVersion()
-			*/
 			"epoching":       epoching.AppModule{}.ConsensusVersion(),
 			"btclightclient": btclightclient.AppModule{}.ConsensusVersion(),
 			"btccheckpoint":  btccheckpoint.AppModule{}.ConsensusVersion(),
