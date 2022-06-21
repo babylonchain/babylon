@@ -505,18 +505,28 @@ func NewBabylonApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	app.SetAnteHandler(
-		NewAnteHandler(
-			appOpts,
-			app.AccountKeeper,
-			app.BankKeeper,
-			app.FeeGrantKeeper,
-			ante.DefaultSigVerificationGasConsumer,
-			encodingConfig.TxConfig.SignModeHandler(),
-			app.EpochingKeeper,
-		),
+	// initialize AnteHandler, which includes
+	// - authAnteHandler: the default AnteHandler created by `auth.ante.NewAnteHandler`
+	// - Extra decorators introduced in Babylon, such as QueueMsgDecorator that delays validator-related messages
+	authAnteHandler, err := ante.NewAnteHandler(
+		ante.HandlerOptions{
+			AccountKeeper:   app.AccountKeeper,
+			BankKeeper:      app.BankKeeper,
+			SignModeHandler: encodingConfig.TxConfig.SignModeHandler(),
+			FeegrantKeeper:  app.FeeGrantKeeper,
+			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+		},
 	)
+	if err != nil {
+		panic(err)
+	}
+	anteHandler := sdk.ChainAnteDecorators(
+		NewWrappedAnteHandler(authAnteHandler),
+		epochingkeeper.NewQueueMsgDecorator(app.EpochingKeeper),
+	)
+	app.SetAnteHandler(anteHandler)
 
+	// initialize EndBlocker
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
