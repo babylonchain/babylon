@@ -1,4 +1,4 @@
 package types
 
-// x/checkpoint.proto module sentinel errors
+// x/checkpointing module sentinel errors
 var ()

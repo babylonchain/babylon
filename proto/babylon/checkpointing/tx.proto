@@ -6,7 +6,7 @@ import "babylon/checkpointing/checkpoint.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// Msg defines the checkpoint.proto Msg service.
+// Msg defines the checkpointing Msg service.
 service Msg {
   rpc AddBlsSig(MsgAddBlsSig) returns (MsgAddBlsSigResponse);
 }
