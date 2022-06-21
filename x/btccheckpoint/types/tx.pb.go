@@ -120,22 +120,22 @@ func (m *BTCSpvProof) GetConfirmingBtcHeader() []byte {
 	return nil
 }
 
-type InsertBTCSpvProofRequest struct {
+type MsgInsertBTCSpvProof struct {
 	Proofs []*BTCSpvProof `protobuf:"bytes,1,rep,name=proofs,proto3" json:"proofs,omitempty"`
 }
 
-func (m *InsertBTCSpvProofRequest) Reset()         { *m = InsertBTCSpvProofRequest{} }
-func (m *InsertBTCSpvProofRequest) String() string { return proto.CompactTextString(m) }
-func (*InsertBTCSpvProofRequest) ProtoMessage()    {}
-func (*InsertBTCSpvProofRequest) Descriptor() ([]byte, []int) {
+func (m *MsgInsertBTCSpvProof) Reset()         { *m = MsgInsertBTCSpvProof{} }
+func (m *MsgInsertBTCSpvProof) String() string { return proto.CompactTextString(m) }
+func (*MsgInsertBTCSpvProof) ProtoMessage()    {}
+func (*MsgInsertBTCSpvProof) Descriptor() ([]byte, []int) {
 	return fileDescriptor_aeec89810b39ea83, []int{1}
 }
-func (m *InsertBTCSpvProofRequest) XXX_Unmarshal(b []byte) error {
+func (m *MsgInsertBTCSpvProof) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *InsertBTCSpvProofRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgInsertBTCSpvProof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_InsertBTCSpvProofRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgInsertBTCSpvProof.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -145,40 +145,40 @@ func (m *InsertBTCSpvProofRequest) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *InsertBTCSpvProofRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InsertBTCSpvProofRequest.Merge(m, src)
+func (m *MsgInsertBTCSpvProof) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInsertBTCSpvProof.Merge(m, src)
 }
-func (m *InsertBTCSpvProofRequest) XXX_Size() int {
+func (m *MsgInsertBTCSpvProof) XXX_Size() int {
 	return m.Size()
 }
-func (m *InsertBTCSpvProofRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_InsertBTCSpvProofRequest.DiscardUnknown(m)
+func (m *MsgInsertBTCSpvProof) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInsertBTCSpvProof.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_InsertBTCSpvProofRequest proto.InternalMessageInfo
+var xxx_messageInfo_MsgInsertBTCSpvProof proto.InternalMessageInfo
 
-func (m *InsertBTCSpvProofRequest) GetProofs() []*BTCSpvProof {
+func (m *MsgInsertBTCSpvProof) GetProofs() []*BTCSpvProof {
 	if m != nil {
 		return m.Proofs
 	}
 	return nil
 }
 
-type InsertBTCSpvProofResponse struct {
+type MsgInsertBTCSpvProofResponse struct {
 }
 
-func (m *InsertBTCSpvProofResponse) Reset()         { *m = InsertBTCSpvProofResponse{} }
-func (m *InsertBTCSpvProofResponse) String() string { return proto.CompactTextString(m) }
-func (*InsertBTCSpvProofResponse) ProtoMessage()    {}
-func (*InsertBTCSpvProofResponse) Descriptor() ([]byte, []int) {
+func (m *MsgInsertBTCSpvProofResponse) Reset()         { *m = MsgInsertBTCSpvProofResponse{} }
+func (m *MsgInsertBTCSpvProofResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgInsertBTCSpvProofResponse) ProtoMessage()    {}
+func (*MsgInsertBTCSpvProofResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_aeec89810b39ea83, []int{2}
 }
-func (m *InsertBTCSpvProofResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgInsertBTCSpvProofResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *InsertBTCSpvProofResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgInsertBTCSpvProofResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_InsertBTCSpvProofResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgInsertBTCSpvProofResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -188,50 +188,50 @@ func (m *InsertBTCSpvProofResponse) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *InsertBTCSpvProofResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_InsertBTCSpvProofResponse.Merge(m, src)
+func (m *MsgInsertBTCSpvProofResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInsertBTCSpvProofResponse.Merge(m, src)
 }
-func (m *InsertBTCSpvProofResponse) XXX_Size() int {
+func (m *MsgInsertBTCSpvProofResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *InsertBTCSpvProofResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_InsertBTCSpvProofResponse.DiscardUnknown(m)
+func (m *MsgInsertBTCSpvProofResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInsertBTCSpvProofResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_InsertBTCSpvProofResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgInsertBTCSpvProofResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*BTCSpvProof)(nil), "babylonchain.babylon.btccheckpoint.BTCSpvProof")
-	proto.RegisterType((*InsertBTCSpvProofRequest)(nil), "babylonchain.babylon.btccheckpoint.InsertBTCSpvProofRequest")
-	proto.RegisterType((*InsertBTCSpvProofResponse)(nil), "babylonchain.babylon.btccheckpoint.InsertBTCSpvProofResponse")
+	proto.RegisterType((*BTCSpvProof)(nil), "babylon.btccheckpoint.BTCSpvProof")
+	proto.RegisterType((*MsgInsertBTCSpvProof)(nil), "babylon.btccheckpoint.MsgInsertBTCSpvProof")
+	proto.RegisterType((*MsgInsertBTCSpvProofResponse)(nil), "babylon.btccheckpoint.MsgInsertBTCSpvProofResponse")
 }
 
 func init() { proto.RegisterFile("babylon/btccheckpoint/tx.proto", fileDescriptor_aeec89810b39ea83) }
 
 var fileDescriptor_aeec89810b39ea83 = []byte{
-	// 341 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x52, 0x3d, 0x4f, 0x02, 0x31,
-	0x18, 0xa6, 0x62, 0x18, 0x0a, 0x6a, 0x2c, 0x31, 0x39, 0x35, 0x69, 0xf0, 0x16, 0x99, 0xee, 0x12,
-	0x8c, 0x9b, 0x2e, 0x38, 0x28, 0x83, 0x1f, 0x41, 0x26, 0x97, 0xcb, 0xb5, 0x14, 0xae, 0x01, 0xda,
-	0xb3, 0x7d, 0x31, 0xf0, 0x2f, 0x18, 0xfd, 0x3b, 0x6e, 0x8e, 0x8c, 0x8e, 0x06, 0xfe, 0x88, 0xb9,
-	0x03, 0xc3, 0x87, 0x1a, 0x8d, 0xe3, 0xf3, 0xf1, 0x3e, 0x4f, 0xdf, 0xe6, 0xc5, 0x94, 0x85, 0x6c,
-	0xd8, 0xd5, 0xca, 0x67, 0xc0, 0x79, 0x24, 0x78, 0x27, 0xd6, 0x52, 0x81, 0x0f, 0x03, 0x2f, 0x36,
-	0x1a, 0x34, 0x71, 0xe7, 0x3a, 0x8f, 0x42, 0xa9, 0xbc, 0x39, 0xf0, 0x56, 0xcc, 0xee, 0x0b, 0xc2,
-	0xf9, 0x6a, 0xe3, 0xe2, 0x3e, 0x7e, 0xba, 0x33, 0x5a, 0xb7, 0xc8, 0x31, 0xde, 0x61, 0xc0, 0x03,
-	0x30, 0xa1, 0xb2, 0x21, 0x07, 0xa9, 0x95, 0x83, 0x4a, 0xa8, 0x5c, 0xa8, 0x6f, 0x33, 0xe0, 0x8d,
-	0x05, 0x4b, 0x2a, 0x78, 0x6f, 0xcd, 0x18, 0x48, 0xd5, 0x14, 0x03, 0x67, 0xa3, 0x84, 0xca, 0x5b,
-	0xf5, 0xe2, 0xaa, 0xbd, 0x96, 0x48, 0xe4, 0x08, 0x17, 0x7a, 0xc2, 0x74, 0xba, 0x22, 0x50, 0xba,
-	0x29, 0xac, 0x93, 0x4d, 0x93, 0xf3, 0x33, 0xee, 0x26, 0xa1, 0x92, 0x58, 0xae, 0x55, 0x4b, 0x9a,
-	0x9e, 0x54, 0xed, 0x20, 0x69, 0x88, 0x44, 0xd8, 0x14, 0xc6, 0xd9, 0x4c, 0xbd, 0xc5, 0x85, 0x58,
-	0x05, 0x7e, 0x95, 0x4a, 0x2e, 0xc7, 0x4e, 0x4d, 0x59, 0x61, 0x60, 0x69, 0x91, 0xba, 0x78, 0xec,
-	0x0b, 0x0b, 0xe4, 0x12, 0xe7, 0xe2, 0x04, 0x5b, 0x07, 0x95, 0xb2, 0xe5, 0x7c, 0xc5, 0xf7, 0x7e,
-	0xff, 0x14, 0x6f, 0x39, 0x67, 0x3e, 0xee, 0x1e, 0xe2, 0xfd, 0x6f, 0x4a, 0x6c, 0xac, 0x95, 0x15,
-	0x95, 0x67, 0x84, 0xb3, 0xd7, 0xb6, 0x4d, 0x46, 0x08, 0xef, 0x7e, 0x71, 0x91, 0xb3, 0xbf, 0x74,
-	0xfe, 0xb4, 0xc1, 0xc1, 0xf9, 0x3f, 0xa7, 0x67, 0x4f, 0xab, 0xde, 0xbe, 0x4e, 0x28, 0x1a, 0x4f,
-	0x28, 0x7a, 0x9f, 0x50, 0x34, 0x9a, 0xd2, 0xcc, 0x78, 0x4a, 0x33, 0x6f, 0x53, 0x9a, 0x79, 0x38,
-	0x6d, 0x4b, 0x88, 0xfa, 0xcc, 0xe3, 0xba, 0xe7, 0x2f, 0x57, 0x7c, 0x02, 0x7f, 0xb0, 0x7e, 0x58,
-	0xc3, 0x58, 0x58, 0x96, 0x4b, 0x8f, 0xeb, 0xe4, 0x23, 0x00, 0x00, 0xff, 0xff, 0xe4, 0xa6, 0x96,
-	0x82, 0x7e, 0x02, 0x00, 0x00,
+	// 338 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0x4f, 0x4f, 0xfa, 0x30,
+	0x1c, 0xc6, 0xe9, 0x8f, 0x5f, 0x38, 0x14, 0xd4, 0x38, 0x24, 0x59, 0x8c, 0x69, 0x70, 0x17, 0x49,
+	0x4c, 0xb6, 0x04, 0xe2, 0xc5, 0x23, 0x5e, 0xe4, 0x80, 0x9a, 0xc9, 0xc9, 0xcb, 0xb2, 0x96, 0xb2,
+	0x35, 0x40, 0xdb, 0xb4, 0xc5, 0x40, 0xe2, 0x8b, 0xf0, 0x2d, 0x79, 0xf3, 0xc8, 0xd1, 0xa3, 0x61,
+	0x6f, 0xc4, 0x6c, 0x8e, 0xf0, 0xc7, 0x79, 0xf0, 0xd6, 0x3e, 0xcf, 0xf3, 0xfd, 0x3c, 0x69, 0xf3,
+	0x85, 0x08, 0x87, 0x78, 0x31, 0x11, 0xdc, 0xc3, 0x86, 0x90, 0x98, 0x92, 0xb1, 0x14, 0x8c, 0x1b,
+	0xcf, 0xcc, 0x5d, 0xa9, 0x84, 0x11, 0x56, 0x23, 0xf7, 0xdd, 0x1d, 0xdf, 0x79, 0x03, 0xb0, 0xda,
+	0x1d, 0xdc, 0x3c, 0xca, 0xe7, 0x07, 0x25, 0xc4, 0xc8, 0xba, 0x80, 0x47, 0xd8, 0x90, 0xc0, 0xa8,
+	0x90, 0xeb, 0x90, 0x18, 0x26, 0xb8, 0x0d, 0x9a, 0xa0, 0x55, 0xf3, 0x0f, 0xb1, 0x21, 0x83, 0x8d,
+	0x6a, 0xb5, 0x61, 0x63, 0x2f, 0x18, 0x30, 0x3e, 0xa4, 0x73, 0xfb, 0x5f, 0x13, 0xb4, 0x0e, 0xfc,
+	0xfa, 0x6e, 0xbc, 0x97, 0x5a, 0xd6, 0x39, 0xac, 0x4d, 0xa9, 0x1a, 0x4f, 0x68, 0xc0, 0xc5, 0x90,
+	0x6a, 0xbb, 0x9c, 0x91, 0xab, 0xdf, 0xda, 0x5d, 0x2a, 0xa5, 0x58, 0x22, 0xf8, 0x88, 0xa9, 0x29,
+	0xe3, 0x51, 0x90, 0x36, 0xc4, 0x34, 0x1c, 0x52, 0x65, 0xff, 0xcf, 0xb2, 0xf5, 0x8d, 0xd9, 0x35,
+	0xe4, 0x36, 0xb3, 0x1c, 0x1f, 0x9e, 0xf4, 0x75, 0xd4, 0xe3, 0x9a, 0x2a, 0xb3, 0xfd, 0x96, 0x6b,
+	0x58, 0x91, 0xe9, 0x41, 0xdb, 0xa0, 0x59, 0x6e, 0x55, 0xdb, 0x8e, 0x5b, 0xf8, 0x07, 0xee, 0xd6,
+	0x8c, 0x9f, 0x4f, 0x38, 0x08, 0x9e, 0x15, 0x31, 0x7d, 0xaa, 0xa5, 0xe0, 0x9a, 0xb6, 0x5f, 0x60,
+	0xb9, 0xaf, 0x23, 0x6b, 0x06, 0x8f, 0x7f, 0xf6, 0x5e, 0xfe, 0xd2, 0x53, 0x04, 0x3c, 0xed, 0xfc,
+	0x21, 0xbc, 0x6e, 0xef, 0xde, 0xbf, 0xaf, 0x10, 0x58, 0xae, 0x10, 0xf8, 0x5c, 0x21, 0xf0, 0x9a,
+	0xa0, 0xd2, 0x32, 0x41, 0xa5, 0x8f, 0x04, 0x95, 0x9e, 0xae, 0x22, 0x66, 0xe2, 0x19, 0x76, 0x89,
+	0x98, 0x7a, 0x39, 0x98, 0xc4, 0x21, 0xe3, 0xeb, 0x8b, 0x37, 0xdf, 0x5f, 0x90, 0x85, 0xa4, 0x1a,
+	0x57, 0xb2, 0x25, 0xe9, 0x7c, 0x05, 0x00, 0x00, 0xff, 0xff, 0xca, 0x99, 0xa8, 0x2a, 0x46, 0x02,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -246,7 +246,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	InsertBTCSpvProof(ctx context.Context, in *InsertBTCSpvProofRequest, opts ...grpc.CallOption) (*InsertBTCSpvProofResponse, error)
+	InsertBTCSpvProof(ctx context.Context, in *MsgInsertBTCSpvProof, opts ...grpc.CallOption) (*MsgInsertBTCSpvProofResponse, error)
 }
 
 type msgClient struct {
@@ -257,9 +257,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) InsertBTCSpvProof(ctx context.Context, in *InsertBTCSpvProofRequest, opts ...grpc.CallOption) (*InsertBTCSpvProofResponse, error) {
-	out := new(InsertBTCSpvProofResponse)
-	err := c.cc.Invoke(ctx, "/babylonchain.babylon.btccheckpoint.Msg/InsertBTCSpvProof", in, out, opts...)
+func (c *msgClient) InsertBTCSpvProof(ctx context.Context, in *MsgInsertBTCSpvProof, opts ...grpc.CallOption) (*MsgInsertBTCSpvProofResponse, error) {
+	out := new(MsgInsertBTCSpvProofResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btccheckpoint.Msg/InsertBTCSpvProof", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -268,14 +268,14 @@ func (c *msgClient) InsertBTCSpvProof(ctx context.Context, in *InsertBTCSpvProof
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	InsertBTCSpvProof(context.Context, *InsertBTCSpvProofRequest) (*InsertBTCSpvProofResponse, error)
+	InsertBTCSpvProof(context.Context, *MsgInsertBTCSpvProof) (*MsgInsertBTCSpvProofResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) InsertBTCSpvProof(ctx context.Context, req *InsertBTCSpvProofRequest) (*InsertBTCSpvProofResponse, error) {
+func (*UnimplementedMsgServer) InsertBTCSpvProof(ctx context.Context, req *MsgInsertBTCSpvProof) (*MsgInsertBTCSpvProofResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method InsertBTCSpvProof not implemented")
 }
 
@@ -284,7 +284,7 @@ func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 }
 
 func _Msg_InsertBTCSpvProof_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InsertBTCSpvProofRequest)
+	in := new(MsgInsertBTCSpvProof)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -293,16 +293,16 @@ func _Msg_InsertBTCSpvProof_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylonchain.babylon.btccheckpoint.Msg/InsertBTCSpvProof",
+		FullMethod: "/babylon.btccheckpoint.Msg/InsertBTCSpvProof",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).InsertBTCSpvProof(ctx, req.(*InsertBTCSpvProofRequest))
+		return srv.(MsgServer).InsertBTCSpvProof(ctx, req.(*MsgInsertBTCSpvProof))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
 var _Msg_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "babylonchain.babylon.btccheckpoint.Msg",
+	ServiceName: "babylon.btccheckpoint.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -363,7 +363,7 @@ func (m *BTCSpvProof) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *InsertBTCSpvProofRequest) Marshal() (dAtA []byte, err error) {
+func (m *MsgInsertBTCSpvProof) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -373,12 +373,12 @@ func (m *InsertBTCSpvProofRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InsertBTCSpvProofRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgInsertBTCSpvProof) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *InsertBTCSpvProofRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgInsertBTCSpvProof) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -400,7 +400,7 @@ func (m *InsertBTCSpvProofRequest) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *InsertBTCSpvProofResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgInsertBTCSpvProofResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -410,12 +410,12 @@ func (m *InsertBTCSpvProofResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *InsertBTCSpvProofResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgInsertBTCSpvProofResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *InsertBTCSpvProofResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgInsertBTCSpvProofResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -458,7 +458,7 @@ func (m *BTCSpvProof) Size() (n int) {
 	return n
 }
 
-func (m *InsertBTCSpvProofRequest) Size() (n int) {
+func (m *MsgInsertBTCSpvProof) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -473,7 +473,7 @@ func (m *InsertBTCSpvProofRequest) Size() (n int) {
 	return n
 }
 
-func (m *InsertBTCSpvProofResponse) Size() (n int) {
+func (m *MsgInsertBTCSpvProofResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -659,7 +659,7 @@ func (m *BTCSpvProof) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *InsertBTCSpvProofRequest) Unmarshal(dAtA []byte) error {
+func (m *MsgInsertBTCSpvProof) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -682,10 +682,10 @@ func (m *InsertBTCSpvProofRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InsertBTCSpvProofRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgInsertBTCSpvProof: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InsertBTCSpvProofRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgInsertBTCSpvProof: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -743,7 +743,7 @@ func (m *InsertBTCSpvProofRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *InsertBTCSpvProofResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgInsertBTCSpvProofResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -766,10 +766,10 @@ func (m *InsertBTCSpvProofResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: InsertBTCSpvProofResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgInsertBTCSpvProofResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: InsertBTCSpvProofResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgInsertBTCSpvProofResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

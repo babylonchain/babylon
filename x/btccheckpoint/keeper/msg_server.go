@@ -16,7 +16,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{keeper}
 }
 
-func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.InsertBTCSpvProofRequest) (*types.InsertBTCSpvProofResponse, error) {
+func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
 	//TODO implement me
 	panic("implement me")
 }

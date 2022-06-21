@@ -1,5 +1,5 @@
 syntax = "proto3";
-package babylonchain.babylon.btccheckpoint;
+package babylon.btccheckpoint;
 
 import "gogoproto/gogo.proto";
 import "babylon/btccheckpoint/params.proto";
