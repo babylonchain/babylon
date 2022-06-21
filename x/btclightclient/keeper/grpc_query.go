@@ -53,6 +53,6 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 	if err != nil {
 		return nil, err
 	}
-	contains := k.HeadersState(sdkCtx).Exists(chHash)
+	contains := k.HeadersState(sdkCtx).HeaderExists(chHash)
 	return &types.QueryContainsResponse{Contains: contains}, nil
 }

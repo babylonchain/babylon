@@ -13,6 +13,7 @@ type HeadersState struct {
 	cdc          codec.BinaryCodec
 	headers      sdk.KVStore
 	hashToHeight sdk.KVStore
+	tip          sdk.KVStore
 }
 
 func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
@@ -22,21 +23,12 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 		cdc:          k.cdc,
 		headers:      prefix.NewStore(store, types.HeadersObjectPrefix),
 		hashToHeight: prefix.NewStore(store, types.HashToHeightPrefix),
+		tip:          prefix.NewStore(store, types.TipPrefix),
 	}
 }
 
-// Create Insert a header into storage
-func (s HeadersState) Create(header *wire.BlockHeader) {
-	height, err := s.GetHeaderHeight(&header.PrevBlock)
-	if err != nil {
-		// Parent should always exist
-		panic("Parent does not exist.")
-	}
-	s.InsertHeader(header, height+1)
-}
-
-// InsertHeader Insert the header into the hash->height and (height, hash)->header storage
-func (s HeadersState) InsertHeader(header *wire.BlockHeader, height uint64) {
+// CreateHeader Insert the header into the hash->height and (height, hash)->header storage
+func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) {
 	headerHash := header.BlockHash()
 	headersKey := types.HeadersObjectKey(height, &headerHash)
 	heightKey := types.HeadersObjectHeightKey(&headerHash)
@@ -46,6 +38,8 @@ func (s HeadersState) InsertHeader(header *wire.BlockHeader, height uint64) {
 	s.headers.Set(headersKey, headerRawBytes.HeaderBytes)
 	// map header to height
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
+
+	s.UpdateTip(header, height)
 }
 
 // GetHeader Retrieve a header by its height and hash
@@ -62,44 +56,6 @@ func (s HeadersState) GetHeader(height uint64, hash *chainhash.Hash) (*wire.Bloc
 		return nil, err
 	}
 	return header, nil
-}
-
-// GetBaseBTCHeader retrieves the BTC header with the minimum height
-func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
-	// Initialize iteration variables
-	var minHeight uint64 = 0
-	var baseBlock *wire.BlockHeader = nil
-
-	// Use NewStore in order to avoid keys having the 0x01 prefix (i.e. types.HashToHeightPrefix)
-	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
-
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	// Iterate through all hashes and their heights
-	for ; iter.Valid(); iter.Next() {
-		hash := iter.Key()
-		height := sdk.BigEndianToUint64(iter.Value())
-
-		encodedHash, err := types.BytesToChainhash(hash)
-		if err != nil {
-			return nil, err
-		}
-
-		if minHeight == 0 {
-			minHeight = height
-		}
-
-		// A hash with a new minimum height has been found
-		if height <= minHeight {
-			baseBlock, err = s.GetHeaderByHash(encodedHash)
-			if err != nil {
-				return nil, err
-			}
-			minHeight = height
-		}
-	}
-	return baseBlock, nil
 }
 
 // GetHeaderHeight Retrieve the Height of a header
@@ -144,16 +100,96 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*wire.BlockHeader
 	return nil
 }
 
-// Exists Check whether a hash is maintained in storage
-func (s HeadersState) Exists(hash *chainhash.Hash) bool {
-	_, err := s.GetHeaderHeight(hash)
-	return err == nil
+// HeaderExists Check whether a hash is maintained in storage
+func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
+	hashBytes := types.ChainhashToBytes(hash)
+	return s.hashToHeight.Has(hashBytes)
 }
 
-func (k Keeper) TipState(ctx sdk.Context) TipState {
-	panic("implement me")
+// GetBaseBTCHeader retrieves the BTC header with the minimum height
+func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
+	// Initialize iteration variables
+	var minHeight uint64 = 0
+	var baseBlock *wire.BlockHeader = nil
+
+	// Use NewStore in order to avoid keys having the 0x01 prefix (i.e. types.HashToHeightPrefix)
+	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
+
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	// Iterate through all hashes and their heights
+	for ; iter.Valid(); iter.Next() {
+		hash := iter.Key()
+		height := sdk.BigEndianToUint64(iter.Value())
+
+		encodedHash, err := types.BytesToChainhash(hash)
+		if err != nil {
+			return nil, err
+		}
+
+		if minHeight == 0 {
+			minHeight = height
+		}
+
+		// A hash with a new minimum height has been found
+		if height <= minHeight {
+			baseBlock, err = s.GetHeaderByHash(encodedHash)
+			if err != nil {
+				return nil, err
+			}
+			minHeight = height
+		}
+	}
+	return baseBlock, nil
 }
 
-type TipState struct {
-	// TODO
+// CreateTip sets the provided header as the tip
+func (s HeadersState) CreateTip(header *wire.BlockHeader) {
+	headerBytes := types.BtcdHeaderToBytes(header)
+	tipKey := types.TipKey()
+	s.tip.Set(tipKey, headerBytes.HeaderBytes)
+}
+
+// UpdateTip checks whether the tip should be updated and acts accordingly
+func (s HeadersState) UpdateTip(header *wire.BlockHeader, height uint64) {
+	if !s.TipExists() {
+		s.CreateTip(header)
+		return
+	}
+
+	// Currently, the tip is the one with the biggest height
+	// TODO: replace this to use accumulative PoW instead
+	tip := s.GetTip()
+	tipHash := tip.BlockHash()
+	tipHeight, err := s.GetHeaderHeight(&tipHash)
+	if err != nil {
+		panic("Existing tip does not have a maintained height")
+	}
+
+	if tipHeight < height {
+		s.CreateTip(header)
+	}
+}
+
+// GetTip returns the currently maintained tip
+func (s HeadersState) GetTip() *wire.BlockHeader {
+	if !s.TipExists() {
+		return nil
+	}
+
+	tipKey := types.TipKey()
+	tipBytes := s.tip.Get(tipKey)
+	tipHeader := &types.BTCHeaderBytes{HeaderBytes: tipBytes}
+	tip, err := types.BytesToBtcdHeader(tipHeader)
+	if err != nil {
+		panic("Stored tip is not a valid btcd header")
+	}
+	return tip
+}
+
+// TipExists checks whether a tip is maintained
+func (s HeadersState) TipExists() bool {
+	tipKey := types.TipKey()
+	return s.tip.Has(tipKey)
 }

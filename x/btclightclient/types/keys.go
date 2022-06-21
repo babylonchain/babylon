@@ -26,8 +26,7 @@ var (
 	HeadersPrefix       = []byte{0x0}                // reserve this namespace for headers
 	HeadersObjectPrefix = append(HeadersPrefix, 0x0) // where we save the concrete header bytes
 	HashToHeightPrefix  = append(HeadersPrefix, 0x1) // where we map hash to height
-
-	TipPrefix = []byte{0x1} // reserve this namespace for the tip
+	TipPrefix           = append(HeadersPrefix, 0x2) // where we store the tip
 )
 
 func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
@@ -42,6 +41,10 @@ func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
 func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
 	hashBytes := ChainhashToBytes(hash)
 	return append(HashToHeightPrefix, hashBytes...)
+}
+
+func TipKey() []byte {
+	return TipPrefix
 }
 
 func KeyPrefix(p string) []byte {

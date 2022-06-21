@@ -39,5 +39,5 @@ func (k Keeper) SetBaseBTCHeader(ctx sdk.Context, baseBTCHeader types.BaseBTCHea
 	if err != nil {
 		panic("Base BTC Header bytes do not correspond to btcd header")
 	}
-	k.HeadersState(ctx).InsertHeader(btcdHeader, baseBTCHeader.Height)
+	k.HeadersState(ctx).CreateHeader(btcdHeader, baseBTCHeader.Height)
 }
