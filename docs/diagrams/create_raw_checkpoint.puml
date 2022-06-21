@@ -1,0 +1,101 @@
+@startuml Creating a Raw Checkpoint
+control     "BLS Signer"      as signer
+control     Tendermint
+queue       Mempool
+participant "Epoching Module" as epoching
+queue       "Delayed Txs"     as delayedtxs
+participant "Staking Module"  as staking
+participant "Bank Module"     as bank
+participant "Checkpointing Module" as checkpointing
+database    "BLS Keys"        as blskeys
+database    "Raw Checkpoints" as rawckpts
+queue       Events
+
+== Block N: End of the Epoch, execute power transfer ==
+
+Tendermint -> epoching ++ : EndBlock
+epoching -> delayedtxs ++ : Dequeue wrapped staking txs
+return wrapped staking txs
+epoching -> staking
+loop foreach wrapped tx
+  epoching -> staking ++ : runTx wrapped tx
+  return result or invalid
+  epoching -> Events : Emit feedback about delayed tx outcome
+end
+epoching -> staking ++ : ApplyAndReturnValidatorSetUpdates
+return ValidatorSetUpdates
+return ValidatorSetUpdates
+
+== Block N+1: The block to be checkpointed, shows the new validators, signed by the old ==
+
+Tendermint -> checkpointing : BeginBlock
+note right
+  There is nothing to do, we are waiting for the Quorum Certificate.
+end note
+
+== Block N+2: The block that contains the Quorum Certificate of the old validators over Block N+1 ==
+
+Tendermint -> checkpointing : BeginBlock
+checkpointing -> rawckpts : Store header.LastCommitHash
+note left
+  LastCommitInfo in BeginBlock does not contain signatures,
+  but we are signing the LastCommitHash, the Merkle root of
+  signatures, and that is available in the Header.
+end note
+
+loop on each old validator node
+  Tendermint --> signer ++ : Observe block.header.LastCommitHash
+  note right
+    The full block has the signatures,
+    i.e. the Quorum Certificate (Q.C.),
+    but all we need is the hash.
+  end note
+  signer -> signer : Sign LastCommitHash
+  signer -> Tendermint -- : AddBlsSig
+  Tendermint -> checkpointing ++: CheckTx
+  note right
+    The sender's ECDSA signature is enough to
+    make them accountable for invalid transactions
+    during transaction delivery.
+    Alternatively we can check that the sender was
+    a validator in the epoch, the hash is what we expect,
+    and their BLS signature.
+  end note
+  return check result
+  Tendermint -> Mempool : Add transaction
+end
+
+== Block N+i: The next block(s) deliver transactions with BLS signatures ==
+
+loop for each AddBlsSig tx
+  Tendermint -> checkpointing ++ : DeliverTx
+  checkpointing -> blskeys : Get validator BLS key
+  checkpointing -> checkpointing : Check BLS signature over full Q.C.
+  checkpointing -> staking : Get validator power at \n beginning of previous epoch
+  checkpointing -> checkpointing : Check eligibility to sign BLS
+  checkpointing -> rawckpts : Get LastCommitHash for the uncheckpointed epoch
+  checkpointing -> checkpointing : Check that Q.C. hash in ledger matches the tx
+
+  alt valid transaction
+    checkpointing -> rawckpts : Get accumulated power, aggregate signature and bitmap
+    alt less than +1/3 power
+      checkpointing -> checkpointing : Aggregate BLS signature
+      checkpointing -> rawckpts : Update aggregate signature and power
+      alt reached +1/3 power
+        checkpointing -> Events : Emit raw checkpoint available for previous epoch
+      end
+    end
+  else invalid tx
+    checkpointing -> bank : Charge gas for invalid transaction
+    alt if validator
+      checkpointing -> staking : Slash malicious validator
+      note right
+        Optional extra punishment for validators.
+      end note
+    end
+  end
+
+  return tx result
+end
+
+@enduml

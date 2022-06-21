@@ -101,6 +101,9 @@ import (
 	"github.com/babylonchain/babylon/x/btclightclient"
 	btclightclientkeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonchain/babylon/x/checkpointing"
+	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
@@ -136,6 +139,7 @@ var (
 		vesting.AppModuleBasic{},
 		btclightclient.AppModuleBasic{},
 		btccheckpoint.AppModuleBasic{},
+		checkpointing.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -196,6 +200,8 @@ type BabylonApp struct {
 
 	BtcCheckpointKeeper btccheckpointkeeper.Keeper
 
+	CheckpointingKeeper checkpointingkeeper.Keeper
+
 	// the module manager
 	mm *module.Manager
 
@@ -244,6 +250,7 @@ func NewBabylonApp(
 		epochingtypes.StoreKey,
 		btclightclienttypes.StoreKey,
 		btccheckpointtypes.StoreKey,
+		checkpointingtypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -342,6 +349,7 @@ func NewBabylonApp(
 	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
 	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
 	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
+	app.CheckpointingKeeper = checkpointingkeeper.NewKeeper(appCodec, keys[checkpointingtypes.StoreKey], keys[checkpointingtypes.MemStoreKey], app.GetSubspace(checkpointingtypes.ModuleName))
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
@@ -384,6 +392,7 @@ func NewBabylonApp(
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
+		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -404,6 +413,7 @@ func NewBabylonApp(
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
+		checkpointingtypes.ModuleName,
 	)
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
@@ -422,6 +432,7 @@ func NewBabylonApp(
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
+		checkpointingtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -442,6 +453,7 @@ func NewBabylonApp(
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
+		checkpointingtypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -479,6 +491,7 @@ func NewBabylonApp(
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
+		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -680,6 +693,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
 	paramsKeeper.Subspace(btclightclienttypes.ModuleName)
 	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
+	paramsKeeper.Subspace(checkpointingtypes.ModuleName)
 
 	return paramsKeeper
 }

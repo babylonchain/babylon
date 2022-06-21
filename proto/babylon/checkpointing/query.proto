@@ -1,0 +1,139 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "babylon/checkpointing/params.proto";
+import "babylon/checkpointing/checkpoint.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // RawCheckpointList queries all checkpoints that match the given status.
+  rpc RawCheckpointList(QueryRawCheckpointListRequest) returns (QueryRawCheckpointListResponse) {
+   option (google.api.http).get = "/babylon/checkpointing/v1/raw_checkpoints/{status}";
+  }
+  // RawCheckpointList queries a list of checkpoints starting from a given epoch number to the current epoch number.
+  rpc RecentRawCheckpointList(QueryRecentRawCheckpointListRequest) returns (QueryRecentRawCheckpointListResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/recent_raw_checkpoints/{from_epoch_num}";
+  }
+
+  // RawCheckpoint queries a checkpoints at a given epoch number.
+  rpc RawCheckpoint(QueryRawCheckpointRequest) returns (QueryRawCheckpointResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/raw_checkpoint/{epoch_num}";
+  }
+
+  // LatestCheckpoint queries the checkpoint with the highest epoch num.
+  rpc LatestCheckpoint(QueryLatestCheckpointRequest) returns (QueryLatestCheckpointResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/latest_checkpoint";
+  }
+
+  // BlsPublicKeyList queries a list of bls public keys of the validators at a given epoch number.
+  rpc BlsPublicKeyList(QueryBlsPublicKeyListRequest) returns (QueryBlsPublicKeyListResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/bls_public_keys/{epoch_num}";
+  }
+
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/params";
+  }
+}
+
+// QueryRawCheckpointListRequest is the request type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointListRequest {
+  // status defines the status of the raw checkpoints of the query
+  RawCheckpointStatus status = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryRawCheckpointListResponse is the response type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointListResponse {
+  // the order is going from the newest to oldest based on the epoch number
+  repeated RawCheckpoint raw_checkpoints = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryRecentRawCheckpointListRequest is the request type for the Query/RecentRawCheckpoints
+// RPC method.
+message QueryRecentRawCheckpointListRequest {
+  // from_epoch defines the start epoch of the query, which is inclusive
+  uint64 from_epoch_num = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryRecentRawCheckpointListResponse is the response type for the Query/RecentRawCheckpoints
+// RPC method.
+message QueryRecentRawCheckpointListResponse {
+  // the order is going from the newest to oldest based on the epoch number
+  repeated RawCheckpoint raw_checkpoints = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryRawCheckpointRequest is the request type for the Query/RawCheckpoint
+// RPC method.
+message QueryRawCheckpointRequest {
+  // epoch_num defines the epoch for the queried checkpoint
+  uint64 epoch_num = 1;
+}
+
+// QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
+// RPC method.
+message QueryRawCheckpointResponse {
+  RawCheckpoint raw_checkpoint = 1;
+}
+
+// QueryLatestCheckpointRequest is the request type for the Query/LatestCheckpoint
+// RPC method.
+message QueryLatestCheckpointRequest {}
+
+// QueryLatestCheckpointResponse is the response type for the Query/LatestCheckpoint
+// RPC method.
+message QueryLatestCheckpointResponse {
+  RawCheckpoint latest_checkpoint = 1;
+}
+
+// QueryBlsPublicKeyListRequest is the request type for the Query/BlsPublicKeys
+// RPC method.
+message QueryBlsPublicKeyListRequest {
+  // epoch_num defines the epoch for the queried bls public keys
+  uint64 epoch_num = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryBlsPublicKeyListResponse is the response type for the Query/BlsPublicKeys
+// RPC method.
+message QueryBlsPublicKeyListResponse {
+  repeated ValidatorWithBlsKey validator_with_bls_keys = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// ValidatorWithBlsKey couples validator address and its bls public key
+message ValidatorWithBlsKey {
+  string validator_address = 1;
+  bytes bls_pub_key = 2;
+}

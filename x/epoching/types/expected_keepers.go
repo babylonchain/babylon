@@ -18,3 +18,15 @@ type BankKeeper interface {
 }
 
 // TODO: add interfaces of staking, slashing and evidence used in epoching
+
+// Event Hooks
+// These can be utilized to communicate between a staking keeper and another
+// keeper which must take particular actions when validators/delegators change
+// state. The second keeper must implement this interface, which then the
+// staking keeper can call.
+
+// EpochingHooks event hooks for epoching validator object (noalias)
+type EpochingHooks interface {
+	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error // Must be called after an epoch begins
+	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error   // Must be called after an epoch ends
+}
