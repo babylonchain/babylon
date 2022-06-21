@@ -4,12 +4,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// QueueMsgDecorator defines an AnteHandler decorator that rejects all messages that might change the validator set.
-type QueueMsgDecorator struct{}
+// DropValidatorMsgDecorator defines an AnteHandler decorator that rejects all messages that might change the validator set.
+type DropValidatorMsgDecorator struct{}
 
-// NewQueueMsgDecorator creates a new QueueMsgDecorator
-func NewQueueMsgDecorator() *QueueMsgDecorator {
-	return &QueueMsgDecorator{}
+// NewDropValidatorMsgDecorator creates a new DropValidatorMsgDecorator
+func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
+	return &DropValidatorMsgDecorator{}
 }
 
 // AnteHandle performs an AnteHandler check that rejects all non-wrapped validator-related messages.
@@ -18,7 +18,7 @@ func NewQueueMsgDecorator() *QueueMsgDecorator {
 // - MsgDelegate
 // - MsgUndelegate
 // - MsgBeginRedelegate
-func (qmd QueueMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	panic("TODO: unimplemented")
 
 	// return next(ctx, tx, simulate)

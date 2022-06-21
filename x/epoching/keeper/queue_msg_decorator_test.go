@@ -12,6 +12,6 @@ func noOpAnteDecorator() sdk.AnteHandler {
 	}
 }
 
-func TestQueueMsgDecorator(t *testing.T) {
+func TestDropValidatorMsgDecorator(t *testing.T) {
 	panic("TODO: unimplemented")
 }

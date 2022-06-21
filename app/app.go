@@ -507,7 +507,7 @@ func NewBabylonApp(
 
 	// initialize AnteHandler, which includes
 	// - authAnteHandler: the default AnteHandler created by `auth.ante.NewAnteHandler`
-	// - Extra decorators introduced in Babylon, such as QueueMsgDecorator that delays validator-related messages
+	// - Extra decorators introduced in Babylon, such as DropValidatorMsgDecorator that delays validator-related messages
 	authAnteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
@@ -522,7 +522,7 @@ func NewBabylonApp(
 	}
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewQueueMsgDecorator(),
+		epochingkeeper.NewDropValidatorMsgDecorator(),
 	)
 	app.SetAnteHandler(anteHandler)
 
