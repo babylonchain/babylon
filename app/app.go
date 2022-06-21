@@ -522,7 +522,7 @@ func NewBabylonApp(
 	}
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewQueueMsgDecorator(app.EpochingKeeper),
+		epochingkeeper.NewQueueMsgDecorator(),
 	)
 	app.SetAnteHandler(anteHandler)
 
