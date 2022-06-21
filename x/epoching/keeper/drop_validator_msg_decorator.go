@@ -19,7 +19,7 @@ func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
 // - MsgUndelegate
 // - MsgBeginRedelegate
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	panic("TODO: unimplemented")
+	// TODO: Implement me
 
-	// return next(ctx, tx, simulate)
+	return next(ctx, tx, simulate)
 }
