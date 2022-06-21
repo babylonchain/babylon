@@ -3,12 +3,15 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/tendermint/tendermint/libs/log"
-
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/tendermint/tendermint/libs/log"
+)
+
+const (
+	DefaultEpochNumber = 0
 )
 
 type (
@@ -46,19 +49,39 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 }
 
 // Set the validator hooks
-func (k *Keeper) SetHooks(sh types.EpochingHooks) *Keeper {
+func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 	if k.hooks != nil {
 		panic("cannot set validator hooks twice")
 	}
 
-	k.hooks = sh
+	k.hooks = eh
 
 	return k
 }
 
-// GetCurrentEpoch returns the current epoch number
-func (k Keeper) GetCurrentEpoch(ctx sdk.Context) sdk.Uint {
-	panic("TODO: unimplemented")
+// SetEpochNumber sets epoch number
+func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
+	store := ctx.KVStore(k.storeKey)
+	epochNumberBytes, err := epochNumber.Marshal()
+	if err != nil {
+		return err
+	}
+	store.Set(types.EpochNumberKey, epochNumberBytes)
+	return nil
+}
+
+// GetEpochNumber fetches epoch number
+func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	bz := store.Get(types.EpochNumberKey)
+	if bz == nil {
+		return sdk.NewUint(uint64(DefaultEpochNumber)), nil
+	}
+	var epochNumber sdk.Uint
+	err := epochNumber.Unmarshal(bz)
+
+	return epochNumber, err
 }
 
 // GetEpochMsgs returns the set of messages queued of the current epoch
