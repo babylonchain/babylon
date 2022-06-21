@@ -29,15 +29,9 @@ func BtcdHeaderToBytes(header *wire.BlockHeader) *BTCHeaderBytes {
 }
 
 func BytesToChainhash(hashBytes []byte) (*chainhash.Hash, error) {
-	hashString := string(hashBytes)
-	hash := new(chainhash.Hash)
-	err := chainhash.Decode(hash, hashString)
-	if err != nil {
-		return nil, err
-	}
-	return hash, nil
+	return chainhash.NewHash(hashBytes)
 }
 
 func ChainhashToBytes(hash *chainhash.Hash) []byte {
-	return []byte(hash.String())
+	return hash.CloneBytes()
 }
