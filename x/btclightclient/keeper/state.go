@@ -108,40 +108,20 @@ func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 
 // GetBaseBTCHeader retrieves the BTC header with the minimum height
 func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
-	// Initialize iteration variables
-	var minHeight uint64 = 0
-	var baseBlock *wire.BlockHeader = nil
+	if !s.TipExists() {
+		return nil, nil
+	}
+	tip := s.GetTip()
 
-	// Use NewStore in order to avoid keys having the 0x01 prefix (i.e. types.HashToHeightPrefix)
-	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
-
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-
-	// Iterate through all hashes and their heights
-	for ; iter.Valid(); iter.Next() {
-		hash := iter.Key()
-		height := sdk.BigEndianToUint64(iter.Value())
-
-		encodedHash, err := types.BytesToChainhash(hash)
+	for s.HeaderExists(&tip.PrevBlock) {
+		newTip, err := s.GetHeaderByHash(&tip.PrevBlock)
 		if err != nil {
 			return nil, err
 		}
-
-		if minHeight == 0 {
-			minHeight = height
-		}
-
-		// A hash with a new minimum height has been found
-		if height <= minHeight {
-			baseBlock, err = s.GetHeaderByHash(encodedHash)
-			if err != nil {
-				return nil, err
-			}
-			minHeight = height
-		}
+		// Hack so that the for loop doesn't initialize a new tip variable
+		tip = newTip
 	}
-	return baseBlock, nil
+	return tip, nil
 }
 
 // CreateTip sets the provided header as the tip
