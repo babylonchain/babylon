@@ -14,6 +14,7 @@ const (
 	TypeMsgWrappedBeginRedelegate = "wrapped_begin_redelegate"
 )
 
+// ensure that these message types implement the sdk.Msg interface
 var (
 	_ sdk.Msg = &MsgCreateValidatorBLS{}
 	_ sdk.Msg = &MsgWrappedDelegate{}
