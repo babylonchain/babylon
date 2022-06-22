@@ -1,7 +1,8 @@
 package keeper
 
 import (
-	"fmt"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -35,7 +36,7 @@ func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 func (qmd DropValidatorMsgDecorator) IsValidatorRelatedMsg(msg sdk.Msg) error {
 	switch msg.(type) {
 	case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgDelegate, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate:
-		return fmt.Errorf("intercepted some {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages")
+		return sdkerrors.Wrap(epochingtypes.ErrInvalidMsgType, "Babylon cannot accept {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages. Please use wrapped versions instead.")
 	default:
 		return nil
 	}
