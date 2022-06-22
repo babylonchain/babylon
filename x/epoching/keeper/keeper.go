@@ -74,8 +74,8 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
 	return epochNumber, err
 }
 
-// SetEpochNumber sets epoch number
-func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
+// setEpochNumber sets epoch number
+func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
@@ -88,15 +88,17 @@ func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
 	return nil
 }
 
-func (k Keeper) IncrementEpochNumber(ctx sdk.Context) error {
+// IncEpochNumber adds epoch number by 1
+func (k Keeper) IncEpochNumber(ctx sdk.Context) error {
 	epochNumber, err := k.GetEpochNumber(ctx)
 	if err != nil {
 		return err
 	}
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	return k.SetQueueLength(ctx, incrementedEpochNumber)
+	return k.setEpochNumber(ctx, incrementedEpochNumber)
 }
 
+// GetQueueLength fetches the number of queued messages
 func (k Keeper) GetQueueLength(ctx sdk.Context) (sdk.Uint, error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -110,7 +112,8 @@ func (k Keeper) GetQueueLength(ctx sdk.Context) (sdk.Uint, error) {
 	return queueLen, err
 }
 
-func (k Keeper) SetQueueLength(ctx sdk.Context, queueLen sdk.Uint) error {
+// setQueueLength sets the msg queue length
+func (k Keeper) setQueueLength(ctx sdk.Context, queueLen sdk.Uint) error {
 	store := ctx.KVStore(k.storeKey)
 
 	queueLenBytes, err := queueLen.Marshal()
@@ -123,19 +126,23 @@ func (k Keeper) SetQueueLength(ctx sdk.Context, queueLen sdk.Uint) error {
 	return nil
 }
 
-func (k Keeper) IncrementQueueLength(ctx sdk.Context) error {
+// IncQueueLength adds the queue length by 1
+func (k Keeper) IncQueueLength(ctx sdk.Context) error {
 	queueLen, err := k.GetQueueLength(ctx)
 	if err != nil {
 		return err
 	}
 	incrementedQueueLen := queueLen.AddUint64(1)
-	return k.SetQueueLength(ctx, incrementedQueueLen)
+	return k.setQueueLength(ctx, incrementedQueueLen)
 }
 
 // EnqueueMsg enqueues a message to the queue of the current epoch
 func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) error {
 	store := ctx.KVStore(k.storeKey)
 
+	// insert KV pair, where
+	// - key: QueuedMsgKey || queueLenBytes
+	// - value: msgBytes
 	queueLen, err := k.GetQueueLength(ctx)
 	if err != nil {
 		return err
@@ -144,24 +151,24 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) error {
 	if err != nil {
 		return err
 	}
-
 	msgBytes, err := k.cdc.Marshal(&msg)
 	if err != nil {
 		return err
 	}
 	store.Set(append(types.QueuedMsgKey, queueLenBytes...), msgBytes)
 
-	return k.IncrementQueueLength(ctx)
+	// increment queue length
+	return k.IncQueueLength(ctx)
 }
 
-// GetEpochMsgs returns the set of messages queued of the current epoch
+// GetEpochMsgs returns the set of messages queued in the current epoch
 func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]types.QueuedMessage, error) {
 	queuedMsgs := []types.QueuedMessage{}
-
 	store := ctx.KVStore(k.storeKey)
+
+	// add each queued msg to queuedMsgs
 	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.QueuedMsgKey)
 	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()
 		queuedMsgBytes := store.Get(key)
@@ -175,13 +182,18 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]types.QueuedMessage, error) {
 	return queuedMsgs, nil
 }
 
-func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
+// ClearEpochMsgs removes all messages in the queue
+func (k Keeper) ClearEpochMsgs(ctx sdk.Context) error {
 	store := ctx.KVStore(k.storeKey)
+
+	// remove all epoch msgs
 	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.QueuedMsgKey)
 	defer iterator.Close()
-
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()
 		store.Delete(key)
 	}
+
+	// set queue len to zero
+	return k.setQueueLength(ctx, sdk.NewUint(0))
 }
