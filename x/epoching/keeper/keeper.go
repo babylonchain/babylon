@@ -98,6 +98,24 @@ func (k Keeper) IncEpochNumber(ctx sdk.Context) error {
 	return k.setEpochNumber(ctx, incrementedEpochNumber)
 }
 
+// GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
+func (k Keeper) GetEpochBoundary(ctx sdk.Context) (sdk.Uint, error) {
+	epochNumber, err := k.GetEpochNumber(ctx)
+	if err != nil {
+		return sdk.NewUint(0), err
+	}
+	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
+
+	// hits epoch boundary
+	existingBlocks := epochNumber.Mod(epochInterval)
+	if existingBlocks.IsZero() {
+		return epochNumber, nil
+	}
+	// haven't hit epoch boundary yet
+	restBlocks := epochInterval.Sub(existingBlocks)
+	return epochNumber.Add(restBlocks), nil
+}
+
 // GetQueueLength fetches the number of queued messages
 func (k Keeper) GetQueueLength(ctx sdk.Context) (sdk.Uint, error) {
 	store := ctx.KVStore(k.storeKey)
@@ -162,8 +180,8 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) error {
 }
 
 // GetEpochMsgs returns the set of messages queued in the current epoch
-func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]types.QueuedMessage, error) {
-	queuedMsgs := []types.QueuedMessage{}
+func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]*types.QueuedMessage, error) {
+	queuedMsgs := []*types.QueuedMessage{}
 	store := ctx.KVStore(k.storeKey)
 
 	// add each queued msg to queuedMsgs
@@ -176,7 +194,7 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]types.QueuedMessage, error) {
 		if err := k.cdc.Unmarshal(queuedMsgBytes, &queuedMsg); err != nil {
 			return nil, err
 		}
-		queuedMsgs = append(queuedMsgs, queuedMsg)
+		queuedMsgs = append(queuedMsgs, &queuedMsg)
 	}
 
 	return queuedMsgs, nil
