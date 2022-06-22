@@ -87,14 +87,6 @@ import (
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
-	/*
-		TODO: app-specific-module imports
-		"github.com/babylon/test-bbl/docs"
-
-		testbblmodule "github.com/babylon/test-bbl/x/testbbl"
-		testbblmodulekeeper "github.com/babylon/test-bbl/x/testbbl/keeper"
-		testbblmoduletypes "github.com/babylon/test-bbl/x/testbbl/types"
-	*/
 	"github.com/babylonchain/babylon/x/btccheckpoint"
 	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -190,10 +182,6 @@ type BabylonApp struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 
-	/*
-		TODO: Add custom module keepers here
-		TestbblKeeper testbblmodulekeeper.Keeper
-	*/
 	EpochingKeeper epochingkeeper.Keeper
 
 	BTCLightClientKeeper btclightclientkeeper.Keeper
@@ -243,10 +231,6 @@ func NewBabylonApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
-		/*
-			TODO: add application specific store key
-			testbblmoduletypes.StoreKey,
-		*/
 		epochingtypes.StoreKey,
 		btclightclienttypes.StoreKey,
 		btccheckpointtypes.StoreKey,
@@ -336,16 +320,6 @@ func NewBabylonApp(
 		),
 	)
 
-	/*
-		TODO: add Babylon app keeper
-		app.TestbblKeeper = *testbblmodulekeeper.NewKeeper(
-			appCodec,
-			keys[testbblmoduletypes.StoreKey],
-			keys[testbblmoduletypes.MemStoreKey],
-			app.GetSubspace(testbblmoduletypes.ModuleName),
-		)
-		testbblModule := testbblmodule.NewAppModule(appCodec, app.TestbblKeeper, app.AccountKeeper, app.BankKeeper)
-	*/
 	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
 	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
 	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
@@ -385,10 +359,6 @@ func NewBabylonApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		/*
-			        TODO: add bbl module
-					testbblModule,
-		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
@@ -406,10 +376,6 @@ func NewBabylonApp(
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName,
-		/*
-			TODO: add bbl module
-			testbblmoduletypes.ModuleName,
-		*/
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
@@ -422,10 +388,6 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
-		/*
-			TODO: add bbl module
-			testbblmoduletypes.ModuleName,
-		*/
 		// TODO: BBL doesn't want the staking module to update the validator set at the end of each block. We consider two approaches to fix this:
 		// - remove stakingtypes.ModuleName from here, and let `epoching.EndBlock` do everything
 		// - call `epoching.EndBlock` first but only to dequeue the delayed staking requests, then let `staking.EndBlock` take care of executing them and return the changeset.
@@ -446,10 +408,6 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
-		/*
-			TODO: add bbl module
-			testbblmoduletypes.ModuleName,
-		*/
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
@@ -484,10 +442,6 @@ func NewBabylonApp(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		/*
-			TODO: add bbl module
-			testbblModule,
-		*/
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
@@ -505,7 +459,10 @@ func NewBabylonApp(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 
-	anteHandler, err := ante.NewAnteHandler(
+	// initialize AnteHandler, which includes
+	// - authAnteHandler: the default AnteHandler created by `auth.ante.NewAnteHandler`
+	// - Extra decorators introduced in Babylon, such as DropValidatorMsgDecorator that delays validator-related messages
+	authAnteHandler, err := ante.NewAnteHandler(
 		ante.HandlerOptions{
 			AccountKeeper:   app.AccountKeeper,
 			BankKeeper:      app.BankKeeper,
@@ -514,12 +471,16 @@ func NewBabylonApp(
 			SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		},
 	)
-
 	if err != nil {
 		panic(err)
 	}
-
+	anteHandler := sdk.ChainAnteDecorators(
+		NewWrappedAnteHandler(authAnteHandler),
+		epochingkeeper.NewDropValidatorMsgDecorator(),
+	)
 	app.SetAnteHandler(anteHandler)
+
+	// initialize EndBlocker
 	app.SetEndBlocker(app.EndBlocker)
 
 	if loadLatest {
@@ -689,10 +650,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
-	/*
-		TODO: add bbl module
-		paramsKeeper.Subspace(testbblmoduletypes.ModuleName)
-	*/
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
 	paramsKeeper.Subspace(btclightclienttypes.ModuleName)
 	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
