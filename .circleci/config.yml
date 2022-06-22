@@ -15,13 +15,13 @@ jobs:
     steps:
       - checkout
       - run:
-          name: "print go environment"
+          name: Print Go environment
           command: "go env"
       - restore_cache: # restores saved cache if no changes are detected since last run
           keys:
             - go-mod-v5-{{ checksum "go.sum" }}
       - run:
-          name: Install Dependencies
+          name: Build babylond
           command: make build
       - save_cache:
           key: go-mod-v5-{{ checksum "go.sum" }}
