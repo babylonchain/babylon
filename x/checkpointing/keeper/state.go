@@ -17,8 +17,9 @@ func (k Keeper) BlsSigsState(ctx sdk.Context) BlsSigsState {
 	// Build the BlsSigsState storage
 	store := ctx.KVStore(k.storeKey)
 	return BlsSigsState{
-		cdc:     k.cdc,
-		blsSigs: prefix.NewStore(store, types.BlsSigsPrefix),
+		cdc:         k.cdc,
+		blsSigs:     prefix.NewStore(store, types.BlsSigsPrefix),
+		hashToEpoch: prefix.NewStore(store, types.BlsSigsHashToEpochPrefix),
 	}
 }
 
@@ -92,6 +93,7 @@ func (bs BlsSigsState) Exists(hash types.BlsSigHash) bool {
 type CheckpointsState struct {
 	cdc         codec.BinaryCodec
 	checkpoints sdk.KVStore
+	hashToEpoch sdk.KVStore
 }
 
 func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
@@ -100,5 +102,8 @@ func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
 	return CheckpointsState{
 		cdc:         k.cdc,
 		checkpoints: prefix.NewStore(store, types.CheckpointsPrefix),
+		hashToEpoch: prefix.NewStore(store, types.CkptsHashToEpochPrefix),
 	}
 }
+
+// TODO: add basic CheckpointsState methods
