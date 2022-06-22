@@ -24,11 +24,19 @@ func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
 // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	for _, msg := range tx.GetMsgs() {
-		switch msg.(type) {
-		case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgDelegate, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate:
-			return ctx, fmt.Errorf("intercepted some {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages")
+		if err := qmd.IsValidatorRelatedMsg(msg); err != nil {
+			return ctx, err
 		}
 	}
 
 	return next(ctx, tx, simulate)
+}
+
+func (qmd DropValidatorMsgDecorator) IsValidatorRelatedMsg(msg sdk.Msg) error {
+	switch msg.(type) {
+	case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgDelegate, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate:
+		return fmt.Errorf("intercepted some {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages")
+	default:
+		return nil
+	}
 }
