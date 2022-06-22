@@ -5,22 +5,37 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  say-hello:
+  build:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     docker:
-      - image: cimg/base:stable
+      - image: cimg/go:1.17.7
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - run:
-          name: "Say hello"
-          command: "echo Hello, World!"
+          name: "print go environment"
+          command: "go env"
+      - restore_cache: # restores saved cache if no changes are detected since last run
+          keys:
+            - go-mod-v5-{{ checksum "go.sum" }}
+      - run:
+          name: Install Dependencies
+          command: make build
+      - save_cache:
+          key: go-mod-v5-{{ checksum "go.sum" }}
+          paths:
+            - "/home/circleci/go/pkg/mod"
+      - run:
+          name: Run tests
+          command: |
+            make test
+      
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  say-hello-workflow:
+  build-and-test:
     jobs:
-      - say-hello
+      - build
