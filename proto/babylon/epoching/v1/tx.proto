@@ -9,10 +9,6 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // CreateValidatorBLS defines a method for creating a new validator with BLS PK.
-  // TODO: this is probably a part of the checkpointing module
-  rpc CreateValidatorBLS(MsgCreateValidatorBLS) returns (MsgCreateValidatorBLSResponse);
-
   // WrappedDelegate defines a method for performing a delegation of coins from a delegator to a validator.
   rpc WrappedDelegate(MsgWrappedDelegate) returns (MsgWrappedDelegateResponse);
 
@@ -22,15 +18,6 @@ service Msg {
   // WrappedBeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.
   rpc WrappedBeginRedelegate(MsgWrappedBeginRedelegate) returns (MsgWrappedBeginRedelegateResponse);
 }
-
-// TODO: change to BBL's MsgCreateValidatorBLS
-message MsgCreateValidatorBLS {
-    option (gogoproto.equal)           = false;
-    option (gogoproto.goproto_getters) = false;
-
-    cosmos.staking.v1beta1.MsgCreateValidator msg = 1;
-}
-message MsgCreateValidatorBLSResponse {}
 
 message MsgWrappedDelegate {
     option (gogoproto.equal)           = false;

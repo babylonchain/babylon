@@ -18,10 +18,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (k msgServer) CreateValidatorBLS(goCtx context.Context, msg *types.MsgCreateValidatorBLS) (*types.MsgCreateValidatorBLSResponse, error) {
-	panic("TODO: unimplemented")
-}
-
 func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	panic("TODO: unimplemented")
 }
