@@ -104,15 +104,8 @@ func (k Keeper) GetEpochBoundary(ctx sdk.Context) (sdk.Uint, error) {
 		return sdk.NewUint(0), err
 	}
 	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
-
-	// hits epoch boundary
-	existingBlocks := epochNumber.Mod(epochInterval)
-	if existingBlocks.IsZero() {
-		return epochNumber, nil
-	}
-	// haven't hit epoch boundary yet
-	restBlocks := epochInterval.Sub(existingBlocks)
-	return epochNumber.Add(restBlocks), nil
+	// example: in epoch 0, epoch interval is 5 blocks, boundary will be (0+1)*5=5
+	return epochNumber.AddUint64(1).Mul(epochInterval), nil
 }
 
 // GetQueueLength fetches the number of queued messages
