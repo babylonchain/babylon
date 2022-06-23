@@ -1,6 +1,9 @@
 package types
 
-import "encoding/hex"
+import (
+	"encoding/hex"
+	bbl "github.com/babylonchain/babylon/types"
+)
 
 // TODO: get these from a configuration file
 const (
@@ -15,9 +18,12 @@ func DefaultGenesis() *GenesisState {
 		panic("Default base header is not valid hex encoded")
 	}
 
+	var headerBytes bbl.BTCHeaderBytes
+	headerBytes.Unmarshal(baseHeaderBytes)
+
 	return &GenesisState{
 		Params:        DefaultParams(),
-		BaseBtcHeader: DefaultBaseBTCHeader(baseHeaderBytes, DefaultBaseHeaderHeight),
+		BaseBtcHeader: DefaultBaseBTCHeader(&headerBytes, DefaultBaseHeaderHeight),
 	}
 }
 

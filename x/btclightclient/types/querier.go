@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	bbl "github.com/babylonchain/babylon/types"
 )
 
 // NewQueryParamsRequest creates a new instance of QueryParamsRequest.
@@ -16,12 +16,11 @@ func NewQueryHashesRequest() *QueryHashesRequest {
 
 // NewQueryContainsRequest creates a new instance of QueryContainsRequest.
 func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
-	// Convert the hex hash into the
-	// reverse bytes representation that we expect
-	chHash, err := chainhash.NewHashFromStr(hash)
+	var headerBytes bbl.BTCHeaderHashBytes
+	err := headerBytes.UnmarshalHex(hash)
 	if err != nil {
 		return nil, err
 	}
-	chBytes := ChainhashToBytes(chHash)
-	return &QueryContainsRequest{Hash: chBytes}, nil
+	res := &QueryContainsRequest{Hash: &headerBytes}
+	return res, nil
 }

@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
@@ -15,9 +16,13 @@ import (
 // Ensure that MsgInsertHeader implements all functions of the Msg interface
 var _ sdk.Msg = (*MsgInsertHeader)(nil)
 
-func NewMsgInsertHeader(signer sdk.AccAddress, header []byte) *MsgInsertHeader {
-	headerBytes := &BTCHeaderBytes{HeaderBytes: header}
-	return &MsgInsertHeader{Signer: signer.String(), Header: headerBytes}
+func NewMsgInsertHeader(signer sdk.AccAddress, headerHex string) (*MsgInsertHeader, error) {
+	var headerBytes bbl.BTCHeaderBytes
+	err := headerBytes.UnmarshalHex(headerHex)
+	if err != nil {
+		return nil, err
+	}
+	return &MsgInsertHeader{Signer: signer.String(), Header: &headerBytes}, nil
 }
 
 func (msg *MsgInsertHeader) ValidateBasic() error {
@@ -27,7 +32,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 		return err
 	}
 
-	header, err := BytesToBtcdHeader(msg.Header)
+	header, err := msg.Header.ToBtcdHeader()
 	if err != nil {
 		return err
 	}

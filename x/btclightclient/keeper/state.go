@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
@@ -33,9 +34,9 @@ func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) {
 	headersKey := types.HeadersObjectKey(height, &headerHash)
 	heightKey := types.HeadersObjectHeightKey(&headerHash)
 
-	headerRawBytes := types.BtcdHeaderToBytes(header)
+	headerBytes := bbl.BtcdHeaderToHeaderBytes(header)
 	// save concrete object
-	s.headers.Set(headersKey, headerRawBytes.HeaderBytes)
+	s.headers.Set(headersKey, headerBytes)
 	// map header to height
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
 
@@ -49,9 +50,10 @@ func (s HeadersState) GetHeader(height uint64, hash *chainhash.Hash) (*wire.Bloc
 	if rawBytes == nil {
 		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided height and hash")
 	}
+	var headerBytes bbl.BTCHeaderBytes
+	headerBytes.Unmarshal(rawBytes)
 
-	headerBytes := &types.BTCHeaderBytes{HeaderBytes: rawBytes}
-	header, err := types.BytesToBtcdHeader(headerBytes)
+	header, err := headerBytes.ToBtcdHeader()
 	if err != nil {
 		return nil, err
 	}
@@ -85,10 +87,9 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*wire.BlockHeader
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {
-		rawBytes := iter.Value()
-		headerBytes := &types.BTCHeaderBytes{HeaderBytes: rawBytes}
-
-		header, err := types.BytesToBtcdHeader(headerBytes)
+		var headerBytes bbl.BTCHeaderBytes
+		headerBytes.Unmarshal(iter.Value())
+		header, err := headerBytes.ToBtcdHeader()
 		if err != nil {
 			return err
 		}
@@ -112,8 +113,9 @@ func (s HeadersState) GetDescendingHeaders() ([]*wire.BlockHeader, error) {
 	// 		 the blocks in a descending height manner.
 	//		 Need to verify.
 	for ; iter.Valid(); iter.Next() {
-		headerBytes := iter.Value()
-		header, err := types.BytesToBtcdHeader(&types.BTCHeaderBytes{HeaderBytes: headerBytes})
+		var headerBytes bbl.BTCHeaderBytes
+		headerBytes.Unmarshal(iter.Value())
+		header, err := headerBytes.ToBtcdHeader()
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +127,7 @@ func (s HeadersState) GetDescendingHeaders() ([]*wire.BlockHeader, error) {
 // HeaderExists Check whether a hash is maintained in storage
 func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
-	hashBytes := types.ChainhashToBytes(hash)
+	hashBytes := bbl.ChainhashToHeaderHashBytes(hash)
 	return store.Has(hashBytes)
 }
 
@@ -159,9 +161,9 @@ func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
 
 // CreateTip sets the provided header as the tip
 func (s HeadersState) CreateTip(header *wire.BlockHeader) {
-	headerBytes := types.BtcdHeaderToBytes(header)
+	headerBytes := bbl.BtcdHeaderToHeaderBytes(header)
 	tipKey := types.TipKey()
-	s.tip.Set(tipKey, headerBytes.HeaderBytes)
+	s.tip.Set(tipKey, headerBytes)
 }
 
 // UpdateTip checks whether the tip should be updated and acts accordingly
@@ -192,9 +194,9 @@ func (s HeadersState) GetTip() *wire.BlockHeader {
 	}
 
 	tipKey := types.TipKey()
-	tipBytes := s.tip.Get(tipKey)
-	tipHeader := &types.BTCHeaderBytes{HeaderBytes: tipBytes}
-	tip, err := types.BytesToBtcdHeader(tipHeader)
+	var tipBytes bbl.BTCHeaderBytes
+	tipBytes.Unmarshal(s.tip.Get(tipKey))
+	tip, err := tipBytes.ToBtcdHeader()
 	if err != nil {
 		panic("Stored tip is not a valid btcd header")
 	}
