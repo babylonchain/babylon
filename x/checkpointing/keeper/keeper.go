@@ -56,6 +56,12 @@ func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	return nil
 }
 
-func (k Keeper) AddCheckpoint(ctx sdk.Context, epoch uint64, ckpt *types.RawCheckpoint) error {
-	panic("implement this")
+func (k Keeper) AddCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
+	// TODO: some checks
+	return k.CheckpointsState(ctx).CreateRawCkpt(ckpt)
+}
+
+func (k Keeper) UpdateCkptStatus(ctx sdk.Context, hash types.RawCkptHash, status uint32) error {
+	// TODO: some checks
+	return k.CheckpointsState(ctx).UpdateCkptStatus(hash, status)
 }
