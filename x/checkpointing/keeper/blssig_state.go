@@ -23,28 +23,40 @@ func (k Keeper) BlsSigsState(ctx sdk.Context) BlsSigsState {
 	}
 }
 
-// InsertBlsSig inserts a bls sig into storage
-func (bs BlsSigsState) InsertBlsSig(sig *types.BlsSig) {
+// CreateBlsSig inserts the bls sig into the hash->epoch and (epoch, hash)->bls sig storage
+func (bs BlsSigsState) CreateBlsSig(sig *types.BlsSig) {
 	epoch := sig.GetEpochNum()
 	sigHash := sig.Hash()
 	blsSigsKey := types.BlsSigsObjectKey(epoch, sigHash)
 	epochKey := types.BlsSigsEpochKey(sigHash)
 
+	// save concrete bls sig object
 	bs.blsSigs.Set(blsSigsKey, bs.cdc.MustMarshal(sig))
+	// map bls sig to epoch
 	bs.hashToEpoch.Set(epochKey, sdk.Uint64ToBigEndian(epoch))
 }
 
 // GetBlsSig retrieves a bls sig by its epoch and hash
 func (bs BlsSigsState) GetBlsSig(epoch uint64, hash types.BlsSigHash) (*types.BlsSig, error) {
 	blsSigsKey := types.BlsSigsObjectKey(epoch, hash)
-	bz := bs.blsSigs.Get(blsSigsKey)
-	if bz == nil {
-		return nil, types.ErrBlsSigDoesNotExist.Wrap("no header with provided height and hash")
+	rawBytes := bs.blsSigs.Get(blsSigsKey)
+	if rawBytes == nil {
+		return nil, types.ErrBlsSigDoesNotExist.Wrap("no header with provided epoch and hash")
 	}
 
 	blsSig := new(types.BlsSig)
-	bs.cdc.MustUnmarshal(bz, blsSig)
+	bs.cdc.MustUnmarshal(rawBytes, blsSig)
 	return blsSig, nil
+}
+
+// GetBlsSigEpoch retrieves the epoch of a bls sig
+func (bs BlsSigsState) GetBlsSigEpoch(hash types.BlsSigHash) (uint64, error) {
+	hashKey := types.BlsSigsEpochKey(hash)
+	bz := bs.hashToEpoch.Get(hashKey)
+	if bz == nil {
+		return 0, types.ErrBlsSigDoesNotExist.Wrap("no bls sig with provided hash")
+	}
+	return sdk.BigEndianToUint64(bz), nil
 }
 
 // GetBlsSigByHash retrieves a bls sig by its hash
@@ -57,53 +69,24 @@ func (bs BlsSigsState) GetBlsSigByHash(hash types.BlsSigHash) (*types.BlsSig, er
 }
 
 // GetBlsSigsByEpoch retrieves bls sigs by their epoch
-func (bs BlsSigsState) GetBlsSigsByEpoch(epoch uint64) ([]*types.BlsSig, error) {
+func (bs BlsSigsState) GetBlsSigsByEpoch(epoch uint64, f func(sig *types.BlsSig) bool) error {
 	store := prefix.NewStore(bs.blsSigs, sdk.Uint64ToBigEndian(epoch))
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
-	blsSigs := make([]*types.BlsSig, 0)
 	for ; iter.Valid(); iter.Next() {
 		rawBytes := iter.Value()
 		blsSig := new(types.BlsSig)
 		bs.cdc.MustUnmarshal(rawBytes, blsSig)
-		blsSigs = append(blsSigs, blsSig)
+		stop := f(blsSig)
+		if stop {
+			break
+		}
 	}
-	if len(blsSigs) == 0 {
-		return nil, types.ErrBlsSigsEpochDoesNotExist.Wrap("no bls sigs with provided epoch")
-	}
-	return blsSigs, nil
-}
-
-func (bs BlsSigsState) GetBlsSigEpoch(hash types.BlsSigHash) (uint64, error) {
-	hashKey := types.BlsSigsEpochKey(hash)
-	bz := bs.hashToEpoch.Get(hashKey)
-	if bz == nil {
-		return 0, types.ErrBlsSigDoesNotExist.Wrap("no bls sig with provided hash")
-	}
-	return sdk.BigEndianToUint64(bz), nil
+	return nil
 }
 
 // Exists Check whether a hash is maintained in storage
 func (bs BlsSigsState) Exists(hash types.BlsSigHash) bool {
-	_, err := bs.GetBlsSigEpoch(hash)
-	return err == nil
+	return bs.hashToEpoch.Has(types.BlsSigHashToBytes(hash))
 }
-
-type CheckpointsState struct {
-	cdc         codec.BinaryCodec
-	checkpoints sdk.KVStore
-	hashToEpoch sdk.KVStore
-}
-
-func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
-	// Build the CheckpointsState storage
-	store := ctx.KVStore(k.storeKey)
-	return CheckpointsState{
-		cdc:         k.cdc,
-		checkpoints: prefix.NewStore(store, types.CheckpointsPrefix),
-		hashToEpoch: prefix.NewStore(store, types.CkptsHashToEpochPrefix),
-	}
-}
-
-// TODO: add basic CheckpointsState methods

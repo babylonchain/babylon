@@ -26,8 +26,11 @@ var (
 	BlsSigsObjectPrefix      = append(BlsSigsPrefix, 0x0) // where we save the concrete bls sig bytes
 	BlsSigsHashToEpochPrefix = append(BlsSigsPrefix, 0x1) // where we map hash to epoch
 
-	CkptsObjectPrefix      = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
-	CkptsHashToEpochPrefix = append(CheckpointsPrefix, 0x1) // where we map hash to epoch
+	CkptsObjectPrefix       = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
+	CkptsHashToEpochPrefix  = append(CheckpointsPrefix, 0x1) // where we map hash to epoch
+	CkptsHashToStatusPrefix = append(CheckpointsPrefix, 0x2) // where we map hash to status
+	TipPrefix               = append(CheckpointsPrefix, 0x3) // where we store the tip epoch
+	LastConfirmedPrefix     = append(CheckpointsPrefix, 0x4) // where we store the last confirmed epoch
 )
 
 // BlsSigsObjectKey defines epoch + hash
@@ -42,15 +45,27 @@ func BlsSigsEpochKey(hash BlsSigHash) []byte {
 }
 
 // CkptsObjectKey defines epoch + status + hash
-func CkptsObjectKey(epoch uint64, status string, hash RawCkptHash) []byte {
+func CkptsObjectKey(epoch uint64, status uint32, hash RawCkptHash) []byte {
 	ee := sdk.Uint64ToBigEndian(epoch)
 	epochPrefix := append(CkptsObjectPrefix, ee...)
-	epochStatusPrefix := append(epochPrefix, []byte(status)...)
+	epochStatusPrefix := append(epochPrefix, Uint32ToBitEndian(status)...)
 	return append(epochStatusPrefix, hash...)
 }
 
 func CkptsEpochKey(hash RawCkptHash) []byte {
 	return append(CkptsHashToEpochPrefix, hash...)
+}
+
+func CkptsStatusKey(hash RawCkptHash) []byte {
+	return append(CkptsHashToStatusPrefix, hash...)
+}
+
+func TipKey() []byte {
+	return TipPrefix
+}
+
+func LastConfirmedKey() []byte {
+	return LastConfirmedPrefix
 }
 
 func KeyPrefix(p string) []byte {

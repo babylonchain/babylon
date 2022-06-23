@@ -52,7 +52,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	// TODO: some checks: 1. duplication check 2. epoch check 3. raw ckpt existence check
 	// TODO: aggregate bls sigs and try to build raw checkpoints
-	k.BlsSigsState(ctx).InsertBlsSig(sig)
+	k.BlsSigsState(ctx).CreateBlsSig(sig)
 	return nil
 }
 

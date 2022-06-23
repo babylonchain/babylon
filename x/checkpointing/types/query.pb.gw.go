@@ -41,7 +41,6 @@ func request_Query_RawCheckpointList_0(ctx context.Context, marshaler runtime.Ma
 
 	var (
 		val string
-		e   int32
 		ok  bool
 		err error
 		_   = err
@@ -52,13 +51,11 @@ func request_Query_RawCheckpointList_0(ctx context.Context, marshaler runtime.Ma
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
 	}
 
-	e, err = runtime.Enum(val, RawCheckpointStatus_value)
+	protoReq.Status, err = runtime.Uint32(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
 	}
-
-	protoReq.Status = RawCheckpointStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
@@ -78,7 +75,6 @@ func local_request_Query_RawCheckpointList_0(ctx context.Context, marshaler runt
 
 	var (
 		val string
-		e   int32
 		ok  bool
 		err error
 		_   = err
@@ -89,13 +85,11 @@ func local_request_Query_RawCheckpointList_0(ctx context.Context, marshaler runt
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "status")
 	}
 
-	e, err = runtime.Enum(val, RawCheckpointStatus_value)
+	protoReq.Status, err = runtime.Uint32(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "status", err)
 	}
-
-	protoReq.Status = RawCheckpointStatus(e)
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)

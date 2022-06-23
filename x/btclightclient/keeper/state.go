@@ -94,7 +94,7 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*wire.BlockHeader
 		}
 		stop := f(header)
 		if stop {
-			break
+			return nil
 		}
 	}
 	return nil
