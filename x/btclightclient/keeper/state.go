@@ -124,8 +124,9 @@ func (s HeadersState) GetDescendingHeaders() ([]*wire.BlockHeader, error) {
 
 // HeaderExists Check whether a hash is maintained in storage
 func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
+	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
 	hashBytes := types.ChainhashToBytes(hash)
-	return s.hashToHeight.Has(hashBytes)
+	return store.Has(hashBytes)
 }
 
 // GetBaseBTCHeader retrieves the BTC header with the minimum height
