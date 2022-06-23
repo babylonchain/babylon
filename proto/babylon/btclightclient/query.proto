@@ -12,7 +12,17 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btclightclient/params";
+    option (google.api.http).get = "/babylon/btclightclient/v1/params";
+  }
+
+  // Hashes retrieves the hashes maintained by the module.
+  rpc Hashes(QueryHashesRequest) returns (QueryHashesResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/hashes";
+  }
+
+  // Contains checks whether a hash is maintained by the module.
+  rpc Contains(QueryContainsRequest) returns (QueryContainsResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/contains";
   }
 }
 
@@ -23,4 +33,26 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+// QueryHashesRequest is request type for the Query/Hashes RPC method.
+// It involves retrieving all hashes that are maintained by the module.
+message QueryHashesRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryHashesResponse is response type for the Query/Hashes RPC method.
+message QueryHashesResponse {
+  repeated bytes hashes = 1;
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+// QueryContainsRequest is request type for the Query/Contains RPC method.
+// It involves checking whether a hash is maintained by the module.
+message QueryContainsRequest {
+  bytes hash = 1;
+}
+
+// QueryContainsResponse is response type for the Query/Contains RPC method.
+message QueryContainsResponse {
+  bool contains = 1;
 }
