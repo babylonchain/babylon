@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	qtypes "github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -47,15 +48,31 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 // EpochMsgs handles the QueryEpochMsgsRequest query
 func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (*types.QueryEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	msgs, err := k.GetEpochMsgs(ctx)
+	var msgs []*types.QueuedMessage
+	store := ctx.KVStore(k.storeKey)
+	epochMsgsStore := prefix.NewStore(store, types.QueuedMsgKey)
+
+	// handle pagination
+	pageRes, err := query.Paginate(epochMsgsStore, req.Pagination, func(key, value []byte) error {
+		// get key in the store
+		storeKey := append(types.QueuedMsgKey, key...)
+		// get value in bytes
+		storeValue := store.Get(storeKey)
+		// unmarshal to queuedMsg
+		var queuedMsg types.QueuedMessage
+		if err := k.cdc.Unmarshal(storeValue, &queuedMsg); err != nil {
+			return err
+		}
+		// append to msgs
+		msgs = append(msgs, &queuedMsg)
+		return nil
+	})
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	resp := &types.QueryEpochMsgsResponse{
-		Msgs: msgs,
-		Pagination: &qtypes.PageResponse{
-			Total: uint64(len(msgs)),
-		},
+		Msgs:       msgs,
+		Pagination: pageRes,
 	}
 	return resp, nil
 }
