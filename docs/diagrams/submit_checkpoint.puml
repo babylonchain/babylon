@@ -38,7 +38,7 @@ User -> submitter : Start monitoring Bitcoin
 
 == Listen For Checkpoint Events ==
 
-Events --> submitter ++ : Raw checkpoint available \n for previous epoch
+Events --> submitter ++ : Raw checkpoint available \n for previous epoch \n or status went back to UNCONFIRMED
 submitter -> checkpointing ++ : Query raw checkpoint \n for previous epoch
 checkpointing -> rawcheckpoint_db : Get raw checkpoint
 return RawCheckpoint
@@ -175,6 +175,10 @@ alt if tip changed
         btccheckpoint -> staking : Release unbonding tokens for epoch
       end
     end
+  end
+  alt if checkpoint status was CHECKPOINTED_NOT_CONFIRMED\n but currently no checkpoint tx was on main chain
+    checkpointing -> checkpointing : Change checkpoint status to \n UNCONFIRMED
+    checkpointing -> Events : Emit epoch checkpoint UNCONFIRMED
   end
   deactivate btccheckpoint
 end
