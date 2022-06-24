@@ -53,14 +53,14 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	epochMsgsStore := prefix.NewStore(store, types.QueuedMsgKey)
 
 	// handle pagination
+	// TODO: the epoch might end between pagination requests, leading inconsistent results by the time someone gets to the end. Possible fixes:
+	// - We could add the epoch number to the query, and return nothing if the current epoch number is different. But it's a bit of pain to have to set it and not know why there's no result.
+	// - We could not reset the key to 0 when the queue is cleared, and just keep incrementing the ID forever. That way when the next query comes, it might skip some records that have been deleted, then resume from the next available record which has a higher key than the value in the pagination data structure.
+	// - We can do nothing, in which case some records that have been inserted after the delete might be skipped because their keys are lower than the pagionation state.
 	pageRes, err := query.Paginate(epochMsgsStore, req.Pagination, func(key, value []byte) error {
-		// get key in the store
-		storeKey := append(types.QueuedMsgKey, key...)
-		// get value in bytes
-		storeValue := store.Get(storeKey)
 		// unmarshal to queuedMsg
 		var queuedMsg types.QueuedMessage
-		if err := k.cdc.Unmarshal(storeValue, &queuedMsg); err != nil {
+		if err := k.cdc.Unmarshal(value, &queuedMsg); err != nil {
 			return err
 		}
 		// append to msgs
