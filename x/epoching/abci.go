@@ -15,7 +15,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k keeper.Keeper) {
+func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	defer telemetry.ModuleMeasureSince(evidencetypes.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 	defer telemetry.ModuleMeasureSince(slashingtypes.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
