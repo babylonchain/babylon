@@ -15,13 +15,14 @@ import (
 // - finishes all mature redelegations
 // in the corresponding queues, where
 // - an unbonding/redelegation becomes mature when its corresponding epoch and all previous epochs have been checkpointed.
-func ApplyMatureUnbonding(ctx sdk.Context, sk *stakingkeeper.Keeper, epochBoundaryTime time.Time) {
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L32-L91)
+func ApplyMatureUnbonding(ctx sdk.Context, stk *stakingkeeper.Keeper, epochBoundaryTime time.Time) {
 	// unbond all mature validators from the unbonding queue
-	sk.UnbondAllMatureValidators(ctx)
+	stk.UnbondAllMatureValidators(ctx)
 
 	// Remove all mature unbonding delegations from the ubd queue.
 	// TODO: DequeueAllMatureUBDQueue does not make use of `currTime` parameter. Double-check
-	matureUnbonds := sk.DequeueAllMatureUBDQueue(ctx, epochBoundaryTime)
+	matureUnbonds := stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryTime)
 	for _, dvPair := range matureUnbonds {
 		addr, err := sdk.ValAddressFromBech32(dvPair.ValidatorAddress)
 		if err != nil {
@@ -31,7 +32,7 @@ func ApplyMatureUnbonding(ctx sdk.Context, sk *stakingkeeper.Keeper, epochBounda
 		if err != nil {
 			panic(err)
 		}
-		balances, err := sk.CompleteUnbonding(ctx, delegatorAddress, addr)
+		balances, err := stk.CompleteUnbonding(ctx, delegatorAddress, addr)
 		if err != nil {
 			continue
 		}
@@ -48,7 +49,7 @@ func ApplyMatureUnbonding(ctx sdk.Context, sk *stakingkeeper.Keeper, epochBounda
 
 	// Remove all mature redelegations from the red queue.
 	// TODO: DequeueAllMatureRedelegationQueue does not make use of `currTime` parameter. Double-check
-	matureRedelegations := sk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryTime)
+	matureRedelegations := stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryTime)
 	for _, dvvTriplet := range matureRedelegations {
 		valSrcAddr, err := sdk.ValAddressFromBech32(dvvTriplet.ValidatorSrcAddress)
 		if err != nil {
@@ -62,7 +63,7 @@ func ApplyMatureUnbonding(ctx sdk.Context, sk *stakingkeeper.Keeper, epochBounda
 		if err != nil {
 			panic(err)
 		}
-		balances, err := sk.CompleteRedelegation(
+		balances, err := stk.CompleteRedelegation(
 			ctx,
 			delegatorAddress,
 			valSrcAddr,
@@ -91,8 +92,9 @@ func ApplyMatureUnbonding(ctx sdk.Context, sk *stakingkeeper.Keeper, epochBounda
 // * Updates the fee pool bonded vs not-bonded tokens.
 // * Updates relevant indices.
 // Triggered upon every epoch.
-func ApplyAndReturnValidatorSetUpdates(ctx sdk.Context, sk *stakingkeeper.Keeper) []abci.ValidatorUpdate {
-	validatorUpdates, err := sk.ApplyAndReturnValidatorSetUpdates(ctx)
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L18-L30)
+func ApplyAndReturnValidatorSetUpdates(ctx sdk.Context, stk *stakingkeeper.Keeper) []abci.ValidatorUpdate {
+	validatorUpdates, err := stk.ApplyAndReturnValidatorSetUpdates(ctx)
 	if err != nil {
 		panic(err)
 	}
