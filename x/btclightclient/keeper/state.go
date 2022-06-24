@@ -133,8 +133,7 @@ func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 	return store.Has(hashBytes)
 }
 
-// GetBaseBTCHeader retrieves the BTC header with the minimum height
-func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
+func (s HeadersState) GetCanonicalChain() ([]*wire.BlockHeader, error) {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
 		return nil, nil
@@ -147,6 +146,8 @@ func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
 		return nil, err
 	}
 
+	var chain []*wire.BlockHeader
+	chain = append(chain, currentHeader)
 	// Set the current header to be that of the tip
 	// Iterate through the collection and:
 	// 		- Discard anything with a higher height from the current header
@@ -155,10 +156,25 @@ func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
 	for _, header := range headers {
 		if header.BlockHash().String() == currentHeader.PrevBlock.String() {
 			currentHeader = header
+			chain = append(chain, header)
 		}
 	}
 
-	return currentHeader, nil
+	return chain, nil
+}
+
+// GetBaseBTCHeader retrieves the BTC header with the minimum height
+func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
+	// Retrieve the canonical chain
+	canonicalChain, err := s.GetCanonicalChain()
+	if err != nil {
+		return nil, err
+	}
+	if len(canonicalChain) == 0 {
+		return nil, nil
+	}
+	// The base btc header is the oldest one from the canonical chain
+	return canonicalChain[len(canonicalChain)-1], nil
 }
 
 // CreateTip sets the provided header as the tip

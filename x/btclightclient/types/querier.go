@@ -21,3 +21,7 @@ func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
 	res := &QueryContainsRequest{Hash: &hashBytes}
 	return res, nil
 }
+
+func NewQueryChainRequest() *QueryChainRequest {
+	return &QueryChainRequest{}
+}
