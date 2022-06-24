@@ -50,7 +50,7 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	chHash, err := req.Hash.ToChainhash()
+	chHash, err := req.Hash.MarshalChainhash()
 	if err != nil {
 		return nil, err
 	}

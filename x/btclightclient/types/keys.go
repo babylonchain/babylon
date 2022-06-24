@@ -33,14 +33,16 @@ var (
 func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
 	he := sdk.Uint64ToBigEndian(height)
 
-	hashBytes := bbl.ChainhashToHeaderHashBytes(hash)
+	var hashBytes bbl.BTCHeaderHashBytes
+	hashBytes.UnmarshalChainhash(hash)
 
 	heightPrefix := append(HeadersObjectPrefix, he...)
 	return append(heightPrefix, hashBytes...)
 }
 
 func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
-	hashBytes := bbl.ChainhashToHeaderHashBytes(hash)
+	var hashBytes bbl.BTCHeaderHashBytes
+	hashBytes.UnmarshalChainhash(hash)
 	return append(HashToHeightPrefix, hashBytes...)
 }
 

@@ -11,7 +11,7 @@ type BTCHeaderBytes []byte
 type BTCHeadersBytes []BTCHeaderBytes
 
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {
-	btcdHeader, err := m.ToBtcdHeader()
+	btcdHeader, err := m.MarshalBlockHeader()
 	if err != nil {
 		return nil, err
 	}
@@ -49,8 +49,8 @@ func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
 	return nil
 }
 
-func (m *BTCHeaderBytes) MarshalHex() (string, error) {
-	btcdHeader, err := m.ToBtcdHeader()
+func (m BTCHeaderBytes) MarshalHex() (string, error) {
+	btcdHeader, err := m.MarshalBlockHeader()
 	if err != nil {
 		return "", err
 	}
@@ -85,8 +85,7 @@ func (m *BTCHeaderBytes) Size() int {
 	return len(bz)
 }
 
-// ToBtcdHeader parse header bytes into a BlockHeader instance
-func (m BTCHeaderBytes) ToBtcdHeader() (*wire.BlockHeader, error) {
+func (m BTCHeaderBytes) MarshalBlockHeader() (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
 
@@ -101,11 +100,9 @@ func (m BTCHeaderBytes) ToBtcdHeader() (*wire.BlockHeader, error) {
 	return header, nil
 }
 
-// BtcdHeaderToHeaderBytes gets a BlockHeader instance and returns the header bytes
-func BtcdHeaderToHeaderBytes(header *wire.BlockHeader) BTCHeaderBytes {
+func (m *BTCHeaderBytes) UnmarshalBlockHeader(header *wire.BlockHeader) {
 	var buf bytes.Buffer
 	header.Serialize(&buf)
 
-	headerBytes := buf.Bytes()
-	return headerBytes
+	*m = buf.Bytes()
 }

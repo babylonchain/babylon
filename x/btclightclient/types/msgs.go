@@ -32,7 +32,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 		return err
 	}
 
-	header, err := msg.Header.ToBtcdHeader()
+	header, err := msg.Header.MarshalBlockHeader()
 	if err != nil {
 		return err
 	}

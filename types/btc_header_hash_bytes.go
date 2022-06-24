@@ -11,7 +11,7 @@ type BTCHeaderHashesBytes []BTCHeaderHashBytes
 
 func (m BTCHeaderHashBytes) MarshalJSON() ([]byte, error) {
 	// Get the chainhash representation
-	chHash, err := m.ToChainhash()
+	chHash, err := m.MarshalChainhash()
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +48,7 @@ func (m *BTCHeaderHashBytes) Unmarshal(bz []byte) error {
 }
 
 func (m *BTCHeaderHashBytes) MarshalHex() (string, error) {
-	chHash, err := m.ToChainhash()
+	chHash, err := m.MarshalChainhash()
 	if err != nil {
 		return "", err
 	}
@@ -85,20 +85,18 @@ func (m *BTCHeaderHashBytes) Size() int {
 	return len(bz)
 }
 
-// ToChainhash gets hash bytes in reverse order and returns a Hash instance
-func (m BTCHeaderHashBytes) ToChainhash() (*chainhash.Hash, error) {
+func (m BTCHeaderHashBytes) MarshalChainhash() (*chainhash.Hash, error) {
 	return chainhash.NewHash(m)
+}
+
+func (m *BTCHeaderHashBytes) UnmarshalChainhash(hash *chainhash.Hash) {
+	var headerHashBytes BTCHeaderHashBytes
+	headerHashBytes.Unmarshal(hash[:])
+	*m = headerHashBytes
 }
 
 func (m BTCHeaderHashBytes) reverse() {
 	for i := 0; i < chainhash.HashSize/2; i++ {
 		m[i], m[chainhash.HashSize-1-i] = m[chainhash.HashSize-1-i], m[i]
 	}
-}
-
-// ChainhashToHeaderHashBytes gets a Hash instance and returns bytes in reverse order
-func ChainhashToHeaderHashBytes(hash *chainhash.Hash) BTCHeaderHashBytes {
-	var headerHashBytes BTCHeaderHashBytes
-	headerHashBytes.Unmarshal(hash[:])
-	return headerHashBytes
 }
