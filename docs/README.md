@@ -32,3 +32,23 @@ paying the BTC fees, for future rewards on Babylon.
 To be able to confirm checkpoints we need to know how deeply embedded they are into the Bitcoin mainchain. This requires an on-chain light client, which relayers feed each bitcoin header they observe.
 
 ![BTC Light Client](diagrams/btc_light_client.png)
+
+## Automation
+
+Adding the following to `.git/hooks/pre-commit` automatically renders and checks in the images when we commit changes to the diagrams. CI should also check that there are no uncommitted changes.
+
+```bash
+#!/usr/bin/env bash
+
+# If any command fails, exit immediately with that command's exit status
+set -eo pipefail
+
+# Redirect output to stderr.
+exec 1>&2
+
+if git diff --cached --name-only | grep .puml
+then
+  make diagrams
+  git add docs/diagrams/*.png
+fi
+```
