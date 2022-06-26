@@ -28,9 +28,7 @@ var (
 	BlsSigsObjectPrefix      = append(BlsSigsPrefix, 0x0) // where we save the concrete bls sig bytes
 	BlsSigsHashToEpochPrefix = append(BlsSigsPrefix, 0x1) // where we map hash to epoch
 
-	CkptsObjectPrefix   = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
-	LastConfirmedPrefix = append(CheckpointsPrefix, 0x1) // where we store the last confirmed epoch
-	TipPrefix           = append(CheckpointsPrefix, 0x2) // where we store the tip epoch
+	CkptsObjectPrefix = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
 )
 
 // BlsSigsObjectKey defines epoch + hash
@@ -47,14 +45,6 @@ func BlsSigsEpochKey(hash BlsSigHash) []byte {
 // CkptsObjectKey defines epoch
 func CkptsObjectKey(epoch uint64) []byte {
 	return append(CkptsObjectPrefix, sdk.Uint64ToBigEndian(epoch)...)
-}
-
-func LastConfirmedKey() []byte {
-	return LastConfirmedPrefix
-}
-
-func TipKey() []byte {
-	return TipPrefix
 }
 
 func KeyPrefix(p string) []byte {

@@ -9,29 +9,23 @@ import (
 )
 
 type CheckpointsState struct {
-	cdc                codec.BinaryCodec
-	checkpoints        sdk.KVStore
-	lastConfirmedEpoch sdk.KVStore
-	tipEpoch           sdk.KVStore
+	cdc         codec.BinaryCodec
+	checkpoints sdk.KVStore
 }
 
 func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
 	// Build the CheckpointsState storage
 	store := ctx.KVStore(k.storeKey)
 	return CheckpointsState{
-		cdc:                k.cdc,
-		checkpoints:        prefix.NewStore(store, types.CheckpointsPrefix),
-		lastConfirmedEpoch: prefix.NewStore(store, types.CheckpointsPrefix),
-		tipEpoch:           prefix.NewStore(store, types.CheckpointsPrefix),
+		cdc:         k.cdc,
+		checkpoints: prefix.NewStore(store, types.CheckpointsPrefix),
 	}
 }
 
 // CreateRawCkpt inserts the raw checkpoint into the storage by its epoch number
-func (cs CheckpointsState) CreateRawCkpt(ckpt *types.RawCheckpoint) error {
+func (cs CheckpointsState) CreateRawCkpt(ckpt *types.RawCheckpoint) {
 	// save concrete ckpt object
-	cs.checkpoints.Set(types.CkptsObjectKey(ckpt.EpochNum), cs.cdc.MustMarshal(ckpt))
-
-	return cs.UpdateTipEpoch(ckpt.EpochNum)
+	cs.checkpoints.Set(types.CkptsObjectKey(ckpt.EpochNum), cs.SerializeCkpt(ckpt))
 }
 
 // GetRawCkpt retrieves a raw checkpoint by its epoch number
@@ -45,36 +39,26 @@ func (cs CheckpointsState) GetRawCkpt(epoch uint64) (*types.RawCheckpoint, error
 	return cs.DeserializeCkpt(rawBytes), nil
 }
 
-// GetRawCkptsByStatus retrieves raw checkpoints by their status by the accending order of epoch
-func (cs CheckpointsState) GetRawCkptsByStatus(status types.CkptStatus) ([]*types.RawCheckpoint, error) {
-	var startEpoch, endEpoch uint64
-	lce := cs.GetLastConfirmedEpoch()
-	if status == types.Confirmed {
-		endEpoch = cs.GetLastConfirmedEpoch()
-		startEpoch = 0
-	} else {
-		startEpoch = lce + 1
-		endEpoch = cs.GetTipEpoch()
-	}
-	if endEpoch <= startEpoch {
-		return nil, types.ErrCkptsDoNotExist.Wrap("no raw checkpoints with provided status")
-	}
-	return cs.getRawCkptsByEpochRangeWithStatus(startEpoch, endEpoch, status)
-}
+// GetRawCkptsByStatus retrieves raw checkpoints by their status by the descending order of epoch
+func (cs CheckpointsState) GetRawCkptsByStatus(status types.CkptStatus) []*types.RawCheckpoint {
+	var ckpts []*types.RawCheckpoint
 
-func (cs CheckpointsState) getRawCkptsByEpochRangeWithStatus(start uint64, endEpoch uint64, status types.CkptStatus) ([]*types.RawCheckpoint, error) {
-	ckptList := make([]*types.RawCheckpoint, endEpoch-start)
-	for i := start; i <= endEpoch; i++ {
-		ckpt, err := cs.GetRawCkpt(i)
-		if err != nil {
-			return nil, err
+	store := prefix.NewStore(cs.checkpoints, types.CkptsObjectPrefix)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		ckptBytes := iter.Value()
+		ckpt := cs.DeserializeCkpt(ckptBytes)
+		// the loop can end if the current status is CONFIRMED but the requested status is not CONFIRMED
+		if status != types.Confirmed && ckpt.Status == types.Confirmed {
+			return ckpts
 		}
-		if status == ckpt.Status {
-			ckptList = append(ckptList, ckpt)
+		if ckpt.Status == status {
+			ckpts = append(ckpts, ckpt)
 		}
 	}
-
-	return ckptList, nil
+	return ckpts
 }
 
 // UpdateCkptStatus updates the checkpoint's status
@@ -91,44 +75,6 @@ func (cs CheckpointsState) UpdateCkptStatus(rawCkptBytes []byte, status types.Ck
 	ckpt.Status = status
 	cs.checkpoints.Set(sdk.Uint64ToBigEndian(ckpt.EpochNum), cs.cdc.MustMarshal(ckpt))
 
-	return nil
-}
-
-// GetLastConfirmedEpoch retrieves the last confirmed epoch
-func (cs CheckpointsState) GetLastConfirmedEpoch() uint64 {
-	if !cs.lastConfirmedEpoch.Has(types.LastConfirmedKey()) {
-		return 0
-	}
-	bz := cs.lastConfirmedEpoch.Get(types.LastConfirmedKey())
-	return sdk.BigEndianToUint64(bz)
-}
-
-func (cs CheckpointsState) UpdateLastConfirmedEpoch(epoch uint64) error {
-	e := cs.GetLastConfirmedEpoch()
-	if e >= epoch {
-		return errors.New("failed to update last confirmed epoch")
-	}
-	epochKey := types.LastConfirmedKey()
-	cs.lastConfirmedEpoch.Set(epochKey, sdk.Uint64ToBigEndian(epoch))
-	return nil
-}
-
-// GetTipEpoch returns the highest epoch that has created a raw checkpoint
-func (cs CheckpointsState) GetTipEpoch() uint64 {
-	if !cs.tipEpoch.Has(types.TipKey()) {
-		return 0
-	}
-	bz := cs.tipEpoch.Get(types.TipKey())
-	return sdk.BigEndianToUint64(bz)
-}
-
-func (cs CheckpointsState) UpdateTipEpoch(epoch uint64) error {
-	tipKey := types.TipKey()
-	te := sdk.BigEndianToUint64(cs.tipEpoch.Get(tipKey))
-	if te >= epoch {
-		return errors.New("failed to update tip epoch")
-	}
-	cs.tipEpoch.Set(tipKey, sdk.Uint64ToBigEndian(epoch))
 	return nil
 }
 
