@@ -1,16 +1,15 @@
 package types
 
 import (
-	"encoding/binary"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
 func (m BlsSig) Hash() BlsSigHash {
 	fields := [][]byte{
+		sdk.Uint64ToBigEndian(m.EpochNum),
 		m.LastCommitHash,
 		m.BlsSig,
-		sdk.Uint64ToBigEndian(m.EpochNum),
 		[]byte(m.SignerAddress),
 	}
 	return hash(fields)
@@ -18,10 +17,10 @@ func (m BlsSig) Hash() BlsSigHash {
 
 func (m RawCheckpoint) Hash() RawCkptHash {
 	fields := [][]byte{
-		m.LastCommitHash,
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.Bitmap,
+		m.LastCommitHash,
 		m.BlsMultiSig,
+		m.Bitmap,
 	}
 	return hash(fields)
 }
@@ -34,20 +33,10 @@ func hash(fields [][]byte) []byte {
 	return tmhash.Sum(bz)
 }
 
-func BlsSigHashToBytes(h BlsSigHash) []byte {
-	return h
+func (m BlsSigHash) Bytes() []byte {
+	return m
 }
 
-func Uint32ToBitEndian(i uint32) []byte {
-	b := make([]byte, 4)
-	binary.BigEndian.PutUint32(b, i)
-	return b
-}
-
-func BigEndianToUint32(bz []byte) uint32 {
-	if len(bz) == 0 {
-		return 0
-	}
-
-	return binary.BigEndian.Uint32(bz)
+func (m RawCkptHash) Bytes() []byte {
+	return m
 }

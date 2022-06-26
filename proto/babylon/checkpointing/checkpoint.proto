@@ -20,7 +20,7 @@ message RawCheckpoint {
   // bls_multi_sig defines the multi sig that is aggregated from individual bls sigs
   bytes bls_multi_sig = 4;
   // status defines the status of the checkpoint
-  uint32 status = 5;
+  CkptStatus status = 5;
 }
 
 // BlsSig wraps the bls sig with meta data.
@@ -35,4 +35,16 @@ message BlsSig {
   // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // the signer_address defines the address of the signer
   string signer_address = 5;
+}
+
+// CkptStatus is the status of a checkpoint.
+enum CkptStatus{
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // UNCHECKPOINTED defines a checkpoint that is checkpointed on BTC.
+  CKPT_STATUS_UNCHECKPOINTED = 0 [(gogoproto.enumvalue_customname) = "Uncheckpointed"];
+  // UNCONFIRMED defines a validator that is checkpointed on BTC but not confirmed.
+  CKPT_STATUS_UNCONFIRMED = 1 [(gogoproto.enumvalue_customname) = "Unconfirmed"];
+  // CONFIRMED defines a validator that is confirmed on BTC.
+  CKPT_STATUS_CONFIRMED = 2 [(gogoproto.enumvalue_customname) = "Confirmed"];
 }

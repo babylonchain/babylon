@@ -1,6 +1,8 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 const (
 	// ModuleName defines the module name
@@ -26,11 +28,9 @@ var (
 	BlsSigsObjectPrefix      = append(BlsSigsPrefix, 0x0) // where we save the concrete bls sig bytes
 	BlsSigsHashToEpochPrefix = append(BlsSigsPrefix, 0x1) // where we map hash to epoch
 
-	CkptsObjectPrefix       = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
-	CkptsHashToEpochPrefix  = append(CheckpointsPrefix, 0x1) // where we map hash to epoch
-	CkptsHashToStatusPrefix = append(CheckpointsPrefix, 0x2) // where we map hash to status
-	TipPrefix               = append(CheckpointsPrefix, 0x3) // where we store the tip epoch
-	LastConfirmedPrefix     = append(CheckpointsPrefix, 0x4) // where we store the last confirmed epoch
+	CkptsObjectPrefix   = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
+	LastConfirmedPrefix = append(CheckpointsPrefix, 0x1) // where we store the last confirmed epoch
+	TipPrefix           = append(CheckpointsPrefix, 0x2) // where we store the tip epoch
 )
 
 // BlsSigsObjectKey defines epoch + hash
@@ -44,28 +44,17 @@ func BlsSigsEpochKey(hash BlsSigHash) []byte {
 	return append(BlsSigsHashToEpochPrefix, hash...)
 }
 
-// CkptsObjectKey defines epoch + status + hash
-func CkptsObjectKey(epoch uint64, status uint32, hash RawCkptHash) []byte {
-	ee := sdk.Uint64ToBigEndian(epoch)
-	epochPrefix := append(CkptsObjectPrefix, ee...)
-	epochStatusPrefix := append(epochPrefix, Uint32ToBitEndian(status)...)
-	return append(epochStatusPrefix, hash...)
-}
-
-func CkptsEpochKey(hash RawCkptHash) []byte {
-	return append(CkptsHashToEpochPrefix, hash...)
-}
-
-func CkptsStatusKey(hash RawCkptHash) []byte {
-	return append(CkptsHashToStatusPrefix, hash...)
-}
-
-func TipKey() []byte {
-	return TipPrefix
+// CkptsObjectKey defines epoch
+func CkptsObjectKey(epoch uint64) []byte {
+	return append(CkptsObjectPrefix, sdk.Uint64ToBigEndian(epoch)...)
 }
 
 func LastConfirmedKey() []byte {
 	return LastConfirmedPrefix
+}
+
+func TipKey() []byte {
+	return TipPrefix
 }
 
 func KeyPrefix(p string) []byte {
