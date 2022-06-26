@@ -11,8 +11,8 @@ participant "BTC Checkpoint Module" as btccheckpoint
 participant "Staking Module"    as staking
 participant "Bank Module"       as bank
 participant "BTC Light Client"  as btclightclient
-database    "Raw Checkpoints"   as rawckpts
-database    "BTC Checkpoints"   as btcckpts
+database    "Raw Checkpoints"   as rawcheckpoint_db
+database    "BTC Checkpoints"   as btccheckpoint_db
 queue       Events
 
 == Initialize Relayer ==
@@ -25,9 +25,9 @@ Tendermint -> Mempool : Add register tx
 
 Tendermint -> btccheckpoint ++ : DeliverTx
 btccheckpoint -> btccheckpoint : Verify Proof-of-Possession
-btccheckpoint -> btcckpts : Check if BTC-to-Cosmos association exists
+btccheckpoint -> btccheckpoint_db : Check if BTC-to-Cosmos association exists
 alt if valid and new
-  btccheckpoint -> btcckpts : Add new BTC-to-Cosmos association
+  btccheckpoint -> btccheckpoint_db : Add new BTC-to-Cosmos association
   btccheckpoint -> Events : Emit new relayer registered
 end
 return result or invalid
@@ -38,9 +38,9 @@ User -> submitter : Start monitoring Bitcoin
 
 == Listen For Checkpoint Events ==
 
-Events --> submitter ++ : Raw checkpoint available \n for previous epoch
+Events --> submitter ++ : Raw checkpoint available \n for previous epoch \n or status went back to UNCONFIRMED
 submitter -> checkpointing ++ : Query raw checkpoint \n for previous epoch
-checkpointing -> rawckpts : Get raw checkpoint
+checkpointing -> rawcheckpoint_db : Get raw checkpoint
 return RawCheckpoint
 
 submitter -> submitter : Split raw checkpoint into \n 2 BTC transactions
@@ -48,6 +48,30 @@ submitter -> submitter : Find UTxO to spend \n to pay for fees
 note left
   Needs BTC wallet
 end note
+
+alt Find the previous epoch checkpoint
+  submitter -> submitter : Check if previous BTC checkpoint has been observed yet
+else try the RPC
+  submitter -> btccheckpoint : Query for previous previous BTC checkpoint
+else wait for notification
+  Events --> submitter : Observe previous BTC checkpoint submitted to Babylon
+  note left
+    Observing Bitcoin would require a full node.
+  end note
+end
+
+loop
+Bitcoin --> submitter : Wait for previous checkpoint carrier BTC block to embed
+note right
+  Even a light client can do this,
+  becuase the BTC block to observe
+  is part of the Event from Babylon.
+
+  Waiting ensures the checkpoint
+  will not be dropped by Babylon.
+end note
+end
+
 submitter -> Bitcoin -- : Broadcast 2 \n checkpoint transactions
 
 ... wait for checkpointing tx to be included in a Bitcoin block ...
@@ -60,7 +84,7 @@ submitter -> Tendermint --++ : Broadcast InsertProofOfInclusion transaction
 
 Tendermint -> btccheckpoint ++ : CheckTx
 btccheckpoint -> btccheckpoint : Validate basic checkpoint structure
-btccheckpoint -> btcckpts : Check if record already exists
+btccheckpoint -> btccheckpoint_db : Check if record already exists
 return ok or duplicate
 alt if not a duplicate
   Tendermint -> Mempool : Add checkpoint tx
@@ -76,28 +100,50 @@ note left
   If the checkpoint is for a hidden fork,
   it might be for a different epoch number.
 end note
+
 alt raw checkpoint exists
   btccheckpoint -> btclightclient : Check that BTC header exists
   alt BTC header exists
-    btccheckpoint -> btcckpts : Add BTC checkpoint transaction
-    btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
-    checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
-    checkpointing -> Events -- : Emit epoch checkpoint included
+    btccheckpoint -> btccheckpoint_db : Find checkpoint for previous epoch in ancestor blocks
+    alt previous epoch BTC checkpoint found
+      btccheckpoint -> btccheckpoint_db : Add BTC checkpoint transaction
+      btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
+      checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
+      checkpointing -> Events -- : Emit epoch checkpoint included
+      Events --> submitter : Observe submitted checkpoints
+    else out-of-sequence checkpoint
+      btccheckpoint -> bank : Penalty for out-of-sequence submission
+    end
+  else
+    btccheckpoint -> bank : Penalty for submission without BTC header history
   end
 else a checkpoint for an unknown Q.C. hash
   btccheckpoint -> checkpointing ++ : Verify BLS signature over unknown hash
-  checkpointing -> checkpointing : Look up BLS keys
-  checkpointing -> checkpointing : Look up Validator Power
-  checkpointing -> checkpointing : Calculate group BLS key based on bitmap
-  checkpointing -> checkpointing : Verify BLS signature
-  alt valid signature from our validators
-    checkpointing -> staking : Slash signing validators
-    checkpointing -> Events : Emit evidence of data availability attack \n or panic to stall consensus.
+  checkpointing -> checkpointing : Parse epoch number
+  alt known epoch number
+    checkpointing -> checkpointing : Look up BLS keys
+    checkpointing -> checkpointing : Look up Validator Power
+    checkpointing -> checkpointing : Calculate group BLS key based on bitmap
+    checkpointing -> checkpointing : Verify BLS signature
+    alt valid signature from our validators
+      checkpointing -> staking : Slash signing validators
+      checkpointing -> Events : Emit evidence of data availability attack \n or panic to stall consensus.
+      note left
+        A monitoring process can shut down Tendermint if it sees this event.
+        The block is produced by the current validator set but the BLS signatures
+        are from the old, so the old validators can't necessarily censor this
+        transaction.
+      end note
+    end
+  else
+    checkpointing -> bank : Penalty for future epoch checkpoint submission
     note left
-      A monitoring process can shut down Tendermint if it sees this event.
-      The block is produced by the current validator set but the BLS signatures
-      are from the old, so the old validators can't necessarily censor this
-      transaction.
+      We can only validate the current and past epochs,
+      as the validator power distribution for future
+      epochs is unknown. We can't tell if a checkpoint
+      is bogus, or from a hidden fork. There is only
+      one epoch, where the fork happened, which can
+      be used as evidence.
     end note
   end
   deactivate checkpointing
@@ -110,7 +156,7 @@ Tendermint -> btclightclient ++ : DeliverTx
 btclightclient -> btclightclient : Update longest chain tip
 alt if tip changed
   btclightclient -> btccheckpoint --++ : Callback on tip change
-  btccheckpoint -> btcckpts : Get unstable checkpoints
+  btccheckpoint -> btccheckpoint_db : Get unstable checkpoints
   btccheckpoint -> btccheckpoint : Sort unstable checkpoints \n by BTC height and tx index
 
   loop foreach unstable checkpoint tx
@@ -124,11 +170,15 @@ alt if tip changed
       return true if just became CONFIRMED
 
       alt checkpoint/epoch just became CONFIRMED
-        btccheckpoint -> btcckpts : Get BTC-to-Cosmos key of tx submitter
+        btccheckpoint -> btccheckpoint_db : Get BTC-to-Cosmos key of tx submitter
         btccheckpoint -> bank : Mint reward for submitter
         btccheckpoint -> staking : Release unbonding tokens for epoch
       end
     end
+  end
+  alt if checkpoint status was CHECKPOINTED_NOT_CONFIRMED\n but currently no checkpoint tx was on main chain
+    checkpointing -> checkpointing : Change checkpoint status to \n UNCONFIRMED
+    checkpointing -> Events : Emit epoch checkpoint UNCONFIRMED
   end
   deactivate btccheckpoint
 end

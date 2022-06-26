@@ -6,6 +6,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+// BytesToBtcdHeader parse header bytes into a BlockHeader instance
 func BytesToBtcdHeader(headerBytes *BTCHeaderBytes) (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
@@ -21,6 +22,7 @@ func BytesToBtcdHeader(headerBytes *BTCHeaderBytes) (*wire.BlockHeader, error) {
 	return header, nil
 }
 
+// BtcdHeaderToBytes gets a BlockHeader instance and returns the header bytes
 func BtcdHeaderToBytes(header *wire.BlockHeader) *BTCHeaderBytes {
 	var buf bytes.Buffer
 	header.Serialize(&buf)
@@ -28,10 +30,12 @@ func BtcdHeaderToBytes(header *wire.BlockHeader) *BTCHeaderBytes {
 	return &BTCHeaderBytes{HeaderBytes: buf.Bytes()}
 }
 
+// BytesToChainhash gets hash bytes in reverse order and returns a Hash instance
 func BytesToChainhash(hashBytes []byte) (*chainhash.Hash, error) {
 	return chainhash.NewHash(hashBytes)
 }
 
+// ChainhashToBytes gets a Hash instance and returns bytes in reverse order
 func ChainhashToBytes(hash *chainhash.Hash) []byte {
-	return hash.CloneBytes()
+	return hash[:]
 }

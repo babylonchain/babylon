@@ -7,7 +7,7 @@ const (
 	// StoreKey defines the primary module store key
 	StoreKey = ModuleName
 
-	// RouterKey is the message route for slashing
+	// RouterKey is the message route for epoching
 	RouterKey = ModuleName
 
 	// QuerierRoute defines the module's query routing key
@@ -17,8 +17,11 @@ const (
 	MemStoreKey = "mem_epoching"
 )
 
-// KeyPrefixEpoch defines prefix key for storing epochs.
-var KeyPrefixEpoch = []byte{0x01}
+var (
+	EpochNumberKey = []byte{0x11} // key prefix for the epoch number
+	QueueLengthKey = []byte{0x12} // key prefix for the queue length
+	QueuedMsgKey   = []byte{0x13} // key prefix for a queued message
+)
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)
