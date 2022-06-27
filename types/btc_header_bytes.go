@@ -11,15 +11,11 @@ type BTCHeaderBytes []byte
 type BTCHeadersBytes []BTCHeaderBytes
 
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {
-	btcdHeader, err := m.MarshalBlockHeader()
+	hex, err := m.MarshalHex()
 	if err != nil {
 		return nil, err
 	}
-
-	var buf bytes.Buffer
-	btcdHeader.Serialize(&buf)
-	str := hex.EncodeToString(buf.Bytes())
-	return json.Marshal(str)
+	return json.Marshal(hex)
 }
 
 func (m *BTCHeaderBytes) UnmarshalJSON(bz []byte) error {
@@ -30,12 +26,7 @@ func (m *BTCHeaderBytes) UnmarshalJSON(bz []byte) error {
 		return err
 	}
 
-	decoded, err := hex.DecodeString(headerHexStr)
-	if err != nil {
-		return err
-	}
-	*m = decoded
-	return nil
+	return m.UnmarshalHex(headerHexStr)
 }
 
 func (m BTCHeaderBytes) Marshal() ([]byte, error) {
@@ -43,14 +34,12 @@ func (m BTCHeaderBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
-	buf := make([]byte, len(data))
-	copy(buf, data)
-	*m = buf
+	*m = data
 	return nil
 }
 
 func (m BTCHeaderBytes) MarshalHex() (string, error) {
-	btcdHeader, err := m.MarshalBlockHeader()
+	btcdHeader, err := m.ToBlockHeader()
 	if err != nil {
 		return "", err
 	}
@@ -67,12 +56,7 @@ func (m *BTCHeaderBytes) UnmarshalHex(header string) error {
 		return err
 	}
 
-	// Copy the bytes into the instance
-	err = m.Unmarshal(decoded)
-	if err != nil {
-		return err
-	}
-	return nil
+	return m.Unmarshal(decoded)
 }
 
 func (m BTCHeaderBytes) MarshalTo(data []byte) (int, error) {
@@ -85,7 +69,7 @@ func (m *BTCHeaderBytes) Size() int {
 	return len(bz)
 }
 
-func (m BTCHeaderBytes) MarshalBlockHeader() (*wire.BlockHeader, error) {
+func (m BTCHeaderBytes) ToBlockHeader() (*wire.BlockHeader, error) {
 	// Create an empty header
 	header := &wire.BlockHeader{}
 
@@ -100,7 +84,7 @@ func (m BTCHeaderBytes) MarshalBlockHeader() (*wire.BlockHeader, error) {
 	return header, nil
 }
 
-func (m *BTCHeaderBytes) UnmarshalBlockHeader(header *wire.BlockHeader) {
+func (m *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) {
 	var buf bytes.Buffer
 	header.Serialize(&buf)
 

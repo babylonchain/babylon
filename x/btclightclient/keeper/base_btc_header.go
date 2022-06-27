@@ -25,7 +25,7 @@ func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) types.BaseBTCHeader {
 	}
 
 	var headerBytes bbl.BTCHeaderBytes
-	headerBytes.UnmarshalBlockHeader(baseBtcdHeader)
+	headerBytes.FromBlockHeader(baseBtcdHeader)
 	return types.BaseBTCHeader{Header: &headerBytes, Height: height}
 }
 
@@ -37,7 +37,7 @@ func (k Keeper) SetBaseBTCHeader(ctx sdk.Context, baseBTCHeader types.BaseBTCHea
 		panic("A base BTC Header has already been set")
 	}
 
-	btcdHeader, err := baseBTCHeader.Header.MarshalBlockHeader()
+	btcdHeader, err := baseBTCHeader.Header.ToBlockHeader()
 	if err != nil {
 		panic("Base BTC Header bytes do not correspond to btcd header")
 	}

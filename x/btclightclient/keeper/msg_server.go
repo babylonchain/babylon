@@ -22,7 +22,7 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	// 		 that will get rejected.
 
 	// Get Btcd header from bytes
-	btcdHeader, err := msg.Header.MarshalBlockHeader()
+	btcdHeader, err := msg.Header.ToBlockHeader()
 	if err != nil {
 		return nil, err
 	}

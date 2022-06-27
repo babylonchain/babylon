@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"encoding/json"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
@@ -10,13 +9,12 @@ type BTCHeaderHashBytes []byte
 type BTCHeaderHashesBytes []BTCHeaderHashBytes
 
 func (m BTCHeaderHashBytes) MarshalJSON() ([]byte, error) {
-	// Get the chainhash representation
-	chHash, err := m.MarshalChainhash()
+	hex, err := m.MarshalHex()
 	if err != nil {
 		return nil, err
 	}
 	// Marshal the JSON from hex format
-	return json.Marshal(chHash.String())
+	return json.Marshal(hex)
 }
 
 func (m *BTCHeaderHashBytes) UnmarshalJSON(bz []byte) error {
@@ -26,12 +24,7 @@ func (m *BTCHeaderHashBytes) UnmarshalJSON(bz []byte) error {
 		return err
 	}
 
-	decoded, err := chainhash.NewHashFromStr(headerHashStr)
-	if err != nil {
-		return err
-	}
-	*m = decoded[:]
-	return nil
+	return m.UnmarshalHex(headerHashStr)
 }
 
 func (m BTCHeaderHashBytes) Marshal() ([]byte, error) {
@@ -40,15 +33,12 @@ func (m BTCHeaderHashBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderHashBytes) Unmarshal(bz []byte) error {
-	// The size of BTCHeaderHashBytes should be chainhash.HashSize
-	buf := make([]byte, chainhash.HashSize)
-	copy(buf, bz)
-	*m = buf
+	*m = bz
 	return nil
 }
 
 func (m *BTCHeaderHashBytes) MarshalHex() (string, error) {
-	chHash, err := m.MarshalChainhash()
+	chHash, err := m.ToChainhash()
 	if err != nil {
 		return "", err
 	}
@@ -57,22 +47,13 @@ func (m *BTCHeaderHashBytes) MarshalHex() (string, error) {
 }
 
 func (m *BTCHeaderHashBytes) UnmarshalHex(hash string) error {
-	// Decode the hash string from hex
-	decoded, err := hex.DecodeString(hash)
+	decoded, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
 		return err
 	}
 
 	// Copy the bytes into the instance
-	err = m.Unmarshal(decoded)
-	if err != nil {
-		return err
-	}
-	// Our internal representation of bytes involves a reverse
-	// form from the bytes represented by hex
-	// This is also the internal representation used by chainhash.Hash
-	m.reverse()
-	return nil
+	return m.Unmarshal(decoded[:])
 }
 
 func (m BTCHeaderHashBytes) MarshalTo(data []byte) (int, error) {
@@ -85,11 +66,11 @@ func (m *BTCHeaderHashBytes) Size() int {
 	return len(bz)
 }
 
-func (m BTCHeaderHashBytes) MarshalChainhash() (*chainhash.Hash, error) {
+func (m BTCHeaderHashBytes) ToChainhash() (*chainhash.Hash, error) {
 	return chainhash.NewHash(m)
 }
 
-func (m *BTCHeaderHashBytes) UnmarshalChainhash(hash *chainhash.Hash) {
+func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
 	var headerHashBytes BTCHeaderHashBytes
 	headerHashBytes.Unmarshal(hash[:])
 	*m = headerHashBytes
