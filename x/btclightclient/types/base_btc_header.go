@@ -10,7 +10,7 @@ func NewBaseBTCHeader(headerBytes *bbl.BTCHeaderBytes, height uint64) BaseBTCHea
 }
 
 // DefaultBaseBTCHeader returns a default set of parameters
-func DefaultBaseBTCHeader(headerBytes *bbl.BTCHeaderBytes, height uint64) BaseBTCHeader {
+func DefaultBaseBTCHeader(headerBytes bbl.BTCHeaderBytes, height uint64) BaseBTCHeader {
 	return NewBaseBTCHeader(headerBytes, height)
 }
 
