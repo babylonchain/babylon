@@ -17,8 +17,7 @@ import (
 var _ sdk.Msg = (*MsgInsertHeader)(nil)
 
 func NewMsgInsertHeader(signer sdk.AccAddress, headerHex string) (*MsgInsertHeader, error) {
-	var headerBytes bbl.BTCHeaderBytes
-	err := headerBytes.UnmarshalHex(headerHex)
+	headerBytes, err := bbl.NewBTCHeaderBytesFromHex(headerHex)
 	if err != nil {
 		return nil, err
 	}

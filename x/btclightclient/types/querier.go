@@ -1,8 +1,6 @@
 package types
 
-import (
-	bbl "github.com/babylonchain/babylon/types"
-)
+import "github.com/babylonchain/babylon/types"
 
 // NewQueryParamsRequest creates a new instance of QueryParamsRequest.
 func NewQueryParamsRequest() *QueryParamsRequest {
@@ -16,8 +14,7 @@ func NewQueryHashesRequest() *QueryHashesRequest {
 
 // NewQueryContainsRequest creates a new instance of QueryContainsRequest.
 func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
-	var hashBytes bbl.BTCHeaderHashBytes
-	err := hashBytes.UnmarshalHex(hash)
+	hashBytes, err := types.NewBTCHeaderHashBytesFromHex(hash)
 	if err != nil {
 		return nil, err
 	}

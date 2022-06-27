@@ -12,8 +12,7 @@ const (
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	var headerBytes bbl.BTCHeaderBytes
-	headerBytes.UnmarshalHex(DefaultBaseHeaderHex)
+	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(DefaultBaseHeaderHex)
 
 	return &GenesisState{
 		Params:        DefaultParams(),

@@ -5,8 +5,8 @@ import (
 )
 
 // NewBaseBTCHeader creates a new Params instance
-func NewBaseBTCHeader(headerBytes *bbl.BTCHeaderBytes, height uint64) BaseBTCHeader {
-	return BaseBTCHeader{Header: headerBytes, Height: height}
+func NewBaseBTCHeader(headerBytes bbl.BTCHeaderBytes, height uint64) BaseBTCHeader {
+	return BaseBTCHeader{Header: &headerBytes, Height: height}
 }
 
 // DefaultBaseBTCHeader returns a default set of parameters

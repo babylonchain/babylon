@@ -8,7 +8,16 @@ import (
 )
 
 type BTCHeaderBytes []byte
-type BTCHeadersBytes []BTCHeaderBytes
+type BTCHeadersBytes = []BTCHeaderBytes
+
+func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
+	var headerBytes BTCHeaderBytes
+	err := headerBytes.UnmarshalHex(hex)
+	if err != nil {
+		return nil, err
+	}
+	return headerBytes, nil
+}
 
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {
 	hex, err := m.MarshalHex()
