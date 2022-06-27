@@ -23,7 +23,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdHashes())
 	cmd.AddCommand(CmdContains())
-	cmd.AddCommand(CmdChain())
+	cmd.AddCommand(CmdMainChain())
 
 	return cmd
 }
@@ -106,9 +106,9 @@ func CmdContains() *cobra.Command {
 	return cmd
 }
 
-func CmdChain() *cobra.Command {
+func CmdMainChain() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "chain",
+		Use:   "main-chain",
 		Short: "retrieve the canonical chain",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -116,8 +116,8 @@ func CmdChain() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := types.NewQueryChainRequest()
-			res, err := queryClient.Chain(context.Background(), params)
+			params := types.NewQueryMainChainRequest()
+			res, err := queryClient.MainChain(context.Background(), params)
 			if err != nil {
 				return err
 			}

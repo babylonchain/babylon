@@ -26,9 +26,9 @@ service Query {
     option (google.api.http).get = "/babylon/btclightclient/v1/contains";
   }
 
-  // Chain returns the canonical chain
-  rpc Chain(QueryChainRequest) returns (QueryChainResponse) {
-    option (google.api.http).get = "/babylon/btclightclient/v1/chain";
+  // MainChain returns the canonical chain
+  rpc MainChain(QueryMainChainRequest) returns (QueryMainChainResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/mainchain";
   }
 }
 
@@ -67,13 +67,13 @@ message QueryContainsResponse {
   bool contains = 1;
 }
 
-// QueryChainRequest is request type for the Query/Chain RPC method.
+// QueryMainChainRequest is request type for the Query/MainChain RPC method.
 // It involves retrieving the canonical chain maintained by the module.
-message QueryChainRequest {}
+message QueryMainChainRequest {}
 
-// QueryChainResponse is response type for the Query/Chain RPC method.
-message QueryChainResponse {
+// QueryMainChainResponse is response type for the Query/MainChain RPC method.
+message QueryMainChainResponse {
   repeated bytes headers = 1 [
-    (gogoproto.castrepeated) = "github.com/babylonchain/babylon/types.BTCHeadersBytes"
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
   ];
 }

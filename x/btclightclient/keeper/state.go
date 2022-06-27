@@ -133,7 +133,7 @@ func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 	return store.Has(hashBytes)
 }
 
-func (s HeadersState) GetCanonicalChain() ([]*wire.BlockHeader, error) {
+func (s HeadersState) GetMainChain() ([]*wire.BlockHeader, error) {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
 		return nil, nil
@@ -166,7 +166,7 @@ func (s HeadersState) GetCanonicalChain() ([]*wire.BlockHeader, error) {
 // GetBaseBTCHeader retrieves the BTC header with the minimum height
 func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
 	// Retrieve the canonical chain
-	canonicalChain, err := s.GetCanonicalChain()
+	canonicalChain, err := s.GetMainChain()
 	if err != nil {
 		return nil, err
 	}

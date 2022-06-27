@@ -58,22 +58,23 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 	return &types.QueryContainsResponse{Contains: contains}, nil
 }
 
-func (k Keeper) Chain(ctx context.Context, req *types.QueryChainRequest) (*types.QueryChainResponse, error) {
+func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest) (*types.QueryMainChainResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	btcdHeaders, err := k.HeadersState(sdkCtx).GetCanonicalChain()
+	btcdHeaders, err := k.HeadersState(sdkCtx).GetMainChain()
 	if err != nil {
 		return nil, err
 	}
 
-	var headers bbl.BTCHeadersBytes
+	var headers []bbl.BTCHeaderBytes
 	for _, btcdHeader := range btcdHeaders {
-		headers = append(headers, bbl.BtcdHeaderToHeaderBytes(btcdHeader))
+		headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+		headers = append(headers, headerBytes)
 	}
 
-	return &types.QueryChainResponse{Headers: headers}, nil
+	return &types.QueryMainChainResponse{Headers: headers}, nil
 }
