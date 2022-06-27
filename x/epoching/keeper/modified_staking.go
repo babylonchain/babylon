@@ -1,13 +1,12 @@
 package keeper
 
 import (
-	"time"
-
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 // ApplyMatureUnbonding
@@ -16,13 +15,19 @@ import (
 // in the corresponding queues, where
 // - an unbonding/redelegation becomes mature when its corresponding epoch and all previous epochs have been checkpointed.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L32-L91)
-func ApplyMatureUnbonding(ctx sdk.Context, stk *stakingkeeper.Keeper, epochBoundaryTime time.Time) {
-	// unbond all mature validators from the unbonding queue
-	stk.UnbondAllMatureValidators(ctx)
+func ApplyMatureUnbonding(ctx sdk.Context, stk *stakingkeeper.Keeper, epochBoundaryHeader tmproto.Header) {
+	currHeader := ctx.BlockHeader()
 
-	// Remove all mature unbonding delegations from the ubd queue.
-	// TODO: DequeueAllMatureUBDQueue does not make use of `currTime` parameter. Double-check
-	matureUnbonds := stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryTime)
+	// unbond all mature validators till the epoch boundary from the unbonding queue
+	ctx.WithBlockHeader(epochBoundaryHeader)
+	stk.UnbondAllMatureValidators(ctx)
+	ctx.WithBlockHeader(currHeader)
+
+	// get all mature unbonding delegations the epoch boundary from the ubd queue.
+	ctx.WithBlockHeader(epochBoundaryHeader)
+	matureUnbonds := stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
+	ctx.WithBlockHeader(currHeader)
+	// unbond all mature delegations
 	for _, dvPair := range matureUnbonds {
 		addr, err := sdk.ValAddressFromBech32(dvPair.ValidatorAddress)
 		if err != nil {
@@ -47,9 +52,11 @@ func ApplyMatureUnbonding(ctx sdk.Context, stk *stakingkeeper.Keeper, epochBound
 		)
 	}
 
-	// Remove all mature redelegations from the red queue.
-	// TODO: DequeueAllMatureRedelegationQueue does not make use of `currTime` parameter. Double-check
-	matureRedelegations := stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryTime)
+	// get all mature redelegations till the epoch boundary from the red queue.
+	ctx.WithBlockHeader(epochBoundaryHeader)
+	matureRedelegations := stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
+	ctx.WithBlockHeader(currHeader)
+	// finish all mature redelegations
 	for _, dvvTriplet := range matureRedelegations {
 		valSrcAddr, err := sdk.ValAddressFromBech32(dvvTriplet.ValidatorSrcAddress)
 		if err != nil {
