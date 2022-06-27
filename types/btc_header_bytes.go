@@ -8,7 +8,6 @@ import (
 )
 
 type BTCHeaderBytes []byte
-type BTCHeadersBytes = []BTCHeaderBytes
 
 func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
 	var headerBytes BTCHeaderBytes

@@ -26,7 +26,7 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	var hashes bbl.BTCHeaderHashesBytes
+	var hashes []bbl.BTCHeaderHashBytes
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 

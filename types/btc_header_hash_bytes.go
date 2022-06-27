@@ -6,7 +6,6 @@ import (
 )
 
 type BTCHeaderHashBytes []byte
-type BTCHeaderHashesBytes = []BTCHeaderHashBytes
 
 func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 	var hashBytes BTCHeaderHashBytes
