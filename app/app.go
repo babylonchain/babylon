@@ -370,7 +370,10 @@ func NewBabylonApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
-	app.mm.SetOrderBeginBlockers(
+	// NOTE: BBL avoids using app.mm.SetOrderBeginBlockers and app.mm.SetOrderEndBlockers as they has an assertation that avoids incomplete lists of modules, while BBL does not want:
+	// - BeginBlock processing in slashing/evidence
+	// - EndBLock processing in staking
+	app.mm.OrderBeginBlockers = []string{
 		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
@@ -379,8 +382,8 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
-	)
-	app.mm.SetOrderEndBlockers(
+	}
+	app.mm.OrderEndBlockers = []string{
 		crisistypes.ModuleName, govtypes.ModuleName,
 		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
@@ -391,7 +394,7 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
-	)
+	}
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
