@@ -43,13 +43,13 @@ func readBlockHeader(headerBytes []byte) (*wire.BlockHeader, error) {
 	return header, nil
 }
 
-// TODO copy of the validation done in btc light client at some point it would
-// be nice to move it to some commong btc module
+// Perform the checks that [checkBlockHeaderSanity](https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430) of btcd does
+//
+// We skip the "timestamp should not be 2 hours into the future" check
+// since this might introduce undeterministic behavior
 func validateHeader(header *wire.BlockHeader, powLimit *big.Int) error {
-	// Perform the checks that checkBlockHeaderSanity of btcd does
-	// https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430
-	// We skip the "timestamp should not be 2 hours into the future" check
-	// since this might introduce undeterministic behavior
+	// TODO copy of the validation done in btc light client at some point it would
+	// be nice to move it to some commong btc module
 
 	msgBlock := &wire.MsgBlock{Header: *header}
 
@@ -80,22 +80,31 @@ func hashConcat(a []byte, b []byte) chainhash.Hash {
 	return chainhash.HashH(c)
 }
 
+// Prove checks the validity of a merkle proof
 // proof logic copied from:
 // https://github.com/summa-tx/bitcoin-spv/blob/fb2a61e7a941d421ae833789d97ed10d2ad79cfe/golang/btcspv/bitcoin_spv.go#L498
 // main reason for not bringing library in, is that we already use btcd
 // bitcoin primitives and this library defines their own which could lead
 // to some mixups
-func verifyProof(proof []byte, index uint32) bool {
+func prove(tx *btcutil.Tx, merkleRoot *chainhash.Hash, intermediateNodes []byte, index uint32) bool {
+	txHash := tx.Hash()
+
+	// Shortcut the empty-block case
+	if txHash.IsEqual(merkleRoot) && index == 0 && len(intermediateNodes) == 0 {
+		return true
+	}
+
+	proof := []byte{}
+	proof = append(proof, txHash[:]...)
+	proof = append(proof, intermediateNodes...)
+	proof = append(proof, merkleRoot[:]...)
+
 	var current chainhash.Hash
 	idx := index
 	proofLength := len(proof)
 
 	if proofLength%32 != 0 {
 		return false
-	}
-
-	if proofLength == 32 {
-		return true
 	}
 
 	if proofLength == 64 {
@@ -122,23 +131,6 @@ func verifyProof(proof []byte, index uint32) bool {
 	}
 
 	return bytes.Equal(current[:], root)
-}
-
-// Prove checks the validity of a merkle proof
-func prove(tx *btcutil.Tx, merkleRoot *chainhash.Hash, intermediateNodes []byte, index uint32) bool {
-	txHash := tx.Hash()
-
-	// Shortcut the empty-block case
-	if txHash.IsEqual(merkleRoot) && index == 0 && len(intermediateNodes) == 0 {
-		return true
-	}
-
-	proof := []byte{}
-	proof = append(proof, txHash[:]...)
-	proof = append(proof, intermediateNodes...)
-	proof = append(proof, merkleRoot[:]...)
-
-	return verifyProof(proof, index)
 }
 
 func extractOpReturnData(tx *btcutil.Tx) []byte {

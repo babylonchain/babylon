@@ -25,8 +25,7 @@ type BTCLightClientKeeper interface {
 }
 
 type CheckpointingKeeper interface {
-	// Function should return epoch of given raw checkpoint or indicate that checkpoint
-	// is invalid
-	// If chekpoint is valid checkpointing module should store it.
-	CheckpointValid(rawCheckpoint []byte) (uint64, error)
+	// CheckpointEpoch should return epoch index it passes all checkpoint validation
+	// and error otherwise
+	CheckpointEpoch(rawCheckpoint []byte) (uint64, error)
 }

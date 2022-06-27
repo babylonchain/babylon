@@ -55,7 +55,7 @@ func (k Keeper) GetBlockHeight(b wire.BlockHeader) (uint64, error) {
 }
 
 func (k Keeper) GetCheckpointEpoch(c []byte) (uint64, error) {
-	return k.checkpointingKeeper.CheckpointValid(c)
+	return k.checkpointingKeeper.CheckpointEpoch(c)
 }
 
 // TODO for now we jsut store raw checkpoint with epoch as key. Ultimatly

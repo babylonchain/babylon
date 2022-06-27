@@ -19,11 +19,8 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{keeper}
 }
 
-// returns fully assembled rawcheckpoint data and the latest header number of
-// headers provided in the proof
-func (m msgServer) getRawCheckPointAndBtchHeight(proofs []*btcutils.ParsedProof) ([]byte, uint64, error) {
+func (m msgServer) getProofHeight(proofs []*btcutils.ParsedProof) (uint64, error) {
 	var latestblock = uint64(0)
-	var rawCheckpointData []byte
 
 	for _, proof := range proofs {
 		// TODO consider interfaces here. As currently this implicity assume that all headers
@@ -33,7 +30,7 @@ func (m msgServer) getRawCheckPointAndBtchHeight(proofs []*btcutils.ParsedProof)
 		num, err := m.k.GetBlockHeight(proof.BlockHeader)
 
 		if err != nil {
-			return nil, 0, err
+			return latestblock, err
 		}
 
 		// returning hightes block number as checkpoint number as if highest becomes
@@ -41,11 +38,21 @@ func (m msgServer) getRawCheckPointAndBtchHeight(proofs []*btcutils.ParsedProof)
 		if num > latestblock {
 			latestblock = num
 		}
+	}
 
+	return latestblock, nil
+}
+
+// returns fully assembled rawcheckpoint data and the latest header number of
+// headers provided in the proof
+func (m msgServer) getRawCheckPoint(proofs []*btcutils.ParsedProof) []byte {
+	var rawCheckpointData []byte
+
+	for _, proof := range proofs {
 		rawCheckpointData = append(rawCheckpointData, proof.OpReturnData...)
 	}
 
-	return rawCheckpointData, latestblock, nil
+	return rawCheckpointData
 }
 
 // TODO at some point add proper logging of error
@@ -61,7 +68,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	// TODO for now we do nothing with processed blockHeight but ultimatly it should
 	// be a part of timestamp
-	rawCheckPointData, _, err := m.getRawCheckPointAndBtchHeight(proofs)
+	_, err := m.getProofHeight(proofs)
 
 	if err != nil {
 		return nil, err
@@ -72,6 +79,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// part of provided block and contains some OP_RETURN data
 	// - header is proved to be part of the chain we know about thorugh BTCLightClient
 	// Inform checkpointing module about it.
+	rawCheckPointData := m.getRawCheckPoint(proofs)
 
 	epochNum, err := m.k.GetCheckpointEpoch(rawCheckPointData)
 

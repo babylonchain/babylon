@@ -12,6 +12,6 @@ func (mb MockBTCLightClientKeeper) BlockHeight(header wire.BlockHeader) (uint64,
 	return uint64(10), nil
 }
 
-func (ck MockCheckpointingKeeper) CheckpointValid(rawCheckpoint []byte) (uint64, error) {
+func (ck MockCheckpointingKeeper) CheckpointEpoch(rawCheckpoint []byte) (uint64, error) {
 	return uint64(10), nil
 }

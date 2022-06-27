@@ -23,14 +23,14 @@ const (
 	expectedProofs = 2
 )
 
-// Parse and Validate provided OP_RETRUN transaction with their proofs.
+// Parse and Validate provided OP_RETURN transaction with their proofs.
 // If even one transaction is invalid error is returned.
 // Returned ParsedProofs are in same order as raw proofs
 // TODO explore possibility of validating that output in second tx is payed by
 // input in the first tx
 func ParseTwoProofs(proofs []*BTCSpvProof, powLimit *big.Int) ([]*btcutils.ParsedProof, error) {
 	if len(proofs) != expectedProofs {
-		return nil, fmt.Errorf("expected at least two valid op return transactions")
+		return nil, fmt.Errorf("expected at exactly valid op return transactions")
 	}
 
 	var parsedProofs []*btcutils.ParsedProof
@@ -61,12 +61,12 @@ func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
 	}
 
 	// TODO get powLimit from some config
-	// result of parsed proog is notneeded, drop it
+	// result of parsed proof is not needed, drop it
 	// whole parsing stuff is stateless
-	_, e := ParseTwoProofs(m.Proofs, btcchaincfg.MainNetParams.PowLimit)
+	_, err := ParseTwoProofs(m.Proofs, btcchaincfg.MainNetParams.PowLimit)
 
-	if e != nil {
-		return e
+	if err != nil {
+		return err
 	}
 
 	return nil
