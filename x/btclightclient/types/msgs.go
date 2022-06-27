@@ -43,7 +43,7 @@ func ValidateHeaderAttributes(header *wire.BlockHeader) error {
 	// Perform the checks that checkBlockHeaderSanity of btcd does
 	// https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430
 	// We skip the "timestamp should not be 2 hours into the future" check
-	// since this might introduce undeterministic behavior
+	// since this might introduce nondeterministic behavior
 
 	msgBlock := &wire.MsgBlock{Header: *header}
 	block := btcutil.NewBlock(msgBlock)
