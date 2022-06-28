@@ -14,21 +14,23 @@ func TestDropValidatorMsgDecorator(t *testing.T) {
 		msg        sdk.Msg
 		expectPass bool
 	}{
-		{&stakingtypes.MsgCreateValidator{}, false},
-		{&stakingtypes.MsgDelegate{}, false},
-		{&stakingtypes.MsgUndelegate{}, false},
-		{&stakingtypes.MsgBeginRedelegate{}, false},
-		{&stakingtypes.MsgEditValidator{}, true},
+		// wrapped message types that should be rejected
+		{&stakingtypes.MsgCreateValidator{}, true},
+		{&stakingtypes.MsgDelegate{}, true},
+		{&stakingtypes.MsgUndelegate{}, true},
+		{&stakingtypes.MsgBeginRedelegate{}, true},
+		// allowed message types
+		{&stakingtypes.MsgEditValidator{}, false},
 	}
 
 	decorator := NewDropValidatorMsgDecorator()
 
 	for _, tc := range testCases {
-		err := decorator.IsValidatorRelatedMsg(tc.msg)
+		res := decorator.IsValidatorRelatedMsg(tc.msg)
 		if tc.expectPass {
-			require.NoError(t, err)
+			require.True(t, res)
 		} else {
-			require.Error(t, err)
+			require.False(t, res)
 		}
 	}
 }

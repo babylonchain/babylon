@@ -23,7 +23,7 @@ func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
 // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	for _, msg := range tx.GetMsgs() {
-		if qmd.IsNonWrappedMsg(msg) {
+		if qmd.IsValidatorRelatedMsg(msg) {
 			return ctx, epochingtypes.ErrInvalidMsgType
 		}
 	}
@@ -31,8 +31,8 @@ func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	return next(ctx, tx, simulate)
 }
 
-// IsNonWrappedMsg checks if the given message is of non-wrapped type, which should be rejected
-func (qmd DropValidatorMsgDecorator) IsNonWrappedMsg(msg sdk.Msg) bool {
+// IsValidatorRelatedMsg checks if the given message is of non-wrapped type, which should be rejected
+func (qmd DropValidatorMsgDecorator) IsValidatorRelatedMsg(msg sdk.Msg) bool {
 	switch msg.(type) {
 	case *stakingtypes.MsgCreateValidator, *stakingtypes.MsgDelegate, *stakingtypes.MsgUndelegate, *stakingtypes.MsgBeginRedelegate:
 		return true
