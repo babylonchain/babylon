@@ -13,6 +13,7 @@ import (
 // - finishes all mature redelegations
 // in the corresponding queues, where
 // - an unbonding/redelegation becomes mature when its corresponding epoch and all previous epochs have been checkpointed.
+// Triggered by the checkpointing module upon the above condition.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L32-L91)
 func (k *Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochBoundaryHeader tmproto.Header) {
 	currHeader := ctx.BlockHeader()
