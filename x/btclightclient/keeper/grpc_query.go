@@ -65,16 +65,55 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	btcdHeaders, err := k.HeadersState(sdkCtx).GetMainChain()
+	if req.Pagination == nil {
+		req.Pagination = &query.PageRequest{}
+	}
+	// If a starting key has not been set, then the first header is the tip
+	prevHeader := k.HeadersState(sdkCtx).GetTip()
+	// Otherwise, retrieve the header from the key
+	if len(req.Pagination.Key) != 0 {
+		headerHash := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
+		chHash, err := headerHash.ToChainhash()
+		if err != nil {
+			return nil, err
+		}
+		prevHeader, err = k.HeadersState(sdkCtx).GetHeaderByHash(chHash)
+	}
+
+	// If no tip exists or a key, then return an empty response
+	if prevHeader == nil {
+		return &types.QueryMainChainResponse{}, nil
+	}
+
+	var headers []bbl.BTCHeaderBytes
+	headers = append(headers, bbl.NewBTCHeaderBytesFromBlockHeader(prevHeader))
+	store := prefix.NewStore(k.HeadersState(sdkCtx).headers, types.HeadersObjectPrefix)
+
+	// Set this value to true to signal to FilteredPaginate to iterate the entries in reverse
+	req.Pagination.Reverse = true
+	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
+		if accumulate {
+			currentHeaderBytes := bbl.NewBTCHeaderBytesFromBytes(value)
+			btcdHeader, err := currentHeaderBytes.ToBlockHeader()
+			if err != nil {
+				return false, err
+			}
+			// If the previous block extends this block, then this block is part of the main chain
+			if prevHeader.PrevBlock.String() == btcdHeader.BlockHash().String() {
+				prevHeader = btcdHeader
+				headers = append(headers, currentHeaderBytes)
+			}
+		}
+		return true, nil
+	})
+
 	if err != nil {
 		return nil, err
 	}
 
-	var headers []bbl.BTCHeaderBytes
-	for _, btcdHeader := range btcdHeaders {
-		headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
-		headers = append(headers, headerBytes)
-	}
+	// Override the next key attribute to point to the parent of the last header
+	// instead of the next element contained in the store
+	pageRes.NextKey = bbl.NewBTCHeaderHashBytesFromChainhash(prevHeader.PrevBlock)
 
-	return &types.QueryMainChainResponse{Headers: headers}, nil
+	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }

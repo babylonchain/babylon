@@ -16,6 +16,16 @@ func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 	return hashBytes, nil
 }
 
+func NewBTCHeaderHashBytesFromChainhash(chHash chainhash.Hash) BTCHeaderHashBytes {
+	var headerHashBytes BTCHeaderHashBytes
+	headerHashBytes.Unmarshal(chHash[:])
+	return headerHashBytes
+}
+
+func NewBTCHeaderHashBytesFromBytes(hash []byte) BTCHeaderHashBytes {
+	return hash
+}
+
 func (m BTCHeaderHashBytes) MarshalJSON() ([]byte, error) {
 	hex, err := m.MarshalHex()
 	if err != nil {

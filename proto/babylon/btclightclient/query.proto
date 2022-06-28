@@ -69,11 +69,15 @@ message QueryContainsResponse {
 
 // QueryMainChainRequest is request type for the Query/MainChain RPC method.
 // It involves retrieving the canonical chain maintained by the module.
-message QueryMainChainRequest {}
+message QueryMainChainRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 
 // QueryMainChainResponse is response type for the Query/MainChain RPC method.
 message QueryMainChainResponse {
   repeated bytes headers = 1 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
   ];
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
