@@ -60,15 +60,18 @@ func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 
 // AddRawCheckpoint adds a raw checkpoint into the storage
 // this API may not needed since checkpoints are generated internally
-func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
+func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) {
 	// NOTE: may remove this API
-	return k.CheckpointsState(ctx).CreateRawCkpt(ckpt)
+	k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckpt)
 }
 
 // CheckpointEpoch verifies checkpoint from BTC and returns epoch number
 func (k Keeper) CheckpointEpoch(ctx sdk.Context, rawCkptBytes []byte) (uint64, error) {
-	ckpt := k.CheckpointsState(ctx).DeserializeCkpt(rawCkptBytes)
-	err := k.verifyRawCheckpoint(ckpt)
+	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+	if err != nil {
+		return 0, err
+	}
+	err = k.verifyRawCheckpoint(ckpt)
 	if err != nil {
 		return 0, err
 	}
@@ -81,7 +84,11 @@ func (k Keeper) verifyRawCheckpoint(ckpt *types.RawCheckpoint) error {
 }
 
 // UpdateCkptStatus updates the status of a raw checkpoint
-func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status types.CkptStatus) error {
+func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status types.CheckpointStatus) error {
 	// TODO: some checks
-	return k.CheckpointsState(ctx).UpdateCkptStatus(rawCkptBytes, status)
+	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+	if err != nil {
+		return err
+	}
+	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
 }

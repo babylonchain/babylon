@@ -31,7 +31,7 @@ func (bs BlsSigsState) CreateBlsSig(sig *types.BlsSig) {
 	epochKey := types.BlsSigsEpochKey(sigHash)
 
 	// save concrete bls sig object
-	bs.blsSigs.Set(blsSigsKey, bs.SerializeBlsSig(sig))
+	bs.blsSigs.Set(blsSigsKey, types.BlsSigToBytes(bs.cdc, sig))
 	// map bls sig to epoch
 	bs.hashToEpoch.Set(epochKey, sdk.Uint64ToBigEndian(epoch))
 }
@@ -44,10 +44,13 @@ func (bs BlsSigsState) GetBlsSigsByEpoch(epoch uint64, f func(sig *types.BlsSig)
 
 	for ; iter.Valid(); iter.Next() {
 		rawBytes := iter.Value()
-		blsSig := bs.DeserializeBlsSig(rawBytes)
+		blsSig, err := types.BytesToBlsSig(bs.cdc, rawBytes)
+		if err != nil {
+			return err
+		}
 		stop := f(blsSig)
 		if stop {
-			break
+			return nil
 		}
 	}
 	return nil
@@ -57,14 +60,4 @@ func (bs BlsSigsState) GetBlsSigsByEpoch(epoch uint64, f func(sig *types.BlsSig)
 func (bs BlsSigsState) Exists(hash types.BlsSigHash) bool {
 	store := prefix.NewStore(bs.hashToEpoch, types.BlsSigsHashToEpochPrefix)
 	return store.Has(hash.Bytes())
-}
-
-func (bs BlsSigsState) SerializeBlsSig(sig *types.BlsSig) []byte {
-	return bs.cdc.MustMarshal(sig)
-}
-
-func (bs BlsSigsState) DeserializeBlsSig(rawSigBytes []byte) *types.BlsSig {
-	sig := new(types.BlsSig)
-	bs.cdc.MustUnmarshal(rawSigBytes, sig)
-	return sig
 }

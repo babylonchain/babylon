@@ -12,7 +12,6 @@ type BlsSigSet struct {
 	validators     types.Validators
 
 	sum          uint64
-	sigsBySigner map[string]*BlsSig
 	sigsBitArray *bits.BitArray
 }
 
@@ -23,15 +22,11 @@ func NewBlsSigSet(epoch uint16, lastCommitHash bytes.HexBytes, validators types.
 		lastCommitHash: lastCommitHash,
 		validators:     validators,
 		sum:            0,
-		sigsBySigner:   make(map[string]*BlsSig, validators.Len()),
 		sigsBitArray:   bits.NewBitArray(validators.Len()),
 	}
 }
 
 func (bs *BlsSigSet) AddBlsSig(sig *BlsSig) (bool, error) {
-	if bs == nil {
-		panic("AddVote() on nil BlsSigSet")
-	}
 	return bs.addBlsSig(sig)
 }
 
