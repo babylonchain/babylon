@@ -99,10 +99,12 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper        keeper.Keeper
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	// TODO: add dependencies to staking, slashing and evidence
+	keeper         keeper.Keeper
+	accountKeeper  types.AccountKeeper
+	bankKeeper     types.BankKeeper
+	stakingKeeper  types.StakingKeeper
+	slashingKeeper types.SlashingKeeper
+	evidenceKeeper types.EvidenceKeeper
 }
 
 func NewAppModule(
@@ -110,12 +112,18 @@ func NewAppModule(
 	keeper keeper.Keeper,
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	stakingKeeper types.StakingKeeper,
+	slashingKeeper types.SlashingKeeper,
+	evidenceKeeper types.EvidenceKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		accountKeeper:  accountKeeper,
 		bankKeeper:     bankKeeper,
+		stakingKeeper:  stakingKeeper,
+		slashingKeeper: slashingKeeper,
+		evidenceKeeper: evidenceKeeper,
 	}
 }
 

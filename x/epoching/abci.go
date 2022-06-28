@@ -6,8 +6,6 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/keeper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -17,15 +15,13 @@ import (
 
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
-	defer telemetry.ModuleMeasureSince(evidencetypes.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
-	defer telemetry.ModuleMeasureSince(slashingtypes.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	logger := k.Logger(ctx)
 	logger.Info("unimplemented")
 
 	// TODO: unimplemented:
 	// - increment epoch number
-	// - slashing equivocating/unlive validators without jailing them
+	// - slashing equivocating/unlive validators following evidence/slashing modules
 	// - trigger hooks and emit events
 }
 

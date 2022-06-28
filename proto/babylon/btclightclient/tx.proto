@@ -1,6 +1,7 @@
 syntax = "proto3";
 package babylon.btclightclient.v1;
 
+import "gogoproto/gogo.proto";
 import "babylon/btclightclient/btclightclient.proto";
 
 
@@ -14,6 +15,8 @@ service Msg {
 // MsgInsertHeader defines the message for incoming header bytes
 message MsgInsertHeader {
   string signer = 1;
-  BTCHeaderBytes header = 2;
+  bytes header = 2 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
+  ];
 }
 message MsgInsertHeaderResponse {}

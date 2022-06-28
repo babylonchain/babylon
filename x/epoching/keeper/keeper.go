@@ -19,8 +19,11 @@ type (
 		cdc              codec.BinaryCodec
 		storeKey         sdk.StoreKey
 		memKey           sdk.StoreKey
-		paramstore       paramtypes.Subspace
 		hooks            types.EpochingHooks
+		paramstore       paramtypes.Subspace
+		stk              types.StakingKeeper
+		slk              types.SlashingKeeper
+		ek               types.EvidenceKeeper
 		StakingMsgServer types.StakingMsgServer
 	}
 )
@@ -30,6 +33,9 @@ func NewKeeper(
 	storeKey,
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
+	stk types.StakingKeeper,
+	slk types.SlashingKeeper,
+	ek types.EvidenceKeeper,
 	stakingMsgServer types.StakingMsgServer,
 ) Keeper {
 	// set KeyTable if it has not already been set
@@ -43,6 +49,9 @@ func NewKeeper(
 		memKey:           memKey,
 		paramstore:       ps,
 		hooks:            nil,
+		stk:              stk,
+		slk:              slk,
+		ek:               ek,
 		StakingMsgServer: stakingMsgServer,
 	}
 }

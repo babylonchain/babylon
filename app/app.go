@@ -326,7 +326,7 @@ func NewBabylonApp(
 
 	// setup epoching keeper
 	stakingMsgServer := stakingkeeper.NewMsgServerImpl(app.StakingKeeper)
-	epochingKeeper := epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), stakingMsgServer)
+	epochingKeeper := epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper, &app.SlashingKeeper, &app.EvidenceKeeper, stakingMsgServer)
 	// TODO: add modules that need to hook onto the epoching module here
 	epochingKeeper = *epochingKeeper.SetHooks(epochingtypes.NewMultiEpochingHooks())
 	app.EpochingKeeper = epochingKeeper
@@ -366,7 +366,7 @@ func NewBabylonApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
+		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.SlashingKeeper, app.EvidenceKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
@@ -377,11 +377,9 @@ func NewBabylonApp(
 	// CanWithdrawInvariant invariant.
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
-	// NOTE: BBL avoids using app.mm.SetOrderBeginBlockers and app.mm.SetOrderEndBlockers as they has an assertation that avoids incomplete lists of modules, while BBL does not want:
-	// - BeginBlock processing in slashing/evidence
-	// - EndBLock processing in staking
-	app.mm.OrderBeginBlockers = []string{
-		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName, distrtypes.ModuleName, stakingtypes.ModuleName,
+	app.mm.SetOrderBeginBlockers(
+		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName, distrtypes.ModuleName, slashingtypes.ModuleName,
+		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName,
@@ -389,9 +387,14 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
-	}
-	app.mm.OrderEndBlockers = []string{
-		crisistypes.ModuleName, govtypes.ModuleName,
+	)
+	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
+	// - how many validators can we slash in a single epoch and
+	// - whether and when to jail slashed validators
+	// app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers[:4], app.mm.OrderBeginBlockers[4+1:]...) // remove slashingtypes.ModuleName
+	// app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers[:4], app.mm.OrderBeginBlockers[4+1:]...) // remove evidencetypes.ModuleName
+
+	app.mm.SetOrderEndBlockers(crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
 		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
@@ -401,7 +404,9 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
-	}
+	)
+	// BBL does not want EndBlock processing in staking
+	app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers[:2], app.mm.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
@@ -448,7 +453,7 @@ func NewBabylonApp(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
+		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.SlashingKeeper, app.EvidenceKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),

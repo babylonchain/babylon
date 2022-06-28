@@ -14,7 +14,7 @@ fi
 export BABYLONDHOME="/data/node${ID}/babylond"
 
 if [ -d "$(dirname "${BABYLONDHOME}"/"${LOG}")" ]; then
-  "${BINARY}" --home "${BABYLONDHOME}" "$@" | tee "${BABYLONDHOME}/${LOG}"
+  "${BINARY}" --home "${BABYLONDHOME}" "$@" 2>&1 | tee "${BABYLONDHOME}/${LOG}"
 else
   "${BINARY}" --home "${BABYLONDHOME}" "$@"
 fi
