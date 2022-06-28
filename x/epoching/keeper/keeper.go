@@ -100,13 +100,16 @@ func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
 }
 
 // IncEpochNumber adds epoch number by 1
-func (k Keeper) IncEpochNumber(ctx sdk.Context) error {
+func (k Keeper) IncEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
 	epochNumber, err := k.GetEpochNumber(ctx)
 	if err != nil {
-		return err
+		return sdk.NewUint(0), err
 	}
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	return k.setEpochNumber(ctx, incrementedEpochNumber)
+	if err := k.setEpochNumber(ctx, incrementedEpochNumber); err != nil {
+		return sdk.NewUint(0), err
+	}
+	return incrementedEpochNumber, nil
 }
 
 // GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
@@ -116,7 +119,8 @@ func (k Keeper) GetEpochBoundary(ctx sdk.Context) (sdk.Uint, error) {
 		return sdk.NewUint(0), err
 	}
 	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
-	// example: in epoch 0, epoch interval is 5 blocks, boundary will be (0+1)*5=5
+	// example: in epoch 0, epoch interval is 5 blocks, boundary will be (0+1)*5 = 5
+	// (i.e., genesis | 1 2 3 4 5 | 6 7 8 9 10)
 	return epochNumber.AddUint64(1).Mul(epochInterval), nil
 }
 

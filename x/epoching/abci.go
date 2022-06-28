@@ -13,35 +13,64 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
+// BeginBlocker is called at the beginning of every block.
+// Upon each BeginBlock, if reaching the epoch beginning, then
+//    - increment epoch number
+//    - trigger AfterEpochBegins hook
+//    - emit BeginEpoch event
+// NOTE: we follow Cosmos SDK's slashing/evidence modules for MVP. No need to modify them at the moment.
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	logger := k.Logger(ctx)
-	logger.Info("unimplemented")
 
-	// TODO: unimplemented:
-	// - increment epoch number
-	// - slashing equivocating/unlive validators following evidence/slashing modules
-	// - trigger hooks and emit events
+	// get the height of the last block in this epoch
+	epochBoundary, err := k.GetEpochBoundary(ctx)
+	if err != nil {
+		logger.Error("failed to execute GetEpochBoundary", err)
+	}
+	// if this block is the first block of an epoch
+	// note that we haven't incremented the epoch number yet
+	if uint64(ctx.BlockHeight())-1 == epochBoundary.Uint64() {
+		// increase epoch number
+		incEpochNumber, err := k.IncEpochNumber(ctx)
+		if err != nil {
+			logger.Error("failed to execute GetEpochMsgs", err)
+		}
+		// trigger AfterEpochBegins hook
+		if err := k.AfterEpochBegins(ctx, incEpochNumber); err != nil {
+			logger.Error("failed to execute GetEpochNumber", err)
+		}
+		// emit BeginEpoch event
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeBeginEpoch,
+				sdk.NewAttribute(types.AttributeKeyEpoch, incEpochNumber.String()),
+			),
+		})
+	}
 }
 
-// Called every block, update validator set
+// EndBlocker is called at the end of every block.
+// If reaching an epoch boundary, then
+// - forward validator-related msgs (bonded -> unbonding) to the staking module
+// - trigger AfterEpochEnds hook
+// - emit EndEpoch event
+// NOTE: The epoching module is not responsible for checkpoint-assisted unbonding (unbonding -> unbonded). Instead, it wraps the staking module and exposes interfaces to the checkpointing module. The checkpointing module will do the actual checkpoint-assisted unbonding upon each EndBlock.
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 	defer telemetry.ModuleMeasureSince(stakingtypes.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	logger := k.Logger(ctx)
 
+	// get the height of the last block in this epoch
 	epochBoundary, err := k.GetEpochBoundary(ctx)
 	if err != nil {
-		logger.Error("failed to execute epochBoundary", err)
+		logger.Error("failed to execute GetEpochBoundary", err)
 		return nil
 	}
 
 	// if reaching an epoch boundary, then
-	// - forward validator-related msgs (bonded -> unbonding) to the staking module
-	// - trigger AfterEpochEnds hook
-	// - emit EndEpoch event
 	if uint64(ctx.BlockHeight()) == epochBoundary.Uint64() {
 		// get all msgs in the msg queue
 		queuedMsgs, err := k.GetEpochMsgs(ctx)
@@ -77,7 +106,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				return nil
 			}
 		}
-		// cleanup the current msg queue
+		// clear the current msg queue
 		if err := k.ClearEpochMsgs(ctx); err != nil {
 			logger.Error("failed to execute ClearEpochMsgs", err)
 			return nil
@@ -90,7 +119,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			return nil
 		}
 		// trigger AfterEpochEnds hook
-		if k.AfterEpochEnds(ctx, epochNumber); err != nil {
+		if err := k.AfterEpochEnds(ctx, epochNumber); err != nil {
 			logger.Error("failed to execute GetEpochNumber", err)
 			return nil
 		}
@@ -103,6 +132,5 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		})
 	}
 
-	// - TODO: if an epoch is newly checkpointed, make unbonding validators/delegations in this epoch unbonded
 	return nil
 }
