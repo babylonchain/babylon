@@ -45,7 +45,7 @@ service Query {
 // RPC method.
 message QueryRawCheckpointListRequest {
   // status defines the status of the raw checkpoints of the query
-  RawCheckpointStatus status = 1;
+  CheckpointStatus status = 1;
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
