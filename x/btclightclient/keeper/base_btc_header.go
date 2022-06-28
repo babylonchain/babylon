@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -23,8 +24,9 @@ func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) types.BaseBTCHeader {
 		return types.BaseBTCHeader{}
 	}
 
-	headerBytes := types.BtcdHeaderToBytes(baseBtcdHeader)
-	return types.BaseBTCHeader{Header: headerBytes, Height: height}
+	var headerBytes bbl.BTCHeaderBytes
+	headerBytes.FromBlockHeader(baseBtcdHeader)
+	return types.BaseBTCHeader{Header: &headerBytes, Height: height}
 }
 
 // SetBaseBTCHeader checks whether a base BTC header exists and
@@ -35,7 +37,7 @@ func (k Keeper) SetBaseBTCHeader(ctx sdk.Context, baseBTCHeader types.BaseBTCHea
 		panic("A base BTC Header has already been set")
 	}
 
-	btcdHeader, err := types.BytesToBtcdHeader(baseBTCHeader.Header)
+	btcdHeader, err := baseBTCHeader.Header.ToBlockHeader()
 	if err != nil {
 		panic("Base BTC Header bytes do not correspond to btcd header")
 	}

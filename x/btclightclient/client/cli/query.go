@@ -79,7 +79,7 @@ func CmdHashes() *cobra.Command {
 
 func CmdContains() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contains [hash]",
+		Use:   "contains [hex-hash]",
 		Short: "check whether the module maintains a hash",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -87,7 +87,10 @@ func CmdContains() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := types.NewQueryContainsRequest(args[0])
+			params, err := types.NewQueryContainsRequest(args[0])
+			if err != nil {
+				return err
+			}
 			res, err := queryClient.Contains(context.Background(), params)
 			if err != nil {
 				return err
