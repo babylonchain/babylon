@@ -18,6 +18,7 @@ type (
 		memKey         sdk.StoreKey
 		stakingKeeper  types.StakingKeeper
 		epochingKeeper types.EpochingKeeper
+		hooks          types.CheckpointingHooks
 		paramstore     paramtypes.Subspace
 	}
 )
@@ -42,6 +43,7 @@ func NewKeeper(
 		stakingKeeper:  stakingKeeper,
 		epochingKeeper: epochingKeeper,
 		paramstore:     ps,
+		hooks:          nil,
 	}
 }
 
