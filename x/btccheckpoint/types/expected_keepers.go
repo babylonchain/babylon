@@ -25,7 +25,7 @@ type BTCLightClientKeeper interface {
 }
 
 type CheckpointingKeeper interface {
-	// CheckpointEpoch should return epoch index it passes all checkpoint validation
-	// and error otherwise
+	// CheckpointEpoch should return epoch index if provided rawCheckpoint
+	// passes all checkpointing validations and error otherwise
 	CheckpointEpoch(rawCheckpoint []byte) (uint64, error)
 }

@@ -23,8 +23,9 @@ const (
 	expectedProofs = 2
 )
 
-// Parse and Validate provided OP_RETURN transaction with their proofs.
-// If even one transaction is invalid error is returned.
+// Parse and Validate transactions which should contain OP_RETURN data.
+// OP_RETURN bytes are not validated in any way. It is up to the caller attach
+// semantic meaning and validity to those bytes.
 // Returned ParsedProofs are in same order as raw proofs
 // TODO explore possibility of validating that output in second tx is payed by
 // input in the first tx
@@ -73,8 +74,15 @@ func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
 }
 
 func (m *MsgInsertBTCSpvProof) GetSigners() []sdk.AccAddress {
-	// cosmos-sdk modules usually ignore possible error here, lets assume it cannot
-	// happen
-	submitter, _ := sdk.AccAddressFromBech32(m.Submitter)
+	// cosmos-sdk modules usually ignore possible error here, we panic for the sake
+	// of informing something terrible had happend
+
+	submitter, err := sdk.AccAddressFromBech32(m.Submitter)
+	if err != nil {
+		// Panic, since the GetSigners method is called after ValidateBasic
+		// which performs the same check.
+		panic(err)
+	}
+
 	return []sdk.AccAddress{submitter}
 }

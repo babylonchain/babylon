@@ -2,11 +2,10 @@ package btcutils
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"math/big"
-	"time"
 
+	"github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -27,49 +26,6 @@ type ParsedProof struct {
 	BlockHeader  wire.BlockHeader
 	Transaction  *btcutil.Tx
 	OpReturnData []byte
-}
-
-func readBlockHeader(headerBytes []byte) (*wire.BlockHeader, error) {
-	header := &wire.BlockHeader{}
-
-	reader := bytes.NewReader(headerBytes)
-
-	e := header.Deserialize(reader)
-
-	if e != nil {
-		return nil, e
-	}
-
-	return header, nil
-}
-
-// Perform the checks that [checkBlockHeaderSanity](https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430) of btcd does
-//
-// We skip the "timestamp should not be 2 hours into the future" check
-// since this might introduce undeterministic behavior
-func validateHeader(header *wire.BlockHeader, powLimit *big.Int) error {
-	// TODO copy of the validation done in btc light client at some point it would
-	// be nice to move it to some commong btc module
-
-	msgBlock := &wire.MsgBlock{Header: *header}
-
-	block := btcutil.NewBlock(msgBlock)
-
-	// The upper limit for the power to be spent
-	// Use the one maintained by btcd
-	err := blockchain.CheckProofOfWork(block, powLimit)
-
-	if err != nil {
-		return err
-	}
-
-	if !header.Timestamp.Equal(time.Unix(header.Timestamp.Unix(), 0)) {
-		str := fmt.Sprintf("block timestamp of %v has a higher "+
-			"precision than one second", header.Timestamp)
-		return errors.New(str)
-	}
-
-	return nil
 }
 
 // Concatenates and double hashes two provided inputs
@@ -171,13 +127,13 @@ func ParseProof(
 		return nil, e
 	}
 
-	header, e := readBlockHeader(btcHeader)
+	header, e := types.BTCHeaderBytes(btcHeader).ToBlockHeader()
 
 	if e != nil {
 		return nil, e
 	}
 
-	e = validateHeader(header, powLimit)
+	e = types.ValidateHeader(header, powLimit)
 
 	if e != nil {
 		return nil, e
