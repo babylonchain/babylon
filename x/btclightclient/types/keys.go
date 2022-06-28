@@ -1,6 +1,7 @@
 package types
 
 import (
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -32,14 +33,16 @@ var (
 func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
 	he := sdk.Uint64ToBigEndian(height)
 
-	hashBytes := ChainhashToBytes(hash)
+	var hashBytes bbl.BTCHeaderHashBytes
+	hashBytes.FromChainhash(hash)
 
 	heightPrefix := append(HeadersObjectPrefix, he...)
 	return append(heightPrefix, hashBytes...)
 }
 
 func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
-	hashBytes := ChainhashToBytes(hash)
+	var hashBytes bbl.BTCHeaderHashBytes
+	hashBytes.FromChainhash(hash)
 	return append(HashToHeightPrefix, hashBytes...)
 }
 

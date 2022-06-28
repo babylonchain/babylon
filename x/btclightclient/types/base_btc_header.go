@@ -1,13 +1,16 @@
 package types
 
+import (
+	bbl "github.com/babylonchain/babylon/types"
+)
+
 // NewBaseBTCHeader creates a new Params instance
-func NewBaseBTCHeader(headerBytes []byte, height uint64) BaseBTCHeader {
-	btcHeaderBytes := &BTCHeaderBytes{HeaderBytes: headerBytes}
-	return BaseBTCHeader{Header: btcHeaderBytes, Height: height}
+func NewBaseBTCHeader(headerBytes bbl.BTCHeaderBytes, height uint64) BaseBTCHeader {
+	return BaseBTCHeader{Header: &headerBytes, Height: height}
 }
 
 // DefaultBaseBTCHeader returns a default set of parameters
-func DefaultBaseBTCHeader(headerBytes []byte, height uint64) BaseBTCHeader {
+func DefaultBaseBTCHeader(headerBytes bbl.BTCHeaderBytes, height uint64) BaseBTCHeader {
 	return NewBaseBTCHeader(headerBytes, height)
 }
 
