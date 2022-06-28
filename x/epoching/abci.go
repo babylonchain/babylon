@@ -17,7 +17,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	// TODO: unimplemented:
-	// - slashing equivocating/unlive validators without jailing them
+	// - slashing equivocating/unlive validators following evidence/slashing modules
 }
 
 // Called every block, update validator set

@@ -7,6 +7,8 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -33,7 +35,17 @@ type StakingKeeper interface {
 	ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []abci.ValidatorUpdate, err error)
 }
 
-// TODO: add interfaces of staking, slashing and evidence used in epoching
+// SlashingKeeper defines the slashing module interface contract needed by the
+// epoching module.
+type SlashingKeeper interface {
+	HandleValidatorSignature(ctx sdk.Context, addr cryptotypes.Address, power int64, signed bool)
+}
+
+// EvidenceKeeper defines the evidence module interface contract needed by the
+// epoching module.
+type EvidenceKeeper interface {
+	HandleEquivocationEvidence(ctx sdk.Context, evidence *evidencetypes.Equivocation)
+}
 
 // Event Hooks
 // These can be utilized to communicate between a staking keeper and another
