@@ -29,7 +29,7 @@ message RawCheckpointWithMeta {
 }
 
 // CkptStatus is the status of a checkpoint.
-enum CheckpointStatus{
+enum CheckpointStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
   // UNCHECKPOINTED defines a checkpoint that is checkpointed on BTC.
