@@ -24,10 +24,17 @@ func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
 
 // CreateRawCkptWithMeta inserts the raw checkpoint with meta into the storage by its epoch number
 // a new checkpoint is created with the status of UNCEHCKPOINTED
-func (cs CheckpointsState) CreateRawCkptWithMeta(ckpt *types.RawCheckpoint) {
+func (cs CheckpointsState) CreateRawCkptWithMeta(ckpt *types.RawCheckpoint) error {
 	// save concrete ckpt object
 	ckptWithMeta := types.NewCheckpointWithMeta(ckpt, types.Uncheckpointed)
+
+	if cs.checkpoints.Has(types.CkptsObjectKey(ckpt.EpochNum)) {
+		// TODO: define an error type for this
+		return errors.New("the epoch already has a checkpoint")
+	}
+
 	cs.checkpoints.Set(types.CkptsObjectKey(ckpt.EpochNum), types.CkptWithMetaToBytes(cs.cdc, ckptWithMeta))
+	return nil
 }
 
 // GetRawCkptWithMeta retrieves a raw checkpoint with meta by its epoch number
@@ -35,7 +42,7 @@ func (cs CheckpointsState) GetRawCkptWithMeta(epoch uint64) (*types.RawCheckpoin
 	ckptsKey := types.CkptsObjectKey(epoch)
 	rawBytes := cs.checkpoints.Get(ckptsKey)
 	if rawBytes == nil {
-		return nil, types.ErrCkptDoesNotExist.Wrap("no raw checkpoint with provided epoch")
+		return nil, types.ErrCkptDoesNotExist.Wrapf("no raw checkpoint is found at epoch %v", epoch)
 	}
 
 	return types.BytesToCkptWithMeta(cs.cdc, rawBytes)

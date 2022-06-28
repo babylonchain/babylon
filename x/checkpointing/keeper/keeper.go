@@ -56,9 +56,9 @@ func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 
 // AddRawCheckpoint adds a raw checkpoint into the storage
 // this API may not needed since checkpoints are generated internally
-func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) {
+func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
 	// NOTE: may remove this API
-	k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckpt)
+	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckpt)
 }
 
 // CheckpointEpoch verifies checkpoint from BTC and returns epoch number
