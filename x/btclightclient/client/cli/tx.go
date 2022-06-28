@@ -35,8 +35,10 @@ func CmdTxInsertHeader() *cobra.Command {
 				return err
 			}
 
-			headerBytes := []byte(args[0])
-			msg := types.NewMsgInsertHeader(clientCtx.GetFromAddress(), headerBytes)
+			msg, err := types.NewMsgInsertHeader(clientCtx.GetFromAddress(), args[0])
+			if err != nil {
+				return err
+			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
