@@ -85,8 +85,8 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		return &types.QueryMainChainResponse{}, nil
 	}
 
-	var headers []bbl.BTCHeaderBytes
-	headers = append(headers, bbl.NewBTCHeaderBytesFromBlockHeader(prevHeader))
+	var headers []*types.HeaderInfo
+	headers = append(headers, types.NewHeaderInfo(prevHeader))
 	store := prefix.NewStore(k.HeadersState(sdkCtx).headers, types.HeadersObjectPrefix)
 
 	// Set this value to true to signal to FilteredPaginate to iterate the entries in reverse
@@ -101,7 +101,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 			// If the previous block extends this block, then this block is part of the main chain
 			if prevHeader.PrevBlock.String() == btcdHeader.BlockHash().String() {
 				prevHeader = btcdHeader
-				headers = append(headers, currentHeaderBytes)
+				headers = append(headers, types.NewHeaderInfo(btcdHeader))
 			}
 		}
 		return true, nil
