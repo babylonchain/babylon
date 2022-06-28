@@ -22,8 +22,6 @@ type (
 		hooks      types.EpochingHooks
 		paramstore paramtypes.Subspace
 		stk        types.StakingKeeper
-		slk        types.SlashingKeeper
-		ek         types.EvidenceKeeper
 	}
 )
 
@@ -33,8 +31,6 @@ func NewKeeper(
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	stk types.StakingKeeper,
-	slk types.SlashingKeeper,
-	ek types.EvidenceKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -48,8 +44,6 @@ func NewKeeper(
 		paramstore: ps,
 		hooks:      nil,
 		stk:        stk,
-		slk:        slk,
-		ek:         ek,
 	}
 }
 

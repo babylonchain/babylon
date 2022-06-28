@@ -7,8 +7,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -33,18 +31,6 @@ type StakingKeeper interface {
 	DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTime time.Time) (matureRedelegations []stakingtypes.DVVTriplet)
 	CompleteRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valSrcAddr, valDstAddr sdk.ValAddress) (sdk.Coins, error)
 	ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []abci.ValidatorUpdate, err error)
-}
-
-// SlashingKeeper defines the slashing module interface contract needed by the
-// epoching module.
-type SlashingKeeper interface {
-	HandleValidatorSignature(ctx sdk.Context, addr cryptotypes.Address, power int64, signed bool)
-}
-
-// EvidenceKeeper defines the evidence module interface contract needed by the
-// epoching module.
-type EvidenceKeeper interface {
-	HandleEquivocationEvidence(ctx sdk.Context, evidence *evidencetypes.Equivocation)
 }
 
 // Event Hooks
