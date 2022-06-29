@@ -39,7 +39,6 @@ func (s *btcutilsTestSuite) SetupSuite() {
 }
 
 func (s *btcutilsTestSuite) TestValidateHeader() {
-	// TODO
 	data := []struct {
 		name     string
 		header   *wire.BlockHeader
