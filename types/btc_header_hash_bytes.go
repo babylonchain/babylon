@@ -2,10 +2,13 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 type BTCHeaderHashBytes []byte
+
+const HeaderHashLen = 32
 
 func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 	var hashBytes BTCHeaderHashBytes
@@ -51,6 +54,9 @@ func (m BTCHeaderHashBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderHashBytes) Unmarshal(bz []byte) error {
+	if len(bz) != HeaderHashLen {
+		return errors.New("invalid header hash length")
+	}
 	*m = bz
 	return nil
 }
@@ -65,6 +71,9 @@ func (m *BTCHeaderHashBytes) MarshalHex() (string, error) {
 }
 
 func (m *BTCHeaderHashBytes) UnmarshalHex(hash string) error {
+	if len(hash) != HeaderHashLen*2 {
+		return errors.New("invalid hex length")
+	}
 	decoded, err := chainhash.NewHashFromStr(hash)
 	if err != nil {
 		return err

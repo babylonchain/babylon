@@ -62,6 +62,5 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 		panic("Height for parent is not maintained")
 	}
 
-	k.HeadersState(ctx).CreateHeader(header, height+1)
-	return nil
+	return k.HeadersState(ctx).CreateHeader(header, height+1)
 }

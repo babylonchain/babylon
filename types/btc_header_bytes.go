@@ -4,10 +4,13 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"github.com/btcsuite/btcd/wire"
 )
 
 type BTCHeaderBytes []byte
+
+const HeaderLen = 80
 
 func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
 	var headerBytes BTCHeaderBytes
@@ -52,6 +55,10 @@ func (m BTCHeaderBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
+	if len(data) != HeaderLen {
+		return errors.New("Invalid header length")
+	}
+
 	*m = data
 	return nil
 }
@@ -102,9 +109,12 @@ func (m BTCHeaderBytes) ToBlockHeader() (*wire.BlockHeader, error) {
 	return header, nil
 }
 
-func (m *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) {
+func (m *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) error {
 	var buf bytes.Buffer
-	header.Serialize(&buf)
+	err := header.Serialize(&buf)
+	if err != nil {
+		return err
+	}
 
-	*m = buf.Bytes()
+	return m.Unmarshal(buf.Bytes())
 }

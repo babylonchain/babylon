@@ -29,19 +29,22 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 }
 
 // CreateHeader Insert the header into the hash->height and (height, hash)->header storage
-func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) {
+func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) error {
 	headerHash := header.BlockHash()
 	headersKey := types.HeadersObjectKey(height, &headerHash)
 	heightKey := types.HeadersObjectHeightKey(&headerHash)
 
 	var headerBytes bbl.BTCHeaderBytes
-	headerBytes.FromBlockHeader(header)
+	err := headerBytes.FromBlockHeader(header)
+	if err != nil {
+		return err
+	}
 	// save concrete object
 	s.headers.Set(headersKey, headerBytes)
 	// map header to height
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
 
-	s.UpdateTip(header, height)
+	return s.UpdateTip(header, height)
 }
 
 // GetHeader Retrieve a header by its height and hash
@@ -178,18 +181,21 @@ func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
 }
 
 // CreateTip sets the provided header as the tip
-func (s HeadersState) CreateTip(header *wire.BlockHeader) {
+func (s HeadersState) CreateTip(header *wire.BlockHeader) error {
 	var headerBytes bbl.BTCHeaderBytes
-	headerBytes.FromBlockHeader(header)
+	err := headerBytes.FromBlockHeader(header)
+	if err != nil {
+		return err
+	}
 	tipKey := types.TipKey()
 	s.tip.Set(tipKey, headerBytes)
+	return nil
 }
 
 // UpdateTip checks whether the tip should be updated and acts accordingly
-func (s HeadersState) UpdateTip(header *wire.BlockHeader, height uint64) {
+func (s HeadersState) UpdateTip(header *wire.BlockHeader, height uint64) error {
 	if !s.TipExists() {
-		s.CreateTip(header)
-		return
+		return s.CreateTip(header)
 	}
 
 	// Currently, the tip is the one with the biggest height
@@ -202,8 +208,9 @@ func (s HeadersState) UpdateTip(header *wire.BlockHeader, height uint64) {
 	}
 
 	if tipHeight < height {
-		s.CreateTip(header)
+		return s.CreateTip(header)
 	}
+	return nil
 }
 
 // GetTip returns the currently maintained tip
