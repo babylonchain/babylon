@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+// ValidateHeader
 // Perform the checks that [checkBlockHeaderSanity](https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430) of btcd does
 //
 // We skip the "timestamp should not be 2 hours into the future" check
