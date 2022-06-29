@@ -32,11 +32,10 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_Marshal() {
 	data := []struct {
 		name string
 		b    []byte
-		size int
 	}{
-		{"one length", []byte("a"), 1},
-		{"long length", []byte("aaaa"), 4},
-		{"zero length", []byte(""), 0},
+		{"one length", []byte("a")},
+		{"long length", []byte("aaaa")},
+		{"zero length", []byte("")},
 	}
 	for _, d := range data {
 		hb := types.BTCHeaderBytes(d.b)
@@ -87,11 +86,10 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_MarshalTo() {
 	data := []struct {
 		name string
 		b    []byte
-		size int
 	}{
-		{"one length", []byte("a"), 1},
-		{"long length", []byte("aaaa"), 4},
-		{"zero length", []byte(""), 0},
+		{"one length", []byte("a")},
+		{"long length", []byte("aaaa")},
+		{"zero length", []byte("")},
 	}
 	for _, d := range data {
 		hb := types.BTCHeaderBytes(d.b)
@@ -108,15 +106,14 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_Size() {
 	data := []struct {
 		name string
 		b    []byte
-		size int
 	}{
-		{"one length", []byte("a"), 1},
-		{"long length", []byte("aaaa"), 4},
-		{"zero length", []byte(""), 0},
+		{"one length", []byte("a")},
+		{"long length", []byte("aaaa")},
+		{"zero length", []byte("")},
 	}
 	for _, d := range data {
 		hb := types.BTCHeaderBytes(d.b)
-		s.Require().Equal(d.size, hb.Size(), d.name)
+		s.Require().Equal(len(d.b), hb.Size(), d.name)
 	}
 }
 
