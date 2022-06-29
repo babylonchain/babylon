@@ -27,7 +27,8 @@ directory.
 
 First, generate the required testnet files under the `.testnet` directory
 ```bash
->>> ./build/babylond testnet --v 1 --output-dir ./.testnet --starting-ip-address 192.168.10.2 --keyring-backend test
+>>> ./build/babylond testnet --v 1 --output-dir ./.testnet \
+        --starting-ip-address 192.168.10.2 --keyring-backend test
 ```
 
 This will lead to the creation of a `.testnet` directory that contains the
