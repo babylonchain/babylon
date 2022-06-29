@@ -25,6 +25,7 @@ type BankKeeper interface {
 // StakingKeeper defines the staking module interface contract needed by the
 // epoching module.
 type StakingKeeper interface {
+	GetParams(ctx sdk.Context) stakingtypes.Params
 	UnbondAllMatureValidators(ctx sdk.Context)
 	DequeueAllMatureUBDQueue(ctx sdk.Context, currTime time.Time) (matureUnbonds []stakingtypes.DVPair)
 	CompleteUnbonding(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (sdk.Coins, error)

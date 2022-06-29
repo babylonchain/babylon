@@ -36,9 +36,26 @@ func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error {
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
-	// TODO: unimplemented:
-	//  - add the validator address to the set
-	//  - if = 1/3 or 2/3 validators are slashed in a single epoch, emit event and trigger hook
+	logger := h.k.Logger(ctx)
+
+	// add the validator address to the set
+	if err := h.k.AddSlashedValidator(ctx, valAddr); err != nil {
+		logger.Error("failed to execute AddSlashedValidator", err)
+	}
+
+	numSlashedVals, err := h.k.GetSlashedValidatorSetSize(ctx)
+	if err != nil {
+		logger.Error("failed to execute GetSlashedValidatorSetSize", err)
+	}
+	numMaxVals := h.k.stk.GetParams(ctx).MaxValidators
+	// if = 1/3 validators are slashed in a single epoch, emit event and trigger hook
+	if numSlashedVals.Uint64() == uint64(numMaxVals)/3 {
+		// TODO: emit event and trigger hook
+	}
+	// if = 2/3 validators are slashed in a single epoch, emit event and trigger hook
+	if numSlashedVals.Uint64() == uint64(numMaxVals)*2/3 {
+		// TODO: emit event and trigger hook
+	}
 }
 
 // Other staking hooks that are not used in the epoching module
