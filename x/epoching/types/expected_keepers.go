@@ -34,13 +34,18 @@ type StakingKeeper interface {
 }
 
 // Event Hooks
-// These can be utilized to communicate between a staking keeper and another
+// These can be utilized to communicate between an epoching keeper and another
 // keeper which must take particular actions when validators/delegators change
 // state. The second keeper must implement this interface, which then the
-// staking keeper can call.
+// epoching keeper can call.
 
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
 	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error // Must be called after an epoch begins
 	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error   // Must be called after an epoch ends
+}
+
+// StakingHooks event hooks for staking validator object (noalias)
+type StakingHooks interface {
+	BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) // Must be called right before a validator is slashed
 }

@@ -209,3 +209,5 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) error {
 	// set queue len to zero
 	return k.setQueueLength(ctx, sdk.NewUint(0))
 }
+
+// TODO: maintain the set of slashed validators for each epoch
