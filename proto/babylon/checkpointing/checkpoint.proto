@@ -7,7 +7,7 @@ import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// RawCheckpoint wraps the multi sig with meta data.
+// RawCheckpoint wraps the bls multi sig with meta data
 message RawCheckpoint {
   option (gogoproto.equal)            = true;
 
@@ -19,8 +19,25 @@ message RawCheckpoint {
   bytes bitmap = 3;
   // bls_multi_sig defines the multi sig that is aggregated from individual bls sigs
   bytes bls_multi_sig = 4;
+}
+
+// RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+message RawCheckpointWithMeta {
+  RawCheckpoint ckpt = 1;
   // status defines the status of the checkpoint
-  RawCheckpointStatus status = 5;
+  CheckpointStatus status = 2;
+}
+
+// CkptStatus is the status of a checkpoint.
+enum CheckpointStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+
+  // UNCHECKPOINTED defines a checkpoint that is checkpointed on BTC.
+  CKPT_STATUS_UNCHECKPOINTED = 0 [(gogoproto.enumvalue_customname) = "Uncheckpointed"];
+  // UNCONFIRMED defines a validator that is checkpointed on BTC but not confirmed.
+  CKPT_STATUS_UNCONFIRMED = 1 [(gogoproto.enumvalue_customname) = "Unconfirmed"];
+  // CONFIRMED defines a validator that is confirmed on BTC.
+  CKPT_STATUS_CONFIRMED = 2 [(gogoproto.enumvalue_customname) = "Confirmed"];
 }
 
 // BlsSig wraps the bls sig with meta data.
@@ -37,12 +54,3 @@ message BlsSig {
   string signer_address = 5;
 }
 
-// RawCheckpointStatus defines the status of the raw checkpoint
-enum RawCheckpointStatus {
-    // UNCHECKPOINTED indicates the checkpoint has not appeared on BTC
-    UNCHECKPOINTED = 0;
-    // CHECKPOINTED_NOT_CONFIRMED indicates the checkpoint has been checkpointed on BTC but has insufficent confirmation
-    CHECKPOINTED_NOT_CONFIRMED = 1;
-    // CONFIRMED indicates the checkpoint has sufficient confirmation depth on BTC
-    CONFIRMED = 2;
-}

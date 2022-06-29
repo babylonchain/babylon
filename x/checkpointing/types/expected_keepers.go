@@ -16,3 +16,13 @@ type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	// Methods imported from bank should be defined here
 }
+
+// StakingKeeper defines the expected interface needed to retrieve validator staking status
+type StakingKeeper interface {
+	GetLastTotalPower(ctx sdk.Context) sdk.Uint
+}
+
+// Epoching defines the expected interface needed to retrieve epoch info
+type EpochingKeeper interface {
+	GetCurrentEpoch(ctx sdk.Context) sdk.Uint
+}

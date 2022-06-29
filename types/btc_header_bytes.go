@@ -18,6 +18,16 @@ func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
 	return headerBytes, nil
 }
 
+func NewBTCHeaderBytesFromBlockHeader(header *wire.BlockHeader) BTCHeaderBytes {
+	var headerBytes BTCHeaderBytes
+	headerBytes.FromBlockHeader(header)
+	return headerBytes
+}
+
+func NewBTCHeaderBytesFromBytes(header []byte) BTCHeaderBytes {
+	return header
+}
+
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {
 	hex, err := m.MarshalHex()
 	if err != nil {
