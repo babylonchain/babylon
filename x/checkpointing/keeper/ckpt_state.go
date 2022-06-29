@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	"errors"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -29,8 +28,7 @@ func (cs CheckpointsState) CreateRawCkptWithMeta(ckpt *types.RawCheckpoint) erro
 	ckptWithMeta := types.NewCheckpointWithMeta(ckpt, types.Uncheckpointed)
 
 	if cs.checkpoints.Has(types.CkptsObjectKey(ckpt.EpochNum)) {
-		// TODO: define an error type for this
-		return errors.New("the epoch already has a checkpoint")
+		return types.ErrCkptAlreadyExist.Wrapf("a raw checkpoint already exists at epoch %v", ckpt.EpochNum)
 	}
 
 	cs.checkpoints.Set(types.CkptsObjectKey(ckpt.EpochNum), types.CkptWithMetaToBytes(cs.cdc, ckptWithMeta))
@@ -86,7 +84,7 @@ func (cs CheckpointsState) UpdateCkptStatus(ckpt *types.RawCheckpoint, status ty
 		return err
 	}
 	if !ckptWithMeta.Ckpt.Hash().Equals(ckpt.Hash()) {
-		return errors.New("hash not the same with existing checkpoint")
+		return types.ErrCkptHashNotEqual.Wrapf("conflicting hash at epoch %v", ckpt.EpochNum)
 	}
 	ckptWithMeta.Status = status
 	cs.checkpoints.Set(sdk.Uint64ToBigEndian(ckpt.EpochNum), types.CkptWithMetaToBytes(cs.cdc, ckptWithMeta))
