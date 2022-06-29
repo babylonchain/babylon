@@ -129,11 +129,14 @@ func (s HeadersState) GetDescendingHeaders() ([]*wire.BlockHeader, error) {
 }
 
 // HeaderExists Check whether a hash is maintained in storage
-func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
+func (s HeadersState) HeaderExists(hash *chainhash.Hash) (bool, error) {
 	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
 	var hashBytes bbl.BTCHeaderHashBytes
-	hashBytes.FromChainhash(hash)
-	return store.Has(hashBytes)
+	err := hashBytes.FromChainhash(hash)
+	if err != nil {
+		return false, err
+	}
+	return store.Has(hashBytes), nil
 }
 
 func (s HeadersState) GetMainChain() ([]*wire.BlockHeader, error) {

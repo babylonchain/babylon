@@ -19,7 +19,7 @@ func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 	return hashBytes, nil
 }
 
-func NewBTCHeaderHashBytesFromChainhash(chHash chainhash.Hash) BTCHeaderHashBytes {
+func NewBTCHeaderHashBytesFromChainhash(chHash *chainhash.Hash) BTCHeaderHashBytes {
 	var headerHashBytes BTCHeaderHashBytes
 	headerHashBytes.Unmarshal(chHash[:])
 	return headerHashBytes
@@ -97,14 +97,6 @@ func (m BTCHeaderHashBytes) ToChainhash() (*chainhash.Hash, error) {
 	return chainhash.NewHash(m)
 }
 
-func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
-	var headerHashBytes BTCHeaderHashBytes
-	headerHashBytes.Unmarshal(hash[:])
-	*m = headerHashBytes
-}
-
-func (m BTCHeaderHashBytes) reverse() {
-	for i := 0; i < chainhash.HashSize/2; i++ {
-		m[i], m[chainhash.HashSize-1-i] = m[chainhash.HashSize-1-i], m[i]
-	}
+func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) error {
+	return m.Unmarshal(hash[:])
 }

@@ -11,7 +11,7 @@ import (
 
 type headerBytesTestSuite struct {
 	suite.Suite
-	valid, invalid, invalidHex, tooLong, tooShort string
+	valid, validHeaderHash, invalid, invalidHex, tooLong, tooShort string
 }
 
 func TestHeaderBytesTestSuite(t *testing.T) {
@@ -21,6 +21,7 @@ func TestHeaderBytesTestSuite(t *testing.T) {
 func (s *headerBytesTestSuite) SetupSuite() {
 	s.T().Parallel()
 	s.valid = "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22"
+	s.validHeaderHash = "00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47"
 	s.invalid = "notvalidhex"
 	s.tooLong = "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22222"
 	s.tooShort = "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c"
@@ -192,5 +193,44 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_UnmarshalJSON() {
 			json.Unmarshal(d.jms, &bz)
 			s.Require().Equal(bz, hb, d.name)
 		}
+	}
+}
+
+func (s *headerBytesTestSuite) TestBTCHeaderBytes_ToBlockHeader() {
+	data := []struct {
+		name       string
+		header     string
+		headerHash string
+	}{{"valid", s.valid, s.validHeaderHash}}
+
+	for _, d := range data {
+		var hb types.BTCHeaderBytes
+		hb.UnmarshalHex(d.header)
+
+		btcdBlock, err := hb.ToBlockHeader()
+		s.Require().NoError(err)
+		s.Require().Equal(d.headerHash, btcdBlock.BlockHash().String(), d.name)
+	}
+}
+
+func (s *headerBytesTestSuite) TestBTCHeaderBytes_FromBlockHeader() {
+	data := []struct {
+		name string
+		hex  string
+	}{{"valid", s.valid}}
+
+	for _, d := range data {
+		var hb types.BTCHeaderBytes
+		hb.UnmarshalHex(d.hex)
+		btcdBlock, _ := hb.ToBlockHeader()
+
+		var hb2 types.BTCHeaderBytes
+		err := hb2.FromBlockHeader(btcdBlock)
+
+		s.Require().NoError(err)
+
+		bz1, _ := hb.Marshal()
+		bz2, _ := hb2.Marshal()
+		s.Require().Equal(bz1, bz2, d.name)
 	}
 }

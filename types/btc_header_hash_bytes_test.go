@@ -194,3 +194,41 @@ func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_UnmarshalJSON() {
 		}
 	}
 }
+
+func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_ToChainhash() {
+	data := []struct {
+		name       string
+		headerHash string
+	}{{"valid", s.valid}}
+
+	for _, d := range data {
+		var hhb types.BTCHeaderHashBytes
+		hhb.UnmarshalHex(d.headerHash)
+
+		chHash, err := hhb.ToChainhash()
+		s.Require().NoError(err)
+		s.Require().Equal(d.headerHash, chHash.String(), d.name)
+	}
+}
+
+func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_FromChainhash() {
+	data := []struct {
+		name string
+		hex  string
+	}{{"valid", s.valid}}
+
+	for _, d := range data {
+		var hhb types.BTCHeaderHashBytes
+		hhb.UnmarshalHex(d.hex)
+		chHash, _ := hhb.ToChainhash()
+
+		var hhb2 types.BTCHeaderHashBytes
+		err := hhb2.FromChainhash(chHash)
+
+		s.Require().NoError(err)
+
+		bz1, _ := hhb.Marshal()
+		bz2, _ := hhb2.Marshal()
+		s.Require().Equal(bz1, bz2, d.name)
+	}
+}
