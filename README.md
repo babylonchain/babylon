@@ -42,8 +42,7 @@ gentxs node0
 The `node0` directory contains the configuration for the single node. To start
 running it, execute
 ```console
-$ ./build/babylond start --home ./.testnet/node0/babylond
-[logs]
+./build/babylond start --home ./.testnet/node0/babylond
 ```
 
 ### Multi node testnet
