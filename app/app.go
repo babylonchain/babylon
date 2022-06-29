@@ -320,16 +320,17 @@ func NewBabylonApp(
 		),
 	)
 
-	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
-	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
-	app.CheckpointingKeeper = checkpointingkeeper.NewKeeper(appCodec, keys[checkpointingtypes.StoreKey], keys[checkpointingtypes.MemStoreKey], app.GetSubspace(checkpointingtypes.ModuleName))
-
 	// setup epoching keeper
+	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
 	stakingMsgServer := stakingkeeper.NewMsgServerImpl(app.StakingKeeper)
 	epochingKeeper := epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper, stakingMsgServer)
 	// TODO: add modules that need to hook onto the epoching module here
 	epochingKeeper = *epochingKeeper.SetHooks(epochingtypes.NewMultiEpochingHooks())
 	app.EpochingKeeper = epochingKeeper
+
+	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
+	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
+	app.CheckpointingKeeper = checkpointingkeeper.NewKeeper(appCodec, keys[checkpointingtypes.StoreKey], keys[checkpointingtypes.MemStoreKey], app.GetSubspace(checkpointingtypes.ModuleName))
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
