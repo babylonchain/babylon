@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -34,6 +36,14 @@ func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error {
 	return nil
 }
 
+// BeforeSlashThreshold triggers the BeforeSlashThreshold hook for other modules that register this hook
+func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) error {
+	if k.hooks != nil {
+		return k.hooks.BeforeSlashThreshold(ctx, valAddrs)
+	}
+	return nil
+}
+
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
 	logger := h.k.Logger(ctx)
@@ -48,13 +58,24 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 		logger.Error("failed to execute GetSlashedValidatorSetSize", err)
 	}
 	numMaxVals := h.k.stk.GetParams(ctx).MaxValidators
-	// if = 1/3 validators are slashed in a single epoch, emit event and trigger hook
-	if numSlashedVals.Uint64() == uint64(numMaxVals)/3 {
-		// TODO: emit event and trigger hook
-	}
-	// if = 2/3 validators are slashed in a single epoch, emit event and trigger hook
-	if numSlashedVals.Uint64() == uint64(numMaxVals)*2/3 {
-		// TODO: emit event and trigger hook
+	// if a certain threshold (1/3 or 2/3) validators are slashed in a single epoch, emit event and trigger hook
+	if numSlashedVals.Uint64() == uint64(numMaxVals)/3 || numSlashedVals.Uint64() == uint64(numMaxVals)*2/3 {
+		// emit event
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeSlashThreshold,
+				sdk.NewAttribute(types.AttributeKeyNumSlashedVals, numSlashedVals.String()),
+				sdk.NewAttribute(types.AttributeKeyNumMaxVals, fmt.Sprint(numMaxVals)),
+			),
+		})
+		// trigger hook
+		slashedVals, err := h.k.GetSlashedValidators(ctx)
+		if err != nil {
+			logger.Error("failed to execute GetSlashedValidators", err)
+		}
+		if err := h.k.BeforeSlashThreshold(ctx, slashedVals); err != nil {
+			logger.Error("failed to execute BeforeSlashThreshold", err)
+		}
 	}
 }
 

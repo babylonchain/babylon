@@ -32,3 +32,13 @@ func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) erro
 
 	return nil
 }
+
+func (h MultiEpochingHooks) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) error {
+	for i := range h {
+		if err := h[i].BeforeSlashThreshold(ctx, valAddrs); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
