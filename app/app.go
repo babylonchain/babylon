@@ -320,7 +320,7 @@ func NewBabylonApp(
 		),
 	)
 
-	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName))
+	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper)
 	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
 	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
 	app.CheckpointingKeeper = checkpointingkeeper.NewKeeper(appCodec, keys[checkpointingtypes.StoreKey], keys[checkpointingtypes.MemStoreKey], app.GetSubspace(checkpointingtypes.ModuleName))
@@ -359,7 +359,7 @@ func NewBabylonApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
+		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
@@ -381,21 +381,25 @@ func NewBabylonApp(
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
 	)
-	app.mm.SetOrderEndBlockers(
-		crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
+	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
+	// - how many validators can we slash in a single epoch and
+	// - whether and when to jail slashed validators
+	// app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers[:4], app.mm.OrderBeginBlockers[4+1:]...) // remove slashingtypes.ModuleName
+	// app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers[:4], app.mm.OrderBeginBlockers[4+1:]...) // remove evidencetypes.ModuleName
+
+	app.mm.SetOrderEndBlockers(crisistypes.ModuleName, govtypes.ModuleName, stakingtypes.ModuleName,
 		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName, distrtypes.ModuleName,
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
-		// TODO: BBL doesn't want the staking module to update the validator set at the end of each block. We consider two approaches to fix this:
-		// - remove stakingtypes.ModuleName from here, and let `epoching.EndBlock` do everything
-		// - call `epoching.EndBlock` first but only to dequeue the delayed staking requests, then let `staking.EndBlock` take care of executing them and return the changeset.
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
 	)
+	// BBL does not want EndBlock processing in staking
+	app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers[:2], app.mm.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
@@ -442,7 +446,7 @@ func NewBabylonApp(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper),
+		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
