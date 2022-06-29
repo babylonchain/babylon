@@ -25,6 +25,11 @@ service Query {
   rpc Contains(QueryContainsRequest) returns (QueryContainsResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/contains";
   }
+
+  // MainChain returns the canonical chain
+  rpc MainChain(QueryMainChainRequest) returns (QueryMainChainResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/mainchain";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -60,4 +65,17 @@ message QueryContainsRequest {
 // QueryContainsResponse is response type for the Query/Contains RPC method.
 message QueryContainsResponse {
   bool contains = 1;
+}
+
+// QueryMainChainRequest is request type for the Query/MainChain RPC method.
+// It involves retrieving the canonical chain maintained by the module.
+message QueryMainChainRequest {
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryMainChainResponse is response type for the Query/MainChain RPC method.
+message QueryMainChainResponse {
+  repeated HeaderInfo headers = 1;
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
