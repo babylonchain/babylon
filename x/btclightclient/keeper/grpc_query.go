@@ -96,7 +96,10 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	req.Pagination.Reverse = true
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
-			currentHeaderBytes := bbl.NewBTCHeaderBytesFromBytes(value)
+			currentHeaderBytes, err := bbl.NewBTCHeaderBytesFromBytes(value)
+			if err != nil {
+				return false, err
+			}
 			btcdHeader, err := currentHeaderBytes.ToBlockHeader()
 			if err != nil {
 				return false, err

@@ -27,8 +27,13 @@ func NewBTCHeaderBytesFromBlockHeader(header *wire.BlockHeader) BTCHeaderBytes {
 	return headerBytes
 }
 
-func NewBTCHeaderBytesFromBytes(header []byte) BTCHeaderBytes {
-	return header
+func NewBTCHeaderBytesFromBytes(header []byte) (BTCHeaderBytes, error) {
+	var headerBytes BTCHeaderBytes
+	err := headerBytes.Unmarshal(header)
+	if err != nil {
+		return nil, err
+	}
+	return headerBytes, nil
 }
 
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {
