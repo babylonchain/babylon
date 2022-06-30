@@ -45,6 +45,17 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// SetHooks sets the validator hooks
+func (k *Keeper) SetHooks(sh types.CheckpointingHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set validator hooks twice")
+	}
+
+	k.hooks = sh
+
+	return k
+}
+
 // AddBlsSig add bls signatures into storage and generates a raw checkpoint
 // if sufficient sigs are accumulated for a specific epoch
 func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
