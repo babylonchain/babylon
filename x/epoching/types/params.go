@@ -4,7 +4,6 @@ import (
 	fmt "fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"gopkg.in/yaml.v2"
 
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
@@ -41,12 +40,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return NewParams(DefaultEpochInterval)
-}
-
-// String returns a human readable string representation of the parameters.
-func (p Params) String() string {
-	out, _ := yaml.Marshal(p)
-	return string(out)
 }
 
 // unmarshal the current staking params value from store key or panic

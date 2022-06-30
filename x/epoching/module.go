@@ -33,10 +33,10 @@ var (
 
 // AppModuleBasic implements the AppModuleBasic interface for the capability module.
 type AppModuleBasic struct {
-	cdc codec.Codec
+	cdc codec.BinaryCodec
 }
 
-func NewAppModuleBasic(cdc codec.Codec) AppModuleBasic {
+func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{cdc: cdc}
 }
 

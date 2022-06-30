@@ -34,7 +34,7 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		types.Amino,
 		storeKey,
 		memStoreKey,
-		types.ModuleName,
+		"EpochingParams",
 	)
 	k := keeper.NewKeeper(
 		cdc,

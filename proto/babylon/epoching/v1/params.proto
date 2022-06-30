@@ -8,7 +8,6 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.equal)            = true;
-  option (gogoproto.goproto_stringer) = false;
 
   // epoch_interval is the number of consecutive blocks to form an epoch
   uint64 epoch_interval = 1 [ (gogoproto.moretags) = "yaml:\"epoch_interval\"" ];
