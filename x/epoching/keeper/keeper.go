@@ -64,8 +64,7 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
 
 	bz := store.Get(types.EpochNumberKey)
 	if bz == nil {
-		// TODO: initialise epoch number when bootstrapping
-		return sdk.NewUint(0), nil
+		return sdk.NewUint(0), types.ErrUnknownEpochNumber
 	}
 	var epochNumber sdk.Uint
 	err := epochNumber.Unmarshal(bz)
@@ -73,8 +72,8 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
 	return epochNumber, err
 }
 
-// setEpochNumber sets epoch number
-func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
+// SetEpochNumber sets epoch number
+func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
@@ -94,7 +93,7 @@ func (k Keeper) IncEpochNumber(ctx sdk.Context) error {
 		return err
 	}
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	return k.setEpochNumber(ctx, incrementedEpochNumber)
+	return k.SetEpochNumber(ctx, incrementedEpochNumber)
 }
 
 // GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
@@ -103,9 +102,15 @@ func (k Keeper) GetEpochBoundary(ctx sdk.Context) (sdk.Uint, error) {
 	if err != nil {
 		return sdk.NewUint(0), err
 	}
+	// epoch number is 0 at the 0-th block, i.e., genesis
+	if epochNumber.IsZero() {
+		return sdk.NewUint(0), nil
+	}
 	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
-	// example: in epoch 0, epoch interval is 5 blocks, boundary will be (0+1)*5=5
-	return epochNumber.AddUint64(1).Mul(epochInterval), nil
+	// example: in epoch 1, epoch interval is 5 blocks, boundary will be 1*5=5
+	// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+	// 0 |     1     |     2      |
+	return epochNumber.Mul(epochInterval), nil
 }
 
 // GetQueueLength fetches the number of queued messages

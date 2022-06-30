@@ -9,8 +9,12 @@ import (
 // InitGenesis initializes the capability module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	// this line is used by starport scaffolding # genesis/module/init
+	// set params for this module
 	k.SetParams(ctx, genState.Params)
+	// init epoch number
+	if err := k.SetEpochNumber(ctx, sdk.NewUint(0)); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
