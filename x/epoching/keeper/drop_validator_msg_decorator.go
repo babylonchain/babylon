@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -29,8 +27,10 @@ func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
 // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	epochNumber, err := qmd.ek.GetEpochNumber(ctx)
+	// epochNumber hasn't been initialised yet (this happens when exporting the genesis state)
+	// in this case, skip this AnteHandle
 	if err != nil {
-		return ctx, fmt.Errorf("error when executing GetEpochNumber, %v", err)
+		return next(ctx, tx, simulate)
 	}
 	for _, msg := range tx.GetMsgs() {
 		// if validator-related message and after genesis, reject msg
