@@ -1,17 +1,23 @@
 package keeper
 
 import (
+	"fmt"
+
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // DropValidatorMsgDecorator defines an AnteHandler decorator that rejects all messages that might change the validator set.
-type DropValidatorMsgDecorator struct{}
+type DropValidatorMsgDecorator struct {
+	ek Keeper
+}
 
 // NewDropValidatorMsgDecorator creates a new DropValidatorMsgDecorator
-func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
-	return &DropValidatorMsgDecorator{}
+func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
+	return &DropValidatorMsgDecorator{
+		ek: ek,
+	}
 }
 
 // AnteHandle performs an AnteHandler check that rejects all non-wrapped validator-related messages.
@@ -22,8 +28,13 @@ func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
 // - MsgBeginRedelegate
 // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	epochNumber, err := qmd.ek.GetEpochNumber(ctx)
+	if err != nil {
+		return ctx, fmt.Errorf("error when executing GetEpochNumber, %v", err)
+	}
 	for _, msg := range tx.GetMsgs() {
-		if qmd.IsValidatorRelatedMsg(msg) {
+		// if validator-related message and after genesis, reject msg
+		if qmd.IsValidatorRelatedMsg(msg) && !epochNumber.IsZero() {
 			return ctx, epochingtypes.ErrInvalidMsgType
 		}
 	}

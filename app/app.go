@@ -483,7 +483,7 @@ func NewBabylonApp(
 	}
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewDropValidatorMsgDecorator(),
+		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
 	)
 	app.SetAnteHandler(anteHandler)
 
