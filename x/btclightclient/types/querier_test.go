@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"bytes"
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"testing"
@@ -43,6 +44,11 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		queryContains, err := types.NewQueryContainsRequest(hexHash)
 
 		if err != nil {
+			// Caught an error for an invalid header hash length
+			// Good, skip
+			if len(hexHash) != bbl.HeaderHashLen*2 {
+				t.Skip()
+			}
 			t.Errorf("returned error for valid hex %s", hexHash)
 		}
 
