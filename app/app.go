@@ -129,6 +129,7 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		epoching.AppModuleBasic{},
 		btclightclient.AppModuleBasic{},
 		btccheckpoint.AppModuleBasic{},
 		checkpointing.AppModuleBasic{},

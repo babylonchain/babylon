@@ -3,8 +3,6 @@ package types
 import (
 	fmt "fmt"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
@@ -40,26 +38,6 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return NewParams(DefaultEpochInterval)
-}
-
-// unmarshal the current staking params value from store key or panic
-func MustUnmarshalParams(cdc *codec.LegacyAmino, value []byte) Params {
-	params, err := UnmarshalParams(cdc, value)
-	if err != nil {
-		panic(err)
-	}
-
-	return params
-}
-
-// unmarshal the current staking params value from store key
-func UnmarshalParams(cdc *codec.LegacyAmino, value []byte) (params Params, err error) {
-	err = cdc.Unmarshal(value, &params)
-	if err != nil {
-		return
-	}
-
-	return
 }
 
 // Validate validates the set of params
