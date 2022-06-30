@@ -29,7 +29,7 @@ const (
 // Returned ParsedProofs are in same order as raw proofs
 // TODO explore possibility of validating that output in second tx is payed by
 // input in the first tx
-func ParseTwoProofs(proofs []*BTCSpvProof, powLimit *big.Int) ([]*btcutils.ParsedProof, error) {
+func ParseTwoProofs(submitter sdk.AccAddress, proofs []*BTCSpvProof, powLimit *big.Int) (*RawCheckpointSubmission, error) {
 	if len(proofs) != expectedProofs {
 		return nil, fmt.Errorf("expected at exactly valid op return transactions")
 	}
@@ -53,18 +53,22 @@ func ParseTwoProofs(proofs []*BTCSpvProof, powLimit *big.Int) ([]*btcutils.Parse
 		parsedProofs = append(parsedProofs, parsedProof)
 	}
 
-	return parsedProofs, nil
+	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1])
+
+	return &sub, nil
 }
 
 func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Submitter); err != nil {
+	address, err := sdk.AccAddressFromBech32(m.Submitter)
+
+	if err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
 	}
 
 	// TODO get powLimit from some config
 	// result of parsed proof is not needed, drop it
 	// whole parsing stuff is stateless
-	_, err := ParseTwoProofs(m.Proofs, btcchaincfg.MainNetParams.PowLimit)
+	_, err = ParseTwoProofs(address, m.Proofs, btcchaincfg.MainNetParams.PowLimit)
 
 	if err != nil {
 		return err

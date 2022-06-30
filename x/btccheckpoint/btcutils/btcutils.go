@@ -20,12 +20,18 @@ const (
 
 // Parsed proof represent semantically valid:
 // - Bitcoin Header
+// - Bitcoin Header hash
 // - Bitcoin Transaction
+// - Bitcoin Transaction index in block
 // - Non-empty OpReturnData
 type ParsedProof struct {
-	BlockHeader  wire.BlockHeader
-	Transaction  *btcutil.Tx
-	OpReturnData []byte
+	BlockHeader wire.BlockHeader
+	// keeping header hash to avoid recomputing it everytime
+	BlockHash        chainhash.Hash
+	Transaction      *btcutil.Tx
+	TransactionBytes []byte
+	TransactionIdx   uint32
+	OpReturnData     []byte
 }
 
 // Concatenates and double hashes two provided inputs
@@ -148,9 +154,12 @@ func ParseProof(
 	}
 
 	parsedProof := &ParsedProof{
-		BlockHeader:  *header,
-		Transaction:  tx,
-		OpReturnData: opReturnData,
+		BlockHeader:      *header,
+		BlockHash:        header.BlockHash(),
+		Transaction:      tx,
+		TransactionBytes: btcTransaction,
+		TransactionIdx:   transactionIndex,
+		OpReturnData:     opReturnData,
 	}
 
 	return parsedProof, nil

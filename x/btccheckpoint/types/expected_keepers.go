@@ -1,7 +1,7 @@
 package types
 
 import (
-	"github.com/btcsuite/btcd/wire"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -19,9 +19,14 @@ type BankKeeper interface {
 }
 
 type BTCLightClientKeeper interface {
-	// Function should validate if provided header is valid and return header
-	// height if thats the case.
-	BlockHeight(header wire.BlockHeader) (uint64, error)
+	// BlockHeight should validate if header with given hash is valid and if it is
+	// part of known chain. In case this is true it shoudld return this block height
+	// in case this is false it should return error
+	BlockHeight(header chainhash.Hash) (uint64, error)
+
+	// IsAncestor should check if childHash header is direct ancestor of parentHash
+	// if either of this header is not known to light clinet it should return error
+	IsAncestor(parentHash chainhash.Hash, childHash chainhash.Hash) (bool, error)
 }
 
 type CheckpointingKeeper interface {
