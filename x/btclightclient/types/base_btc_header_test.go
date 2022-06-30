@@ -38,6 +38,13 @@ func FuzzNewBaseBTCHeader(f *testing.F) {
 
 func FuzzBaseBTCHeader_Validate(f *testing.F) {
 	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+
+	// test that the default header is valid
+	defaultBaseBTCHeader := types.DefaultBaseBTCHeader(defaultHeader, uint64(42))
+	if defaultBaseBTCHeader.Validate() != nil {
+		f.Errorf("DefaultBaseBTCHeader is not valid")
+	}
+
 	defaultHeaderBytes, _ := defaultHeader.Marshal()
 	f.Add(defaultHeaderBytes, uint64(42))
 
