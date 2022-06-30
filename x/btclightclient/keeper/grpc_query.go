@@ -54,7 +54,10 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 	if err != nil {
 		return nil, err
 	}
-	contains := k.HeadersState(sdkCtx).HeaderExists(chHash)
+	contains, err := k.HeadersState(sdkCtx).HeaderExists(chHash)
+	if err != nil {
+		return nil, err
+	}
 	return &types.QueryContainsResponse{Contains: contains}, nil
 }
 
@@ -113,7 +116,8 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 
 	// Override the next key attribute to point to the parent of the last header
 	// instead of the next element contained in the store
-	pageRes.NextKey = bbl.NewBTCHeaderHashBytesFromChainhash(prevHeader.PrevBlock)
+	prevBlockCh := prevHeader.PrevBlock
+	pageRes.NextKey = bbl.NewBTCHeaderHashBytesFromChainhash(&prevBlockCh)
 
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }
