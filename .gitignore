@@ -208,3 +208,6 @@ $RECYCLE.BIN/
 tools-stamp
 /tests/localbabylon/.babylond/*
 docs/diagrams/plantuml.jar
+.testnets/
+mytestnet/
+output/

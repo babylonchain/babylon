@@ -10,10 +10,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 )
 
-const (
-	DefaultEpochNumber = 0
-)
-
 type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
@@ -68,7 +64,8 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
 
 	bz := store.Get(types.EpochNumberKey)
 	if bz == nil {
-		return sdk.NewUint(uint64(DefaultEpochNumber)), nil
+		// TODO: initialise epoch number when bootstrapping
+		return sdk.NewUint(0), nil
 	}
 	var epochNumber sdk.Uint
 	err := epochNumber.Unmarshal(bz)
