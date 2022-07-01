@@ -31,11 +31,6 @@ jobs:
           name: Run tests
           command: |
             make test
-      - run:
-          name: Generate single block
-          command: |
-            ./build/babylond testnet --v 1 --output-dir ./output --starting-ip-address 192.168.10.2 --keyring-backend test &&
-            ./build/babylond start --home ./output/node0/babylond --halt-height 1
       
 
 # Invoke jobs via workflows
