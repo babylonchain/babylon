@@ -35,11 +35,11 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// increase epoch number
 		incEpochNumber, err := k.IncEpochNumber(ctx)
 		if err != nil {
-			logger.Error("failed to execute GetEpochMsgs", err)
+			logger.Error("failed to execute IncEpochNumber", err)
 		}
 		// trigger AfterEpochBegins hook
 		if err := k.AfterEpochBegins(ctx, incEpochNumber); err != nil {
-			logger.Error("failed to execute GetEpochNumber", err)
+			logger.Error("failed to execute AfterEpochBegins", err)
 		}
 		// emit BeginEpoch event
 		ctx.EventManager().EmitEvents(sdk.Events{
@@ -67,7 +67,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	epochBoundary, err := k.GetEpochBoundary(ctx)
 	if err != nil {
 		logger.Error("failed to execute GetEpochBoundary", err)
-		return nil
+		return []abci.ValidatorUpdate{}
 	}
 
 	// if reaching an epoch boundary, then
