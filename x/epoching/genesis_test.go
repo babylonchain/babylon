@@ -19,3 +19,17 @@ func TestExportGenesis(t *testing.T) {
 	genesisState := epoching.ExportGenesis(ctx, app.EpochingKeeper)
 	require.Equal(t, genesisState.Params, types.DefaultParams())
 }
+
+func TestInitGenesis(t *testing.T) {
+	app := simapp.Setup(false)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+
+	genesisState := types.GenesisState{
+		Params: types.Params{
+			EpochInterval: 100,
+		},
+	}
+
+	epoching.InitGenesis(ctx, app.EpochingKeeper, genesisState)
+	require.Equal(t, app.EpochingKeeper.GetParams(ctx).EpochInterval, uint64(100))
+}
