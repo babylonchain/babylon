@@ -129,6 +129,7 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		epoching.AppModuleBasic{},
 		btclightclient.AppModuleBasic{},
 		btccheckpoint.AppModuleBasic{},
 		checkpointing.AppModuleBasic{},
@@ -483,7 +484,7 @@ func NewBabylonApp(
 	}
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewDropValidatorMsgDecorator(),
+		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
 	)
 	app.SetAnteHandler(anteHandler)
 

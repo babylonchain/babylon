@@ -23,7 +23,7 @@ func TestDropValidatorMsgDecorator(t *testing.T) {
 		{&stakingtypes.MsgEditValidator{}, false},
 	}
 
-	decorator := NewDropValidatorMsgDecorator()
+	decorator := NewDropValidatorMsgDecorator(Keeper{})
 
 	for _, tc := range testCases {
 		res := decorator.IsValidatorRelatedMsg(tc.msg)

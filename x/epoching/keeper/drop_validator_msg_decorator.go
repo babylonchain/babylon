@@ -7,11 +7,15 @@ import (
 )
 
 // DropValidatorMsgDecorator defines an AnteHandler decorator that rejects all messages that might change the validator set.
-type DropValidatorMsgDecorator struct{}
+type DropValidatorMsgDecorator struct {
+	ek Keeper
+}
 
 // NewDropValidatorMsgDecorator creates a new DropValidatorMsgDecorator
-func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
-	return &DropValidatorMsgDecorator{}
+func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
+	return &DropValidatorMsgDecorator{
+		ek: ek,
+	}
 }
 
 // AnteHandle performs an AnteHandler check that rejects all non-wrapped validator-related messages.
@@ -22,7 +26,12 @@ func NewDropValidatorMsgDecorator() *DropValidatorMsgDecorator {
 // - MsgBeginRedelegate
 // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
+	// skip if at genesis block, as genesis state contains txs that bootstrap the initial validator set
+	if ctx.BlockHeight() == 0 {
+		return next(ctx, tx, simulate)
+	}
 	for _, msg := range tx.GetMsgs() {
+		// if validator-related message after genesis, reject msg
 		if qmd.IsValidatorRelatedMsg(msg) {
 			return ctx, epochingtypes.ErrInvalidMsgType
 		}
