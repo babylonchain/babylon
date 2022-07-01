@@ -26,15 +26,13 @@ func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
 // - MsgBeginRedelegate
 // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
-	epochNumber, err := qmd.ek.GetEpochNumber(ctx)
-	// epochNumber hasn't been initialised yet (this happens when exporting the genesis state)
-	// in this case, skip this AnteHandle
-	if err != nil {
+	// skip if at genesis block, as genesis state contains txs that bootstrap the initial validator set
+	if ctx.BlockHeight() == 0 {
 		return next(ctx, tx, simulate)
 	}
 	for _, msg := range tx.GetMsgs() {
-		// if validator-related message and after genesis, reject msg
-		if qmd.IsValidatorRelatedMsg(msg) && !epochNumber.IsZero() {
+		// if validator-related message after genesis, reject msg
+		if qmd.IsValidatorRelatedMsg(msg) {
 			return ctx, epochingtypes.ErrInvalidMsgType
 		}
 	}
