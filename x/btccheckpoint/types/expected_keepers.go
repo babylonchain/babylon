@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -17,4 +18,14 @@ type BankKeeper interface {
 	// Methods imported from bank should be defined here
 }
 
-// TODO: add interfaces of staking, slashing and evidence used in btccheckpoint
+type BTCLightClientKeeper interface {
+	// Function should validate if provided header is valid and return header
+	// height if thats the case.
+	BlockHeight(header wire.BlockHeader) (uint64, error)
+}
+
+type CheckpointingKeeper interface {
+	// CheckpointEpoch should return epoch index if provided rawCheckpoint
+	// passes all checkpointing validations and error otherwise
+	CheckpointEpoch(rawCheckpoint []byte) (uint64, error)
+}

@@ -43,7 +43,8 @@ message BTCSpvProof {
 }
 
 message MsgInsertBTCSpvProof {
-  repeated BTCSpvProof proofs = 1;
+  string submitter = 1;
+  repeated BTCSpvProof proofs = 2;
 }
 
 message MsgInsertBTCSpvProofResponse {}

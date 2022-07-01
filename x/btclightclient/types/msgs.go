@@ -1,14 +1,8 @@
 package types
 
 import (
-	"errors"
-	"fmt"
 	bbl "github.com/babylonchain/babylon/types"
-	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/btcutil"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -35,36 +29,8 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 	if err != nil {
 		return err
 	}
-
-	return ValidateHeaderAttributes(header)
-}
-
-func ValidateHeaderAttributes(header *wire.BlockHeader) error {
-	// Perform the checks that checkBlockHeaderSanity of btcd does
-	// https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L430
-	// We skip the "timestamp should not be 2 hours into the future" check
-	// since this might introduce nondeterministic behavior
-
-	msgBlock := &wire.MsgBlock{Header: *header}
-	block := btcutil.NewBlock(msgBlock)
-
-	// The upper limit for the power to be spent
-	// Use the one maintained by btcd
 	// TODO: get this from a configuration file
-	powLimit := btcchaincfg.MainNetParams.PowLimit
-
-	err := blockchain.CheckProofOfWork(block, powLimit)
-	if err != nil {
-		return err
-	}
-
-	if !header.Timestamp.Equal(time.Unix(header.Timestamp.Unix(), 0)) {
-		str := fmt.Sprintf("block timestamp of %v has a higher "+
-			"precision than one second", header.Timestamp)
-		return errors.New(str)
-	}
-
-	return nil
+	return bbl.ValidateHeader(header, btcchaincfg.MainNetParams.PowLimit)
 }
 
 func (msg *MsgInsertHeader) GetSigners() []sdk.AccAddress {
