@@ -5,7 +5,7 @@ entity "Tendermint Block" as block {
   * hash
   --
   * height
-  * last_commit_hash
+  * last_commit
   ...
 }
 
@@ -39,7 +39,7 @@ package "epoching" #FFC09F {
     * epoch_number
     --
     * start_block_height <<FK>>
-    * end_block_height <<FK>>
+    * epoch_length
   }
   entity "Queued Message" as queued_msg {
     * tx_id <<FK>>: hash of tx bytes
@@ -145,12 +145,12 @@ package "btclightclient" #ADF7B6 {
   }
 }
 
-block }o--|{ validator : validator set
+block }o--|{ validator : current validator set
+block }o--|{ validator : next validator set
 block }o--|| validator : proposer
 
 epoch ||--o{ queued_msg : delay to end of epoch
-epoch ||--|| block : start
-epoch ||--o| block : end
+epoch ||--|| block : start height
 
 queued_msg ||--|| staking_msg
 queued_msg ||--o| delayed_result : inform user \nvia events
