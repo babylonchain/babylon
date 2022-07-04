@@ -33,6 +33,12 @@ To be able to confirm checkpoints we need to know how deeply embedded they are i
 
 ![BTC Light Client](diagrams/btc_light_client.png)
 
+## Database Schema
+
+Even though we use a Key-Value store instead of a Relational Database, the following Entity Relationship Diagram is useful to get a sense of the conceptual data model, including the cardinalities. The grouping shows which module the collections belong to in the design.
+
+![Database Schema](diagrams/database_schema.png)
+
 ## Automation
 
 Adding the following to `.git/hooks/pre-commit` automatically renders and checks in the images when we commit changes to the diagrams. CI should also check that there are no uncommitted changes.

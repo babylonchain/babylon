@@ -1,0 +1,146 @@
+
+@startuml Database Schema
+
+package "staking" #79ADDC {
+  entity "Message" as staking_msg {
+  }
+
+  entity "Validator" as validator {
+    * public_key: ECDSA public key
+    --
+    * power: delegated staking power
+  }
+
+  entity "Unbonding Queue" as unbonding_queue {
+    * public_key <<FK>>: validator key
+    --
+    * height: set to epoch end block height
+    * time: left at default21 days
+  }
+}
+
+package "epoching" #FFC09F {
+  entity "Epoch" as epoch {
+    * epoch_number
+  }
+  entity "Queued Message" as queued_msg {
+    * tx_id <<FK>>: hash of tx bytes
+    * msg_id: hash of msg bytes
+    --
+    * msg : wrapped staking msg
+  }
+  entity "Delayed Result" as delayed_result {
+    * tx_id <<FK>>: hash of original tx
+    * msg_id: hash of message
+    --
+    * outcome: success or failure
+    * events: emitted by staking execution
+    * logs: emitted by staking execution
+  }
+}
+
+
+package "checkpointing" #FFEE93 {
+  entity "Raw Checkpoint" as raw_ckpt {
+    * epoch_number <<FK>>
+    --
+    * last_commit_hash: Quorum Certificate
+    * aggr_bls_sig: aggregated BLS signature
+    * aggr_bls_bitmap: which validators signed
+  }
+
+  entity "Checkpoint Status" as ckpt_status {
+    * epoch_number <<FK>>
+    --
+    * status:
+      | ACCUMULATING: await sigs
+      | SIGNED: has +1/3 sigs, await submit
+      | SUBMITTED: included on BTC
+      | CONFIRMED: k-deep on BTC
+    * effective_timestamp: BTC timestamp of k-deep
+  }
+
+  entity "BLS Key" as bls_key {
+    * bls_public_key: validator BLS public key
+    --
+    * public_key <<FK>>: validator ECDSA public key
+    * PoP: Proof-of-Possession
+  }
+
+  entity "BLS Signature" as bls_sig {
+    * bls_public_key <<FK>>
+    * last_commit_hash
+    --
+    * bls_sig
+  }
+}
+
+package "btccheckpoint" #FCF5C7 {
+  entity "Registered Submitter" as ckpt_submitter {
+    * btc_public_key
+    --
+    * public_key <<FK>>: User account to reward
+  }
+
+  entity "Checkpoint Submission" as ckpt_submission {
+    * submission ID <<generated>>
+    --
+    * ckpt_hash <<FK>>: derived from OP_RETURN
+    * btc_public_key <<FK>>: submitter derived from inclusions
+    --
+    * prev_epoch_ckpt_submission <<computed>>:
+      at least one submission for previous epoch in an
+      ancestor Bitcoin block has to exist
+  }
+
+  entity "Checkpoint Inclusion Proof" as ckpt_inclusion {
+    * btc_block_hash <<FK>>
+    * tx_index: position of transaction in BTC block
+    --
+    * btc_transaction: raw BTC transaction with OP_RETURN
+    * proof: that this transaction is part merkle_root
+  }
+}
+
+package "btclightclient" #ADF7B6 {
+  entity "Bitcoin Header" as btc_header {
+    * hash: Block Hash
+    --
+    * parent_hash <<FK>>
+    * merkle_root
+    * timestamp
+    * difficulty_target
+    * nonce
+    --
+    * height <<computed>>
+    * total_pow <<computed>>
+  }
+}
+
+
+epoch ||--o{ queued_msg
+
+queued_msg ||--|| staking_msg
+queued_msg ||--o| delayed_result
+
+unbonding_queue }o--|| epoch
+unbonding_queue }o--|| validator
+
+raw_ckpt |o--|| epoch
+raw_ckpt ||--|| ckpt_status
+raw_ckpt ||--o{ bls_sig
+
+bls_key ||--o{ bls_sig
+bls_key ||--|| validator
+
+ckpt_submission }o--|| raw_ckpt
+ckpt_submission }o--|| ckpt_submitter
+ckpt_submission }o--|{ ckpt_submission
+
+ckpt_inclusion }|--|| ckpt_submission
+ckpt_inclusion }o--|| btc_header
+
+btc_header }o--o| btc_header
+
+
+@enduml
