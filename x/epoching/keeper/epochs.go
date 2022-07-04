@@ -23,8 +23,8 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
 	return epochNumber, err
 }
 
-// setEpochNumber sets epoch number
-func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
+// SetEpochNumber sets epoch number
+func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
@@ -44,7 +44,7 @@ func (k Keeper) IncEpochNumber(ctx sdk.Context) error {
 		return err
 	}
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	return k.setEpochNumber(ctx, incrementedEpochNumber)
+	return k.SetEpochNumber(ctx, incrementedEpochNumber)
 }
 
 // GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
