@@ -8,5 +8,5 @@ import (
 
 // x/btccheckpoint module sentinel errors
 var (
-	ErrSample = sdkerrors.Register(ModuleName, 1100, "sample error")
+	ErrInvalidCheckpointProof = sdkerrors.Register(ModuleName, 1100, "Invalid checkpoint proof")
 )

@@ -10,7 +10,10 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-	k.SetBaseBTCHeader(ctx, genState.BaseBtcHeader)
+	err := k.SetBaseBTCHeader(ctx, genState.BaseBtcHeader)
+	if err != nil {
+		panic("Invalid base BTC header in genesis")
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.

@@ -16,6 +16,7 @@ type (
 		cdc        codec.BinaryCodec
 		storeKey   sdk.StoreKey
 		memKey     sdk.StoreKey
+		hooks      types.CheckpointingHooks
 		paramstore paramtypes.Subspace
 	}
 )
@@ -36,11 +37,23 @@ func NewKeeper(
 		storeKey:   storeKey,
 		memKey:     memKey,
 		paramstore: ps,
+		hooks:      nil,
 	}
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// SetHooks sets the validator hooks
+func (k *Keeper) SetHooks(sh types.CheckpointingHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set validator hooks twice")
+	}
+
+	k.hooks = sh
+
+	return k
 }
 
 // AddBlsSig add bls signatures into storage and generates a raw checkpoint
@@ -54,9 +67,9 @@ func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 
 // AddRawCheckpoint adds a raw checkpoint into the storage
 // this API may not needed since checkpoints are generated internally
-func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) {
+func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
 	// NOTE: may remove this API
-	k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckpt)
+	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckpt)
 }
 
 // CheckpointEpoch verifies checkpoint from BTC and returns epoch number

@@ -25,13 +25,16 @@ func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) types.BaseBTCHeader {
 	}
 
 	var headerBytes bbl.BTCHeaderBytes
-	headerBytes.FromBlockHeader(baseBtcdHeader)
+	err = headerBytes.FromBlockHeader(baseBtcdHeader)
+	if err != nil {
+		return types.BaseBTCHeader{}
+	}
 	return types.BaseBTCHeader{Header: &headerBytes, Height: height}
 }
 
 // SetBaseBTCHeader checks whether a base BTC header exists and
 // 					if not inserts it into storage
-func (k Keeper) SetBaseBTCHeader(ctx sdk.Context, baseBTCHeader types.BaseBTCHeader) {
+func (k Keeper) SetBaseBTCHeader(ctx sdk.Context, baseBTCHeader types.BaseBTCHeader) error {
 	existingHeader, _ := k.HeadersState(ctx).GetBaseBTCHeader()
 	if existingHeader != nil {
 		panic("A base BTC Header has already been set")
@@ -41,5 +44,5 @@ func (k Keeper) SetBaseBTCHeader(ctx sdk.Context, baseBTCHeader types.BaseBTCHea
 	if err != nil {
 		panic("Base BTC Header bytes do not correspond to btcd header")
 	}
-	k.HeadersState(ctx).CreateHeader(btcdHeader, baseBTCHeader.Height)
+	return k.HeadersState(ctx).CreateHeader(btcdHeader, baseBTCHeader.Height)
 }

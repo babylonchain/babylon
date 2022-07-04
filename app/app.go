@@ -129,6 +129,7 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		epoching.AppModuleBasic{},
 		btclightclient.AppModuleBasic{},
 		btccheckpoint.AppModuleBasic{},
 		checkpointing.AppModuleBasic{},
@@ -322,7 +323,10 @@ func NewBabylonApp(
 
 	app.EpochingKeeper = epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper)
 	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
-	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName))
+
+	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
+	// change to correct implementations
+	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName), btccheckpointtypes.MockBTCLightClientKeeper{}, btccheckpointtypes.MockCheckpointingKeeper{})
 	app.CheckpointingKeeper = checkpointingkeeper.NewKeeper(appCodec, keys[checkpointingtypes.StoreKey], keys[checkpointingtypes.MemStoreKey], app.GetSubspace(checkpointingtypes.ModuleName))
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -480,7 +484,7 @@ func NewBabylonApp(
 	}
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
-		epochingkeeper.NewDropValidatorMsgDecorator(),
+		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
 	)
 	app.SetAnteHandler(anteHandler)
 
