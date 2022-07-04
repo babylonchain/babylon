@@ -1,8 +1,22 @@
 
 @startuml Database Schema
 
+entity "Tendermint Block" as block {
+  * hash
+  --
+  * height
+  * last_commit_hash
+  ...
+}
+
 package "staking" #79ADDC {
   entity "Message" as staking_msg {
+    * oneof
+    | CreateValidator
+    | EditValidator
+    | Delegate
+    | BeginRedelegate
+    | Undelegate
   }
 
   entity "Validator" as validator {
@@ -15,13 +29,17 @@ package "staking" #79ADDC {
     * public_key <<FK>>: validator key
     --
     * height: set to epoch end block height
-    * time: left at default21 days
+    * time: left at default 21 days
+    * tokens: amount to refund
   }
 }
 
 package "epoching" #FFC09F {
   entity "Epoch" as epoch {
     * epoch_number
+    --
+    * start_block_height <<FK>>
+    * end_block_height <<FK>>
   }
   entity "Queued Message" as queued_msg {
     * tx_id <<FK>>: hash of tx bytes
@@ -127,30 +145,34 @@ package "btclightclient" #ADF7B6 {
   }
 }
 
+block }o--|{ validator : validator set
+block }o--|| validator : proposer
 
-epoch ||--o{ queued_msg
+epoch ||--o{ queued_msg : delay to end of epoch
+epoch ||--|| block : start
+epoch ||--o| block : end
 
 queued_msg ||--|| staking_msg
-queued_msg ||--o| delayed_result
+queued_msg ||--o| delayed_result : inform user \nvia events
 
-unbonding_queue }o--|| epoch
-unbonding_queue }o--|| validator
+unbonding_queue }o--|| block : unbonding height
+unbonding_queue }o--|| validator : unbonding validator
 
-raw_ckpt |o--|| epoch
-raw_ckpt ||--|| ckpt_status
-raw_ckpt ||--o{ bls_sig
+raw_ckpt |o--|| epoch : checkpointed epoch
+raw_ckpt ||--|| ckpt_status : current status
+raw_ckpt ||--o{ bls_sig : submitted sigs
 
-bls_key ||--o{ bls_sig
-bls_key ||--|| validator
+bls_key ||--o{ bls_sig : signed with
+bls_key ||--|| validator : registered by
 
-ckpt_submission }o--|| raw_ckpt
-ckpt_submission }o--|| ckpt_submitter
-ckpt_submission }o--|{ ckpt_submission
+ckpt_submission }o--|| raw_ckpt : submitted ckpt
+ckpt_submission }o--|| ckpt_submitter : to reward
+ckpt_submission }o--|{ ckpt_submission : previous epoch\n submission
 
-ckpt_inclusion }|--|| ckpt_submission
-ckpt_inclusion }o--|| btc_header
+ckpt_inclusion }|--|| ckpt_submission : multiple UTxO needed
+ckpt_inclusion }o--|| btc_header : included in
 
-btc_header }o--o| btc_header
-btc_trusted |o--|| btc_header
+btc_header }o--o| btc_header : parent
+btc_trusted |o--|| btc_header : start from
 
 @enduml
