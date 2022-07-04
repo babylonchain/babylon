@@ -1,0 +1,25 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+// BlsPubKey wraps BLS public key with meta data
+message BlsPubKey {
+  // key is the BLS public key of a validator
+  bytes key = 1;
+
+  // address is validator's address
+  string address = 2;
+}
+
+// ProofOfPossession defines proof for the ownership of Ed25519 and BLS private keys
+message ProofOfPossession {
+  // ed25519_pk is the Ed25519 public key of the validator
+  bytes ed25519_pk = 1;
+
+  // bls_sig is the BLS signature over ed25519_pk
+  bytes bls_sig = 2;
+
+  // ed25519_sig is the Ed25519 signature over bls_sig
+  bytes ed25519_sig = 3;
+}

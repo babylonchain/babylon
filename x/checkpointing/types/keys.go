@@ -22,13 +22,16 @@ const (
 )
 
 var (
-	BlsSigsPrefix     = []byte{0x0} // reserve this namespace for bls sigs
+	BlsSigsPrefix     = []byte{0x0} // reserve this namespace for BLS sigs
 	CheckpointsPrefix = []byte{0x1} // reserve this namespace for checkpoints
+	BlsKeysPrefix     = []byte{0x2} // reserve this namespace for BLS keys
 
-	BlsSigsObjectPrefix      = append(BlsSigsPrefix, 0x0) // where we save the concrete bls sig bytes
+	BlsSigsObjectPrefix      = append(BlsSigsPrefix, 0x0) // where we save the concrete BLS sig bytes
 	BlsSigsHashToEpochPrefix = append(BlsSigsPrefix, 0x1) // where we map hash to epoch
 
-	CkptsObjectPrefix = append(CheckpointsPrefix, 0x0) // where we save the concrete bls sig bytes
+	CkptsObjectPrefix = append(CheckpointsPrefix, 0x0) // where we save the concrete BLS sig bytes
+
+	BlsKeysObjectPrefix = append(BlsKeysPrefix, 0x0) // where we save the concrete BLS public keys
 )
 
 // BlsSigsObjectKey defines epoch + hash
@@ -45,6 +48,10 @@ func BlsSigsEpochKey(hash BlsSigHash) []byte {
 // CkptsObjectKey defines epoch
 func CkptsObjectKey(epoch uint64) []byte {
 	return append(CkptsObjectPrefix, sdk.Uint64ToBigEndian(epoch)...)
+}
+
+func BlsKeysObjectKey(valAddress string) []byte {
+	return append(BlsKeysObjectPrefix, []byte(valAddress)...)
 }
 
 func KeyPrefix(p string) []byte {

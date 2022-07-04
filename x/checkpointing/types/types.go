@@ -46,6 +46,16 @@ func BytesToBlsSig(cdc codec.BinaryCodec, bz []byte) (*BlsSig, error) {
 	return blsSig, err
 }
 
+func BlsPubKeyToBytes(cdc codec.BinaryCodec, key *BlsPubKey) []byte {
+	return cdc.MustMarshal(key)
+}
+
+func BytesToBlsPubKey(cdc codec.BinaryCodec, bz []byte) (*BlsPubKey, error) {
+	key := new(BlsPubKey)
+	err := cdc.Unmarshal(bz, key)
+	return key, err
+}
+
 func (m RawCkptHash) Equals(h RawCkptHash) bool {
 	if bytes.Compare(m.Bytes(), h.Bytes()) == 0 {
 		return true
