@@ -4,6 +4,7 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
@@ -24,9 +25,15 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// get msg in bytes
+	msgBytes, err := k.cdc.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
 	// wrapped -> unwrapped -> QueuedMessage
 	queuedMsg := types.QueuedMessage{
-		MsgId: msg.GetSignBytes(), // TODO: not sure if this can be a good MsgId or not
+		MsgId: tmhash.Sum(msgBytes),
 		Msg: &types.QueuedMessage_MsgDelegate{
 			MsgDelegate: msg.Msg,
 		},
@@ -44,9 +51,15 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// get msg in bytes
+	msgBytes, err := k.cdc.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
 	// wrapped -> unwrapped -> QueuedMessage
 	queuedMsg := types.QueuedMessage{
-		MsgId: msg.GetSignBytes(), // TODO: not sure if this can be a good MsgId or not
+		MsgId: tmhash.Sum(msgBytes),
 		Msg: &types.QueuedMessage_MsgUndelegate{
 			MsgUndelegate: msg.Msg,
 		},
@@ -64,9 +77,15 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// get msg in bytes
+	msgBytes, err := k.cdc.Marshal(msg)
+	if err != nil {
+		return nil, err
+	}
+
 	// wrapped -> unwrapped -> QueuedMessage
 	queuedMsg := types.QueuedMessage{
-		MsgId: msg.GetSignBytes(), // TODO: not sure if this can be a good MsgId or not
+		MsgId: tmhash.Sum(msgBytes),
 		Msg: &types.QueuedMessage_MsgBeginRedelegate{
 			MsgBeginRedelegate: msg.Msg,
 		},

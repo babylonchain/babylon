@@ -79,6 +79,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			return nil
 		}
 		// forward each msg in the msg queue to the right keeper
+		// TODO: is it possible or beneficial if we can get the execution results of the delayed messages in the epoching module rather than in the staking module?
 		for _, msg := range queuedMsgs {
 			switch unwrappedMsg := msg.Msg.(type) {
 			case *types.QueuedMessage_MsgCreateValidator:
