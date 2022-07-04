@@ -61,6 +61,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 	defer telemetry.ModuleMeasureSince(stakingtypes.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	validatorSetUpdate := []abci.ValidatorUpdate{}
 	logger := k.Logger(ctx)
 
 	// get the height of the last block in this epoch
@@ -107,6 +108,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				return nil
 			}
 		}
+
+		// update validator set
+		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
+
 		// clear the current msg queue
 		if err := k.ClearEpochMsgs(ctx); err != nil {
 			logger.Error("failed to execute ClearEpochMsgs", err)
@@ -133,5 +138,5 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		})
 	}
 
-	return nil
+	return validatorSetUpdate
 }
