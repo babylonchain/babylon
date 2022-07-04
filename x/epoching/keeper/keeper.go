@@ -19,7 +19,7 @@ type (
 		hooks            types.EpochingHooks
 		paramstore       paramtypes.Subspace
 		stk              types.StakingKeeper
-		StakingMsgServer types.StakingMsgServer
+		stakingMsgServer types.StakingMsgServer
 	}
 )
 
@@ -43,7 +43,7 @@ func NewKeeper(
 		paramstore:       ps,
 		hooks:            nil,
 		stk:              stk,
-		StakingMsgServer: stakingMsgServer,
+		stakingMsgServer: stakingMsgServer,
 	}
 }
 
@@ -214,22 +214,22 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) {
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType := unwrappedMsg.MsgCreateValidator
-		if _, err := k.StakingMsgServer.CreateValidator(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+		if _, err := k.stakingMsgServer.CreateValidator(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
 			panic(err)
 		}
 	case *types.QueuedMessage_MsgDelegate:
 		unwrappedMsgWithType := unwrappedMsg.MsgDelegate
-		if _, err := k.StakingMsgServer.Delegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+		if _, err := k.stakingMsgServer.Delegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
 			panic(err)
 		}
 	case *types.QueuedMessage_MsgUndelegate:
 		unwrappedMsgWithType := unwrappedMsg.MsgUndelegate
-		if _, err := k.StakingMsgServer.Undelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+		if _, err := k.stakingMsgServer.Undelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
 			panic(err)
 		}
 	case *types.QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType := unwrappedMsg.MsgBeginRedelegate
-		if _, err := k.StakingMsgServer.BeginRedelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+		if _, err := k.stakingMsgServer.BeginRedelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
 			panic(err)
 		}
 	default:
