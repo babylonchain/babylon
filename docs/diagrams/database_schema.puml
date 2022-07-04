@@ -159,6 +159,7 @@ unbonding_queue }o--|| block : unbonding height
 unbonding_queue }o--|| validator : unbonding validator
 
 raw_ckpt |o--|| epoch : checkpointed epoch
+raw_ckpt |o..|| block : commit hash from
 raw_ckpt ||--|| ckpt_status : current status
 raw_ckpt ||--o{ bls_sig : submitted sigs
 
