@@ -85,8 +85,8 @@ package "btccheckpoint" #FCF5C7 {
   entity "Checkpoint Submission" as ckpt_submission {
     * submission ID <<generated>>
     --
-    * ckpt_hash <<FK>>: derived from OP_RETURN
-    * btc_public_key <<FK>>: submitter derived from inclusions
+    * ckpt_hash <<FK>> <<derived>>: from OP_RETURN
+    * btc_public_key <<FK>> <<derived>>: submitter from inclusions
     --
     * prev_epoch_ckpt_submission <<computed>>:
       at least one submission for previous epoch in an
@@ -98,13 +98,13 @@ package "btccheckpoint" #FCF5C7 {
     * tx_index: position of transaction in BTC block
     --
     * btc_transaction: raw BTC transaction with OP_RETURN
-    * proof: that this transaction is part merkle_root
+    * proof: that this transaction is part of the merkle_root
   }
 }
 
 package "btclightclient" #ADF7B6 {
   entity "Bitcoin Header" as btc_header {
-    * hash: Block Hash
+    * hash: Block Hash <<derived>>
     --
     * parent_hash <<FK>>
     * merkle_root
@@ -114,6 +114,16 @@ package "btclightclient" #ADF7B6 {
     --
     * height <<computed>>
     * total_pow <<computed>>
+  }
+
+  entity "Trusted Header" as btc_trusted {
+    <<singleton in genesis>>
+    --
+    * raw_header: bytes of a deeply embedded block
+    * height: from block explorer
+    * total_pow: from block explorer
+    --
+    * hash: Block Hash <<derived>>
   }
 }
 
@@ -141,6 +151,6 @@ ckpt_inclusion }|--|| ckpt_submission
 ckpt_inclusion }o--|| btc_header
 
 btc_header }o--o| btc_header
-
+btc_trusted |o--|| btc_header
 
 @enduml
