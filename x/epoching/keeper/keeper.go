@@ -62,125 +62,117 @@ func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 }
 
 // GetEpochNumber fetches epoch number
-func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
+func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.EpochNumberKey)
 	if bz == nil {
-		return sdk.NewUint(0), types.ErrUnknownEpochNumber
+		panic(types.ErrUnknownEpochNumber)
 	}
 	var epochNumber sdk.Uint
-	err := epochNumber.Unmarshal(bz)
+	if err := epochNumber.Unmarshal(bz); err != nil {
+		panic(err)
+	}
 
-	return epochNumber, err
+	return epochNumber
 }
 
 // SetEpochNumber sets epoch number
-func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
+func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	store.Set(types.EpochNumberKey, epochNumberBytes)
-
-	return nil
 }
 
 // IncEpochNumber adds epoch number by 1
-func (k Keeper) IncEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
-	epochNumber, err := k.GetEpochNumber(ctx)
-	if err != nil {
-		return sdk.NewUint(0), err
-	}
+func (k Keeper) IncEpochNumber(ctx sdk.Context) sdk.Uint {
+	epochNumber := k.GetEpochNumber(ctx)
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	return incrementedEpochNumber, k.SetEpochNumber(ctx, incrementedEpochNumber)
+	k.SetEpochNumber(ctx, incrementedEpochNumber)
+	return incrementedEpochNumber
 }
 
 // GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
-func (k Keeper) GetEpochBoundary(ctx sdk.Context) (sdk.Uint, error) {
-	epochNumber, err := k.GetEpochNumber(ctx)
-	if err != nil {
-		return sdk.NewUint(0), err
-	}
+// example: in epoch 1, epoch interval is 5 blocks, boundary will be 1*5=5
+// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+// 0 |     1     |     2      |
+func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
+	epochNumber := k.GetEpochNumber(ctx)
 	// epoch number is 0 at the 0-th block, i.e., genesis
 	if epochNumber.IsZero() {
-		return sdk.NewUint(0), nil
+		return sdk.NewUint(0)
 	}
+	// case when epoch number > 0
 	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
-	// example: in epoch 1, epoch interval is 5 blocks, boundary will be 1*5=5
-	// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
-	// 0 |     1     |     2      |
-	return epochNumber.Mul(epochInterval), nil
+	return epochNumber.Mul(epochInterval)
 }
 
 // GetQueueLength fetches the number of queued messages
-func (k Keeper) GetQueueLength(ctx sdk.Context) (sdk.Uint, error) {
+func (k Keeper) GetQueueLength(ctx sdk.Context) sdk.Uint {
 	store := ctx.KVStore(k.storeKey)
 
+	// get queue len in bytes from DB
 	bz := store.Get(types.QueueLengthKey)
 	if bz == nil {
-		return sdk.NewUint(0), nil
+		panic(types.ErrUnknownQueueLen)
 	}
+	// unmarshal
 	var queueLen sdk.Uint
-	err := queueLen.Unmarshal(bz)
+	if err := queueLen.Unmarshal(bz); err != nil {
+		panic(err)
+	}
 
-	return queueLen, err
+	return queueLen
 }
 
-// setQueueLength sets the msg queue length
-func (k Keeper) setQueueLength(ctx sdk.Context, queueLen sdk.Uint) error {
+// SetQueueLength sets the msg queue length
+func (k Keeper) SetQueueLength(ctx sdk.Context, queueLen sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	queueLenBytes, err := queueLen.Marshal()
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	store.Set(types.QueueLengthKey, queueLenBytes)
-
-	return nil
 }
 
 // incQueueLength adds the queue length by 1
-func (k Keeper) incQueueLength(ctx sdk.Context) error {
-	queueLen, err := k.GetQueueLength(ctx)
-	if err != nil {
-		return err
-	}
+func (k Keeper) incQueueLength(ctx sdk.Context) {
+	queueLen := k.GetQueueLength(ctx)
 	incrementedQueueLen := queueLen.AddUint64(1)
-	return k.setQueueLength(ctx, incrementedQueueLen)
+	k.SetQueueLength(ctx, incrementedQueueLen)
 }
 
 // EnqueueMsg enqueues a message to the queue of the current epoch
-func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) error {
+func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 	store := ctx.KVStore(k.storeKey)
 
 	// insert KV pair, where
 	// - key: QueuedMsgKey || queueLenBytes
 	// - value: msgBytes
-	queueLen, err := k.GetQueueLength(ctx)
-	if err != nil {
-		return err
-	}
+	queueLen := k.GetQueueLength(ctx)
 	queueLenBytes, err := queueLen.Marshal()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	msgBytes, err := k.cdc.Marshal(&msg)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	store.Set(append(types.QueuedMsgKey, queueLenBytes...), msgBytes)
 
 	// increment queue length
-	return k.incQueueLength(ctx)
+	k.incQueueLength(ctx)
 }
 
 // GetEpochMsgs returns the set of messages queued in the current epoch
-func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]*types.QueuedMessage, error) {
+func (k Keeper) GetEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 	queuedMsgs := []*types.QueuedMessage{}
 	store := ctx.KVStore(k.storeKey)
 
@@ -191,16 +183,16 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) ([]*types.QueuedMessage, error) {
 		queuedMsgBytes := iterator.Value()
 		var queuedMsg types.QueuedMessage
 		if err := k.cdc.Unmarshal(queuedMsgBytes, &queuedMsg); err != nil {
-			return nil, err
+			panic(err)
 		}
 		queuedMsgs = append(queuedMsgs, &queuedMsg)
 	}
 
-	return queuedMsgs, nil
+	return queuedMsgs
 }
 
 // ClearEpochMsgs removes all messages in the queue
-func (k Keeper) ClearEpochMsgs(ctx sdk.Context) error {
+func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
 	// remove all epoch msgs
@@ -212,5 +204,5 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) error {
 	}
 
 	// set queue len to zero
-	return k.setQueueLength(ctx, sdk.NewUint(0))
+	k.SetQueueLength(ctx, sdk.NewUint(0))
 }

@@ -9,7 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewHandler ...
+// NewHandler handles messages for the epoching module
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 

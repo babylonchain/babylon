@@ -6,6 +6,7 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/keeper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -22,25 +23,15 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
-	logger := k.Logger(ctx)
-
 	// get the height of the last block in this epoch
-	epochBoundary, err := k.GetEpochBoundary(ctx)
-	if err != nil {
-		logger.Error("failed to execute GetEpochBoundary", err)
-	}
+	epochBoundary := k.GetEpochBoundary(ctx)
 	// if this block is the first block of an epoch
 	// note that we haven't incremented the epoch number yet
 	if uint64(ctx.BlockHeight())-1 == epochBoundary.Uint64() {
 		// increase epoch number
-		incEpochNumber, err := k.IncEpochNumber(ctx)
-		if err != nil {
-			logger.Error("failed to execute IncEpochNumber", err)
-		}
+		incEpochNumber := k.IncEpochNumber(ctx)
 		// trigger AfterEpochBegins hook
-		if err := k.AfterEpochBegins(ctx, incEpochNumber); err != nil {
-			logger.Error("failed to execute AfterEpochBegins", err)
-		}
+		k.AfterEpochBegins(ctx, incEpochNumber)
 		// emit BeginEpoch event
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
@@ -62,23 +53,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(stakingtypes.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
 	validatorSetUpdate := []abci.ValidatorUpdate{}
-	logger := k.Logger(ctx)
 
 	// get the height of the last block in this epoch
-	epochBoundary, err := k.GetEpochBoundary(ctx)
-	if err != nil {
-		logger.Error("failed to execute GetEpochBoundary", err)
-		return []abci.ValidatorUpdate{}
-	}
+	epochBoundary := k.GetEpochBoundary(ctx)
 
 	// if reaching an epoch boundary, then
 	if uint64(ctx.BlockHeight()) == epochBoundary.Uint64() {
 		// get all msgs in the msg queue
-		queuedMsgs, err := k.GetEpochMsgs(ctx)
-		if err != nil {
-			logger.Error("failed to execute GetEpochMsgs", err)
-			return nil
-		}
+		queuedMsgs := k.GetEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
 		// TODO: is it possible or beneficial if we can get the execution results of the delayed messages in the epoching module rather than in the staking module?
 		for _, msg := range queuedMsgs {
@@ -86,49 +68,36 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			case *types.QueuedMessage_MsgCreateValidator:
 				unwrappedMsgWithType := unwrappedMsg.MsgCreateValidator
 				if _, err := k.StakingMsgServer.CreateValidator(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					logger.Error("failed to forward MsgCreateValidator", err)
+					panic(err)
 				}
 			case *types.QueuedMessage_MsgDelegate:
 				unwrappedMsgWithType := unwrappedMsg.MsgDelegate
 				if _, err := k.StakingMsgServer.Delegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					logger.Error("failed to forward MsgDelegate", err)
+					panic(err)
 				}
 			case *types.QueuedMessage_MsgUndelegate:
 				unwrappedMsgWithType := unwrappedMsg.MsgUndelegate
 				if _, err := k.StakingMsgServer.Undelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					logger.Error("failed to forward MsgUndelegate", err)
+					panic(err)
 				}
 			case *types.QueuedMessage_MsgBeginRedelegate:
 				unwrappedMsgWithType := unwrappedMsg.MsgBeginRedelegate
 				if _, err := k.StakingMsgServer.BeginRedelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					logger.Error("failed to forward MsgBeginRedelegate", err)
+					panic(err)
 				}
 			default:
-				logger.Error("unknown type of QueuedMessage: %v", msg)
-				return nil
+				panic(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.String()))
 			}
 		}
 
 		// update validator set
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
-
 		// clear the current msg queue
-		if err := k.ClearEpochMsgs(ctx); err != nil {
-			logger.Error("failed to execute ClearEpochMsgs", err)
-			return nil
-		}
-
+		k.ClearEpochMsgs(ctx)
 		// get epoch number
-		epochNumber, err := k.GetEpochNumber(ctx)
-		if err != nil {
-			logger.Error("failed to execute GetEpochNumber", err)
-			return nil
-		}
+		epochNumber := k.GetEpochNumber(ctx)
 		// trigger AfterEpochEnds hook
-		if err := k.AfterEpochEnds(ctx, epochNumber); err != nil {
-			logger.Error("failed to execute GetEpochNumber", err)
-			return nil
-		}
+		k.AfterEpochEnds(ctx, epochNumber)
 		// emit EndEpoch event
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(

@@ -56,6 +56,6 @@ type StakingKeeper interface {
 
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
-	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error // Must be called after an epoch begins
-	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error   // Must be called after an epoch ends
+	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) // Must be called after an epoch begins
+	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint)   // Must be called after an epoch ends
 }

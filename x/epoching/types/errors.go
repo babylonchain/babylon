@@ -10,4 +10,5 @@ import (
 var (
 	ErrInvalidMsgType     = sdkerrors.Register(ModuleName, 1, "invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages. use wrapped versions instead")
 	ErrUnknownEpochNumber = sdkerrors.Register(ModuleName, 2, "the epoch number is not known in DB")
+	ErrUnknownQueueLen    = sdkerrors.Register(ModuleName, 3, "the msg queue length is not known in DB")
 )

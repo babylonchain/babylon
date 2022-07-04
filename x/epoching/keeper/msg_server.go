@@ -40,9 +40,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 	}
 
 	// enqueue msg
-	if err := k.EnqueueMsg(ctx, queuedMsg); err != nil {
-		return nil, err
-	}
+	k.EnqueueMsg(ctx, queuedMsg)
 
 	return &types.MsgWrappedDelegateResponse{}, nil
 }
@@ -66,9 +64,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	}
 
 	// enqueue msg
-	if err := k.EnqueueMsg(ctx, queuedMsg); err != nil {
-		return nil, err
-	}
+	k.EnqueueMsg(ctx, queuedMsg)
 
 	return &types.MsgWrappedUndelegateResponse{}, nil
 }
@@ -92,9 +88,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 	}
 
 	// enqueue msg
-	if err := k.EnqueueMsg(ctx, queuedMsg); err != nil {
-		return nil, err
-	}
+	k.EnqueueMsg(ctx, queuedMsg)
 
 	return &types.MsgWrappedBeginRedelegateResponse{}, nil
 }

@@ -12,9 +12,9 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// set params for this module
 	k.SetParams(ctx, genState.Params)
 	// init epoch number
-	if err := k.SetEpochNumber(ctx, sdk.NewUint(0)); err != nil {
-		panic(err)
-	}
+	k.SetEpochNumber(ctx, sdk.NewUint(0))
+	// init queue length
+	k.SetQueueLength(ctx, sdk.NewUint(0))
 }
 
 // ExportGenesis returns the capability module's exported genesis.
