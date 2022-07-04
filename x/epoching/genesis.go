@@ -13,7 +13,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	k.SetParams(ctx, genState.Params)
 	// init epoch number
 	k.SetEpochNumber(ctx, sdk.NewUint(0))
-	// init queue length
+	// init msg queue length
 	k.SetQueueLength(ctx, sdk.NewUint(0))
 }
 

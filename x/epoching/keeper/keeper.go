@@ -6,6 +6,7 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -205,4 +206,33 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 
 	// set queue len to zero
 	k.SetQueueLength(ctx, sdk.NewUint(0))
+}
+
+// HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
+// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) {
+	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgCreateValidator:
+		unwrappedMsgWithType := unwrappedMsg.MsgCreateValidator
+		if _, err := k.StakingMsgServer.CreateValidator(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+			panic(err)
+		}
+	case *types.QueuedMessage_MsgDelegate:
+		unwrappedMsgWithType := unwrappedMsg.MsgDelegate
+		if _, err := k.StakingMsgServer.Delegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+			panic(err)
+		}
+	case *types.QueuedMessage_MsgUndelegate:
+		unwrappedMsgWithType := unwrappedMsg.MsgUndelegate
+		if _, err := k.StakingMsgServer.Undelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+			panic(err)
+		}
+	case *types.QueuedMessage_MsgBeginRedelegate:
+		unwrappedMsgWithType := unwrappedMsg.MsgBeginRedelegate
+		if _, err := k.StakingMsgServer.BeginRedelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
+			panic(err)
+		}
+	default:
+		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+	}
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/keeper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -64,30 +63,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		// forward each msg in the msg queue to the right keeper
 		// TODO: is it possible or beneficial if we can get the execution results of the delayed messages in the epoching module rather than in the staking module?
 		for _, msg := range queuedMsgs {
-			switch unwrappedMsg := msg.Msg.(type) {
-			case *types.QueuedMessage_MsgCreateValidator:
-				unwrappedMsgWithType := unwrappedMsg.MsgCreateValidator
-				if _, err := k.StakingMsgServer.CreateValidator(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					panic(err)
-				}
-			case *types.QueuedMessage_MsgDelegate:
-				unwrappedMsgWithType := unwrappedMsg.MsgDelegate
-				if _, err := k.StakingMsgServer.Delegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					panic(err)
-				}
-			case *types.QueuedMessage_MsgUndelegate:
-				unwrappedMsgWithType := unwrappedMsg.MsgUndelegate
-				if _, err := k.StakingMsgServer.Undelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					panic(err)
-				}
-			case *types.QueuedMessage_MsgBeginRedelegate:
-				unwrappedMsgWithType := unwrappedMsg.MsgBeginRedelegate
-				if _, err := k.StakingMsgServer.BeginRedelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-					panic(err)
-				}
-			default:
-				panic(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, msg.String()))
-			}
+			k.HandleQueuedMsg(ctx, msg)
 		}
 
 		// update validator set
