@@ -40,29 +40,20 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
 			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
-		chHash, err := chainhash.NewHashFromStr(hexHash)
-		if err != nil {
-			// the hexHash is not a valid one
-			t.Skip()
-		}
+		chHash, _ := chainhash.NewHashFromStr(hexHash)
 
 		queryContains, err := types.NewQueryContainsRequest(hexHash)
-
 		if err != nil {
 			t.Errorf("returned error for valid hex %s", hexHash)
 		}
-
 		if queryContains == nil {
 			t.Errorf("returned a nil reference to a query")
 		}
-
 		if queryContains.Hash == nil {
 			t.Errorf("has an empty hash attribute")
 		}
-
-		gotHashBytes := *(queryContains.Hash)
-		if bytes.Compare(gotHashBytes, chHash[:]) != 0 {
-			t.Errorf("expected hash bytes %s got %s", chHash[:], gotHashBytes)
+		if bytes.Compare(*(queryContains.Hash), chHash[:]) != 0 {
+			t.Errorf("expected hash bytes %s got %s", chHash[:], *(queryContains.Hash))
 		}
 	})
 }

@@ -4,11 +4,8 @@ import (
 	"bytes"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 	"math/rand"
 	"testing"
-	"time"
 )
 
 func FuzzNewHeaderInfo(f *testing.F) {
@@ -29,51 +26,26 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
 		rand.Seed(seed)
-		if !validHex(prevBlockStr, bbl.BTCHeaderHashLen) {
-			prevBlockStr = genRandomHexStr(bbl.BTCHeaderHashLen)
-		}
-		if !validHex(merkleRootStr, bbl.BTCHeaderHashLen) {
-			merkleRootStr = genRandomHexStr(bbl.BTCHeaderHashLen)
-		}
+		header := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 
-		// Get the chainhash versions
-		prevBlock, err := chainhash.NewHashFromStr(prevBlockStr)
-		if err != nil {
-			t.Skip()
-		}
-		merkleRoot, err := chainhash.NewHashFromStr(merkleRootStr)
-		if err != nil {
-			t.Skip()
-		}
-		time := time.Unix(timeInt, 0)
+		// Get the expected header bytes
+		expectedHeaderBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
 
-		// Construct a header
-		header := wire.BlockHeader{
-			Version:    version,
-			Bits:       bits,
-			Nonce:      nonce,
-			PrevBlock:  *prevBlock,
-			MerkleRoot: *merkleRoot,
-			Timestamp:  time,
-		}
-
-		headerInfo := types.NewHeaderInfo(&header)
-
+		headerInfo := types.NewHeaderInfo(header)
 		if headerInfo == nil {
 			t.Errorf("returned object is nil")
 		}
 
-		gotHeader := *headerInfo.Header
-		expectedHeader := bbl.NewBTCHeaderBytesFromBlockHeader(&header)
-		if bytes.Compare(expectedHeader, gotHeader) != 0 {
-			t.Errorf("Expected header %s got %s", expectedHeader, gotHeader)
+		gotHeaderBytes := *headerInfo.Header
+		if bytes.Compare(expectedHeaderBytes, gotHeaderBytes) != 0 {
+			t.Errorf("Expected header %s got %s", expectedHeaderBytes, gotHeaderBytes)
 		}
 
-		gotHash := *headerInfo.Hash
+		gotHashBytes := *headerInfo.Hash
 		blockHash := header.BlockHash()
-		expectedHash := bbl.NewBTCHeaderHashBytesFromChainhash(&blockHash)
-		if bytes.Compare(expectedHash, gotHash) != 0 {
-			t.Errorf("Expected header hash %s got %s", expectedHash, gotHash)
+		expectedHashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(&blockHash)
+		if bytes.Compare(expectedHashBytes, gotHashBytes) != 0 {
+			t.Errorf("Expected header hash %s got %s", expectedHashBytes, gotHashBytes)
 		}
 	})
 }

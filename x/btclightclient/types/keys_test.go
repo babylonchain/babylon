@@ -18,19 +18,16 @@ func FuzzHeadersObjectKey(f *testing.F) {
 		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
 			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
-		chHash, err := chainhash.NewHashFromStr(hexHash)
-		if err != nil {
-			// the hexHash is an invalid one
-			t.Skip()
-		}
-
+		// get chainhash and height
+		chHash, _ := chainhash.NewHashFromStr(hexHash)
 		heightBytes := sdk.Uint64ToBigEndian(height)
+
+		// construct the expected key
 		chHashBytes := chHash[:]
 		expectedKey := append(types.HeadersObjectPrefix, heightBytes...)
 		expectedKey = append(expectedKey, chHashBytes...)
 
 		gotKey := types.HeadersObjectKey(height, chHash)
-
 		if bytes.Compare(expectedKey, gotKey) != 0 {
 			t.Errorf("Expected headers object key %s got %s", expectedKey, gotKey)
 		}
@@ -44,17 +41,14 @@ func FuzzHeadersObjectHeightKey(f *testing.F) {
 		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
 			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
-		chHash, err := chainhash.NewHashFromStr(hexHash)
-		if err != nil {
-			// the hexHash is not a valid one
-			t.Skip()
-		}
+		// Get the chainhash
+		chHash, _ := chainhash.NewHashFromStr(hexHash)
 
+		// Construct the expected key
 		chHashBytes := chHash[:]
 		expectedKey := append(types.HashToHeightPrefix, chHashBytes...)
 
 		gotKey := types.HeadersObjectHeightKey(chHash)
-
 		if bytes.Compare(expectedKey, gotKey) != 0 {
 			t.Errorf("Expected headers object height key %s got %s", expectedKey, gotKey)
 		}

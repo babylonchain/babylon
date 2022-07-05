@@ -12,66 +12,82 @@ import (
 )
 
 func FuzzMsgInsertHeader(f *testing.F) {
-	addressStr := "from________________"
-	addressBytes := []byte(addressStr)
-	maxDifficulty, _ := new(big.Int).SetString("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16)
+	addressBytes := []byte("from________________")
+	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	defaultBtcdHeader, _ := defaultHeader.ToBlockHeader()
 
-	f.Add(addressBytes, types.DefaultBaseHeaderHex, int64(17))
-	f.Fuzz(func(t *testing.T, addressBytes []byte, headerHex string, seed int64) {
-		seedInput := types.DefaultBaseHeaderHex == headerHex
+	// Maximum btc difficulty possible
+	// Use it to set the difficulty bits of blocks as well as the upper PoW limit
+	// since the block hash needs to be below that
+	// This is the maximum allowed given the 2^23-1 precision
+	maxDifficulty, _ := new(big.Int).SetString("ffff000000000000000000000000000000000000000000000000000000000000", 16)
+
+	f.Add(
+		addressBytes,
+		defaultBtcdHeader.Version,
+		defaultBtcdHeader.Bits,
+		defaultBtcdHeader.Nonce,
+		defaultBtcdHeader.Timestamp.Unix(),
+		defaultBtcdHeader.PrevBlock.String(),
+		defaultBtcdHeader.MerkleRoot.String(),
+		int64(17))
+
+	f.Fuzz(func(t *testing.T, addressBytes []byte, version int32, bits uint32, nonce uint32,
+		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
+
+		rand.Seed(seed)
 		errorKind := 0
 
-		// Populate proper data
-		rand.Seed(seed)
+		// Get the btcd header based on the provided data
+		btcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		// If the header hex is the same as the default one, then this is the seed input
+		headerHex, _ := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader).MarshalHex()
+		seedInput := types.DefaultBaseHeaderHex == headerHex
+
+		// Make the address have a proper size
 		if len(addressBytes) == 0 || len(addressBytes) >= 256 {
 			addressBytes = genRandomByteArray(1 + uint64(rand.Intn(257)))
 		}
-		if !validHex(headerHex, bbl.BTCHeaderLen) {
-			headerHex = genRandomHexStr(bbl.BTCHeaderLen)
-		}
 
-		// Even if the data has the proper structure, some checks still fail
+		// Get the signer structure
 		var signer sdk.AccAddress
-		err := signer.Unmarshal(addressBytes)
-		if err != nil {
-			// Invalid address
-			t.Skip()
-		}
-		tmpHeader, err := bbl.NewBTCHeaderBytesFromHex(headerHex)
-		if err != nil {
-			t.Skip()
-		}
-		tmpBtcdHeader, err := tmpHeader.ToBlockHeader()
-		if err != nil {
-			// Cannot be converted to a block header
-			t.Skip()
-		}
+		signer.Unmarshal(addressBytes)
 
-		// Change the btcd header and convert back to hex
+		// Perform modifications on the btcd header if it is not part of the seed input
 		if !seedInput {
 			errorKind = rand.Intn(3)
 			switch errorKind {
 			case 0:
 				// Valid input
 				// Set the work bits to the pow limit
-				tmpBtcdHeader.Bits = blockchain.BigToCompact(maxDifficulty)
+				bits = blockchain.BigToCompact(maxDifficulty)
 			case 1:
 				// Zero PoW
-				tmpBtcdHeader.Bits = blockchain.BigToCompact(big.NewInt(0))
+				bits = blockchain.BigToCompact(big.NewInt(0))
 			case 2:
 				// Negative PoW
-				tmpBtcdHeader.Bits = blockchain.BigToCompact(big.NewInt(-1))
+				bits = blockchain.BigToCompact(big.NewInt(-1))
+			default:
+				bits = blockchain.BigToCompact(maxDifficulty)
 			}
 		}
-		header := bbl.NewBTCHeaderBytesFromBlockHeader(tmpBtcdHeader)
-		headerHex, err = header.MarshalHex()
-		if err != nil {
-			// btcd header can't be marshalled to hex
+		// Generate a header with the provided modifications
+		newBtcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		newHeader := bbl.NewBTCHeaderBytesFromBlockHeader(newBtcdHeader)
+		newHeaderHex, _ := newHeader.MarshalHex()
+
+		// Check whether the hash is still bigger than the maximum allowed
+		// This happens because even though we pass a series of "f"s as an input
+		// the maximum that the bits field can contain is 2^23-1, meaning
+		// that there is still space for block hashes that are less than that
+		newHeaderHash := newBtcdHeader.BlockHash()
+		hashNum := blockchain.HashToBig(&newHeaderHash)
+		if hashNum.Cmp(maxDifficulty) > 0 {
 			t.Skip()
 		}
 
 		// Check the message creation
-		msgInsertHeader, err := types.NewMsgInsertHeader(signer, headerHex)
+		msgInsertHeader, err := types.NewMsgInsertHeader(signer, newHeaderHex)
 		if err != nil {
 			t.Errorf("Valid parameters led to error")
 		}
@@ -81,8 +97,8 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		if msgInsertHeader.Header == nil {
 			t.Errorf("nil header")
 		}
-		if bytes.Compare(header, *(msgInsertHeader.Header)) != 0 {
-			t.Errorf("Expected header bytes %s got %s", header, *(msgInsertHeader.Header))
+		if bytes.Compare(newHeader, *(msgInsertHeader.Header)) != 0 {
+			t.Errorf("Expected header bytes %s got %s", newHeader, *(msgInsertHeader.Header))
 		}
 
 		// Validate the message

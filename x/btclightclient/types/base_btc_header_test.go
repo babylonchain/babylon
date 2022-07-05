@@ -10,31 +10,35 @@ import (
 
 func FuzzBaseBTCHeader(f *testing.F) {
 	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
-	defaultHeaderBytes, _ := defaultHeader.Marshal()
-	f.Add(defaultHeaderBytes, uint64(42), int64(17))
+	defaultBtcdHeader, _ := defaultHeader.ToBlockHeader()
 
-	f.Fuzz(func(t *testing.T, headerBytes []byte, height uint64, seed int64) {
-		// HeaderBytes should have a length of bbl.HeaderLen
-		// If not, generate a random array using of that length using the seed
-		if len(headerBytes) != bbl.BTCHeaderLen {
-			rand.Seed(seed)
-			headerBytes = genRandomByteArray(bbl.BTCHeaderLen)
-		}
-		headerBytesObj, err := bbl.NewBTCHeaderBytesFromBytes(headerBytes)
-		if err != nil {
-			// Invalid header bytes
-			t.Skip()
-		}
+	f.Add(
+		defaultBtcdHeader.Version,
+		defaultBtcdHeader.Bits,
+		defaultBtcdHeader.Nonce,
+		defaultBtcdHeader.Timestamp.Unix(),
+		defaultBtcdHeader.PrevBlock.String(),
+		defaultBtcdHeader.MerkleRoot.String(),
+		uint64(42),
+		int64(17))
+
+	f.Fuzz(func(t *testing.T, version int32, bits uint32, nonce uint32,
+		timeInt int64, prevBlockStr string, merkleRootStr string, height uint64, seed int64) {
+
+		rand.Seed(seed)
+		// Get the btcd header based on the provided data
+		btcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		// Convert it into bytes
+		headerBytesObj := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+		headerBytes, _ := headerBytesObj.Marshal()
 
 		baseBTCHeader := types.NewBaseBTCHeader(headerBytesObj, height)
-
 		// Validate the various attributes
 		gotHeaderBytes, err := baseBTCHeader.Header.Marshal()
 		if err != nil {
 			t.Errorf("Header returned cannot be marshalled")
 		}
 		gotHeight := baseBTCHeader.Height
-
 		if bytes.Compare(headerBytes, gotHeaderBytes) != 0 {
 			t.Errorf("Header attribute is different")
 		}
