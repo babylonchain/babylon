@@ -2,10 +2,12 @@ package types_test
 
 import (
 	"bytes"
+	"encoding/hex"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
+	"math/rand"
 	"testing"
 	"time"
 )
@@ -19,11 +21,23 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		btcdHeader.Nonce,
 		btcdHeader.Timestamp.Unix(),
 		btcdHeader.PrevBlock.String(),
-		btcdHeader.MerkleRoot.String())
+		btcdHeader.MerkleRoot.String(),
+		int64(17))
 
 	f.Fuzz(func(t *testing.T, version int32, bits uint32, nonce uint32,
-		timeInt int64, prevBlockStr string, merkleRootStr string) {
+		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
 
+		// If either  of the hash strings is not of appropriate length
+		// or not valid hex, generate a random hex randomly
+		rand.Seed(seed)
+		if _, err := hex.DecodeString(prevBlockStr); err != nil || len(prevBlockStr) != bbl.HeaderHashLen {
+			prevBlockStr = genRandomHexStr(bbl.HeaderHashLen)
+		}
+		if _, err := hex.DecodeString(merkleRootStr); err != nil || len(merkleRootStr) != bbl.HeaderHashLen {
+			merkleRootStr = genRandomHexStr(bbl.HeaderHashLen)
+		}
+
+		// Get the chainhash versions
 		prevBlock, err := chainhash.NewHashFromStr(prevBlockStr)
 		if err != nil {
 			t.Skip()
@@ -34,6 +48,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		}
 		time := time.Unix(timeInt, 0)
 
+		// Construct a header
 		header := wire.BlockHeader{
 			Version:    version,
 			Bits:       bits,

@@ -17,7 +17,8 @@ func FuzzBaseBTCHeader(f *testing.F) {
 		// HeaderBytes should have a length of bbl.HeaderLen
 		// If not, generate a random array using of that length using the seed
 		if len(headerBytes) != bbl.HeaderLen {
-			headerBytes = generateRandomByteArray(seed, bbl.HeaderLen)
+			rand.Seed(seed)
+			headerBytes = genRandomByteArray(bbl.HeaderLen)
 		}
 		headerBytesObj, err := bbl.NewBTCHeaderBytesFromBytes(headerBytes)
 		if err != nil {
@@ -47,11 +48,4 @@ func FuzzBaseBTCHeader(f *testing.F) {
 			t.Errorf("Got error %s when validating", err)
 		}
 	})
-}
-
-func generateRandomByteArray(seed int64, length uint64) []byte {
-	rand.Seed(seed)
-	newHeaderBytes := make([]byte, length)
-	rand.Read(newHeaderBytes)
-	return newHeaderBytes
 }
