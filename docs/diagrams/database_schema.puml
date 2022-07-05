@@ -11,6 +11,8 @@ entity "Tendermint Block" as block {
 
 package "staking" #79ADDC {
   entity "Message" as staking_msg {
+    <<embedded>>
+    --
     * oneof
     | CreateValidator
     | EditValidator
@@ -55,6 +57,9 @@ package "epoching" #FFC09F {
     * events: emitted by staking execution
     * logs: emitted by staking execution
   }
+  note bottom
+    Returned to and stored by Tendermint.
+  end note
 }
 
 
@@ -158,7 +163,7 @@ block }o--|| validator : proposer
 epoch ||--o{ queued_msg : delay to end of epoch
 epoch ||--|| block : start height
 
-queued_msg ||--|| staking_msg
+queued_msg ||..|| staking_msg
 queued_msg ||--o| delayed_result : inform user \nvia events
 
 unbonding_queue }o--|| block : unbonding height
