@@ -10,7 +10,7 @@ entity "Tendermint Block" as block {
 }
 
 package "staking" #79ADDC {
-  entity "Message" as staking_msg {
+  enum "Message" as staking_msg {
     <<embedded>>
     --
     * oneof
@@ -60,6 +60,12 @@ package "epoching" #FFC09F {
   note bottom
     Returned to and stored by Tendermint.
   end note
+
+  enum MsgWrappedStaking {
+    <<embedded in transaction>>
+    --
+    * wrapped staking msg\n except MsgCreateValidator
+  }
 }
 
 
@@ -87,7 +93,6 @@ package "checkpointing" #FFEE93 {
     * bls_public_key: validator BLS public key
     --
     * public_key <<FK>>: validator Ed25519 public key
-    * PoP: Proof-of-Possession
   }
 
   entity "BLS Signature" as bls_sig {
@@ -95,6 +100,14 @@ package "checkpointing" #FFEE93 {
     * last_commit_hash
     --
     * bls_sig
+  }
+
+  enum MsgWrappedCreateValidator {
+    <<embedded in transaction>>
+    --
+    * BLS key
+    * PoP: Proof-of-Possession
+    * wrapped staking msg: \n MsgCreateValidator
   }
 }
 
@@ -163,7 +176,7 @@ block }o--|| validator : proposer
 epoch ||--o{ queued_msg : delay to end of epoch
 epoch ||--|| block : start height
 
-queued_msg ||..|| staking_msg
+queued_msg .> staking_msg
 queued_msg ||--o| delayed_result : inform user \nvia events
 
 unbonding_queue }o--|| block : unbonding height
@@ -187,5 +200,9 @@ ckpt_inclusion }o--|| btc_header : included in
 btc_header }o--o| btc_header : parent
 btc_trusted |o--|| btc_header : start from
 btc_tip |o--|| btc_header: longest chain
+
+MsgWrappedCreateValidator .> bls_key : creates
+MsgWrappedCreateValidator .> queued_msg : creates
+MsgWrappedStaking .> queued_msg : creates
 
 @enduml
