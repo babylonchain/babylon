@@ -5,6 +5,7 @@ import (
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"math/rand"
 	"testing"
 )
 
@@ -33,8 +34,12 @@ func TestNewQueryHashesRequest(t *testing.T) {
 }
 
 func FuzzNewQueryContainsRequest(f *testing.F) {
-	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47")
-	f.Fuzz(func(t *testing.T, hexHash string) {
+	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
+	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
+		rand.Seed(seed)
+		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
+			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
+		}
 		chHash, err := chainhash.NewHashFromStr(hexHash)
 		if err != nil {
 			// the hexHash is not a valid one
@@ -44,11 +49,6 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		queryContains, err := types.NewQueryContainsRequest(hexHash)
 
 		if err != nil {
-			// Caught an error for an invalid header hash length
-			// Good, skip
-			if len(hexHash) != bbl.BTCHeaderHashLen*2 {
-				t.Skip()
-			}
 			t.Errorf("returned error for valid hex %s", hexHash)
 		}
 
