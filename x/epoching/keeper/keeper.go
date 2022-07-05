@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,13 +14,13 @@ import (
 
 type (
 	Keeper struct {
-		cdc              codec.BinaryCodec
-		storeKey         sdk.StoreKey
-		memKey           sdk.StoreKey
-		hooks            types.EpochingHooks
-		paramstore       paramtypes.Subspace
-		stk              types.StakingKeeper
-		stakingMsgServer types.StakingMsgServer
+		cdc        codec.BinaryCodec
+		storeKey   sdk.StoreKey
+		memKey     sdk.StoreKey
+		hooks      types.EpochingHooks
+		paramstore paramtypes.Subspace
+		stk        types.StakingKeeper
+		router     *baseapp.MsgServiceRouter
 	}
 )
 
@@ -29,7 +30,6 @@ func NewKeeper(
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	stk types.StakingKeeper,
-	stakingMsgServer types.StakingMsgServer,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -37,13 +37,12 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:              cdc,
-		storeKey:         storeKey,
-		memKey:           memKey,
-		paramstore:       ps,
-		hooks:            nil,
-		stk:              stk,
-		stakingMsgServer: stakingMsgServer,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		memKey:     memKey,
+		paramstore: ps,
+		hooks:      nil,
+		stk:        stk,
 	}
 }
 
@@ -51,7 +50,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// Set the validator hooks
+// SetHooks sets the validator hooks
 func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 	if k.hooks != nil {
 		panic("cannot set validator hooks twice")
@@ -59,6 +58,12 @@ func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 
 	k.hooks = eh
 
+	return k
+}
+
+// SetMsgServiceRouter sets the msgServiceRouter
+func (k *Keeper) SetMsgServiceRouter(router *baseapp.MsgServiceRouter) *Keeper {
+	k.router = router
 	return k
 }
 
@@ -209,30 +214,31 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
-// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
-func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) {
+func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) *sdk.Result {
+	var res *sdk.Result
+	var err error
+	var unwrappedMsgWithType sdk.Msg
+	// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
-		unwrappedMsgWithType := unwrappedMsg.MsgCreateValidator
-		if _, err := k.stakingMsgServer.CreateValidator(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-			panic(err)
-		}
+		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
 	case *types.QueuedMessage_MsgDelegate:
-		unwrappedMsgWithType := unwrappedMsg.MsgDelegate
-		if _, err := k.stakingMsgServer.Delegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-			panic(err)
-		}
+		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
 	case *types.QueuedMessage_MsgUndelegate:
-		unwrappedMsgWithType := unwrappedMsg.MsgUndelegate
-		if _, err := k.stakingMsgServer.Undelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-			panic(err)
-		}
+		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
 	case *types.QueuedMessage_MsgBeginRedelegate:
-		unwrappedMsgWithType := unwrappedMsg.MsgBeginRedelegate
-		if _, err := k.stakingMsgServer.BeginRedelegate(sdk.WrapSDKContext(ctx), unwrappedMsgWithType); err != nil {
-			panic(err)
-		}
+		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
 	default:
 		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
+
+	// get the handler function from router
+	handler := k.router.Handler(unwrappedMsgWithType)
+	// handle the unwrapped message
+	res, err = handler(ctx, unwrappedMsgWithType)
+	if err != nil {
+		panic(err)
+	}
+
+	return res
 }

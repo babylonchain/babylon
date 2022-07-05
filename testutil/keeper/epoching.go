@@ -43,8 +43,9 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		paramsSubspace,
 		// TODO: make this compile at the moment, will fix for integrated testing
 		nil,
-		nil,
 	)
+
+	// TODO: add msgServiceRouter?
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 

@@ -1,7 +1,6 @@
 package types
 
 import (
-	"context"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,20 +20,6 @@ type AccountKeeper interface {
 type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	// Methods imported from bank should be defined here
-}
-
-type StakingMsgServer interface {
-	// CreateValidator defines a method for creating a new validator.
-	CreateValidator(context.Context, *stakingtypes.MsgCreateValidator) (*stakingtypes.MsgCreateValidatorResponse, error)
-	// Delegate defines a method for performing a delegation of coins
-	// from a delegator to a validator.
-	Delegate(context.Context, *stakingtypes.MsgDelegate) (*stakingtypes.MsgDelegateResponse, error)
-	// BeginRedelegate defines a method for performing a redelegation
-	// of coins from a delegator and source validator to a destination validator.
-	BeginRedelegate(context.Context, *stakingtypes.MsgBeginRedelegate) (*stakingtypes.MsgBeginRedelegateResponse, error)
-	// Undelegate defines a method for performing an undelegation from a
-	// delegate and a validator.
-	Undelegate(context.Context, *stakingtypes.MsgUndelegate) (*stakingtypes.MsgUndelegateResponse, error)
 }
 
 // StakingKeeper defines the staking module interface contract needed by the

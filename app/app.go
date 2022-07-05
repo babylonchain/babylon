@@ -323,10 +323,11 @@ func NewBabylonApp(
 
 	// setup epoching keeper
 	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
-	stakingMsgServer := stakingkeeper.NewMsgServerImpl(app.StakingKeeper)
-	epochingKeeper := epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper, stakingMsgServer)
+	epochingKeeper := epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper)
 	// TODO: add modules that need to hook onto the epoching module here
 	epochingKeeper.SetHooks(epochingtypes.NewMultiEpochingHooks())
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
 	app.EpochingKeeper = epochingKeeper
 
 	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
