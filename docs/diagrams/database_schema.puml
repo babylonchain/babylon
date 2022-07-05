@@ -122,7 +122,7 @@ package "btccheckpoint" #FCF5C7 {
 
 package "btclightclient" #ADF7B6 {
   entity "Bitcoin Header" as btc_header {
-    * hash: Block Hash <<derived>>
+    * hash: block hash <<derived>>
     --
     * parent_hash <<FK>>
     * merkle_root
@@ -142,6 +142,12 @@ package "btclightclient" #ADF7B6 {
     * total_pow: from block explorer
     --
     * hash: Block Hash <<derived>>
+  }
+
+  entity "Tip" as btc_tip {
+    <<singleton>>
+    --
+    * hash <<FK>>: block hash
   }
 }
 
@@ -175,5 +181,6 @@ ckpt_inclusion }o--|| btc_header : included in
 
 btc_header }o--o| btc_header : parent
 btc_trusted |o--|| btc_header : start from
+btc_tip |o--|| btc_header: longest chain
 
 @enduml
