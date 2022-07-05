@@ -22,7 +22,7 @@ package "staking" #79ADDC {
   }
 
   entity "Validator" as validator {
-    * public_key: ECDSA public key
+    * public_key: Ed25519 public key
     --
     * power: delegated staking power
   }
@@ -86,7 +86,7 @@ package "checkpointing" #FFEE93 {
   entity "BLS Key" as bls_key {
     * bls_public_key: validator BLS public key
     --
-    * public_key <<FK>>: validator ECDSA public key
+    * public_key <<FK>>: validator Ed25519 public key
     * PoP: Proof-of-Possession
   }
 
