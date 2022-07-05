@@ -84,7 +84,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 					continue
 				}
 			}
-			logger.Info(res.Log)
 		}
 
 		// update validator set
