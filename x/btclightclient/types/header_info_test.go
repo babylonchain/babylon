@@ -2,7 +2,6 @@ package types_test
 
 import (
 	"bytes"
-	"encoding/hex"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -30,10 +29,10 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
 		rand.Seed(seed)
-		if _, err := hex.DecodeString(prevBlockStr); err != nil || len(prevBlockStr) != bbl.HeaderHashLen {
+		if !validHex(prevBlockStr, bbl.HeaderHashLen) {
 			prevBlockStr = genRandomHexStr(bbl.HeaderHashLen)
 		}
-		if _, err := hex.DecodeString(merkleRootStr); err != nil || len(merkleRootStr) != bbl.HeaderHashLen {
+		if !validHex(merkleRootStr, bbl.HeaderHashLen) {
 			merkleRootStr = genRandomHexStr(bbl.HeaderHashLen)
 		}
 
