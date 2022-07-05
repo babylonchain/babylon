@@ -37,6 +37,8 @@ To be able to confirm checkpoints we need to know how deeply embedded they are i
 
 Even though we use a Key-Value store instead of a Relational Database, the following Entity Relationship Diagram is useful to get a sense of the conceptual data model, including the cardinalities. The grouping shows which module the collections belong to in the design.
 
+Note that some boxes are actually _messages_ and aren't part of the storage schema, they are just there to illustrate where some of the entities are coming from, or to establish a relationship between entities that come to life as a result of a common message, but then live separately without explicit foreign keys between them.
+
 ![Database Schema](diagrams/database_schema.png)
 
 ## Automation
