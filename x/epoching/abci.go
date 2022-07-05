@@ -59,11 +59,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		// get all msgs in the msg queue
 		queuedMsgs := k.GetEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
-		// TODO: is it possible or beneficial if we can get the execution results of the delayed messages in the epoching module rather than in the staking module?
 		for _, msg := range queuedMsgs {
 			res, err := k.HandleQueuedMsg(ctx, msg)
 			// we should skip msg with errors rather than panicking, as some users may wrap an invalid message
 			// (e.g., self-delegate coins more than its balance, wrong coding of addresses, ...)
+			// honest validators will have consistent execution results on the queued messages
 			if err != nil {
 				logger.Error(err.Error())
 				continue
