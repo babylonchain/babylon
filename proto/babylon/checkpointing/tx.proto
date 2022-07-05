@@ -13,9 +13,6 @@ service Msg {
   // AddBlsSig defines a method for accumulating BLS signatures
   rpc AddBlsSig(MsgAddBlsSig) returns (MsgAddBlsSigResponse);
 
-  // CreateBlsKey defines a method for registering a BLS key for a validator
-  rpc CreateBlsKey(MsgCreateBlsKey) returns (MsgCreateBlsKeyResponse);
-
   // WrappedCreateValidator defines a method for registering a new validator
   rpc WrappedCreateValidator(MsgWrappedCreateValidator) returns (MsgWrappedCreateValidatorResponse);
 }
@@ -32,22 +29,14 @@ message MsgAddBlsSig {
 // MsgAddBlsSigResponse defines the MsgAddBlsSig response type.
 message MsgAddBlsSigResponse {}
 
-// MsgCreateBlsKey defines a message to create a BLS key for a validator
-message MsgCreateBlsKey {
-  BlsPubKey pubkey = 1;
-  ProofOfPossession pop = 2;
-}
-
-// MsgCreateBlsKeyResponse defines the MsgCreateBlsKey response type
-message MsgCreateBlsKeyResponse {}
-
 // MsgWrappedCreateValidator defines a wrapped message to create a validator
 message MsgWrappedCreateValidator {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  cosmos.staking.v1beta1.MsgCreateValidator msg_staking = 1;
-  MsgCreateBlsKey msg_checkpointing = 2;
+  BlsPubKey pubkey = 1;
+  ProofOfPossession pop = 2;
+  cosmos.staking.v1beta1.MsgCreateValidator msg_staking = 3;
 }
 
 // MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator response type

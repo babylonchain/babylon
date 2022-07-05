@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -98,4 +98,8 @@ func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status ty
 		return err
 	}
 	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
+}
+
+func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey *types.BlsPubKey, msg *stakingtypes.MsgCreateValidator) error {
+	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, msg)
 }

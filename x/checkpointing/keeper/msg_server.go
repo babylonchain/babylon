@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -18,14 +19,19 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (m msgServer) AddBlsSig(ctx context.Context, header *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
+func (m msgServer) AddBlsSig(goCtx context.Context, header *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
 	panic("TODO: implement me")
 }
 
-func (m msgServer) CreateBlsKey(ctx context.Context, msg *types.MsgCreateBlsKey) (*types.MsgCreateBlsKeyResponse, error) {
-	panic("TODO: implement me")
-}
+// WrappedCreateValidator stores validator's BLS public key as well as corresponding MsgCreateValidator message
+func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
+	// TODO: verify pop
+	ctx := sdk.UnwrapSDKContext(goCtx)
 
-func (m msgServer) WrappedCreateValidator(ctx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
-	panic("TODO: implement me")
+	err := m.k.CreateRegistration(ctx, msg.Pubkey, msg.MsgStaking)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgWrappedCreateValidatorResponse{}, nil
 }

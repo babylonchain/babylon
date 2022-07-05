@@ -18,7 +18,7 @@ func (k Keeper) BlsSigsState(ctx sdk.Context) BlsSigsState {
 	store := ctx.KVStore(k.storeKey)
 	return BlsSigsState{
 		cdc:         k.cdc,
-		blsSigs:     prefix.NewStore(store, types.BlsSigsPrefix),
+		blsSigs:     prefix.NewStore(store, types.BlsSigsObjectPrefix),
 		hashToEpoch: prefix.NewStore(store, types.BlsSigsHashToEpochPrefix),
 	}
 }

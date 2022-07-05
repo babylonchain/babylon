@@ -105,107 +105,18 @@ func (m *MsgAddBlsSigResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAddBlsSigResponse proto.InternalMessageInfo
 
-// MsgCreateBlsKey defines a message to create a BLS key for a validator
-type MsgCreateBlsKey struct {
-	Pubkey *BlsPubKey         `protobuf:"bytes,1,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
-	Pop    *ProofOfPossession `protobuf:"bytes,2,opt,name=pop,proto3" json:"pop,omitempty"`
-}
-
-func (m *MsgCreateBlsKey) Reset()         { *m = MsgCreateBlsKey{} }
-func (m *MsgCreateBlsKey) String() string { return proto.CompactTextString(m) }
-func (*MsgCreateBlsKey) ProtoMessage()    {}
-func (*MsgCreateBlsKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_24b023a97b92daa6, []int{2}
-}
-func (m *MsgCreateBlsKey) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgCreateBlsKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgCreateBlsKey.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgCreateBlsKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCreateBlsKey.Merge(m, src)
-}
-func (m *MsgCreateBlsKey) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgCreateBlsKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCreateBlsKey.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgCreateBlsKey proto.InternalMessageInfo
-
-func (m *MsgCreateBlsKey) GetPubkey() *BlsPubKey {
-	if m != nil {
-		return m.Pubkey
-	}
-	return nil
-}
-
-func (m *MsgCreateBlsKey) GetPop() *ProofOfPossession {
-	if m != nil {
-		return m.Pop
-	}
-	return nil
-}
-
-// MsgCreateBlsKeyResponse defines the MsgCreateBlsKey response type
-type MsgCreateBlsKeyResponse struct {
-}
-
-func (m *MsgCreateBlsKeyResponse) Reset()         { *m = MsgCreateBlsKeyResponse{} }
-func (m *MsgCreateBlsKeyResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgCreateBlsKeyResponse) ProtoMessage()    {}
-func (*MsgCreateBlsKeyResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_24b023a97b92daa6, []int{3}
-}
-func (m *MsgCreateBlsKeyResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgCreateBlsKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgCreateBlsKeyResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgCreateBlsKeyResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCreateBlsKeyResponse.Merge(m, src)
-}
-func (m *MsgCreateBlsKeyResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgCreateBlsKeyResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCreateBlsKeyResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgCreateBlsKeyResponse proto.InternalMessageInfo
-
 // MsgWrappedCreateValidator defines a wrapped message to create a validator
 type MsgWrappedCreateValidator struct {
-	MsgStaking       *types.MsgCreateValidator `protobuf:"bytes,1,opt,name=msg_staking,json=msgStaking,proto3" json:"msg_staking,omitempty"`
-	MsgCheckpointing *MsgCreateBlsKey          `protobuf:"bytes,2,opt,name=msg_checkpointing,json=msgCheckpointing,proto3" json:"msg_checkpointing,omitempty"`
+	Pubkey     *BlsPubKey                `protobuf:"bytes,1,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+	Pop        *ProofOfPossession        `protobuf:"bytes,2,opt,name=pop,proto3" json:"pop,omitempty"`
+	MsgStaking *types.MsgCreateValidator `protobuf:"bytes,3,opt,name=msg_staking,json=msgStaking,proto3" json:"msg_staking,omitempty"`
 }
 
 func (m *MsgWrappedCreateValidator) Reset()         { *m = MsgWrappedCreateValidator{} }
 func (m *MsgWrappedCreateValidator) String() string { return proto.CompactTextString(m) }
 func (*MsgWrappedCreateValidator) ProtoMessage()    {}
 func (*MsgWrappedCreateValidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_24b023a97b92daa6, []int{4}
+	return fileDescriptor_24b023a97b92daa6, []int{2}
 }
 func (m *MsgWrappedCreateValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -242,7 +153,7 @@ func (m *MsgWrappedCreateValidatorResponse) Reset()         { *m = MsgWrappedCre
 func (m *MsgWrappedCreateValidatorResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgWrappedCreateValidatorResponse) ProtoMessage()    {}
 func (*MsgWrappedCreateValidatorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_24b023a97b92daa6, []int{5}
+	return fileDescriptor_24b023a97b92daa6, []int{3}
 }
 func (m *MsgWrappedCreateValidatorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -274,8 +185,6 @@ var xxx_messageInfo_MsgWrappedCreateValidatorResponse proto.InternalMessageInfo
 func init() {
 	proto.RegisterType((*MsgAddBlsSig)(nil), "babylon.checkpointing.v1.MsgAddBlsSig")
 	proto.RegisterType((*MsgAddBlsSigResponse)(nil), "babylon.checkpointing.v1.MsgAddBlsSigResponse")
-	proto.RegisterType((*MsgCreateBlsKey)(nil), "babylon.checkpointing.v1.MsgCreateBlsKey")
-	proto.RegisterType((*MsgCreateBlsKeyResponse)(nil), "babylon.checkpointing.v1.MsgCreateBlsKeyResponse")
 	proto.RegisterType((*MsgWrappedCreateValidator)(nil), "babylon.checkpointing.v1.MsgWrappedCreateValidator")
 	proto.RegisterType((*MsgWrappedCreateValidatorResponse)(nil), "babylon.checkpointing.v1.MsgWrappedCreateValidatorResponse")
 }
@@ -283,38 +192,34 @@ func init() {
 func init() { proto.RegisterFile("babylon/checkpointing/tx.proto", fileDescriptor_24b023a97b92daa6) }
 
 var fileDescriptor_24b023a97b92daa6 = []byte{
-	// 486 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x54, 0xcd, 0x6a, 0xdb, 0x40,
-	0x10, 0xb6, 0x12, 0x70, 0xdb, 0x49, 0xa0, 0xad, 0x08, 0xa9, 0xa3, 0x83, 0x9c, 0xda, 0x10, 0xfa,
-	0x03, 0x2b, 0x9c, 0xd0, 0x43, 0x1b, 0x7a, 0xa8, 0x73, 0x34, 0x26, 0x46, 0x86, 0x14, 0x7a, 0x09,
-	0x5a, 0x79, 0xb3, 0x16, 0x96, 0xb4, 0x8b, 0x46, 0x0e, 0xd1, 0x1b, 0x94, 0x42, 0xa1, 0x8f, 0x90,
-	0xc7, 0x29, 0x3d, 0xe5, 0xd8, 0x63, 0xb1, 0x29, 0xf4, 0x31, 0x8a, 0xac, 0x95, 0x62, 0x1b, 0xcb,
-	0x98, 0x9c, 0xa4, 0xd5, 0x7c, 0x7f, 0x33, 0xbb, 0x5a, 0x30, 0xa9, 0x43, 0x13, 0x5f, 0x84, 0x96,
-	0x3b, 0x64, 0xee, 0x48, 0x0a, 0x2f, 0x8c, 0xbd, 0x90, 0x5b, 0xf1, 0x0d, 0x91, 0x91, 0x88, 0x85,
-	0x5e, 0x53, 0x75, 0xb2, 0x50, 0x27, 0xd7, 0x2d, 0x63, 0x8f, 0x0b, 0x2e, 0x66, 0x20, 0x2b, 0x7d,
-	0xcb, 0xf0, 0xc6, 0xd1, 0x6a, 0xbd, 0xfb, 0x95, 0xc2, 0x35, 0x57, 0xe3, 0xa8, 0x8f, 0x97, 0x23,
-	0x96, 0x28, 0x50, 0xdd, 0x15, 0x18, 0x08, 0xb4, 0x30, 0x76, 0x46, 0x69, 0xf5, 0xba, 0x45, 0x59,
-	0xec, 0xb4, 0x8a, 0x74, 0x8d, 0x3e, 0xec, 0x76, 0x91, 0x7f, 0x1a, 0x0c, 0xda, 0x3e, 0xf6, 0x3d,
-	0xae, 0xbf, 0x87, 0x47, 0xa9, 0x02, 0x7a, 0xbc, 0xa6, 0x1d, 0x6a, 0xaf, 0x76, 0x8e, 0x0f, 0x49,
-	0x59, 0x7e, 0x92, 0x51, 0xec, 0x2a, 0x9d, 0x3d, 0x3f, 0x3c, 0xfe, 0x7a, 0x5b, 0xaf, 0xfc, 0xbb,
-	0xad, 0x57, 0x1a, 0xfb, 0xb0, 0x37, 0x2f, 0x6a, 0x33, 0x94, 0x22, 0x44, 0xd6, 0xf8, 0xae, 0xc1,
-	0xd3, 0x2e, 0xf2, 0xb3, 0x88, 0x39, 0x31, 0x6b, 0xfb, 0xd8, 0x61, 0x89, 0x7e, 0x0a, 0x55, 0x39,
-	0xa6, 0x23, 0x96, 0x28, 0xbf, 0xe6, 0x5a, 0xbf, 0xde, 0x98, 0x76, 0x58, 0x62, 0x2b, 0x8a, 0xfe,
-	0x11, 0xb6, 0xa5, 0x90, 0xb5, 0xad, 0x19, 0xf3, 0x6d, 0x39, 0xb3, 0x17, 0x09, 0x71, 0x75, 0x7e,
-	0xd5, 0x13, 0x88, 0x0c, 0xd1, 0x13, 0xa1, 0x9d, 0xf2, 0x1a, 0x07, 0xf0, 0x62, 0x29, 0x4e, 0x11,
-	0xf5, 0x97, 0x06, 0x07, 0x5d, 0xe4, 0x9f, 0x23, 0x47, 0x4a, 0x36, 0xc8, 0x20, 0x17, 0x8e, 0xef,
-	0x0d, 0x9c, 0x58, 0x44, 0x7a, 0x07, 0x76, 0x02, 0xe4, 0x97, 0x6a, 0xaa, 0x2a, 0xf9, 0x1b, 0x92,
-	0x0d, 0x9b, 0xa8, 0xcf, 0x44, 0x0d, 0x9b, 0x14, 0x1e, 0x85, 0x80, 0x0d, 0x01, 0xf2, 0x7e, 0x06,
-	0xd3, 0x2f, 0xe0, 0x79, 0x2a, 0xb6, 0x10, 0x5a, 0xb5, 0xf4, 0xba, 0xbc, 0xa5, 0xe5, 0xe0, 0xcf,
-	0x02, 0xe4, 0x67, 0xf3, 0xa0, 0xb9, 0xfd, 0x68, 0xc2, 0xcb, 0xd2, 0x5e, 0xf2, 0x8e, 0x8f, 0xff,
-	0x6e, 0xc1, 0x76, 0x17, 0xb9, 0xee, 0xc2, 0x93, 0xfb, 0xe3, 0x70, 0xb4, 0x36, 0x40, 0x81, 0x33,
-	0xc8, 0x66, 0xb8, 0xdc, 0x4c, 0xf7, 0x61, 0x77, 0xe1, 0x14, 0x6c, 0xde, 0xa8, 0xd1, 0xda, 0x7c,
-	0x26, 0xb9, 0xdb, 0x37, 0x0d, 0xf6, 0x4b, 0x76, 0xf2, 0x64, 0xad, 0xda, 0x6a, 0x92, 0x71, 0xfa,
-	0x00, 0x52, 0x1e, 0xa6, 0x7d, 0xfe, 0x73, 0x62, 0x6a, 0x77, 0x13, 0x53, 0xfb, 0x33, 0x31, 0xb5,
-	0x1f, 0x53, 0xb3, 0x72, 0x37, 0x35, 0x2b, 0xbf, 0xa7, 0x66, 0xe5, 0xcb, 0x3b, 0xee, 0xc5, 0xc3,
-	0x31, 0x25, 0xae, 0x08, 0x2c, 0x65, 0xe0, 0x0e, 0x1d, 0x2f, 0xcc, 0x17, 0xd6, 0xcd, 0xf2, 0x1d,
-	0x93, 0x48, 0x86, 0xb4, 0x3a, 0xfb, 0x93, 0x4f, 0xfe, 0x07, 0x00, 0x00, 0xff, 0xff, 0x23, 0x97,
-	0xb6, 0xb3, 0x89, 0x04, 0x00, 0x00,
+	// 432 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0x3f, 0x6f, 0xd3, 0x40,
+	0x14, 0xf7, 0x11, 0x29, 0xc0, 0x95, 0xc9, 0xaa, 0xaa, 0x90, 0xc1, 0x29, 0x89, 0x54, 0x21, 0x90,
+	0xce, 0x4a, 0x2b, 0x06, 0xa8, 0x18, 0x28, 0x63, 0x15, 0x35, 0x72, 0x24, 0x90, 0x58, 0xaa, 0x3b,
+	0xe7, 0x7a, 0x39, 0x25, 0xf1, 0x3b, 0xf9, 0x5d, 0xaa, 0xfa, 0x1b, 0x20, 0x26, 0x3e, 0x42, 0x3f,
+	0x0e, 0x63, 0x47, 0x46, 0x94, 0x2c, 0x4c, 0xac, 0xac, 0xc8, 0xf6, 0x99, 0x86, 0x2a, 0x8e, 0x50,
+	0x27, 0xfb, 0xfc, 0x7e, 0xff, 0xde, 0xcf, 0x36, 0x0d, 0x04, 0x17, 0xd9, 0x0c, 0x92, 0x30, 0x9e,
+	0xc8, 0x78, 0x6a, 0x40, 0x27, 0x56, 0x27, 0x2a, 0xb4, 0x57, 0xcc, 0xa4, 0x60, 0xc1, 0x6f, 0xb9,
+	0x39, 0xfb, 0x67, 0xce, 0x2e, 0xfb, 0xed, 0x5d, 0x05, 0x0a, 0x0a, 0x50, 0x98, 0xdf, 0x95, 0xf8,
+	0xf6, 0xc1, 0x66, 0xbd, 0xdb, 0x93, 0xc3, 0xf5, 0x36, 0xe3, 0xc4, 0x0c, 0xcf, 0xa7, 0x32, 0x73,
+	0xa0, 0x4e, 0x0c, 0x38, 0x07, 0x0c, 0xd1, 0xf2, 0x69, 0x3e, 0xbd, 0xec, 0x0b, 0x69, 0x79, 0xff,
+	0x6f, 0xba, 0xee, 0x88, 0x3e, 0x19, 0xa0, 0x7a, 0x37, 0x1e, 0x9f, 0xcc, 0x70, 0xa4, 0x95, 0xff,
+	0x9a, 0x3e, 0xcc, 0x15, 0x50, 0xab, 0x16, 0xd9, 0x27, 0xcf, 0x77, 0x0e, 0xf7, 0x59, 0x5d, 0x7e,
+	0x56, 0x52, 0xa2, 0xa6, 0x28, 0xae, 0x6f, 0x1e, 0x7d, 0xbe, 0xee, 0x78, 0x3f, 0xaf, 0x3b, 0x5e,
+	0x77, 0x8f, 0xee, 0xae, 0x8b, 0x46, 0x12, 0x0d, 0x24, 0x28, 0xbb, 0xbf, 0x08, 0x7d, 0x3a, 0x40,
+	0xf5, 0x31, 0xe5, 0xc6, 0xc8, 0xf1, 0xfb, 0x54, 0x72, 0x2b, 0x3f, 0xf0, 0x99, 0x1e, 0x73, 0x0b,
+	0xa9, 0x7f, 0x4c, 0x9b, 0x66, 0x21, 0xa6, 0x32, 0x73, 0xce, 0xbd, 0xad, 0xce, 0xc3, 0x85, 0x38,
+	0x95, 0x59, 0xe4, 0x28, 0xfe, 0x5b, 0xda, 0x30, 0x60, 0x5a, 0x0f, 0x0a, 0xe6, 0xcb, 0x7a, 0xe6,
+	0x30, 0x05, 0xb8, 0x38, 0xbb, 0x18, 0x02, 0xa2, 0x44, 0xd4, 0x90, 0x44, 0x39, 0xcf, 0x3f, 0xa5,
+	0x3b, 0x73, 0x54, 0xe7, 0xae, 0xa6, 0x56, 0xa3, 0x90, 0x79, 0xc1, 0xca, 0xf6, 0x98, 0x7b, 0xcc,
+	0x5c, 0x7b, 0x6c, 0x80, 0xea, 0x4e, 0xf8, 0x88, 0xce, 0x51, 0x8d, 0x4a, 0xd8, 0x5a, 0x11, 0x3d,
+	0xfa, 0xac, 0x76, 0xdf, 0xaa, 0x95, 0xc3, 0xdf, 0x84, 0x36, 0x06, 0xa8, 0xfc, 0x98, 0x3e, 0xbe,
+	0x7d, 0x0f, 0x07, 0xf5, 0x2b, 0xac, 0x57, 0xdb, 0x66, 0xff, 0x87, 0xab, 0xcc, 0xfc, 0x2f, 0x84,
+	0xee, 0xd5, 0xf4, 0x7f, 0xb4, 0x55, 0x6a, 0x33, 0xa9, 0x7d, 0x7c, 0x0f, 0x52, 0x15, 0xe6, 0xe4,
+	0xec, 0xdb, 0x32, 0x20, 0x37, 0xcb, 0x80, 0xfc, 0x58, 0x06, 0xe4, 0xeb, 0x2a, 0xf0, 0x6e, 0x56,
+	0x81, 0xf7, 0x7d, 0x15, 0x78, 0x9f, 0x5e, 0x29, 0x6d, 0x27, 0x0b, 0xc1, 0x62, 0x98, 0x87, 0xce,
+	0x20, 0x9e, 0x70, 0x9d, 0x54, 0x87, 0xf0, 0xea, 0xee, 0xef, 0x96, 0x19, 0x89, 0xa2, 0x59, 0x7c,
+	0xd4, 0x47, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0x77, 0x54, 0xbd, 0x28, 0x94, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -331,8 +236,6 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	// AddBlsSig defines a method for accumulating BLS signatures
 	AddBlsSig(ctx context.Context, in *MsgAddBlsSig, opts ...grpc.CallOption) (*MsgAddBlsSigResponse, error)
-	// CreateBlsKey defines a method for registering a BLS key for a validator
-	CreateBlsKey(ctx context.Context, in *MsgCreateBlsKey, opts ...grpc.CallOption) (*MsgCreateBlsKeyResponse, error)
 	// WrappedCreateValidator defines a method for registering a new validator
 	WrappedCreateValidator(ctx context.Context, in *MsgWrappedCreateValidator, opts ...grpc.CallOption) (*MsgWrappedCreateValidatorResponse, error)
 }
@@ -354,15 +257,6 @@ func (c *msgClient) AddBlsSig(ctx context.Context, in *MsgAddBlsSig, opts ...grp
 	return out, nil
 }
 
-func (c *msgClient) CreateBlsKey(ctx context.Context, in *MsgCreateBlsKey, opts ...grpc.CallOption) (*MsgCreateBlsKeyResponse, error) {
-	out := new(MsgCreateBlsKeyResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Msg/CreateBlsKey", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 func (c *msgClient) WrappedCreateValidator(ctx context.Context, in *MsgWrappedCreateValidator, opts ...grpc.CallOption) (*MsgWrappedCreateValidatorResponse, error) {
 	out := new(MsgWrappedCreateValidatorResponse)
 	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Msg/WrappedCreateValidator", in, out, opts...)
@@ -376,8 +270,6 @@ func (c *msgClient) WrappedCreateValidator(ctx context.Context, in *MsgWrappedCr
 type MsgServer interface {
 	// AddBlsSig defines a method for accumulating BLS signatures
 	AddBlsSig(context.Context, *MsgAddBlsSig) (*MsgAddBlsSigResponse, error)
-	// CreateBlsKey defines a method for registering a BLS key for a validator
-	CreateBlsKey(context.Context, *MsgCreateBlsKey) (*MsgCreateBlsKeyResponse, error)
 	// WrappedCreateValidator defines a method for registering a new validator
 	WrappedCreateValidator(context.Context, *MsgWrappedCreateValidator) (*MsgWrappedCreateValidatorResponse, error)
 }
@@ -388,9 +280,6 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) AddBlsSig(ctx context.Context, req *MsgAddBlsSig) (*MsgAddBlsSigResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddBlsSig not implemented")
-}
-func (*UnimplementedMsgServer) CreateBlsKey(ctx context.Context, req *MsgCreateBlsKey) (*MsgCreateBlsKeyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CreateBlsKey not implemented")
 }
 func (*UnimplementedMsgServer) WrappedCreateValidator(ctx context.Context, req *MsgWrappedCreateValidator) (*MsgWrappedCreateValidatorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WrappedCreateValidator not implemented")
@@ -414,24 +303,6 @@ func _Msg_AddBlsSig_Handler(srv interface{}, ctx context.Context, dec func(inter
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).AddBlsSig(ctx, req.(*MsgAddBlsSig))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Msg_CreateBlsKey_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgCreateBlsKey)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).CreateBlsKey(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Msg/CreateBlsKey",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).CreateBlsKey(ctx, req.(*MsgCreateBlsKey))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -461,10 +332,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddBlsSig",
 			Handler:    _Msg_AddBlsSig_Handler,
-		},
-		{
-			MethodName: "CreateBlsKey",
-			Handler:    _Msg_CreateBlsKey_Handler,
 		},
 		{
 			MethodName: "WrappedCreateValidator",
@@ -533,76 +400,6 @@ func (m *MsgAddBlsSigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCreateBlsKey) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgCreateBlsKey) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgCreateBlsKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.Pop != nil {
-		{
-			size, err := m.Pop.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if m.Pubkey != nil {
-		{
-			size, err := m.Pubkey.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgCreateBlsKeyResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgCreateBlsKeyResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgCreateBlsKeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
 func (m *MsgWrappedCreateValidator) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -623,9 +420,21 @@ func (m *MsgWrappedCreateValidator) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	_ = i
 	var l int
 	_ = l
-	if m.MsgCheckpointing != nil {
+	if m.MsgStaking != nil {
 		{
-			size, err := m.MsgCheckpointing.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.MsgStaking.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Pop != nil {
+		{
+			size, err := m.Pop.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -635,9 +444,9 @@ func (m *MsgWrappedCreateValidator) MarshalToSizedBuffer(dAtA []byte) (int, erro
 		i--
 		dAtA[i] = 0x12
 	}
-	if m.MsgStaking != nil {
+	if m.Pubkey != nil {
 		{
-			size, err := m.MsgStaking.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.Pubkey.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -706,7 +515,7 @@ func (m *MsgAddBlsSigResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgCreateBlsKey) Size() (n int) {
+func (m *MsgWrappedCreateValidator) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -720,30 +529,8 @@ func (m *MsgCreateBlsKey) Size() (n int) {
 		l = m.Pop.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
-	return n
-}
-
-func (m *MsgCreateBlsKeyResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgWrappedCreateValidator) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
 	if m.MsgStaking != nil {
 		l = m.MsgStaking.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.MsgCheckpointing != nil {
-		l = m.MsgCheckpointing.Size()
 		n += 1 + l + sovTx(uint64(l))
 	}
 	return n
@@ -900,7 +687,7 @@ func (m *MsgAddBlsSigResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCreateBlsKey) Unmarshal(dAtA []byte) error {
+func (m *MsgWrappedCreateValidator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -923,10 +710,10 @@ func (m *MsgCreateBlsKey) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCreateBlsKey: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgWrappedCreateValidator: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCreateBlsKey: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgWrappedCreateValidator: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1001,107 +788,7 @@ func (m *MsgCreateBlsKey) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgCreateBlsKeyResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCreateBlsKeyResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCreateBlsKeyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgWrappedCreateValidator) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgWrappedCreateValidator: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgWrappedCreateValidator: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field MsgStaking", wireType)
 			}
@@ -1134,42 +821,6 @@ func (m *MsgWrappedCreateValidator) Unmarshal(dAtA []byte) error {
 				m.MsgStaking = &types.MsgCreateValidator{}
 			}
 			if err := m.MsgStaking.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field MsgCheckpointing", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.MsgCheckpointing == nil {
-				m.MsgCheckpointing = &MsgCreateBlsKey{}
-			}
-			if err := m.MsgCheckpointing.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
