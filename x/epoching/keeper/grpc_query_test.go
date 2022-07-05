@@ -1,22 +1,53 @@
 package keeper_test
 
 import (
-	"testing"
+	"fmt"
 
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/stretchr/testify/require"
 )
 
-func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.EpochingKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-	params := types.DefaultParams()
-	keeper.SetParams(ctx, params)
+func (suite *KeeperTestSuite) TestParamsQuery() {
+	ctx, queryClient := suite.ctx, suite.queryClient
+	var req *types.QueryParamsRequest
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
-	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
+	testCases := []struct {
+		msg      string
+		malleate func()
+		expPass  bool
+		params   types.Params
+	}{
+		{
+			"default params",
+			func() {
+				req = &types.QueryParamsRequest{}
+			},
+			true,
+			types.DefaultParams(),
+		},
+		{
+			"wrong params",
+			func() {
+				req = &types.QueryParamsRequest{}
+			},
+			false,
+			types.NewParams(777),
+		},
+	}
+
+	for _, tc := range testCases {
+		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
+			tc.malleate()
+
+			wctx := sdk.WrapSDKContext(ctx)
+			resp, err := queryClient.Params(wctx, req)
+			if tc.expPass {
+				suite.NoError(err)
+				suite.Equal(&types.QueryParamsResponse{Params: tc.params}, resp)
+			} else {
+				suite.NotEqual(&types.QueryParamsResponse{Params: tc.params}, resp)
+			}
+		})
+	}
 }

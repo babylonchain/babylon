@@ -30,7 +30,9 @@ func (suite *KeeperTestSuite) SetupTest() {
 	querier := keeper.Querier{Keeper: app.EpochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
-	suite.queryClient = types.NewQueryClient(queryHelper)
+	queryClient := types.NewQueryClient(queryHelper)
+
+	suite.app, suite.ctx, suite.queryClient = app, ctx, queryClient
 }
 
 func TestParams(t *testing.T) {
