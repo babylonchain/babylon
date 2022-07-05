@@ -56,6 +56,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 
 	// if reaching an epoch boundary, then
 	if uint64(ctx.BlockHeight()) == epochBoundary.Uint64() {
+		// get epoch number
+		epochNumber := k.GetEpochNumber(ctx)
 		// get all msgs in the msg queue
 		queuedMsgs := k.GetEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
@@ -68,7 +70,20 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				logger.Error(err.Error())
 				continue
 			}
-			// TODO: what to do on the events and logs returned by the staking module?
+			// append the epoch info to each event and emit event
+			for _, event := range res.Events {
+				newAttr := sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()).ToKVPair()
+				event.Attributes = append(event.Attributes, newAttr)
+				typedEvent, err := sdk.ParseTypedEvent(event)
+				if err != nil {
+					logger.Error(err.Error())
+					continue
+				}
+				if err := ctx.EventManager().EmitTypedEvent(typedEvent); err != nil {
+					logger.Error(err.Error())
+					continue
+				}
+			}
 			logger.Info(res.Log)
 		}
 
@@ -76,8 +91,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
 		// clear the current msg queue
 		k.ClearEpochMsgs(ctx)
-		// get epoch number
-		epochNumber := k.GetEpochNumber(ctx)
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epochNumber)
 		// emit EndEpoch event
