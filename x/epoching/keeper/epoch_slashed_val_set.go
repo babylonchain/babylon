@@ -6,66 +6,61 @@ import (
 )
 
 // GetSlashedValidatorSetSize fetches the number of slashed validators
-func (k Keeper) GetSlashedValidatorSetSize(ctx sdk.Context) (sdk.Uint, error) {
+func (k Keeper) GetSlashedValidatorSetSize(ctx sdk.Context) sdk.Uint {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.SlashedValidatorSetSizeKey)
 	if bz == nil {
-		return sdk.NewUint(0), nil
+		panic(types.ErrUnknownSlashedValSetSize)
 	}
 	var len sdk.Uint
-	err := len.Unmarshal(bz)
+	if err := len.Unmarshal(bz); err != nil {
+		panic(err)
+	}
 
-	return len, err
+	return len
 }
 
-// setSlashedValidatorSetSize sets the slashed validator set size
-func (k Keeper) setSlashedValidatorSetSize(ctx sdk.Context, len sdk.Uint) error {
+// SetSlashedValidatorSetSize sets the slashed validator set size
+func (k Keeper) SetSlashedValidatorSetSize(ctx sdk.Context, len sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	lenBytes, err := len.Marshal()
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	store.Set(types.SlashedValidatorSetSizeKey, lenBytes)
-
-	return nil
 }
 
 // incSlashedValidatorSetSize adds the set size by 1
-func (k Keeper) incSlashedValidatorSetSize(ctx sdk.Context) error {
-	len, err := k.GetSlashedValidatorSetSize(ctx)
-	if err != nil {
-		return err
-	}
+func (k Keeper) incSlashedValidatorSetSize(ctx sdk.Context) sdk.Uint {
+	len := k.GetSlashedValidatorSetSize(ctx)
 	incLen := len.AddUint64(1)
-	return k.setSlashedValidatorSetSize(ctx, incLen)
+	k.SetSlashedValidatorSetSize(ctx, incLen)
+	return incLen
 }
 
 // AddSlashedValidator adds a slashed validator to the set of the current epoch
-func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) error {
+func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) {
 	store := ctx.KVStore(k.storeKey)
 
 	// insert KV pair, where
 	// - key: SlashedValidatorKey || lenBytes
 	// - value: valAddr in Bytes
-	len, err := k.GetSlashedValidatorSetSize(ctx)
-	if err != nil {
-		return err
-	}
+	len := k.GetSlashedValidatorSetSize(ctx)
 	lenBytes, err := len.Marshal()
 	if err != nil {
-		return err
+		panic(err)
 	}
 	store.Set(append(types.SlashedValidatorKey, lenBytes...), valAddr)
 
 	// increment set size
-	return k.incSlashedValidatorSetSize(ctx)
+	k.incSlashedValidatorSetSize(ctx)
 }
 
 // GetSlashedValidators returns the set of slashed validators in the current epoch
-func (k Keeper) GetSlashedValidators(ctx sdk.Context) ([]sdk.ValAddress, error) {
+func (k Keeper) GetSlashedValidators(ctx sdk.Context) []sdk.ValAddress {
 	addrs := []sdk.ValAddress{}
 	store := ctx.KVStore(k.storeKey)
 
@@ -77,11 +72,11 @@ func (k Keeper) GetSlashedValidators(ctx sdk.Context) ([]sdk.ValAddress, error) 
 		addrs = append(addrs, addr)
 	}
 
-	return addrs, nil
+	return addrs
 }
 
 // ClearSlashedValidators removes all slashed validators in the set
-func (k Keeper) ClearSlashedValidators(ctx sdk.Context) error {
+func (k Keeper) ClearSlashedValidators(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
 	// remove all slashed validators
@@ -93,7 +88,5 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context) error {
 	}
 
 	// set set size to zero
-	return k.setSlashedValidatorSetSize(ctx, sdk.NewUint(0))
+	k.SetSlashedValidatorSetSize(ctx, sdk.NewUint(0))
 }
-
-// TODO: upon EndBlock, clear the set of slashed validators

@@ -70,6 +70,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
 		// clear the current msg queue
 		k.ClearEpochMsgs(ctx)
+		// clear the slashed validator set
+		k.ClearSlashedValidators(ctx)
 		// get epoch number
 		epochNumber := k.GetEpochNumber(ctx)
 		// trigger AfterEpochEnds hook

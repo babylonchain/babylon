@@ -43,17 +43,10 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress)
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
-	logger := h.k.Logger(ctx)
-
 	// add the validator address to the set
-	if err := h.k.AddSlashedValidator(ctx, valAddr); err != nil {
-		logger.Error("failed to execute AddSlashedValidator", err)
-	}
+	h.k.AddSlashedValidator(ctx, valAddr)
 
-	numSlashedVals, err := h.k.GetSlashedValidatorSetSize(ctx)
-	if err != nil {
-		logger.Error("failed to execute GetSlashedValidatorSetSize", err)
-	}
+	numSlashedVals := h.k.GetSlashedValidatorSetSize(ctx)
 	numMaxVals := h.k.stk.GetParams(ctx).MaxValidators
 	// if a certain threshold (1/3 or 2/3) validators are slashed in a single epoch, emit event and trigger hook
 	if numSlashedVals.Uint64() == uint64(numMaxVals)/3 || numSlashedVals.Uint64() == uint64(numMaxVals)*2/3 {
@@ -66,10 +59,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 			),
 		})
 		// trigger hook
-		slashedVals, err := h.k.GetSlashedValidators(ctx)
-		if err != nil {
-			logger.Error("failed to execute GetSlashedValidators", err)
-		}
+		slashedVals := h.k.GetSlashedValidators(ctx)
 		h.k.BeforeSlashThreshold(ctx, slashedVals)
 	}
 }
