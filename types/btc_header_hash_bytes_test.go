@@ -119,7 +119,7 @@ func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_Size() {
 func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_Unmarshal() {
 	// Unmarshal should check whether the data has a length of 80 bytes
 	// and then copy the data into the header
-	bz := []byte(strings.Repeat("a", types.HeaderHashLen))
+	bz := []byte(strings.Repeat("a", types.BTCHeaderHashLen))
 	data := []struct {
 		name   string
 		bytes  []byte
@@ -127,7 +127,7 @@ func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_Unmarshal() {
 	}{
 		{"valid", bz, false},
 		{"too long", append(bz, byte('a')), true},
-		{"too short", bz[:types.HeaderHashLen-1], true},
+		{"too short", bz[:types.BTCHeaderHashLen-1], true},
 	}
 	for _, d := range data {
 		var hb types.BTCHeaderHashBytes
