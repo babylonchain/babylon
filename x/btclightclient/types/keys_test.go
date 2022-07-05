@@ -15,8 +15,8 @@ func FuzzHeadersObjectKey(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, height uint64, hexHash string, seed int64) {
 		rand.Seed(seed)
-		if !validHex(hexHash, bbl.HeaderHashLen) {
-			hexHash = genRandomHexStr(bbl.HeaderHashLen)
+		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
+			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 		chHash, err := chainhash.NewHashFromStr(hexHash)
 		if err != nil {
@@ -41,8 +41,8 @@ func FuzzHeadersObjectHeightKey(f *testing.F) {
 	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47")
 
 	f.Fuzz(func(t *testing.T, hexHash string) {
-		if !validHex(hexHash, bbl.HeaderHashLen) {
-			hexHash = genRandomHexStr(bbl.HeaderHashLen)
+		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
+			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 		chHash, err := chainhash.NewHashFromStr(hexHash)
 		if err != nil {

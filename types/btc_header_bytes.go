@@ -10,7 +10,7 @@ import (
 
 type BTCHeaderBytes []byte
 
-const HeaderLen = 80
+const BTCHeaderLen = 80
 
 func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
 	var headerBytes BTCHeaderBytes
@@ -60,7 +60,7 @@ func (m BTCHeaderBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
-	if len(data) != HeaderLen {
+	if len(data) != BTCHeaderLen {
 		return errors.New("Invalid header length")
 	}
 

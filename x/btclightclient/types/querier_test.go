@@ -46,7 +46,7 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		if err != nil {
 			// Caught an error for an invalid header hash length
 			// Good, skip
-			if len(hexHash) != bbl.HeaderHashLen*2 {
+			if len(hexHash) != bbl.BTCHeaderHashLen*2 {
 				t.Skip()
 			}
 			t.Errorf("returned error for valid hex %s", hexHash)

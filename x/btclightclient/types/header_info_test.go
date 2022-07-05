@@ -29,11 +29,11 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
 		rand.Seed(seed)
-		if !validHex(prevBlockStr, bbl.HeaderHashLen) {
-			prevBlockStr = genRandomHexStr(bbl.HeaderHashLen)
+		if !validHex(prevBlockStr, bbl.BTCHeaderHashLen) {
+			prevBlockStr = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
-		if !validHex(merkleRootStr, bbl.HeaderHashLen) {
-			merkleRootStr = genRandomHexStr(bbl.HeaderHashLen)
+		if !validHex(merkleRootStr, bbl.BTCHeaderHashLen) {
+			merkleRootStr = genRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 
 		// Get the chainhash versions
