@@ -20,28 +20,25 @@ var _ types.EpochingHooks = Keeper{}
 // Create new distribution hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
-// AfterEpochBegins triggers the AfterEpochBegins hook for other modules that register this hook
-func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error {
+// AfterEpochBegins - call hook if registered
+func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) {
 	if k.hooks != nil {
-		return k.hooks.AfterEpochBegins(ctx, epoch)
+		k.hooks.AfterEpochBegins(ctx, epoch)
 	}
-	return nil
 }
 
-// AfterEpochEnds triggers the AfterEpochEnds hook for other modules that register this hook
-func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error {
+// AfterEpochEnds - call hook if registered
+func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) {
 	if k.hooks != nil {
-		return k.hooks.AfterEpochEnds(ctx, epoch)
+		k.hooks.AfterEpochEnds(ctx, epoch)
 	}
-	return nil
 }
 
 // BeforeSlashThreshold triggers the BeforeSlashThreshold hook for other modules that register this hook
-func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) error {
+func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {
 	if k.hooks != nil {
-		return k.hooks.BeforeSlashThreshold(ctx, valAddrs)
+		k.hooks.BeforeSlashThreshold(ctx, valAddrs)
 	}
-	return nil
 }
 
 // BeforeValidatorSlashed records the slash event
@@ -73,9 +70,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 		if err != nil {
 			logger.Error("failed to execute GetSlashedValidators", err)
 		}
-		if err := h.k.BeforeSlashThreshold(ctx, slashedVals); err != nil {
-			logger.Error("failed to execute BeforeSlashThreshold", err)
-		}
+		h.k.BeforeSlashThreshold(ctx, slashedVals)
 	}
 }
 

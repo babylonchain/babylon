@@ -10,50 +10,52 @@ const (
 )
 
 // GetEpochNumber fetches epoch number
-func (k Keeper) GetEpochNumber(ctx sdk.Context) (sdk.Uint, error) {
+func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.EpochNumberKey)
 	if bz == nil {
-		return sdk.NewUint(uint64(DefaultEpochNumber)), nil
+		panic(types.ErrUnknownEpochNumber)
 	}
 	var epochNumber sdk.Uint
-	err := epochNumber.Unmarshal(bz)
+	if err := epochNumber.Unmarshal(bz); err != nil {
+		panic(err)
+	}
 
-	return epochNumber, err
+	return epochNumber
 }
 
 // SetEpochNumber sets epoch number
-func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) error {
+func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	store.Set(types.EpochNumberKey, epochNumberBytes)
-
-	return nil
 }
 
 // IncEpochNumber adds epoch number by 1
-func (k Keeper) IncEpochNumber(ctx sdk.Context) error {
-	epochNumber, err := k.GetEpochNumber(ctx)
-	if err != nil {
-		return err
-	}
+func (k Keeper) IncEpochNumber(ctx sdk.Context) sdk.Uint {
+	epochNumber := k.GetEpochNumber(ctx)
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	return k.SetEpochNumber(ctx, incrementedEpochNumber)
+	k.SetEpochNumber(ctx, incrementedEpochNumber)
+	return incrementedEpochNumber
 }
 
 // GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
-func (k Keeper) GetEpochBoundary(ctx sdk.Context) (sdk.Uint, error) {
-	epochNumber, err := k.GetEpochNumber(ctx)
-	if err != nil {
-		return sdk.NewUint(0), err
+// example: in epoch 1, epoch interval is 5 blocks, boundary will be 1*5=5
+// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+// 0 |     1     |     2      |
+func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
+	epochNumber := k.GetEpochNumber(ctx)
+	// epoch number is 0 at the 0-th block, i.e., genesis
+	if epochNumber.IsZero() {
+		return sdk.NewUint(0)
 	}
+	// case when epoch number > 0
 	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
-	// example: in epoch 0, epoch interval is 5 blocks, boundary will be (0+1)*5=5
-	return epochNumber.AddUint64(1).Mul(epochInterval), nil
+	return epochNumber.Mul(epochInterval)
 }

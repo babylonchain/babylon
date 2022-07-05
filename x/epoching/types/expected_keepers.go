@@ -42,12 +42,14 @@ type StakingKeeper interface {
 
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
-	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error                // Must be called after an epoch begins
-	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error                  // Must be called after an epoch ends
-	BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) error // Must be called before a certain threshold (1/3 or 2/3) of validators are slashed in a single epoch
+	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint)                // Must be called after an epoch begins
+	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint)                  // Must be called after an epoch ends
+	BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) // Must be called before a certain threshold (1/3 or 2/3) of validators are slashed in a single epoch
 }
 
 // StakingHooks event hooks for staking validator object (noalias)
 type StakingHooks interface {
 	BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) // Must be called right before a validator is slashed
+	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint)                                 // Must be called after an epoch begins
+	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint)                                   // Must be called after an epoch ends
 }

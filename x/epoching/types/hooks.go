@@ -13,32 +13,20 @@ func NewMultiEpochingHooks(hooks ...EpochingHooks) MultiEpochingHooks {
 	return hooks
 }
 
-func (h MultiEpochingHooks) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) error {
+func (h MultiEpochingHooks) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) {
 	for i := range h {
-		if err := h[i].AfterEpochBegins(ctx, epoch); err != nil {
-			return err
-		}
+		h[i].AfterEpochBegins(ctx, epoch)
 	}
-
-	return nil
 }
 
-func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) error {
+func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) {
 	for i := range h {
-		if err := h[i].AfterEpochEnds(ctx, epoch); err != nil {
-			return err
-		}
+		h[i].AfterEpochEnds(ctx, epoch)
 	}
-
-	return nil
 }
 
-func (h MultiEpochingHooks) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) error {
+func (h MultiEpochingHooks) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {
 	for i := range h {
-		if err := h[i].BeforeSlashThreshold(ctx, valAddrs); err != nil {
-			return err
-		}
+		h[i].BeforeSlashThreshold(ctx, valAddrs)
 	}
-
-	return nil
 }

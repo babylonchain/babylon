@@ -45,6 +45,8 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		nil,
 	)
 
+	// TODO: add msgServiceRouter?
+
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
 	// Initialize params

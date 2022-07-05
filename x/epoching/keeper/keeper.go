@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -18,6 +19,7 @@ type (
 		hooks      types.EpochingHooks
 		paramstore paramtypes.Subspace
 		stk        types.StakingKeeper
+		router     *baseapp.MsgServiceRouter
 	}
 )
 
@@ -47,7 +49,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// Set the validator hooks
+// SetHooks sets the validator hooks
 func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 	if k.hooks != nil {
 		panic("cannot set validator hooks twice")
@@ -55,5 +57,11 @@ func (k *Keeper) SetHooks(eh types.EpochingHooks) *Keeper {
 
 	k.hooks = eh
 
+	return k
+}
+
+// SetMsgServiceRouter sets the msgServiceRouter
+func (k *Keeper) SetMsgServiceRouter(router *baseapp.MsgServiceRouter) *Keeper {
+	k.router = router
 	return k
 }
