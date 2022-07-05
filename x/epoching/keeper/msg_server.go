@@ -33,6 +33,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 
 	// wrapped -> unwrapped -> QueuedMessage
 	queuedMsg := types.QueuedMessage{
+		TxId:  tmhash.Sum(ctx.TxBytes()),
 		MsgId: tmhash.Sum(msgBytes),
 		Msg: &types.QueuedMessage_MsgDelegate{
 			MsgDelegate: msg.Msg,
@@ -57,6 +58,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 
 	// wrapped -> unwrapped -> QueuedMessage
 	queuedMsg := types.QueuedMessage{
+		TxId:  tmhash.Sum(ctx.TxBytes()),
 		MsgId: tmhash.Sum(msgBytes),
 		Msg: &types.QueuedMessage_MsgUndelegate{
 			MsgUndelegate: msg.Msg,
@@ -81,6 +83,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 
 	// wrapped -> unwrapped -> QueuedMessage
 	queuedMsg := types.QueuedMessage{
+		TxId:  tmhash.Sum(ctx.TxBytes()),
 		MsgId: tmhash.Sum(msgBytes),
 		Msg: &types.QueuedMessage_MsgBeginRedelegate{
 			MsgBeginRedelegate: msg.Msg,
