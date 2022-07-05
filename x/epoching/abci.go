@@ -48,6 +48,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	logger := k.Logger(ctx)
 	validatorSetUpdate := []abci.ValidatorUpdate{}
 
 	// get the height of the last block in this epoch
@@ -60,7 +61,9 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		// forward each msg in the msg queue to the right keeper
 		// TODO: is it possible or beneficial if we can get the execution results of the delayed messages in the epoching module rather than in the staking module?
 		for _, msg := range queuedMsgs {
-			k.HandleQueuedMsg(ctx, msg)
+			res := k.HandleQueuedMsg(ctx, msg)
+			// TODO: what to do on the events and logs returned by the staking module?
+			logger.Info(res.Log)
 		}
 
 		// update validator set
