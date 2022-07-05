@@ -16,8 +16,9 @@ func genRandomHexStr(length uint64) string {
 	return hex.EncodeToString(randBytes)
 }
 
+// validHex accepts a hex string and the length representation as a byte array
 func validHex(hexStr string, length int) bool {
-	if len(hexStr) != length {
+	if len(hexStr) != length*2 {
 		return false
 	}
 	if _, err := hex.DecodeString(hexStr); err != nil {
