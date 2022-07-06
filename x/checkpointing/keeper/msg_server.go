@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -39,10 +40,7 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
 	}
 
-	err = m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
-	if err != nil {
-		return nil, err
-	}
+	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
 
 	return &types.MsgWrappedCreateValidatorResponse{}, err
 }

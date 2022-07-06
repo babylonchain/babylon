@@ -9,7 +9,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// NewHandler ...
+// NewHandler handles messages for the epoching module
+// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func NewHandler(k keeper.Keeper) sdk.Handler {
 	msgServer := keeper.NewMsgServerImpl(k)
 

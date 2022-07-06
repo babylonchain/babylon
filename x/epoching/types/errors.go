@@ -8,6 +8,8 @@ import (
 
 // x/epoching module sentinel errors
 var (
-	ErrInvalidMsgType     = sdkerrors.Register(ModuleName, 1, "invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages. use wrapped versions instead")
-	ErrUnknownEpochNumber = sdkerrors.Register(ModuleName, 2, "the epoch number is not known in DB")
+	ErrUnwrappedMsgType         = sdkerrors.Register(ModuleName, 1, "invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate} messages. use wrapped versions instead")
+	ErrInvalidQueuedMessageType = sdkerrors.Register(ModuleName, 2, "invalid message type of a QueuedMessage")
+	ErrUnknownEpochNumber       = sdkerrors.Register(ModuleName, 3, "the epoch number is not known in DB")
+	ErrUnknownQueueLen          = sdkerrors.Register(ModuleName, 4, "the msg queue length is not known in DB")
 )
