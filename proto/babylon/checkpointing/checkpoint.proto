@@ -44,6 +44,8 @@ enum CheckpointStatus {
 
 // BlsSig wraps the bls sig with meta data.
 message BlsSig {
+  option (gogoproto.equal)            = false;
+
   // epoch_num defines the epoch number that the bls sig is signed on
   uint64 epoch_num = 1;
   // last_commit_hash defines the 'LastCommitHash' that the bls sig is signed on

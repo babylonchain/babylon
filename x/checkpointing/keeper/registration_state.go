@@ -30,7 +30,7 @@ func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr t
 	blsPubKey, err := rs.GetBlsPubKey(valAddr)
 
 	// we should disallow a validator to register with different BLS public keys
-	if err == nil && !blsPubKey.Equals(key) {
+	if err == nil && !blsPubKey.Equal(key) {
 		return types.ErrBlsKeyAlreadyExist.Wrapf("the validator has registered a BLS public key")
 	}
 

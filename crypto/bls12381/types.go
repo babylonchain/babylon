@@ -33,6 +33,15 @@ func (sig Signature) Marshal() ([]byte, error) {
 	return sig, nil
 }
 
+func (sig Signature) MustMarshal() []byte {
+	bz, err := sig.Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	return bz
+}
+
 func (sig Signature) MarshalTo(data []byte) (int, error) {
 	copy(data, sig)
 	return len(data), nil
@@ -56,8 +65,21 @@ func (sig Signature) Byte() []byte {
 	return sig
 }
 
+func (sig Signature) Equal(s Signature) bool {
+	return string(sig) == string(s)
+}
+
 func (pk PublicKey) Marshal() ([]byte, error) {
 	return pk, nil
+}
+
+func (pk PublicKey) MustMarshal() []byte {
+	bz, err := pk.Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	return bz
 }
 
 func (pk PublicKey) MarshalTo(data []byte) (int, error) {
@@ -79,7 +101,7 @@ func (pk *PublicKey) Unmarshal(data []byte) error {
 	return nil
 }
 
-func (pk PublicKey) Equals(k PublicKey) bool {
+func (pk PublicKey) Equal(k PublicKey) bool {
 	return string(pk) == string(k)
 }
 
