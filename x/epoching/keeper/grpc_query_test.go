@@ -11,27 +11,20 @@ import (
 
 func (suite *KeeperTestSuite) TestParamsQuery() {
 	ctx, queryClient := suite.ctx, suite.queryClient
-	var req *types.QueryParamsRequest
+	req := types.QueryParamsRequest{}
 
 	testCases := []struct {
-		msg      string
-		malleate func()
-		expPass  bool
-		params   types.Params
+		msg     string
+		expPass bool
+		params  types.Params
 	}{
 		{
 			"default params",
-			func() {
-				req = &types.QueryParamsRequest{}
-			},
 			true,
 			types.DefaultParams(),
 		},
 		{
 			"wrong params",
-			func() {
-				req = &types.QueryParamsRequest{}
-			},
 			false,
 			types.NewParams(777),
 		},
@@ -39,10 +32,8 @@ func (suite *KeeperTestSuite) TestParamsQuery() {
 
 	for _, tc := range testCases {
 		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			tc.malleate()
-
 			wctx := sdk.WrapSDKContext(ctx)
-			resp, err := queryClient.Params(wctx, req)
+			resp, err := queryClient.Params(wctx, &req)
 			suite.NoError(err)
 			if tc.expPass {
 				suite.Equal(&types.QueryParamsResponse{Params: tc.params}, resp)
@@ -55,7 +46,7 @@ func (suite *KeeperTestSuite) TestParamsQuery() {
 
 func (suite *KeeperTestSuite) TestCurrentEpoch() {
 	ctx, queryClient := suite.ctx, suite.queryClient
-	var req *types.QueryCurrentEpochRequest
+	req := types.QueryCurrentEpochRequest{}
 
 	testCases := []struct {
 		msg           string
@@ -66,9 +57,7 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 	}{
 		{
 			"epoch 0",
-			func() {
-				req = &types.QueryCurrentEpochRequest{}
-			},
+			func() {},
 			true,
 			sdk.NewUint(0),
 			sdk.NewUint(0),
@@ -77,7 +66,6 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 			"epoch 1",
 			func() {
 				suite.keeper.IncEpochNumber(suite.ctx)
-				req = &types.QueryCurrentEpochRequest{}
 			},
 			true,
 			sdk.NewUint(1),
@@ -87,7 +75,6 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 			"epoch 2",
 			func() {
 				suite.keeper.IncEpochNumber(suite.ctx)
-				req = &types.QueryCurrentEpochRequest{}
 			},
 			true,
 			sdk.NewUint(2),
@@ -97,7 +84,6 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 			"reset to epoch 0",
 			func() {
 				suite.keeper.SetEpochNumber(suite.ctx, sdk.NewUint(0))
-				req = &types.QueryCurrentEpochRequest{}
 			},
 			true,
 			sdk.NewUint(0),
@@ -110,7 +96,7 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 			tc.malleate()
 
 			wctx := sdk.WrapSDKContext(ctx)
-			resp, err := queryClient.CurrentEpoch(wctx, req)
+			resp, err := queryClient.CurrentEpoch(wctx, &req)
 			suite.NoError(err)
 			if tc.expPass {
 				suite.Equal(tc.epochNumber.Uint64(), resp.CurrentEpoch)
@@ -125,36 +111,34 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 
 func (suite *KeeperTestSuite) TestEpochMsgs() {
 	ctx, queryClient := suite.ctx, suite.queryClient
-	var req *types.QueryEpochMsgsRequest
 
 	testCases := []struct {
 		msg       string
 		malleate  func()
 		expPass   bool
+		req       *types.QueryEpochMsgsRequest
 		epochMsgs []*types.QueuedMessage
 	}{
 		{
 			"empty epoch msgs",
-			func() {
-				req = &types.QueryEpochMsgsRequest{
-					Pagination: &query.PageRequest{
-						Limit: 100,
-					},
-				}
-			},
+			func() {},
 			true,
+			&types.QueryEpochMsgsRequest{
+				Pagination: &query.PageRequest{
+					Limit: 100,
+				},
+			},
 			[]*types.QueuedMessage{},
 		},
 		{
 			"non-exist epoch msg",
-			func() {
-				req = &types.QueryEpochMsgsRequest{
-					Pagination: &query.PageRequest{
-						Limit: 100,
-					},
-				}
-			},
+			func() {},
 			false,
+			&types.QueryEpochMsgsRequest{
+				Pagination: &query.PageRequest{
+					Limit: 100,
+				},
+			},
 			[]*types.QueuedMessage{
 				{TxId: []byte{0x01}},
 			},
@@ -166,13 +150,13 @@ func (suite *KeeperTestSuite) TestEpochMsgs() {
 					TxId: []byte{0x01},
 				}
 				suite.keeper.EnqueueMsg(suite.ctx, msg)
-				req = &types.QueryEpochMsgsRequest{
-					Pagination: &query.PageRequest{
-						Limit: 100,
-					},
-				}
 			},
 			true,
+			&types.QueryEpochMsgsRequest{
+				Pagination: &query.PageRequest{
+					Limit: 100,
+				},
+			},
 			[]*types.QueuedMessage{
 				{TxId: []byte{0x01}},
 			},
@@ -181,13 +165,13 @@ func (suite *KeeperTestSuite) TestEpochMsgs() {
 			"cleared epoch msg",
 			func() {
 				suite.keeper.ClearEpochMsgs(suite.ctx)
-				req = &types.QueryEpochMsgsRequest{
-					Pagination: &query.PageRequest{
-						Limit: 100,
-					},
-				}
 			},
 			true,
+			&types.QueryEpochMsgsRequest{
+				Pagination: &query.PageRequest{
+					Limit: 100,
+				},
+			},
 			[]*types.QueuedMessage{},
 		},
 	}
@@ -197,7 +181,7 @@ func (suite *KeeperTestSuite) TestEpochMsgs() {
 			tc.malleate()
 
 			wctx := sdk.WrapSDKContext(ctx)
-			resp, err := queryClient.EpochMsgs(wctx, req)
+			resp, err := queryClient.EpochMsgs(wctx, tc.req)
 			suite.NoError(err)
 			if tc.expPass {
 				suite.Equal(len(tc.epochMsgs), len(resp.Msgs))
