@@ -3,6 +3,7 @@ package types
 import (
 	bbl "github.com/babylonchain/babylon/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -25,12 +26,15 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 		return err
 	}
 
+	return msg.ValidateHeader(btcchaincfg.MainNetParams.PowLimit)
+}
+
+func (msg *MsgInsertHeader) ValidateHeader(powLimit *big.Int) error {
 	header, err := msg.Header.ToBlockHeader()
 	if err != nil {
 		return err
 	}
-	// TODO: get this from a configuration file
-	return bbl.ValidateHeader(header, btcchaincfg.MainNetParams.PowLimit)
+	return bbl.ValidateHeader(header, powLimit)
 }
 
 func (msg *MsgInsertHeader) GetSigners() []sdk.AccAddress {
