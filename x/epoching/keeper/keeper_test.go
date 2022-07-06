@@ -20,6 +20,7 @@ type KeeperTestSuite struct {
 
 	app         *app.BabylonApp
 	ctx         sdk.Context
+	keeper      *keeper.Keeper
 	msgSrvr     types.MsgServer
 	queryClient types.QueryClient
 }
@@ -28,14 +29,15 @@ func (suite *KeeperTestSuite) SetupTest() {
 	app := app.Setup(false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
-	querier := keeper.Querier{Keeper: app.EpochingKeeper}
+	epochingKeeper := app.EpochingKeeper
+	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
 	queryClient := types.NewQueryClient(queryHelper)
 
-	msgSrvr := keeper.NewMsgServerImpl(app.EpochingKeeper)
+	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	suite.app, suite.ctx, suite.msgSrvr, suite.queryClient = app, ctx, msgSrvr, queryClient
+	suite.app, suite.ctx, suite.keeper, suite.msgSrvr, suite.queryClient = app, ctx, &epochingKeeper, msgSrvr, queryClient
 }
 
 func TestParams(t *testing.T) {
