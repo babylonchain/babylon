@@ -27,3 +27,14 @@ func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
 
 	return []sdk.AccAddress{signer}
 }
+
+func (m *MsgWrappedCreateValidator) ValidateBasic() error {
+	// This function validates stateless message elements
+	// TODO: verify bls sig
+
+	return m.MsgCreateValidator.ValidateBasic()
+}
+
+func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
+	return m.MsgCreateValidator.GetSigners()
+}
