@@ -50,6 +50,4 @@ type EpochingHooks interface {
 // StakingHooks event hooks for staking validator object (noalias)
 type StakingHooks interface {
 	BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) // Must be called right before a validator is slashed
-	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint)                                 // Must be called after an epoch begins
-	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint)                                   // Must be called after an epoch ends
 }
