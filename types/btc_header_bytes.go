@@ -10,7 +10,7 @@ import (
 
 type BTCHeaderBytes []byte
 
-const HeaderLen = 80
+const BTCHeaderLen = 80
 
 func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
 	var headerBytes BTCHeaderBytes
@@ -27,8 +27,13 @@ func NewBTCHeaderBytesFromBlockHeader(header *wire.BlockHeader) BTCHeaderBytes {
 	return headerBytes
 }
 
-func NewBTCHeaderBytesFromBytes(header []byte) BTCHeaderBytes {
-	return header
+func NewBTCHeaderBytesFromBytes(header []byte) (BTCHeaderBytes, error) {
+	var headerBytes BTCHeaderBytes
+	err := headerBytes.Unmarshal(header)
+	if err != nil {
+		return nil, err
+	}
+	return headerBytes, nil
 }
 
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {
@@ -55,7 +60,7 @@ func (m BTCHeaderBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderBytes) Unmarshal(data []byte) error {
-	if len(data) != HeaderLen {
+	if len(data) != BTCHeaderLen {
 		return errors.New("Invalid header length")
 	}
 

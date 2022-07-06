@@ -2,7 +2,7 @@
 
 ## Requirements
 
-- Go 1.17
+- Go 1.18
 - Docker (for running a testnet)
 
 ## Building

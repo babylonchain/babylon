@@ -48,7 +48,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	logger := k.Logger(ctx)
 	validatorSetUpdate := []abci.ValidatorUpdate{}
 
 	// get the height of the last block in this epoch
@@ -56,14 +55,46 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 
 	// if reaching an epoch boundary, then
 	if uint64(ctx.BlockHeight()) == epochBoundary.Uint64() {
+		// get epoch number
+		epochNumber := k.GetEpochNumber(ctx)
 		// get all msgs in the msg queue
 		queuedMsgs := k.GetEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
-		// TODO: is it possible or beneficial if we can get the execution results of the delayed messages in the epoching module rather than in the staking module?
 		for _, msg := range queuedMsgs {
-			res := k.HandleQueuedMsg(ctx, msg)
-			// TODO: what to do on the events and logs returned by the staking module?
-			logger.Info(res.Log)
+			res, err := k.HandleQueuedMsg(ctx, msg)
+			// skip this failed msg and emit and event signalling it
+			// we do not panic here as some users may wrap an invalid message
+			// (e.g., self-delegate coins more than its balance, wrong coding of addresses, ...)
+			// honest validators will have consistent execution results on the queued messages
+			if err != nil {
+				// emit an event signalling the failed execution
+				eventMsgFail := sdk.NewEvent(
+					types.EventTypeHandleQueuedMsgFailed,
+					sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()), // epoch number
+					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)),      // txid
+					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)),    // msgid
+					sdk.NewAttribute(types.AttributeKeyErrorMsg, err.Error()),       // err
+				)
+				ctx.EventManager().EmitEvent(eventMsgFail)
+				// skip this failed msg
+				continue
+			}
+			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
+			for _, event := range res.Events {
+				// create the wrapped event
+				wrappedEvent := abci.Event{Type: types.EventTypeHandleQueuedMsg}
+				// add our attributes
+				wrappedEvent.Attributes = append(wrappedEvent.Attributes,
+					sdk.NewAttribute(types.AttributeKeyOriginalEventType, event.Type).ToKVPair(), // original event type
+					sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()).ToKVPair(),   // epoch number
+					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)).ToKVPair(),        // txid
+					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)).ToKVPair(),      // msgid
+				)
+				// add original attributes
+				wrappedEvent.Attributes = append(wrappedEvent.Attributes, event.Attributes...)
+				// emit the wrapped event
+				ctx.EventManager().EmitEvent(sdk.Event(wrappedEvent))
+			}
 		}
 
 		// update validator set
@@ -72,8 +103,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		k.ClearEpochMsgs(ctx)
 		// clear the slashed validator set
 		k.ClearSlashedValidators(ctx)
-		// get epoch number
-		epochNumber := k.GetEpochNumber(ctx)
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epochNumber)
 		// emit EndEpoch event

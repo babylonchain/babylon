@@ -9,7 +9,7 @@ func (m BlsSig) Hash() BlsSigHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
 		m.LastCommitHash,
-		m.BlsSig,
+		m.BlsSig.MustMarshal(),
 		[]byte(m.SignerAddress),
 	}
 	return hash(fields)
@@ -19,7 +19,7 @@ func (m RawCheckpoint) Hash() RawCkptHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
 		m.LastCommitHash,
-		m.BlsMultiSig,
+		m.BlsMultiSig.MustMarshal(),
 		m.Bitmap,
 	}
 	return hash(fields)
