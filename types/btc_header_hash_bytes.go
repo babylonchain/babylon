@@ -8,7 +8,7 @@ import (
 
 type BTCHeaderHashBytes []byte
 
-const HeaderHashLen = 32
+const BTCHeaderHashLen = 32
 
 func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 	var hashBytes BTCHeaderHashBytes
@@ -54,7 +54,7 @@ func (m BTCHeaderHashBytes) Marshal() ([]byte, error) {
 }
 
 func (m *BTCHeaderHashBytes) Unmarshal(bz []byte) error {
-	if len(bz) != HeaderHashLen {
+	if len(bz) != BTCHeaderHashLen {
 		return errors.New("invalid header hash length")
 	}
 	*m = bz
@@ -71,7 +71,7 @@ func (m *BTCHeaderHashBytes) MarshalHex() (string, error) {
 }
 
 func (m *BTCHeaderHashBytes) UnmarshalHex(hash string) error {
-	if len(hash) != HeaderHashLen*2 {
+	if len(hash) != BTCHeaderHashLen*2 {
 		return errors.New("invalid hex length")
 	}
 	decoded, err := chainhash.NewHashFromStr(hash)
