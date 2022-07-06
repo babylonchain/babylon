@@ -102,9 +102,7 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
-func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) *sdk.Result {
-	var res *sdk.Result
-	var err error
+func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
 	var unwrappedMsgWithType sdk.Msg
 	// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := msg.Msg.(type) {
@@ -123,10 +121,5 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) *sdk.
 	// get the handler function from router
 	handler := k.router.Handler(unwrappedMsgWithType)
 	// handle the unwrapped message
-	res, err = handler(ctx, unwrappedMsgWithType)
-	if err != nil {
-		panic(err)
-	}
-
-	return res
+	return handler(ctx, unwrappedMsgWithType)
 }
