@@ -32,8 +32,8 @@ var (
 
 	CkptsObjectPrefix = append(CheckpointsPrefix, 0x0) // where we save the concrete BLS sig bytes
 
-	BlsKeysObjectPrefix = append(RegistrationPrefix, 0x0) // where we save the concrete BLS public keys
-	BlsKeySetPrefix     = append(RegistrationPrefix, 0x1) // where we save BLS key set
+	AddrToBlsKeyPrefix = append(RegistrationPrefix, 0x0) // where we save the concrete BLS public keys
+	BlsKeyToAddrPrefix = append(RegistrationPrefix, 0x1) // where we save BLS key set
 )
 
 // BlsSigsObjectKey defines epoch + hash
@@ -53,14 +53,14 @@ func CkptsObjectKey(epoch uint64) []byte {
 	return append(CkptsObjectPrefix, sdk.Uint64ToBigEndian(epoch)...)
 }
 
-// BlsKeysObjectKey defines validator address
-func BlsKeysObjectKey(valAddr ValidatorAddress) []byte {
-	return append(BlsKeysObjectPrefix, []byte(valAddr)...)
+// AddrToBlsKeyKey defines validator address
+func AddrToBlsKeyKey(valAddr ValidatorAddress) []byte {
+	return append(AddrToBlsKeyPrefix, []byte(valAddr)...)
 }
 
-// BlsKeySetKey defines BLS public key
-func BlsKeySetKey(pk bls12381.PublicKey) []byte {
-	return append(BlsKeySetPrefix, pk...)
+// BlsKeyToAddrKey defines BLS public key
+func BlsKeyToAddrKey(pk bls12381.PublicKey) []byte {
+	return append(BlsKeyToAddrPrefix, pk...)
 }
 
 func KeyPrefix(p string) []byte {

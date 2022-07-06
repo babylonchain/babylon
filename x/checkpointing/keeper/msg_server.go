@@ -26,7 +26,7 @@ func (m msgServer) AddBlsSig(goCtx context.Context, header *types.MsgAddBlsSig) 
 
 // WrappedCreateValidator stores validator's BLS public key as well as corresponding MsgCreateValidator message
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
-	// TODO: verify pop
+	// TODO: verify pop, should be done in ValidateBasic()
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	err := m.k.CreateRegistration(ctx, *msg.Key.Pubkey, types.ValidatorAddress(msg.MsgCreateValidator.ValidatorAddress))

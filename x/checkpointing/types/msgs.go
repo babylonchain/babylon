@@ -30,21 +30,11 @@ func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
 
 func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 	// This function validates stateless message elements
-	_, err := sdk.AccAddressFromBech32(m.MsgCreateValidator.ValidatorAddress)
-	if err != nil {
-		return err
-	}
-
 	// TODO: verify bls sig
 
-	return nil
+	return m.MsgCreateValidator.ValidateBasic()
 }
 
 func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.MsgCreateValidator.ValidatorAddress)
-	if err != nil {
-		panic(err)
-	}
-
-	return []sdk.AccAddress{signer}
+	return m.MsgCreateValidator.GetSigners()
 }
