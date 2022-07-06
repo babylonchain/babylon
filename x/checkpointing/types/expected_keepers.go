@@ -1,6 +1,7 @@
 package types
 
 import (
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -24,7 +25,8 @@ type StakingKeeper interface {
 
 // EpochingKeeper defines the expected interface needed to retrieve epoch info
 type EpochingKeeper interface {
-	GetCurrentEpoch(ctx sdk.Context) sdk.Uint
+	GetEpochNumber(ctx sdk.Context) sdk.Uint
+	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage) error
 }
 
 // Event Hooks

@@ -1,76 +1,84 @@
 package keeper
 
 import (
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type RegistrationState struct {
-	cdc                 codec.BinaryCodec
-	blsKeys             sdk.KVStore
-	msgCreateValidators sdk.KVStore
+	cdc     codec.BinaryCodec
+	blsKeys sdk.KVStore
+	// keySet maps BLS public keys to validator addresses
+	keySet sdk.KVStore
 }
 
 func (k Keeper) RegistrationState(ctx sdk.Context) RegistrationState {
 	// Build the RegistrationState storage
 	store := ctx.KVStore(k.storeKey)
 	return RegistrationState{
-		cdc:                 k.cdc,
-		blsKeys:             prefix.NewStore(store, types.BlsKeysObjectPrefix),
-		msgCreateValidators: prefix.NewStore(store, types.MsgCreateValidatorsPrefix),
+		cdc:     k.cdc,
+		blsKeys: prefix.NewStore(store, types.BlsKeysObjectPrefix),
+		keySet:  prefix.NewStore(store, types.BlsKeySetPrefix),
 	}
 }
 
-// CreateRegistration inserts the BLS key as well as a corresponding MsgCreateValidator message into the storage
-func (rs RegistrationState) CreateRegistration(key *types.BlsPubKey, msg *stakingtypes.MsgCreateValidator) error {
-	if rs.Exists(key.Address) {
-		return types.ErrBlsKeyAlreadyExist.Wrapf("existed public key: %x", key.Key)
+// CreateRegistration inserts the BLS key into the addr -> key and key -> addr storage
+func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr types.ValidatorAddress) error {
+	blsPubKey, err := rs.GetBlsPubKey(valAddr)
+
+	// we should disallow a validator to register with different BLS public keys
+	if err == nil && !blsPubKey.Equals(key) {
+		return types.ErrBlsKeyAlreadyExist.Wrapf("the validator has registered a BLS public key")
 	}
 
-	blsKeysKey := types.BlsKeysObjectKey(key.Address)
-	msgKey := types.MsgCreateValidatorsKey(key.Address)
+	// we should disallow the same BLS public key is registered by different validators
+	blsKeySetKey := types.BlsKeySetKey(key)
+	rawAddr := rs.keySet.Get(blsKeySetKey)
+	if rawAddr != nil && types.BytesToValAddr(rawAddr) != valAddr {
+		return types.ErrBlsKeyAlreadyExist.Wrapf("same BLS public key is registered by another validator")
+	}
 
 	// save concrete BLS public key object and msgCreateValidator
-	rs.blsKeys.Set(blsKeysKey, types.BlsPubKeyToBytes(rs.cdc, key))
-	rs.msgCreateValidators.Set(msgKey, rs.cdc.MustMarshal(msg))
+	blsKeysKey := types.BlsKeysObjectKey(valAddr)
+	rs.blsKeys.Set(blsKeysKey, key)
+	rs.keySet.Set(blsKeySetKey, types.ValAddrToBytes(valAddr))
 
 	return nil
 }
 
 // GetBlsPubKey retrieves BLS public key by validator's address
-func (rs RegistrationState) GetBlsPubKey(addr string) (*types.BlsPubKey, error) {
+func (rs RegistrationState) GetBlsPubKey(addr types.ValidatorAddress) (bls12381.PublicKey, error) {
 	pubKeyKey := types.BlsKeysObjectKey(addr)
 	rawBytes := rs.blsKeys.Get(pubKeyKey)
 	if rawBytes == nil {
 		return nil, types.ErrBlsKeyDoesNotExist.Wrapf("BLS public key does not exist with address %s", addr)
 	}
+	pk := new(bls12381.PublicKey)
+	err := pk.Unmarshal(rawBytes)
 
-	return types.BytesToBlsPubKey(rs.cdc, rawBytes)
+	return *pk, err
 }
 
-// RemoveBlsPubKey removes a BLS public key
-func (rs RegistrationState) RemoveBlsPubKey(addr string) error {
-	if !rs.Exists(addr) {
+// RemoveBlsKey removes a BLS public key
+// this should be called when a validator is removed
+func (rs RegistrationState) RemoveBlsKey(addr types.ValidatorAddress) error {
+	blsPubKey, err := rs.GetBlsPubKey(addr)
+	if err != nil {
 		return types.ErrBlsKeyDoesNotExist.Wrapf("BLS public key does not exist with address %s", addr)
 	}
 
-	// delete BLS public key and corresponding msgCreateValidator from storage
+	// delete BLS public key and corresponding key set from storage
 	rs.blsKeys.Delete(types.BlsKeysObjectKey(addr))
-	rs.msgCreateValidators.Delete(types.MsgCreateValidatorsKey(addr))
+	rs.keySet.Delete(types.BlsKeySetKey(blsPubKey))
 
 	return nil
 }
 
-// RemoveMsgCreateValidator removes a MsgCreateValidator
-func (rs RegistrationState) RemoveMsgCreateValidator(addr string) {
-	rs.msgCreateValidators.Delete(types.MsgCreateValidatorsKey(addr))
-}
-
 // Exists checks whether a BLS key exists
-func (rs RegistrationState) Exists(addr string) bool {
+func (rs RegistrationState) Exists(addr types.ValidatorAddress) bool {
 	blsKeysKey := types.BlsKeysObjectKey(addr)
 	return rs.blsKeys.Has(blsKeysKey)
 }

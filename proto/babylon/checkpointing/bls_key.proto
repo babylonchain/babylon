@@ -1,25 +1,25 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// BlsPubKey wraps BLS public key with meta data
-message BlsPubKey {
-  // key is the BLS public key of a validator
-  bytes key = 1;
+// BlsKey wraps BLS public key with PoP
+message BlsKey {
+  // pubkey is the BLS public key of a validator
+  bytes pubkey = 1 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.PublicKey"
+  ];
 
-  // address is validator's address
-  string address = 2;
+  // pop is the proof-of-possession of the BLS key
+  ProofOfPossession pop = 2;
 }
 
 // ProofOfPossession defines proof for the ownership of Ed25519 and BLS private keys
 message ProofOfPossession {
-  // ed25519_pk is the Ed25519 public key of the validator
-  bytes ed25519_pk = 1;
-
-  // bls_sig is the BLS signature over ed25519_pk
-  bytes bls_sig = 2;
-
-  // ed25519_sig is the Ed25519 signature over bls_sig
-  bytes ed25519_sig = 3;
+  // bls_sig is calculated by encrypt(key = BLS_sk, data = encrypt(key = Ed25519_sk, data = Secp256k1_pk))
+  bytes bls_sig = 1 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
+  ];
 }

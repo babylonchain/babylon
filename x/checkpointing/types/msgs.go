@@ -30,7 +30,7 @@ func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
 
 func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 	// This function validates stateless message elements
-	_, err := sdk.AccAddressFromBech32(m.Pubkey.Address)
+	_, err := sdk.AccAddressFromBech32(m.MsgCreateValidator.ValidatorAddress)
 	if err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 }
 
 func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Pubkey.Address)
+	signer, err := sdk.AccAddressFromBech32(m.MsgCreateValidator.ValidatorAddress)
 	if err != nil {
 		panic(err)
 	}

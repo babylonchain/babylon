@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -28,10 +29,20 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	// TODO: verify pop
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := m.k.CreateRegistration(ctx, msg.Pubkey, msg.MsgStaking)
+	err := m.k.CreateRegistration(ctx, *msg.Key.Pubkey, types.ValidatorAddress(msg.MsgCreateValidator.ValidatorAddress))
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgWrappedCreateValidatorResponse{}, nil
+	// enqueue the msg into the epoching module
+	queueMsg := epochingtypes.QueuedMessage{
+		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
+	}
+
+	err = m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgWrappedCreateValidatorResponse{}, err
 }

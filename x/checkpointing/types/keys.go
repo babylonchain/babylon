@@ -1,6 +1,7 @@
 package types
 
 import (
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,8 +32,8 @@ var (
 
 	CkptsObjectPrefix = append(CheckpointsPrefix, 0x0) // where we save the concrete BLS sig bytes
 
-	BlsKeysObjectPrefix       = append(RegistrationPrefix, 0x0) // where we save the concrete BLS public keys
-	MsgCreateValidatorsPrefix = append(RegistrationPrefix, 0x1) // where we save MsgCreateValidators
+	BlsKeysObjectPrefix = append(RegistrationPrefix, 0x0) // where we save the concrete BLS public keys
+	BlsKeySetPrefix     = append(RegistrationPrefix, 0x1) // where we save BLS key set
 )
 
 // BlsSigsObjectKey defines epoch + hash
@@ -53,13 +54,13 @@ func CkptsObjectKey(epoch uint64) []byte {
 }
 
 // BlsKeysObjectKey defines validator address
-func BlsKeysObjectKey(valAddr string) []byte {
+func BlsKeysObjectKey(valAddr ValidatorAddress) []byte {
 	return append(BlsKeysObjectPrefix, []byte(valAddr)...)
 }
 
-// MsgCreateValidatorsKey defines validator address
-func MsgCreateValidatorsKey(valAddr string) []byte {
-	return append(MsgCreateValidatorsPrefix, []byte(valAddr)...)
+// BlsKeySetKey defines BLS public key
+func BlsKeySetKey(pk bls12381.PublicKey) []byte {
+	return append(BlsKeySetPrefix, pk...)
 }
 
 func KeyPrefix(p string) []byte {

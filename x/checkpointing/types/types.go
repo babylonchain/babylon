@@ -5,9 +5,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
+type ValidatorAddress string
+
 type BlsSigHash []byte
 
 type RawCkptHash []byte
+
+func BytesToValAddr(data []byte) ValidatorAddress {
+	return ValidatorAddress(data)
+}
+
+func ValAddrToBytes(address ValidatorAddress) []byte {
+	return []byte(address)
+}
 
 func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawCheckpointWithMeta {
 	return &RawCheckpointWithMeta{
@@ -44,16 +54,6 @@ func BytesToBlsSig(cdc codec.BinaryCodec, bz []byte) (*BlsSig, error) {
 	blsSig := new(BlsSig)
 	err := cdc.Unmarshal(bz, blsSig)
 	return blsSig, err
-}
-
-func BlsPubKeyToBytes(cdc codec.BinaryCodec, key *BlsPubKey) []byte {
-	return cdc.MustMarshal(key)
-}
-
-func BytesToBlsPubKey(cdc codec.BinaryCodec, bz []byte) (*BlsPubKey, error) {
-	key := new(BlsPubKey)
-	err := cdc.Unmarshal(bz, key)
-	return key, err
 }
 
 func (m RawCkptHash) Equals(h RawCkptHash) bool {

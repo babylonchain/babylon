@@ -5,6 +5,8 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_babylonchain_babylon_crypto_bls12381 "github.com/babylonchain/babylon/crypto/bls12381"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -22,26 +24,26 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// BlsPubKey wraps BLS public key with meta data
-type BlsPubKey struct {
-	// key is the BLS public key of a validator
-	Key []byte `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	// address is validator's address
-	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+// BlsKey wraps BLS public key with PoP
+type BlsKey struct {
+	// pubkey is the BLS public key of a validator
+	Pubkey *github_com_babylonchain_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,1,opt,name=pubkey,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.PublicKey" json:"pubkey,omitempty"`
+	// pop is the proof-of-possession of the BLS key
+	Pop *ProofOfPossession `protobuf:"bytes,2,opt,name=pop,proto3" json:"pop,omitempty"`
 }
 
-func (m *BlsPubKey) Reset()         { *m = BlsPubKey{} }
-func (m *BlsPubKey) String() string { return proto.CompactTextString(m) }
-func (*BlsPubKey) ProtoMessage()    {}
-func (*BlsPubKey) Descriptor() ([]byte, []int) {
+func (m *BlsKey) Reset()         { *m = BlsKey{} }
+func (m *BlsKey) String() string { return proto.CompactTextString(m) }
+func (*BlsKey) ProtoMessage()    {}
+func (*BlsKey) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a7e926461cc70111, []int{0}
 }
-func (m *BlsPubKey) XXX_Unmarshal(b []byte) error {
+func (m *BlsKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *BlsPubKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BlsKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_BlsPubKey.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BlsKey.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -51,40 +53,29 @@ func (m *BlsPubKey) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *BlsPubKey) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_BlsPubKey.Merge(m, src)
+func (m *BlsKey) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BlsKey.Merge(m, src)
 }
-func (m *BlsPubKey) XXX_Size() int {
+func (m *BlsKey) XXX_Size() int {
 	return m.Size()
 }
-func (m *BlsPubKey) XXX_DiscardUnknown() {
-	xxx_messageInfo_BlsPubKey.DiscardUnknown(m)
+func (m *BlsKey) XXX_DiscardUnknown() {
+	xxx_messageInfo_BlsKey.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_BlsPubKey proto.InternalMessageInfo
+var xxx_messageInfo_BlsKey proto.InternalMessageInfo
 
-func (m *BlsPubKey) GetKey() []byte {
+func (m *BlsKey) GetPop() *ProofOfPossession {
 	if m != nil {
-		return m.Key
+		return m.Pop
 	}
 	return nil
 }
 
-func (m *BlsPubKey) GetAddress() string {
-	if m != nil {
-		return m.Address
-	}
-	return ""
-}
-
 // ProofOfPossession defines proof for the ownership of Ed25519 and BLS private keys
 type ProofOfPossession struct {
-	// ed25519_pk is the Ed25519 public key of the validator
-	Ed25519Pk []byte `protobuf:"bytes,1,opt,name=ed25519_pk,json=ed25519Pk,proto3" json:"ed25519_pk,omitempty"`
-	// bls_sig is the BLS signature over ed25519_pk
-	BlsSig []byte `protobuf:"bytes,2,opt,name=bls_sig,json=blsSig,proto3" json:"bls_sig,omitempty"`
-	// ed25519_sig is the Ed25519 signature over bls_sig
-	Ed25519Sig []byte `protobuf:"bytes,3,opt,name=ed25519_sig,json=ed25519Sig,proto3" json:"ed25519_sig,omitempty"`
+	// bls_sig is calculated by encrypt(key = BLS_sk, data = encrypt(key = Ed25519_sk, data = Secp256k1_pk))
+	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,1,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 }
 
 func (m *ProofOfPossession) Reset()         { *m = ProofOfPossession{} }
@@ -120,29 +111,8 @@ func (m *ProofOfPossession) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ProofOfPossession proto.InternalMessageInfo
 
-func (m *ProofOfPossession) GetEd25519Pk() []byte {
-	if m != nil {
-		return m.Ed25519Pk
-	}
-	return nil
-}
-
-func (m *ProofOfPossession) GetBlsSig() []byte {
-	if m != nil {
-		return m.BlsSig
-	}
-	return nil
-}
-
-func (m *ProofOfPossession) GetEd25519Sig() []byte {
-	if m != nil {
-		return m.Ed25519Sig
-	}
-	return nil
-}
-
 func init() {
-	proto.RegisterType((*BlsPubKey)(nil), "babylon.checkpointing.v1.BlsPubKey")
+	proto.RegisterType((*BlsKey)(nil), "babylon.checkpointing.v1.BlsKey")
 	proto.RegisterType((*ProofOfPossession)(nil), "babylon.checkpointing.v1.ProofOfPossession")
 }
 
@@ -151,27 +121,28 @@ func init() {
 }
 
 var fileDescriptor_a7e926461cc70111 = []byte{
-	// 262 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x90, 0x31, 0x4f, 0xc3, 0x30,
-	0x10, 0x85, 0x6b, 0x2a, 0xb5, 0x8a, 0xe9, 0x00, 0x5e, 0xc8, 0x82, 0xa9, 0xca, 0xd2, 0x29, 0x51,
-	0x41, 0x11, 0x62, 0xed, 0xca, 0xd0, 0x28, 0xdd, 0x58, 0xaa, 0x38, 0x71, 0x1d, 0xcb, 0xc6, 0x8e,
-	0x72, 0x29, 0xc2, 0xff, 0x82, 0x9f, 0xc5, 0xd8, 0x91, 0x11, 0x25, 0x7f, 0x04, 0x25, 0x4a, 0x06,
-	0xd8, 0xfc, 0xfc, 0xde, 0x7d, 0xba, 0x7b, 0xf8, 0x9e, 0xa5, 0xcc, 0x69, 0x6b, 0xc2, 0xac, 0xe0,
-	0x99, 0x2a, 0xad, 0x34, 0xb5, 0x34, 0x22, 0x64, 0x1a, 0x0e, 0x8a, 0xbb, 0xa0, 0xac, 0x6c, 0x6d,
-	0x89, 0x3f, 0x84, 0x82, 0x3f, 0xa1, 0xe0, 0x7d, 0xb3, 0x7a, 0xc2, 0xde, 0x56, 0x43, 0x7c, 0x62,
-	0x2f, 0xdc, 0x91, 0x2b, 0x3c, 0x55, 0xdc, 0xf9, 0x68, 0x89, 0xd6, 0x8b, 0xa4, 0x7b, 0x12, 0x1f,
-	0xcf, 0xd3, 0x3c, 0xaf, 0x38, 0x80, 0x7f, 0xb1, 0x44, 0x6b, 0x2f, 0x19, 0xe5, 0x4a, 0xe3, 0xeb,
-	0xb8, 0xb2, 0xf6, 0xb8, 0x3b, 0xc6, 0x16, 0x80, 0x03, 0x48, 0x6b, 0xc8, 0x2d, 0xc6, 0x3c, 0x7f,
-	0x88, 0xa2, 0xcd, 0xf3, 0xa1, 0x54, 0x03, 0xc7, 0x1b, 0x7e, 0x62, 0x45, 0x6e, 0xf0, 0xbc, 0xdb,
-	0x0b, 0xa4, 0xe8, 0x69, 0x8b, 0x64, 0xc6, 0x34, 0xec, 0xa5, 0x20, 0x77, 0xf8, 0x72, 0x9c, 0xeb,
-	0xcc, 0x69, 0x6f, 0x8e, 0xa8, 0xbd, 0x14, 0xdb, 0xdd, 0x57, 0x43, 0xd1, 0xb9, 0xa1, 0xe8, 0xa7,
-	0xa1, 0xe8, 0xb3, 0xa5, 0x93, 0x73, 0x4b, 0x27, 0xdf, 0x2d, 0x9d, 0xbc, 0x46, 0x42, 0xd6, 0xc5,
-	0x89, 0x05, 0x99, 0x7d, 0x0b, 0x87, 0x2b, 0xb3, 0x22, 0x95, 0x66, 0x14, 0xe1, 0xc7, 0xbf, 0x66,
-	0x6a, 0x57, 0x72, 0x60, 0xb3, 0xbe, 0x98, 0xc7, 0xdf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x3e, 0x05,
-	0xe2, 0xdc, 0x3f, 0x01, 0x00, 0x00,
+	// 284 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4e, 0x4a, 0x4c, 0xaa,
+	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0xce, 0x48, 0x4d, 0xce, 0x2e, 0xc8, 0xcf, 0xcc, 0x2b, 0xc9, 0xcc,
+	0x4b, 0xd7, 0x4f, 0xca, 0x29, 0x8e, 0xcf, 0x4e, 0xad, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17,
+	0x92, 0x80, 0x2a, 0xd2, 0x43, 0x51, 0xa4, 0x57, 0x66, 0x28, 0x25, 0x92, 0x9e, 0x9f, 0x9e, 0x0f,
+	0x56, 0xa4, 0x0f, 0x62, 0x41, 0xd4, 0x2b, 0xcd, 0x63, 0xe4, 0x62, 0x73, 0xca, 0x29, 0xf6, 0x4e,
+	0xad, 0x14, 0x0a, 0xe5, 0x62, 0x2b, 0x28, 0x4d, 0xca, 0x4e, 0xad, 0x94, 0x60, 0x54, 0x60, 0xd4,
+	0xe0, 0x71, 0xb2, 0xbd, 0x75, 0x4f, 0xde, 0x32, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f, 0x39,
+	0x3f, 0x57, 0x1f, 0x6a, 0x72, 0x72, 0x46, 0x62, 0x66, 0x9e, 0x3e, 0xdc, 0x2d, 0x45, 0x95, 0x05,
+	0x25, 0xf9, 0x20, 0x47, 0x18, 0x1a, 0x19, 0x5b, 0x18, 0xea, 0x05, 0x94, 0x26, 0xe5, 0x64, 0x26,
+	0x7b, 0xa7, 0x56, 0x06, 0x41, 0x0d, 0x13, 0xb2, 0xe5, 0x62, 0x2e, 0xc8, 0x2f, 0x90, 0x60, 0x52,
+	0x60, 0xd4, 0xe0, 0x36, 0xd2, 0xd6, 0xc3, 0xe5, 0x3e, 0xbd, 0x80, 0xa2, 0xfc, 0xfc, 0x34, 0xff,
+	0xb4, 0x80, 0xfc, 0xe2, 0xe2, 0xd4, 0xe2, 0xe2, 0xcc, 0xfc, 0xbc, 0x20, 0x90, 0x3e, 0xa5, 0x6c,
+	0x2e, 0x41, 0x0c, 0x19, 0xa1, 0x30, 0x2e, 0x76, 0x90, 0xb7, 0x8b, 0x33, 0xd3, 0x29, 0x71, 0x6b,
+	0x70, 0x66, 0x7a, 0x5e, 0x62, 0x49, 0x69, 0x51, 0x6a, 0x10, 0x5b, 0x52, 0x4e, 0x71, 0x70, 0x66,
+	0xba, 0x93, 0xff, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38,
+	0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x99, 0x12, 0x32,
+	0xbc, 0x02, 0x2d, 0x5a, 0x4a, 0x2a, 0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0xa1, 0x6c, 0x0c, 0x08,
+	0x00, 0x00, 0xff, 0xff, 0x88, 0x85, 0x5d, 0xf5, 0xbc, 0x01, 0x00, 0x00,
 }
 
-func (m *BlsPubKey) Marshal() (dAtA []byte, err error) {
+func (m *BlsKey) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -181,27 +152,37 @@ func (m *BlsPubKey) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *BlsPubKey) MarshalTo(dAtA []byte) (int, error) {
+func (m *BlsKey) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *BlsPubKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BlsKey) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Address) > 0 {
-		i -= len(m.Address)
-		copy(dAtA[i:], m.Address)
-		i = encodeVarintBlsKey(dAtA, i, uint64(len(m.Address)))
+	if m.Pop != nil {
+		{
+			size, err := m.Pop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintBlsKey(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Key) > 0 {
-		i -= len(m.Key)
-		copy(dAtA[i:], m.Key)
-		i = encodeVarintBlsKey(dAtA, i, uint64(len(m.Key)))
+	if m.Pubkey != nil {
+		{
+			size := m.Pubkey.Size()
+			i -= size
+			if _, err := m.Pubkey.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintBlsKey(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -228,24 +209,15 @@ func (m *ProofOfPossession) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Ed25519Sig) > 0 {
-		i -= len(m.Ed25519Sig)
-		copy(dAtA[i:], m.Ed25519Sig)
-		i = encodeVarintBlsKey(dAtA, i, uint64(len(m.Ed25519Sig)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.BlsSig) > 0 {
-		i -= len(m.BlsSig)
-		copy(dAtA[i:], m.BlsSig)
-		i = encodeVarintBlsKey(dAtA, i, uint64(len(m.BlsSig)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Ed25519Pk) > 0 {
-		i -= len(m.Ed25519Pk)
-		copy(dAtA[i:], m.Ed25519Pk)
-		i = encodeVarintBlsKey(dAtA, i, uint64(len(m.Ed25519Pk)))
+	if m.BlsSig != nil {
+		{
+			size := m.BlsSig.Size()
+			i -= size
+			if _, err := m.BlsSig.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintBlsKey(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -263,18 +235,18 @@ func encodeVarintBlsKey(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *BlsPubKey) Size() (n int) {
+func (m *BlsKey) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Key)
-	if l > 0 {
+	if m.Pubkey != nil {
+		l = m.Pubkey.Size()
 		n += 1 + l + sovBlsKey(uint64(l))
 	}
-	l = len(m.Address)
-	if l > 0 {
+	if m.Pop != nil {
+		l = m.Pop.Size()
 		n += 1 + l + sovBlsKey(uint64(l))
 	}
 	return n
@@ -286,16 +258,8 @@ func (m *ProofOfPossession) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Ed25519Pk)
-	if l > 0 {
-		n += 1 + l + sovBlsKey(uint64(l))
-	}
-	l = len(m.BlsSig)
-	if l > 0 {
-		n += 1 + l + sovBlsKey(uint64(l))
-	}
-	l = len(m.Ed25519Sig)
-	if l > 0 {
+	if m.BlsSig != nil {
+		l = m.BlsSig.Size()
 		n += 1 + l + sovBlsKey(uint64(l))
 	}
 	return n
@@ -307,7 +271,7 @@ func sovBlsKey(x uint64) (n int) {
 func sozBlsKey(x uint64) (n int) {
 	return sovBlsKey(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *BlsPubKey) Unmarshal(dAtA []byte) error {
+func (m *BlsKey) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -330,15 +294,15 @@ func (m *BlsPubKey) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: BlsPubKey: wiretype end group for non-group")
+			return fmt.Errorf("proto: BlsKey: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: BlsPubKey: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BlsKey: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pubkey", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -365,16 +329,17 @@ func (m *BlsPubKey) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Key = append(m.Key[:0], dAtA[iNdEx:postIndex]...)
-			if m.Key == nil {
-				m.Key = []byte{}
+			var v github_com_babylonchain_babylon_crypto_bls12381.PublicKey
+			m.Pubkey = &v
+			if err := m.Pubkey.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Pop", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBlsKey
@@ -384,23 +349,27 @@ func (m *BlsPubKey) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthBlsKey
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthBlsKey
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Address = string(dAtA[iNdEx:postIndex])
+			if m.Pop == nil {
+				m.Pop = &ProofOfPossession{}
+			}
+			if err := m.Pop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -454,40 +423,6 @@ func (m *ProofOfPossession) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ed25519Pk", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBlsKey
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthBlsKey
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthBlsKey
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Ed25519Pk = append(m.Ed25519Pk[:0], dAtA[iNdEx:postIndex]...)
-			if m.Ed25519Pk == nil {
-				m.Ed25519Pk = []byte{}
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BlsSig", wireType)
 			}
 			var byteLen int
@@ -515,43 +450,10 @@ func (m *ProofOfPossession) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BlsSig = append(m.BlsSig[:0], dAtA[iNdEx:postIndex]...)
-			if m.BlsSig == nil {
-				m.BlsSig = []byte{}
-			}
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Ed25519Sig", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowBlsKey
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthBlsKey
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthBlsKey
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Ed25519Sig = append(m.Ed25519Sig[:0], dAtA[iNdEx:postIndex]...)
-			if m.Ed25519Sig == nil {
-				m.Ed25519Sig = []byte{}
+			var v github_com_babylonchain_babylon_crypto_bls12381.Signature
+			m.BlsSig = &v
+			if err := m.BlsSig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
 			}
 			iNdEx = postIndex
 		default:
