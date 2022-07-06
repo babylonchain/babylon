@@ -8,12 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"math/big"
 )
 
 type HeadersState struct {
 	cdc          codec.BinaryCodec
 	headers      sdk.KVStore
 	hashToHeight sdk.KVStore
+	hashToWork   sdk.KVStore
 	tip          sdk.KVStore
 }
 
@@ -24,16 +26,21 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 		cdc:          k.cdc,
 		headers:      prefix.NewStore(store, types.HeadersObjectPrefix),
 		hashToHeight: prefix.NewStore(store, types.HashToHeightPrefix),
+		hashToWork:   prefix.NewStore(store, types.HashToWorkPrefix),
 		tip:          prefix.NewStore(store, types.TipPrefix),
 	}
 }
 
-// CreateHeader Insert the header into the hash->height and (height, hash)->header storage
-func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) {
+// CreateHeader Insert the header into the following storages:
+// - hash->height
+// - hash->work
+// - (height, hash)->header storage
+func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64, cumulativeWork *big.Int) {
 	headerHash := header.BlockHash()
 	// Get necessary keys according
 	headersKey := types.HeadersObjectKey(height, &headerHash)
 	heightKey := types.HeadersObjectHeightKey(&headerHash)
+	workKey := types.HeadersObjectWorkKey(&headerHash)
 
 	// Convert the block header into bytes
 	headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
@@ -42,8 +49,10 @@ func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) {
 	s.headers.Set(headersKey, headerBytes)
 	// map header to height
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
+	// map header to work
+	s.hashToWork.Set(workKey, cumulativeWork.Bytes())
 
-	s.updateLongestChain(header, height)
+	s.updateLongestChain(header, cumulativeWork)
 }
 
 // CreateTip sets the provided header as the tip
@@ -88,6 +97,21 @@ func (s HeadersState) GetHeaderHeight(hash *chainhash.Hash) (uint64, error) {
 	// Convert to uint64 form
 	height := sdk.BigEndianToUint64(bz)
 	return height, nil
+}
+
+// GetHeaderWork Retrieve the work of a header
+func (s HeadersState) GetHeaderWork(hash *chainhash.Hash) (*big.Int, error) {
+	// Keyed by hash
+	hashKey := types.HeadersObjectHeightKey(hash)
+	// Retrieve the raw bytes for the work
+	bz := s.hashToWork.Get(hashKey)
+	if bz == nil {
+		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
+	}
+
+	// Convert to *big.Int form
+	work := new(big.Int).SetBytes(bz)
+	return work, nil
 }
 
 // GetHeaderByHash Retrieve a header by its hash
@@ -212,25 +236,26 @@ func (s HeadersState) TipExists() bool {
 }
 
 // updateLongestChain checks whether the tip should be updated and acts accordingly
-func (s HeadersState) updateLongestChain(header *wire.BlockHeader, height uint64) {
+func (s HeadersState) updateLongestChain(header *wire.BlockHeader, cumulativeWork *big.Int) {
 	// If there is no existing tip, then the header is set as the tip
 	if !s.TipExists() {
 		s.CreateTip(header)
 		return
 	}
 
-	// Currently, the tip is the one with the biggest height
-	// TODO: replace this to use accumulative PoW instead
 	// Get the current tip header hash
 	tip := s.GetTip()
 
 	tipHash := tip.BlockHash()
-	tipHeight, err := s.GetHeaderHeight(&tipHash)
+	// Retrieve the tip's work from storage
+	tipWork, err := s.GetHeaderWork(&tipHash)
 	if err != nil {
-		panic("Existing tip does not have a maintained height")
+		panic("Existing tip does not have a maintained work")
 	}
 
-	if tipHeight < height {
+	// If the work of the current tip is less than the work of the provided header,
+	// the provided header is set as the tip.
+	if tipWork.Cmp(cumulativeWork) < 0 {
 		s.CreateTip(header)
 	}
 }
