@@ -75,7 +75,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)),    // msgid
 					sdk.NewAttribute(types.AttributeKeyErrorMsg, err.Error()),       // msgid
 				)
-				ctx.EventManager().EmitEvent(sdk.Event(eventMsgFail))
+				ctx.EventManager().EmitEvent(eventMsgFail)
 				// skip this failed msg
 				continue
 			}
