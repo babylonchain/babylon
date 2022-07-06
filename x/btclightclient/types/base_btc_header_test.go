@@ -10,7 +10,7 @@ import (
 
 func FuzzBaseBTCHeader(f *testing.F) {
 	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
-	defaultBtcdHeader, _ := defaultHeader.ToBlockHeader()
+	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
 	f.Add(
 		defaultBtcdHeader.Version,
@@ -29,7 +29,7 @@ func FuzzBaseBTCHeader(f *testing.F) {
 		// Get the btcd header based on the provided data
 		btcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 		// Convert it into bytes
-		headerBytesObj, _ := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+		headerBytesObj := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 		headerBytes, _ := headerBytesObj.Marshal()
 
 		baseBTCHeader := types.NewBaseBTCHeader(headerBytesObj, height)

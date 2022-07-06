@@ -10,7 +10,7 @@ import (
 
 func FuzzNewHeaderInfo(f *testing.F) {
 	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
-	btcdHeader, _ := defaultHeader.ToBlockHeader()
+	btcdHeader := defaultHeader.ToBlockHeader()
 	f.Add(
 		btcdHeader.Version,
 		btcdHeader.Bits,
@@ -29,12 +29,9 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		header := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 
 		// Get the expected header bytes
-		expectedHeaderBytes, _ := bbl.NewBTCHeaderBytesFromBlockHeader(header)
+		expectedHeaderBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
 
-		headerInfo, err := types.NewHeaderInfo(header)
-		if err != nil {
-			t.Errorf("NewHeaderInfo led to an error %s", err)
-		}
+		headerInfo := types.NewHeaderInfo(header)
 		if headerInfo == nil {
 			t.Errorf("returned object is nil")
 		}
@@ -46,7 +43,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 
 		gotHashBytes := *headerInfo.Hash
 		blockHash := header.BlockHash()
-		expectedHashBytes, _ := bbl.NewBTCHeaderHashBytesFromChainhash(&blockHash)
+		expectedHashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(&blockHash)
 		if bytes.Compare(expectedHashBytes, gotHashBytes) != 0 {
 			t.Errorf("Expected header hash %s got %s", expectedHashBytes, gotHashBytes)
 		}
