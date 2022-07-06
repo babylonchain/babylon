@@ -43,6 +43,20 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
 
+	// emit event
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeWrappedDelegate,
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.Msg.ValidatorAddress),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Msg.DelegatorAddress),
+		),
+	})
+
 	return &types.MsgWrappedDelegateResponse{}, nil
 }
 
@@ -68,6 +82,20 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
 
+	// emit event
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeWrappedUndelegate,
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.Msg.ValidatorAddress),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Msg.DelegatorAddress),
+		),
+	})
+
 	return &types.MsgWrappedUndelegateResponse{}, nil
 }
 
@@ -92,6 +120,21 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 
 	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
+
+	// emit event
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeWrappedBeginRedelegate,
+			sdk.NewAttribute(types.AttributeKeySrcValidator, msg.Msg.ValidatorSrcAddress),
+			sdk.NewAttribute(types.AttributeKeyDstValidator, msg.Msg.ValidatorDstAddress),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.Msg.DelegatorAddress),
+		),
+	})
 
 	return &types.MsgWrappedBeginRedelegateResponse{}, nil
 }
