@@ -2,22 +2,22 @@ package keeper
 
 import (
 	"fmt"
-
-	"github.com/tendermint/tendermint/libs/log"
-
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		memKey     sdk.StoreKey
-		hooks      types.CheckpointingHooks
-		paramstore paramtypes.Subspace
+		cdc            codec.BinaryCodec
+		storeKey       sdk.StoreKey
+		memKey         sdk.StoreKey
+		epochingKeeper types.EpochingKeeper
+		hooks          types.CheckpointingHooks
+		paramstore     paramtypes.Subspace
 	}
 )
 
@@ -25,6 +25,7 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey sdk.StoreKey,
+	ek types.EpochingKeeper,
 	ps paramtypes.Subspace,
 ) Keeper {
 	// set KeyTable if it has not already been set
@@ -33,11 +34,12 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		hooks:      nil,
+		cdc:            cdc,
+		storeKey:       storeKey,
+		memKey:         memKey,
+		epochingKeeper: ek,
+		paramstore:     ps,
+		hooks:          nil,
 	}
 }
 
@@ -98,4 +100,8 @@ func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status ty
 		return err
 	}
 	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
+}
+
+func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr types.ValidatorAddress) error {
+	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
 }

@@ -5,9 +5,19 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
+type ValidatorAddress string
+
 type BlsSigHash []byte
 
 type RawCkptHash []byte
+
+func BytesToValAddr(data []byte) ValidatorAddress {
+	return ValidatorAddress(data)
+}
+
+func ValAddrToBytes(address ValidatorAddress) []byte {
+	return []byte(address)
+}
 
 func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawCheckpointWithMeta {
 	return &RawCheckpointWithMeta{
