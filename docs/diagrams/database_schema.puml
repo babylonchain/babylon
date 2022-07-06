@@ -77,6 +77,9 @@ package "checkpointing" #FFEE93 {
     * aggr_bls_sig: aggregated BLS signature
     * aggr_bls_bitmap: which validators signed
   }
+  note top
+    Goes in the checkpoint in serialized form.
+  end note
 
   entity "Checkpoint Status" as ckpt_status {
     * epoch_number <<FK>>
@@ -86,7 +89,7 @@ package "checkpointing" #FFEE93 {
       | SIGNED: has +1/3 sigs, await submit
       | SUBMITTED: included on BTC
       | CONFIRMED: k-deep on BTC
-    * effective_timestamp: BTC timestamp of k-deep
+      | FINALIZED: w-deep on BTC
   }
 
   entity "BLS Key" as bls_key {
