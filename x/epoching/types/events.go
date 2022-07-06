@@ -18,6 +18,7 @@ const (
 	AttributeKeyValidator         = "validator"
 	AttributeKeySrcValidator      = "source_validator"
 	AttributeKeyDstValidator      = "destination_validator"
+	AttributeKeyEpochBoundary     = "epoch_boundary"
 
 	AttributeValueCategory = ModuleName
 )
