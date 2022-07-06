@@ -21,10 +21,13 @@ func NewBTCHeaderBytesFromHex(hex string) (BTCHeaderBytes, error) {
 	return headerBytes, nil
 }
 
-func NewBTCHeaderBytesFromBlockHeader(header *wire.BlockHeader) BTCHeaderBytes {
+func NewBTCHeaderBytesFromBlockHeader(header *wire.BlockHeader) (BTCHeaderBytes, error) {
 	var headerBytes BTCHeaderBytes
-	headerBytes.FromBlockHeader(header)
-	return headerBytes
+	err := headerBytes.FromBlockHeader(header)
+	if err != nil {
+		return nil, err
+	}
+	return headerBytes, nil
 }
 
 func NewBTCHeaderBytesFromBytes(header []byte) (BTCHeaderBytes, error) {

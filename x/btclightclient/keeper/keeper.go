@@ -60,13 +60,13 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	if err != nil {
 		return err
 	}
-	if parentExists {
+	if !parentExists {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}
 
 	height, err := k.HeadersState(ctx).GetHeaderHeight(&header.PrevBlock)
 	if err != nil {
-		// Parent should always exist
+		// Height should always exist if the previous checks have passed
 		panic("Height for parent is not maintained")
 	}
 

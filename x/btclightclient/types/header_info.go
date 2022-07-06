@@ -5,13 +5,19 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
-func NewHeaderInfo(header *wire.BlockHeader) *HeaderInfo {
+func NewHeaderInfo(header *wire.BlockHeader) (*HeaderInfo, error) {
 	headerHashCh := header.BlockHash()
 
-	currentHeaderBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
-	headerHash := bbl.NewBTCHeaderHashBytesFromChainhash(&headerHashCh)
+	currentHeaderBytes, err := bbl.NewBTCHeaderBytesFromBlockHeader(header)
+	if err != nil {
+		return nil, err
+	}
+	headerHash, err := bbl.NewBTCHeaderHashBytesFromChainhash(&headerHashCh)
+	if err != nil {
+		return nil, err
+	}
 	return &HeaderInfo{
 		Header: &currentHeaderBytes,
 		Hash:   &headerHash,
-	}
+	}, nil
 }

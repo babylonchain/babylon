@@ -30,18 +30,26 @@ var (
 	TipPrefix           = append(HeadersPrefix, 0x2) // where we store the tip
 )
 
-func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
+func HeadersObjectKey(height uint64, hash *chainhash.Hash) ([]byte, error) {
 	he := sdk.Uint64ToBigEndian(height)
 
-	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
+	hashBytes, err := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
+	if err != nil {
+		return nil, err
+	}
 
 	heightPrefix := append(HeadersObjectPrefix, he...)
-	return append(heightPrefix, hashBytes...)
+	return append(heightPrefix, hashBytes...), nil
 }
 
-func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
-	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
-	return append(HashToHeightPrefix, hashBytes...)
+func HeadersObjectHeightKey(hash *chainhash.Hash) ([]byte, error) {
+	hashBytes, err := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
+	if err != nil {
+		return nil, err
+	}
+	return append(HashToHeightPrefix, hashBytes...), nil
+}
+
 }
 
 func TipKey() []byte {

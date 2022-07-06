@@ -19,10 +19,13 @@ func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 	return hashBytes, nil
 }
 
-func NewBTCHeaderHashBytesFromChainhash(chHash *chainhash.Hash) BTCHeaderHashBytes {
+func NewBTCHeaderHashBytesFromChainhash(chHash *chainhash.Hash) (BTCHeaderHashBytes, error) {
 	var headerHashBytes BTCHeaderHashBytes
-	headerHashBytes.Unmarshal(chHash[:])
-	return headerHashBytes
+	err := headerHashBytes.Unmarshal(chHash[:])
+	if err != nil {
+		return nil, err
+	}
+	return headerHashBytes, nil
 }
 
 func NewBTCHeaderHashBytesFromBytes(hash []byte) BTCHeaderHashBytes {

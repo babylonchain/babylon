@@ -72,7 +72,10 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		req.Pagination = &query.PageRequest{}
 	}
 	// If a starting key has not been set, then the first header is the tip
-	prevHeader := k.HeadersState(sdkCtx).GetTip()
+	prevHeader, err := k.HeadersState(sdkCtx).GetTip()
+	if err != nil {
+		return nil, err
+	}
 	// Otherwise, retrieve the header from the key
 	if len(req.Pagination.Key) != 0 {
 		headerHash := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
@@ -89,7 +92,11 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	}
 
 	var headers []*types.HeaderInfo
-	headers = append(headers, types.NewHeaderInfo(prevHeader))
+	headerInfo, err := types.NewHeaderInfo(prevHeader)
+	if err != nil {
+		return nil, err
+	}
+	headers = append(headers, headerInfo)
 	store := prefix.NewStore(k.HeadersState(sdkCtx).headers, types.HeadersObjectPrefix)
 
 	// Set this value to true to signal to FilteredPaginate to iterate the entries in reverse
@@ -107,7 +114,11 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 			// If the previous block extends this block, then this block is part of the main chain
 			if prevHeader.PrevBlock.String() == btcdHeader.BlockHash().String() {
 				prevHeader = btcdHeader
-				headers = append(headers, types.NewHeaderInfo(btcdHeader))
+				headerInfo, err := types.NewHeaderInfo(btcdHeader)
+				if err != nil {
+					return false, err
+				}
+				headers = append(headers, headerInfo)
 			}
 		}
 		return true, nil
@@ -120,7 +131,10 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	// Override the next key attribute to point to the parent of the last header
 	// instead of the next element contained in the store
 	prevBlockCh := prevHeader.PrevBlock
-	pageRes.NextKey = bbl.NewBTCHeaderHashBytesFromChainhash(&prevBlockCh)
+	pageRes.NextKey, err = bbl.NewBTCHeaderHashBytesFromChainhash(&prevBlockCh)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }
