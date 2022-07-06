@@ -27,7 +27,10 @@ func FuzzHeadersObjectKey(f *testing.F) {
 		expectedKey := append(types.HeadersObjectPrefix, heightBytes...)
 		expectedKey = append(expectedKey, chHashBytes...)
 
-		gotKey := types.HeadersObjectKey(height, chHash)
+		gotKey, err := types.HeadersObjectKey(height, chHash)
+		if err != nil {
+			t.Errorf("Tuple (%d, %s) cannot be converted to a height key", height, chHash.String())
+		}
 		if bytes.Compare(expectedKey, gotKey) != 0 {
 			t.Errorf("Expected headers object key %s got %s", expectedKey, gotKey)
 		}

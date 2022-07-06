@@ -50,8 +50,6 @@ func HeadersObjectHeightKey(hash *chainhash.Hash) ([]byte, error) {
 	return append(HashToHeightPrefix, hashBytes...), nil
 }
 
-}
-
 func TipKey() []byte {
 	return TipPrefix
 }
