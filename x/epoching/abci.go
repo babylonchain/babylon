@@ -48,7 +48,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	logger := k.Logger(ctx)
 	validatorSetUpdate := []abci.ValidatorUpdate{}
 
 	// get the height of the last block in this epoch
@@ -63,26 +62,38 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		// forward each msg in the msg queue to the right keeper
 		for _, msg := range queuedMsgs {
 			res, err := k.HandleQueuedMsg(ctx, msg)
-			// we should skip msg with errors rather than panicking, as some users may wrap an invalid message
+			// skip this failed msg and emit and event signalling it
+			// we do not panic here as some users may wrap an invalid message
 			// (e.g., self-delegate coins more than its balance, wrong coding of addresses, ...)
 			// honest validators will have consistent execution results on the queued messages
 			if err != nil {
-				logger.Error(err.Error())
+				// emit an event signalling the failed execution
+				eventMsgFail := sdk.NewEvent(
+					types.EventTypeHandleQueuedMsgFailed,
+					sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()), // epoch number
+					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)),      // txid
+					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)),    // msgid
+					sdk.NewAttribute(types.AttributeKeyErrorMsg, err.Error()),       // msgid
+				)
+				ctx.EventManager().EmitEvent(sdk.Event(eventMsgFail))
+				// skip this failed msg
 				continue
 			}
-			// append the epoch info to each event and emit event
+			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
 			for _, event := range res.Events {
-				newAttr := sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()).ToKVPair()
-				event.Attributes = append(event.Attributes, newAttr)
-				typedEvent, err := sdk.ParseTypedEvent(event)
-				if err != nil {
-					logger.Error(err.Error())
-					continue
-				}
-				if err := ctx.EventManager().EmitTypedEvent(typedEvent); err != nil {
-					logger.Error(err.Error())
-					continue
-				}
+				// create the wrapped event
+				wrappedEvent := abci.Event{Type: types.EventTypeHandleQueuedMsg}
+				// add our attributes
+				wrappedEvent.Attributes = append(wrappedEvent.Attributes,
+					sdk.NewAttribute(types.AttributeKeyOriginalEventType, event.Type).ToKVPair(), // original event type
+					sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()).ToKVPair(),   // epoch number
+					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)).ToKVPair(),        // txid
+					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)).ToKVPair(),      // msgid
+				)
+				// add original attributes
+				wrappedEvent.Attributes = append(wrappedEvent.Attributes, event.Attributes...)
+				// emit the wrapped event
+				ctx.EventManager().EmitEvent(sdk.Event(wrappedEvent))
 			}
 		}
 
