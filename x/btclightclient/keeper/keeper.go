@@ -48,27 +48,22 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // InsertHeader inserts a btcd header into the header state
 func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	headerHash := header.BlockHash()
-	headerExists, err := k.HeadersState(ctx).HeaderExists(&headerHash)
-	if err != nil {
-		return err
-	}
+	headerExists := k.HeadersState(ctx).HeaderExists(&headerHash)
 	if headerExists {
 		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
 	}
 
-	parentExists, err := k.HeadersState(ctx).HeaderExists(&header.PrevBlock)
-	if err != nil {
-		return err
-	}
-	if parentExists {
+	parentExists := k.HeadersState(ctx).HeaderExists(&header.PrevBlock)
+	if !parentExists {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}
 
 	height, err := k.HeadersState(ctx).GetHeaderHeight(&header.PrevBlock)
 	if err != nil {
-		// Parent should always exist
+		// Height should always exist if the previous checks have passed
 		panic("Height for parent is not maintained")
 	}
 
-	return k.HeadersState(ctx).CreateHeader(header, height+1)
+	k.HeadersState(ctx).CreateHeader(header, height+1)
+	return nil
 }

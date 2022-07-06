@@ -14,7 +14,7 @@ import (
 func FuzzMsgInsertHeader(f *testing.F) {
 	addressBytes := []byte("from________________")
 	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
-	defaultBtcdHeader, _ := defaultHeader.ToBlockHeader()
+	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
 	// Maximum btc difficulty possible
 	// Use it to set the difficulty bits of blocks as well as the upper PoW limit
@@ -41,7 +41,8 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		// Get the btcd header based on the provided data
 		btcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 		// If the header hex is the same as the default one, then this is the seed input
-		headerHex, _ := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader).MarshalHex()
+		headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+		headerHex := headerBytes.MarshalHex()
 		seedInput := types.DefaultBaseHeaderHex == headerHex
 
 		// Make the address have a proper size
@@ -74,7 +75,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		// Generate a header with the provided modifications
 		newBtcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 		newHeader := bbl.NewBTCHeaderBytesFromBlockHeader(newBtcdHeader)
-		newHeaderHex, _ := newHeader.MarshalHex()
+		newHeaderHex := newHeader.MarshalHex()
 
 		// Check whether the hash is still bigger than the maximum allowed
 		// This happens because even though we pass a series of "f"s as an input

@@ -47,11 +47,11 @@ func FuzzHeadersObjectHeightKey(f *testing.F) {
 
 		// Construct the expected key
 		chHashBytes := chHash[:]
-		expectedKey := append(types.HashToHeightPrefix, chHashBytes...)
 
-		gotKey := types.HeadersObjectHeightKey(chHash)
-		if bytes.Compare(expectedKey, gotKey) != 0 {
-			t.Errorf("Expected headers object height key %s got %s", expectedKey, gotKey)
+		expectedHeightKey := append(types.HashToHeightPrefix, chHashBytes...)
+		gotHeightKey := types.HeadersObjectHeightKey(chHash)
+		if bytes.Compare(expectedHeightKey, gotHeightKey) != 0 {
+			t.Errorf("Expected headers object height key %s got %s", expectedHeightKey, gotHeightKey)
 		}
 	})
 }

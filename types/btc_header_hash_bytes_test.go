@@ -55,9 +55,8 @@ func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_MarshalHex() {
 		var hhb types.BTCHeaderHashBytes
 		hhb.UnmarshalHex(d.hex)
 
-		h, err := hhb.MarshalHex()
+		h := hhb.MarshalHex()
 		s.Require().Equal(d.hex, h, d.name)
-		s.Require().NoError(err, d.name)
 	}
 }
 
@@ -202,8 +201,7 @@ func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_ToChainhash() {
 		var hhb types.BTCHeaderHashBytes
 		hhb.UnmarshalHex(d.headerHash)
 
-		chHash, err := hhb.ToChainhash()
-		s.Require().NoError(err)
+		chHash := hhb.ToChainhash()
 		s.Require().Equal(d.headerHash, chHash.String(), d.name)
 	}
 }
@@ -217,12 +215,10 @@ func (s *headerHashBytesTestSuite) TestBTCHeaderHashBytes_FromChainhash() {
 	for _, d := range data {
 		var hhb types.BTCHeaderHashBytes
 		hhb.UnmarshalHex(d.hex)
-		chHash, _ := hhb.ToChainhash()
+		chHash := hhb.ToChainhash()
 
 		var hhb2 types.BTCHeaderHashBytes
-		err := hhb2.FromChainhash(chHash)
-
-		s.Require().NoError(err)
+		hhb2.FromChainhash(chHash)
 
 		bz1, _ := hhb.Marshal()
 		bz2, _ := hhb2.Marshal()
