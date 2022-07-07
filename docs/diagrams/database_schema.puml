@@ -181,7 +181,7 @@ block }o--|{ validator : current validator set
 block }o--|{ validator : next validator set
 block }o--|| validator : proposer
 
-epoch ||--o{ queued_msg : delay to end of epoch
+epoch ||..o{ queued_msg : delay to end of epoch
 epoch ||--|| block : start height
 
 queued_msg .> staking_msg
