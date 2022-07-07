@@ -35,7 +35,8 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 // - hash->height
 // - hash->work
 // - (height, hash)->header storage
-func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64, cumulativeWork *big.Int) {
+// Returns a boolean value indicating whether there is a new tip
+func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64, cumulativeWork *big.Int) bool {
 	headerHash := header.BlockHash()
 	// Get necessary keys according
 	headersKey := types.HeadersObjectKey(height, &headerHash)
@@ -52,7 +53,7 @@ func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64, cumu
 	// map header to work
 	s.hashToWork.Set(workKey, cumulativeWork.Bytes())
 
-	s.updateLongestChain(header, cumulativeWork)
+	return s.updateLongestChain(header, cumulativeWork)
 }
 
 // CreateTip sets the provided header as the tip
@@ -235,12 +236,12 @@ func (s HeadersState) TipExists() bool {
 	return s.tip.Has(tipKey)
 }
 
-// updateLongestChain checks whether the tip should be updated and acts accordingly
-func (s HeadersState) updateLongestChain(header *wire.BlockHeader, cumulativeWork *big.Int) {
+// updateLongestChain checks whether the tip should be updated and returns true if it does
+func (s HeadersState) updateLongestChain(header *wire.BlockHeader, cumulativeWork *big.Int) bool {
 	// If there is no existing tip, then the header is set as the tip
 	if !s.TipExists() {
 		s.CreateTip(header)
-		return
+		return true
 	}
 
 	// Get the current tip header hash
@@ -257,5 +258,7 @@ func (s HeadersState) updateLongestChain(header *wire.BlockHeader, cumulativeWor
 	// the provided header is set as the tip.
 	if tipWork.Cmp(cumulativeWork) < 0 {
 		s.CreateTip(header)
+		return true
 	}
+	return false
 }

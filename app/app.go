@@ -330,7 +330,9 @@ func NewBabylonApp(
 	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
 	app.EpochingKeeper = epochingKeeper
 
-	app.BTCLightClientKeeper = *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
+	btclightclientKeeper := *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
+	btclightclientKeeper.SetHooks(btclightclienttypes.NewMultiBTCLightClientHooks())
+	app.BTCLightClientKeeper = btclightclientKeeper
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations

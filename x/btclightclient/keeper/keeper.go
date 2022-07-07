@@ -17,6 +17,7 @@ type (
 		cdc        codec.BinaryCodec
 		storeKey   sdk.StoreKey
 		memKey     sdk.StoreKey
+		hooks      types.BTCLightClientHooks
 		paramstore paramtypes.Subspace
 	}
 )
@@ -37,12 +38,23 @@ func NewKeeper(
 		cdc:        cdc,
 		storeKey:   storeKey,
 		memKey:     memKey,
+		hooks:      nil,
 		paramstore: ps,
 	}
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
+}
+
+// SetHooks sets the btclightclient hooks
+func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
+	if k.hooks != nil {
+		panic("cannot set btclightclient hooks twice")
+	}
+	k.hooks = bh
+
+	return k
 }
 
 // InsertHeader inserts a btcd header into the header state
@@ -74,6 +86,12 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	cumulativeWork := types.CumulativeWork(headerWork, parentWork)
 
 	// Create the header
-	k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
+	tipUpdated := k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
+	if tipUpdated {
+		// Trigger TipUpdated hook
+		k.AfterTipUpdated(ctx, height+1)
+		// Emit TipUpdated event
+		ctx.EventManager().EmitTypedEvent(&types.EventChainExtended{Height: height + 1})
+	}
 	return nil
 }
