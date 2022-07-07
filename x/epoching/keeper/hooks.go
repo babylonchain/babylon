@@ -46,7 +46,8 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	// add the validator address to the set
 	h.k.AddSlashedValidator(ctx, valAddr)
 
-	numSlashedVals := h.k.GetSlashedValidatorSetSize(ctx)
+	epochNumber := h.k.GetEpochNumber(ctx)
+	numSlashedVals := h.k.GetSlashedValidatorSetSize(ctx, epochNumber)
 	numMaxVals := h.k.stk.GetParams(ctx).MaxValidators
 	// if a certain threshold (1/3 or 2/3) validators are slashed in a single epoch, emit event and trigger hook
 	if numSlashedVals.Uint64() == uint64(numMaxVals)/3 || numSlashedVals.Uint64() == uint64(numMaxVals)*2/3 {
@@ -59,7 +60,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 			),
 		})
 		// trigger hook
-		slashedVals := h.k.GetSlashedValidators(ctx)
+		slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
 		h.k.BeforeSlashThreshold(ctx, slashedVals)
 	}
 }
