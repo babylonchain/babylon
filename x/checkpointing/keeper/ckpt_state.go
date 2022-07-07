@@ -17,7 +17,7 @@ func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
 	store := ctx.KVStore(k.storeKey)
 	return CheckpointsState{
 		cdc:         k.cdc,
-		checkpoints: prefix.NewStore(store, types.CheckpointsPrefix),
+		checkpoints: prefix.NewStore(store, types.CkptsObjectPrefix),
 	}
 }
 

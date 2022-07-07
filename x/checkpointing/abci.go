@@ -23,6 +23,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	// get the height of the last block in this epoch
 	epochBoundary := k.GetEpochBoundary(ctx)
 	// if this block is the second block of an epoch
+	// TODO: it's not correct, we want the epoch boundary of the previous epoch
 	if uint64(ctx.BlockHeight())-2 == epochBoundary.Uint64() {
 		// note that this epochNum is obtained before the BeginBlocker of the epoching module is executed
 		// meaning that the epochNum has not been incremented upon a new epoch

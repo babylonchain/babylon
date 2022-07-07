@@ -28,6 +28,8 @@ message RawCheckpointWithMeta {
   RawCheckpoint ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
+  // power_sum defines the accumulated voting power for the checkpoint
+  uint64 power_sum = 3;
 }
 
 // CkptStatus is the status of a checkpoint.
