@@ -41,6 +41,7 @@ func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
 
 func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
 	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
+
 	return append(HashToHeightPrefix, hashBytes...)
 }
 

@@ -9,6 +9,7 @@ func NewHeaderInfo(header *wire.BlockHeader) *HeaderInfo {
 	headerHashCh := header.BlockHash()
 
 	currentHeaderBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
+
 	headerHash := bbl.NewBTCHeaderHashBytesFromChainhash(&headerHashCh)
 	return &HeaderInfo{
 		Header: &currentHeaderBytes,
