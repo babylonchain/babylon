@@ -1,0 +1,10 @@
+syntax = "proto3";
+package babylon.btclightclient.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+
+// EventTipUpdated is emitted on Msg/InsertHeader
+message EventTipUpdated {
+  // The height of the new tip
+  uint64 height = 1;
+}
