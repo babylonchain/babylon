@@ -95,3 +95,9 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	}
 	return nil
 }
+
+// BlockHeight returns the height of the provided header
+func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, error) {
+	headerHash := header.BlockHash()
+	return k.HeadersState(ctx).GetHeaderHeight(&headerHash)
+}
