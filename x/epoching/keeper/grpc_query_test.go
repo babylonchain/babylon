@@ -59,9 +59,9 @@ func FuzzParamsQuery(f *testing.F) {
 		require.NoError(t, err)
 		// if the random flag is true, then resp.Params should be changed, otherwise default
 		if flag {
-			require.Equal(t, resp.Params, params)
+			require.Equal(t, params, resp.Params)
 		} else {
-			require.Equal(t, resp.Params, types.DefaultParams())
+			require.Equal(t, types.DefaultParams(), resp.Params)
 		}
 	})
 }
