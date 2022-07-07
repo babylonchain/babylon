@@ -48,10 +48,8 @@ func TestMsgDecode(t *testing.T) {
 	// create unwrapped msg
 	msgUnwrapped := stakingtypes.NewMsgDelegate(sdk.AccAddress(valAddr1), valAddr2, coinPos)
 
-	// wrapp msg
-	msg, err := types.NewMsgWrappedDelegate(msgUnwrapped)
-	require.NoError(t, err)
-
+	// wrap and marshal msg
+	msg := types.NewMsgWrappedDelegate(msgUnwrapped)
 	msgSerialized, err := cdc.MarshalInterface(msg)
 	require.NoError(t, err)
 
@@ -73,24 +71,18 @@ func TestMsgWrappedDelegate(t *testing.T) {
 		validatorAddr sdk.ValAddress
 		bond          sdk.Coin
 		expectPass    bool
-		expectErr     bool
 	}{
-		{"basic good", sdk.AccAddress(valAddr1), valAddr2, coinPos, true, false},
-		{"self bond", sdk.AccAddress(valAddr1), valAddr1, coinPos, true, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, coinPos, false, false},
-		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, coinPos, false, false},
-		{"empty bond", sdk.AccAddress(valAddr1), valAddr2, coinZero, false, false},
-		{"nil bold", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false, false},
+		{"basic good", sdk.AccAddress(valAddr1), valAddr2, coinPos, true},
+		{"self bond", sdk.AccAddress(valAddr1), valAddr1, coinPos, true},
+		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, coinPos, false},
+		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, coinPos, false},
+		{"empty bond", sdk.AccAddress(valAddr1), valAddr2, coinZero, false},
+		{"nil bold", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false},
 	}
 
 	for _, tc := range tests {
 		msgUnwrapped := stakingtypes.NewMsgDelegate(tc.delegatorAddr, tc.validatorAddr, tc.bond)
-		msg, err := types.NewMsgWrappedDelegate(msgUnwrapped)
-		if tc.expectErr {
-			require.Error(t, err, "test: %v", tc.name)
-		} else {
-			require.NoError(t, err, "test: %v", tc.name)
-		}
+		msg := types.NewMsgWrappedDelegate(msgUnwrapped)
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {
@@ -108,24 +100,18 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		validatorDstAddr sdk.ValAddress
 		amount           sdk.Coin
 		expectPass       bool
-		expectErr        bool
 	}{
-		{"regular", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true, false},
-		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false, false},
-		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.Coin{}, false, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false, false},
-		{"empty source validator", sdk.AccAddress(valAddr1), emptyAddr, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false, false},
-		{"empty destination validator", sdk.AccAddress(valAddr1), valAddr2, emptyAddr, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false, false},
+		{"regular", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true},
+		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false},
+		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.Coin{}, false},
+		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
+		{"empty source validator", sdk.AccAddress(valAddr1), emptyAddr, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
+		{"empty destination validator", sdk.AccAddress(valAddr1), valAddr2, emptyAddr, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
 	}
 
 	for _, tc := range tests {
 		msgUnwrapped := stakingtypes.NewMsgBeginRedelegate(tc.delegatorAddr, tc.validatorSrcAddr, tc.validatorDstAddr, tc.amount)
-		msg, err := types.NewMsgWrappedBeginRedelegate(msgUnwrapped)
-		if tc.expectErr {
-			require.Error(t, err, "test: %v", tc.name)
-		} else {
-			require.NoError(t, err, "test: %v", tc.name)
-		}
+		msg := types.NewMsgWrappedBeginRedelegate(msgUnwrapped)
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {
@@ -142,23 +128,17 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 		validatorAddr sdk.ValAddress
 		amount        sdk.Coin
 		expectPass    bool
-		expectErr     bool
 	}{
-		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true, false},
-		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false, false},
-		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false, false},
-		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false, false},
+		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true},
+		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false},
+		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false},
+		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
+		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
 	}
 
 	for _, tc := range tests {
 		msgUnwrapped := stakingtypes.NewMsgUndelegate(tc.delegatorAddr, tc.validatorAddr, tc.amount)
-		msg, err := types.NewMsgWrappedUndelegate(msgUnwrapped)
-		if tc.expectErr {
-			require.Error(t, err, "test: %v", tc.name)
-		} else {
-			require.NoError(t, err, "test: %v", tc.name)
-		}
+		msg := types.NewMsgWrappedUndelegate(msgUnwrapped)
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {

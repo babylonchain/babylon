@@ -24,8 +24,6 @@ var _ types.MsgServer = msgServer{}
 // WrappedDelegate handles the MsgWrappedDelegate request
 func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// get msg in bytes
 	msgBytes, err := k.cdc.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -40,10 +38,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 		},
 	}
 
-	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
-
-	// emit event
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeWrappedDelegate,
@@ -64,8 +59,6 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 // WrappedUndelegate handles the MsgWrappedUndelegate request
 func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// get msg in bytes
 	msgBytes, err := k.cdc.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -80,10 +73,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 		},
 	}
 
-	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
-
-	// emit event
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeWrappedUndelegate,
@@ -104,8 +94,6 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 // WrappedBeginRedelegate handles the MsgWrappedBeginRedelegate request
 func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	// get msg in bytes
 	msgBytes, err := k.cdc.Marshal(msg)
 	if err != nil {
 		return nil, err
@@ -122,7 +110,6 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 
 	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
-
 	// emit event
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
