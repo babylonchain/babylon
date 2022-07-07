@@ -64,6 +64,16 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 		panic("Height for parent is not maintained")
 	}
 
-	k.HeadersState(ctx).CreateHeader(header, height+1)
+	parentWork, err := k.HeadersState(ctx).GetHeaderWork(&header.PrevBlock)
+	if err != nil {
+		// Work should always exist if the previous checks have passed
+		panic("Work for parent is not maintained")
+	}
+
+	headerWork := types.CalcWork(header)
+	cumulativeWork := types.CumulativeWork(headerWork, parentWork)
+
+	// Create the header
+	k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
 	return nil
 }
