@@ -146,6 +146,7 @@ package "btclightclient" #ADF7B6 {
   entity "Bitcoin Header" as btc_header {
     * hash: block hash <<derived>>
     --
+    * version
     * parent_hash <<FK>>
     * merkle_root
     * timestamp
