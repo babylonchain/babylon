@@ -56,9 +56,8 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_MarshalHex() {
 		var hb types.BTCHeaderBytes
 		hb.UnmarshalHex(d.hex)
 
-		h, err := hb.MarshalHex()
+		h := hb.MarshalHex()
 		s.Require().Equal(d.hex, h, d.name)
-		s.Require().NoError(err, d.name)
 	}
 }
 
@@ -204,8 +203,7 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_ToBlockHeader() {
 		var hb types.BTCHeaderBytes
 		hb.UnmarshalHex(d.header)
 
-		btcdBlock, err := hb.ToBlockHeader()
-		s.Require().NoError(err)
+		btcdBlock := hb.ToBlockHeader()
 		s.Require().Equal(d.headerHash, btcdBlock.BlockHash().String(), d.name)
 	}
 }
@@ -219,12 +217,10 @@ func (s *headerBytesTestSuite) TestBTCHeaderBytes_FromBlockHeader() {
 	for _, d := range data {
 		var hb types.BTCHeaderBytes
 		hb.UnmarshalHex(d.hex)
-		btcdBlock, _ := hb.ToBlockHeader()
+		btcdBlock := hb.ToBlockHeader()
 
 		var hb2 types.BTCHeaderBytes
-		err := hb2.FromBlockHeader(btcdBlock)
-
-		s.Require().NoError(err)
+		hb2.FromBlockHeader(btcdBlock)
 
 		bz1, _ := hb.Marshal()
 		bz2, _ := hb2.Marshal()

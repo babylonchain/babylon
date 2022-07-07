@@ -10,7 +10,7 @@ import (
 
 func FuzzBaseBTCHeader(f *testing.F) {
 	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
-	defaultBtcdHeader, _ := defaultHeader.ToBlockHeader()
+	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
 	f.Add(
 		defaultBtcdHeader.Version,

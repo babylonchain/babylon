@@ -8,12 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"math/big"
 )
 
 type HeadersState struct {
 	cdc          codec.BinaryCodec
 	headers      sdk.KVStore
 	hashToHeight sdk.KVStore
+	hashToWork   sdk.KVStore
 	tip          sdk.KVStore
 }
 
@@ -24,59 +26,98 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 		cdc:          k.cdc,
 		headers:      prefix.NewStore(store, types.HeadersObjectPrefix),
 		hashToHeight: prefix.NewStore(store, types.HashToHeightPrefix),
+		hashToWork:   prefix.NewStore(store, types.HashToWorkPrefix),
 		tip:          prefix.NewStore(store, types.TipPrefix),
 	}
 }
 
-// CreateHeader Insert the header into the hash->height and (height, hash)->header storage
-func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64) error {
+// CreateHeader Insert the header into the following storages:
+// - hash->height
+// - hash->work
+// - (height, hash)->header storage
+func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64, cumulativeWork *big.Int) {
 	headerHash := header.BlockHash()
+	// Get necessary keys according
 	headersKey := types.HeadersObjectKey(height, &headerHash)
 	heightKey := types.HeadersObjectHeightKey(&headerHash)
+	workKey := types.HeadersObjectWorkKey(&headerHash)
 
-	var headerBytes bbl.BTCHeaderBytes
-	err := headerBytes.FromBlockHeader(header)
-	if err != nil {
-		return err
-	}
+	// Convert the block header into bytes
+	headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
+
 	// save concrete object
 	s.headers.Set(headersKey, headerBytes)
 	// map header to height
 	s.hashToHeight.Set(heightKey, sdk.Uint64ToBigEndian(height))
+	// map header to work
+	s.hashToWork.Set(workKey, cumulativeWork.Bytes())
 
-	return s.UpdateTip(header, height)
+	s.updateLongestChain(header, cumulativeWork)
+}
+
+// CreateTip sets the provided header as the tip
+func (s HeadersState) CreateTip(header *wire.BlockHeader) {
+	// Retrieve the key for the tip storage
+	tipKey := types.TipKey()
+
+	// Convert the *wire.BlockHeader object into a BTCHeaderBytes object
+	headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
+
+	// Convert the BTCHeaderBytes object into a bytes array
+	rawBytes := headerBytes.MustMarshal()
+
+	s.tip.Set(tipKey, rawBytes)
 }
 
 // GetHeader Retrieve a header by its height and hash
 func (s HeadersState) GetHeader(height uint64, hash *chainhash.Hash) (*wire.BlockHeader, error) {
+	// Keyed by (height, hash)
 	headersKey := types.HeadersObjectKey(height, hash)
+
+	// Retrieve the raw bytes
 	rawBytes := s.headers.Get(headersKey)
 	if rawBytes == nil {
 		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided height and hash")
 	}
-	var headerBytes bbl.BTCHeaderBytes
-	headerBytes.Unmarshal(rawBytes)
 
-	header, err := headerBytes.ToBlockHeader()
-	if err != nil {
-		return nil, err
-	}
-	return header, nil
+	return blockHeaderFromStoredBytes(rawBytes), nil
 }
 
 // GetHeaderHeight Retrieve the Height of a header
 func (s HeadersState) GetHeaderHeight(hash *chainhash.Hash) (uint64, error) {
+	// Keyed by hash
 	hashKey := types.HeadersObjectHeightKey(hash)
+
+	// Retrieve the raw bytes for the height
 	bz := s.hashToHeight.Get(hashKey)
 	if bz == nil {
 		return 0, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
 	}
+
+	// Convert to uint64 form
 	height := sdk.BigEndianToUint64(bz)
 	return height, nil
 }
 
+// GetHeaderWork Retrieve the work of a header
+func (s HeadersState) GetHeaderWork(hash *chainhash.Hash) (*big.Int, error) {
+	// Keyed by hash
+	hashKey := types.HeadersObjectHeightKey(hash)
+	// Retrieve the raw bytes for the work
+	bz := s.hashToWork.Get(hashKey)
+	if bz == nil {
+		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
+	}
+
+	// Convert to *big.Int form
+	work := new(big.Int).SetBytes(bz)
+	return work, nil
+}
+
 // GetHeaderByHash Retrieve a header by its hash
 func (s HeadersState) GetHeaderByHash(hash *chainhash.Hash) (*wire.BlockHeader, error) {
+	// Get the height of the header in order to use it along with the hash
+	// as a (height, hash) key for the object storage
 	height, err := s.GetHeaderHeight(hash)
 	if err != nil {
 		return nil, err
@@ -84,73 +125,78 @@ func (s HeadersState) GetHeaderByHash(hash *chainhash.Hash) (*wire.BlockHeader, 
 	return s.GetHeader(height, hash)
 }
 
-// GetHeadersByHeight Retrieve headers by their height
-func (s HeadersState) GetHeadersByHeight(height uint64, f func(*wire.BlockHeader) bool) error {
+// GetBaseBTCHeader retrieves the BTC header with the minimum height
+func (s HeadersState) GetBaseBTCHeader() *wire.BlockHeader {
+	// Retrieve the canonical chain
+	canonicalChain := s.GetMainChain()
+	// If the canonical chain is empty, then there is no base header
+	if len(canonicalChain) == 0 {
+		return nil
+	}
+	// The base btc header is the oldest one from the canonical chain
+	return canonicalChain[len(canonicalChain)-1]
+}
+
+// GetTip returns the tip of the canonical chain
+func (s HeadersState) GetTip() *wire.BlockHeader {
+	if !s.TipExists() {
+		return nil
+	}
+
+	// Get the key to the tip storage
+	tipKey := types.TipKey()
+	return blockHeaderFromStoredBytes(s.tip.Get(tipKey))
+}
+
+// GetHeadersByHeight Retrieve headers by their height using an accumulator function
+func (s HeadersState) GetHeadersByHeight(height uint64, f func(*wire.BlockHeader) bool) {
+	// The s.headers store is keyed by (height, hash)
+	// By getting the prefix key using the height,
+	// we are getting a store of `hash -> header` that contains all hashes
+	// with a particular height.
 	store := prefix.NewStore(s.headers, sdk.Uint64ToBigEndian(height))
+
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
+	// Iterate through the prefix store and retrieve each header object.
+	// Using the header object invoke the accumulator function.
 	for ; iter.Valid(); iter.Next() {
-		var headerBytes bbl.BTCHeaderBytes
-		headerBytes.Unmarshal(iter.Value())
-		header, err := headerBytes.ToBlockHeader()
-		if err != nil {
-			return err
-		}
+		header := blockHeaderFromStoredBytes(iter.Value())
+		// The accumulator function notifies us whether the iteration should stop.
 		stop := f(header)
 		if stop {
-			return nil
+			break
 		}
 	}
-	return nil
 }
 
 // GetDescendingHeaders returns a collection of descending headers according to their height
-func (s HeadersState) GetDescendingHeaders() ([]*wire.BlockHeader, error) {
-	var headers []*wire.BlockHeader
-
+func (s HeadersState) GetDescendingHeaders() []*wire.BlockHeader {
+	// Get the prefix store for the (height, hash) -> header collection
 	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
+	// Iterate it in reverse in order to get highest heights first
+	// TODO: need to verify this assumption
 	iter := store.ReverseIterator(nil, nil)
 	defer iter.Close()
 
-	// TODO: This assumes that the ReverseIterator will return
-	// 		 the blocks in a descending height manner.
-	//		 Need to verify.
+	var headers []*wire.BlockHeader
 	for ; iter.Valid(); iter.Next() {
-		var headerBytes bbl.BTCHeaderBytes
-		headerBytes.Unmarshal(iter.Value())
-		header, err := headerBytes.ToBlockHeader()
-		if err != nil {
-			return nil, err
-		}
-		headers = append(headers, header)
+		headers = append(headers, blockHeaderFromStoredBytes(iter.Value()))
 	}
-	return headers, nil
+	return headers
 }
 
-// HeaderExists Check whether a hash is maintained in storage
-func (s HeadersState) HeaderExists(hash *chainhash.Hash) (bool, error) {
-	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
-	var hashBytes bbl.BTCHeaderHashBytes
-	err := hashBytes.FromChainhash(hash)
-	if err != nil {
-		return false, err
-	}
-	return store.Has(hashBytes), nil
-}
-
-func (s HeadersState) GetMainChain() ([]*wire.BlockHeader, error) {
+// GetMainChain returns the current canonical chain as a collection of block headers
+func (s HeadersState) GetMainChain() []*wire.BlockHeader {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
-		return nil, nil
+		return nil
 	}
 	currentHeader := s.GetTip()
 
-	// Retrieve a collection of headers along with their heights
-	headers, err := s.GetDescendingHeaders()
-	if err != nil {
-		return nil, err
-	}
+	// Retrieve a collection of headers in descending height order
+	headers := s.GetDescendingHeaders()
 
 	var chain []*wire.BlockHeader
 	chain = append(chain, currentHeader)
@@ -166,74 +212,50 @@ func (s HeadersState) GetMainChain() ([]*wire.BlockHeader, error) {
 		}
 	}
 
-	return chain, nil
+	return chain
 }
 
-// GetBaseBTCHeader retrieves the BTC header with the minimum height
-func (s HeadersState) GetBaseBTCHeader() (*wire.BlockHeader, error) {
-	// Retrieve the canonical chain
-	canonicalChain, err := s.GetMainChain()
-	if err != nil {
-		return nil, err
-	}
-	if len(canonicalChain) == 0 {
-		return nil, nil
-	}
-	// The base btc header is the oldest one from the canonical chain
-	return canonicalChain[len(canonicalChain)-1], nil
+// HeaderExists Check whether a hash is maintained in storage
+func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
+	// Get the prefix store for the hash->height collection
+	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
+
+	// Convert the *chainhash.Hash object into a BTCHeaderHashBytesObject
+	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
+
+	// Convert the BTCHeaderHashBytes object into raw bytes
+	rawBytes := hashBytes.MustMarshal()
+
+	return store.Has(rawBytes)
 }
 
-// CreateTip sets the provided header as the tip
-func (s HeadersState) CreateTip(header *wire.BlockHeader) error {
-	var headerBytes bbl.BTCHeaderBytes
-	err := headerBytes.FromBlockHeader(header)
-	if err != nil {
-		return err
-	}
-	tipKey := types.TipKey()
-	s.tip.Set(tipKey, headerBytes)
-	return nil
-}
-
-// UpdateTip checks whether the tip should be updated and acts accordingly
-func (s HeadersState) UpdateTip(header *wire.BlockHeader, height uint64) error {
-	if !s.TipExists() {
-		return s.CreateTip(header)
-	}
-
-	// Currently, the tip is the one with the biggest height
-	// TODO: replace this to use accumulative PoW instead
-	tip := s.GetTip()
-	tipHash := tip.BlockHash()
-	tipHeight, err := s.GetHeaderHeight(&tipHash)
-	if err != nil {
-		panic("Existing tip does not have a maintained height")
-	}
-
-	if tipHeight < height {
-		return s.CreateTip(header)
-	}
-	return nil
-}
-
-// GetTip returns the currently maintained tip
-func (s HeadersState) GetTip() *wire.BlockHeader {
-	if !s.TipExists() {
-		return nil
-	}
-
-	tipKey := types.TipKey()
-	var tipBytes bbl.BTCHeaderBytes
-	tipBytes.Unmarshal(s.tip.Get(tipKey))
-	tip, err := tipBytes.ToBlockHeader()
-	if err != nil {
-		panic("Stored tip is not a valid btcd header")
-	}
-	return tip
-}
-
-// TipExists checks whether a tip is maintained
+// TipExists checks whether the tip of the canonical chain has been set
 func (s HeadersState) TipExists() bool {
 	tipKey := types.TipKey()
 	return s.tip.Has(tipKey)
+}
+
+// updateLongestChain checks whether the tip should be updated and acts accordingly
+func (s HeadersState) updateLongestChain(header *wire.BlockHeader, cumulativeWork *big.Int) {
+	// If there is no existing tip, then the header is set as the tip
+	if !s.TipExists() {
+		s.CreateTip(header)
+		return
+	}
+
+	// Get the current tip header hash
+	tip := s.GetTip()
+
+	tipHash := tip.BlockHash()
+	// Retrieve the tip's work from storage
+	tipWork, err := s.GetHeaderWork(&tipHash)
+	if err != nil {
+		panic("Existing tip does not have a maintained work")
+	}
+
+	// If the work of the current tip is less than the work of the provided header,
+	// the provided header is set as the tip.
+	if tipWork.Cmp(cumulativeWork) < 0 {
+		s.CreateTip(header)
+	}
 }

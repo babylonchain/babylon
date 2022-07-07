@@ -22,10 +22,7 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	// 		 that will get rejected.
 
 	// Get Btcd header from bytes
-	btcdHeader, err := msg.Header.ToBlockHeader()
-	if err != nil {
-		return nil, err
-	}
+	btcdHeader := msg.Header.ToBlockHeader()
 
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)

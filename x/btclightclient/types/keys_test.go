@@ -34,7 +34,7 @@ func FuzzHeadersObjectKey(f *testing.F) {
 	})
 }
 
-func FuzzHeadersObjectHeightKey(f *testing.F) {
+func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
 	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
 
 	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
@@ -47,11 +47,17 @@ func FuzzHeadersObjectHeightKey(f *testing.F) {
 
 		// Construct the expected key
 		chHashBytes := chHash[:]
-		expectedKey := append(types.HashToHeightPrefix, chHashBytes...)
 
-		gotKey := types.HeadersObjectHeightKey(chHash)
-		if bytes.Compare(expectedKey, gotKey) != 0 {
-			t.Errorf("Expected headers object height key %s got %s", expectedKey, gotKey)
+		expectedHeightKey := append(types.HashToHeightPrefix, chHashBytes...)
+		gotHeightKey := types.HeadersObjectHeightKey(chHash)
+		if bytes.Compare(expectedHeightKey, gotHeightKey) != 0 {
+			t.Errorf("Expected headers object height key %s got %s", expectedHeightKey, gotHeightKey)
+		}
+
+		expectedWorkKey := append(types.HashToWorkPrefix, chHashBytes...)
+		gotWorkKey := types.HeadersObjectWorkKey(chHash)
+		if bytes.Compare(expectedWorkKey, gotWorkKey) != 0 {
+			t.Errorf("Expected headers object work key %s got %s", expectedWorkKey, gotWorkKey)
 		}
 	})
 }
