@@ -161,10 +161,13 @@ package "btclightclient" #ADF7B6 {
     --
     * raw_header: bytes of a deeply embedded block
     * height: from block explorer
-    * total_pow: from block explorer
     --
     * hash: Block Hash <<derived>>
   }
+  note bottom
+    total_pow will be considered to start from
+    this block, as if it was genesis.
+  end note
 
   entity "Tip" as btc_tip {
     <<singleton>>
