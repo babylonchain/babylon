@@ -90,6 +90,7 @@ package "checkpointing" #FFEE93 {
       | SUBMITTED: included on BTC
       | CONFIRMED: k-deep on BTC
       | FINALIZED: w-deep on BTC
+    * aggr_power: sum of accumulated validator power
   }
 
   entity "BLS Key" as bls_key {
