@@ -21,21 +21,22 @@ func NewBTCHeaderHashBytesFromHex(hex string) (BTCHeaderHashBytes, error) {
 
 func NewBTCHeaderHashBytesFromChainhash(chHash *chainhash.Hash) BTCHeaderHashBytes {
 	var headerHashBytes BTCHeaderHashBytes
-	headerHashBytes.Unmarshal(chHash[:])
+	headerHashBytes.FromChainhash(chHash)
 	return headerHashBytes
 }
 
-func NewBTCHeaderHashBytesFromBytes(hash []byte) BTCHeaderHashBytes {
-	return hash
-}
-
-func (m BTCHeaderHashBytes) MarshalJSON() ([]byte, error) {
-	hex, err := m.MarshalHex()
+func NewBTCHeaderHashBytesFromBytes(hash []byte) (BTCHeaderHashBytes, error) {
+	var headerHashBytes BTCHeaderHashBytes
+	err := headerHashBytes.Unmarshal(hash)
 	if err != nil {
 		return nil, err
 	}
+	return headerHashBytes, nil
+}
+
+func (m BTCHeaderHashBytes) MarshalJSON() ([]byte, error) {
 	// Marshal the JSON from hex format
-	return json.Marshal(hex)
+	return json.Marshal(m.MarshalHex())
 }
 
 func (m *BTCHeaderHashBytes) UnmarshalJSON(bz []byte) error {
@@ -53,21 +54,29 @@ func (m BTCHeaderHashBytes) Marshal() ([]byte, error) {
 	return m, nil
 }
 
+func (m BTCHeaderHashBytes) MustMarshal() []byte {
+	bz, err := m.Marshal()
+	if err != nil {
+		panic("Marshalling failed")
+	}
+	return bz
+}
+
 func (m *BTCHeaderHashBytes) Unmarshal(bz []byte) error {
 	if len(bz) != BTCHeaderHashLen {
 		return errors.New("invalid header hash length")
+	}
+	// Verify that the bytes can be transformed to a *chainhash.Hash object
+	_, err := toChainhash(bz)
+	if err != nil {
+		return errors.New("bytes do not correspond to *chainhash.Hash object")
 	}
 	*m = bz
 	return nil
 }
 
-func (m *BTCHeaderHashBytes) MarshalHex() (string, error) {
-	chHash, err := m.ToChainhash()
-	if err != nil {
-		return "", err
-	}
-
-	return chHash.String(), nil
+func (m *BTCHeaderHashBytes) MarshalHex() string {
+	return m.ToChainhash().String()
 }
 
 func (m *BTCHeaderHashBytes) UnmarshalHex(hash string) error {
@@ -84,7 +93,11 @@ func (m *BTCHeaderHashBytes) UnmarshalHex(hash string) error {
 }
 
 func (m BTCHeaderHashBytes) MarshalTo(data []byte) (int, error) {
-	copy(data, m)
+	bz, err := m.Marshal()
+	if err != nil {
+		return 0, err
+	}
+	copy(data, bz)
 	return len(data), nil
 }
 
@@ -93,10 +106,21 @@ func (m *BTCHeaderHashBytes) Size() int {
 	return len(bz)
 }
 
-func (m BTCHeaderHashBytes) ToChainhash() (*chainhash.Hash, error) {
-	return chainhash.NewHash(m)
+func (m BTCHeaderHashBytes) ToChainhash() *chainhash.Hash {
+	chHash, err := toChainhash(m)
+	if err != nil {
+		panic("BTCHeaderHashBytes cannot be converted to chainhash")
+	}
+	return chHash
 }
 
-func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) error {
-	return m.Unmarshal(hash[:])
+func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
+	err := m.Unmarshal(hash[:])
+	if err != nil {
+		panic("*chainhash.Hash bytes cannot be unmarshalled")
+	}
+}
+
+func toChainhash(data []byte) (*chainhash.Hash, error) {
+	return chainhash.NewHash(data)
 }

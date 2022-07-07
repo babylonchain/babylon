@@ -27,6 +27,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	if uint64(ctx.BlockHeight())-1 == epochBoundary.Uint64() {
 		// increase epoch number
 		incEpochNumber := k.IncEpochNumber(ctx)
+		// init the slashed validator set size of this new epoch
+		k.InitSlashedValidatorSetSize(ctx)
 		// trigger AfterEpochBegins hook
 		k.AfterEpochBegins(ctx, incEpochNumber)
 		// emit BeginEpoch event

@@ -25,6 +25,7 @@ type BankKeeper interface {
 // StakingKeeper defines the staking module interface contract needed by the
 // epoching module.
 type StakingKeeper interface {
+	GetParams(ctx sdk.Context) stakingtypes.Params
 	UnbondAllMatureValidators(ctx sdk.Context)
 	DequeueAllMatureUBDQueue(ctx sdk.Context, currTime time.Time) (matureUnbonds []stakingtypes.DVPair)
 	CompleteUnbonding(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (sdk.Coins, error)
@@ -34,13 +35,19 @@ type StakingKeeper interface {
 }
 
 // Event Hooks
-// These can be utilized to communicate between a staking keeper and another
+// These can be utilized to communicate between an epoching keeper and another
 // keeper which must take particular actions when validators/delegators change
 // state. The second keeper must implement this interface, which then the
-// staking keeper can call.
+// epoching keeper can call.
 
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
-	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) // Must be called after an epoch begins
-	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint)   // Must be called after an epoch ends
+	AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint)                // Must be called after an epoch begins
+	AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint)                  // Must be called after an epoch ends
+	BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) // Must be called before a certain threshold (1/3 or 2/3) of validators are slashed in a single epoch
+}
+
+// StakingHooks event hooks for staking validator object (noalias)
+type StakingHooks interface {
+	BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) // Must be called right before a validator is slashed
 }

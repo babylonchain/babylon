@@ -18,9 +18,11 @@ const (
 )
 
 var (
-	EpochNumberKey = []byte{0x11} // key prefix for the epoch number
-	QueueLengthKey = []byte{0x12} // key prefix for the queue length
-	QueuedMsgKey   = []byte{0x13} // key prefix for a queued message
+	EpochNumberKey             = []byte{0x11} // key prefix for the epoch number
+	QueueLengthKey             = []byte{0x12} // key prefix for the queue length
+	QueuedMsgKey               = []byte{0x13} // key prefix for a queued message
+	SlashedValidatorSetSizeKey = []byte{0x14} // key prefix for the number of the slashed validators in a single epoch
+	SlashedValidatorKey        = []byte{0x15} // key prefix for a slashed validator
 )
 
 func KeyPrefix(p string) []byte {
