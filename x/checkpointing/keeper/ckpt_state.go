@@ -23,15 +23,14 @@ func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
 
 // CreateRawCkptWithMeta inserts the raw checkpoint with meta into the storage by its epoch number
 // a new checkpoint is created with the status of UNCEHCKPOINTED
-func (cs CheckpointsState) CreateRawCkptWithMeta(ckpt *types.RawCheckpoint) error {
-	// save concrete ckpt object
-	ckptWithMeta := types.NewCheckpointWithMeta(ckpt, types.Uncheckpointed)
-
-	if cs.checkpoints.Has(types.CkptsObjectKey(ckpt.EpochNum)) {
-		return types.ErrCkptAlreadyExist.Wrapf("a raw checkpoint already exists at epoch %v", ckpt.EpochNum)
+func (cs CheckpointsState) CreateRawCkptWithMeta(ckptWithMeta *types.RawCheckpointWithMeta) error {
+	epoch := ckptWithMeta.Ckpt.EpochNum
+	if cs.checkpoints.Has(types.CkptsObjectKey(epoch)) {
+		return types.ErrCkptAlreadyExist.Wrapf("a raw checkpoint already exists at epoch %v", epoch)
 	}
 
-	cs.checkpoints.Set(types.CkptsObjectKey(ckpt.EpochNum), types.CkptWithMetaToBytes(cs.cdc, ckptWithMeta))
+	// save concrete ckpt object
+	cs.checkpoints.Set(types.CkptsObjectKey(epoch), types.CkptWithMetaToBytes(cs.cdc, ckptWithMeta))
 	return nil
 }
 

@@ -27,6 +27,7 @@ type StakingKeeper interface {
 type EpochingKeeper interface {
 	GetEpochNumber(ctx sdk.Context) sdk.Uint
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
+	GetEpochBoundary(ctx sdk.Context) sdk.Uint
 }
 
 // Event Hooks
