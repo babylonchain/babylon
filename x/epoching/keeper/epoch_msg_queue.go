@@ -2,9 +2,22 @@ package keeper
 
 import (
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
+
+// InitQueueLength initialises the msg queue length to 0
+func (k Keeper) InitQueueLength(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	queueLenBytes, err := sdk.NewUint(0).Marshal()
+	if err != nil {
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+	}
+
+	store.Set(types.QueueLengthKey, queueLenBytes)
+}
 
 // GetQueueLength fetches the number of queued messages
 func (k Keeper) GetQueueLength(ctx sdk.Context) sdk.Uint {
@@ -18,19 +31,19 @@ func (k Keeper) GetQueueLength(ctx sdk.Context) sdk.Uint {
 	// unmarshal
 	var queueLen sdk.Uint
 	if err := queueLen.Unmarshal(bz); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return queueLen
 }
 
-// SetQueueLength sets the msg queue length
-func (k Keeper) SetQueueLength(ctx sdk.Context, queueLen sdk.Uint) {
+// setQueueLength sets the msg queue length
+func (k Keeper) setQueueLength(ctx sdk.Context, queueLen sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	queueLenBytes, err := queueLen.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(types.QueueLengthKey, queueLenBytes)
@@ -40,26 +53,27 @@ func (k Keeper) SetQueueLength(ctx sdk.Context, queueLen sdk.Uint) {
 func (k Keeper) incQueueLength(ctx sdk.Context) {
 	queueLen := k.GetQueueLength(ctx)
 	incrementedQueueLen := queueLen.AddUint64(1)
-	k.SetQueueLength(ctx, incrementedQueueLen)
+	k.setQueueLength(ctx, incrementedQueueLen)
 }
 
 // EnqueueMsg enqueues a message to the queue of the current epoch
 func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
+	// prefix: QueuedMsgKey
 	store := ctx.KVStore(k.storeKey)
+	queuedMsgStore := prefix.NewStore(store, types.QueuedMsgKey)
 
-	// insert KV pair, where
-	// - key: QueuedMsgKey || queueLenBytes
-	// - value: msgBytes
+	// key: queueLenBytes
 	queueLen := k.GetQueueLength(ctx)
 	queueLenBytes, err := queueLen.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
+	// value: msgBytes
 	msgBytes, err := k.cdc.Marshal(&msg)
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
-	store.Set(append(types.QueuedMsgKey, queueLenBytes...), msgBytes)
+	queuedMsgStore.Set(queueLenBytes, msgBytes)
 
 	// increment queue length
 	k.incQueueLength(ctx)
@@ -77,7 +91,7 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 		queuedMsgBytes := iterator.Value()
 		var queuedMsg types.QueuedMessage
 		if err := k.cdc.Unmarshal(queuedMsgBytes, &queuedMsg); err != nil {
-			panic(err)
+			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		queuedMsgs = append(queuedMsgs, &queuedMsg)
 	}
@@ -98,7 +112,7 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 	}
 
 	// set queue len to zero
-	k.SetQueueLength(ctx, sdk.NewUint(0))
+	k.setQueueLength(ctx, sdk.NewUint(0))
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module

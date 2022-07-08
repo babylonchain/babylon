@@ -12,11 +12,13 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// set params for this module
 	k.SetParams(ctx, genState.Params)
 	// init epoch number
-	k.SetEpochNumber(ctx, sdk.NewUint(0))
+	k.InitEpochNumber(ctx)
 	// init msg queue length
-	k.SetQueueLength(ctx, sdk.NewUint(0))
-	// init slashed validator set size
-	k.InitSlashedValidatorSetSize(ctx)
+	k.InitQueueLength(ctx)
+	// init validator set
+	k.InitValidatorSet(ctx)
+	// init slashed voting power
+	k.InitSlashedVotingPower(ctx)
 }
 
 // ExportGenesis returns the capability module's exported genesis.

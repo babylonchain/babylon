@@ -28,18 +28,24 @@ message RawCheckpointWithMeta {
   RawCheckpoint ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
+  // power_sum defines the accumulated voting power for the checkpoint
+  uint64 power_sum = 3;
 }
 
 // CkptStatus is the status of a checkpoint.
 enum CheckpointStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
-  // UNCHECKPOINTED defines a checkpoint that is checkpointed on BTC.
-  CKPT_STATUS_UNCHECKPOINTED = 0 [(gogoproto.enumvalue_customname) = "Uncheckpointed"];
-  // UNCONFIRMED defines a validator that is checkpointed on BTC but not confirmed.
-  CKPT_STATUS_UNCONFIRMED = 1 [(gogoproto.enumvalue_customname) = "Unconfirmed"];
-  // CONFIRMED defines a validator that is confirmed on BTC.
-  CKPT_STATUS_CONFIRMED = 2 [(gogoproto.enumvalue_customname) = "Confirmed"];
+  // ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
+  CKPT_STATUS_ACCUMULATING = 0 [(gogoproto.enumvalue_customname) = "Accumulating"];
+  // SIGNED defines a checkpoint that has accumulated sufficient BLS signatures.
+  CKPT_STATUS_SIGNED = 1 [(gogoproto.enumvalue_customname) = "Unconfirmed"];
+  // SUBMITTED defines a checkpoint that is included on BTC.
+  CKPT_STATUS_SUBMITTED = 2 [(gogoproto.enumvalue_customname) = "Submitted"];
+  // CONFIRMED defines a checkpoint that is k-deep on BTC.
+  CKPT_STATUS_CONFIRMED = 3 [(gogoproto.enumvalue_customname) = "Confirmed"];
+  // FINALIZED defines a checkpoint that is w-deep on BTC.
+  CKPT_STATUS_FINALIZED = 4 [(gogoproto.enumvalue_customname) = "Finalized"];
 }
 
 // BlsSig wraps the bls sig with meta data.

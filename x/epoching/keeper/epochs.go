@@ -3,11 +3,24 @@ package keeper
 import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
 	DefaultEpochNumber = 0
 )
+
+// setEpochNumber sets epoch number
+func (k Keeper) InitEpochNumber(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	epochNumberBytes, err := sdk.NewUint(0).Marshal()
+	if err != nil {
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+	}
+
+	store.Set(types.EpochNumberKey, epochNumberBytes)
+}
 
 // GetEpochNumber fetches epoch number
 func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
@@ -19,19 +32,19 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	}
 	var epochNumber sdk.Uint
 	if err := epochNumber.Unmarshal(bz); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return epochNumber
 }
 
-// SetEpochNumber sets epoch number
-func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
+// setEpochNumber sets epoch number
+func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(types.EpochNumberKey, epochNumberBytes)
@@ -41,7 +54,7 @@ func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 func (k Keeper) IncEpochNumber(ctx sdk.Context) sdk.Uint {
 	epochNumber := k.GetEpochNumber(ctx)
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	k.SetEpochNumber(ctx, incrementedEpochNumber)
+	k.setEpochNumber(ctx, incrementedEpochNumber)
 	return incrementedEpochNumber
 }
 

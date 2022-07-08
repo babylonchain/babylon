@@ -68,10 +68,14 @@ func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 }
 
 // AddRawCheckpoint adds a raw checkpoint into the storage
-// this API may not needed since checkpoints are generated internally
-func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
-	// NOTE: may remove this API
-	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckpt)
+func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
+	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckptWithMeta)
+}
+
+func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum sdk.Uint, lch types.LastCommitHash) error {
+	ckptWithMeta := types.NewCheckpointWithMeta(types.NewCheckpoint(epochNum, lch), types.Accumulating)
+
+	return k.AddRawCheckpoint(ctx, ckptWithMeta)
 }
 
 // CheckpointEpoch verifies checkpoint from BTC and returns epoch number
@@ -104,4 +108,12 @@ func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status ty
 
 func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr types.ValidatorAddress) error {
 	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
+}
+
+func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
+	return k.epochingKeeper.GetEpochBoundary(ctx)
+}
+
+func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
+	return k.epochingKeeper.GetEpochNumber(ctx)
 }
