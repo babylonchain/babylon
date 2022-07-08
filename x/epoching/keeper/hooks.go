@@ -45,7 +45,7 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress)
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
 	thresholds := []float64{float64(1) / float64(3), float64(2) / float64(3)}
 
-	epochNumber := h.k.GetEpochNumber(ctx)
+	epochNumber := h.k.GetEpoch(ctx).EpochNumber
 	totalVotingPower := h.k.GetTotalVotingPower(ctx, epochNumber)
 	validatorSet := h.k.GetValidatorSet(ctx, epochNumber)
 

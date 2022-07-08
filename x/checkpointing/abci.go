@@ -27,7 +27,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	if epoch.IsSecondBlock(ctx) {
 		// note that this epochNum is obtained before the BeginBlocker of the epoching module is executed
 		// meaning that the epochNum has not been incremented upon a new epoch
-		epochNum := k.GetEpochNumber(ctx)
+		epochNum := k.GetEpoch(ctx).EpochNumber
 		lch := ctx.BlockHeader().LastCommitHash
 		err := k.BuildRawCheckpoint(ctx, epochNum, lch)
 		if err != nil {

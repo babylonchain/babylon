@@ -116,10 +116,6 @@ func (k Keeper) GetEpochBoundary(ctx sdk.Context) uint64 {
 	return k.epochingKeeper.GetEpoch(ctx).LastBlockHeight()
 }
 
-func (k Keeper) GetEpochNumber(ctx sdk.Context) uint64 {
-	return k.epochingKeeper.GetEpochNumber(ctx)
-}
-
 func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
 }

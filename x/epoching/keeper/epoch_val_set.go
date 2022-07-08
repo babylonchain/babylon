@@ -29,7 +29,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) map[string]
 // InitValidatorSet stores the validator set in the beginning of the current epoch
 // This is called upon BeginBlock
 func (k Keeper) InitValidatorSet(ctx sdk.Context) {
-	epochNumber := k.GetEpochNumber(ctx)
+	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.valSetStore(ctx, epochNumber)
 	totalPower := int64(0)
 

@@ -98,7 +98,7 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 		{
 			"epoch 1",
 			func() {
-				suite.keeper.IncEpochNumber(suite.ctx)
+				suite.keeper.IncEpoch(suite.ctx)
 			},
 			1,
 			suite.keeper.GetParams(suite.ctx).EpochInterval * 1,
@@ -106,7 +106,7 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 		{
 			"epoch 2",
 			func() {
-				suite.keeper.IncEpochNumber(suite.ctx)
+				suite.keeper.IncEpoch(suite.ctx)
 			},
 			2,
 			suite.keeper.GetParams(suite.ctx).EpochInterval * 2,
@@ -114,7 +114,7 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 		{
 			"reset to epoch 0",
 			func() {
-				suite.keeper.InitEpochNumber(suite.ctx)
+				suite.keeper.InitEpoch(suite.ctx)
 			},
 			0,
 			0,
@@ -146,7 +146,7 @@ func FuzzCurrentEpoch(f *testing.F) {
 		_, ctx, keeper, _, queryClient := setupTestKeeper()
 		wctx := sdk.WrapSDKContext(ctx)
 		for i := uint64(0); i < increment; i++ {
-			keeper.IncEpochNumber(ctx)
+			keeper.IncEpoch(ctx)
 		}
 		req := types.QueryCurrentEpochRequest{}
 		resp, err := queryClient.CurrentEpoch(wctx, &req)

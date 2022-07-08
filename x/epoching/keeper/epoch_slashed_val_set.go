@@ -28,7 +28,7 @@ func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber uint64, power
 // InitSlashedVotingPower sets the slashed voting power of the current epoch to 0
 // This is called upon initialising the genesis state and upon a new epoch
 func (k Keeper) InitSlashedVotingPower(ctx sdk.Context) {
-	epochNumber := k.GetEpochNumber(ctx)
+	epochNumber := k.GetEpoch(ctx).EpochNumber
 	k.setSlashedVotingPower(ctx, epochNumber, 0)
 }
 
@@ -57,7 +57,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 // AddSlashedValidator adds a slashed validator to the set of the current epoch
 // This is called upon hook `BeforeValidatorSlashed` exposed by the staking module
 func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) {
-	epochNumber := k.GetEpochNumber(ctx)
+	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
 
 	// insert into "set of slashed addresses" as KV pair, where

@@ -26,7 +26,6 @@ type StakingKeeper interface {
 // EpochingKeeper defines the expected interface needed to retrieve epoch info
 type EpochingKeeper interface {
 	GetEpoch(ctx sdk.Context) epochingtypes.Epoch
-	GetEpochNumber(ctx sdk.Context) uint64
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
 }
 
