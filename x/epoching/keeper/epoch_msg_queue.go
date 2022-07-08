@@ -13,7 +13,7 @@ func (k Keeper) InitQueueLength(ctx sdk.Context) {
 
 	queueLenBytes, err := sdk.NewUint(0).Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(types.QueueLengthKey, queueLenBytes)
@@ -31,7 +31,7 @@ func (k Keeper) GetQueueLength(ctx sdk.Context) sdk.Uint {
 	// unmarshal
 	var queueLen sdk.Uint
 	if err := queueLen.Unmarshal(bz); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return queueLen
@@ -43,7 +43,7 @@ func (k Keeper) setQueueLength(ctx sdk.Context, queueLen sdk.Uint) {
 
 	queueLenBytes, err := queueLen.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(types.QueueLengthKey, queueLenBytes)
@@ -66,12 +66,12 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 	queueLen := k.GetQueueLength(ctx)
 	queueLenBytes, err := queueLen.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	// value: msgBytes
 	msgBytes, err := k.cdc.Marshal(&msg)
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	queuedMsgStore.Set(queueLenBytes, msgBytes)
 
@@ -91,7 +91,7 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 		queuedMsgBytes := iterator.Value()
 		var queuedMsg types.QueuedMessage
 		if err := k.cdc.Unmarshal(queuedMsgBytes, &queuedMsg); err != nil {
-			panic(err)
+			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		queuedMsgs = append(queuedMsgs, &queuedMsg)
 	}

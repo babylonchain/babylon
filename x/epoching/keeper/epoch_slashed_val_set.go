@@ -4,6 +4,7 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // setSlashedVotingPower sets the slashed voting power
@@ -13,12 +14,12 @@ func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber sdk.Uint, pow
 	// key: epochNumber
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	// value: power
 	powerBytes, err := sdk.NewInt(power).Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(epochNumberBytes, powerBytes)
@@ -38,7 +39,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int
 	// key: epochNumber
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	bz := store.Get(epochNumberBytes)
 	if bz == nil {
@@ -47,7 +48,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int
 	// get value
 	var slashedVotingPower sdk.Int
 	if err := slashedVotingPower.Unmarshal(bz); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return slashedVotingPower.Int64()
@@ -102,7 +103,7 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) {
 	// forget the slashed voting power of this epoch
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	k.slashedVotingPowerStore(ctx).Delete(epochNumberBytes)
 }
@@ -114,7 +115,7 @@ func (k Keeper) slashedValSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix
 	slashedValStore := prefix.NewStore(store, types.SlashedValidatorSetKey)
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	return prefix.NewStore(slashedValStore, epochNumberBytes)
 }

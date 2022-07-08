@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -15,7 +16,7 @@ func (k Keeper) InitEpochNumber(ctx sdk.Context) {
 
 	epochNumberBytes, err := sdk.NewUint(0).Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(types.EpochNumberKey, epochNumberBytes)
@@ -31,7 +32,7 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	}
 	var epochNumber sdk.Uint
 	if err := epochNumber.Unmarshal(bz); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return epochNumber
@@ -43,7 +44,7 @@ func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(types.EpochNumberKey, epochNumberBytes)

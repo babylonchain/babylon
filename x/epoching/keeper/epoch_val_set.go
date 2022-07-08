@@ -4,6 +4,7 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -18,7 +19,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) map[strin
 		powerBytes := iterator.Value()
 		var power sdk.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
-			panic(err)
+			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		valSet[addr] = power.Int64()
 	}
@@ -42,7 +43,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 		addrBytes := []byte(addr)
 		powerBytes, err := sdk.NewInt(power).Marshal()
 		if err != nil {
-			panic(err)
+			panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 		}
 		store.Set(addrBytes, powerBytes)
 		totalPower += power
@@ -50,11 +51,11 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 	// store total voting power of this validator set
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	totalPowerBytes, err := sdk.NewInt(totalPower).Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	k.votingPowerStore(ctx).Set(epochNumberBytes, totalPowerBytes)
 }
@@ -74,7 +75,7 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
 	powerStore := k.votingPowerStore(ctx)
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	powerStore.Delete(epochNumberBytes)
 }
@@ -84,9 +85,12 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber sdk.Uint, v
 	store := k.valSetStore(ctx, epochNumber)
 
 	powerBytes := store.Get(valAddr)
+	if powerBytes == nil {
+		panic(types.ErrUnknownValidator)
+	}
 	var power sdk.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return power.Int64()
@@ -96,13 +100,16 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber sdk.Uint, v
 func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64 {
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	store := k.votingPowerStore(ctx)
 	powerBytes := store.Get(epochNumberBytes)
+	if powerBytes == nil {
+		panic(types.ErrUnknownTotalVotingPower)
+	}
 	var power sdk.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 	return power.Int64()
 }
@@ -116,7 +123,7 @@ func (k Keeper) valSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix.Store 
 	valSetStore := prefix.NewStore(store, types.ValidatorSetKey)
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
-		panic(err)
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
 	return prefix.NewStore(valSetStore, epochNumberBytes)
 }
@@ -148,7 +155,7 @@ func (k Keeper) getValSetFromStaking(ctx sdk.Context) (map[string]int64, error) 
 		powerBytes := iterator.Value()
 		var power sdk.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
-			return nil, err
+			return nil, sdkerrors.Wrap(types.ErrUnmarshal, err.Error())
 		}
 		valSet[valAddrStr] = power.Int64()
 	}
