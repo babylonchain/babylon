@@ -177,7 +177,7 @@ func (s HeadersState) GetDescendingHeaders() []*wire.BlockHeader {
 	var headers []*wire.BlockHeader
 	s.iterateReverseHeaders(func(header *wire.BlockHeader) bool {
 		headers = append(headers, header)
-		return true
+		return false
 	})
 	return headers
 }
@@ -244,7 +244,7 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 				}
 				resHeader = btcdHeader
 				resHeight = height
-				return false
+				return true
 			}
 		} else {
 			if ancestor1 == btcdHeader.BlockHash() {
@@ -262,7 +262,7 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 				encountered[ancestor2.String()] = true
 			}
 		}
-		return true
+		return false
 	})
 	return resHeader, resHeight
 }
@@ -275,13 +275,13 @@ func (s HeadersState) GetInOrderAncestorsUntil(child *wire.BlockHeader, parent *
 	ancestors = append(ancestors, child)
 	s.iterateReverseHeaders(func(header *wire.BlockHeader) bool {
 		if header.BlockHash() == parent.BlockHash() {
-			return false
+			return true
 		}
 		if header.BlockHash().String() == currentHeader.PrevBlock.String() {
 			currentHeader = header
 			ancestors = append(ancestors, header)
 		}
-		return true
+		return false
 	})
 
 	return ancestors
