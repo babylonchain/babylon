@@ -101,7 +101,7 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 		{
 			"reset to epoch 0",
 			func() {
-				suite.keeper.SetEpochNumber(suite.ctx, sdk.NewUint(0))
+				suite.keeper.InitEpochNumber(suite.ctx)
 			},
 			sdk.NewUint(0),
 			sdk.NewUint(0),
