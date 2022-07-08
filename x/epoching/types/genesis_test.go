@@ -3,22 +3,27 @@ package types_test
 import (
 	"testing"
 
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/testutil/nullify"
 	"github.com/babylonchain/babylon/x/epoching"
-
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/stretchr/testify/require"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func TestGenesis(t *testing.T) {
+	// This test requires setting up the staking module
+	// Otherwise the epoching module cannot initialise the genesis validator set
+	app := app.Setup(false)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	keeper := app.EpochingKeeper
+
 	genesisState := types.GenesisState{
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := keepertest.EpochingKeeper(t)
-	epoching.InitGenesis(ctx, *k, genesisState)
-	got := epoching.ExportGenesis(ctx, *k)
+	epoching.InitGenesis(ctx, keeper, genesisState)
+	got := epoching.ExportGenesis(ctx, keeper)
 	require.NotNil(t, got)
 
 	nullify.Fill(&genesisState)

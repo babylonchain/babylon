@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"crypto/rand"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -20,19 +21,29 @@ type KeeperTestSuite struct {
 
 	app         *app.BabylonApp
 	ctx         sdk.Context
+	keeper      *keeper.Keeper
+	msgSrvr     types.MsgServer
 	queryClient types.QueryClient
 }
 
-func (suite *KeeperTestSuite) SetupTest() {
+// setupTestKeeper creates a new server
+func setupTestKeeper() (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient) {
 	app := app.Setup(false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
-	querier := keeper.Querier{Keeper: app.EpochingKeeper}
+	epochingKeeper := app.EpochingKeeper
+	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
 	queryClient := types.NewQueryClient(queryHelper)
 
-	suite.app, suite.ctx, suite.queryClient = app, ctx, queryClient
+	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
+
+	return app, ctx, &epochingKeeper, msgSrvr, queryClient
+}
+
+func (suite *KeeperTestSuite) SetupTest() {
+	suite.app, suite.ctx, suite.keeper, suite.msgSrvr, suite.queryClient = setupTestKeeper()
 }
 
 func TestParams(t *testing.T) {
@@ -54,4 +65,17 @@ func TestParams(t *testing.T) {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+func genRandomByteSlice(length uint64) []byte {
+	r := make([]byte, length)
+	rand.Read(r)
+	return r
+}
+
+func min(a, b uint64) uint64 {
+	if a < b {
+		return a
+	}
+	return b
 }

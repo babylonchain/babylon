@@ -20,12 +20,10 @@ var (
 )
 
 // NewMsgWrappedDelegate creates a new MsgWrappedDelegate instance.
-func NewMsgWrappedDelegate(
-	msg *stakingtypes.MsgDelegate,
-) (*MsgWrappedDelegate, error) {
+func NewMsgWrappedDelegate(msg *stakingtypes.MsgDelegate) *MsgWrappedDelegate {
 	return &MsgWrappedDelegate{
 		Msg: msg,
-	}, nil
+	}
 }
 
 // Route implements the sdk.Msg interface.
@@ -49,16 +47,17 @@ func (msg MsgWrappedDelegate) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedDelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
 	return msg.Msg.ValidateBasic()
 }
 
 // NewMsgWrappedUndelegate creates a new MsgWrappedUndelegate instance.
-func NewMsgWrappedUndelegate(
-	msg *stakingtypes.MsgUndelegate,
-) (*MsgWrappedUndelegate, error) {
+func NewMsgWrappedUndelegate(msg *stakingtypes.MsgUndelegate) *MsgWrappedUndelegate {
 	return &MsgWrappedUndelegate{
 		Msg: msg,
-	}, nil
+	}
 }
 
 // Route implements the sdk.Msg interface.
@@ -82,16 +81,17 @@ func (msg MsgWrappedUndelegate) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedUndelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
 	return msg.Msg.ValidateBasic()
 }
 
 // NewMsgWrappedBeginRedelegate creates a new MsgWrappedBeginRedelegate instance.
-func NewMsgWrappedBeginRedelegate(
-	msg *stakingtypes.MsgBeginRedelegate,
-) (*MsgWrappedBeginRedelegate, error) {
+func NewMsgWrappedBeginRedelegate(msg *stakingtypes.MsgBeginRedelegate) *MsgWrappedBeginRedelegate {
 	return &MsgWrappedBeginRedelegate{
 		Msg: msg,
-	}, nil
+	}
 }
 
 // Route implements the sdk.Msg interface.
@@ -115,5 +115,8 @@ func (msg MsgWrappedBeginRedelegate) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedBeginRedelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
 	return msg.Msg.ValidateBasic()
 }
