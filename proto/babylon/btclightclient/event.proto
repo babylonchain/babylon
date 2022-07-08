@@ -1,10 +1,15 @@
 syntax = "proto3";
 package babylon.btclightclient.v1;
 
+import "gogoproto/gogo.proto";
+
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 // EventTipUpdated is emitted on Msg/InsertHeader
 message EventTipUpdated {
   // The height of the new tip
   uint64 height = 1;
+  bytes hash = 2 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
+  ];
 }

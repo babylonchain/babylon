@@ -5,6 +5,8 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -22,22 +24,25 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type EventChainExtended struct {
-	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+// EventTipUpdated is emitted on Msg/InsertHeader
+type EventTipUpdated struct {
+	// The height of the new tip
+	Height uint64                                                    `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	Hash   *github_com_babylonchain_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
 }
 
-func (m *EventChainExtended) Reset()         { *m = EventChainExtended{} }
-func (m *EventChainExtended) String() string { return proto.CompactTextString(m) }
-func (*EventChainExtended) ProtoMessage()    {}
-func (*EventChainExtended) Descriptor() ([]byte, []int) {
+func (m *EventTipUpdated) Reset()         { *m = EventTipUpdated{} }
+func (m *EventTipUpdated) String() string { return proto.CompactTextString(m) }
+func (*EventTipUpdated) ProtoMessage()    {}
+func (*EventTipUpdated) Descriptor() ([]byte, []int) {
 	return fileDescriptor_dbeb7d7d6407e7ec, []int{0}
 }
-func (m *EventChainExtended) XXX_Unmarshal(b []byte) error {
+func (m *EventTipUpdated) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EventChainExtended) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EventTipUpdated) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EventChainExtended.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EventTipUpdated.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -47,19 +52,19 @@ func (m *EventChainExtended) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *EventChainExtended) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventChainExtended.Merge(m, src)
+func (m *EventTipUpdated) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventTipUpdated.Merge(m, src)
 }
-func (m *EventChainExtended) XXX_Size() int {
+func (m *EventTipUpdated) XXX_Size() int {
 	return m.Size()
 }
-func (m *EventChainExtended) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventChainExtended.DiscardUnknown(m)
+func (m *EventTipUpdated) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventTipUpdated.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EventChainExtended proto.InternalMessageInfo
+var xxx_messageInfo_EventTipUpdated proto.InternalMessageInfo
 
-func (m *EventChainExtended) GetHeight() uint64 {
+func (m *EventTipUpdated) GetHeight() uint64 {
 	if m != nil {
 		return m.Height
 	}
@@ -67,7 +72,7 @@ func (m *EventChainExtended) GetHeight() uint64 {
 }
 
 func init() {
-	proto.RegisterType((*EventChainExtended)(nil), "babylon.btclightclient.v1.EventChainExtended")
+	proto.RegisterType((*EventTipUpdated)(nil), "babylon.btclightclient.v1.EventTipUpdated")
 }
 
 func init() {
@@ -75,21 +80,25 @@ func init() {
 }
 
 var fileDescriptor_dbeb7d7d6407e7ec = []byte{
-	// 167 bytes of a gzipped FileDescriptorProto
+	// 225 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4a, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0xce, 0xc9, 0x4c, 0xcf, 0x00, 0x91, 0xa9, 0x79, 0x25,
 	0xfa, 0xa9, 0x65, 0xa9, 0x79, 0x25, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x92, 0x50, 0x35,
-	0x7a, 0xa8, 0x6a, 0xf4, 0xca, 0x0c, 0x95, 0x74, 0xb8, 0x84, 0x5c, 0x41, 0x2a, 0x9d, 0x33, 0x12,
-	0x33, 0xf3, 0x5c, 0x2b, 0x4a, 0x52, 0xf3, 0x52, 0x52, 0x53, 0x84, 0xc4, 0xb8, 0xd8, 0x32, 0x52,
-	0x41, 0x0a, 0x25, 0x18, 0x15, 0x18, 0x35, 0x58, 0x82, 0xa0, 0x3c, 0xa7, 0x80, 0x13, 0x8f, 0xe4,
-	0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f,
-	0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x4b, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b,
-	0xce, 0xcf, 0xd5, 0x87, 0xda, 0x96, 0x0c, 0x32, 0x12, 0xc6, 0xd1, 0xaf, 0x40, 0x77, 0x60, 0x49,
-	0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0xd8, 0x85, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x46,
-	0xb6, 0x04, 0x4e, 0xc7, 0x00, 0x00, 0x00,
+	0x7a, 0xa8, 0x6a, 0xf4, 0xca, 0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0xaa, 0xf4, 0x41,
+	0x2c, 0x88, 0x06, 0xa5, 0x6a, 0x2e, 0x7e, 0x57, 0x90, 0xfe, 0x90, 0xcc, 0x82, 0xd0, 0x82, 0x94,
+	0xc4, 0x92, 0xd4, 0x14, 0x21, 0x31, 0x2e, 0xb6, 0x8c, 0x54, 0x90, 0x5e, 0x09, 0x46, 0x05, 0x46,
+	0x0d, 0x96, 0x20, 0x28, 0x4f, 0x28, 0x80, 0x8b, 0x25, 0x23, 0xb1, 0x38, 0x43, 0x82, 0x49, 0x81,
+	0x51, 0x83, 0xc7, 0xc9, 0xe6, 0xd6, 0x3d, 0x79, 0x8b, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd,
+	0xe4, 0xfc, 0x5c, 0x7d, 0xa8, 0xc5, 0xc9, 0x19, 0x89, 0x99, 0x79, 0x30, 0x8e, 0x7e, 0x49, 0x65,
+	0x41, 0x6a, 0xb1, 0x9e, 0x53, 0x88, 0xb3, 0x47, 0x6a, 0x62, 0x4a, 0x6a, 0x91, 0x47, 0x62, 0x71,
+	0x86, 0x53, 0x65, 0x49, 0x6a, 0x71, 0x10, 0xd8, 0x24, 0xa7, 0x80, 0x13, 0x8f, 0xe4, 0x18, 0x2f,
+	0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18,
+	0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x23, 0x64, 0x72, 0x05, 0x7a, 0x28, 0x80, 0xad, 0x4a, 0x62,
+	0x03, 0xfb, 0xca, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x9d, 0x31, 0x8a, 0x8c, 0x2c, 0x01, 0x00,
+	0x00,
 }
 
-func (m *EventChainExtended) Marshal() (dAtA []byte, err error) {
+func (m *EventTipUpdated) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -99,16 +108,28 @@ func (m *EventChainExtended) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EventChainExtended) MarshalTo(dAtA []byte) (int, error) {
+func (m *EventTipUpdated) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EventChainExtended) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EventTipUpdated) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.Hash != nil {
+		{
+			size := m.Hash.Size()
+			i -= size
+			if _, err := m.Hash.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintEvent(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
 	if m.Height != 0 {
 		i = encodeVarintEvent(dAtA, i, uint64(m.Height))
 		i--
@@ -128,7 +149,7 @@ func encodeVarintEvent(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *EventChainExtended) Size() (n int) {
+func (m *EventTipUpdated) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -136,6 +157,10 @@ func (m *EventChainExtended) Size() (n int) {
 	_ = l
 	if m.Height != 0 {
 		n += 1 + sovEvent(uint64(m.Height))
+	}
+	if m.Hash != nil {
+		l = m.Hash.Size()
+		n += 1 + l + sovEvent(uint64(l))
 	}
 	return n
 }
@@ -146,7 +171,7 @@ func sovEvent(x uint64) (n int) {
 func sozEvent(x uint64) (n int) {
 	return sovEvent(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *EventChainExtended) Unmarshal(dAtA []byte) error {
+func (m *EventTipUpdated) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -169,10 +194,10 @@ func (m *EventChainExtended) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EventChainExtended: wiretype end group for non-group")
+			return fmt.Errorf("proto: EventTipUpdated: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventChainExtended: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EventTipUpdated: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -194,6 +219,41 @@ func (m *EventChainExtended) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BTCHeaderHashBytes
+			m.Hash = &v
+			if err := m.Hash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvent(dAtA[iNdEx:])

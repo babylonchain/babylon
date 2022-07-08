@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -88,10 +89,13 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	// Create the header
 	tipUpdated := k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
 	if tipUpdated {
+		btcHeaderHashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(&headerHash)
 		// Trigger TipUpdated hook
 		k.AfterTipUpdated(ctx, height+1)
 		// Emit TipUpdated event
-		ctx.EventManager().EmitTypedEvent(&types.EventChainExtended{Height: height + 1})
+		ctx.EventManager().EmitTypedEvent(&types.EventTipUpdated{
+			Height: height + 1,
+			Hash:   &btcHeaderHashBytes})
 	}
 	return nil
 }
