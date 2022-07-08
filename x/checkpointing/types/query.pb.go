@@ -76,7 +76,7 @@ func (m *QueryRawCheckpointListRequest) GetStatus() CheckpointStatus {
 	if m != nil {
 		return m.Status
 	}
-	return Uncheckpointed
+	return Accumulating
 }
 
 func (m *QueryRawCheckpointListRequest) GetPagination() *query.PageRequest {
