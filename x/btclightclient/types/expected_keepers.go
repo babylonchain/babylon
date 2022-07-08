@@ -1,6 +1,7 @@
 package types
 
 import (
+	bbl "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -18,5 +19,6 @@ type BankKeeper interface {
 }
 
 type BTCLightClientHooks interface {
-	AfterTipUpdated(ctx sdk.Context, height uint64) // Must be called after the tip is updated
+	AfterBTCRollBack(ctx sdk.Context, hash bbl.BTCHeaderHashBytes, height uint64)    // Must be called after the chain is rolled back
+	AfterBTCRollForward(ctx sdk.Context, hash bbl.BTCHeaderHashBytes, height uint64) // Must be called after the chain is rolled forward
 }

@@ -5,10 +5,21 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
-// EventTipUpdated is emitted on Msg/InsertHeader
-message EventTipUpdated {
-  // The height of the new tip
+// EventBTCRollBack is emitted on Msg/InsertHeader
+message EventBTCRollBack {
+  // The height to which we rolled back
   uint64 height = 1;
+  // The hash of the header to which we rolled back
+  bytes hash = 2 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
+  ];
+}
+
+// EventBTCRollForward is emitted on Msg/InsertHeader
+message EventBTCRollForward {
+  // The height to which we rolled forward
+  uint64 height = 1;
+  // The hash of the header to which we rolled forward
   bytes hash = 2 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
   ];

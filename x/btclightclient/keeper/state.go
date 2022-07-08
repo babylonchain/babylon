@@ -216,6 +216,92 @@ func (s HeadersState) GetMainChain() []*wire.BlockHeader {
 	return chain
 }
 
+// GetHighestCommonAncestor traverses the ancestors of both headers
+//  						to identify the common ancestor with the highest height
+func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header2 *wire.BlockHeader) (*wire.BlockHeader, uint64) {
+	// Get the prefix store for the (height, hash) -> header collection
+	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
+	// Iterate it in reverse in order to get highest heights first
+	// TODO: need to verify this assumption
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	// The algorithm works as follows:
+	// 1. Initialize a hashmap hash -> bool denoting whether the hash
+	//    of an ancestor of either header1 or header2 has been encountered
+	// 2. Maintain ancestor1 and ancestor2 as variables that point
+	//	  to the current ancestor hash of the header1 and header2 parameters
+	// 3. Whenever a node is encountered with a hash that is equal to ancestor{1,2},
+	//    update the ancestor{1,2} variables.
+	// 4. If ancestor1 or ancestor2 is set to the hash table,
+	//    then that's the hash of the earliest ancestor
+	// 5. Using the hash of the heighest ancestor wait until we get the header bytes
+	// 	  in order to avoid an extra access.
+	ancestor1 := header1.BlockHash()
+	ancestor2 := header2.BlockHash()
+	var encountered map[string]bool
+	encountered[ancestor1.String()] = true
+	encountered[ancestor2.String()] = true
+	var found *chainhash.Hash = nil
+
+	for ; iter.Valid(); iter.Next() {
+		btcdBlock := blockHeaderFromStoredBytes(iter.Value())
+		// We have already found what we're looking for, no need to proceed further
+		if found != nil {
+			if *found == btcdBlock.BlockHash() {
+				height, err := s.GetHeaderHeight(found)
+				if err != nil {
+					panic("Height for header existing in storage not maintained")
+				}
+				return btcdBlock, height
+			}
+		} else {
+			if ancestor1 == btcdBlock.BlockHash() {
+				ancestor1 = btcdBlock.PrevBlock
+				if encountered[ancestor1.String()] {
+					found = &ancestor1
+				}
+				encountered[ancestor1.String()] = true
+			}
+			if ancestor2 == btcdBlock.BlockHash() {
+				ancestor2 = btcdBlock.PrevBlock
+				if encountered[ancestor2.String()] {
+					found = &ancestor2
+				}
+				encountered[ancestor2.String()] = true
+			}
+		}
+	}
+	return nil, 0
+}
+
+// GetInOrderAncestorsUntil returns the list of nodes starting from the node after `parent` until the `child`
+func (s HeadersState) GetInOrderAncestorsUntil(child *wire.BlockHeader, parent *wire.BlockHeader) []*wire.BlockHeader {
+	// Get the prefix store for the (height, hash) -> header collection
+	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
+	// Iterate it in reverse in order to get highest heights first
+	// TODO: need to verify this assumption
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	currentHeader := child
+
+	var ancestors []*wire.BlockHeader
+	ancestors = append(ancestors, child)
+	for ; iter.Valid(); iter.Next() {
+		btcdHeader := blockHeaderFromStoredBytes(iter.Value())
+		if btcdHeader.BlockHash() == parent.BlockHash() {
+			break
+		}
+		if btcdHeader.BlockHash().String() == currentHeader.PrevBlock.String() {
+			currentHeader = btcdHeader
+			ancestors = append(ancestors, btcdHeader)
+		}
+	}
+
+	return ancestors
+}
+
 // HeaderExists Check whether a hash is maintained in storage
 func (s HeadersState) HeaderExists(hash *chainhash.Hash) bool {
 	// Get the prefix store for the hash->height collection

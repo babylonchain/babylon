@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-	bbl "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -86,16 +85,23 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	headerWork := types.CalcWork(header)
 	cumulativeWork := types.CumulativeWork(headerWork, parentWork)
 
+	previousTip := k.HeadersState(ctx).GetTip()
 	// Create the header
 	tipUpdated := k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
+
+	// The tip has been updated to `header`
 	if tipUpdated {
-		btcHeaderHashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(&headerHash)
-		// Trigger TipUpdated hook
-		k.AfterTipUpdated(ctx, height+1)
-		// Emit TipUpdated event
-		ctx.EventManager().EmitTypedEvent(&types.EventTipUpdated{
-			Height: height + 1,
-			Hash:   &btcHeaderHashBytes})
+		hca, hcaHeight := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, header)
+
+		k.triggerRollBack(ctx, hca, hcaHeight)
+
+		addedToMainChain := k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
+
+		for idx, added := range addedToMainChain {
+			// height + 1 -> height of the tip
+			// height + 1 - len(addedToMainChain) -> height of highest common ancestor
+			k.triggerRollForward(ctx, added, height+1-uint64(len(addedToMainChain))+uint64(idx))
+		}
 	}
 	return nil
 }

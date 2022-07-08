@@ -1,6 +1,9 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	bbl "github.com/babylonchain/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 var _ BTCLightClientHooks = &MultiBTCLightClientHooks{}
 
@@ -10,8 +13,14 @@ func NewMultiBTCLightClientHooks(hooks ...BTCLightClientHooks) MultiBTCLightClie
 	return hooks
 }
 
-func (h MultiBTCLightClientHooks) AfterTipUpdated(ctx sdk.Context, height uint64) {
+func (h MultiBTCLightClientHooks) AfterBTCRollBack(ctx sdk.Context, hash bbl.BTCHeaderHashBytes, height uint64) {
 	for i := range h {
-		h[i].AfterTipUpdated(ctx, height)
+		h[i].AfterBTCRollBack(ctx, hash, height)
+	}
+}
+
+func (h MultiBTCLightClientHooks) AfterBTCRollForward(ctx sdk.Context, hash bbl.BTCHeaderHashBytes, height uint64) {
+	for i := range h {
+		h[i].AfterBTCRollForward(ctx, hash, height)
 	}
 }
