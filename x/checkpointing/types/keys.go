@@ -39,28 +39,27 @@ var (
 // BlsSigsObjectKey defines epoch + hash
 func BlsSigsObjectKey(epoch uint64, hash BlsSigHash) []byte {
 	ee := sdk.Uint64ToBigEndian(epoch)
-	epochPrefix := append(BlsSigsObjectPrefix, ee...)
-	return append(epochPrefix, hash...)
+	return append(ee, hash...)
 }
 
 // BlsSigsEpochKey defines BLS sig hash
 func BlsSigsEpochKey(hash BlsSigHash) []byte {
-	return append(BlsSigsHashToEpochPrefix, hash...)
+	return hash
 }
 
 // CkptsObjectKey defines epoch
 func CkptsObjectKey(epoch uint64) []byte {
-	return append(CkptsObjectPrefix, sdk.Uint64ToBigEndian(epoch)...)
+	return sdk.Uint64ToBigEndian(epoch)
 }
 
 // AddrToBlsKeyKey defines validator address
 func AddrToBlsKeyKey(valAddr ValidatorAddress) []byte {
-	return append(AddrToBlsKeyPrefix, []byte(valAddr)...)
+	return []byte(valAddr)
 }
 
 // BlsKeyToAddrKey defines BLS public key
 func BlsKeyToAddrKey(pk bls12381.PublicKey) []byte {
-	return append(BlsKeyToAddrPrefix, pk...)
+	return pk
 }
 
 func KeyPrefix(p string) []byte {
