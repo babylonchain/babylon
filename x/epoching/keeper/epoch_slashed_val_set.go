@@ -53,7 +53,7 @@ func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) []sd
 	addrs := []sdk.ValAddress{}
 	store := k.slashedValSetStore(ctx, epochNumber)
 	// add each valAddr, which is the key
-	// the prefix `SlashedValidatorKey || epochNumber` has been stripped
+	// the prefix `SlashedValidatorSetKey || epochNumber` has been stripped
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
@@ -87,9 +87,9 @@ func (k Keeper) GetSlashedValidatorSetSize(ctx sdk.Context, epochNumber sdk.Uint
 }
 
 // ClearSlashedValidators removes all slashed validators in the set
-// This is called upon the epoch is checkpointed
+// TODO: This is called upon the epoch is checkpointed
 func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) {
-	// prefix : SlashedValidatorKey || epochNumber
+	// prefix : SlashedValidatorSetKey || epochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
 
 	// remove all entries with this prefix
@@ -105,10 +105,10 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) {
 }
 
 // slashedValSetStore returns the KVStore of the slashed validator set for a given epoch
-// prefix : SlashedValidatorKey || epochNumber
+// prefix : SlashedValidatorSetKey || epochNumber
 func (k Keeper) slashedValSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
-	slashedValStore := prefix.NewStore(store, types.SlashedValidatorKey)
+	slashedValStore := prefix.NewStore(store, types.SlashedValidatorSetKey)
 	epochNumberBytes, err := epochNumber.Marshal()
 	if err != nil {
 		panic(err)

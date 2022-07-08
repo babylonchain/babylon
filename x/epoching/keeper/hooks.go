@@ -43,26 +43,51 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress)
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
-	// add the validator address to the set
-	h.k.AddSlashedValidator(ctx, valAddr)
+	thresholds := []float64{1 / 3, 2 / 3}
 
 	epochNumber := h.k.GetEpochNumber(ctx)
-	numSlashedVals := h.k.GetSlashedValidatorSetSize(ctx, epochNumber)
-	numMaxVals := h.k.stk.GetParams(ctx).MaxValidators
-	// if a certain threshold (1/3 or 2/3) validators are slashed in a single epoch, emit event and trigger hook
-	if numSlashedVals.Uint64() == uint64(numMaxVals)/3 || numSlashedVals.Uint64() == uint64(numMaxVals)*2/3 {
-		// emit event
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeSlashThreshold,
-				sdk.NewAttribute(types.AttributeKeyNumSlashedVals, numSlashedVals.String()),
-				sdk.NewAttribute(types.AttributeKeyNumMaxVals, fmt.Sprint(numMaxVals)),
-			),
-		})
-		// trigger hook
-		slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
-		h.k.BeforeSlashThreshold(ctx, slashedVals)
+	totalVotingPower := h.k.GetTotalVotingPower(ctx, epochNumber)
+	validatorSet := h.k.GetValidatorSet(ctx, epochNumber)
+
+	// calculate total slashed voting power
+	slashedVotingPower := int64(0)
+	slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
+	for _, slashedVal := range slashedVals {
+		if power, ok := validatorSet[slashedVal.String()]; ok {
+			slashedVotingPower += power
+		} else {
+			panic(types.ErrUnknownValidator)
+		}
 	}
+
+	// voting power of this validator
+	thisVotingPower, ok := validatorSet[valAddr.String()]
+	if !ok {
+		panic(types.ErrUnknownValidator)
+	}
+
+	for _, threshold := range thresholds {
+		// if a certain threshold voting power is slashed in a single epoch, emit event and trigger hook
+		if float64(slashedVotingPower) < float64(totalVotingPower)*threshold && float64(totalVotingPower)*threshold <= float64(slashedVotingPower+thisVotingPower) {
+			// add the newly slashed validator
+			slashedVals = append(slashedVals, valAddr)
+			// emit event
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(
+					types.EventTypeSlashThreshold,
+					sdk.NewAttribute(types.AttributeKeySlashedVotingPower, fmt.Sprintf("%d", slashedVotingPower)),
+					sdk.NewAttribute(types.AttributeKeyTotalVotingPower, fmt.Sprintf("%d", slashedVotingPower)),
+					sdk.NewAttribute(types.AttributeKeySlashedValidators, fmt.Sprintf("%v", slashedVals)),
+				),
+			})
+			// trigger hook
+			slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
+			h.k.BeforeSlashThreshold(ctx, slashedVals)
+		}
+	}
+
+	// add the validator address to the set
+	h.k.AddSlashedValidator(ctx, valAddr)
 }
 
 // Other staking hooks that are not used in the epoching module

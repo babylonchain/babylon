@@ -29,6 +29,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		incEpochNumber := k.IncEpochNumber(ctx)
 		// init the slashed validator set size of this new epoch
 		k.InitSlashedValidatorSetSize(ctx)
+		// store the current validator set
+		k.SetValidatorSet(ctx, incEpochNumber)
 		// trigger AfterEpochBegins hook
 		k.AfterEpochBegins(ctx, incEpochNumber)
 		// emit BeginEpoch event

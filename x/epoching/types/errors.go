@@ -13,4 +13,5 @@ var (
 	ErrUnknownEpochNumber       = sdkerrors.Register(ModuleName, 3, "the epoch number is not known in DB")
 	ErrUnknownQueueLen          = sdkerrors.Register(ModuleName, 4, "the msg queue length is not known in DB")
 	ErrUnknownSlashedValSetSize = sdkerrors.Register(ModuleName, 5, "the slashed validator set size is not known in DB. Maybe the epoch has been checkpointed?")
+	ErrUnknownValidator         = sdkerrors.Register(ModuleName, 6, "the slashed validator is not in the validator set.")
 )
