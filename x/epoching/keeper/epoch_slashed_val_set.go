@@ -7,7 +7,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// setSlashedVotingPower sets the slashed voting power
+// setSlashedVotingPower sets the total amount of voting power that has been slashed in the epoch
 func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber sdk.Uint, power int64) {
 	store := k.slashedVotingPowerStore(ctx)
 
@@ -60,7 +60,7 @@ func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) {
 	epochNumber := k.GetEpochNumber(ctx)
 	store := k.slashedValSetStore(ctx, epochNumber)
 
-	// insert KV pair, where
+	// insert into "set of slashed addresses" as KV pair, where
 	// - key: valAddr
 	// - value: empty
 	store.Set(valAddr, []byte{})

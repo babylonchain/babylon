@@ -104,7 +104,7 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
 	// remove all epoch msgs
-	iterator := sdk.KVStorePrefixIterator(ctx.KVStore(k.storeKey), types.QueuedMsgKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.QueuedMsgKey)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		key := iterator.Key()

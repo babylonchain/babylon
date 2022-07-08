@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // GetValidatorSet returns the set of validators of a given epoch
@@ -141,24 +140,15 @@ func (k Keeper) votingPowerStore(ctx sdk.Context) prefix.Store {
 // key: string(address)
 // value: voting power (in int64 as per Cosmos SDK)
 // This is called upon BeginEpoch
-// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L348-L373)
+// (mostly adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L348-L373)
 func (k Keeper) getValSetFromStaking(ctx sdk.Context) (map[string]int64, error) {
 	valSet := make(map[string]int64)
 
-	iterator := k.stk.LastValidatorsIterator(ctx)
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		// extract the validator address from the key (prefix is 1-byte, addrLen is 1-byte)
-		valAddr := stakingtypes.AddressFromLastValidatorPowerKey(iterator.Key())
-		valAddrStr := string(valAddr)
-		powerBytes := iterator.Value()
-		var power sdk.Int
-		if err := power.Unmarshal(powerBytes); err != nil {
-			return nil, sdkerrors.Wrap(types.ErrUnmarshal, err.Error())
-		}
-		valSet[valAddrStr] = power.Int64()
-	}
+	k.stk.IterateLastValidatorPowers(ctx, func(addr sdk.ValAddress, power int64) (stop bool) {
+		valAddrStr := addr.String()
+		valSet[valAddrStr] = power
+		return false
+	})
 
 	return valSet, nil
 }
