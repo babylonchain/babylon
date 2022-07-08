@@ -73,6 +73,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 		expectPass    bool
 	}{
 		{"basic good", sdk.AccAddress(valAddr1), valAddr2, coinPos, true},
+		{"no wrapped msg", nil, nil, coinPos, false},
 		{"self bond", sdk.AccAddress(valAddr1), valAddr1, coinPos, true},
 		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, coinPos, false},
 		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, coinPos, false},
@@ -81,8 +82,13 @@ func TestMsgWrappedDelegate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		msgUnwrapped := stakingtypes.NewMsgDelegate(tc.delegatorAddr, tc.validatorAddr, tc.bond)
-		msg := types.NewMsgWrappedDelegate(msgUnwrapped)
+		var msg *types.MsgWrappedDelegate
+		if tc.delegatorAddr == nil {
+			msg = types.NewMsgWrappedDelegate(nil)
+		} else {
+			msgUnwrapped := stakingtypes.NewMsgDelegate(tc.delegatorAddr, tc.validatorAddr, tc.bond)
+			msg = types.NewMsgWrappedDelegate(msgUnwrapped)
+		}
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {
@@ -102,6 +108,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		expectPass       bool
 	}{
 		{"regular", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true},
+		{"no wrapped msg", nil, nil, nil, coinPos, false},
 		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false},
 		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.Coin{}, false},
 		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
@@ -110,8 +117,13 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		msgUnwrapped := stakingtypes.NewMsgBeginRedelegate(tc.delegatorAddr, tc.validatorSrcAddr, tc.validatorDstAddr, tc.amount)
-		msg := types.NewMsgWrappedBeginRedelegate(msgUnwrapped)
+		var msg *types.MsgWrappedBeginRedelegate
+		if tc.delegatorAddr == nil {
+			msg = types.NewMsgWrappedBeginRedelegate(nil)
+		} else {
+			msgUnwrapped := stakingtypes.NewMsgBeginRedelegate(tc.delegatorAddr, tc.validatorSrcAddr, tc.validatorDstAddr, tc.amount)
+			msg = types.NewMsgWrappedBeginRedelegate(msgUnwrapped)
+		}
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {
@@ -130,6 +142,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 		expectPass    bool
 	}{
 		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true},
+		{"no wrapped msg", nil, nil, coinPos, false},
 		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false},
 		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false},
 		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
@@ -137,8 +150,13 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-		msgUnwrapped := stakingtypes.NewMsgUndelegate(tc.delegatorAddr, tc.validatorAddr, tc.amount)
-		msg := types.NewMsgWrappedUndelegate(msgUnwrapped)
+		var msg *types.MsgWrappedUndelegate
+		if tc.delegatorAddr == nil {
+			msg = types.NewMsgWrappedUndelegate(nil)
+		} else {
+			msgUnwrapped := stakingtypes.NewMsgUndelegate(tc.delegatorAddr, tc.validatorAddr, tc.amount)
+			msg = types.NewMsgWrappedUndelegate(msgUnwrapped)
+		}
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
 		} else {

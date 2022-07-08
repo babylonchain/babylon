@@ -10,21 +10,20 @@ import (
 func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
 	testCases := []struct {
 		name      string
-		req       *types.MsgWrappedDelegate
+		req       *stakingtypes.MsgDelegate
 		expectErr bool
 	}{
 		{
-			"empty msg",
-			&types.MsgWrappedDelegate{
-				Msg: &stakingtypes.MsgDelegate{},
-			},
+			"empty wrapped msg",
+			&stakingtypes.MsgDelegate{},
 			false,
 		},
 	}
 	for _, tc := range testCases {
 		wctx := sdk.WrapSDKContext(suite.ctx)
 		suite.Run(tc.name, func() {
-			_, err := suite.msgSrvr.WrappedDelegate(wctx, tc.req)
+			wrappedMsg := types.NewMsgWrappedDelegate(tc.req)
+			_, err := suite.msgSrvr.WrappedDelegate(wctx, wrappedMsg)
 			suite.Require().NoError(err)
 
 			resp, err := suite.queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
@@ -45,21 +44,20 @@ func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
 func (suite *KeeperTestSuite) TestMsgWrappedUndelegate() {
 	testCases := []struct {
 		name      string
-		req       *types.MsgWrappedUndelegate
+		req       *stakingtypes.MsgUndelegate
 		expectErr bool
 	}{
 		{
-			"empty msg",
-			&types.MsgWrappedUndelegate{
-				Msg: &stakingtypes.MsgUndelegate{},
-			},
+			"empty wrapped msg",
+			&stakingtypes.MsgUndelegate{},
 			false,
 		},
 	}
 	for _, tc := range testCases {
 		wctx := sdk.WrapSDKContext(suite.ctx)
 		suite.Run(tc.name, func() {
-			_, err := suite.msgSrvr.WrappedUndelegate(wctx, tc.req)
+			wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
+			_, err := suite.msgSrvr.WrappedUndelegate(wctx, wrappedMsg)
 			suite.Require().NoError(err)
 
 			resp, err := suite.queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
@@ -80,20 +78,20 @@ func (suite *KeeperTestSuite) TestMsgWrappedUndelegate() {
 func (suite *KeeperTestSuite) TestMsgWrappedBeginRedelegate() {
 	testCases := []struct {
 		name      string
-		req       *types.MsgWrappedBeginRedelegate
+		req       *stakingtypes.MsgBeginRedelegate
 		expectErr bool
 	}{
 		{
-			"empty msg",
-			&types.MsgWrappedBeginRedelegate{
-				Msg: &stakingtypes.MsgBeginRedelegate{},
-			},
+			"empty wrapped msg",
+			&stakingtypes.MsgBeginRedelegate{},
 			false,
 		},
 	}
 	for _, tc := range testCases {
 		wctx := sdk.WrapSDKContext(suite.ctx)
-		_, err := suite.msgSrvr.WrappedBeginRedelegate(wctx, tc.req)
+		wrappedMsg := types.NewMsgWrappedBeginRedelegate(tc.req)
+
+		_, err := suite.msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
 		suite.Require().NoError(err)
 
 		resp, err := suite.queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
@@ -103,7 +101,7 @@ func (suite *KeeperTestSuite) TestMsgWrappedBeginRedelegate() {
 		suite.Require().Equal(1, len(resp.Msgs))
 
 		suite.Run(tc.name, func() {
-			_, err := suite.msgSrvr.WrappedBeginRedelegate(wctx, tc.req)
+			_, err := suite.msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
 			if tc.expectErr {
 				suite.Require().Error(err)
 			} else {

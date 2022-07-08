@@ -17,4 +17,5 @@ var (
 	ErrUnknownTotalVotingPower   = sdkerrors.Register(ModuleName, 7, "the total voting power is not known in DB.")
 	ErrMarshal                   = sdkerrors.Register(ModuleName, 8, "marshal error.")
 	ErrUnmarshal                 = sdkerrors.Register(ModuleName, 9, "unmarshal error.")
+	ErrNoWrappedMsg              = sdkerrors.Register(ModuleName, 10, "the wrapped msg contains no msg inside.")
 )

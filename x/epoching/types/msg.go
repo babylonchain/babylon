@@ -47,6 +47,9 @@ func (msg MsgWrappedDelegate) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedDelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
 	return msg.Msg.ValidateBasic()
 }
 
@@ -78,6 +81,9 @@ func (msg MsgWrappedUndelegate) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedUndelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
 	return msg.Msg.ValidateBasic()
 }
 
@@ -109,5 +115,8 @@ func (msg MsgWrappedBeginRedelegate) GetSignBytes() []byte {
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedBeginRedelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
 	return msg.Msg.ValidateBasic()
 }
