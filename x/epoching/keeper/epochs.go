@@ -9,6 +9,18 @@ const (
 	DefaultEpochNumber = 0
 )
 
+// setEpochNumber sets epoch number
+func (k Keeper) InitEpochNumber(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	epochNumberBytes, err := sdk.NewUint(0).Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	store.Set(types.EpochNumberKey, epochNumberBytes)
+}
+
 // GetEpochNumber fetches epoch number
 func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	store := ctx.KVStore(k.storeKey)
@@ -25,8 +37,8 @@ func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	return epochNumber
 }
 
-// SetEpochNumber sets epoch number
-func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
+// setEpochNumber sets epoch number
+func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 	store := ctx.KVStore(k.storeKey)
 
 	epochNumberBytes, err := epochNumber.Marshal()
@@ -41,7 +53,7 @@ func (k Keeper) SetEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
 func (k Keeper) IncEpochNumber(ctx sdk.Context) sdk.Uint {
 	epochNumber := k.GetEpochNumber(ctx)
 	incrementedEpochNumber := epochNumber.AddUint64(1)
-	k.SetEpochNumber(ctx, incrementedEpochNumber)
+	k.setEpochNumber(ctx, incrementedEpochNumber)
 	return incrementedEpochNumber
 }
 
