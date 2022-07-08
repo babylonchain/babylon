@@ -24,3 +24,9 @@ func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) {
 		h[i].AfterEpochEnds(ctx, epoch)
 	}
 }
+
+func (h MultiEpochingHooks) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {
+	for i := range h {
+		h[i].BeforeSlashThreshold(ctx, valAddrs)
+	}
+}
