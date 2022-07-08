@@ -15,7 +15,7 @@ func GenKeyPair(seed []byte) (*blst.SecretKey, PublicKey) {
 
 // Sign signs on a msg using a BLS secret key
 // the returned sig is compressed version with 48 byte size
-func Sign(sk *blst.SecretKey, msg []byte) []byte {
+func Sign(sk *blst.SecretKey, msg []byte) Signature {
 	return new(BlsSig).Sign(sk, msg, DST).Compress()
 }
 
@@ -26,8 +26,17 @@ func Verify(sig Signature, pk PublicKey, msg []byte) (bool, error) {
 	return dummySig.VerifyCompressed(sig, false, pk, false, msg, DST), nil
 }
 
-// AggrSigs aggregates BLS sigs into a single BLS signature
-func AggrSigs(sigs []Signature) (Signature, error) {
+// AggrSig aggregates BLS signatures in an accumulative manner
+func AggrSig(existingSig Signature, newSig Signature) (Signature, error) {
+	if existingSig == nil {
+		return newSig, nil
+	}
+	sigs := []Signature{existingSig, newSig}
+	return AggrSigList(sigs)
+}
+
+// AggrSigList aggregates BLS sigs into a single BLS signature
+func AggrSigList(sigs []Signature) (Signature, error) {
 	aggSig := new(BlsMultiSig)
 	sigBytes := make([][]byte, len(sigs))
 	for i := 0; i < len(sigs); i++ {
@@ -39,8 +48,17 @@ func AggrSigs(sigs []Signature) (Signature, error) {
 	return aggSig.ToAffine().Compress(), nil
 }
 
-// AggrPKs aggregates BLS public keys into a single BLS public key
-func AggrPKs(pks []PublicKey) ([]byte, error) {
+// AggrPK aggregates BLS public keys in an accumulative manner
+func AggrPK(existingPK PublicKey, newPK PublicKey) (PublicKey, error) {
+	if existingPK == nil {
+		return newPK, nil
+	}
+	pks := []PublicKey{existingPK, newPK}
+	return AggrPKList(pks)
+}
+
+// AggrPKList aggregates BLS public keys into a single BLS public key
+func AggrPKList(pks []PublicKey) (PublicKey, error) {
 	aggPk := new(BlsMultiPubKey)
 	pkBytes := make([][]byte, len(pks))
 	for i := 0; i < len(pks); i++ {
@@ -55,7 +73,7 @@ func AggrPKs(pks []PublicKey) ([]byte, error) {
 // VerifyMultiSig verifies a BLS sig (compressed) over a message with
 // a group of BLS public keys (compressed)
 func VerifyMultiSig(sig Signature, pks []PublicKey, msg []byte) (bool, error) {
-	aggPk, err := AggrPKs(pks)
+	aggPk, err := AggrPKList(pks)
 	if err != nil {
 		return false, err
 	}
