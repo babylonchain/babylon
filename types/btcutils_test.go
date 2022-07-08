@@ -27,8 +27,8 @@ func (s *btcutilsTestSuite) SetupSuite() {
 	mainnetHeaderBytes, _ := types.NewBTCHeaderBytesFromHex(mainnetHeaderHex)
 	testnetHeaderBytes, _ := types.NewBTCHeaderBytesFromHex(testnetHeaderHex)
 
-	s.mainnetHeader, _ = mainnetHeaderBytes.ToBlockHeader()
-	s.testnetHeader, _ = testnetHeaderBytes.ToBlockHeader()
+	s.mainnetHeader = mainnetHeaderBytes.ToBlockHeader()
+	s.testnetHeader = testnetHeaderBytes.ToBlockHeader()
 
 	mainnetHeader := *s.mainnetHeader
 	s.mainnetHeaderInvalidTs = &mainnetHeader

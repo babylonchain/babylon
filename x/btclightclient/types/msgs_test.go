@@ -14,7 +14,7 @@ import (
 
 func FuzzMsgInsertHeader(f *testing.F) {
 	addressBytes := []byte("from________________")
-	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	defaultHeader := bbl.GetBaseHeaderBytes()
 	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
 	// Maximum btc difficulty possible
@@ -44,7 +44,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		// If the header hex is the same as the default one, then this is the seed input
 		headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 		headerHex := headerBytes.MarshalHex()
-		seedInput := types.DefaultBaseHeaderHex == headerHex
+		seedInput := defaultHeader.MarshalHex() == headerHex
 
 		// Make the address have a proper size
 		if len(addressBytes) == 0 || len(addressBytes) >= 256 {
