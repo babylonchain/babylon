@@ -43,9 +43,7 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress)
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
-	thresholds := []float64{}
-	thresholds = append(thresholds, float64(1)/float64(3))
-	thresholds = append(thresholds, float64(2)/float64(3))
+	thresholds := []float64{float64(1) / float64(3), float64(2) / float64(3)}
 
 	epochNumber := h.k.GetEpochNumber(ctx)
 	totalVotingPower := h.k.GetTotalVotingPower(ctx, epochNumber)
@@ -56,7 +54,10 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	// voting power of this validator
 	thisVotingPower, ok := validatorSet[valAddr.String()]
 	if !ok {
-		panic(types.ErrUnknownValidator)
+		// It's possible that the most powerful validator outside the validator set enrols to the validator after an existing validator is slashed.
+		// Consequently, here we cannot find this validator in the validatorSet map.
+		// As we consider the validator set in the epoch beginning to be the validator set throughout this epoch, we consider this new validator in the edge to have no voting power and return directly here.
+		return
 	}
 
 	for _, threshold := range thresholds {
