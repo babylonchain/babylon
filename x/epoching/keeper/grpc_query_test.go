@@ -194,6 +194,19 @@ func (suite *KeeperTestSuite) TestEpochMsgs() {
 			},
 		},
 		{
+			"newly inserted epoch msg",
+			func() {
+				msg := types.QueuedMessage{
+					TxId: []byte{0x02},
+				}
+				suite.keeper.EnqueueMsg(suite.ctx, msg)
+			},
+			[]*types.QueuedMessage{
+				{TxId: []byte{0x01}},
+				{TxId: []byte{0x02}},
+			},
+		},
+		{
 			"cleared epoch msg",
 			func() {
 				suite.keeper.ClearEpochMsgs(suite.ctx)
