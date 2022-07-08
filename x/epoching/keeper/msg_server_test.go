@@ -7,7 +7,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// TODO: check if the msg is indeed queued
 func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
 	testCases := []struct {
 		name      string
@@ -15,7 +14,7 @@ func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
 		expectErr bool
 	}{
 		{
-			"MsgWrappedDelegate",
+			"empty msg",
 			&types.MsgWrappedDelegate{
 				Msg: &stakingtypes.MsgDelegate{},
 			},
@@ -50,7 +49,7 @@ func (suite *KeeperTestSuite) TestMsgWrappedUndelegate() {
 		expectErr bool
 	}{
 		{
-			"MsgWrappedDelegate",
+			"empty msg",
 			&types.MsgWrappedUndelegate{
 				Msg: &stakingtypes.MsgUndelegate{},
 			},
@@ -85,7 +84,7 @@ func (suite *KeeperTestSuite) TestMsgWrappedBeginRedelegate() {
 		expectErr bool
 	}{
 		{
-			"MsgWrappedDelegate",
+			"empty msg",
 			&types.MsgWrappedBeginRedelegate{
 				Msg: &stakingtypes.MsgBeginRedelegate{},
 			},
