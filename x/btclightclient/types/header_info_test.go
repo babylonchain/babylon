@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"bytes"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"math/rand"
@@ -26,7 +27,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
 		rand.Seed(seed)
-		header := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		header := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 
 		// Get the expected header bytes
 		expectedHeaderBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)

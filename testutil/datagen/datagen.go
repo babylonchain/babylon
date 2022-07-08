@@ -1,4 +1,4 @@
-package types_test
+package datagen
 
 import (
 	"encoding/hex"
@@ -9,24 +9,24 @@ import (
 	"time"
 )
 
-func genRandomByteArray(length uint64) []byte {
+func GenRandomByteArray(length uint64) []byte {
 	newHeaderBytes := make([]byte, length)
 	rand.Read(newHeaderBytes)
 	return newHeaderBytes
 }
 
-func genRandomHexStr(length uint64) string {
-	randBytes := genRandomByteArray(length)
+func GenRandomHexStr(length uint64) string {
+	randBytes := GenRandomByteArray(length)
 	return hex.EncodeToString(randBytes)
 }
 
-func genRandomBtcdHeader(version int32, bits uint32, nonce uint32,
+func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
 	timeInt int64, prevBlockStr string, merkleRootStr string) *wire.BlockHeader {
-	if !validHex(prevBlockStr, bbl.BTCHeaderHashLen) {
-		prevBlockStr = genRandomHexStr(bbl.BTCHeaderHashLen)
+	if !ValidHex(prevBlockStr, bbl.BTCHeaderHashLen) {
+		prevBlockStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
 	}
-	if !validHex(merkleRootStr, bbl.BTCHeaderHashLen) {
-		merkleRootStr = genRandomHexStr(bbl.BTCHeaderHashLen)
+	if !ValidHex(merkleRootStr, bbl.BTCHeaderHashLen) {
+		merkleRootStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
 	}
 
 	// Get the chainhash versions
@@ -47,8 +47,8 @@ func genRandomBtcdHeader(version int32, bits uint32, nonce uint32,
 	return &header
 }
 
-// validHex accepts a hex string and the length representation as a byte array
-func validHex(hexStr string, length int) bool {
+// ValidHex accepts a hex string and the length representation as a byte array
+func ValidHex(hexStr string, length int) bool {
 	if len(hexStr) != length*2 {
 		return false
 	}
