@@ -66,6 +66,21 @@ package "epoching" #FFC09F {
     --
     * wrapped staking msg\n except MsgCreateValidator
   }
+
+  entity "Validator Snapshot" as validator_snapshot {
+    * epoch_number <<FK>>
+    * address <<FK>>
+    --
+    * power
+  }
+  note left
+    At beginning of epoch
+  end note
+
+  entity "Slashed Validators" as validator_slashed {
+    * epoch_number <<FK>>
+    * address <<FK>>
+  }
 }
 
 
@@ -183,6 +198,12 @@ block }o--|| validator : proposer
 
 epoch ||..o{ queued_msg : delay to end of epoch
 epoch ||--|| block : start height
+
+validator_snapshot }|--|| epoch
+validator_snapshot }|--|| validator
+
+validator_slashed }o--|| epoch
+validator_slashed }o--|| validator
 
 queued_msg .> staking_msg
 queued_msg ||--o| delayed_result : inform user \nvia events
