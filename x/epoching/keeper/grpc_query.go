@@ -30,11 +30,10 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 // CurrentEpoch handles the QueryCurrentEpochRequest query
 func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequest) (*types.QueryCurrentEpochResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	epochNumber := k.GetEpochNumber(ctx)
-	epochBoundary := k.GetEpochBoundary(ctx)
+	epoch := k.GetEpoch(ctx)
 	resp := &types.QueryCurrentEpochResponse{
-		CurrentEpoch:  epochNumber.BigInt().Uint64(),
-		EpochBoundary: epochBoundary.BigInt().Uint64(),
+		CurrentEpoch:  epoch.EpochNumber,
+		EpochBoundary: epoch.LastBlockHeight(),
 	}
 	return resp, nil
 }

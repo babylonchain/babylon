@@ -2,8 +2,8 @@ package types
 
 import (
 	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type LastCommitHash []byte
@@ -22,9 +22,9 @@ func ValAddrToBytes(address ValidatorAddress) []byte {
 	return []byte(address)
 }
 
-func NewCheckpoint(epochNum sdk.Uint, lch LastCommitHash) *RawCheckpoint {
+func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
-		EpochNum:       epochNum.Uint64(),
+		EpochNum:       epochNum,
 		LastCommitHash: lch,
 		Bitmap:         nil,
 		BlsMultiSig:    nil,

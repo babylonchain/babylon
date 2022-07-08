@@ -8,11 +8,11 @@ import (
 )
 
 // setSlashedVotingPower sets the total amount of voting power that has been slashed in the epoch
-func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber sdk.Uint, power int64) {
+func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber uint64, power int64) {
 	store := k.slashedVotingPowerStore(ctx)
 
 	// key: epochNumber
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -33,11 +33,11 @@ func (k Keeper) InitSlashedVotingPower(ctx sdk.Context) {
 }
 
 // GetSlashedVotingPower fetches the amount of slashed voting power of a given epoch
-func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64 {
+func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
 	store := k.slashedVotingPowerStore(ctx)
 
 	// key: epochNumber
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -72,7 +72,7 @@ func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) {
 }
 
 // GetSlashedValidators returns the set of slashed validators of a given epoch
-func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) []sdk.ValAddress {
+func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber uint64) []sdk.ValAddress {
 	addrs := []sdk.ValAddress{}
 	store := k.slashedValSetStore(ctx, epochNumber)
 	// add each valAddr, which is the key
@@ -88,7 +88,7 @@ func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) []sd
 
 // ClearSlashedValidators removes all slashed validators in the set
 // TODO: This is called upon the epoch is checkpointed
-func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) {
+func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber uint64) {
 	// prefix : SlashedValidatorSetKey || epochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
 
@@ -101,7 +101,7 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) {
 	}
 
 	// forget the slashed voting power of this epoch
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -110,10 +110,10 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber sdk.Uint) {
 
 // slashedValSetStore returns the KVStore of the slashed validator set for a given epoch
 // prefix : SlashedValidatorSetKey || epochNumber
-func (k Keeper) slashedValSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix.Store {
+func (k Keeper) slashedValSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	slashedValStore := prefix.NewStore(store, types.SlashedValidatorSetKey)
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}

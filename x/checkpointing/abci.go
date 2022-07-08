@@ -1,8 +1,10 @@
 package checkpointing
 
 import (
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"fmt"
 	"time"
+
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 
@@ -20,11 +22,9 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
-	// get the height of the last block in this epoch
-	epochBoundary := k.GetEpochBoundary(ctx)
 	// if this block is the second block of an epoch
-	// TODO: it's not correct, we want the epoch boundary of the previous epoch
-	if uint64(ctx.BlockHeight())-2 == epochBoundary.Uint64() {
+	epoch := k.GetEpoch(ctx)
+	if epoch.IsSecondBlock(ctx) {
 		// note that this epochNum is obtained before the BeginBlocker of the epoching module is executed
 		// meaning that the epochNum has not been incremented upon a new epoch
 		epochNum := k.GetEpochNumber(ctx)
@@ -38,7 +38,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				types.EventTypeRawCheckpointGenerated,
-				sdk.NewAttribute(types.AttributeKeyEpochNumber, k.GetEpochNumber(ctx).String()),
+				sdk.NewAttribute(types.AttributeKeyEpochNumber, fmt.Sprint(epoch.EpochNumber)),
 			),
 		})
 

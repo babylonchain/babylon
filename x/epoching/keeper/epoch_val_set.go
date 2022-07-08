@@ -8,7 +8,7 @@ import (
 )
 
 // GetValidatorSet returns the set of validators of a given epoch
-func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) map[string]int64 {
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) map[string]int64 {
 	valSet := make(map[string]int64)
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
@@ -48,7 +48,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 		totalPower += power
 	}
 	// store total voting power of this validator set
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -61,7 +61,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 
 // ClearValidatorSet removes the validator set of a given epoch
 // TODO: This is called upon the epoch is checkpointed
-func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
+func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber uint64) {
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -72,7 +72,7 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
 	}
 	// clear total voting power of this validator set
 	powerStore := k.votingPowerStore(ctx)
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -80,7 +80,7 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
 }
 
 // GetValidatorVotingPower returns the voting power of a given validator in a given epoch
-func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber sdk.Uint, valAddr sdk.ValAddress) int64 {
+func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, valAddr sdk.ValAddress) int64 {
 	store := k.valSetStore(ctx, epochNumber)
 
 	powerBytes := store.Get(valAddr)
@@ -96,8 +96,8 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber sdk.Uint, v
 }
 
 // GetTotalVotingPower returns the total voting power of a given epoch
-func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64 {
-	epochNumberBytes, err := epochNumber.Marshal()
+func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -117,10 +117,10 @@ func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64
 // prefix: ValidatorSetKey || epochNumber
 // key: string(address)
 // value: voting power (in int64 as per Cosmos SDK)
-func (k Keeper) valSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix.Store {
+func (k Keeper) valSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	valSetStore := prefix.NewStore(store, types.ValidatorSetKey)
-	epochNumberBytes, err := epochNumber.Marshal()
+	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}

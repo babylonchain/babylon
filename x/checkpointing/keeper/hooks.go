@@ -17,7 +17,7 @@ func (k Keeper) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) e
 }
 
 // AfterRawCheckpointConfirmed - call hook if registered
-func (k Keeper) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch sdk.Uint) error {
+func (k Keeper) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error {
 	if k.hooks != nil {
 		return k.hooks.AfterRawCheckpointConfirmed(ctx, epoch)
 	}

@@ -86,38 +86,38 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 	testCases := []struct {
 		msg           string
 		malleate      func()
-		epochNumber   sdk.Uint
-		epochBoundary sdk.Uint
+		epochNumber   uint64
+		epochBoundary uint64
 	}{
 		{
 			"epoch 0",
 			func() {},
-			sdk.NewUint(0),
-			sdk.NewUint(0),
+			0,
+			0,
 		},
 		{
 			"epoch 1",
 			func() {
 				suite.keeper.IncEpochNumber(suite.ctx)
 			},
-			sdk.NewUint(1),
-			sdk.NewUint(suite.keeper.GetParams(suite.ctx).EpochInterval * 1),
+			1,
+			suite.keeper.GetParams(suite.ctx).EpochInterval * 1,
 		},
 		{
 			"epoch 2",
 			func() {
 				suite.keeper.IncEpochNumber(suite.ctx)
 			},
-			sdk.NewUint(2),
-			sdk.NewUint(suite.keeper.GetParams(suite.ctx).EpochInterval * 2),
+			2,
+			suite.keeper.GetParams(suite.ctx).EpochInterval * 2,
 		},
 		{
 			"reset to epoch 0",
 			func() {
 				suite.keeper.InitEpochNumber(suite.ctx)
 			},
-			sdk.NewUint(0),
-			sdk.NewUint(0),
+			0,
+			0,
 		},
 	}
 
@@ -127,8 +127,8 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 			wctx := sdk.WrapSDKContext(ctx)
 			resp, err := queryClient.CurrentEpoch(wctx, &req)
 			suite.NoError(err)
-			suite.Equal(tc.epochNumber.Uint64(), resp.CurrentEpoch)
-			suite.Equal(tc.epochBoundary.Uint64(), resp.EpochBoundary)
+			suite.Equal(tc.epochNumber, resp.CurrentEpoch)
+			suite.Equal(tc.epochBoundary, resp.EpochBoundary)
 		})
 	}
 }

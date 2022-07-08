@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -72,7 +74,7 @@ func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpo
 	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckptWithMeta)
 }
 
-func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum sdk.Uint, lch types.LastCommitHash) error {
+func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash) error {
 	ckptWithMeta := types.NewCheckpointWithMeta(types.NewCheckpoint(epochNum, lch), types.Accumulating)
 
 	return k.AddRawCheckpoint(ctx, ckptWithMeta)
@@ -110,10 +112,14 @@ func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey
 	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
 }
 
-func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
-	return k.epochingKeeper.GetEpochBoundary(ctx)
+func (k Keeper) GetEpochBoundary(ctx sdk.Context) uint64 {
+	return k.epochingKeeper.GetEpoch(ctx).LastBlockHeight()
 }
 
-func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
+func (k Keeper) GetEpochNumber(ctx sdk.Context) uint64 {
 	return k.epochingKeeper.GetEpochNumber(ctx)
+}
+
+func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
+	return k.epochingKeeper.GetEpoch(ctx)
 }

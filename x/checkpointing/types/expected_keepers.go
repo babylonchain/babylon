@@ -25,9 +25,9 @@ type StakingKeeper interface {
 
 // EpochingKeeper defines the expected interface needed to retrieve epoch info
 type EpochingKeeper interface {
-	GetEpochNumber(ctx sdk.Context) sdk.Uint
+	GetEpoch(ctx sdk.Context) epochingtypes.Epoch
+	GetEpochNumber(ctx sdk.Context) uint64
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
-	GetEpochBoundary(ctx sdk.Context) sdk.Uint
 }
 
 // Event Hooks
@@ -39,5 +39,5 @@ type EpochingKeeper interface {
 // CheckpointingHooks event hooks for raw checkpoint object (noalias)
 type CheckpointingHooks interface {
 	AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error // Must be called when a BLS key is registered
-	AfterRawCheckpointConfirmed(ctx sdk.Context, epoch sdk.Uint) error   // Must be called when a raw checkpoint is CONFIRMED
+	AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     // Must be called when a raw checkpoint is CONFIRMED
 }

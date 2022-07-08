@@ -1,6 +1,7 @@
 package epoching
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/babylonchain/babylon/x/epoching/keeper"
@@ -21,10 +22,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	// get the height of the last block in this epoch
-	epochBoundary := k.GetEpochBoundary(ctx)
+	epochBoundary := k.GetEpoch(ctx).LastBlockHeight()
 	// if this block is the first block of an epoch
 	// note that we haven't incremented the epoch number yet
-	if uint64(ctx.BlockHeight())-1 == epochBoundary.Uint64() {
+	if uint64(ctx.BlockHeight())-1 == epochBoundary {
 		// increase epoch number
 		incEpochNumber := k.IncEpochNumber(ctx)
 		// init the slashed voting power of this new epoch
@@ -37,7 +38,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				types.EventTypeBeginEpoch,
-				sdk.NewAttribute(types.AttributeKeyEpoch, incEpochNumber.String()),
+				sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(incEpochNumber)),
 			),
 		})
 	}
@@ -55,10 +56,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	validatorSetUpdate := []abci.ValidatorUpdate{}
 
 	// get the height of the last block in this epoch
-	epochBoundary := k.GetEpochBoundary(ctx)
+	epochBoundary := k.GetEpoch(ctx).LastBlockHeight()
 
 	// if reaching an epoch boundary, then
-	if uint64(ctx.BlockHeight()) == epochBoundary.Uint64() {
+	if uint64(ctx.BlockHeight()) == epochBoundary {
 		// get epoch number
 		epochNumber := k.GetEpochNumber(ctx)
 		// get all msgs in the msg queue
@@ -74,10 +75,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				// emit an event signalling the failed execution
 				eventMsgFail := sdk.NewEvent(
 					types.EventTypeHandleQueuedMsgFailed,
-					sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()), // epoch number
-					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)),      // txid
-					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)),    // msgid
-					sdk.NewAttribute(types.AttributeKeyErrorMsg, err.Error()),       // err
+					sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(epochNumber)), // epoch number
+					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)),         // txid
+					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)),       // msgid
+					sdk.NewAttribute(types.AttributeKeyErrorMsg, err.Error()),          // err
 				)
 				ctx.EventManager().EmitEvent(eventMsgFail)
 				// skip this failed msg
@@ -89,10 +90,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				wrappedEvent := abci.Event{Type: types.EventTypeHandleQueuedMsg}
 				// add our attributes
 				wrappedEvent.Attributes = append(wrappedEvent.Attributes,
-					sdk.NewAttribute(types.AttributeKeyOriginalEventType, event.Type).ToKVPair(), // original event type
-					sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()).ToKVPair(),   // epoch number
-					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)).ToKVPair(),        // txid
-					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)).ToKVPair(),      // msgid
+					sdk.NewAttribute(types.AttributeKeyOriginalEventType, event.Type).ToKVPair(),  // original event type
+					sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(epochNumber)).ToKVPair(), // epoch number
+					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)).ToKVPair(),         // txid
+					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)).ToKVPair(),       // msgid
 				)
 				// add original attributes
 				wrappedEvent.Attributes = append(wrappedEvent.Attributes, event.Attributes...)
@@ -111,7 +112,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		ctx.EventManager().EmitEvents(sdk.Events{
 			sdk.NewEvent(
 				types.EventTypeEndEpoch,
-				sdk.NewAttribute(types.AttributeKeyEpoch, epochNumber.String()),
+				sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(epochNumber)),
 			),
 		})
 	}

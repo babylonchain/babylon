@@ -13,13 +13,13 @@ func NewMultiEpochingHooks(hooks ...EpochingHooks) MultiEpochingHooks {
 	return hooks
 }
 
-func (h MultiEpochingHooks) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) {
+func (h MultiEpochingHooks) AfterEpochBegins(ctx sdk.Context, epoch uint64) {
 	for i := range h {
 		h[i].AfterEpochBegins(ctx, epoch)
 	}
 }
 
-func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) {
+func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 	for i := range h {
 		h[i].AfterEpochEnds(ctx, epoch)
 	}

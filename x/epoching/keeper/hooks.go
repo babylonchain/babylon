@@ -21,14 +21,14 @@ var _ types.EpochingHooks = Keeper{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterEpochBegins - call hook if registered
-func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) {
+func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch uint64) {
 	if k.hooks != nil {
 		k.hooks.AfterEpochBegins(ctx, epoch)
 	}
 }
 
 // AfterEpochEnds - call hook if registered
-func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) {
+func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 	if k.hooks != nil {
 		k.hooks.AfterEpochEnds(ctx, epoch)
 	}
