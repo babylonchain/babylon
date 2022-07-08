@@ -30,7 +30,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 }
 
 func (msg *MsgInsertHeader) ValidateHeader(powLimit *big.Int) error {
-	return bbl.ValidateHeader(msg.Header.ToBlockHeader(), powLimit)
+	return bbl.ValidateBTCHeader(msg.Header.ToBlockHeader(), powLimit)
 }
 
 func (msg *MsgInsertHeader) GetSigners() []sdk.AccAddress {

@@ -14,7 +14,7 @@ import (
 
 func FuzzMsgInsertHeader(f *testing.F) {
 	addressBytes := []byte("from________________")
-	defaultHeader := bbl.GetBaseHeaderBytes()
+	defaultHeader := bbl.GetBaseBTCHeaderBytes()
 	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
 	// Maximum btc difficulty possible

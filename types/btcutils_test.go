@@ -38,7 +38,7 @@ func (s *btcutilsTestSuite) SetupSuite() {
 	s.testnetPowLimit = btcchaincfg.TestNet3Params.PowLimit
 }
 
-func (s *btcutilsTestSuite) TestValidateHeader() {
+func (s *btcutilsTestSuite) TestValidateBTCHeader() {
 	data := []struct {
 		name     string
 		header   *wire.BlockHeader
@@ -53,7 +53,7 @@ func (s *btcutilsTestSuite) TestValidateHeader() {
 	}
 
 	for _, d := range data {
-		err := types.ValidateHeader(d.header, d.powLimit)
+		err := types.ValidateBTCHeader(d.header, d.powLimit)
 		if d.hasErr {
 			s.Require().Error(err, d.name)
 		} else {

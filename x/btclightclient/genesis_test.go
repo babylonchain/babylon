@@ -12,8 +12,8 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	headerBytes := bbl.GetBaseHeaderBytes()
-	headerHeight := bbl.GetBaseHeaderHeight()
+	headerBytes := bbl.GetBaseBTCHeaderBytes()
+	headerHeight := bbl.GetBaseBTCHeaderHeight()
 	headerHash := headerBytes.Hash()
 	headerWork := types.CalcWork(&headerBytes)
 	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, headerHeight, &headerWork)

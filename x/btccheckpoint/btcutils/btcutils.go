@@ -129,7 +129,7 @@ func ParseProof(
 
 	header := types.BTCHeaderBytes(btcHeader).ToBlockHeader()
 
-	e = types.ValidateHeader(header, powLimit)
+	e = types.ValidateBTCHeader(header, powLimit)
 
 	if e != nil {
 		return nil, e
