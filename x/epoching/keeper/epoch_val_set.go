@@ -26,24 +26,10 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) map[strin
 	return valSet
 }
 
-// GetTotalVotingPower returns the total voting power of a given epoch
-func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64 {
-	epochNumberBytes, err := epochNumber.Marshal()
-	if err != nil {
-		panic(err)
-	}
-	store := k.votingPowerStore(ctx)
-	powerBytes := store.Get(epochNumberBytes)
-	var power sdk.Int
-	if err := power.Unmarshal(powerBytes); err != nil {
-		panic(err)
-	}
-	return power.Int64()
-}
-
-// SetValidatorSet stores the validator set in the beginning of a given epoch
+// InitValidatorSet stores the validator set in the beginning of the current epoch
 // This is called upon BeginBlock
-func (k Keeper) SetValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
+func (k Keeper) InitValidatorSet(ctx sdk.Context) {
+	epochNumber := k.GetEpochNumber(ctx)
 	store := k.valSetStore(ctx, epochNumber)
 	totalPower := int64(0)
 
@@ -91,6 +77,34 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
 		panic(err)
 	}
 	powerStore.Delete(epochNumberBytes)
+}
+
+// GetValidatorVotingPower returns the voting power of a given validator in a given epoch
+func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber sdk.Uint, valAddr sdk.ValAddress) int64 {
+	store := k.valSetStore(ctx, epochNumber)
+
+	powerBytes := store.Get(valAddr)
+	var power sdk.Int
+	if err := power.Unmarshal(powerBytes); err != nil {
+		panic(err)
+	}
+
+	return power.Int64()
+}
+
+// GetTotalVotingPower returns the total voting power of a given epoch
+func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64 {
+	epochNumberBytes, err := epochNumber.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	store := k.votingPowerStore(ctx)
+	powerBytes := store.Get(epochNumberBytes)
+	var power sdk.Int
+	if err := power.Unmarshal(powerBytes); err != nil {
+		panic(err)
+	}
+	return power.Int64()
 }
 
 // valSetStore returns the KVStore of the validator set of a given epoch
