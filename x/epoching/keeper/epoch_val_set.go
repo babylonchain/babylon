@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"sort"
+
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -14,7 +16,10 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) map[string]
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		addr := string(iterator.Key())
+		// sdk.ValAddress -> string is done by valAddr.String()
+		// string -> sdk.ValAddress is done by sdk.ValAddressFromBech32(addr)
+		// reference: https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/types/address_test.go#L286-L300
+		addr := sdk.ValAddress(iterator.Key()).String()
 		powerBytes := iterator.Value()
 		var power sdk.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
@@ -24,6 +29,35 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) map[string]
 	}
 
 	return valSet
+}
+
+// GetValidatorSetSorted returns the set of validators of a given epoch, where the validators are ordered by their
+func (k Keeper) GetValidatorSetSorted(ctx sdk.Context, epochNumber uint64) []sdk.ValAddress {
+	valSet := k.GetValidatorSet(ctx, epochNumber)
+
+	// order by value, big to small
+	// (adapted from https://go.dev/play/p/y1_WBENH4N)
+	type kv struct {
+		Key   string
+		Value int64
+	}
+	var ss []kv
+	for k, v := range valSet {
+		ss = append(ss, kv{k, v})
+	}
+	sort.Slice(ss, func(i, j int) bool {
+		return ss[i].Value > ss[j].Value
+	})
+
+	valSlice := []sdk.ValAddress{}
+	for _, kv := range ss {
+		addr, err := sdk.ValAddressFromBech32(kv.Key)
+		if err != nil {
+			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+		}
+		valSlice = append(valSlice, addr)
+	}
+	return valSlice
 }
 
 // InitValidatorSet stores the validator set in the beginning of the current epoch
