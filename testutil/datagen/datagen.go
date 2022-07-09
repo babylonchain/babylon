@@ -20,6 +20,14 @@ func GenRandomHexStr(length uint64) string {
 	return hex.EncodeToString(randBytes)
 }
 
+func OneInN(n int) bool {
+	return RandomInt(n) == 0
+}
+
+func RandomInt(rng int) uint64 {
+	return uint64(rand.Intn(rng))
+}
+
 func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
 	timeInt int64, prevBlockStr string, merkleRootStr string) *wire.BlockHeader {
 	if !ValidHex(prevBlockStr, bbl.BTCHeaderHashLen) {
