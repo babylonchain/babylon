@@ -27,7 +27,7 @@ func (k Keeper) RegistrationState(ctx sdk.Context) RegistrationState {
 }
 
 // CreateRegistration inserts the BLS key into the addr -> key and key -> addr storage
-func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr types.ValidatorAddress) error {
+func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr sdk.ValAddress) error {
 	blsPubKey, err := rs.GetBlsPubKey(valAddr)
 
 	// we should disallow a validator to register with different BLS public keys
@@ -38,20 +38,25 @@ func (rs RegistrationState) CreateRegistration(key bls12381.PublicKey, valAddr t
 	// we should disallow the same BLS public key is registered by different validators
 	bkToAddrKey := types.BlsKeyToAddrKey(key)
 	rawAddr := rs.blsKeysToAddr.Get(bkToAddrKey)
-	if rawAddr != nil && types.BytesToValAddr(rawAddr) != valAddr {
+	addr := new(sdk.ValAddress)
+	err = addr.Unmarshal(rawAddr)
+	if err != nil {
+		return err
+	}
+	if rawAddr != nil && !addr.Equals(valAddr) {
 		return types.ErrBlsKeyAlreadyExist.Wrapf("same BLS public key is registered by another validator")
 	}
 
 	// save concrete BLS public key object
 	blsPkKey := types.AddrToBlsKeyKey(valAddr)
 	rs.addrToBlsKeys.Set(blsPkKey, key)
-	rs.blsKeysToAddr.Set(bkToAddrKey, types.ValAddrToBytes(valAddr))
+	rs.blsKeysToAddr.Set(bkToAddrKey, valAddr.Bytes())
 
 	return nil
 }
 
 // GetBlsPubKey retrieves BLS public key by validator's address
-func (rs RegistrationState) GetBlsPubKey(addr types.ValidatorAddress) (bls12381.PublicKey, error) {
+func (rs RegistrationState) GetBlsPubKey(addr sdk.ValAddress) (bls12381.PublicKey, error) {
 	pkKey := types.AddrToBlsKeyKey(addr)
 	rawBytes := rs.addrToBlsKeys.Get(pkKey)
 	if rawBytes == nil {
@@ -64,7 +69,7 @@ func (rs RegistrationState) GetBlsPubKey(addr types.ValidatorAddress) (bls12381.
 }
 
 // Exists checks whether a BLS key exists
-func (rs RegistrationState) Exists(addr types.ValidatorAddress) bool {
+func (rs RegistrationState) Exists(addr sdk.ValAddress) bool {
 	pkKey := types.AddrToBlsKeyKey(addr)
 	return rs.addrToBlsKeys.Has(pkKey)
 }

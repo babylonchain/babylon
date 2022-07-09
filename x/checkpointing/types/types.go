@@ -3,28 +3,56 @@ package types
 import (
 	"bytes"
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type LastCommitHash []byte
 
-type ValidatorAddress string
+//type ValidatorAddress string
 
 type BlsSigHash []byte
 
 type RawCkptHash []byte
 
-func BytesToValAddr(data []byte) ValidatorAddress {
-	return ValidatorAddress(data)
-}
+//
+//func (addr ValidatorAddress) Marshal() ([]byte, error) {
+//	return []byte(addr), nil
+//}
+//
+//func (addr ValidatorAddress) MustMarshal() []byte {
+//	bz, err := addr.Marshal()
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	return bz
+//}
+//
+//func (addr ValidatorAddress) MarshalTo(data []byte) (int, error) {
+//	copy(data, addr)
+//	return len(data), nil
+//}
+//
+//func (addr ValidatorAddress) Size() int {
+//	bz := addr.MustMarshal()
+//	return len(bz)
+//}
+//
+//func (addr *ValidatorAddress) Unmarshal(data []byte) error {
+//	*addr = ValidatorAddress(data)
+//	return nil
+//}
+//
+//func (addr ValidatorAddress) Byte() []byte {
+//	return []byte(addr)
+//}
+//
+//func (addr ValidatorAddress) Equal(s ValidatorAddress) bool {
+//	return addr == s
+//}
 
-func ValAddrToBytes(address ValidatorAddress) []byte {
-	return []byte(address)
-}
-
-func NewCheckpoint(epochNum sdk.Uint, lch LastCommitHash) *RawCheckpoint {
+func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
-		EpochNum:       epochNum.Uint64(),
+		EpochNum:       epochNum,
 		LastCommitHash: lch,
 		Bitmap:         nil,
 		BlsMultiSig:    nil,

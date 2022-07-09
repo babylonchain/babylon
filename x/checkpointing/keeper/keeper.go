@@ -58,13 +58,34 @@ func (k *Keeper) SetHooks(sh types.CheckpointingHooks) *Keeper {
 	return k
 }
 
-// AddBlsSig add bls signatures into storage and generates a raw checkpoint
+// addBlsSig add bls signatures into storage and generates a raw checkpoint
 // if sufficient sigs are accumulated for a specific epoch
-func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
-	// TODO: some checks: 1. duplication check 2. epoch check 3. raw ckpt existence check
-	// TODO: aggregate bls sigs and try to build raw checkpoints
-	k.BlsSigsState(ctx).CreateBlsSig(sig)
+func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
+	// assuming stateless checks have done in Antehandler
+
+	// get raw checkpoint
+	ckptWithMeta, err := k.GetRawCheckpoint(ctx, sig.GetEpochNum())
+	if err != nil {
+		return err
+	}
+	vals, err
+	if ckptWithMeta.Status != types.Accumulating {
+		return types.ErrCkptNotAccumulating.Wrapf("raw checkpoint at epoch %v is not accumulating BLS sigs", sig.GetEpochNum())
+	}
+
+	aggSig, err := bls12381.AggrSig(*ckpt.Ckpt.BlsMultiSig, *sig.BlsSig)
+	if err != nil {
+		return err
+	}
+	// 2. aggregate bls sigs
+
+	// 3. change status if needed
+	// 4. store modified raw checkpoint
 	return nil
+}
+
+func (k Keeper) GetRawCheckpoint(ctx sdk.Context, epochNum uint64) (*types.RawCheckpointWithMeta, error) {
+	return k.CheckpointsState(ctx).GetRawCkptWithMeta(epochNum)
 }
 
 // AddRawCheckpoint adds a raw checkpoint into the storage
@@ -72,7 +93,7 @@ func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpo
 	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckptWithMeta)
 }
 
-func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum sdk.Uint, lch types.LastCommitHash) error {
+func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash) error {
 	ckptWithMeta := types.NewCheckpointWithMeta(types.NewCheckpoint(epochNum, lch), types.Accumulating)
 
 	return k.AddRawCheckpoint(ctx, ckptWithMeta)
@@ -106,8 +127,12 @@ func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status ty
 	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
 }
 
-func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr types.ValidatorAddress) error {
+func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr sdk.ValAddress) error {
 	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
+}
+
+func (k Keeper) GetBlsPubKey(ctx sdk.Context, address sdk.ValAddress) (bls12381.PublicKey, error) {
+	return k.RegistrationState(ctx).GetBlsPubKey(address)
 }
 
 func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
@@ -116,4 +141,8 @@ func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
 
 func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
 	return k.epochingKeeper.GetEpochNumber(ctx)
+}
+
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epoch sdk.Uint) map[string]int64 {
+	return k.GetValidatorSet(ctx, epoch)
 }

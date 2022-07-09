@@ -61,8 +61,8 @@ message BlsSig {
     (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
   ];
   // can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does not support scalar
-  // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // string signer_address = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // the signer_address defines the address of the signer
-  string signer_address = 5;
+  string signer_address = 4;
 }
 
