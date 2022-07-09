@@ -75,7 +75,7 @@ message QueryMainChainRequest {
 
 // QueryMainChainResponse is response type for the Query/MainChain RPC method.
 message QueryMainChainResponse {
-  repeated HeaderInfo headers = 1;
+  repeated BTCHeaderInfo headers = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

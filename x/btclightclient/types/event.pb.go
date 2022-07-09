@@ -5,7 +5,6 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
@@ -26,10 +25,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // EventBTCRollBack is emitted on Msg/InsertHeader
 type EventBTCRollBack struct {
-	// The height to which we rolled back
-	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	// The hash of the header to which we rolled back
-	Hash *github_com_babylonchain_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
+	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 }
 
 func (m *EventBTCRollBack) Reset()         { *m = EventBTCRollBack{} }
@@ -65,19 +61,16 @@ func (m *EventBTCRollBack) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventBTCRollBack proto.InternalMessageInfo
 
-func (m *EventBTCRollBack) GetHeight() uint64 {
+func (m *EventBTCRollBack) GetHeader() *BTCHeaderInfo {
 	if m != nil {
-		return m.Height
+		return m.Header
 	}
-	return 0
+	return nil
 }
 
 // EventBTCRollForward is emitted on Msg/InsertHeader
 type EventBTCRollForward struct {
-	// The height to which we rolled forward
-	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	// The hash of the header to which we rolled forward
-	Hash *github_com_babylonchain_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
+	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 }
 
 func (m *EventBTCRollForward) Reset()         { *m = EventBTCRollForward{} }
@@ -113,11 +106,11 @@ func (m *EventBTCRollForward) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventBTCRollForward proto.InternalMessageInfo
 
-func (m *EventBTCRollForward) GetHeight() uint64 {
+func (m *EventBTCRollForward) GetHeader() *BTCHeaderInfo {
 	if m != nil {
-		return m.Height
+		return m.Header
 	}
-	return 0
+	return nil
 }
 
 func init() {
@@ -130,23 +123,21 @@ func init() {
 }
 
 var fileDescriptor_dbeb7d7d6407e7ec = []byte{
-	// 242 bytes of a gzipped FileDescriptorProto
+	// 223 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4a, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0xce, 0xc9, 0x4c, 0xcf, 0x00, 0x91, 0xa9, 0x79, 0x25,
 	0xfa, 0xa9, 0x65, 0xa9, 0x79, 0x25, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x92, 0x50, 0x35,
 	0x7a, 0xa8, 0x6a, 0xf4, 0xca, 0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0xaa, 0xf4, 0x41,
-	0x2c, 0x88, 0x06, 0xa5, 0x1a, 0x2e, 0x01, 0x57, 0x90, 0x7e, 0xa7, 0x10, 0xe7, 0xa0, 0xfc, 0x9c,
-	0x1c, 0xa7, 0xc4, 0xe4, 0x6c, 0x21, 0x31, 0x2e, 0xb6, 0x8c, 0x54, 0x90, 0x66, 0x09, 0x46, 0x05,
-	0x46, 0x0d, 0x96, 0x20, 0x28, 0x4f, 0x28, 0x80, 0x8b, 0x25, 0x23, 0xb1, 0x38, 0x43, 0x82, 0x49,
-	0x81, 0x51, 0x83, 0xc7, 0xc9, 0xe6, 0xd6, 0x3d, 0x79, 0x8b, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24,
-	0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xa8, 0xcd, 0xc9, 0x19, 0x89, 0x99, 0x79, 0x30, 0x8e, 0x7e, 0x49,
-	0x65, 0x41, 0x6a, 0xb1, 0x9e, 0x53, 0x88, 0xb3, 0x47, 0x6a, 0x62, 0x4a, 0x6a, 0x91, 0x47, 0x62,
-	0x71, 0x86, 0x53, 0x65, 0x49, 0x6a, 0x71, 0x10, 0xd8, 0x24, 0xa5, 0x7a, 0x2e, 0x61, 0x64, 0xdb,
-	0xdd, 0xf2, 0x8b, 0xca, 0x13, 0x8b, 0x52, 0xe8, 0xe7, 0x00, 0xa7, 0x80, 0x13, 0x8f, 0xe4, 0x18,
-	0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5,
-	0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x23, 0x64, 0x72, 0x05, 0x7a, 0x3c, 0x80, 0xad, 0x4a,
-	0x62, 0x03, 0x87, 0xab, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0x64, 0x1a, 0xeb, 0xce, 0xae, 0x01,
-	0x00, 0x00,
+	0x2c, 0x88, 0x06, 0x29, 0x6d, 0x1c, 0x86, 0xa2, 0xe9, 0x07, 0x2b, 0x56, 0x0a, 0xe1, 0x12, 0x70,
+	0x05, 0x59, 0xe6, 0x14, 0xe2, 0x1c, 0x94, 0x9f, 0x93, 0xe3, 0x94, 0x98, 0x9c, 0x2d, 0xe4, 0xc0,
+	0xc5, 0x96, 0x91, 0x9a, 0x98, 0x92, 0x5a, 0x24, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x6d, 0xa4, 0xa1,
+	0x87, 0xd3, 0x09, 0x7a, 0x4e, 0x21, 0xce, 0x1e, 0x60, 0xb5, 0x9e, 0x79, 0x69, 0xf9, 0x41, 0x50,
+	0x7d, 0x4a, 0xe1, 0x5c, 0xc2, 0xc8, 0xa6, 0xba, 0xe5, 0x17, 0x95, 0x27, 0x16, 0xa5, 0x50, 0x6e,
+	0xb0, 0x53, 0xc0, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38,
+	0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x99, 0xa5, 0x67,
+	0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x43, 0x4d, 0x4d, 0xce, 0x48, 0xcc, 0xcc,
+	0x83, 0x71, 0xf4, 0x2b, 0xd0, 0xc3, 0xa3, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0x1c, 0x0e,
+	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xfd, 0xad, 0x58, 0xdc, 0x8b, 0x01, 0x00, 0x00,
 }
 
 func (m *EventBTCRollBack) Marshal() (dAtA []byte, err error) {
@@ -169,22 +160,17 @@ func (m *EventBTCRollBack) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Hash != nil {
+	if m.Header != nil {
 		{
-			size := m.Hash.Size()
-			i -= size
-			if _, err := m.Hash.MarshalTo(dAtA[i:]); err != nil {
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
 				return 0, err
 			}
+			i -= size
 			i = encodeVarintEvent(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x12
-	}
-	if m.Height != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.Height))
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -209,22 +195,17 @@ func (m *EventBTCRollForward) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Hash != nil {
+	if m.Header != nil {
 		{
-			size := m.Hash.Size()
-			i -= size
-			if _, err := m.Hash.MarshalTo(dAtA[i:]); err != nil {
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
 				return 0, err
 			}
+			i -= size
 			i = encodeVarintEvent(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x12
-	}
-	if m.Height != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.Height))
-		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -246,11 +227,8 @@ func (m *EventBTCRollBack) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Height != 0 {
-		n += 1 + sovEvent(uint64(m.Height))
-	}
-	if m.Hash != nil {
-		l = m.Hash.Size()
+	if m.Header != nil {
+		l = m.Header.Size()
 		n += 1 + l + sovEvent(uint64(l))
 	}
 	return n
@@ -262,11 +240,8 @@ func (m *EventBTCRollForward) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Height != 0 {
-		n += 1 + sovEvent(uint64(m.Height))
-	}
-	if m.Hash != nil {
-		l = m.Hash.Size()
+	if m.Header != nil {
+		l = m.Header.Size()
 		n += 1 + l + sovEvent(uint64(l))
 	}
 	return n
@@ -308,29 +283,10 @@ func (m *EventBTCRollBack) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
-			}
-			m.Height = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Height |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvent
@@ -340,24 +296,25 @@ func (m *EventBTCRollBack) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthEvent
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthEvent
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonchain_babylon_types.BTCHeaderHashBytes
-			m.Hash = &v
-			if err := m.Hash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.Header == nil {
+				m.Header = &BTCHeaderInfo{}
+			}
+			if err := m.Header.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -412,29 +369,10 @@ func (m *EventBTCRollForward) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
-			}
-			m.Height = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvent
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Height |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvent
@@ -444,24 +382,25 @@ func (m *EventBTCRollForward) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthEvent
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthEvent
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			var v github_com_babylonchain_babylon_types.BTCHeaderHashBytes
-			m.Hash = &v
-			if err := m.Hash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.Header == nil {
+				m.Header = &BTCHeaderInfo{}
+			}
+			if err := m.Header.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

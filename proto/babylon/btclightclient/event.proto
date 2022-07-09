@@ -2,25 +2,16 @@ syntax = "proto3";
 package babylon.btclightclient.v1;
 
 import "gogoproto/gogo.proto";
+import "babylon/btclightclient/btclightclient.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 // EventBTCRollBack is emitted on Msg/InsertHeader
 message EventBTCRollBack {
-  // The height to which we rolled back
-  uint64 height = 1;
-  // The hash of the header to which we rolled back
-  bytes hash = 2 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  BTCHeaderInfo header = 1;
 }
 
 // EventBTCRollForward is emitted on Msg/InsertHeader
 message EventBTCRollForward {
-  // The height to which we rolled forward
-  uint64 height = 1;
-  // The hash of the header to which we rolled forward
-  bytes hash = 2 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  BTCHeaderInfo header = 1;
 }

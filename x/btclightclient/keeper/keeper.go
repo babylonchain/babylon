@@ -70,7 +70,7 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}
 
-	height, err := k.HeadersState(ctx).GetHeaderHeight(&header.PrevBlock)
+	parentHeight, err := k.HeadersState(ctx).GetHeaderHeight(&header.PrevBlock)
 	if err != nil {
 		// Height should always exist if the previous checks have passed
 		panic("Height for parent is not maintained")
@@ -87,7 +87,7 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 
 	previousTip := k.HeadersState(ctx).GetTip()
 	// Create the header
-	k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
+	k.HeadersState(ctx).CreateHeader(header, parentHeight+1, cumulativeWork)
 
 	// Get the new tip
 	currentTip := k.HeadersState(ctx).GetTip()
@@ -96,11 +96,15 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 	var addedToMainChain []*wire.BlockHeader
 
 	// The tip has changed, we need to send events
-	if currentTip.BlockHash().String() != previousTip.BlockHash().String() {
+	if !sameBlock(currentTip, previousTip) {
+		tipHeight := parentHeight + 1
 		// The new tip extends the old tip
 		if isParent(currentTip, previousTip) {
+			if !sameBlock(currentTip, header) {
+				panic("The header added on top of the previous tip is not the same as the provided header")
+			}
 			// If the new header extended
-			addedToMainChain = append(addedToMainChain, currentTip)
+			addedToMainChain = append(addedToMainChain, header)
 		} else {
 			// There has been a chain re-org
 			// Get the highest common ancestor between
@@ -111,13 +115,13 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 			// Find the newly added headers to the main chain
 			addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
 		}
-	}
-	// Iterate through the headers that were added to the main chain
-	// and trigger a roll-forward event
-	for idx, added := range addedToMainChain {
-		// height + 1 -> height of the tip
-		// height + 1 - len(addedToMainChain) -> height of highest common ancestor
-		k.triggerRollForward(ctx, added, height+1-uint64(len(addedToMainChain))+uint64(idx))
+		// Iterate through the headers that were added to the main chain
+		// and trigger a roll-forward event
+		for idx, added := range addedToMainChain {
+			// tipHeight + 1 - len(addedToMainChain) -> height of the highest common ancestor
+			addedHeight := tipHeight - uint64(len(addedToMainChain)) + 1 + uint64(idx)
+			k.triggerRollForward(ctx, added, addedHeight)
+		}
 	}
 
 	return nil
@@ -131,4 +135,8 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, 
 
 func isParent(child *wire.BlockHeader, parent *wire.BlockHeader) bool {
 	return child.PrevBlock.String() == parent.BlockHash().String()
+}
+
+func sameBlock(header1 *wire.BlockHeader, header2 *wire.BlockHeader) bool {
+	return header1.BlockHash().String() == header2.BlockHash().String()
 }
