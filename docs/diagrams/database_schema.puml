@@ -1,0 +1,237 @@
+
+@startuml Database Schema
+
+entity "Tendermint Block" as block {
+  * hash
+  --
+  * height
+  * last_commit
+  ...
+}
+
+package "staking" #79ADDC {
+  enum "Message" as staking_msg {
+    <<embedded>>
+    --
+    * oneof
+    | CreateValidator
+    | EditValidator
+    | Delegate
+    | BeginRedelegate
+    | Undelegate
+  }
+
+  entity "Validator" as validator {
+    * public_key: Ed25519 public key
+    --
+    * power: delegated staking power
+  }
+
+  entity "Unbonding Queue" as unbonding_queue {
+    * public_key <<FK>>: validator key
+    --
+    * height: set to epoch end block height
+    * time: left at default 21 days
+    * tokens: amount to refund
+  }
+}
+
+package "epoching" #FFC09F {
+  entity "Epoch" as epoch {
+    * epoch_number
+    --
+    * start_block_height <<FK>>
+    * epoch_length
+  }
+  entity "Queued Message" as queued_msg {
+    * tx_id <<FK>>: hash of tx bytes
+    * msg_id: hash of msg bytes
+    --
+    * msg : wrapped staking msg
+  }
+  entity "Delayed Result" as delayed_result {
+    * tx_id <<FK>>: hash of original tx
+    * msg_id: hash of message
+    --
+    * outcome: success or failure
+    * events: emitted by staking execution
+    * logs: emitted by staking execution
+  }
+  note bottom
+    Returned to and stored by Tendermint.
+  end note
+
+  enum MsgWrappedStaking {
+    <<embedded in transaction>>
+    --
+    * wrapped staking msg\n except MsgCreateValidator
+  }
+
+  entity "Validator Snapshot" as validator_snapshot {
+    * epoch_number <<FK>>
+    * address <<FK>>
+    --
+    * power
+  }
+  note left
+    At beginning of epoch
+  end note
+
+  entity "Slashed Validators" as validator_slashed {
+    * epoch_number <<FK>>
+    * address <<FK>>
+  }
+}
+
+
+package "checkpointing" #FFEE93 {
+  entity "Raw Checkpoint" as raw_ckpt {
+    * epoch_number <<FK>>
+    --
+    * last_commit_hash: Quorum Certificate
+    * aggr_bls_sig: aggregated BLS signature
+    * aggr_bls_bitmap: which validators signed
+  }
+  note top
+    Goes in the checkpoint in serialized form.
+  end note
+
+  entity "Checkpoint Status" as ckpt_status {
+    * epoch_number <<FK>>
+    --
+    * status:
+      | ACCUMULATING: await sigs
+      | SIGNED: has +1/3 sigs, await submit
+      | SUBMITTED: included on BTC
+      | CONFIRMED: k-deep on BTC
+      | FINALIZED: w-deep on BTC
+    * aggr_power: sum of accumulated validator power
+  }
+
+  entity "BLS Key" as bls_key {
+    * bls_public_key: validator BLS public key
+    --
+    * public_key <<FK>>: validator Ed25519 public key
+  }
+
+  entity "BLS Signature" as bls_sig {
+    * bls_public_key <<FK>>
+    * last_commit_hash
+    --
+    * bls_sig
+  }
+
+  enum MsgWrappedCreateValidator {
+    <<embedded in transaction>>
+    --
+    * BLS key
+    * PoP: Proof-of-Possession
+    * wrapped staking msg: \n MsgCreateValidator
+  }
+}
+
+package "btccheckpoint" #FCF5C7 {
+  entity "Registered Submitter" as ckpt_submitter {
+    * btc_public_key
+    --
+    * public_key <<FK>>: User account to reward
+  }
+
+  entity "Checkpoint Submission" as ckpt_submission {
+    * submission ID <<generated>>
+    --
+    * ckpt_hash <<FK>> <<derived>>: from OP_RETURN
+    * btc_public_key <<FK>> <<derived>>: submitter from inclusions
+    --
+    * prev_epoch_ckpt_submission <<computed>>:
+      at least one submission for previous epoch in an
+      ancestor Bitcoin block has to exist
+  }
+
+  entity "Checkpoint Inclusion Proof" as ckpt_inclusion {
+    * btc_block_hash <<FK>>
+    * tx_index: position of transaction in BTC block
+    --
+    * btc_transaction: raw BTC transaction with OP_RETURN
+    * proof: that this transaction is part of the merkle_root
+  }
+}
+
+package "btclightclient" #ADF7B6 {
+  entity "Bitcoin Header" as btc_header {
+    * hash: block hash <<derived>>
+    --
+    * version
+    * parent_hash <<FK>>
+    * merkle_root
+    * timestamp
+    * difficulty_target
+    * nonce
+    --
+    * height <<computed>>
+    * total_pow <<computed>>
+  }
+
+  entity "Trusted Header" as btc_trusted {
+    <<singleton in genesis>>
+    --
+    * raw_header: bytes of a deeply embedded block
+    * height: from block explorer
+    --
+    * hash: Block Hash <<derived>>
+  }
+  note bottom
+    total_pow will be considered to start from
+    this block, as if it was genesis.
+  end note
+
+  entity "Tip" as btc_tip {
+    <<singleton>>
+    --
+    * hash <<FK>>: block hash
+  }
+}
+
+block }o--|{ validator : current validator set
+block }o--|{ validator : next validator set
+block }o--|| validator : proposer
+
+epoch ||..o{ queued_msg : delay to end of epoch
+epoch ||--|| block : start height
+
+validator_snapshot }|--|| epoch
+validator_snapshot }|--|| validator
+
+validator_slashed }o--|| epoch
+validator_slashed }o--|| validator
+
+queued_msg .> staking_msg
+queued_msg ||--o| delayed_result : inform user \nvia events
+
+unbonding_queue }o--|| block : unbonding height
+unbonding_queue }o--|| validator : unbonding validator
+
+raw_ckpt |o--|| epoch : checkpointed epoch
+raw_ckpt |o..|| block : commit hash from
+raw_ckpt ||--|| ckpt_status : current status
+raw_ckpt ||--o{ bls_sig : submitted sigs
+
+bls_key ||--o{ bls_sig : signed with
+bls_key ||--|| validator : registered by
+
+ckpt_submission }o--|| raw_ckpt : submitted ckpt
+ckpt_submission }o--|| ckpt_submitter : to reward
+ckpt_submission }o--|{ ckpt_submission : previous epoch\n submission
+
+ckpt_inclusion }|--|| ckpt_submission : multiple UTxO needed
+ckpt_inclusion }o--|| btc_header : included in
+
+btc_header }o--o| btc_header : parent
+btc_trusted |o--|| btc_header : start from
+btc_tip |o--|| btc_header: longest chain
+
+MsgWrappedCreateValidator .> bls_key : creates
+MsgWrappedCreateValidator .> queued_msg : creates
+MsgWrappedStaking .> queued_msg : creates
+
+@enduml
