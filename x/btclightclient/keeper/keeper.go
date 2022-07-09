@@ -87,22 +87,39 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 
 	previousTip := k.HeadersState(ctx).GetTip()
 	// Create the header
-	tipUpdated := k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
+	k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
 
-	// The tip has been updated to `header`
-	if tipUpdated {
-		hca, hcaHeight := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, header)
+	// Get the new tip
+	currentTip := k.HeadersState(ctx).GetTip()
 
-		k.triggerRollBack(ctx, hca, hcaHeight)
+	// Variable maintaining the headers that have been added to the main chain
+	var addedToMainChain []*wire.BlockHeader
 
-		addedToMainChain := k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
+	// The tip has changed, we need to send events
+	if currentTip.BlockHash().String() != previousTip.BlockHash().String() {
+		// The new tip extends the old tip
+		if isParent(currentTip, previousTip) {
+			// If the new header extended
+			addedToMainChain = append(addedToMainChain, currentTip)
+		} else {
+			// There has been a chain re-org
+			// Get the highest common ancestor between
+			hca, hcaHeight := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, header)
+			// Trigger a roll-back event to that ancestor
+			k.triggerRollBack(ctx, hca, hcaHeight)
 
-		for idx, added := range addedToMainChain {
-			// height + 1 -> height of the tip
-			// height + 1 - len(addedToMainChain) -> height of highest common ancestor
-			k.triggerRollForward(ctx, added, height+1-uint64(len(addedToMainChain))+uint64(idx))
+			// Find the newly added headers to the main chain
+			addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
 		}
 	}
+	// Iterate through the headers that were added to the main chain
+	// and trigger a roll-forward event
+	for idx, added := range addedToMainChain {
+		// height + 1 -> height of the tip
+		// height + 1 - len(addedToMainChain) -> height of highest common ancestor
+		k.triggerRollForward(ctx, added, height+1-uint64(len(addedToMainChain))+uint64(idx))
+	}
+
 	return nil
 }
 
@@ -110,4 +127,8 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, error) {
 	headerHash := header.BlockHash()
 	return k.HeadersState(ctx).GetHeaderHeight(&headerHash)
+}
+
+func isParent(child *wire.BlockHeader, parent *wire.BlockHeader) bool {
+	return child.PrevBlock.String() == parent.BlockHash().String()
 }
