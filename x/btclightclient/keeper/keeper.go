@@ -144,6 +144,7 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, 
 
 // HeaderKDeep returns true if a header is at least k-deep on the main chain
 func (k Keeper) HeaderKDeep(ctx sdk.Context, header *wire.BlockHeader, depth uint64) bool {
+	// TODO: optimize to not traverse the entire mainchain by storing the height along with the header
 	mainchain := k.HeadersState(ctx).GetMainChain()
 	if depth > uint64(len(mainchain)) {
 		return false
