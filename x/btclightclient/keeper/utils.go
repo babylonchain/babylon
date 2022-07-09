@@ -14,3 +14,11 @@ func blockHeaderFromStoredBytes(bz []byte) *wire.BlockHeader {
 	// Convert the BTCHeaderBytes object into a *wire.BlockHeader object
 	return headerBytes.ToBlockHeader()
 }
+
+func isParent(child *wire.BlockHeader, parent *wire.BlockHeader) bool {
+	return child.PrevBlock.String() == parent.BlockHash().String()
+}
+
+func sameBlock(header1 *wire.BlockHeader, header2 *wire.BlockHeader) bool {
+	return header1.BlockHash().String() == header2.BlockHash().String()
+}

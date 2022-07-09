@@ -97,26 +97,30 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 
 	// The tip has changed, we need to send events
 	if !sameBlock(currentTip, previousTip) {
-		tipHeight := parentHeight + 1
-		// The new tip extends the old tip
-		if isParent(currentTip, previousTip) {
-			if !sameBlock(currentTip, header) {
-				panic("The header added on top of the previous tip is not the same as the provided header")
-			}
-			// If the new header extended
-			addedToMainChain = append(addedToMainChain, header)
-		} else {
-			// There has been a chain re-org
-			// Get the highest common ancestor between
-			hca, hcaHeight := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, header)
-			// Trigger a roll-back event to that ancestor
-			k.triggerRollBack(ctx, hca, hcaHeight)
-
-			// Find the newly added headers to the main chain
-			addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
+		if !sameBlock(currentTip, header) {
+			panic("The tip was updated but with a different header than the one provided")
 		}
-		// Iterate through the headers that were added to the main chain
-		// and trigger a roll-forward event
+		tipHeight := parentHeight + 1
+		// Get the highest common ancestor between the new tip and the old tip
+		// There are two cases:
+		// 	 1. The new tip extends the old tip
+		//	    - The highest common ancestor is the old tip
+		// 		- No need to send a roll-back event
+		//   2. There has been a chain re-org
+		// 		- Need to send a roll-back event
+		hca := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, currentTip)
+		hcaHash := hca.BlockHash()
+		hcaHeight, err := k.HeadersState(ctx).GetHeaderHeight(&hcaHash)
+		if err != nil {
+			panic("Height for maintained header not available in storage")
+		}
+		if !isParent(currentTip, previousTip) {
+			// chain re-org: trigger a roll-back event to the highest common ancestor
+			k.triggerRollBack(ctx, hca, hcaHeight)
+		}
+		// Find the newly added headers to the main chain
+		addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
+		// Iterate through the added headers and trigger a roll-forward event
 		for idx, added := range addedToMainChain {
 			// tipHeight + 1 - len(addedToMainChain) -> height of the highest common ancestor
 			addedHeight := tipHeight - uint64(len(addedToMainChain)) + 1 + uint64(idx)
@@ -131,12 +135,4 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, error) {
 	headerHash := header.BlockHash()
 	return k.HeadersState(ctx).GetHeaderHeight(&headerHash)
-}
-
-func isParent(child *wire.BlockHeader, parent *wire.BlockHeader) bool {
-	return child.PrevBlock.String() == parent.BlockHash().String()
-}
-
-func sameBlock(header1 *wire.BlockHeader, header2 *wire.BlockHeader) bool {
-	return header1.BlockHash().String() == header2.BlockHash().String()
 }

@@ -211,7 +211,7 @@ func (s HeadersState) GetMainChain() []*wire.BlockHeader {
 
 // GetHighestCommonAncestor traverses the ancestors of both headers
 //  						to identify the common ancestor with the highest height
-func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header2 *wire.BlockHeader) (*wire.BlockHeader, uint64) {
+func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header2 *wire.BlockHeader) *wire.BlockHeader {
 	// The algorithm works as follows:
 	// 1. Initialize a hashmap hash -> bool denoting whether the hash
 	//    of an ancestor of either header1 or header2 has been encountered
@@ -223,6 +223,12 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 	//    then that's the hash of the earliest ancestor
 	// 5. Using the hash of the heighest ancestor wait until we get the header bytes
 	// 	  in order to avoid an extra access.
+	if isParent(header1, header2) {
+		return header2
+	}
+	if isParent(header2, header1) {
+		return header1
+	}
 	ancestor1 := header1.BlockHash()
 	ancestor2 := header2.BlockHash()
 	var encountered map[string]bool
@@ -231,18 +237,12 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 	var found *chainhash.Hash = nil
 
 	var resHeader *wire.BlockHeader = nil
-	var resHeight uint64 = 0
 
 	s.iterateReverseHeaders(func(btcdHeader *wire.BlockHeader) bool {
 		// We have already found what we're looking for, no need to proceed further
 		if found != nil {
 			if *found == btcdHeader.BlockHash() {
-				height, err := s.GetHeaderHeight(found)
-				if err != nil {
-					panic("Height for header existing in storage not maintained")
-				}
 				resHeader = btcdHeader
-				resHeight = height
 				return true
 			}
 		} else {
@@ -263,7 +263,7 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 		}
 		return false
 	})
-	return resHeader, resHeight
+	return resHeader
 }
 
 // GetInOrderAncestorsUntil returns the list of nodes starting from the child and ending with the block *before* the `ancestor`.
@@ -272,6 +272,9 @@ func (s HeadersState) GetInOrderAncestorsUntil(child *wire.BlockHeader, parent *
 
 	var ancestors []*wire.BlockHeader
 	ancestors = append(ancestors, child)
+	if isParent(child, parent) {
+		return ancestors
+	}
 	s.iterateReverseHeaders(func(header *wire.BlockHeader) bool {
 		if header.BlockHash() == parent.BlockHash() {
 			return true
