@@ -145,6 +145,9 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, 
 // HeaderKDeep returns true if a header is at least k-deep on the main chain
 func (k Keeper) HeaderKDeep(ctx sdk.Context, header *wire.BlockHeader, depth uint64) bool {
 	mainchain := k.HeadersState(ctx).GetMainChain()
+	if depth > uint64(len(mainchain)) {
+		return false
+	}
 	// k-deep -> k headers built on top of the BTC header
 	// Discard the first `depth` headers
 	kDeepMainChain := mainchain[depth:]
