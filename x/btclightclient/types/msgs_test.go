@@ -48,7 +48,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 		// Make the address have a proper size
 		if len(addressBytes) == 0 || len(addressBytes) >= 256 {
-			addressBytes = datagen.GenRandomByteArray(1 + uint64(rand.Intn(257)))
+			addressBytes = datagen.GenRandomByteArray(1 + uint64(rand.Intn(255)))
 		}
 
 		// Get the signer structure
