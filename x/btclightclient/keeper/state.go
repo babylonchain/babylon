@@ -182,6 +182,7 @@ func (s HeadersState) GetDescendingHeaders() []*wire.BlockHeader {
 }
 
 // GetMainChain returns the current canonical chain as a collection of block headers
+// 				starting from the tip and ending on the base header
 func (s HeadersState) GetMainChain() []*wire.BlockHeader {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
