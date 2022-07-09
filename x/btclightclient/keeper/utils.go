@@ -2,6 +2,7 @@ package keeper
 
 import (
 	bbl "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -16,9 +17,13 @@ func blockHeaderFromStoredBytes(bz []byte) *wire.BlockHeader {
 }
 
 func isParent(child *wire.BlockHeader, parent *wire.BlockHeader) bool {
-	return child.PrevBlock.String() == parent.BlockHash().String()
+	return sameHash(child.PrevBlock, parent.BlockHash())
 }
 
 func sameBlock(header1 *wire.BlockHeader, header2 *wire.BlockHeader) bool {
-	return header1.BlockHash().String() == header2.BlockHash().String()
+	return sameHash(header1.BlockHash(), header2.BlockHash())
+}
+
+func sameHash(hash1 chainhash.Hash, hash2 chainhash.Hash) bool {
+	return hash1.String() == hash2.String()
 }

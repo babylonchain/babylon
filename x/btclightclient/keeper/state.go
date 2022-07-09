@@ -239,12 +239,13 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 	var resHeader *wire.BlockHeader = nil
 
 	s.iterateReverseHeaders(func(btcdHeader *wire.BlockHeader) bool {
-		// We have already found what we're looking for, no need to proceed further
-		if found != nil {
-			if *found == btcdHeader.BlockHash() {
-				resHeader = btcdHeader
-				return true
-			}
+		// During iteration, we will encounter an ancestor for which its header hash
+		// has been set on the hash map.
+		// However, we do not have the entry yet, so we set the found flag to that hash
+		// and when we encounter it during iteration we return it.
+		if found != nil && sameHash(*found, btcdHeader.BlockHash()) {
+			resHeader = btcdHeader
+			return true
 		} else {
 			if ancestor1 == btcdHeader.BlockHash() {
 				ancestor1 = btcdHeader.PrevBlock
