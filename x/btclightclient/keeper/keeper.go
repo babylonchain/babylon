@@ -108,18 +108,23 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 		// 		- No need to send a roll-back event
 		//   2. There has been a chain re-org
 		// 		- Need to send a roll-back event
-		hca := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, currentTip)
-		hcaHash := hca.BlockHash()
-		hcaHeight, err := k.HeadersState(ctx).GetHeaderHeight(&hcaHash)
-		if err != nil {
-			panic("Height for maintained header not available in storage")
-		}
-		if !isParent(currentTip, previousTip) {
+		var hca *wire.BlockHeader
+		var hcaHeight uint64
+		if isParent(currentTip, previousTip) {
+			hca = previousTip
+			hcaHeight = parentHeight
+		} else {
+			hca := k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, currentTip)
+			hcaHash := hca.BlockHash()
+			hcaHeight, err = k.HeadersState(ctx).GetHeaderHeight(&hcaHash)
+			if err != nil {
+				panic("Height for maintained header not available in storage")
+			}
 			// chain re-org: trigger a roll-back event to the highest common ancestor
 			k.triggerRollBack(ctx, hca, hcaHeight)
 		}
 		// Find the newly added headers to the main chain
-		addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(header, hca)
+		addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(currentTip, hca)
 		// Iterate through the added headers and trigger a roll-forward event
 		for idx, added := range addedToMainChain {
 			// tipHeight + 1 - len(addedToMainChain) -> height of the highest common ancestor
