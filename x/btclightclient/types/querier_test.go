@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"bytes"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -37,8 +38,8 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
 	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
 		rand.Seed(seed)
-		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
+		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
+			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 		chHash, _ := chainhash.NewHashFromStr(hexHash)
 
