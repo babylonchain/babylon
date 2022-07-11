@@ -45,7 +45,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 			types.EventTypeWrappedDelegate,
 			sdk.NewAttribute(types.AttributeKeyValidator, msg.Msg.ValidatorAddress),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).LastBlockHeight())),
+			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).GetLastBlockHeight())),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -80,7 +80,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 			types.EventTypeWrappedUndelegate,
 			sdk.NewAttribute(types.AttributeKeyValidator, msg.Msg.ValidatorAddress),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).LastBlockHeight())),
+			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).GetLastBlockHeight())),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,
@@ -118,7 +118,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 			sdk.NewAttribute(types.AttributeKeySrcValidator, msg.Msg.ValidatorSrcAddress),
 			sdk.NewAttribute(types.AttributeKeyDstValidator, msg.Msg.ValidatorDstAddress),
 			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).LastBlockHeight())),
+			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).GetLastBlockHeight())),
 		),
 		sdk.NewEvent(
 			sdk.EventTypeMessage,

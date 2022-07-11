@@ -33,7 +33,7 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 	epoch := k.GetEpoch(ctx)
 	resp := &types.QueryCurrentEpochResponse{
 		CurrentEpoch:  epoch.EpochNumber,
-		EpochBoundary: epoch.LastBlockHeight(),
+		EpochBoundary: epoch.GetLastBlockHeight(),
 	}
 	return resp, nil
 }
