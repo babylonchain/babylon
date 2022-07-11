@@ -23,7 +23,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// EventBTCRollBack is emitted on Msg/InsertHeader
+// The header included in the event is the block in the history
+// of the current mainchain to which we are rolling back to.
+// In other words, there is one rollback event emitted per re-org, to the
+// greatest common ancestor of the old and the new fork.
 type EventBTCRollBack struct {
 	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 }
@@ -69,6 +72,9 @@ func (m *EventBTCRollBack) GetHeader() *BTCHeaderInfo {
 }
 
 // EventBTCRollForward is emitted on Msg/InsertHeader
+// The header included in the event is the one the main chain is extended with.
+// In the event of a reorg, each block on the new fork that comes after
+// the greatest common ancestor will have a corresponding roll forward event.
 type EventBTCRollForward struct {
 	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 }

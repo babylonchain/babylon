@@ -12,4 +12,5 @@ var (
 	ErrDuplicateHeader          = sdkerrors.Register(ModuleName, 1101, "duplicate header")
 	ErrHeaderParentDoesNotExist = sdkerrors.Register(ModuleName, 1102, "header parent does not exist")
 	ErrInvalidDifficulty        = sdkerrors.Register(ModuleName, 1103, "invalid difficulty bits")
+	ErrHeaderHigherThanTip      = sdkerrors.Register(ModuleName, 1104, "header is higher than the tip")
 )

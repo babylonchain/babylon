@@ -21,14 +21,12 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	// 		 so as to not pollute the mempool with transactions
 	// 		 that will get rejected.
 
-	// Get Btcd header from bytes
-	btcdHeader := msg.Header.ToBlockHeader()
-
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
+	parentHash := msg.Header.ParentHash()
 	// Retrieve parent
-	parent, err := m.k.HeadersState(sdkCtx).GetHeaderByHash(&btcdHeader.PrevBlock)
+	parent, err := m.k.HeadersState(sdkCtx).GetHeaderByHash(parentHash)
 	// parent does not exist
 	if err != nil {
 		return nil, err
@@ -40,8 +38,8 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	// while in the second case it should have a maximum difference of a factor of 4 from it
 	// See: https://github.com/bitcoinbook/bitcoinbook/blob/develop/ch10.asciidoc#retargeting-to-adjust-difficulty
 	// We consolidate those into a single check.
-	oldDifficulty := blockchain.CompactToBig(parent.Bits)
-	currentDifficulty := blockchain.CompactToBig(btcdHeader.Bits)
+	oldDifficulty := blockchain.CompactToBig(parent.Header.Bits())
+	currentDifficulty := blockchain.CompactToBig(msg.Header.Bits())
 	maxCurrentDifficulty := new(big.Int).Mul(oldDifficulty, big.NewInt(4))
 	minCurrentDifficulty := new(big.Int).Div(oldDifficulty, big.NewInt(4))
 	if currentDifficulty.Cmp(maxCurrentDifficulty) > 0 || currentDifficulty.Cmp(minCurrentDifficulty) < 0 {
@@ -49,7 +47,7 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	}
 
 	// All good, insert the header
-	err = m.k.InsertHeader(sdkCtx, btcdHeader)
+	err = m.k.InsertHeader(sdkCtx, msg.Header)
 	if err != nil {
 		return nil, err
 	}
