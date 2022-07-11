@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"fmt"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -68,19 +70,35 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	if err != nil {
 		return err
 	}
-	vals, err
-	if ckptWithMeta.Status != types.Accumulating {
-		return types.ErrCkptNotAccumulating.Wrapf("raw checkpoint at epoch %v is not accumulating BLS sigs", sig.GetEpochNum())
-	}
 
-	aggSig, err := bls12381.AggrSig(*ckpt.Ckpt.BlsMultiSig, *sig.BlsSig)
+	// get signer's address
+	signerAddr, err := sdk.ValAddressFromBech32(sig.SignerAddress)
 	if err != nil {
 		return err
 	}
-	// 2. aggregate bls sigs
 
-	// 3. change status if needed
-	// 4. store modified raw checkpoint
+	// get validators for the epoch
+	vals := k.GetValidatorSet(ctx, sig.GetEpochNum())
+	signerBlsKey, err := k.GetBlsPubKey(ctx, signerAddr)
+	if err != nil {
+		return err
+	}
+
+	// accumulate BLS signatures
+	finished, err := ckptWithMeta.Accumulate(vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
+	if err != nil {
+		return err
+	}
+
+	// update checkpoint status to SIGNED
+	if finished {
+		ckptWithMeta.Status = types.Signed
+	}
+	err = k.UpdateCheckpoint(ctx, ckptWithMeta)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -127,6 +145,10 @@ func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status ty
 	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
 }
 
+func (k Keeper) UpdateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
+	return k.CheckpointsState(ctx).UpdateCheckpoint(ckptWithMeta)
+}
+
 func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr sdk.ValAddress) error {
 	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
 }
@@ -135,14 +157,14 @@ func (k Keeper) GetBlsPubKey(ctx sdk.Context, address sdk.ValAddress) (bls12381.
 	return k.RegistrationState(ctx).GetBlsPubKey(address)
 }
 
-func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
-	return k.epochingKeeper.GetEpochBoundary(ctx)
+func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
+	return k.epochingKeeper.GetEpoch(ctx)
 }
 
-func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
-	return k.epochingKeeper.GetEpochNumber(ctx)
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) *epochingtypes.ValidatorSet {
+	return k.epochingKeeper.GetValidatorSet(ctx, epochNumber)
 }
 
-func (k Keeper) GetValidatorSet(ctx sdk.Context, epoch sdk.Uint) map[string]int64 {
-	return k.GetValidatorSet(ctx, epoch)
+func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
+	return k.epochingKeeper.GetTotalVotingPower(ctx, epochNumber)
 }

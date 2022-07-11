@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"bytes"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
@@ -39,7 +40,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		errorKind := 0
 
 		// Get the btcd header based on the provided data
-		btcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		btcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 		// If the header hex is the same as the default one, then this is the seed input
 		headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 		headerHex := headerBytes.MarshalHex()
@@ -47,7 +48,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 		// Make the address have a proper size
 		if len(addressBytes) == 0 || len(addressBytes) >= 256 {
-			addressBytes = genRandomByteArray(1 + uint64(rand.Intn(257)))
+			addressBytes = datagen.GenRandomByteArray(1 + uint64(rand.Intn(255)))
 		}
 
 		// Get the signer structure
@@ -73,7 +74,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			}
 		}
 		// Generate a header with the provided modifications
-		newBtcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		newBtcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 		newHeader := bbl.NewBTCHeaderBytesFromBlockHeader(newBtcdHeader)
 		newHeaderHex := newHeader.MarshalHex()
 

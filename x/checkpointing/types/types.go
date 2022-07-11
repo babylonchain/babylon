@@ -2,53 +2,18 @@ package types
 
 import (
 	"bytes"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type LastCommitHash []byte
 
-//type ValidatorAddress string
-
 type BlsSigHash []byte
 
 type RawCkptHash []byte
-
-//
-//func (addr ValidatorAddress) Marshal() ([]byte, error) {
-//	return []byte(addr), nil
-//}
-//
-//func (addr ValidatorAddress) MustMarshal() []byte {
-//	bz, err := addr.Marshal()
-//	if err != nil {
-//		panic(err)
-//	}
-//
-//	return bz
-//}
-//
-//func (addr ValidatorAddress) MarshalTo(data []byte) (int, error) {
-//	copy(data, addr)
-//	return len(data), nil
-//}
-//
-//func (addr ValidatorAddress) Size() int {
-//	bz := addr.MustMarshal()
-//	return len(bz)
-//}
-//
-//func (addr *ValidatorAddress) Unmarshal(data []byte) error {
-//	*addr = ValidatorAddress(data)
-//	return nil
-//}
-//
-//func (addr ValidatorAddress) Byte() []byte {
-//	return []byte(addr)
-//}
-//
-//func (addr ValidatorAddress) Equal(s ValidatorAddress) bool {
-//	return addr == s
-//}
 
 func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
@@ -64,6 +29,35 @@ func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawChe
 		Ckpt:   ckpt,
 		Status: status,
 	}
+}
+
+func (cm *RawCheckpointWithMeta) Accumulate(vals *epochingtypes.ValidatorSet, signerAddr sdk.ValAddress, signerBlsKey bls12381.PublicKey, sig bls12381.Signature, totalPower int64) (bool, error) {
+	if cm.Status != Accumulating {
+		return false, ErrCkptNotAccumulating.Wrapf("checkpoint at epoch %v is not accumulating", cm.Ckpt.EpochNum)
+	}
+	val, index, err := vals.FindValidatorWithIndex(signerAddr)
+	if err != nil {
+		return false, err
+	}
+	if bitmap.Get(cm.Ckpt.Bitmap, index) {
+		return false, ErrCkptAlreadyVoted
+	}
+	aggSig, err := bls12381.AggrSig(*cm.Ckpt.BlsMultiSig, sig)
+	if err != nil {
+		return false, err
+	}
+	cm.Ckpt.BlsMultiSig = &aggSig
+	aggPK, err := bls12381.AggrPK(*cm.BlsAggrPk, signerBlsKey)
+	if err != nil {
+		return false, err
+	}
+	cm.BlsAggrPk = &aggPK
+	bitmap.Set(cm.Ckpt.Bitmap, index, true)
+	cm.PowerSum += uint64(val.Power)
+	if int64(cm.PowerSum) > totalPower/3 {
+		return true, nil
+	}
+	return false, nil
 }
 
 func RawCkptToBytes(cdc codec.BinaryCodec, ckpt *RawCheckpoint) []byte {
