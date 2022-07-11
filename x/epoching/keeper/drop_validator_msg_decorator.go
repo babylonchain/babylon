@@ -24,7 +24,7 @@ func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
 // - MsgDelegate
 // - MsgUndelegate
 // - MsgBeginRedelegate
-// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	// skip if at genesis block, as genesis state contains txs that bootstrap the initial validator set
 	if ctx.BlockHeight() == 0 {
