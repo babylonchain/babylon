@@ -146,7 +146,7 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderBytes) (uint64
 
 // MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
 func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes) (int64, error) {
-	// Retrieve the header. If it does not exist, return false
+	// Retrieve the header. If it does not exist, return an error
 	headerInfo, err := k.HeadersState(ctx).GetHeaderByHash(headerBytes.Hash())
 	if err != nil {
 		return -1, err
@@ -155,7 +155,7 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 	// Retrieve the tip
 	tipInfo := k.HeadersState(ctx).GetTip()
 
-	// If the height of the requested header is larger than the tip, return false
+	// If the height of the requested header is larger than the tip, return an error
 	if tipInfo.Height < headerInfo.Height {
 		return -1, types.ErrHeaderHigherThanTip.Wrap("header higher than tip")
 	}
@@ -163,6 +163,8 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 	headerDepth := tipInfo.Height - headerInfo.Height + 1
 	mainchain := k.HeadersState(ctx).GetMainChainUpTo(headerDepth)
 
+	// If we got an empty mainchain or the header does not equal the last element of the mainchain
+	// then the header is not maintained inside the mainchain.
 	if len(mainchain) == 0 || !headerInfo.Eq(mainchain[len(mainchain)-1]) {
 		return -1, nil
 	}
