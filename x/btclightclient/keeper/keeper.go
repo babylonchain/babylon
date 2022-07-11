@@ -144,20 +144,36 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderBytes) (uint64
 	return k.HeadersState(ctx).GetHeaderHeight(headerHash)
 }
 
+// MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
+func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes) (int64, error) {
+	// Retrieve the header. If it does not exist, return false
+	headerInfo, err := k.HeadersState(ctx).GetHeaderByHash(headerBytes.Hash())
+	if err != nil {
+		return -1, err
+	}
+
+	// Retrieve the tip
+	tipInfo := k.HeadersState(ctx).GetTip()
+
+	// If the height of the requested header is larger than the tip, return false
+	if tipInfo.Height < headerInfo.Height {
+		return -1, types.ErrHeaderHigherThanTip.Wrap("header higher than tip")
+	}
+
+	headerDepth := tipInfo.Height - headerInfo.Height + 1
+	mainchain := k.HeadersState(ctx).GetMainChainUpTo(headerDepth)
+
+	if len(mainchain) == 0 || !headerInfo.Eq(mainchain[len(mainchain)-1]) {
+		return -1, nil
+	}
+	return int64(headerDepth), nil
+}
+
 // HeaderKDeep returns true if a header is at least k-deep on the main chain
-func (k Keeper) HeaderKDeep(ctx sdk.Context, header *bbl.BTCHeaderBytes, depth uint64) bool {
-	// TODO: optimize to not traverse the entire mainchain by storing the height along with the header
-	mainchain := k.HeadersState(ctx).GetMainChain()
-	if depth > uint64(len(mainchain)) {
+func (k Keeper) HeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) bool {
+	mainchainDepth, err := k.MainChainDepth(ctx, headerBytes)
+	if err != nil || mainchainDepth < 0 {
 		return false
 	}
-	// k-deep -> k headers built on top of the BTC header
-	// Discard the first `depth` headers
-	kDeepMainChain := mainchain[depth:]
-	for _, mainChainHeader := range kDeepMainChain {
-		if header.Eq(mainChainHeader.Header) {
-			return true
-		}
-	}
-	return false
+	return uint64(mainchainDepth) >= depth
 }

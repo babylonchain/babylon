@@ -169,19 +169,22 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCHeaderI
 	}
 }
 
-// GetDescendingHeaders returns a collection of descending headers according to their height
-func (s HeadersState) GetDescendingHeaders() []*types.BTCHeaderInfo {
+// GetDescendingHeadersUpTo returns a collection of descending headers according to their height
+func (s HeadersState) GetDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
 	var headers []*types.BTCHeaderInfo
 	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
 		headers = append(headers, header)
+		if tipHeight-header.Height == depth {
+			return true
+		}
 		return false
 	})
 	return headers
 }
 
-// GetMainChain returns the current canonical chain as a collection of block headers
-// 				starting from the tip and ending on the base header
-func (s HeadersState) GetMainChain() []*types.BTCHeaderInfo {
+// GetMainChainUpTo returns the current canonical chain as a collection of block headers
+// 				    starting from the tip and ending on the header that has a depth distance from it.
+func (s HeadersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
 		return nil
@@ -189,7 +192,7 @@ func (s HeadersState) GetMainChain() []*types.BTCHeaderInfo {
 	currentHeader := s.GetTip()
 
 	// Retrieve a collection of headers in descending height order
-	headers := s.GetDescendingHeaders()
+	headers := s.GetDescendingHeadersUpTo(currentHeader.Height, depth)
 
 	var chain []*types.BTCHeaderInfo
 	chain = append(chain, currentHeader)
@@ -206,6 +209,17 @@ func (s HeadersState) GetMainChain() []*types.BTCHeaderInfo {
 	}
 
 	return chain
+}
+
+// GetMainChain retrieves the main chain as a collection of block headers starting from the tip
+// 				and ending on the base BTC header.
+func (s HeadersState) GetMainChain() []*types.BTCHeaderInfo {
+	if !s.TipExists() {
+		return nil
+	}
+	tip := s.GetTip()
+	// By providing the depth as the tip.Height, we ensure that we will go as deep as possible
+	return s.GetMainChainUpTo(tip.Height)
 }
 
 // GetHighestCommonAncestor traverses the ancestors of both headers
