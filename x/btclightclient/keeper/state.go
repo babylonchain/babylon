@@ -35,7 +35,6 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 // - hash->height
 // - hash->work
 // - (height, hash)->header storage
-// Returns a boolean value indicating whether there is a new tip
 func (s HeadersState) CreateHeader(header *wire.BlockHeader, height uint64, cumulativeWork *big.Int) {
 	headerHash := header.BlockHash()
 	// Get necessary keys according

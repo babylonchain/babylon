@@ -87,15 +87,6 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 
 	previousTip := k.HeadersState(ctx).GetTip()
 	// Create the header
-<<<<<<< HEAD
-	tipUpdated := k.HeadersState(ctx).CreateHeader(header, height+1, cumulativeWork)
-	if tipUpdated {
-		// Trigger TipUpdated hook
-		k.AfterTipUpdated(ctx, height+1)
-		// Emit TipUpdated event
-		ctx.EventManager().EmitTypedEvent(&types.EventChainExtended{Height: height + 1})
-	}
-=======
 	k.HeadersState(ctx).CreateHeader(header, parentHeight+1, cumulativeWork)
 
 	// Get the new tip
@@ -142,7 +133,6 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *wire.BlockHeader) error {
 		}
 	}
 
->>>>>>> e625af45a6bfe769f34d66e848ef597f8f95fa21
 	return nil
 }
 
@@ -151,8 +141,6 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *wire.BlockHeader) (uint64, 
 	headerHash := header.BlockHash()
 	return k.HeadersState(ctx).GetHeaderHeight(&headerHash)
 }
-<<<<<<< HEAD
-=======
 
 // HeaderKDeep returns true if a header is at least k-deep on the main chain
 func (k Keeper) HeaderKDeep(ctx sdk.Context, header *wire.BlockHeader, depth uint64) bool {
@@ -171,4 +159,3 @@ func (k Keeper) HeaderKDeep(ctx sdk.Context, header *wire.BlockHeader, depth uin
 	}
 	return false
 }
->>>>>>> e625af45a6bfe769f34d66e848ef597f8f95fa21
