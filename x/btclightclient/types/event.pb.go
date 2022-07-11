@@ -5,6 +5,7 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
@@ -22,24 +23,26 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// EventTipUpdated is emitted on Msg/InsertHeader
-type EventTipUpdated struct {
-	// The height of the new tip
-	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+// The header included in the event is the block in the history
+// of the current mainchain to which we are rolling back to.
+// In other words, there is one rollback event emitted per re-org, to the
+// greatest common ancestor of the old and the new fork.
+type EventBTCRollBack struct {
+	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 }
 
-func (m *EventTipUpdated) Reset()         { *m = EventTipUpdated{} }
-func (m *EventTipUpdated) String() string { return proto.CompactTextString(m) }
-func (*EventTipUpdated) ProtoMessage()    {}
-func (*EventTipUpdated) Descriptor() ([]byte, []int) {
+func (m *EventBTCRollBack) Reset()         { *m = EventBTCRollBack{} }
+func (m *EventBTCRollBack) String() string { return proto.CompactTextString(m) }
+func (*EventBTCRollBack) ProtoMessage()    {}
+func (*EventBTCRollBack) Descriptor() ([]byte, []int) {
 	return fileDescriptor_dbeb7d7d6407e7ec, []int{0}
 }
-func (m *EventTipUpdated) XXX_Unmarshal(b []byte) error {
+func (m *EventBTCRollBack) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EventTipUpdated) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EventBTCRollBack) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EventTipUpdated.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EventBTCRollBack.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -49,27 +52,76 @@ func (m *EventTipUpdated) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *EventTipUpdated) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventTipUpdated.Merge(m, src)
+func (m *EventBTCRollBack) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCRollBack.Merge(m, src)
 }
-func (m *EventTipUpdated) XXX_Size() int {
+func (m *EventBTCRollBack) XXX_Size() int {
 	return m.Size()
 }
-func (m *EventTipUpdated) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventTipUpdated.DiscardUnknown(m)
+func (m *EventBTCRollBack) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCRollBack.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EventTipUpdated proto.InternalMessageInfo
+var xxx_messageInfo_EventBTCRollBack proto.InternalMessageInfo
 
-func (m *EventTipUpdated) GetHeight() uint64 {
+func (m *EventBTCRollBack) GetHeader() *BTCHeaderInfo {
 	if m != nil {
-		return m.Height
+		return m.Header
 	}
-	return 0
+	return nil
+}
+
+// EventBTCRollForward is emitted on Msg/InsertHeader
+// The header included in the event is the one the main chain is extended with.
+// In the event of a reorg, each block on the new fork that comes after
+// the greatest common ancestor will have a corresponding roll forward event.
+type EventBTCRollForward struct {
+	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+}
+
+func (m *EventBTCRollForward) Reset()         { *m = EventBTCRollForward{} }
+func (m *EventBTCRollForward) String() string { return proto.CompactTextString(m) }
+func (*EventBTCRollForward) ProtoMessage()    {}
+func (*EventBTCRollForward) Descriptor() ([]byte, []int) {
+	return fileDescriptor_dbeb7d7d6407e7ec, []int{1}
+}
+func (m *EventBTCRollForward) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventBTCRollForward) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventBTCRollForward.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventBTCRollForward) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCRollForward.Merge(m, src)
+}
+func (m *EventBTCRollForward) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventBTCRollForward) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCRollForward.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventBTCRollForward proto.InternalMessageInfo
+
+func (m *EventBTCRollForward) GetHeader() *BTCHeaderInfo {
+	if m != nil {
+		return m.Header
+	}
+	return nil
 }
 
 func init() {
-	proto.RegisterType((*EventTipUpdated)(nil), "babylon.btclightclient.v1.EventTipUpdated")
+	proto.RegisterType((*EventBTCRollBack)(nil), "babylon.btclightclient.v1.EventBTCRollBack")
+	proto.RegisterType((*EventBTCRollForward)(nil), "babylon.btclightclient.v1.EventBTCRollForward")
 }
 
 func init() {
@@ -77,21 +129,24 @@ func init() {
 }
 
 var fileDescriptor_dbeb7d7d6407e7ec = []byte{
-	// 166 bytes of a gzipped FileDescriptorProto
+	// 223 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4a, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0xce, 0xc9, 0x4c, 0xcf, 0x00, 0x91, 0xa9, 0x79, 0x25,
 	0xfa, 0xa9, 0x65, 0xa9, 0x79, 0x25, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x92, 0x50, 0x35,
-	0x7a, 0xa8, 0x6a, 0xf4, 0xca, 0x0c, 0x95, 0x34, 0xb9, 0xf8, 0x5d, 0x41, 0x2a, 0x43, 0x32, 0x0b,
-	0x42, 0x0b, 0x52, 0x12, 0x4b, 0x52, 0x53, 0x84, 0xc4, 0xb8, 0xd8, 0x32, 0x52, 0x41, 0xaa, 0x24,
-	0x18, 0x15, 0x18, 0x35, 0x58, 0x82, 0xa0, 0x3c, 0xa7, 0x80, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c,
-	0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e,
-	0x3c, 0x96, 0x63, 0x88, 0x32, 0x4b, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5,
-	0x87, 0x5a, 0x95, 0x9c, 0x91, 0x98, 0x99, 0x07, 0xe3, 0xe8, 0x57, 0xa0, 0xbb, 0xae, 0xa4, 0xb2,
-	0x20, 0xb5, 0x38, 0x89, 0x0d, 0xec, 0x3c, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xe9, 0xba,
-	0x25, 0x58, 0xc4, 0x00, 0x00, 0x00,
+	0x7a, 0xa8, 0x6a, 0xf4, 0xca, 0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0xaa, 0xf4, 0x41,
+	0x2c, 0x88, 0x06, 0x29, 0x6d, 0x1c, 0x86, 0xa2, 0xe9, 0x07, 0x2b, 0x56, 0x0a, 0xe1, 0x12, 0x70,
+	0x05, 0x59, 0xe6, 0x14, 0xe2, 0x1c, 0x94, 0x9f, 0x93, 0xe3, 0x94, 0x98, 0x9c, 0x2d, 0xe4, 0xc0,
+	0xc5, 0x96, 0x91, 0x9a, 0x98, 0x92, 0x5a, 0x24, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x6d, 0xa4, 0xa1,
+	0x87, 0xd3, 0x09, 0x7a, 0x4e, 0x21, 0xce, 0x1e, 0x60, 0xb5, 0x9e, 0x79, 0x69, 0xf9, 0x41, 0x50,
+	0x7d, 0x4a, 0xe1, 0x5c, 0xc2, 0xc8, 0xa6, 0xba, 0xe5, 0x17, 0x95, 0x27, 0x16, 0xa5, 0x50, 0x6e,
+	0xb0, 0x53, 0xc0, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38,
+	0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x99, 0xa5, 0x67,
+	0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x43, 0x4d, 0x4d, 0xce, 0x48, 0xcc, 0xcc,
+	0x83, 0x71, 0xf4, 0x2b, 0xd0, 0xc3, 0xa3, 0xa4, 0xb2, 0x20, 0xb5, 0x38, 0x89, 0x0d, 0x1c, 0x0e,
+	0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0xfd, 0xad, 0x58, 0xdc, 0x8b, 0x01, 0x00, 0x00,
 }
 
-func (m *EventTipUpdated) Marshal() (dAtA []byte, err error) {
+func (m *EventBTCRollBack) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -101,20 +156,62 @@ func (m *EventTipUpdated) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EventTipUpdated) MarshalTo(dAtA []byte) (int, error) {
+func (m *EventBTCRollBack) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EventTipUpdated) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EventBTCRollBack) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Height != 0 {
-		i = encodeVarintEvent(dAtA, i, uint64(m.Height))
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintEvent(dAtA, i, uint64(size))
+		}
 		i--
-		dAtA[i] = 0x8
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventBTCRollForward) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventBTCRollForward) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventBTCRollForward) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintEvent(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -130,14 +227,28 @@ func encodeVarintEvent(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *EventTipUpdated) Size() (n int) {
+func (m *EventBTCRollBack) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Height != 0 {
-		n += 1 + sovEvent(uint64(m.Height))
+	if m.Header != nil {
+		l = m.Header.Size()
+		n += 1 + l + sovEvent(uint64(l))
+	}
+	return n
+}
+
+func (m *EventBTCRollForward) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Header != nil {
+		l = m.Header.Size()
+		n += 1 + l + sovEvent(uint64(l))
 	}
 	return n
 }
@@ -148,7 +259,7 @@ func sovEvent(x uint64) (n int) {
 func sozEvent(x uint64) (n int) {
 	return sovEvent(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *EventTipUpdated) Unmarshal(dAtA []byte) error {
+func (m *EventBTCRollBack) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -171,17 +282,17 @@ func (m *EventTipUpdated) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EventTipUpdated: wiretype end group for non-group")
+			return fmt.Errorf("proto: EventBTCRollBack: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventTipUpdated: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EventBTCRollBack: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
 			}
-			m.Height = 0
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvent
@@ -191,11 +302,114 @@ func (m *EventTipUpdated) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Height |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
+			if msglen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Header == nil {
+				m.Header = &BTCHeaderInfo{}
+			}
+			if err := m.Header.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvent(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventBTCRollForward) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvent
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventBTCRollForward: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventBTCRollForward: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvent
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Header == nil {
+				m.Header = &BTCHeaderInfo{}
+			}
+			if err := m.Header.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvent(dAtA[iNdEx:])

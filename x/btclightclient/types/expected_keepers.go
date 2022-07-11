@@ -18,5 +18,6 @@ type BankKeeper interface {
 }
 
 type BTCLightClientHooks interface {
-	AfterTipUpdated(ctx sdk.Context, height uint64) // Must be called after the tip is updated
+	AfterBTCRollBack(ctx sdk.Context, headerInfo *BTCHeaderInfo)    // Must be called after the chain is rolled back
+	AfterBTCRollForward(ctx sdk.Context, headerInfo *BTCHeaderInfo) // Must be called after the chain is rolled forward
 }

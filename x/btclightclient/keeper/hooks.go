@@ -8,9 +8,16 @@ import (
 // Implements BTCLightClientHooks interface
 var _ types.BTCLightClientHooks = Keeper{}
 
-// AfterTipUpdated - call hook if registered
-func (k Keeper) AfterTipUpdated(ctx sdk.Context, height uint64) {
+// AfterBTCRollBack - call hook if registered
+func (k Keeper) AfterBTCRollBack(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
 	if k.hooks != nil {
-		k.hooks.AfterTipUpdated(ctx, height)
+		k.hooks.AfterBTCRollBack(ctx, headerInfo)
+	}
+}
+
+// AfterBTCRollForward - call hook if registered
+func (k Keeper) AfterBTCRollForward(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
+	if k.hooks != nil {
+		k.hooks.AfterBTCRollBack(ctx, headerInfo)
 	}
 }
