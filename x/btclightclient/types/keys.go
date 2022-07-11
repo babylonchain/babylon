@@ -2,7 +2,6 @@ package types
 
 import (
 	bbl "github.com/babylonchain/babylon/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -31,24 +30,20 @@ var (
 	TipPrefix           = append(HeadersPrefix, 0x3) // where we store the tip
 )
 
-func HeadersObjectKey(height uint64, hash *chainhash.Hash) []byte {
+func HeadersObjectKey(height uint64, hash *bbl.BTCHeaderHashBytes) []byte {
 	he := sdk.Uint64ToBigEndian(height)
-
-	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
+	hashBytes := hash.MustMarshal()
 
 	heightPrefix := append(HeadersObjectPrefix, he...)
 	return append(heightPrefix, hashBytes...)
 }
 
-func HeadersObjectHeightKey(hash *chainhash.Hash) []byte {
-	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
-
-	return append(HashToHeightPrefix, hashBytes...)
+func HeadersObjectHeightKey(hash *bbl.BTCHeaderHashBytes) []byte {
+	return append(HashToHeightPrefix, hash.MustMarshal()...)
 }
 
-func HeadersObjectWorkKey(hash *chainhash.Hash) []byte {
-	hashBytes := bbl.NewBTCHeaderHashBytesFromChainhash(hash)
-	return append(HashToWorkPrefix, hashBytes...)
+func HeadersObjectWorkKey(hash *bbl.BTCHeaderHashBytes) []byte {
+	return append(HashToWorkPrefix, hash.MustMarshal()...)
 }
 
 func TipKey() []byte {

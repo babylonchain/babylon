@@ -121,6 +121,16 @@ func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
 	}
 }
 
+func (m *BTCHeaderHashBytes) String() string {
+	// TODO: test
+	return m.ToChainhash().String()
+}
+
+func (m *BTCHeaderHashBytes) Eq(hash *BTCHeaderHashBytes) bool {
+	// TODO: test
+	return m.String() == hash.String()
+}
+
 func toChainhash(data []byte) (*chainhash.Hash, error) {
 	return chainhash.NewHash(data)
 }

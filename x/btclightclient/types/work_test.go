@@ -2,22 +2,23 @@ package types_test
 
 import (
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	"math/big"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"testing"
 )
 
 func FuzzCumulativeWork(f *testing.F) {
-	f.Add(int64(17), int64(25))
-	f.Fuzz(func(t *testing.T, numa int64, numb int64) {
-		biga := big.NewInt(numa)
-		bigb := big.NewInt(numb)
+	f.Add(uint64(17), uint64(25))
+	f.Fuzz(func(t *testing.T, numa uint64, numb uint64) {
+		biga := sdk.NewUint(numa)
+		bigb := sdk.NewUint(numb)
 
 		gotSum := types.CumulativeWork(biga, bigb)
 
-		expectedSum := new(big.Int)
-		expectedSum.Add(biga, bigb)
+		expectedSum := sdk.NewUint(0)
+		expectedSum.Add(biga)
+		expectedSum.Add(bigb)
 
-		if expectedSum.Cmp(gotSum) != 0 {
+		if !expectedSum.Equal(gotSum) {
 			t.Errorf("Cumulative work does not correspond to actual one")
 		}
 	})
