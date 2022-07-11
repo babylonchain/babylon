@@ -30,7 +30,7 @@ func RandomInt(rng int) uint64 {
 
 func RandomIntOtherThan(x int) uint64 {
 	untilX := 1 + RandomInt(x)
-	if RandomInt(1) == 0 {
+	if RandomInt(2) == 0 {
 		return uint64(x) + untilX
 	}
 	return uint64(x) - untilX
