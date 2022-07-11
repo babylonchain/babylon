@@ -30,11 +30,10 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 // CurrentEpoch handles the QueryCurrentEpochRequest query
 func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequest) (*types.QueryCurrentEpochResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-	epochNumber := k.GetEpochNumber(ctx)
-	epochBoundary := k.GetEpochBoundary(ctx)
+	epoch := k.GetEpoch(ctx)
 	resp := &types.QueryCurrentEpochResponse{
-		CurrentEpoch:  epochNumber.BigInt().Uint64(),
-		EpochBoundary: epochBoundary.BigInt().Uint64(),
+		CurrentEpoch:  epoch.EpochNumber,
+		EpochBoundary: epoch.GetLastBlockHeight(),
 	}
 	return resp, nil
 }
@@ -47,7 +46,7 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	epochMsgsStore := prefix.NewStore(store, types.QueuedMsgKey)
 
 	// handle pagination
-	// TODO: the epoch might end between pagination requests, leading inconsistent results by the time someone gets to the end. Possible fixes:
+	// TODO (non-urgent): the epoch might end between pagination requests, leading inconsistent results by the time someone gets to the end. Possible fixes:
 	// - We could add the epoch number to the query, and return nothing if the current epoch number is different. But it's a bit of pain to have to set it and not know why there's no result.
 	// - We could not reset the key to 0 when the queue is cleared, and just keep incrementing the ID forever. That way when the next query comes, it might skip some records that have been deleted, then resume from the next available record which has a higher key than the value in the pagination data structure.
 	// - We can do nothing, in which case some records that have been inserted after the delete might be skipped because their keys are lower than the pagionation state.

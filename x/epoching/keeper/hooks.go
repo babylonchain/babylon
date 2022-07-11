@@ -21,14 +21,14 @@ var _ types.EpochingHooks = Keeper{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterEpochBegins - call hook if registered
-func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch sdk.Uint) {
+func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch uint64) {
 	if k.hooks != nil {
 		k.hooks.AfterEpochBegins(ctx, epoch)
 	}
 }
 
 // AfterEpochEnds - call hook if registered
-func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch sdk.Uint) {
+func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 	if k.hooks != nil {
 		k.hooks.AfterEpochEnds(ctx, epoch)
 	}
@@ -45,16 +45,15 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress)
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
 	thresholds := []float64{float64(1) / float64(3), float64(2) / float64(3)}
 
-	epochNumber := h.k.GetEpochNumber(ctx)
+	epochNumber := h.k.GetEpoch(ctx).EpochNumber
 	totalVotingPower := h.k.GetTotalVotingPower(ctx, epochNumber)
-	validatorSet := h.k.GetValidatorSet(ctx, epochNumber)
 
 	// calculate total slashed voting power
 	slashedVotingPower := h.k.GetSlashedVotingPower(ctx, epochNumber)
 	// voting power of this validator
-	thisVotingPower, ok := validatorSet[valAddr.String()]
-	if !ok {
-		// It's possible that the most powerful validator outside the validator set enrols to the validator after an existing validator is slashed.
+	thisVotingPower, err := h.k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	if err != nil {
+		// It's possible that the most powerful validator outside the validator set enrols to the validator after this validator is slashed.
 		// Consequently, here we cannot find this validator in the validatorSet map.
 		// As we consider the validator set in the epoch beginning to be the validator set throughout this epoch, we consider this new validator in the edge to have no voting power and return directly here.
 		return
@@ -81,7 +80,10 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	}
 
 	// add the validator address to the set
-	h.k.AddSlashedValidator(ctx, valAddr)
+	if err := h.k.AddSlashedValidator(ctx, valAddr); err != nil {
+		// same as above error case
+		return
+	}
 }
 
 // Other staking hooks that are not used in the epoching module

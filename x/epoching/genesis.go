@@ -12,7 +12,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// set params for this module
 	k.SetParams(ctx, genState.Params)
 	// init epoch number
-	k.InitEpochNumber(ctx)
+	k.InitEpoch(ctx)
 	// init msg queue length
 	k.InitQueueLength(ctx)
 	// init validator set

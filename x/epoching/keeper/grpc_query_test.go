@@ -86,38 +86,38 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 	testCases := []struct {
 		msg           string
 		malleate      func()
-		epochNumber   sdk.Uint
-		epochBoundary sdk.Uint
+		epochNumber   uint64
+		epochBoundary uint64
 	}{
 		{
 			"epoch 0",
 			func() {},
-			sdk.NewUint(0),
-			sdk.NewUint(0),
+			0,
+			0,
 		},
 		{
 			"epoch 1",
 			func() {
-				suite.keeper.IncEpochNumber(suite.ctx)
+				suite.keeper.IncEpoch(suite.ctx)
 			},
-			sdk.NewUint(1),
-			sdk.NewUint(suite.keeper.GetParams(suite.ctx).EpochInterval * 1),
+			1,
+			suite.keeper.GetParams(suite.ctx).EpochInterval * 1,
 		},
 		{
 			"epoch 2",
 			func() {
-				suite.keeper.IncEpochNumber(suite.ctx)
+				suite.keeper.IncEpoch(suite.ctx)
 			},
-			sdk.NewUint(2),
-			sdk.NewUint(suite.keeper.GetParams(suite.ctx).EpochInterval * 2),
+			2,
+			suite.keeper.GetParams(suite.ctx).EpochInterval * 2,
 		},
 		{
 			"reset to epoch 0",
 			func() {
-				suite.keeper.InitEpochNumber(suite.ctx)
+				suite.keeper.InitEpoch(suite.ctx)
 			},
-			sdk.NewUint(0),
-			sdk.NewUint(0),
+			0,
+			0,
 		},
 	}
 
@@ -127,8 +127,8 @@ func (suite *KeeperTestSuite) TestCurrentEpoch() {
 			wctx := sdk.WrapSDKContext(ctx)
 			resp, err := queryClient.CurrentEpoch(wctx, &req)
 			suite.NoError(err)
-			suite.Equal(tc.epochNumber.Uint64(), resp.CurrentEpoch)
-			suite.Equal(tc.epochBoundary.Uint64(), resp.EpochBoundary)
+			suite.Equal(tc.epochNumber, resp.CurrentEpoch)
+			suite.Equal(tc.epochBoundary, resp.EpochBoundary)
 		})
 	}
 }
@@ -146,7 +146,7 @@ func FuzzCurrentEpoch(f *testing.F) {
 		_, ctx, keeper, _, queryClient := setupTestKeeper()
 		wctx := sdk.WrapSDKContext(ctx)
 		for i := uint64(0); i < increment; i++ {
-			keeper.IncEpochNumber(ctx)
+			keeper.IncEpoch(ctx)
 		}
 		req := types.QueryCurrentEpochRequest{}
 		resp, err := queryClient.CurrentEpoch(wctx, &req)
@@ -215,7 +215,7 @@ func (suite *KeeperTestSuite) TestEpochMsgs() {
 			resp, err := queryClient.EpochMsgs(wctx, req)
 			suite.NoError(err)
 			suite.Equal(len(tc.epochMsgs), len(resp.Msgs))
-			suite.Equal(uint64(len(tc.epochMsgs)), suite.keeper.GetQueueLength(suite.ctx).Uint64())
+			suite.Equal(uint64(len(tc.epochMsgs)), suite.keeper.GetQueueLength(suite.ctx))
 			for idx := range tc.epochMsgs {
 				suite.Equal(tc.epochMsgs[idx].MsgId, resp.Msgs[idx].MsgId)
 				suite.Equal(tc.epochMsgs[idx].TxId, resp.Msgs[idx].TxId)

@@ -11,16 +11,12 @@ import (
 func (k Keeper) InitQueueLength(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
-	queueLenBytes, err := sdk.NewUint(0).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
-
+	queueLenBytes := sdk.Uint64ToBigEndian(0)
 	store.Set(types.QueueLengthKey, queueLenBytes)
 }
 
 // GetQueueLength fetches the number of queued messages
-func (k Keeper) GetQueueLength(ctx sdk.Context) sdk.Uint {
+func (k Keeper) GetQueueLength(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 
 	// get queue len in bytes from DB
@@ -29,30 +25,21 @@ func (k Keeper) GetQueueLength(ctx sdk.Context) sdk.Uint {
 		panic(types.ErrUnknownQueueLen)
 	}
 	// unmarshal
-	var queueLen sdk.Uint
-	if err := queueLen.Unmarshal(bz); err != nil {
-		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
-	}
-
-	return queueLen
+	return sdk.BigEndianToUint64(bz)
 }
 
 // setQueueLength sets the msg queue length
-func (k Keeper) setQueueLength(ctx sdk.Context, queueLen sdk.Uint) {
+func (k Keeper) setQueueLength(ctx sdk.Context, queueLen uint64) {
 	store := ctx.KVStore(k.storeKey)
 
-	queueLenBytes, err := queueLen.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
-
+	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
 	store.Set(types.QueueLengthKey, queueLenBytes)
 }
 
 // incQueueLength adds the queue length by 1
 func (k Keeper) incQueueLength(ctx sdk.Context) {
 	queueLen := k.GetQueueLength(ctx)
-	incrementedQueueLen := queueLen.AddUint64(1)
+	incrementedQueueLen := queueLen + 1
 	k.setQueueLength(ctx, incrementedQueueLen)
 }
 
@@ -64,10 +51,7 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 
 	// key: queueLenBytes
 	queueLen := k.GetQueueLength(ctx)
-	queueLenBytes, err := queueLen.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
 	// value: msgBytes
 	msgBytes, err := k.cdc.Marshal(&msg)
 	if err != nil {
@@ -112,13 +96,13 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 	}
 
 	// set queue len to zero
-	k.setQueueLength(ctx, sdk.NewUint(0))
+	k.setQueueLength(ctx, 0)
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
 func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
 	var unwrappedMsgWithType sdk.Msg
-	// TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator

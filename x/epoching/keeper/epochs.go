@@ -3,7 +3,6 @@ package keeper
 import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -11,64 +10,59 @@ const (
 )
 
 // setEpochNumber sets epoch number
-func (k Keeper) InitEpochNumber(ctx sdk.Context) {
+func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
 
-	epochNumberBytes, err := sdk.NewUint(0).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
-
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	store.Set(types.EpochNumberKey, epochNumberBytes)
 }
 
-// GetEpochNumber fetches epoch number
-func (k Keeper) GetEpochNumber(ctx sdk.Context) sdk.Uint {
+// InitEpoch sets the zero epoch number to DB
+func (k Keeper) InitEpoch(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	epochNumberBytes := sdk.Uint64ToBigEndian(0)
+	store.Set(types.EpochNumberKey, epochNumberBytes)
+}
+
+// GetEpoch fetches the current epoch
+func (k Keeper) GetEpoch(ctx sdk.Context) types.Epoch {
 	store := ctx.KVStore(k.storeKey)
 
 	bz := store.Get(types.EpochNumberKey)
 	if bz == nil {
 		panic(types.ErrUnknownEpochNumber)
 	}
-	var epochNumber sdk.Uint
-	if err := epochNumber.Unmarshal(bz); err != nil {
-		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+	epochNumber := sdk.BigEndianToUint64(bz)
+	epochInterval := k.GetParams(ctx).EpochInterval
+	return types.Epoch{
+		EpochNumber:          epochNumber,
+		CurrentEpochInterval: epochInterval,
+		FirstBlockHeight:     firstBlockHeight(epochNumber, epochInterval),
 	}
-
-	return epochNumber
 }
 
-// setEpochNumber sets epoch number
-func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber sdk.Uint) {
-	store := ctx.KVStore(k.storeKey)
-
-	epochNumberBytes, err := epochNumber.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
-
-	store.Set(types.EpochNumberKey, epochNumberBytes)
-}
-
-// IncEpochNumber adds epoch number by 1
-func (k Keeper) IncEpochNumber(ctx sdk.Context) sdk.Uint {
-	epochNumber := k.GetEpochNumber(ctx)
-	incrementedEpochNumber := epochNumber.AddUint64(1)
+// IncEpoch adds epoch number by 1
+func (k Keeper) IncEpoch(ctx sdk.Context) types.Epoch {
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	incrementedEpochNumber := epochNumber + 1
 	k.setEpochNumber(ctx, incrementedEpochNumber)
-	return incrementedEpochNumber
+	epochInterval := k.GetParams(ctx).EpochInterval
+	return types.Epoch{
+		EpochNumber:          incrementedEpochNumber,
+		CurrentEpochInterval: epochInterval,
+		FirstBlockHeight:     firstBlockHeight(incrementedEpochNumber, epochInterval),
+	}
 }
 
-// GetEpochBoundary gets the epoch boundary, i.e., the height of the block that ends this epoch
-// example: in epoch 1, epoch interval is 5 blocks, boundary will be 1*5=5
-// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
-// 0 |     1     |     2      |
-func (k Keeper) GetEpochBoundary(ctx sdk.Context) sdk.Uint {
-	epochNumber := k.GetEpochNumber(ctx)
-	// epoch number is 0 at the 0-th block, i.e., genesis
-	if epochNumber.IsZero() {
-		return sdk.NewUint(0)
+// firstBlockHeight returns the height of the first block of a given epoch and epoch interval
+// TODO (non-urgent): add support to variable epoch interval
+func firstBlockHeight(epochNumber uint64, epochInterval uint64) uint64 {
+	// example: in epoch 2, epoch interval is 5 blocks, FirstBlockHeight will be (2-1)*5+1 = 6
+	// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+	// 0 |     1     |     2      |
+	if epochNumber == 0 {
+		return 0
+	} else {
+		return (epochNumber-1)*epochInterval + 1
 	}
-	// case when epoch number > 0
-	epochInterval := sdk.NewUint(k.GetParams(ctx).EpochInterval)
-	return epochNumber.Mul(epochInterval)
 }

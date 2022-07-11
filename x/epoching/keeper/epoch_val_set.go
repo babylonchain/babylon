@@ -1,44 +1,48 @@
 package keeper
 
 import (
+	"sort"
+
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// GetValidatorSet returns the set of validators of a given epoch
-func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) map[string]int64 {
-	valSet := make(map[string]int64)
+// GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their voting power in descending order
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) []types.Validator {
+	vals := []types.Validator{}
+
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		addr := string(iterator.Key())
+		addr := sdk.ValAddress(iterator.Key())
 		powerBytes := iterator.Value()
 		var power sdk.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
-		valSet[addr] = power.Int64()
+		val := types.Validator{
+			Addr:  addr,
+			Power: power.Int64(),
+		}
+		vals = append(vals, val)
 	}
+	sort.Sort(types.Validators(vals))
 
-	return valSet
+	return vals
 }
 
 // InitValidatorSet stores the validator set in the beginning of the current epoch
 // This is called upon BeginBlock
 func (k Keeper) InitValidatorSet(ctx sdk.Context) {
-	epochNumber := k.GetEpochNumber(ctx)
+	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.valSetStore(ctx, epochNumber)
 	totalPower := int64(0)
 
 	// store the validator set
-	valSet, err := k.getValSetFromStaking(ctx)
-	if err != nil {
-		panic(err)
-	}
-	for addr, power := range valSet {
+	k.stk.IterateLastValidatorPowers(ctx, func(addr sdk.ValAddress, power int64) (stop bool) {
 		addrBytes := []byte(addr)
 		powerBytes, err := sdk.NewInt(power).Marshal()
 		if err != nil {
@@ -46,12 +50,12 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 		}
 		store.Set(addrBytes, powerBytes)
 		totalPower += power
-	}
+
+		return false
+	})
+
 	// store total voting power of this validator set
-	epochNumberBytes, err := epochNumber.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	totalPowerBytes, err := sdk.NewInt(totalPower).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
@@ -61,7 +65,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 
 // ClearValidatorSet removes the validator set of a given epoch
 // TODO: This is called upon the epoch is checkpointed
-func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
+func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber uint64) {
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
@@ -72,35 +76,29 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber sdk.Uint) {
 	}
 	// clear total voting power of this validator set
 	powerStore := k.votingPowerStore(ctx)
-	epochNumberBytes, err := epochNumber.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	powerStore.Delete(epochNumberBytes)
 }
 
 // GetValidatorVotingPower returns the voting power of a given validator in a given epoch
-func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber sdk.Uint, valAddr sdk.ValAddress) int64 {
+func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, valAddr sdk.ValAddress) (int64, error) {
 	store := k.valSetStore(ctx, epochNumber)
 
 	powerBytes := store.Get(valAddr)
 	if powerBytes == nil {
-		panic(types.ErrUnknownValidator)
+		return 0, types.ErrUnknownValidator
 	}
 	var power sdk.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
 		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
-	return power.Int64()
+	return power.Int64(), nil
 }
 
 // GetTotalVotingPower returns the total voting power of a given epoch
-func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64 {
-	epochNumberBytes, err := epochNumber.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	store := k.votingPowerStore(ctx)
 	powerBytes := store.Get(epochNumberBytes)
 	if powerBytes == nil {
@@ -117,13 +115,10 @@ func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber sdk.Uint) int64
 // prefix: ValidatorSetKey || epochNumber
 // key: string(address)
 // value: voting power (in int64 as per Cosmos SDK)
-func (k Keeper) valSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix.Store {
+func (k Keeper) valSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	valSetStore := prefix.NewStore(store, types.ValidatorSetKey)
-	epochNumberBytes, err := epochNumber.Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	return prefix.NewStore(valSetStore, epochNumberBytes)
 }
 
@@ -134,21 +129,4 @@ func (k Keeper) valSetStore(ctx sdk.Context, epochNumber sdk.Uint) prefix.Store 
 func (k Keeper) votingPowerStore(ctx sdk.Context) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	return prefix.NewStore(store, types.VotingPowerKey)
-}
-
-// get the last validator set
-// key: string(address)
-// value: voting power (in int64 as per Cosmos SDK)
-// This is called upon BeginEpoch
-// (mostly adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L348-L373)
-func (k Keeper) getValSetFromStaking(ctx sdk.Context) (map[string]int64, error) {
-	valSet := make(map[string]int64)
-
-	k.stk.IterateLastValidatorPowers(ctx, func(addr sdk.ValAddress, power int64) (stop bool) {
-		valAddrStr := addr.String()
-		valSet[valAddrStr] = power
-		return false
-	})
-
-	return valSet, nil
 }
