@@ -215,7 +215,7 @@ func (suite *KeeperTestSuite) TestEpochMsgs() {
 			resp, err := queryClient.EpochMsgs(wctx, req)
 			suite.NoError(err)
 			suite.Equal(len(tc.epochMsgs), len(resp.Msgs))
-			suite.Equal(uint64(len(tc.epochMsgs)), suite.keeper.GetQueueLength(suite.ctx).Uint64())
+			suite.Equal(uint64(len(tc.epochMsgs)), suite.keeper.GetQueueLength(suite.ctx))
 			for idx := range tc.epochMsgs {
 				suite.Equal(tc.epochMsgs[idx].MsgId, resp.Msgs[idx].MsgId)
 				suite.Equal(tc.epochMsgs[idx].TxId, resp.Msgs[idx].TxId)

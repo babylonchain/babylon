@@ -12,10 +12,7 @@ func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber uint64, power
 	store := k.slashedVotingPowerStore(ctx)
 
 	// key: epochNumber
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	// value: power
 	powerBytes, err := sdk.NewInt(power).Marshal()
 	if err != nil {
@@ -37,10 +34,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 	store := k.slashedVotingPowerStore(ctx)
 
 	// key: epochNumber
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	bz := store.Get(epochNumberBytes)
 	if bz == nil {
 		panic(types.ErrUnknownSlashedVotingPower)
@@ -106,10 +100,7 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber uint64) {
 	}
 
 	// forget the slashed voting power of this epoch
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	k.slashedVotingPowerStore(ctx).Delete(epochNumberBytes)
 }
 
@@ -118,10 +109,7 @@ func (k Keeper) ClearSlashedValidators(ctx sdk.Context, epochNumber uint64) {
 func (k Keeper) slashedValSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	slashedValStore := prefix.NewStore(store, types.SlashedValidatorSetKey)
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	return prefix.NewStore(slashedValStore, epochNumberBytes)
 }
 

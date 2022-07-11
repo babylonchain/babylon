@@ -3,7 +3,6 @@ package keeper
 import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 const (
@@ -14,23 +13,14 @@ const (
 func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
 
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
-
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	store.Set(types.EpochNumberKey, epochNumberBytes)
 }
 
 // InitEpoch sets the zero epoch number to DB
 func (k Keeper) InitEpoch(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
-
-	epochNumberBytes, err := sdk.NewUint(0).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
-
+	epochNumberBytes := sdk.Uint64ToBigEndian(0)
 	store.Set(types.EpochNumberKey, epochNumberBytes)
 }
 
@@ -42,13 +32,9 @@ func (k Keeper) GetEpoch(ctx sdk.Context) types.Epoch {
 	if bz == nil {
 		panic(types.ErrUnknownEpochNumber)
 	}
-	var epochNumber sdk.Uint
-	if err := epochNumber.Unmarshal(bz); err != nil {
-		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
-	}
-
+	epochNumber := sdk.BigEndianToUint64(bz)
 	return types.Epoch{
-		EpochNumber:   epochNumber.Uint64(),
+		EpochNumber:   epochNumber,
 		EpochInterval: k.GetParams(ctx).EpochInterval,
 	}
 }

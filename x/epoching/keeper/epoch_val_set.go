@@ -55,10 +55,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 	})
 
 	// store total voting power of this validator set
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	totalPowerBytes, err := sdk.NewInt(totalPower).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
@@ -79,10 +76,7 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber uint64) {
 	}
 	// clear total voting power of this validator set
 	powerStore := k.votingPowerStore(ctx)
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	powerStore.Delete(epochNumberBytes)
 }
 
@@ -104,10 +98,7 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, val
 
 // GetTotalVotingPower returns the total voting power of a given epoch
 func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	store := k.votingPowerStore(ctx)
 	powerBytes := store.Get(epochNumberBytes)
 	if powerBytes == nil {
@@ -127,10 +118,7 @@ func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
 func (k Keeper) valSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	valSetStore := prefix.NewStore(store, types.ValidatorSetKey)
-	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
-	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
-	}
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	return prefix.NewStore(valSetStore, epochNumberBytes)
 }
 
