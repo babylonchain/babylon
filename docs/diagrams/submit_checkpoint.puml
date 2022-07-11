@@ -108,8 +108,8 @@ alt raw checkpoint exists
     alt previous epoch BTC checkpoint found
       btccheckpoint -> btccheckpoint_db : Add BTC checkpoint transaction
       btccheckpoint -> checkpointing ++ : Callback on checkpoint registered
-      checkpointing -> checkpointing : Change checkpoint status to \n CHECKPOINTED_NOT_CONFIRMED
-      checkpointing -> Events -- : Emit epoch checkpoint included
+      checkpointing -> checkpointing : Change checkpoint status to \n SUBMITTED
+      checkpointing -> Events -- : Emit epoch checkpoint SUBMITTED
       Events --> submitter : Observe submitted checkpoints
     else out-of-sequence checkpoint
       btccheckpoint -> bank : Penalty for out-of-sequence submission
@@ -159,26 +159,42 @@ alt if tip changed
   btccheckpoint -> btccheckpoint_db : Get unstable checkpoints
   btccheckpoint -> btccheckpoint : Sort unstable checkpoints \n by BTC height and tx index
 
-  loop foreach unstable checkpoint tx
+  loop foreach SUBMITTED checkpoint tx
     btccheckpoint -> btclightclient ++: Check including block embedding depth
     return block depth if on main chain
 
-    alt if checkpoint tx became stable
-      btccheckpoint -> checkpointing ++ : Callback on checkpoint stable
+    alt if checkpoint tx became k-deep
+      btccheckpoint -> checkpointing ++ : Callback on checkpoint CONFIRMED
       checkpointing -> checkpointing : Change checkpoint status to \n CONFIRMED
-      checkpointing -> Events : Emit epoch checkpoint stable
+      checkpointing -> Events : Emit epoch checkpoint CONFIRMED
       return true if just became CONFIRMED
 
       alt checkpoint/epoch just became CONFIRMED
         btccheckpoint -> btccheckpoint_db : Get BTC-to-Cosmos key of tx submitter
         btccheckpoint -> bank : Mint reward for submitter
+      end
+    end
+  end
+
+  loop foreach CONFIRMED checkpoint tx
+    btccheckpoint -> btclightclient ++: Check including block embedding depth
+    return block depth if on main chain
+
+    alt if checkpoint tx became w-deep
+      btccheckpoint -> checkpointing ++ : Callback on checkpoint FINALIZED
+      checkpointing -> checkpointing : Change checkpoint status to \n FINALIZED
+      checkpointing -> Events : Emit epoch checkpoint FINALIZED
+      return true if just became FINALIZED
+
+      alt checkpoint/epoch just became FINALIZED
         btccheckpoint -> staking : Release unbonding tokens for epoch
       end
     end
   end
-  alt if checkpoint status was CHECKPOINTED_NOT_CONFIRMED\n but currently no checkpoint tx was on main chain
-    checkpointing -> checkpointing : Change checkpoint status to \n UNCONFIRMED
-    checkpointing -> Events : Emit epoch checkpoint UNCONFIRMED
+
+  alt if a checkpoint status was SUBMITTED\n but currently no checkpoint tx was on main chain
+    checkpointing -> checkpointing : Change checkpoint status to \n SIGNED
+    checkpointing -> Events : Emit epoch checkpoint SIGNED
   end
   deactivate btccheckpoint
 end

@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"bytes"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"math/rand"
@@ -27,7 +28,7 @@ func FuzzBaseBTCHeader(f *testing.F) {
 
 		rand.Seed(seed)
 		// Get the btcd header based on the provided data
-		btcdHeader := genRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+		btcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
 		// Convert it into bytes
 		headerBytesObj := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 		headerBytes, _ := headerBytesObj.Marshal()

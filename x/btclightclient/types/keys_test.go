@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"bytes"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -15,8 +16,8 @@ func FuzzHeadersObjectKey(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, height uint64, hexHash string, seed int64) {
 		rand.Seed(seed)
-		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
+		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
+			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 		// get chainhash and height
 		chHash, _ := chainhash.NewHashFromStr(hexHash)
@@ -39,8 +40,8 @@ func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
 		rand.Seed(seed)
-		if !validHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = genRandomHexStr(bbl.BTCHeaderHashLen)
+		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
+			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 		// Get the chainhash
 		chHash, _ := chainhash.NewHashFromStr(hexHash)
