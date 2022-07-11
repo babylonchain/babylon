@@ -122,7 +122,6 @@ func (m *BTCHeaderHashBytes) FromChainhash(hash *chainhash.Hash) {
 }
 
 func (m *BTCHeaderHashBytes) String() string {
-	// TODO: test
 	return m.ToChainhash().String()
 }
 

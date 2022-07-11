@@ -135,7 +135,6 @@ func (m *BTCHeaderBytes) FromBlockHeader(header *wire.BlockHeader) {
 }
 
 func (m *BTCHeaderBytes) HasParent(header *BTCHeaderBytes) bool {
-	// TODO: test
 	current := m.ToBlockHeader()
 	parent := header.ToBlockHeader()
 
@@ -143,26 +142,22 @@ func (m *BTCHeaderBytes) HasParent(header *BTCHeaderBytes) bool {
 }
 
 func (m *BTCHeaderBytes) Eq(other *BTCHeaderBytes) bool {
-	// TODO: test
 	return m.Hash().Eq(other.Hash())
 }
 
 func (m *BTCHeaderBytes) Hash() *BTCHeaderHashBytes {
-	// TODO: test
 	blockHash := m.ToBlockHeader().BlockHash()
 	hashBytes := NewBTCHeaderHashBytesFromChainhash(&blockHash)
 	return &hashBytes
 }
 
 func (m *BTCHeaderBytes) ParentHash() *BTCHeaderHashBytes {
-	// TODO: test
 	parentHash := m.ToBlockHeader().PrevBlock
 	hashBytes := NewBTCHeaderHashBytesFromChainhash(&parentHash)
 	return &hashBytes
 }
 
 func (m *BTCHeaderBytes) Bits() uint32 {
-	// TODO: test
 	return m.ToBlockHeader().Bits
 }
 

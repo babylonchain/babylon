@@ -198,3 +198,29 @@ func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
 		}
 	})
 }
+
+func FuzzHeaderHashBytesOperators(f *testing.F) {
+	f.Add(int64(42))
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		hexHash := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
+		hexHash2 := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
+		chHash, _ := chainhash.NewHashFromStr(hexHash)
+
+		var hbb, hbb2 types.BTCHeaderHashBytes
+		hbb.FromChainhash(chHash)
+		hbb2, _ = types.NewBTCHeaderHashBytesFromHex(hexHash2)
+
+		if hbb.String() != chHash.String() {
+			t.Errorf("String() method returned %s while %s was expected", hbb, chHash)
+		}
+
+		if !hbb.Eq(&hbb) {
+			t.Errorf("Object does not equal itself")
+		}
+		if hbb.Eq(&hbb2) {
+			t.Errorf("Object %s equals %s", hbb, hbb2)
+		}
+	})
+}

@@ -202,3 +202,59 @@ func FuzzBTCHeaderBytesBtcdBlockOps(f *testing.F) {
 		}
 	})
 }
+
+func FuzzBTCHeaderBytesOperators(f *testing.F) {
+	defaultHeader, _ := types.NewBTCHeaderBytesFromHex("00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22")
+	defaultBtcdHeader := defaultHeader.ToBlockHeader()
+
+	f.Add(
+		defaultBtcdHeader.Version,
+		defaultBtcdHeader.Bits,
+		defaultBtcdHeader.Nonce,
+		defaultBtcdHeader.Timestamp.Unix(),
+		defaultBtcdHeader.PrevBlock.String(),
+		defaultBtcdHeader.MerkleRoot.String(),
+		int64(17))
+
+	f.Fuzz(func(t *testing.T, version int32, bits uint32, nonce uint32,
+		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
+
+		rand.Seed(seed)
+		btcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+
+		btcdHeaderHash := btcdHeader.BlockHash()
+		childPrevBlock := types.NewBTCHeaderHashBytesFromChainhash(&btcdHeaderHash)
+		btcdHeaderChild := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, childPrevBlock.MarshalHex(), merkleRootStr)
+
+		var hb, hb2, hbChild types.BTCHeaderBytes
+		hb.FromBlockHeader(btcdHeader)
+		hb2.FromBlockHeader(btcdHeader)
+		hbChild.FromBlockHeader(btcdHeaderChild)
+
+		if !hb.Eq(&hb) {
+			t.Errorf("BTCHeaderBytes object does not equal itself")
+		}
+		if !hb.Eq(&hb2) {
+			t.Errorf("BTCHeaderBytes object does not equal a different object with the same bytes")
+		}
+		if hb.Eq(&hbChild) {
+			t.Errorf("BTCHeaderBytes object equals a different object with different bytes")
+		}
+
+		if !hbChild.HasParent(&hb) {
+			t.Errorf("HasParent method returns false with a correct parent")
+		}
+		if hbChild.HasParent(&hbChild) {
+			t.Errorf("HasParent method returns true for the same object")
+		}
+
+		if !hbChild.ParentHash().Eq(&childPrevBlock) {
+			t.Errorf("ParentHash did not return the parent hash")
+		}
+
+		if !hb.Hash().Eq(&childPrevBlock) {
+			t.Errorf("Hash method does not return the correct hash")
+		}
+
+	})
+}
