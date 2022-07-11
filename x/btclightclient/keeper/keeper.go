@@ -171,8 +171,8 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 	return int64(headerDepth), nil
 }
 
-// HeaderKDeep returns true if a header is at least k-deep on the main chain
-func (k Keeper) HeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) bool {
+// IsHeaderKDeep returns true if a header is at least k-deep on the main chain
+func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) bool {
 	mainchainDepth, err := k.MainChainDepth(ctx, headerBytes)
 	if err != nil || mainchainDepth < 0 {
 		return false
