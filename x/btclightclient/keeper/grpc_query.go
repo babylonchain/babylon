@@ -67,6 +67,11 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	}
 	// If a starting key has not been set, then the first header is the tip
 	prevHeader := k.HeadersState(sdkCtx).GetTip()
+	prevHeaderHash := prevHeader.BlockHash()
+	prevHeaderHeight, err := k.HeadersState(sdkCtx).GetHeaderHeight(&prevHeaderHash)
+	if err != nil {
+		panic("Maintained header does not have a height")
+	}
 	// Otherwise, retrieve the header from the key
 	if len(req.Pagination.Key) != 0 {
 		headerHash, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
@@ -82,8 +87,9 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		return &types.QueryMainChainResponse{}, nil
 	}
 
-	var headers []*types.HeaderInfo
-	headerInfo := types.NewHeaderInfo(prevHeader)
+	var headers []*types.BTCHeaderInfo
+	currentHeight := prevHeaderHeight
+	headerInfo := types.NewBTCHeaderInfo(prevHeader, prevHeaderHeight)
 	headers = append(headers, headerInfo)
 	store := prefix.NewStore(k.HeadersState(sdkCtx).headers, types.HeadersObjectPrefix)
 
@@ -94,8 +100,9 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 			btcdHeader := blockHeaderFromStoredBytes(value)
 			// If the previous block extends this block, then this block is part of the main chain
 			if prevHeader.PrevBlock.String() == btcdHeader.BlockHash().String() {
+				currentHeight -= 1
 				prevHeader = btcdHeader
-				headers = append(headers, types.NewHeaderInfo(btcdHeader))
+				headers = append(headers, types.NewBTCHeaderInfo(btcdHeader, currentHeight))
 			}
 		}
 		return true, nil

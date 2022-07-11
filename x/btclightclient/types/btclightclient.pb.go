@@ -71,23 +71,24 @@ func (m *BaseBTCHeader) GetHeight() uint64 {
 	return 0
 }
 
-type HeaderInfo struct {
+type BTCHeaderInfo struct {
 	Header *github_com_babylonchain_babylon_types.BTCHeaderBytes     `protobuf:"bytes,1,opt,name=header,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderBytes" json:"header,omitempty"`
 	Hash   *github_com_babylonchain_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
+	Height uint64                                                    `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
 }
 
-func (m *HeaderInfo) Reset()         { *m = HeaderInfo{} }
-func (m *HeaderInfo) String() string { return proto.CompactTextString(m) }
-func (*HeaderInfo) ProtoMessage()    {}
-func (*HeaderInfo) Descriptor() ([]byte, []int) {
+func (m *BTCHeaderInfo) Reset()         { *m = BTCHeaderInfo{} }
+func (m *BTCHeaderInfo) String() string { return proto.CompactTextString(m) }
+func (*BTCHeaderInfo) ProtoMessage()    {}
+func (*BTCHeaderInfo) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3313d955a6cadef2, []int{1}
 }
-func (m *HeaderInfo) XXX_Unmarshal(b []byte) error {
+func (m *BTCHeaderInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *HeaderInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BTCHeaderInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_HeaderInfo.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BTCHeaderInfo.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -97,21 +98,28 @@ func (m *HeaderInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *HeaderInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HeaderInfo.Merge(m, src)
+func (m *BTCHeaderInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCHeaderInfo.Merge(m, src)
 }
-func (m *HeaderInfo) XXX_Size() int {
+func (m *BTCHeaderInfo) XXX_Size() int {
 	return m.Size()
 }
-func (m *HeaderInfo) XXX_DiscardUnknown() {
-	xxx_messageInfo_HeaderInfo.DiscardUnknown(m)
+func (m *BTCHeaderInfo) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCHeaderInfo.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_HeaderInfo proto.InternalMessageInfo
+var xxx_messageInfo_BTCHeaderInfo proto.InternalMessageInfo
+
+func (m *BTCHeaderInfo) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
 
 func init() {
 	proto.RegisterType((*BaseBTCHeader)(nil), "babylon.btclightclient.v1.BaseBTCHeader")
-	proto.RegisterType((*HeaderInfo)(nil), "babylon.btclightclient.v1.HeaderInfo")
+	proto.RegisterType((*BTCHeaderInfo)(nil), "babylon.btclightclient.v1.BTCHeaderInfo")
 }
 
 func init() {
@@ -119,7 +127,7 @@ func init() {
 }
 
 var fileDescriptor_3313d955a6cadef2 = []byte{
-	// 247 bytes of a gzipped FileDescriptorProto
+	// 253 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xd2, 0x4e, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0xce, 0xc9, 0x4c, 0xcf, 0x00, 0x91, 0xa9, 0x79, 0x25,
 	0x68, 0x5c, 0xbd, 0x82, 0xa2, 0xfc, 0x92, 0x7c, 0x21, 0x49, 0xa8, 0x62, 0x3d, 0x34, 0xd9, 0x32,
@@ -129,13 +137,13 @@ var fileDescriptor_3313d955a6cadef2 = []byte{
 	0xde, 0x24, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f, 0x39, 0x3f, 0x57, 0x1f, 0x6a, 0x41, 0x72,
 	0x46, 0x62, 0x66, 0x1e, 0x8c, 0xa3, 0x5f, 0x52, 0x59, 0x90, 0x5a, 0xac, 0x07, 0x37, 0xc4, 0xa9,
 	0xb2, 0x24, 0xb5, 0x38, 0x08, 0x6a, 0x8e, 0x90, 0x18, 0xc8, 0x44, 0x90, 0x5b, 0x24, 0x98, 0x14,
-	0x18, 0x35, 0x58, 0x82, 0xa0, 0x3c, 0xa5, 0x0d, 0x8c, 0x5c, 0x5c, 0x10, 0xf5, 0x9e, 0x79, 0x69,
-	0xf9, 0x34, 0xb0, 0x38, 0x80, 0x8b, 0x25, 0x23, 0xb1, 0x38, 0x03, 0x6c, 0x2d, 0x8f, 0x93, 0xcd,
-	0xad, 0x7b, 0xf2, 0x16, 0x24, 0x9a, 0xe7, 0x91, 0x58, 0x9c, 0x01, 0x31, 0x13, 0x6c, 0x92, 0x53,
-	0xc0, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24, 0xc7, 0x38, 0xe1, 0xb1,
-	0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44, 0x99, 0x11, 0x32, 0xb9, 0x02,
-	0x3d, 0xfe, 0xc0, 0x56, 0x25, 0xb1, 0x81, 0xa3, 0xc1, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x30,
-	0xbb, 0x6f, 0xf3, 0xe6, 0x01, 0x00, 0x00,
+	0x18, 0x35, 0x58, 0x82, 0xa0, 0x3c, 0xa5, 0xd3, 0x8c, 0x5c, 0xbc, 0x70, 0x2d, 0x9e, 0x79, 0x69,
+	0xf9, 0x34, 0xb0, 0x3b, 0x80, 0x8b, 0x25, 0x23, 0xb1, 0x38, 0x03, 0x6c, 0x33, 0x8f, 0x93, 0xcd,
+	0xad, 0x7b, 0xf2, 0x16, 0x24, 0x9a, 0xe7, 0x91, 0x58, 0x9c, 0x01, 0x31, 0x13, 0x6c, 0x12, 0x92,
+	0x6f, 0x98, 0x91, 0x7d, 0xe3, 0x14, 0x70, 0xe2, 0x91, 0x1c, 0xe3, 0x85, 0x47, 0x72, 0x8c, 0x0f,
+	0x1e, 0xc9, 0x31, 0x4e, 0x78, 0x2c, 0xc7, 0x70, 0xe1, 0xb1, 0x1c, 0xc3, 0x8d, 0xc7, 0x72, 0x0c,
+	0x51, 0x66, 0x84, 0x6c, 0xac, 0x40, 0x8f, 0x5a, 0xb0, 0x13, 0x92, 0xd8, 0xc0, 0x31, 0x64, 0x0c,
+	0x08, 0x00, 0x00, 0xff, 0xff, 0x73, 0x01, 0xff, 0x5f, 0x01, 0x02, 0x00, 0x00,
 }
 
 func (m *BaseBTCHeader) Marshal() (dAtA []byte, err error) {
@@ -178,7 +186,7 @@ func (m *BaseBTCHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *HeaderInfo) Marshal() (dAtA []byte, err error) {
+func (m *BTCHeaderInfo) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -188,16 +196,21 @@ func (m *HeaderInfo) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *HeaderInfo) MarshalTo(dAtA []byte) (int, error) {
+func (m *BTCHeaderInfo) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *HeaderInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BTCHeaderInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.Height != 0 {
+		i = encodeVarintBtclightclient(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x18
+	}
 	if m.Hash != nil {
 		{
 			size := m.Hash.Size()
@@ -252,7 +265,7 @@ func (m *BaseBTCHeader) Size() (n int) {
 	return n
 }
 
-func (m *HeaderInfo) Size() (n int) {
+func (m *BTCHeaderInfo) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -265,6 +278,9 @@ func (m *HeaderInfo) Size() (n int) {
 	if m.Hash != nil {
 		l = m.Hash.Size()
 		n += 1 + l + sovBtclightclient(uint64(l))
+	}
+	if m.Height != 0 {
+		n += 1 + sovBtclightclient(uint64(m.Height))
 	}
 	return n
 }
@@ -379,7 +395,7 @@ func (m *BaseBTCHeader) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *HeaderInfo) Unmarshal(dAtA []byte) error {
+func (m *BTCHeaderInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -402,10 +418,10 @@ func (m *HeaderInfo) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: HeaderInfo: wiretype end group for non-group")
+			return fmt.Errorf("proto: BTCHeaderInfo: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: HeaderInfo: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BTCHeaderInfo: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -478,6 +494,25 @@ func (m *HeaderInfo) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtclightclient
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipBtclightclient(dAtA[iNdEx:])

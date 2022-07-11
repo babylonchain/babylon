@@ -14,12 +14,13 @@ message BaseBTCHeader {
   uint64 height = 2;
 }
 
-message HeaderInfo {
+message BTCHeaderInfo {
   bytes header = 1 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
   ];
   bytes hash = 2 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
   ];
+  uint64 height = 3;
 }
 

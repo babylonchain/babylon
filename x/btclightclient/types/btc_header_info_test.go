@@ -19,10 +19,11 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		btcdHeader.Timestamp.Unix(),
 		btcdHeader.PrevBlock.String(),
 		btcdHeader.MerkleRoot.String(),
+		uint64(42),
 		int64(17))
 
 	f.Fuzz(func(t *testing.T, version int32, bits uint32, nonce uint32,
-		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
+		timeInt int64, prevBlockStr string, merkleRootStr string, height uint64, seed int64) {
 
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
@@ -32,7 +33,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		// Get the expected header bytes
 		expectedHeaderBytes := bbl.NewBTCHeaderBytesFromBlockHeader(header)
 
-		headerInfo := types.NewHeaderInfo(header)
+		headerInfo := types.NewBTCHeaderInfo(header, height)
 		if headerInfo == nil {
 			t.Errorf("returned object is nil")
 		}
