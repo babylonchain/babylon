@@ -269,16 +269,16 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *wire.BlockHeader, header
 }
 
 // GetInOrderAncestorsUntil returns the list of nodes starting from the child and ending with the block *before* the `ancestor`.
-func (s HeadersState) GetInOrderAncestorsUntil(child *wire.BlockHeader, parent *wire.BlockHeader) []*wire.BlockHeader {
+func (s HeadersState) GetInOrderAncestorsUntil(child *wire.BlockHeader, ancestor *wire.BlockHeader) []*wire.BlockHeader {
 	currentHeader := child
 
 	var ancestors []*wire.BlockHeader
 	ancestors = append(ancestors, child)
-	if isParent(child, parent) {
+	if isParent(child, ancestor) {
 		return ancestors
 	}
 	s.iterateReverseHeaders(func(header *wire.BlockHeader) bool {
-		if header.BlockHash() == parent.BlockHash() {
+		if header.BlockHash() == ancestor.BlockHash() {
 			return true
 		}
 		if header.BlockHash().String() == currentHeader.PrevBlock.String() {
@@ -313,7 +313,7 @@ func (s HeadersState) TipExists() bool {
 
 // updateLongestChain checks whether the tip should be updated and returns true if it does
 func (s HeadersState) updateLongestChain(header *wire.BlockHeader, cumulativeWork *big.Int) {
-	// If there is no existing tip, then the header is set as the tiBTCp
+	// If there is no existing tip, then the header is set as the tip
 	if !s.TipExists() {
 		s.CreateTip(header)
 		return
