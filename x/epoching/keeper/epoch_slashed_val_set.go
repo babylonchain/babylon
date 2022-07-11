@@ -56,7 +56,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 
 // AddSlashedValidator adds a slashed validator to the set of the current epoch
 // This is called upon hook `BeforeValidatorSlashed` exposed by the staking module
-func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) {
+func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
 
@@ -67,8 +67,13 @@ func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) {
 
 	// add voting power
 	slashedVotingPower := k.GetSlashedVotingPower(ctx, epochNumber)
-	thisVotingPower := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	thisVotingPower, err := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	if err != nil {
+		// we don't panic here since it's possible that the most powerful validator outside the validator set enrols to the validator after this validator is slashed.
+		return err
+	}
 	k.setSlashedVotingPower(ctx, epochNumber, slashedVotingPower+thisVotingPower)
+	return nil
 }
 
 // GetSlashedValidators returns the set of slashed validators of a given epoch

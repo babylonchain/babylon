@@ -9,55 +9,29 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// GetValidatorSet returns the set of validators of a given epoch
-func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) map[string]int64 {
-	valSet := make(map[string]int64)
+// GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their voting power in descending order
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) []types.Validator {
+	vals := []types.Validator{}
+
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
-		// sdk.ValAddress -> string is done by valAddr.String()
-		// string -> sdk.ValAddress is done by sdk.ValAddressFromBech32(addr)
-		// reference: https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/types/address_test.go#L286-L300
-		addr := sdk.ValAddress(iterator.Key()).String()
+		addr := sdk.ValAddress(iterator.Key())
 		powerBytes := iterator.Value()
 		var power sdk.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
-		valSet[addr] = power.Int64()
-	}
-
-	return valSet
-}
-
-// GetValidatorSetSorted returns the set of validators of a given epoch, where the validators are ordered by their
-func (k Keeper) GetValidatorSetSorted(ctx sdk.Context, epochNumber uint64) []sdk.ValAddress {
-	valSet := k.GetValidatorSet(ctx, epochNumber)
-
-	// order by value, big to small
-	// (adapted from https://go.dev/play/p/y1_WBENH4N)
-	type kv struct {
-		Key   string
-		Value int64
-	}
-	var ss []kv
-	for k, v := range valSet {
-		ss = append(ss, kv{k, v})
-	}
-	sort.Slice(ss, func(i, j int) bool {
-		return ss[i].Value > ss[j].Value
-	})
-
-	valSlice := []sdk.ValAddress{}
-	for _, kv := range ss {
-		addr, err := sdk.ValAddressFromBech32(kv.Key)
-		if err != nil {
-			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+		val := types.Validator{
+			Addr:  addr,
+			Power: power.Int64(),
 		}
-		valSlice = append(valSlice, addr)
+		vals = append(vals, val)
 	}
-	return valSlice
+	sort.Sort(types.Validators(vals))
+
+	return vals
 }
 
 // InitValidatorSet stores the validator set in the beginning of the current epoch
@@ -68,11 +42,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 	totalPower := int64(0)
 
 	// store the validator set
-	valSet, err := k.getValSetFromStaking(ctx)
-	if err != nil {
-		panic(err)
-	}
-	for addr, power := range valSet {
+	k.stk.IterateLastValidatorPowers(ctx, func(addr sdk.ValAddress, power int64) (stop bool) {
 		addrBytes := []byte(addr)
 		powerBytes, err := sdk.NewInt(power).Marshal()
 		if err != nil {
@@ -80,7 +50,10 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 		}
 		store.Set(addrBytes, powerBytes)
 		totalPower += power
-	}
+
+		return false
+	})
+
 	// store total voting power of this validator set
 	epochNumberBytes, err := sdk.NewUint(epochNumber).Marshal()
 	if err != nil {
@@ -114,19 +87,19 @@ func (k Keeper) ClearValidatorSet(ctx sdk.Context, epochNumber uint64) {
 }
 
 // GetValidatorVotingPower returns the voting power of a given validator in a given epoch
-func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, valAddr sdk.ValAddress) int64 {
+func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, valAddr sdk.ValAddress) (int64, error) {
 	store := k.valSetStore(ctx, epochNumber)
 
 	powerBytes := store.Get(valAddr)
 	if powerBytes == nil {
-		panic(types.ErrUnknownValidator)
+		return 0, types.ErrUnknownValidator
 	}
 	var power sdk.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
 		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
-	return power.Int64()
+	return power.Int64(), nil
 }
 
 // GetTotalVotingPower returns the total voting power of a given epoch
@@ -168,21 +141,4 @@ func (k Keeper) valSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 func (k Keeper) votingPowerStore(ctx sdk.Context) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	return prefix.NewStore(store, types.VotingPowerKey)
-}
-
-// get the last validator set
-// key: string(address)
-// value: voting power (in int64 as per Cosmos SDK)
-// This is called upon BeginEpoch
-// (mostly adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L348-L373)
-func (k Keeper) getValSetFromStaking(ctx sdk.Context) (map[string]int64, error) {
-	valSet := make(map[string]int64)
-
-	k.stk.IterateLastValidatorPowers(ctx, func(addr sdk.ValAddress, power int64) (stop bool) {
-		valAddrStr := addr.String()
-		valSet[valAddrStr] = power
-		return false
-	})
-
-	return valSet, nil
 }

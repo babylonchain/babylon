@@ -112,10 +112,6 @@ func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey
 	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
 }
 
-func (k Keeper) GetEpochBoundary(ctx sdk.Context) uint64 {
-	return k.epochingKeeper.GetEpoch(ctx).LastBlockHeight()
-}
-
 func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
 }
