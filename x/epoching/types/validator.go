@@ -9,16 +9,16 @@ type Validator struct {
 	Power int64
 }
 
-type Validators []Validator
+type ValidatorSet []Validator
 
-func (v Validators) Len() int {
+func (v ValidatorSet) Len() int {
 	return len(v)
 }
 
-func (v Validators) Less(i, j int) bool {
+func (v ValidatorSet) Less(i, j int) bool {
 	return v[i].Power < v[j].Power || (v[i].Power == v[j].Power && sdk.BigEndianToUint64(v[i].Addr) < sdk.BigEndianToUint64(v[j].Addr))
 }
 
-func (v Validators) Swap(i, j int) {
+func (v ValidatorSet) Swap(i, j int) {
 	v[i], v[j] = v[j], v[i]
 }

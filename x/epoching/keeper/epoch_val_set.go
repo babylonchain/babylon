@@ -11,7 +11,7 @@ import (
 
 // GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their voting power in descending order
 func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) []types.Validator {
-	vals := []types.Validator{}
+	vals := types.ValidatorSet{}
 
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
@@ -29,7 +29,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) []types.Val
 		}
 		vals = append(vals, val)
 	}
-	sort.Sort(types.Validators(vals))
+	sort.Sort(vals)
 
 	return vals
 }
