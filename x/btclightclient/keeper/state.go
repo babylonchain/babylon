@@ -283,6 +283,10 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 
 // GetInOrderAncestorsUntil returns the list of nodes starting from the child and ending with the block *before* the `ancestor`.
 func (s HeadersState) GetInOrderAncestorsUntil(child *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
+	if ancestor.Height >= child.Height {
+		panic("Ancestor has a higher height than descendant")
+	}
+
 	currentHeader := child
 
 	var ancestors []*types.BTCHeaderInfo
@@ -297,6 +301,11 @@ func (s HeadersState) GetInOrderAncestorsUntil(child *types.BTCHeaderInfo, ances
 		if currentHeader.HasParent(header) {
 			currentHeader = header
 			ancestors = append(ancestors, header)
+		}
+		// Abandon the iteration if the height of the current header is lower
+		// than the height of the provided ancestor
+		if currentHeader.Height < ancestor.Height {
+			return true
 		}
 		return false
 	})
