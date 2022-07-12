@@ -48,4 +48,4 @@ func FuzzEpochMsgQueue(f *testing.F) {
 	})
 }
 
-// TODO: how to fuzz HandleQueuedMsg?
+// // TODO (stateful tests): fuzz HandleQueueMsg. initialise some validators, let them submit some msgs and trigger HandleQueueMsg
