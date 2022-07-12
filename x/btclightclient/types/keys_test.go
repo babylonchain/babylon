@@ -5,7 +5,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
 	"testing"
@@ -20,15 +19,15 @@ func FuzzHeadersObjectKey(f *testing.F) {
 			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		}
 		// get chainhash and height
-		chHash, _ := chainhash.NewHashFromStr(hexHash)
 		heightBytes := sdk.Uint64ToBigEndian(height)
+		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
 
 		// construct the expected key
-		chHashBytes := chHash[:]
+		headerHashBytes := headerHash.MustMarshal()
 		expectedKey := append(types.HeadersObjectPrefix, heightBytes...)
-		expectedKey = append(expectedKey, chHashBytes...)
+		expectedKey = append(expectedKey, headerHashBytes...)
 
-		gotKey := types.HeadersObjectKey(height, chHash)
+		gotKey := types.HeadersObjectKey(height, &headerHash)
 		if bytes.Compare(expectedKey, gotKey) != 0 {
 			t.Errorf("Expected headers object key %s got %s", expectedKey, gotKey)
 		}
@@ -43,20 +42,17 @@ func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
 		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
 			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		}
-		// Get the chainhash
-		chHash, _ := chainhash.NewHashFromStr(hexHash)
+		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
+		headerHashBytes := headerHash.MustMarshal()
 
-		// Construct the expected key
-		chHashBytes := chHash[:]
-
-		expectedHeightKey := append(types.HashToHeightPrefix, chHashBytes...)
-		gotHeightKey := types.HeadersObjectHeightKey(chHash)
+		expectedHeightKey := append(types.HashToHeightPrefix, headerHashBytes...)
+		gotHeightKey := types.HeadersObjectHeightKey(&headerHash)
 		if bytes.Compare(expectedHeightKey, gotHeightKey) != 0 {
 			t.Errorf("Expected headers object height key %s got %s", expectedHeightKey, gotHeightKey)
 		}
 
-		expectedWorkKey := append(types.HashToWorkPrefix, chHashBytes...)
-		gotWorkKey := types.HeadersObjectWorkKey(chHash)
+		expectedWorkKey := append(types.HashToWorkPrefix, headerHashBytes...)
+		gotWorkKey := types.HeadersObjectWorkKey(&headerHash)
 		if bytes.Compare(expectedWorkKey, gotWorkKey) != 0 {
 			t.Errorf("Expected headers object work key %s got %s", expectedWorkKey, gotWorkKey)
 		}

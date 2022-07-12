@@ -1,17 +1,18 @@
 package types
 
 import (
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/wire"
-	"math/big"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func CalcWork(header *wire.BlockHeader) *big.Int {
-	return blockchain.CalcWork(header.Bits)
+func CalcWork(header *bbl.BTCHeaderBytes) sdk.Uint {
+	return sdk.NewUintFromBigInt(blockchain.CalcWork(header.Bits()))
 }
 
-func CumulativeWork(childWork *big.Int, parentWork *big.Int) *big.Int {
-	sum := new(big.Int)
-	sum.Add(childWork, parentWork)
+func CumulativeWork(childWork sdk.Uint, parentWork sdk.Uint) sdk.Uint {
+	sum := sdk.NewUint(0)
+	sum.Add(childWork)
+	sum.Add(parentWork)
 	return sum
 }

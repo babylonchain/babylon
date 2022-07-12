@@ -63,7 +63,12 @@ func CmdHashes() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := types.NewQueryHashesRequest()
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryHashesRequest(pageReq)
 			res, err := queryClient.Hashes(context.Background(), params)
 			if err != nil {
 				return err
@@ -116,7 +121,12 @@ func CmdMainChain() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := types.NewQueryMainChainRequest()
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			params := types.NewQueryMainChainRequest(pageReq)
 			res, err := queryClient.MainChain(context.Background(), params)
 			if err != nil {
 				return err
