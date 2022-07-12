@@ -22,7 +22,7 @@ type BankKeeper interface {
 type EpochingKeeper interface {
 	GetEpoch(ctx sdk.Context) epochingtypes.Epoch
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
-	GetValidatorSet(ctx sdk.Context, epochNumer uint64) *epochingtypes.ValidatorSet
+	GetValidatorSet(ctx sdk.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64
 }
 

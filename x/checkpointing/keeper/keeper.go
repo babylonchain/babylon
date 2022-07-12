@@ -60,8 +60,8 @@ func (k *Keeper) SetHooks(sh types.CheckpointingHooks) *Keeper {
 	return k
 }
 
-// addBlsSig add bls signatures into storage and generates a raw checkpoint
-// if sufficient sigs are accumulated for a specific epoch
+// addBlsSig adds a BLS signature to the raw checkpoint and updates the status
+// if sufficient signatures are accumulated for the epoch.
 func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	// assuming stateless checks have done in Antehandler
 
@@ -69,6 +69,11 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, sig.GetEpochNum())
 	if err != nil {
 		return err
+	}
+
+	// the checkpoint is not accumulating
+	if ckptWithMeta.Status != types.Accumulating {
+		return nil
 	}
 
 	// get signer's address
@@ -85,16 +90,16 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	}
 
 	// accumulate BLS signatures
-	finished, err := ckptWithMeta.Accumulate(vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
+	updated, err := ckptWithMeta.Accumulate(
+		vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
 	if err != nil {
 		return err
 	}
 
 	// update checkpoint status to SIGNED
-	if finished {
-		ckptWithMeta.Status = types.Signed
+	if updated {
+		err = k.UpdateCheckpoint(ctx, ckptWithMeta)
 	}
-	err = k.UpdateCheckpoint(ctx, ckptWithMeta)
 	if err != nil {
 		return err
 	}
@@ -161,7 +166,7 @@ func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
 }
 
-func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) *epochingtypes.ValidatorSet {
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) epochingtypes.ValidatorSet {
 	return k.epochingKeeper.GetValidatorSet(ctx, epochNumber)
 }
 

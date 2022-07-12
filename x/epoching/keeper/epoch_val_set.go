@@ -1,17 +1,15 @@
 package keeper
 
 import (
-	"sort"
-
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their voting power in descending order
-func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) *types.ValidatorSet {
-	vals := new(types.ValidatorSet)
+// GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their address in ascending order
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.ValidatorSet {
+	vals := []*types.Validator{}
 
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
@@ -27,11 +25,9 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) *types.Vali
 			Addr:  addr,
 			Power: power.Int64(),
 		}
-		vals.AppendValidator(val)
+		vals = append(vals, val)
 	}
-	sort.Sort(*vals)
-
-	return vals
+	return types.NewValidatorSet(vals)
 }
 
 // InitValidatorSet stores the validator set in the beginning of the current epoch
