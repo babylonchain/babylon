@@ -3,21 +3,20 @@ package babylon.checkpointing.v1;
 
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
-import "google/protobuf/timestamp.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// RawCheckpoint wraps the bls multi sig with meta data
+// RawCheckpoint wraps the BLS multi sig with meta data
 message RawCheckpoint {
   option (gogoproto.equal)            = true;
 
   // epoch_num defines the epoch number the raw checkpoint is for
   uint64 epoch_num = 1;
-  // last_commit_hash defines the 'LastCommitHash' that individual bls sigs are signed on
+  // last_commit_hash defines the 'LastCommitHash' that individual BLS sigs are signed on
   bytes last_commit_hash = 2;
-  // bitmap defines the bitmap that indicates the signers of the bls multi sig
+  // bitmap defines the bitmap that indicates the signers of the BLS multi sig
   bytes bitmap = 3;
-  // bls_multi_sig defines the multi sig that is aggregated from individual bls sigs
+  // bls_multi_sig defines the multi sig that is aggregated from individual BLS sigs
   bytes bls_multi_sig = 4 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
   ];
@@ -28,8 +27,12 @@ message RawCheckpointWithMeta {
   RawCheckpoint ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
+  // bls_aggr_pk defines the aggregated BLS public key
+  bytes bls_aggr_pk = 3 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.PublicKey"
+  ];
   // power_sum defines the accumulated voting power for the checkpoint
-  uint64 power_sum = 3;
+  uint64 power_sum = 4;
 }
 
 // CkptStatus is the status of a checkpoint.
@@ -38,8 +41,8 @@ enum CheckpointStatus {
 
   // ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
   CKPT_STATUS_ACCUMULATING = 0 [(gogoproto.enumvalue_customname) = "Accumulating"];
-  // SIGNED defines a checkpoint that has accumulated sufficient BLS signatures.
-  CKPT_STATUS_SIGNED = 1 [(gogoproto.enumvalue_customname) = "Unconfirmed"];
+  // SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
+  CKPT_STATUS_SEALED = 1 [(gogoproto.enumvalue_customname) = "Sealed"];
   // SUBMITTED defines a checkpoint that is included on BTC.
   CKPT_STATUS_SUBMITTED = 2 [(gogoproto.enumvalue_customname) = "Submitted"];
   // CONFIRMED defines a checkpoint that is k-deep on BTC.
@@ -48,21 +51,21 @@ enum CheckpointStatus {
   CKPT_STATUS_FINALIZED = 4 [(gogoproto.enumvalue_customname) = "Finalized"];
 }
 
-// BlsSig wraps the bls sig with meta data.
+// BlsSig wraps the BLS sig with meta data.
 message BlsSig {
   option (gogoproto.equal)            = false;
 
-  // epoch_num defines the epoch number that the bls sig is signed on
+  // epoch_num defines the epoch number that the BLS sig is signed on
   uint64 epoch_num = 1;
-  // last_commit_hash defines the 'LastCommitHash' that the bls sig is signed on
+  // last_commit_hash defines the 'LastCommitHash' that the BLS sig is signed on
   bytes last_commit_hash = 2;
-  // bls_sig defines the actual bls sig
+  // bls_sig defines the actual BLS sig
   bytes bls_sig = 3 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
   ];
   // can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does not support scalar
-  // string signer_address = 5 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // string signer_address = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   // the signer_address defines the address of the signer
-  string signer_address = 5;
+  string signer_address = 4;
 }
 

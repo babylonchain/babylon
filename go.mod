@@ -25,8 +25,8 @@ require (
 )
 
 require (
+	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/regen-network/cosmos-proto v0.3.1
-	google.golang.org/protobuf v1.28.0
 )
 
 require (
@@ -123,6 +123,7 @@ require (
 require (
 	github.com/google/go-cmp v0.5.8 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

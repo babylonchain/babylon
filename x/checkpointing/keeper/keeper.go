@@ -60,13 +60,54 @@ func (k *Keeper) SetHooks(sh types.CheckpointingHooks) *Keeper {
 	return k
 }
 
-// AddBlsSig add bls signatures into storage and generates a raw checkpoint
-// if sufficient sigs are accumulated for a specific epoch
-func (k Keeper) AddBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
-	// TODO: some checks: 1. duplication check 2. epoch check 3. raw ckpt existence check
-	// TODO: aggregate bls sigs and try to build raw checkpoints
-	k.BlsSigsState(ctx).CreateBlsSig(sig)
+// addBlsSig adds a BLS signature to the raw checkpoint and updates the status
+// if sufficient signatures are accumulated for the epoch.
+func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
+	// assuming stateless checks have done in Antehandler
+
+	// get raw checkpoint
+	ckptWithMeta, err := k.GetRawCheckpoint(ctx, sig.GetEpochNum())
+	if err != nil {
+		return err
+	}
+
+	// the checkpoint is not accumulating
+	if ckptWithMeta.Status != types.Accumulating {
+		return nil
+	}
+
+	// get signer's address
+	signerAddr, err := sdk.ValAddressFromBech32(sig.SignerAddress)
+	if err != nil {
+		return err
+	}
+
+	// get validators for the epoch
+	vals := k.GetValidatorSet(ctx, sig.GetEpochNum())
+	signerBlsKey, err := k.GetBlsPubKey(ctx, signerAddr)
+	if err != nil {
+		return err
+	}
+
+	// accumulate BLS signatures
+	updated, err := ckptWithMeta.Accumulate(
+		vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
+	if err != nil {
+		return err
+	}
+
+	if updated {
+		err = k.UpdateCheckpoint(ctx, ckptWithMeta)
+	}
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (k Keeper) GetRawCheckpoint(ctx sdk.Context, epochNum uint64) (*types.RawCheckpointWithMeta, error) {
+	return k.CheckpointsState(ctx).GetRawCkptWithMeta(epochNum)
 }
 
 // AddRawCheckpoint adds a raw checkpoint into the storage
@@ -108,10 +149,26 @@ func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status ty
 	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
 }
 
-func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr types.ValidatorAddress) error {
+func (k Keeper) UpdateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
+	return k.CheckpointsState(ctx).UpdateCheckpoint(ckptWithMeta)
+}
+
+func (k Keeper) CreateRegistration(ctx sdk.Context, blsPubKey bls12381.PublicKey, valAddr sdk.ValAddress) error {
 	return k.RegistrationState(ctx).CreateRegistration(blsPubKey, valAddr)
+}
+
+func (k Keeper) GetBlsPubKey(ctx sdk.Context, address sdk.ValAddress) (bls12381.PublicKey, error) {
+	return k.RegistrationState(ctx).GetBlsPubKey(address)
 }
 
 func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
+}
+
+func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) epochingtypes.ValidatorSet {
+	return k.epochingKeeper.GetValidatorSet(ctx, epochNumber)
+}
+
+func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
+	return k.epochingKeeper.GetTotalVotingPower(ctx, epochNumber)
 }

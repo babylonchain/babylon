@@ -90,3 +90,16 @@ func (cs CheckpointsState) UpdateCkptStatus(ckpt *types.RawCheckpoint, status ty
 
 	return nil
 }
+
+// UpdateCheckpoint overwrites an existing checkpoint
+func (cs CheckpointsState) UpdateCheckpoint(ckpt *types.RawCheckpointWithMeta) error {
+	_, err := cs.GetRawCkptWithMeta(ckpt.Ckpt.EpochNum)
+	if err != nil {
+		// the checkpoint should exist
+		return err
+	}
+
+	cs.checkpoints.Set(sdk.Uint64ToBigEndian(ckpt.Ckpt.EpochNum), types.CkptWithMetaToBytes(cs.cdc, ckpt))
+
+	return nil
+}

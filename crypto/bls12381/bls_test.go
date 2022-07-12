@@ -36,7 +36,7 @@ func TestVerifyBlsMultiSig(t *testing.T) {
 	for i := 0; i < n; i++ {
 		sigs[i] = Sign(sks[i], msga)
 	}
-	multiSig, err := AggrSigs(sigs)
+	multiSig, err := AggrSigList(sigs)
 	require.Nil(t, err)
 	res, err := VerifyMultiSig(multiSig, pks, msga)
 	require.True(t, res)
@@ -58,7 +58,7 @@ func TestVerifyBlsMultiSig2(t *testing.T) {
 		sigs[i] = Sign(sks[i], msga)
 	}
 	sigs[n-1] = Sign(sks[n-1], msgb)
-	multiSig, err := AggrSigs(sigs)
+	multiSig, err := AggrSigList(sigs)
 	require.Nil(t, err)
 	res, err := VerifyMultiSig(multiSig, pks, msga)
 	require.False(t, res)
@@ -68,7 +68,34 @@ func TestVerifyBlsMultiSig2(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func genRandomKeyPair() (*blst.SecretKey, []byte) {
+func TestAccumulativeAggregation(t *testing.T) {
+	msga := []byte("aaaaaaaa")
+	msgb := []byte("bbbbbbbb")
+	n := 100
+	sks, pks := generateBatchTestKeyPairs(n)
+	var aggPK PublicKey
+	var aggSig Signature
+	var err error
+	var res bool
+	for i := 0; i < n-1; i++ {
+		sig := Sign(sks[i], msga)
+		aggSig, err = AggrSig(aggSig, sig)
+		require.Nil(t, err)
+		aggPK, err = AggrPK(aggPK, pks[i])
+		require.Nil(t, err)
+		res, err = Verify(aggSig, aggPK, msga)
+		require.True(t, res)
+		require.Nil(t, err)
+	}
+	sig := Sign(sks[n-1], msgb)
+	aggSig, err = AggrSig(aggSig, sig)
+	aggPK, err = AggrPK(aggPK, pks[n-1])
+	res, err = Verify(aggSig, aggPK, msga)
+	require.False(t, res)
+	require.Nil(t, err)
+}
+
+func genRandomKeyPair() (*blst.SecretKey, PublicKey) {
 	var ikm [32]byte
 	_, _ = rand.Read(ikm[:])
 	return GenKeyPair(ikm[:])
