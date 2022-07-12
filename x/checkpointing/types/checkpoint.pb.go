@@ -32,7 +32,7 @@ type CheckpointStatus int32
 const (
 	// ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
 	Accumulating CheckpointStatus = 0
-	// SIGNED defines a checkpoint that has accumulated sufficient BLS signatures.
+	// SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
 	Sealed CheckpointStatus = 1
 	// SUBMITTED defines a checkpoint that is included on BTC.
 	Submitted CheckpointStatus = 2

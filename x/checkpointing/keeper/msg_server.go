@@ -21,7 +21,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-// AddBlsSig adds BLS sig messages and changes a raw checkpoint status to SIGNED if sufficient voting power is accumulated
+// AddBlsSig adds BLS sig messages and changes a raw checkpoint status to SEALED if sufficient voting power is accumulated
 func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 

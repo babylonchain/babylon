@@ -44,6 +44,11 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	sig bls12381.Signature,
 	totalPower int64) (bool, error) {
 
+	// the checkpoint should be accumulating
+	if cm.Status != Accumulating {
+		return false, ErrCkptNotAccumulating
+	}
+
 	// get validator and its index
 	val, index, err := vals.FindValidatorWithIndex(signerAddr)
 	if err != nil {

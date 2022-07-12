@@ -41,7 +41,7 @@ enum CheckpointStatus {
 
   // ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
   CKPT_STATUS_ACCUMULATING = 0 [(gogoproto.enumvalue_customname) = "Accumulating"];
-  // SIGNED defines a checkpoint that has accumulated sufficient BLS signatures.
+  // SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
   CKPT_STATUS_SEALED = 1 [(gogoproto.enumvalue_customname) = "Sealed"];
   // SUBMITTED defines a checkpoint that is included on BTC.
   CKPT_STATUS_SUBMITTED = 2 [(gogoproto.enumvalue_customname) = "Submitted"];

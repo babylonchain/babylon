@@ -193,8 +193,8 @@ alt if tip changed
   end
 
   alt if a checkpoint status was SUBMITTED\n but currently no checkpoint tx was on main chain
-    checkpointing -> checkpointing : Change checkpoint status to \n SIGNED
-    checkpointing -> Events : Emit epoch checkpoint SIGNED
+    checkpointing -> checkpointing : Change checkpoint status to \n SEALED
+    checkpointing -> Events : Emit epoch checkpoint SEALED
   end
   deactivate btccheckpoint
 end

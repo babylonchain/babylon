@@ -96,7 +96,6 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		return err
 	}
 
-	// update checkpoint status to SIGNED
 	if updated {
 		err = k.UpdateCheckpoint(ctx, ckptWithMeta)
 	}
