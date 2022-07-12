@@ -5,9 +5,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) types.BTCHeaderInfo {
-	baseBtcHeader := k.HeadersState(ctx).GetBaseBTCHeader()
-	return *baseBtcHeader
+func (k Keeper) GetBaseBTCHeader(ctx sdk.Context) *types.BTCHeaderInfo {
+	return k.HeadersState(ctx).GetBaseBTCHeader()
 }
 
 // SetBaseBTCHeader checks whether a base BTC header exists and
