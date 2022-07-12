@@ -1,11 +1,15 @@
 package keeper_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"math/rand"
 	"testing"
 )
 
 func FuzzHeadersStateCreateHeader(f *testing.F) {
+	// TODO
 	/*
 		 Checks:
 		 1. A headerInfo provided as an argument leads to the following storage objects being created:
@@ -35,10 +39,21 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 	})
 }
 
-func FuzzHeadersStateCreateTip(f *testing.F) {
+func FuzzHeadersStateTipOps(f *testing.F) {
 	/*
+		Functions Tested:
+		1. CreateTip
+		2. GetTip
+		3. TipExists
+
 		Checks:
-		1. The `headerInfo` object passed is set as the tip.
+		* CreateTip
+			1. The `headerInfo` object passed is set as the tip.
+		* GetTip
+			1. If the tip does not exist, nil is returned.
+			2. The element maintained in the tip storage is returned.
+		* TipExists
+			1. Returns true/false depending on the existence of a tip.
 
 		Data generation:
 		- Create two headers:
@@ -48,85 +63,158 @@ func FuzzHeadersStateCreateTip(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+
+		headerInfo1 := datagen.GenRandomHeaderInfo()
+		headerInfo2 := datagen.GenRandomHeaderInfo()
+
+		retrievedHeaderInfo := blcKeeper.HeadersState(ctx).GetTip()
+		if retrievedHeaderInfo != nil {
+			t.Errorf("GetTip did not return nil for empty tip")
+		}
+
+		if blcKeeper.HeadersState(ctx).TipExists() {
+			t.Errorf("TipExists returned true when no tip has been set")
+		}
+
+		blcKeeper.HeadersState(ctx).CreateTip(headerInfo1)
+		retrievedHeaderInfo = blcKeeper.HeadersState(ctx).GetTip()
+
+		if !headerInfo1.Eq(retrievedHeaderInfo) {
+			t.Errorf("HeaderInfo object did not get stored in tip")
+		}
+
+		if !blcKeeper.HeadersState(ctx).TipExists() {
+			t.Errorf("TipExists returned false when a tip had been set")
+		}
+
+		blcKeeper.HeadersState(ctx).CreateTip(headerInfo2)
+		retrievedHeaderInfo = blcKeeper.HeadersState(ctx).GetTip()
+		if !headerInfo2.Eq(retrievedHeaderInfo) {
+			t.Errorf("Tip did not get overriden")
+		}
+		if !blcKeeper.HeadersState(ctx).TipExists() {
+			t.Errorf("TipExists returned false when a tip had been set")
+		}
 	})
 }
 
-func FuzzHeadersStateGetHeader(f *testing.F) {
+func FuzzHeadersStateGetHeaderOps(f *testing.F) {
 	/*
+		Functions tested:
+		1. GetHeader
+		2. GetHeaderHeight
+		3. GetHeaderWork
+		4. GetHeaderByHash
+		5. HeaderExists
+
 		Checks:
-		1. If the header specified by a height and a hash does not exist, (nil, error) is returned
-		2. If the header specified by a height and a hash exists, (headerInfo, nil) is returned
+		* GetHeader
+			1. If the header specified by a height and a hash does not exist, (nil, error) is returned
+			2. If the header specified by a height and a hash exists, (headerInfo, nil) is returned
+		* GetHeaderHeight
+			1. If the header specified by the hash does not exist, (0, error) is returned
+			2. If the header specified by the hash exists, (height, nil) is returned
+		* GetHeaderWork
+			1. If the header specified by the hash does not exist, (nil, error) is returned
+			2. If the header specified by the hash exists, (work, nil) is returned.
+		* GetHeaderByHash
+			1. If the header specified by the hash does not exist (nil, error) is returned
+			2. If the header specified by the hash exists (headerInfo, nil) is returned.
+		* HeaderExists
+			1. Returns false if the header passed is nil.
+			2. Returns true/false depending on the existence of the header.
 
 		Data generation:
-		- Create a header and store it using the `CreateHeader` method. Do retrievals using
-			* (height, hash)
-			* (height, wrongHash)
-			* (wrongHeight, hash)
-			* (wrongHeight, wrongHash)
+		- Create a header and store it using the `CreateHeader` method. Do retrievals to check conditions.
 	*/
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
-	})
-}
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		headerInfo := datagen.GenRandomHeaderInfo()
+		wrongHash := datagen.MutateHash(headerInfo.Hash)
+		wrongHeight := headerInfo.Height + datagen.RandomInt(10) + 1
 
-func FuzzHeadersStateGetHeaderHeight(f *testing.F) {
-	/*
-		Checks:
-		1. If the header specified by the hash does not exist, (nil, error) is returned
-		2. If the header specified by the hash exists, (height, nil) is returned
+		// ****** HeaderExists tests ******
+		if blcKeeper.HeadersState(ctx).HeaderExists(nil) {
+			t.Errorf("HeaderExists returned true for nil input")
+		}
+		if blcKeeper.HeadersState(ctx).HeaderExists(headerInfo.Hash) {
+			t.Errorf("HeaderExists returned true for not created header")
+		}
+		blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+		if !blcKeeper.HeadersState(ctx).HeaderExists(headerInfo.Hash) {
+			t.Errorf("HeaderExists returned false for created header")
+		}
+		// ****** GetHeader tests ******
+		// correct retrieval
+		retrievedHeaderInfo, err := blcKeeper.HeadersState(ctx).GetHeader(headerInfo.Height, headerInfo.Hash)
+		if err != nil {
+			t.Errorf("GetHeader returned error for valid retrieval: %s", err)
+		}
+		if retrievedHeaderInfo == nil || !retrievedHeaderInfo.Eq(headerInfo) {
+			t.Errorf("GetHeader returned a header that is nil or does not equal the one inserted")
+		}
+		retrievedHeaderInfo, err = blcKeeper.HeadersState(ctx).GetHeader(headerInfo.Height, wrongHash)
+		if retrievedHeaderInfo != nil || err == nil {
+			t.Errorf("GetHeader returned a filled HeaderInfo or the error is nil for invalid input")
+		}
 
-		Data generation:
-		- Create a header and store it using the `CreateHeader` method. Do retrievals:
-			* (hash)
-			* (wrongHash)
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
-	})
-}
+		retrievedHeaderInfo, err = blcKeeper.HeadersState(ctx).GetHeader(wrongHeight, headerInfo.Hash)
+		if retrievedHeaderInfo != nil || err == nil {
+			t.Errorf("GetHeader returned a filled HeaderInfo or the error is nil for invalid input")
+		}
 
-func FuzzHeadersStateGetHeaderWork(f *testing.F) {
-	/*
-		 Checks:
-		 1. If the header specified by the hash does not exist, (nil, error) is returned
-		 2. If the header specified by the hash exists, (work, nil) is returned.
+		retrievedHeaderInfo, err = blcKeeper.HeadersState(ctx).GetHeader(wrongHeight, wrongHash)
+		if retrievedHeaderInfo != nil || err == nil {
+			t.Errorf("GetHeader returned a filled HeaderInfo or the error is nil for invalid input")
+		}
 
-		 Data generation:
-		 - Create a header and store it using the `CreateHeader` method. Do retrievals:
-			* (hash)
-			* (wrongHash)
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
-	})
-}
+		// ****** GetHeaderHeight tests ******
+		height, err := blcKeeper.HeadersState(ctx).GetHeaderHeight(headerInfo.Hash)
+		if err != nil {
+			t.Errorf("GetHeaderHeight returned an error for valid retrieval: %s", err)
+		}
+		if height != headerInfo.Height {
+			t.Errorf("GetHeaderHeight returned incorrect height")
+		}
+		height, err = blcKeeper.HeadersState(ctx).GetHeaderHeight(wrongHash)
+		if err == nil || height != 0 {
+			t.Errorf("GetHeaderHeight returned nil error or a height different than zero for invalid input")
+		}
 
-func FuzzHeadersStateGetHeaderByHash(f *testing.F) {
-	/*
-		Checks:
-		1. If the header specified by the hash does not exist (nil, error) is returned
-		2. If the header specified by the hash exists (headerInfo, nil) is returned.
+		// ****** GetHeaderWork tests ******
+		work, err := blcKeeper.HeadersState(ctx).GetHeaderWork(headerInfo.Hash)
+		if err != nil {
+			t.Errorf("GetHeaderWork returned an error for valid retrieval: %s", err)
+		}
+		if work == nil || !work.Equal(*headerInfo.Work) {
+			t.Errorf("GetHeaderWork returned nil or incorrect work")
+		}
+		work, err = blcKeeper.HeadersState(ctx).GetHeaderWork(wrongHash)
+		if err == nil || work != nil {
+			t.Errorf("GetHeaderWork returned nil error or a work different than nil for invalid input")
+		}
 
-		Data generation:
-		- Create a header and store it using the `CreateHeader` method. Do retrievals:
-			* (hash)
-			* (wrongHash)
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
+		// ****** GetHeaderByHash tests ******
+		retrievedHeaderInfo, err = blcKeeper.HeadersState(ctx).GetHeaderByHash(headerInfo.Hash)
+		if err != nil {
+			t.Errorf("GetHeaderByHash returned an error for valid retrieval: %s", err)
+		}
+		if retrievedHeaderInfo == nil || !retrievedHeaderInfo.Eq(headerInfo) {
+			t.Errorf("GetHeaderByHash returned a header that is nil or does not equal the one inserted")
+		}
+
+		retrievedHeaderInfo, err = blcKeeper.HeadersState(ctx).GetHeaderByHash(wrongHash)
+		if retrievedHeaderInfo != nil || err == nil {
+			t.Errorf("GetHeaderByHash returned a filled HeaderInfo or the error is nil for invalid input")
+		}
 	})
 }
 
 func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
+	// TODO
 	/*
 		Checks:
 		1. If no headers exist, nil is returned
@@ -142,25 +230,7 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 	})
 }
 
-func FuzzHeadersStateGetTip(f *testing.F) {
-	/*
-		Checks:
-		1. If the tip does not exist, nil is returned.
-		2. The element maintained in the tip storage is returned.
-
-		Data generation:
-		- Generate two headers and store them using the `CreateTip` method.
-			- First to be inserted first
-			- Second to override the first
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
-	})
-}
-
-func FuzzHeadersStateGetHeadersByHeight(f *testing.F) {
+func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 	/*
 		Checks:
 		1. If the height does not correspond to any headers, the function parameter is never invoked.
@@ -175,11 +245,56 @@ func FuzzHeadersStateGetHeadersByHeight(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		maxHeaders := 256 // maximum 255 headers with particular height
+		numHeaders := datagen.RandomInt(maxHeaders)
+		height := rand.Uint64() // the height for those headers
+
+		// This will contain a mapping between all the header hashes that were created
+		// and a boolean value.
+		hashCount := make(map[string]bool)
+
+		// Generate numHeaders with particular height
+		var i uint64
+		for i = 0; i < numHeaders; i++ {
+			headerInfo := datagen.GenRandomHeaderInfoWithHeight(height)
+			hashCount[headerInfo.Hash.MarshalHex()] = false
+			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+		}
+
+		var headersAdded uint64 = 0
+		var stopHeight uint64 = 0
+		blcKeeper.HeadersState(ctx).HeadersByHeight(height, func(header *types.BTCHeaderInfo) bool {
+			headersAdded += 1
+			if _, ok := hashCount[header.Hash.MarshalHex()]; !ok {
+				t.Errorf("HeadersByHeight returned header that was not created")
+			}
+			hashCount[header.Hash.MarshalHex()] = true
+			if datagen.OneInN(maxHeaders) {
+				// Only set it once
+				if stopHeight != 0 {
+					stopHeight = headersAdded
+				}
+				return true
+			}
+			return false
+		})
+		if stopHeight != 0 && stopHeight != headersAdded {
+			t.Errorf("Stop signal was not respected. %d headers were added while %d were expected", stopHeight, headersAdded)
+		}
+
+		for _, cnt := range hashCount {
+			if !cnt && headersAdded == numHeaders {
+				// If there is a header hash that the count is not set
+				// and all the headers were iterated, then something went wrong
+				t.Errorf("Function did not iterate all headers")
+			}
+		}
 	})
 }
 
 func FuzzHeadersStateGetMainChainUpTo(f *testing.F) {
+	// TODO
 	/*
 		Checks:
 		1. If the tip does not exist, we have no headers, so an empty list is returned.
@@ -197,6 +312,7 @@ func FuzzHeadersStateGetMainChainUpTo(f *testing.F) {
 }
 
 func FuzzHeadersStateGetMainChain(f *testing.F) {
+	// TODO
 	/*
 		Checks:
 		1. We get the entire main chain.
@@ -212,6 +328,7 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 }
 
 func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
+	// TODO
 	/*
 		Checks:
 		1. The header returned is an ancestor of both headers.
@@ -231,6 +348,7 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 }
 
 func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
+	// TODO
 	/*
 		Checks:
 		1. All the ancestors are contained in the returned list.
@@ -241,37 +359,6 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 		- Generate a random tree of headers and store it.
 		- Select a random header which will serve as the `descendant`. Cannot be the base header.
 		- Select a random header that is an ancestor of `descendant`.
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
-	})
-}
-
-func FuzzHeadersStateHeaderExists(f *testing.F) {
-	/*
-		Checks:
-		- Returns false if the header passed is nil.
-		- Returns true/false depending on the existence of the header.
-
-		Data generation:
-		- Generate a header and insert it into storage using `CreateHeader`.
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
-	})
-}
-
-func FuzzHeadersStateTipExists(f *testing.F) {
-	/*
-		Checks:
-		- Returns true/false depending on the existence of a tip.
-
-		Data generation:
-		- Generate a header and insert it into storage using `CreateTip`.
 	*/
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {

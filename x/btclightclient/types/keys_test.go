@@ -24,7 +24,8 @@ func FuzzHeadersObjectKey(f *testing.F) {
 
 		// construct the expected key
 		headerHashBytes := headerHash.MustMarshal()
-		expectedKey := append(types.HeadersObjectPrefix, heightBytes...)
+		var expectedKey []byte
+		expectedKey = append(expectedKey, heightBytes...)
 		expectedKey = append(expectedKey, headerHashBytes...)
 
 		gotKey := types.HeadersObjectKey(height, &headerHash)
@@ -45,13 +46,15 @@ func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
 		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
 		headerHashBytes := headerHash.MustMarshal()
 
-		expectedHeightKey := append(types.HashToHeightPrefix, headerHashBytes...)
+		var expectedHeightKey []byte
+		expectedHeightKey = append(expectedHeightKey, headerHashBytes...)
 		gotHeightKey := types.HeadersObjectHeightKey(&headerHash)
 		if bytes.Compare(expectedHeightKey, gotHeightKey) != 0 {
 			t.Errorf("Expected headers object height key %s got %s", expectedHeightKey, gotHeightKey)
 		}
 
-		expectedWorkKey := append(types.HashToWorkPrefix, headerHashBytes...)
+		var expectedWorkKey []byte
+		expectedWorkKey = append(expectedWorkKey, headerHashBytes...)
 		gotWorkKey := types.HeadersObjectWorkKey(&headerHash)
 		if bytes.Compare(expectedWorkKey, gotWorkKey) != 0 {
 			t.Errorf("Expected headers object work key %s got %s", expectedWorkKey, gotWorkKey)

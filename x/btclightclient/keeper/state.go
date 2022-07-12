@@ -68,11 +68,11 @@ func (s HeadersState) GetHeader(height uint64, hash *bbl.BTCHeaderHashBytes) (*t
 	// Keyed by (height, hash)
 	headersKey := types.HeadersObjectKey(height, hash)
 
-	// Retrieve the raw bytes
-	rawBytes := s.headers.Get(headersKey)
-	if rawBytes == nil {
+	if !s.headers.Has(headersKey) {
 		return nil, types.ErrHeaderDoesNotExist.Wrap("no header with provided height and hash")
 	}
+	// Retrieve the raw bytes
+	rawBytes := s.headers.Get(headersKey)
 
 	return headerInfoFromStoredBytes(s.cdc, rawBytes), nil
 }
@@ -83,11 +83,11 @@ func (s HeadersState) GetHeaderHeight(hash *bbl.BTCHeaderHashBytes) (uint64, err
 	hashKey := types.HeadersObjectHeightKey(hash)
 
 	// Retrieve the raw bytes for the height
-	bz := s.hashToHeight.Get(hashKey)
-	if bz == nil {
+	if !s.hashToHeight.Has(hashKey) {
 		return 0, types.ErrHeaderDoesNotExist.Wrap("no header with provided hash")
 	}
 
+	bz := s.hashToHeight.Get(hashKey)
 	// Convert to uint64 form
 	height := sdk.BigEndianToUint64(bz)
 	return height, nil
@@ -146,8 +146,8 @@ func (s HeadersState) GetTip() *types.BTCHeaderInfo {
 	return headerInfoFromStoredBytes(s.cdc, s.tip.Get(tipKey))
 }
 
-// GetHeadersByHeight Retrieve headers by their height using an accumulator function
-func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCHeaderInfo) bool) {
+// HeadersByHeight Retrieve headers by their height using an accumulator function
+func (s HeadersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo) bool) {
 	// The s.headers store is keyed by (height, hash)
 	// By getting the prefix key using the height,
 	// we are getting a store of `hash -> header` that contains all hashes
@@ -328,13 +328,10 @@ func (s HeadersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, 
 
 // HeaderExists Check whether a hash is maintained in storage
 func (s HeadersState) HeaderExists(hash *bbl.BTCHeaderHashBytes) bool {
-	// Get the prefix store for the hash->height collection
-	store := prefix.NewStore(s.hashToHeight, types.HashToHeightPrefix)
-
-	// Convert the BTCHeaderHashBytes object into raw bytes
-	rawBytes := hash.MustMarshal()
-
-	return store.Has(rawBytes)
+	if hash == nil {
+		return false
+	}
+	return s.hashToHeight.Has(hash.MustMarshal())
 }
 
 // TipExists checks whether the tip of the canonical chain has been set
