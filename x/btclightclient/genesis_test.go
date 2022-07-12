@@ -13,10 +13,13 @@ import (
 
 func TestGenesis(t *testing.T) {
 	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerHash := headerBytes.Hash()
+	headerWork := types.CalcWork(&headerBytes)
+	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, types.DefaultBaseHeaderHeight, &headerWork)
 
 	genesisState := types.GenesisState{
 		Params:        types.DefaultParams(),
-		BaseBtcHeader: types.DefaultBaseBTCHeader(headerBytes, types.DefaultBaseHeaderHeight),
+		BaseBtcHeader: *baseHeaderInfo,
 	}
 
 	k, ctx := keepertest.BTCLightClientKeeper(t)

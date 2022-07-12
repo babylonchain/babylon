@@ -30,6 +30,14 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
+	// Ensure that the pagination key corresponds to hash bytes
+	if len(req.Pagination.Key) != 0 {
+		_, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	store := prefix.NewStore(k.HeadersState(sdkCtx).hashToHeight, types.HashToHeightPrefix)
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
@@ -50,8 +58,7 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	chHash := req.Hash.ToChainhash()
-	contains := k.HeadersState(sdkCtx).HeaderExists(chHash)
+	contains := k.HeadersState(sdkCtx).HeaderExists(req.Hash)
 	return &types.QueryContainsResponse{Contains: contains}, nil
 }
 
@@ -73,8 +80,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "key does not correspond to a header hash")
 		}
-		chHash := headerHash.ToChainhash()
-		prevHeader, err = k.HeadersState(sdkCtx).GetHeaderByHash(chHash)
+		prevHeader, err = k.HeadersState(sdkCtx).GetHeaderByHash(&headerHash)
 	}
 
 	// If no tip exists or a key, then return an empty response
@@ -82,20 +88,19 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		return &types.QueryMainChainResponse{}, nil
 	}
 
-	var headers []*types.HeaderInfo
-	headerInfo := types.NewHeaderInfo(prevHeader)
-	headers = append(headers, headerInfo)
+	var headers []*types.BTCHeaderInfo
+	headers = append(headers, prevHeader)
 	store := prefix.NewStore(k.HeadersState(sdkCtx).headers, types.HeadersObjectPrefix)
 
 	// Set this value to true to signal to FilteredPaginate to iterate the entries in reverse
 	req.Pagination.Reverse = true
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		if accumulate {
-			btcdHeader := blockHeaderFromStoredBytes(value)
+			headerInfo := headerInfoFromStoredBytes(k.cdc, value)
 			// If the previous block extends this block, then this block is part of the main chain
-			if prevHeader.PrevBlock.String() == btcdHeader.BlockHash().String() {
-				prevHeader = btcdHeader
-				headers = append(headers, types.NewHeaderInfo(btcdHeader))
+			if prevHeader.HasParent(headerInfo) {
+				prevHeader = headerInfo
+				headers = append(headers, headerInfo)
 			}
 		}
 		return true, nil
@@ -107,8 +112,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 
 	// Override the next key attribute to point to the parent of the last header
 	// instead of the next element contained in the store
-	prevBlockCh := prevHeader.PrevBlock
-	pageRes.NextKey = bbl.NewBTCHeaderHashBytesFromChainhash(&prevBlockCh)
+	pageRes.NextKey = prevHeader.Header.ParentHash().MustMarshal()
 
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }

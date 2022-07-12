@@ -6,6 +6,7 @@ import (
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"math/rand"
 	"testing"
 )
@@ -23,14 +24,21 @@ func TestNewQueryParamsRequest(t *testing.T) {
 }
 
 func TestNewQueryHashesRequest(t *testing.T) {
-	newQueryHashes := types.NewQueryHashesRequest()
+	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerHashBytes := headerBytes.Hash()
+	req := query.PageRequest{
+		Key: headerHashBytes.MustMarshal(),
+	}
+	newQueryHashes := types.NewQueryHashesRequest(&req)
 	if newQueryHashes == nil {
 		t.Errorf("A nil object was returned")
 	}
 
-	emptyQueryHashes := types.QueryHashesRequest{}
-	if *newQueryHashes != emptyQueryHashes {
-		t.Errorf("expected an empty QueryHashesRequest")
+	expectedQueryHashes := types.QueryHashesRequest{
+		Pagination: &req,
+	}
+	if *newQueryHashes != expectedQueryHashes {
+		t.Errorf("expected a QueryHashesRequest %s", expectedQueryHashes)
 	}
 }
 
@@ -60,13 +68,19 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 }
 
 func TestNewQueryMainChainRequest(t *testing.T) {
-	newQueryMainChain := types.NewQueryMainChainRequest()
+	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	req := query.PageRequest{
+		Key: headerBytes.MustMarshal(),
+	}
+	newQueryMainChain := types.NewQueryMainChainRequest(&req)
 	if newQueryMainChain == nil {
 		t.Errorf("A nil object was returned")
 	}
 
-	emptyQueryMainChain := types.QueryMainChainRequest{}
-	if *newQueryMainChain != emptyQueryMainChain {
-		t.Errorf("expected an empty QueryMainChainRequest")
+	expectedQueryMainChain := types.QueryMainChainRequest{
+		Pagination: &req,
+	}
+	if *newQueryMainChain != expectedQueryMainChain {
+		t.Errorf("expected a QueryMainChainRequest %s", expectedQueryMainChain)
 	}
 }

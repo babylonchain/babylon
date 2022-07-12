@@ -1,6 +1,9 @@
 package types
 
-import "github.com/babylonchain/babylon/types"
+import (
+	"github.com/babylonchain/babylon/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+)
 
 // NewQueryParamsRequest creates a new instance of QueryParamsRequest.
 func NewQueryParamsRequest() *QueryParamsRequest {
@@ -8,8 +11,8 @@ func NewQueryParamsRequest() *QueryParamsRequest {
 }
 
 // NewQueryHashesRequest creates a new instance of QueryHashesRequest.
-func NewQueryHashesRequest() *QueryHashesRequest {
-	return &QueryHashesRequest{}
+func NewQueryHashesRequest(req *query.PageRequest) *QueryHashesRequest {
+	return &QueryHashesRequest{Pagination: req}
 }
 
 // NewQueryContainsRequest creates a new instance of QueryContainsRequest.
@@ -22,6 +25,6 @@ func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
 	return res, nil
 }
 
-func NewQueryMainChainRequest() *QueryMainChainRequest {
-	return &QueryMainChainRequest{}
+func NewQueryMainChainRequest(req *query.PageRequest) *QueryMainChainRequest {
+	return &QueryMainChainRequest{Pagination: req}
 }

@@ -11,5 +11,5 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
 
-  BaseBTCHeader base_btc_header = 2 [(gogoproto.nullable) = false];
+  BTCHeaderInfo base_btc_header = 2 [(gogoproto.nullable) = false];
 }

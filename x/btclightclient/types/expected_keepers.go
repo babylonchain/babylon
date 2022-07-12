@@ -16,3 +16,8 @@ type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
 	// Methods imported from bank should be defined here
 }
+
+type BTCLightClientHooks interface {
+	AfterBTCRollBack(ctx sdk.Context, headerInfo *BTCHeaderInfo)    // Must be called after the chain is rolled back
+	AfterBTCRollForward(ctx sdk.Context, headerInfo *BTCHeaderInfo) // Must be called after the chain is rolled forward
+}

@@ -1,229 +1,260 @@
 package types_test
 
 import (
-	"encoding/hex"
+	"bytes"
 	"encoding/json"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/types"
-	"github.com/stretchr/testify/suite"
-	"strings"
+	"math/rand"
 	"testing"
 )
 
-type headerBytesTestSuite struct {
-	suite.Suite
-	valid, validHeaderHash, invalid, invalidHex, tooLong, tooShort string
-}
+func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
+	f.Add(int64(42))
 
-func TestHeaderBytesTestSuite(t *testing.T) {
-	suite.Run(t, new(headerBytesTestSuite))
-}
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
 
-func (s *headerBytesTestSuite) SetupSuite() {
-	s.T().Parallel()
-	s.valid = "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22"
-	s.validHeaderHash = "00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47"
-	s.invalid = "notvalidhex"
-	s.tooLong = "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22222"
-	s.tooShort = "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c"
-}
+		invalidHeader := false
+		bz := datagen.GenRandomByteArray(types.BTCHeaderLen)
+		if datagen.OneInN(10) {
+			bz = datagen.GenRandomByteArray(datagen.RandomIntOtherThan(types.BTCHeaderLen))
+			invalidHeader = true
+		}
 
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_Marshal() {
-	// Marshal should just return the bytes themselves
-	data := []struct {
-		name string
-		b    []byte
-	}{
-		{"one length", []byte("a")},
-		{"long length", []byte("aaaa")},
-		{"zero length", []byte("")},
-	}
-	for _, d := range data {
-		hb := types.BTCHeaderBytes(d.b)
+		hb, err := types.NewBTCHeaderBytesFromBytes(bz)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s led to a NewBTCHeaderBytesFromBytes error %s", bz, err)
+			}
+			t.Skip()
+		}
+
+		err = hb.Unmarshal(bz)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s led to an unmarshal error %s", bz, err)
+			}
+			t.Skip()
+		}
+
 		m, err := hb.Marshal()
-		s.Require().NoError(err, d.name)
-		s.Require().Equal(d.b, m, d.name)
-	}
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Marshaling of bytes slice led to error %s", err)
+			}
+			t.Skip()
+		}
+		if bytes.Compare(m, bz) != 0 {
+			t.Errorf("Marshal returned %s while %s was expected", m, bz)
+		}
+
+		m = make([]byte, len(bz))
+		sz, err := hb.MarshalTo(m)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("MarshalTo led to error %s", err)
+			}
+			t.Skip()
+		}
+		if sz != len(bz) {
+			t.Errorf("MarhslTo marshalled %d bytes instead of %d", sz, len(bz))
+		}
+		if bytes.Compare(m, bz) != 0 {
+			t.Errorf("MarshalTo copied %s while %s was expected", m, bz)
+		}
+
+		if invalidHeader {
+			t.Errorf("Invalid header succeeded in all operations")
+		}
+
+		sz = hb.Size()
+		if sz != len(bz) {
+			t.Errorf("Size returned %d while %d was expected", sz, len(bz))
+		}
+	})
 }
 
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_MarshalHex() {
-	data := []struct {
-		name string
-		hex  string
-	}{
-		{"valid", s.valid},
-	}
-	for _, d := range data {
-		var hb types.BTCHeaderBytes
-		hb.UnmarshalHex(d.hex)
+func FuzzBTCHeaderBytesHexOps(f *testing.F) {
+	f.Add(int64(42))
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		invalidHeader := false
+		// 2 hex chars per byte
+		hex := datagen.GenRandomHexStr(types.BTCHeaderLen)
+		if datagen.OneInN(10) {
+			if datagen.OneInN(2) {
+				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen))
+			} else {
+				hex = string(datagen.GenRandomByteArray(types.BTCHeaderLen * 2))
+			}
+			invalidHeader = true
+		}
+		hb, err := types.NewBTCHeaderBytesFromHex(hex)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s %d led to a NewBTCHeaderBytesFromHex error %s", hex, len(hex), err)
+			}
+			t.Skip()
+		}
+
+		err = hb.UnmarshalHex(hex)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s led to an unmarshal error %s", hex, err)
+			}
+			t.Skip()
+		}
 
 		h := hb.MarshalHex()
-		s.Require().Equal(d.hex, h, d.name)
-	}
-}
-
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_MarshalJSON() {
-	data := []struct {
-		name string
-		hex  string
-	}{
-		{"valid", s.valid},
-	}
-	for _, d := range data {
-		jme, _ := json.Marshal(d.hex)
-
-		var hb types.BTCHeaderBytes
-		hb.UnmarshalHex(d.hex)
-
-		jm, err := hb.MarshalJSON()
-		s.Require().Equal(jme, jm, d.name)
-		s.Require().NoError(err, d.name)
-	}
-}
-
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_MarshalTo() {
-	// MarshalTo should just copy the bytes
-	data := []struct {
-		name string
-		b    []byte
-	}{
-		{"one length", []byte("a")},
-		{"long length", []byte("aaaa")},
-		{"zero length", []byte("")},
-	}
-	for _, d := range data {
-		hb := types.BTCHeaderBytes(d.b)
-		bz := make([]byte, len(d.b))
-
-		size, err := hb.MarshalTo(bz)
-		s.Require().NoError(err, d.name)
-		s.Require().Equal(d.b, bz, d.name)
-		s.Require().Equal(len(d.b), size, d.name)
-	}
-}
-
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_Size() {
-	data := []struct {
-		name string
-		b    []byte
-	}{
-		{"one length", []byte("a")},
-		{"long length", []byte("aaaa")},
-		{"zero length", []byte("")},
-	}
-	for _, d := range data {
-		hb := types.BTCHeaderBytes(d.b)
-		s.Require().Equal(len(d.b), hb.Size(), d.name)
-	}
-}
-
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_Unmarshal() {
-	// Unmarshal should check whether the data has a length of 80 bytes
-	// and then copy the data into the header
-	bz := []byte(strings.Repeat("a", types.BTCHeaderLen))
-	data := []struct {
-		name   string
-		bytes  []byte
-		hasErr bool
-	}{
-		{"valid", bz, false},
-		{"too long", append(bz, byte('a')), true},
-		{"too short", bz[:types.BTCHeaderLen-1], true},
-	}
-	for _, d := range data {
-		var hb types.BTCHeaderBytes
-		err := hb.Unmarshal(d.bytes)
-		if d.hasErr {
-			s.Require().Error(err, d.name)
-		} else {
-			s.Require().NoError(err, d.name)
-			s.Require().Equal(types.BTCHeaderBytes(d.bytes), hb, d.name)
+		if h != hex {
+			t.Errorf("Marshal returned %s while %s was expected", h, hex)
 		}
-	}
-}
-
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_UnmarshalHex() {
-	data := []struct {
-		name   string
-		hex    string
-		hasErr bool
-	}{
-		{"valid", s.valid, false},
-		{"invalid", s.invalid, true},
-		{"too long", s.tooLong, true},
-		{"too short", s.tooShort, true},
-	}
-	for _, d := range data {
-		var hb types.BTCHeaderBytes
-		err := hb.UnmarshalHex(d.hex)
-		if d.hasErr {
-			s.Require().Error(err, d.name)
-		} else {
-			s.Require().NoError(err, d.name)
-			decoded, _ := hex.DecodeString(d.hex)
-			s.Require().Equal(types.BTCHeaderBytes(decoded), hb, d.name)
+		if invalidHeader {
+			t.Errorf("Invalid header passed all checks")
 		}
-	}
+	})
 }
 
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_UnmarshalJSON() {
-	validJm, _ := json.Marshal(s.valid)
-	invalidJm, _ := json.Marshal(s.invalid)
-	notJsonJm := []byte("smth")
-	data := []struct {
-		name   string
-		jms    []byte
-		hasErr bool
-	}{
-		{"valid", validJm, false},
-		{"invalid", invalidJm, true},
-		{"not json", notJsonJm, true},
-	}
-	for _, d := range data {
-		var hb types.BTCHeaderBytes
-		err := hb.UnmarshalJSON(d.jms)
-		if d.hasErr {
-			s.Require().Error(err, d.name)
-		} else {
-			s.Require().NoError(err, d.name)
-			var bz types.BTCHeaderBytes
-			json.Unmarshal(d.jms, &bz)
-			s.Require().Equal(bz, hb, d.name)
+func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
+	f.Add(int64(42))
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		invalidHeader := false
+		// 2 hex chars per byte
+		hex := datagen.GenRandomHexStr(types.BTCHeaderLen)
+		if datagen.OneInN(10) {
+			if datagen.OneInN(2) {
+				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen))
+			} else {
+				hex = string(datagen.GenRandomByteArray(types.BTCHeaderLen * 2))
+			}
+			invalidHeader = true
 		}
-	}
+		hb, err := types.NewBTCHeaderBytesFromHex(hex)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s %d led to a NewBTCHeaderBytesFromHex error %s", hex, len(hex), err)
+			}
+			t.Skip()
+		}
+
+		jsonHex, _ := json.Marshal(hex)
+
+		err = hb.UnmarshalJSON(jsonHex)
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s led to an unmarshal error %s", hex, err)
+			}
+			t.Skip()
+		}
+
+		h, err := hb.MarshalJSON()
+		if err != nil {
+			if !invalidHeader {
+				t.Fatalf("Valid header %s led to an marshal error %s", hex, err)
+			}
+			t.Skip()
+		}
+		if bytes.Compare(h, jsonHex) != 0 {
+			t.Errorf("Marshal returned %s while %s was expected", h, jsonHex)
+		}
+		if invalidHeader {
+			t.Errorf("Invalid header passed all checks")
+		}
+	})
 }
 
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_ToBlockHeader() {
-	data := []struct {
-		name       string
-		header     string
-		headerHash string
-	}{{"valid", s.valid, s.validHeaderHash}}
+func FuzzBTCHeaderBytesBtcdBlockOps(f *testing.F) {
+	defaultHeader, _ := types.NewBTCHeaderBytesFromHex("00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22")
+	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
-	for _, d := range data {
+	f.Add(
+		defaultBtcdHeader.Version,
+		defaultBtcdHeader.Bits,
+		defaultBtcdHeader.Nonce,
+		defaultBtcdHeader.Timestamp.Unix(),
+		defaultBtcdHeader.PrevBlock.String(),
+		defaultBtcdHeader.MerkleRoot.String(),
+		int64(17))
+
+	f.Fuzz(func(t *testing.T, version int32, bits uint32, nonce uint32,
+		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
+
+		rand.Seed(seed)
+		btcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+
 		var hb types.BTCHeaderBytes
-		hb.UnmarshalHex(d.header)
+		hb.FromBlockHeader(btcdHeader)
+		hbBlockHeader := hb.ToBlockHeader()
 
-		btcdBlock := hb.ToBlockHeader()
-		s.Require().Equal(d.headerHash, btcdBlock.BlockHash().String(), d.name)
-	}
+		if btcdHeader.BlockHash() != hbBlockHeader.BlockHash() {
+			t.Errorf("Expected block hash %s got block hash %s", btcdHeader.BlockHash(), hbBlockHeader.BlockHash())
+		}
+
+		hb = types.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+		if btcdHeader.BlockHash() != hbBlockHeader.BlockHash() {
+			t.Errorf("Expected block hash %s got block hash %s", btcdHeader.BlockHash(), hbBlockHeader.BlockHash())
+		}
+	})
 }
 
-func (s *headerBytesTestSuite) TestBTCHeaderBytes_FromBlockHeader() {
-	data := []struct {
-		name string
-		hex  string
-	}{{"valid", s.valid}}
+func FuzzBTCHeaderBytesOperators(f *testing.F) {
+	defaultHeader, _ := types.NewBTCHeaderBytesFromHex("00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22")
+	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
-	for _, d := range data {
-		var hb types.BTCHeaderBytes
-		hb.UnmarshalHex(d.hex)
-		btcdBlock := hb.ToBlockHeader()
+	f.Add(
+		defaultBtcdHeader.Version,
+		defaultBtcdHeader.Bits,
+		defaultBtcdHeader.Nonce,
+		defaultBtcdHeader.Timestamp.Unix(),
+		defaultBtcdHeader.PrevBlock.String(),
+		defaultBtcdHeader.MerkleRoot.String(),
+		int64(17))
 
-		var hb2 types.BTCHeaderBytes
-		hb2.FromBlockHeader(btcdBlock)
+	f.Fuzz(func(t *testing.T, version int32, bits uint32, nonce uint32,
+		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
 
-		bz1, _ := hb.Marshal()
-		bz2, _ := hb2.Marshal()
-		s.Require().Equal(bz1, bz2, d.name)
-	}
+		rand.Seed(seed)
+		btcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
+
+		btcdHeaderHash := btcdHeader.BlockHash()
+		childPrevBlock := types.NewBTCHeaderHashBytesFromChainhash(&btcdHeaderHash)
+		btcdHeaderChild := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, childPrevBlock.MarshalHex(), merkleRootStr)
+
+		var hb, hb2, hbChild types.BTCHeaderBytes
+		hb.FromBlockHeader(btcdHeader)
+		hb2.FromBlockHeader(btcdHeader)
+		hbChild.FromBlockHeader(btcdHeaderChild)
+
+		if !hb.Eq(&hb) {
+			t.Errorf("BTCHeaderBytes object does not equal itself")
+		}
+		if !hb.Eq(&hb2) {
+			t.Errorf("BTCHeaderBytes object does not equal a different object with the same bytes")
+		}
+		if hb.Eq(&hbChild) {
+			t.Errorf("BTCHeaderBytes object equals a different object with different bytes")
+		}
+
+		if !hbChild.HasParent(&hb) {
+			t.Errorf("HasParent method returns false with a correct parent")
+		}
+		if hbChild.HasParent(&hbChild) {
+			t.Errorf("HasParent method returns true for the same object")
+		}
+
+		if !hbChild.ParentHash().Eq(&childPrevBlock) {
+			t.Errorf("ParentHash did not return the parent hash")
+		}
+
+		if !hb.Hash().Eq(&childPrevBlock) {
+			t.Errorf("Hash method does not return the correct hash")
+		}
+
+	})
 }
