@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"strconv"
 	"testing"
 	"time"
@@ -22,7 +21,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
@@ -33,7 +31,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -469,37 +466,3 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, minttypes.ModuleName, recipientMod, amounts)
 }
-
-// The below code is adapted from https://github.com/FunctionX/fx-core/blob/master/app/fxcore/test_helpers.go#L471-L504
-
-func GenerateGenesisValidator(validatorNum int, initCoins sdk.Coins) (*tmtypes.ValidatorSet, authtypes.GenesisAccounts, []banktypes.Balance) {
-	if validatorNum <= 0 {
-		return &tmtypes.ValidatorSet{}, authtypes.GenesisAccounts{}, []banktypes.Balance{}
-	}
-
-	valSets := make([]*tmtypes.Validator, 0, validatorNum)
-	var genesisAccounts authtypes.GenesisAccounts
-	balances := make([]banktypes.Balance, 0, validatorNum)
-	for i := 0; i < validatorNum; i++ {
-		privKey := tmed25519.GenPrivKey()
-		pubKey := privKey.PubKey()
-
-		validator := tmtypes.NewValidator(pubKey, 1)
-		valSets = append(valSets, validator)
-
-		senderPrivKey := secp256k1.GenPrivKey()
-		acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
-		genesisAccounts = append(genesisAccounts, acc)
-
-		balance := banktypes.Balance{
-			Address: acc.GetAddress().String(),
-			Coins:   initCoins,
-		}
-		balances = append(balances, balance)
-	}
-	return tmtypes.NewValidatorSet(valSets), genesisAccounts, balances
-}
-
-var (
-	CoinOne = new(big.Int).Exp(big.NewInt(10), big.NewInt(18), nil)
-)

@@ -15,25 +15,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// setupTestKeeper creates a simulated Babylon app with a set of validators
-func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient) {
-
-	initBalances := sdk.NewIntFromBigInt(app.CoinOne).Mul(sdk.NewInt(20000))
-	validator, genesisAccounts, balances := app.GenerateGenesisValidator(2, sdk.NewCoins(sdk.NewCoin("BBL", initBalances)))
-	app := app.SetupWithGenesisValSet(t, validator, genesisAccounts, balances...)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-
-	epochingKeeper := app.EpochingKeeper
-	querier := keeper.Querier{Keeper: epochingKeeper}
-	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, querier)
-	queryClient := types.NewQueryClient(queryHelper)
-
-	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
-
-	return app, ctx, &epochingKeeper, msgSrvr, queryClient
-}
-
 // setupTestKeeper creates a simulated Babylon app
 func setupTestKeeper() (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient) {
 	app := app.Setup(false)
