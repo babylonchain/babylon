@@ -13,13 +13,16 @@ type Validator struct {
 
 type ValidatorSet []*Validator
 
-func NewValidatorSet(vals []*Validator) ValidatorSet {
+// NewSortedValidatorSet returns a sorted ValidatorSet by validator's address in the ascending order
+func NewSortedValidatorSet(vals []*Validator) ValidatorSet {
 	sort.Slice(vals, func(i, j int) bool {
 		return sdk.BigEndianToUint64(vals[i].Addr) < sdk.BigEndianToUint64(vals[j].Addr)
 	})
 	return vals
 }
 
+// FindValidatorWithIndex returns the validator and its index
+// an error is returned if the validator does not exist in the set
 func (vs ValidatorSet) FindValidatorWithIndex(valAddr sdk.ValAddress) (*Validator, int, error) {
 	index := vs.binarySearch(valAddr)
 	if index == -1 {

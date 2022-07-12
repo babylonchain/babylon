@@ -27,7 +27,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.Valid
 		}
 		vals = append(vals, val)
 	}
-	return types.NewValidatorSet(vals)
+	return types.NewSortedValidatorSet(vals)
 }
 
 // InitValidatorSet stores the validator set in the beginning of the current epoch

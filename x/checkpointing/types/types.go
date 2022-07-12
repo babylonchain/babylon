@@ -36,7 +36,7 @@ func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawChe
 // 2. aggregates the BLS public key
 // 3. updates Bitmap
 // 4. accumulates voting power
-// it returns True if more than third of voting power is accumulated
+// it returns True if the checkpoint is updated
 func (cm *RawCheckpointWithMeta) Accumulate(
 	vals epochingtypes.ValidatorSet,
 	signerAddr sdk.ValAddress,
