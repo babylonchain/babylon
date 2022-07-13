@@ -22,14 +22,18 @@ import (
 func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient, *tmtypes.ValidatorSet) {
 	t.Helper()
 
-	// create validator set with single validator
-	privVal := datagen.NewPV()
-	pubKey, err := privVal.GetPubKey()
-	require.NoError(t, err)
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	// generate the validator set with 10 validators
+	vals := []*tmtypes.Validator{}
+	for i := 0; i < 10; i++ {
+		privVal := datagen.NewPV()
+		pubKey, err := privVal.GetPubKey()
+		require.NoError(t, err)
+		val := tmtypes.NewValidator(pubKey, 1)
+		vals = append(vals, val)
+	}
+	valSet := tmtypes.NewValidatorSet(vals)
 
-	// generate genesis account
+	// generate the genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	balance := banktypes.Balance{
