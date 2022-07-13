@@ -192,7 +192,7 @@ func (m msgServer) checkAndSaveEpochData(
 		m.k.SaveEpochData(sdkCtx, epochNum, &newEd)
 		m.k.SaveSubmission(sdkCtx, subKey, subData)
 	} else {
-		// epoch data already existis for epoch 0, append new submission, and save
+		// epoch data already existis for given epoch, append new submission, and save
 		// submission key and data
 		ed.AppendKey(subKey)
 		m.k.SaveEpochData(sdkCtx, epochNum, ed)
@@ -212,7 +212,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	}
 
 	// TODO get PowLimit from config
-	sub, e := types.ParseTwoProofs(address, req.Proofs, btcchaincfg.MainNetParams.PowLimit)
+	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, btcchaincfg.MainNetParams.PowLimit)
 
 	if e != nil {
 		return nil, types.ErrInvalidCheckpointProof
@@ -221,7 +221,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	submissionKey := sub.GetSubmissionKey()
+	submissionKey := rawSubmission.GetSubmissionKey()
 
 	if m.k.SubmissionExists(sdkCtx, submissionKey) {
 		return nil, types.ErrDuplicatedSubmission
@@ -229,7 +229,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	// TODO for now we do nothing with processed blockHeight but ultimatly it should
 	// be a part of timestamp
-	_, err = m.validateAgainsHeaderChain(sub)
+	_, err = m.validateAgainsHeaderChain(rawSubmission)
 
 	if err != nil {
 		return nil, err
@@ -241,16 +241,17 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// - header is proved to be part of the chain we know about through BTCLightClient
 	// - this is new checkpoint submission
 	// Inform checkpointing module about it.
-	epochNum, err := m.k.GetCheckpointEpoch(sub.GetRawCheckPointBytes())
+	epochNum, err := m.k.GetCheckpointEpoch(rawSubmission.GetRawCheckPointBytes())
 
 	if err != nil {
 		return nil, err
 	}
 
+	// This seems to be valid babylon checkpoint, check ancestors.
 	// If this submission is not for initial epoch there must already exsits checkpoints
 	// for previous epoch which are ancestors of provided submissions
 	if epochNum > 0 {
-		// this is valid checkpoint for not initial epoch, we need to checek previous epoch
+		// this is valid checkpoint for not initial epoch, we need to check previous epoch
 		// checkpoints
 		previousEpochData := m.k.GetEpochData(sdkCtx, epochNum-1)
 
@@ -263,7 +264,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 			return nil, types.ErrNoCheckpointsForPreviousEpoch
 		}
 
-		isDescendant := m.checkHeaderIsDescentantOfPreviousEpoch(previousEpochData.Key, sub)
+		isDescendant := m.checkHeaderIsDescentantOfPreviousEpoch(previousEpochData.Key, rawSubmission)
 
 		if !isDescendant {
 			return nil, types.ErrProvidedHeaderDoesNotHaveAncestor
@@ -271,7 +272,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	}
 
 	// Everything is fine, save new checkpoint and update Epoch data
-	m.checkAndSaveEpochData(sdkCtx, epochNum, submissionKey, sub.GetSubmissionData())
+	m.checkAndSaveEpochData(sdkCtx, epochNum, submissionKey, rawSubmission.GetSubmissionData())
 
 	return &types.MsgInsertBTCSpvProofResponse{}, nil
 }

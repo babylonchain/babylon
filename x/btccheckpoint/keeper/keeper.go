@@ -62,22 +62,6 @@ func (k Keeper) GetCheckpointEpoch(c []byte) (uint64, error) {
 	return k.checkpointingKeeper.CheckpointEpoch(c)
 }
 
-// TODO for now we jsut store raw checkpoint with epoch as key. Ultimatly
-// we should store checkpoint with some timestamp info, or even do not store
-// checkpoint itelf but its status
-func (k Keeper) StoreCheckpoint(ctx sdk.Context, e uint64, c []byte) {
-	store := ctx.KVStore(k.storeKey)
-	key := sdk.Uint64ToBigEndian(e)
-	store.Set(key, c)
-}
-
-// TODO just return checkpoint if exists
-func (k Keeper) GetCheckpoint(ctx sdk.Context, e uint64) []byte {
-	store := ctx.KVStore(k.storeKey)
-	key := sdk.Uint64ToBigEndian(e)
-	return store.Get(key)
-}
-
 func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
 	store := ctx.KVStore(k.storeKey)
 	kBytes := k.cdc.MustMarshal(&sk)

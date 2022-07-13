@@ -48,7 +48,8 @@ func (s *RawCheckpointSubmission) GetSecondBlockHash() chainhash.Hash {
 }
 
 func toTransactionKey(p *btcutils.ParsedProof) TransactionKey {
-	hashBytes := types.NewBTCHeaderHashBytesFromChainhash(p.BlockHeader.BlockHash())
+	h := p.BlockHeader.BlockHash()
+	hashBytes := types.NewBTCHeaderHashBytesFromChainhash(&h)
 	return TransactionKey{
 		Index: p.TransactionIdx,
 		Hash:  &hashBytes,
@@ -81,7 +82,7 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*chainhash.Hash {
 	var hashes []*chainhash.Hash
 
 	for _, k := range sk.Key {
-		h, _ := k.Hash.ToChainhash()
+		h := k.Hash.ToChainhash()
 		hashes = append(hashes, h)
 	}
 
