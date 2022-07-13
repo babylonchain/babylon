@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -22,8 +23,6 @@ import (
 )
 
 func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient, *tmtypes.ValidatorSet) {
-	t.Helper()
-
 	// generate the validator set with 10 validators
 	vals := []*tmtypes.Validator{}
 	for i := 0; i < 10; i++ {
@@ -43,8 +42,7 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
 	}
 
-	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	app, ctx := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
 
 	epochingKeeper := app.EpochingKeeper
 	querier := keeper.Querier{Keeper: epochingKeeper}
@@ -60,15 +58,7 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 func nextBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
 	newHeight := app.LastBlockHeight() + 1
 	valSet := app.StakingKeeper.GetLastValidators(ctx)
-
-	// calculate validator hash and new header
-	// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/test_helpers.go#L156-L163)
-	bzs := make([][]byte, len(valSet))
-	for i, val := range valSet {
-		consAddr, _ := val.GetConsAddr()
-		bzs[i] = consAddr
-	}
-	valhash := merkle.HashFromByteSlices(bzs)
+	valhash := calculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
 		AppHash:            app.LastCommitID().Hash,
@@ -139,4 +129,15 @@ func min(a, b uint64) uint64 {
 		return a
 	}
 	return b
+}
+
+// calculate validator hash and new header
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/test_helpers.go#L156-L163)
+func calculateValHash(valSet []stakingtypes.Validator) []byte {
+	bzs := make([][]byte, len(valSet))
+	for i, val := range valSet {
+		consAddr, _ := val.GetConsAddr()
+		bzs[i] = consAddr
+	}
+	return merkle.HashFromByteSlices(bzs)
 }

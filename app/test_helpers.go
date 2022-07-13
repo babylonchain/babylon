@@ -89,7 +89,7 @@ func Setup(isCheckTx bool) *BabylonApp {
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit (10^6) in the default token of the babylon app from first genesis
 // account. A Nop logger is set in BabylonApp.
-func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *BabylonApp {
+func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) (*BabylonApp, sdk.Context) {
 	app, genesisState := setup(true, 5)
 	// set genesis accounts
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
@@ -160,14 +160,17 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 
 	// commit genesis changes
 	app.Commit()
-	app.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
-		Height:             app.LastBlockHeight() + 1,
+	height := app.LastBlockHeight() + 1
+	header := tmproto.Header{
+		Height:             height,
 		AppHash:            app.LastCommitID().Hash,
 		ValidatorsHash:     valSet.Hash(),
 		NextValidatorsHash: valSet.Hash(),
-	}})
+	}
+	app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
-	return app
+	return app, ctx
 }
 
 // SetupWithGenesisAccounts initializes a new BabylonApp with the provided genesis
