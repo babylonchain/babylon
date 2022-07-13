@@ -21,16 +21,30 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 var _ types.MsgServer = msgServer{}
 
-func (m msgServer) AddBlsSig(goCtx context.Context, header *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
-	panic("TODO: implement me")
+// AddBlsSig adds BLS sig messages and changes a raw checkpoint status to SEALED if sufficient voting power is accumulated
+func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	err := m.k.addBlsSig(ctx, msg.BlsSig)
+	if err != nil {
+		return &types.MsgAddBlsSigResponse{}, err
+	}
+
+	return &types.MsgAddBlsSigResponse{}, nil
 }
 
-// WrappedCreateValidator stores validator's BLS public key as well as corresponding MsgCreateValidator message
+// WrappedCreateValidator registers validator's BLS public key
+// and forwards corresponding MsgCreateValidator message to
+// the epoching module
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
 	// TODO: verify pop, should be done in ValidateBasic()
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	err := m.k.CreateRegistration(ctx, *msg.Key.Pubkey, types.ValidatorAddress(msg.MsgCreateValidator.ValidatorAddress))
+	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)
+	if err != nil {
+		return nil, err
+	}
+	err = m.k.CreateRegistration(ctx, *msg.Key.Pubkey, valAddr)
 	if err != nil {
 		return nil, err
 	}

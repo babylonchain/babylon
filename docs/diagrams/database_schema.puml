@@ -101,7 +101,7 @@ package "checkpointing" #FFEE93 {
     --
     * status:
       | ACCUMULATING: await sigs
-      | SIGNED: has +1/3 sigs, await submit
+      | SEALED: has +1/3 sigs, await submit
       | SUBMITTED: included on BTC
       | CONFIRMED: k-deep on BTC
       | FINALIZED: w-deep on BTC
