@@ -25,8 +25,8 @@ func FuzzEpochValSet(f *testing.F) {
 		}
 
 		// generate a random number of new blocks
-		numNewBlocks := rand.Intn(1000)
-		for i := 0; i < int(numNewBlocks); i++ {
+		numIncBlocks := rand.Uint64()%1000 + 1
+		for i := uint64(0); i < numIncBlocks; i++ {
 			ctx = nextBlock(app, ctx)
 		}
 

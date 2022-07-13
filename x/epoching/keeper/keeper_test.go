@@ -58,7 +58,7 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 }
 
 func nextBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
-	newHeight := ctx.BlockHeight() + 1
+	newHeight := app.LastBlockHeight() + 1
 	valSet := app.StakingKeeper.GetLastValidators(ctx)
 
 	// calculate validator hash and new header
