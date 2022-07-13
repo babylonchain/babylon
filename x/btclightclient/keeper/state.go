@@ -169,8 +169,8 @@ func (s HeadersState) GetHeadersByHeight(height uint64, f func(*types.BTCHeaderI
 	}
 }
 
-// GetDescendingHeadersUpTo returns a collection of descending headers according to their height
-func (s HeadersState) GetDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
+// getDescendingHeadersUpTo returns a collection of descending headers according to their height
+func (s HeadersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
 	var headers []*types.BTCHeaderInfo
 	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
 		headers = append(headers, header)
@@ -192,7 +192,7 @@ func (s HeadersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	currentHeader := s.GetTip()
 
 	// Retrieve a collection of headers in descending height order
-	headers := s.GetDescendingHeadersUpTo(currentHeader.Height, depth)
+	headers := s.getDescendingHeadersUpTo(currentHeader.Height, depth)
 
 	var chain []*types.BTCHeaderInfo
 	chain = append(chain, currentHeader)
@@ -281,17 +281,17 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 	return resHeader
 }
 
-// GetInOrderAncestorsUntil returns the list of nodes starting from the block *before* the `ancestor` and ending with the child.
-func (s HeadersState) GetInOrderAncestorsUntil(child *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
-	if ancestor.Height >= child.Height {
+// GetInOrderAncestorsUntil returns the list of nodes starting from the block *before* the `ancestor` and ending with the `descendant`.
+func (s HeadersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
+	if ancestor.Height >= descendant.Height {
 		panic("Ancestor has a higher height than descendant")
 	}
 
-	currentHeader := child
+	currentHeader := descendant
 
 	var ancestors []*types.BTCHeaderInfo
-	ancestors = append(ancestors, child)
-	if child.HasParent(ancestor) {
+	ancestors = append(ancestors, descendant)
+	if descendant.HasParent(ancestor) {
 		return ancestors
 	}
 
