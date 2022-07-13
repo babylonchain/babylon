@@ -21,9 +21,10 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
-	// if this block is the first block of an epoch
+	// if this block is the first block of the next epoch
 	// note that we haven't incremented the epoch number yet
-	if k.GetEpoch(ctx).IsFirstBlock(ctx) {
+	epoch := k.GetEpoch(ctx)
+	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
 		IncEpoch := k.IncEpoch(ctx)
 		// init the slashed voting power of this new epoch

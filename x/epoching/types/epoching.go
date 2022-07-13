@@ -29,3 +29,12 @@ func (e Epoch) IsFirstBlock(ctx sdk.Context) bool {
 func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
 	return e.GetSecondBlockHeight() == uint64(ctx.BlockHeight())
 }
+
+func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
+	if e.EpochNumber == 0 {
+		return ctx.BlockHeight() == 1
+	} else {
+		height := uint64(ctx.BlockHeight())
+		return e.FirstBlockHeight+e.CurrentEpochInterval == height
+	}
+}

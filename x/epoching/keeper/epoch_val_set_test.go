@@ -17,13 +17,24 @@ func FuzzEpochValSet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, ctx, keeper, _, _, valSet := setupTestKeeperWithValSet(t)
+		app, ctx, keeper, _, _, valSet := setupTestKeeperWithValSet(t)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 		require.Equal(t, len(valSet.Validators), len(getValSet))
 		for i := range getValSet {
 			require.Equal(t, sdk.ValAddress(valSet.Validators[i].Address), getValSet[i].Addr)
 		}
 
-		// TODO (stateful tests): randomly add/remove validators, then verify whether the actual validator set is expected or not
+		// generate a random number of new blocks
+		numNewBlocks := rand.Intn(1000)
+		for i := 0; i < int(numNewBlocks); i++ {
+			ctx = nextBlock(app, ctx)
+		}
+
+		// check whether the validator set remains the same or not
+		getValSet2 := keeper.GetValidatorSet(ctx, keeper.GetEpoch(ctx).EpochNumber)
+		require.Equal(t, len(valSet.Validators), len(getValSet2))
+		for i := range getValSet2 {
+			require.Equal(t, sdk.ValAddress(valSet.Validators[i].Address), getValSet[i].Addr)
+		}
 	})
 }

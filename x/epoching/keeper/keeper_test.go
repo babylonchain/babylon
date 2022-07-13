@@ -15,6 +15,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -53,6 +55,32 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
 	return app, ctx, &epochingKeeper, msgSrvr, queryClient, valSet
+}
+
+func nextBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
+	newHeight := ctx.BlockHeight() + 1
+	valSet := app.StakingKeeper.GetLastValidators(ctx)
+
+	// calculate validator hash and new header
+	// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/test_helpers.go#L156-L163)
+	bzs := make([][]byte, len(valSet))
+	for i, val := range valSet {
+		consAddr, _ := val.GetConsAddr()
+		bzs[i] = consAddr
+	}
+	valhash := merkle.HashFromByteSlices(bzs)
+	newHeader := tmproto.Header{
+		Height:             newHeight,
+		AppHash:            app.LastCommitID().Hash,
+		ValidatorsHash:     valhash,
+		NextValidatorsHash: valhash,
+	}
+
+	app.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
+	app.EndBlock(abci.RequestEndBlock{Height: newHeight})
+	app.Commit()
+
+	return ctx.WithBlockHeader(newHeader)
 }
 
 // setupTestKeeper creates a simulated Babylon app
