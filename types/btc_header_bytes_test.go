@@ -18,7 +18,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 		invalidHeader := false
 		bz := datagen.GenRandomByteArray(types.BTCHeaderLen)
 		if datagen.OneInN(10) {
-			bz = datagen.GenRandomByteArray(datagen.RandomIntOtherThan(types.BTCHeaderLen))
+			bz = datagen.GenRandomByteArray(datagen.RandomIntOtherThan(types.BTCHeaderLen, 10*types.BTCHeaderLen))
 			invalidHeader = true
 		}
 
@@ -86,7 +86,7 @@ func FuzzBTCHeaderBytesHexOps(f *testing.F) {
 		hex := datagen.GenRandomHexStr(types.BTCHeaderLen)
 		if datagen.OneInN(10) {
 			if datagen.OneInN(2) {
-				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen))
+				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen, 10*types.BTCHeaderLen))
 			} else {
 				hex = string(datagen.GenRandomByteArray(types.BTCHeaderLen * 2))
 			}
@@ -129,7 +129,7 @@ func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
 		hex := datagen.GenRandomHexStr(types.BTCHeaderLen)
 		if datagen.OneInN(10) {
 			if datagen.OneInN(2) {
-				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen))
+				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen, 10*types.BTCHeaderLen))
 			} else {
 				hex = string(datagen.GenRandomByteArray(types.BTCHeaderLen * 2))
 			}

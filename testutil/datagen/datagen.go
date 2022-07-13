@@ -24,12 +24,15 @@ func RandomInt(rng int) uint64 {
 	return uint64(rand.Intn(rng))
 }
 
-func RandomIntOtherThan(x int) uint64 {
-	untilX := 1 + RandomInt(x)
-	if RandomInt(2) == 0 {
-		return uint64(x) + untilX
+func RandomIntOtherThan(x int, rng int) uint64 {
+	if rng == 1 && x == 0 {
+		panic("There is no other int")
 	}
-	return uint64(x) - untilX
+	res := RandomInt(rng)
+	for res == uint64(x) {
+		res = RandomInt(rng)
+	}
+	return res
 }
 
 // ValidHex accepts a hex string and the length representation as a byte array

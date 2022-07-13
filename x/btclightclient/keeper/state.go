@@ -173,10 +173,10 @@ func (s HeadersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo
 func (s HeadersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
 	var headers []*types.BTCHeaderInfo
 	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
-		headers = append(headers, header)
 		if tipHeight-header.Height == depth {
 			return true
 		}
+		headers = append(headers, header)
 		return false
 	})
 	return headers
@@ -192,7 +192,8 @@ func (s HeadersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	currentHeader := s.GetTip()
 
 	// Retrieve a collection of headers in descending height order
-	headers := s.getDescendingHeadersUpTo(currentHeader.Height, depth)
+	// Use depth+1 since we want all headers at the depth height.
+	headers := s.getDescendingHeadersUpTo(currentHeader.Height, depth+1)
 
 	var chain []*types.BTCHeaderInfo
 	chain = append(chain, currentHeader)
@@ -240,12 +241,12 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 		return header2
 	}
 	if header2.HasParent(header1) {
-		return header2
+		return header1
 	}
 
 	ancestor1 := header1.Hash
 	ancestor2 := header2.Hash
-	var encountered map[string]bool
+	encountered := make(map[string]bool, 0)
 	encountered[ancestor1.String()] = true
 	encountered[ancestor2.String()] = true
 	var found *bbl.BTCHeaderHashBytes = nil
@@ -262,14 +263,14 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 			return true
 		} else {
 			if ancestor1.Eq(header.Hash) {
-				ancestor1 = header.Hash
+				ancestor1 = header.Header.ParentHash()
 				if encountered[ancestor1.String()] {
 					found = ancestor1
 				}
 				encountered[ancestor1.String()] = true
 			}
 			if ancestor2.Eq(header.Hash) {
-				ancestor2 = header.Hash
+				ancestor2 = header.Header.ParentHash()
 				if encountered[ancestor2.String()] {
 					found = ancestor2
 				}
@@ -281,10 +282,14 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 	return resHeader
 }
 
-// GetInOrderAncestorsUntil returns the list of nodes starting from the block *before* the `ancestor` and ending with the `descendant`.
+// GetInOrderAncestorsUntil returns the list of nodes starting from the block *after* the `ancestor` and ending with the `descendant`.
 func (s HeadersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
-	if ancestor.Height >= descendant.Height {
+	if ancestor.Height > descendant.Height {
 		panic("Ancestor has a higher height than descendant")
+	}
+	if ancestor.Height == descendant.Height {
+		// return an empty list
+		return []*types.BTCHeaderInfo{}
 	}
 
 	currentHeader := descendant
@@ -359,11 +364,8 @@ func (s HeadersState) updateLongestChain(headerInfo *types.BTCHeaderInfo) {
 }
 
 func (s HeadersState) iterateReverseHeaders(fn func(*types.BTCHeaderInfo) bool) {
-	// Get the prefix store for the (height, hash) -> header collection
-	store := prefix.NewStore(s.headers, types.HeadersObjectPrefix)
 	// Iterate it in reverse in order to get highest heights first
-	// TODO: need to verify this assumption
-	iter := store.ReverseIterator(nil, nil)
+	iter := s.headers.ReverseIterator(nil, nil)
 	defer iter.Close()
 
 	for ; iter.Valid(); iter.Next() {

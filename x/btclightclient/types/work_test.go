@@ -15,8 +15,8 @@ func FuzzCumulativeWork(f *testing.F) {
 		gotSum := types.CumulativeWork(biga, bigb)
 
 		expectedSum := sdk.NewUint(0)
-		expectedSum.Add(biga)
-		expectedSum.Add(bigb)
+		expectedSum = expectedSum.Add(biga)
+		expectedSum = expectedSum.Add(bigb)
 
 		if !expectedSum.Equal(gotSum) {
 			t.Errorf("Cumulative work does not correspond to actual one")

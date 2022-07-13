@@ -12,7 +12,7 @@ func CalcWork(header *bbl.BTCHeaderBytes) sdk.Uint {
 
 func CumulativeWork(childWork sdk.Uint, parentWork sdk.Uint) sdk.Uint {
 	sum := sdk.NewUint(0)
-	sum.Add(childWork)
-	sum.Add(parentWork)
+	sum = sum.Add(childWork)
+	sum = sum.Add(parentWork)
 	return sum
 }

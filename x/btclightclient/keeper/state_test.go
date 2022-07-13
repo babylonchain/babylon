@@ -4,12 +4,12 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
 	"testing"
 )
 
 func FuzzHeadersStateCreateHeader(f *testing.F) {
-	// TODO
 	/*
 		 Checks:
 		 1. A headerInfo provided as an argument leads to the following storage objects being created:
@@ -29,13 +29,76 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 				This will test whether the tip is not updated when less work than it is added.
 			 4. A header that builds on top of the base header but with equal work to (2).
 				This will test whether the tip is not updated when equal work to it is added.
-		 - No need to create a tree, since this function does not considers existence or the chain,
+		 - No need to create a tree, since this function does not consider the existence or the chain,
 		   it just inserts into state and updates the tip based on a simple work comparison.
 	*/
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+
+		// Create base header and test whether the tip and storages are set
+		baseHeader := datagen.GenRandomHeaderInfo()
+		blcKeeper.HeadersState(ctx).CreateHeader(baseHeader)
+		tip := blcKeeper.HeadersState(ctx).GetTip()
+		if tip == nil {
+			t.Errorf("Creation of base header did not lead to creation of tip")
+		}
+		if !baseHeader.Eq(tip) {
+			t.Errorf("Tip does not correspond to the one submitted")
+		}
+		headerObj, err := blcKeeper.HeadersState(ctx).GetHeader(baseHeader.Height, baseHeader.Hash)
+		if err != nil {
+			t.Errorf("Could not retrieve created header")
+		}
+		if !baseHeader.Eq(headerObj) {
+			t.Errorf("Created object does not correspond to the one submitted")
+		}
+		work, err := blcKeeper.HeadersState(ctx).GetHeaderWork(baseHeader.Hash)
+		if err != nil {
+			t.Errorf("Could not retrieve work of created header")
+		}
+		if !baseHeader.Work.Equal(*work) {
+			t.Errorf("Created object work does not correspond to the one submitted")
+		}
+		height, err := blcKeeper.HeadersState(ctx).GetHeaderHeight(baseHeader.Hash)
+		if err != nil {
+			t.Errorf("Could not retrieve height of created header")
+		}
+		if height != baseHeader.Height {
+			t.Errorf("Created object height does not correspond to the one submitted")
+		}
+
+		mostWork := sdk.NewUint(10)
+		lessWork := mostWork.Sub(sdk.NewUint(1))
+		// Create an object that builds on top of base header
+		childMostWork := datagen.GenRandomHeaderInfoWithParentAndWork(baseHeader, &mostWork)
+		blcKeeper.HeadersState(ctx).CreateHeader(childMostWork)
+		// Check whether the tip was updated
+		tip = blcKeeper.HeadersState(ctx).GetTip()
+		if tip == nil {
+			t.Errorf("Tip became nil instead of getting updated")
+		}
+		if !childMostWork.Eq(tip) {
+			t.Errorf("Tip did not get properly updated")
+		}
+
+		childEqualWork := datagen.GenRandomHeaderInfoWithParentAndWork(baseHeader, &mostWork)
+		blcKeeper.HeadersState(ctx).CreateHeader(childEqualWork)
+		// Check whether the tip was updated
+		tip = blcKeeper.HeadersState(ctx).GetTip()
+		if !childMostWork.Eq(tip) {
+			t.Errorf("Tip got updated when it shouldn't")
+		}
+
+		childLessWork := datagen.GenRandomHeaderInfoWithParentAndWork(baseHeader, &lessWork)
+		blcKeeper.HeadersState(ctx).CreateHeader(childLessWork)
+		// Check whether the tip was updated
+		tip = blcKeeper.HeadersState(ctx).GetTip()
+		if !childMostWork.Eq(tip) {
+			t.Errorf("Tip got updated when it shouldn't")
+		}
+
 	})
 }
 
@@ -214,7 +277,6 @@ func FuzzHeadersStateGetHeaderOps(f *testing.F) {
 }
 
 func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
-	// TODO
 	/*
 		Checks:
 		1. If no headers exist, nil is returned
@@ -226,7 +288,27 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+
+		nilBaseHeader := blcKeeper.HeadersState(ctx).GetBaseBTCHeader()
+		if nilBaseHeader != nil {
+			t.Errorf("Non-existent base BTC header led to non-nil return")
+		}
+
+		headersMap := datagen.GenRandomHeaderInfoTree()
+		for _, headerInfo := range headersMap {
+			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+		}
+
+		tip := blcKeeper.HeadersState(ctx).GetTip()
+		mainChain := getMainChain(headersMap, tip)
+
+		expectedBaseHeader := mainChain[len(mainChain)-1]
+		gotBaseHeader := blcKeeper.HeadersState(ctx).GetBaseBTCHeader()
+
+		if !expectedBaseHeader.Eq(gotBaseHeader) {
+			t.Errorf("Expected base header %s got %s", expectedBaseHeader.Hash, gotBaseHeader.Hash)
+		}
 	})
 }
 
@@ -293,42 +375,68 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 	})
 }
 
-func FuzzHeadersStateGetMainChainUpTo(f *testing.F) {
-	// TODO
-	/*
-		Checks:
-		1. If the tip does not exist, we have no headers, so an empty list is returned.
-		2. We get the main chain containing `depth + 1` elements.
-
-		Data generation:
-		- Generate a random tree and retrieve the main chain from it.
-		- Randomly generate the depth as `rand.Intn(tipHeight - baseHeight)`.
-	*/
-	f.Add(int64(42))
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		t.Skip()
-	})
-}
-
 func FuzzHeadersStateGetMainChain(f *testing.F) {
-	// TODO
 	/*
+		Functions Tested:
+		1. GetMainChain
+		2. GetMainChainUpTo
+
 		Checks:
-		1. We get the entire main chain.
+		* GetMainChain
+			1. We get the entire main chain.
+		* GetMainChainUpTo
+			1. We get the main chain containing `depth + 1` elements.
 
 		Data generation:
 		- Generate a random tree and retrieve the main chain from it.
+		- Randomly generate the depth
 	*/
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		headersMap := datagen.GenRandomHeaderInfoTree()
+		maxAccPow := sdk.NewUint(0)
+		var tip *types.BTCHeaderInfo = nil
+		// Add all headers to storage
+		for _, headerInfo := range headersMap {
+			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+			if headerInfo.Work.GT(maxAccPow) {
+				maxAccPow = *headerInfo.Work
+				tip = headerInfo
+			}
+		}
+
+		expectedMainChain := getMainChain(headersMap, tip)
+		gotMainChain := blcKeeper.HeadersState(ctx).GetMainChain()
+
+		if len(expectedMainChain) != len(gotMainChain) {
+			t.Fatalf("Expected main chain length of %d, got %d", len(expectedMainChain), len(gotMainChain))
+		}
+
+		for i := 0; i < len(expectedMainChain); i++ {
+			if !expectedMainChain[i].Eq(gotMainChain[i]) {
+				t.Errorf("Expected header %s at position %d, got %s", expectedMainChain[i].Hash, i, gotMainChain[i].Hash)
+			}
+		}
+
+		// depth is a random integer
+		upToDepth := datagen.RandomInt(len(expectedMainChain))
+		expectedMainChainUpTo := expectedMainChain[:upToDepth+1]
+		gotMainChainUpTo := blcKeeper.HeadersState(ctx).GetMainChainUpTo(upToDepth)
+		if len(expectedMainChainUpTo) != len(gotMainChainUpTo) {
+			t.Fatalf("Expected main chain length of %d, got %d", len(expectedMainChainUpTo), len(gotMainChainUpTo))
+		}
+
+		for i := 0; i < len(expectedMainChainUpTo); i++ {
+			if !expectedMainChainUpTo[i].Eq(gotMainChainUpTo[i]) {
+				t.Errorf("Expected header %s at position %d, got %s", expectedMainChainUpTo[i].Hash, i, gotMainChainUpTo[i].Hash)
+			}
+		}
 	})
 }
 
 func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
-	// TODO
 	/*
 		Checks:
 		1. The header returned is an ancestor of both headers.
@@ -343,12 +451,60 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		// Generate a tree of at least a depth of two, since we need at least two nodes
+		headersMap := datagen.GenRandomHeaderInfoTreeMinDepth(uint64(2))
+		// Add all headers to storage
+		for _, headerInfo := range headersMap {
+			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+		}
+		// Get two random headers from the tree. Use random indexes to identify those.
+		// Get the random indexes
+		header1Idx := datagen.RandomInt(len(headersMap))
+		header2Idx := datagen.RandomIntOtherThan(int(header1Idx), len(headersMap))
+		headers := selectRandomHeaders(headersMap, []uint64{header1Idx, header2Idx})
+		header1 := headers[0]
+		header2 := headers[1]
+
+		// Identify the highest common ancestor for the two headers:
+		// Do a BFS starting from both headers and maintain a hashmap denoting whether
+		// something has been encountered. If we get to something that has been encountered,
+		// then that's the highest common ancestor.
+		var highestCommonAncestor *types.BTCHeaderInfo = nil
+		visited := make(map[string]bool, 0)
+		queue := make([]*types.BTCHeaderInfo, 0)
+		queue = append(queue, header1)
+		queue = append(queue, header2)
+		for len(queue) > 0 {
+			top := queue[0]
+			queue = queue[1:] // Not that performant, O(N^2) complexity
+			// If the node has been visited, it is the highest common ancestor
+			if _, ok := visited[top.Hash.String()]; ok {
+				highestCommonAncestor = top
+				break
+			}
+			visited[top.Hash.String()] = true
+			// Check if parent exists, we might be in the base node for which its parent does not exist.
+			if parent, ok := headersMap[top.Header.ParentHash().String()]; ok {
+				queue = append(queue, parent)
+			}
+		}
+
+		if highestCommonAncestor == nil {
+			t.Fatalf("Could not find a highest common ancestor")
+		}
+
+		retrievedHighestCommonAncestor := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(header1, header2)
+		if retrievedHighestCommonAncestor == nil {
+			t.Fatalf("No common ancestor found between the nodes %s and %s. Expected ancestor: %s", header1.Hash, header2.Hash, highestCommonAncestor.Hash)
+		}
+		if !highestCommonAncestor.Eq(retrievedHighestCommonAncestor) {
+			t.Errorf("Did not retrieve the correct highest common ancestor. Got %s, expected %s", retrievedHighestCommonAncestor.Hash, highestCommonAncestor.Hash)
+		}
 	})
 }
 
 func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
-	// TODO
 	/*
 		Checks:
 		1. All the ancestors are contained in the returned list.
@@ -363,6 +519,71 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		t.Skip()
+		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		// Generate a tree of any size.
+		// We can work with even one header, since this should lead to an empty result.
+		headersMap := datagen.GenRandomHeaderInfoTree()
+		// Insert the headers into storage
+		for _, headerInfo := range headersMap {
+			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+		}
+		// Get a random descendant and insert headers into storage
+		descendantIdx := datagen.RandomInt(len(headersMap))
+		descendant := selectRandomHeaders(headersMap, []uint64{descendantIdx})[0]
+
+		// get the chain ending starting from the base header and ending on descendant
+		chain := getChain(headersMap, descendant)
+		// get a random ancestor (or the same node)
+		ancestorIdx := datagen.RandomInt(len(chain))
+		ancestor := chain[ancestorIdx]
+
+		expectedAncestors := chain[ancestorIdx+1:]
+
+		gotAncestors := blcKeeper.HeadersState(ctx).GetInOrderAncestorsUntil(descendant, ancestor)
+		if len(gotAncestors) != len(expectedAncestors) {
+			t.Errorf("Got different ancestor list sizes. Expected %d got %d", len(expectedAncestors), len(gotAncestors))
+		}
+
+		for i := 0; i < len(expectedAncestors); i++ {
+			if !expectedAncestors[i].Eq(gotAncestors[i]) {
+				t.Errorf("Ancestors do not match. Expected %s got %s", expectedAncestors[i].Hash, gotAncestors[i].Hash)
+			}
+		}
 	})
+}
+
+func selectRandomHeaders(headers map[string]*types.BTCHeaderInfo, idxs []uint64) []*types.BTCHeaderInfo {
+	res := make([]*types.BTCHeaderInfo, len(idxs))
+	var idx uint64 = 0
+	for _, headerInfo := range headers {
+		for intIdx, pos := range idxs {
+			if idx == pos {
+				res[intIdx] = headerInfo
+			}
+		}
+		idx += 1
+	}
+	return res
+}
+
+// getChain retrieves the chain starting from the descendant up to the base header.
+func getChain(headers map[string]*types.BTCHeaderInfo, descendant *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
+	var chain []*types.BTCHeaderInfo
+	if parent, ok := headers[descendant.Header.ParentHash().String()]; ok {
+		chain = getChain(headers, parent)
+	}
+	chain = append(chain, descendant)
+	return chain
+}
+
+// getMainChain finds the tip of the chain and retrieves all its ancestors until the base header
+// 				The chain starts from the tip and leads to the base header
+func getMainChain(headers map[string]*types.BTCHeaderInfo, tip *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
+	// This chain starts from the base header and leads to the tip
+	// We want the reverse of it
+	chain := getChain(headers, tip)
+	for i, j := 0, len(chain)-1; i < j; i, j = i+1, j-1 {
+		chain[i], chain[j] = chain[j], chain[i]
+	}
+	return chain
 }
