@@ -39,4 +39,5 @@ func FuzzEpochValSet(f *testing.F) {
 	})
 }
 
-// TODO: create some random validators and check if the resulting validator set is consistent or not
+// TODO (stateful tests): create some random validators and check if the resulting validator set is consistent or not
+// require mocking Msg(Wrapped)CreateValidator
