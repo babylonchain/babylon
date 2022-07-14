@@ -55,7 +55,7 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 	return app, ctx, &epochingKeeper, msgSrvr, queryClient, valSet
 }
 
-func nextBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
+func genAndApplyEmptyBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
 	newHeight := app.LastBlockHeight() + 1
 	valSet := app.StakingKeeper.GetLastValidators(ctx)
 	valhash := calculateValHash(valSet)

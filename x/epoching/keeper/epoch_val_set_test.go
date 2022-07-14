@@ -27,7 +27,7 @@ func FuzzEpochValSet(f *testing.F) {
 		// generate a random number of new blocks
 		numIncBlocks := rand.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = nextBlock(app, ctx)
+			ctx = genAndApplyEmptyBlock(app, ctx)
 		}
 
 		// check whether the validator set remains the same or not
@@ -38,3 +38,5 @@ func FuzzEpochValSet(f *testing.F) {
 		}
 	})
 }
+
+// TODO: create some random validators and check if the resulting validator set is consistent or not

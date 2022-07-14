@@ -25,18 +25,10 @@ var _ types.MsgServer = msgServer{}
 // WrappedDelegate handles the MsgWrappedDelegate request
 func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	msgBytes, err := k.cdc.Marshal(msg)
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(txid, msg)
 	if err != nil {
 		return nil, err
-	}
-
-	// wrapped -> unwrapped -> QueuedMessage
-	queuedMsg := types.QueuedMessage{
-		TxId:  tmhash.Sum(ctx.TxBytes()),
-		MsgId: tmhash.Sum(msgBytes),
-		Msg: &types.QueuedMessage_MsgDelegate{
-			MsgDelegate: msg.Msg,
-		},
 	}
 
 	k.EnqueueMsg(ctx, queuedMsg)
@@ -60,18 +52,10 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 // WrappedUndelegate handles the MsgWrappedUndelegate request
 func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	msgBytes, err := k.cdc.Marshal(msg)
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(txid, msg)
 	if err != nil {
 		return nil, err
-	}
-
-	// wrapped -> unwrapped -> QueuedMessage
-	queuedMsg := types.QueuedMessage{
-		TxId:  tmhash.Sum(ctx.TxBytes()),
-		MsgId: tmhash.Sum(msgBytes),
-		Msg: &types.QueuedMessage_MsgUndelegate{
-			MsgUndelegate: msg.Msg,
-		},
 	}
 
 	k.EnqueueMsg(ctx, queuedMsg)
@@ -95,18 +79,10 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 // WrappedBeginRedelegate handles the MsgWrappedBeginRedelegate request
 func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	msgBytes, err := k.cdc.Marshal(msg)
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(txid, msg)
 	if err != nil {
 		return nil, err
-	}
-
-	// wrapped -> unwrapped -> QueuedMessage
-	queuedMsg := types.QueuedMessage{
-		TxId:  tmhash.Sum(ctx.TxBytes()),
-		MsgId: tmhash.Sum(msgBytes),
-		Msg: &types.QueuedMessage_MsgBeginRedelegate{
-			MsgBeginRedelegate: msg.Msg,
-		},
 	}
 
 	// enqueue msg

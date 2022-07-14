@@ -31,7 +31,7 @@ func FuzzEpochs(f *testing.F) {
 		// increment a random number of new blocks
 		numIncBlocks := rand.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = nextBlock(app, ctx)
+			ctx = genAndApplyEmptyBlock(app, ctx)
 		}
 
 		// ensure that the epoch info is still correct
@@ -39,9 +39,9 @@ func FuzzEpochs(f *testing.F) {
 		if numIncBlocks%epochInterval > 0 {
 			expectedEpochNumber += 1
 		}
-		acutalNewEpoch := keeper.GetEpoch(ctx)
-		require.Equal(t, expectedEpochNumber, acutalNewEpoch.EpochNumber)
-		require.Equal(t, epochInterval, acutalNewEpoch.CurrentEpochInterval)
-		require.Equal(t, (expectedEpochNumber-1)*epochInterval+1, acutalNewEpoch.FirstBlockHeight)
+		actualNewEpoch := keeper.GetEpoch(ctx)
+		require.Equal(t, expectedEpochNumber, actualNewEpoch.EpochNumber)
+		require.Equal(t, epochInterval, actualNewEpoch.CurrentEpochInterval)
+		require.Equal(t, (expectedEpochNumber-1)*epochInterval+1, actualNewEpoch.FirstBlockHeight)
 	})
 }
