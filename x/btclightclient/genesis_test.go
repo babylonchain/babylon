@@ -12,10 +12,11 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerBytes := bbl.GetBaseBTCHeaderBytes()
+	headerHeight := bbl.GetBaseBTCHeaderHeight()
 	headerHash := headerBytes.Hash()
 	headerWork := types.CalcWork(&headerBytes)
-	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, types.DefaultBaseHeaderHeight, &headerWork)
+	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, headerHeight, &headerWork)
 
 	genesisState := types.GenesisState{
 		Params:        types.DefaultParams(),
