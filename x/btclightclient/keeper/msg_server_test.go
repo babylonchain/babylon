@@ -64,7 +64,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		}
 
 		// If the header has a parent that does not exist, (nil, error) is returned
-		headerParentNotExists := datagen.GenRandomHeaderInfo().Header
+		headerParentNotExists := datagen.GenRandomBTCHeaderInfo().Header
 		msg = &types.MsgInsertHeader{Header: headerParentNotExists}
 		resp, err = msgServer.InsertHeader(sdkCtx, msg)
 		if resp != nil {
@@ -95,7 +95,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		headerDifficultyDiv := sdk.NewUintFromBigInt(new(big.Int).Div(parentHeaderDifficulty, big.NewInt(int64(mul))))
 
 		// Do tests
-		headerMoreWork := datagen.GenRandomHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyMul)
+		headerMoreWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyMul)
 		msg = &types.MsgInsertHeader{Header: headerMoreWork.Header}
 		resp, err = msgServer.InsertHeader(sdkCtx, msg)
 		if mul > keeper.BTCDifficultyMultiplier && resp != nil {
@@ -108,7 +108,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 			t.Errorf("Valid header work led to an error")
 		}
 
-		headerLessWork := datagen.GenRandomHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyDiv)
+		headerLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyDiv)
 		msg = &types.MsgInsertHeader{Header: headerLessWork.Header}
 		resp, err = msgServer.InsertHeader(sdkCtx, msg)
 		if mul > keeper.BTCDifficultyMultiplier && resp != nil {

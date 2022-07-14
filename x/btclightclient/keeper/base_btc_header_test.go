@@ -25,7 +25,7 @@ func FuzzKeeperBaseBTCHeader(f *testing.F) {
 		if retrievedHeaderInfo != nil {
 			t.Errorf("GetBaseBTCHeader returned a header without one being set")
 		}
-		headerInfo1 := datagen.GenRandomHeaderInfo()
+		headerInfo1 := datagen.GenRandomBTCHeaderInfo()
 		blcKeeper.SetBaseBTCHeader(ctx, *headerInfo1)
 		retrievedHeaderInfo = blcKeeper.GetBaseBTCHeader(ctx)
 		if retrievedHeaderInfo == nil {
