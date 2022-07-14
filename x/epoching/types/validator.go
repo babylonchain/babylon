@@ -1,9 +1,10 @@
 package types
 
 import (
+	"sort"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
-	"sort"
 )
 
 type Validator struct {

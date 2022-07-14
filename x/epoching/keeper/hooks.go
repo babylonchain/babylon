@@ -8,17 +8,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// Wrapper struct
-type Hooks struct {
-	k Keeper
-}
-
-// Implements StakingHooks/EpochingHooks interfaces
-var _ stakingtypes.StakingHooks = Hooks{}
+// ensures Keeper implements EpochingHooks interfaces
 var _ types.EpochingHooks = Keeper{}
-
-// Create new distribution hooks
-func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterEpochBegins - call hook if registered
 func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch uint64) {
@@ -40,6 +31,17 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress)
 		k.hooks.BeforeSlashThreshold(ctx, valAddrs)
 	}
 }
+
+// Wrapper struct
+type Hooks struct {
+	k Keeper
+}
+
+// ensures Hooks implements StakingHooks interfaces
+var _ stakingtypes.StakingHooks = Hooks{}
+
+// Create new distribution hooks
+func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
