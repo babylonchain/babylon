@@ -50,6 +50,19 @@ func GetBaseBTCHeaderHeight() uint64 {
 	return height
 }
 
+func GetMaxDifficulty() big.Int {
+	// Maximum btc difficulty possible
+	// Use it to set the difficulty bits of blocks as well as the upper PoW limit
+	// since the block hash needs to be below that
+	// This is the maximum allowed given the 2^23-1 precision
+	maxDifficulty := new(big.Int)
+	maxDifficulty, success := maxDifficulty.SetString("ffff000000000000000000000000000000000000000000000000000000000000", 16)
+	if !success {
+		panic("Conversion did not succeed")
+	}
+	return *maxDifficulty
+}
+
 func GetBaseBTCHeaderBytes() BTCHeaderBytes {
 	hex := GetBaseBTCHeaderHex()
 	headerBytes, err := NewBTCHeaderBytesFromHex(hex)

@@ -69,10 +69,11 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			t.Errorf("Created object height does not correspond to the one submitted")
 		}
 
-		mostWork := sdk.NewUint(10)
-		lessWork := mostWork.Sub(sdk.NewUint(1))
+		// The smaller number, the bigger the difficulty
+		mostDifficulty := sdk.NewUint(10)
+		lessDifficulty := mostDifficulty.Add(sdk.NewUint(1))
 		// Create an object that builds on top of base header
-		childMostWork := datagen.GenRandomHeaderInfoWithParentAndWork(baseHeader, &mostWork)
+		childMostWork := datagen.GenRandomHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
 		blcKeeper.HeadersState(ctx).CreateHeader(childMostWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
@@ -83,7 +84,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			t.Errorf("Tip did not get properly updated")
 		}
 
-		childEqualWork := datagen.GenRandomHeaderInfoWithParentAndWork(baseHeader, &mostWork)
+		childEqualWork := datagen.GenRandomHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
 		blcKeeper.HeadersState(ctx).CreateHeader(childEqualWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
@@ -91,7 +92,8 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			t.Errorf("Tip got updated when it shouldn't")
 		}
 
-		childLessWork := datagen.GenRandomHeaderInfoWithParentAndWork(baseHeader, &lessWork)
+		childLessWork := datagen.GenRandomHeaderInfoWithParentAndBits(baseHeader, &lessDifficulty)
+		//fmt.Println(mostWork, lessWork, childMostWork.Work, childLessWork.Work)
 		blcKeeper.HeadersState(ctx).CreateHeader(childLessWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()

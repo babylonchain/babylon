@@ -38,36 +38,82 @@ func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
 	return &header
 }
 
-// GenRandomHeaderInfoWithParentAndWork generates a BTCHeaderInfo object in which the `header.PrevBlock` points to the `parent`
-// 								 and the `Work` property points to the accumulated work (parent.Work + header.Work)
-func GenRandomHeaderInfoWithParentAndWork(parent *btclightclienttypes.BTCHeaderInfo, work *sdk.Uint) *btclightclienttypes.BTCHeaderInfo {
-	header, _ := bbl.NewBTCHeaderBytesFromBytes(GenRandomByteArray(bbl.BTCHeaderLen))
+func GenRandomBits() uint32 {
+	// Instead of navigating through all the different signs and bit constructing
+	// of the workBits, we can resort to having a uint64 (instead of the maximum of 2^256).
+	// First, generate an integer, convert it into a big.Int and then into compact form.
 
-	// Random header work
-	headerWork := sdk.NewUint(rand.Uint64()).Add(sdk.NewUint(1))
-	if work != nil {
-		headerWork = *work
+	difficulty := rand.Uint64()
+	if difficulty == 0 {
+		difficulty += 1
+	}
+	bigDifficulty := sdk.NewUint(difficulty)
+
+	workBits := blockchain.BigToCompact(bigDifficulty.BigInt())
+	return workBits
+}
+
+func GenRandomPrevBlockChainhash() *chainhash.Hash {
+	chHash, _ := chainhash.NewHashFromStr(GenRandomHexStr(bbl.BTCHeaderHashLen))
+	return chHash
+}
+
+func GenRandomMerkleRootChainhash() *chainhash.Hash {
+	// TODO: use a constant for this
+	chHash, _ := chainhash.NewHashFromStr(GenRandomHexStr(32))
+	return chHash
+}
+
+func GenRandomTime() time.Time {
+	// TODO: Do not use the current time
+	return time.Now()
+}
+
+func GenRandomVersion() int32 {
+	return rand.Int31()
+}
+
+func GenRandomHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbl.BTCHeaderBytes {
+	// TODO: add prefixes to func names
+	headerBits := GenRandomBits()
+	parentHash := GenRandomPrevBlockChainhash()
+	merkleRoot := GenRandomMerkleRootChainhash()
+	time := GenRandomTime()
+	version := GenRandomVersion()
+
+	if bitsBig != nil {
+		headerBits = blockchain.BigToCompact(bitsBig.BigInt())
+	}
+	if parent != nil {
+		parentHash = parent.Hash.ToChainhash()
 	}
 
-	// Retrieve the btcd block to do modifications
-	btcdHeader := header.ToBlockHeader()
-	btcdHeader.Bits = blockchain.BigToCompact(headerWork.BigInt())
+	btcdHeader := &wire.BlockHeader{}
+	btcdHeader.Bits = headerBits
+	btcdHeader.PrevBlock = *parentHash
+	btcdHeader.Version = version
+	btcdHeader.Timestamp = time
+	btcdHeader.MerkleRoot = *merkleRoot
+	return bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+}
 
-	// Compute the parameters that depend on the parent
-	var accumulatedWork sdk.Uint
-	var height uint64
+func GenRandomHeight() uint64 {
+	return rand.Uint64()
+}
+
+// GenRandomHeaderInfoWithParentAndBits generates a BTCHeaderInfo object in which the `header.PrevBlock` points to the `parent`
+// and the `Work` property points to the accumulated work (parent.Work + header.Work). Less bits as a parameter, means more difficulty.
+func GenRandomHeaderInfoWithParentAndBits(parent *btclightclienttypes.BTCHeaderInfo, bits *sdk.Uint) *btclightclienttypes.BTCHeaderInfo {
+	header := GenRandomHeaderBytes(parent, bits)
+	height := GenRandomHeight()
 	if parent != nil {
 		height = parent.Height + 1
-		accumulatedWork = btclightclienttypes.CumulativeWork(headerWork, *parent.Work)
-		// Set the PrevBlock to the parent's hash
-		btcdHeader.PrevBlock = *parent.Hash.ToChainhash()
-	} else {
-		height = rand.Uint64()
-		// if there is no parent, the accumulated work is the same as the work
-		accumulatedWork = headerWork
 	}
 
-	header = bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+	accumulatedWork := btclightclienttypes.CalcWork(&header)
+	if parent != nil {
+		accumulatedWork = btclightclienttypes.CumulativeWork(accumulatedWork, *parent.Work)
+	}
 
 	return &btclightclienttypes.BTCHeaderInfo{
 		Header: &header,
@@ -78,7 +124,7 @@ func GenRandomHeaderInfoWithParentAndWork(parent *btclightclienttypes.BTCHeaderI
 }
 
 func GenRandomHeaderInfoWithParent(parent *btclightclienttypes.BTCHeaderInfo) *btclightclienttypes.BTCHeaderInfo {
-	return GenRandomHeaderInfoWithParentAndWork(parent, nil)
+	return GenRandomHeaderInfoWithParentAndBits(parent, nil)
 }
 
 // GenRandomHeaderInfo generates a random BTCHeaderInfo object

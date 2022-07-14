@@ -13,4 +13,5 @@ var (
 	ErrHeaderParentDoesNotExist = sdkerrors.Register(ModuleName, 1102, "header parent does not exist")
 	ErrInvalidDifficulty        = sdkerrors.Register(ModuleName, 1103, "invalid difficulty bits")
 	ErrHeaderHigherThanTip      = sdkerrors.Register(ModuleName, 1104, "header is higher than the tip")
+	ErrEmptyMessage             = sdkerrors.Register(ModuleName, 1105, "empty message provided")
 )

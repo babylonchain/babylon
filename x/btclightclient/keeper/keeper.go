@@ -107,7 +107,7 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 	var addedToMainChain []*types.BTCHeaderInfo
 
 	// The tip has changed, we need to send events
-	if currentTip.Eq(previousTip) {
+	if !currentTip.Eq(previousTip) {
 		if !currentTip.Eq(headerInfo) {
 			panic("The tip was updated but with a different header than the one provided")
 		}

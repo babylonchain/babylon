@@ -5,7 +5,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/wire"
+	"math/big"
 )
 
 type BTCHeaderBytes []byte
@@ -159,6 +161,10 @@ func (m *BTCHeaderBytes) ParentHash() *BTCHeaderHashBytes {
 
 func (m *BTCHeaderBytes) Bits() uint32 {
 	return m.ToBlockHeader().Bits
+}
+
+func (m *BTCHeaderBytes) Difficulty() *big.Int {
+	return blockchain.CompactToBig(m.Bits())
 }
 
 func toBlockHeader(data []byte) (*wire.BlockHeader, error) {

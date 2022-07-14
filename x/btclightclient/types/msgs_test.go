@@ -17,11 +17,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 	defaultHeader := bbl.GetBaseBTCHeaderBytes()
 	defaultBtcdHeader := defaultHeader.ToBlockHeader()
 
-	// Maximum btc difficulty possible
-	// Use it to set the difficulty bits of blocks as well as the upper PoW limit
-	// since the block hash needs to be below that
-	// This is the maximum allowed given the 2^23-1 precision
-	maxDifficulty, _ := new(big.Int).SetString("ffff000000000000000000000000000000000000000000000000000000000000", 16)
+	maxDifficulty := bbl.GetMaxDifficulty()
 
 	f.Add(
 		addressBytes,
@@ -62,7 +58,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			case 0:
 				// Valid input
 				// Set the work bits to the pow limit
-				bits = blockchain.BigToCompact(maxDifficulty)
+				bits = blockchain.BigToCompact(&maxDifficulty)
 			case 1:
 				// Zero PoW
 				bits = blockchain.BigToCompact(big.NewInt(0))
@@ -70,7 +66,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 				// Negative PoW
 				bits = blockchain.BigToCompact(big.NewInt(-1))
 			default:
-				bits = blockchain.BigToCompact(maxDifficulty)
+				bits = blockchain.BigToCompact(&maxDifficulty)
 			}
 		}
 		// Generate a header with the provided modifications
@@ -84,7 +80,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		// that there is still space for block hashes that are less than that
 		newHeaderHash := newBtcdHeader.BlockHash()
 		hashNum := blockchain.HashToBig(&newHeaderHash)
-		if hashNum.Cmp(maxDifficulty) > 0 {
+		if hashNum.Cmp(&maxDifficulty) > 0 {
 			t.Skip()
 		}
 
@@ -104,7 +100,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		}
 
 		// Validate the message
-		err = msgInsertHeader.ValidateHeader(maxDifficulty)
+		err = msgInsertHeader.ValidateHeader(&maxDifficulty)
 		if err != nil && errorKind == 0 {
 			t.Errorf("Valid message %s failed with %s", headerHex, err)
 		}
