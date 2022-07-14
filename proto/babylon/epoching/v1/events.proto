@@ -1,0 +1,63 @@
+syntax = "proto3";
+package babylon.epoching.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/epoching/types";
+
+message EventAttribute {
+    bytes key = 1;
+    bytes value = 2;
+    bool index = 3;
+}
+
+message EventBeginEpoch {
+    uint64 epoch_number = 1;
+}
+
+message EventEndEpoch {
+    uint64 epoch_number = 1;
+}
+
+message EventHandleQueuedMsg {
+    string original_event_type = 1;
+    uint64 epoch_number = 2;
+    bytes tx_id = 3;
+    bytes msg_id = 4;
+    repeated EventAttribute original_attributes = 5;
+}
+
+message EventHandleQueuedMsgFailed {
+    uint64 epoch_numer = 1;
+    bytes tx_id = 2;
+    bytes msg_id = 3;
+    string error_msg = 4;
+}
+
+message EventSlashThreshold {
+    int64 slashed_voting_power = 1;
+    int64 total_voting_power = 2;
+    repeated bytes slashed_validators = 3;
+}
+
+message EventWrappedDelegate {
+    string validator_address = 1;
+    uint64 amount = 2;
+    string denom = 3;
+    uint64 epoch_boundary = 4;
+}
+
+message EventWrappedUndelegate {
+    string validator_address = 1;
+    uint64 amount = 2;
+    string denom = 3;
+    uint64 epoch_boundary = 4;
+}
+
+message EventWrappedBeginRedelegate {
+    string source_validator_address = 1;
+    string destination_validator_address = 2;
+    uint64 amount = 3;
+    string denom = 4;
+    uint64 epoch_boundary = 5;
+}
