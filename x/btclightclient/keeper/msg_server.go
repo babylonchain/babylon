@@ -35,7 +35,7 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 
 	parentHash := msg.Header.ParentHash()
 	// Retrieve parent
-	parent, err := m.k.HeadersState(sdkCtx).GetHeaderByHash(parentHash)
+	parent, err := m.k.headersState(sdkCtx).GetHeaderByHash(parentHash)
 	// parent does not exist
 	if err != nil {
 		return nil, err

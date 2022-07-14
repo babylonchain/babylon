@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type HeadersState struct {
+type headersState struct {
 	cdc          codec.BinaryCodec
 	headers      sdk.KVStore
 	hashToHeight sdk.KVStore
@@ -16,10 +16,10 @@ type HeadersState struct {
 	tip          sdk.KVStore
 }
 
-func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
-	// Build the HeadersState storage
+func (k Keeper) headersState(ctx sdk.Context) headersState {
+	// Build the headersState storage
 	store := ctx.KVStore(k.storeKey)
-	return HeadersState{
+	return headersState{
 		cdc:          k.cdc,
 		headers:      prefix.NewStore(store, types.HeadersObjectPrefix),
 		hashToHeight: prefix.NewStore(store, types.HashToHeightPrefix),
@@ -32,7 +32,7 @@ func (k Keeper) HeadersState(ctx sdk.Context) HeadersState {
 // - hash->height
 // - hash->work
 // - (height, hash)->header storage
-func (s HeadersState) CreateHeader(headerInfo *types.BTCHeaderInfo) {
+func (s headersState) CreateHeader(headerInfo *types.BTCHeaderInfo) {
 	headerHash := headerInfo.Hash
 	height := headerInfo.Height
 	cumulativeWork := headerInfo.Work
@@ -57,14 +57,14 @@ func (s HeadersState) CreateHeader(headerInfo *types.BTCHeaderInfo) {
 }
 
 // CreateTip sets the provided header as the tip
-func (s HeadersState) CreateTip(headerInfo *types.BTCHeaderInfo) {
+func (s headersState) CreateTip(headerInfo *types.BTCHeaderInfo) {
 	// Retrieve the key for the tip storage
 	tipKey := types.TipKey()
 	s.tip.Set(tipKey, s.cdc.MustMarshal(headerInfo))
 }
 
 // GetHeader Retrieve a header by its height and hash
-func (s HeadersState) GetHeader(height uint64, hash *bbl.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
+func (s headersState) GetHeader(height uint64, hash *bbl.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
 	// Keyed by (height, hash)
 	headersKey := types.HeadersObjectKey(height, hash)
 
@@ -78,7 +78,7 @@ func (s HeadersState) GetHeader(height uint64, hash *bbl.BTCHeaderHashBytes) (*t
 }
 
 // GetHeaderHeight Retrieve the Height of a header
-func (s HeadersState) GetHeaderHeight(hash *bbl.BTCHeaderHashBytes) (uint64, error) {
+func (s headersState) GetHeaderHeight(hash *bbl.BTCHeaderHashBytes) (uint64, error) {
 	// Keyed by hash
 	hashKey := types.HeadersObjectHeightKey(hash)
 
@@ -94,7 +94,7 @@ func (s HeadersState) GetHeaderHeight(hash *bbl.BTCHeaderHashBytes) (uint64, err
 }
 
 // GetHeaderWork Retrieve the work of a header
-func (s HeadersState) GetHeaderWork(hash *bbl.BTCHeaderHashBytes) (*sdk.Uint, error) {
+func (s headersState) GetHeaderWork(hash *bbl.BTCHeaderHashBytes) (*sdk.Uint, error) {
 	// Keyed by hash
 	hashKey := types.HeadersObjectHeightKey(hash)
 	// Retrieve the raw bytes for the work
@@ -113,7 +113,7 @@ func (s HeadersState) GetHeaderWork(hash *bbl.BTCHeaderHashBytes) (*sdk.Uint, er
 }
 
 // GetHeaderByHash Retrieve a header by its hash
-func (s HeadersState) GetHeaderByHash(hash *bbl.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
+func (s headersState) GetHeaderByHash(hash *bbl.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
 	// Get the height of the header in order to use it along with the hash
 	// as a (height, hash) key for the object storage
 	height, err := s.GetHeaderHeight(hash)
@@ -124,7 +124,7 @@ func (s HeadersState) GetHeaderByHash(hash *bbl.BTCHeaderHashBytes) (*types.BTCH
 }
 
 // GetBaseBTCHeader retrieves the BTC header with the minimum height
-func (s HeadersState) GetBaseBTCHeader() *types.BTCHeaderInfo {
+func (s headersState) GetBaseBTCHeader() *types.BTCHeaderInfo {
 	// Retrieve the canonical chain
 	canonicalChain := s.GetMainChain()
 	// If the canonical chain is empty, then there is no base header
@@ -136,7 +136,7 @@ func (s HeadersState) GetBaseBTCHeader() *types.BTCHeaderInfo {
 }
 
 // GetTip returns the tip of the canonical chain
-func (s HeadersState) GetTip() *types.BTCHeaderInfo {
+func (s headersState) GetTip() *types.BTCHeaderInfo {
 	if !s.TipExists() {
 		return nil
 	}
@@ -147,7 +147,7 @@ func (s HeadersState) GetTip() *types.BTCHeaderInfo {
 }
 
 // HeadersByHeight Retrieve headers by their height using an accumulator function
-func (s HeadersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo) bool) {
+func (s headersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo) bool) {
 	// The s.headers store is keyed by (height, hash)
 	// By getting the prefix key using the height,
 	// we are getting a store of `hash -> header` that contains all hashes
@@ -170,7 +170,7 @@ func (s HeadersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo
 }
 
 // getDescendingHeadersUpTo returns a collection of descending headers according to their height
-func (s HeadersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
+func (s headersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
 	var headers []*types.BTCHeaderInfo
 	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
 		if tipHeight-header.Height == depth {
@@ -184,7 +184,7 @@ func (s HeadersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) [
 
 // GetMainChainUpTo returns the current canonical chain as a collection of block headers
 // 				    starting from the tip and ending on the header that has a depth distance from it.
-func (s HeadersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
+func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
 		return nil
@@ -214,7 +214,7 @@ func (s HeadersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 
 // GetMainChain retrieves the main chain as a collection of block headers starting from the tip
 // 				and ending on the base BTC header.
-func (s HeadersState) GetMainChain() []*types.BTCHeaderInfo {
+func (s headersState) GetMainChain() []*types.BTCHeaderInfo {
 	if !s.TipExists() {
 		return nil
 	}
@@ -225,7 +225,7 @@ func (s HeadersState) GetMainChain() []*types.BTCHeaderInfo {
 
 // GetHighestCommonAncestor traverses the ancestors of both headers
 //  						to identify the common ancestor with the highest height
-func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, header2 *types.BTCHeaderInfo) *types.BTCHeaderInfo {
+func (s headersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, header2 *types.BTCHeaderInfo) *types.BTCHeaderInfo {
 	// The algorithm works as follows:
 	// 1. Initialize a hashmap hash -> bool denoting whether the hash
 	//    of an ancestor of either header1 or header2 has been encountered
@@ -283,7 +283,7 @@ func (s HeadersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 }
 
 // GetInOrderAncestorsUntil returns the list of nodes starting from the block *after* the `ancestor` and ending with the `descendant`.
-func (s HeadersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
+func (s headersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
 	if ancestor.Height > descendant.Height {
 		panic("Ancestor has a higher height than descendant")
 	}
@@ -332,7 +332,7 @@ func (s HeadersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, 
 }
 
 // HeaderExists Check whether a hash is maintained in storage
-func (s HeadersState) HeaderExists(hash *bbl.BTCHeaderHashBytes) bool {
+func (s headersState) HeaderExists(hash *bbl.BTCHeaderHashBytes) bool {
 	if hash == nil {
 		return false
 	}
@@ -340,13 +340,13 @@ func (s HeadersState) HeaderExists(hash *bbl.BTCHeaderHashBytes) bool {
 }
 
 // TipExists checks whether the tip of the canonical chain has been set
-func (s HeadersState) TipExists() bool {
+func (s headersState) TipExists() bool {
 	tipKey := types.TipKey()
 	return s.tip.Has(tipKey)
 }
 
 // updateLongestChain checks whether the tip should be updated and returns true if it does
-func (s HeadersState) updateLongestChain(headerInfo *types.BTCHeaderInfo) {
+func (s headersState) updateLongestChain(headerInfo *types.BTCHeaderInfo) {
 	// If there is no existing tip, then the header is set as the tip
 	if !s.TipExists() {
 		s.CreateTip(headerInfo)
@@ -363,7 +363,7 @@ func (s HeadersState) updateLongestChain(headerInfo *types.BTCHeaderInfo) {
 	}
 }
 
-func (s HeadersState) iterateReverseHeaders(fn func(*types.BTCHeaderInfo) bool) {
+func (s headersState) iterateReverseHeaders(fn func(*types.BTCHeaderInfo) bool) {
 	// Iterate it in reverse in order to get highest heights first
 	iter := s.headers.ReverseIterator(nil, nil)
 	defer iter.Close()

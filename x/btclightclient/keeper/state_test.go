@@ -2,7 +2,8 @@ package keeper_test
 
 import (
 	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/testutil/keeper"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/x/btclightclient/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
@@ -35,7 +36,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		// Create base header and test whether the tip and storages are set
 		baseHeader := datagen.GenRandomBTCHeaderInfo()
@@ -127,7 +128,7 @@ func FuzzHeadersStateTipOps(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		headerInfo1 := datagen.GenRandomBTCHeaderInfo()
 		headerInfo2 := datagen.GenRandomBTCHeaderInfo()
@@ -195,7 +196,7 @@ func FuzzHeadersStateGetHeaderOps(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		headerInfo := datagen.GenRandomBTCHeaderInfo()
 		wrongHash := datagen.MutateHash(headerInfo.Hash)
 		wrongHeight := headerInfo.Height + datagen.RandomInt(10) + 1
@@ -289,7 +290,7 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		nilBaseHeader := blcKeeper.HeadersState(ctx).GetBaseBTCHeader()
 		if nilBaseHeader != nil {
@@ -328,7 +329,7 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		maxHeaders := 256 // maximum 255 headers with particular height
 		numHeaders := datagen.RandomInt(maxHeaders)
 		height := rand.Uint64() // the height for those headers
@@ -395,7 +396,7 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		headersMap := datagen.GenRandomHeaderInfoTree()
 		maxAccPow := sdk.NewUint(0)
 		var tip *types.BTCHeaderInfo = nil
@@ -452,7 +453,7 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		// Generate a tree of at least a depth of two, since we need at least two nodes
 		headersMap := datagen.GenRandomBTCHeaderInfoTreeMinDepth(uint64(2))
 		// Add all headers to storage
@@ -520,7 +521,7 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 	f.Add(int64(42))
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		// Generate a tree of any size.
 		// We can work with even one header, since this should lead to an empty result.
 		headersMap := datagen.GenRandomHeaderInfoTree()
@@ -551,6 +552,10 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 			}
 		}
 	})
+}
+
+func setupRandomChain(k *keeper.Keeper, ctx sdk.Context) {
+	// TODO
 }
 
 func selectRandomHeaders(headers map[string]*types.BTCHeaderInfo, idxs []uint64) []*types.BTCHeaderInfo {
