@@ -338,18 +338,19 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		maxHeaders := 256 // maximum 255 headers with particular height
 		numHeaders := datagen.RandomInt(maxHeaders)
-		height := rand.Uint64() // the height for those headers
 
 		// This will contain a mapping between all the header hashes that were created
 		// and a boolean value.
 		hashCount := make(map[string]bool)
+		baseHeader := setupBaseHeader(blcKeeper, ctx)
+		height := baseHeader.Height + 1
 
 		// Generate numHeaders with particular height
 		var i uint64
 		for i = 0; i < numHeaders; i++ {
-			headerInfo := datagen.GenRandomBTCHeaderInfoWithHeight(height)
+			headerInfo := datagen.GenRandomBTCHeaderInfoWithParent(baseHeader)
 			hashCount[headerInfo.Hash.MarshalHex()] = false
-			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
+			blcKeeper.InsertHeader(ctx, headerInfo.Header)
 		}
 
 		var headersAdded uint64 = 0

@@ -139,13 +139,6 @@ func GenRandomBTCHeaderInfo() *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParent(nil)
 }
 
-// GenRandomBTCHeaderInfoWithHeight generates a random BTCHeaderInfo object with a particular height
-func GenRandomBTCHeaderInfoWithHeight(height uint64) *btclightclienttypes.BTCHeaderInfo {
-	headerInfo := GenRandomBTCHeaderInfo()
-	headerInfo.Height = height
-	return headerInfo
-}
-
 // genRandomHeaderInfoChildren recursively generates a random tree of BTCHeaderInfo objects rooted at `parent`.
 // 							   It accomplishes this by randomly selecting the number of children for the `parent` block, and
 // 							   then generating trees rooted at the children block.
