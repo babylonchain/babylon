@@ -38,7 +38,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 			 5. parent 1 < work < 4 times the work of the header
 			 6. parent > 4 times the work of the header
 	*/
-	f.Add(int64(42))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		msgServer, blcKeeper, sdkCtx := setupMsgServer(t)

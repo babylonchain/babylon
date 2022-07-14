@@ -12,7 +12,6 @@ import (
 )
 
 func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
-	// TODO: Replace this with the new generation functions
 	timeInt int64, prevBlockStr string, merkleRootStr string) *wire.BlockHeader {
 	if !ValidHex(prevBlockStr, bbl.BTCHeaderHashLen) {
 		prevBlockStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
@@ -143,6 +142,10 @@ func GenRandomBTCHeaderInfoWithParentAndBits(parent *btclightclienttypes.BTCHead
 // in which the parent points to the `parent` parameter.
 func GenRandomBTCHeaderInfoWithParent(parent *btclightclienttypes.BTCHeaderInfo) *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParentAndBits(parent, nil)
+}
+
+func GenRandomBTCHeaderInfoWithBits(bits *sdk.Uint) *btclightclienttypes.BTCHeaderInfo {
+	return GenRandomBTCHeaderInfoWithParentAndBits(nil, bits)
 }
 
 // GenRandomBTCHeaderInfo generates a random BTCHeaderInfo object

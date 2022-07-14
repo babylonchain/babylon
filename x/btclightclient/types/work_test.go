@@ -1,14 +1,19 @@
 package types_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"math/rand"
 	"testing"
 )
 
 func FuzzCumulativeWork(f *testing.F) {
-	f.Add(uint64(17), uint64(25))
-	f.Fuzz(func(t *testing.T, numa uint64, numb uint64) {
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+		numa := rand.Uint64()
+		numb := rand.Uint64()
 		biga := sdk.NewUint(numa)
 		bigb := sdk.NewUint(numb)
 

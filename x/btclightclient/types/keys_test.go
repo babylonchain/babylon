@@ -11,13 +11,12 @@ import (
 )
 
 func FuzzHeadersObjectKey(f *testing.F) {
-	f.Add(uint64(42), "00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
-	f.Fuzz(func(t *testing.T, height uint64, hexHash string, seed int64) {
+	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
-		}
+		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
+		height := rand.Uint64()
 		// get chainhash and height
 		heightBytes := sdk.Uint64ToBigEndian(height)
 		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
@@ -36,13 +35,11 @@ func FuzzHeadersObjectKey(f *testing.F) {
 }
 
 func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
-	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
-	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
+	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
-		}
+		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
 		headerHashBytes := headerHash.MustMarshal()
 
