@@ -3,7 +3,6 @@ package types
 import (
 	"github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/btcutils"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -39,17 +38,16 @@ func (s *RawCheckpointSubmission) GetRawCheckPointBytes() []byte {
 	return rawCheckpointData
 }
 
-func (s *RawCheckpointSubmission) GetFirstBlockHash() chainhash.Hash {
+func (s *RawCheckpointSubmission) GetFirstBlockHash() types.BTCHeaderHashBytes {
 	return s.Proof1.BlockHash
 }
 
-func (s *RawCheckpointSubmission) GetSecondBlockHash() chainhash.Hash {
+func (s *RawCheckpointSubmission) GetSecondBlockHash() types.BTCHeaderHashBytes {
 	return s.Proof2.BlockHash
 }
 
 func toTransactionKey(p *btcutils.ParsedProof) TransactionKey {
-	h := p.BlockHeader.BlockHash()
-	hashBytes := types.NewBTCHeaderHashBytesFromChainhash(&h)
+	hashBytes := p.BlockHash
 	return TransactionKey{
 		Index: p.TransactionIdx,
 		Hash:  &hashBytes,
@@ -68,21 +66,19 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 }
 
 func (rsc *RawCheckpointSubmission) GetSubmissionData() SubmissionData {
-	var tBytes [][]byte
-	tBytes = append(tBytes, rsc.Proof1.TransactionBytes)
-	tBytes = append(tBytes, rsc.Proof2.TransactionBytes)
 
+	tBytes := [][]byte{rsc.Proof1.TransactionBytes, rsc.Proof2.TransactionBytes}
 	return SubmissionData{
 		Submitter:      rsc.Submitter.Bytes(),
 		Btctransaction: tBytes,
 	}
 }
 
-func (sk *SubmissionKey) GetKeyBlockHashes() []*chainhash.Hash {
-	var hashes []*chainhash.Hash
+func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
+	var hashes []*types.BTCHeaderHashBytes
 
 	for _, k := range sk.Key {
-		h := k.Hash.ToChainhash()
+		h := k.Hash
 		hashes = append(hashes, h)
 	}
 

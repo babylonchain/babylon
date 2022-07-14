@@ -3,9 +3,9 @@ package keeper
 import (
 	"context"
 
+	btypes "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -20,48 +20,53 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{keeper}
 }
 
-func (m msgServer) validateAgainsHeaderChain(rawSub *types.RawCheckpointSubmission) (uint64, error) {
+// Gets proof height in context of btclightclilent, also if proof is composed
+// from two different blocks checks that they are on the same fork.
+func (m msgServer) getProofHeight(rawSub *types.RawCheckpointSubmission) (uint64, error) {
 	var latestblock = uint64(0)
 
 	fh := rawSub.GetFirstBlockHash()
 	sh := rawSub.GetSecondBlockHash()
 
-	if fh.IsEqual(&sh) {
+	if fh.Eq(&sh) {
 		// both hashes are the same which means, two transactions with their respective
 		// proofs were provided in the same block. We only need to check one block for
 		// for height
 		num, err := m.k.GetBlockHeight(fh)
 
 		if err != nil {
-			return latestblock, err
+			return 0, err
 		}
 
 		return num, nil
 	}
 
-	// at this point we known that both transactions were in different blocks.
+	// at this point we know that both transactions were in different blocks.
 	// we need to check two things:
 	// - if both blocks are known to header oracle
 	// - if both blocks are on the same fork i.e if second block is descendant of the
 	// first block
-	for _, hash := range []chainhash.Hash{fh, sh} {
+	for _, hash := range []btypes.BTCHeaderHashBytes{fh, sh} {
 		num, err := m.k.GetBlockHeight(hash)
 		if err != nil {
-			return latestblock, err
+			return 0, err
 		}
-		// returning hightes block number as checkpoint number as if highest becomes
-		// stable then it means older is also stable.
+		// the highest block number with a checkpoint being stable implies that all blocks are stable
 		if num > latestblock {
 			latestblock = num
 		}
 	}
 
-	// we have checked earlier that both block are known to header light client,
+	// we have checked earlier that both blocks are known to header light client,
 	// so no need to check err.
-	isAncestor, _ := m.k.IsAncestor(fh, sh)
+	isAncestor, err := m.k.IsAncestor(fh, sh)
+
+	if err != nil {
+		panic("Headers which are should have been known to btclight client")
+	}
 
 	if !isAncestor {
-		return latestblock, types.ErrProvidedHeaderFromDifferentForks
+		return 0, types.ErrProvidedHeaderFromDifferentForks
 	}
 
 	return latestblock, nil
@@ -69,17 +74,13 @@ func (m msgServer) validateAgainsHeaderChain(rawSub *types.RawCheckpointSubmissi
 
 // checkHashesFromOneBlock checks if all hashes are from the same block i.e
 // if all hashes are equal
-func checkHashesFromOneBlock(hs []*chainhash.Hash) bool {
+func checkHashesFromOneBlock(hs []*btypes.BTCHeaderHashBytes) bool {
 	if len(hs) < 2 {
 		return true
 	}
 
-	for i := range hs {
-		if i == 0 {
-			continue
-		}
-
-		if !hs[i-1].IsEqual(hs[i]) {
+	for i := 1; i < len(hs); i++ {
+		if !hs[i-1].Eq(hs[i]) {
 			return false
 		}
 	}
@@ -87,17 +88,13 @@ func checkHashesFromOneBlock(hs []*chainhash.Hash) bool {
 	return true
 }
 
-func (m msgServer) checkHashesAreAncestors(hs []*chainhash.Hash) bool {
+func (m msgServer) checkHashesAreAncestors(hs []*btypes.BTCHeaderHashBytes) bool {
 	if len(hs) < 2 {
 		// cannot have ancestry relations with only 0 or 1 hash
 		return false
 	}
 
-	for i := range hs {
-		if i == 0 {
-			continue
-		}
-
+	for i := 1; i < len(hs); i++ {
 		anc, err := m.k.IsAncestor(*hs[i-1], *hs[i])
 
 		if err != nil {
@@ -161,7 +158,11 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 			lastHashFromSavedCheckpoint := hs[len(hs)-1]
 
 			// do not check err as all those hashes were checked in previous validation steps
-			anc, _ := m.k.IsAncestor(*lastHashFromSavedCheckpoint, rawSub.GetFirstBlockHash())
+			anc, err := m.k.IsAncestor(*lastHashFromSavedCheckpoint, rawSub.GetFirstBlockHash())
+
+			if err != nil {
+				panic("Unexpected anecestry error, all blocks should have been known at this point")
+			}
 
 			if anc {
 				// found ancestry stop checking
@@ -186,18 +187,18 @@ func (m msgServer) checkAndSaveEpochData(
 	// Otherwise it is possible to end up with node which updated submission list
 	// but did not save submission itself.
 
-	// we do not have any data saved yet
 	if ed == nil {
+		// we do not have any data saved yet
 		newEd := types.NewEpochData(subKey)
-		m.k.SaveEpochData(sdkCtx, epochNum, &newEd)
-		m.k.SaveSubmission(sdkCtx, subKey, subData)
+		ed = &newEd
 	} else {
 		// epoch data already existis for given epoch, append new submission, and save
 		// submission key and data
 		ed.AppendKey(subKey)
-		m.k.SaveEpochData(sdkCtx, epochNum, ed)
-		m.k.SaveSubmission(sdkCtx, subKey, subData)
 	}
+
+	m.k.SaveEpochData(sdkCtx, epochNum, ed)
+	m.k.SaveSubmission(sdkCtx, subKey, subData)
 }
 
 // TODO at some point add proper logging of error
@@ -229,7 +230,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	// TODO for now we do nothing with processed blockHeight but ultimatly it should
 	// be a part of timestamp
-	_, err = m.validateAgainsHeaderChain(rawSubmission)
+	_, err = m.getProofHeight(rawSubmission)
 
 	if err != nil {
 		return nil, err
@@ -250,7 +251,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// This seems to be valid babylon checkpoint, check ancestors.
 	// If this submission is not for initial epoch there must already exsits checkpoints
 	// for previous epoch which are ancestors of provided submissions
-	if epochNum > 0 {
+	if epochNum > 1 {
 		// this is valid checkpoint for not initial epoch, we need to check previous epoch
 		// checkpoints
 		previousEpochData := m.k.GetEpochData(sdkCtx, epochNum-1)

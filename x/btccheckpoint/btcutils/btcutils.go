@@ -10,7 +10,6 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcd/wire"
 )
 
 const (
@@ -25,9 +24,8 @@ const (
 // - Bitcoin Transaction index in block
 // - Non-empty OpReturnData
 type ParsedProof struct {
-	BlockHeader wire.BlockHeader
 	// keeping header hash to avoid recomputing it everytime
-	BlockHash        chainhash.Hash
+	BlockHash        types.BTCHeaderHashBytes
 	Transaction      *btcutil.Tx
 	TransactionBytes []byte
 	TransactionIdx   uint32
@@ -153,9 +151,9 @@ func ParseProof(
 		return nil, fmt.Errorf("provided transaction should provide op return data")
 	}
 
+	bh := header.BlockHash()
 	parsedProof := &ParsedProof{
-		BlockHeader:      *header,
-		BlockHash:        header.BlockHash(),
+		BlockHash:        types.NewBTCHeaderHashBytesFromChainhash(&bh),
 		Transaction:      tx,
 		TransactionBytes: btcTransaction,
 		TransactionIdx:   transactionIndex,

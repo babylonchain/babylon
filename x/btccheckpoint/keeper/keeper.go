@@ -3,9 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/tendermint/tendermint/libs/log"
 
+	btypes "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,11 +50,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(b chainhash.Hash) (uint64, error) {
+func (k Keeper) GetBlockHeight(b btypes.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(b)
 }
 
-func (k Keeper) IsAncestor(parentHash chainhash.Hash, childHash chainhash.Hash) (bool, error) {
+func (k Keeper) IsAncestor(parentHash btypes.BTCHeaderHashBytes, childHash btypes.BTCHeaderHashBytes) (bool, error) {
 	return k.btcLightClientKeeper.IsAncestor(parentHash, childHash)
 }
 
@@ -72,13 +72,15 @@ func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
 func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.GetEpochIndexKey(e))
+
 	if len(bytes) == 0 {
 		return nil
-	} else {
-		ed := &types.EpochData{}
-		k.cdc.MustUnmarshal(bytes, ed)
-		return ed
 	}
+
+	ed := &types.EpochData{}
+	k.cdc.MustUnmarshal(bytes, ed)
+	return ed
+
 }
 
 func (k Keeper) SaveEpochData(ctx sdk.Context, e uint64, ed *types.EpochData) {
