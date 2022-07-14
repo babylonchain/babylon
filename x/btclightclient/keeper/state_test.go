@@ -597,6 +597,12 @@ func setupBaseHeader(k *keeper.Keeper, ctx sdk.Context) *types.BTCHeaderInfo {
 }
 
 func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minDepth uint64, maxDepth uint64) map[string]*types.BTCHeaderInfo {
+	// Create the base header
+	baseHeader := setupBaseHeader(k, ctx)
+	return genRandomTreeRoot(k, ctx, baseHeader, minDepth, maxDepth)
+}
+
+func genRandomTreeRoot(k *keeper.Keeper, ctx sdk.Context, root *types.BTCHeaderInfo, minDepth uint64, maxDepth uint64) map[string]*types.BTCHeaderInfo {
 	headersMap := make(map[string]*types.BTCHeaderInfo, maxDepth)
 	if maxDepth == 0 {
 		maxDepth = datagen.RandomInt(10) + 1
@@ -604,16 +610,14 @@ func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minDepth uint64, maxDepth 
 	if maxDepth < minDepth {
 		maxDepth = minDepth
 	}
-	// Create the base header
-	baseHeader := setupBaseHeader(k, ctx)
-	headersMap[baseHeader.Hash.String()] = baseHeader
+	headersMap[root.Hash.String()] = root
 
-	datagen.GenRandomBTCHeaderInfoTree(baseHeader, minDepth, func(headerInfo *types.BTCHeaderInfo) bool {
+	datagen.GenRandomBTCHeaderInfoTree(root, minDepth, func(headerInfo *types.BTCHeaderInfo) bool {
 		if _, ok := headersMap[headerInfo.Hash.String()]; ok {
 			// Rare occasion that we get a duplicate hash
 			return true
 		}
-		if headerInfo.Height-baseHeader.Height > maxDepth {
+		if headerInfo.Height-root.Height > maxDepth {
 			return true
 		}
 		err := k.InsertHeader(ctx, headerInfo.Header)
@@ -624,5 +628,6 @@ func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minDepth uint64, maxDepth 
 		headersMap[headerInfo.Hash.String()] = headerInfo
 		return false
 	})
+
 	return headersMap
 }

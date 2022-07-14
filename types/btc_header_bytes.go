@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"math/big"
 	"time"
@@ -37,6 +38,24 @@ func NewBTCHeaderBytesFromBytes(header []byte) (BTCHeaderBytes, error) {
 		return nil, err
 	}
 	return headerBytes, nil
+}
+
+func NewBTCHeaderBytesFromAttributes(bits uint32, prevBlock *BTCHeaderHashBytes, version int32,
+	timestamp time.Time, merkleRoot string) (BTCHeaderBytes, error) {
+
+	merkleRootChHash, err := chainhash.NewHashFromStr(merkleRoot)
+	if err != nil {
+		return nil, err
+	}
+
+	btcdHeader := &wire.BlockHeader{}
+	btcdHeader.Bits = bits
+	btcdHeader.PrevBlock = *prevBlock.ToChainhash()
+	btcdHeader.Version = version
+	btcdHeader.Timestamp = timestamp
+	btcdHeader.MerkleRoot = *merkleRootChHash
+	return NewBTCHeaderBytesFromBlockHeader(btcdHeader), nil
+
 }
 
 func (m BTCHeaderBytes) MarshalJSON() ([]byte, error) {

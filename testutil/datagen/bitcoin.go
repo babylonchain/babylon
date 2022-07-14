@@ -12,6 +12,7 @@ import (
 )
 
 func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
+	// TODO: Replace this with the new generation functions
 	timeInt int64, prevBlockStr string, merkleRootStr string) *wire.BlockHeader {
 	if !ValidHex(prevBlockStr, bbl.BTCHeaderHashLen) {
 		prevBlockStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
@@ -38,6 +39,7 @@ func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
 	return &header
 }
 
+// GenRandomBTCHeaderBits constructs a random uint32 corresponding to BTC header difficulty bits
 func GenRandomBTCHeaderBits() uint32 {
 	// Instead of navigating through all the different signs and bit constructing
 	// of the workBits, we can resort to having a uint64 (instead of the maximum of 2^256).
@@ -53,32 +55,43 @@ func GenRandomBTCHeaderBits() uint32 {
 	return workBits
 }
 
-func GenRandomBTCHeaderPrevBlockChainhash() *chainhash.Hash {
-	chHash, _ := chainhash.NewHashFromStr(GenRandomHexStr(bbl.BTCHeaderHashLen))
-	return chHash
+// GenRandomBTCHeaderPrevBlock constructs a random BTCHeaderHashBytes instance
+func GenRandomBTCHeaderPrevBlock() *bbl.BTCHeaderHashBytes {
+	hex := GenRandomHexStr(bbl.BTCHeaderHashLen)
+	hashBytes, _ := bbl.NewBTCHeaderHashBytesFromHex(hex)
+	return &hashBytes
 }
 
-func GenRandomBTCHeaderMerkleRootChainhash() *chainhash.Hash {
-	// TODO: use a constant for this
-	chHash, _ := chainhash.NewHashFromStr(GenRandomHexStr(32))
-	return chHash
+// GenRandomBTCHeaderMerkleRoot generates a random hex string corresponding to a merkle root
+func GenRandomBTCHeaderMerkleRoot() string {
+	// TODO: this should become a constant and have a custom type
+	return GenRandomHexStr(32)
 }
 
+// GenRandomBTCHeaderTimestamp generates a random BTC header timestamp
 func GenRandomBTCHeaderTimestamp() time.Time {
-	// TODO: Do not use the current time
-	return time.Now()
+	randomTime := rand.Int63n(time.Now().Unix())
+	return time.Unix(randomTime, 0)
 }
 
+// GenRandomBTCHeaderVersion generates a random version integer
 func GenRandomBTCHeaderVersion() int32 {
 	return rand.Int31()
 }
 
+// GenRandomBTCHeaderBytes generates a random BTCHeaderBytes object
+// based on randomly generated BTC header attributes
+// If the `parent` argument is not `nil`, then the `PrevBlock`
+// attribute of the BTC header will point to the hash of the parent and the
+// `Timestamp` attribute will be later than the parent's `Timestamp`.
+// If the `bitsBig` argument is not `nil`, then the `Bits` attribute
+// of the BTC header will point to the compact form of big integer.
 func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbl.BTCHeaderBytes {
-	merkleRoot := GenRandomBTCHeaderMerkleRootChainhash()
+	merkleRoot := GenRandomBTCHeaderMerkleRoot()
 	version := GenRandomBTCHeaderVersion()
 
 	var headerBits uint32
-	var parentHash *chainhash.Hash
+	var parentHash *bbl.BTCHeaderHashBytes
 	var time time.Time
 	if bitsBig != nil {
 		headerBits = blockchain.BigToCompact(bitsBig.BigInt())
@@ -87,23 +100,19 @@ func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig 
 	}
 	if parent != nil {
 		// Set the parent hash
-		parentHash = parent.Header.Hash().ToChainhash()
+		parentHash = parent.Hash
 		// The time should be more recent than the parent time
 		time = parent.Header.Time().Add(1)
 	} else {
-		parentHash = GenRandomBTCHeaderPrevBlockChainhash()
+		parentHash = GenRandomBTCHeaderPrevBlock()
 		time = GenRandomBTCHeaderTimestamp()
 	}
 
-	btcdHeader := &wire.BlockHeader{}
-	btcdHeader.Bits = headerBits
-	btcdHeader.PrevBlock = *parentHash
-	btcdHeader.Version = version
-	btcdHeader.Timestamp = time
-	btcdHeader.MerkleRoot = *merkleRoot
-	return bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+	headerBytes, _ := bbl.NewBTCHeaderBytesFromAttributes(headerBits, parentHash, version, time, merkleRoot)
+	return headerBytes
 }
 
+// GenRandomBTCHeight returns a random uint64
 func GenRandomBTCHeight() uint64 {
 	return rand.Uint64()
 }
@@ -130,6 +139,8 @@ func GenRandomBTCHeaderInfoWithParentAndBits(parent *btclightclienttypes.BTCHead
 	}
 }
 
+// GenRandomBTCHeaderInfoWithParent generates a random BTCHeaderInfo object
+// in which the parent points to the `parent` parameter.
 func GenRandomBTCHeaderInfoWithParent(parent *btclightclienttypes.BTCHeaderInfo) *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParentAndBits(parent, nil)
 }
@@ -139,11 +150,14 @@ func GenRandomBTCHeaderInfo() *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParent(nil)
 }
 
-// genRandomHeaderInfoChildren recursively generates a random tree of BTCHeaderInfo objects rooted at `parent`.
-// 							   It accomplishes this by randomly selecting the number of children for the `parent` block, and
-// 							   then generating trees rooted at the children block.
-//							   A `depth` argument is provided that specifies the maximum depth for the tree rooted at `parent`.
-// 							   The generated BTCHeaderInfo objects are inserted into a hashmap, for future efficient retrieval.
+// GenRandomBTCHeaderInfoTree recursively generates a random tree of BTCHeaderInfo objects rooted at `root`.
+// The `minDepth` parameter specifies the minimum depth that the generated tree should have.
+// In order to get realistically looking trees, only the first child of the node is expected to be the root of a tree of
+// a height of `minDepth-1`.
+// The tree generation is accomplished by randomly selecting the number of children (0-2 children), and recursively
+// calling the function to generate trees rooted at them.
+// The nodes that are generated are fed into a `callback` function, which returns `true/false` depending on whether
+// the generation should stop or not.
 func GenRandomBTCHeaderInfoTree(root *btclightclienttypes.BTCHeaderInfo, minDepth uint64, callback func(info *btclightclienttypes.BTCHeaderInfo) bool) {
 	// Randomly identify the number of children
 	numChildren := 0
@@ -165,8 +179,13 @@ func GenRandomBTCHeaderInfoTree(root *btclightclienttypes.BTCHeaderInfo, minDept
 		if callback(child) {
 			continue
 		}
+		// Only generate `minDepth-1` subtrees for the first child
+		childMinDepth := uint64(0)
+		if i != 0 {
+			childMinDepth = minDepth - 1
+		}
 		// Generate the grandchildren
-		GenRandomBTCHeaderInfoTree(child, minDepth-1, callback)
+		GenRandomBTCHeaderInfoTree(child, childMinDepth, callback)
 	}
 
 }
@@ -174,8 +193,11 @@ func GenRandomBTCHeaderInfoTree(root *btclightclienttypes.BTCHeaderInfo, minDept
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.
 func MutateHash(hash *bbl.BTCHeaderHashBytes) *bbl.BTCHeaderHashBytes {
 	mutatedBytes := make([]byte, bbl.BTCHeaderHashLen)
+	// Retrieve a random byte index
+	idx := RandomInt(bbl.BTCHeaderHashLen)
 	copy(mutatedBytes, hash.MustMarshal())
-	mutatedBytes[0] -= 1
+	// Add one to the index
+	mutatedBytes[idx] += 1
 	mutated, _ := bbl.NewBTCHeaderHashBytesFromBytes(mutatedBytes)
 	return &mutated
 }
