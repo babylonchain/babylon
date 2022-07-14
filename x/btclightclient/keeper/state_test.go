@@ -38,9 +38,9 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
+		baseHeader := setupBaseHeader(blcKeeper, ctx)
+
 		// Create base header and test whether the tip and storages are set
-		baseHeader := datagen.GenRandomBTCHeaderInfo()
-		blcKeeper.HeadersState(ctx).CreateHeader(baseHeader)
 		tip := blcKeeper.HeadersState(ctx).GetTip()
 		if tip == nil {
 			t.Errorf("Creation of base header did not lead to creation of tip")
@@ -75,7 +75,10 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		lessDifficulty := mostDifficulty.Add(sdk.NewUint(1))
 		// Create an object that builds on top of base header
 		childMostWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
-		blcKeeper.HeadersState(ctx).CreateHeader(childMostWork)
+		err = blcKeeper.InsertHeader(ctx, childMostWork.Header)
+		if err != nil {
+			t.Errorf("Header insertion failed")
+		}
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if tip == nil {
@@ -86,7 +89,10 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		}
 
 		childEqualWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
-		blcKeeper.HeadersState(ctx).CreateHeader(childEqualWork)
+		err = blcKeeper.InsertHeader(ctx, childEqualWork.Header)
+		if err != nil {
+			t.Errorf("Header insertion failed")
+		}
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if !childMostWork.Eq(tip) {
@@ -94,7 +100,10 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		}
 
 		childLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &lessDifficulty)
-		blcKeeper.HeadersState(ctx).CreateHeader(childLessWork)
+		err = blcKeeper.InsertHeader(ctx, childLessWork.Header)
+		if err != nil {
+			t.Errorf("Header insertion failed")
+		}
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if !childMostWork.Eq(tip) {
@@ -297,10 +306,7 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 			t.Errorf("Non-existent base BTC header led to non-nil return")
 		}
 
-		headersMap := datagen.GenRandomHeaderInfoTree()
-		for _, headerInfo := range headersMap {
-			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
-		}
+		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
 
 		tip := blcKeeper.HeadersState(ctx).GetTip()
 		mainChain := getMainChain(headersMap, tip)
@@ -397,12 +403,12 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		headersMap := datagen.GenRandomHeaderInfoTree()
+		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
+
 		maxAccPow := sdk.NewUint(0)
 		var tip *types.BTCHeaderInfo = nil
 		// Add all headers to storage
 		for _, headerInfo := range headersMap {
-			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
 			if headerInfo.Work.GT(maxAccPow) {
 				maxAccPow = *headerInfo.Work
 				tip = headerInfo
@@ -455,11 +461,7 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		// Generate a tree of at least a depth of two, since we need at least two nodes
-		headersMap := datagen.GenRandomBTCHeaderInfoTreeMinDepth(uint64(2))
-		// Add all headers to storage
-		for _, headerInfo := range headersMap {
-			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
-		}
+		headersMap := genRandomTree(blcKeeper, ctx, uint64(2), 0)
 		// Get two random headers from the tree. Use random indexes to identify those.
 		// Get the random indexes
 		header1Idx := datagen.RandomInt(len(headersMap))
@@ -524,11 +526,7 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		// Generate a tree of any size.
 		// We can work with even one header, since this should lead to an empty result.
-		headersMap := datagen.GenRandomHeaderInfoTree()
-		// Insert the headers into storage
-		for _, headerInfo := range headersMap {
-			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
-		}
+		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
 		// Get a random descendant and insert headers into storage
 		descendantIdx := datagen.RandomInt(len(headersMap))
 		descendant := selectRandomHeaders(headersMap, []uint64{descendantIdx})[0]
@@ -552,10 +550,6 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 			}
 		}
 	})
-}
-
-func setupRandomChain(k *keeper.Keeper, ctx sdk.Context) {
-	// TODO
 }
 
 func selectRandomHeaders(headers map[string]*types.BTCHeaderInfo, idxs []uint64) []*types.BTCHeaderInfo {
@@ -592,4 +586,42 @@ func getMainChain(headers map[string]*types.BTCHeaderInfo, tip *types.BTCHeaderI
 		chain[i], chain[j] = chain[j], chain[i]
 	}
 	return chain
+}
+
+func setupBaseHeader(k *keeper.Keeper, ctx sdk.Context) *types.BTCHeaderInfo {
+	baseHeaderInfo := datagen.GenRandomBTCHeaderInfo()
+
+	k.SetBaseBTCHeader(ctx, *baseHeaderInfo)
+	return baseHeaderInfo
+}
+
+func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minDepth uint64, maxDepth uint64) map[string]*types.BTCHeaderInfo {
+	headersMap := make(map[string]*types.BTCHeaderInfo, maxDepth)
+	if maxDepth == 0 {
+		maxDepth = datagen.RandomInt(10) + 1
+	}
+	if maxDepth < minDepth {
+		maxDepth = minDepth
+	}
+	// Create the base header
+	baseHeader := setupBaseHeader(k, ctx)
+	headersMap[baseHeader.Hash.String()] = baseHeader
+
+	datagen.GenRandomBTCHeaderInfoTree(baseHeader, minDepth, func(headerInfo *types.BTCHeaderInfo) bool {
+		if _, ok := headersMap[headerInfo.Hash.String()]; ok {
+			// Rare occasion that we get a duplicate hash
+			return true
+		}
+		if headerInfo.Height-baseHeader.Height > maxDepth {
+			return true
+		}
+		err := k.InsertHeader(ctx, headerInfo.Header)
+		if err != nil {
+			panic("Header insertion failed")
+		}
+
+		headersMap[headerInfo.Hash.String()] = headerInfo
+		return false
+	})
+	return headersMap
 }

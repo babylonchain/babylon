@@ -74,12 +74,9 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 			t.Errorf("Message with header with non-existent parent did not return an error")
 		}
 
-		// Construct a tree and insert it into storage
-		headersMap := datagen.GenRandomHeaderInfoTree()
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
-		for _, headerInfo := range headersMap {
-			blcKeeper.HeadersState(ctx).CreateHeader(headerInfo)
-		}
+		// Construct a tree and insert it into storage
+		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
 		// Select a random header
 		parentHeaderIdx := datagen.RandomInt(len(headersMap))
 		parentHeader := selectRandomHeaders(headersMap, []uint64{parentHeaderIdx})[0]

@@ -151,12 +151,7 @@ func GenRandomBTCHeaderInfoWithHeight(height uint64) *btclightclienttypes.BTCHea
 // 							   then generating trees rooted at the children block.
 //							   A `depth` argument is provided that specifies the maximum depth for the tree rooted at `parent`.
 // 							   The generated BTCHeaderInfo objects are inserted into a hashmap, for future efficient retrieval.
-func genRandomBTCHeaderInfoChildren(headersMap map[string]*btclightclienttypes.BTCHeaderInfo, parent *btclightclienttypes.BTCHeaderInfo, minDepth uint64, maxDepth uint64) {
-	// Base condition
-	if maxDepth == 0 {
-		return
-	}
-
+func GenRandomBTCHeaderInfoTree(root *btclightclienttypes.BTCHeaderInfo, minDepth uint64, callback func(info *btclightclienttypes.BTCHeaderInfo) bool) {
 	// Randomly identify the number of children
 	numChildren := 0
 	if minDepth > 0 {
@@ -173,37 +168,14 @@ func genRandomBTCHeaderInfoChildren(headersMap map[string]*btclightclienttypes.B
 
 	// Generate the children, insert them into the hashmap, and generate the grandchildren.
 	for i := 0; i < numChildren; i++ {
-		child := GenRandomBTCHeaderInfoWithParent(parent)
-		if _, ok := headersMap[child.Hash.String()]; ok {
-			// Extraordinary chance that we got the same hash
+		child := GenRandomBTCHeaderInfoWithParent(root)
+		if callback(child) {
 			continue
 		}
-		// Insert the child into the hash map
-		headersMap[child.Hash.String()] = child
 		// Generate the grandchildren
-		genRandomBTCHeaderInfoChildren(headersMap, child, minDepth-1, maxDepth-1)
+		GenRandomBTCHeaderInfoTree(child, minDepth-1, callback)
 	}
-}
 
-// GenRandomBTCHeaderInfoTreeMinDepth recursively generates a random tree of BTCHeaderInfo objects that has a minimum depth.
-func GenRandomBTCHeaderInfoTreeMinDepth(minDepth uint64) map[string]*btclightclienttypes.BTCHeaderInfo {
-	headers := make(map[string]*btclightclienttypes.BTCHeaderInfo, minDepth)
-	maxDepth := RandomInt(10) + 1 // Maximum depth: 10
-	if maxDepth < minDepth {
-		maxDepth = minDepth
-	}
-	root := GenRandomBTCHeaderInfo()
-
-	headers[root.Hash.String()] = root
-
-	genRandomBTCHeaderInfoChildren(headers, root, minDepth-1, maxDepth-1)
-
-	return headers
-}
-
-// GenRandomHeaderInfoTree recursively generates a random tree of BTCHeaderInfo objects.
-func GenRandomHeaderInfoTree() map[string]*btclightclienttypes.BTCHeaderInfo {
-	return GenRandomBTCHeaderInfoTreeMinDepth(0)
 }
 
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.
