@@ -42,8 +42,10 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
 	}
 
+	// setup the app
 	app, ctx := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
 
+	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
