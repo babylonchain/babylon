@@ -69,13 +69,16 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 			for _, slashedVal := range slashedVals {
 				slashedValBytes = append(slashedValBytes, slashedVal)
 			}
-			ctx.EventManager().EmitTypedEvent(
+			err := ctx.EventManager().EmitTypedEvent(
 				&types.EventSlashThreshold{
 					SlashedVotingPower: slashedVotingPower,
 					TotalVotingPower:   totalVotingPower,
 					SlashedValidators:  slashedValBytes,
 				},
 			)
+			if err != nil {
+				panic(err)
+			}
 			h.k.BeforeSlashThreshold(ctx, slashedVals)
 		}
 	}
