@@ -8,6 +8,7 @@ import (
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/wire"
 	"math/big"
+	"time"
 )
 
 type BTCHeaderBytes []byte
@@ -161,6 +162,10 @@ func (m *BTCHeaderBytes) ParentHash() *BTCHeaderHashBytes {
 
 func (m *BTCHeaderBytes) Bits() uint32 {
 	return m.ToBlockHeader().Bits
+}
+
+func (m *BTCHeaderBytes) Time() time.Time {
+	return m.ToBlockHeader().Timestamp
 }
 
 func (m *BTCHeaderBytes) Difficulty() *big.Int {

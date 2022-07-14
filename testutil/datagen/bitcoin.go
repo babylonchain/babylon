@@ -75,17 +75,25 @@ func GenRandomVersion() int32 {
 
 func GenRandomHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbl.BTCHeaderBytes {
 	// TODO: add prefixes to func names
-	headerBits := GenRandomBits()
-	parentHash := GenRandomPrevBlockChainhash()
 	merkleRoot := GenRandomMerkleRootChainhash()
-	time := GenRandomTime()
 	version := GenRandomVersion()
 
+	var headerBits uint32
+	var parentHash *chainhash.Hash
+	var time time.Time
 	if bitsBig != nil {
 		headerBits = blockchain.BigToCompact(bitsBig.BigInt())
+	} else {
+		headerBits = GenRandomBits()
 	}
 	if parent != nil {
-		parentHash = parent.Hash.ToChainhash()
+		// Set the parent hash
+		parentHash = parent.Header.Hash().ToChainhash()
+		// The time should be more recent than the parent time
+		time = parent.Header.Time().Add(1)
+	} else {
+		parentHash = GenRandomPrevBlockChainhash()
+		time = GenRandomTime()
 	}
 
 	btcdHeader := &wire.BlockHeader{}
@@ -139,14 +147,14 @@ func GenRandomHeaderInfoWithHeight(height uint64) *btclightclienttypes.BTCHeader
 	return headerInfo
 }
 
-// genRandomHeaderInfoChildren recursivelly generates a random tree of BTCHeaderInfo objects rooted at `parent`.
+// genRandomHeaderInfoChildren recursively generates a random tree of BTCHeaderInfo objects rooted at `parent`.
 // 							   It accomplishes this by randomly selecting the number of children for the `parent` block, and
 // 							   then generating trees rooted at the children block.
 //							   A `depth` argument is provided that specifies the maximum depth for the tree rooted at `parent`.
 // 							   The generated BTCHeaderInfo objects are inserted into a hashmap, for future efficient retrieval.
-func genRandomHeaderInfoChildren(headersMap map[string]*btclightclienttypes.BTCHeaderInfo, parent *btclightclienttypes.BTCHeaderInfo, minDepth uint64, depth uint64) {
+func genRandomHeaderInfoChildren(headersMap map[string]*btclightclienttypes.BTCHeaderInfo, parent *btclightclienttypes.BTCHeaderInfo, minDepth uint64, maxDepth uint64) {
 	// Base condition
-	if depth == 0 {
+	if maxDepth == 0 {
 		return
 	}
 
@@ -174,27 +182,27 @@ func genRandomHeaderInfoChildren(headersMap map[string]*btclightclienttypes.BTCH
 		// Insert the child into the hash map
 		headersMap[child.Hash.String()] = child
 		// Generate the grandchildren
-		genRandomHeaderInfoChildren(headersMap, child, minDepth-1, depth-1)
+		genRandomHeaderInfoChildren(headersMap, child, minDepth-1, maxDepth-1)
 	}
 }
 
-// GenRandomHeaderInfoTreeMinDepth recursivelly generates a random tree of BTCHeaderInfo objects that has a minimum depth.
+// GenRandomHeaderInfoTreeMinDepth recursively generates a random tree of BTCHeaderInfo objects that has a minimum depth.
 func GenRandomHeaderInfoTreeMinDepth(minDepth uint64) map[string]*btclightclienttypes.BTCHeaderInfo {
-	headers := make(map[string]*btclightclienttypes.BTCHeaderInfo, 0)
-	depth := RandomInt(10) + 1 // Maximum depth: 10
-	if depth < minDepth {
-		depth = minDepth
+	headers := make(map[string]*btclightclienttypes.BTCHeaderInfo, minDepth)
+	maxDepth := RandomInt(10) + 1 // Maximum depth: 10
+	if maxDepth < minDepth {
+		maxDepth = minDepth
 	}
 	root := GenRandomHeaderInfo()
 
 	headers[root.Hash.String()] = root
 
-	genRandomHeaderInfoChildren(headers, root, minDepth-1, depth-1)
+	genRandomHeaderInfoChildren(headers, root, minDepth-1, maxDepth-1)
 
 	return headers
 }
 
-// GenRandomHeaderInfoTree recursivelly generates a random tree of BTCHeaderInfo objects.
+// GenRandomHeaderInfoTree recursively generates a random tree of BTCHeaderInfo objects.
 func GenRandomHeaderInfoTree() map[string]*btclightclienttypes.BTCHeaderInfo {
 	return GenRandomHeaderInfoTreeMinDepth(0)
 }
