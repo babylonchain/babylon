@@ -11,31 +11,23 @@ import (
 	"time"
 )
 
-func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
-	timeInt int64, prevBlockStr string, merkleRootStr string) *wire.BlockHeader {
-	if !ValidHex(prevBlockStr, bbl.BTCHeaderHashLen) {
-		prevBlockStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
-	}
-	if !ValidHex(merkleRootStr, bbl.BTCHeaderHashLen) {
-		merkleRootStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
-	}
+func GenRandomBtcdHeader() *wire.BlockHeader {
+	version := GenRandomBTCHeaderVersion()
+	bits := GenRandomBTCHeaderBits()
+	nonce := GenRandomBTCHeaderNonce()
+	prevBlock := GenRandomBTCHeaderPrevBlock()
+	merkleRoot := GenRandomBTCHeaderMerkleRoot()
+	timestamp := GenRandomBTCHeaderTimestamp()
 
-	// Get the chainhash versions
-	prevBlock, _ := chainhash.NewHashFromStr(prevBlockStr)
-	merkleRoot, _ := chainhash.NewHashFromStr(merkleRootStr)
-	time := time.Unix(timeInt, 0)
-
-	// Construct a header
-	header := wire.BlockHeader{
+	header := &wire.BlockHeader{
 		Version:    version,
 		Bits:       bits,
 		Nonce:      nonce,
-		PrevBlock:  *prevBlock,
+		PrevBlock:  *prevBlock.ToChainhash(),
 		MerkleRoot: *merkleRoot,
-		Timestamp:  time,
+		Timestamp:  timestamp,
 	}
-
-	return &header
+	return header
 }
 
 // GenRandomBTCHeaderBits constructs a random uint32 corresponding to BTC header difficulty bits
@@ -62,9 +54,10 @@ func GenRandomBTCHeaderPrevBlock() *bbl.BTCHeaderHashBytes {
 }
 
 // GenRandomBTCHeaderMerkleRoot generates a random hex string corresponding to a merkle root
-func GenRandomBTCHeaderMerkleRoot() string {
+func GenRandomBTCHeaderMerkleRoot() *chainhash.Hash {
 	// TODO: this should become a constant and have a custom type
-	return GenRandomHexStr(32)
+	chHash, _ := chainhash.NewHashFromStr(GenRandomHexStr(32))
+	return chHash
 }
 
 // GenRandomBTCHeaderTimestamp generates a random BTC header timestamp
@@ -78,6 +71,11 @@ func GenRandomBTCHeaderVersion() int32 {
 	return rand.Int31()
 }
 
+// GenRandomBTCHeaderNonce generates a random BTC header nonce
+func GenRandomBTCHeaderNonce() uint32 {
+	return rand.Uint32()
+}
+
 // GenRandomBTCHeaderBytes generates a random BTCHeaderBytes object
 // based on randomly generated BTC header attributes
 // If the `parent` argument is not `nil`, then the `PrevBlock`
@@ -86,29 +84,19 @@ func GenRandomBTCHeaderVersion() int32 {
 // If the `bitsBig` argument is not `nil`, then the `Bits` attribute
 // of the BTC header will point to the compact form of big integer.
 func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbl.BTCHeaderBytes {
-	merkleRoot := GenRandomBTCHeaderMerkleRoot()
-	version := GenRandomBTCHeaderVersion()
+	btcdHeader := GenRandomBtcdHeader()
 
-	var headerBits uint32
-	var parentHash *bbl.BTCHeaderHashBytes
-	var time time.Time
 	if bitsBig != nil {
-		headerBits = blockchain.BigToCompact(bitsBig.BigInt())
-	} else {
-		headerBits = GenRandomBTCHeaderBits()
+		btcdHeader.Bits = blockchain.BigToCompact(bitsBig.BigInt())
 	}
 	if parent != nil {
 		// Set the parent hash
-		parentHash = parent.Hash
+		btcdHeader.PrevBlock = *parent.Hash.ToChainhash()
 		// The time should be more recent than the parent time
-		time = parent.Header.Time().Add(1)
-	} else {
-		parentHash = GenRandomBTCHeaderPrevBlock()
-		time = GenRandomBTCHeaderTimestamp()
+		btcdHeader.Timestamp = parent.Header.Time().Add(1)
 	}
 
-	headerBytes, _ := bbl.NewBTCHeaderBytesFromAttributes(headerBits, parentHash, version, time, merkleRoot)
-	return headerBytes
+	return bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 }
 
 // GenRandomBTCHeight returns a random uint64
