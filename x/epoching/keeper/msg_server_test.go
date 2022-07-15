@@ -7,6 +7,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
+// TODO (fuzz tests): replace the following tests with fuzz ones
 func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
 	testCases := []struct {
 		name      string

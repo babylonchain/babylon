@@ -17,7 +17,7 @@ func FuzzEpochs(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		app, ctx, keeper, _, _ := setupTestKeeper()
+		app, ctx, keeper, _, _, _ := setupTestKeeper(t)
 		// ensure that the epoch info is correct at the genesis
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, epoch.EpochNumber, uint64(0))

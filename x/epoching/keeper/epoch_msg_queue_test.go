@@ -18,7 +18,7 @@ func FuzzEpochMsgQueue(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, ctx, keeper, _, _ := setupTestKeeper()
+		_, ctx, keeper, _, _, _ := setupTestKeeper(t)
 		// ensure that the epoch msg queue is correct at the genesis
 		require.Empty(t, keeper.GetEpochMsgs(ctx))
 		require.Equal(t, uint64(0), keeper.GetQueueLength(ctx))
