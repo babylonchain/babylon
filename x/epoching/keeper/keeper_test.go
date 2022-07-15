@@ -43,7 +43,8 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 	}
 
 	// setup the app
-	app, ctx := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
+	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
+	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
