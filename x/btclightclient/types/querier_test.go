@@ -24,7 +24,7 @@ func TestNewQueryParamsRequest(t *testing.T) {
 }
 
 func TestNewQueryHashesRequest(t *testing.T) {
-	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerBytes := bbl.GetBaseBTCHeaderBytes()
 	headerHashBytes := headerBytes.Hash()
 	req := query.PageRequest{
 		Key: headerHashBytes.MustMarshal(),
@@ -68,7 +68,7 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 }
 
 func TestNewQueryMainChainRequest(t *testing.T) {
-	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerBytes := bbl.GetBaseBTCHeaderBytes()
 	req := query.PageRequest{
 		Key: headerBytes.MustMarshal(),
 	}

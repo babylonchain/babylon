@@ -1,7 +1,6 @@
 package epoching
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/babylonchain/babylon/x/epoching/keeper"
@@ -34,12 +33,14 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// trigger AfterEpochBegins hook
 		k.AfterEpochBegins(ctx, IncEpoch.EpochNumber)
 		// emit BeginEpoch event
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeBeginEpoch,
-				sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(IncEpoch.EpochNumber)),
-			),
-		})
+		err := ctx.EventManager().EmitTypedEvent(
+			&types.EventBeginEpoch{
+				EpochNumber: IncEpoch.EpochNumber,
+			},
+		)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -68,32 +69,34 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			// honest validators will have consistent execution results on the queued messages
 			if err != nil {
 				// emit an event signalling the failed execution
-				eventMsgFail := sdk.NewEvent(
-					types.EventTypeHandleQueuedMsgFailed,
-					sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(epoch.EpochNumber)), // epoch number
-					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)),               // txid
-					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)),             // msgid
-					sdk.NewAttribute(types.AttributeKeyErrorMsg, err.Error()),                // err
+				err := ctx.EventManager().EmitTypedEvent(
+					&types.EventHandleQueuedMsg{
+						EpochNumber: epoch.EpochNumber,
+						TxId:        msg.TxId,
+						MsgId:       msg.MsgId,
+						Error:       err.Error(),
+					},
 				)
-				ctx.EventManager().EmitEvent(eventMsgFail)
+				if err != nil {
+					panic(err)
+				}
 				// skip this failed msg
 				continue
 			}
 			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
 			for _, event := range res.Events {
-				// create the wrapped event
-				wrappedEvent := abci.Event{Type: types.EventTypeHandleQueuedMsg}
-				// add our attributes
-				wrappedEvent.Attributes = append(wrappedEvent.Attributes,
-					sdk.NewAttribute(types.AttributeKeyOriginalEventType, event.Type).ToKVPair(),        // original event type
-					sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(epoch.EpochNumber)).ToKVPair(), // epoch number
-					sdk.NewAttribute(types.AttributeKeyTxId, string(msg.TxId)).ToKVPair(),               // txid
-					sdk.NewAttribute(types.AttributeKeyMsgId, string(msg.MsgId)).ToKVPair(),             // msgid
+				err := ctx.EventManager().EmitTypedEvent(
+					&types.EventHandleQueuedMsg{
+						OriginalEventType:  event.Type,
+						EpochNumber:        epoch.EpochNumber,
+						TxId:               msg.TxId,
+						MsgId:              msg.MsgId,
+						OriginalAttributes: event.Attributes,
+					},
 				)
-				// add original attributes
-				wrappedEvent.Attributes = append(wrappedEvent.Attributes, event.Attributes...)
-				// emit the wrapped event
-				ctx.EventManager().EmitEvent(sdk.Event(wrappedEvent))
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 
@@ -104,12 +107,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epoch.EpochNumber)
 		// emit EndEpoch event
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeEndEpoch,
-				sdk.NewAttribute(types.AttributeKeyEpoch, fmt.Sprint(epoch.EpochNumber)),
-			),
-		})
+		err := ctx.EventManager().EmitTypedEvent(
+			&types.EventEndEpoch{
+				EpochNumber: epoch.EpochNumber,
+			},
+		)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return validatorSetUpdate

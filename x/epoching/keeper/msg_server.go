@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -32,19 +31,17 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 	}
 
 	k.EnqueueMsg(ctx, queuedMsg)
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeWrappedDelegate,
-			sdk.NewAttribute(types.AttributeKeyValidator, msg.Msg.ValidatorAddress),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).GetLastBlockHeight())),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Msg.DelegatorAddress),
-		),
-	})
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedDelegate{
+			ValidatorAddress: msg.Msg.ValidatorAddress,
+			Amount:           msg.Msg.Amount.Amount.Uint64(),
+			Denom:            msg.Msg.Amount.GetDenom(),
+			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgWrappedDelegateResponse{}, nil
 }
@@ -59,19 +56,17 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	}
 
 	k.EnqueueMsg(ctx, queuedMsg)
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeWrappedUndelegate,
-			sdk.NewAttribute(types.AttributeKeyValidator, msg.Msg.ValidatorAddress),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).GetLastBlockHeight())),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Msg.DelegatorAddress),
-		),
-	})
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedUndelegate{
+			ValidatorAddress: msg.Msg.ValidatorAddress,
+			Amount:           msg.Msg.Amount.Amount.Uint64(),
+			Denom:            msg.Msg.Amount.GetDenom(),
+			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgWrappedUndelegateResponse{}, nil
 }
@@ -85,23 +80,19 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 		return nil, err
 	}
 
-	// enqueue msg
 	k.EnqueueMsg(ctx, queuedMsg)
-	// emit event
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeWrappedBeginRedelegate,
-			sdk.NewAttribute(types.AttributeKeySrcValidator, msg.Msg.ValidatorSrcAddress),
-			sdk.NewAttribute(types.AttributeKeyDstValidator, msg.Msg.ValidatorDstAddress),
-			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Msg.Amount.String()),
-			sdk.NewAttribute(types.AttributeKeyEpochBoundary, fmt.Sprint(k.GetEpoch(ctx).GetLastBlockHeight())),
-		),
-		sdk.NewEvent(
-			sdk.EventTypeMessage,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(sdk.AttributeKeySender, msg.Msg.DelegatorAddress),
-		),
-	})
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedBeginRedelegate{
+			SourceValidatorAddress:      msg.Msg.ValidatorSrcAddress,
+			DestinationValidatorAddress: msg.Msg.ValidatorDstAddress,
+			Amount:                      msg.Msg.Amount.Amount.Uint64(),
+			Denom:                       msg.Msg.Amount.GetDenom(),
+			EpochBoundary:               k.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	return &types.MsgWrappedBeginRedelegateResponse{}, nil
 }

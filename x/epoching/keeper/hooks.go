@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -64,19 +62,12 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	for _, threshold := range thresholds {
 		// if a certain threshold voting power is slashed in a single epoch, emit event and trigger hook
 		if float64(slashedVotingPower) < float64(totalVotingPower)*threshold && float64(totalVotingPower)*threshold <= float64(slashedVotingPower+thisVotingPower) {
-			// get slashed validators
 			slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
 			slashedVals = append(slashedVals, valAddr)
-			// emit event
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					types.EventTypeSlashThreshold,
-					sdk.NewAttribute(types.AttributeKeySlashedVotingPower, fmt.Sprintf("%d", slashedVotingPower)),
-					sdk.NewAttribute(types.AttributeKeyTotalVotingPower, fmt.Sprintf("%d", slashedVotingPower)),
-					sdk.NewAttribute(types.AttributeKeySlashedValidators, fmt.Sprintf("%v", slashedVals)),
-				),
-			})
-			// trigger hook
+			event := types.NewEventSlashThreshold(slashedVotingPower, totalVotingPower, slashedVals)
+			if err := ctx.EventManager().EmitTypedEvent(&event); err != nil {
+				panic(err)
+			}
 			h.k.BeforeSlashThreshold(ctx, slashedVals)
 		}
 	}
