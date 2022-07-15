@@ -43,7 +43,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		tree := genRandomTree(blcKeeper, ctx, 1, 1)
 		baseHeader := tree.Root.Header
 
-		// Create base header and test whether the tip and storages are set
+		// Test whether the tip and storages are set
 		tip := blcKeeper.HeadersState(ctx).GetTip()
 		if tip == nil {
 			t.Errorf("Creation of base header did not lead to creation of tip")
@@ -73,15 +73,13 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			t.Errorf("Created object height does not correspond to the one submitted")
 		}
 
+		// Test whether a new header updates the tip.
 		// The smaller number, the bigger the difficulty
 		mostDifficulty := sdk.NewUint(10)
 		lessDifficulty := mostDifficulty.Add(sdk.NewUint(1))
 		// Create an object that builds on top of base header
 		childMostWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
-		err = blcKeeper.InsertHeader(ctx, childMostWork.Header)
-		if err != nil {
-			t.Errorf("Header insertion failed")
-		}
+		blcKeeper.HeadersState(ctx).CreateHeader(childMostWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if tip == nil {
@@ -92,10 +90,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		}
 
 		childEqualWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
-		err = blcKeeper.InsertHeader(ctx, childEqualWork.Header)
-		if err != nil {
-			t.Errorf("Header insertion failed")
-		}
+		blcKeeper.HeadersState(ctx).CreateHeader(childEqualWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if !childMostWork.Eq(tip) {
@@ -103,10 +98,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		}
 
 		childLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &lessDifficulty)
-		err = blcKeeper.InsertHeader(ctx, childLessWork.Header)
-		if err != nil {
-			t.Errorf("Header insertion failed")
-		}
+		blcKeeper.HeadersState(ctx).CreateHeader(childLessWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if !childMostWork.Eq(tip) {
@@ -410,9 +402,6 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 		tree := genRandomTree(blcKeeper, ctx, 1, 0)
 		expectedMainChain := treeNodeListToHeaderInfo(tree.GetMainChain())
 		gotMainChain := blcKeeper.HeadersState(ctx).GetMainChain()
-		fmt.Println("Expected tip: ", tree.GetTip().Header.Hash)
-		fmt.Println("Got tip: ", gotMainChain[0].Hash)
-		fmt.Println("")
 
 		if len(expectedMainChain) != len(gotMainChain) {
 			t.Fatalf("Expected main chain length of %d, got %d", len(expectedMainChain), len(gotMainChain))
