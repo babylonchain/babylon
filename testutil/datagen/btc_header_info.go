@@ -153,46 +153,6 @@ func GenRandomBTCHeaderInfo() *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParent(nil)
 }
 
-// GenRandomBTCHeaderInfoTree recursively generates a random tree of BTCHeaderInfo objects rooted at `root`.
-// The `minDepth` parameter specifies the minimum depth that the generated tree should have.
-// In order to get realistically looking trees, only the first child of the node is expected to be the root of a tree of
-// a height of `minDepth-1`.
-// The tree generation is accomplished by randomly selecting the number of children (0-2 children), and recursively
-// calling the function to generate trees rooted at them.
-// The nodes that are generated are fed into a `callback` function, which returns `true/false` depending on whether
-// the generation should stop or not.
-func GenRandomBTCHeaderInfoTree(root *btclightclienttypes.BTCHeaderInfo, minDepth uint64, callback func(info *btclightclienttypes.BTCHeaderInfo) bool) {
-	// Randomly identify the number of children
-	numChildren := 0
-	if minDepth > 0 {
-		numChildren = 1 // 75% chance of 1 child now
-	}
-	if OneInN(2) {
-		// 50% of the times, one child
-		numChildren = 1
-	} else if OneInN(2) {
-		// 25% of the times, 2 children
-		// Implies that 25% of the times 0 children
-		numChildren = 2
-	}
-
-	// Generate the children, insert them into the hashmap, and generate the grandchildren.
-	for i := 0; i < numChildren; i++ {
-		child := GenRandomBTCHeaderInfoWithParent(root)
-		if callback(child) {
-			continue
-		}
-		// Only generate `minDepth-1` subtrees for the first child
-		childMinDepth := uint64(0)
-		if i != 0 {
-			childMinDepth = minDepth - 1
-		}
-		// Generate the grandchildren
-		GenRandomBTCHeaderInfoTree(child, childMinDepth, callback)
-	}
-
-}
-
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.
 func MutateHash(hash *bbl.BTCHeaderHashBytes) *bbl.BTCHeaderHashBytes {
 	mutatedBytes := make([]byte, bbl.BTCHeaderHashLen)

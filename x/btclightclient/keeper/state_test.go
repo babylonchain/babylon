@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
@@ -38,7 +39,9 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
-		baseHeader := setupBaseHeader(blcKeeper, ctx)
+		// Generate a tree with a single root node
+		tree := genRandomTree(blcKeeper, ctx, 1, 1)
+		baseHeader := tree.Root.Header
 
 		// Create base header and test whether the tip and storages are set
 		tip := blcKeeper.HeadersState(ctx).GetTip()
@@ -306,12 +309,9 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 			t.Errorf("Non-existent base BTC header led to non-nil return")
 		}
 
-		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
+		tree := genRandomTree(blcKeeper, ctx, 1, 0)
+		expectedBaseHeader := tree.Root.Header
 
-		tip := blcKeeper.HeadersState(ctx).GetTip()
-		mainChain := getMainChain(headersMap, tip)
-
-		expectedBaseHeader := mainChain[len(mainChain)-1]
 		gotBaseHeader := blcKeeper.HeadersState(ctx).GetBaseBTCHeader()
 
 		if !expectedBaseHeader.Eq(gotBaseHeader) {
@@ -342,14 +342,16 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 		// This will contain a mapping between all the header hashes that were created
 		// and a boolean value.
 		hashCount := make(map[string]bool)
-		baseHeader := setupBaseHeader(blcKeeper, ctx)
+		// Setup a tree with a single header
+		tree := genRandomTree(blcKeeper, ctx, 1, 1)
+		baseHeader := tree.Root.Header
 		height := baseHeader.Height + 1
 
 		// Generate numHeaders with particular height
 		var i uint64
 		for i = 0; i < numHeaders; i++ {
 			headerInfo := datagen.GenRandomBTCHeaderInfoWithParent(baseHeader)
-			hashCount[headerInfo.Hash.MarshalHex()] = false
+			hashCount[headerInfo.Hash.MarshalHex()] = true
 			blcKeeper.InsertHeader(ctx, headerInfo.Header)
 		}
 
@@ -404,20 +406,13 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
 
-		maxAccPow := sdk.NewUint(0)
-		var tip *types.BTCHeaderInfo = nil
-		// Add all headers to storage
-		for _, headerInfo := range headersMap {
-			if headerInfo.Work.GT(maxAccPow) {
-				maxAccPow = *headerInfo.Work
-				tip = headerInfo
-			}
-		}
-
-		expectedMainChain := getMainChain(headersMap, tip)
+		tree := genRandomTree(blcKeeper, ctx, 1, 0)
+		expectedMainChain := treeNodeListToHeaderInfo(tree.GetMainChain())
 		gotMainChain := blcKeeper.HeadersState(ctx).GetMainChain()
+		fmt.Println("Expected tip: ", tree.GetTip().Header.Hash)
+		fmt.Println("Got tip: ", gotMainChain[0].Hash)
+		fmt.Println("")
 
 		if len(expectedMainChain) != len(gotMainChain) {
 			t.Fatalf("Expected main chain length of %d, got %d", len(expectedMainChain), len(gotMainChain))
@@ -461,50 +456,32 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		// Generate a tree of at least a depth of two, since we need at least two nodes
-		headersMap := genRandomTree(blcKeeper, ctx, uint64(2), 0)
-		// Get two random headers from the tree. Use random indexes to identify those.
-		// Get the random indexes
-		header1Idx := datagen.RandomInt(len(headersMap))
-		header2Idx := datagen.RandomIntOtherThan(int(header1Idx), len(headersMap))
-		headers := selectRandomHeaders(headersMap, []uint64{header1Idx, header2Idx})
-		header1 := headers[0]
-		header2 := headers[1]
+		// Generate a random tree with at least one node
+		tree := genRandomTree(blcKeeper, ctx, 1, 0)
+		// Retrieve a random common ancestor
+		commonAncestor := tree.SelectRandomHeader()
 
-		// Identify the highest common ancestor for the two headers:
-		// Do a BFS starting from both headers and maintain a hashmap denoting whether
-		// something has been encountered. If we get to something that has been encountered,
-		// then that's the highest common ancestor.
-		var highestCommonAncestor *types.BTCHeaderInfo = nil
-		visited := make(map[string]bool, 0)
-		queue := make([]*types.BTCHeaderInfo, 0)
-		queue = append(queue, header1)
-		queue = append(queue, header2)
-		for len(queue) > 0 {
-			top := queue[0]
-			queue = queue[1:] // Not that performant, O(N^2) complexity
-			// If the node has been visited, it is the highest common ancestor
-			if _, ok := visited[top.Hash.String()]; ok {
-				highestCommonAncestor = top
-				break
-			}
-			visited[top.Hash.String()] = true
-			// Check if parent exists, we might be in the base node for which its parent does not exist.
-			if parent, ok := headersMap[top.Header.ParentHash().String()]; ok {
-				queue = append(queue, parent)
-			}
-		}
+		// Generate a child header, insert it into storage, create a tree with a root based on it, and retrieve a descendant of it element from it
+		childTree1Info := datagen.GenRandomBTCHeaderInfoWithParent(commonAncestor.Header)
+		blcKeeper.InsertHeader(ctx, childTree1Info.Header)
+		childTree1Root := datagen.NewBTCHeaderTreeNode(childTree1Info, commonAncestor)
+		childTree1 := genRandomTreeWithRoot(blcKeeper, ctx, childTree1Root, 1, 0)
+		descendant1 := childTree1.SelectRandomHeader()
 
-		if highestCommonAncestor == nil {
-			t.Fatalf("Could not find a highest common ancestor")
-		}
+		// Repeat for a second child
+		childTree2Info := datagen.GenRandomBTCHeaderInfoWithParent(commonAncestor.Header)
+		blcKeeper.InsertHeader(ctx, childTree2Info.Header)
+		childTree2Root := datagen.NewBTCHeaderTreeNode(childTree2Info, commonAncestor)
+		childTree2 := genRandomTreeWithRoot(blcKeeper, ctx, childTree2Root, 1, 0)
+		descendant2 := childTree2.SelectRandomHeader()
 
-		retrievedHighestCommonAncestor := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(header1, header2)
+		retrievedHighestCommonAncestor := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(descendant1.Header, descendant2.Header)
 		if retrievedHighestCommonAncestor == nil {
-			t.Fatalf("No common ancestor found between the nodes %s and %s. Expected ancestor: %s", header1.Hash, header2.Hash, highestCommonAncestor.Hash)
+			t.Fatalf("No common ancestor found between the nodes %s and %s. Expected ancestor: %s", descendant1.Header.Hash, descendant2.Header.Hash, commonAncestor.Header.Hash)
 		}
-		if !highestCommonAncestor.Eq(retrievedHighestCommonAncestor) {
-			t.Errorf("Did not retrieve the correct highest common ancestor. Got %s, expected %s", retrievedHighestCommonAncestor.Hash, highestCommonAncestor.Hash)
+		if !commonAncestor.Header.Eq(retrievedHighestCommonAncestor) {
+			fmt.Println("Failed")
+			t.Errorf("Did not retrieve the correct highest common ancestor. Got %s, expected %s", retrievedHighestCommonAncestor.Hash, commonAncestor.Header.Hash)
 		}
 	})
 }
@@ -525,109 +502,82 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+
 		// Generate a tree of any size.
 		// We can work with even one header, since this should lead to an empty result.
-		headersMap := genRandomTree(blcKeeper, ctx, 0, 0)
-		// Get a random descendant and insert headers into storage
-		descendantIdx := datagen.RandomInt(len(headersMap))
-		descendant := selectRandomHeaders(headersMap, []uint64{descendantIdx})[0]
+		tree := genRandomTree(blcKeeper, ctx, 1, 0)
 
-		// get the chain ending starting from the base header and ending on descendant
-		chain := getChain(headersMap, descendant)
-		// get a random ancestor (or the same node)
-		ancestorIdx := datagen.RandomInt(len(chain))
-		ancestor := chain[ancestorIdx]
-
-		expectedAncestors := chain[ancestorIdx+1:]
-
-		gotAncestors := blcKeeper.HeadersState(ctx).GetInOrderAncestorsUntil(descendant, ancestor)
-		if len(gotAncestors) != len(expectedAncestors) {
-			t.Errorf("Got different ancestor list sizes. Expected %d got %d", len(expectedAncestors), len(gotAncestors))
+		// Get a random header from the tree
+		descendant := tree.SelectRandomHeader()
+		// Get a random ancestor from it
+		ancestor := descendant.GetRandomAncestor()
+		// Get the ancestry of the descendant.
+		// It is in reverse order from the one that GetInOrderAncestorsUntil returns, since it starts with the descendant.
+		expectedAncestorsReverse := treeNodeListToHeaderInfo(descendant.GetHeaderAncestryUpTo(ancestor))
+		gotAncestors := blcKeeper.HeadersState(ctx).GetInOrderAncestorsUntil(descendant.Header, ancestor.Header)
+		if len(gotAncestors) != len(expectedAncestorsReverse) {
+			t.Errorf("Got different ancestor list sizes. Expected %d got %d", len(expectedAncestorsReverse), len(gotAncestors))
 		}
 
-		for i := 0; i < len(expectedAncestors); i++ {
-			if !expectedAncestors[i].Eq(gotAncestors[i]) {
-				t.Errorf("Ancestors do not match. Expected %s got %s", expectedAncestors[i].Hash, gotAncestors[i].Hash)
+		for i := 0; i < len(expectedAncestorsReverse); i++ {
+			reverseIdx := len(expectedAncestorsReverse) - i - 1
+			if !expectedAncestorsReverse[i].Eq(gotAncestors[reverseIdx]) {
+				t.Errorf("Ancestors do not match. Expected %s got %s", expectedAncestorsReverse[i].Hash, gotAncestors[reverseIdx].Hash)
 			}
 		}
 	})
 }
 
-func selectRandomHeaders(headers map[string]*types.BTCHeaderInfo, idxs []uint64) []*types.BTCHeaderInfo {
-	res := make([]*types.BTCHeaderInfo, len(idxs))
-	var idx uint64 = 0
-	for _, headerInfo := range headers {
-		for intIdx, pos := range idxs {
-			if idx == pos {
-				res[intIdx] = headerInfo
-			}
-		}
-		idx += 1
-	}
-	return res
+// genRandomTree generates a tree of headers. It accomplishes this by generating a root
+// which will serve as the base header and then invokes the `genRandomTreeWithRoot` utility.
+func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minHeight uint64, maxHeight uint64) *datagen.BTCHeaderTree {
+	root := datagen.GenRandomBTCHeaderInfo()
+	k.SetBaseBTCHeader(ctx, *root)
+
+	rootTreeNode := datagen.NewBTCHeaderTreeNode(root, nil)
+
+	return genRandomTreeWithRoot(k, ctx, rootTreeNode, minHeight, maxHeight)
 }
 
-// getChain retrieves the chain starting from the descendant up to the base header.
-func getChain(headers map[string]*types.BTCHeaderInfo, descendant *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
-	var chain []*types.BTCHeaderInfo
-	if parent, ok := headers[descendant.Header.ParentHash().String()]; ok {
-		chain = getChain(headers, parent)
+// genRandomTreeWithRoot generates a tree of BTCHeaderTreeNode objects rooted at `root`.
+// The `minTreeHeight` and `maxTreeHeight` parameters denote the minimum and maximum height
+// of the tree that is generated. For example, a `minTreeHeight` of 1,
+// means that the tree should have at least one node (the root), while
+// a `maxTreeHeight` of 4, denotes that the maximum height of the tree should be 4.
+// If any of those parameters is set to 0, then they are randomly generated up to 5 and 10 respectively.
+// If `minTreeHeight > maxTreeHeight` then `maxTreeHeight` is set to `minTreeHeight`.
+// While the tree is generated, the headers that are generated for it are inserted into storage.
+func genRandomTreeWithRoot(k *keeper.Keeper, ctx sdk.Context,
+	root *datagen.BTCHeaderTreeNode, minTreeHeight uint64, maxTreeHeight uint64) *datagen.BTCHeaderTree {
+
+	if minTreeHeight == 0 {
+		minTreeHeight = datagen.RandomInt(5) + 1
 	}
-	chain = append(chain, descendant)
-	return chain
-}
-
-// getMainChain finds the tip of the chain and retrieves all its ancestors until the base header
-// 				The chain starts from the tip and leads to the base header
-func getMainChain(headers map[string]*types.BTCHeaderInfo, tip *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
-	// This chain starts from the base header and leads to the tip
-	// We want the reverse of it
-	chain := getChain(headers, tip)
-	for i, j := 0, len(chain)-1; i < j; i, j = i+1, j-1 {
-		chain[i], chain[j] = chain[j], chain[i]
+	if maxTreeHeight == 0 {
+		maxTreeHeight = datagen.RandomInt(10) + 1
 	}
-	return chain
-}
-
-func setupBaseHeader(k *keeper.Keeper, ctx sdk.Context) *types.BTCHeaderInfo {
-	baseHeaderInfo := datagen.GenRandomBTCHeaderInfo()
-
-	k.SetBaseBTCHeader(ctx, *baseHeaderInfo)
-	return baseHeaderInfo
-}
-
-func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minDepth uint64, maxDepth uint64) map[string]*types.BTCHeaderInfo {
-	// Create the base header
-	baseHeader := setupBaseHeader(k, ctx)
-	return genRandomTreeRoot(k, ctx, baseHeader, minDepth, maxDepth)
-}
-
-func genRandomTreeRoot(k *keeper.Keeper, ctx sdk.Context, root *types.BTCHeaderInfo, minDepth uint64, maxDepth uint64) map[string]*types.BTCHeaderInfo {
-	headersMap := make(map[string]*types.BTCHeaderInfo, maxDepth)
-	if maxDepth == 0 {
-		maxDepth = datagen.RandomInt(10) + 1
+	if maxTreeHeight < minTreeHeight {
+		maxTreeHeight = minTreeHeight
 	}
-	if maxDepth < minDepth {
-		maxDepth = minDepth
-	}
-	headersMap[root.Hash.String()] = root
 
-	datagen.GenRandomBTCHeaderInfoTree(root, minDepth, func(headerInfo *types.BTCHeaderInfo) bool {
-		if _, ok := headersMap[headerInfo.Hash.String()]; ok {
-			// Rare occasion that we get a duplicate hash
-			return true
-		}
-		if headerInfo.Height-root.Height > maxDepth {
-			return true
-		}
+	tree := datagen.NewBTCHeaderTree(root, minTreeHeight, maxTreeHeight)
+
+	tree.GenRandomBTCHeaderInfoTree(func(headerInfo *types.BTCHeaderInfo) bool {
 		err := k.InsertHeader(ctx, headerInfo.Header)
 		if err != nil {
-			panic("Header insertion failed")
+			// Something went wrong, do not add this header
+			return false
 		}
-
-		headersMap[headerInfo.Hash.String()] = headerInfo
-		return false
+		return true
 	})
+	return tree
+}
 
-	return headersMap
+// treeNodeListToHeaderInfo takes a list of BTCHeaderTreeNode objects and convert it to a list of BTCHeaderInfo objects
+func treeNodeListToHeaderInfo(treeNodeList []*datagen.BTCHeaderTreeNode) []*types.BTCHeaderInfo {
+	headerInfoList := make([]*types.BTCHeaderInfo, 0)
+	for _, node := range treeNodeList {
+		headerInfoList = append(headerInfoList, node.Header)
+	}
+	return headerInfoList
 }
