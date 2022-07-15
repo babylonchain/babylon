@@ -1,14 +1,20 @@
 package keeper_test
 
 import (
+	"testing"
+
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
 )
 
 // TODO (fuzz tests): replace the following tests with fuzz ones
-func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
+func TestMsgWrappedDelegate(t *testing.T) {
+	_, ctx, _, msgSrvr, queryClient, _ := setupTestKeeper(t)
+	wctx := sdk.WrapSDKContext(ctx)
+
 	testCases := []struct {
 		name      string
 		req       *stakingtypes.MsgDelegate
@@ -21,28 +27,29 @@ func (suite *KeeperTestSuite) TestMsgWrappedDelegate() {
 		},
 	}
 	for _, tc := range testCases {
-		wctx := sdk.WrapSDKContext(suite.ctx)
-		suite.Run(tc.name, func() {
-			wrappedMsg := types.NewMsgWrappedDelegate(tc.req)
-			_, err := suite.msgSrvr.WrappedDelegate(wctx, wrappedMsg)
-			suite.Require().NoError(err)
 
-			resp, err := suite.queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
-				Pagination: &query.PageRequest{},
-			})
-			suite.Require().NoError(err)
-			suite.Require().Equal(1, len(resp.Msgs))
+		wrappedMsg := types.NewMsgWrappedDelegate(tc.req)
+		_, err := msgSrvr.WrappedDelegate(wctx, wrappedMsg)
+		require.NoError(t, err)
 
-			if tc.expectErr {
-				suite.Require().Error(err)
-			} else {
-				suite.Require().NoError(err)
-			}
+		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
+			Pagination: &query.PageRequest{},
 		})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp.Msgs))
+
+		if tc.expectErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
 	}
 }
 
-func (suite *KeeperTestSuite) TestMsgWrappedUndelegate() {
+func TestMsgWrappedUndelegate(t *testing.T) {
+	_, ctx, _, msgSrvr, queryClient, _ := setupTestKeeper(t)
+	wctx := sdk.WrapSDKContext(ctx)
+
 	testCases := []struct {
 		name      string
 		req       *stakingtypes.MsgUndelegate
@@ -55,28 +62,28 @@ func (suite *KeeperTestSuite) TestMsgWrappedUndelegate() {
 		},
 	}
 	for _, tc := range testCases {
-		wctx := sdk.WrapSDKContext(suite.ctx)
-		suite.Run(tc.name, func() {
-			wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
-			_, err := suite.msgSrvr.WrappedUndelegate(wctx, wrappedMsg)
-			suite.Require().NoError(err)
+		wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
+		_, err := msgSrvr.WrappedUndelegate(wctx, wrappedMsg)
+		require.NoError(t, err)
 
-			resp, err := suite.queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
-				Pagination: &query.PageRequest{},
-			})
-			suite.Require().NoError(err)
-			suite.Require().Equal(1, len(resp.Msgs))
-
-			if tc.expectErr {
-				suite.Require().Error(err)
-			} else {
-				suite.Require().NoError(err)
-			}
+		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
+			Pagination: &query.PageRequest{},
 		})
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp.Msgs))
+
+		if tc.expectErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
 	}
 }
 
-func (suite *KeeperTestSuite) TestMsgWrappedBeginRedelegate() {
+func TestMsgWrappedBeginRedelegate(t *testing.T) {
+	_, ctx, _, msgSrvr, queryClient, _ := setupTestKeeper(t)
+	wctx := sdk.WrapSDKContext(ctx)
+
 	testCases := []struct {
 		name      string
 		req       *stakingtypes.MsgBeginRedelegate
@@ -89,25 +96,22 @@ func (suite *KeeperTestSuite) TestMsgWrappedBeginRedelegate() {
 		},
 	}
 	for _, tc := range testCases {
-		wctx := sdk.WrapSDKContext(suite.ctx)
 		wrappedMsg := types.NewMsgWrappedBeginRedelegate(tc.req)
 
-		_, err := suite.msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
-		suite.Require().NoError(err)
+		_, err := msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
+		require.NoError(t, err)
 
-		resp, err := suite.queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
+		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
 			Pagination: &query.PageRequest{},
 		})
-		suite.Require().NoError(err)
-		suite.Require().Equal(1, len(resp.Msgs))
+		require.NoError(t, err)
+		require.Equal(t, 1, len(resp.Msgs))
 
-		suite.Run(tc.name, func() {
-			_, err := suite.msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
-			if tc.expectErr {
-				suite.Require().Error(err)
-			} else {
-				suite.Require().NoError(err)
-			}
-		})
+		_, err = msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
+		if tc.expectErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
 	}
 }

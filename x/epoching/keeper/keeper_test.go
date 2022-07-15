@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/x/epoching/keeper"
@@ -83,23 +82,4 @@ func genAndApplyEmptyBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
 	app.Commit()
 
 	return ctx.WithBlockHeader(newHeader)
-}
-
-type KeeperTestSuite struct {
-	suite.Suite
-
-	app         *app.BabylonApp
-	ctx         sdk.Context
-	keeper      *keeper.Keeper
-	msgSrvr     types.MsgServer
-	queryClient types.QueryClient
-	valSet      *tmtypes.ValidatorSet
-}
-
-func (suite *KeeperTestSuite) SetupTest() {
-	suite.app, suite.ctx, suite.keeper, suite.msgSrvr, suite.queryClient, suite.valSet = setupTestKeeper(suite.T())
-}
-
-func TestKeeperTestSuite(t *testing.T) {
-	suite.Run(t, new(KeeperTestSuite))
 }
