@@ -70,11 +70,11 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			if err != nil {
 				// emit an event signalling the failed execution
 				err := ctx.EventManager().EmitTypedEvent(
-					&types.EventHandleQueuedMsgFailed{
-						EpochNumer: epoch.EpochNumber,
-						TxId:       msg.TxId,
-						MsgId:      msg.MsgId,
-						ErrorMsg:   err.Error(),
+					&types.EventHandleQueuedMsg{
+						EpochNumber: epoch.EpochNumber,
+						TxId:        msg.TxId,
+						MsgId:       msg.MsgId,
+						Error:       err.Error(),
 					},
 				)
 				if err != nil {
@@ -85,24 +85,13 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			}
 			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
 			for _, event := range res.Events {
-				// get attributes in the original event
-				originalAttrs := []*types.EventAttribute{}
-				for _, attr := range event.Attributes {
-					originalAttr := types.EventAttribute{
-						Key:   attr.Key,
-						Value: attr.Value,
-						Index: attr.Index,
-					}
-					originalAttrs = append(originalAttrs, &originalAttr)
-				}
-				// emit the wrapped event
 				err := ctx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
 						OriginalEventType:  event.Type,
 						EpochNumber:        epoch.EpochNumber,
 						TxId:               msg.TxId,
 						MsgId:              msg.MsgId,
-						OriginalAttributes: originalAttrs,
+						OriginalAttributes: event.Attributes,
 					},
 				)
 				if err != nil {

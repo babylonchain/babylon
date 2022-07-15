@@ -62,21 +62,10 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	for _, threshold := range thresholds {
 		// if a certain threshold voting power is slashed in a single epoch, emit event and trigger hook
 		if float64(slashedVotingPower) < float64(totalVotingPower)*threshold && float64(totalVotingPower)*threshold <= float64(slashedVotingPower+thisVotingPower) {
-			// get slashed validators, each in bytes
 			slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
 			slashedVals = append(slashedVals, valAddr)
-			slashedValBytes := [][]byte{}
-			for _, slashedVal := range slashedVals {
-				slashedValBytes = append(slashedValBytes, slashedVal)
-			}
-			err := ctx.EventManager().EmitTypedEvent(
-				&types.EventSlashThreshold{
-					SlashedVotingPower: slashedVotingPower,
-					TotalVotingPower:   totalVotingPower,
-					SlashedValidators:  slashedValBytes,
-				},
-			)
-			if err != nil {
+			event := types.NewEventSlashThreshold(slashedVotingPower, totalVotingPower, slashedVals)
+			if err := ctx.EventManager().EmitTypedEvent(&event); err != nil {
 				panic(err)
 			}
 			h.k.BeforeSlashThreshold(ctx, slashedVals)

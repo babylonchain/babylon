@@ -5,12 +5,6 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
-message EventAttribute {
-    bytes key = 1;
-    bytes value = 2;
-    bool index = 3;
-}
-
 message EventBeginEpoch {
     uint64 epoch_number = 1;
 }
@@ -24,14 +18,10 @@ message EventHandleQueuedMsg {
     uint64 epoch_number = 2;
     bytes tx_id = 3;
     bytes msg_id = 4;
-    repeated EventAttribute original_attributes = 5;
-}
-
-message EventHandleQueuedMsgFailed {
-    uint64 epoch_numer = 1;
-    bytes tx_id = 2;
-    bytes msg_id = 3;
-    string error_msg = 4;
+    repeated bytes original_attributes = 5 [
+        (gogoproto.customtype) = "github.com/tendermint/tendermint/abci/types.EventAttribute"
+    ];
+    string error = 6;
 }
 
 message EventSlashThreshold {
