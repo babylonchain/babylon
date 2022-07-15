@@ -2,14 +2,12 @@ package keeper_test
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
-
-// TODO (stateful tests): slash some random validators and check if the resulting (slashed) validator sets are consistent or not
-// require mocking slashing
 
 func FuzzSlashedValSet(f *testing.F) {
 	f.Add(int64(11111))
@@ -23,26 +21,39 @@ func FuzzSlashedValSet(f *testing.F) {
 		app, ctx, keeper, _, _, _ := setupTestKeeperWithValSet(t)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 
-		// slash a random set of validators
+		// slash a random subset of validators
 		numSlashed := rand.Intn(len(getValSet))
+		excpectedSlashedVals := []sdk.ValAddress{}
 		for i := 0; i < numSlashed; i++ {
 			idx := rand.Intn(len(getValSet))
 			slashedVal := getValSet[idx]
 			app.StakingKeeper.Slash(ctx, sdk.ConsAddress(slashedVal.Addr), 0, slashedVal.Power, sdk.OneDec())
-			// remove the slashed validator from the validator set
+			// add the slashed validator to the slashed validator set
+			excpectedSlashedVals = append(excpectedSlashedVals, slashedVal.Addr)
+			// remove the slashed validator from the validator set in order to avoid slashing a validator more than once
 			getValSet = append(getValSet[:idx], getValSet[idx+1:]...)
+		}
+
+		// check whether the slashed validator is consistent in DB or not
+		actualSlashedVals := keeper.GetSlashedValidators(ctx, 0)
+		require.Equal(t, len(excpectedSlashedVals), len(actualSlashedVals))
+		sortVals(excpectedSlashedVals)
+		sortVals(actualSlashedVals)
+		for i := range actualSlashedVals {
+			require.Equal(t, excpectedSlashedVals[i], actualSlashedVals[i])
 		}
 
 		// go to the 1st block and thus epoch 1
 		ctx = genAndApplyEmptyBlock(app, ctx)
 		epochNumber := keeper.GetEpoch(ctx).EpochNumber
 		require.Equal(t, uint64(1), epochNumber)
+		// no validator is slashed in epoch 1
+		require.Empty(t, keeper.GetSlashedValidators(ctx, 1))
+	})
+}
 
-		// check whether the validator set has excluded the slashed ones or not
-		getValSet2 := keeper.GetValidatorSet(ctx, epochNumber)
-		require.Equal(t, len(getValSet), len(getValSet2))
-		for i := range getValSet2 {
-			require.Equal(t, sdk.ValAddress(getValSet[i].Addr), getValSet[i].Addr)
-		}
+func sortVals(vals []sdk.ValAddress) {
+	sort.Slice(vals, func(i, j int) bool {
+		return sdk.BigEndianToUint64(vals[i]) < sdk.BigEndianToUint64(vals[j])
 	})
 }
