@@ -42,7 +42,7 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
 	}
 
-	// setup the app
+	// setup the app and ctx
 	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 

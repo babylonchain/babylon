@@ -34,7 +34,7 @@ func FuzzSlashedValSet(f *testing.F) {
 			getValSet = append(getValSet[:idx], getValSet[idx+1:]...)
 		}
 
-		// check whether the slashed validator is consistent in DB or not
+		// check whether the slashed validator set in DB is consistent or not
 		actualSlashedVals := keeper.GetSlashedValidators(ctx, 0)
 		require.Equal(t, len(excpectedSlashedVals), len(actualSlashedVals))
 		sortVals(excpectedSlashedVals)
