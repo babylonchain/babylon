@@ -169,7 +169,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	// commit genesis changes
-	app.Commit()
+	// app.Commit()
 
 	return app, ctx
 }
