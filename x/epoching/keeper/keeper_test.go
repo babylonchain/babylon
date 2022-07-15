@@ -83,3 +83,19 @@ func genAndApplyEmptyBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
 
 	return ctx.WithBlockHeader(newHeader)
 }
+
+func TestParams(t *testing.T) {
+	_, ctx, keeper, _, _, _ := setupTestKeeper(t)
+
+	expParams := types.DefaultParams()
+
+	//check that the empty keeper loads the default
+	resParams := keeper.GetParams(ctx)
+	require.True(t, expParams.Equal(resParams))
+
+	//modify a params, save, and retrieve
+	expParams.EpochInterval = 777
+	keeper.SetParams(ctx, expParams)
+	resParams = keeper.GetParams(ctx)
+	require.True(t, expParams.Equal(resParams))
+}
