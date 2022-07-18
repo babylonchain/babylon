@@ -158,17 +158,6 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 		},
 	)
 
-	//// NOTE: the below code is not needed. InitChain has already set up the genesiss state, which is in AppStateBytes
-	// commit genesis changes
-	// app.Commit()
-	// header := tmproto.Header{
-	// 	Height:             app.LastBlockHeight() + 1,
-	// 	AppHash:            app.LastCommitID().Hash,
-	// 	ValidatorsHash:     valSet.Hash(),
-	// 	NextValidatorsHash: valSet.Hash(),
-	// }
-	// app.BeginBlock(abci.RequestBeginBlock{Header: header})
-
 	return app
 }
 
