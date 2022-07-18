@@ -28,3 +28,8 @@ func CalculateValHash(valSet []stakingtypes.Validator) []byte {
 	}
 	return merkle.HashFromByteSlices(bzs)
 }
+
+// ZeroCommission constructs a commission rates with all zeros.
+func ZeroCommission() stakingtypes.CommissionRates {
+	return stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+}
