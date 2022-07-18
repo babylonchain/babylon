@@ -534,7 +534,9 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 // a `maxTreeHeight` of 4, denotes that the maximum height of the tree should be 4.
 func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minHeight uint64, maxHeight uint64) *datagen.BTCHeaderTree {
 	tree := datagen.NewBTCHeaderTree()
-	root := tree.GenRoot()
+	// Generate the root for the tree
+	root := datagen.GenRandomBTCHeaderInfo()
+	tree.AddNode(root, nil)
 	k.SetBaseBTCHeader(ctx, *root)
 
 	genRandomTreeWithParent(k, ctx, minHeight-1, maxHeight-1, root, tree)

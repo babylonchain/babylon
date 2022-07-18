@@ -6,7 +6,9 @@ import (
 )
 
 type BTCHeaderTree struct {
-	headers  map[string]*blctypes.BTCHeaderInfo
+	// headers is a map of unique identifies to BTCHeaderInfo objects
+	headers map[string]*blctypes.BTCHeaderInfo
+	// children is a map of unique identifies to unique identifiers for children
 	children map[string][]string
 }
 
@@ -14,13 +16,6 @@ func NewBTCHeaderTree() *BTCHeaderTree {
 	headers := make(map[string]*blctypes.BTCHeaderInfo, 0)
 	children := make(map[string][]string, 0)
 	return &BTCHeaderTree{headers: headers, children: children}
-}
-
-// GenRoot generates a random header info objects and adds it to the internal storage
-func (t *BTCHeaderTree) GenRoot() *blctypes.BTCHeaderInfo {
-	root := GenRandomBTCHeaderInfo()
-	t.AddNode(root, nil)
-	return root
 }
 
 // AddNode adds a node into storage. If the `parent` is set,
@@ -38,6 +33,35 @@ func (t *BTCHeaderTree) NodeExists(node *blctypes.BTCHeaderInfo) bool {
 		return true
 	}
 	return false
+}
+
+// GetRoot returns the root of the tree -- i.e. the node without an existing parent
+func (t *BTCHeaderTree) GetRoot() *blctypes.BTCHeaderInfo {
+	for _, header := range t.headers {
+		if t.getParent(header) == nil {
+			return header
+		}
+	}
+	return nil
+}
+
+// GetTip returns the header in the tree with the most work
+func (t *BTCHeaderTree) GetTip() *blctypes.BTCHeaderInfo {
+	maxWork := sdk.NewUint(0)
+	var tip *blctypes.BTCHeaderInfo
+	for _, node := range t.headers {
+		if node.Work.GT(maxWork) {
+			maxWork = *node.Work
+			tip = node
+		}
+	}
+	return tip
+}
+
+// GetMainChain returns the tree fork with the most work
+func (t *BTCHeaderTree) GetMainChain() []*blctypes.BTCHeaderInfo {
+	tip := t.GetTip()
+	return t.GetHeaderAncestry(tip)
 }
 
 // RandNumChildren randomly generates 0-2 children with the following probabilities:
@@ -109,25 +133,6 @@ func (t *BTCHeaderTree) GenRandomBTCHeaderTree(minHeight uint64, maxHeight uint6
 	}
 }
 
-// GetTip returns the header in the tree with the most work
-func (t *BTCHeaderTree) GetTip() *blctypes.BTCHeaderInfo {
-	maxWork := sdk.NewUint(0)
-	var tip *blctypes.BTCHeaderInfo
-	for _, node := range t.headers {
-		if node.Work.GT(maxWork) {
-			maxWork = *node.Work
-			tip = node
-		}
-	}
-	return tip
-}
-
-// GetMainChain returns the tree fork with the most work
-func (t *BTCHeaderTree) GetMainChain() []*blctypes.BTCHeaderInfo {
-	tip := t.GetTip()
-	return t.GetHeaderAncestry(tip)
-}
-
 // SelectRandomHeader selects a random header from the list of nodes
 func (t *BTCHeaderTree) SelectRandomHeader() *blctypes.BTCHeaderInfo {
 	randIdx := RandomInt(len(t.headers))
@@ -192,16 +197,6 @@ func (t *BTCHeaderTree) IsOnNodeChain(node *blctypes.BTCHeaderInfo, ancestor *bl
 		return true
 	}
 	return false
-}
-
-// GetRoot returns the root of the tree -- i.e. the node without an existing parent
-func (t *BTCHeaderTree) GetRoot() *blctypes.BTCHeaderInfo {
-	for _, header := range t.headers {
-		if t.getParent(header) == nil {
-			return header
-		}
-	}
-	return nil
 }
 
 // GetChildren returns the children of a node as a list of BTCHeaderInfo objects
