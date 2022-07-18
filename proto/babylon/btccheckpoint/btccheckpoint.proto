@@ -1,0 +1,52 @@
+syntax = "proto3";
+package babylon.btccheckpoint;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
+
+// Each provided OP_RETURN transaction can be idendtified by hash of block in
+// which transaction was included and transaction index in the block
+message TransactionKey {
+  uint32 index = 1;
+  bytes hash = 2 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
+  ];
+}
+
+// Checkpoint can be composed from multiple transactions, so to identify whole
+// submission we need list of transaction keys.
+// Each submission can generally be identified by this list of (txIdx, blockHash)
+// tuples.
+// Note: this could possibly be optimized as if transactions were in one block
+// they would have the same block hash and different indexes, but each blockhash
+// is only 33 (1  byte for prefix encoding and 32 byte hash), so there should
+// be other strong arguments for this optimization
+message SubmissionKey {
+  repeated TransactionKey key = 1;
+}
+
+// TODO: Determine if we should keep any block number or depth info.
+// On one hand it may be usefull to determine if block is stable or not, on other
+// depth/block number info, without context (i.e info about chain) is pretty useless
+// and blockshash in enough to retrieve is from lightclient
+message SubmissionData {
+  // TODO: this could probably be better typed
+  // Address of submitter of given checkpoint. Required to payup the reward to
+  // submitter of given checkpoint
+  bytes submitter = 1;
+  // Required to recover address of sender of btc transction to payup the reward.
+  // TODO: Maybe it is worth recovering senders while processing the InsertProof
+  // message, and store only those. Another point is that it is not that simple
+  // to recover sender of btc tx.
+  repeated bytes btctransaction = 2;
+}
+
+// Data stored in db and indexed by epoch number
+// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching callbacks
+message EpochData {
+  // List of all received checkpoints during this epoch, sorted by order of
+  // submission.
+  repeated SubmissionKey key = 1;
+}
+
