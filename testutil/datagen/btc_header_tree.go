@@ -18,17 +18,17 @@ func NewBTCHeaderTree() *BTCHeaderTree {
 	return &BTCHeaderTree{headers: headers, children: children}
 }
 
-// AddNode adds a node into storage. If the `parent` is set,
+// Add adds a node into storage. If the `parent` is set,
 // it is also added to the list of `parent`.
-func (t *BTCHeaderTree) AddNode(node *blctypes.BTCHeaderInfo, parent *blctypes.BTCHeaderInfo) {
+func (t *BTCHeaderTree) Add(node *blctypes.BTCHeaderInfo, parent *blctypes.BTCHeaderInfo) {
 	t.headers[node.Hash.String()] = node
 	if parent != nil {
 		t.children[parent.Hash.String()] = append(t.children[parent.Hash.String()], node.Hash.String())
 	}
 }
 
-// NodeExists checks whether a node is maintained in the internal storage
-func (t *BTCHeaderTree) NodeExists(node *blctypes.BTCHeaderInfo) bool {
+// Contains checks whether a node is maintained in the internal storage
+func (t *BTCHeaderTree) Contains(node *blctypes.BTCHeaderInfo) bool {
 	if _, ok := t.headers[node.Hash.String()]; ok {
 		return true
 	}
@@ -61,7 +61,7 @@ func (t *BTCHeaderTree) GetTip() *blctypes.BTCHeaderInfo {
 // GetMainChain returns the tree fork with the most work
 func (t *BTCHeaderTree) GetMainChain() []*blctypes.BTCHeaderInfo {
 	tip := t.GetTip()
-	return t.GetHeaderAncestry(tip)
+	return t.GetNodeAncestry(tip)
 }
 
 // RandNumChildren randomly generates 0-2 children with the following probabilities:
@@ -112,7 +112,7 @@ func (t *BTCHeaderTree) GenRandomBTCHeaderTree(minHeight uint64, maxHeight uint6
 		childInfo := GenRandomBTCHeaderInfoWithParent(parent)
 
 		// Rare occasion that we get the same hash, skip
-		if t.NodeExists(childInfo) {
+		if t.Contains(childInfo) {
 			// Only retry up to 3 times to generate the child
 			if retries < maxRetries {
 				i -= 1
@@ -127,14 +127,14 @@ func (t *BTCHeaderTree) GenRandomBTCHeaderTree(minHeight uint64, maxHeight uint6
 			childMinHeight = minHeight - 1
 		}
 		if callback(childInfo) {
-			t.AddNode(childInfo, parent)
+			t.Add(childInfo, parent)
 			t.GenRandomBTCHeaderTree(childMinHeight, maxHeight-1, childInfo, callback)
 		}
 	}
 }
 
-// SelectRandomHeader selects a random header from the list of nodes
-func (t *BTCHeaderTree) SelectRandomHeader() *blctypes.BTCHeaderInfo {
+// RandomNode selects a random header from the list of nodes
+func (t *BTCHeaderTree) RandomNode() *blctypes.BTCHeaderInfo {
 	randIdx := RandomInt(len(t.headers))
 	var idx uint64 = 0
 	for _, node := range t.headers {
@@ -146,8 +146,8 @@ func (t *BTCHeaderTree) SelectRandomHeader() *blctypes.BTCHeaderInfo {
 	return nil
 }
 
-// getAncestryUpToUtil recursively iterates the parents of the node until the root node is reached
-func (t *BTCHeaderTree) getAncestryUpToUtil(ancestry *[]*blctypes.BTCHeaderInfo,
+// getNodeAncestryUpToUtil recursively iterates the parents of the node until the root node is reached
+func (t *BTCHeaderTree) getNodeAncestryUpToUtil(ancestry *[]*blctypes.BTCHeaderInfo,
 	node *blctypes.BTCHeaderInfo, upTo *blctypes.BTCHeaderInfo) {
 
 	if upTo != nil && node.Eq(upTo) {
@@ -156,30 +156,30 @@ func (t *BTCHeaderTree) getAncestryUpToUtil(ancestry *[]*blctypes.BTCHeaderInfo,
 	*ancestry = append(*ancestry, node)
 	parent := t.getParent(node)
 	if parent != nil {
-		t.getAncestryUpToUtil(ancestry, parent, upTo)
+		t.getNodeAncestryUpToUtil(ancestry, parent, upTo)
 	}
 }
 
-// GetHeaderAncestryUpTo returns an ancestry list starting from the tree node and
+// GetNodeAncestryUpTo returns an ancestry list starting from the tree node and
 // leading to a child of the `upTo` parameter if it is not nil.
-func (t *BTCHeaderTree) GetHeaderAncestryUpTo(node *blctypes.BTCHeaderInfo,
+func (t *BTCHeaderTree) GetNodeAncestryUpTo(node *blctypes.BTCHeaderInfo,
 	upTo *blctypes.BTCHeaderInfo) []*blctypes.BTCHeaderInfo {
 
 	ancestry := make([]*blctypes.BTCHeaderInfo, 0)
-	t.getAncestryUpToUtil(&ancestry, node, upTo)
+	t.getNodeAncestryUpToUtil(&ancestry, node, upTo)
 	return ancestry
 }
 
-// GetHeaderAncestry returns an ancestry list starting from the tree node and
+// GetNodeAncestry returns an ancestry list starting from the tree node and
 // leading to the root of the tree.
-func (t *BTCHeaderTree) GetHeaderAncestry(node *blctypes.BTCHeaderInfo) []*blctypes.BTCHeaderInfo {
-	return t.GetHeaderAncestryUpTo(node, nil)
+func (t *BTCHeaderTree) GetNodeAncestry(node *blctypes.BTCHeaderInfo) []*blctypes.BTCHeaderInfo {
+	return t.GetNodeAncestryUpTo(node, nil)
 }
 
 // GetRandomAncestor retrieves the ancestry list and returns an ancestor from it.
 // Can include the node itself.
 func (t *BTCHeaderTree) GetRandomAncestor(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
-	ancestry := t.GetHeaderAncestry(node)
+	ancestry := t.GetNodeAncestry(node)
 	idx := RandomInt(len(ancestry))
 	return ancestry[idx]
 }
@@ -190,7 +190,7 @@ func (t *BTCHeaderTree) IsOnNodeChain(node *blctypes.BTCHeaderInfo, ancestor *bl
 	if node.Eq(ancestor) {
 		return true
 	}
-	ancestryUpTo := t.GetHeaderAncestryUpTo(node, ancestor)
+	ancestryUpTo := t.GetNodeAncestryUpTo(node, ancestor)
 	lastElement := ancestryUpTo[len(ancestryUpTo)-1]
 	parent := t.getParent(lastElement)
 	if parent != nil && parent.Eq(ancestor) {
@@ -201,7 +201,7 @@ func (t *BTCHeaderTree) IsOnNodeChain(node *blctypes.BTCHeaderInfo, ancestor *bl
 
 // GetChildren returns the children of a node as a list of BTCHeaderInfo objects
 func (t *BTCHeaderTree) GetChildren(node *blctypes.BTCHeaderInfo) []*blctypes.BTCHeaderInfo {
-	if !t.NodeExists(node) {
+	if !t.Contains(node) {
 		panic("Retrieving children of non existent node")
 	}
 	childrenHash := t.children[node.Hash.String()]
@@ -212,24 +212,24 @@ func (t *BTCHeaderTree) GetChildren(node *blctypes.BTCHeaderInfo) []*blctypes.BT
 	return children
 }
 
-// getDescendantsUtil recursively iterates the descendants of a node and adds them to a list
-func (t *BTCHeaderTree) getDescendantsUtil(descendants *[]*blctypes.BTCHeaderInfo, node *blctypes.BTCHeaderInfo) {
+// getNodeDescendantsUtil recursively iterates the descendants of a node and adds them to a list
+func (t *BTCHeaderTree) getNodeDescendantsUtil(descendants *[]*blctypes.BTCHeaderInfo, node *blctypes.BTCHeaderInfo) {
 	*descendants = append(*descendants, node)
 	for _, child := range t.GetChildren(node) {
-		t.getDescendantsUtil(descendants, child)
+		t.getNodeDescendantsUtil(descendants, child)
 	}
 }
 
-// GetDescendants returns a list of the descendants of a node
-func (t *BTCHeaderTree) GetDescendants(node *blctypes.BTCHeaderInfo) []*blctypes.BTCHeaderInfo {
+// GetNodeDescendants returns a list of the descendants of a node
+func (t *BTCHeaderTree) GetNodeDescendants(node *blctypes.BTCHeaderInfo) []*blctypes.BTCHeaderInfo {
 	descendants := make([]*blctypes.BTCHeaderInfo, 0)
-	t.getDescendantsUtil(&descendants, node)
+	t.getNodeDescendantsUtil(&descendants, node)
 	return descendants
 }
 
-// GetRandomDescendant returns a random descendant of the node
-func (t *BTCHeaderTree) GetRandomDescendant(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
-	descendants := t.GetDescendants(node)
+// RandomDescendant returns a random descendant of the node
+func (t *BTCHeaderTree) RandomDescendant(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
+	descendants := t.GetNodeDescendants(node)
 	idx := RandomInt(len(descendants))
 	return descendants[idx]
 }

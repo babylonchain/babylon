@@ -77,7 +77,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
 		// Construct a tree and insert it into storage
 		tree := genRandomTree(blcKeeper, ctx, uint64(2), 10)
-		parentHeader := tree.SelectRandomHeader()
+		parentHeader := tree.RandomNode()
 		// Do not work with different cases. Select a random integer between 1-BTCDifficultyMultiplier+1
 		// 1/BTCDifficultyMultiplier times, the work is going to be invalid
 		parentHeaderDifficulty := parentHeader.Header.Difficulty()

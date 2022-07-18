@@ -448,12 +448,12 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 		// Generate a random tree with at least one node
 		tree := genRandomTree(blcKeeper, ctx, 1, 10)
 		// Retrieve a random common ancestor
-		commonAncestor := tree.SelectRandomHeader()
+		commonAncestor := tree.RandomNode()
 
 		// Generate two child nodes for the common ancestor
 		childRoot1 := datagen.GenRandomBTCHeaderInfoWithParent(commonAncestor)
 		childRoot2 := datagen.GenRandomBTCHeaderInfoWithParent(commonAncestor)
-		if tree.NodeExists(childRoot1) || tree.NodeExists(childRoot2) {
+		if tree.Contains(childRoot1) || tree.Contains(childRoot2) {
 			// Unlucky case where we get the same hash. Should be extremely rare.
 			// Instead of adding extra complexity to this test case, just skip it
 			t.Skip()
@@ -462,16 +462,16 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 		blcKeeper.InsertHeader(ctx, childRoot1.Header)
 		blcKeeper.InsertHeader(ctx, childRoot2.Header)
 		// Add them into the data structures maintained by the tree
-		tree.AddNode(childRoot1, commonAncestor)
-		tree.AddNode(childRoot2, commonAncestor)
+		tree.Add(childRoot1, commonAncestor)
+		tree.Add(childRoot2, commonAncestor)
 
 		// Generate subtrees rooted at the descendant nodes
 		genRandomTreeWithParent(blcKeeper, ctx, 1, 10, childRoot1, tree)
 		genRandomTreeWithParent(blcKeeper, ctx, 1, 10, childRoot2, tree)
 
 		// Get a random descendant from each of the subtrees
-		descendant1 := tree.GetRandomDescendant(childRoot1)
-		descendant2 := tree.GetRandomDescendant(childRoot2)
+		descendant1 := tree.RandomDescendant(childRoot1)
+		descendant2 := tree.RandomDescendant(childRoot2)
 
 		retrievedHighestCommonAncestor := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(descendant1, descendant2)
 		if retrievedHighestCommonAncestor == nil {
@@ -506,12 +506,12 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 		tree := genRandomTree(blcKeeper, ctx, 1, 10)
 
 		// Get a random header from the tree
-		descendant := tree.SelectRandomHeader()
+		descendant := tree.RandomNode()
 		// Get a random ancestor from it
 		ancestor := tree.GetRandomAncestor(descendant)
 		// Get the ancestry of the descendant.
 		// It is in reverse order from the one that GetInOrderAncestorsUntil returns, since it starts with the descendant.
-		expectedAncestorsReverse := tree.GetHeaderAncestryUpTo(descendant, ancestor)
+		expectedAncestorsReverse := tree.GetNodeAncestryUpTo(descendant, ancestor)
 		gotAncestors := blcKeeper.HeadersState(ctx).GetInOrderAncestorsUntil(descendant, ancestor)
 		if len(gotAncestors) != len(expectedAncestorsReverse) {
 			t.Errorf("Got different ancestor list sizes. Expected %d got %d", len(expectedAncestorsReverse), len(gotAncestors))
@@ -536,7 +536,7 @@ func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minHeight uint64, maxHeigh
 	tree := datagen.NewBTCHeaderTree()
 	// Generate the root for the tree
 	root := datagen.GenRandomBTCHeaderInfo()
-	tree.AddNode(root, nil)
+	tree.Add(root, nil)
 	k.SetBaseBTCHeader(ctx, *root)
 
 	genRandomTreeWithParent(k, ctx, minHeight-1, maxHeight-1, root, tree)
