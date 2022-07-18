@@ -61,7 +61,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 
 // FuzzHandleQueueMsg tests HandleQueueMsg over MsgWrappedDelegate.
 // It enqueues some MsgWrappedDelegate, enters a new epoch (which triggers HandleQueueMsg), and check if the message queue is consistent or not, and if the queue msgs are processed or not.
-func FuzzHandleQueueMsg_MsgWrappedDelegate(f *testing.F) {
+func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 	f.Add(int64(11111))
 	f.Add(int64(22222))
 	f.Add(int64(55555))
