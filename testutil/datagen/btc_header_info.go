@@ -55,7 +55,7 @@ func GenRandomBTCHeaderPrevBlock() *bbl.BTCHeaderHashBytes {
 
 // GenRandomBTCHeaderMerkleRoot generates a random hex string corresponding to a merkle root
 func GenRandomBTCHeaderMerkleRoot() *chainhash.Hash {
-	// TODO: this should become a constant and have a custom type
+	// TODO: the length should become a constant and the merkle root should have a custom type
 	chHash, _ := chainhash.NewHashFromStr(GenRandomHexStr(32))
 	return chHash
 }
@@ -93,7 +93,13 @@ func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig 
 		// Set the parent hash
 		btcdHeader.PrevBlock = *parent.Hash.ToChainhash()
 		// The time should be more recent than the parent time
-		btcdHeader.Timestamp = parent.Header.Time().Add(1)
+		// Typical BTC header difference is 10 mins with some fluctuations
+		// The header timestamp is going to be the time of the parent + 10 mins +- 0-59 seconds
+		seconds := rand.Intn(60)
+		if OneInN(2) { // 50% of the times subtract the seconds
+			seconds = -1 * seconds
+		}
+		btcdHeader.Timestamp = parent.Header.Time().Add(time.Minute*10 + time.Duration(seconds)*time.Second)
 	}
 
 	return bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)

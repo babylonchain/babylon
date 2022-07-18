@@ -27,7 +27,7 @@ func (n *BTCHeaderTreeNode) getAncestryUpToUtil(ancestry *[]*BTCHeaderTreeNode, 
 }
 
 // GetHeaderAncestryUpTo returns an ancestry list starting from the tree node and
-// leading to the `upTo` parameter if it is not nil.
+// leading to a child of the `upTo` parameter if it is not nil.
 func (n *BTCHeaderTreeNode) GetHeaderAncestryUpTo(upTo *BTCHeaderTreeNode) []*BTCHeaderTreeNode {
 	ancestry := make([]*BTCHeaderTreeNode, 0)
 	n.getAncestryUpToUtil(&ancestry, upTo)
@@ -71,4 +71,18 @@ func (n *BTCHeaderTreeNode) Eq(other *BTCHeaderTreeNode) bool {
 // InsertChild inserts a child into the children list
 func (n *BTCHeaderTreeNode) InsertChild(child *BTCHeaderTreeNode) {
 	n.Children = append(n.Children, child)
+}
+
+// IsOnChain returns true or false depending on whether the node
+// is equal or a descendant of the `ancestor` parameter.
+func (n *BTCHeaderTreeNode) IsOnChain(ancestor *BTCHeaderTreeNode) bool {
+	if n.Eq(ancestor) {
+		return true
+	}
+	ancestryUpTo := n.GetHeaderAncestryUpTo(ancestor)
+	lastElement := ancestryUpTo[len(ancestryUpTo)-1]
+	if lastElement.Parent != nil && lastElement.Parent.Eq(ancestor) {
+		return true
+	}
+	return false
 }

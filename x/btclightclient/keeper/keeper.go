@@ -146,6 +146,9 @@ func (k Keeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderBytes) (uint64
 
 // MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
 func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes) (int64, error) {
+	if headerBytes == nil {
+		return -1, types.ErrEmptyMessage
+	}
 	// Retrieve the header. If it does not exist, return an error
 	headerInfo, err := k.headersState(ctx).GetHeaderByHash(headerBytes.Hash())
 	if err != nil {
@@ -155,12 +158,16 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 	// Retrieve the tip
 	tipInfo := k.headersState(ctx).GetTip()
 
-	// If the height of the requested header is larger than the tip, return an error
+	// If the height of the requested header is larger than the tip, return -1
 	if tipInfo.Height < headerInfo.Height {
-		return -1, types.ErrHeaderHigherThanTip.Wrap("header higher than tip")
+		return -1, nil
 	}
 
-	headerDepth := tipInfo.Height - headerInfo.Height + 1
+	// The depth is the number of blocks that have been build on top of the header
+	// For example:
+	// 		Tip: 0-deep
+	// 		Tip height is 10, headerInfo height is 5: 5-deep etc.
+	headerDepth := tipInfo.Height - headerInfo.Height
 	mainchain := k.headersState(ctx).GetMainChainUpTo(headerDepth)
 
 	// If we got an empty mainchain or the header does not equal the last element of the mainchain
@@ -172,10 +179,19 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 }
 
 // IsHeaderKDeep returns true if a header is at least k-deep on the main chain
-func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) bool {
-	mainchainDepth, err := k.MainChainDepth(ctx, headerBytes)
-	if err != nil || mainchainDepth < 0 {
-		return false
+func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) (bool, error) {
+	if headerBytes == nil {
+		return false, types.ErrEmptyMessage
 	}
-	return uint64(mainchainDepth) >= depth
+	mainchainDepth, err := k.MainChainDepth(ctx, headerBytes)
+	if err != nil {
+		return false, err
+	}
+	// If MainChainDepth returned a negative depth, then the header is not on the mainchain
+	if mainchainDepth < 0 {
+		return false, nil
+	}
+	// return true if the provided depth is more than equal the mainchain depth
+	//panic(fmt.Sprintf("%d %d", depth, mainchainDepth))
+	return depth >= uint64(mainchainDepth), nil
 }

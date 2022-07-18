@@ -549,14 +549,20 @@ func genRandomTreeWithRoot(k *keeper.Keeper, ctx sdk.Context,
 		maxTreeHeight = minTreeHeight
 	}
 
+	existenceMap := make(map[string]bool, 0)
 	tree := datagen.NewBTCHeaderTree(root, minTreeHeight, maxTreeHeight)
 
 	tree.GenRandomBTCHeaderInfoTree(func(headerInfo *types.BTCHeaderInfo) bool {
+		// Do not generate headers with the same hash
+		if _, ok := existenceMap[headerInfo.Hash.String()]; ok {
+			return false
+		}
 		err := k.InsertHeader(ctx, headerInfo.Header)
 		if err != nil {
 			// Something went wrong, do not add this header
-			return false
+			panic("Valid header led to error")
 		}
+		existenceMap[headerInfo.Hash.String()] = true
 		return true
 	})
 	return tree

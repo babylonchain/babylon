@@ -61,11 +61,11 @@ func (t *BTCHeaderTree) GenRandomBTCHeaderInfoTree(callback func(*btclightclient
 		childNode := NewBTCHeaderTreeNode(childInfo, t.Root)
 		// Only generate `minHeight-1` subtrees for the first child
 		childMinHeight := uint64(0)
-		if i != 0 {
+		if i != 0 && t.MinHeight-1 > 0 {
 			childMinHeight = t.MinHeight - 1
 		}
 
-		childTree := NewBTCHeaderTree(childNode, childMinHeight-1, t.MaxHeight-1)
+		childTree := NewBTCHeaderTree(childNode, childMinHeight, t.MaxHeight-1)
 		// Callback returns `true` if the child is ok for the purposes of the test
 		if !callback(childInfo) {
 			// Only retry three times

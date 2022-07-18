@@ -173,7 +173,9 @@ func (s headersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo
 func (s headersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
 	var headers []*types.BTCHeaderInfo
 	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
-		if tipHeight-header.Height == depth {
+		// Use `depth+1` because we want to first gather all the headers
+		// with a depth of `depth`.
+		if tipHeight-header.Height == depth+1 {
 			return true
 		}
 		headers = append(headers, header)
@@ -193,7 +195,7 @@ func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 
 	// Retrieve a collection of headers in descending height order
 	// Use depth+1 since we want all headers at the depth height.
-	headers := s.getDescendingHeadersUpTo(currentHeader.Height, depth+1)
+	headers := s.getDescendingHeadersUpTo(currentHeader.Height, depth)
 
 	var chain []*types.BTCHeaderInfo
 	chain = append(chain, currentHeader)
