@@ -20,7 +20,8 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 		bz := datagen.GenRandomByteArray(types.BTCHeaderHashLen)
 		// 1/10 times generate an invalid size
 		if datagen.OneInN(10) {
-			bz = datagen.GenRandomByteArray(datagen.RandomInt(types.BTCHeaderHashLen * 10))
+			bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*10)
+			bz = datagen.GenRandomByteArray(bzSz)
 			invalidHash = true
 		}
 
@@ -60,7 +61,7 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 			t.Skip()
 		}
 		if sz != len(bz) {
-			t.Errorf("MarhslTo marshalled %d bytes instead of %d", sz, len(bz))
+			t.Errorf("MarshalTo marshalled %d bytes instead of %d", sz, len(bz))
 		}
 		if bytes.Compare(m, bz) != 0 {
 			t.Errorf("MarshalTo copied %s while %s was expected", m, bz)
