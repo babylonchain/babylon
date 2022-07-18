@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +18,8 @@ func FuzzEpochValSet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		app, ctx, keeper, _, _, valSet := SetupTestKeeperWithValSet(t)
+		helper := testepoching.NewHelperWithValSet(t)
+		ctx, keeper, valSet := helper.Ctx, helper.EpochingKeeper, helper.ValSet
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 		require.Equal(t, len(valSet.Validators), len(getValSet))
 		for i := range getValSet {
@@ -27,7 +29,7 @@ func FuzzEpochValSet(f *testing.F) {
 		// generate a random number of new blocks
 		numIncBlocks := rand.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = genAndApplyEmptyBlock(app, ctx)
+			ctx = helper.GenAndApplyEmptyBlock()
 		}
 
 		// check whether the validator set remains the same or not

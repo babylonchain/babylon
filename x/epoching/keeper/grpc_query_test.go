@@ -37,7 +37,8 @@ func FuzzParamsQuery(f *testing.F) {
 			params.EpochInterval = uint64(rand.Int())
 		}
 
-		_, ctx, keeper, _, queryClient, _ := SetupTestKeeper(t)
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		// if setParamsFlag == 0, set params
 		setParamsFlag := rand.Intn(2)
@@ -66,7 +67,8 @@ func FuzzCurrentEpoch(f *testing.F) {
 	f.Add(uint64(3333))
 
 	f.Fuzz(func(t *testing.T, increment uint64) {
-		_, ctx, keeper, _, queryClient, _ := SetupTestKeeper(t)
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		for i := uint64(0); i < increment; i++ {
 			keeper.IncEpoch(ctx)
@@ -95,7 +97,8 @@ func FuzzEpochMsgs(f *testing.F) {
 		limit := uint64(rand.Int() % 100)
 
 		txidsMap := map[string]bool{}
-		_, ctx, keeper, _, queryClient, _ := SetupTestKeeper(t)
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		// enque a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {

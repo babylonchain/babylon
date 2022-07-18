@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -18,7 +19,8 @@ func FuzzEpochMsgQueue(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, ctx, keeper, _, _, _ := SetupTestKeeper(t)
+		helper := testepoching.NewHelper(t)
+		ctx, keeper := helper.Ctx, helper.EpochingKeeper
 		// ensure that the epoch msg queue is correct at the genesis
 		require.Empty(t, keeper.GetEpochMsgs(ctx))
 		require.Equal(t, uint64(0), keeper.GetQueueLength(ctx))

@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"testing"
 
+	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -12,7 +13,8 @@ import (
 
 // TODO (fuzz tests): replace the following tests with fuzz ones
 func TestMsgWrappedDelegate(t *testing.T) {
-	_, ctx, _, msgSrvr, queryClient, _ := SetupTestKeeper(t)
+	helper := testepoching.NewHelper(t)
+	ctx, msgSrvr, queryClient := helper.Ctx, helper.MsgSrvr, helper.QueryClient
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -47,7 +49,8 @@ func TestMsgWrappedDelegate(t *testing.T) {
 }
 
 func TestMsgWrappedUndelegate(t *testing.T) {
-	_, ctx, _, msgSrvr, queryClient, _ := SetupTestKeeper(t)
+	helper := testepoching.NewHelper(t)
+	ctx, msgSrvr, queryClient := helper.Ctx, helper.MsgSrvr, helper.QueryClient
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -81,7 +84,8 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 }
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
-	_, ctx, _, msgSrvr, queryClient, _ := SetupTestKeeper(t)
+	helper := testepoching.NewHelper(t)
+	ctx, msgSrvr, queryClient := helper.Ctx, helper.MsgSrvr, helper.QueryClient
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
