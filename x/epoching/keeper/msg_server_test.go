@@ -12,7 +12,7 @@ import (
 
 // TODO (fuzz tests): replace the following tests with fuzz ones
 func TestMsgWrappedDelegate(t *testing.T) {
-	_, ctx, _, msgSrvr, queryClient, _ := setupTestKeeper(t)
+	_, ctx, _, msgSrvr, queryClient, _ := SetupTestKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -47,7 +47,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 }
 
 func TestMsgWrappedUndelegate(t *testing.T) {
-	_, ctx, _, msgSrvr, queryClient, _ := setupTestKeeper(t)
+	_, ctx, _, msgSrvr, queryClient, _ := SetupTestKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -81,7 +81,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 }
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
-	_, ctx, _, msgSrvr, queryClient, _ := setupTestKeeper(t)
+	_, ctx, _, msgSrvr, queryClient, _ := SetupTestKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {

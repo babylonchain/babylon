@@ -19,7 +19,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient, *tmtypes.ValidatorSet) {
+func SetupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient, *tmtypes.ValidatorSet) {
 	// generate the validator set with 10 validators
 	valSet, err := testepoching.GenTmValidatorSet(10)
 	require.NoError(t, err)
@@ -47,8 +47,8 @@ func setupTestKeeperWithValSet(t *testing.T) (*app.BabylonApp, sdk.Context, *kee
 	return app, ctx, &epochingKeeper, msgSrvr, queryClient, valSet
 }
 
-// setupTestKeeper creates a simulated Babylon app
-func setupTestKeeper(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient, *tmtypes.ValidatorSet) {
+// SetupTestKeeper creates a simulated Babylon app
+func SetupTestKeeper(t *testing.T) (*app.BabylonApp, sdk.Context, *keeper.Keeper, types.MsgServer, types.QueryClient, *tmtypes.ValidatorSet) {
 	app := app.Setup(false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
@@ -85,7 +85,7 @@ func genAndApplyEmptyBlock(app *app.BabylonApp, ctx sdk.Context) sdk.Context {
 }
 
 func TestParams(t *testing.T) {
-	_, ctx, keeper, _, _, _ := setupTestKeeper(t)
+	_, ctx, keeper, _, _, _ := SetupTestKeeper(t)
 
 	expParams := types.DefaultParams()
 

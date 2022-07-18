@@ -18,7 +18,7 @@ func FuzzSlashedValSet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		app, ctx, keeper, _, _, _ := setupTestKeeperWithValSet(t)
+		app, ctx, keeper, _, _, _ := SetupTestKeeperWithValSet(t)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 
 		// slash a random subset of validators

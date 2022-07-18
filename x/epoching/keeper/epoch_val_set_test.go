@@ -17,7 +17,7 @@ func FuzzEpochValSet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		app, ctx, keeper, _, _, valSet := setupTestKeeperWithValSet(t)
+		app, ctx, keeper, _, _, valSet := SetupTestKeeperWithValSet(t)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 		require.Equal(t, len(valSet.Validators), len(getValSet))
 		for i := range getValSet {
