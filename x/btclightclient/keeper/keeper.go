@@ -140,6 +140,9 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 
 // BlockHeight returns the height of the provided header
 func (k Keeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderBytes) (uint64, error) {
+	if header == nil {
+		return 0, types.ErrEmptyMessage
+	}
 	headerHash := header.Hash()
 	return k.headersState(ctx).GetHeaderHeight(headerHash)
 }
