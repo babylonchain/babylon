@@ -19,7 +19,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
@@ -31,13 +30,13 @@ type Helper struct {
 	EpochingKeeper *keeper.Keeper
 	MsgSrvr        types.MsgServer
 	QueryClient    types.QueryClient
-	ValSet         *tmtypes.ValidatorSet
 	StakingKeeper  *stakingkeeper.Keeper
+
+	GenAccs []authtypes.GenesisAccount
 }
 
 // NewHelper creates the helper for testing the epoching module
 func NewHelper(t *testing.T) *Helper {
-
 	app := app.Setup(false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
@@ -48,11 +47,7 @@ func NewHelper(t *testing.T) *Helper {
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	valSet := app.StakingKeeper.GetLastValidators(ctx)
-	tmValSet, err := ToTmValidators(valSet, sdk.DefaultPowerReduction)
-	require.NoError(t, err)
-
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, tmtypes.NewValidatorSet(tmValSet), &app.StakingKeeper}
+	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, nil}
 }
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
@@ -68,9 +63,10 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
 	}
+	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, valSet, []authtypes.GenesisAccount{acc}, balance)
+	app := app.SetupWithGenesisValSet(t, valSet, GenAccs, balance)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	// get necessary subsets of the app/keeper
@@ -81,7 +77,7 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, valSet, &app.StakingKeeper}
+	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs}
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain

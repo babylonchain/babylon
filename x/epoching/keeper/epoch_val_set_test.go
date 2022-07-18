@@ -19,11 +19,14 @@ func FuzzEpochValSet(f *testing.F) {
 		rand.Seed(seed)
 
 		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper, valSet := helper.Ctx, helper.EpochingKeeper, helper.ValSet
+		ctx, keeper := helper.Ctx, helper.EpochingKeeper
+		valSet := helper.StakingKeeper.GetLastValidators(helper.Ctx)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
-		require.Equal(t, len(valSet.Validators), len(getValSet))
+		require.Equal(t, len(valSet), len(getValSet))
 		for i := range getValSet {
-			require.Equal(t, sdk.ValAddress(valSet.Validators[i].Address), getValSet[i].Addr)
+			consAddr, err := valSet[i].GetConsAddr()
+			require.NoError(t, err)
+			require.Equal(t, sdk.ValAddress(consAddr), getValSet[i].Addr)
 		}
 
 		// generate a random number of new blocks
@@ -34,9 +37,11 @@ func FuzzEpochValSet(f *testing.F) {
 
 		// check whether the validator set remains the same or not
 		getValSet2 := keeper.GetValidatorSet(ctx, keeper.GetEpoch(ctx).EpochNumber)
-		require.Equal(t, len(valSet.Validators), len(getValSet2))
+		require.Equal(t, len(valSet), len(getValSet2))
 		for i := range getValSet2 {
-			require.Equal(t, sdk.ValAddress(valSet.Validators[i].Address), getValSet[i].Addr)
+			consAddr, err := valSet[i].GetConsAddr()
+			require.NoError(t, err)
+			require.Equal(t, sdk.ValAddress(consAddr), getValSet[i].Addr)
 		}
 	})
 }
