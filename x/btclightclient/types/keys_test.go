@@ -11,20 +11,20 @@ import (
 )
 
 func FuzzHeadersObjectKey(f *testing.F) {
-	f.Add(uint64(42), "00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
-	f.Fuzz(func(t *testing.T, height uint64, hexHash string, seed int64) {
+	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
-		}
+		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
+		height := rand.Uint64()
 		// get chainhash and height
 		heightBytes := sdk.Uint64ToBigEndian(height)
 		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
 
 		// construct the expected key
 		headerHashBytes := headerHash.MustMarshal()
-		expectedKey := append(types.HeadersObjectPrefix, heightBytes...)
+		var expectedKey []byte
+		expectedKey = append(expectedKey, heightBytes...)
 		expectedKey = append(expectedKey, headerHashBytes...)
 
 		gotKey := types.HeadersObjectKey(height, &headerHash)
@@ -35,23 +35,23 @@ func FuzzHeadersObjectKey(f *testing.F) {
 }
 
 func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
-	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
-	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
+	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
-		}
+		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
 		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
 		headerHashBytes := headerHash.MustMarshal()
 
-		expectedHeightKey := append(types.HashToHeightPrefix, headerHashBytes...)
+		var expectedHeightKey []byte
+		expectedHeightKey = append(expectedHeightKey, headerHashBytes...)
 		gotHeightKey := types.HeadersObjectHeightKey(&headerHash)
 		if bytes.Compare(expectedHeightKey, gotHeightKey) != 0 {
 			t.Errorf("Expected headers object height key %s got %s", expectedHeightKey, gotHeightKey)
 		}
 
-		expectedWorkKey := append(types.HashToWorkPrefix, headerHashBytes...)
+		var expectedWorkKey []byte
+		expectedWorkKey = append(expectedWorkKey, headerHashBytes...)
 		gotWorkKey := types.HeadersObjectWorkKey(&headerHash)
 		if bytes.Compare(expectedWorkKey, gotWorkKey) != 0 {
 			t.Errorf("Expected headers object work key %s got %s", expectedWorkKey, gotWorkKey)

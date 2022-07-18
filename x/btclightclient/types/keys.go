@@ -34,16 +34,19 @@ func HeadersObjectKey(height uint64, hash *bbl.BTCHeaderHashBytes) []byte {
 	he := sdk.Uint64ToBigEndian(height)
 	hashBytes := hash.MustMarshal()
 
-	heightPrefix := append(HeadersObjectPrefix, he...)
-	return append(heightPrefix, hashBytes...)
+	var prefix []byte
+	prefix = append(prefix, he...)
+	return append(prefix, hashBytes...)
 }
 
 func HeadersObjectHeightKey(hash *bbl.BTCHeaderHashBytes) []byte {
-	return append(HashToHeightPrefix, hash.MustMarshal()...)
+	var prefix []byte
+	return append(prefix, hash.MustMarshal()...)
 }
 
 func HeadersObjectWorkKey(hash *bbl.BTCHeaderHashBytes) []byte {
-	return append(HashToWorkPrefix, hash.MustMarshal()...)
+	var prefix []byte
+	return append(prefix, hash.MustMarshal()...)
 }
 
 func TipKey() []byte {

@@ -14,14 +14,14 @@ func NewBTCHeaderInfo(header *bbl.BTCHeaderBytes, headerHash *bbl.BTCHeaderHashB
 	}
 }
 
-func (hi *BTCHeaderInfo) HasParent(parent *BTCHeaderInfo) bool {
-	return hi.Header.HasParent(parent.Header)
+func (m *BTCHeaderInfo) HasParent(parent *BTCHeaderInfo) bool {
+	return m.Header.HasParent(parent.Header)
 }
 
-func (hi *BTCHeaderInfo) Eq(other *BTCHeaderInfo) bool {
-	return hi.Hash.Eq(other.Hash)
+func (m *BTCHeaderInfo) Eq(other *BTCHeaderInfo) bool {
+	return m.Hash.Eq(other.Hash)
 }
 
-func (hi BTCHeaderInfo) Validate() error {
+func (m BTCHeaderInfo) Validate() error {
 	return nil
 }
