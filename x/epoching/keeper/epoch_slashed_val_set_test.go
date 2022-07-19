@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -18,7 +19,8 @@ func FuzzSlashedValSet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		app, ctx, keeper, _, _, _ := setupTestKeeperWithValSet(t)
+		helper := testepoching.NewHelperWithValSet(t)
+		ctx, keeper, stakingKeeper := helper.Ctx, helper.EpochingKeeper, helper.StakingKeeper
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 
 		// slash a random subset of validators
@@ -27,7 +29,7 @@ func FuzzSlashedValSet(f *testing.F) {
 		for i := 0; i < numSlashed; i++ {
 			idx := rand.Intn(len(getValSet))
 			slashedVal := getValSet[idx]
-			app.StakingKeeper.Slash(ctx, sdk.ConsAddress(slashedVal.Addr), 0, slashedVal.Power, sdk.OneDec())
+			stakingKeeper.Slash(ctx, sdk.ConsAddress(slashedVal.Addr), 0, slashedVal.Power, sdk.OneDec())
 			// add the slashed validator to the slashed validator set
 			excpectedSlashedVals = append(excpectedSlashedVals, slashedVal.Addr)
 			// remove the slashed validator from the validator set in order to avoid slashing a validator more than once
@@ -44,7 +46,7 @@ func FuzzSlashedValSet(f *testing.F) {
 		}
 
 		// go to the 1st block and thus epoch 1
-		ctx = genAndApplyEmptyBlock(app, ctx)
+		ctx = helper.GenAndApplyEmptyBlock()
 		epochNumber := keeper.GetEpoch(ctx).EpochNumber
 		require.Equal(t, uint64(1), epochNumber)
 		// no validator is slashed in epoch 1

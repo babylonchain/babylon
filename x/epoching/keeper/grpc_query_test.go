@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -36,7 +37,8 @@ func FuzzParamsQuery(f *testing.F) {
 			params.EpochInterval = uint64(rand.Int())
 		}
 
-		_, ctx, keeper, _, queryClient := setupTestKeeper()
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		// if setParamsFlag == 0, set params
 		setParamsFlag := rand.Intn(2)
@@ -65,7 +67,8 @@ func FuzzCurrentEpoch(f *testing.F) {
 	f.Add(uint64(3333))
 
 	f.Fuzz(func(t *testing.T, increment uint64) {
-		_, ctx, keeper, _, queryClient := setupTestKeeper()
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		for i := uint64(0); i < increment; i++ {
 			keeper.IncEpoch(ctx)
@@ -94,7 +97,8 @@ func FuzzEpochMsgs(f *testing.F) {
 		limit := uint64(rand.Int() % 100)
 
 		txidsMap := map[string]bool{}
-		_, ctx, keeper, _, queryClient := setupTestKeeper()
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		// enque a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {
@@ -111,7 +115,7 @@ func FuzzEpochMsgs(f *testing.F) {
 		resp, err := queryClient.EpochMsgs(wctx, &req)
 		require.NoError(t, err)
 
-		require.Equal(t, min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
+		require.Equal(t, testepoching.Min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
 		for idx := range resp.Msgs {
 			_, ok := txidsMap[string(resp.Msgs[idx].TxId)]
 			require.True(t, ok)
