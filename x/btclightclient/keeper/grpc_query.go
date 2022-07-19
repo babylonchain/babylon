@@ -4,7 +4,6 @@ import (
 	"context"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -38,7 +37,7 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 		}
 	}
 
-	store := prefix.NewStore(k.headersState(sdkCtx).hashToHeight, types.HashToHeightPrefix)
+	store := k.headersState(sdkCtx).hashToHeight
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			hashes = append(hashes, key)
@@ -72,47 +71,42 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	if req.Pagination == nil {
 		req.Pagination = &query.PageRequest{}
 	}
-	// If a starting key has not been set, then the first header is the tip
-	prevHeader := k.headersState(sdkCtx).GetTip()
-	// Otherwise, retrieve the header from the key
+
+	if req.Pagination.Limit == 0 {
+		req.Pagination.Limit = query.DefaultLimit
+	}
+
+	tip := k.headersState(sdkCtx).GetTip()
+	var startHeader *types.BTCHeaderInfo
 	if len(req.Pagination.Key) != 0 {
 		headerHash, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "key does not correspond to a header hash")
 		}
-		prevHeader, err = k.headersState(sdkCtx).GetHeaderByHash(&headerHash)
-	}
-
-	// If no tip exists or a key, then return an empty response
-	if prevHeader == nil {
-		return &types.QueryMainChainResponse{}, nil
-	}
-
-	var headers []*types.BTCHeaderInfo
-	headers = append(headers, prevHeader)
-	store := prefix.NewStore(k.headersState(sdkCtx).headers, types.HeadersObjectPrefix)
-
-	// Set this value to true to signal to FilteredPaginate to iterate the entries in reverse
-	req.Pagination.Reverse = true
-	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
-		if accumulate {
-			headerInfo := headerInfoFromStoredBytes(k.cdc, value)
-			// If the previous block extends this block, then this block is part of the main chain
-			if prevHeader.HasParent(headerInfo) {
-				prevHeader = headerInfo
-				headers = append(headers, headerInfo)
-			}
+		startHeader, err = k.headersState(sdkCtx).GetHeaderByHash(&headerHash)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, "header specified by key does not exist")
 		}
-		return true, nil
-	})
-
-	if err != nil {
-		return nil, err
+	} else {
+		startHeader = tip
 	}
 
-	// Override the next key attribute to point to the parent of the last header
-	// instead of the next element contained in the store
-	pageRes.NextKey = prevHeader.Header.ParentHash().MustMarshal()
+	// This is the depth in which the start header should in the mainchain
+	startHeaderDepth := tip.Height - startHeader.Height
+	// The depth that we want to retrieve up to
+	// -1 because the depth denotes how many headers have been built on top of it
+	depth := startHeaderDepth + req.Pagination.Limit - 1
+	// Retrieve the mainchain up to the depth
+	mainchain := k.headersState(sdkCtx).GetMainChainUpTo(depth)
+	// Check whether the key provided is part of the mainchain
+	if uint64(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(startHeader) {
+		return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
+	}
 
+	nextKey := mainchain[len(mainchain)-1].Header.ParentHash().MustMarshal()
+	headers := mainchain[startHeaderDepth:]
+	pageRes := &query.PageResponse{
+		NextKey: nextKey,
+	}
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }
