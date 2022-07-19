@@ -311,74 +311,72 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			if ctx.EventManager().Events()[0].Type != rollForwardName {
 				t.Errorf("The single event expected does not have the roll forward type")
 			}
-		} else {
+		} else if oldTip.Work.GT(*header.Work) {
 			// If the tip has a greater work than the newly inserted header
 			// no events should be sent and the tip should not change
-			if oldTip.Work.GT(*header.Work) {
-				if !oldTip.Eq(newTip) {
-					t.Errorf("Header with less work inserted but the tip changed")
+			if !oldTip.Eq(newTip) {
+				t.Errorf("Header with less work inserted but the tip changed")
+			}
+			// No rollforward hooks should be invoked
+			if len(mockHooks.AfterBTCRollForwardStore) != 0 {
+				t.Fatalf("Expected the BTCRollForward hook to not be invoked")
+			}
+			// No rollback hooks should be invoked
+			if len(mockHooks.AfterBTCRollBackStore) != 0 {
+				t.Fatalf("Expected the BTCRollBack hook to not be invoked")
+			}
+			if len(ctx.EventManager().Events()) != 0 {
+				t.Errorf("Events have been invoked when the tip wasn't updated")
+			}
+		} else {
+			// The tip has been updated. It should be towards the new header
+			if !newTip.Eq(header) {
+				t.Errorf("Inserted header has more work than the previous tip but does not become the new tip")
+			}
+			// Get the highest common ancestor of the old tip and the new header
+			hca := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(header, oldTip)
+			// Get the ancestry of the header up to the highest common ancestor
+			ancestry := tree.GetNodeAncestryUpTo(header, hca)
+			// We should have as many invocations of the roll-forward hook as the ancestors
+			// up to the highest common one
+			if len(ancestry) != len(mockHooks.AfterBTCRollForwardStore) {
+				t.Fatalf("Expected as many invocations of the roll-forward hook as the number of ancestors.")
+			}
+			for i := 0; i < len(ancestry); i++ {
+				// Compare the nodes in reverse order, since the rollfoward events should be in an oldest header first manner.
+				if !ancestry[i].Eq(mockHooks.AfterBTCRollForwardStore[len(ancestry)-i-1]) {
+					t.Errorf("Headers do not match. Expected %s got %s", ancestry[i].Hash, mockHooks.AfterBTCRollForwardStore[len(ancestry)-i-1].Hash)
 				}
-				// No rollforward hooks should be invoked
-				if len(mockHooks.AfterBTCRollForwardStore) != 0 {
-					t.Fatalf("Expected the BTCRollForward hook to not be invoked")
-				}
-				// No rollback hooks should be invoked
-				if len(mockHooks.AfterBTCRollBackStore) != 0 {
-					t.Fatalf("Expected the BTCRollBack hook to not be invoked")
-				}
-				if len(ctx.EventManager().Events()) != 0 {
-					t.Errorf("Events have been invoked when the tip wasn't updated")
-				}
-			} else {
-				// The tip has been updated. It should be towards the new header
-				if !newTip.Eq(header) {
-					t.Errorf("Inserted header has more work than the previous tip but does not become the new tip")
-				}
-				// Get the highest common ancestor of the old tip and the new header
-				hca := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(header, oldTip)
-				// Get the ancestry of the header up to the highest common ancestor
-				ancestry := tree.GetNodeAncestryUpTo(header, hca)
-				// We should have as many invocations of the roll-forward hook as the ancestors
-				// up to the highest common one
-				if len(ancestry) != len(mockHooks.AfterBTCRollForwardStore) {
-					t.Fatalf("Expected as many invocations of the roll-forward hook as the number of ancestors.")
-				}
-				for i := 0; i < len(ancestry); i++ {
-					// Compare the nodes in reverse order, since the rollfoward events should be in an oldest header first manner.
-					if !ancestry[i].Eq(mockHooks.AfterBTCRollForwardStore[len(ancestry)-i-1]) {
-						t.Errorf("Headers do not match. Expected %s got %s", ancestry[i].Hash, mockHooks.AfterBTCRollForwardStore[len(ancestry)-i-1].Hash)
-					}
-				}
+			}
 
-				// The rollback hook should be invoked for the highest common ancestor
-				if len(mockHooks.AfterBTCRollBackStore) != 1 {
-					t.Fatalf("Expected the BTCRollBack hook to be invoked once")
-				}
-				if !mockHooks.AfterBTCRollBackStore[0].Eq(hca) {
-					t.Errorf("Expected the BTCRollBack hook to be invoked for the highest common ancestor")
-				}
+			// The rollback hook should be invoked for the highest common ancestor
+			if len(mockHooks.AfterBTCRollBackStore) != 1 {
+				t.Fatalf("Expected the BTCRollBack hook to be invoked once")
+			}
+			if !mockHooks.AfterBTCRollBackStore[0].Eq(hca) {
+				t.Errorf("Expected the BTCRollBack hook to be invoked for the highest common ancestor")
+			}
 
-				// Test the invoked events
-				invokedEvents := ctx.EventManager().Events()
-				// There should be a total of len(ancestry) + 1 events
-				if len(invokedEvents) != len(ancestry)+1 {
-					t.Errorf("More events than expected were invoked %d %d", len(invokedEvents), len(ancestry)+1)
+			// Test the invoked events
+			invokedEvents := ctx.EventManager().Events()
+			// There should be a total of len(ancestry) + 1 events
+			if len(invokedEvents) != len(ancestry)+1 {
+				t.Errorf("More events than expected were invoked %d %d", len(invokedEvents), len(ancestry)+1)
+			}
+			// Only test that there is a certain number of rollForward and rollBack events
+			// Testing the attributes is a much more complex approach
+			rollForwardCnt := 0
+			rollBackCnt := 0
+			for i := 0; i < len(invokedEvents); i++ {
+				if invokedEvents[i].Type == rollForwardName {
+					rollForwardCnt += 1
 				}
-				// Only test that there is a certain number of rollForward and rollBack events
-				// Testing the attributes is a much more complex approach
-				rollForwardCnt := 0
-				rollBackCnt := 0
-				for i := 0; i < len(invokedEvents); i++ {
-					if invokedEvents[i].Type == rollForwardName {
-						rollForwardCnt += 1
-					}
-					if invokedEvents[i].Type == rollBackName {
-						rollBackCnt += 1
-					}
+				if invokedEvents[i].Type == rollBackName {
+					rollBackCnt += 1
 				}
-				if rollForwardCnt != len(ancestry) || rollBackCnt != 1 {
-					t.Errorf("Wrong number of roll forward and roll back events")
-				}
+			}
+			if rollForwardCnt != len(ancestry) || rollBackCnt != 1 {
+				t.Errorf("Wrong number of roll forward and roll back events")
 			}
 		}
 	})
