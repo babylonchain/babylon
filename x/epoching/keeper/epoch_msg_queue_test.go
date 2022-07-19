@@ -12,11 +12,6 @@ import (
 
 var (
 	coinWithOnePower = sdk.NewInt64Coin(sdk.DefaultBondDenom, sdk.DefaultPowerReduction.Int64())
-	coin100          = sdk.NewInt64Coin(sdk.DefaultBondDenom, 100)
-	coin50           = sdk.NewInt64Coin(sdk.DefaultBondDenom, 50)
-	// val1    = sdk.ValAddress("_____validator1_____")
-	// val2    = sdk.ValAddress("_____validator2_____")
-	// val3    = sdk.ValAddress("_____validator3_____")
 )
 
 // FuzzEnqueueMsg tests EnqueueMsg. It enqueues some wrapped msgs, and check if the message queue includes the enqueued msgs or not
@@ -142,7 +137,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// unbond a random amount of tokens from the validator
-		numNewVals := rand.Int63n(7) + 1 // numNewVals \in [1, 7] since UBD queue contains at most 7 validators
+		numNewVals := rand.Int63n(7) + 1 // numNewVals \in [1, 7] since UBD queue contains at most DefaultMaxEntries=7 validators
 		for i := int64(0); i < numNewVals; i++ {
 			helper.WrappedUndelegate(genAddr, val, coinWithOnePower.Amount)
 		}
@@ -175,7 +170,82 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		require.Equal(t, 1, len(unbondingDels))                            // there is only 1 type of tokens
 		require.Equal(t, numNewVals, int64(len(unbondingDels[0].Entries))) // there are numNewVals entries
 		for _, entry := range unbondingDels[0].Entries {
-			require.Equal(t, coinWithOnePower.Amount, entry.Balance) // each unbonding delegation has tokens of 1 voting power
+			require.Equal(t, coinWithOnePower.Amount, entry.Balance) // each unbonding delegation entry has tokens of 1 voting power
+		}
+	})
+}
+
+// FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate tests HandleQueueMsg over MsgWrappedBeginRedelegate.
+// It enqueues some MsgWrappedBeginRedelegate, enters a new epoch (which triggers HandleQueueMsg), and check if the tokens become unbonding or not
+func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
+	f.Add(int64(11111))
+	f.Add(int64(22222))
+	f.Add(int64(55555))
+	f.Add(int64(12312))
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		helper := testepoching.NewHelperWithValSet(t)
+		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		valSet0 := helper.EpochingKeeper.GetValidatorSet(helper.Ctx, 0)
+
+		// 2 validators, where the operator will redelegate some token from val1 to val2
+		val1 := valSet0[0].Addr
+		val1Power, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val1)
+		require.NoError(t, err)
+		val2 := valSet0[1].Addr
+		val2Power, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val2)
+		require.NoError(t, err)
+		require.Equal(t, val1Power, val2Power)
+
+		// get genesis account's address, whose holder will be the delegator
+		require.NotNil(t, genAccs)
+		require.NotEmpty(t, genAccs)
+		genAddr := genAccs[0].GetAddress()
+
+		// redelegate a random amount of tokens from val1 to val2
+		numNewVals := rand.Int63n(7) + 1 // numNewVals \in [1, 7] since UBD queue contains at most DefaultMaxEntries=7 validators
+		for i := int64(0); i < numNewVals; i++ {
+			helper.WrappedBeginRedelegate(genAddr, val1, val2, coinWithOnePower.Amount)
+		}
+		// ensure the msgs are queued
+		epochMsgs := keeper.GetEpochMsgs(ctx)
+		require.Equal(t, numNewVals, int64(len(epochMsgs)))
+
+		// enter the 1st block and thus epoch 1
+		// Note that we missed epoch 0's BeginBlock/EndBlock and thus EpochMsgs are not handled
+		ctx = helper.GenAndApplyEmptyBlock()
+		// enter epoch 2
+		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
+			ctx = helper.GenAndApplyEmptyBlock()
+		}
+
+		// ensure queued msgs have been handled
+		queueLen := keeper.GetQueueLength(ctx)
+		require.Equal(t, uint64(0), queueLen)
+		epochMsgs = keeper.GetEpochMsgs(ctx)
+		require.Equal(t, 0, len(epochMsgs))
+
+		// ensure the voting power has been redelegated from val1 to val2
+		// Note that in Babylon, redelegation happens unconditionally upon `EndEpoch`, rather than upon checkpointed. Meanwhile in Cosmos SDK, redelegation happens upon `EndBlock`.
+		// This is because slashable security only requires `unbonding` -> `unbonded` to depend on checkpoints, and redelegation does not unbond any stake from the system.
+		val1Power2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val1)
+		require.NoError(t, err)
+		val2Power2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val2)
+		require.NoError(t, err)
+		redelegatedPower := helper.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewVals))
+		// ensure the voting power of val1 has reduced
+		require.Equal(t, val1Power-redelegatedPower, val1Power2)
+		// ensure the voting power of val2 has increased
+		require.Equal(t, val2Power+redelegatedPower, val2Power2)
+
+		// ensure the genesis account has these redelegating tokens
+		redelegations := helper.StakingKeeper.GetAllRedelegations(ctx, genAddr, val1, val2)
+		require.Equal(t, 1, len(redelegations))                            // there is only 1 type of tokens
+		require.Equal(t, numNewVals, int64(len(redelegations[0].Entries))) // there are numNewVals entries
+		for _, entry := range redelegations[0].Entries {
+			require.Equal(t, coinWithOnePower.Amount, entry.InitialBalance) // each redelegating entry has tokens of 1 voting power
 		}
 	})
 }
