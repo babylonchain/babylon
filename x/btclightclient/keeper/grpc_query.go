@@ -38,7 +38,7 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 		}
 	}
 
-	store := prefix.NewStore(k.HeadersState(sdkCtx).hashToHeight, types.HashToHeightPrefix)
+	store := prefix.NewStore(k.headersState(sdkCtx).hashToHeight, types.HashToHeightPrefix)
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		if accumulate {
 			hashes = append(hashes, key)
@@ -58,7 +58,7 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	contains := k.HeadersState(sdkCtx).HeaderExists(req.Hash)
+	contains := k.headersState(sdkCtx).HeaderExists(req.Hash)
 	return &types.QueryContainsResponse{Contains: contains}, nil
 }
 
@@ -73,14 +73,14 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		req.Pagination = &query.PageRequest{}
 	}
 	// If a starting key has not been set, then the first header is the tip
-	prevHeader := k.HeadersState(sdkCtx).GetTip()
+	prevHeader := k.headersState(sdkCtx).GetTip()
 	// Otherwise, retrieve the header from the key
 	if len(req.Pagination.Key) != 0 {
 		headerHash, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "key does not correspond to a header hash")
 		}
-		prevHeader, err = k.HeadersState(sdkCtx).GetHeaderByHash(&headerHash)
+		prevHeader, err = k.headersState(sdkCtx).GetHeaderByHash(&headerHash)
 	}
 
 	// If no tip exists or a key, then return an empty response
@@ -90,7 +90,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 
 	var headers []*types.BTCHeaderInfo
 	headers = append(headers, prevHeader)
-	store := prefix.NewStore(k.HeadersState(sdkCtx).headers, types.HeadersObjectPrefix)
+	store := prefix.NewStore(k.headersState(sdkCtx).headers, types.HeadersObjectPrefix)
 
 	// Set this value to true to signal to FilteredPaginate to iterate the entries in reverse
 	req.Pagination.Reverse = true

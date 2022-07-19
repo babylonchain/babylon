@@ -126,7 +126,6 @@ func (m *BTCHeaderHashBytes) String() string {
 }
 
 func (m *BTCHeaderHashBytes) Eq(hash *BTCHeaderHashBytes) bool {
-	// TODO: test
 	return m.String() == hash.String()
 }
 

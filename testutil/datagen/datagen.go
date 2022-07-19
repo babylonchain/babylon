@@ -2,11 +2,7 @@ package datagen
 
 import (
 	"encoding/hex"
-	bbl "github.com/babylonchain/babylon/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 	"math/rand"
-	"time"
 )
 
 func GenRandomByteArray(length uint64) []byte {
@@ -28,39 +24,15 @@ func RandomInt(rng int) uint64 {
 	return uint64(rand.Intn(rng))
 }
 
-func RandomIntOtherThan(x int) uint64 {
-	untilX := 1 + RandomInt(x)
-	if RandomInt(2) == 0 {
-		return uint64(x) + untilX
+func RandomIntOtherThan(x int, rng int) uint64 {
+	if rng == 1 && x == 0 {
+		panic("There is no other int")
 	}
-	return uint64(x) - untilX
-}
-
-func GenRandomBtcdHeader(version int32, bits uint32, nonce uint32,
-	timeInt int64, prevBlockStr string, merkleRootStr string) *wire.BlockHeader {
-	if !ValidHex(prevBlockStr, bbl.BTCHeaderHashLen) {
-		prevBlockStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
+	res := RandomInt(rng)
+	for res == uint64(x) {
+		res = RandomInt(rng)
 	}
-	if !ValidHex(merkleRootStr, bbl.BTCHeaderHashLen) {
-		merkleRootStr = GenRandomHexStr(bbl.BTCHeaderHashLen)
-	}
-
-	// Get the chainhash versions
-	prevBlock, _ := chainhash.NewHashFromStr(prevBlockStr)
-	merkleRoot, _ := chainhash.NewHashFromStr(merkleRootStr)
-	time := time.Unix(timeInt, 0)
-
-	// Construct a header
-	header := wire.BlockHeader{
-		Version:    version,
-		Bits:       bits,
-		Nonce:      nonce,
-		PrevBlock:  *prevBlock,
-		MerkleRoot: *merkleRoot,
-		Timestamp:  time,
-	}
-
-	return &header
+	return res
 }
 
 // ValidHex accepts a hex string and the length representation as a byte array
