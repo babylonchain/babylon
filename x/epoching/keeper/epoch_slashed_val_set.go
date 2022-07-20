@@ -92,7 +92,7 @@ func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber uint64) types.
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		val := types.Validator{Addr: addr, Power: power.Int64()}
-		valSet = append(valSet, &val)
+		valSet = append(valSet, val)
 	}
 
 	return valSet

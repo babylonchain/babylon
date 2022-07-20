@@ -2,7 +2,6 @@ package simulation
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -29,11 +28,12 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 
 		case bytes.Equal(kvA.Key[:1], types.ValidatorSetKey),
 			bytes.Equal(kvA.Key[:1], types.SlashedValidatorSetKey):
-			var valSetA, valSetB types.ValidatorSet
-			if err := json.Unmarshal(kvA.Value, &valSetA); err != nil {
+			valSetA, err := types.NewValidatorSetFromBytes(kvA.Value)
+			if err != nil {
 				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 			}
-			if err := json.Unmarshal(kvB.Value, &valSetB); err != nil {
+			valSetB, err := types.NewValidatorSetFromBytes(kvB.Value)
+			if err != nil {
 				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			return fmt.Sprintf("%v\n%v", valSetA, valSetB)
@@ -42,10 +42,10 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			bytes.Equal(kvA.Key[:1], types.SlashedVotingPowerKey):
 			var powerA, powerB sdk.Int
 			if err := powerA.Unmarshal(kvA.Value); err != nil {
-				panic(err)
+				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			if err := powerB.Unmarshal(kvA.Value); err != nil {
-				panic(err)
+				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			return fmt.Sprintf("%v\n%v", powerA, powerB)
 

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,14 +13,20 @@ type Validator struct {
 	Power int64          `json:"power"`
 }
 
-type ValidatorSet []*Validator
+type ValidatorSet []Validator
 
 // NewSortedValidatorSet returns a sorted ValidatorSet by validator's address in the ascending order
-func NewSortedValidatorSet(vals []*Validator) ValidatorSet {
+func NewSortedValidatorSet(vals []Validator) ValidatorSet {
 	sort.Slice(vals, func(i, j int) bool {
 		return sdk.BigEndianToUint64(vals[i].Addr) < sdk.BigEndianToUint64(vals[j].Addr)
 	})
 	return vals
+}
+
+func NewValidatorSetFromBytes(vsBytes []byte) (ValidatorSet, error) {
+	var vs ValidatorSet
+	err := json.Unmarshal(vsBytes, &vs)
+	return vs, err
 }
 
 // FindValidatorWithIndex returns the validator and its index
@@ -29,7 +36,7 @@ func (vs ValidatorSet) FindValidatorWithIndex(valAddr sdk.ValAddress) (*Validato
 	if index == -1 {
 		return nil, 0, errors.New("validator address does not exist in the validator set")
 	}
-	return vs[index], index, nil
+	return &vs[index], index, nil
 }
 
 func (vs ValidatorSet) binarySearch(targetAddr sdk.ValAddress) int {
@@ -50,4 +57,16 @@ func (vs ValidatorSet) binarySearch(targetAddr sdk.ValAddress) int {
 	}
 
 	return -1
+}
+
+func (vs ValidatorSet) Marshal() ([]byte, error) {
+	return json.Marshal(vs)
+}
+
+func (vs ValidatorSet) MustMarshal() []byte {
+	vsBytes, err := vs.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	return vsBytes
 }
