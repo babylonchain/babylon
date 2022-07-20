@@ -13,4 +13,5 @@ var (
 	ErrNoCheckpointsForPreviousEpoch     = sdkerrors.Register(ModuleName, 1102, "No checkpoints for previous epoch")
 	ErrProvidedHeaderFromDifferentForks  = sdkerrors.Register(ModuleName, 1103, "Proof header from different forks")
 	ErrProvidedHeaderDoesNotHaveAncestor = sdkerrors.Register(ModuleName, 1104, "Proof header does not have ancestor in previous epoch")
+	ErrEpochAlreadyConfirmedOrFinalized  = sdkerrors.Register(ModuleName, 1105, "Submission denied. Epoch already confirmed/finalized")
 )

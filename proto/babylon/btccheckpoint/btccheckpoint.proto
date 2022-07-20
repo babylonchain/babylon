@@ -26,6 +26,17 @@ message SubmissionKey {
   repeated TransactionKey key = 1;
 }
 
+enum RawCheckpointStatus {
+  option (gogoproto.goproto_enum_prefix) = false;
+  // SUBMITTED defines a checkpoint that is included on BTC.
+  CKPT_STATUS_SUBMITTED = 0 [(gogoproto.enumvalue_customname) = "Submitted"];
+  // CONFIRMED defines a checkpoint that is k-deep on BTC.
+  CKPT_STATUS_CONFIRMED = 1 [(gogoproto.enumvalue_customname) = "Confirmed"];
+  // FINALIZED defines a checkpoint that is w-deep on BTC.
+  CKPT_STATUS_FINALIZED = 2 [(gogoproto.enumvalue_customname) = "Finalized"];
+}
+
+
 // TODO: Determine if we should keep any block number or depth info.
 // On one hand it may be usefull to determine if block is stable or not, on other
 // depth/block number info, without context (i.e info about chain) is pretty useless
@@ -40,6 +51,8 @@ message SubmissionData {
   // message, and store only those. Another point is that it is not that simple
   // to recover sender of btc tx.
   repeated bytes btctransaction = 2;
+
+  uint64 epoch = 3;
 }
 
 // Data stored in db and indexed by epoch number
@@ -48,5 +61,11 @@ message EpochData {
   // List of all received checkpoints during this epoch, sorted by order of
   // submission.
   repeated SubmissionKey key = 1;
+
+  // Current status of epoch.
+  RawCheckpointStatus status = 2;
+
+  // Required to comunicate with checkpoint module about checkpoint status
+  bytes raw_checkpoint = 3;
 }
 
