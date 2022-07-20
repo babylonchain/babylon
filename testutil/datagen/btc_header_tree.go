@@ -234,6 +234,16 @@ func (t *BTCHeaderTree) RandomDescendant(node *blctypes.BTCHeaderInfo) *blctypes
 	return descendants[idx]
 }
 
+// GetHeadersMap returns a mapping between node hashes and nodes
+func (t *BTCHeaderTree) GetHeadersMap() map[string]*blctypes.BTCHeaderInfo {
+	return t.headers
+}
+
+// Size returns the number of nodes that are maintained
+func (t *BTCHeaderTree) Size() int {
+	return len(t.headers)
+}
+
 // getParent returns the parent of the node, or nil if it doesn't exist
 func (t *BTCHeaderTree) getParent(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
 	if header, ok := t.headers[node.Header.ParentHash().String()]; ok {

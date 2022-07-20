@@ -76,37 +76,77 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		req.Pagination.Limit = query.DefaultLimit
 	}
 
-	tip := k.headersState(sdkCtx).GetTip()
-	var startHeader *types.BTCHeaderInfo
+	var keyHeader *types.BTCHeaderInfo
 	if len(req.Pagination.Key) != 0 {
 		headerHash, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "key does not correspond to a header hash")
 		}
-		startHeader, err = k.headersState(sdkCtx).GetHeaderByHash(&headerHash)
+		keyHeader, err = k.headersState(sdkCtx).GetHeaderByHash(&headerHash)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "header specified by key does not exist")
 		}
+	}
+
+	var headers []*types.BTCHeaderInfo
+	var nextKey []byte
+	if req.Pagination.Reverse {
+		var start, end uint64
+		baseHeader := k.headersState(sdkCtx).GetBaseBTCHeader()
+		// The base header is located at the end of the mainchain
+		// which requires starting at the end
+		mainchain := k.headersState(sdkCtx).GetMainChain()
+		// Reverse the mainchain -- we want to retrieve results starting from the base header
+		for i, j := 0, len(mainchain)-1; i < j; i, j = i+1, j-1 {
+			mainchain[i], mainchain[j] = mainchain[j], mainchain[i]
+		}
+		if keyHeader == nil {
+			keyHeader = baseHeader
+			start = 0
+		} else {
+			start = keyHeader.Height - baseHeader.Height
+		}
+		end = start + req.Pagination.Limit
+
+		if end >= uint64(len(mainchain)) {
+			end = uint64(len(mainchain))
+		}
+
+		// If the header's position on the mainchain is larger than the entire mainchain, then it is not part of the mainchain
+		// Also, if the element at the header's position on the mainchain is not the provided one, then it is not part of the mainchain
+		if start >= uint64(len(mainchain)) || !mainchain[start].Eq(keyHeader) {
+			return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
+		}
+		headers = mainchain[start:end]
+		if end < uint64(len(mainchain)) {
+			nextKey = mainchain[end].Hash.MustMarshal()
+		}
 	} else {
-		startHeader = tip
+		tip := k.headersState(sdkCtx).GetTip()
+		// If there is no starting key, then the starting header is the tip
+		if keyHeader == nil {
+			keyHeader = tip
+		}
+		// This is the depth in which the start header should in the mainchain
+		startHeaderDepth := tip.Height - keyHeader.Height
+		// The depth that we want to retrieve up to
+		// -1 because the depth denotes how many headers have been built on top of it
+		depth := startHeaderDepth + req.Pagination.Limit - 1
+		// Retrieve the mainchain up to the depth
+		mainchain := k.headersState(sdkCtx).GetMainChainUpTo(depth)
+		// Check whether the key provided is part of the mainchain
+		if uint64(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(keyHeader) {
+			return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
+		}
+
+		// The next key is the last elements parent hash
+		nextKey = mainchain[len(mainchain)-1].Header.ParentHash().MustMarshal()
+		headers = mainchain[startHeaderDepth:]
 	}
 
-	// This is the depth in which the start header should in the mainchain
-	startHeaderDepth := tip.Height - startHeader.Height
-	// The depth that we want to retrieve up to
-	// -1 because the depth denotes how many headers have been built on top of it
-	depth := startHeaderDepth + req.Pagination.Limit - 1
-	// Retrieve the mainchain up to the depth
-	mainchain := k.headersState(sdkCtx).GetMainChainUpTo(depth)
-	// Check whether the key provided is part of the mainchain
-	if uint64(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(startHeader) {
-		return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
-	}
-
-	nextKey := mainchain[len(mainchain)-1].Header.ParentHash().MustMarshal()
-	headers := mainchain[startHeaderDepth:]
 	pageRes := &query.PageResponse{
 		NextKey: nextKey,
 	}
+	// The headers that we should return start from the depth of the start header
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }
