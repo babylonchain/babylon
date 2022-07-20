@@ -8,8 +8,8 @@ import (
 )
 
 type Validator struct {
-	Addr  sdk.ValAddress
-	Power int64
+	Addr  sdk.ValAddress `json:"addr"`
+	Power int64          `json:"power"`
 }
 
 type ValidatorSet []*Validator

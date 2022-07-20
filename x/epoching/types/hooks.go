@@ -25,8 +25,8 @@ func (h MultiEpochingHooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 	}
 }
 
-func (h MultiEpochingHooks) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {
+func (h MultiEpochingHooks) BeforeSlashThreshold(ctx sdk.Context, valSet ValidatorSet) {
 	for i := range h {
-		h[i].BeforeSlashThreshold(ctx, valAddrs)
+		h[i].BeforeSlashThreshold(ctx, valSet)
 	}
 }

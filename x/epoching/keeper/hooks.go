@@ -24,9 +24,9 @@ func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 }
 
 // BeforeSlashThreshold triggers the BeforeSlashThreshold hook for other modules that register this hook
-func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {
+func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valSet types.ValidatorSet) {
 	if k.hooks != nil {
-		k.hooks.BeforeSlashThreshold(ctx, valAddrs)
+		k.hooks.BeforeSlashThreshold(ctx, valSet)
 	}
 }
 
@@ -52,6 +52,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	slashedVotingPower := h.k.GetSlashedVotingPower(ctx, epochNumber)
 	// voting power of this validator
 	thisVotingPower, err := h.k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	thisVal := types.Validator{Addr: valAddr, Power: thisVotingPower}
 	if err != nil {
 		// It's possible that the most powerful validator outside the validator set enrols to the validator after this validator is slashed.
 		// Consequently, here we cannot find this validator in the validatorSet map.
@@ -63,7 +64,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 		// if a certain threshold voting power is slashed in a single epoch, emit event and trigger hook
 		if float64(slashedVotingPower) < float64(totalVotingPower)*threshold && float64(totalVotingPower)*threshold <= float64(slashedVotingPower+thisVotingPower) {
 			slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
-			slashedVals = append(slashedVals, valAddr)
+			slashedVals = append(slashedVals, &thisVal)
 			event := types.NewEventSlashThreshold(slashedVotingPower, totalVotingPower, slashedVals)
 			if err := ctx.EventManager().EmitTypedEvent(&event); err != nil {
 				panic(err)

@@ -76,8 +76,8 @@ func (m *TransactionKey) GetIndex() uint32 {
 // Each submission can generally be identified by this list of (txIdx, blockHash)
 // tuples.
 // Note: this could possibly be optimized as if transactions were in one block
-// there would have the same block hash and different indexes, but each blockshash
-// is only 33 (1  bytes for prefix encoding and 32 byte hash), so there should
+// they would have the same block hash and different indexes, but each blockhash
+// is only 33 (1  byte for prefix encoding and 32 byte hash), so there should
 // be other strong arguments for this optimization
 type SubmissionKey struct {
 	Key []*TransactionKey `protobuf:"bytes,1,rep,name=key,proto3" json:"key,omitempty"`

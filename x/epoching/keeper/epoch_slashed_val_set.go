@@ -53,15 +53,19 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
+	thisVotingPower, err := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	thisVotingPowerBytes, err := sdk.NewInt(thisVotingPower).Marshal()
+	if err != nil {
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+	}
 
 	// insert into "set of slashed addresses" as KV pair, where
 	// - key: valAddr
-	// - value: empty
-	store.Set(valAddr, []byte{})
+	// - value: thisVotingPower
+	store.Set(valAddr, thisVotingPowerBytes)
 
 	// add voting power
 	slashedVotingPower := k.GetSlashedVotingPower(ctx, epochNumber)
-	thisVotingPower, err := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
 	if err != nil {
 		// we don't panic here since it's possible that the most powerful validator outside the validator set enrols to the validator after this validator is slashed.
 		return err
@@ -71,18 +75,27 @@ func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) err
 }
 
 // GetSlashedValidators returns the set of slashed validators of a given epoch
-func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber uint64) []sdk.ValAddress {
-	addrs := []sdk.ValAddress{}
+func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber uint64) types.ValidatorSet {
+	valSet := types.ValidatorSet{}
 	store := k.slashedValSetStore(ctx, epochNumber)
 	// add each valAddr, which is the key
 	iterator := store.Iterator(nil, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		addr := sdk.ValAddress(iterator.Key())
-		addrs = append(addrs, addr)
+		powerBytes := iterator.Value()
+		if powerBytes == nil {
+			panic(types.ErrUnknownValidator)
+		}
+		var power sdk.Int
+		if err := power.Unmarshal(powerBytes); err != nil {
+			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+		}
+		val := types.Validator{Addr: addr, Power: power.Int64()}
+		valSet = append(valSet, &val)
 	}
 
-	return addrs
+	return valSet
 }
 
 // ClearSlashedValidators removes all slashed validators in the set
