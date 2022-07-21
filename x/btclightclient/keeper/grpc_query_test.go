@@ -149,6 +149,9 @@ func FuzzContainsQuery(f *testing.F) {
 			t.Errorf("Nil input led to a nil error")
 		}
 
+		// Generate a random tree of headers and insert it into storage
+		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+
 		// Test with a non-existent header
 		query, _ := types.NewQueryContainsRequest(datagen.GenRandomBTCHeaderInfo().Hash.MarshalHex())
 		resp, err = blcKeeper.Contains(sdkCtx, query)
@@ -163,7 +166,6 @@ func FuzzContainsQuery(f *testing.F) {
 		}
 
 		// Test with an existing header
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
 		query, _ = types.NewQueryContainsRequest(tree.RandomNode().Hash.MarshalHex())
 		resp, err = blcKeeper.Contains(sdkCtx, query)
 		if err != nil {
@@ -223,6 +225,9 @@ func FuzzMainChainQuery(f *testing.F) {
 			t.Errorf("Invalid key led to a nil error")
 		}
 
+		// Generate a random tree of headers and insert it into storage
+		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+
 		// Check whether the key being set to an element that does not exist leads to an error
 		pagination = constructRequestWithKey(datagen.GenRandomBTCHeaderInfo().Hash.MustMarshal())
 		mainchainRequest = types.NewQueryMainChainRequest(pagination)
@@ -234,8 +239,6 @@ func FuzzMainChainQuery(f *testing.F) {
 			t.Errorf("Key corresponding to a header that does not exist led to a nil error")
 		}
 
-		// Generate a random tree of headers
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
 		// Get the mainchain
 		mainchain := tree.GetMainChain()
 

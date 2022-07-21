@@ -97,9 +97,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		// which requires starting at the end
 		mainchain := k.headersState(sdkCtx).GetMainChain()
 		// Reverse the mainchain -- we want to retrieve results starting from the base header
-		for i, j := 0, len(mainchain)-1; i < j; i, j = i+1, j-1 {
-			mainchain[i], mainchain[j] = mainchain[j], mainchain[i]
-		}
+		bbl.Reverse(mainchain)
 		if keyHeader == nil {
 			keyHeader = baseHeader
 			start = 0
