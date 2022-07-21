@@ -27,40 +27,40 @@ func WeightedOperations(
 	appParams simtypes.AppParams, cdc codec.JSONCodec, ak types.AccountKeeper, bk types.BankKeeper, stk types.StakingKeeper, k keeper.Keeper,
 ) simulation.WeightedOperations {
 	var (
-		weightMsgDelegate        int
-		weightMsgUndelegate      int
-		weightMsgBeginRedelegate int
+		weightMsgWrappedDelegate        int
+		weightMsgWrappedUndelegate      int
+		weightMsgWrappedBeginRedelegate int
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedDelegate, &weightMsgDelegate, nil,
+	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedDelegate, &weightMsgWrappedDelegate, nil,
 		func(_ *rand.Rand) {
-			weightMsgDelegate = simappparams.DefaultWeightMsgDelegate
+			weightMsgWrappedDelegate = simappparams.DefaultWeightMsgDelegate // TODO: use our own (and randomised) weight rather than those from the unwrapped msgs
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedUndelegate, &weightMsgUndelegate, nil,
+	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedUndelegate, &weightMsgWrappedUndelegate, nil,
 		func(_ *rand.Rand) {
-			weightMsgUndelegate = simappparams.DefaultWeightMsgUndelegate
+			weightMsgWrappedUndelegate = simappparams.DefaultWeightMsgUndelegate // TODO: use our own (and randomised) weight rather than those from the unwrapped msgs
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedBeginRedelegate, &weightMsgBeginRedelegate, nil,
+	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedBeginRedelegate, &weightMsgWrappedBeginRedelegate, nil,
 		func(_ *rand.Rand) {
-			weightMsgBeginRedelegate = simappparams.DefaultWeightMsgBeginRedelegate
+			weightMsgWrappedBeginRedelegate = simappparams.DefaultWeightMsgBeginRedelegate // TODO: use our own (and randomised) weight rather than those from the unwrapped msgs
 		},
 	)
 
 	return simulation.WeightedOperations{
 		simulation.NewWeightedOperation(
-			weightMsgDelegate,
+			weightMsgWrappedDelegate,
 			SimulateMsgWrappedDelegate(ak, bk, stk, k),
 		),
 		simulation.NewWeightedOperation(
-			weightMsgUndelegate,
+			weightMsgWrappedUndelegate,
 			SimulateMsgWrappedUndelegate(ak, bk, stk, k),
 		),
 		simulation.NewWeightedOperation(
-			weightMsgBeginRedelegate,
+			weightMsgWrappedBeginRedelegate,
 			SimulateMsgWrappedBeginRedelegate(ak, bk, stk, k),
 		),
 	}
@@ -84,7 +84,7 @@ func SimulateMsgWrappedDelegate(ak types.AccountKeeper, bk types.BankKeeper, stk
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "unable to pick a validator"), nil, nil
 		}
 		if val.InvalidExRate() {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "validator's invalid echange rate"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "validator's invalid exchange rate"), nil, nil
 		}
 
 		// pick a random bondAmt
@@ -149,20 +149,20 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to pick a validator"), nil, nil
 		}
 		if val.InvalidExRate() {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "validator's invalid echange rate"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "validator's invalid exchange rate"), nil, nil
 		}
 
 		// pick a random delegator from validator
 		valAddr := val.GetOperator()
 		delegations := stk.GetValidatorDelegations(ctx, val.GetOperator())
 		if delegations == nil {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "keeper does have any delegation entries"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "keeper does not have any delegation entries"), nil, nil
 		}
 		delegation := delegations[r.Intn(len(delegations))]
 		delAddr := delegation.GetDelegatorAddr()
 
 		if stk.HasMaxUnbondingDelegationEntries(ctx, delAddr, valAddr) {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "keeper does have a max unbonding delegation entries"), nil, nil
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "keeper reaches max unbonding delegation entries"), nil, nil
 		}
 
 		// pick a random unbondAmt
@@ -248,7 +248,7 @@ func SimulateMsgWrappedBeginRedelegate(ak types.AccountKeeper, bk types.BankKeep
 		delAddr := delegation.GetDelegatorAddr()
 
 		if stk.HasReceivingRedelegation(ctx, delAddr, srcAddr) {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "receveing redelegation is not allowed"), nil, nil // skip
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "receiving redelegation is not allowed"), nil, nil // skip
 		}
 
 		// pick a random destination validator
