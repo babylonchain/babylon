@@ -59,9 +59,10 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	// generate the genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	// ensure the genesis account has a sufficient amount of tokens
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.DefaultPowerReduction.MulRaw(10000000))),
 	}
 	GenAccs := []authtypes.GenesisAccount{acc}
 
@@ -149,19 +150,19 @@ func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValA
 }
 
 // WrappedUndelegate calls handler to unbound some stake from a validator.
-func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount sdk.Int, ok bool) *sdk.Result {
+func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount sdk.Int) *sdk.Result {
 	unbondAmt := sdk.NewCoin(sdk.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgUndelegate(delegator, val, unbondAmt)
 	wmsg := types.NewMsgWrappedUndelegate(msg)
-	return h.Handle(wmsg, ok)
+	return h.Handle(wmsg, true)
 }
 
 // WrappedBeginRedelegate calls handler to redelegate some stake from a validator to another
-func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.ValAddress, dstVal sdk.ValAddress, amount sdk.Int, ok bool) *sdk.Result {
+func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.ValAddress, dstVal sdk.ValAddress, amount sdk.Int) *sdk.Result {
 	unbondAmt := sdk.NewCoin(sdk.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgBeginRedelegate(delegator, srcVal, dstVal, unbondAmt)
 	wmsg := types.NewMsgWrappedBeginRedelegate(msg)
-	return h.Handle(wmsg, ok)
+	return h.Handle(wmsg, true)
 }
 
 // Handle calls epoching handler on a given message
