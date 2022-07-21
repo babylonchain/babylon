@@ -9,17 +9,34 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/babylonchain/babylon/app"
 
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // Get flags every time the simulator is run
@@ -83,7 +100,6 @@ func TestFullAppSimulation(t *testing.T) {
 	}
 }
 
-/*
 func TestAppImportExport(t *testing.T) {
 	config, db, dir, logger, skip, err := sdksimapp.SetupSimulation("leveldb-app-sim", "Simulation")
 	if skip {
@@ -145,27 +161,33 @@ func TestAppImportExport(t *testing.T) {
 
 	ctxA := babylon.NewContext(true, tmproto.Header{Height: babylon.LastBlockHeight()})
 	ctxB := newBabylon.NewContext(true, tmproto.Header{Height: babylon.LastBlockHeight()})
-	newBabylon.mm.InitGenesis(ctxB, babylon.AppCodec(), genesisState)
+	newBabylon.ModuleManager().InitGenesis(ctxB, babylon.AppCodec(), genesisState)
 	newBabylon.StoreConsensusParams(ctxB, exported.ConsensusParams)
 
 	fmt.Printf("comparing stores...\n")
 
 	storeKeysPrefixes := []StoreKeysPrefixes{
-		{babylon.keys[authtypes.StoreKey], newBabylon.keys[authtypes.StoreKey], [][]byte{}},
-		{babylon.keys[stakingtypes.StoreKey], newBabylon.keys[stakingtypes.StoreKey],
+		{babylon.GetKey(authtypes.StoreKey), newBabylon.GetKey(authtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(stakingtypes.StoreKey), newBabylon.GetKey(stakingtypes.StoreKey),
 			[][]byte{
 				stakingtypes.UnbondingQueueKey, stakingtypes.RedelegationQueueKey, stakingtypes.ValidatorQueueKey,
 				stakingtypes.HistoricalInfoKey,
 			}}, // ordering may change but it doesn't matter
-		{babylon.keys[slashingtypes.StoreKey], newBabylon.keys[slashingtypes.StoreKey], [][]byte{}},
-		{babylon.keys[minttypes.StoreKey], newBabylon.keys[minttypes.StoreKey], [][]byte{}},
-		{babylon.keys[distrtypes.StoreKey], newBabylon.keys[distrtypes.StoreKey], [][]byte{}},
-		{babylon.keys[banktypes.StoreKey], newBabylon.keys[banktypes.StoreKey], [][]byte{banktypes.BalancesPrefix}},
-		{babylon.keys[paramtypes.StoreKey], newBabylon.keys[paramtypes.StoreKey], [][]byte{}},
-		{babylon.keys[govtypes.StoreKey], newBabylon.keys[govtypes.StoreKey], [][]byte{}},
-		{babylon.keys[evidencetypes.StoreKey], newBabylon.keys[evidencetypes.StoreKey], [][]byte{}},
-		{babylon.keys[capabilitytypes.StoreKey], newBabylon.keys[capabilitytypes.StoreKey], [][]byte{}},
-		{babylon.keys[authzkeeper.StoreKey], newBabylon.keys[authzkeeper.StoreKey], [][]byte{}},
+		{babylon.GetKey(slashingtypes.StoreKey), newBabylon.GetKey(slashingtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(minttypes.StoreKey), newBabylon.GetKey(minttypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(distrtypes.StoreKey), newBabylon.GetKey(distrtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(banktypes.StoreKey), newBabylon.GetKey(banktypes.StoreKey), [][]byte{banktypes.BalancesPrefix}},
+		{babylon.GetKey(paramtypes.StoreKey), newBabylon.GetKey(paramtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(govtypes.StoreKey), newBabylon.GetKey(govtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(evidencetypes.StoreKey), newBabylon.GetKey(evidencetypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(capabilitytypes.StoreKey), newBabylon.GetKey(capabilitytypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(authzkeeper.StoreKey), newBabylon.GetKey(authzkeeper.StoreKey), [][]byte{}},
+		// TODO: add Babylon module StoreKey and prefix here
+		{babylon.GetKey(btccheckpointtypes.StoreKey), newBabylon.GetKey(btccheckpointtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(btclightclienttypes.StoreKey), newBabylon.GetKey(btclightclienttypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(checkpointingtypes.StoreKey), newBabylon.GetKey(checkpointingtypes.StoreKey), [][]byte{}},
+		{babylon.GetKey(epochingtypes.StoreKey), newBabylon.GetKey(epochingtypes.StoreKey),
+			[][]byte{epochingtypes.SlashedVotingPowerKey, epochingtypes.VotingPowerKey}},
 	}
 
 	for _, skp := range storeKeysPrefixes {
@@ -237,7 +259,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	newBabylon.InitChain(abci.RequestInitChain{
@@ -257,7 +279,6 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	)
 	require.NoError(t, err)
 }
-*/
 
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
 // and doesn't depend on the application.
