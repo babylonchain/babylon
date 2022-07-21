@@ -58,6 +58,9 @@ func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
 
 // InsertHeader inserts a btcd header into the header state
 func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error {
+	if header == nil {
+		return types.ErrEmptyMessage
+	}
 	headerHash := header.Hash()
 	parentHash := header.ParentHash()
 
