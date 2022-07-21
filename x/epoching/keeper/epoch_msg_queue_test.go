@@ -137,8 +137,8 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// unbond a random amount of tokens from the validator
-		// Note that for any pair of delegator and validator, there can be <=DefaultMaxEntries=7 concurrent undelegations at any time slot
-		// Otherwise, only DefaultMaxEntries undelegations will be processed at this height and the other will be rejected
+		// Note that for any pair of delegator and validator, there can be `<=DefaultMaxEntries=7` concurrent undelegations at any time slot
+		// Otherwise, only `DefaultMaxEntries` undelegations will be processed at this height and the rest will be rejected
 		// See https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/delegation.go#L814-L816
 		numNewUndels := rand.Int63n(7) + 1
 		for i := int64(0); i < numNewUndels; i++ {
@@ -208,7 +208,8 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// redelegate a random amount of tokens from val1 to val2
-		// same as undelegation, there can be <=DefaultMaxEntries=7 concurrent redelegation requests for any (delegatorAddr, srcValidatorAddr, dstValidatorAddr)
+		// same as undelegation, there can be `<=DefaultMaxEntries=7` concurrent redelegation requests for any tuple (delegatorAddr, srcValidatorAddr, dstValidatorAddr)
+		// See https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/delegation.go#L908-L910
 		numNewRedels := rand.Int63n(7) + 1
 		for i := int64(0); i < numNewRedels; i++ {
 			helper.WrappedBeginRedelegate(genAddr, val1, val2, coinWithOnePower.Amount)
@@ -232,7 +233,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		require.Equal(t, 0, len(epochMsgs))
 
 		// ensure the voting power has been redelegated from val1 to val2
-		// Note that in Cosmos SDK, redelegation happens upon the next `EndBlock` rather than waiting for 14 days.
+		// Note that in Cosmos SDK, redelegation happens upon the next `EndBlock`, rather than waiting for 14 days.
 		// This is because redelegation does not affect PoS security: upon redelegation requests, no token is leaving the system.
 		// SImilarly, in Babylon, redelegation happens unconditionally upon `EndEpoch`, rather than depending on checkpoint status.
 		val1Power2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val1)
