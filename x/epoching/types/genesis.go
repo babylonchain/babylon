@@ -13,6 +13,13 @@ func DefaultGenesis() *GenesisState {
 	}
 }
 
+// NewGenesis creates a new GenesisState instanc e
+func NewGenesis(params Params) *GenesisState {
+	return &GenesisState{
+		Params: params,
+	}
+}
+
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {

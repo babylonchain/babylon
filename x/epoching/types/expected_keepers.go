@@ -19,6 +19,7 @@ type AccountKeeper interface {
 // BankKeeper defines the expected interface needed to retrieve account balances.
 type BankKeeper interface {
 	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
+	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
 	// Methods imported from bank should be defined here
 }
 
@@ -31,8 +32,14 @@ type StakingKeeper interface {
 	CompleteUnbonding(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) (sdk.Coins, error)
 	DequeueAllMatureRedelegationQueue(ctx sdk.Context, currTime time.Time) (matureRedelegations []stakingtypes.DVVTriplet)
 	CompleteRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valSrcAddr, valDstAddr sdk.ValAddress) (sdk.Coins, error)
-	ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) (updates []abci.ValidatorUpdate, err error)
-	IterateLastValidatorPowers(ctx sdk.Context, handler func(operator sdk.ValAddress, power int64) (stop bool))
+	ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) ([]abci.ValidatorUpdate, error)
+	IterateLastValidatorPowers(ctx sdk.Context, handler func(operator sdk.ValAddress, power int64) bool)
+	GetValidator(ctx sdk.Context, addr sdk.ValAddress) (stakingtypes.Validator, bool)
+	GetValidatorDelegations(ctx sdk.Context, valAddr sdk.ValAddress) []stakingtypes.Delegation
+	HasMaxUnbondingDelegationEntries(ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress) bool
+	BondDenom(ctx sdk.Context) string
+	HasReceivingRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valDstAddr sdk.ValAddress) bool
+	HasMaxRedelegationEntries(ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorSrcAddr, validatorDstAddr sdk.ValAddress) bool
 }
 
 // Event Hooks
@@ -43,9 +50,9 @@ type StakingKeeper interface {
 
 // EpochingHooks event hooks for epoching validator object (noalias)
 type EpochingHooks interface {
-	AfterEpochBegins(ctx sdk.Context, epoch uint64)                  // Must be called after an epoch begins
-	AfterEpochEnds(ctx sdk.Context, epoch uint64)                    // Must be called after an epoch ends
-	BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) // Must be called before a certain threshold (1/3 or 2/3) of validators are slashed in a single epoch
+	AfterEpochBegins(ctx sdk.Context, epoch uint64)            // Must be called after an epoch begins
+	AfterEpochEnds(ctx sdk.Context, epoch uint64)              // Must be called after an epoch ends
+	BeforeSlashThreshold(ctx sdk.Context, valSet ValidatorSet) // Must be called before a certain threshold (1/3 or 2/3) of validators are slashed in a single epoch
 }
 
 // StakingHooks event hooks for staking validator object (noalias)

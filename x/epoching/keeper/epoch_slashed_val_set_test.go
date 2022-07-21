@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -40,9 +41,9 @@ func FuzzSlashedValSet(f *testing.F) {
 		actualSlashedVals := keeper.GetSlashedValidators(ctx, 0)
 		require.Equal(t, len(excpectedSlashedVals), len(actualSlashedVals))
 		sortVals(excpectedSlashedVals)
-		sortVals(actualSlashedVals)
+		actualSlashedVals = types.NewSortedValidatorSet(actualSlashedVals)
 		for i := range actualSlashedVals {
-			require.Equal(t, excpectedSlashedVals[i], actualSlashedVals[i])
+			require.Equal(t, excpectedSlashedVals[i], actualSlashedVals[i].Addr)
 		}
 
 		// go to the 1st block and thus epoch 1

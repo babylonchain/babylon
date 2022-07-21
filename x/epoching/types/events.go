@@ -1,13 +1,9 @@
 package types
 
-import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-)
-
-func NewEventSlashThreshold(slashedVotingPower int64, totalVotingPower int64, slashedVals []sdk.ValAddress) EventSlashThreshold {
+func NewEventSlashThreshold(slashedVotingPower int64, totalVotingPower int64, slashedValSet ValidatorSet) EventSlashThreshold {
 	slashedValBytes := [][]byte{}
-	for _, slashedVal := range slashedVals {
-		slashedValBytes = append(slashedValBytes, slashedVal)
+	for _, slashedVal := range slashedValSet {
+		slashedValBytes = append(slashedValBytes, slashedVal.Addr)
 	}
 	return EventSlashThreshold{
 		SlashedVotingPower: slashedVotingPower,
