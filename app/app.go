@@ -207,7 +207,7 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".babylonapp")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".babylond")
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
