@@ -63,8 +63,8 @@ func interBlockCacheOpt() func(*baseapp.BaseApp) {
 }
 
 func TestFullAppSimulation(t *testing.T) {
-	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-sim", "Simulation")
-	if flag {
+	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if skip {
 		t.Skip("skipping application simulation")
 	}
 	require.NoError(t, err, "simulation setup failed")
@@ -101,8 +101,8 @@ func TestFullAppSimulation(t *testing.T) {
 }
 
 func TestAppImportExport(t *testing.T) {
-	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-sim", "Simulation")
-	if flag {
+	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if skip {
 		t.Skip("skipping application import/export simulation")
 	}
 	require.NoError(t, err, "simulation setup failed")
@@ -203,8 +203,8 @@ func TestAppImportExport(t *testing.T) {
 }
 
 func TestAppSimulationAfterImport(t *testing.T) {
-	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-sim", "Simulation")
-	if flag {
+	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if skip {
 		t.Skip("skipping application simulation after import")
 	}
 	require.NoError(t, err, "simulation setup failed")
