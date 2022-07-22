@@ -18,12 +18,12 @@ import (
 // /usr/local/go/bin/go test -benchmem -run=^$ github.com/babylonchain/babylon/simapp -bench ^BenchmarkFullAppSimulation$ -Commit=true -cpuprofile cpu.out
 func BenchmarkFullAppSimulation(b *testing.B) {
 	b.ReportAllocs()
-	config, db, dir, logger, skip, err := sdksimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
 	if err != nil {
 		b.Fatalf("simulation setup failed: %s", err.Error())
 	}
 
-	if skip {
+	if !FlagEnabledValue {
 		b.Skip("skipping benchmark application simulation")
 	}
 
@@ -66,12 +66,12 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 
 func BenchmarkInvariants(b *testing.B) {
 	b.ReportAllocs()
-	config, db, dir, logger, skip, err := sdksimapp.SetupSimulation("leveldb-app-invariant-bench", "Simulation")
+	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("leveldb-app-invariant-bench", "Simulation")
 	if err != nil {
 		b.Fatalf("simulation setup failed: %s", err.Error())
 	}
 
-	if skip {
+	if !FlagEnabledValue {
 		b.Skip("skipping benchmark application simulation")
 	}
 
