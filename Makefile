@@ -10,7 +10,7 @@ BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/babylonchain/babylon.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
-SIMAPP = ./app
+SIMAPP = ./simapp
 
 export GO111MODULE = on
 
