@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -32,10 +31,10 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 	return func(r *rand.Rand, accs []simtypes.Account, config simtypes.Config,
 	) (appState json.RawMessage, simAccs []simtypes.Account, chainID string, genesisTimestamp time.Time) {
 
-		if sdksimapp.FlagGenesisTimeValue == 0 {
+		if FlagGenesisTimeValue == 0 {
 			genesisTimestamp = simtypes.RandTimestamp(r)
 		} else {
-			genesisTimestamp = time.Unix(sdksimapp.FlagGenesisTimeValue, 0)
+			genesisTimestamp = time.Unix(FlagGenesisTimeValue, 0)
 		}
 
 		chainID = config.ChainID
@@ -47,7 +46,7 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 			// override the default chain-id from simapp to set it later to the config
 			genesisDoc, accounts := AppStateFromGenesisFileFn(r, cdc, config.GenesisFile)
 
-			if sdksimapp.FlagGenesisTimeValue == 0 {
+			if FlagGenesisTimeValue == 0 {
 				// use genesis timestamp if no custom timestamp is provided (i.e no random timestamp)
 				genesisTimestamp = genesisDoc.GenesisTime
 			}

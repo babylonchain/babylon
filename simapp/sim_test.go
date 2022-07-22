@@ -63,8 +63,8 @@ func interBlockCacheOpt() func(*baseapp.BaseApp) {
 }
 
 func TestFullAppSimulation(t *testing.T) {
-	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("leveldb-app-sim", "Simulation")
-	if !FlagEnabledValue {
+	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if flag {
 		t.Skip("skipping application simulation")
 	}
 	require.NoError(t, err, "simulation setup failed")
@@ -74,7 +74,7 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// run randomized simulation
@@ -101,8 +101,8 @@ func TestFullAppSimulation(t *testing.T) {
 }
 
 func TestAppImportExport(t *testing.T) {
-	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("leveldb-app-sim", "Simulation")
-	if !FlagEnabledValue {
+	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if flag {
 		t.Skip("skipping application import/export simulation")
 	}
 	require.NoError(t, err, "simulation setup failed")
@@ -112,7 +112,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -144,7 +144,7 @@ func TestAppImportExport(t *testing.T) {
 
 	fmt.Printf("importing genesis...\n")
 
-	_, newDB, newDir, _, _, err := sdksimapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	_, newDB, newDir, _, _, err := SetupSimulation("leveldb-app-sim-2", "Simulation-2")
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
@@ -152,7 +152,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	var genesisState app.GenesisState
@@ -203,8 +203,8 @@ func TestAppImportExport(t *testing.T) {
 }
 
 func TestAppSimulationAfterImport(t *testing.T) {
-	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("leveldb-app-sim", "Simulation")
-	if !FlagEnabledValue {
+	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	if flag {
 		t.Skip("skipping application simulation after import")
 	}
 	require.NoError(t, err, "simulation setup failed")
@@ -214,7 +214,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -251,7 +251,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	fmt.Printf("importing genesis...\n")
 
-	_, newDB, newDir, _, _, err := sdksimapp.SetupSimulation("leveldb-app-sim-2", "Simulation-2")
+	_, newDB, newDir, _, _, err := SetupSimulation("leveldb-app-sim-2", "Simulation-2")
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
@@ -259,7 +259,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	newBabylon.InitChain(abci.RequestInitChain{
@@ -303,14 +303,14 @@ func TestAppStateDeterminism(t *testing.T) {
 
 		for j := 0; j < numTimesToRunPerSeed; j++ {
 			var logger log.Logger
-			if sdksimapp.FlagVerboseValue {
+			if FlagVerboseValue {
 				logger = log.TestingLogger()
 			} else {
 				logger = log.NewNopLogger()
 			}
 
 			db := dbm.NewMemDB()
-			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",

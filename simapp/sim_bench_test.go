@@ -18,12 +18,12 @@ import (
 // /usr/local/go/bin/go test -benchmem -run=^$ github.com/babylonchain/babylon/simapp -bench ^BenchmarkFullAppSimulation$ -Commit=true -cpuprofile cpu.out
 func BenchmarkFullAppSimulation(b *testing.B) {
 	b.ReportAllocs()
-	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	config, db, dir, logger, flag, err := SetupSimulation("goleveldb-app-sim", "Simulation")
 	if err != nil {
 		b.Fatalf("simulation setup failed: %s", err.Error())
 	}
 
-	if !FlagEnabledValue {
+	if flag {
 		b.Skip("skipping benchmark application simulation")
 	}
 
@@ -35,7 +35,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		}
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -66,12 +66,12 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 
 func BenchmarkInvariants(b *testing.B) {
 	b.ReportAllocs()
-	config, db, dir, logger, _, err := sdksimapp.SetupSimulation("leveldb-app-invariant-bench", "Simulation")
+	config, db, dir, logger, flag, err := SetupSimulation("leveldb-app-invariant-bench", "Simulation")
 	if err != nil {
 		b.Fatalf("simulation setup failed: %s", err.Error())
 	}
 
-	if !FlagEnabledValue {
+	if flag {
 		b.Skip("skipping benchmark application simulation")
 	}
 
@@ -85,7 +85,7 @@ func BenchmarkInvariants(b *testing.B) {
 		}
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
