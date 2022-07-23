@@ -22,9 +22,7 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 
 // Gets proof height in context of btclightclilent, also if proof is composed
 // from two different blocks checks that they are on the same fork.
-func (m msgServer) getProofHeight(ctx sdk.Context, rawSub *types.RawCheckpointSubmission) (uint64, error) {
-	var latestblock = uint64(0)
-
+func (m msgServer) checkAllHeadersAreKnown(ctx sdk.Context, rawSub *types.RawCheckpointSubmission) error {
 	fh := rawSub.GetFirstBlockHash()
 	sh := rawSub.GetSecondBlockHash()
 
@@ -32,13 +30,11 @@ func (m msgServer) getProofHeight(ctx sdk.Context, rawSub *types.RawCheckpointSu
 		// both hashes are the same which means, two transactions with their respective
 		// proofs were provided in the same block. We only need to check one block for
 		// for height
-		num, err := m.k.GetBlockHeight(ctx, fh)
-
-		if err != nil {
-			return 0, err
+		if m.k.CheckHeaderIsKnown(ctx, fh) {
+			return nil
+		} else {
+			return types.ErrUnknownHeader
 		}
-
-		return num, nil
 	}
 
 	// at this point we know that both transactions were in different blocks.
@@ -47,13 +43,8 @@ func (m msgServer) getProofHeight(ctx sdk.Context, rawSub *types.RawCheckpointSu
 	// - if both blocks are on the same fork i.e if second block is descendant of the
 	// first block
 	for _, hash := range []btypes.BTCHeaderHashBytes{fh, sh} {
-		num, err := m.k.GetBlockHeight(ctx, hash)
-		if err != nil {
-			return 0, err
-		}
-		// the highest block number with a checkpoint being stable implies that all blocks are stable
-		if num > latestblock {
-			latestblock = num
+		if !m.k.CheckHeaderIsKnown(ctx, hash) {
+			return types.ErrUnknownHeader
 		}
 	}
 
@@ -66,10 +57,10 @@ func (m msgServer) getProofHeight(ctx sdk.Context, rawSub *types.RawCheckpointSu
 	}
 
 	if !isAncestor {
-		return 0, types.ErrProvidedHeaderFromDifferentForks
+		return types.ErrProvidedHeaderFromDifferentForks
 	}
 
-	return latestblock, nil
+	return nil
 }
 
 // checkHashesFromOneBlock checks if all hashes are from the same block i.e
@@ -202,9 +193,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, types.ErrDuplicatedSubmission
 	}
 
-	// TODO for now we do nothing with processed blockHeight but ultimatly it should
-	// be a part of timestamp
-	_, err = m.getProofHeight(sdkCtx, rawSubmission)
+	err = m.checkAllHeadersAreKnown(sdkCtx, rawSubmission)
 
 	if err != nil {
 		return nil, err

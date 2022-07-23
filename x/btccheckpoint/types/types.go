@@ -93,7 +93,7 @@ func GetEpochIndexKey(e uint64) []byte {
 func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
 	return EpochData{
 		Key:           []*SubmissionKey{},
-		Status:        Submitted,
+		Status:        Signed,
 		RawCheckpoint: rawCheckpointBytes,
 	}
 }
