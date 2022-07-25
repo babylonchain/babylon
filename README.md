@@ -93,15 +93,14 @@ The logs for a particular node can be found under
 
 After building a node and starting it, you can perform queries.
 ```console
-$ babylond --home .testnet/node{i}/babylond/ --chain-id <chain-id> \
+babylond --home .testnet/node{i}/babylond/ --chain-id <chain-id> \
     query <module-name> <query-name>
 ```
 
 For example, in order to get the hashes maintained by the `btcligthclient`
 module:
 ```console
-$ babylond --home .testnet/node0/babylond/ --chain-id chain-test \
-    query btclightclient hashes
+$ babylond --home .testnet/node0/babylond/ --chain-id chain-test query btclightclient hashes
 
 hashes:
 - 00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47
@@ -114,10 +113,10 @@ pagination:
 
 After building a node and running it, one can send transactions as follows:
 ```console
-$ babylond --home .testnet/node{i}/babylond --chain-id <chain-id> \
-           --keyring-backend {os,file,test} --fees <amount><denom> \
-           --from <key-name> --broadcast-mode {sync,async,block} \
-           tx <module-name> <tx-name> [data]
+babylond --home .testnet/node{i}/babylond --chain-id <chain-id> \
+         --keyring-backend {os,file,test} --fees <amount><denom> \
+         --from <key-name> --broadcast-mode {sync,async,block} \
+         tx <module-name> <tx-name> [data]
 ```
 
 The `--fees` flag specifies the amount of fees that we are willing to pay and
@@ -131,10 +130,10 @@ and `block` means after the transaction has been processed by the next block.
 For example, in the `btclightclient` module, in order
 to submit a header, one should:
 ```console
-$ babylond --home .testnet/node0/babylond --chain-id chain-test \
-           --keyring-backend test --fees 100stake \
-           --from node0 --broadcast-mode block \
-           tx btclightclient insert-header <header-hex>
+babylond --home .testnet/node0/babylond --chain-id chain-test \
+         --keyring-backend test --fees 100stake \
+         --from node0 --broadcast-mode block \
+         tx btclightclient insert-header <header-hex>
 ```
 
 ## Running a multi-node testnet
