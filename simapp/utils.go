@@ -14,8 +14,11 @@ import (
 // SetupSimulation creates the config, db (levelDB), temporary directory and logger for the simulation tests.
 // If `FlagEnabledValue` is false it skips the current test.
 // Returns error on an invalid db intantiation or temp dir creation.
-// NOTE: this function is identical to https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/utils.go. The reason of migrating it here is that it uses the modules' flags initialised in `init()`. Otherwise, if using `sdksimapp.SetupSimulation`, then `sdksimapp.FlagEnabledValue` and `sdksimapp.FlagVerboseValue` will be used, rather than those in `config.go` of our module.
-// The other functions under https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/utils.go do not access flags and thus can be reused safely.
+// NOTE: this function is identical to https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/utils.go.
+// The reason of migrating it here is that it uses the modules' flags initialised in `init()`. Otherwise,
+// if using  `sdksimapp.SetupSimulation`, then `sdksimapp.FlagEnabledValue` and `sdksimapp.FlagVerboseValue`
+// will be used, rather than those in `config.go` of our module.  The other functions under
+// https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/utils.go do not access flags and thus can be reused safely.
 func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string, log.Logger, bool, error) {
 	if !FlagEnabledValue {
 		return simtypes.Config{}, nil, "", nil, true, nil
