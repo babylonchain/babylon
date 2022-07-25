@@ -5,7 +5,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 
-	btypes "github.com/babylonchain/babylon/types"
+	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,20 +55,30 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx sdk.Context, b btypes.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx sdk.Context, b bbl.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash btypes.BTCHeaderHashBytes) bool {
-	_, _, err := k.btcLightClientKeeper.ChainDepth(ctx, &hash)
-	if err == nil {
-		return true
-	} else {
-		return false
-	}
+func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash bbl.BTCHeaderHashBytes) bool {
+	_, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
+	return err == nil
 }
 
-func (k Keeper) IsAncestor(ctx sdk.Context, parentHash btypes.BTCHeaderHashBytes, childHash btypes.BTCHeaderHashBytes) (bool, error) {
+func (k Keeper) MainChainDepth(ctx sdk.Context, hash bbl.BTCHeaderHashBytes) (uint64, bool, error) {
+	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
+
+	if err != nil {
+		return 0, false, err
+	}
+
+	if depth < 0 {
+		return 0, false, nil
+	}
+
+	return uint64(depth), true, nil
+}
+
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHash bbl.BTCHeaderHashBytes, childHash bbl.BTCHeaderHashBytes) (bool, error) {
 	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 
@@ -189,7 +199,11 @@ func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.Submis
 	var onMain bool = true
 	var allAtLeastNDeep = true
 	for _, tk := range sk.Key {
-		depth, onMainChain, e := k.btcLightClientKeeper.ChainDepth(ctx, tk.Hash)
+		if tk.Hash == nil {
+			panic("Unexpected submission key with nil hash bytes")
+		}
+
+		depth, onMainChain, e := k.MainChainDepth(ctx, *tk.Hash)
 
 		if e != nil {
 			return false, false, e
@@ -209,7 +223,11 @@ func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.Submis
 func (k Keeper) checkSubmissionOnMainChain(ctx sdk.Context, sk types.SubmissionKey) (bool, error) {
 	var onMain bool = true
 	for _, tk := range sk.Key {
-		_, onMainChain, e := k.btcLightClientKeeper.ChainDepth(ctx, tk.Hash)
+		if tk.Hash == nil {
+			panic("Unexpected submission key with nil hash bytes")
+		}
+
+		_, onMainChain, e := k.MainChainDepth(ctx, *tk.Hash)
 
 		if e != nil {
 			return false, e
@@ -222,11 +240,11 @@ func (k Keeper) checkSubmissionOnMainChain(ctx sdk.Context, sk types.SubmissionK
 	return onMain, nil
 }
 
-func (k Keeper) CheckSubmissionConfirmed(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
+func (k Keeper) checkSubmissionConfirmed(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
 	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.kDeep)
 }
 
-func (k Keeper) CheckSubmissionFinlized(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
+func (k Keeper) checkSubmissionFinlized(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
 	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.wDeep)
 }
 
@@ -278,7 +296,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		var sk types.SubmissionKey
 		k.cdc.MustUnmarshal(skBytes, &sk)
 
-		onMainChain, deepEnough, err := k.CheckSubmissionConfirmed(ctx, sk)
+		onMainChain, deepEnough, err := k.checkSubmissionConfirmed(ctx, sk)
 
 		if err != nil {
 			// submission which was known to lighclient is no longer known
@@ -391,7 +409,7 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		var sk types.SubmissionKey
 		k.cdc.MustUnmarshal(skBytes, &sk)
 
-		onMainChain, deepEnough, err := k.CheckSubmissionFinlized(ctx, sk)
+		onMainChain, deepEnough, err := k.checkSubmissionFinlized(ctx, sk)
 
 		if err != nil {
 			// Previously confirmed submission is now unknown to btc light client.
