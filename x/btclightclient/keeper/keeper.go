@@ -217,13 +217,8 @@ func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbl.BTCHeaderHashBy
 		return false, types.ErrHeaderDoesNotExist.Wrapf("child does not exist")
 	}
 
-	// If the height of the child is less than the parent, then the input is invalid
-	if childHeader.Height < parentHeader.Height {
-		return false, types.ErrInvalidAncestor.Wrapf("ancestor height is larger than descendant height")
-	}
-
-	// If they have the same height, then the result is false
-	if childHeader.Height == parentHeader.Height {
+	// If the height of the child is equal or less than the parent, then the input is invalid
+	if childHeader.Height <= parentHeader.Height {
 		return false, nil
 	}
 

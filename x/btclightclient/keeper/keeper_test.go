@@ -270,8 +270,8 @@ func FuzzKeeperIsAncestor(f *testing.F) {
 			}
 		} else if ancestor.Height > header.Height { // Descendant test
 			isAncestor, err = blcKeeper.IsAncestor(ctx, ancestor.Hash, header.Hash)
-			if err == nil {
-				t.Errorf("Providing a descendant as a parent led to a nil error")
+			if err != nil {
+				t.Errorf("Providing a descendant as a parent led to a non-nil error")
 			}
 			if isAncestor {
 				t.Errorf("Providing a descendant as a parent led to a true result")
