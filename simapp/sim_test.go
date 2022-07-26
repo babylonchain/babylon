@@ -84,7 +84,7 @@ func TestFullAppSimulation(t *testing.T) {
 		babylon.BaseApp,
 		AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		sdksimapp.SimulationOperations(babylon, babylon.AppCodec(), config),
+		SimulationOperations(babylon, babylon.AppCodec(), config),
 		babylon.ModuleAccountAddrs(),
 		config,
 		babylon.AppCodec(),
@@ -122,7 +122,7 @@ func TestAppImportExport(t *testing.T) {
 		babylon.BaseApp,
 		AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		sdksimapp.SimulationOperations(babylon, babylon.AppCodec(), config),
+		SimulationOperations(babylon, babylon.AppCodec(), config),
 		babylon.ModuleAccountAddrs(),
 		config,
 		babylon.AppCodec(),
@@ -224,7 +224,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		babylon.BaseApp,
 		AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		sdksimapp.SimulationOperations(babylon, babylon.AppCodec(), config),
+		SimulationOperations(babylon, babylon.AppCodec(), config),
 		babylon.ModuleAccountAddrs(),
 		config,
 		babylon.AppCodec(),
@@ -272,7 +272,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		newBabylon.BaseApp,
 		AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		sdksimapp.SimulationOperations(newBabylon, newBabylon.AppCodec(), config),
+		SimulationOperations(newBabylon, newBabylon.AppCodec(), config),
 		babylon.ModuleAccountAddrs(),
 		config,
 		babylon.AppCodec(),
@@ -323,7 +323,7 @@ func TestAppStateDeterminism(t *testing.T) {
 				babylon.BaseApp,
 				AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 				simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-				sdksimapp.SimulationOperations(babylon, babylon.AppCodec(), config),
+				SimulationOperations(babylon, babylon.AppCodec(), config),
 				babylon.ModuleAccountAddrs(),
 				config,
 				babylon.AppCodec(),
