@@ -207,7 +207,7 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".babylonapp")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".babylond")
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
@@ -634,6 +634,10 @@ func (app *BabylonApp) RegisterTxService(clientCtx client.Context) {
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *BabylonApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+}
+
+func (app *BabylonApp) ModuleManager() *module.Manager {
+	return app.mm
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server

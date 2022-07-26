@@ -18,7 +18,7 @@ import (
 // /usr/local/go/bin/go test -benchmem -run=^$ github.com/babylonchain/babylon/simapp -bench ^BenchmarkFullAppSimulation$ -Commit=true -cpuprofile cpu.out
 func BenchmarkFullAppSimulation(b *testing.B) {
 	b.ReportAllocs()
-	config, db, dir, logger, skip, err := sdksimapp.SetupSimulation("goleveldb-app-sim", "Simulation")
+	config, db, dir, logger, skip, err := SetupSimulation("goleveldb-app-sim", "Simulation")
 	if err != nil {
 		b.Fatalf("simulation setup failed: %s", err.Error())
 	}
@@ -35,7 +35,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		}
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -44,7 +44,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		babylon.BaseApp,
 		AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		sdksimapp.SimulationOperations(babylon, babylon.AppCodec(), config),
+		SimulationOperations(babylon, babylon.AppCodec(), config),
 		babylon.ModuleAccountAddrs(),
 		config,
 		babylon.AppCodec(),
@@ -66,7 +66,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 
 func BenchmarkInvariants(b *testing.B) {
 	b.ReportAllocs()
-	config, db, dir, logger, skip, err := sdksimapp.SetupSimulation("leveldb-app-invariant-bench", "Simulation")
+	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-invariant-bench", "Simulation")
 	if err != nil {
 		b.Fatalf("simulation setup failed: %s", err.Error())
 	}
@@ -85,7 +85,7 @@ func BenchmarkInvariants(b *testing.B) {
 		}
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, sdksimapp.FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -94,7 +94,7 @@ func BenchmarkInvariants(b *testing.B) {
 		babylon.BaseApp,
 		AppStateFn(babylon.AppCodec(), babylon.SimulationManager()),
 		simtypes.RandomAccounts, // Replace with own random account function if using keys other than secp256k1
-		sdksimapp.SimulationOperations(babylon, babylon.AppCodec(), config),
+		SimulationOperations(babylon, babylon.AppCodec(), config),
 		babylon.ModuleAccountAddrs(),
 		config,
 		babylon.AppCodec(),
