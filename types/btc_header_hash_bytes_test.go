@@ -90,7 +90,8 @@ func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
 		if datagen.OneInN(10) {
 			if datagen.OneInN(2) {
 				// 1/4 times generate an invalid hash size
-				hex = datagen.GenRandomHexStr(datagen.RandomInt(types.BTCHeaderHashLen * 20))
+				bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
+				hex = datagen.GenRandomHexStr(bzSz)
 			} else {
 				// 1/4 times generate an invalid hex
 				hex = string(datagen.GenRandomByteArray(types.BTCHeaderHashLen * 2))
@@ -135,7 +136,8 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 		if datagen.OneInN(10) {
 			if datagen.OneInN(2) {
 				// 1/4 times generate an invalid hash size
-				hex = datagen.GenRandomHexStr(datagen.RandomInt(types.BTCHeaderHashLen * 20))
+				bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
+				hex = datagen.GenRandomHexStr(bzSz)
 			} else {
 				// 1/4 times generate an invalid hex
 				hex = string(datagen.GenRandomByteArray(types.BTCHeaderHashLen * 2))
