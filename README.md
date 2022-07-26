@@ -124,7 +124,7 @@ the denomination and the `--from` flag denotes the name of the key that we want
 to use to sign the transaction (i.e. from which account we want this
 transaction to happen). The `--broadcast-mode` specifies how long we want to
 wait until we receive a response from the CLI: `async` means immediately,
-`sync` means after the transaction has been validated through `ValidateBasic`,
+`sync` means after the transaction has been validated through `CheckTx`,
 and `block` means after the transaction has been processed by the next block.
 
 For example, in the `btclightclient` module, in order
