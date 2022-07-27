@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
@@ -84,6 +85,10 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	}
 
 	return true, nil
+}
+
+func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
+	return hex.DecodeString(s)
 }
 
 func BytesToRawCkpt(cdc codec.BinaryCodec, bz []byte) (*RawCheckpoint, error) {

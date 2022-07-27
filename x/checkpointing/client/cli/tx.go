@@ -2,9 +2,12 @@ package cli
 
 import (
 	"fmt"
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
@@ -26,21 +29,43 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	cmd.AddCommand(CmdTxAddBlsSig())
+
 	return cmd
 }
 
 func CmdTxAddBlsSig() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "submit [validator_address] [bls_sig]",
-		Short: "Submit BLS signature bytes.",
-		Args:  cobra.ExactArgs(2),
+		Use:   "submit [epoch_number] [last_commit_hash] [bls_sig] [signer address]",
+		Short: "submit a BLS signature",
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
 				return err
 			}
 
-			msg, err := types.NewMsgAddBlsSig(args[0])
+			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			lch, err := types.NewLastCommitHashFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			blsSig, err := bls12381.NewBLSSigFromHex(args[2])
+			if err != nil {
+				return err
+			}
+
+			addr, err := sdk.ValAddressFromBech32(args[3])
+			if err != nil {
+				return err
+			}
+
+			msg, err := types.NewMsgAddBlsSig(epoch_num, lch, blsSig, addr)
 			if err != nil {
 				return err
 			}
