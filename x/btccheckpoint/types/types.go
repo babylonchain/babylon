@@ -65,12 +65,13 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionData() SubmissionData {
+func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64) SubmissionData {
 
 	tBytes := [][]byte{rsc.Proof1.TransactionBytes, rsc.Proof2.TransactionBytes}
 	return SubmissionData{
 		Submitter:      rsc.Submitter.Bytes(),
 		Btctransaction: tBytes,
+		Epoch:          epochNum,
 	}
 }
 
@@ -85,13 +86,12 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 	return hashes
 }
 
-func GetEpochIndexKey(e uint64) []byte {
-	return sdk.Uint64ToBigEndian(e)
-}
-
-func NewEpochData(key SubmissionKey) EpochData {
-	keys := []*SubmissionKey{&key}
-	return EpochData{Key: keys}
+func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
+	return EpochData{
+		Key:           []*SubmissionKey{},
+		Status:        Signed,
+		RawCheckpoint: rawCheckpointBytes,
+	}
 }
 
 func (s *EpochData) AppendKey(k SubmissionKey) {

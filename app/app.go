@@ -336,7 +336,19 @@ func NewBabylonApp(
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations
-	app.BtcCheckpointKeeper = btccheckpointkeeper.NewKeeper(appCodec, keys[btccheckpointtypes.StoreKey], keys[btccheckpointtypes.MemStoreKey], app.GetSubspace(btccheckpointtypes.ModuleName), btccheckpointtypes.MockBTCLightClientKeeper{}, btccheckpointtypes.MockCheckpointingKeeper{})
+	app.BtcCheckpointKeeper =
+		btccheckpointkeeper.NewKeeper(
+			appCodec,
+			keys[btccheckpointtypes.StoreKey],
+			keys[btccheckpointtypes.MemStoreKey],
+			app.GetSubspace(btccheckpointtypes.ModuleName),
+			btccheckpointtypes.MockBTCLightClientKeeper{},
+			btccheckpointtypes.MockCheckpointingKeeper{},
+			// TODO decide on proper values for those constants, also those should be taken
+			// from some global config
+			6,
+			10,
+		)
 	app.CheckpointingKeeper = checkpointingkeeper.NewKeeper(appCodec, keys[checkpointingtypes.StoreKey], keys[checkpointingtypes.MemStoreKey], app.EpochingKeeper, app.GetSubspace(checkpointingtypes.ModuleName))
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
