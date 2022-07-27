@@ -19,6 +19,13 @@ make build
 This will lead to the creation of a `babylond` executable under the `build`
 directory.
 
+## Installing
+
+To build the chain and install a babylon executable:
+```console
+make install
+```
+
 ## Testing
 
 ```console
@@ -27,12 +34,16 @@ make test
 
 ## Running a node
 
+The following commands assume that the `babylond` executable has been
+installed. If the repository was only built, then `./build/babylond` should be
+used in its place.
+
 ### Generating the node configuration
 The configuration for a single node can be created through the `testnet`
 command. While the testnet command can create an arbitrary number of nodes that
 communicate on a testnet, here we focus on the setup of a single node.
 ```console
-./build/babylond testnet \
+babylond testnet \
     --v                     1 \
     --output-dir            ./.testnet \
     --starting-ip-address   192.168.10.2 \
@@ -81,7 +92,7 @@ A brief description of the contents:
 
 ### Running the node
 ```console
-./build/babylond start --home ./.testnet/node0/babylond
+babylond start --home ./.testnet/node0/babylond
 ```
 
 ### Logs
