@@ -6,7 +6,6 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -119,59 +118,38 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
 
-	fmt.Println("DISPATCHING", sdktypes.MsgTypeURL(unwrappedMsgWithType), unwrappedMsgWithType)
-
-	switch unwrappedMsg := msg.Msg.(type) {
-	case *types.QueuedMessage_MsgDelegate:
-		k.printDelegations(ctx, unwrappedMsg.MsgDelegate.ValidatorAddress)
-		k.checkHasDelegatorStartingInfo("PRE DELEG", ctx, unwrappedMsg.MsgDelegate.ValidatorAddress, unwrappedMsg.MsgDelegate.DelegatorAddress)
-	case *types.QueuedMessage_MsgUndelegate:
-		k.checkHasDelegatorStartingInfo("PRE UNDELEG", ctx, unwrappedMsg.MsgUndelegate.ValidatorAddress, unwrappedMsg.MsgUndelegate.DelegatorAddress)
-	case *types.QueuedMessage_MsgBeginRedelegate:
-		k.checkHasDelegatorStartingInfo("PRE REDELEG", ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorSrcAddress, unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
-	default:
-
-	}
-
 	// get the handler function from router
 	handler := k.router.Handler(unwrappedMsgWithType)
+
+	// Create a new Context based off of the existing Context with a MultiStore branch
+	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
+	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId)
+
 	// handle the unwrapped message
-	result, err := handler(ctx, unwrappedMsgWithType)
+	result, err := handler(handlerCtx, unwrappedMsgWithType)
 
-	if err != nil {
-		fmt.Println("DISPATCH FAILED", sdktypes.MsgTypeURL(unwrappedMsgWithType), err)
-	}
-	switch unwrappedMsg := msg.Msg.(type) {
-	case *types.QueuedMessage_MsgDelegate:
-		k.checkHasDelegatorStartingInfo("POST DELEG", ctx, unwrappedMsg.MsgDelegate.ValidatorAddress, unwrappedMsg.MsgDelegate.DelegatorAddress)
-		k.printDelegations(ctx, unwrappedMsg.MsgDelegate.ValidatorAddress)
-
-	case *types.QueuedMessage_MsgBeginRedelegate:
-		k.checkHasDelegatorStartingInfo("POST REDELEG", ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorDstAddress, unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
-		k.printDelegations(ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorSrcAddress)
-	default:
+	if err == nil {
+		msCache.Write()
 	}
 
 	return result, err
 }
 
-func (k Keeper) checkHasDelegatorStartingInfo(lbl string, ctx sdk.Context, val string, del string) {
-	valAddr, _ := sdk.ValAddressFromBech32(val)
-	delAddr, _ := sdk.AccAddressFromBech32(del)
-	if !k.distr.HasDelegatorStartingInfo(ctx, valAddr, delAddr) {
-		fmt.Println(lbl, ": ", "NO DELEGATION START INFO", " del: ", del, " val: ", val)
-	} else {
-		fmt.Println(lbl, ": ", "HAS DELEGATION START INFO ", " del: ", del, " val: ", val)
+// based on a function with the same name in `baseapp.go``
+func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte) (sdk.Context, sdk.CacheMultiStore) {
+	ms := ctx.MultiStore()
+	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824
+	msCache := ms.CacheMultiStore()
+	if msCache.TracingEnabled() {
+		msCache = msCache.SetTracingContext(
+			sdk.TraceContext(
+				map[string]interface{}{
+					"txHash":  fmt.Sprintf("%X", txid),
+					"msgHash": fmt.Sprintf("%X", msgid),
+				},
+			),
+		).(sdk.CacheMultiStore)
 	}
-}
 
-func (k Keeper) printDelegations(ctx sdk.Context, val string) {
-	valAddr, _ := sdk.ValAddressFromBech32(val)
-	srcVal, _ := k.stk.GetValidator(ctx, valAddr)
-	srcAddr := srcVal.GetOperator()
-	delegations := k.stk.GetValidatorDelegations(ctx, srcAddr)
-	fmt.Println("DELEGATING TO ", val, ": ", len(delegations))
-	for i := range delegations {
-		fmt.Println("DELEGATION: ", delegations[i])
-	}
+	return ctx.WithMultiStore(msCache), msCache
 }
