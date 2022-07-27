@@ -122,6 +122,9 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	fmt.Println("DISPATCHING", sdktypes.MsgTypeURL(unwrappedMsgWithType), unwrappedMsgWithType)
 
 	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgDelegate:
+		k.printDelegations(ctx, unwrappedMsg.MsgDelegate.ValidatorAddress)
+		k.checkHasDelegatorStartingInfo("PRE DELEG", ctx, unwrappedMsg.MsgDelegate.ValidatorAddress, unwrappedMsg.MsgDelegate.DelegatorAddress)
 	case *types.QueuedMessage_MsgUndelegate:
 		k.checkHasDelegatorStartingInfo("PRE UNDELEG", ctx, unwrappedMsg.MsgUndelegate.ValidatorAddress, unwrappedMsg.MsgUndelegate.DelegatorAddress)
 	case *types.QueuedMessage_MsgBeginRedelegate:
@@ -141,8 +144,11 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgDelegate:
 		k.checkHasDelegatorStartingInfo("POST DELEG", ctx, unwrappedMsg.MsgDelegate.ValidatorAddress, unwrappedMsg.MsgDelegate.DelegatorAddress)
+		k.printDelegations(ctx, unwrappedMsg.MsgDelegate.ValidatorAddress)
+
 	case *types.QueuedMessage_MsgBeginRedelegate:
 		k.checkHasDelegatorStartingInfo("POST REDELEG", ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorDstAddress, unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
+		k.printDelegations(ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorSrcAddress)
 	default:
 	}
 
@@ -156,5 +162,16 @@ func (k Keeper) checkHasDelegatorStartingInfo(lbl string, ctx sdk.Context, val s
 		fmt.Println(lbl, ": ", "NO DELEGATION START INFO", " del: ", del, " val: ", val)
 	} else {
 		fmt.Println(lbl, ": ", "HAS DELEGATION START INFO ", " del: ", del, " val: ", val)
+	}
+}
+
+func (k Keeper) printDelegations(ctx sdk.Context, val string) {
+	valAddr, _ := sdk.ValAddressFromBech32(val)
+	srcVal, _ := k.stk.GetValidator(ctx, valAddr)
+	srcAddr := srcVal.GetOperator()
+	delegations := k.stk.GetValidatorDelegations(ctx, srcAddr)
+	fmt.Println("DELEGATING TO ", val, ": ", len(delegations))
+	for i := range delegations {
+		fmt.Println("DELEGATION: ", delegations[i])
 	}
 }
