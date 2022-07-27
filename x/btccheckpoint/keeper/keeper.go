@@ -55,16 +55,16 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx sdk.Context, b bbl.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbl.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash bbl.BTCHeaderHashBytes) bool {
+func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) bool {
 	_, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 	return err == nil
 }
 
-func (k Keeper) MainChainDepth(ctx sdk.Context, hash bbl.BTCHeaderHashBytes) (uint64, bool, error) {
+func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) (uint64, bool, error) {
 	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 
 	if err != nil {
@@ -78,7 +78,7 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, hash bbl.BTCHeaderHashBytes) (ui
 	return uint64(depth), true, nil
 }
 
-func (k Keeper) IsAncestor(ctx sdk.Context, parentHash bbl.BTCHeaderHashBytes, childHash bbl.BTCHeaderHashBytes) (bool, error) {
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, childHash *bbl.BTCHeaderHashBytes) (bool, error) {
 	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 
@@ -171,7 +171,7 @@ func (k Keeper) addToUnconfirmed(ctx sdk.Context, sk types.SubmissionKey) {
 
 func (k Keeper) saveSubmission(ctx sdk.Context, sk types.SubmissionKey, sd types.SubmissionData) {
 	store := ctx.KVStore(k.storeKey)
-	kBytes := k.cdc.MustMarshal(&sk)
+	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
 	sBytes := k.cdc.MustMarshal(&sd)
 	store.Set(kBytes, sBytes)
 }
@@ -180,7 +180,7 @@ func (k Keeper) saveSubmission(ctx sdk.Context, sk types.SubmissionKey, sd types
 // should only be called when data for sure is in store
 func (k Keeper) getSubmissionDataExists(ctx sdk.Context, sk types.SubmissionKey) types.SubmissionData {
 	store := ctx.KVStore(k.storeKey)
-	kBytes := k.cdc.MustMarshal(&sk)
+	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
 	sdBytes := store.Get(kBytes)
 	if sdBytes == nil {
 		panic("Submission data should exists in the store")
@@ -199,11 +199,7 @@ func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.Submis
 	var onMain bool = true
 	var allAtLeastNDeep = true
 	for _, tk := range sk.Key {
-		if tk.Hash == nil {
-			panic("Unexpected submission key with nil hash bytes")
-		}
-
-		depth, onMainChain, e := k.MainChainDepth(ctx, *tk.Hash)
+		depth, onMainChain, e := k.MainChainDepth(ctx, tk.Hash)
 
 		if e != nil {
 			return false, false, e
@@ -223,11 +219,7 @@ func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.Submis
 func (k Keeper) checkSubmissionOnMainChain(ctx sdk.Context, sk types.SubmissionKey) (bool, error) {
 	var onMain bool = true
 	for _, tk := range sk.Key {
-		if tk.Hash == nil {
-			panic("Unexpected submission key with nil hash bytes")
-		}
-
-		_, onMainChain, e := k.MainChainDepth(ctx, *tk.Hash)
+		_, onMainChain, e := k.MainChainDepth(ctx, tk.Hash)
 
 		if e != nil {
 			return false, e

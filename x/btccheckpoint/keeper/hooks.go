@@ -32,4 +32,4 @@ func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64) {}
 
 func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {}
 
-func (h Hooks) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {}
+func (h Hooks) BeforeSlashThreshold(ctx sdk.Context, valSet etypes.ValidatorSet) {}

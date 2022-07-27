@@ -9,11 +9,11 @@ import (
 type MockBTCLightClientKeeper struct{}
 type MockCheckpointingKeeper struct{}
 
-func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header bbl.BTCHeaderHashBytes) (uint64, error) {
+func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderHashBytes) (uint64, error) {
 	return uint64(10), nil
 }
 
-func (mb MockBTCLightClientKeeper) IsAncestor(ctx sdk.Context, parentHash bbl.BTCHeaderHashBytes, childHash bbl.BTCHeaderHashBytes) (bool, error) {
+func (mb MockBTCLightClientKeeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, childHash *bbl.BTCHeaderHashBytes) (bool, error) {
 	return true, nil
 }
 
@@ -37,6 +37,6 @@ func (ck MockCheckpointingKeeper) SetCheckpointFinalized(rawCheckpoint []byte) {
 // lost all its checkpoints and is checkpoint empty
 func (ck MockCheckpointingKeeper) SetCheckpointForgotten(rawCheckpoint []byte) {}
 
-func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes bbl.BTCHeaderHashBytes) (int64, error) {
+func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderHashBytes) (int64, error) {
 	return 1, nil
 }

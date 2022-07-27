@@ -86,10 +86,6 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 	return hashes
 }
 
-func GetEpochIndexKey(e uint64) []byte {
-	return sdk.Uint64ToBigEndian(e)
-}
-
 func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
 	return EpochData{
 		Key:           []*SubmissionKey{},
