@@ -17,7 +17,11 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
 	genesis.Params = k.GetParams(ctx)
-	genesis.BaseBtcHeader = k.GetBaseBTCHeader(ctx)
+	baseBTCHeader := k.GetBaseBTCHeader(ctx)
+	if baseBTCHeader == nil {
+		panic("A base BTC Header has not been set")
+	}
+	genesis.BaseBtcHeader = *baseBTCHeader
 
 	return genesis
 }

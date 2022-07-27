@@ -9,7 +9,7 @@ import (
 
 // GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their address in ascending order
 func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.ValidatorSet {
-	vals := []*types.Validator{}
+	vals := []types.Validator{}
 
 	store := k.valSetStore(ctx, epochNumber)
 	iterator := store.Iterator(nil, nil)
@@ -21,7 +21,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.Valid
 		if err := power.Unmarshal(powerBytes); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
-		val := &types.Validator{
+		val := types.Validator{
 			Addr:  addr,
 			Power: power.Int64(),
 		}

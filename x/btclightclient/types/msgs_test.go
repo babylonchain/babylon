@@ -5,86 +5,53 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/btcsuite/btcd/blockchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/big"
 	"math/rand"
 	"testing"
 )
 
 func FuzzMsgInsertHeader(f *testing.F) {
-	addressBytes := []byte("from________________")
-	defaultHeader, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
-	defaultBtcdHeader := defaultHeader.ToBlockHeader()
+	maxDifficulty := bbl.GetMaxDifficulty()
 
-	// Maximum btc difficulty possible
-	// Use it to set the difficulty bits of blocks as well as the upper PoW limit
-	// since the block hash needs to be below that
-	// This is the maximum allowed given the 2^23-1 precision
-	maxDifficulty, _ := new(big.Int).SetString("ffff000000000000000000000000000000000000000000000000000000000000", 16)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
-	f.Add(
-		addressBytes,
-		defaultBtcdHeader.Version,
-		defaultBtcdHeader.Bits,
-		defaultBtcdHeader.Nonce,
-		defaultBtcdHeader.Timestamp.Unix(),
-		defaultBtcdHeader.PrevBlock.String(),
-		defaultBtcdHeader.MerkleRoot.String(),
-		int64(17))
-
-	f.Fuzz(func(t *testing.T, addressBytes []byte, version int32, bits uint32, nonce uint32,
-		timeInt int64, prevBlockStr string, merkleRootStr string, seed int64) {
-
+	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		errorKind := 0
 
-		// Get the btcd header based on the provided data
-		btcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
-		// If the header hex is the same as the default one, then this is the seed input
-		headerBytes := bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+		addressBytes := datagen.GenRandomByteArray(1 + uint64(rand.Intn(255)))
+		headerBytes := datagen.GenRandomBTCHeaderInfo().Header
 		headerHex := headerBytes.MarshalHex()
-		seedInput := types.DefaultBaseHeaderHex == headerHex
-
-		// Make the address have a proper size
-		if len(addressBytes) == 0 || len(addressBytes) >= 256 {
-			addressBytes = datagen.GenRandomByteArray(1 + uint64(rand.Intn(255)))
-		}
 
 		// Get the signer structure
 		var signer sdk.AccAddress
 		signer.Unmarshal(addressBytes)
 
-		// Perform modifications on the btcd header if it is not part of the seed input
-		if !seedInput {
-			errorKind = rand.Intn(3)
-			switch errorKind {
-			case 0:
-				// Valid input
-				// Set the work bits to the pow limit
-				bits = blockchain.BigToCompact(maxDifficulty)
-			case 1:
-				// Zero PoW
-				bits = blockchain.BigToCompact(big.NewInt(0))
-			case 2:
-				// Negative PoW
-				bits = blockchain.BigToCompact(big.NewInt(-1))
-			default:
-				bits = blockchain.BigToCompact(maxDifficulty)
-			}
+		// Perform modifications on the header
+		errorKind = rand.Intn(2)
+		var bitsBig sdk.Uint
+		switch errorKind {
+		case 0:
+			// Valid input
+			// Set the work bits to the pow limit
+			bitsBig = sdk.NewUintFromBigInt(&maxDifficulty)
+		case 1:
+			// Zero PoW
+			bitsBig = sdk.NewUint(0)
+		default:
+			bitsBig = sdk.NewUintFromBigInt(&maxDifficulty)
 		}
+
 		// Generate a header with the provided modifications
-		newBtcdHeader := datagen.GenRandomBtcdHeader(version, bits, nonce, timeInt, prevBlockStr, merkleRootStr)
-		newHeader := bbl.NewBTCHeaderBytesFromBlockHeader(newBtcdHeader)
+		newHeader := datagen.GenRandomBTCHeaderInfoWithBits(&bitsBig).Header
 		newHeaderHex := newHeader.MarshalHex()
 
 		// Check whether the hash is still bigger than the maximum allowed
 		// This happens because even though we pass a series of "f"s as an input
 		// the maximum that the bits field can contain is 2^23-1, meaning
 		// that there is still space for block hashes that are less than that
-		newHeaderHash := newBtcdHeader.BlockHash()
-		hashNum := blockchain.HashToBig(&newHeaderHash)
-		if hashNum.Cmp(maxDifficulty) > 0 {
+		headerDifficulty := types.CalcWork(newHeader)
+		if headerDifficulty.GT(sdk.NewUintFromBigInt(&maxDifficulty)) {
 			t.Skip()
 		}
 
@@ -99,12 +66,12 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		if msgInsertHeader.Header == nil {
 			t.Errorf("nil header")
 		}
-		if bytes.Compare(newHeader, *(msgInsertHeader.Header)) != 0 {
-			t.Errorf("Expected header bytes %s got %s", newHeader, *(msgInsertHeader.Header))
+		if bytes.Compare(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) != 0 {
+			t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal())
 		}
 
 		// Validate the message
-		err = msgInsertHeader.ValidateHeader(maxDifficulty)
+		err = msgInsertHeader.ValidateHeader(&maxDifficulty)
 		if err != nil && errorKind == 0 {
 			t.Errorf("Valid message %s failed with %s", headerHex, err)
 		}

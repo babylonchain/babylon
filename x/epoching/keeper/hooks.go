@@ -1,24 +1,13 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// Wrapper struct
-type Hooks struct {
-	k Keeper
-}
-
-// Implements StakingHooks/EpochingHooks interfaces
-var _ stakingtypes.StakingHooks = Hooks{}
+// ensures Keeper implements EpochingHooks interfaces
 var _ types.EpochingHooks = Keeper{}
-
-// Create new distribution hooks
-func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterEpochBegins - call hook if registered
 func (k Keeper) AfterEpochBegins(ctx sdk.Context, epoch uint64) {
@@ -35,11 +24,22 @@ func (k Keeper) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 }
 
 // BeforeSlashThreshold triggers the BeforeSlashThreshold hook for other modules that register this hook
-func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valAddrs []sdk.ValAddress) {
+func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valSet types.ValidatorSet) {
 	if k.hooks != nil {
-		k.hooks.BeforeSlashThreshold(ctx, valAddrs)
+		k.hooks.BeforeSlashThreshold(ctx, valSet)
 	}
 }
+
+// Wrapper struct
+type Hooks struct {
+	k Keeper
+}
+
+// ensures Hooks implements StakingHooks interfaces
+var _ stakingtypes.StakingHooks = Hooks{}
+
+// Create new distribution hooks
+func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) {
@@ -52,6 +52,7 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	slashedVotingPower := h.k.GetSlashedVotingPower(ctx, epochNumber)
 	// voting power of this validator
 	thisVotingPower, err := h.k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	thisVal := types.Validator{Addr: valAddr, Power: thisVotingPower}
 	if err != nil {
 		// It's possible that the most powerful validator outside the validator set enrols to the validator after this validator is slashed.
 		// Consequently, here we cannot find this validator in the validatorSet map.
@@ -62,19 +63,12 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 	for _, threshold := range thresholds {
 		// if a certain threshold voting power is slashed in a single epoch, emit event and trigger hook
 		if float64(slashedVotingPower) < float64(totalVotingPower)*threshold && float64(totalVotingPower)*threshold <= float64(slashedVotingPower+thisVotingPower) {
-			// get slashed validators
 			slashedVals := h.k.GetSlashedValidators(ctx, epochNumber)
-			slashedVals = append(slashedVals, valAddr)
-			// emit event
-			ctx.EventManager().EmitEvents(sdk.Events{
-				sdk.NewEvent(
-					types.EventTypeSlashThreshold,
-					sdk.NewAttribute(types.AttributeKeySlashedVotingPower, fmt.Sprintf("%d", slashedVotingPower)),
-					sdk.NewAttribute(types.AttributeKeyTotalVotingPower, fmt.Sprintf("%d", slashedVotingPower)),
-					sdk.NewAttribute(types.AttributeKeySlashedValidators, fmt.Sprintf("%v", slashedVals)),
-				),
-			})
-			// trigger hook
+			slashedVals = append(slashedVals, thisVal)
+			event := types.NewEventSlashThreshold(slashedVotingPower, totalVotingPower, slashedVals)
+			if err := ctx.EventManager().EmitTypedEvent(&event); err != nil {
+				panic(err)
+			}
 			h.k.BeforeSlashThreshold(ctx, slashedVals)
 		}
 	}

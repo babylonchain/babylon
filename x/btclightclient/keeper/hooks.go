@@ -18,6 +18,6 @@ func (k Keeper) AfterBTCRollBack(ctx sdk.Context, headerInfo *types.BTCHeaderInf
 // AfterBTCRollForward - call hook if registered
 func (k Keeper) AfterBTCRollForward(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
 	if k.hooks != nil {
-		k.hooks.AfterBTCRollBack(ctx, headerInfo)
+		k.hooks.AfterBTCRollForward(ctx, headerInfo)
 	}
 }

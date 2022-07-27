@@ -5,7 +5,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"math/rand"
 	"testing"
@@ -24,7 +23,7 @@ func TestNewQueryParamsRequest(t *testing.T) {
 }
 
 func TestNewQueryHashesRequest(t *testing.T) {
-	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerBytes := bbl.GetBaseBTCHeaderBytes()
 	headerHashBytes := headerBytes.Hash()
 	req := query.PageRequest{
 		Key: headerHashBytes.MustMarshal(),
@@ -43,13 +42,12 @@ func TestNewQueryHashesRequest(t *testing.T) {
 }
 
 func FuzzNewQueryContainsRequest(f *testing.F) {
-	f.Add("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47", int64(17))
-	f.Fuzz(func(t *testing.T, hexHash string, seed int64) {
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		if !datagen.ValidHex(hexHash, bbl.BTCHeaderHashLen) {
-			hexHash = datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
-		}
-		chHash, _ := chainhash.NewHashFromStr(hexHash)
+		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
+
+		btcHeaderHashBytes, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
 
 		queryContains, err := types.NewQueryContainsRequest(hexHash)
 		if err != nil {
@@ -61,14 +59,14 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		if queryContains.Hash == nil {
 			t.Errorf("has an empty hash attribute")
 		}
-		if bytes.Compare(*(queryContains.Hash), chHash[:]) != 0 {
-			t.Errorf("expected hash bytes %s got %s", chHash[:], *(queryContains.Hash))
+		if bytes.Compare(*(queryContains.Hash), btcHeaderHashBytes.MustMarshal()) != 0 {
+			t.Errorf("expected hash bytes %s got %s", btcHeaderHashBytes.MustMarshal(), *(queryContains.Hash))
 		}
 	})
 }
 
 func TestNewQueryMainChainRequest(t *testing.T) {
-	headerBytes, _ := bbl.NewBTCHeaderBytesFromHex(types.DefaultBaseHeaderHex)
+	headerBytes := bbl.GetBaseBTCHeaderBytes()
 	req := query.PageRequest{
 		Key: headerBytes.MustMarshal(),
 	}

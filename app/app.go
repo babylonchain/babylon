@@ -207,7 +207,7 @@ func init() {
 		panic(err)
 	}
 
-	DefaultNodeHome = filepath.Join(userHomeDir, ".babylonapp")
+	DefaultNodeHome = filepath.Join(userHomeDir, ".babylond")
 }
 
 // NewBabylonApp returns a reference to an initialized BabylonApp.
@@ -275,6 +275,15 @@ func NewBabylonApp(
 	stakingKeeper := stakingkeeper.NewKeeper(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName),
 	)
+
+	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
+	epochingKeeper := epochingkeeper.NewKeeper(
+		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper,
+	)
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
+	app.EpochingKeeper = epochingKeeper
+
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
 		app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName,
@@ -320,15 +329,6 @@ func NewBabylonApp(
 		// register the governance hooks
 		),
 	)
-
-	// setup epoching keeper
-	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
-	epochingKeeper := epochingkeeper.NewKeeper(appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper)
-	// TODO: add modules that need to hook onto the epoching module here
-	epochingKeeper.SetHooks(epochingtypes.NewMultiEpochingHooks())
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	app.EpochingKeeper = epochingKeeper
 
 	btclightclientKeeper := *btclightclientkeeper.NewKeeper(appCodec, keys[btclightclienttypes.StoreKey], keys[btclightclienttypes.MemStoreKey], app.GetSubspace(btclightclienttypes.ModuleName))
 	btclightclientKeeper.SetHooks(btclightclienttypes.NewMultiBTCLightClientHooks())
@@ -634,6 +634,10 @@ func (app *BabylonApp) RegisterTxService(clientCtx client.Context) {
 // RegisterTendermintService implements the Application.RegisterTendermintService method.
 func (app *BabylonApp) RegisterTendermintService(clientCtx client.Context) {
 	tmservice.RegisterTendermintService(app.BaseApp.GRPCQueryRouter(), clientCtx, app.interfaceRegistry)
+}
+
+func (app *BabylonApp) ModuleManager() *module.Manager {
+	return app.mm
 }
 
 // RegisterSwaggerAPI registers swagger route with API Server

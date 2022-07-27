@@ -11,7 +11,7 @@ import (
 )
 
 func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
-	f.Add(int64(42))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
@@ -20,7 +20,8 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 		bz := datagen.GenRandomByteArray(types.BTCHeaderHashLen)
 		// 1/10 times generate an invalid size
 		if datagen.OneInN(10) {
-			bz = datagen.GenRandomByteArray(datagen.RandomInt(types.BTCHeaderHashLen * 10))
+			bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*10)
+			bz = datagen.GenRandomByteArray(bzSz)
 			invalidHash = true
 		}
 
@@ -60,7 +61,7 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 			t.Skip()
 		}
 		if sz != len(bz) {
-			t.Errorf("MarhslTo marshalled %d bytes instead of %d", sz, len(bz))
+			t.Errorf("MarshalTo marshalled %d bytes instead of %d", sz, len(bz))
 		}
 		if bytes.Compare(m, bz) != 0 {
 			t.Errorf("MarshalTo copied %s while %s was expected", m, bz)
@@ -78,7 +79,7 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
-	f.Add(int64(42))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
@@ -89,7 +90,8 @@ func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
 		if datagen.OneInN(10) {
 			if datagen.OneInN(2) {
 				// 1/4 times generate an invalid hash size
-				hex = datagen.GenRandomHexStr(datagen.RandomInt(types.BTCHeaderHashLen * 20))
+				bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
+				hex = datagen.GenRandomHexStr(bzSz)
 			} else {
 				// 1/4 times generate an invalid hex
 				hex = string(datagen.GenRandomByteArray(types.BTCHeaderHashLen * 2))
@@ -123,7 +125,7 @@ func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
-	f.Add(int64(42))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
@@ -134,7 +136,8 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 		if datagen.OneInN(10) {
 			if datagen.OneInN(2) {
 				// 1/4 times generate an invalid hash size
-				hex = datagen.GenRandomHexStr(datagen.RandomInt(types.BTCHeaderHashLen * 20))
+				bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
+				hex = datagen.GenRandomHexStr(bzSz)
 			} else {
 				// 1/4 times generate an invalid hex
 				hex = string(datagen.GenRandomByteArray(types.BTCHeaderHashLen * 2))
@@ -177,7 +180,7 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 }
 
 func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
-	f.Add(int64(42))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
@@ -200,7 +203,7 @@ func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
 }
 
 func FuzzHeaderHashBytesOperators(f *testing.F) {
-	f.Add(int64(42))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 

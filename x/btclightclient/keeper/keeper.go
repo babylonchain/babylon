@@ -58,30 +58,33 @@ func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
 
 // InsertHeader inserts a btcd header into the header state
 func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error {
+	if header == nil {
+		return types.ErrEmptyMessage
+	}
 	headerHash := header.Hash()
 	parentHash := header.ParentHash()
 
 	// Check whether the header already exists, if yes reject
-	headerExists := k.HeadersState(ctx).HeaderExists(headerHash)
+	headerExists := k.headersState(ctx).HeaderExists(headerHash)
 	if headerExists {
 		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
 	}
 
 	// Check whether the parent exists, if not reject
-	parentExists := k.HeadersState(ctx).HeaderExists(parentHash)
+	parentExists := k.headersState(ctx).HeaderExists(parentHash)
 	if !parentExists {
 		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
 	}
 
 	// Retrieve the height of the parent to calculate the current height
-	parentHeight, err := k.HeadersState(ctx).GetHeaderHeight(parentHash)
+	parentHeight, err := k.headersState(ctx).GetHeaderHeight(parentHash)
 	if err != nil {
 		// Height should always exist if the previous checks have passed
 		panic("Height for parent is not maintained")
 	}
 
 	// Retrieve the work of the parent to calculate the cumulative work
-	parentWork, err := k.HeadersState(ctx).GetHeaderWork(parentHash)
+	parentWork, err := k.headersState(ctx).GetHeaderWork(parentHash)
 	if err != nil {
 		// Work should always exist if the previous checks have passed
 		panic("Work for parent is not maintained")
@@ -95,19 +98,19 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 	headerInfo := types.NewBTCHeaderInfo(header, headerHash, parentHeight+1, &cumulativeWork)
 
 	// Retrieve the previous tip for future usage
-	previousTip := k.HeadersState(ctx).GetTip()
+	previousTip := k.headersState(ctx).GetTip()
 
 	// Create the header
-	k.HeadersState(ctx).CreateHeader(headerInfo)
+	k.headersState(ctx).CreateHeader(headerInfo)
 
 	// Get the new tip
-	currentTip := k.HeadersState(ctx).GetTip()
+	currentTip := k.headersState(ctx).GetTip()
 
 	// Variable maintaining the headers that have been added to the main chain
 	var addedToMainChain []*types.BTCHeaderInfo
 
 	// The tip has changed, we need to send events
-	if currentTip.Eq(previousTip) {
+	if !currentTip.Eq(previousTip) {
 		if !currentTip.Eq(headerInfo) {
 			panic("The tip was updated but with a different header than the one provided")
 		}
@@ -122,12 +125,12 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 		if currentTip.HasParent(previousTip) {
 			hca = previousTip
 		} else {
-			hca = k.HeadersState(ctx).GetHighestCommonAncestor(previousTip, currentTip)
+			hca = k.headersState(ctx).GetHighestCommonAncestor(previousTip, currentTip)
 			// chain re-org: trigger a roll-back event to the highest common ancestor
 			k.triggerRollBack(ctx, hca)
 		}
 		// Find the newly added headers to the main chain
-		addedToMainChain = k.HeadersState(ctx).GetInOrderAncestorsUntil(currentTip, hca)
+		addedToMainChain = k.headersState(ctx).GetInOrderAncestorsUntil(currentTip, hca)
 		// Iterate through the added headers and trigger a roll-forward event
 		for _, added := range addedToMainChain {
 			// tipHeight + 1 - len(addedToMainChain) -> height of the highest common ancestor
@@ -139,29 +142,38 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 }
 
 // BlockHeight returns the height of the provided header
-func (k Keeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderBytes) (uint64, error) {
-	headerHash := header.Hash()
-	return k.HeadersState(ctx).GetHeaderHeight(headerHash)
+func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbl.BTCHeaderHashBytes) (uint64, error) {
+	if headerHash == nil {
+		return 0, types.ErrEmptyMessage
+	}
+	return k.headersState(ctx).GetHeaderHeight(headerHash)
 }
 
 // MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
-func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes) (int64, error) {
+func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHashBytes) (int64, error) {
+	if headerHashBytes == nil {
+		return -1, types.ErrEmptyMessage
+	}
 	// Retrieve the header. If it does not exist, return an error
-	headerInfo, err := k.HeadersState(ctx).GetHeaderByHash(headerBytes.Hash())
+	headerInfo, err := k.headersState(ctx).GetHeaderByHash(headerHashBytes)
 	if err != nil {
 		return -1, err
 	}
 
 	// Retrieve the tip
-	tipInfo := k.HeadersState(ctx).GetTip()
+	tipInfo := k.headersState(ctx).GetTip()
 
-	// If the height of the requested header is larger than the tip, return an error
+	// If the height of the requested header is larger than the tip, return -1
 	if tipInfo.Height < headerInfo.Height {
-		return -1, types.ErrHeaderHigherThanTip.Wrap("header higher than tip")
+		return -1, nil
 	}
 
-	headerDepth := tipInfo.Height - headerInfo.Height + 1
-	mainchain := k.HeadersState(ctx).GetMainChainUpTo(headerDepth)
+	// The depth is the number of blocks that have been build on top of the header
+	// For example:
+	// 		Tip: 0-deep
+	// 		Tip height is 10, headerInfo height is 5: 5-deep etc.
+	headerDepth := tipInfo.Height - headerInfo.Height
+	mainchain := k.headersState(ctx).GetMainChainUpTo(headerDepth)
 
 	// If we got an empty mainchain or the header does not equal the last element of the mainchain
 	// then the header is not maintained inside the mainchain.
@@ -172,10 +184,50 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 }
 
 // IsHeaderKDeep returns true if a header is at least k-deep on the main chain
-func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) bool {
-	mainchainDepth, err := k.MainChainDepth(ctx, headerBytes)
-	if err != nil || mainchainDepth < 0 {
-		return false
+func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHashBytes, depth uint64) (bool, error) {
+	if headerHashBytes == nil {
+		return false, types.ErrEmptyMessage
 	}
-	return uint64(mainchainDepth) >= depth
+	mainchainDepth, err := k.MainChainDepth(ctx, headerHashBytes)
+	if err != nil {
+		return false, err
+	}
+	// If MainChainDepth returned a negative depth, then the header is not on the mainchain
+	if mainchainDepth < 0 {
+		return false, nil
+	}
+	// return true if the provided depth is more than equal the mainchain depth
+	return depth >= uint64(mainchainDepth), nil
+}
+
+// IsAncestor returns true/false depending on whether `parent` is an ancestor of `child`.
+// Returns false if the parent and the child are the same header.
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbl.BTCHeaderHashBytes, childHashBytes *bbl.BTCHeaderHashBytes) (bool, error) {
+	// nil checks
+	if parentHashBytes == nil || childHashBytes == nil {
+		return false, types.ErrEmptyMessage
+	}
+	// Retrieve parent and child header
+	parentHeader, err := k.headersState(ctx).GetHeaderByHash(parentHashBytes)
+	if err != nil {
+		return false, types.ErrHeaderDoesNotExist.Wrapf("parent does not exist")
+	}
+	childHeader, err := k.headersState(ctx).GetHeaderByHash(childHashBytes)
+	if err != nil {
+		return false, types.ErrHeaderDoesNotExist.Wrapf("child does not exist")
+	}
+
+	// If the height of the child is equal or less than the parent, then the input is invalid
+	if childHeader.Height <= parentHeader.Height {
+		return false, nil
+	}
+
+	// Retrieve the ancestry
+	ancestry := k.headersState(ctx).GetHeaderAncestryUpTo(childHeader, childHeader.Height-parentHeader.Height)
+	// If it is empty, return false
+	if len(ancestry) == 0 {
+		return false, nil
+	}
+	// Return whether the last element of the ancestry is equal to the parent
+	return ancestry[len(ancestry)-1].Eq(parentHeader), nil
 }

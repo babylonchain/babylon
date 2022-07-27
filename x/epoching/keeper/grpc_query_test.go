@@ -1,39 +1,16 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 )
-
-func (suite *KeeperTestSuite) TestParamsQuery() {
-	ctx, queryClient := suite.ctx, suite.queryClient
-	req := types.QueryParamsRequest{}
-
-	testCases := []struct {
-		msg    string
-		params types.Params
-	}{
-		{
-			"default params",
-			types.DefaultParams(),
-		},
-	}
-
-	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			wctx := sdk.WrapSDKContext(ctx)
-			resp, err := queryClient.Params(wctx, &req)
-			suite.NoError(err)
-			suite.Equal(&types.QueryParamsResponse{Params: tc.params}, resp)
-		})
-	}
-}
 
 // FuzzParamsQuery fuzzes queryClient.Params
 // 1. Generate random param
@@ -60,7 +37,8 @@ func FuzzParamsQuery(f *testing.F) {
 			params.EpochInterval = uint64(rand.Int())
 		}
 
-		_, ctx, keeper, _, queryClient := setupTestKeeper()
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		// if setParamsFlag == 0, set params
 		setParamsFlag := rand.Intn(2)
@@ -79,60 +57,6 @@ func FuzzParamsQuery(f *testing.F) {
 	})
 }
 
-func (suite *KeeperTestSuite) TestCurrentEpoch() {
-	ctx, queryClient := suite.ctx, suite.queryClient
-	req := types.QueryCurrentEpochRequest{}
-
-	testCases := []struct {
-		msg           string
-		malleate      func()
-		epochNumber   uint64
-		epochBoundary uint64
-	}{
-		{
-			"epoch 0",
-			func() {},
-			0,
-			0,
-		},
-		{
-			"epoch 1",
-			func() {
-				suite.keeper.IncEpoch(suite.ctx)
-			},
-			1,
-			suite.keeper.GetParams(suite.ctx).EpochInterval * 1,
-		},
-		{
-			"epoch 2",
-			func() {
-				suite.keeper.IncEpoch(suite.ctx)
-			},
-			2,
-			suite.keeper.GetParams(suite.ctx).EpochInterval * 2,
-		},
-		{
-			"reset to epoch 0",
-			func() {
-				suite.keeper.InitEpoch(suite.ctx)
-			},
-			0,
-			0,
-		},
-	}
-
-	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			tc.malleate()
-			wctx := sdk.WrapSDKContext(ctx)
-			resp, err := queryClient.CurrentEpoch(wctx, &req)
-			suite.NoError(err)
-			suite.Equal(tc.epochNumber, resp.CurrentEpoch)
-			suite.Equal(tc.epochBoundary, resp.EpochBoundary)
-		})
-	}
-}
-
 // FuzzCurrentEpoch fuzzes queryClient.CurrentEpoch
 // 1. generate a random number of epochs to increment
 // 2. query the current epoch and boundary
@@ -143,7 +67,8 @@ func FuzzCurrentEpoch(f *testing.F) {
 	f.Add(uint64(3333))
 
 	f.Fuzz(func(t *testing.T, increment uint64) {
-		_, ctx, keeper, _, queryClient := setupTestKeeper()
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		for i := uint64(0); i < increment; i++ {
 			keeper.IncEpoch(ctx)
@@ -154,74 +79,6 @@ func FuzzCurrentEpoch(f *testing.F) {
 		require.Equal(t, increment, resp.CurrentEpoch)
 		require.Equal(t, increment*keeper.GetParams(ctx).EpochInterval, resp.EpochBoundary)
 	})
-}
-
-func (suite *KeeperTestSuite) TestEpochMsgs() {
-	ctx, queryClient := suite.ctx, suite.queryClient
-	wctx := sdk.WrapSDKContext(ctx)
-	req := &types.QueryEpochMsgsRequest{
-		Pagination: &query.PageRequest{
-			Limit: 100,
-		},
-	}
-
-	testCases := []struct {
-		msg       string
-		malleate  func()
-		epochMsgs []*types.QueuedMessage
-	}{
-		{
-			"empty epoch msgs",
-			func() {},
-			[]*types.QueuedMessage{},
-		},
-		{
-			"newly inserted epoch msg",
-			func() {
-				msg := types.QueuedMessage{
-					TxId: []byte{0x01},
-				}
-				suite.keeper.EnqueueMsg(suite.ctx, msg)
-			},
-			[]*types.QueuedMessage{
-				{TxId: []byte{0x01}},
-			},
-		},
-		{
-			"newly inserted epoch msg",
-			func() {
-				msg := types.QueuedMessage{
-					TxId: []byte{0x02},
-				}
-				suite.keeper.EnqueueMsg(suite.ctx, msg)
-			},
-			[]*types.QueuedMessage{
-				{TxId: []byte{0x01}},
-				{TxId: []byte{0x02}},
-			},
-		},
-		{
-			"cleared epoch msg",
-			func() {
-				suite.keeper.ClearEpochMsgs(suite.ctx)
-			},
-			[]*types.QueuedMessage{},
-		},
-	}
-
-	for _, tc := range testCases {
-		suite.Run(fmt.Sprintf("Case %s", tc.msg), func() {
-			tc.malleate()
-			resp, err := queryClient.EpochMsgs(wctx, req)
-			suite.NoError(err)
-			suite.Equal(len(tc.epochMsgs), len(resp.Msgs))
-			suite.Equal(uint64(len(tc.epochMsgs)), suite.keeper.GetQueueLength(suite.ctx))
-			for idx := range tc.epochMsgs {
-				suite.Equal(tc.epochMsgs[idx].MsgId, resp.Msgs[idx].MsgId)
-				suite.Equal(tc.epochMsgs[idx].TxId, resp.Msgs[idx].TxId)
-			}
-		})
-	}
 }
 
 // FuzzEpochMsgs fuzzes queryClient.EpochMsgs
@@ -240,11 +97,12 @@ func FuzzEpochMsgs(f *testing.F) {
 		limit := uint64(rand.Int() % 100)
 
 		txidsMap := map[string]bool{}
-		_, ctx, keeper, _, queryClient := setupTestKeeper()
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
 		// enque a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {
-			txid := genRandomByteSlice(32)
+			txid := datagen.GenRandomByteArray(32)
 			txidsMap[string(txid)] = true
 			keeper.EnqueueMsg(ctx, types.QueuedMessage{TxId: txid})
 		}
@@ -257,7 +115,7 @@ func FuzzEpochMsgs(f *testing.F) {
 		resp, err := queryClient.EpochMsgs(wctx, &req)
 		require.NoError(t, err)
 
-		require.Equal(t, min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
+		require.Equal(t, testepoching.Min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
 		for idx := range resp.Msgs {
 			_, ok := txidsMap[string(resp.Msgs[idx].TxId)]
 			require.True(t, ok)
