@@ -10,13 +10,13 @@ var (
 	_ sdk.Msg = (*MsgAddBlsSig)(nil)
 )
 
-func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) (*MsgAddBlsSig, error) {
+func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
 	return &MsgAddBlsSig{BlsSig: &BlsSig{
 		EpochNum:       epochNum,
 		LastCommitHash: lch,
 		BlsSig:         &sig,
 		SignerAddress:  addr.String(),
-	}}, nil
+	}}
 }
 
 func (m *MsgAddBlsSig) ValidateBasic() error {

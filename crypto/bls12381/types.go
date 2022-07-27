@@ -71,11 +71,27 @@ func (sig Signature) Equal(s Signature) bool {
 }
 
 func NewBLSSigFromHex(s string) (Signature, error) {
-	return hex.DecodeString(s)
+	bz, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+
+	var sig Signature
+	err = sig.Unmarshal(bz)
+	if err != nil {
+		return nil, err
+	}
+
+	return sig, nil
 }
 
-func (sig Signature) String() string {
-	return hex.EncodeToString(sig)
+func (sig Signature) String() (string, error) {
+	bz, err := sig.Marshal()
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(bz), nil
 }
 
 func (pk PublicKey) Marshal() ([]byte, error) {

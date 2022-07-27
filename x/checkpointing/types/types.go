@@ -88,7 +88,24 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 }
 
 func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
-	return hex.DecodeString(s)
+	bz, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+	
+	var lch LastCommitHash
+
+	err = lch.Unmarshal(bz)
+	if err != nil {
+		return nil, err
+	}
+
+	return lch, nil
+}
+
+func (lch *LastCommitHash) Unmarshal(bz []byte) error {
+	*lch = bz
+	return nil
 }
 
 func BytesToRawCkpt(cdc codec.BinaryCodec, bz []byte) (*RawCheckpoint, error) {
