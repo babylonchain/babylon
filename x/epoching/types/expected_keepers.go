@@ -42,10 +42,6 @@ type StakingKeeper interface {
 	HasMaxRedelegationEntries(ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorSrcAddr, validatorDstAddr sdk.ValAddress) bool
 }
 
-type DistributionKeeper interface {
-	HasDelegatorStartingInfo(ctx sdk.Context, val sdk.ValAddress, del sdk.AccAddress) bool
-}
-
 // Event Hooks
 // These can be utilized to communicate between an epoching keeper and another
 // keeper which must take particular actions when validators/delegators change

@@ -19,7 +19,6 @@ type (
 		hooks      types.EpochingHooks
 		paramstore paramtypes.Subspace
 		stk        types.StakingKeeper
-		distr      types.DistributionKeeper
 		router     *baseapp.MsgServiceRouter
 	}
 )
@@ -30,7 +29,6 @@ func NewKeeper(
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
 	stk types.StakingKeeper,
-	distr types.DistributionKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -44,7 +42,6 @@ func NewKeeper(
 		paramstore: ps,
 		hooks:      nil,
 		stk:        stk,
-		distr:      distr,
 	}
 }
 
