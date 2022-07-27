@@ -507,7 +507,7 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 		// Get a random header from the tree
 		descendant := tree.RandomNode()
 		// Get a random ancestor from it
-		ancestor := tree.GetRandomAncestor(descendant)
+		ancestor := tree.RandomAncestor(descendant)
 		// Get the ancestry of the descendant.
 		// It is in reverse order from the one that GetInOrderAncestorsUntil returns, since it starts with the descendant.
 		expectedAncestorsReverse := tree.GetNodeAncestryUpTo(descendant, ancestor)
@@ -520,6 +520,42 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 			reverseIdx := len(expectedAncestorsReverse) - i - 1
 			if !expectedAncestorsReverse[i].Eq(gotAncestors[reverseIdx]) {
 				t.Errorf("Ancestors do not match. Expected %s got %s", expectedAncestorsReverse[i].Hash, gotAncestors[reverseIdx].Hash)
+			}
+		}
+	})
+}
+
+func FuzzHeadersStateGetHeaderAncestryUpTo(f *testing.F) {
+	/*
+		Checks:
+		1. All the ancestors up to the depth are in the returned list.
+		2. The ancestors start from the parameter and lead to the ancestor.
+
+		Data generation:
+		- Generate a random tree of headers and store it.
+		- Select a random header which will serve as the `header` parameter.
+		- Select a random depth in the range of [0, header.Height-baseHeader.Height]
+	*/
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+
+		descendant := tree.RandomNode()
+		ancestor := tree.RandomAncestor(descendant)
+
+		ancestors := blcKeeper.HeadersState(ctx).GetHeaderAncestryUpTo(descendant, descendant.Height-ancestor.Height)
+		// Use the parent of the ancestor since UpTo does not include the ancestor in the result
+		expectedAncestors := tree.GetNodeAncestryUpTo(descendant, tree.GetParent(ancestor))
+
+		if len(ancestors) != len(expectedAncestors) {
+			t.Errorf("Got different ancestor list sizes. Expected %d, got %d", len(expectedAncestors), len(ancestors))
+		}
+
+		for i := 0; i < len(ancestors); i++ {
+			if !ancestors[i].Eq(expectedAncestors[i]) {
+				t.Errorf("Ancestors do not match. Expected %s, got %s", expectedAncestors[i].Hash, ancestors[i].Hash)
 			}
 		}
 	})

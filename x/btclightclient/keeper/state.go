@@ -170,12 +170,12 @@ func (s headersState) HeadersByHeight(height uint64, f func(*types.BTCHeaderInfo
 }
 
 // getDescendingHeadersUpTo returns a collection of descending headers according to their height
-func (s headersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) []*types.BTCHeaderInfo {
+func (s headersState) getDescendingHeadersUpTo(startHeight uint64, depth uint64) []*types.BTCHeaderInfo {
 	var headers []*types.BTCHeaderInfo
 	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
 		// Use `depth+1` because we want to first gather all the headers
 		// with a depth of `depth`.
-		if tipHeight-header.Height == depth+1 {
+		if startHeight-header.Height == depth+1 {
 			return true
 		}
 		headers = append(headers, header)
@@ -184,15 +184,9 @@ func (s headersState) getDescendingHeadersUpTo(tipHeight uint64, depth uint64) [
 	return headers
 }
 
-// GetMainChainUpTo returns the current canonical chain as a collection of block headers
-// 				    starting from the tip and ending on the header that has a depth distance from it.
-func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
-	// If there is no tip, there is no base header
-	if !s.TipExists() {
-		return nil
-	}
-	currentHeader := s.GetTip()
-
+// GetHeaderAncestryUpTo returns a list of headers starting from the header parameter and leading to
+// 						 the header that has a `depth` distance from it.
+func (s headersState) GetHeaderAncestryUpTo(currentHeader *types.BTCHeaderInfo, depth uint64) []*types.BTCHeaderInfo {
 	// Retrieve a collection of headers in descending height order
 	// Use depth+1 since we want all headers at the depth height.
 	headers := s.getDescendingHeadersUpTo(currentHeader.Height, depth)
@@ -212,6 +206,16 @@ func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	}
 
 	return chain
+}
+
+// GetMainChainUpTo returns the current canonical chain as a collection of block headers
+// 				    starting from the tip and ending on the header that has a depth distance from it.
+func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
+	// If there is no tip, there is no base header
+	if !s.TipExists() {
+		return nil
+	}
+	return s.GetHeaderAncestryUpTo(s.GetTip(), depth)
 }
 
 // GetMainChain retrieves the main chain as a collection of block headers starting from the tip
@@ -294,38 +298,20 @@ func (s headersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, 
 		return []*types.BTCHeaderInfo{}
 	}
 
-	currentHeader := descendant
-
-	var ancestors []*types.BTCHeaderInfo
-	ancestors = append(ancestors, descendant)
 	if descendant.HasParent(ancestor) {
-		return ancestors
+		return []*types.BTCHeaderInfo{descendant}
 	}
 
-	found := false
-	s.iterateReverseHeaders(func(header *types.BTCHeaderInfo) bool {
-		if header.Eq(ancestor) {
-			found = true
-			return true
-		}
-		if currentHeader.HasParent(header) {
-			currentHeader = header
-			ancestors = append(ancestors, header)
-		}
-		// Abandon the iteration if the height of the current header is lower
-		// than the height of the provided ancestor
-		if currentHeader.Height < ancestor.Height {
-			return true
-		}
-		return false
-	})
-
-	// If the header was not found, discard the ancestors list
-	if !found {
-		ancestors = []*types.BTCHeaderInfo{}
+	ancestors := s.GetHeaderAncestryUpTo(descendant, descendant.Height-ancestor.Height)
+	if !ancestors[len(ancestors)-1].Eq(ancestor) {
+		// `ancestor` is not an ancestor of `descendant`, return an empty list
+		return []*types.BTCHeaderInfo{}
 	}
 
-	// Reverse the array
+	// Discard the last element of the ancestry which corresponds to `ancestor`
+	ancestors = ancestors[:len(ancestors)-1]
+
+	// Reverse the ancestry
 	for i, j := 0, len(ancestors)-1; i < j; i, j = i+1, j-1 {
 		ancestors[i], ancestors[j] = ancestors[j], ancestors[i]
 	}

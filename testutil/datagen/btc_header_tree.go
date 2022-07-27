@@ -38,7 +38,7 @@ func (t *BTCHeaderTree) Contains(node *blctypes.BTCHeaderInfo) bool {
 // GetRoot returns the root of the tree -- i.e. the node without an existing parent
 func (t *BTCHeaderTree) GetRoot() *blctypes.BTCHeaderInfo {
 	for _, header := range t.headers {
-		if t.getParent(header) == nil {
+		if t.GetParent(header) == nil {
 			return header
 		}
 	}
@@ -154,7 +154,7 @@ func (t *BTCHeaderTree) getNodeAncestryUpToUtil(ancestry *[]*blctypes.BTCHeaderI
 		return
 	}
 	*ancestry = append(*ancestry, node)
-	parent := t.getParent(node)
+	parent := t.GetParent(node)
 	if parent != nil {
 		t.getNodeAncestryUpToUtil(ancestry, parent, upTo)
 	}
@@ -176,9 +176,9 @@ func (t *BTCHeaderTree) GetNodeAncestry(node *blctypes.BTCHeaderInfo) []*blctype
 	return t.GetNodeAncestryUpTo(node, nil)
 }
 
-// GetRandomAncestor retrieves the ancestry list and returns an ancestor from it.
+// RandomAncestor retrieves the ancestry list and returns an ancestor from it.
 // Can include the node itself.
-func (t *BTCHeaderTree) GetRandomAncestor(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
+func (t *BTCHeaderTree) RandomAncestor(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
 	ancestry := t.GetNodeAncestry(node)
 	idx := RandomInt(len(ancestry))
 	return ancestry[idx]
@@ -192,7 +192,7 @@ func (t *BTCHeaderTree) IsOnNodeChain(node *blctypes.BTCHeaderInfo, ancestor *bl
 	}
 	ancestryUpTo := t.GetNodeAncestryUpTo(node, ancestor)
 	lastElement := ancestryUpTo[len(ancestryUpTo)-1]
-	parent := t.getParent(lastElement)
+	parent := t.GetParent(lastElement)
 	if parent != nil && parent.Eq(ancestor) {
 		return true
 	}
@@ -244,8 +244,8 @@ func (t *BTCHeaderTree) Size() int {
 	return len(t.headers)
 }
 
-// getParent returns the parent of the node, or nil if it doesn't exist
-func (t *BTCHeaderTree) getParent(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
+// GetParent returns the parent of the node, or nil if it doesn't exist
+func (t *BTCHeaderTree) GetParent(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
 	if header, ok := t.headers[node.Header.ParentHash().String()]; ok {
 		return header
 	}

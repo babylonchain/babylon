@@ -142,21 +142,20 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 }
 
 // BlockHeight returns the height of the provided header
-func (k Keeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderBytes) (uint64, error) {
-	if header == nil {
+func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbl.BTCHeaderHashBytes) (uint64, error) {
+	if headerHash == nil {
 		return 0, types.ErrEmptyMessage
 	}
-	headerHash := header.Hash()
 	return k.headersState(ctx).GetHeaderHeight(headerHash)
 }
 
 // MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
-func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes) (int64, error) {
-	if headerBytes == nil {
+func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHashBytes) (int64, error) {
+	if headerHashBytes == nil {
 		return -1, types.ErrEmptyMessage
 	}
 	// Retrieve the header. If it does not exist, return an error
-	headerInfo, err := k.headersState(ctx).GetHeaderByHash(headerBytes.Hash())
+	headerInfo, err := k.headersState(ctx).GetHeaderByHash(headerHashBytes)
 	if err != nil {
 		return -1, err
 	}
@@ -185,11 +184,11 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes)
 }
 
 // IsHeaderKDeep returns true if a header is at least k-deep on the main chain
-func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, depth uint64) (bool, error) {
-	if headerBytes == nil {
+func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHashBytes, depth uint64) (bool, error) {
+	if headerHashBytes == nil {
 		return false, types.ErrEmptyMessage
 	}
-	mainchainDepth, err := k.MainChainDepth(ctx, headerBytes)
+	mainchainDepth, err := k.MainChainDepth(ctx, headerHashBytes)
 	if err != nil {
 		return false, err
 	}
@@ -198,6 +197,37 @@ func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerBytes *bbl.BTCHeaderBytes, 
 		return false, nil
 	}
 	// return true if the provided depth is more than equal the mainchain depth
-	//panic(fmt.Sprintf("%d %d", depth, mainchainDepth))
 	return depth >= uint64(mainchainDepth), nil
+}
+
+// IsAncestor returns true/false depending on whether `parent` is an ancestor of `child`.
+// Returns false if the parent and the child are the same header.
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbl.BTCHeaderHashBytes, childHashBytes *bbl.BTCHeaderHashBytes) (bool, error) {
+	// nil checks
+	if parentHashBytes == nil || childHashBytes == nil {
+		return false, types.ErrEmptyMessage
+	}
+	// Retrieve parent and child header
+	parentHeader, err := k.headersState(ctx).GetHeaderByHash(parentHashBytes)
+	if err != nil {
+		return false, types.ErrHeaderDoesNotExist.Wrapf("parent does not exist")
+	}
+	childHeader, err := k.headersState(ctx).GetHeaderByHash(childHashBytes)
+	if err != nil {
+		return false, types.ErrHeaderDoesNotExist.Wrapf("child does not exist")
+	}
+
+	// If the height of the child is equal or less than the parent, then the input is invalid
+	if childHeader.Height <= parentHeader.Height {
+		return false, nil
+	}
+
+	// Retrieve the ancestry
+	ancestry := k.headersState(ctx).GetHeaderAncestryUpTo(childHeader, childHeader.Height-parentHeader.Height)
+	// If it is empty, return false
+	if len(ancestry) == 0 {
+		return false, nil
+	}
+	// Return whether the last element of the ancestry is equal to the parent
+	return ancestry[len(ancestry)-1].Eq(parentHeader), nil
 }
