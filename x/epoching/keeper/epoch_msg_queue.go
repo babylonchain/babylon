@@ -1,9 +1,12 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
@@ -116,8 +119,42 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
 
+	fmt.Println("DISPATCHING", sdktypes.MsgTypeURL(unwrappedMsgWithType), unwrappedMsgWithType)
+
+	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgUndelegate:
+		k.checkHasDelegatorStartingInfo("PRE UNDELEG", ctx, unwrappedMsg.MsgUndelegate.ValidatorAddress, unwrappedMsg.MsgUndelegate.DelegatorAddress)
+	case *types.QueuedMessage_MsgBeginRedelegate:
+		k.checkHasDelegatorStartingInfo("PRE REDELEG", ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorSrcAddress, unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
+	default:
+
+	}
+
 	// get the handler function from router
 	handler := k.router.Handler(unwrappedMsgWithType)
 	// handle the unwrapped message
-	return handler(ctx, unwrappedMsgWithType)
+	result, err := handler(ctx, unwrappedMsgWithType)
+
+	if err != nil {
+		fmt.Println("DISPATCH FAILED", sdktypes.MsgTypeURL(unwrappedMsgWithType), err)
+	}
+	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgDelegate:
+		k.checkHasDelegatorStartingInfo("POST DELEG", ctx, unwrappedMsg.MsgDelegate.ValidatorAddress, unwrappedMsg.MsgDelegate.DelegatorAddress)
+	case *types.QueuedMessage_MsgBeginRedelegate:
+		k.checkHasDelegatorStartingInfo("POST REDELEG", ctx, unwrappedMsg.MsgBeginRedelegate.ValidatorDstAddress, unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
+	default:
+	}
+
+	return result, err
+}
+
+func (k Keeper) checkHasDelegatorStartingInfo(lbl string, ctx sdk.Context, val string, del string) {
+	valAddr, _ := sdk.ValAddressFromBech32(val)
+	delAddr, _ := sdk.AccAddressFromBech32(del)
+	if !k.distr.HasDelegatorStartingInfo(ctx, valAddr, delAddr) {
+		fmt.Println(lbl, ": ", "NO DELEGATION START INFO", " del: ", del, " val: ", val)
+	} else {
+		fmt.Println(lbl, ": ", "HAS DELEGATION START INFO ", " del: ", del, " val: ", val)
+	}
 }

@@ -278,7 +278,7 @@ func NewBabylonApp(
 
 	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
 	epochingKeeper := epochingkeeper.NewKeeper(
-		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper,
+		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper, &app.DistrKeeper,
 	)
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
 	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
