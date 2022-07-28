@@ -5,6 +5,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) triggerHeaderInserted(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
+	// Trigger AfterBTCHeaderInserted hook
+	k.AfterBTCHeaderInserted(ctx, headerInfo)
+	// Emit HeaderInserted event
+	ctx.EventManager().EmitTypedEvent(&types.EventBTCHeaderInserted{Header: headerInfo})
+}
+
 func (k Keeper) triggerRollBack(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
 	// Trigger AfterBTCRollBack hook
 	k.AfterBTCRollBack(ctx, headerInfo)

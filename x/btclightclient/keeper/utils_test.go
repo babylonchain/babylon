@@ -14,22 +14,32 @@ import (
 var _ types.BTCLightClientHooks = &MockHooks{}
 
 type MockHooks struct {
-	AfterBTCRollForwardStore []*types.BTCHeaderInfo
-	AfterBTCRollBackStore    []*types.BTCHeaderInfo
+	AfterBTCRollForwardStore    []*types.BTCHeaderInfo
+	AfterBTCRollBackStore       []*types.BTCHeaderInfo
+	AfterBTCHeaderInsertedStore []*types.BTCHeaderInfo
 }
 
 func NewMockHooks() *MockHooks {
 	rollForwardStore := make([]*types.BTCHeaderInfo, 0)
 	rollBackwardStore := make([]*types.BTCHeaderInfo, 0)
-	return &MockHooks{AfterBTCRollForwardStore: rollForwardStore, AfterBTCRollBackStore: rollBackwardStore}
+	headerInsertedStore := make([]*types.BTCHeaderInfo, 0)
+	return &MockHooks{
+		AfterBTCRollForwardStore:    rollForwardStore,
+		AfterBTCRollBackStore:       rollBackwardStore,
+		AfterBTCHeaderInsertedStore: headerInsertedStore,
+	}
 }
 
-func (m *MockHooks) AfterBTCRollForward(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
+func (m *MockHooks) AfterBTCRollForward(_ sdk.Context, headerInfo *types.BTCHeaderInfo) {
 	m.AfterBTCRollForwardStore = append(m.AfterBTCRollForwardStore, headerInfo)
 }
 
-func (m *MockHooks) AfterBTCRollBack(ctx sdk.Context, headerInfo *types.BTCHeaderInfo) {
+func (m *MockHooks) AfterBTCRollBack(_ sdk.Context, headerInfo *types.BTCHeaderInfo) {
 	m.AfterBTCRollBackStore = append(m.AfterBTCRollBackStore, headerInfo)
+}
+
+func (m *MockHooks) AfterBTCHeaderInserted(_ sdk.Context, headerInfo *types.BTCHeaderInfo) {
+	m.AfterBTCHeaderInsertedStore = append(m.AfterBTCHeaderInsertedStore, headerInfo)
 }
 
 // Methods for generating trees
