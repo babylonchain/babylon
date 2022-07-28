@@ -372,6 +372,23 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 		// Get event names. Those will be useful to test the types of the emitted events
 		rollForwardName := proto.MessageName(&types.EventBTCRollForward{})
 		rollBackName := proto.MessageName(&types.EventBTCRollBack{})
+		headerInsertedName := proto.MessageName(&types.EventBTCHeaderInserted{})
+
+		// The headerInserted hook call should contain the new header
+		if len(mockHooks.AfterBTCHeaderInsertedStore) != 1 {
+			t.Fatalf("Expected a single BTCHeaderInserted hook to be invoked. Got %d", len(mockHooks.AfterBTCHeaderInsertedStore))
+		}
+		if !mockHooks.AfterBTCHeaderInsertedStore[0].Eq(header) {
+			t.Errorf("The headerInfo inside the BTCHeaderInserted hook is not the new header")
+		}
+		// Check that an event has been triggered for the new header
+		if len(ctx.EventManager().Events()) == 0 {
+			t.Fatalf("No events were triggered")
+		}
+		// The header creation event should have been the one that was first generated
+		if ctx.EventManager().Events()[0].Type != headerInsertedName {
+			t.Errorf("The first event does not have the BTCHeaderInserted type")
+		}
 
 		// If the new header builds on top of the tip
 		if oldTip.Eq(parentHeader) {
@@ -391,11 +408,13 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			if len(mockHooks.AfterBTCRollBackStore) != 0 {
 				t.Fatalf("Expected the BTCRollBack hook to not be invoked")
 			}
-			if len(ctx.EventManager().Events()) != 1 {
-				t.Fatalf("Only one event should have been invoked")
+			// 2 events because the first one is for the header creation
+			if len(ctx.EventManager().Events()) != 2 {
+				t.Fatalf("We expected only two events. One for header creation and one for rolling forward.")
 			}
-			if ctx.EventManager().Events()[0].Type != rollForwardName {
-				t.Errorf("The single event expected does not have the roll forward type")
+			// The second event should be the roll forward one
+			if ctx.EventManager().Events()[1].Type != rollForwardName {
+				t.Errorf("The second event does not have the roll forward type")
 			}
 		} else if oldTip.Work.GT(*header.Work) {
 			// If the tip has a greater work than the newly inserted header
@@ -411,8 +430,9 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			if len(mockHooks.AfterBTCRollBackStore) != 0 {
 				t.Fatalf("Expected the BTCRollBack hook to not be invoked")
 			}
-			if len(ctx.EventManager().Events()) != 0 {
-				t.Errorf("Events have been invoked when the tip wasn't updated")
+			// No other events other than BTCHeaderInserted should be invoked
+			if len(ctx.EventManager().Events()) != 1 {
+				t.Errorf("Extra events have been invoked when the tip wasn't updated")
 			}
 		} else {
 			// The tip has been updated. It should be towards the new header
@@ -445,9 +465,9 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 
 			// Test the invoked events
 			invokedEvents := ctx.EventManager().Events()
-			// There should be a total of len(ancestry) + 1 events
-			if len(invokedEvents) != len(ancestry)+1 {
-				t.Errorf("More events than expected were invoked %d %d", len(invokedEvents), len(ancestry)+1)
+			// There should be a total of len(ancestry) + 2 events
+			if len(invokedEvents) != len(ancestry)+2 {
+				t.Errorf("More events than expected were invoked %d %d", len(invokedEvents), len(ancestry)+2)
 			}
 			// Only test that there is a certain number of rollForward and rollBack events
 			// Testing the attributes is a much more complex approach

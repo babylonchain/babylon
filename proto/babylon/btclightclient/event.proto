@@ -21,3 +21,10 @@ message EventBTCRollBack {
 message EventBTCRollForward {
   BTCHeaderInfo header = 1;
 }
+
+// EventBTCHeaderInserted is emitted on Msg/InsertHeader
+// The header included in the event is the one that was added to the
+// on chain BTC storage.
+message EventBTCHeaderInserted {
+  BTCHeaderInfo header = 1;
+}
