@@ -85,13 +85,10 @@ func NewBLSSigFromHex(s string) (Signature, error) {
 	return sig, nil
 }
 
-func (sig Signature) String() (string, error) {
-	bz, err := sig.Marshal()
-	if err != nil {
-		return "", err
-	}
+func (sig Signature) String() string {
+	bz := sig.MustMarshal()
 
-	return hex.EncodeToString(bz), nil
+	return hex.EncodeToString(bz)
 }
 
 func (pk PublicKey) Marshal() ([]byte, error) {

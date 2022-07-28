@@ -35,7 +35,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 // CmdRawCheckpointList defines the cobra command to query raw checkpoints by status
 func CmdRawCheckpointList() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "raw-checkpoint-list [epoch_number]",
+		Use:   "raw-checkpoint-list [status]",
 		Short: "retrieve the checkpoints by status",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -50,7 +50,7 @@ func CmdRawCheckpointList() *cobra.Command {
 
 			status, exists := types.CheckpointStatus_value[args[0]]
 			if !exists {
-				return errors.New("checkpoint not found")
+				return errors.New("invalid status")
 			}
 
 			params := types.NewQueryRawCheckpointListRequest(pageReq, types.CheckpointStatus(status))
