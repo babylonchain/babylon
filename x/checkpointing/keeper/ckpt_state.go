@@ -46,7 +46,7 @@ func (cs CheckpointsState) GetRawCkptWithMeta(epoch uint64) (*types.RawCheckpoin
 }
 
 // GetRawCkptsWithMetaByStatus retrieves raw checkpoints with meta by their status by the descending order of epoch
-func (cs CheckpointsState) GetRawCkptsWithMetaByStatus(status types.CheckpointStatus, f func(sig *types.RawCheckpointWithMeta) bool) error {
+func (cs CheckpointsState) GetRawCkptsWithMetaByStatus(status types.CheckpointStatus, f func(*types.RawCheckpointWithMeta) bool) error {
 	store := prefix.NewStore(cs.checkpoints, types.CkptsObjectPrefix)
 	iter := store.ReverseIterator(nil, nil)
 	defer iter.Close()

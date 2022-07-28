@@ -1,11 +1,23 @@
 package types
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
 
 var (
 	// Ensure that MsgInsertHeader implements all functions of the Msg interface
 	_ sdk.Msg = (*MsgAddBlsSig)(nil)
 )
+
+func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
+	return &MsgAddBlsSig{BlsSig: &BlsSig{
+		EpochNum:       epochNum,
+		LastCommitHash: lch,
+		BlsSig:         &sig,
+		SignerAddress:  addr.String(),
+	}}
+}
 
 func (m *MsgAddBlsSig) ValidateBasic() error {
 	// This function validates stateless message elements

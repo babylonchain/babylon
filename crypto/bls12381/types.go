@@ -1,6 +1,7 @@
 package bls12381
 
 import (
+	"encoding/hex"
 	"errors"
 	blst "github.com/supranational/blst/bindings/go"
 )
@@ -67,6 +68,27 @@ func (sig Signature) Byte() []byte {
 
 func (sig Signature) Equal(s Signature) bool {
 	return string(sig) == string(s)
+}
+
+func NewBLSSigFromHex(s string) (Signature, error) {
+	bz, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+
+	var sig Signature
+	err = sig.Unmarshal(bz)
+	if err != nil {
+		return nil, err
+	}
+
+	return sig, nil
+}
+
+func (sig Signature) String() string {
+	bz := sig.MustMarshal()
+
+	return hex.EncodeToString(bz)
 }
 
 func (pk PublicKey) Marshal() ([]byte, error) {
