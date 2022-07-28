@@ -109,6 +109,7 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 	// Variable maintaining the headers that have been added to the main chain
 	var addedToMainChain []*types.BTCHeaderInfo
 
+	k.triggerHeaderInserted(ctx, headerInfo)
 	// The tip has changed, we need to send events
 	if !currentTip.Eq(previousTip) {
 		if !currentTip.Eq(headerInfo) {
