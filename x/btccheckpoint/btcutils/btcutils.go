@@ -13,8 +13,10 @@ import (
 )
 
 const (
-	// 1 byte for OP_RETURN opcode and at most 80bytes of data
-	maxOpReturnPkScriptSize = 81
+	// 1 byte for OP_RETURN opcode
+	// 1 byte for OP_DATAXX, or 2 bytes for OP_PUSHDATA1 opcode
+	// max 80 bytes of application specific data
+	maxOpReturnPkScriptSize = 83
 )
 
 // Parsed proof represent semantically valid:
@@ -37,7 +39,7 @@ func hashConcat(a []byte, b []byte) chainhash.Hash {
 	c := []byte{}
 	c = append(c, a...)
 	c = append(c, b...)
-	return chainhash.HashH(c)
+	return chainhash.DoubleHashH(c)
 }
 
 // Prove checks the validity of a merkle proof
@@ -60,7 +62,9 @@ func prove(tx *btcutil.Tx, merkleRoot *chainhash.Hash, intermediateNodes []byte,
 	proof = append(proof, merkleRoot[:]...)
 
 	var current chainhash.Hash
+
 	idx := index
+
 	proofLength := len(proof)
 
 	if proofLength%32 != 0 {
@@ -100,15 +104,41 @@ func extractOpReturnData(tx *btcutil.Tx) []byte {
 	for _, output := range msgTx.TxOut {
 		pkScript := output.PkScript
 		pkScriptLen := len(pkScript)
-		if pkScriptLen > 0 &&
+		// valid op return script will have at least 2 bytes
+		// - fisrt byte should be OP_RETURN marker
+		// - second byte should indicate how many bytes there are in opreturn script
+		if pkScriptLen > 1 &&
 			pkScriptLen <= maxOpReturnPkScriptSize &&
 			pkScript[0] == txscript.OP_RETURN {
-			// drop first op return byte
-			opReturnData = append(opReturnData, pkScript[1:]...)
+
+			// if this is OP_PUSHDATA1, we need to drop first 3 bytes as those are related
+			// to script iteslf i.e OP_RETURN + OP_PUSHDATA1 + len of bytes
+			if pkScript[1] == txscript.OP_PUSHDATA1 {
+				opReturnData = append(opReturnData, pkScript[3:]...)
+			} else {
+				// this should be one of OP_DATAXX opcodes we drop first 2 bytes
+				opReturnData = append(opReturnData, pkScript[2:]...)
+			}
 		}
 	}
 
 	return opReturnData
+}
+
+func parseTransaction(bytes []byte) (*btcutil.Tx, error) {
+	tx, e := btcutil.NewTxFromBytes(bytes)
+
+	if e != nil {
+		return nil, e
+	}
+
+	e = blockchain.CheckTransactionSanity(tx)
+
+	if e != nil {
+		return nil, e
+	}
+
+	return tx, nil
 }
 
 // TODO define domain errors with nice error messages
@@ -119,13 +149,7 @@ func ParseProof(
 	merkleProof []byte,
 	btcHeader []byte,
 	powLimit *big.Int) (*ParsedProof, error) {
-	tx, e := btcutil.NewTxFromBytes(btcTransaction)
-
-	if e != nil {
-		return nil, e
-	}
-
-	e = blockchain.CheckTransactionSanity(tx)
+	tx, e := parseTransaction(btcTransaction)
 
 	if e != nil {
 		return nil, e
@@ -142,7 +166,7 @@ func ParseProof(
 	validProof := prove(tx, &header.MerkleRoot, merkleProof, transactionIndex)
 
 	if !validProof {
-		return nil, fmt.Errorf("header failed validation")
+		return nil, fmt.Errorf("header failed validation due to failed proof")
 	}
 
 	opReturnData := extractOpReturnData(tx)
