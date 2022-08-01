@@ -8,6 +8,7 @@ import (
 
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
 
@@ -70,4 +71,73 @@ func GetBaseBTCHeaderBytes() BTCHeaderBytes {
 		panic("Base BTC header hex cannot be converted to bytes")
 	}
 	return headerBytes
+}
+
+func min(a, b uint) uint {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func createBranch(nodes []*chainhash.Hash, numfLeafs uint, idx uint) []*chainhash.Hash {
+
+	var branch []*chainhash.Hash
+
+	var size = numfLeafs
+	var index = idx
+
+	var i uint = 0
+
+	for size > 1 {
+		j := min(index^1, size-1)
+
+		branch = append(branch, nodes[i+j])
+
+		index = index >> 1
+
+		i = i + size
+
+		size = (size + 1) >> 1
+	}
+
+	return branch
+}
+
+// quite inefficiet method of calculating merkle proofs, created for testing purposes
+func CreateProofForIdx(transactions [][]byte, idx uint) ([]*chainhash.Hash, error) {
+	if len(transactions) == 0 {
+		return nil, errors.New("can't calculate proof for empty transaction list")
+	}
+
+	if int(idx) >= len(transactions) {
+		return nil, errors.New("provided index should be smaller that lenght of transaction list")
+	}
+
+	var txs []*btcutil.Tx
+	for _, b := range transactions {
+		tx, e := btcutil.NewTxFromBytes(b)
+
+		if e != nil {
+			return nil, e
+		}
+
+		txs = append(txs, tx)
+	}
+
+	store := blockchain.BuildMerkleTreeStore(txs, false)
+
+	var storeNoNil []*chainhash.Hash
+
+	// to correctly calculate indexes we need to filter out all nil hashes which
+	// represents nodes which are empty
+	for _, h := range store {
+		if h != nil {
+			storeNoNil = append(storeNoNil, h)
+		}
+	}
+
+	branch := createBranch(storeNoNil, uint(len(transactions)), idx)
+
+	return branch, nil
 }

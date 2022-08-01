@@ -48,6 +48,8 @@ func NewKeeper(
 		paramstore:           ps,
 		btcLightClientKeeper: bk,
 		checkpointingKeeper:  ck,
+		kDeep:                kDeep,
+		wDeep:                wDeep,
 	}
 }
 
@@ -176,6 +178,22 @@ func (k Keeper) saveSubmission(ctx sdk.Context, sk types.SubmissionKey, sd types
 	store.Set(kBytes, sBytes)
 }
 
+// GetSubmissionData return submission data for given key, return nil if there is not data
+// under givem key
+func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *types.SubmissionData {
+	store := ctx.KVStore(k.storeKey)
+	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
+	sdBytes := store.Get(kBytes)
+
+	if len(sdBytes) == 0 {
+		return nil
+	}
+
+	var sd types.SubmissionData
+	k.cdc.MustUnmarshal(sdBytes, &sd)
+	return &sd
+}
+
 // getSubmissionDataExists retrive submissions data, panics if data does not exists
 // should only be called when data for sure is in store
 func (k Keeper) getSubmissionDataExists(ctx sdk.Context, sk types.SubmissionKey) types.SubmissionData {
@@ -200,7 +218,6 @@ func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.Submis
 	var allAtLeastNDeep = true
 	for _, tk := range sk.Key {
 		depth, onMainChain, e := k.MainChainDepth(ctx, tk.Hash)
-
 		if e != nil {
 			return false, false, e
 		}
@@ -475,6 +492,61 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		k.promoteConfirmedToFinalized(ctx, newFinalizedSubKey)
 	}
 
+}
+
+func (k Keeper) GetAllUnconfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	unconfirmed := []types.SubmissionKey{}
+
+	store := ctx.KVStore(k.storeKey)
+
+	// iterator over all unconfirmed submissions
+	iterator := sdk.KVStorePrefixIterator(store, types.UnconfirmedIndexPrefix)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		skBytes := iterator.Value()
+		var sk types.SubmissionKey
+		k.cdc.MustUnmarshal(skBytes, &sk)
+		unconfirmed = append(unconfirmed, sk)
+	}
+	return unconfirmed
+}
+
+func (k Keeper) GetAllConfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	confirmed := []types.SubmissionKey{}
+
+	store := ctx.KVStore(k.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.ConfirmedIndexPrefix)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		skBytes := iterator.Value()
+		var sk types.SubmissionKey
+		k.cdc.MustUnmarshal(skBytes, &sk)
+		confirmed = append(confirmed, sk)
+	}
+	return confirmed
+}
+
+func (k Keeper) GetAllFinalizedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	finalized := []types.SubmissionKey{}
+
+	store := ctx.KVStore(k.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, types.FinalizedIndexPrefix)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		skBytes := iterator.Value()
+		var sk types.SubmissionKey
+		k.cdc.MustUnmarshal(skBytes, &sk)
+		finalized = append(finalized, sk)
+	}
+	return finalized
 }
 
 // Callback to be called when btc light client tip change
