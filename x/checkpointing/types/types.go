@@ -2,12 +2,19 @@ package types
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+const (
+	// HashSize is the size in bytes of a hash
+	HashSize = sha256.Size
 )
 
 type LastCommitHash []byte
@@ -92,7 +99,7 @@ func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var lch LastCommitHash
 
 	err = lch.Unmarshal(bz)
@@ -104,6 +111,9 @@ func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
 }
 
 func (lch *LastCommitHash) Unmarshal(bz []byte) error {
+	if len(bz) != HashSize {
+		return errors.New("invalid lastCommitHash length")
+	}
 	*lch = bz
 	return nil
 }

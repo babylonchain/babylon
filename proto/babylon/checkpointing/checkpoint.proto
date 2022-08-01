@@ -24,6 +24,8 @@ message RawCheckpoint {
 
 // RawCheckpointWithMeta wraps the raw checkpoint with meta data.
 message RawCheckpointWithMeta {
+  option (gogoproto.equal)            = true;
+
   RawCheckpoint ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
