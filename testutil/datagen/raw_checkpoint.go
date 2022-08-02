@@ -16,9 +16,10 @@ func GenRandomRawCheckpointWithMeta() *types.RawCheckpointWithMeta {
 }
 
 func GenRandomRawCheckpoint() *types.RawCheckpoint {
+	randomHashBytes := GenRandomLastCommitHash()
 	return &types.RawCheckpoint{
 		EpochNum:       GenRandomEpochNum(),
-		LastCommitHash: GenRandomLastCommitHash(),
+		LastCommitHash: &randomHashBytes,
 	}
 }
 

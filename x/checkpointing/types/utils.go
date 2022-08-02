@@ -8,7 +8,7 @@ import (
 func (m BlsSig) Hash() BlsSigHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.LastCommitHash,
+		m.LastCommitHash.MustMarshal(),
 		m.BlsSig.MustMarshal(),
 		[]byte(m.SignerAddress),
 	}
@@ -18,7 +18,7 @@ func (m BlsSig) Hash() BlsSigHash {
 func (m RawCheckpoint) Hash() RawCkptHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.LastCommitHash,
+		m.LastCommitHash.MustMarshal(),
 		m.BlsMultiSig.MustMarshal(),
 		m.Bitmap,
 	}

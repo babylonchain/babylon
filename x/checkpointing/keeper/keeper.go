@@ -99,7 +99,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	}
 
 	if updated {
-		err = k.updateCheckpoint(ctx, ckptWithMeta)
+		err = k.UpdateCheckpoint(ctx, ckptWithMeta)
 	}
 	if err != nil {
 		return err
@@ -178,10 +178,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 	if sum <= powerSum*1.0/3.0 {
 		return nil, errors.New("insufficient voting power")
 	}
-	msgBytes, err := ckpt.LastCommitHash.Marshal()
-	if err != nil {
-		return nil, err
-	}
+	msgBytes := ckpt.LastCommitHash.MustMarshal()
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, valPubKeys, msgBytes)
 	if err != nil {
 		return nil, err
@@ -204,7 +201,7 @@ func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, ckptBytes []byte) error 
 		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SEALED")
 	}
 	ckptWithMeta.Status = types.Submitted
-	return k.updateCheckpoint(ctx, ckptWithMeta)
+	return k.UpdateCheckpoint(ctx, ckptWithMeta)
 }
 
 // SetCheckpointConfirmed sets the status of a checkpoint to CONFIRMED
@@ -217,7 +214,7 @@ func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, ckptBytes []byte) error 
 		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SUBMITTED")
 	}
 	ckptWithMeta.Status = types.Confirmed
-	return k.updateCheckpoint(ctx, ckptWithMeta)
+	return k.UpdateCheckpoint(ctx, ckptWithMeta)
 }
 
 // SetCheckpointFinalized sets the status of a checkpoint to FINALIZED
@@ -226,10 +223,11 @@ func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, ckptBytes []byte) error 
 	if err != nil {
 		return err
 	}
-	if ckptWithMeta.Status != types.Finalized {
+	if ckptWithMeta.Status != types.Confirmed {
 		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be CONFIRMED")
 	}
-	return k.updateCheckpoint(ctx, ckptWithMeta)
+	ckptWithMeta.Status = types.Finalized
+	return k.UpdateCheckpoint(ctx, ckptWithMeta)
 }
 
 // TODO: should we add a new status of FORGOTTEN?
@@ -241,10 +239,10 @@ func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, ckptBytes []byte) error 
 	if ckptWithMeta.Status != types.Submitted {
 		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SUBMITTED")
 	}
-	return k.updateCheckpoint(ctx, ckptWithMeta)
+	return k.UpdateCheckpoint(ctx, ckptWithMeta)
 }
 
-func (k Keeper) updateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
+func (k Keeper) UpdateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
 	return k.CheckpointsState(ctx).UpdateCheckpoint(ckptWithMeta)
 }
 

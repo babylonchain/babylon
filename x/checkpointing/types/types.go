@@ -133,13 +133,21 @@ func (lch *LastCommitHash) String() string {
 	return hex.EncodeToString(*lch)
 }
 
+func (lch *LastCommitHash) MustMarshal() []byte {
+	bz, err := lch.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
 func (lch *LastCommitHash) Marshal() ([]byte, error) {
 	return *lch, nil
 }
 
-func (lch *LastCommitHash) MarshalTo(dAtA []byte) (int, error) {
-	size := lch.Size()
-	return lch.MarshalToSizedBuffer(dAtA[:size])
+func (lch LastCommitHash) MarshalTo(data []byte) (int, error) {
+	copy(data, lch)
+	return len(data), nil
 }
 
 func (lch *LastCommitHash) MarshalToSizedBuffer(dAtA []byte) (int, error) {
@@ -164,6 +172,10 @@ func BytesToRawCkpt(cdc codec.BinaryCodec, bz []byte) (*RawCheckpoint, error) {
 	ckpt := new(RawCheckpoint)
 	err := cdc.Unmarshal(bz, ckpt)
 	return ckpt, err
+}
+
+func RawCkptToBytes(cdc codec.BinaryCodec, ckpt *RawCheckpoint) []byte {
+	return cdc.MustMarshal(ckpt)
 }
 
 // ValidateBasic does sanity checks on a raw checkpoint

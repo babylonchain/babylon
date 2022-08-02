@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -51,5 +51,5 @@ func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	// Initialize params
 	k.SetParams(ctx, types.DefaultParams())
 
-	return &k, ctx
+	return &k, ctx, cdc
 }
