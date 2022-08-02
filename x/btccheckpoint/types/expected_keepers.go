@@ -36,24 +36,24 @@ type BTCLightClientKeeper interface {
 type CheckpointingKeeper interface {
 	// CheckpointEpoch should return epoch index if provided rawCheckpoint
 	// passes all checkpointing validations and error otherwise
-	CheckpointEpoch(rawCheckpoint []byte) (uint64, error)
+	CheckpointEpoch(ctx sdk.Context, rawCheckpoint []byte) (uint64, error)
 
-	// It quite mouthfull to have 4 differnt methods to operate on checkpoint state
+	// It quite mouthfull to have 4 different methods to operate on checkpoint state
 	// but this approach decouples both modules a bit more than having some kind
 	// of shared enum passed into the methods. Both modules are free to evolve their
 	// representation of checkpoint state independently
 
-	// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-	// sucessfully submitted on btc chain. It can be either or main chaing or fork.
-	SetCheckpointSubmitted(rawCheckpoint []byte)
-	// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-	// sucessfully submitted on btc chain and it is at least K-deep on the main chain
-	SetCheckpointConfirmed(rawCheckpoint []byte)
-	// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-	// sucessfully submitted on btc chain and it is at least W-deep on the main chain
-	SetCheckpointFinalized(rawCheckpoint []byte)
+	// SetCheckpointSubmitted informs checkpointing module that checkpoint was
+	// successfully submitted on btc chain. It can be either or main chain or fork.
+	SetCheckpointSubmitted(ctx sdk.Context, rawCheckpoint []byte) error
+	// SetCheckpointConfirmed informs checkpointing module that checkpoint was
+	// successfully submitted on btc chain, and it is at least K-deep on the main chain
+	SetCheckpointConfirmed(ctx sdk.Context, rawCheckpoint []byte) error
+	// SetCheckpointFinalized informs checkpointing module that checkpoint was
+	// successfully submitted on btc chain, and it is at least W-deep on the main chain
+	SetCheckpointFinalized(ctx sdk.Context, rawCheckpoint []byte) error
 
-	// SetCheckpointForgotten Informs checkpoining module thaht this checkpoint lost
+	// SetCheckpointForgotten informs checkpointing module that this checkpoint lost
 	// all submissions on btc chain
-	SetCheckpointForgotten(rawCheckpoint []byte)
+	SetCheckpointForgotten(ctx sdk.Context, rawCheckpoint []byte) error
 }

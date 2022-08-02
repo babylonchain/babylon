@@ -99,7 +99,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	}
 
 	if updated {
-		err = k.UpdateCheckpoint(ctx, ckptWithMeta)
+		err = k.updateCheckpoint(ctx, ckptWithMeta)
 	}
 	if err != nil {
 		return err
@@ -129,78 +129,122 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 // conflicting checkpoint. A conflicting checkpoint indicates the existence
 // of a fork
 func (k Keeper) CheckpointEpoch(ctx sdk.Context, rawCkptBytes []byte) (uint64, error) {
-	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+	ckptWithMeta, err := k.verifyCkptBytes(ctx, rawCkptBytes)
 	if err != nil {
 		return 0, err
 	}
+	return ckptWithMeta.Ckpt.EpochNum, nil
+}
+
+// verifyCkptBytes verifies checkpoint from BTC. A checkpoint is valid if
+// it equals to the existing raw checkpoint. Otherwise, it further verifies
+// the raw checkpoint and decides whether it is an invalid checkpoint or a
+// conflicting checkpoint. A conflicting checkpoint indicates the existence
+// of a fork
+func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.RawCheckpointWithMeta, error) {
+	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+	if err != nil {
+		return nil, err
+	}
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, ckpt.EpochNum)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	// a valid checkpoint should equal to the existing one according to epoch number
 	if ckptWithMeta.Ckpt.Equal(ckpt) {
-		return ckpt.EpochNum, nil
+		return ckptWithMeta, nil
 	}
 
 	// next verify if the multi signature is valid
 	err = ckpt.ValidateBasic()
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	err = k.verifyRawCheckpoint(ctx, ckpt)
-	if err != nil {
-		return 0, err
-	}
-	// TODO: needs to stall the node since a conflicting checkpoint is found
-	return 0, types.ErrInvalidRawCheckpoint.Wrapf("a conflicting checkpoint is found")
-}
-
-func (k Keeper) verifyRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
 	powerSum := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
 	valSet := k.GetValidatorSet(ctx, ckpt.EpochNum)
 	if bitmap.Len(ckpt.Bitmap) != len(valSet) {
-		return errors.New("invalid bitmap")
+		return nil, errors.New("invalid bitmap")
 	}
 	var sum int64
-	var err error
 	valPubKeys := make([]bls12381.PublicKey, len(valSet))
 	for i, v := range valSet {
 		valPubKeys[i], err = k.GetBlsPubKey(ctx, v.Addr)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		sum += v.Power
 	}
 	if sum <= powerSum*1.0/3.0 {
-		return errors.New("insufficient voting power")
+		return nil, errors.New("insufficient voting power")
 	}
 	msgBytes, err := ckpt.LastCommitHash.Marshal()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, valPubKeys, msgBytes)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if !ok {
-		return errors.New("invalid BLS multi-sig")
+		return nil, errors.New("invalid BLS multi-sig")
 	}
 
-	return nil
+	// TODO: needs to stall the node since a conflicting checkpoint is found
+	return nil, types.ErrInvalidRawCheckpoint.Wrapf("a conflicting checkpoint is found")
 }
 
-// UpdateCkptStatus updates the status of a raw checkpoint
-func (k Keeper) UpdateCkptStatus(ctx sdk.Context, rawCkptBytes []byte, status types.CheckpointStatus) error {
-	// TODO: some checks
-	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+// SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED
+func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, ckptBytes []byte) error {
+	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
 	if err != nil {
 		return err
 	}
-	return k.CheckpointsState(ctx).UpdateCkptStatus(ckpt, status)
+	if ckptWithMeta.Status != types.Sealed {
+		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SEALED")
+	}
+	ckptWithMeta.Status = types.Submitted
+	return k.updateCheckpoint(ctx, ckptWithMeta)
 }
 
-func (k Keeper) UpdateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
+// SetCheckpointConfirmed sets the status of a checkpoint to CONFIRMED
+func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, ckptBytes []byte) error {
+	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
+	if err != nil {
+		return err
+	}
+	if ckptWithMeta.Status != types.Submitted {
+		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SUBMITTED")
+	}
+	ckptWithMeta.Status = types.Confirmed
+	return k.updateCheckpoint(ctx, ckptWithMeta)
+}
+
+// SetCheckpointFinalized sets the status of a checkpoint to FINALIZED
+func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, ckptBytes []byte) error {
+	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
+	if err != nil {
+		return err
+	}
+	if ckptWithMeta.Status != types.Finalized {
+		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be CONFIRMED")
+	}
+	return k.updateCheckpoint(ctx, ckptWithMeta)
+}
+
+// TODO: should we add a new status of FORGOTTEN?
+func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, ckptBytes []byte) error {
+	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
+	if err != nil {
+		return err
+	}
+	if ckptWithMeta.Status != types.Submitted {
+		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SUBMITTED")
+	}
+	return k.updateCheckpoint(ctx, ckptWithMeta)
+}
+
+func (k Keeper) updateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
 	return k.CheckpointsState(ctx).UpdateCheckpoint(ckptWithMeta)
 }
 
