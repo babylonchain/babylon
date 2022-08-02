@@ -12,6 +12,12 @@ func NewMultiBTCLightClientHooks(hooks ...BTCLightClientHooks) MultiBTCLightClie
 	return hooks
 }
 
+func (h MultiBTCLightClientHooks) AfterBTCHeaderInserted(ctx sdk.Context, headerInfo *BTCHeaderInfo) {
+	for i := range h {
+		h[i].AfterBTCHeaderInserted(ctx, headerInfo)
+	}
+}
+
 func (h MultiBTCLightClientHooks) AfterBTCRollBack(ctx sdk.Context, headerInfo *BTCHeaderInfo) {
 	for i := range h {
 		h[i].AfterBTCRollBack(ctx, headerInfo)

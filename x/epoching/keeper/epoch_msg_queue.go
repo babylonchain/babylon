@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -118,6 +120,36 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 
 	// get the handler function from router
 	handler := k.router.Handler(unwrappedMsgWithType)
+
+	// Create a new Context based off of the existing Context with a MultiStore branch
+	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
+	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId)
+
 	// handle the unwrapped message
-	return handler(ctx, unwrappedMsgWithType)
+	result, err := handler(handlerCtx, unwrappedMsgWithType)
+
+	if err == nil {
+		msCache.Write()
+	}
+
+	return result, err
+}
+
+// based on a function with the same name in `baseapp.go``
+func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte) (sdk.Context, sdk.CacheMultiStore) {
+	ms := ctx.MultiStore()
+	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824
+	msCache := ms.CacheMultiStore()
+	if msCache.TracingEnabled() {
+		msCache = msCache.SetTracingContext(
+			sdk.TraceContext(
+				map[string]interface{}{
+					"txHash":  fmt.Sprintf("%X", txid),
+					"msgHash": fmt.Sprintf("%X", msgid),
+				},
+			),
+		).(sdk.CacheMultiStore)
+	}
+
+	return ctx.WithMultiStore(msCache), msCache
 }

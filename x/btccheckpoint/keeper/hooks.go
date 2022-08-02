@@ -28,6 +28,8 @@ func (h Hooks) AfterBTCRollForward(ctx sdk.Context, headerInfo *ltypes.BTCHeader
 	h.k.OnTipChange(ctx)
 }
 
+func (h Hooks) AfterBTCHeaderInserted(ctx sdk.Context, headerInfo *ltypes.BTCHeaderInfo) {}
+
 func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64) {}
 
 func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {}
