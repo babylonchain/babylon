@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	"errors"
 	"fmt"
+	"github.com/boljen/go-bitmap"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -121,21 +123,70 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 	return k.AddRawCheckpoint(ctx, ckptWithMeta)
 }
 
-// CheckpointEpoch verifies checkpoint from BTC and returns epoch number
+// CheckpointEpoch verifies checkpoint from BTC and returns epoch number if
+// it equals to the existing raw checkpoint. Otherwise, it further verifies
+// the raw checkpoint and decides whether it is an invalid checkpoint or a
+// conflicting checkpoint. A conflicting checkpoint indicates the existence
+// of a fork
 func (k Keeper) CheckpointEpoch(ctx sdk.Context, rawCkptBytes []byte) (uint64, error) {
 	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
 	if err != nil {
 		return 0, err
 	}
-	err = k.verifyRawCheckpoint(ckpt)
+	ckptWithMeta, err := k.GetRawCheckpoint(ctx, ckpt.EpochNum)
 	if err != nil {
 		return 0, err
 	}
-	return ckpt.EpochNum, nil
+
+	// a valid checkpoint should equal to the existing one according to epoch number
+	if ckptWithMeta.Ckpt.Equal(ckpt) {
+		return ckpt.EpochNum, nil
+	}
+
+	// next verify if the multi signature is valid
+	err = ckpt.ValidateBasic()
+	if err != nil {
+		return 0, err
+	}
+	err = k.verifyRawCheckpoint(ctx, ckpt)
+	if err != nil {
+		return 0, err
+	}
+	// TODO: needs to stall the node since a conflicting checkpoint is found
+	return 0, types.ErrInvalidRawCheckpoint.Wrapf("a conflicting checkpoint is found")
 }
 
-func (k Keeper) verifyRawCheckpoint(ckpt *types.RawCheckpoint) error {
-	// TODO: verify checkpoint basic and bls multi-sig
+func (k Keeper) verifyRawCheckpoint(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
+	powerSum := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
+	valSet := k.GetValidatorSet(ctx, ckpt.EpochNum)
+	if bitmap.Len(ckpt.Bitmap) != len(valSet) {
+		return errors.New("invalid bitmap")
+	}
+	var sum int64
+	var err error
+	valPubKeys := make([]bls12381.PublicKey, len(valSet))
+	for i, v := range valSet {
+		valPubKeys[i], err = k.GetBlsPubKey(ctx, v.Addr)
+		if err != nil {
+			return err
+		}
+		sum += v.Power
+	}
+	if sum <= powerSum*1.0/3.0 {
+		return errors.New("insufficient voting power")
+	}
+	msgBytes, err := ckpt.LastCommitHash.Marshal()
+	if err != nil {
+		return err
+	}
+	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, valPubKeys, msgBytes)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("invalid BLS multi-sig")
+	}
+
 	return nil
 }
 

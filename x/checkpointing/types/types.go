@@ -26,7 +26,7 @@ type RawCkptHash []byte
 func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
 		EpochNum:       epochNum,
-		LastCommitHash: lch,
+		LastCommitHash: &lch,
 		Bitmap:         nil,
 		BlsMultiSig:    nil,
 	}
@@ -118,10 +118,72 @@ func (lch *LastCommitHash) Unmarshal(bz []byte) error {
 	return nil
 }
 
+func (lch *LastCommitHash) Size() (n int) {
+	if lch == nil {
+		return 0
+	}
+	return len(*lch)
+}
+
+func (lch *LastCommitHash) Equal(l LastCommitHash) bool {
+	return lch.String() == l.String()
+}
+
+func (lch *LastCommitHash) String() string {
+	return hex.EncodeToString(*lch)
+}
+
+func (lch *LastCommitHash) Marshal() ([]byte, error) {
+	return *lch, nil
+}
+
+func (lch *LastCommitHash) MarshalTo(dAtA []byte) (int, error) {
+	size := lch.Size()
+	return lch.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (lch *LastCommitHash) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (lch *LastCommitHash) ValidateBasic() error {
+	if lch == nil {
+		return errors.New("invalid lastCommitHash")
+	}
+	if len(*lch) != HashSize {
+		return errors.New("invalid lastCommitHash")
+	}
+	return nil
+}
+
 func BytesToRawCkpt(cdc codec.BinaryCodec, bz []byte) (*RawCheckpoint, error) {
 	ckpt := new(RawCheckpoint)
 	err := cdc.Unmarshal(bz, ckpt)
 	return ckpt, err
+}
+
+// ValidateBasic does sanity checks on a raw checkpoint
+func (ckpt RawCheckpoint) ValidateBasic() error {
+	if ckpt.EpochNum == 0 {
+		return ErrInvalidRawCheckpoint.Wrapf("epoch number cannot be zero")
+	}
+	if ckpt.Bitmap == nil {
+		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
+	}
+	err := ckpt.LastCommitHash.ValidateBasic()
+	if err != nil {
+		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
+	}
+	err = ckpt.BlsMultiSig.ValidateBasic()
+	if err != nil {
+		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
+	}
+
+	return nil
 }
 
 func CkptWithMetaToBytes(cdc codec.BinaryCodec, ckptWithMeta *RawCheckpointWithMeta) []byte {
