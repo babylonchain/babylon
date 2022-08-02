@@ -17,25 +17,33 @@ func (mb MockBTCLightClientKeeper) IsAncestor(ctx sdk.Context, parentHash *bbl.B
 	return true, nil
 }
 
-func (ck MockCheckpointingKeeper) CheckpointEpoch(rawCheckpoint []byte) (uint64, error) {
+func (ck MockCheckpointingKeeper) CheckpointEpoch(ctx sdk.Context, rawCheckpoint []byte) (uint64, error) {
 	return uint64(10), nil
 }
 
 // SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-// sucessfully submitted on btc chain. It can be either or main chain or fork.
-func (ck MockCheckpointingKeeper) SetCheckpointSubmitted(rawCheckpoint []byte) {}
+// successfully submitted on btc chain. It can be either or main chain or fork.
+func (ck MockCheckpointingKeeper) SetCheckpointSubmitted(ctx sdk.Context, rawCheckpoint []byte) error {
+	return nil
+}
 
-// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-// sucessfully submitted on btc chain and it is at least K-deep on the main chain
-func (ck MockCheckpointingKeeper) SetCheckpointConfirmed(rawCheckpoint []byte) {}
+// SetCheckpointConfirmed Informs checkpointing module that checkpoint was
+// successfully submitted on btc chain, and it is at least K-deep on the main chain
+func (ck MockCheckpointingKeeper) SetCheckpointConfirmed(ctx sdk.Context, rawCheckpoint []byte) error {
+	return nil
+}
 
-// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-// sucessfully submitted on btc chain and it is at least W-deep on the main chain
-func (ck MockCheckpointingKeeper) SetCheckpointFinalized(rawCheckpoint []byte) {}
+// SetCheckpointFinalized Informs checkpointing module that checkpoint was
+// successfully submitted on btc chain, and it is at least W-deep on the main chain
+func (ck MockCheckpointingKeeper) SetCheckpointFinalized(ctx sdk.Context, rawCheckpoint []byte) error {
+	return nil
+}
 
 // SetCheckpointForgotten Informs checkpointing module that was in submitted state
 // lost all its checkpoints and is checkpoint empty
-func (ck MockCheckpointingKeeper) SetCheckpointForgotten(rawCheckpoint []byte) {}
+func (ck MockCheckpointingKeeper) SetCheckpointForgotten(ctx sdk.Context, rawCheckpoint []byte) error {
+	return nil
+}
 
 func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderHashBytes) (int64, error) {
 	return 1, nil
