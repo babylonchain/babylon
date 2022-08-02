@@ -46,7 +46,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 			t.Skip()
 		}
 		if bytes.Compare(m, bz) != 0 {
-			t.Errorf("MustMarshal returned %s while %s was expected", m, bz)
+			t.Errorf("Marshal returned %s while %s was expected", m, bz)
 		}
 
 		m = make([]byte, len(bz))
@@ -110,7 +110,7 @@ func FuzzBTCHeaderBytesHexOps(f *testing.F) {
 
 		h := hb.MarshalHex()
 		if h != hex {
-			t.Errorf("MustMarshal returned %s while %s was expected", h, hex)
+			t.Errorf("Marshal returned %s while %s was expected", h, hex)
 		}
 		if invalidHeader {
 			t.Errorf("Invalid header passed all checks")
@@ -161,7 +161,7 @@ func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
 			t.Skip()
 		}
 		if bytes.Compare(h, jsonHex) != 0 {
-			t.Errorf("MustMarshal returned %s while %s was expected", h, jsonHex)
+			t.Errorf("Marshal returned %s while %s was expected", h, jsonHex)
 		}
 		if invalidHeader {
 			t.Errorf("Invalid header passed all checks")

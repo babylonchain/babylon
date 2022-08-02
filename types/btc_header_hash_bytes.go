@@ -35,7 +35,7 @@ func NewBTCHeaderHashBytesFromBytes(hash []byte) (BTCHeaderHashBytes, error) {
 }
 
 func (m BTCHeaderHashBytes) MarshalJSON() ([]byte, error) {
-	// MustMarshal the JSON from hex format
+	// Marshal the JSON from hex format
 	return json.Marshal(m.MarshalHex())
 }
 

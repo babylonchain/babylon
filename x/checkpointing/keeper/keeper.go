@@ -157,11 +157,13 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 	}
 
 	// next verify if the multi signature is valid
+	// sanity check
 	err = ckpt.ValidateBasic()
 	if err != nil {
 		return nil, err
 	}
-	powerSum := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
+	// check whether sufficient voting power is accumulated
+	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
 	valSet := k.GetValidatorSet(ctx, ckpt.EpochNum)
 	if bitmap.Len(ckpt.Bitmap) != len(valSet) {
 		return nil, errors.New("invalid bitmap")
@@ -175,7 +177,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 		}
 		sum += v.Power
 	}
-	if sum <= powerSum*1.0/3.0 {
+	if sum <= totalPower*1/3 {
 		return nil, errors.New("insufficient voting power")
 	}
 	msgBytes := ckpt.LastCommitHash.MustMarshal()

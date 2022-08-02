@@ -150,14 +150,6 @@ func (lch LastCommitHash) MarshalTo(data []byte) (int, error) {
 	return len(data), nil
 }
 
-func (lch *LastCommitHash) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
 func (lch *LastCommitHash) ValidateBasic() error {
 	if lch == nil {
 		return errors.New("invalid lastCommitHash")
