@@ -494,13 +494,13 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 
 }
 
-func (k Keeper) GetAllUnconfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
-	unconfirmed := []types.SubmissionKey{}
+func (k Keeper) getSubmissionsWithPrefix(ctx sdk.Context, prefix []byte) []types.SubmissionKey {
+	sumbmissionKeys := []types.SubmissionKey{}
 
 	store := ctx.KVStore(k.storeKey)
 
-	// iterator over all unconfirmed submissions
-	iterator := sdk.KVStorePrefixIterator(store, types.UnconfirmedIndexPrefix)
+	// iterator over all submissions  with prefix
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
 
 	defer iterator.Close()
 
@@ -508,45 +508,21 @@ func (k Keeper) GetAllUnconfirmedSubmissions(ctx sdk.Context) []types.Submission
 		skBytes := iterator.Value()
 		var sk types.SubmissionKey
 		k.cdc.MustUnmarshal(skBytes, &sk)
-		unconfirmed = append(unconfirmed, sk)
+		sumbmissionKeys = append(sumbmissionKeys, sk)
 	}
-	return unconfirmed
+	return sumbmissionKeys
+}
+
+func (k Keeper) GetAllUnconfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	return k.getSubmissionsWithPrefix(ctx, types.UnconfirmedIndexPrefix)
 }
 
 func (k Keeper) GetAllConfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
-	confirmed := []types.SubmissionKey{}
-
-	store := ctx.KVStore(k.storeKey)
-
-	iterator := sdk.KVStorePrefixIterator(store, types.ConfirmedIndexPrefix)
-
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		skBytes := iterator.Value()
-		var sk types.SubmissionKey
-		k.cdc.MustUnmarshal(skBytes, &sk)
-		confirmed = append(confirmed, sk)
-	}
-	return confirmed
+	return k.getSubmissionsWithPrefix(ctx, types.ConfirmedIndexPrefix)
 }
 
 func (k Keeper) GetAllFinalizedSubmissions(ctx sdk.Context) []types.SubmissionKey {
-	finalized := []types.SubmissionKey{}
-
-	store := ctx.KVStore(k.storeKey)
-
-	iterator := sdk.KVStorePrefixIterator(store, types.FinalizedIndexPrefix)
-
-	defer iterator.Close()
-
-	for ; iterator.Valid(); iterator.Next() {
-		skBytes := iterator.Value()
-		var sk types.SubmissionKey
-		k.cdc.MustUnmarshal(skBytes, &sk)
-		finalized = append(finalized, sk)
-	}
-	return finalized
+	return k.getSubmissionsWithPrefix(ctx, types.FinalizedIndexPrefix)
 }
 
 // Callback to be called when btc light client tip change

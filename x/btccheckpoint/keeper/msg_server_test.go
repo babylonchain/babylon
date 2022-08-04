@@ -24,16 +24,29 @@ func InputsToSpvProofs(inputs []*CheckpointInput) []*btcctypes.BTCSpvProof {
 	var spvs []*btcctypes.BTCSpvProof
 
 	for _, input := range inputs {
-		headerBytes, _ := hex.DecodeString(input.header)
+		headerBytes, err := hex.DecodeString(input.header)
+
+		if err != nil {
+			panic("Inputs should containg valid hex encoded header")
+		}
 
 		var txBytes [][]byte
 
 		for _, t := range input.transactions {
-			tbytes, _ := hex.DecodeString(t)
+			tbytes, err := hex.DecodeString(t)
+
+			if err != nil {
+				panic("Inputs should contain valid hex encoded transactions")
+			}
+
 			txBytes = append(txBytes, tbytes)
 		}
 
-		spv, _ := dg.SpvProofFromHeaderAndTransactions(headerBytes, txBytes, uint(input.opReturnTransactionIdx))
+		spv, err := dg.SpvProofFromHeaderAndTransactions(headerBytes, txBytes, uint(input.opReturnTransactionIdx))
+
+		if err != nil {
+			panic("Inputs should contain valid spv hex encoded data")
+		}
 
 		spvs = append(spvs, spv)
 	}
@@ -109,7 +122,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		lc := btcctypes.NewMockBTCLightClientKeeper(int64(kDeep) - 1)
 		cc := btcctypes.NewMockCheckpointingKeeper(test.epoch)
 
-		k, ctx := keepertest.BTCCheckpointKeeper(t, lc, cc, uint64(kDeep), uint64(wDeep))
+		k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, uint64(kDeep), uint64(wDeep))
 
 		proofs := InputsToSpvProofs(test.inputs)
 
@@ -193,7 +206,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 		lc := btcctypes.NewMockBTCLightClientKeeper(int64(test.kDeep) - 1)
 		cc := btcctypes.NewMockCheckpointingKeeper(test.epoch)
 
-		k, ctx := keepertest.BTCCheckpointKeeper(t, lc, cc, test.kDeep, test.wDeep)
+		k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, test.kDeep, test.wDeep)
 
 		proofs := InputsToSpvProofs(test.inputs)
 

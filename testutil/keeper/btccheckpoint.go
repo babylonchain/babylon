@@ -17,7 +17,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-func BTCCheckpointKeeper(
+func NewBTCCheckpointKeeper(
 	t testing.TB,
 	lk btcctypes.BTCLightClientKeeper,
 	ek btcctypes.CheckpointingKeeper,
