@@ -3,8 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-	"github.com/boljen/go-bitmap"
-
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
@@ -146,6 +144,11 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 	if err != nil {
 		return nil, err
 	}
+	// sanity check
+	err = ckpt.ValidateBasic()
+	if err != nil {
+		return nil, err
+	}
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, ckpt.EpochNum)
 	if err != nil {
 		return nil, err
@@ -157,21 +160,16 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 	}
 
 	// next verify if the multi signature is valid
-	// sanity check
-	err = ckpt.ValidateBasic()
+	// check whether sufficient voting power is accumulated
+	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
+	signerSet, err := k.GetValidatorSet(ctx, ckpt.EpochNum).FindSubset(ckpt.Bitmap)
 	if err != nil {
 		return nil, err
 	}
-	// check whether sufficient voting power is accumulated
-	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
-	valSet := k.GetValidatorSet(ctx, ckpt.EpochNum)
-	if bitmap.Len(ckpt.Bitmap) != len(valSet) {
-		return nil, errors.New("invalid bitmap")
-	}
 	var sum int64
-	valPubKeys := make([]bls12381.PublicKey, len(valSet))
-	for i, v := range valSet {
-		valPubKeys[i], err = k.GetBlsPubKey(ctx, v.Addr)
+	signersPubKeys := make([]bls12381.PublicKey, len(signerSet))
+	for i, v := range signerSet {
+		signersPubKeys[i], err = k.GetBlsPubKey(ctx, v.Addr)
 		if err != nil {
 			return nil, err
 		}
@@ -181,7 +179,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 		return nil, errors.New("insufficient voting power")
 	}
 	msgBytes := ckpt.LastCommitHash.MustMarshal()
-	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, valPubKeys, msgBytes)
+	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -195,52 +193,32 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 
 // SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED
 func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, ckptBytes []byte) error {
-	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
-	if err != nil {
-		return err
-	}
-	if ckptWithMeta.Status != types.Sealed {
-		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SEALED")
-	}
-	ckptWithMeta.Status = types.Submitted
-	return k.UpdateCheckpoint(ctx, ckptWithMeta)
+	return k.setCheckpointStatus(ctx, ckptBytes, types.Sealed, types.Submitted)
 }
 
 // SetCheckpointConfirmed sets the status of a checkpoint to CONFIRMED
 func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, ckptBytes []byte) error {
-	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
-	if err != nil {
-		return err
-	}
-	if ckptWithMeta.Status != types.Submitted {
-		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SUBMITTED")
-	}
-	ckptWithMeta.Status = types.Confirmed
-	return k.UpdateCheckpoint(ctx, ckptWithMeta)
+	return k.setCheckpointStatus(ctx, ckptBytes, types.Submitted, types.Confirmed)
 }
 
 // SetCheckpointFinalized sets the status of a checkpoint to FINALIZED
 func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, ckptBytes []byte) error {
-	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
-	if err != nil {
-		return err
-	}
-	if ckptWithMeta.Status != types.Confirmed {
-		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be CONFIRMED")
-	}
-	ckptWithMeta.Status = types.Finalized
-	return k.UpdateCheckpoint(ctx, ckptWithMeta)
+	return k.setCheckpointStatus(ctx, ckptBytes, types.Confirmed, types.Finalized)
 }
 
-// TODO: should we add a new status of FORGOTTEN?
 func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, ckptBytes []byte) error {
+	return k.setCheckpointStatus(ctx, ckptBytes, types.Submitted, types.Sealed)
+}
+
+func (k Keeper) setCheckpointStatus(ctx sdk.Context, ckptBytes []byte, from types.CheckpointStatus, to types.CheckpointStatus) error {
 	ckptWithMeta, err := k.verifyCkptBytes(ctx, ckptBytes)
 	if err != nil {
 		return err
 	}
-	if ckptWithMeta.Status != types.Submitted {
-		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be SUBMITTED")
+	if ckptWithMeta.Status != from {
+		return types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be %s", from.String())
 	}
+	ckptWithMeta.Status = to
 	return k.UpdateCheckpoint(ctx, ckptWithMeta)
 }
 

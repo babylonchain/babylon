@@ -16,7 +16,7 @@ import (
 	3. if a RawCheckpointWithMeta object with the same epoch number already exists, an error is returned
 */
 func FuzzKeeperAddRawCheckpoint(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t)
@@ -52,11 +52,11 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 
 /*
 	FuzzKeeperCheckpointEpoch checks
-	1. the rawCheckpointBytes is not valid, (-1, err) should be returned
+	1. the rawCheckpointBytes is not valid, (0, err) should be returned
 	2. the rawCheckpointBytes is valid, the correct epoch number should be returned
 */
 func FuzzKeeperCheckpointEpoch(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		ckptKeeper, ctx, cdc := testkeeper.CheckpointingKeeper(t)
@@ -83,7 +83,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 	2. the rawCheckpointBytes is valid, the correct epoch number should be returned
 */
 func FuzzKeeperSetCheckpointSubmitted(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		ckptKeeper, ctx, cdc := testkeeper.CheckpointingKeeper(t)

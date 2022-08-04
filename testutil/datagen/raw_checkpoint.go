@@ -1,8 +1,9 @@
 package datagen
 
 import (
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
+	"github.com/boljen/go-bitmap"
 	"math/rand"
 )
 
@@ -17,9 +18,12 @@ func GenRandomRawCheckpointWithMeta() *types.RawCheckpointWithMeta {
 
 func GenRandomRawCheckpoint() *types.RawCheckpoint {
 	randomHashBytes := GenRandomLastCommitHash()
+	randomBLSSig := GenRandomBlsMultiSig()
 	return &types.RawCheckpoint{
 		EpochNum:       GenRandomEpochNum(),
 		LastCommitHash: &randomHashBytes,
+		Bitmap:         bitmap.New(13),
+		BlsMultiSig:    &randomBLSSig,
 	}
 }
 
@@ -28,5 +32,9 @@ func GenRandomEpochNum() uint64 {
 }
 
 func GenRandomLastCommitHash() types.LastCommitHash {
-	return tmrand.Bytes(types.HashSize)
+	return GenRandomByteArray(types.HashSize)
+}
+
+func GenRandomBlsMultiSig() bls12381.Signature {
+	return GenRandomByteArray(bls12381.SignatureLen)
 }
