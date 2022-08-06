@@ -30,6 +30,11 @@ service Query {
   rpc MainChain(QueryMainChainRequest) returns (QueryMainChainResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/mainchain";
   }
+
+  // BestHeader return best header on canonical chain
+  rpc BestHeader(QueryBestHeaderRequest) returns (QueryBestHeaderResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/bestheader";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -78,4 +83,11 @@ message QueryMainChainResponse {
   repeated BTCHeaderInfo headers = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryBestHeaderRequest {
+}
+
+message QueryBestHeaderResponse {
+  BTCHeaderInfo header = 1;
 }

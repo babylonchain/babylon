@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -147,4 +148,16 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	}
 	// The headers that we should return start from the depth of the start header
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
+}
+
+func (k Keeper) BestHeader(ctx context.Context, req *types.QueryBestHeaderRequest) (*types.QueryBestHeaderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	tip := k.headersState(sdkCtx).GetTip()
+
+	return &types.QueryBestHeaderResponse{Header: tip}, nil
 }

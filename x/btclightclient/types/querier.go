@@ -28,3 +28,7 @@ func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
 func NewQueryMainChainRequest(req *query.PageRequest) *QueryMainChainRequest {
 	return &QueryMainChainRequest{Pagination: req}
 }
+
+func NewQueryBestHeaderRequest() *QueryBestHeaderRequest {
+	return &QueryBestHeaderRequest{}
+}
