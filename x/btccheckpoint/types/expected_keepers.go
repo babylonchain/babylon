@@ -44,16 +44,16 @@ type CheckpointingKeeper interface {
 	// representation of checkpoint state independently
 
 	// SetCheckpointSubmitted informs checkpointing module that checkpoint was
-	// successfully submitted on btc chain. It can be either or main chain or fork.
-	SetCheckpointSubmitted(ctx sdk.Context, rawCheckpoint []byte) error
+	// successfully submitted on btc chain.
+	SetCheckpointSubmitted(ctx sdk.Context, epoch uint64)
 	// SetCheckpointConfirmed informs checkpointing module that checkpoint was
 	// successfully submitted on btc chain, and it is at least K-deep on the main chain
-	SetCheckpointConfirmed(ctx sdk.Context, rawCheckpoint []byte) error
+	SetCheckpointConfirmed(ctx sdk.Context, epoch uint64)
 	// SetCheckpointFinalized informs checkpointing module that checkpoint was
 	// successfully submitted on btc chain, and it is at least W-deep on the main chain
-	SetCheckpointFinalized(ctx sdk.Context, rawCheckpoint []byte) error
+	SetCheckpointFinalized(ctx sdk.Context, epoch uint64)
 
 	// SetCheckpointForgotten informs checkpointing module that this checkpoint lost
 	// all submissions on btc chain
-	SetCheckpointForgotten(ctx sdk.Context, rawCheckpoint []byte) error
+	SetCheckpointForgotten(ctx sdk.Context, epoch uint64)
 }

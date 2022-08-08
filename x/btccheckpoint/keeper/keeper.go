@@ -150,7 +150,7 @@ func (k Keeper) AddEpochSubmission(
 		// It is first epoch submission which is on the main chain, inform checkpointing module
 		// about it and change epoch status to submited
 		ed.Status = types.Submitted
-		k.checkpointingKeeper.SetCheckpointSubmitted(ctx, ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointSubmitted(ctx, epochNum)
 	}
 
 	ed.AppendKey(sk)
@@ -366,7 +366,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		// Save epoch with confirmed status and infrom checkpointing module about
 		// new confirmed checpoint
 		k.saveEpochData(ctx, sd.Epoch, ed)
-		_ = k.checkpointingKeeper.SetCheckpointConfirmed(ctx, ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointConfirmed(ctx, sd.Epoch)
 
 		// TODO Rewards.
 		// 1. Check if any other submission from this epoch did not become confirmed
@@ -466,7 +466,7 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		newFinalizedEpochs[sd.Epoch] = true
 		ed.Status = types.Finalized
 		k.saveEpochData(ctx, sd.Epoch, ed)
-		_ = k.checkpointingKeeper.SetCheckpointFinalized(ctx, ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointFinalized(ctx, sd.Epoch)
 
 		// TODO Consider how to prune submissions
 	}

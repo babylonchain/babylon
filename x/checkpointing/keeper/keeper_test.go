@@ -78,39 +78,43 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 
 /*
 	FuzzKeeperSetCheckpointStatus checks
-	1. if the checkpoint is not valid, an error should be returned
-	2. if the checkpoint is ACCUMULATING, an error should be returned
-	2. the rawCheckpointBytes is valid, the correct epoch number should be returned
+	if the checkpoint status is not correct, the status will not be changed
 */
-func FuzzKeeperSetCheckpointSubmitted(f *testing.F) {
+func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		ckptKeeper, ctx, cdc := testkeeper.CheckpointingKeeper(t)
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t)
 
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
-		ckptBytes := types.RawCkptToBytes(cdc, mockCkptWithMeta.Ckpt)
-		err := ckptKeeper.SetCheckpointSubmitted(ctx, ckptBytes)
-		require.Errorf(t, err, "invalid checkpoint bytes")
+		epoch := mockCkptWithMeta.Ckpt.EpochNum
 
 		_ = ckptKeeper.AddRawCheckpoint(
 			ctx,
 			mockCkptWithMeta,
 		)
-		err = ckptKeeper.SetCheckpointSubmitted(ctx, ckptBytes)
-		require.Errorf(t, err, "checkpoint status should be SEALED")
+		ckptKeeper.SetCheckpointSubmitted(ctx, epoch)
+		status, err := ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Accumulating, status)
 		mockCkptWithMeta.Status = types.Sealed
 		err = ckptKeeper.UpdateCheckpoint(ctx, mockCkptWithMeta)
 		require.NoError(t, err)
-		err = ckptKeeper.SetCheckpointSubmitted(ctx, ckptBytes)
+		ckptKeeper.SetCheckpointSubmitted(ctx, epoch)
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
-		err = ckptKeeper.SetCheckpointConfirmed(ctx, ckptBytes)
+		require.Equal(t, types.Submitted, status)
+		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
-		err = ckptKeeper.SetCheckpointConfirmed(ctx, ckptBytes)
-		require.Errorf(t, err, "checkpoint status should be SUBMITTED")
-		err = ckptKeeper.SetCheckpointFinalized(ctx, ckptBytes)
+		require.Equal(t, types.Confirmed, status)
+		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
-		err = ckptKeeper.SetCheckpointFinalized(ctx, ckptBytes)
-		require.Errorf(t, err, "checkpoint status should be CONFIRMED")
+		require.Equal(t, types.Confirmed, status)
+		ckptKeeper.SetCheckpointFinalized(ctx, epoch)
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Finalized, status)
 	})
 }
