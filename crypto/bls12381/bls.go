@@ -1,22 +1,54 @@
 package bls12381
 
 import (
+	"crypto/rand"
 	"github.com/pkg/errors"
 	blst "github.com/supranational/blst/bindings/go"
+	tmcrypto "github.com/tendermint/tendermint/crypto"
+	"io"
 )
 
 // GenKeyPair generates a random BLS key pair based on a given seed
 // the public key is compressed with 96 byte size
-func GenKeyPair(seed []byte) (*blst.SecretKey, PublicKey) {
-	sk := blst.KeyGen(seed)
+func GenKeyPair() (PrivateKey, PublicKey) {
+	skSerialized := GenPrivKey()
+	sk := new(blst.SecretKey)
+	sk.Deserialize(skSerialized)
 	pk := new(BlsPubKey).From(sk)
-	return sk, pk.Compress()
+	return skSerialized, pk.Compress()
+}
+
+func GenPrivKey() PrivateKey {
+	return genPrivKey(rand.Reader)
+}
+
+func GenPrivKeyFromSecret(secret []byte) PrivateKey {
+	seed := tmcrypto.Sha256(secret)
+
+	return genPrivKeyFromSeed(seed)
+}
+
+func genPrivKey(rand io.Reader) PrivateKey {
+	seed := make([]byte, SeedSize)
+
+	_, err := io.ReadFull(rand, seed)
+	if err != nil {
+		panic(err)
+	}
+
+	return genPrivKeyFromSeed(seed)
+}
+
+func genPrivKeyFromSeed(seed []byte) PrivateKey {
+	return blst.KeyGen(seed).Serialize()
 }
 
 // Sign signs on a msg using a BLS secret key
 // the returned sig is compressed version with 48 byte size
-func Sign(sk *blst.SecretKey, msg []byte) Signature {
-	return new(BlsSig).Sign(sk, msg, DST).Compress()
+func Sign(sk PrivateKey, msg []byte) Signature {
+	secretKey := new(blst.SecretKey)
+	secretKey.Deserialize(sk)
+	return new(BlsSig).Sign(secretKey, msg, DST).Compress()
 }
 
 // Verify verifies a BLS sig over msg with a BLS public key

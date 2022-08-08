@@ -6,6 +6,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
 	"path/filepath"
@@ -120,7 +123,8 @@ func InitTestnet(
 	}
 
 	nodeIDs := make([]string, numValidators)
-	valPubKeys := make([]cryptotypes.PubKey, numValidators)
+	valPubkeys := make([]cryptotypes.PubKey, numValidators)
+	valKeys := make([]*privval.ValidatorKeys, numValidators)
 
 	babylonConfig := srvconfig.DefaultConfig()
 	babylonConfig.MinGasPrices = minGasPrices
@@ -159,7 +163,8 @@ func InitTestnet(
 			return err
 		}
 
-		nodeIDs[i], valPubKeys[i], err = genutil.InitializeNodeValidatorFiles(nodeConfig)
+		//accInfo, err := clientCtx.Keyring.KeyByAddress(clientCtx.FromAddress)
+		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, []byte("hello world"))
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
@@ -208,9 +213,14 @@ func InitTestnet(
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
+		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys[i].ValPubkey)
+		if err != nil {
+			return err
+		}
+		valPubkeys = append(valPubkeys, valPubkey)
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
-			valPubKeys[i],
+			valPubkey,
 			sdk.NewCoin(sdk.DefaultBondDenom, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
@@ -255,7 +265,7 @@ func InitTestnet(
 	}
 
 	err := collectGenFiles(
-		clientCtx, nodeConfig, chainID, nodeIDs, valPubKeys, numValidators,
+		clientCtx, nodeConfig, chainID, nodeIDs, valPubkeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
 	if err != nil {

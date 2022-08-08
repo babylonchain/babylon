@@ -3,6 +3,7 @@ package types
 import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 var (
@@ -17,6 +18,21 @@ func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature
 		BlsSig:         &sig,
 		SignerAddress:  addr.String(),
 	}}
+}
+
+func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator) *MsgWrappedCreateValidator {
+	return &MsgWrappedCreateValidator{
+
+		MsgCreateValidator: msgCreateVal,
+	}
+
+	return &MsgWrappedCreateValidator{
+		Key: &BlsKey{
+			Pubkey: nil,
+			Pop:    nil,
+		},
+		MsgCreateValidator: nil,
+	}
 }
 
 func (m *MsgAddBlsSig) ValidateBasic() error {
