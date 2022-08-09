@@ -234,8 +234,7 @@ func (k Keeper) setCheckpointStatus(ctx sdk.Context, epoch uint64, from types.Ch
 	ckptWithMeta.Status = to
 	err = k.UpdateCheckpoint(ctx, ckptWithMeta)
 	if err != nil {
-		// TODO: ignore err for now
-		return
+		panic("failed to update checkpoint status")
 	}
 }
 
