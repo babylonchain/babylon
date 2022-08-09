@@ -163,8 +163,28 @@ func InitTestnet(
 			return err
 		}
 
-		//accInfo, err := clientCtx.Keyring.KeyByAddress(clientCtx.FromAddress)
-		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, []byte("hello world"))
+		// generate account key
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
+		if err != nil {
+			return err
+		}
+		keyringAlgos, _ := kb.SupportedAlgorithms()
+		algo, err := keyring.NewSigningAlgoFromString(algoStr, keyringAlgos)
+		if err != nil {
+			return err
+		}
+		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
+		if err != nil {
+			_ = os.RemoveAll(outputDir)
+			return err
+		}
+		accKeyInfo, err := kb.Key(nodeDirName)
+		if err != nil {
+			return err
+		}
+
+		// generate validator keys
+		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, accKeyInfo.GetPubKey())
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
@@ -172,23 +192,6 @@ func InitTestnet(
 
 		memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
 		genFiles = append(genFiles, nodeConfig.GenesisFile())
-
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
-		if err != nil {
-			return err
-		}
-
-		keyringAlgos, _ := kb.SupportedAlgorithms()
-		algo, err := keyring.NewSigningAlgoFromString(algoStr, keyringAlgos)
-		if err != nil {
-			return err
-		}
-
-		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
-		if err != nil {
-			_ = os.RemoveAll(outputDir)
-			return err
-		}
 
 		info := map[string]string{"secret": secret}
 

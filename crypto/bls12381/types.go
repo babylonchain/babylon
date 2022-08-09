@@ -41,7 +41,7 @@ func (sig Signature) ValidateBasic() error {
 	if sig == nil {
 		return errors.New("invalid BLS signature")
 	}
-	if len(sig) != SignatureLen {
+	if len(sig) != SignatureSize {
 		return errors.New("invalid BLS signature")
 	}
 

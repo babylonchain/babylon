@@ -92,21 +92,21 @@ func GenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 	return NewWrappedFilePV(ed25519.GenPrivKey(), bls12381.GenPrivKey(), keyFilePath, stateFilePath)
 }
 
-// LoadFilePV loads a FilePV from the filePaths.  The FilePV handles double
+// LoadWrappedFilePV loads a FilePV from the filePaths.  The FilePV handles double
 // signing prevention by persisting data to the stateFilePath.  If either file path
 // does not exist, the program will exit.
-func LoadFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
-	return loadFilePV(keyFilePath, stateFilePath, true)
+func LoadWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
+	return loadWrappedFilePV(keyFilePath, stateFilePath, true)
 }
 
-// LoadFilePVEmptyState loads a FilePV from the given keyFilePath, with an empty LastSignState.
+// LoadWrappedFilePVEmptyState loads a FilePV from the given keyFilePath, with an empty LastSignState.
 // If the keyFilePath does not exist, the program will exit.
-func LoadFilePVEmptyState(keyFilePath, stateFilePath string) *WrappedFilePV {
-	return loadFilePV(keyFilePath, stateFilePath, false)
+func LoadWrappedFilePVEmptyState(keyFilePath, stateFilePath string) *WrappedFilePV {
+	return loadWrappedFilePV(keyFilePath, stateFilePath, false)
 }
 
 // If loadState is true, we load from the stateFilePath. Otherwise, we use an empty LastSignState.
-func loadFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFilePV {
+func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFilePV {
 	keyJSONBytes, err := ioutil.ReadFile(keyFilePath)
 	if err != nil {
 		tmos.Exit(err.Error())
@@ -145,12 +145,12 @@ func loadFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFileP
 	}
 }
 
-// LoadOrGenFilePV loads a FilePV from the given filePaths
+// LoadOrGenWrappedFilePV loads a FilePV from the given filePaths
 // or else generates a new one and saves it to the filePaths.
-func LoadOrGenFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
+func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 	var pv *WrappedFilePV
 	if tmos.FileExists(keyFilePath) {
-		pv = LoadFilePV(keyFilePath, stateFilePath)
+		pv = LoadWrappedFilePV(keyFilePath, stateFilePath)
 	} else {
 		pv = GenWrappedFilePV(keyFilePath, stateFilePath)
 		pv.Save()
@@ -158,6 +158,7 @@ func LoadOrGenFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 	return pv
 }
 
+// TODO: implement SignBLS
 // GetAddress returns the address of the validator.
 // Implements PrivValidator.
 func (pv *WrappedFilePV) GetAddress() types.Address {
