@@ -26,15 +26,22 @@ var DST = []byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_")
 
 type Signature []byte
 type PublicKey []byte
+type PrivateKey []byte
 
-const SignatureLen = 48
-const PublicKeyLen = 96
+const (
+	// SignatureSize is the size, in bytes, of a compressed BLS signature
+	SignatureSize = 48
+	// PubKeySize is the size, in bytes, of a compressed BLS public key
+	PubKeySize = 96
+	// SeedSize is the size, in bytes, of private key seeds
+	SeedSize = 32
+)
 
 func (sig Signature) ValidateBasic() error {
 	if sig == nil {
 		return errors.New("invalid BLS signature")
 	}
-	if len(sig) != SignatureLen {
+	if len(sig) != SignatureSize {
 		return errors.New("invalid BLS signature")
 	}
 
@@ -65,7 +72,7 @@ func (sig Signature) Size() int {
 }
 
 func (sig *Signature) Unmarshal(data []byte) error {
-	if len(data) != SignatureLen {
+	if len(data) != SignatureSize {
 		return errors.New("Invalid signature length")
 	}
 
@@ -126,7 +133,7 @@ func (pk PublicKey) Size() int {
 }
 
 func (pk *PublicKey) Unmarshal(data []byte) error {
-	if len(data) != PublicKeyLen {
+	if len(data) != PubKeySize {
 		return errors.New("Invalid public key length")
 	}
 
@@ -140,4 +147,11 @@ func (pk PublicKey) Equal(k PublicKey) bool {
 
 func (pk PublicKey) Byte() []byte {
 	return pk
+}
+
+func (sk PrivateKey) PubKey() PublicKey {
+	secretKey := new(blst.SecretKey)
+	secretKey.Deserialize(sk)
+	pk := new(BlsPubKey).From(secretKey)
+	return pk.Compress()
 }

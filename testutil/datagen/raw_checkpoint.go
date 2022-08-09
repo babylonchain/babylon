@@ -36,5 +36,5 @@ func GenRandomLastCommitHash() types.LastCommitHash {
 }
 
 func GenRandomBlsMultiSig() bls12381.Signature {
-	return GenRandomByteArray(bls12381.SignatureLen)
+	return GenRandomByteArray(bls12381.SignatureSize)
 }

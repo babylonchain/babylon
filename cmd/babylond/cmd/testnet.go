@@ -6,6 +6,9 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
 	"path/filepath"
@@ -120,7 +123,8 @@ func InitTestnet(
 	}
 
 	nodeIDs := make([]string, numValidators)
-	valPubKeys := make([]cryptotypes.PubKey, numValidators)
+	valPubkeys := make([]cryptotypes.PubKey, numValidators)
+	valKeys := make([]*privval.ValidatorKeys, numValidators)
 
 	babylonConfig := srvconfig.DefaultConfig()
 	babylonConfig.MinGasPrices = minGasPrices
@@ -159,7 +163,28 @@ func InitTestnet(
 			return err
 		}
 
-		nodeIDs[i], valPubKeys[i], err = genutil.InitializeNodeValidatorFiles(nodeConfig)
+		// generate account key
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
+		if err != nil {
+			return err
+		}
+		keyringAlgos, _ := kb.SupportedAlgorithms()
+		algo, err := keyring.NewSigningAlgoFromString(algoStr, keyringAlgos)
+		if err != nil {
+			return err
+		}
+		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
+		if err != nil {
+			_ = os.RemoveAll(outputDir)
+			return err
+		}
+		accKeyInfo, err := kb.Key(nodeDirName)
+		if err != nil {
+			return err
+		}
+
+		// generate validator keys
+		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, accKeyInfo.GetPubKey())
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
@@ -167,23 +192,6 @@ func InitTestnet(
 
 		memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
 		genFiles = append(genFiles, nodeConfig.GenesisFile())
-
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
-		if err != nil {
-			return err
-		}
-
-		keyringAlgos, _ := kb.SupportedAlgorithms()
-		algo, err := keyring.NewSigningAlgoFromString(algoStr, keyringAlgos)
-		if err != nil {
-			return err
-		}
-
-		addr, secret, err := testutil.GenerateSaveCoinKey(kb, nodeDirName, "", true, algo)
-		if err != nil {
-			_ = os.RemoveAll(outputDir)
-			return err
-		}
 
 		info := map[string]string{"secret": secret}
 
@@ -208,9 +216,14 @@ func InitTestnet(
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
+		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys[i].ValPubkey)
+		if err != nil {
+			return err
+		}
+		valPubkeys = append(valPubkeys, valPubkey)
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
-			valPubKeys[i],
+			valPubkey,
 			sdk.NewCoin(sdk.DefaultBondDenom, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
@@ -255,7 +268,7 @@ func InitTestnet(
 	}
 
 	err := collectGenFiles(
-		clientCtx, nodeConfig, chainID, nodeIDs, valPubKeys, numValidators,
+		clientCtx, nodeConfig, chainID, nodeIDs, valPubkeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
 	if err != nil {

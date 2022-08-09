@@ -1,18 +1,15 @@
 package bls12381
 
 import (
-	"crypto/rand"
 	"github.com/stretchr/testify/require"
 	"testing"
-
-	blst "github.com/supranational/blst/bindings/go"
 )
 
 // Tests single BLS sig verification
 func TestVerifyBlsSig(t *testing.T) {
 	msga := []byte("aaaaaaaa")
 	msgb := []byte("bbbbbbbb")
-	sk, pk := genRandomKeyPair()
+	sk, pk := GenKeyPair()
 	sig := Sign(sk, msga)
 	// a byte size of a sig (compressed) is 48
 	require.Equal(t, 48, len(sig))
@@ -95,17 +92,20 @@ func TestAccumulativeAggregation(t *testing.T) {
 	require.Nil(t, err)
 }
 
-func genRandomKeyPair() (*blst.SecretKey, PublicKey) {
-	var ikm [32]byte
-	_, _ = rand.Read(ikm[:])
-	return GenKeyPair(ikm[:])
+func TestSKToPK(t *testing.T) {
+	n := 100
+	sks, pks := generateBatchTestKeyPairs(n)
+	for i := 0; i < n; i++ {
+		ok := sks[i].PubKey().Equal(pks[i])
+		require.True(t, ok)
+	}
 }
 
-func generateBatchTestKeyPairs(n int) ([]*blst.SecretKey, []PublicKey) {
-	sks := make([]*blst.SecretKey, n)
+func generateBatchTestKeyPairs(n int) ([]PrivateKey, []PublicKey) {
+	sks := make([]PrivateKey, n)
 	pubks := make([]PublicKey, n)
 	for i := 0; i < n; i++ {
-		sk, pk := genRandomKeyPair()
+		sk, pk := GenKeyPair()
 		sks[i] = sk
 		pubks[i] = pk
 	}
