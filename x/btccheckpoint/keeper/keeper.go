@@ -84,8 +84,8 @@ func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, 
 	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 
-func (k Keeper) GetCheckpointEpoch(c []byte) (uint64, error) {
-	return k.checkpointingKeeper.CheckpointEpoch(c)
+func (k Keeper) GetCheckpointEpoch(ctx sdk.Context, c []byte) (uint64, error) {
+	return k.checkpointingKeeper.CheckpointEpoch(ctx, c)
 }
 
 func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
@@ -152,7 +152,7 @@ func (k Keeper) AddEpochSubmission(
 		// It is first epoch submission which is on the main chain, inform checkpointing module
 		// about it and change epoch status to submited
 		ed.Status = types.Submitted
-		k.checkpointingKeeper.SetCheckpointSubmitted(ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointSubmitted(ctx, epochNum)
 	}
 
 	ed.AppendKey(sk)
@@ -383,7 +383,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		// Save epoch with confirmed status and infrom checkpointing module about
 		// new confirmed checpoint
 		k.saveEpochData(ctx, sd.Epoch, ed)
-		k.checkpointingKeeper.SetCheckpointConfirmed(ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointConfirmed(ctx, sd.Epoch)
 
 		// TODO Rewards.
 		// 1. Check if any other submission from this epoch did not become confirmed
@@ -483,7 +483,7 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		newFinalizedEpochs[sd.Epoch] = true
 		ed.Status = types.Finalized
 		k.saveEpochData(ctx, sd.Epoch, ed)
-		k.checkpointingKeeper.SetCheckpointFinalized(ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointFinalized(ctx, sd.Epoch)
 
 		// TODO Consider how to prune submissions
 	}

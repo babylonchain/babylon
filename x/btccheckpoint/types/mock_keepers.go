@@ -74,7 +74,7 @@ func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *
 	return ck.depth, nil
 }
 
-func (ck MockCheckpointingKeeper) CheckpointEpoch(rawCheckpoint []byte) (uint64, error) {
+func (ck MockCheckpointingKeeper) CheckpointEpoch(ctx sdk.Context, rawCheckpoint []byte) (uint64, error) {
 	if ck.returnError {
 		return 0, errors.New("bad checkpoints")
 	}
@@ -83,17 +83,21 @@ func (ck MockCheckpointingKeeper) CheckpointEpoch(rawCheckpoint []byte) (uint64,
 }
 
 // SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-// sucessfully submitted on btc chain. It can be either or main chain or fork.
-func (ck MockCheckpointingKeeper) SetCheckpointSubmitted(rawCheckpoint []byte) {}
+// successfully submitted on btc chain.
+func (ck MockCheckpointingKeeper) SetCheckpointSubmitted(ctx sdk.Context, epoch uint64) {
+}
 
-// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-// sucessfully submitted on btc chain and it is at least K-deep on the main chain
-func (ck MockCheckpointingKeeper) SetCheckpointConfirmed(rawCheckpoint []byte) {}
+// SetCheckpointConfirmed Informs checkpointing module that checkpoint was
+// successfully submitted on btc chain, and it is at least K-deep on the main chain
+func (ck MockCheckpointingKeeper) SetCheckpointConfirmed(ctx sdk.Context, epoch uint64) {
+}
 
-// SetCheckpointSubmitted Informs checkpointing module that checkpoint was
-// sucessfully submitted on btc chain and it is at least W-deep on the main chain
-func (ck MockCheckpointingKeeper) SetCheckpointFinalized(rawCheckpoint []byte) {}
+// SetCheckpointFinalized Informs checkpointing module that checkpoint was
+// successfully submitted on btc chain, and it is at least W-deep on the main chain
+func (ck MockCheckpointingKeeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
+}
 
 // SetCheckpointForgotten Informs checkpointing module that was in submitted state
 // lost all its checkpoints and is checkpoint empty
-func (ck MockCheckpointingKeeper) SetCheckpointForgotten(rawCheckpoint []byte) {}
+func (ck MockCheckpointingKeeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {
+}

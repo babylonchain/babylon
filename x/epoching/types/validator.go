@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"github.com/boljen/go-bitmap"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,6 +38,19 @@ func (vs ValidatorSet) FindValidatorWithIndex(valAddr sdk.ValAddress) (*Validato
 		return nil, 0, errors.New("validator address does not exist in the validator set")
 	}
 	return &vs[index], index, nil
+}
+
+func (vs ValidatorSet) FindSubset(bitmap bitmap.Bitmap) (ValidatorSet, error) {
+	valSet := make([]Validator, 0)
+	for i := 0; i < bitmap.Len(); i++ {
+		if bitmap.Get(i) {
+			if i >= len(vs) {
+				return nil, errors.New("invalid validator index")
+			}
+			valSet = append(valSet, vs[i])
+		}
+	}
+	return valSet, nil
 }
 
 func (vs ValidatorSet) binarySearch(targetAddr sdk.ValAddress) int {

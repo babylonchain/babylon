@@ -13,7 +13,9 @@ message RawCheckpoint {
   // epoch_num defines the epoch number the raw checkpoint is for
   uint64 epoch_num = 1;
   // last_commit_hash defines the 'LastCommitHash' that individual BLS sigs are signed on
-  bytes last_commit_hash = 2;
+  bytes last_commit_hash = 2 [
+    (gogoproto.customtype) = "LastCommitHash"
+  ];
   // bitmap defines the bitmap that indicates the signers of the BLS multi sig
   bytes bitmap = 3;
   // bls_multi_sig defines the multi sig that is aggregated from individual BLS sigs
@@ -24,6 +26,8 @@ message RawCheckpoint {
 
 // RawCheckpointWithMeta wraps the raw checkpoint with meta data.
 message RawCheckpointWithMeta {
+  option (gogoproto.equal)            = true;
+
   RawCheckpoint ckpt = 1;
   // status defines the status of the checkpoint
   CheckpointStatus status = 2;
@@ -58,8 +62,9 @@ message BlsSig {
   // epoch_num defines the epoch number that the BLS sig is signed on
   uint64 epoch_num = 1;
   // last_commit_hash defines the 'LastCommitHash' that the BLS sig is signed on
-  bytes last_commit_hash = 2;
-  // bls_sig defines the actual BLS sig
+  bytes last_commit_hash = 2 [
+    (gogoproto.customtype) = "LastCommitHash"
+  ];
   bytes bls_sig = 3 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
   ];
