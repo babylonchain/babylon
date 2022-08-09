@@ -2,12 +2,19 @@ package types
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+const (
+	// HashSize is the size in bytes of a hash
+	HashSize = sha256.Size
 )
 
 type LastCommitHash []byte
@@ -19,7 +26,7 @@ type RawCkptHash []byte
 func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
 		EpochNum:       epochNum,
-		LastCommitHash: lch,
+		LastCommitHash: &lch,
 		Bitmap:         nil,
 		BlsMultiSig:    nil,
 	}
@@ -92,7 +99,7 @@ func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var lch LastCommitHash
 
 	err = lch.Unmarshal(bz)
@@ -104,7 +111,52 @@ func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
 }
 
 func (lch *LastCommitHash) Unmarshal(bz []byte) error {
+	if len(bz) != HashSize {
+		return errors.New("invalid lastCommitHash length")
+	}
 	*lch = bz
+	return nil
+}
+
+func (lch *LastCommitHash) Size() (n int) {
+	if lch == nil {
+		return 0
+	}
+	return len(*lch)
+}
+
+func (lch *LastCommitHash) Equal(l LastCommitHash) bool {
+	return lch.String() == l.String()
+}
+
+func (lch *LastCommitHash) String() string {
+	return hex.EncodeToString(*lch)
+}
+
+func (lch *LastCommitHash) MustMarshal() []byte {
+	bz, err := lch.Marshal()
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+func (lch *LastCommitHash) Marshal() ([]byte, error) {
+	return *lch, nil
+}
+
+func (lch LastCommitHash) MarshalTo(data []byte) (int, error) {
+	copy(data, lch)
+	return len(data), nil
+}
+
+func (lch *LastCommitHash) ValidateBasic() error {
+	if lch == nil {
+		return errors.New("invalid lastCommitHash")
+	}
+	if len(*lch) != HashSize {
+		return errors.New("invalid lastCommitHash")
+	}
 	return nil
 }
 
@@ -112,6 +164,30 @@ func BytesToRawCkpt(cdc codec.BinaryCodec, bz []byte) (*RawCheckpoint, error) {
 	ckpt := new(RawCheckpoint)
 	err := cdc.Unmarshal(bz, ckpt)
 	return ckpt, err
+}
+
+func RawCkptToBytes(cdc codec.BinaryCodec, ckpt *RawCheckpoint) []byte {
+	return cdc.MustMarshal(ckpt)
+}
+
+// ValidateBasic does sanity checks on a raw checkpoint
+func (ckpt RawCheckpoint) ValidateBasic() error {
+	if ckpt.EpochNum == 0 {
+		return ErrInvalidRawCheckpoint.Wrapf("epoch number cannot be zero")
+	}
+	if ckpt.Bitmap == nil {
+		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
+	}
+	err := ckpt.LastCommitHash.ValidateBasic()
+	if err != nil {
+		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
+	}
+	err = ckpt.BlsMultiSig.ValidateBasic()
+	if err != nil {
+		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
+	}
+
+	return nil
 }
 
 func CkptWithMetaToBytes(cdc codec.BinaryCodec, ckptWithMeta *RawCheckpointWithMeta) []byte {

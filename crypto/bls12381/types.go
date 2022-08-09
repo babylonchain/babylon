@@ -37,6 +37,17 @@ const (
 	SeedSize = 32
 )
 
+func (sig Signature) ValidateBasic() error {
+	if sig == nil {
+		return errors.New("invalid BLS signature")
+	}
+	if len(sig) != SignatureLen {
+		return errors.New("invalid BLS signature")
+	}
+
+	return nil
+}
+
 func (sig Signature) Marshal() ([]byte, error) {
 	return sig, nil
 }

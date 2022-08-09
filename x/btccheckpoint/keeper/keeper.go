@@ -48,6 +48,8 @@ func NewKeeper(
 		paramstore:           ps,
 		btcLightClientKeeper: bk,
 		checkpointingKeeper:  ck,
+		kDeep:                kDeep,
+		wDeep:                wDeep,
 	}
 }
 
@@ -82,8 +84,8 @@ func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, 
 	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 
-func (k Keeper) GetCheckpointEpoch(c []byte) (uint64, error) {
-	return k.checkpointingKeeper.CheckpointEpoch(c)
+func (k Keeper) GetCheckpointEpoch(ctx sdk.Context, c []byte) (uint64, error) {
+	return k.checkpointingKeeper.CheckpointEpoch(ctx, c)
 }
 
 func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
@@ -150,7 +152,7 @@ func (k Keeper) AddEpochSubmission(
 		// It is first epoch submission which is on the main chain, inform checkpointing module
 		// about it and change epoch status to submited
 		ed.Status = types.Submitted
-		k.checkpointingKeeper.SetCheckpointSubmitted(ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointSubmitted(ctx, epochNum)
 	}
 
 	ed.AppendKey(sk)
@@ -174,6 +176,22 @@ func (k Keeper) saveSubmission(ctx sdk.Context, sk types.SubmissionKey, sd types
 	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
 	sBytes := k.cdc.MustMarshal(&sd)
 	store.Set(kBytes, sBytes)
+}
+
+// GetSubmissionData return submission data for given key, return nil if there is not data
+// under givem key
+func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *types.SubmissionData {
+	store := ctx.KVStore(k.storeKey)
+	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
+	sdBytes := store.Get(kBytes)
+
+	if len(sdBytes) == 0 {
+		return nil
+	}
+
+	var sd types.SubmissionData
+	k.cdc.MustUnmarshal(sdBytes, &sd)
+	return &sd
 }
 
 // getSubmissionDataExists retrive submissions data, panics if data does not exists
@@ -200,7 +218,6 @@ func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.Submis
 	var allAtLeastNDeep = true
 	for _, tk := range sk.Key {
 		depth, onMainChain, e := k.MainChainDepth(ctx, tk.Hash)
-
 		if e != nil {
 			return false, false, e
 		}
@@ -366,7 +383,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		// Save epoch with confirmed status and infrom checkpointing module about
 		// new confirmed checpoint
 		k.saveEpochData(ctx, sd.Epoch, ed)
-		k.checkpointingKeeper.SetCheckpointConfirmed(ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointConfirmed(ctx, sd.Epoch)
 
 		// TODO Rewards.
 		// 1. Check if any other submission from this epoch did not become confirmed
@@ -466,7 +483,7 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		newFinalizedEpochs[sd.Epoch] = true
 		ed.Status = types.Finalized
 		k.saveEpochData(ctx, sd.Epoch, ed)
-		k.checkpointingKeeper.SetCheckpointFinalized(ed.RawCheckpoint)
+		k.checkpointingKeeper.SetCheckpointFinalized(ctx, sd.Epoch)
 
 		// TODO Consider how to prune submissions
 	}
@@ -475,6 +492,37 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		k.promoteConfirmedToFinalized(ctx, newFinalizedSubKey)
 	}
 
+}
+
+func (k Keeper) getSubmissionsWithPrefix(ctx sdk.Context, prefix []byte) []types.SubmissionKey {
+	sumbmissionKeys := []types.SubmissionKey{}
+
+	store := ctx.KVStore(k.storeKey)
+
+	// iterator over all submissions  with prefix
+	iterator := sdk.KVStorePrefixIterator(store, prefix)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		skBytes := iterator.Value()
+		var sk types.SubmissionKey
+		k.cdc.MustUnmarshal(skBytes, &sk)
+		sumbmissionKeys = append(sumbmissionKeys, sk)
+	}
+	return sumbmissionKeys
+}
+
+func (k Keeper) GetAllUnconfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	return k.getSubmissionsWithPrefix(ctx, types.UnconfirmedIndexPrefix)
+}
+
+func (k Keeper) GetAllConfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	return k.getSubmissionsWithPrefix(ctx, types.ConfirmedIndexPrefix)
+}
+
+func (k Keeper) GetAllFinalizedSubmissions(ctx sdk.Context) []types.SubmissionKey {
+	return k.getSubmissionsWithPrefix(ctx, types.FinalizedIndexPrefix)
 }
 
 // Callback to be called when btc light client tip change

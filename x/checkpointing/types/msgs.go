@@ -14,7 +14,7 @@ var (
 func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
 	return &MsgAddBlsSig{BlsSig: &BlsSig{
 		EpochNum:       epochNum,
-		LastCommitHash: lch,
+		LastCommitHash: &lch,
 		BlsSig:         &sig,
 		SignerAddress:  addr.String(),
 	}}

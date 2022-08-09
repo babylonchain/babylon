@@ -208,7 +208,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// - header is proved to be part of the chain we know about through BTCLightClient
 	// - this is new checkpoint submission
 	// Inform checkpointing module about it.
-	epochNum, err := m.k.GetCheckpointEpoch(rawCheckpointBytes)
+	epochNum, err := m.k.GetCheckpointEpoch(sdkCtx, rawCheckpointBytes)
 
 	if err != nil {
 		return nil, err
