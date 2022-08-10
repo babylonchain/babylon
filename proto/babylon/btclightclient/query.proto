@@ -32,8 +32,8 @@ service Query {
   }
 
   // BestHeader return best header on canonical chain
-  rpc BestHeader(QueryBestHeaderRequest) returns (QueryBestHeaderResponse) {
-    option (google.api.http).get = "/babylon/btclightclient/v1/bestheader";
+  rpc Tip(QueryTipRequest) returns (QueryTipResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/tip";
   }
 }
 
@@ -85,9 +85,9 @@ message QueryMainChainResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryBestHeaderRequest {
+message QueryTipRequest {
 }
 
-message QueryBestHeaderResponse {
+message QueryTipResponse {
   BTCHeaderInfo header = 1;
 }

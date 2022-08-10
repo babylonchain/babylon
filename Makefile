@@ -209,7 +209,7 @@ endif
 
 test-babylon-integration:
 	@echo "Running babylon integration test"
-	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration
+	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration -p 1
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."

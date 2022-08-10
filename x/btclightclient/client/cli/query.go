@@ -25,7 +25,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdHashes())
 	cmd.AddCommand(CmdContains())
 	cmd.AddCommand(CmdMainChain())
-	cmd.AddCommand(CmdBestHeader())
+	cmd.AddCommand(CmdTip())
 
 	return cmd
 }
@@ -143,18 +143,18 @@ func CmdMainChain() *cobra.Command {
 	return cmd
 }
 
-func CmdBestHeader() *cobra.Command {
+func CmdTip() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "best-header",
-		Short: "retrieve the canonical chain",
+		Use:   "tip",
+		Short: "retrieve tip of btc blockchain",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := types.NewQueryBestHeaderRequest()
-			res, err := queryClient.BestHeader(context.Background(), params)
+			params := types.NewQueryTipRequest()
+			res, err := queryClient.Tip(context.Background(), params)
 			if err != nil {
 				return err
 			}

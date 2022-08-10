@@ -105,7 +105,7 @@ func TestBtcLightClientGenesis(t *testing.T) {
 	for i, c := range clients {
 		lc := lightclient.NewQueryClient(c)
 
-		res, err := lc.BestHeader(context.Background(), lightclient.NewQueryBestHeaderRequest())
+		res, err := lc.Tip(context.Background(), lightclient.NewQueryTipRequest())
 
 		if err != nil {
 			// this is fatal, as it means we most probably did not get any response and

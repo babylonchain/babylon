@@ -29,6 +29,6 @@ func NewQueryMainChainRequest(req *query.PageRequest) *QueryMainChainRequest {
 	return &QueryMainChainRequest{Pagination: req}
 }
 
-func NewQueryBestHeaderRequest() *QueryBestHeaderRequest {
-	return &QueryBestHeaderRequest{}
+func NewQueryTipRequest() *QueryTipRequest {
+	return &QueryTipRequest{}
 }

@@ -150,7 +150,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
 }
 
-func (k Keeper) BestHeader(ctx context.Context, req *types.QueryBestHeaderRequest) (*types.QueryBestHeaderResponse, error) {
+func (k Keeper) Tip(ctx context.Context, req *types.QueryTipRequest) (*types.QueryTipResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -159,5 +159,5 @@ func (k Keeper) BestHeader(ctx context.Context, req *types.QueryBestHeaderReques
 
 	tip := k.headersState(sdkCtx).GetTip()
 
-	return &types.QueryBestHeaderResponse{Header: tip}, nil
+	return &types.QueryTipResponse{Header: tip}, nil
 }
