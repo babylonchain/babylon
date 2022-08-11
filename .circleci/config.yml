@@ -8,8 +8,9 @@ jobs:
   build:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
-    docker:
-      - image: cimg/go:1.18
+    machine:
+      image: ubuntu-2204:2022.07.1
+      resource_class: large
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
@@ -19,19 +20,25 @@ jobs:
           command: "go env"
       - restore_cache: # restores saved cache if no changes are detected since last run
           keys:
-            - go-mod-v5-{{ checksum "go.sum" }}
+            - go-mod-v6-{{ checksum "go.sum" }}
       - run:
           name: Build babylond
           command: make build
       - save_cache:
-          key: go-mod-v5-{{ checksum "go.sum" }}
+          key: go-mod-v6-{{ checksum "go.sum" }}
           paths:
-            - "/home/circleci/go/pkg/mod"
+            - "/home/circleci/.go_workspace/pkg/mod"
       - run:
           name: Run tests
           command: |
             make test
-      
+      - run:
+          name: Run integration tests
+          command: |
+            make localnet-start
+            make test-babylon-integration
+            make localnet-stop
+
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
