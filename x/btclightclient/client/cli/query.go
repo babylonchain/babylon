@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -24,6 +25,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdHashes())
 	cmd.AddCommand(CmdContains())
 	cmd.AddCommand(CmdMainChain())
+	cmd.AddCommand(CmdTip())
 
 	return cmd
 }
@@ -128,6 +130,31 @@ func CmdMainChain() *cobra.Command {
 
 			params := types.NewQueryMainChainRequest(pageReq)
 			res, err := queryClient.MainChain(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdTip() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tip",
+		Short: "retrieve tip of btc blockchain",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := types.NewQueryTipRequest()
+			res, err := queryClient.Tip(context.Background(), params)
 			if err != nil {
 				return err
 			}
