@@ -7,7 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/testutil/datagen"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonchain/babylon/x/genutil"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
@@ -20,6 +21,8 @@ import (
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
+	bbnutil "github.com/babylonchain/babylon/x/genutil"
+	genutiltypes "github.com/babylonchain/babylon/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -33,8 +36,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -178,13 +179,9 @@ func InitTestnet(
 			_ = os.RemoveAll(outputDir)
 			return err
 		}
-		accKeyInfo, err := kb.Key(nodeDirName)
-		if err != nil {
-			return err
-		}
 
 		// generate validator keys
-		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, accKeyInfo.GetPubKey())
+		nodeIDs[i], valKeys[i], err = bbnutil.InitializeNodeValidatorFiles(nodeConfig)
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
@@ -232,9 +229,10 @@ func InitTestnet(
 		if err != nil {
 			return err
 		}
+		wrappedCreateValMsg := checkpointingtypes.NewMsgWrappedCreateValidator(valKeys[i].BlsPubkey, valKeys[i].PoP, createValMsg)
 
 		txBuilder := clientCtx.TxConfig.NewTxBuilder()
-		if err := txBuilder.SetMsgs(createValMsg); err != nil {
+		if err := txBuilder.SetMsgs(wrappedCreateValMsg); err != nil {
 			return err
 		}
 
@@ -354,7 +352,7 @@ func collectGenFiles(
 			return err
 		}
 
-		nodeAppState, err := genutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig, nodeConfig, initCfg, *genDoc, genBalIterator)
+		nodeAppState, err := bbnutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig, nodeConfig, initCfg, *genDoc, genBalIterator)
 		if err != nil {
 			return err
 		}

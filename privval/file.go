@@ -1,17 +1,22 @@
 package privval
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/gogo/protobuf/proto"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	tmos "github.com/tendermint/tendermint/libs/os"
+	"github.com/tendermint/tendermint/libs/protoio"
 	"github.com/tendermint/tendermint/libs/tempfile"
 	"github.com/tendermint/tendermint/privval"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"github.com/tendermint/tendermint/types"
+	tmtime "github.com/tendermint/tendermint/types/time"
 	"io/ioutil"
+	"time"
 )
 
 // copied from github.com/tendermint/tendermint/privval/file.go"
@@ -179,6 +184,24 @@ func (pv *WrappedFilePV) GetBlsPrivKey() bls12381.PrivateKey {
 	return pv.Key.BlsPrivKey
 }
 
+// SignVote signs a canonical representation of the vote, along with the
+// chainID. Implements PrivValidator.
+func (pv *WrappedFilePV) SignVote(chainID string, vote *tmproto.Vote) error {
+	if err := pv.signVote(chainID, vote); err != nil {
+		return fmt.Errorf("error signing vote: %w", err)
+	}
+	return nil
+}
+
+// SignProposal signs a canonical representation of the proposal, along with
+// the chainID. Implements PrivValidator.
+func (pv *WrappedFilePV) SignProposal(chainID string, proposal *tmproto.Proposal) error {
+	if err := pv.signProposal(chainID, proposal); err != nil {
+		return fmt.Errorf("error signing proposal: %w", err)
+	}
+	return nil
+}
+
 // Save persists the FilePV to disk.
 func (pv *WrappedFilePV) Save() {
 	pv.Key.Save()
@@ -206,4 +229,144 @@ func (pv *WrappedFilePV) String() string {
 		pv.LastSignState.Round,
 		pv.LastSignState.Step,
 	)
+}
+
+//------------------------------------------------------------------------------------
+
+// signVote checks if the vote is good to sign and sets the vote signature.
+// It may need to set the timestamp as well if the vote is otherwise the same as
+// a previously signed vote (ie. we crashed after signing but before the vote hit the WAL).
+func (pv *WrappedFilePV) signVote(chainID string, vote *tmproto.Vote) error {
+	height, round, step := vote.Height, vote.Round, voteToStep(vote)
+
+	lss := pv.LastSignState
+
+	sameHRS, err := lss.CheckHRS(height, round, step)
+	if err != nil {
+		return err
+	}
+
+	signBytes := types.VoteSignBytes(chainID, vote)
+
+	// We might crash before writing to the wal,
+	// causing us to try to re-sign for the same HRS.
+	// If signbytes are the same, use the last signature.
+	// If they only differ by timestamp, use last timestamp and signature
+	// Otherwise, return error
+	if sameHRS {
+		if bytes.Equal(signBytes, lss.SignBytes) {
+			vote.Signature = lss.Signature
+		} else if timestamp, ok := checkVotesOnlyDifferByTimestamp(lss.SignBytes, signBytes); ok {
+			vote.Timestamp = timestamp
+			vote.Signature = lss.Signature
+		} else {
+			err = fmt.Errorf("conflicting data")
+		}
+		return err
+	}
+
+	// It passed the checks. Sign the vote
+	sig, err := pv.Key.PrivKey.Sign(signBytes)
+	if err != nil {
+		return err
+	}
+	pv.saveSigned(height, round, step, signBytes, sig)
+	vote.Signature = sig
+	return nil
+}
+
+// signProposal checks if the proposal is good to sign and sets the proposal signature.
+// It may need to set the timestamp as well if the proposal is otherwise the same as
+// a previously signed proposal ie. we crashed after signing but before the proposal hit the WAL).
+func (pv *WrappedFilePV) signProposal(chainID string, proposal *tmproto.Proposal) error {
+	height, round, step := proposal.Height, proposal.Round, stepPropose
+
+	lss := pv.LastSignState
+
+	sameHRS, err := lss.CheckHRS(height, round, step)
+	if err != nil {
+		return err
+	}
+
+	signBytes := types.ProposalSignBytes(chainID, proposal)
+
+	// We might crash before writing to the wal,
+	// causing us to try to re-sign for the same HRS.
+	// If signbytes are the same, use the last signature.
+	// If they only differ by timestamp, use last timestamp and signature
+	// Otherwise, return error
+	if sameHRS {
+		if bytes.Equal(signBytes, lss.SignBytes) {
+			proposal.Signature = lss.Signature
+		} else if timestamp, ok := checkProposalsOnlyDifferByTimestamp(lss.SignBytes, signBytes); ok {
+			proposal.Timestamp = timestamp
+			proposal.Signature = lss.Signature
+		} else {
+			err = fmt.Errorf("conflicting data")
+		}
+		return err
+	}
+
+	// It passed the checks. Sign the proposal
+	sig, err := pv.Key.PrivKey.Sign(signBytes)
+	if err != nil {
+		return err
+	}
+	pv.saveSigned(height, round, step, signBytes, sig)
+	proposal.Signature = sig
+	return nil
+}
+
+// Persist height/round/step and signature
+func (pv *WrappedFilePV) saveSigned(height int64, round int32, step int8,
+	signBytes []byte, sig []byte) {
+
+	pv.LastSignState.Height = height
+	pv.LastSignState.Round = round
+	pv.LastSignState.Step = step
+	pv.LastSignState.Signature = sig
+	pv.LastSignState.SignBytes = signBytes
+	pv.LastSignState.Save()
+}
+
+//-----------------------------------------------------------------------------------------
+
+// returns the timestamp from the lastSignBytes.
+// returns true if the only difference in the votes is their timestamp.
+func checkVotesOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (time.Time, bool) {
+	var lastVote, newVote tmproto.CanonicalVote
+	if err := protoio.UnmarshalDelimited(lastSignBytes, &lastVote); err != nil {
+		panic(fmt.Sprintf("LastSignBytes cannot be unmarshalled into vote: %v", err))
+	}
+	if err := protoio.UnmarshalDelimited(newSignBytes, &newVote); err != nil {
+		panic(fmt.Sprintf("signBytes cannot be unmarshalled into vote: %v", err))
+	}
+
+	lastTime := lastVote.Timestamp
+	// set the times to the same value and check equality
+	now := tmtime.Now()
+	lastVote.Timestamp = now
+	newVote.Timestamp = now
+
+	return lastTime, proto.Equal(&newVote, &lastVote)
+}
+
+// returns the timestamp from the lastSignBytes.
+// returns true if the only difference in the proposals is their timestamp
+func checkProposalsOnlyDifferByTimestamp(lastSignBytes, newSignBytes []byte) (time.Time, bool) {
+	var lastProposal, newProposal tmproto.CanonicalProposal
+	if err := protoio.UnmarshalDelimited(lastSignBytes, &lastProposal); err != nil {
+		panic(fmt.Sprintf("LastSignBytes cannot be unmarshalled into proposal: %v", err))
+	}
+	if err := protoio.UnmarshalDelimited(newSignBytes, &newProposal); err != nil {
+		panic(fmt.Sprintf("signBytes cannot be unmarshalled into proposal: %v", err))
+	}
+
+	lastTime := lastProposal.Timestamp
+	// set the times to the same value and check equality
+	now := tmtime.Now()
+	lastProposal.Timestamp = now
+	newProposal.Timestamp = now
+
+	return lastTime, proto.Equal(&newProposal, &lastProposal)
 }

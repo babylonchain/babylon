@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -20,18 +21,13 @@ func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature
 	}}
 }
 
-func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator) *MsgWrappedCreateValidator {
-	return &MsgWrappedCreateValidator{
-
-		MsgCreateValidator: msgCreateVal,
-	}
-
+func NewMsgWrappedCreateValidator(blsPubkey bls12381.PublicKey, pop *ProofOfPossession, msgCreateVal *stakingtypes.MsgCreateValidator) *MsgWrappedCreateValidator {
 	return &MsgWrappedCreateValidator{
 		Key: &BlsKey{
-			Pubkey: nil,
-			Pop:    nil,
+			Pubkey: &blsPubkey,
+			Pop:    pop,
 		},
-		MsgCreateValidator: nil,
+		MsgCreateValidator: msgCreateVal,
 	}
 }
 
@@ -65,4 +61,9 @@ func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 
 func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
 	return m.MsgCreateValidator.GetSigners()
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (m MsgWrappedCreateValidator) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	return m.MsgCreateValidator.UnpackInterfaces(unpacker)
 }

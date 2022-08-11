@@ -1,24 +1,58 @@
-package datagen
+package genutil
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	"path/filepath"
+	"time"
+
 	"github.com/babylonchain/babylon/privval"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/go-bip39"
 	cfg "github.com/tendermint/tendermint/config"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/p2p"
-	"path/filepath"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-// InitializeNodeValidatorFiles creates private validator and p2p configuration files.
-func InitializeNodeValidatorFiles(config *cfg.Config, accPubkey cryptotypes.PubKey) (string, *privval.ValidatorKeys, error) {
-	return InitializeNodeValidatorFilesFromMnemonic(config, "", accPubkey)
+// ExportGenesisFile creates and writes the genesis configuration to disk. An
+// error is returned if building or writing the configuration to file fails.
+func ExportGenesisFile(genDoc *tmtypes.GenesisDoc, genFile string) error {
+	if err := genDoc.ValidateAndComplete(); err != nil {
+		return err
+	}
+
+	return genDoc.SaveAs(genFile)
 }
 
-func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic string, accPubkey cryptotypes.PubKey) (nodeID string, valKeys *privval.ValidatorKeys, err error) {
+// ExportGenesisFileWithTime creates and writes the genesis configuration to disk.
+// An error is returned if building or writing the configuration to file fails.
+func ExportGenesisFileWithTime(
+	genFile, chainID string, validators []tmtypes.GenesisValidator,
+	appState json.RawMessage, genTime time.Time,
+) error {
+
+	genDoc := tmtypes.GenesisDoc{
+		GenesisTime: genTime,
+		ChainID:     chainID,
+		Validators:  validators,
+		AppState:    appState,
+	}
+
+	if err := genDoc.ValidateAndComplete(); err != nil {
+		return err
+	}
+
+	return genDoc.SaveAs(genFile)
+}
+
+// InitializeNodeValidatorFiles creates private validator and p2p configuration files.
+func InitializeNodeValidatorFiles(config *cfg.Config) (string, *privval.ValidatorKeys, error) {
+	return InitializeNodeValidatorFilesFromMnemonic(config, "")
+}
+
+func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic string) (nodeID string, valKeys *privval.ValidatorKeys, err error) {
 	if len(mnemonic) > 0 && !bip39.IsMnemonicValid(mnemonic) {
 		return "", nil, fmt.Errorf("invalid mnemonic")
 	}
@@ -51,7 +85,7 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 
 	valPrivkey := filePV.GetValPrivKey()
 	blsPrivkey := filePV.GetBlsPrivKey()
-	valKeys, err = privval.NewValidatorKeys(valPrivkey, blsPrivkey, accPubkey)
+	valKeys, err = privval.NewValidatorKeys(valPrivkey, blsPrivkey)
 	if err != nil {
 		return "", nil, err
 	}
