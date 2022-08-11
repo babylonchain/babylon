@@ -55,7 +55,7 @@ message QueryRawCheckpointListRequest {
 // RPC method.
 message QueryRawCheckpointListResponse {
   // the order is going from the newest to oldest based on the epoch number
-  repeated RawCheckpoint raw_checkpoints = 1;
+  repeated RawCheckpointWithMeta raw_checkpoints = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -75,7 +75,7 @@ message QueryRecentRawCheckpointListRequest {
 // RPC method.
 message QueryRecentRawCheckpointListResponse {
   // the order is going from the newest to oldest based on the epoch number
-  repeated RawCheckpoint raw_checkpoints = 1;
+  repeated RawCheckpointWithMeta raw_checkpoints = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -91,7 +91,7 @@ message QueryRawCheckpointRequest {
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
 message QueryRawCheckpointResponse {
-  RawCheckpoint raw_checkpoint = 1;
+  RawCheckpointWithMeta raw_checkpoint = 1;
 }
 
 // QueryLatestCheckpointRequest is the request type for the Query/LatestCheckpoint
@@ -101,7 +101,7 @@ message QueryLatestCheckpointRequest {}
 // QueryLatestCheckpointResponse is the response type for the Query/LatestCheckpoint
 // RPC method.
 message QueryLatestCheckpointResponse {
-  RawCheckpoint latest_checkpoint = 1;
+  RawCheckpointWithMeta latest_checkpoint = 1;
 }
 
 // QueryBlsPublicKeyListRequest is the request type for the Query/BlsPublicKeys
