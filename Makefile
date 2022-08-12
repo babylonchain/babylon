@@ -207,6 +207,10 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
+test-babylon-integration:
+	@echo "Running babylon integration test"
+	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration -p 1
+
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
 	@go test -mod=readonly $(SIMAPP) -run TestAppStateDeterminism -Enabled=true \

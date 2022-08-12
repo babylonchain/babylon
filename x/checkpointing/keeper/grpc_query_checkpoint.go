@@ -16,7 +16,7 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	var checkpointList []*types.RawCheckpoint
+	var checkpointList []*types.RawCheckpointWithMeta
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -28,7 +28,7 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 				return false, err
 			}
 			if ckptWithMeta.Status == req.Status {
-				checkpointList = append(checkpointList, ckptWithMeta.Ckpt)
+				checkpointList = append(checkpointList, ckptWithMeta)
 			}
 		}
 		return true, nil
@@ -54,7 +54,7 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 		return nil, err
 	}
 
-	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta.Ckpt}, nil
+	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
 }
 
 func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {
