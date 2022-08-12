@@ -1,5 +1,5 @@
 syntax = "proto3";
-package babylon.checkpointing.v1;
+package babylon.genutil.v1;
 
 import "gogoproto/gogo.proto";
 
