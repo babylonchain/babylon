@@ -8,6 +8,8 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
+	cdc.RegisterConcrete(&MsgAddBlsSig{}, "checkpointing/AddBlsSig", nil)
+	cdc.RegisterConcrete(&MsgWrappedCreateValidator{}, "checkpointing/WrappedCreateValidator", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {

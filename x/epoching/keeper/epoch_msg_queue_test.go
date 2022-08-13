@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/rand"
 	"testing"
 
@@ -33,9 +34,11 @@ func FuzzEnqueueMsg(f *testing.F) {
 		// Enqueue a random number of msgs
 		numQueuedMsgs := rand.Uint64() % 100
 		for i := uint64(0); i < numQueuedMsgs; i++ {
+
 			msg := types.QueuedMessage{
 				TxId:  sdk.Uint64ToBigEndian(i),
 				MsgId: sdk.Uint64ToBigEndian(i),
+				Msg:   &types.QueuedMessage_MsgDelegate{MsgDelegate: &stakingtypes.MsgDelegate{}},
 			}
 			keeper.EnqueueMsg(ctx, msg)
 		}
@@ -45,7 +48,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 		for i, msg := range epochMsgs {
 			require.Equal(t, sdk.Uint64ToBigEndian(uint64(i)), msg.TxId)
 			require.Equal(t, sdk.Uint64ToBigEndian(uint64(i)), msg.MsgId)
-			require.Nil(t, msg.Msg)
+			require.NotNil(t, msg)
 		}
 
 		// after clearing the msg queue, ensure that the epoch msg queue is empty

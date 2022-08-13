@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"github.com/tendermint/tendermint/crypto/tmhash"
 
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,11 +51,13 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	}
 
 	// enqueue the msg into the epoching module
-	queueMsg := epochingtypes.QueuedMessage{
-		Msg: &epochingtypes.QueuedMessage_MsgCreateValidator{MsgCreateValidator: msg.MsgCreateValidator},
+	txid := tmhash.Sum(ctx.TxBytes())
+	queueMsg, err := epochingtypes.NewQueuedMessage(txid, msg.MsgCreateValidator)
+	if err != nil {
+		return nil, err
 	}
 
-	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
+	m.k.epochingKeeper.EnqueueGenMsg(ctx, queueMsg)
 
 	return &types.MsgWrappedCreateValidatorResponse{}, err
 }

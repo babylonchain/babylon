@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -55,7 +54,7 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 	queueLen := k.GetQueueLength(ctx)
 	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
 	// value: msgBytes
-	msgBytes, err := k.cdc.Marshal(&msg)
+	msgBytes, err := k.cdc.MarshalInterface(&msg)
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -63,6 +62,15 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 
 	// increment queue length
 	k.incQueueLength(ctx)
+}
+
+func (k Keeper) EnqueueGenMsg(ctx sdk.Context, msg types.QueuedMessage) {
+	k.EnqueueMsg(ctx, msg)
+
+	epoch := k.GetEpoch(ctx)
+	if epoch.EpochNumber == 0 {
+		k.HandleQueuedMsgs(ctx, epoch)
+	}
 }
 
 // GetEpochMsgs returns the set of messages queued in the current epoch
@@ -75,11 +83,11 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		queuedMsgBytes := iterator.Value()
-		var queuedMsg types.QueuedMessage
-		if err := k.cdc.Unmarshal(queuedMsgBytes, &queuedMsg); err != nil {
+		var queuedMsg sdk.Msg
+		if err := k.cdc.UnmarshalInterface(queuedMsgBytes, &queuedMsg); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
-		queuedMsgs = append(queuedMsgs, &queuedMsg)
+		queuedMsgs = append(queuedMsgs, queuedMsg.(*types.QueuedMessage))
 	}
 
 	return queuedMsgs
@@ -101,22 +109,67 @@ func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
 	k.setQueueLength(ctx, 0)
 }
 
+func (k Keeper) HandleQueuedMsgs(ctx sdk.Context, epoch types.Epoch) {
+	// get all msgs in the msg queue
+	queuedMsgs := k.GetEpochMsgs(ctx)
+	// forward each msg in the msg queue to the right keeper
+	for _, msg := range queuedMsgs {
+		res, err := k.HandleQueuedMsg(ctx, msg)
+		// skip this failed msg and emit and event signalling it
+		// we do not panic here as some users may wrap an invalid message
+		// (e.g., self-delegate coins more than its balance, wrong coding of addresses, ...)
+		// honest validators will have consistent execution results on the queued messages
+		if err != nil {
+			// emit an event signalling the failed execution
+			err := ctx.EventManager().EmitTypedEvent(
+				&types.EventHandleQueuedMsg{
+					EpochNumber: epoch.EpochNumber,
+					TxId:        msg.TxId,
+					MsgId:       msg.MsgId,
+					Error:       err.Error(),
+				},
+			)
+			if err != nil {
+				panic(err)
+			}
+			// skip this failed msg
+			continue
+		}
+		// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
+		for _, event := range res.Events {
+			err := ctx.EventManager().EmitTypedEvent(
+				&types.EventHandleQueuedMsg{
+					OriginalEventType:  event.Type,
+					EpochNumber:        epoch.EpochNumber,
+					TxId:               msg.TxId,
+					MsgId:              msg.MsgId,
+					OriginalAttributes: event.Attributes,
+				},
+			)
+			if err != nil {
+				panic(err)
+			}
+		}
+	}
+
+	// clear the current msg queue
+	k.ClearEpochMsgs(ctx)
+	// trigger AfterEpochEnds hook
+	k.AfterEpochEnds(ctx, epoch.EpochNumber)
+	// emit EndEpoch event
+	err := ctx.EventManager().EmitTypedEvent(
+		&types.EventEndEpoch{
+			EpochNumber: epoch.EpochNumber,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+}
+
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
 func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
-	var unwrappedMsgWithType sdk.Msg
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
-	switch unwrappedMsg := msg.Msg.(type) {
-	case *types.QueuedMessage_MsgCreateValidator:
-		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
-	case *types.QueuedMessage_MsgDelegate:
-		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
-	case *types.QueuedMessage_MsgUndelegate:
-		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
-	case *types.QueuedMessage_MsgBeginRedelegate:
-		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
-	default:
-		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
-	}
+	unwrappedMsgWithType := msg.WithType()
 
 	// get the handler function from router
 	handler := k.router.Handler(unwrappedMsgWithType)

@@ -3,16 +3,9 @@
 
 package testutil
 
-import (
-	"testing"
-
-	"github.com/babylonchain/babylon/testutil/network"
-
-	"github.com/stretchr/testify/suite"
-)
-
-func TestIntegrationTestSuite(t *testing.T) {
-	cfg := network.DefaultConfig()
-	cfg.NumValidators = 1
-	suite.Run(t, NewIntegrationTestSuite(cfg))
-}
+//TODO: testing gen cmd
+//func TestIntegrationTestSuite(t *testing.T) {
+//	cfg := network.DefaultConfig()
+//	cfg.NumValidators = 1
+//	suite.Run(t, NewIntegrationTestSuite(cfg))
+//}

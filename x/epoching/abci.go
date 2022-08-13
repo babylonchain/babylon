@@ -58,63 +58,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	// if reaching an epoch boundary, then
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsLastBlock(ctx) {
-		// get all msgs in the msg queue
-		queuedMsgs := k.GetEpochMsgs(ctx)
-		// forward each msg in the msg queue to the right keeper
-		for _, msg := range queuedMsgs {
-			res, err := k.HandleQueuedMsg(ctx, msg)
-			// skip this failed msg and emit and event signalling it
-			// we do not panic here as some users may wrap an invalid message
-			// (e.g., self-delegate coins more than its balance, wrong coding of addresses, ...)
-			// honest validators will have consistent execution results on the queued messages
-			if err != nil {
-				// emit an event signalling the failed execution
-				err := ctx.EventManager().EmitTypedEvent(
-					&types.EventHandleQueuedMsg{
-						EpochNumber: epoch.EpochNumber,
-						TxId:        msg.TxId,
-						MsgId:       msg.MsgId,
-						Error:       err.Error(),
-					},
-				)
-				if err != nil {
-					panic(err)
-				}
-				// skip this failed msg
-				continue
-			}
-			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
-			for _, event := range res.Events {
-				err := ctx.EventManager().EmitTypedEvent(
-					&types.EventHandleQueuedMsg{
-						OriginalEventType:  event.Type,
-						EpochNumber:        epoch.EpochNumber,
-						TxId:               msg.TxId,
-						MsgId:              msg.MsgId,
-						OriginalAttributes: event.Attributes,
-					},
-				)
-				if err != nil {
-					panic(err)
-				}
-			}
-		}
-
-		// update validator set
+		k.HandleQueuedMsgs(ctx, epoch)
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
-		// clear the current msg queue
-		k.ClearEpochMsgs(ctx)
-		// trigger AfterEpochEnds hook
-		k.AfterEpochEnds(ctx, epoch.EpochNumber)
-		// emit EndEpoch event
-		err := ctx.EventManager().EmitTypedEvent(
-			&types.EventEndEpoch{
-				EpochNumber: epoch.EpochNumber,
-			},
-		)
-		if err != nil {
-			panic(err)
-		}
 	}
 
 	return validatorSetUpdate

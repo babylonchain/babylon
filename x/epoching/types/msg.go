@@ -1,6 +1,7 @@
 package types
 
 import (
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -14,9 +15,11 @@ const (
 
 // ensure that these message types implement the sdk.Msg interface
 var (
-	_ sdk.Msg = &MsgWrappedDelegate{}
-	_ sdk.Msg = &MsgWrappedUndelegate{}
-	_ sdk.Msg = &MsgWrappedBeginRedelegate{}
+	_ sdk.Msg                            = &MsgWrappedDelegate{}
+	_ sdk.Msg                            = &MsgWrappedUndelegate{}
+	_ sdk.Msg                            = &MsgWrappedBeginRedelegate{}
+	_ sdk.Msg                            = &QueuedMessage{}
+	_ codectypes.UnpackInterfacesMessage = (*QueuedMessage)(nil)
 )
 
 // NewMsgWrappedDelegate creates a new MsgWrappedDelegate instance.

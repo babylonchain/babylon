@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/rand"
 	"testing"
 
@@ -104,7 +105,11 @@ func FuzzEpochMsgs(f *testing.F) {
 		for i := uint64(0); i < numMsgs; i++ {
 			txid := datagen.GenRandomByteArray(32)
 			txidsMap[string(txid)] = true
-			keeper.EnqueueMsg(ctx, types.QueuedMessage{TxId: txid})
+			queuedMsg := types.QueuedMessage{
+				TxId: txid,
+				Msg:  &types.QueuedMessage_MsgDelegate{MsgDelegate: &stakingtypes.MsgDelegate{}},
+			}
+			keeper.EnqueueMsg(ctx, queuedMsg)
 		}
 		// get epoch msgs
 		req := types.QueryEpochMsgsRequest{

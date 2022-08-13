@@ -25,6 +25,7 @@ var (
 	VotingPowerKey         = []byte{0x15} // key prefix for the total voting power of a validator set in a single epoch
 	SlashedVotingPowerKey  = []byte{0x16} // key prefix for the total slashed voting power in a single epoch
 	SlashedValidatorSetKey = []byte{0x17} // key prefix for slashed validator set
+	PubkeyKey              = []byte{0x18} // key prefix for validator public key
 )
 
 func KeyPrefix(p string) []byte {
