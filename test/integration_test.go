@@ -13,7 +13,9 @@ import (
 	appparams "github.com/babylonchain/babylon/app/params"
 	bbl "github.com/babylonchain/babylon/types"
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
+	ec "github.com/babylonchain/babylon/x/epoching/types"
 	ref "github.com/cosmos/cosmos-sdk/client/grpc/reflection"
+	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"google.golang.org/grpc"
 )
 
@@ -47,6 +49,34 @@ func checkInterfacesWithRetries(client *grpc.ClientConn, maxTries int, sleepTime
 		}
 
 		<-time.After(sleepTime)
+	}
+}
+
+func allClientsOverBlockNumber(clients []*grpc.ClientConn, blockNumber int64) bool {
+	for _, c := range clients {
+		latestResponse, err := tm.NewServiceClient(c).GetLatestBlock(context.Background(), &tm.GetLatestBlockRequest{})
+
+		if err != nil {
+			panic("Integration tests failed, due to node failure")
+		}
+
+		if latestResponse.Block.Header.Height < blockNumber {
+			return false
+		}
+	}
+	// we iterated over all clients, and all of them were  >= blockNumber
+	return true
+}
+
+func waitForBlock(clients []*grpc.ClientConn, blockNumber int64) {
+	for {
+		allOver := allClientsOverBlockNumber(clients, blockNumber)
+
+		if allOver {
+			return
+		}
+
+		<-time.After(2 * time.Second)
 	}
 }
 
@@ -115,6 +145,47 @@ func TestBtcLightClientGenesis(t *testing.T) {
 
 		if res.Header.Height != hardcodedHeaderHeight || !res.Header.Hash.Eq(&hardcodedHeaderHash) {
 			t.Errorf("Node with address %s started with unexpected header", addresses[i])
+		}
+	}
+}
+
+func TestNodeProgres(t *testing.T) {
+
+	// most probably nodes are after block 1 at this point, but to make sure we are waiting
+	// for block 1
+	// blocks 1-10 are epoch 1 blocks.
+	waitForBlock(clients, 1)
+
+	for _, c := range clients {
+		epochingClient := ec.NewQueryClient(c)
+
+		currentEpochResponse, err := epochingClient.CurrentEpoch(context.Background(), &ec.QueryCurrentEpochRequest{})
+
+		if err != nil {
+			panic("Querry failed, testnet not running")
+		}
+
+		if currentEpochResponse.CurrentEpoch != 1 {
+			t.Fatalf("Initial epoch should equal 1. Current epoch %d", currentEpochResponse.CurrentEpoch)
+		}
+	}
+
+	// TODO default epoch interval is equal to 10, we should retrieve it from config
+	// block 11 is first block of epoch 2, so if all clients are after block 11, they
+	// should be at epoch 2
+	waitForBlock(clients, 11)
+
+	for _, c := range clients {
+		epochingClient := ec.NewQueryClient(c)
+
+		currentEpochResponse, err := epochingClient.CurrentEpoch(context.Background(), &ec.QueryCurrentEpochRequest{})
+
+		if err != nil {
+			panic("Querry failed, testnet not running")
+		}
+
+		if currentEpochResponse.CurrentEpoch != 2 {
+			t.Errorf("Epoch after 10 blocks, should equal 2. Curent epoch %d", currentEpochResponse.CurrentEpoch)
 		}
 	}
 }
