@@ -26,11 +26,8 @@ ENV RPCPASS=rpcpass
 ENV PASSPHRASE=pass
 ENV GENERATE_INTERVAL_SECS=30
 
-# Do the one time setup of the miner and the wallet.
-RUN /bitcoind/wrapper.sh setup
-
 EXPOSE 18554 18555 18556
 
 ENTRYPOINT ["/bitcoind/wrapper.sh"]
-CMD ["run"]
+CMD []
 STOPSIGNAL SIGTERM
