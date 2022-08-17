@@ -89,12 +89,12 @@ services:
       localnet:
         ipv4_address: 192.168.10.5
 
-  bitcoind:
+  bitcoinsim:
     build:
       context: ./
-      dockerfile: ./contrib/images/bitcoind/Dockerfile
-    image: babylonchain/bitcoind:latest
-    container_name: bitcoind
+      dockerfile: ./contrib/images/bitcoinsim/Dockerfile
+    image: babylonchain/bitcoinsim:latest
+    container_name: bitcoinsim
     ports:
       - 18554-18556:18554-18556
     networks:

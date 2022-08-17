@@ -1,6 +1,6 @@
-# bitcoind
+# bitcoinsim
 
-`bitcoind` is a Docker image we build to be able to run a single Bitcoin node in the local devnet that produces blocks at regular intervals without consuming CPU.
+`bitcoinsim` is a Docker image we build to be able to run a single Bitcoin node in the local devnet that produces blocks at regular intervals without consuming CPU.
 
 To achieve this we use [btcd](https://github.com/btcsuite/btcd) in `--simnet` mode and make calls to the [generate](https://github.com/btcsuite/btcd/blob/v0.23.1/rpcserver.go#L886) API endpoint.
 
@@ -17,7 +17,7 @@ See more at:
 You can build the image with the following command:
 
 ```bash
-make bitcoind
+make bitcoinsim
 ```
 
 ## Test
@@ -25,13 +25,13 @@ make bitcoind
 One way to see if it works is to run the container interactively:
 
 ```bash
-docker run -it --rm --name bitcoind babylonchain/bintcoind
+docker run -it --rm --name bitcoinsim babylonchain/bitcoinsim
 ```
 
 The logs should show that a wallet is created with and mining is started:
 
 ```console
-$ docker run -it --rm babylonchain/bintcoind
+$ docker run -it --rm babylonchain/bitcoinsim
 Starting btcd...
 Creating a wallet...
 spawn btcwallet --simnet -u rpcuser -P rpcpass --create
@@ -132,11 +132,11 @@ Then we can connect to this from another container to query the balance:
 ```console
 $ docker ps
 CONTAINER ID        IMAGE                    COMMAND                  CREATED             STATUS              PORTS               NAMES
-93e58681637d        babylonchain/bintcoind   "/bitcoind/wrapper.sh"   5 minutes ago       Up 5 minutes        18554-18556/tcp     bitcoind
-$ docker exec -it bitcoind sh
-/bitcoind # btcctl --simnet --wallet -u $RPCUSER -P $RPCPASS getbalance
+93e58681637d        babylonchain/bitcoinsim   "/bitcoinsim/wrapper.sh"   5 minutes ago       Up 5 minutes        18554-18556/tcp     bitcoinsim
+$ docker exec -it bitcoinsim sh
+/bitcoinsim # btcctl --simnet --wallet -u $RPCUSER -P $RPCPASS getbalance
 600
-/bitcoind #
+/bitcoinsim #
 
 ```
 
@@ -149,14 +149,14 @@ The image has been added to the main `docker-compose.yml` file. It will build it
 It can be started on its own like so:
 
 ```bash
-docker-compose up -d bitcoind
+docker-compose up -d bitcoinsim
 ```
 
 Currently the image doesn't support restarting, the container has to be completely removed and recreated if it's stopped. It can be removed with the following command:
 
 ```bash
-docker-compose stop bitcoind
-docker-compose rm bitcoind
+docker-compose stop bitcoinsim
+docker-compose rm bitcoinsim
 ```
 
 The ports are mapped to the same default ports that `btcd` and `btcwallet` would use, so if the host already runs these services they might clash.

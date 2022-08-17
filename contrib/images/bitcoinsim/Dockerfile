@@ -14,12 +14,12 @@ RUN cd btcwallet && go install -v . ./cmd/... && cd -
 
 
 FROM alpine:3.14 AS run
-RUN apk add bash curl jq expect expect-dev
-WORKDIR /bitcoind
+RUN apk add bash expect expect-dev
+WORKDIR /bitcoinsim
 
 COPY --from=build /go/bin/* /usr/bin/
-COPY contrib/images/bitcoind/wrapper.sh /bitcoind/wrapper.sh
-COPY contrib/images/bitcoind/btcwallet_create.exp /bitcoind/btcwallet_create.exp
+COPY contrib/images/bitcoinsim/wrapper.sh /bitcoinsim/wrapper.sh
+COPY contrib/images/bitcoinsim/btcwallet_create.exp /bitcoinsim/btcwallet_create.exp
 
 ENV RPCUSER=rpcuser
 ENV RPCPASS=rpcpass
@@ -28,6 +28,6 @@ ENV GENERATE_INTERVAL_SECS=30
 
 EXPOSE 18554 18555 18556
 
-ENTRYPOINT ["/bitcoind/wrapper.sh"]
+ENTRYPOINT ["/bitcoinsim/wrapper.sh"]
 CMD []
 STOPSIGNAL SIGTERM
