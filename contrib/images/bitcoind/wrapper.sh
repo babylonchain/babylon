@@ -30,6 +30,7 @@ echo $MINING_ADDR > mining.addr
 
 echo "Restarting btcd with mining address $MINING_ADDR..."
 kill -9 $BTCD_PID
+sleep 1
 btcd --simnet -u $RPCUSER -P $RPCPASS --rpclisten=0.0.0.0:18556 --listen=0.0.0.0:18555 --miningaddr=$MINING_ADDR 2>&1 &
 BTCD_PID=$!
 

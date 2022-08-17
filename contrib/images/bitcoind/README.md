@@ -159,4 +159,4 @@ docker-compose stop bitcoind
 docker-compose rm bitcoind
 ```
 
-The ports are mapped to the 10000 higher than the default ports that `btcd` and `btcwallet` would use, to avoid clashes if they are already running on the host.
+The ports are mapped to the same default ports that `btcd` and `btcwallet` would use, so if the host already runs these services they might clash.
