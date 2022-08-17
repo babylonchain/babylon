@@ -95,10 +95,10 @@ services:
       dockerfile: ./contrib/images/bitcoind/Dockerfile
     image: babylonchain/bitcoind:latest
     container_name: bitcoind
-    ports:
-      - 28554:18554
-      - 28555:18555
-      - 28556:18556
+    # ports:
+    #   - 28554:18554
+    #   - 28555:18555
+    #   - 28556:18556
     networks:
       - localnet
 
