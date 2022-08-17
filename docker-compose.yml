@@ -89,6 +89,19 @@ services:
       localnet:
         ipv4_address: 192.168.10.5
 
+  bitcoind:
+    build:
+      context: ./
+      dockerfile: ./contrib/images/bitcoind/Dockerfile
+    image: babylonchain/bitcoind:latest
+    container_name: bitcoind
+    ports:
+      - 18554:18554
+      - 18555:18555
+      - 18556:18556
+    networks:
+      - localnet
+
 networks:
   localnet:
     driver: bridge

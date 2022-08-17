@@ -145,3 +145,13 @@ The balance will go up as more blocks mature. The default coinbase maturity is 1
 ## Use in docker-compose
 
 The image has been added to the main `docker-compose.yml` file. It will build it if it's not built already and start running it as part of the local testnet. The other containers can use the default ports to connect to it, which are also exposed on the host.
+
+It can be started on its own like so:
+
+```bash
+docker-compose up -d bitcoind
+```
+
+The ports are mapped to the default ports that `btcd` and `btcwallet` would use, so if those are already running on the host they will clash.
+
+Currently the image doesn't support restarting, the container has to be completely removed and recreated if it's stopped.
