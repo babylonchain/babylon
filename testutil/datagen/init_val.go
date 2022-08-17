@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/go-bip39"
 	cfg "github.com/tendermint/tendermint/config"
 	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
@@ -14,11 +13,11 @@ import (
 )
 
 // InitializeNodeValidatorFiles creates private validator and p2p configuration files.
-func InitializeNodeValidatorFiles(config *cfg.Config, accPubkey cryptotypes.PubKey) (string, *privval.ValidatorKeys, error) {
-	return InitializeNodeValidatorFilesFromMnemonic(config, "", accPubkey)
+func InitializeNodeValidatorFiles(config *cfg.Config) (string, *privval.ValidatorKeys, error) {
+	return InitializeNodeValidatorFilesFromMnemonic(config, "")
 }
 
-func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic string, accPubkey cryptotypes.PubKey) (nodeID string, valKeys *privval.ValidatorKeys, err error) {
+func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic string) (nodeID string, valKeys *privval.ValidatorKeys, err error) {
 	if len(mnemonic) > 0 && !bip39.IsMnemonicValid(mnemonic) {
 		return "", nil, fmt.Errorf("invalid mnemonic")
 	}
@@ -51,7 +50,7 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 
 	valPrivkey := filePV.GetValPrivKey()
 	blsPrivkey := filePV.GetBlsPrivKey()
-	valKeys, err = privval.NewValidatorKeys(valPrivkey, blsPrivkey, accPubkey)
+	valKeys, err = privval.NewValidatorKeys(valPrivkey, blsPrivkey)
 	if err != nil {
 		return "", nil, err
 	}

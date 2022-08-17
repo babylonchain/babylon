@@ -178,13 +178,9 @@ func InitTestnet(
 			_ = os.RemoveAll(outputDir)
 			return err
 		}
-		accKeyInfo, err := kb.Key(nodeDirName)
-		if err != nil {
-			return err
-		}
 
 		// generate validator keys
-		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, accKeyInfo.GetPubKey())
+		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig)
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err

@@ -80,7 +80,7 @@ func (sig *Signature) Unmarshal(data []byte) error {
 	return nil
 }
 
-func (sig Signature) Byte() []byte {
+func (sig Signature) Bytes() []byte {
 	return sig
 }
 
@@ -145,7 +145,7 @@ func (pk PublicKey) Equal(k PublicKey) bool {
 	return string(pk) == string(k)
 }
 
-func (pk PublicKey) Byte() []byte {
+func (pk PublicKey) Bytes() []byte {
 	return pk
 }
 

@@ -72,7 +72,7 @@ func AggrSigList(sigs []Signature) (Signature, error) {
 	aggSig := new(BlsMultiSig)
 	sigBytes := make([][]byte, len(sigs))
 	for i := 0; i < len(sigs); i++ {
-		sigBytes[i] = sigs[i].Byte()
+		sigBytes[i] = sigs[i].Bytes()
 	}
 	if !aggSig.AggregateCompressed(sigBytes, false) {
 		return nil, errors.New("failed to aggregate bls signatures")
@@ -94,7 +94,7 @@ func AggrPKList(pks []PublicKey) (PublicKey, error) {
 	aggPk := new(BlsMultiPubKey)
 	pkBytes := make([][]byte, len(pks))
 	for i := 0; i < len(pks); i++ {
-		pkBytes[i] = pks[i].Byte()
+		pkBytes[i] = pks[i].Bytes()
 	}
 	if !aggPk.AggregateCompressed(pkBytes, false) {
 		return nil, errors.New("failed to aggregate bls public keys")
