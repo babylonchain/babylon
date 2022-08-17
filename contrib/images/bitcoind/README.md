@@ -152,6 +152,6 @@ It can be started on its own like so:
 docker-compose up -d bitcoind
 ```
 
-The ports are mapped to the default ports that `btcd` and `btcwallet` would use, so if those are already running on the host they will clash.
+The ports are mapped to the 10000 higher than the default ports that `btcd` and `btcwallet` would use, to avoid clashes if they are already running on the host.
 
 Currently the image doesn't support restarting, the container has to be completely removed and recreated if it's stopped.

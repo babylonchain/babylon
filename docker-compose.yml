@@ -96,9 +96,9 @@ services:
     image: babylonchain/bitcoind:latest
     container_name: bitcoind
     ports:
-      - 18554:18554
-      - 18555:18555
-      - 18556:18556
+      - 28554:18554
+      - 28555:18555
+      - 28556:18556
     networks:
       - localnet
 
