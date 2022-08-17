@@ -89,6 +89,18 @@ services:
       localnet:
         ipv4_address: 192.168.10.5
 
+  bitcoinsim:
+    build:
+      context: ./
+      dockerfile: ./contrib/images/bitcoinsim/Dockerfile
+    image: babylonchain/bitcoinsim:latest
+    container_name: bitcoinsim
+    ports:
+      - 18554-18556:18554-18556
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.6
+
 networks:
   localnet:
     driver: bridge

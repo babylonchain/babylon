@@ -1,4 +1,4 @@
-all: babylond-env
+all: babylond-env bitcoinsim
 
 babylond-env: babylond-rmi
 	docker build --tag babylonchain/babylond -f babylond-env/Dockerfile \
@@ -11,4 +11,11 @@ babylond-dlv: babylond-rmi
 babylond-rmi:
 	docker rmi babylonchain/babylond 2>/dev/null; true
 
-.PHONY: all babylond-env babylond-dlv babylond-rmi
+bitcoinsim:
+	docker build --tag babylonchain/bitcoinsim -f bitcoinsim/Dockerfile \
+        	$(shell git rev-parse --show-toplevel)
+
+bitcoinsim-rmi:
+	docker rmi babylonchain/bitcoinsim 2>/dev/null; true
+
+.PHONY: all babylond-env babylond-dlv babylond-rmi bitcoinsim bitcoinsim-rmi
