@@ -98,7 +98,8 @@ services:
     ports:
       - 18554-18556:18554-18556
     networks:
-      - localnet
+      localnet:
+        ipv4_address: 192.168.10.6
 
 networks:
   localnet:
