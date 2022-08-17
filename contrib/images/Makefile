@@ -12,7 +12,7 @@ babylond-rmi:
 	docker rmi babylonchain/babylond 2>/dev/null; true
 
 bitcoind:
-	docker build --tag babylonchain/bintcoind -f bitcoind/Dockerfile \
+	docker build --tag babylonchain/bitcoind -f bitcoind/Dockerfile \
         	$(shell git rev-parse --show-toplevel)
 
 bitcoind-rmi:
