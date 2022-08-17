@@ -36,7 +36,7 @@ BTCD_PID=$!
 # Allow btcd to start
 sleep 5
 
-echo "Generating enought blocks for the first coinbase to mature..."
+echo "Generating enough blocks for the first coinbase to mature..."
 btcctl --simnet -u $RPCUSER -P $RPCPASS generate 100
 
 # Allow some time for the wallet to catch up.
