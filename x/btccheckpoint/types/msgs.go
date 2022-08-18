@@ -4,6 +4,7 @@ import (
 	fmt "fmt"
 	"math/big"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/x/btccheckpoint/btcutils"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,14 +16,6 @@ var (
 	_ sdk.Msg = (*MsgInsertBTCSpvProof)(nil)
 )
 
-const (
-	// two proofs is babylon specific not bitcoin specific, that why it is defined
-	// here not in btcutils
-	// This could also be a parameter in config. At this time babylon expect 2,
-	// OP_RETRUN transactions with valid proofs.
-	expectedProofs = 2
-)
-
 // Parse and Validate transactions which should contain OP_RETURN data.
 // OP_RETURN bytes are not validated in any way. It is up to the caller attach
 // semantic meaning and validity to those bytes.
@@ -30,7 +23,8 @@ const (
 // TODO explore possibility of validating that output in second tx is payed by
 // input in the first tx
 func ParseTwoProofs(submitter sdk.AccAddress, proofs []*BTCSpvProof, powLimit *big.Int) (*RawCheckpointSubmission, error) {
-	if len(proofs) != expectedProofs {
+	// Expecting as many proofs as many parts our checkpoint is composed of
+	if len(proofs) != txformat.NumberOfParts {
 		return nil, fmt.Errorf("expected at exactly valid op return transactions")
 	}
 

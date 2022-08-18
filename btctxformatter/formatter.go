@@ -1,6 +1,7 @@
 package btctxformatter
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
@@ -16,6 +17,11 @@ type formatHeader struct {
 	part    uint8
 }
 
+type BabylonData struct {
+	data  []byte
+	index uint8
+}
+
 const (
 	TestTag BabylonTag = "BBT"
 
@@ -23,11 +29,11 @@ const (
 
 	CurrentVersion FormatVersion = 0
 
-	firstPartNumber uint8 = 0
+	firstPartIndex uint8 = 0
 
-	secondPartNumber uint8 = 1
+	secondPartIndex uint8 = 1
 
-	HeaderLength = 4
+	headerLength = 4
 
 	LastCommitHashLength = 32
 
@@ -35,14 +41,19 @@ const (
 
 	AddressLength = 20
 
-	// 8 bytes are for 64bit unsigned epoch number
-	FirstHalfLength = HeaderLength + LastCommitHashLength + AddressLength + 8 + BitMapLength
+	// Each checkpoint is composed of two parts
+	NumberOfParts = 2
 
-	HashLength = 10
+	hashLength = 10
 
 	BlsSigLength = 48
 
-	SecondHalfLength = HeaderLength + BlsSigLength + HashLength
+	// 8 bytes are for 64bit unsigned epoch number
+	firstPartLength = headerLength + LastCommitHashLength + AddressLength + 8 + BitMapLength
+
+	secondPartLength = headerLength + BlsSigLength + hashLength
+
+	ApplicationDataLength = firstPartLength + secondPartLength - headerLength - headerLength - hashLength
 )
 
 func getVerHalf(version FormatVersion, halfNumber uint8) uint8 {
@@ -69,7 +80,7 @@ func u64ToBEBytes(u uint64) []byte {
 	return bytes
 }
 
-func encodeFirstTx(
+func encodeFirstOpRetrun(
 	tag BabylonTag,
 	version FormatVersion,
 	epoch uint64,
@@ -80,7 +91,7 @@ func encodeFirstTx(
 
 	var serializedBytes = []byte{}
 
-	serializedBytes = append(serializedBytes, encodeHeader(tag, version, firstPartNumber)...)
+	serializedBytes = append(serializedBytes, encodeHeader(tag, version, firstPartIndex)...)
 
 	serializedBytes = append(serializedBytes, u64ToBEBytes(epoch)...)
 
@@ -95,24 +106,24 @@ func encodeFirstTx(
 
 func getCheckSum(firstTxBytes []byte) []byte {
 	hash := sha256.Sum256(firstTxBytes)
-	return hash[0:HashLength]
+	return hash[0:hashLength]
 }
 
-func encodeSecondTx(
+func encodeSecondOpReturn(
 	tag BabylonTag,
 	version FormatVersion,
-	firstTxBytes []byte,
+	firstOpReturnBytes []byte,
 	blsSig []byte,
 ) []byte {
 	var serializedBytes = []byte{}
 
-	serializedBytes = append(serializedBytes, encodeHeader(tag, version, secondPartNumber)...)
+	serializedBytes = append(serializedBytes, encodeHeader(tag, version, secondPartIndex)...)
 
 	serializedBytes = append(serializedBytes, blsSig...)
 
 	// we are calculating checksum only from application data, without header, as header is always
 	// the same.
-	serializedBytes = append(serializedBytes, getCheckSum(firstTxBytes[4:])...)
+	serializedBytes = append(serializedBytes, getCheckSum(firstOpReturnBytes[headerLength:])...)
 
 	return serializedBytes
 }
@@ -151,9 +162,9 @@ func EncodeCheckpointData(
 		return nil, nil, errors.New("BlsSig should have 48 bytes")
 	}
 
-	var firstHalf = encodeFirstTx(tag, version, epoch, lastCommitHash, bitmap, submitterAddress)
+	var firstHalf = encodeFirstOpRetrun(tag, version, epoch, lastCommitHash, bitmap, submitterAddress)
 
-	var secondHalf = encodeSecondTx(tag, version, firstHalf, blsSig)
+	var secondHalf = encodeSecondOpReturn(tag, version, firstHalf, blsSig)
 
 	return firstHalf, secondHalf, nil
 }
@@ -214,29 +225,29 @@ func (header *formatHeader) validateHeader(
 func GetCheckpointData(
 	tag BabylonTag,
 	version FormatVersion,
-	partNumber uint8,
+	partIndex uint8,
 	data []byte,
 ) ([]byte, error) {
 
-	if partNumber > 1 {
-		return nil, errors.New("invalid part number")
+	if partIndex > 1 {
+		return nil, errors.New("invalid part index")
 	}
 
 	if version > CurrentVersion {
-		return nil, errors.New("invalid part number")
+		return nil, errors.New("not supported version")
 	}
 
-	if partNumber == 0 && len(data) != FirstHalfLength {
+	if partIndex == 0 && len(data) != firstPartLength {
 		return nil, errors.New("invalid length. First part should have 77 bytes")
 	}
 
-	if partNumber == 1 && len(data) != SecondHalfLength {
+	if partIndex == 1 && len(data) != secondPartLength {
 		return nil, errors.New("invalid length. First part should have 62 bytes")
 	}
 
 	header := parseHeader(data)
 
-	err := header.validateHeader(tag, version, partNumber)
+	err := header.validateHeader(tag, version, partIndex)
 
 	if err != nil {
 		return nil, err
@@ -244,11 +255,66 @@ func GetCheckpointData(
 
 	// At this point this is probable babylon data, strip the header and return data
 	// to the caller
-	dataWithoutHeader := data[4:]
+	dataWithoutHeader := data[headerLength:]
 
 	dataNoHeader := make([]byte, len(dataWithoutHeader))
 
 	copy(dataNoHeader, dataWithoutHeader)
 
 	return dataNoHeader, nil
+}
+
+// IsBabylonCheckpointData Checks if given bytearray is potential babylon data,
+// if it is then returns index of data along side with data itself
+func IsBabylonCheckpointData(
+	tag BabylonTag,
+	version FormatVersion,
+	data []byte,
+) (*BabylonData, error) {
+
+	var idx uint8 = 0
+
+	for idx < NumberOfParts {
+		data, err := GetCheckpointData(tag, version, idx, data)
+
+		if err == nil {
+			bd := BabylonData{data: data, index: idx}
+			return &bd, nil
+		}
+
+		idx++
+	}
+
+	return nil, errors.New("not valid babylon data")
+}
+
+func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
+	if version > CurrentVersion {
+		return nil, errors.New("not supported version")
+	}
+
+	if len(f) != firstPartLength-headerLength {
+		return nil, errors.New("not valid first part")
+	}
+
+	if len(s) != secondPartLength-headerLength {
+		return nil, errors.New("not valid second part")
+	}
+
+	firstHash := sha256.Sum256(f)
+
+	hashStartIdx := len(s) - hashLength
+
+	expectedHash := s[hashStartIdx:]
+
+	if !bytes.Equal(firstHash[:hashLength], expectedHash) {
+		return nil, errors.New("parts do not connect")
+	}
+
+	var dst []byte
+	// TODO this is not supper efficient
+	dst = append(dst, f...)
+	dst = append(dst, s[:hashStartIdx]...)
+
+	return dst, nil
 }

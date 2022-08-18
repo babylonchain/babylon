@@ -1,9 +1,7 @@
 package btctxformatter
 
 import (
-	"bytes"
 	"crypto/rand"
-	"crypto/sha256"
 	"testing"
 )
 
@@ -28,31 +26,33 @@ func TestEncodeMainCheckpointData(t *testing.T) {
 		t.Errorf("Valid data should be properly encoded")
 	}
 
-	if len(firstHalf) != FirstHalfLength {
-		t.Errorf("Encoded first half should have %d bytes, have %d", FirstHalfLength, len(firstHalf))
+	if len(firstHalf) != firstPartLength {
+		t.Errorf("Encoded first half should have %d bytes, have %d", firstPartLength, len(firstHalf))
 	}
 
-	if len(secondHalf) != SecondHalfLength {
-		t.Errorf("Encoded second half should have %d bytes, have %d", SecondHalfLength, len(secondHalf))
+	if len(secondHalf) != secondPartLength {
+		t.Errorf("Encoded second half should have %d bytes, have %d", secondPartLength, len(secondHalf))
 	}
 
-	decodedFirst, err := GetCheckpointData(MainTag, CurrentVersion, 0, firstHalf)
+	decodedFirst, err := IsBabylonCheckpointData(MainTag, CurrentVersion, firstHalf)
+
 	if err != nil {
 		t.Errorf("Valid data should be properly decoded")
 	}
 
-	decodedSecond, err := GetCheckpointData(MainTag, CurrentVersion, 1, secondHalf)
+	decodedSecond, err := IsBabylonCheckpointData(MainTag, CurrentVersion, secondHalf)
+
 	if err != nil {
 		t.Errorf("Valid data should be properly decoded")
 	}
 
-	firstHalfCheckSum := sha256.Sum256(decodedFirst)
+	data, err := ConnectParts(CurrentVersion, decodedFirst.data, decodedSecond.data)
 
-	checksumPart := firstHalfCheckSum[0:HashLength]
+	if err != nil {
+		t.Errorf("Parts should match. Error: %v", err)
+	}
 
-	checksumPartFromDec := decodedSecond[len(decodedSecond)-10:]
-
-	if !bytes.Equal(checksumPart, checksumPartFromDec) {
-		t.Errorf("Calculated checksum of first half should equal checksum attached to second half")
+	if len(data) != ApplicationDataLength {
+		t.Errorf("Not expected application level data length. Have: %d, want: %d", len(data), ApplicationDataLength)
 	}
 }
