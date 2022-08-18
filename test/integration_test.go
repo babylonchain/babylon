@@ -6,14 +6,15 @@ package babylon_integration_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
 	"testing"
 	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
-	ec "github.com/babylonchain/babylon/x/epoching/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	ref "github.com/cosmos/cosmos-sdk/client/grpc/reflection"
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"google.golang.org/grpc"
@@ -57,7 +58,8 @@ func allClientsOverBlockNumber(clients []*grpc.ClientConn, blockNumber int64) bo
 		latestResponse, err := tm.NewServiceClient(c).GetLatestBlock(context.Background(), &tm.GetLatestBlockRequest{})
 
 		if err != nil {
-			panic("Integration tests failed, due to node failure")
+			errorString := fmt.Sprintf("Integration tests failed, due to node failure. Erro: %v", err)
+			panic(errorString)
 		}
 
 		if latestResponse.Block.Header.Height < blockNumber {
@@ -129,7 +131,7 @@ func TestBtcLightClientGenesis(t *testing.T) {
 	// TODO currently btclightclient hardcodes this header in some function. Ultimately
 	// we would like to get it from config file, and assert here that each node
 	// start with genesis header from this config file
-	hardcodedHeaderHash, _ := bbl.NewBTCHeaderHashBytesFromHex("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47")
+	hardcodedHeaderHash, _ := bbn.NewBTCHeaderHashBytesFromHex("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47")
 	hardcodedHeaderHeight := uint64(736056)
 
 	for i, c := range clients {
@@ -157,12 +159,16 @@ func TestNodeProgres(t *testing.T) {
 	waitForBlock(clients, 1)
 
 	for _, c := range clients {
-		epochingClient := ec.NewQueryClient(c)
+		epochingClient := epochingtypes.NewQueryClient(c)
 
-		currentEpochResponse, err := epochingClient.CurrentEpoch(context.Background(), &ec.QueryCurrentEpochRequest{})
+		currentEpochResponse, err := epochingClient.CurrentEpoch(
+			context.Background(),
+			&epochingtypes.QueryCurrentEpochRequest{},
+		)
 
 		if err != nil {
-			panic("Querry failed, testnet not running")
+			errorString := fmt.Sprintf("Query failed, testnet not running. Error: %v", err)
+			panic(errorString)
 		}
 
 		if currentEpochResponse.CurrentEpoch != 1 {
@@ -176,12 +182,16 @@ func TestNodeProgres(t *testing.T) {
 	waitForBlock(clients, 11)
 
 	for _, c := range clients {
-		epochingClient := ec.NewQueryClient(c)
+		epochingClient := epochingtypes.NewQueryClient(c)
 
-		currentEpochResponse, err := epochingClient.CurrentEpoch(context.Background(), &ec.QueryCurrentEpochRequest{})
+		currentEpochResponse, err := epochingClient.CurrentEpoch(
+			context.Background(),
+			&epochingtypes.QueryCurrentEpochRequest{},
+		)
 
 		if err != nil {
-			panic("Querry failed, testnet not running")
+			errorString := fmt.Sprintf("Query failed, testnet not running. Error: %v", err)
+			panic(errorString)
 		}
 
 		if currentEpochResponse.CurrentEpoch != 2 {
