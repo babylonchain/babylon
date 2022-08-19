@@ -31,7 +31,7 @@ func NewValidatorKeys(valPrivkey tmcrypto.PrivKey, blsPrivKey bls12381.PrivateKe
 	}, nil
 }
 
-// BuildPoP builds a proof-of-possession by PoP=encrypt(key = BLS_sk, data = encrypt(key = Ed25519_sk, data = BLS_pk))
+// BuildPoP builds a proof-of-possession by PoP=sign(key = BLS_sk, data = sign(key = Ed25519_sk, data = BLS_pk))
 // where valPrivKey is Ed25519_sk and blsPrivkey is BLS_sk
 func BuildPoP(valPrivKey tmcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*types.ProofOfPossession, error) {
 	if valPrivKey == nil {

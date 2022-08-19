@@ -10,7 +10,7 @@ This message wraps the original `MsgCreateValidator` message as well as a BLS pu
 The execution of `MsgWrappedCreateValidator` is as follows.
 
 1. The `Checkpointing` module first processes `MsgWrappedCreateValidator` to register the validator's BLS key. If success, then
-2. extract `MsgCreateValidator` and deliver `MsgCreateValidator` to the epoching module's message queue, which will be processed until the end of this epoch. If success, the registration is succeeded.
+2. extract `MsgCreateValidator` and deliver `MsgCreateValidator` to the epoching module's message queue, which will be processed at the end of this epoch. If success, the registration is succeeded.
 3. Otherwise, the registration fails and the validator should register again with the same keys.
 
 ## Genesis
