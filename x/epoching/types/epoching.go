@@ -14,7 +14,7 @@ func (e Epoch) GetLastBlockHeight() uint64 {
 
 func (e Epoch) GetSecondBlockHeight() uint64 {
 	if e.EpochNumber == 0 {
-		return 0
+		panic("should not be called when epoch number is zero")
 	}
 	return e.FirstBlockHeight + 1
 }
