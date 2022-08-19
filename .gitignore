@@ -209,5 +209,6 @@ tools-stamp
 /tests/localbabylon/.babylond/*
 docs/diagrams/plantuml.jar
 .testnets/
+.testnet/
 mytestnet/
 output/

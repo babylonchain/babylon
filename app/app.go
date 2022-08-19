@@ -438,7 +438,7 @@ func NewBabylonApp(
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
 	)
-	// BBL does not want EndBlock processing in staking
+	// Babylon does not want EndBlock processing in staking
 	app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers[:2], app.mm.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
 
 	// NOTE: The genutils module must occur after staking so that pools are

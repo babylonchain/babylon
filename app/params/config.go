@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	HumanCoinUnit = "bbl"
-	BaseCoinUnit  = "ubbl"
-	BblExponent   = 6
+	HumanCoinUnit = "bbn"
+	BaseCoinUnit  = "ubbn"
+	BbnExponent   = 6
 
 	DefaultBondDenom = BaseCoinUnit
 
 	// Bech32PrefixAccAddr defines the Bech32 prefix of an account's address.
-	Bech32PrefixAccAddr = "bbl"
+	Bech32PrefixAccAddr = "bbn"
 )
 
 var (
@@ -41,7 +41,7 @@ func RegisterDenoms() {
 	if err != nil {
 		panic(err)
 	}
-	err = sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, BblExponent))
+	err = sdk.RegisterDenom(BaseCoinUnit, sdk.NewDecWithPrec(1, BbnExponent))
 	if err != nil {
 		panic(err)
 	}
