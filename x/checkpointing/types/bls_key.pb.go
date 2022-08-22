@@ -74,7 +74,7 @@ func (m *BlsKey) GetPop() *ProofOfPossession {
 
 // ProofOfPossession defines proof for the ownership of Ed25519 and BLS private keys
 type ProofOfPossession struct {
-	// bls_sig is calculated by encrypt(key = BLS_sk, data = encrypt(key = Ed25519_sk, data = Secp256k1_pk))
+	// bls_sig is calculated by sign(key = BLS_sk, data = sign(key = Ed25519_sk, data = BLS_pk))
 	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,1,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 }
 
