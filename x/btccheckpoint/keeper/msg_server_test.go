@@ -3,14 +3,16 @@ package keeper_test
 import (
 	"bytes"
 	"encoding/hex"
+	"math/rand"
 	"testing"
+	"time"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	dg "github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/chaincfg"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -44,17 +46,78 @@ func BlockCreationResultToProofs(inputs []*dg.BlockCreationResult) []*btcctypes.
 	return spvs
 }
 
+type testCheckpointData struct {
+	epoch            uint64
+	lastCommitHash   []byte
+	bitmap           []byte
+	blsSig           []byte
+	submitterAddress []byte
+}
+
+func getRandomCheckpointDataForEpoch(e uint64) testCheckpointData {
+	return testCheckpointData{
+		epoch:            e,
+		lastCommitHash:   dg.GenRandomByteArray(txformat.LastCommitHashLength),
+		bitmap:           dg.GenRandomByteArray(txformat.BitMapLength),
+		blsSig:           dg.GenRandomByteArray(txformat.BlsSigLength),
+		submitterAddress: dg.GenRandomByteArray(txformat.AddressLength),
+	}
+}
+
+// both f and s must be parts retrived from txformat.Encode
+func getExpectedOpReturn(f []byte, s []byte) []byte {
+	firstPartNoHeader, err := txformat.GetCheckpointData(
+		txformat.MainTag,
+		txformat.CurrentVersion,
+		0,
+		f,
+	)
+
+	if err != nil {
+		panic("ExpectedOpReturn provided first part should be valid checkpoint data")
+	}
+
+	secondPartNoHeader, err := txformat.GetCheckpointData(
+		txformat.MainTag,
+		txformat.CurrentVersion,
+		1,
+		s,
+	)
+
+	if err != nil {
+		panic("ExpectedOpReturn provided second part should be valid checkpoint data")
+	}
+
+	connected, err := txformat.ConnectParts(txformat.CurrentVersion, firstPartNoHeader, secondPartNoHeader)
+
+	if err != nil {
+		panic("ExpectedOpReturn parts should be connected")
+	}
+
+	return connected
+}
+
 func TestSubmitValidNewCheckpoint(t *testing.T) {
+	rand.Seed(time.Now().Unix())
 	epoch := uint64(1)
 	kDeep := 2
 	wDeep := 4
-	var expectedOpReturn []byte
-	data1 := []byte{1, 2, 3, 4}
+	checkpointData := getRandomCheckpointDataForEpoch(epoch)
+
+	data1, data2 := txformat.MustEncodeCheckpointData(
+		txformat.MainTag,
+		txformat.CurrentVersion,
+		checkpointData.epoch,
+		checkpointData.lastCommitHash,
+		checkpointData.bitmap,
+		checkpointData.blsSig,
+		checkpointData.submitterAddress,
+	)
+
 	blck1 := dg.CreateBlock(1, 7, 7, data1)
-	data2 := []byte{5, 6, 7, 8}
 	blck2 := dg.CreateBlock(2, 14, 3, data2)
-	expectedOpReturn = append(expectedOpReturn, data1...)
-	expectedOpReturn = append(expectedOpReturn, data2...)
+
+	expectedOpReturn := getExpectedOpReturn(data1, data2)
 
 	// here we will only have valid unconfirmed submissions
 	lc := btcctypes.NewMockBTCLightClientKeeper(int64(kDeep) - 1)
@@ -81,7 +144,8 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	_, err := srv.InsertBTCSpvProof(sdkCtx, &msg)
 
 	if err != nil {
-		t.Errorf("Unexpected message processing error: %v", err)
+		// fatal as other tests will panic if this fails
+		t.Fatalf("Unexpected message processing error: %v", err)
 	}
 
 	ed := k.GetEpochData(ctx, epoch)
@@ -120,13 +184,23 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 }
 
 func TestStateTransitionOfValidSubmission(t *testing.T) {
+	rand.Seed(time.Now().Unix())
 	epoch := uint64(1)
 	kDeep := 2
 	wDeep := 4
+	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
-	data1 := []byte{1, 2, 3, 4}
+	data1, data2 := txformat.MustEncodeCheckpointData(
+		txformat.MainTag,
+		txformat.CurrentVersion,
+		checkpointData.epoch,
+		checkpointData.lastCommitHash,
+		checkpointData.bitmap,
+		checkpointData.blsSig,
+		checkpointData.submitterAddress,
+	)
+
 	blck1 := dg.CreateBlock(1, 7, 7, data1)
-	data2 := []byte{5, 6, 7, 8}
 	blck2 := dg.CreateBlock(2, 14, 3, data2)
 
 	// here we will only have valid unconfirmed submissions

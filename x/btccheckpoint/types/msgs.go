@@ -47,7 +47,26 @@ func ParseTwoProofs(submitter sdk.AccAddress, proofs []*BTCSpvProof, powLimit *b
 		parsedProofs = append(parsedProofs, parsedProof)
 	}
 
-	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1])
+	var checkpointData [][]byte
+
+	for i, proof := range parsedProofs {
+		// TODO tag should be taken from configuration
+		data, err := txformat.GetCheckpointData(txformat.MainTag, txformat.CurrentVersion, uint8(i), proof.OpReturnData)
+		if err != nil {
+			return nil, err
+		}
+		checkpointData = append(checkpointData, data)
+	}
+
+	// at this point we know we have two correctly formated babylon op return transacitons
+	// we need to check if parts match
+	fullTxData, err := txformat.ConnectParts(txformat.CurrentVersion, checkpointData[0], checkpointData[1])
+
+	if err != nil {
+		return nil, err
+	}
+
+	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1], fullTxData)
 
 	return &sub, nil
 }
