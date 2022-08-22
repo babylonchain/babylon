@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
@@ -137,6 +138,7 @@ func InitTestnet(
 	var (
 		genAccounts []authtypes.GenesisAccount
 		genBalances []banktypes.Balance
+		genBlsKeys  []*checkpointingtypes.BlsKey
 		genFiles    []string
 	)
 
@@ -210,6 +212,11 @@ func InitTestnet(
 
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
+		genBlsKeys = append(genBlsKeys, &checkpointingtypes.BlsKey{
+			Pubkey:           &valKeys[i].BlsPubkey,
+			Pop:              valKeys[i].PoP,
+			ValidatorAddress: sdk.ValAddress(addr).String(),
+		})
 
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys[i].ValPubkey)
@@ -259,7 +266,7 @@ func InitTestnet(
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 	}
 
-	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, numValidators); err != nil {
+	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, genBlsKeys, numValidators); err != nil {
 		return err
 	}
 
@@ -278,7 +285,7 @@ func InitTestnet(
 func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
-	genFiles []string, numValidators int,
+	genFiles []string, genBlsKeys []*checkpointingtypes.BlsKey, numValidators int,
 ) error {
 
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
@@ -304,6 +311,13 @@ func initGenFiles(
 		bankGenState.Supply = bankGenState.Supply.Add(bal.Coins...)
 	}
 	appGenState[banktypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&bankGenState)
+
+	// set the BLS keys in the genesis state
+	var checkpointGenState checkpointingtypes.GenesisState
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[checkpointingtypes.ModuleName], &checkpointGenState)
+
+	checkpointGenState.BlsKeys = genBlsKeys
+	appGenState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&checkpointGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {

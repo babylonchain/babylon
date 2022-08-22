@@ -37,7 +37,8 @@ func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*t
 // and forwards corresponding MsgCreateValidator message to
 // the epoching module
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
-	// TODO: verify pop, should be done in ValidateBasic()
+	// verify Proof-of-Possession
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)

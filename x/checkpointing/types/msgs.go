@@ -56,6 +56,10 @@ func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
+func (m *MsgWrappedCreateValidator) VerifyPoP() bool {
+	return m.Key.Pop.IsValid(*m.Key.Pubkey)
+}
+
 func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 	// This function validates stateless message elements
 	// TODO: verify bls sig

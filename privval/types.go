@@ -45,5 +45,9 @@ func BuildPoP(valPrivKey tmcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*typ
 		return nil, err
 	}
 	pop := bls12381.Sign(blsPrivkey, data)
-	return &types.ProofOfPossession{BlsSig: &pop}, nil
+	return &types.ProofOfPossession{
+		Ed25519Pk:  valPrivKey.PubKey().Bytes(),
+		Ed25519Sig: data,
+		BlsSig:     &pop,
+	}, nil
 }
