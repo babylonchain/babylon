@@ -5,7 +5,6 @@ import (
 
 	btypes "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -179,8 +178,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
 	}
 
-	// TODO get PowLimit from config
-	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, btcchaincfg.MainNetParams.PowLimit)
+	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, m.k.GetPowLimit())
 
 	if e != nil {
 		return nil, types.ErrInvalidCheckpointProof
