@@ -44,6 +44,8 @@ const (
 	// Each checkpoint is composed of two parts
 	NumberOfParts = 2
 
+	// First 10 bytes of sha256 of first part are appended to second part to ease up
+	// pairing of parts
 	hashLength = 10
 
 	BlsSigLength = 48
@@ -137,7 +139,6 @@ func EncodeCheckpointData(
 	blsSig []byte,
 	submitterAddress []byte,
 ) ([]byte, []byte, error) {
-
 	if tag != MainTag && tag != TestTag {
 		return nil, nil, errors.New("not allowed Tag value")
 	}
@@ -160,6 +161,10 @@ func EncodeCheckpointData(
 
 	if len(blsSig) != BlsSigLength {
 		return nil, nil, errors.New("BlsSig should have 48 bytes")
+	}
+
+	if len(submitterAddress) != AddressLength {
+		return nil, nil, errors.New("address should have 20 bytes")
 	}
 
 	var firstHalf = encodeFirstOpRetrun(tag, version, epoch, lastCommitHash, bitmap, submitterAddress)
