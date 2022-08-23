@@ -84,7 +84,7 @@ func waitForBlock(clients []*grpc.ClientConn, blockNumber int64) {
 
 func TestMain(m *testing.M) {
 
-	// This is needed so that all address prefixes are in bbl format
+	// This is needed so that all address prefixes are in Babylon format
 	appparams.SetAddressPrefixes()
 
 	for _, addr := range addresses {
