@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 	"errors"
-
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	ed255192 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -40,20 +40,13 @@ func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*t
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// verify Proof-of-Possession
-	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)
-	if err != nil {
-		return nil, err
-	}
-	valPubkey, found := m.k.GetValidatorPubkey(ctx, valAddr)
-	if !found {
-		return nil, errors.New("can not find validator by address")
-	}
-	ok := msg.VerifyPoP(valPubkey)
+	ok := msg.VerifyPoP(&ed255192.PubKey{Key: msg.MsgCreateValidator.Pubkey.Value})
 	if !ok {
 		return nil, errors.New("the proof-of-possession is not valid")
 	}
 
-	// store BLS public key with validator address
+	// store BLS public key
+	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)
 	err = m.k.CreateRegistration(ctx, *msg.Key.Pubkey, valAddr)
 	if err != nil {
 		return nil, err
