@@ -7,8 +7,6 @@ option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
 // BlsKey wraps BLS public key with PoP
 message BlsKey {
-  // validator_address is the address corresponding to a validator
-  string validator_address = 1;
   // pubkey is the BLS public key of a validator
   bytes pubkey = 2 [
     (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.PublicKey"

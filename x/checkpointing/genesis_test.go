@@ -4,6 +4,7 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing"
+	ed255192 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -20,30 +21,30 @@ func TestInitGenesis(t *testing.T) {
 	ckptKeeper := app.CheckpointingKeeper
 
 	valNum := 10
-	blsKeys := make([]*types.BlsKey, valNum)
-	valPubkeys := make([][]byte, valNum)
+	genKeys := make([]*types.GenesisKey, valNum)
 	for i := 0; i < valNum; i++ {
 		valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
 		require.NoError(t, err)
-		blsKey := &types.BlsKey{
+		genKey := &types.GenesisKey{
 			ValidatorAddress: valKeys.ValPubkey.Address().String(),
-			Pubkey:           &valKeys.BlsPubkey,
-			Pop:              valKeys.PoP,
+			BlsKey: &types.BlsKey{
+				Pubkey: &valKeys.BlsPubkey,
+				Pop:    valKeys.PoP,
+			},
+			ValPubkey: &ed255192.PubKey{Key: valKeys.ValPubkey.Bytes()},
 		}
-		blsKeys[i] = blsKey
-		valPubkeys[i] = valKeys.ValPubkey.Bytes()
+		genKeys[i] = genKey
 	}
 	genesisState := types.GenesisState{
-		Params:     types.Params{},
-		BlsKeys:    blsKeys,
-		ValPubkeys: valPubkeys,
+		Params:      types.Params{},
+		GenesisKeys: genKeys,
 	}
 
 	checkpointing.InitGenesis(ctx, ckptKeeper, genesisState)
 	for i := 0; i < valNum; i++ {
-		addr, err := sdk.ValAddressFromHex(blsKeys[i].ValidatorAddress)
+		addr, err := sdk.ValAddressFromHex(genKeys[i].ValidatorAddress)
 		require.NoError(t, err)
 		blsKey, err := ckptKeeper.GetBlsPubKey(ctx, addr)
-		require.True(t, blsKeys[i].Pubkey.Equal(blsKey))
+		require.True(t, genKeys[i].BlsKey.Pubkey.Equal(blsKey))
 	}
 }

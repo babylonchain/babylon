@@ -13,9 +13,16 @@ message GenesisState {
   // params defines all the paramaters of related to checkpointing
   Params params = 1 [(gogoproto.nullable) = false];
 
-  // bls_keys defines the BLS keys of each validator at genesis
-  repeated BlsKey bls_keys = 2;
+  repeated GenesisKey genesis_keys = 2;
+}
 
-  // val_pubkeys defines the ed25519 public keys of each validator at genesis
-  repeated bytes val_pubkeys = 3;
+message GenesisKey {
+  // validator_address is the address corresponding to a validator
+  string validator_address = 1;
+
+  // bls_key defines the BLS key of the validator at genesis
+  BlsKey bls_key = 2;
+
+  // val_pubkey defines the ed25519 public key of the validator at genesis
+  cosmos.crypto.ed25519.PubKey val_pubkey = 3;
 }

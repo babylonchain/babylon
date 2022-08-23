@@ -10,7 +10,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"net"
 	"os"
 	"path/filepath"
@@ -135,11 +134,10 @@ func InitTestnet(
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
 
 	var (
-		genAccounts   []authtypes.GenesisAccount
-		genBalances   []banktypes.Balance
-		genBlsKeys    []*checkpointingtypes.BlsKey
-		genValPubkeys []cryptotypes.PubKey
-		genFiles      []string
+		genAccounts []authtypes.GenesisAccount
+		genBalances []banktypes.Balance
+		genKeys     []*checkpointingtypes.GenesisKey
+		genFiles    []string
 	)
 
 	inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -212,18 +210,21 @@ func InitTestnet(
 
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
-		genBlsKeys = append(genBlsKeys, &checkpointingtypes.BlsKey{
-			Pubkey:           &valKeys[i].BlsPubkey,
-			Pop:              valKeys[i].PoP,
-			ValidatorAddress: sdk.ValAddress(addr).String(),
-		})
 
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
 		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys[i].ValPubkey)
 		if err != nil {
 			return err
 		}
-		genValPubkeys = append(genValPubkeys, valPubkey)
+		genKey := &checkpointingtypes.GenesisKey{
+			ValidatorAddress: sdk.ValAddress(addr).String(),
+			BlsKey: &checkpointingtypes.BlsKey{
+				Pubkey: &valKeys[i].BlsPubkey,
+				Pop:    valKeys[i].PoP,
+			},
+			ValPubkey: nil,
+		}
+		genKeys = append(genKeys, genKey)
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubkey,
@@ -266,12 +267,12 @@ func InitTestnet(
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 	}
 
-	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, genBlsKeys, genValPubkeys, numValidators); err != nil {
+	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, genKeys, numValidators); err != nil {
 		return err
 	}
 
 	err := collectGenFiles(
-		clientCtx, nodeConfig, chainID, nodeIDs, genValPubkeys, numValidators,
+		clientCtx, nodeConfig, chainID, nodeIDs, genKeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
 	if err != nil {
@@ -285,7 +286,7 @@ func InitTestnet(
 func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
-	genFiles []string, genBlsKeys []*checkpointingtypes.BlsKey, valPubKeys []cryptotypes.PubKey, numValidators int,
+	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
 ) error {
 
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
@@ -316,12 +317,7 @@ func initGenFiles(
 	var checkpointGenState checkpointingtypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[checkpointingtypes.ModuleName], &checkpointGenState)
 
-	checkpointGenState.BlsKeys = genBlsKeys
-	var valPubkeysBytes = make([][]byte, len(valPubKeys))
-	for i := 0; i < len(valPubKeys); i++ {
-		valPubkeysBytes[i] = valPubKeys[i].Bytes()
-	}
-	checkpointGenState.ValPubkeys = valPubkeysBytes
+	checkpointGenState.GenesisKeys = genKeys
 	appGenState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&checkpointGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
@@ -346,7 +342,7 @@ func initGenFiles(
 
 func collectGenFiles(
 	clientCtx client.Context, nodeConfig *tmconfig.Config, chainID string,
-	nodeIDs []string, valPubKeys []cryptotypes.PubKey, numValidators int,
+	nodeIDs []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
 	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator,
 ) error {
 
@@ -361,7 +357,7 @@ func collectGenFiles(
 
 		nodeConfig.SetRoot(nodeDir)
 
-		nodeID, valPubKey := nodeIDs[i], valPubKeys[i]
+		nodeID, valPubKey := nodeIDs[i], genKeys[i].ValPubkey
 		initCfg := genutiltypes.NewInitConfig(chainID, gentxsDir, nodeID, valPubKey)
 
 		genDoc, err := types.GenesisDocFromFile(nodeConfig.GenesisFile())
