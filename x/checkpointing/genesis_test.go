@@ -21,6 +21,7 @@ func TestInitGenesis(t *testing.T) {
 
 	valNum := 10
 	blsKeys := make([]*types.BlsKey, valNum)
+	valPubkeys := make([][]byte, valNum)
 	for i := 0; i < valNum; i++ {
 		valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
 		require.NoError(t, err)
@@ -30,10 +31,12 @@ func TestInitGenesis(t *testing.T) {
 			Pop:              valKeys.PoP,
 		}
 		blsKeys[i] = blsKey
+		valPubkeys[i] = valKeys.ValPubkey.Bytes()
 	}
 	genesisState := types.GenesisState{
-		Params:  types.Params{},
-		BlsKeys: blsKeys,
+		Params:     types.Params{},
+		BlsKeys:    blsKeys,
+		ValPubkeys: valPubkeys,
 	}
 
 	checkpointing.InitGenesis(ctx, ckptKeeper, genesisState)

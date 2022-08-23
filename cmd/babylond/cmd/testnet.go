@@ -10,6 +10,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"net"
 	"os"
 	"path/filepath"
@@ -26,7 +27,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -124,7 +124,6 @@ func InitTestnet(
 	}
 
 	nodeIDs := make([]string, numValidators)
-	valPubkeys := make([]cryptotypes.PubKey, numValidators)
 	valKeys := make([]*privval.ValidatorKeys, numValidators)
 
 	babylonConfig := srvconfig.DefaultConfig()
@@ -136,10 +135,11 @@ func InitTestnet(
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
 
 	var (
-		genAccounts []authtypes.GenesisAccount
-		genBalances []banktypes.Balance
-		genBlsKeys  []*checkpointingtypes.BlsKey
-		genFiles    []string
+		genAccounts   []authtypes.GenesisAccount
+		genBalances   []banktypes.Balance
+		genBlsKeys    []*checkpointingtypes.BlsKey
+		genValPubkeys []cryptotypes.PubKey
+		genFiles      []string
 	)
 
 	inBuf := bufio.NewReader(cmd.InOrStdin())
@@ -223,7 +223,7 @@ func InitTestnet(
 		if err != nil {
 			return err
 		}
-		valPubkeys = append(valPubkeys, valPubkey)
+		genValPubkeys = append(genValPubkeys, valPubkey)
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubkey,
@@ -266,12 +266,12 @@ func InitTestnet(
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 	}
 
-	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, genBlsKeys, numValidators); err != nil {
+	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, genBlsKeys, genValPubkeys, numValidators); err != nil {
 		return err
 	}
 
 	err := collectGenFiles(
-		clientCtx, nodeConfig, chainID, nodeIDs, valPubkeys, numValidators,
+		clientCtx, nodeConfig, chainID, nodeIDs, genValPubkeys, numValidators,
 		outputDir, nodeDirPrefix, nodeDaemonHome, genBalIterator,
 	)
 	if err != nil {
@@ -285,7 +285,7 @@ func InitTestnet(
 func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
-	genFiles []string, genBlsKeys []*checkpointingtypes.BlsKey, numValidators int,
+	genFiles []string, genBlsKeys []*checkpointingtypes.BlsKey, valPubKeys []cryptotypes.PubKey, numValidators int,
 ) error {
 
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
@@ -317,6 +317,11 @@ func initGenFiles(
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[checkpointingtypes.ModuleName], &checkpointGenState)
 
 	checkpointGenState.BlsKeys = genBlsKeys
+	var valPubkeysBytes = make([][]byte, len(valPubKeys))
+	for i := 0; i < len(valPubKeys); i++ {
+		valPubkeysBytes[i] = valPubKeys[i].Bytes()
+	}
+	checkpointGenState.ValPubkeys = valPubkeysBytes
 	appGenState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&checkpointGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")

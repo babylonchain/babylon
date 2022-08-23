@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetGenBlsKeys registers BLS keys with each validator at genesis
-func (k Keeper) SetGenBlsKeys(ctx sdk.Context, blsKeys []*types.BlsKey) {
-	for _, blskey := range blsKeys {
+func (k Keeper) SetGenBlsKeys(ctx sdk.Context, blsKeys []*types.BlsKey, valPubkeys []cryptotypes.PubKey) {
+	for i, blskey := range blsKeys {
 		valAddr, err := sdk.ValAddressFromHex(blskey.ValidatorAddress)
 		if err != nil {
 			panic(err)
@@ -16,7 +17,7 @@ func (k Keeper) SetGenBlsKeys(ctx sdk.Context, blsKeys []*types.BlsKey) {
 		if exists {
 			panic("a validator's BLS key has already been registered")
 		}
-		ok := blskey.Pop.IsValid(*blskey.Pubkey)
+		ok := blskey.Pop.IsValid(*blskey.Pubkey, valPubkeys[i])
 		if !ok {
 			panic("Proof-of-Possession is not valid")
 		}

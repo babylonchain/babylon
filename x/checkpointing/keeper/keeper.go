@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
@@ -260,4 +261,8 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) epochingtyp
 
 func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
 	return k.epochingKeeper.GetTotalVotingPower(ctx, epochNumber)
+}
+
+func (k Keeper) GetValidatorPubkey(ctx sdk.Context, valAddr sdk.ValAddress) (cryptotypes.PubKey, bool) {
+	return k.epochingKeeper.GetValidatorPubkey(ctx, valAddr)
 }

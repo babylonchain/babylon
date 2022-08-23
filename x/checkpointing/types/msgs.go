@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -56,8 +57,8 @@ func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgWrappedCreateValidator) VerifyPoP() bool {
-	return m.Key.Pop.IsValid(*m.Key.Pubkey)
+func (m *MsgWrappedCreateValidator) VerifyPoP(valPubkey cryptotypes.PubKey) bool {
+	return m.Key.Pop.IsValid(*m.Key.Pubkey, valPubkey)
 }
 
 func (m *MsgWrappedCreateValidator) ValidateBasic() error {

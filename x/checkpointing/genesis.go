@@ -3,6 +3,8 @@ package checkpointing
 import (
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -11,7 +13,11 @@ import (
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
 
-	k.SetGenBlsKeys(ctx, genState.BlsKeys)
+	valPubkeys := make([]cryptotypes.PubKey, len(genState.ValPubkeys))
+	for i := 0; i < len(genState.ValPubkeys); i++ {
+		valPubkeys[i] = &ed25519.PubKey{Key: genState.ValPubkeys[i]}
+	}
+	k.SetGenBlsKeys(ctx, genState.BlsKeys, valPubkeys)
 }
 
 // ExportGenesis returns the capability module's exported genesis.
