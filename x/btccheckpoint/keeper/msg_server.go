@@ -19,6 +19,22 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{keeper}
 }
 
+func (m msgServer) isAncestor(ctx sdk.Context, fh *btypes.BTCHeaderHashBytes, sh *btypes.BTCHeaderHashBytes) (bool, error) {
+	isFirstAncestor, err := m.k.IsAncestor(ctx, fh, sh)
+
+	if err != nil {
+		return false, err
+	}
+
+	isSecondAncestor, err := m.k.IsAncestor(ctx, sh, fh)
+
+	if err != nil {
+		return false, err
+	}
+
+	return isFirstAncestor || isSecondAncestor, nil
+}
+
 // Gets proof height in context of btclightclilent, also if proof is composed
 // from two different blocks checks that they are on the same fork.
 func (m msgServer) checkAllHeadersAreKnown(ctx sdk.Context, rawSub *types.RawCheckpointSubmission) error {
@@ -49,7 +65,7 @@ func (m msgServer) checkAllHeadersAreKnown(ctx sdk.Context, rawSub *types.RawChe
 
 	// we have checked earlier that both blocks are known to header light client,
 	// so no need to check err.
-	isAncestor, err := m.k.IsAncestor(ctx, &fh, &sh)
+	isAncestor, err := m.isAncestor(ctx, &fh, &sh)
 
 	if err != nil {
 		panic("Headers which are should have been known to btclight client")
@@ -85,7 +101,7 @@ func (m msgServer) checkHashesAreAncestors(ctx sdk.Context, hs []*btypes.BTCHead
 	}
 
 	for i := 1; i < len(hs); i++ {
-		anc, err := m.k.IsAncestor(ctx, hs[i-1], hs[i])
+		anc, err := m.isAncestor(ctx, hs[i-1], hs[i])
 
 		if err != nil {
 			// TODO: Light client lost knowledge of one of the chekpoint hashes.
@@ -124,7 +140,7 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 			fh := rawSub.GetFirstBlockHash()
 			// all the hashes are from the same block, we only need to check if firstHash
 			// of new submission is ancestor of this one hash
-			anc, err := m.k.IsAncestor(ctx, hs[0], &fh)
+			anc, err := m.isAncestor(ctx, hs[0], &fh)
 			if err != nil {
 				// TODO: light client lost knowledge of blockhash from previous epoch
 				// (we know that this is not rawSub as we checked that earlier)
@@ -151,7 +167,7 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 			fh := rawSub.GetFirstBlockHash()
 
 			// do not check err as all those hashes were checked in previous validation steps
-			anc, err := m.k.IsAncestor(ctx, lastHashFromSavedCheckpoint, &fh)
+			anc, err := m.isAncestor(ctx, lastHashFromSavedCheckpoint, &fh)
 
 			if err != nil {
 				panic("Unexpected anecestry error, all blocks should have been known at this point")

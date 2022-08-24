@@ -22,16 +22,22 @@ var (
 	// opcode.  It is defined here to reduce garbage creation.
 	opTrueScript = []byte{txscript.OP_TRUE}
 
+	tranasctionVersion = 1
+
 	lowFee = btcutil.Amount(1)
 )
 
+// standardCoinbaseScript returns a standard script suitable for use as the
+// signature script of the coinbase transaction of a new block.  In particular,
+// it starts with the block height that is required by version 2 blocks
 func standardCoinbaseScript(blockHeight int32, extraNonce uint64) ([]byte, error) {
 	return txscript.NewScriptBuilder().AddInt64(int64(blockHeight)).
 		AddInt64(int64(extraNonce)).Script()
 }
 
 // opReturnScript returns a provably-pruneable OP_RETURN script with the
-// provided data.
+// provided data.(i.e  this is how OP_RETURN script should look like to not pollue
+// unspent transaction outputs )
 func opReturnScript(data []byte) []byte {
 	builder := txscript.NewScriptBuilder()
 	script, err := builder.AddOp(txscript.OP_RETURN).AddData(data).Script()
@@ -41,6 +47,9 @@ func opReturnScript(data []byte) []byte {
 	return script
 }
 
+// solveBlock mutates provided header.Nonce, until it solves proof of work puzzle
+// WARNING: providing header with too large difficulty (header.Bits) will make this
+// function unfinishable.
 func solveBlock(header *wire.BlockHeader) bool {
 	// sbResult is used by the solver goroutines to send results.
 	type sbResult struct {
@@ -118,7 +127,7 @@ func createCoinbaseTx(blockHeight int32, params *chaincfg.Params) *wire.MsgTx {
 		panic(err)
 	}
 
-	tx := wire.NewMsgTx(1)
+	tx := wire.NewMsgTx(int32(tranasctionVersion))
 	tx.AddTxIn(&wire.TxIn{
 		// Coinbase transactions have no inputs, so previous outpoint is
 		// zero hash and max index.
@@ -172,7 +181,7 @@ func makeSpendableOutWithRandOutPoint(amount btcutil.Amount) spendableOut {
 }
 
 func createSpendTx(spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
-	spendTx := wire.NewMsgTx(1)
+	spendTx := wire.NewMsgTx(int32(tranasctionVersion))
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,
 		Sequence:         wire.MaxTxInSequenceNum,
@@ -188,7 +197,7 @@ func createSpendTx(spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
 }
 
 func createSpendOpReturnTx(spend *spendableOut, fee btcutil.Amount, data []byte) *wire.MsgTx {
-	spendTx := wire.NewMsgTx(1)
+	spendTx := wire.NewMsgTx(int32(tranasctionVersion))
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,
 		Sequence:         wire.MaxTxInSequenceNum,
