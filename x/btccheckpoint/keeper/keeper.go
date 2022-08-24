@@ -3,13 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/tendermint/tendermint/libs/log"
+	"math/big"
 
 	bbl "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/tendermint/tendermint/libs/log"
 )
 
 type (
@@ -22,6 +23,7 @@ type (
 		checkpointingKeeper  types.CheckpointingKeeper
 		kDeep                uint64
 		wDeep                uint64
+		powLimit             *big.Int
 	}
 )
 
@@ -35,6 +37,7 @@ func NewKeeper(
 	// Those are node level constants should go to some kind of global node config
 	kDeep uint64,
 	wDeep uint64,
+	powLimit *big.Int,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -50,7 +53,12 @@ func NewKeeper(
 		checkpointingKeeper:  ck,
 		kDeep:                kDeep,
 		wDeep:                wDeep,
+		powLimit:             powLimit,
 	}
+}
+
+func (k Keeper) GetPowLimit() *big.Int {
+	return k.powLimit
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
@@ -358,6 +359,8 @@ func NewBabylonApp(
 			// from some global config
 			6,
 			10,
+			// TODO take from config
+			chaincfg.MainNetParams.PowLimit,
 		)
 
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
