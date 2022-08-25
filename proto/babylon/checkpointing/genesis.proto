@@ -1,7 +1,6 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
-import "google/protobuf/any.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/crypto/ed25519/keys.proto";
@@ -26,5 +25,5 @@ message GenesisKey {
   BlsKey bls_key = 2;
 
   // val_pubkey defines the ed25519 public key of the validator at genesis
-  google.protobuf.Any val_pubkey = 3 [(cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey"];
+  cosmos.crypto.ed25519.PubKey val_pubkey = 3;
 }

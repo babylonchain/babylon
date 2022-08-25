@@ -4,8 +4,8 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -28,15 +28,13 @@ func TestInitGenesis(t *testing.T) {
 		require.NoError(t, err)
 		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys.ValPubkey)
 		require.NoError(t, err)
-		pkAny, err := codectypes.NewAnyWithValue(valPubkey)
-		require.NoError(t, err)
 		genKey := &types.GenesisKey{
 			ValidatorAddress: sdk.ValAddress(valKeys.ValPubkey.Address()).String(),
 			BlsKey: &types.BlsKey{
 				Pubkey: &valKeys.BlsPubkey,
 				Pop:    valKeys.PoP,
 			},
-			ValPubkey: pkAny,
+			ValPubkey: &cosmosed.PubKey{Key: valPubkey.Bytes()},
 		}
 		genKeys[i] = genKey
 	}

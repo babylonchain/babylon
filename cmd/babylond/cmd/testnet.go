@@ -9,9 +9,8 @@ import (
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"net"
 	"os"
 	"path/filepath"
@@ -218,17 +217,14 @@ func InitTestnet(
 		if err != nil {
 			return err
 		}
-		pkAny, err := codectypes.NewAnyWithValue(valPubkey)
-		if err != nil {
-			panic(err)
-		}
+
 		genKey := &checkpointingtypes.GenesisKey{
 			ValidatorAddress: sdk.ValAddress(addr).String(),
 			BlsKey: &checkpointingtypes.BlsKey{
 				Pubkey: &valKeys[i].BlsPubkey,
 				Pop:    valKeys[i].PoP,
 			},
-			ValPubkey: pkAny,
+			ValPubkey: valPubkey.(*ed25519.PubKey),
 		}
 		genKeys = append(genKeys, genKey)
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
@@ -364,7 +360,7 @@ func collectGenFiles(
 		nodeConfig.SetRoot(nodeDir)
 
 		nodeID, valPubKey := nodeIDs[i], genKeys[i].ValPubkey
-		initCfg := genutiltypes.NewInitConfig(chainID, gentxsDir, nodeID, valPubKey.GetCachedValue().(cryptotypes.PubKey))
+		initCfg := genutiltypes.NewInitConfig(chainID, gentxsDir, nodeID, valPubKey)
 
 		genDoc, err := types.GenesisDocFromFile(nodeConfig.GenesisFile())
 		if err != nil {
