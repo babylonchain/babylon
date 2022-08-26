@@ -435,7 +435,7 @@ localnet-build-dlv:
 
 localnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
-			  testnet init-files --v 4 -o /data --starting-ip-address babylonnode{i} --keyring-backend=test
+			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
 	docker-compose up -d
 
 localnet-stop:
