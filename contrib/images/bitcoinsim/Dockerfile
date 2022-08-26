@@ -18,8 +18,8 @@ RUN apk add bash expect expect-dev
 WORKDIR /bitcoinsim
 
 COPY --from=build /go/bin/* /usr/bin/
-COPY contrib/images/bitcoinsim/wrapper.sh /bitcoinsim/wrapper.sh
-COPY contrib/images/bitcoinsim/btcwallet_create.exp /bitcoinsim/btcwallet_create.exp
+COPY wrapper.sh /bitcoinsim/wrapper.sh
+COPY btcwallet_create.exp /bitcoinsim/btcwallet_create.exp
 
 ENV RPCUSER=rpcuser
 ENV RPCPASS=rpcpass
