@@ -4,7 +4,6 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"math/big"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -25,8 +24,8 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 	if err != nil {
 		return err
 	}
-
-	return msg.ValidateHeader(btcchaincfg.MainNetParams.PowLimit)
+	powLimit := bbn.GetGlobalPowLimit()
+	return msg.ValidateHeader(&powLimit)
 }
 
 func (msg *MsgInsertHeader) ValidateHeader(powLimit *big.Int) error {

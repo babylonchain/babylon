@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -86,13 +85,10 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 func initAppConfig() (string, interface{}) {
 	// The following code snippet is just for reference.
 
-	type CustomAppConfig struct {
-		serverconfig.Config
-	}
-
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
-	srvCfg := serverconfig.DefaultConfig()
+	babylonConfig := DefaultBabylonConfig()
+	babylonTemplate := DefaultBabylonTemplate()
 	// The SDK's default minimum gas price is set to "" (empty value) inside
 	// app.toml. If left empty by validators, the node will halt on startup.
 	// However, the chain developer can set a default app.toml value for their
@@ -105,13 +101,9 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In app, we set the min gas prices to 0.
-	srvCfg.MinGasPrices = "0stake"
+	babylonConfig.MinGasPrices = "0stake"
 
-	customAppConfig := CustomAppConfig{
-		Config: *srvCfg,
-	}
-
-	return serverconfig.DefaultConfigTemplate, customAppConfig
+	return babylonTemplate, babylonConfig
 }
 
 func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {

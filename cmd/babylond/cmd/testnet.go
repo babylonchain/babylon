@@ -6,14 +6,16 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"net"
 	"os"
 	"path/filepath"
+
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	"github.com/spf13/cobra"
 	tmconfig "github.com/tendermint/tendermint/config"
@@ -126,13 +128,15 @@ func InitTestnet(
 	nodeIDs := make([]string, numValidators)
 	valKeys := make([]*privval.ValidatorKeys, numValidators)
 
-	babylonConfig := srvconfig.DefaultConfig()
+	babylonConfig := DefaultBabylonConfig()
 	babylonConfig.MinGasPrices = minGasPrices
 	babylonConfig.API.Enable = true
 	babylonConfig.Telemetry.Enabled = true
 	babylonConfig.Telemetry.PrometheusRetentionTime = 60
 	babylonConfig.Telemetry.EnableHostnameLabel = false
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
+	// it makes sense in integration tests to use simnet due to lower difficulty
+	babylonConfig.BtcConfig.Network = string(bbn.BtcSimnet)
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -266,6 +270,8 @@ func InitTestnet(
 			return err
 		}
 
+		customTemplate := DefaultBabylonTemplate()
+		srvconfig.SetConfigTemplate(customTemplate)
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 	}
 
