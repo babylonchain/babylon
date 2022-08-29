@@ -1,11 +1,15 @@
 package keeper_test
 
 import (
+	"fmt"
+	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/testutil/mocks"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -31,6 +35,23 @@ var (
 )
 
 func TestKeeper_SendBlsSig(t *testing.T) {
+	cfg := network.DefaultConfig()
+	encodingCfg := app.MakeTestEncodingConfig()
+	cfg.InterfaceRegistry = encodingCfg.InterfaceRegistry
+	cfg.TxConfig = encodingCfg.TxConfig
+	cfg.NumValidators = 1
+
+	network := network.New(t, cfg)
+	defer network.Cleanup()
+
+	val := network.Validators[0]
+	nodeDirName := fmt.Sprintf("node%d", 0)
+	clientCtx := val.ClientCtx.WithHeight(2).
+		WithFromAddress(val.Address).
+		WithFromName(nodeDirName).
+		WithBroadcastMode(flags.BroadcastAsync)
+	clientCtx.SkipConfirm = true
+
 	epochNum := uint64(10)
 	lch := tmhash.Sum([]byte("last_commit_hash"))
 	signBytes := append(sdk.Uint64ToBigEndian(epochNum), lch...)
@@ -39,11 +60,11 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	defer ctrl.Finish()
 	ek := mocks.NewMockEpochingKeeper(ctrl)
 	signer := mocks.NewMockBlsSigner(ctrl)
-	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, signer)
+	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, signer, clientCtx)
 
 	ek.EXPECT().GetValidatorSet(ctx, gomock.Eq(epochNum)).Return(valSet)
 	signer.EXPECT().GetAddress().Return(addr1)
 	signer.EXPECT().SignMsgWithBls(gomock.Eq(signBytes)).Return(bls12381.Sign(blsPrivKey1, signBytes), nil)
-	err := ckptkeeper.SendBlsSig(ctx, epochNum, lch)
+	err := ckptkeeper.SendBlsSig(ctx, epochNum, lch, clientCtx)
 	require.NoError(t, err)
 }

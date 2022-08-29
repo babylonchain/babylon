@@ -154,7 +154,7 @@ var (
 	_ servertypes.Application = (*BabylonApp)(nil)
 )
 
-// App extends an ABCI application, but with most of its parameters exported.
+// BabylonApp extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
 type BabylonApp struct {
@@ -339,14 +339,32 @@ func NewBabylonApp(
 		keys[btclightclienttypes.MemStoreKey],
 		app.GetSubspace(btclightclienttypes.ModuleName))
 
+	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
+	if err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
+		panic(err)
+	}
+	pvStateFile := nodeCfg.PrivValidatorStateFile()
+	if err := tmos.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
+		panic(err)
+	}
+	// TODO: currently, the client.Context is a placeholder, it should be injected from somewhere
 	app.CheckpointingKeeper =
 		checkpointingkeeper.NewKeeper(
 			appCodec,
 			keys[checkpointingtypes.StoreKey],
 			keys[checkpointingtypes.MemStoreKey],
-			privval.LoadOrGenWrappedFilePV(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile()),
+			privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile),
 			app.EpochingKeeper,
-			app.GetSubspace(checkpointingtypes.ModuleName))
+			app.GetSubspace(checkpointingtypes.ModuleName),
+			client.Context{}.
+				WithCodec(encodingConfig.Marshaler).
+				WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
+				WithTxConfig(encodingConfig.TxConfig).
+				WithLegacyAmino(encodingConfig.Amino).
+				WithInput(os.Stdin).
+				WithAccountRetriever(authtypes.AccountRetriever{}).
+				WithViper(""), // In app, we don't use any prefix for env variables.
+		)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations

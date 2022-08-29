@@ -6,6 +6,7 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
@@ -21,6 +22,7 @@ type (
 		epochingKeeper types.EpochingKeeper
 		hooks          types.CheckpointingHooks
 		paramstore     paramtypes.Subspace
+		clientCtx      client.Context
 	}
 )
 
@@ -31,6 +33,7 @@ func NewKeeper(
 	signer BlsSigner,
 	ek types.EpochingKeeper,
 	ps paramtypes.Subspace,
+	clientCtx client.Context,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -45,6 +48,7 @@ func NewKeeper(
 		epochingKeeper: ek,
 		paramstore:     ps,
 		hooks:          nil,
+		clientCtx:      clientCtx,
 	}
 }
 
