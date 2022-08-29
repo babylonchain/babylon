@@ -3,6 +3,8 @@ package privval
 import (
 	"fmt"
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -161,8 +163,8 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 // TODO: implement SignBLS
 // GetAddress returns the address of the validator.
 // Implements PrivValidator.
-func (pv *WrappedFilePV) GetAddress() types.Address {
-	return pv.Key.Address
+func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
+	return sdk.ValAddress(pv.Key.Address)
 }
 
 // GetPubKey returns the public key of the validator.
@@ -177,6 +179,22 @@ func (pv *WrappedFilePV) GetValPrivKey() tmcrypto.PrivKey {
 
 func (pv *WrappedFilePV) GetBlsPrivKey() bls12381.PrivateKey {
 	return pv.Key.BlsPrivKey
+}
+
+func (pv *WrappedFilePV) SignMsgWithBls(msg []byte) (bls12381.Signature, error) {
+	blsPrivKey := pv.GetBlsPrivKey()
+	if blsPrivKey == nil {
+		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
+	}
+	return bls12381.Sign(blsPrivKey, msg), nil
+}
+
+func (pv *WrappedFilePV) GetBlsPubkey() (bls12381.PublicKey, error) {
+	blsPrivKey := pv.GetBlsPrivKey()
+	if blsPrivKey == nil {
+		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
+	}
+	return blsPrivKey.PubKey(), nil
 }
 
 // Save persists the FilePV to disk.

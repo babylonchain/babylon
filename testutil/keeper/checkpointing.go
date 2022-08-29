@@ -16,7 +16,7 @@ import (
 	"testing"
 )
 
-func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
+func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -41,8 +41,8 @@ func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.Prot
 		cdc,
 		storeKey,
 		memStoreKey,
-		// TODO: nil for now, will add epoching keeper for integrated testing
-		nil,
+		signer,
+		ek,
 		paramsSubspace,
 	)
 

@@ -2,6 +2,8 @@ package app
 
 import (
 	"encoding/json"
+	"github.com/babylonchain/babylon/privval"
+	tmconfig "github.com/tendermint/tendermint/config"
 	"io"
 	"net/http"
 	"os"
@@ -214,7 +216,7 @@ func init() {
 // NewBabylonApp returns a reference to an initialized BabylonApp.
 func NewBabylonApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig,
+	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, nodeCfg *tmconfig.Config,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
 
@@ -342,6 +344,7 @@ func NewBabylonApp(
 			appCodec,
 			keys[checkpointingtypes.StoreKey],
 			keys[checkpointingtypes.MemStoreKey],
+			privval.LoadOrGenWrappedFilePV(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile()),
 			app.EpochingKeeper,
 			app.GetSubspace(checkpointingtypes.ModuleName))
 

@@ -19,7 +19,7 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t)
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
 
 		// test nil raw checkpoint
 		err := ckptKeeper.AddRawCheckpoint(ctx, nil)
@@ -59,7 +59,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		ckptKeeper, ctx, cdc := testkeeper.CheckpointingKeeper(t)
+		ckptKeeper, ctx, cdc := testkeeper.CheckpointingKeeper(t, nil, nil)
 
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
 		ckptBytes := types.RawCkptToBytes(cdc, mockCkptWithMeta.Ckpt)
@@ -84,7 +84,7 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t)
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
 
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
 		epoch := mockCkptWithMeta.Ckpt.EpochNum

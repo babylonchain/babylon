@@ -38,7 +38,7 @@ func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator)
 
 func (m *MsgAddBlsSig) ValidateBasic() error {
 	// This function validates stateless message elements
-	_, err := sdk.AccAddressFromBech32(m.BlsSig.SignerAddress)
+	_, err := sdk.ValAddressFromBech32(m.BlsSig.SignerAddress)
 	if err != nil {
 		return err
 	}
