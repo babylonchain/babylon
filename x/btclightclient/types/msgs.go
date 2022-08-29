@@ -1,7 +1,7 @@
 package types
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"math/big"
 
@@ -12,7 +12,7 @@ import (
 var _ sdk.Msg = (*MsgInsertHeader)(nil)
 
 func NewMsgInsertHeader(signer sdk.AccAddress, headerHex string) (*MsgInsertHeader, error) {
-	headerBytes, err := bbl.NewBTCHeaderBytesFromHex(headerHex)
+	headerBytes, err := bbn.NewBTCHeaderBytesFromHex(headerHex)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func (msg *MsgInsertHeader) ValidateBasic() error {
 }
 
 func (msg *MsgInsertHeader) ValidateHeader(powLimit *big.Int) error {
-	return bbl.ValidateBTCHeader(msg.Header.ToBlockHeader(), powLimit)
+	return bbn.ValidateBTCHeader(msg.Header.ToBlockHeader(), powLimit)
 }
 
 func (msg *MsgInsertHeader) GetSigners() []sdk.AccAddress {

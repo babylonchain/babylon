@@ -5,7 +5,7 @@ import (
 
 	"math/big"
 
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -65,16 +65,16 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbl.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) bool {
+func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
 	_, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 	return err == nil
 }
 
-func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) (uint64, bool, error) {
+func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) (uint64, bool, error) {
 	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 
 	if err != nil {
@@ -88,7 +88,7 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) (u
 	return uint64(depth), true, nil
 }
 
-func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, childHash *bbl.BTCHeaderHashBytes) (bool, error) {
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error) {
 	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 

@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
@@ -135,7 +135,7 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 			transactionBytes = append(transactionBytes, tb)
 		}
 
-		branch, _ := bbl.CreateProofForIdx(transactionBytes, uint(test.opReturnTransactionIdx))
+		branch, _ := bbn.CreateProofForIdx(transactionBytes, uint(test.opReturnTransactionIdx))
 
 		opReturnTx := transactionBytes[test.opReturnTransactionIdx]
 

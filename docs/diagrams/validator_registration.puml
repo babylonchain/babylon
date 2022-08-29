@@ -12,13 +12,13 @@ queue       Events
 
 == Create User Transaction ==
 
-User -> CLI ++ : bbld tx staking create-validator ... \n --generate-only
+User -> CLI ++ : bbnd tx staking create-validator ... \n --generate-only
 return unsigned_staking_tx.json
-User -> CLI ++ : bbld tx checkpointing create-validator \n ~--wrap unsigned_staking_tx.json \n ~--bls-key ... --generate-only
+User -> CLI ++ : bbnd tx checkpointing create-validator \n ~--wrap unsigned_staking_tx.json \n ~--bls-key ... --generate-only
 return unsigned_checkpointing_tx.json
-User -> CLI ++ : bbld tx sign unsigned_checkpointing_tx.json
+User -> CLI ++ : bbnd tx sign unsigned_checkpointing_tx.json
 return signed_checkpointing_tx.json
-User -> CLI : bbld tx broadcast signed_checkpointing_tx.json
+User -> CLI : bbnd tx broadcast signed_checkpointing_tx.json
 
 CLI -> Tendermint ++ : signed_checkpointing_tx
 Tendermint -> checkpointing ++ : CheckTx

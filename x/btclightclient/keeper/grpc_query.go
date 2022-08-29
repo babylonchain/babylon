@@ -2,8 +2,7 @@ package keeper
 
 import (
 	"context"
-
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -26,13 +25,13 @@ func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*typ
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	var hashes []bbl.BTCHeaderHashBytes
+	var hashes []bbn.BTCHeaderHashBytes
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	// Ensure that the pagination key corresponds to hash bytes
 	if len(req.Pagination.Key) != 0 {
-		_, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
+		_, err := bbn.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
 		if err != nil {
 			return nil, err
 		}
@@ -79,7 +78,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 
 	var keyHeader *types.BTCHeaderInfo
 	if len(req.Pagination.Key) != 0 {
-		headerHash, err := bbl.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
+		headerHash, err := bbn.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "key does not correspond to a header hash")
 		}
@@ -98,7 +97,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		// which requires starting at the end
 		mainchain := k.headersState(sdkCtx).GetMainChain()
 		// Reverse the mainchain -- we want to retrieve results starting from the base header
-		bbl.Reverse(mainchain)
+		bbn.Reverse(mainchain)
 		if keyHeader == nil {
 			keyHeader = baseHeader
 			start = 0
