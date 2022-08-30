@@ -7,7 +7,6 @@ import (
 	bbl "github.com/babylonchain/babylon/types"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
-	"github.com/babylonchain/babylon/x/btccheckpoint/btcutils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -31,11 +30,11 @@ func ParseTwoProofs(
 		return nil, fmt.Errorf("expected at exactly valid op return transactions")
 	}
 
-	var parsedProofs []*btcutils.ParsedProof
+	var parsedProofs []*ParsedProof
 
 	for _, proof := range proofs {
 		parsedProof, e :=
-			btcutils.ParseProof(
+			ParseProof(
 				proof.BtcTransaction,
 				proof.BtcTransactionIndex,
 				proof.MerkleNodes,

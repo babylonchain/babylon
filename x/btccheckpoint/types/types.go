@@ -2,7 +2,6 @@ package types
 
 import (
 	"github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btccheckpoint/btcutils"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,15 +12,15 @@ import (
 // []*ParsedProof.
 type RawCheckpointSubmission struct {
 	Submitter      sdk.AccAddress
-	Proof1         btcutils.ParsedProof
-	Proof2         btcutils.ParsedProof
+	Proof1         ParsedProof
+	Proof2         ParsedProof
 	checkpointData []byte
 }
 
 func NewRawCheckpointSubmission(
 	a sdk.AccAddress,
-	p1 btcutils.ParsedProof,
-	p2 btcutils.ParsedProof,
+	p1 ParsedProof,
+	p2 ParsedProof,
 	checkpointData []byte,
 ) RawCheckpointSubmission {
 	r := RawCheckpointSubmission{
@@ -34,8 +33,8 @@ func NewRawCheckpointSubmission(
 	return r
 }
 
-func (s *RawCheckpointSubmission) GetProofs() []*btcutils.ParsedProof {
-	return []*btcutils.ParsedProof{&s.Proof1, &s.Proof2}
+func (s *RawCheckpointSubmission) GetProofs() []*ParsedProof {
+	return []*ParsedProof{&s.Proof1, &s.Proof2}
 }
 
 func (s *RawCheckpointSubmission) GetRawCheckPointBytes() []byte {
@@ -53,7 +52,7 @@ func (s *RawCheckpointSubmission) GetSecondBlockHash() types.BTCHeaderHashBytes 
 	return s.Proof2.BlockHash
 }
 
-func toTransactionKey(p *btcutils.ParsedProof) TransactionKey {
+func toTransactionKey(p *ParsedProof) TransactionKey {
 	hashBytes := p.BlockHash
 	return TransactionKey{
 		Index: p.TransactionIdx,
