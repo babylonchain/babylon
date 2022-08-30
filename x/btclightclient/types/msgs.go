@@ -1,9 +1,9 @@
 package types
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
-	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"math/big"
+
+	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
