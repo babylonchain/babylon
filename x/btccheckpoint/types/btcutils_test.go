@@ -1,14 +1,23 @@
-package btcutils
+package types_test
 
 import (
 	"bytes"
 	"encoding/hex"
 	"testing"
 
-	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
+
+func hashFromString(s string) *chainhash.Hash {
+	hash, e := chainhash.NewHashFromStr(s)
+	if e != nil {
+		panic("Invalid hex sting")
+	}
+
+	return hash
+}
 
 // Sanity test checking mostly btcd code, that we can realy parse bitcoin transaction
 func TestBtcTransactionParsing(t *testing.T) {
@@ -31,7 +40,7 @@ func TestBtcTransactionParsing(t *testing.T) {
 		txBytes, _ := hex.DecodeString(test.bitcoinTransactionHex)
 		hashBytes, _ := chainhash.NewHashFromStr(test.txHash)
 
-		tx, e := parseTransaction(txBytes)
+		tx, e := btcctypes.ParseTransaction(txBytes)
 
 		if e != nil {
 			t.Errorf("Failed to parse valid bitcoin transaction %d", i)
@@ -135,7 +144,7 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 			transactionBytes = append(transactionBytes, tb)
 		}
 
-		branch, _ := bbn.CreateProofForIdx(transactionBytes, uint(test.opReturnTransactionIdx))
+		branch, _ := btcctypes.CreateProofForIdx(transactionBytes, uint(test.opReturnTransactionIdx))
 
 		opReturnTx := transactionBytes[test.opReturnTransactionIdx]
 
@@ -145,7 +154,7 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 			cProof = append(cProof, h.CloneBytes()...)
 		}
 
-		p, err := ParseProof(
+		p, err := btcctypes.ParseProof(
 			opReturnTx,
 			uint32(test.opReturnTransactionIdx),
 			cProof,
