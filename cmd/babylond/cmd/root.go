@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	tmconfig "github.com/tendermint/tendermint/config"
 	"io"
 	"os"
 	"path/filepath"
@@ -233,14 +232,22 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	nodeCfg := tmconfig.DefaultConfig()
+	// TODO: add a new flag to check whether the node is validator
+	backend := appOpts.Get(flags.FlagKeyringBackend).(string)
+	clientCtx := client.Context{}.
+		WithChainID(appOpts.Get(flags.FlagChainID).(string)).
+		WithFromName(appOpts.Get(flags.FlagFrom).(string))
+	privSigner, err := app.InitClientContext(clientCtx, backend)
+	if err != nil {
+		panic(err)
+	}
 
 	return app.NewBabylonApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		a.encCfg,
-		nodeCfg,
+		privSigner,
 		appOpts,
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
@@ -268,16 +275,20 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	nodeCfg := tmconfig.DefaultConfig()
-
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, nodeCfg, appOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, &app.PrivSigner{
+			WrappedPV: nil,
+			ClientCtx: client.Context{},
+		}, appOpts)
 
 		if err := babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, nodeCfg, appOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, &app.PrivSigner{
+			WrappedPV: nil,
+			ClientCtx: client.Context{},
+		}, appOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)

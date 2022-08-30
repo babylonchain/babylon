@@ -2,7 +2,6 @@ package checkpointing
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client"
 	"time"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -44,7 +43,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 
 		go func() {
 			// TODO: inject client.Context
-			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch, client.Context{})
+			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
 			if err != nil {
 				ctx.Logger().Error("failed to send BLS signature")
 			}

@@ -41,10 +41,10 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	cfg.TxConfig = encodingCfg.TxConfig
 	cfg.NumValidators = 1
 
-	network := network.New(t, cfg)
-	defer network.Cleanup()
+	testNetwork := network.New(t, cfg)
+	defer testNetwork.Cleanup()
 
-	val := network.Validators[0]
+	val := testNetwork.Validators[0]
 	nodeDirName := fmt.Sprintf("node%d", 0)
 	clientCtx := val.ClientCtx.WithHeight(2).
 		WithFromAddress(val.Address).
@@ -65,6 +65,6 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	ek.EXPECT().GetValidatorSet(ctx, gomock.Eq(epochNum)).Return(valSet)
 	signer.EXPECT().GetAddress().Return(addr1)
 	signer.EXPECT().SignMsgWithBls(gomock.Eq(signBytes)).Return(bls12381.Sign(blsPrivKey1, signBytes), nil)
-	err := ckptkeeper.SendBlsSig(ctx, epochNum, lch, clientCtx)
+	err := ckptkeeper.SendBlsSig(ctx, epochNum, lch)
 	require.NoError(t, err)
 }

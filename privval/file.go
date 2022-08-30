@@ -14,6 +14,8 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"github.com/tendermint/tendermint/types"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 // copied from github.com/tendermint/tendermint/privval/file.go"
@@ -160,7 +162,6 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 	return pv
 }
 
-// TODO: implement SignBLS
 // GetAddress returns the address of the validator.
 // Implements PrivValidator.
 func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
@@ -213,6 +214,12 @@ func (pv *WrappedFilePV) Reset() {
 	pv.LastSignState.Signature = sig
 	pv.LastSignState.SignBytes = nil
 	pv.Save()
+}
+
+// Clean removes PVKey file and PVState file
+func (pv *WrappedFilePV) Clean(keyFilePath, stateFilePath string) {
+	_ = os.RemoveAll(filepath.Dir(keyFilePath))
+	_ = os.RemoveAll(filepath.Dir(stateFilePath))
 }
 
 // String returns a string representation of the FilePV.

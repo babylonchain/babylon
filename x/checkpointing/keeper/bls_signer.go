@@ -3,7 +3,6 @@ package keeper
 import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/pflag"
@@ -16,7 +15,7 @@ type BlsSigner interface {
 }
 
 // SendBlsSig prepares a BLS signature message and sends it to Tendermint
-func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash, clientCtx client.Context) error {
+func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash) error {
 	// get self address
 	curValSet := k.GetValidatorSet(ctx, epochNum)
 	addr := k.blsSigner.GetAddress()
@@ -40,7 +39,7 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 
 	// insert the message into the transaction
 	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	err = tx.GenerateOrBroadcastTxCLI(clientCtx, fs, msg)
+	err = tx.GenerateOrBroadcastTxCLI(k.clientCtx, fs, msg)
 	if err != nil {
 		return err
 	}

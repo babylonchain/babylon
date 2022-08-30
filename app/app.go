@@ -2,8 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/babylonchain/babylon/privval"
-	tmconfig "github.com/tendermint/tendermint/config"
 	"io"
 	"net/http"
 	"os"
@@ -216,7 +214,7 @@ func init() {
 // NewBabylonApp returns a reference to an initialized BabylonApp.
 func NewBabylonApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, nodeCfg *tmconfig.Config,
+	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, privSigner *PrivSigner,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
 
@@ -339,31 +337,15 @@ func NewBabylonApp(
 		keys[btclightclienttypes.MemStoreKey],
 		app.GetSubspace(btclightclienttypes.ModuleName))
 
-	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
-	if err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
-		panic(err)
-	}
-	pvStateFile := nodeCfg.PrivValidatorStateFile()
-	if err := tmos.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
-		panic(err)
-	}
-	// TODO: currently, the client.Context is a placeholder, it should be injected from somewhere
 	app.CheckpointingKeeper =
 		checkpointingkeeper.NewKeeper(
 			appCodec,
 			keys[checkpointingtypes.StoreKey],
 			keys[checkpointingtypes.MemStoreKey],
-			privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile),
+			privSigner.WrappedPV,
 			app.EpochingKeeper,
 			app.GetSubspace(checkpointingtypes.ModuleName),
-			client.Context{}.
-				WithCodec(encodingConfig.Marshaler).
-				WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
-				WithTxConfig(encodingConfig.TxConfig).
-				WithLegacyAmino(encodingConfig.Amino).
-				WithInput(os.Stdin).
-				WithAccountRetriever(authtypes.AccountRetriever{}).
-				WithViper(""), // In app, we don't use any prefix for env variables.
+			privSigner.ClientCtx,
 		)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
