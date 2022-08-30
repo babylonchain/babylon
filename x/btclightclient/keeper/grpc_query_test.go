@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	"github.com/babylonchain/babylon/testutil/datagen"
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"math/rand"
 	"testing"
@@ -61,7 +61,7 @@ func FuzzHashesQuery(f *testing.F) {
 
 		// Test pagination key being invalid
 		// We want the key to have a positive length
-		bzSz := datagen.RandomIntOtherThan(bbl.BTCHeaderHashLen-1, bbl.BTCHeaderHashLen*10) + 1
+		bzSz := datagen.RandomIntOtherThan(bbn.BTCHeaderHashLen-1, bbn.BTCHeaderHashLen*10) + 1
 		key := datagen.GenRandomByteArray(bzSz)
 		pagination := constructRequestWithKey(key)
 		hashesRequest := types.NewQueryHashesRequest(pagination)
@@ -213,7 +213,7 @@ func FuzzMainChainQuery(f *testing.F) {
 
 		// Test pagination key being invalid
 		// We want the key to have a positive length
-		bzSz := datagen.RandomIntOtherThan(bbl.BTCHeaderHashLen-1, bbl.BTCHeaderHashLen*10) + 1
+		bzSz := datagen.RandomIntOtherThan(bbn.BTCHeaderHashLen-1, bbn.BTCHeaderHashLen*10) + 1
 		key := datagen.GenRandomByteArray(bzSz)
 		pagination := constructRequestWithKey(key)
 		mainchainRequest := types.NewQueryMainChainRequest(pagination)

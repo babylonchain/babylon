@@ -1,7 +1,7 @@
 package types
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -30,7 +30,7 @@ var (
 	TipPrefix           = append(HeadersPrefix, 0x3) // where we store the tip
 )
 
-func HeadersObjectKey(height uint64, hash *bbl.BTCHeaderHashBytes) []byte {
+func HeadersObjectKey(height uint64, hash *bbn.BTCHeaderHashBytes) []byte {
 	he := sdk.Uint64ToBigEndian(height)
 	hashBytes := hash.MustMarshal()
 
@@ -39,12 +39,12 @@ func HeadersObjectKey(height uint64, hash *bbl.BTCHeaderHashBytes) []byte {
 	return append(prefix, hashBytes...)
 }
 
-func HeadersObjectHeightKey(hash *bbl.BTCHeaderHashBytes) []byte {
+func HeadersObjectHeightKey(hash *bbn.BTCHeaderHashBytes) []byte {
 	var prefix []byte
 	return append(prefix, hash.MustMarshal()...)
 }
 
-func HeadersObjectWorkKey(hash *bbl.BTCHeaderHashBytes) []byte {
+func HeadersObjectWorkKey(hash *bbn.BTCHeaderHashBytes) []byte {
 	var prefix []byte
 	return append(prefix, hash.MustMarshal()...)
 }

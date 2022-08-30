@@ -3,7 +3,7 @@ package types_test
 import (
 	"bytes"
 	"github.com/babylonchain/babylon/testutil/datagen"
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
@@ -11,7 +11,7 @@ import (
 )
 
 func FuzzMsgInsertHeader(f *testing.F) {
-	maxDifficulty := bbl.GetMaxDifficulty()
+	maxDifficulty := bbn.GetMaxDifficulty()
 
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 

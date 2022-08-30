@@ -3,7 +3,7 @@ package types
 import (
 	"errors"
 
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -57,16 +57,16 @@ func (mc *MockBTCLightClientKeeper) ReturnSuccess() {
 	mc.returnError = false
 }
 
-func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header *bbl.BTCHeaderHashBytes) (uint64, error) {
+func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header *bbn.BTCHeaderHashBytes) (uint64, error) {
 	// todo not used
 	return uint64(10), nil
 }
 
-func (mb MockBTCLightClientKeeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, childHash *bbl.BTCHeaderHashBytes) (bool, error) {
+func (mb MockBTCLightClientKeeper) IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error) {
 	return true, nil
 }
 
-func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderHashBytes) (int64, error) {
+func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (int64, error) {
 	if ck.returnError {
 		return -1, errors.New("unknown header")
 	}

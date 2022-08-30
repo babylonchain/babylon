@@ -3,7 +3,7 @@ package types_test
 import (
 	"bytes"
 	"github.com/babylonchain/babylon/testutil/datagen"
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
@@ -15,11 +15,11 @@ func FuzzHeadersObjectKey(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
+		hexHash := datagen.GenRandomHexStr(bbn.BTCHeaderHashLen)
 		height := rand.Uint64()
 		// get chainhash and height
 		heightBytes := sdk.Uint64ToBigEndian(height)
-		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
+		headerHash, _ := bbn.NewBTCHeaderHashBytesFromHex(hexHash)
 
 		// construct the expected key
 		headerHashBytes := headerHash.MustMarshal()
@@ -39,8 +39,8 @@ func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		hexHash := datagen.GenRandomHexStr(bbl.BTCHeaderHashLen)
-		headerHash, _ := bbl.NewBTCHeaderHashBytesFromHex(hexHash)
+		hexHash := datagen.GenRandomHexStr(bbn.BTCHeaderHashLen)
+		headerHash, _ := bbn.NewBTCHeaderHashBytesFromHex(hexHash)
 		headerHashBytes := headerHash.MustMarshal()
 
 		var expectedHeightKey []byte

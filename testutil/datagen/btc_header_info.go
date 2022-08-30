@@ -1,7 +1,7 @@
 package datagen
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -47,9 +47,9 @@ func GenRandomBTCHeaderBits() uint32 {
 }
 
 // GenRandomBTCHeaderPrevBlock constructs a random BTCHeaderHashBytes instance
-func GenRandomBTCHeaderPrevBlock() *bbl.BTCHeaderHashBytes {
-	hex := GenRandomHexStr(bbl.BTCHeaderHashLen)
-	hashBytes, _ := bbl.NewBTCHeaderHashBytesFromHex(hex)
+func GenRandomBTCHeaderPrevBlock() *bbn.BTCHeaderHashBytes {
+	hex := GenRandomHexStr(bbn.BTCHeaderHashLen)
+	hashBytes, _ := bbn.NewBTCHeaderHashBytesFromHex(hex)
 	return &hashBytes
 }
 
@@ -83,7 +83,7 @@ func GenRandomBTCHeaderNonce() uint32 {
 // `Timestamp` attribute will be later than the parent's `Timestamp`.
 // If the `bitsBig` argument is not `nil`, then the `Bits` attribute
 // of the BTC header will point to the compact form of big integer.
-func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbl.BTCHeaderBytes {
+func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbn.BTCHeaderBytes {
 	btcdHeader := GenRandomBtcdHeader()
 
 	if bitsBig != nil {
@@ -102,7 +102,7 @@ func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig 
 		btcdHeader.Timestamp = parent.Header.Time().Add(time.Minute*10 + time.Duration(seconds)*time.Second)
 	}
 
-	return bbl.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
+	return bbn.NewBTCHeaderBytesFromBlockHeader(btcdHeader)
 }
 
 // GenRandomBTCHeight returns a random uint64
@@ -148,13 +148,13 @@ func GenRandomBTCHeaderInfo() *btclightclienttypes.BTCHeaderInfo {
 }
 
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.
-func MutateHash(hash *bbl.BTCHeaderHashBytes) *bbl.BTCHeaderHashBytes {
-	mutatedBytes := make([]byte, bbl.BTCHeaderHashLen)
+func MutateHash(hash *bbn.BTCHeaderHashBytes) *bbn.BTCHeaderHashBytes {
+	mutatedBytes := make([]byte, bbn.BTCHeaderHashLen)
 	// Retrieve a random byte index
-	idx := RandomInt(bbl.BTCHeaderHashLen)
+	idx := RandomInt(bbn.BTCHeaderHashLen)
 	copy(mutatedBytes, hash.MustMarshal())
 	// Add one to the index
 	mutatedBytes[idx] += 1
-	mutated, _ := bbl.NewBTCHeaderHashBytesFromBytes(mutatedBytes)
+	mutated, _ := bbn.NewBTCHeaderHashBytesFromBytes(mutatedBytes)
 	return &mutated
 }

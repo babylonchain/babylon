@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -64,7 +64,7 @@ func (s headersState) CreateTip(headerInfo *types.BTCHeaderInfo) {
 }
 
 // GetHeader Retrieve a header by its height and hash
-func (s headersState) GetHeader(height uint64, hash *bbl.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
+func (s headersState) GetHeader(height uint64, hash *bbn.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
 	// Keyed by (height, hash)
 	headersKey := types.HeadersObjectKey(height, hash)
 
@@ -78,7 +78,7 @@ func (s headersState) GetHeader(height uint64, hash *bbl.BTCHeaderHashBytes) (*t
 }
 
 // GetHeaderHeight Retrieve the Height of a header
-func (s headersState) GetHeaderHeight(hash *bbl.BTCHeaderHashBytes) (uint64, error) {
+func (s headersState) GetHeaderHeight(hash *bbn.BTCHeaderHashBytes) (uint64, error) {
 	// Keyed by hash
 	hashKey := types.HeadersObjectHeightKey(hash)
 
@@ -94,7 +94,7 @@ func (s headersState) GetHeaderHeight(hash *bbl.BTCHeaderHashBytes) (uint64, err
 }
 
 // GetHeaderWork Retrieve the work of a header
-func (s headersState) GetHeaderWork(hash *bbl.BTCHeaderHashBytes) (*sdk.Uint, error) {
+func (s headersState) GetHeaderWork(hash *bbn.BTCHeaderHashBytes) (*sdk.Uint, error) {
 	// Keyed by hash
 	hashKey := types.HeadersObjectHeightKey(hash)
 	// Retrieve the raw bytes for the work
@@ -113,7 +113,7 @@ func (s headersState) GetHeaderWork(hash *bbl.BTCHeaderHashBytes) (*sdk.Uint, er
 }
 
 // GetHeaderByHash Retrieve a header by its hash
-func (s headersState) GetHeaderByHash(hash *bbl.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
+func (s headersState) GetHeaderByHash(hash *bbn.BTCHeaderHashBytes) (*types.BTCHeaderInfo, error) {
 	// Get the height of the header in order to use it along with the hash
 	// as a (height, hash) key for the object storage
 	height, err := s.GetHeaderHeight(hash)
@@ -255,7 +255,7 @@ func (s headersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, hea
 	encountered := make(map[string]bool, 0)
 	encountered[ancestor1.String()] = true
 	encountered[ancestor2.String()] = true
-	var found *bbl.BTCHeaderHashBytes = nil
+	var found *bbn.BTCHeaderHashBytes = nil
 
 	var resHeader *types.BTCHeaderInfo = nil
 
@@ -320,7 +320,7 @@ func (s headersState) GetInOrderAncestorsUntil(descendant *types.BTCHeaderInfo, 
 }
 
 // HeaderExists Check whether a hash is maintained in storage
-func (s headersState) HeaderExists(hash *bbl.BTCHeaderHashBytes) bool {
+func (s headersState) HeaderExists(hash *bbn.BTCHeaderHashBytes) bool {
 	if hash == nil {
 		return false
 	}

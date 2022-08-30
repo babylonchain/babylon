@@ -1,13 +1,13 @@
 package types
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 )
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	headerBytes := bbl.GetBaseBTCHeaderBytes()
-	headerHeight := bbl.GetBaseBTCHeaderHeight()
+	headerBytes := bbn.GetBaseBTCHeaderBytes()
+	headerHeight := bbn.GetBaseBTCHeaderHeight()
 	headerHash := headerBytes.Hash()
 	// The cumulative work for the Base BTC header is only the work
 	// for that particular header. This means that it is very important

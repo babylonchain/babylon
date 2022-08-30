@@ -1,12 +1,12 @@
 package datagen
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
 
 func SpvProofFromHeaderAndTransactions(headerBytes []byte, transactions [][]byte, transactionIdx uint) (*btcctypes.BTCSpvProof, error) {
-	proof, e := bbl.CreateProofForIdx(transactions, transactionIdx)
+	proof, e := bbn.CreateProofForIdx(transactions, transactionIdx)
 
 	if e != nil {
 		return nil, e
