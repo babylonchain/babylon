@@ -102,7 +102,7 @@ func prove(tx *btcutil.Tx, merkleRoot *chainhash.Hash, intermediateNodes []byte,
 	return bytes.Equal(current[:], root)
 }
 
-func extractOpReturnData(tx *btcutil.Tx) []byte {
+func ExtractOpReturnData(tx *btcutil.Tx) []byte {
 	msgTx := tx.MsgTx()
 	opReturnData := []byte{}
 
@@ -174,7 +174,7 @@ func ParseProof(
 		return nil, fmt.Errorf("header failed validation due to failed proof")
 	}
 
-	opReturnData := extractOpReturnData(tx)
+	opReturnData := ExtractOpReturnData(tx)
 
 	if len(opReturnData) == 0 {
 		return nil, fmt.Errorf("provided transaction should provide op return data")
