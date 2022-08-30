@@ -1,11 +1,10 @@
-package datagen
+package types
 
 import (
 	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
 
-func SpvProofFromHeaderAndTransactions(headerBytes []byte, transactions [][]byte, transactionIdx uint) (*btcctypes.BTCSpvProof, error) {
+func SpvProofFromHeaderAndTransactions(headerBytes []byte, transactions [][]byte, transactionIdx uint) (*BTCSpvProof, error) {
 	proof, e := bbn.CreateProofForIdx(transactions, transactionIdx)
 
 	if e != nil {
@@ -18,7 +17,7 @@ func SpvProofFromHeaderAndTransactions(headerBytes []byte, transactions [][]byte
 		flatProof = append(flatProof, h.CloneBytes()...)
 	}
 
-	spvProof := btcctypes.BTCSpvProof{
+	spvProof := BTCSpvProof{
 		BtcTransaction:      transactions[transactionIdx],
 		BtcTransactionIndex: uint32(transactionIdx),
 		MerkleNodes:         flatProof,
