@@ -4,9 +4,10 @@ import (
 	fmt "fmt"
 	"math/big"
 
+	bbl "github.com/babylonchain/babylon/types"
+
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/x/btccheckpoint/btcutils"
-	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
@@ -20,9 +21,11 @@ var (
 // OP_RETURN bytes are not validated in any way. It is up to the caller attach
 // semantic meaning and validity to those bytes.
 // Returned ParsedProofs are in same order as raw proofs
-// TODO explore possibility of validating that output in second tx is payed by
-// input in the first tx
-func ParseTwoProofs(submitter sdk.AccAddress, proofs []*BTCSpvProof, powLimit *big.Int) (*RawCheckpointSubmission, error) {
+func ParseTwoProofs(
+	submitter sdk.AccAddress,
+	proofs []*BTCSpvProof,
+	powLimit *big.Int,
+	expectedTag txformat.BabylonTag) (*RawCheckpointSubmission, error) {
 	// Expecting as many proofs as many parts our checkpoint is composed of
 	if len(proofs) != txformat.NumberOfParts {
 		return nil, fmt.Errorf("expected at exactly valid op return transactions")
@@ -50,8 +53,13 @@ func ParseTwoProofs(submitter sdk.AccAddress, proofs []*BTCSpvProof, powLimit *b
 	var checkpointData [][]byte
 
 	for i, proof := range parsedProofs {
-		// TODO tag should be taken from configuration
-		data, err := txformat.GetCheckpointData(txformat.MainTag, txformat.CurrentVersion, uint8(i), proof.OpReturnData)
+		data, err := txformat.GetCheckpointData(
+			expectedTag,
+			txformat.CurrentVersion,
+			uint8(i),
+			proof.OpReturnData,
+		)
+
 		if err != nil {
 			return nil, err
 		}
@@ -78,10 +86,11 @@ func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
 	}
 
-	// TODO get powLimit from some config
 	// result of parsed proof is not needed, drop it
 	// whole parsing stuff is stateless
-	_, err = ParseTwoProofs(address, m.Proofs, btcchaincfg.MainNetParams.PowLimit)
+	powLimit := bbl.GetGlobalPowLimit()
+
+	_, err = ParseTwoProofs(address, m.Proofs, &powLimit, bbl.GetGlobalCheckPointTag())
 
 	if err != nil {
 		return err
