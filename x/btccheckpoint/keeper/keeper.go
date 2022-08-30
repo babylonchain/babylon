@@ -5,6 +5,7 @@ import (
 
 	"math/big"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,15 +16,16 @@ import (
 
 type (
 	Keeper struct {
-		cdc                  codec.BinaryCodec
-		storeKey             sdk.StoreKey
-		memKey               sdk.StoreKey
-		paramstore           paramtypes.Subspace
-		btcLightClientKeeper types.BTCLightClientKeeper
-		checkpointingKeeper  types.CheckpointingKeeper
-		kDeep                uint64
-		wDeep                uint64
-		powLimit             *big.Int
+		cdc                   codec.BinaryCodec
+		storeKey              sdk.StoreKey
+		memKey                sdk.StoreKey
+		paramstore            paramtypes.Subspace
+		btcLightClientKeeper  types.BTCLightClientKeeper
+		checkpointingKeeper   types.CheckpointingKeeper
+		kDeep                 uint64
+		wDeep                 uint64
+		powLimit              *big.Int
+		expectedCheckpointTag txformat.BabylonTag
 	}
 )
 
@@ -38,6 +40,7 @@ func NewKeeper(
 	kDeep uint64,
 	wDeep uint64,
 	powLimit *big.Int,
+	expectedTag txformat.BabylonTag,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -45,20 +48,25 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:                  cdc,
-		storeKey:             storeKey,
-		memKey:               memKey,
-		paramstore:           ps,
-		btcLightClientKeeper: bk,
-		checkpointingKeeper:  ck,
-		kDeep:                kDeep,
-		wDeep:                wDeep,
-		powLimit:             powLimit,
+		cdc:                   cdc,
+		storeKey:              storeKey,
+		memKey:                memKey,
+		paramstore:            ps,
+		btcLightClientKeeper:  bk,
+		checkpointingKeeper:   ck,
+		kDeep:                 kDeep,
+		wDeep:                 wDeep,
+		powLimit:              powLimit,
+		expectedCheckpointTag: expectedTag,
 	}
 }
 
 func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
+}
+
+func (k Keeper) GetExpectedTag() txformat.BabylonTag {
+	return k.expectedCheckpointTag
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

@@ -9,20 +9,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
-
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -31,6 +25,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+	dbm "github.com/tendermint/tm-db"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -55,7 +55,7 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
 	encCdc := MakeTestEncodingConfig()
-	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, sdksimapp.EmptyAppOptions{})
+	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, EmptyAppOptions{})
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -432,6 +432,16 @@ type EmptyAppOptions struct{}
 
 // Get implements AppOptions
 func (ao EmptyAppOptions) Get(o string) interface{} {
+	// some defaults required for app.toml config
+
+	if o == "btc-config.network" {
+		return string(bbn.BtcSimnet)
+	}
+
+	if o == "btc-config.checkpoint-tag" {
+		return string(txformat.MainTag)
+	}
+
 	return nil
 }
 
