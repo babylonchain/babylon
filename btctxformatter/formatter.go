@@ -18,8 +18,8 @@ type formatHeader struct {
 }
 
 type BabylonData struct {
-	data  []byte
-	index uint8
+	Data  []byte
+	Index uint8
 }
 
 const (
@@ -283,7 +283,7 @@ func IsBabylonCheckpointData(
 		data, err := GetCheckpointData(tag, version, idx, data)
 
 		if err == nil {
-			bd := BabylonData{data: data, index: idx}
+			bd := BabylonData{Data: data, Index: idx}
 			return &bd, nil
 		}
 
