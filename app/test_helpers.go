@@ -433,13 +433,22 @@ type EmptyAppOptions struct{}
 // Get implements AppOptions
 func (ao EmptyAppOptions) Get(o string) interface{} {
 	// some defaults required for app.toml config
+	defaultBaseHeader, defaultBaseHeaderHeight := bbn.GetDefaultBaseHeader()
 
 	if o == "btc-config.network" {
 		return string(bbn.BtcSimnet)
 	}
 
 	if o == "btc-config.checkpoint-tag" {
-		return string(txformat.MainTag)
+		return string(txformat.TestTag)
+	}
+
+	if o == "btc-config.base-header" {
+		return defaultBaseHeader.MarshalHex()
+	}
+
+	if o == "btc-config.base-header-height" {
+		return defaultBaseHeaderHeight
 	}
 
 	return nil

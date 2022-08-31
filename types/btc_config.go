@@ -21,8 +21,10 @@ var (
 type SupportedBtcNetwork string
 
 type BtcConfig struct {
-	powLimit      *big.Int
-	checkPointTag txformat.BabylonTag
+	powLimit         *big.Int
+	checkPointTag    txformat.BabylonTag
+	baseHeader       BTCHeaderBytes
+	baseHeaderHeight uint64
 }
 
 const (
@@ -75,15 +77,53 @@ func parseCheckpointTag(opts servertypes.AppOptions) txformat.BabylonTag {
 	} else {
 		panic("tag should be one of [BBN, BBT]")
 	}
+}
 
+func parseBaseHex(opts servertypes.AppOptions) BTCHeaderBytes {
+	valueInterface := opts.Get("btc-config.base-header")
+	if valueInterface == nil {
+		panic("Bitcoin base header should be provided in options")
+	}
+
+	headerHex, err := cast.ToStringE(valueInterface)
+
+	if err != nil {
+		panic("base-header should be a valid string")
+	}
+
+	headerBytes, err := NewBTCHeaderBytesFromHex(headerHex)
+
+	if err != nil {
+		panic("base-header should be a valid header hex")
+	}
+	return headerBytes
+}
+
+func parseBaseHeaderHeight(opts servertypes.AppOptions) uint64 {
+	valueInterface := opts.Get("btc-config.base-header-height")
+	if valueInterface == nil {
+		panic("Bitcoin base header height should be provided in options")
+	}
+
+	headerHeight, err := cast.ToUint64E(valueInterface)
+
+	if err != nil {
+		panic("base-header-height should be a valid uint64")
+	}
+
+	return headerHeight
 }
 
 func ParseBtcOptionsFromConfig(opts servertypes.AppOptions) BtcConfig {
 	powLimit := parsePowLimit(opts)
 	tag := parseCheckpointTag(opts)
+	baseHex := parseBaseHex(opts)
+	baseHeight := parseBaseHeaderHeight(opts)
 	return BtcConfig{
-		powLimit:      powLimit,
-		checkPointTag: tag,
+		powLimit:         powLimit,
+		checkPointTag:    tag,
+		baseHeader:       baseHex,
+		baseHeaderHeight: baseHeight,
 	}
 }
 
@@ -99,6 +139,31 @@ func (c *BtcConfig) PowLimit() big.Int {
 
 func (c *BtcConfig) CheckpointTag() txformat.BabylonTag {
 	return c.checkPointTag
+}
+
+func (c *BtcConfig) BaseHeader() BTCHeaderBytes {
+	return c.baseHeader
+}
+
+func (c *BtcConfig) BaseHeaderHeight() uint64 {
+	return c.baseHeaderHeight
+}
+
+func GetDefaultBaseHeader() (BTCHeaderBytes, uint64) {
+	hex := "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22"
+	headerBytes, err := NewBTCHeaderBytesFromHex(hex)
+	if err != nil {
+		panic("Invalid default base header hex")
+	}
+	return headerBytes, 736056
+}
+
+func GetBaseBTCHeaderHeight() uint64 {
+	return btcConfig.BaseHeaderHeight()
+}
+
+func GetBaseBTCHeader() BTCHeaderBytes {
+	return btcConfig.BaseHeader()
 }
 
 func GetGlobalPowLimit() big.Int {

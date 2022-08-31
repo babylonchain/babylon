@@ -6,8 +6,7 @@ import (
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	headerBytes := bbn.GetBaseBTCHeaderBytes()
-	headerHeight := bbn.GetBaseBTCHeaderHeight()
+	headerBytes, headerHeight := bbn.GetDefaultBaseHeader()
 	headerHash := headerBytes.Hash()
 	// The cumulative work for the Base BTC header is only the work
 	// for that particular header. This means that it is very important
