@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/btcsuite/btcd/chaincfg"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
@@ -217,6 +217,11 @@ func NewBabylonApp(
 	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, privSigner *PrivSigner,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
+	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
+	powLimit := btcConfig.PowLimit()
+	// WARNING: We are initiating global babylon btc config  as first so other modules
+	// can use it from start
+	bbn.InitGlobalBtcConfig(btcConfig)
 
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -362,8 +367,8 @@ func NewBabylonApp(
 			// from some global config
 			6,
 			10,
-			// TODO take from config
-			chaincfg.MainNetParams.PowLimit,
+			&powLimit,
+			btcConfig.CheckpointTag(),
 		)
 
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(

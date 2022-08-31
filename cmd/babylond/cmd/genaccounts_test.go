@@ -13,7 +13,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/babylonchain/babylon/app"
-	bblcmd "github.com/babylonchain/babylon/cmd/babylond/cmd"
+	bbncmd "github.com/babylonchain/babylon/cmd/babylond/cmd"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -92,7 +92,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
 			ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 
-			cmd := bblcmd.AddGenesisAccountCmd(home)
+			cmd := bbncmd.AddGenesisAccountCmd(home)
 			cmd.SetArgs([]string{
 				tc.addr,
 				tc.denom,

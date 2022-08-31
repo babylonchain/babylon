@@ -52,7 +52,7 @@ func FuzzEncodingDecoding(f *testing.F) {
 			t.Errorf("Valid data should be properly decoded")
 		}
 
-		data, err := ConnectParts(CurrentVersion, decodedFirst.data, decodedSecond.data)
+		data, err := ConnectParts(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
 
 		if err != nil {
 			t.Errorf("Parts should match. Error: %v", err)
@@ -73,7 +73,7 @@ func FuzzDecodingWontPanic(f *testing.F) {
 		decoded, err := IsBabylonCheckpointData(MainTag, CurrentVersion, bytes)
 
 		if err == nil {
-			if decoded.index != 0 && decoded.index != 1 {
+			if decoded.Index != 0 && decoded.Index != 1 {
 				t.Errorf("With correct decoding index should be either 0 or 1")
 			}
 		}

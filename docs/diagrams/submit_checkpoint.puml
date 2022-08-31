@@ -17,7 +17,7 @@ queue       Events
 
 == Initialize Relayer ==
 
-User -> CLI : bbld tx btccheckpoint \n register --key btc-key.pk
+User -> CLI : bbnd tx btccheckpoint \n register --key btc-key.pk
 CLI -> Tendermint : Broadcast tx
 Tendermint -> Mempool : Add register tx
 
@@ -76,7 +76,7 @@ submitter -> Bitcoin -- : Broadcast 2 \n checkpoint transactions
 
 ... wait for checkpointing tx to be included in a Bitcoin block ...
 
-Bitcoin --> submitter ++ : Observe BTC block \n with BBL checkpoints
+Bitcoin --> submitter ++ : Observe BTC block \n with BBN checkpoints
 submitter -> submitter : Construct BTC Proof-of-Inclusion
 submitter -> Tendermint --++ : Broadcast InsertProofOfInclusion transaction
 

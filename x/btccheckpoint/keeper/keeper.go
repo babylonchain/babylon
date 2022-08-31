@@ -5,7 +5,8 @@ import (
 
 	"math/big"
 
-	bbl "github.com/babylonchain/babylon/types"
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,15 +16,16 @@ import (
 
 type (
 	Keeper struct {
-		cdc                  codec.BinaryCodec
-		storeKey             sdk.StoreKey
-		memKey               sdk.StoreKey
-		paramstore           paramtypes.Subspace
-		btcLightClientKeeper types.BTCLightClientKeeper
-		checkpointingKeeper  types.CheckpointingKeeper
-		kDeep                uint64
-		wDeep                uint64
-		powLimit             *big.Int
+		cdc                   codec.BinaryCodec
+		storeKey              sdk.StoreKey
+		memKey                sdk.StoreKey
+		paramstore            paramtypes.Subspace
+		btcLightClientKeeper  types.BTCLightClientKeeper
+		checkpointingKeeper   types.CheckpointingKeeper
+		kDeep                 uint64
+		wDeep                 uint64
+		powLimit              *big.Int
+		expectedCheckpointTag txformat.BabylonTag
 	}
 )
 
@@ -38,6 +40,7 @@ func NewKeeper(
 	kDeep uint64,
 	wDeep uint64,
 	powLimit *big.Int,
+	expectedTag txformat.BabylonTag,
 ) Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -45,15 +48,16 @@ func NewKeeper(
 	}
 
 	return Keeper{
-		cdc:                  cdc,
-		storeKey:             storeKey,
-		memKey:               memKey,
-		paramstore:           ps,
-		btcLightClientKeeper: bk,
-		checkpointingKeeper:  ck,
-		kDeep:                kDeep,
-		wDeep:                wDeep,
-		powLimit:             powLimit,
+		cdc:                   cdc,
+		storeKey:              storeKey,
+		memKey:                memKey,
+		paramstore:            ps,
+		btcLightClientKeeper:  bk,
+		checkpointingKeeper:   ck,
+		kDeep:                 kDeep,
+		wDeep:                 wDeep,
+		powLimit:              powLimit,
+		expectedCheckpointTag: expectedTag,
 	}
 }
 
@@ -61,20 +65,24 @@ func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
 }
 
+func (k Keeper) GetExpectedTag() txformat.BabylonTag {
+	return k.expectedCheckpointTag
+}
+
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbl.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) bool {
+func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
 	_, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 	return err == nil
 }
 
-func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) (uint64, bool, error) {
+func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) (uint64, bool, error) {
 	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 
 	if err != nil {
@@ -88,7 +96,7 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbl.BTCHeaderHashBytes) (u
 	return uint64(depth), true, nil
 }
 
-func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, childHash *bbl.BTCHeaderHashBytes) (bool, error) {
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error) {
 	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 

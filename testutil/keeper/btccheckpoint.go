@@ -5,6 +5,7 @@ import (
 
 	"math/big"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -55,6 +56,8 @@ func NewBTCCheckpointKeeper(
 		kDeep,
 		wDeep,
 		powLimit,
+		// use MainTag tests
+		txformat.MainTag,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

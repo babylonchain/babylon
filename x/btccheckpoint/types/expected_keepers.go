@@ -1,7 +1,7 @@
 package types
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -22,15 +22,15 @@ type BTCLightClientKeeper interface {
 	// BlockHeight should validate if header with given hash is valid and if it is
 	// part of known chain. In case this is true it should return this block height
 	// in case this is false it should return error
-	BlockHeight(ctx sdk.Context, headerHash *bbl.BTCHeaderHashBytes) (uint64, error)
+	BlockHeight(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error)
 
 	// IsAncestor should check if childHash header is direct ancestor of parentHash
 	// if either of this header is not known to light clinet it should return error
-	IsAncestor(ctx sdk.Context, parentHash *bbl.BTCHeaderHashBytes, childHash *bbl.BTCHeaderHashBytes) (bool, error)
+	IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error)
 
 	// MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
 	// Error is returned if header is unknown to lightclient
-	MainChainDepth(ctx sdk.Context, headerBytes *bbl.BTCHeaderHashBytes) (int64, error)
+	MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (int64, error)
 }
 
 type CheckpointingKeeper interface {

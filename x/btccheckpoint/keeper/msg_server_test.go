@@ -34,7 +34,7 @@ func BlockCreationResultToProofs(inputs []*dg.BlockCreationResult) []*btcctypes.
 			txBytes = append(txBytes, tbytes)
 		}
 
-		spv, err := dg.SpvProofFromHeaderAndTransactions(headerBytes, txBytes, uint(input.BbnTxIndex))
+		spv, err := btcctypes.SpvProofFromHeaderAndTransactions(headerBytes, txBytes, uint(input.BbnTxIndex))
 
 		if err != nil {
 			panic("Inputs should contain valid spv hex encoded data")

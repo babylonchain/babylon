@@ -1,7 +1,7 @@
 package btclightclient_test
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"testing"
 
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
@@ -12,8 +12,8 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	headerBytes := bbl.GetBaseBTCHeaderBytes()
-	headerHeight := bbl.GetBaseBTCHeaderHeight()
+	headerBytes := bbn.GetBaseBTCHeaderBytes()
+	headerHeight := bbn.GetBaseBTCHeaderHeight()
 	headerHash := headerBytes.Hash()
 	headerWork := types.CalcWork(&headerBytes)
 	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, headerHeight, &headerWork)

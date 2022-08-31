@@ -194,7 +194,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
 	}
 
-	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, m.k.GetPowLimit())
+	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, m.k.GetPowLimit(), m.k.GetExpectedTag())
 
 	if e != nil {
 		return nil, types.ErrInvalidCheckpointProof

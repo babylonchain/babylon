@@ -1,12 +1,12 @@
 package types
 
 import (
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func CalcWork(header *bbl.BTCHeaderBytes) sdk.Uint {
+func CalcWork(header *bbn.BTCHeaderBytes) sdk.Uint {
 	return sdk.NewUintFromBigInt(blockchain.CalcWork(header.Bits()))
 }
 

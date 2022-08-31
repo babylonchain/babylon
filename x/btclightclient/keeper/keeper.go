@@ -2,7 +2,7 @@ package keeper
 
 import (
 	"fmt"
-	bbl "github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/babylonchain/babylon/x/btclightclient/types"
@@ -57,7 +57,7 @@ func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
 }
 
 // InsertHeader inserts a btcd header into the header state
-func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error {
+func (k Keeper) InsertHeader(ctx sdk.Context, header *bbn.BTCHeaderBytes) error {
 	if header == nil {
 		return types.ErrEmptyMessage
 	}
@@ -143,7 +143,7 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbl.BTCHeaderBytes) error 
 }
 
 // BlockHeight returns the height of the provided header
-func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbl.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
 	if headerHash == nil {
 		return 0, types.ErrEmptyMessage
 	}
@@ -151,7 +151,7 @@ func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbl.BTCHeaderHashBytes)
 }
 
 // MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
-func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHashBytes) (int64, error) {
+func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbn.BTCHeaderHashBytes) (int64, error) {
 	if headerHashBytes == nil {
 		return -1, types.ErrEmptyMessage
 	}
@@ -185,7 +185,7 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHa
 }
 
 // IsHeaderKDeep returns true if a header is at least k-deep on the main chain
-func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHashBytes, depth uint64) (bool, error) {
+func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerHashBytes *bbn.BTCHeaderHashBytes, depth uint64) (bool, error) {
 	if headerHashBytes == nil {
 		return false, types.ErrEmptyMessage
 	}
@@ -203,7 +203,7 @@ func (k Keeper) IsHeaderKDeep(ctx sdk.Context, headerHashBytes *bbl.BTCHeaderHas
 
 // IsAncestor returns true/false depending on whether `parent` is an ancestor of `child`.
 // Returns false if the parent and the child are the same header.
-func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbl.BTCHeaderHashBytes, childHashBytes *bbl.BTCHeaderHashBytes) (bool, error) {
+func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbn.BTCHeaderHashBytes, childHashBytes *bbn.BTCHeaderHashBytes) (bool, error) {
 	// nil checks
 	if parentHashBytes == nil || childHashBytes == nil {
 		return false, types.ErrEmptyMessage
