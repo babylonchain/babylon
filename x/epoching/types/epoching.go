@@ -42,7 +42,7 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg
 // i.e., wrapped -> unwrapped -> QueuedMessage
-func NewQueuedMessage(txid []byte, msg sdk.Msg) (QueuedMessage, error) {
+func NewQueuedMessage(height uint64, txid []byte, msg sdk.Msg) (QueuedMessage, error) {
 	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, ...) inside isQueuedMessage_Msg
 	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	var qmsg isQueuedMessage_Msg
@@ -75,9 +75,10 @@ func NewQueuedMessage(txid []byte, msg sdk.Msg) (QueuedMessage, error) {
 	}
 
 	queuedMsg := QueuedMessage{
-		TxId:  txid,
-		MsgId: tmhash.Sum(msgBytes),
-		Msg:   qmsg,
+		TxId:        txid,
+		MsgId:       tmhash.Sum(msgBytes),
+		BlockHeight: height,
+		Msg:         qmsg,
 	}
 	return queuedMsg, nil
 }
