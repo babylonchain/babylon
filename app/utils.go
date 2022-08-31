@@ -8,7 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	tmconfig "github.com/tendermint/tendermint/config"
+	tmos "github.com/tendermint/tendermint/libs/os"
 	"os"
+	"path/filepath"
 )
 
 type PrivSigner struct {
@@ -18,7 +20,14 @@ type PrivSigner struct {
 
 func InitClientContext(clientCtx client.Context, backend string) (*PrivSigner, error) {
 	nodeCfg := tmconfig.DefaultConfig()
-	wrappedPV := privval.LoadOrGenWrappedFilePV(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
+	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
+	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+	pvStateFile := nodeCfg.PrivValidatorStateFile()
+	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
+	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 	encodingCfg := MakeTestEncodingConfig()
 	clientCtx = client.Context{}.
 		WithHomeDir(DefaultNodeHome).

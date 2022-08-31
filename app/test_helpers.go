@@ -107,7 +107,7 @@ func SetupPrivSigner() (*PrivSigner, error) {
 		return nil, err
 	}
 	privSigner, _ := InitClientContext(client.Context{}, keyring.BackendMemory)
-	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
+	privSigner.WrappedPV.Clean(pvKeyFile, pvStateFile)
 	return privSigner, nil
 }
 

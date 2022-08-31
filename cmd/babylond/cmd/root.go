@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"io"
 	"os"
 	"path/filepath"
@@ -225,11 +226,13 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	}
 
 	// TODO: add a new flag to check whether the node is validator
-	backend := appOpts.Get(flags.FlagKeyringBackend).(string)
-	clientCtx := client.Context{}.
-		WithChainID(appOpts.Get(flags.FlagChainID).(string)).
-		WithFromName(appOpts.Get(flags.FlagFrom).(string))
-	privSigner, err := app.InitClientContext(clientCtx, backend)
+	//backend := appOpts.Get(flags.FlagKeyringBackend).(string)
+	clientCtx := client.Context{}
+	// TODO: comment the options below because those flags are not passed in integration test
+	//WithChainID(appOpts.Get(flags.FlagChainID).(string)).
+	//WithFromName(appOpts.Get(flags.FlagFrom).(string))
+	// TODO: use BackendTest of keyring for now because the current integration test does not pass FlagKeryingBackend
+	privSigner, err := app.InitClientContext(clientCtx, keyring.BackendTest)
 	if err != nil {
 		panic(err)
 	}
@@ -267,20 +270,22 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
+	backend := appOpts.Get(flags.FlagKeyringBackend).(string)
+	clientCtx := client.Context{}.
+		WithChainID(appOpts.Get(flags.FlagChainID).(string)).
+		WithFromName(appOpts.Get(flags.FlagFrom).(string))
+	privSigner, err := app.InitClientContext(clientCtx, backend)
+	if err != nil {
+		panic(err)
+	}
 	if height != -1 {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, &app.PrivSigner{
-			WrappedPV: nil,
-			ClientCtx: client.Context{},
-		}, appOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, privSigner, appOpts)
 
 		if err := babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {
-		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, &app.PrivSigner{
-			WrappedPV: nil,
-			ClientCtx: client.Context{},
-		}, appOpts)
+		babylonApp = app.NewBabylonApp(logger, db, traceStore, true, map[int64]bool{}, homePath, uint(1), a.encCfg, privSigner, appOpts)
 	}
 
 	return babylonApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
