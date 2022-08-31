@@ -14,7 +14,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// init epoch number
 	k.InitEpoch(ctx)
 	// init msg queue length
-	k.InitQueueLength(ctx)
+	k.InitMsgQueue(ctx)
 	// init validator set
 	k.InitValidatorSet(ctx)
 	// init slashed voting power

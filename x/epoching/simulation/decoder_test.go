@@ -42,7 +42,7 @@ func TestDecodeStore(t *testing.T) {
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
 			{Key: types.EpochNumberKey, Value: sdk.Uint64ToBigEndian(epochNumber)},
-			{Key: types.QueuedMsgKey, Value: cdc.MustMarshal(&queuedMsg)},
+			{Key: types.MsgQueueKey, Value: cdc.MustMarshal(&queuedMsg)},
 			{Key: types.ValidatorSetKey, Value: valSet.MustMarshal()},
 			{Key: types.SlashedValidatorSetKey, Value: valSet.MustMarshal()},
 			{Key: types.VotingPowerKey, Value: oneBytes},

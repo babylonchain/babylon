@@ -20,7 +20,7 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			bytes.Equal(kvA.Key[:1], types.QueueLengthKey):
 			return fmt.Sprintf("%v\n%v", sdk.BigEndianToUint64(kvA.Value), sdk.BigEndianToUint64(kvB.Value))
 
-		case bytes.Equal(kvA.Key[:1], types.QueuedMsgKey):
+		case bytes.Equal(kvA.Key[:1], types.MsgQueueKey):
 			var qmA, qmB types.QueuedMessage
 			cdc.MustUnmarshal(kvA.Value, &qmA)
 			cdc.MustUnmarshal(kvB.Value, &qmB)

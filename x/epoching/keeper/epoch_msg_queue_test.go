@@ -27,8 +27,8 @@ func FuzzEnqueueMsg(f *testing.F) {
 		helper := testepoching.NewHelper(t)
 		ctx, keeper := helper.Ctx, helper.EpochingKeeper
 		// ensure that the epoch msg queue is correct at the genesis
-		require.Empty(t, keeper.GetEpochMsgs(ctx))
-		require.Equal(t, uint64(0), keeper.GetQueueLength(ctx))
+		require.Empty(t, keeper.GetCurrentEpochMsgs(ctx))
+		require.Equal(t, uint64(0), keeper.GetCurrentQueueLength(ctx))
 
 		// Enqueue a random number of msgs
 		numQueuedMsgs := rand.Uint64() % 100
@@ -41,17 +41,12 @@ func FuzzEnqueueMsg(f *testing.F) {
 		}
 
 		// ensure that each msg in the queue is correct
-		epochMsgs := keeper.GetEpochMsgs(ctx)
+		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		for i, msg := range epochMsgs {
 			require.Equal(t, sdk.Uint64ToBigEndian(uint64(i)), msg.TxId)
 			require.Equal(t, sdk.Uint64ToBigEndian(uint64(i)), msg.MsgId)
 			require.Nil(t, msg.Msg)
 		}
-
-		// after clearing the msg queue, ensure that the epoch msg queue is empty
-		keeper.ClearEpochMsgs(ctx)
-		require.Empty(t, keeper.GetEpochMsgs(ctx))
-		require.Equal(t, uint64(0), keeper.GetQueueLength(ctx))
 	})
 }
 
@@ -86,7 +81,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 			helper.WrappedDelegate(genAddr, val, coinWithOnePower.Amount)
 		}
 		// ensure the msgs are queued
-		epochMsgs := keeper.GetEpochMsgs(ctx)
+		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewDels, int64(len(epochMsgs)))
 
 		// enter the 1st block and thus epoch 1
@@ -96,12 +91,6 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
-
-		// ensure queued msgs have been handled
-		queueLen := keeper.GetQueueLength(ctx)
-		require.Equal(t, uint64(0), queueLen)
-		epochMsgs = keeper.GetEpochMsgs(ctx)
-		require.Equal(t, 0, len(epochMsgs))
 
 		// ensure the voting power has been added w.r.t. the newly delegated tokens
 		valPower2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val)
@@ -145,7 +134,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 			helper.WrappedUndelegate(genAddr, val, coinWithOnePower.Amount)
 		}
 		// ensure the msgs are queued
-		epochMsgs := keeper.GetEpochMsgs(ctx)
+		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewUndels, int64(len(epochMsgs)))
 
 		// enter the 1st block and thus epoch 1
@@ -155,12 +144,6 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
-
-		// ensure queued msgs have been handled
-		queueLen := keeper.GetQueueLength(ctx)
-		require.Equal(t, uint64(0), queueLen)
-		epochMsgs = keeper.GetEpochMsgs(ctx)
-		require.Equal(t, 0, len(epochMsgs))
 
 		// ensure the voting power has been reduced w.r.t. the unbonding tokens
 		valPower2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val)
@@ -215,7 +198,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 			helper.WrappedBeginRedelegate(genAddr, val1, val2, coinWithOnePower.Amount)
 		}
 		// ensure the msgs are queued
-		epochMsgs := keeper.GetEpochMsgs(ctx)
+		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewRedels, int64(len(epochMsgs)))
 
 		// enter the 1st block and thus epoch 1
@@ -225,12 +208,6 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
-
-		// ensure queued msgs have been handled
-		queueLen := keeper.GetQueueLength(ctx)
-		require.Equal(t, uint64(0), queueLen)
-		epochMsgs = keeper.GetEpochMsgs(ctx)
-		require.Equal(t, 0, len(epochMsgs))
 
 		// ensure the voting power has been redelegated from val1 to val2
 		// Note that in Cosmos SDK, redelegation happens upon the next `EndBlock`, rather than waiting for 14 days.

@@ -43,7 +43,7 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	ctx := sdk.UnwrapSDKContext(c)
 	var msgs []*types.QueuedMessage
 	store := ctx.KVStore(k.storeKey)
-	epochMsgsStore := prefix.NewStore(store, types.QueuedMsgKey)
+	epochMsgsStore := prefix.NewStore(store, types.MsgQueueKey)
 
 	// handle pagination
 	// TODO (non-urgent): the epoch might end between pagination requests, leading inconsistent results by the time someone gets to the end. Possible fixes:
