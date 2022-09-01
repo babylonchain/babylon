@@ -2,11 +2,24 @@ package types
 
 import (
 	"encoding/json"
-	"github.com/boljen/go-bitmap"
 	"sort"
+
+	"github.com/boljen/go-bitmap"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/pkg/errors"
+)
+
+type ValState int
+
+const (
+	ValStateCreateRequestSubmitted = iota
+	ValStateCreated
+	ValStateBondingRequestSubmitted
+	ValStateBonded
+	ValStateUnbondingRequestSubmitted
+	ValStateUnbonding
+	ValStateUnbonded
 )
 
 type Validator struct {

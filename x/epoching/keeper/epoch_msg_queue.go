@@ -70,6 +70,33 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 
 	// increment queue length
 	k.incCurrentQueueLength(ctx)
+
+	// update the lifecycle of the validator
+	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgCreateValidator: // upon receiving MsgWrappedCreateValidator
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
+		if err != nil {
+			panic(err)
+		}
+		k.InitValState(ctx, valAddr)
+	case *types.QueuedMessage_MsgDelegate: // upon receiving MsgWrappedDelegate
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgDelegate.ValidatorAddress)
+		if err != nil {
+			panic(err)
+		}
+		k.UpdateValState(ctx, valAddr, types.ValStateBondingRequestSubmitted)
+	case *types.QueuedMessage_MsgUndelegate: // upon receiving MsgWrappedUndelegate
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
+		if err != nil {
+			panic(err)
+		}
+		k.UpdateValState(ctx, valAddr, types.ValStateUnbondingRequestSubmitted)
+	case *types.QueuedMessage_MsgBeginRedelegate:
+		// do nothing here since redel does not change validator set
+	default:
+		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+	}
 }
 
 // GetEpochMsgs returns the set of messages queued in a given epoch
@@ -100,19 +127,36 @@ func (k Keeper) GetCurrentEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
 func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
-	var unwrappedMsgWithType sdk.Msg
+	var (
+		unwrappedMsgWithType sdk.Msg
+		newValState          types.ValState
+		valAddr              sdk.ValAddress
+		err                  error
+	)
+
 	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
+		newValState = types.ValStateCreated
+		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
 	case *types.QueuedMessage_MsgDelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
+		newValState = types.ValStateBonded
+		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgDelegate.ValidatorAddress)
 	case *types.QueuedMessage_MsgUndelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
+		newValState = types.ValStateUnbonded
+		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
 	case *types.QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
 	default:
 		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+	}
+
+	// failed to decode validator address
+	if err != nil {
+		panic(err)
 	}
 
 	// get the handler function from router
@@ -124,9 +168,16 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 
 	// handle the unwrapped message
 	result, err := handler(handlerCtx, unwrappedMsgWithType)
+	if err != nil {
+		return result, err
+	}
 
-	if err == nil {
-		msCache.Write()
+	// release the cache
+	msCache.Write()
+
+	// if MsgCreateValidator, MsgDelegate and MsgUndelegate, then update the validator state for its lifecycle
+	if _, ok := msg.Msg.(*types.QueuedMessage_MsgBeginRedelegate); !ok {
+		k.UpdateValState(ctx, valAddr, newValState)
 	}
 
 	return result, err
