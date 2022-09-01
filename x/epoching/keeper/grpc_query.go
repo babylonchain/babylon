@@ -80,7 +80,7 @@ func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorL
 	if err != nil {
 		return nil, err
 	}
-	lc := k.getValLifecycle(ctx, valAddr)
+	lc := k.GetValLifecycle(ctx, valAddr)
 	return &types.QueryValidatorLifecycleResponse{
 		ValLife: lc,
 	}, nil

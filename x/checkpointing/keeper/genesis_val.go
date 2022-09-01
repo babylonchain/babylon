@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -34,6 +35,7 @@ func (k Keeper) InitGenValLifecycle(ctx sdk.Context, genKeys []*types.GenesisKey
 		if err != nil {
 			panic(err)
 		}
-		k.epochingKeeper.InitValState(ctx, addr)
+		k.epochingKeeper.InitValState(ctx, addr)                                 // creation request submitted at block 0
+		k.epochingKeeper.UpdateValState(ctx, addr, epochingtypes.ValStateBonded) // bonded at block 0
 	}
 }

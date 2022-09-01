@@ -8,8 +8,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// TODO: test the lifecycle functionality
+// TODO: add more tests on the lifecycle record
 
+// InitValState creates the lifecycle for the given validator, and assigns the current height to the create request time
 // called upon receiving MsgWrappedCreateValidator
 func (k Keeper) InitValState(ctx sdk.Context, valAddr sdk.ValAddress) {
 
@@ -17,11 +18,15 @@ func (k Keeper) InitValState(ctx sdk.Context, valAddr sdk.ValAddress) {
 		ValAddr:             valAddr.String(), // bech32-encoded string
 		CreateRequestHeight: uint64(ctx.BlockHeight()),
 	}
-	k.setValLifecycle(ctx, valAddr, &lc)
+	k.SetValLifecycle(ctx, valAddr, &lc)
 }
 
+// InitValState adds a state for an existing validator lifecycle, including bonded, unbonding and unbonded
+// after MsgWrappedCreateValidator is handled, the validator becomes bonded
+// after MsgWrappedUndelegate is handled, the validator becomes unbonding
+// after the epoch carrying this validator's MsgWrappedUndelegate msg is checkpointed, the validator becomes unbonded
 func (k Keeper) UpdateValState(ctx sdk.Context, valAddr sdk.ValAddress, state types.ValState) {
-	lc := k.getValLifecycle(ctx, valAddr)
+	lc := k.GetValLifecycle(ctx, valAddr)
 	switch state {
 	case types.ValStateCreateRequestSubmitted:
 		panic(fmt.Errorf("call InitValState instead"))
@@ -34,16 +39,16 @@ func (k Keeper) UpdateValState(ctx sdk.Context, valAddr sdk.ValAddress, state ty
 	case types.ValStateUnbonded:
 		lc.UnbondedHeight = uint64(ctx.BlockHeight())
 	}
-	k.setValLifecycle(ctx, valAddr, lc)
+	k.SetValLifecycle(ctx, valAddr, lc)
 }
 
-func (k Keeper) setValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress, lc *types.ValidatorLifecycle) {
+func (k Keeper) SetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress, lc *types.ValidatorLifecycle) {
 	store := k.valLifecycleStore(ctx)
 	lcBytes := k.cdc.MustMarshal(lc)
 	store.Set([]byte(valAddr), lcBytes)
 }
 
-func (k Keeper) getValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.ValidatorLifecycle {
+func (k Keeper) GetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.ValidatorLifecycle {
 	store := k.valLifecycleStore(ctx)
 	lcBytes := store.Get([]byte(valAddr))
 	var lc types.ValidatorLifecycle

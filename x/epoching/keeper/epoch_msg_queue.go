@@ -146,7 +146,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	// release the cache
 	msCache.Write()
 
-	// if MsgCreateValidator, MsgDelegate and MsgUndelegate, then update the validator state for its lifecycle
+	// if MsgCreateValidator or MsgUndelegate, then update the validator state for its lifecycle
 	// otherwise do nothing
 	switch msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator, *types.QueuedMessage_MsgUndelegate:

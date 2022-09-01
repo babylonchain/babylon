@@ -70,6 +70,12 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		valPower, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val)
 		require.NoError(t, err)
 
+		// ensure the validator's lifecycle data is generated
+		lc := keeper.GetValLifecycle(ctx, val)
+		require.NotNil(t, lc)
+		require.Equal(t, lc.CreateRequestHeight, uint64(0))
+		require.Equal(t, lc.BondedHeight, uint64(0))
+
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
 		require.NotEmpty(t, genAccs)
@@ -122,6 +128,12 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		val := valSet0[0].Addr
 		valPower, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val)
 		require.NoError(t, err)
+
+		// ensure the validator's lifecycle data is generated
+		lc := keeper.GetValLifecycle(ctx, val)
+		require.NotNil(t, lc)
+		require.Equal(t, lc.CreateRequestHeight, uint64(0))
+		require.Equal(t, lc.BondedHeight, uint64(0))
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
@@ -190,6 +202,16 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		val2Power, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val2)
 		require.NoError(t, err)
 		require.Equal(t, val1Power, val2Power)
+
+		// ensure the validator's lifecycle data is generated
+		lc1 := keeper.GetValLifecycle(ctx, val1)
+		require.NotNil(t, lc1)
+		require.Equal(t, lc1.CreateRequestHeight, uint64(0))
+		require.Equal(t, lc1.BondedHeight, uint64(0))
+		lc2 := keeper.GetValLifecycle(ctx, val2)
+		require.NotNil(t, lc2)
+		require.Equal(t, lc2.CreateRequestHeight, uint64(0))
+		require.Equal(t, lc2.BondedHeight, uint64(0))
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
