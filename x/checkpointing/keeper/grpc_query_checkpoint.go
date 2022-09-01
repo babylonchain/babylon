@@ -76,14 +76,19 @@ func (k Keeper) EpochStatusCount(ctx context.Context, req *types.QueryEpochStatu
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	// iterate epochs from 0 to the current epoch and count the status
+	// iterate epochs in the reverse order and count epoch numbers for each status
 	epochStatusCount := make(map[string]uint64, 0)
-	for i := uint64(0); i <= req.EpochNum; i++ {
+	for e := req.EpochNum; e >= uint64(0); e-- {
 		// reuse the EpochStatus query
-		epochStatusReq := &types.QueryEpochStatusRequest{EpochNum: i}
+		epochStatusReq := &types.QueryEpochStatusRequest{EpochNum: e}
 		epochStatusRes, err := k.EpochStatus(ctx, epochStatusReq)
 		if err != nil {
 			return nil, err
+		}
+		// counts stop if a finalized epoch is reached since all the previous epochs are guaranteed to be finalized
+		if epochStatusRes.Status == types.Finalized.String() {
+			epochStatusCount[types.Finalized.String()] = e + 1
+			break
 		}
 		epochStatusCount[epochStatusRes.Status]++
 	}

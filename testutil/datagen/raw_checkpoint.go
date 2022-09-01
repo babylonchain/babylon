@@ -27,12 +27,25 @@ func GenRandomRawCheckpoint() *types.RawCheckpoint {
 	}
 }
 
+// GenRandomSequenceRawCheckpointsWithMeta generates random checkpoints from epoch 0 to a random epoch
 func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
-	topEpoch := GenRandomEpochNum()
+	var topEpoch, finalEpoch uint64
+	epoch1 := GenRandomEpochNum()
+	epoch2 := GenRandomEpochNum()
+	if epoch1 > epoch2 {
+		topEpoch = epoch1
+		finalEpoch = epoch2
+	} else {
+		topEpoch = epoch2
+		finalEpoch = epoch1
+	}
 	var checkpoints []*types.RawCheckpointWithMeta
-	for i := uint64(0); i <= topEpoch; i++ {
+	for e := uint64(0); e <= topEpoch; e++ {
 		ckpt := GenRandomRawCheckpointWithMeta()
-		ckpt.Ckpt.EpochNum = i
+		ckpt.Ckpt.EpochNum = e
+		if e <= finalEpoch {
+			ckpt.Status = types.Finalized
+		}
 		checkpoints = append(checkpoints, ckpt)
 	}
 
@@ -52,6 +65,7 @@ func GenRandomBlsMultiSig() bls12381.Signature {
 	return GenRandomByteArray(bls12381.SignatureSize)
 }
 
+// GenRandomStatus generates random status except for Finalized
 func GenRandomStatus() types.CheckpointStatus {
-	return types.CheckpointStatus(rand.Int31n(int32(len(types.CheckpointStatus_name))))
+	return types.CheckpointStatus(rand.Int31n(int32(len(types.CheckpointStatus_name) - 1)))
 }
