@@ -8,6 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// TODO: test the lifecycle functionality
+
 // called upon receiving MsgWrappedCreateValidator
 func (k Keeper) InitValState(ctx sdk.Context, valAddr sdk.ValAddress) {
 
@@ -18,7 +20,6 @@ func (k Keeper) InitValState(ctx sdk.Context, valAddr sdk.ValAddress) {
 	k.setValLifecycle(ctx, valAddr, &lc)
 }
 
-// TODO: test the lifecycle functionality
 func (k Keeper) UpdateValState(ctx sdk.Context, valAddr sdk.ValAddress, state types.ValState) {
 	lc := k.getValLifecycle(ctx, valAddr)
 	switch state {
