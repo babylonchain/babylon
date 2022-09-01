@@ -35,6 +35,16 @@ service Query {
     option (google.api.http).get = "/babylon/checkpointing/v1/bls_public_keys/{epoch_num}";
   }
 
+  // EpochStatus queries the status of a given epoch
+  rpc EpochStatus(QueryEpochStatusRequest) returns (QueryEpochStatusResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status/{epoch_num}";
+  }
+
+  // EpochStatusCount queries the number of epochs with each status
+  rpc EpochStatusCount(QueryEpochStatusCountRequest) returns (QueryEpochStatusCountResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status_count/{epoch_num}";
+  }
+
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/checkpointing/v1/params";
@@ -121,6 +131,22 @@ message QueryBlsPublicKeyListResponse {
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryEpochStatusRequest {
+  uint64 epoch_num = 1;
+}
+
+message QueryEpochStatusResponse {
+  string status = 1;
+}
+
+message QueryEpochStatusCountRequest {
+  uint64 epoch_num = 1;
+}
+
+message QueryEpochStatusCountResponse {
+  map<string, uint64> status_count = 1;
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.

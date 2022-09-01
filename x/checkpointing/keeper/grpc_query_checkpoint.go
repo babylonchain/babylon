@@ -57,6 +57,14 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
 }
 
+func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequest) (*types.QueryEpochStatusResponse, error) {
+	panic("")
+}
+
+func (k Keeper) EpochStatusCount(ctx context.Context, req *types.QueryEpochStatusCountRequest) (*types.QueryEpochStatusCountResponse, error) {
+	panic("")
+}
+
 func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {
 	panic("TODO: implement this")
 }
