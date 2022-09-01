@@ -9,6 +9,7 @@ import (
 )
 
 // TODO: add more tests on the lifecycle record
+// TODO: record height for each delegation
 
 // InitValState creates the lifecycle for the given validator, and assigns the current height to the create request time
 // called upon receiving MsgWrappedCreateValidator

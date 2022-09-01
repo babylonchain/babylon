@@ -7,6 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0
@@ -146,11 +147,29 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	// release the cache
 	msCache.Write()
 
-	// if MsgCreateValidator or MsgUndelegate, then update the validator state for its lifecycle
-	// otherwise do nothing
-	switch msg.Msg.(type) {
-	case *types.QueuedMessage_MsgCreateValidator, *types.QueuedMessage_MsgUndelegate:
+	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgCreateValidator:
+		// record the height when becoming bonded
 		k.UpdateValState(ctx, valAddr, newValState)
+	case *types.QueuedMessage_MsgUndelegate:
+		// get validator operator's address
+		validator, found := k.stk.GetValidator(ctx, valAddr)
+		if !found {
+			return result, stakingtypes.ErrNoValidatorFound
+		}
+		operatorAddr := validator.GetOperator()
+		// get delegator's address
+		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgUndelegate.DelegatorAddress)
+		if err != nil {
+			return result, err
+		}
+		// record the height when becoming unbonding
+		// ONLY WHEN the validator operator makes the undelegation request
+		if delAddr.Equals(operatorAddr) {
+			k.UpdateValState(ctx, valAddr, newValState)
+		}
+	default:
+		// do nothing
 	}
 
 	return result, nil
