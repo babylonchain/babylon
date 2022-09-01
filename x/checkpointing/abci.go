@@ -41,6 +41,12 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 			),
 		})
 
-		// TODO: call BLS signer to send a BLS-sig transaction
+		go func() {
+			// TODO: inject client.Context
+			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
+			if err != nil {
+				ctx.Logger().Error("failed to send BLS signature")
+			}
+		}()
 	}
 }

@@ -2,7 +2,6 @@ package types
 
 import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -25,7 +24,6 @@ type EpochingKeeper interface {
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
 	GetValidatorSet(ctx sdk.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64
-	GetValidatorPubkey(ctx sdk.Context, valAddr sdk.ValAddress) (cryptotypes.PubKey, bool)
 }
 
 // Event Hooks
