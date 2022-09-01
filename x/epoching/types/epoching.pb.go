@@ -228,10 +228,10 @@ func (*QueuedMessage) XXX_OneofWrappers() []interface{} {
 type ValidatorLifecycle struct {
 	// val_addr is the address of the validator
 	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
-	// bonding_request_height is the block height when this validator's creation request is received by Babylon
+	// create_request_height is the block height when this validator's creation request is received by Babylon
 	// this happens when Babylon nodes commit the block that includes the `MsgWrappedCreateValidator` msg
 	CreateRequestHeight uint64 `protobuf:"varint,2,opt,name=create_request_height,json=createRequestHeight,proto3" json:"create_request_height,omitempty"`
-	// bonded_height is the block height when the validator's creation request is handled by Babylon and this validator becomes created (but still unbonded)
+	// created_height is the block height when the validator's creation request is handled by Babylon and this validator becomes created (but still unbonded)
 	// this happens at the end of an epoch
 	CreatedHeight uint64 `protobuf:"varint,3,opt,name=created_height,json=createdHeight,proto3" json:"created_height,omitempty"`
 	// bonding_request_height is the block height when this validator's bonding request is received by Babylon

@@ -34,10 +34,10 @@ message ValidatorLifecycle {
   // val_addr is the address of the validator
   string val_addr = 1;
 
-  // bonding_request_height is the block height when this validator's creation request is received by Babylon
+  // create_request_height is the block height when this validator's creation request is received by Babylon
   // this happens when Babylon nodes commit the block that includes the `MsgWrappedCreateValidator` msg
   uint64 create_request_height = 2;
-  // bonded_height is the block height when the validator's creation request is handled by Babylon and this validator becomes created (but still unbonded)
+  // created_height is the block height when the validator's creation request is handled by Babylon and this validator becomes created (but still unbonded)
   // this happens at the end of an epoch
   uint64 created_height = 3;
 
