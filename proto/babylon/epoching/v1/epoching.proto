@@ -29,3 +29,26 @@ message QueuedMessage {
     // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
   }
 }
+
+message ValidatorLifecycle {
+  // val_addr is the address of the validator
+  string val_addr = 1;
+
+  // bonding_request_height is the block height when this validator's bonding request is received by Babylon
+  // this happens when Babylon nodes commit the block that includes the `MsgWrappedCreateValidator` msg
+  uint64 bonding_request_height = 2;
+  // bonded_height is the block height when the validator's bonding request is handled by Babylon and this validator becomes bonded
+  // this happens at the end of an epoch
+  uint64 bonded_height = 3;
+
+  // unbonding_request_height is the block height when this validator's unbonding request is received by Babylon
+  // this happens when Babylon nodes commit the block that includes the `MsgUndelegate` msg
+  uint64 unbonding_request_height = 4;
+  // unbonding_height is the block height when the validator's unbonding request is handled by Babylon and this validator becomes unbonding
+  // this happens at the end of an epoch
+  uint64 unbonding_height = 5;
+
+  // unbonded_height is the block height when when this validator becomes uunbonded
+  // this happens when the epoch's checkpoint is finalised
+  uint64 unbonded_height = 6;
+}

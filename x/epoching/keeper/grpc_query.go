@@ -72,3 +72,7 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	}
 	return resp, nil
 }
+
+func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorLifecycleRequest) (*types.QueryValidatorLifecycleResponse, error) {
+	panic("TODO: unimplemented")
+}
