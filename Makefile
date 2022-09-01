@@ -120,6 +120,16 @@ $(BUILDDIR)/:
 
 .PHONY: build build-linux
 
+mockgen_cmd=go run github.com/golang/mock/mockgen@v1.6.0
+
+mocks: $(MOCKS_DIR)
+	$(mockgen_cmd) -source=x/checkpointing/types/expected_keepers.go -package mocks -destination testutil/mocks/checkpointing_expected_keepers.go
+	$(mockgen_cmd) -source=x/checkpointing/keeper/bls_signer.go -package mocks -destination testutil/mocks/bls_signer.go
+.PHONY: mocks
+
+$(MOCKS_DIR):
+	mkdir -p $(MOCKS_DIR)
+
 distclean: clean tools-clean
 clean:
 	rm -rf \

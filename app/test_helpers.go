@@ -5,6 +5,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	tmconfig "github.com/tendermint/tendermint/config"
+	tmos "github.com/tendermint/tendermint/libs/os"
+	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -55,7 +59,11 @@ var DefaultConsensusParams = &abci.ConsensusParams{
 func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
 	encCdc := MakeTestEncodingConfig()
-	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, EmptyAppOptions{})
+	privSigner, err := SetupPrivSigner()
+	if err != nil {
+		panic(err)
+	}
+	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{})
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -83,6 +91,24 @@ func Setup(isCheckTx bool) *BabylonApp {
 	}
 
 	return app
+}
+
+// SetupPrivSigner sets up a PrivSigner for testing
+func SetupPrivSigner() (*PrivSigner, error) {
+	nodeCfg := tmconfig.DefaultConfig()
+	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
+	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+	pvStateFile := nodeCfg.PrivValidatorStateFile()
+	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
+	if err != nil {
+		return nil, err
+	}
+	privSigner, _ := InitClientContext(client.Context{}, keyring.BackendMemory)
+	privSigner.WrappedPV.Clean(pvKeyFile, pvStateFile)
+	return privSigner, nil
 }
 
 // SetupWithGenesisValSet initializes a new BabylonApp with a validator set and genesis accounts

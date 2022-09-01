@@ -74,7 +74,9 @@ func TestFullAppSimulation(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	privSigner, err := app.SetupPrivSigner()
+	require.NoError(t, err)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// run randomized simulation
@@ -112,7 +114,9 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	privSigner, err := app.SetupPrivSigner()
+	require.NoError(t, err)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -152,7 +156,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	var genesisState app.GenesisState
@@ -214,7 +218,9 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(dir))
 	}()
 
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	privSigner, err := app.SetupPrivSigner()
+	require.NoError(t, err)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -259,7 +265,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	newBabylon.InitChain(abci.RequestInitChain{
@@ -310,14 +316,16 @@ func TestAppStateDeterminism(t *testing.T) {
 			}
 
 			db := dbm.NewMemDB()
-			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+			privSigner, err := app.SetupPrivSigner()
+			require.NoError(t, err)
+			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
 				config.Seed, i+1, numSeeds, j+1, numTimesToRunPerSeed,
 			)
 
-			_, _, err := simulation.SimulateFromSeed(
+			_, _, err = simulation.SimulateFromSeed(
 				t,
 				os.Stdout,
 				babylon.BaseApp,

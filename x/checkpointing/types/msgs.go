@@ -38,7 +38,7 @@ func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator)
 
 func (m *MsgAddBlsSig) ValidateBasic() error {
 	// This function validates stateless message elements
-	_, err := sdk.AccAddressFromBech32(m.BlsSig.SignerAddress)
+	_, err := sdk.ValAddressFromBech32(m.BlsSig.SignerAddress)
 	if err != nil {
 		return err
 	}
@@ -49,12 +49,12 @@ func (m *MsgAddBlsSig) ValidateBasic() error {
 }
 
 func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.BlsSig.SignerAddress)
+	signer, err := sdk.ValAddressFromBech32(m.BlsSig.SignerAddress)
 	if err != nil {
 		panic(err)
 	}
 
-	return []sdk.AccAddress{signer}
+	return []sdk.AccAddress{sdk.AccAddress(signer)}
 }
 
 func (m *MsgWrappedCreateValidator) VerifyPoP(valPubkey cryptotypes.PubKey) bool {
