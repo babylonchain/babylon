@@ -19,6 +19,7 @@ type PrivSigner struct {
 }
 
 func InitClientContext(clientCtx client.Context, backend string) (*PrivSigner, error) {
+	// setup private validator
 	nodeCfg := tmconfig.DefaultConfig()
 	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
 	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
@@ -27,7 +28,12 @@ func InitClientContext(clientCtx client.Context, backend string) (*PrivSigner, e
 	}
 	pvStateFile := nodeCfg.PrivValidatorStateFile()
 	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
+	if err != nil {
+		return nil, err
+	}
 	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
+
+	// setup client context
 	encodingCfg := MakeTestEncodingConfig()
 	clientCtx = client.Context{}.
 		WithHomeDir(DefaultNodeHome).
