@@ -40,6 +40,7 @@ type StakingKeeper interface {
 	BondDenom(ctx sdk.Context) string
 	HasReceivingRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valDstAddr sdk.ValAddress) bool
 	HasMaxRedelegationEntries(ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorSrcAddr, validatorDstAddr sdk.ValAddress) bool
+	ValidateUnbondAmount(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, amt sdk.Int) (sdk.Dec, error)
 }
 
 // Event Hooks

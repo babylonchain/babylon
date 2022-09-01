@@ -70,33 +70,6 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 
 	// increment queue length
 	k.incCurrentQueueLength(ctx)
-
-	// update the lifecycle of the validator
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
-	switch unwrappedMsg := msg.Msg.(type) {
-	case *types.QueuedMessage_MsgCreateValidator: // upon receiving MsgWrappedCreateValidator
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
-		if err != nil {
-			panic(err)
-		}
-		k.InitValState(ctx, valAddr)
-	case *types.QueuedMessage_MsgDelegate: // upon receiving MsgWrappedDelegate
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgDelegate.ValidatorAddress)
-		if err != nil {
-			panic(err)
-		}
-		k.UpdateValState(ctx, valAddr, types.ValStateBondingRequestSubmitted)
-	case *types.QueuedMessage_MsgUndelegate: // upon receiving MsgWrappedUndelegate
-		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
-		if err != nil {
-			panic(err)
-		}
-		k.UpdateValState(ctx, valAddr, types.ValStateUnbondingRequestSubmitted)
-	case *types.QueuedMessage_MsgBeginRedelegate:
-		// do nothing here since redel does not change validator set
-	default:
-		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
-	}
 }
 
 // GetEpochMsgs returns the set of messages queued in a given epoch
