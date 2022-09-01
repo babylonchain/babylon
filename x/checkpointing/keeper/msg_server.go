@@ -41,7 +41,7 @@ func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*t
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// TODO: porting verification rules from staking module
+	// TODO: porting other verification rules from staking module
 	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)
 	if err != nil {
 		return nil, err

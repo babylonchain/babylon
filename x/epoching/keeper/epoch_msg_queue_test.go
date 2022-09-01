@@ -36,7 +36,6 @@ func FuzzEnqueueMsg(f *testing.F) {
 			msg := types.QueuedMessage{
 				TxId:  sdk.Uint64ToBigEndian(i),
 				MsgId: sdk.Uint64ToBigEndian(i),
-				Msg:   &types.QueuedMessage_MsgDelegate{},
 			}
 			keeper.EnqueueMsg(ctx, msg)
 		}

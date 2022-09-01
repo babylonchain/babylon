@@ -149,11 +149,13 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	msCache.Write()
 
 	// if MsgCreateValidator, MsgDelegate and MsgUndelegate, then update the validator state for its lifecycle
-	if _, ok := msg.Msg.(*types.QueuedMessage_MsgBeginRedelegate); !ok {
+	// otherwise do nothing
+	switch msg.Msg.(type) {
+	case *types.QueuedMessage_MsgCreateValidator, *types.QueuedMessage_MsgDelegate, *types.QueuedMessage_MsgUndelegate:
 		k.UpdateValState(ctx, valAddr, newValState)
 	}
 
-	return result, err
+	return result, nil
 }
 
 // based on a function with the same name in `baseapp.go``
