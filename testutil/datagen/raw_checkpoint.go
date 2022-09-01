@@ -10,7 +10,7 @@ import (
 func GenRandomRawCheckpointWithMeta() *types.RawCheckpointWithMeta {
 	ckptWithMeta := &types.RawCheckpointWithMeta{
 		Ckpt:     GenRandomRawCheckpoint(),
-		Status:   types.Accumulating,
+		Status:   GenRandomStatus(),
 		PowerSum: 0,
 	}
 	return ckptWithMeta
@@ -27,8 +27,21 @@ func GenRandomRawCheckpoint() *types.RawCheckpoint {
 	}
 }
 
+func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
+	topEpoch := GenRandomEpochNum()
+	var checkpoints []*types.RawCheckpointWithMeta
+	for i := uint64(0); i <= topEpoch; i++ {
+		ckpt := GenRandomRawCheckpointWithMeta()
+		ckpt.Ckpt.EpochNum = i
+		checkpoints = append(checkpoints, ckpt)
+	}
+
+	return checkpoints
+}
+
 func GenRandomEpochNum() uint64 {
-	return rand.Uint64()
+	epochNum := rand.Int63n(100)
+	return uint64(epochNum)
 }
 
 func GenRandomLastCommitHash() types.LastCommitHash {
@@ -37,4 +50,8 @@ func GenRandomLastCommitHash() types.LastCommitHash {
 
 func GenRandomBlsMultiSig() bls12381.Signature {
 	return GenRandomByteArray(bls12381.SignatureSize)
+}
+
+func GenRandomStatus() types.CheckpointStatus {
+	return types.CheckpointStatus(rand.Int31n(int32(len(types.CheckpointStatus_name))))
 }

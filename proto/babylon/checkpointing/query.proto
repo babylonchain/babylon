@@ -133,18 +133,27 @@ message QueryBlsPublicKeyListResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryEpochStatusRequest is the request type for the Query/EpochStatus
+// RPC method.
 message QueryEpochStatusRequest {
   uint64 epoch_num = 1;
 }
 
+// QueryEpochStatusResponse is the response type for the Query/EpochStatus
+// RPC method.
 message QueryEpochStatusResponse {
   string status = 1;
 }
 
+// QueryEpochStatusCountRequest is the request type for the Query/EpochStatusCount
+// RPC method.
 message QueryEpochStatusCountRequest {
+  // epoch_num is the top epoch number that the count ends at
   uint64 epoch_num = 1;
 }
 
+// QueryEpochStatusCountResponse is the response type for the Query/EpochStatusCount
+// RPC method.
 message QueryEpochStatusCountResponse {
   map<string, uint64> status_count = 1;
 }

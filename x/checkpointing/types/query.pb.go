@@ -542,6 +542,8 @@ func (m *QueryBlsPublicKeyListResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryEpochStatusRequest is the request type for the Query/EpochStatus
+// RPC method.
 type QueryEpochStatusRequest struct {
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
@@ -586,6 +588,8 @@ func (m *QueryEpochStatusRequest) GetEpochNum() uint64 {
 	return 0
 }
 
+// QueryEpochStatusResponse is the response type for the Query/EpochStatus
+// RPC method.
 type QueryEpochStatusResponse struct {
 	Status string `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
 }
@@ -630,7 +634,10 @@ func (m *QueryEpochStatusResponse) GetStatus() string {
 	return ""
 }
 
+// QueryEpochStatusCountRequest is the request type for the Query/EpochStatusCount
+// RPC method.
 type QueryEpochStatusCountRequest struct {
+	// epoch_num is the top epoch number that the count ends at
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
@@ -674,6 +681,8 @@ func (m *QueryEpochStatusCountRequest) GetEpochNum() uint64 {
 	return 0
 }
 
+// QueryEpochStatusCountResponse is the response type for the Query/EpochStatusCount
+// RPC method.
 type QueryEpochStatusCountResponse struct {
 	StatusCount map[string]uint64 `protobuf:"bytes,1,rep,name=status_count,json=statusCount,proto3" json:"status_count,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }

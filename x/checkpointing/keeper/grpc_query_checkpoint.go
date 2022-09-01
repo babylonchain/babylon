@@ -58,11 +58,37 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 }
 
 func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequest) (*types.QueryEpochStatusResponse, error) {
-	panic("")
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	ckptWithMeta, err := k.CheckpointsState(sdkCtx).GetRawCkptWithMeta(req.EpochNum)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryEpochStatusResponse{Status: ckptWithMeta.Status.String()}, nil
 }
 
 func (k Keeper) EpochStatusCount(ctx context.Context, req *types.QueryEpochStatusCountRequest) (*types.QueryEpochStatusCountResponse, error) {
-	panic("")
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	// iterate epochs from 0 to the current epoch and count the status
+	epochStatusCount := make(map[string]uint64, 0)
+	for i := uint64(0); i <= req.EpochNum; i++ {
+		// reuse the EpochStatus query
+		epochStatusReq := &types.QueryEpochStatusRequest{EpochNum: i}
+		epochStatusRes, err := k.EpochStatus(ctx, epochStatusReq)
+		if err != nil {
+			return nil, err
+		}
+		epochStatusCount[epochStatusRes.Status]++
+	}
+
+	return &types.QueryEpochStatusCountResponse{StatusCount: epochStatusCount}, nil
 }
 
 func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {
