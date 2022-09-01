@@ -9,7 +9,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// InitQueueLength initialises the msg queue length of the current epoch to 0
+// InitMsgQueue initialises the msg queue length of the current epoch to 0
 func (k Keeper) InitMsgQueue(ctx sdk.Context) {
 	store := k.msgQueueLengthStore(ctx)
 
@@ -27,7 +27,7 @@ func (k Keeper) GetQueueLength(ctx sdk.Context, epochNumber uint64) uint64 {
 	// get queue len in bytes from DB
 	bz := store.Get(epochNumberBytes)
 	if bz == nil {
-		panic(types.ErrUnknownQueueLen)
+		return 0
 	}
 	// unmarshal
 	return sdk.BigEndianToUint64(bz)

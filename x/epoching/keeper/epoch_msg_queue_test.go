@@ -92,6 +92,9 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
 
+		// ensure epoch 2 has initialised an empty msg queue
+		require.Empty(t, helper.EpochingKeeper.GetCurrentEpochMsgs(ctx))
+
 		// ensure the voting power has been added w.r.t. the newly delegated tokens
 		valPower2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val)
 		require.NoError(t, err)
@@ -144,6 +147,9 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
+
+		// ensure epoch 2 has initialised an empty msg queue
+		require.Empty(t, helper.EpochingKeeper.GetCurrentEpochMsgs(ctx))
 
 		// ensure the voting power has been reduced w.r.t. the unbonding tokens
 		valPower2, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 2, val)
@@ -208,6 +214,9 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
+
+		// ensure epoch 2 has initialised an empty msg queue
+		require.Empty(t, helper.EpochingKeeper.GetCurrentEpochMsgs(ctx))
 
 		// ensure the voting power has been redelegated from val1 to val2
 		// Note that in Cosmos SDK, redelegation happens upon the next `EndBlock`, rather than waiting for 14 days.

@@ -28,7 +28,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		IncEpoch := k.IncEpoch(ctx)
 		// init epoch msg queue
 		k.InitMsgQueue(ctx)
-		// if epoch 1, then copy all queued msgs in epoch 0 to epoch 1
+		// if first block of epoch 1, then copy all queued msgs in epoch 0 to epoch 1
+		// the reason is that the genesis block in epoch 0 will not trigger `BeginBlock` or `EndBlock`
 		// TODO: more elegant way to do this? e.g., reject all msgs submitted in epoch 0?
 		if epoch.EpochNumber == uint64(0) {
 			epochMsgs := k.GetEpochMsgs(ctx, 0)
