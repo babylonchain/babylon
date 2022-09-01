@@ -10,8 +10,8 @@ import (
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
 	k.SetParams(ctx, genState.Params)
-
 	k.SetGenBlsKeys(ctx, genState.GenesisKeys)
+	k.InitGenValLifecycle(ctx, genState.GenesisKeys)
 }
 
 // ExportGenesis returns the capability module's exported genesis.

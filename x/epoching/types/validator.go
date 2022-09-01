@@ -14,8 +14,6 @@ type ValState int
 
 const (
 	ValStateCreateRequestSubmitted = iota
-	ValStateCreated
-	ValStateBondingRequestSubmitted
 	ValStateBonded
 	ValStateUnbondingRequestSubmitted
 	ValStateUnbonding

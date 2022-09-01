@@ -27,6 +27,7 @@ type EpochingKeeper interface {
 	GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64
 	GetValidatorPubkey(ctx sdk.Context, valAddr sdk.ValAddress) (cryptotypes.PubKey, bool)
 	UpdateValState(ctx sdk.Context, valAddr sdk.ValAddress, state epochingtypes.ValState)
+	InitValState(ctx sdk.Context, valAddr sdk.ValAddress)
 }
 
 // Event Hooks

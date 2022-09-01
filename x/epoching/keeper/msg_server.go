@@ -52,7 +52,6 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 	}
 
 	k.EnqueueMsg(ctx, queuedMsg)
-	k.UpdateValState(ctx, valAddr, types.ValStateBondingRequestSubmitted)
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{

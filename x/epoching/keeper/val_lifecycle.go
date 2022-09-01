@@ -25,10 +25,6 @@ func (k Keeper) UpdateValState(ctx sdk.Context, valAddr sdk.ValAddress, state ty
 	switch state {
 	case types.ValStateCreateRequestSubmitted:
 		panic(fmt.Errorf("call InitValState instead"))
-	case types.ValStateCreated:
-		lc.CreatedHeight = uint64(ctx.BlockHeight())
-	case types.ValStateBondingRequestSubmitted:
-		lc.BondingRequestHeight = uint64(ctx.BlockHeight())
 	case types.ValStateBonded:
 		lc.BondedHeight = uint64(ctx.BlockHeight())
 	case types.ValStateUnbondingRequestSubmitted:

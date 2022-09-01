@@ -37,25 +37,18 @@ message ValidatorLifecycle {
   // create_request_height is the block height when this validator's creation request is received by Babylon
   // this happens when Babylon nodes commit the block that includes the `MsgWrappedCreateValidator` msg
   uint64 create_request_height = 2;
-  // created_height is the block height when the validator's creation request is handled by Babylon and this validator becomes created (but still unbonded)
+  // bonded_height is the block height when `MsgWrappedCreateValidator` msg is handled by Babylon and this validator becomes bonded
   // this happens at the end of an epoch
-  uint64 created_height = 3;
-
-  // bonding_request_height is the block height when this validator's bonding request is received by Babylon
-  // this happens when Babylon nodes commit the block that includes the `MsgWrappedDelegate` msg
-  uint64 bonding_request_height = 4;
-  // bonded_height is the block height when the validator's bonding request is handled by Babylon and this validator becomes bonded
-  // this happens at the end of an epoch
-  uint64 bonded_height = 5;
+  uint64 bonded_height = 3;
 
   // unbonding_request_height is the block height when this validator's unbonding request is received by Babylon
   // this happens when Babylon nodes commit the block that includes the `MsgWrappedUndelegate` msg
-  uint64 unbonding_request_height = 6;
-  // unbonding_height is the block height when the validator's unbonding request is handled by Babylon and this validator becomes unbonding
+  uint64 unbonding_request_height = 4;
+  // unbonding_height is the block height when the `MsgWrappedUndelegate` msg is handled by Babylon and this validator becomes unbonding
   // this happens at the end of an epoch
-  uint64 unbonding_height = 7;
+  uint64 unbonding_height = 5;
 
   // unbonded_height is the block height when when this validator becomes uunbonded
   // this happens when the epoch's checkpoint is finalised
-  uint64 unbonded_height = 8;
+  uint64 unbonded_height = 6;
 }

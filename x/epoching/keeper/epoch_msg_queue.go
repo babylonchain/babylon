@@ -111,15 +111,13 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
-		newValState = types.ValStateCreated
+		newValState = types.ValStateBonded
 		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
 	case *types.QueuedMessage_MsgDelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
-		newValState = types.ValStateBonded
-		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgDelegate.ValidatorAddress)
 	case *types.QueuedMessage_MsgUndelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
-		newValState = types.ValStateUnbonded
+		newValState = types.ValStateUnbonding
 		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
 	case *types.QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
@@ -151,7 +149,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	// if MsgCreateValidator, MsgDelegate and MsgUndelegate, then update the validator state for its lifecycle
 	// otherwise do nothing
 	switch msg.Msg.(type) {
-	case *types.QueuedMessage_MsgCreateValidator, *types.QueuedMessage_MsgDelegate, *types.QueuedMessage_MsgUndelegate:
+	case *types.QueuedMessage_MsgCreateValidator, *types.QueuedMessage_MsgUndelegate:
 		k.UpdateValState(ctx, valAddr, newValState)
 	}
 
