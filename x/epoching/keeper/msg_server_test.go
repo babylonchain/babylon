@@ -13,7 +13,9 @@ import (
 // TODO (fuzz tests): replace the following tests with fuzz ones
 func TestMsgWrappedDelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
-	ctx, msgSrvr := helper.Ctx, helper.MsgSrvr
+	msgSrvr := helper.MsgSrvr
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx := helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -30,7 +32,6 @@ func TestMsgWrappedDelegate(t *testing.T) {
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedDelegate(tc.req)
 		_, err := msgSrvr.WrappedDelegate(wctx, wrappedMsg)
-
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {
@@ -41,7 +42,9 @@ func TestMsgWrappedDelegate(t *testing.T) {
 
 func TestMsgWrappedUndelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
-	ctx, msgSrvr := helper.Ctx, helper.MsgSrvr
+	msgSrvr := helper.MsgSrvr
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx := helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -58,7 +61,6 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
 		_, err := msgSrvr.WrappedUndelegate(wctx, wrappedMsg)
-
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {
@@ -69,7 +71,9 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
-	ctx, msgSrvr := helper.Ctx, helper.MsgSrvr
+	msgSrvr := helper.MsgSrvr
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx := helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -87,7 +91,6 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		wrappedMsg := types.NewMsgWrappedBeginRedelegate(tc.req)
 
 		_, err := msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
-
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {

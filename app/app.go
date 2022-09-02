@@ -152,7 +152,7 @@ var (
 	_ servertypes.Application = (*BabylonApp)(nil)
 )
 
-// App extends an ABCI application, but with most of its parameters exported.
+// BabylonApp extends an ABCI application, but with most of its parameters exported.
 // They are exported for convenience in creating helper functions, as object
 // capabilities aren't needed for testing.
 type BabylonApp struct {
@@ -214,7 +214,7 @@ func init() {
 // NewBabylonApp returns a reference to an initialized BabylonApp.
 func NewBabylonApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
-	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig,
+	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, privSigner *PrivSigner,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
@@ -347,8 +347,11 @@ func NewBabylonApp(
 			appCodec,
 			keys[checkpointingtypes.StoreKey],
 			keys[checkpointingtypes.MemStoreKey],
+			privSigner.WrappedPV,
 			app.EpochingKeeper,
-			app.GetSubspace(checkpointingtypes.ModuleName))
+			app.GetSubspace(checkpointingtypes.ModuleName),
+			privSigner.ClientCtx,
+		)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations

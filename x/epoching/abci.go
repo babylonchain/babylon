@@ -25,28 +25,19 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
-		IncEpoch := k.IncEpoch(ctx)
-		// init epoch msg queue
+		incEpoch := k.IncEpoch(ctx)
+		// init the msg queue of this new epoch
 		k.InitMsgQueue(ctx)
-		// if first block of epoch 1, then copy all queued msgs in epoch 0 to epoch 1
-		// the reason is that the genesis block in epoch 0 will not trigger `BeginBlock` or `EndBlock`
-		// TODO: more elegant way to do this? e.g., reject all msgs submitted in epoch 0?
-		if epoch.EpochNumber == uint64(0) {
-			epochMsgs := k.GetEpochMsgs(ctx, 0)
-			for _, msg := range epochMsgs {
-				k.EnqueueMsg(ctx, *msg)
-			}
-		}
 		// init the slashed voting power of this new epoch
 		k.InitSlashedVotingPower(ctx)
 		// store the current validator set
 		k.InitValidatorSet(ctx)
 		// trigger AfterEpochBegins hook
-		k.AfterEpochBegins(ctx, IncEpoch.EpochNumber)
+		k.AfterEpochBegins(ctx, incEpoch.EpochNumber)
 		// emit BeginEpoch event
 		err := ctx.EventManager().EmitTypedEvent(
 			&types.EventBeginEpoch{
-				EpochNumber: IncEpoch.EpochNumber,
+				EpochNumber: incEpoch.EpochNumber,
 			},
 		)
 		if err != nil {
@@ -83,6 +74,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				err := ctx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
 						EpochNumber: epoch.EpochNumber,
+						Height:      msg.BlockHeight,
 						TxId:        msg.TxId,
 						MsgId:       msg.MsgId,
 						Error:       err.Error(),

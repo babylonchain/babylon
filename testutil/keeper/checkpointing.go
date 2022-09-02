@@ -3,6 +3,7 @@ package keeper
 import (
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -16,7 +17,7 @@ import (
 	"testing"
 )
 
-func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
+func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner, cliCtx client.Context) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -27,6 +28,7 @@ func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.Prot
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
+	types.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
 	paramsSubspace := typesparams.NewSubspace(
@@ -41,9 +43,10 @@ func CheckpointingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context, *codec.Prot
 		cdc,
 		storeKey,
 		memStoreKey,
-		// TODO: nil for now, will add epoching keeper for integrated testing
-		nil,
+		signer,
+		ek,
 		paramsSubspace,
+		cliCtx,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

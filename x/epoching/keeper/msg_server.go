@@ -45,6 +45,11 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 	}
 
 	height := uint64(ctx.BlockHeight())
+
+	if height == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(height, txid, msg)
 	if err != nil {
@@ -92,6 +97,11 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	}
 
 	height := uint64(ctx.BlockHeight())
+
+	if height == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(height, txid, msg)
 	if err != nil {
@@ -143,6 +153,11 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 	}
 
 	height := uint64(ctx.BlockHeight())
+
+	if height == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(height, txid, msg)
 	if err != nil {

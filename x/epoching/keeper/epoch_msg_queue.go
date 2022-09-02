@@ -28,7 +28,7 @@ func (k Keeper) GetQueueLength(ctx sdk.Context, epochNumber uint64) uint64 {
 	// get queue len in bytes from DB
 	bz := store.Get(epochNumberBytes)
 	if bz == nil {
-		return 0
+		return 0 // BBN has not reached this epoch yet
 	}
 	// unmarshal
 	return sdk.BigEndianToUint64(bz)
@@ -79,7 +79,7 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context, epochNumber uint64) []*types.Queue
 	store := k.msgQueueStore(ctx, epochNumber)
 
 	// add each queued msg to queuedMsgs
-	iterator := store.Iterator(nil, nil)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		queuedMsgBytes := iterator.Value()
@@ -136,7 +136,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 
 	// Create a new Context based off of the existing Context with a MultiStore branch
 	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
-	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId)
+	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId, msg.BlockHeight)
 
 	// handle the unwrapped message
 	result, err := handler(handlerCtx, unwrappedMsgWithType)
@@ -176,7 +176,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 }
 
 // based on a function with the same name in `baseapp.go``
-func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte) (sdk.Context, sdk.CacheMultiStore) {
+func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (sdk.Context, sdk.CacheMultiStore) {
 	ms := ctx.MultiStore()
 	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824
 	msCache := ms.CacheMultiStore()
@@ -186,6 +186,7 @@ func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte) (sdk.Context, sd
 				map[string]interface{}{
 					"txHash":  fmt.Sprintf("%X", txid),
 					"msgHash": fmt.Sprintf("%X", msgid),
+					"height":  fmt.Sprintf("%d", height),
 				},
 			),
 		).(sdk.CacheMultiStore)
