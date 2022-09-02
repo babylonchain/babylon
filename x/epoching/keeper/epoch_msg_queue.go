@@ -27,7 +27,7 @@ func (k Keeper) GetQueueLength(ctx sdk.Context, epochNumber uint64) uint64 {
 	// get queue len in bytes from DB
 	bz := store.Get(epochNumberBytes)
 	if bz == nil {
-		return 0
+		return 0 // BBN has not reached this epoch yet
 	}
 	// unmarshal
 	return sdk.BigEndianToUint64(bz)
