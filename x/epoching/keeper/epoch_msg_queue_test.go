@@ -84,9 +84,10 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		valSet1 := helper.EpochingKeeper.GetCurrentValidatorSet(helper.Ctx)
-		val := valSet1[0].Addr // validator to be undelegated
-		valPower, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
+		// get validator to be undelegated
+		valSet := keeper.GetCurrentValidatorSet(helper.Ctx)
+		val := valSet[0].Addr
+		valPower, err := keeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
 
 		// delegate a random amount of tokens to the validator

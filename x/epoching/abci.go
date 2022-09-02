@@ -25,19 +25,18 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
-		IncEpoch := k.IncEpoch(ctx)
-		// init epoch msg queue
+		incEpoch := k.IncEpoch(ctx)
 		k.InitQueueLength(ctx)
 		// init the slashed voting power of this new epoch
 		k.InitSlashedVotingPower(ctx)
 		// store the current validator set
 		k.InitValidatorSet(ctx)
 		// trigger AfterEpochBegins hook
-		k.AfterEpochBegins(ctx, IncEpoch.EpochNumber)
+		k.AfterEpochBegins(ctx, incEpoch.EpochNumber)
 		// emit BeginEpoch event
 		err := ctx.EventManager().EmitTypedEvent(
 			&types.EventBeginEpoch{
-				EpochNumber: IncEpoch.EpochNumber,
+				EpochNumber: incEpoch.EpochNumber,
 			},
 		)
 		if err != nil {
@@ -74,6 +73,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				err := ctx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
 						EpochNumber: epoch.EpochNumber,
+						Height:      msg.BlockHeight,
 						TxId:        msg.TxId,
 						MsgId:       msg.MsgId,
 						Error:       err.Error(),
