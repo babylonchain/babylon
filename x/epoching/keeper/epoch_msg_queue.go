@@ -10,7 +10,7 @@ import (
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0
-func (k Keeper) InitMsgQueue(ctx sdk.Context) {
+func (k Keeper) InitQueueLength(ctx sdk.Context) {
 	store := k.msgQueueLengthStore(ctx)
 
 	epochNumber := k.GetEpoch(ctx).EpochNumber
@@ -78,7 +78,7 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context, epochNumber uint64) []*types.Queue
 	store := k.msgQueueStore(ctx, epochNumber)
 
 	// add each queued msg to queuedMsgs
-	iterator := store.Iterator(nil, nil)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		queuedMsgBytes := iterator.Value()
