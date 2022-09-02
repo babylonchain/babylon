@@ -65,7 +65,6 @@ func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgW
 	}
 
 	m.k.epochingKeeper.EnqueueMsg(ctx, queueMsg)
-	m.k.epochingKeeper.UpdateValState(ctx, valAddr, epochingtypes.ValStateCreateRequestSubmitted)
 
 	return &types.MsgWrappedCreateValidatorResponse{}, err
 }

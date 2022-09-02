@@ -163,7 +163,7 @@ func (k Keeper) UnbondAllMatureValidators(ctx sdk.Context) {
 				}
 
 				// Babylon modification: record the height when this validator becomes unbonded
-				k.UpdateValState(ctx, addr, types.ValStateUnbonded)
+				k.RecordNewValState(ctx, addr, types.ValState_UNBONDED)
 			}
 
 			store.Delete(key)

@@ -30,25 +30,20 @@ message QueuedMessage {
   }
 }
 
+enum ValState {
+  CREATED = 0;
+  BONDED = 1;
+  UNBONDING = 2;
+  UNBONDED = 3;
+  REMOVED = 4;
+}
+
+message ValStateUpdate {
+  ValState state = 1;
+  uint64 height = 2;
+}
+
 message ValidatorLifecycle {
-  // val_addr is the address of the validator
   string val_addr = 1;
-
-  // create_request_height is the block height when this validator's creation request is received by Babylon
-  // this happens when Babylon nodes commit the block that includes the `MsgWrappedCreateValidator` msg
-  uint64 create_request_height = 2;
-  // bonded_height is the block height when `MsgWrappedCreateValidator` msg is handled by Babylon and this validator becomes bonded
-  // this happens at the end of an epoch
-  uint64 bonded_height = 3;
-
-  // unbonding_request_height is the block height when this validator's unbonding request is received by Babylon
-  // this happens when Babylon nodes commit the block that includes the `MsgWrappedUndelegate` msg
-  uint64 unbonding_request_height = 4;
-  // unbonding_height is the block height when the `MsgWrappedUndelegate` msg is handled by Babylon and this validator becomes unbonding
-  // this happens at the end of an epoch
-  uint64 unbonding_height = 5;
-
-  // unbonded_height is the block height when when this validator becomes uunbonded
-  // this happens when the epoch's checkpoint is finalised
-  uint64 unbonded_height = 6;
+  repeated ValStateUpdate val_life = 2;
 }

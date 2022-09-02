@@ -192,16 +192,16 @@ func (mr *MockEpochingKeeperMockRecorder) InitValState(ctx, valAddr interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitValState", reflect.TypeOf((*MockEpochingKeeper)(nil).InitValState), ctx, valAddr)
 }
 
-// UpdateValState mocks base method.
-func (m *MockEpochingKeeper) UpdateValState(ctx types1.Context, valAddr types1.ValAddress, state types.ValState) {
+// RecordNewValState mocks base method.
+func (m *MockEpochingKeeper) RecordNewValState(ctx types1.Context, valAddr types1.ValAddress, state types.ValState) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "UpdateValState", ctx, valAddr, state)
+	m.ctrl.Call(m, "RecordNewValState", ctx, valAddr, state)
 }
 
-// UpdateValState indicates an expected call of UpdateValState.
-func (mr *MockEpochingKeeperMockRecorder) UpdateValState(ctx, valAddr, state interface{}) *gomock.Call {
+// RecordNewValState indicates an expected call of RecordNewValState.
+func (mr *MockEpochingKeeperMockRecorder) RecordNewValState(ctx, valAddr, state interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateValState", reflect.TypeOf((*MockEpochingKeeper)(nil).UpdateValState), ctx, valAddr, state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordNewValState", reflect.TypeOf((*MockEpochingKeeper)(nil).RecordNewValState), ctx, valAddr, state)
 }
 
 // MockCheckpointingHooks is a mock of CheckpointingHooks interface.

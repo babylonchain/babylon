@@ -109,7 +109,6 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	}
 
 	k.EnqueueMsg(ctx, queuedMsg)
-	k.UpdateValState(ctx, valAddr, types.ValStateUnbondingRequestSubmitted)
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedUndelegate{

@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0
@@ -103,8 +102,6 @@ func (k Keeper) GetCurrentEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
 	var (
 		unwrappedMsgWithType sdk.Msg
-		newValState          types.ValState
-		valAddr              sdk.ValAddress
 		err                  error
 	)
 
@@ -112,14 +109,10 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
-		newValState = types.ValStateBonded
-		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
 	case *types.QueuedMessage_MsgDelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
 	case *types.QueuedMessage_MsgUndelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
-		newValState = types.ValStateUnbonding
-		valAddr, err = sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
 	case *types.QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
 	default:
@@ -146,31 +139,6 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 
 	// release the cache
 	msCache.Write()
-
-	switch unwrappedMsg := msg.Msg.(type) {
-	case *types.QueuedMessage_MsgCreateValidator:
-		// record the height when becoming bonded
-		k.UpdateValState(ctx, valAddr, newValState)
-	case *types.QueuedMessage_MsgUndelegate:
-		// get validator operator's address
-		validator, found := k.stk.GetValidator(ctx, valAddr)
-		if !found {
-			return result, stakingtypes.ErrNoValidatorFound
-		}
-		operatorAddr := validator.GetOperator()
-		// get delegator's address
-		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgUndelegate.DelegatorAddress)
-		if err != nil {
-			return result, err
-		}
-		// record the height when becoming unbonding
-		// ONLY WHEN the validator operator makes the undelegation request
-		if delAddr.Equals(operatorAddr) {
-			k.UpdateValState(ctx, valAddr, newValState)
-		}
-	default:
-		// do nothing
-	}
 
 	return result, nil
 }

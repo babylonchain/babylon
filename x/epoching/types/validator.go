@@ -10,16 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-type ValState int
-
-const (
-	ValStateCreateRequestSubmitted = iota
-	ValStateBonded
-	ValStateUnbondingRequestSubmitted
-	ValStateUnbonding
-	ValStateUnbonded
-)
-
 type Validator struct {
 	Addr  sdk.ValAddress `json:"addr"`
 	Power int64          `json:"power"`

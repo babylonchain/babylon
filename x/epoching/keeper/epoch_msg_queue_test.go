@@ -93,8 +93,9 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		// ensure the validator's lifecycle data is generated
 		lc := keeper.GetValLifecycle(ctx, val)
 		require.NotNil(t, lc)
-		require.Equal(t, lc.CreateRequestHeight, uint64(0))
-		require.Equal(t, lc.BondedHeight, uint64(0))
+		require.Equal(t, 1, len(lc.ValLife))
+		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, uint64(0), lc.ValLife[0].Height)
 
 		// delegate a random amount of tokens to the validator
 		numNewDels := rand.Int63n(1000) + 1
@@ -158,8 +159,9 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		// ensure the validator's lifecycle data is generated
 		lc := keeper.GetValLifecycle(ctx, val)
 		require.NotNil(t, lc)
-		require.Equal(t, lc.CreateRequestHeight, uint64(0))
-		require.Equal(t, lc.BondedHeight, uint64(0))
+		require.Equal(t, 1, len(lc.ValLife))
+		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, uint64(0), lc.ValLife[0].Height)
 
 		// unbond a random amount of tokens from the validator
 		// Note that for any pair of delegator and validator, there can be `<=DefaultMaxEntries=7` concurrent undelegations at any time slot
@@ -238,14 +240,13 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		require.Equal(t, val1Power, val2Power)
 
 		// ensure the validator's lifecycle data is generated
-		lc1 := keeper.GetValLifecycle(ctx, val1)
-		require.NotNil(t, lc1)
-		require.Equal(t, lc1.CreateRequestHeight, uint64(0))
-		require.Equal(t, lc1.BondedHeight, uint64(0))
-		lc2 := keeper.GetValLifecycle(ctx, val2)
-		require.NotNil(t, lc2)
-		require.Equal(t, lc2.CreateRequestHeight, uint64(0))
-		require.Equal(t, lc2.BondedHeight, uint64(0))
+		for _, val := range []sdk.ValAddress{val1, val2} {
+			lc := keeper.GetValLifecycle(ctx, val)
+			require.NotNil(t, lc)
+			require.Equal(t, 1, len(lc.ValLife))
+			require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+			require.Equal(t, uint64(0), lc.ValLife[0].Height)
+		}
 
 		// redelegate a random amount of tokens from val1 to val2
 		// same as undelegation, there can be `<=DefaultMaxEntries=7` concurrent redelegation requests for any tuple (delegatorAddr, srcValidatorAddr, dstValidatorAddr)

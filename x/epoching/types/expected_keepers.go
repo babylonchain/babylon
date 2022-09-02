@@ -61,5 +61,9 @@ type EpochingHooks interface {
 
 // StakingHooks event hooks for staking validator object (noalias)
 type StakingHooks interface {
-	BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) // Must be called right before a validator is slashed
+	BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec)                     // Must be called right before a validator is slashed
+	AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) error                                  // Must be called when a validator is created
+	AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error        // Must be called when a validator is deleted
+	AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error         // Must be called when a validator is bonded
+	AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) error // Must be called when a validator begins unbonding
 }
