@@ -71,21 +71,21 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		rand.Seed(seed)
 
 		helper := testepoching.NewHelperWithValSet(t)
-		keeper, genAccs := helper.EpochingKeeper, helper.GenAccs
+		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		params := keeper.GetParams(ctx)
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// enter the 1st block and thus epoch 1
-		// Note that the genesis block does not trigger BeginBlock or EndBlock
-		ctx := helper.GenAndApplyEmptyBlock()
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx = helper.BeginBlock()
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
 		// get validator to be undelegated
-		valSet := keeper.GetCurrentValidatorSet(helper.Ctx)
+		valSet := keeper.GetCurrentValidatorSet(ctx)
 		val := valSet[0].Addr
 		valPower, err := keeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
@@ -99,8 +99,10 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewDels, int64(len(epochMsgs)))
 
-		// enter epoch 2
-		params := keeper.GetParams(ctx)
+		// EndBlock of block 1
+		ctx = helper.EndBlock()
+
+		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < params.EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
@@ -137,8 +139,8 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// enter the 1st block and thus epoch 1
-		ctx = helper.GenAndApplyEmptyBlock()
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx = helper.BeginBlock()
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -158,6 +160,9 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		// ensure the msgs are queued
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewUndels, int64(len(epochMsgs)))
+
+		// EndBlock of block 1
+		ctx = helper.EndBlock()
 
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
@@ -204,8 +209,8 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// enter the 1st block and thus epoch 1
-		ctx = helper.GenAndApplyEmptyBlock()
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx = helper.BeginBlock()
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -230,6 +235,9 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		// ensure the msgs are queued
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewRedels, int64(len(epochMsgs)))
+
+		// EndBlock of block 1
+		ctx = helper.EndBlock()
 
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {

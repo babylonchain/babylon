@@ -10,7 +10,7 @@ import (
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0
-func (k Keeper) InitQueueLength(ctx sdk.Context) {
+func (k Keeper) InitMsgQueue(ctx sdk.Context) {
 	store := k.msgQueueLengthStore(ctx)
 
 	epochNumber := k.GetEpoch(ctx).EpochNumber

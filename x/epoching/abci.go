@@ -26,7 +26,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
 		incEpoch := k.IncEpoch(ctx)
-		k.InitQueueLength(ctx)
+		// init the msg queue of this new epoch
+		k.InitMsgQueue(ctx)
 		// init the slashed voting power of this new epoch
 		k.InitSlashedVotingPower(ctx)
 		// store the current validator set
