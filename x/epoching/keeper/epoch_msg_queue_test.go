@@ -71,7 +71,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		rand.Seed(seed)
 
 		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		keeper, genAccs := helper.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
@@ -80,13 +80,13 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 
 		// enter the 1st block and thus epoch 1
 		// Note that the genesis block does not trigger BeginBlock or EndBlock
-		ctx = helper.GenAndApplyEmptyBlock()
+		ctx := helper.GenAndApplyEmptyBlock()
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		valSet1 := helper.EpochingKeeper.GetValidatorSet(helper.Ctx, 0)
+		valSet1 := helper.EpochingKeeper.GetCurrentValidatorSet(helper.Ctx)
 		val := valSet1[0].Addr // validator to be undelegated
-		valPower, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val)
+		valPower, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
 
 		// delegate a random amount of tokens to the validator
@@ -141,9 +141,9 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		valSet1 := helper.EpochingKeeper.GetValidatorSet(helper.Ctx, 0)
+		valSet1 := helper.EpochingKeeper.GetCurrentValidatorSet(helper.Ctx)
 		val := valSet1[0].Addr // validator to be undelegated
-		valPower, err := helper.EpochingKeeper.GetValidatorVotingPower(ctx, 0, val)
+		valPower, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
 
 		// unbond a random amount of tokens from the validator
