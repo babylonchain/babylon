@@ -18,4 +18,5 @@ var (
 	ErrMarshal                   = sdkerrors.Register(ModuleName, 8, "marshal error.")
 	ErrUnmarshal                 = sdkerrors.Register(ModuleName, 9, "unmarshal error.")
 	ErrNoWrappedMsg              = sdkerrors.Register(ModuleName, 10, "the wrapped msg contains no msg inside.")
+	ErrZeroEpochMsg              = sdkerrors.Register(ModuleName, 11, "the 0-th epoch does not handle messages")
 )

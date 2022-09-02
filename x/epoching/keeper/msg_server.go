@@ -25,6 +25,11 @@ var _ types.MsgServer = msgServer{}
 func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	height := uint64(ctx.BlockHeight())
+
+	if height == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(height, txid, msg)
 	if err != nil {
@@ -51,6 +56,11 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	height := uint64(ctx.BlockHeight())
+
+	if height == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(height, txid, msg)
 	if err != nil {
@@ -77,6 +87,11 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	height := uint64(ctx.BlockHeight())
+
+	if height == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(height, txid, msg)
 	if err != nil {

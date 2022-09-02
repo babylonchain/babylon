@@ -15,6 +15,8 @@ import (
 func TestMsgWrappedDelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
 	ctx, msgSrvr, queryClient := helper.Ctx, helper.MsgSrvr, helper.QueryClient
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx = helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -35,6 +37,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
+			EpochNum:   uint64(1),
 			Pagination: &query.PageRequest{},
 		})
 		require.NoError(t, err)
@@ -51,6 +54,8 @@ func TestMsgWrappedDelegate(t *testing.T) {
 func TestMsgWrappedUndelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
 	ctx, msgSrvr, queryClient := helper.Ctx, helper.MsgSrvr, helper.QueryClient
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx = helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -70,6 +75,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
+			EpochNum:   uint64(1),
 			Pagination: &query.PageRequest{},
 		})
 		require.NoError(t, err)
@@ -86,6 +92,8 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
 	ctx, msgSrvr, queryClient := helper.Ctx, helper.MsgSrvr, helper.QueryClient
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx = helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -106,6 +114,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		require.NoError(t, err)
 
 		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
+			EpochNum:   uint64(1),
 			Pagination: &query.PageRequest{},
 		})
 		require.NoError(t, err)

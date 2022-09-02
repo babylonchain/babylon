@@ -40,6 +40,7 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 // EpochMsgs handles the QueryEpochMsgsRequest query
 func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (*types.QueryEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
 	epoch := k.GetEpoch(ctx)
 	if epoch.EpochNumber < req.EpochNum {
 		return nil, types.ErrUnknownEpochNumber
