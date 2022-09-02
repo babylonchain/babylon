@@ -7,8 +7,6 @@ import (
 	"fmt"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	tmconfig "github.com/tendermint/tendermint/config"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	"path/filepath"
 	"strconv"
 	"testing"
 	"time"
@@ -96,18 +94,8 @@ func Setup(isCheckTx bool) *BabylonApp {
 // SetupPrivSigner sets up a PrivSigner for testing
 func SetupPrivSigner() (*PrivSigner, error) {
 	nodeCfg := tmconfig.DefaultConfig()
-	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
-	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
-	if err != nil {
-		return nil, err
-	}
-	pvStateFile := nodeCfg.PrivValidatorStateFile()
-	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
-	if err != nil {
-		return nil, err
-	}
 	privSigner, _ := InitClientContext(client.Context{}, keyring.BackendMemory)
-	privSigner.WrappedPV.Clean(pvKeyFile, pvStateFile)
+	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil
 }
 
