@@ -27,7 +27,7 @@ service Query {
   }
 
   // ValidatorLifecycle queries the lifecycle of a given validator
-  rpc ValidatorLifecycle(QueryValidatorLifecycleRequest)returns (QueryValidatorLifecycleResponse) {
+  rpc ValidatorLifecycle(QueryValidatorLifecycleRequest) returns (QueryValidatorLifecycleResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/validator_lifecycle/{val_addr}";
   }
 }
