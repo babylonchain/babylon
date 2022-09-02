@@ -57,6 +57,7 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
 }
 
+// EpochStatus returns the status of the checkpoint at a given epoch
 func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequest) (*types.QueryEpochStatusResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -71,6 +72,7 @@ func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequ
 	return &types.QueryEpochStatusResponse{Status: ckptWithMeta.Status.String()}, nil
 }
 
+// EpochStatusCount returns the count of epochs with each status of the checkpoint
 func (k Keeper) EpochStatusCount(ctx context.Context, req *types.QueryEpochStatusCountRequest) (*types.QueryEpochStatusCountResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")

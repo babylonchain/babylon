@@ -35,7 +35,7 @@ service Query {
     option (google.api.http).get = "/babylon/checkpointing/v1/bls_public_keys/{epoch_num}";
   }
 
-  // EpochStatus queries the status of a given epoch
+  // EpochStatus queries the status of the checkpoint at a given epoch
   rpc EpochStatus(QueryEpochStatusRequest) returns (QueryEpochStatusResponse) {
     option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status/{epoch_num}";
   }
