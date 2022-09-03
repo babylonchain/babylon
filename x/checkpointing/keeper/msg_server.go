@@ -28,7 +28,7 @@ func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*t
 
 	err := m.k.addBlsSig(ctx, msg.BlsSig)
 	if err != nil {
-		return &types.MsgAddBlsSigResponse{}, err
+		return nil, err
 	}
 
 	return &types.MsgAddBlsSigResponse{}, nil

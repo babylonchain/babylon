@@ -42,7 +42,7 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 		require.True(t, ckpt.Equal(mockCkptWithMeta))
 
 		// test existing raw checkpoint by epoch number
-		err = ckptKeeper.BuildRawCheckpoint(
+		_, err = ckptKeeper.BuildRawCheckpoint(
 			ctx,
 			mockCkptWithMeta.Ckpt.EpochNum,
 			datagen.GenRandomLastCommitHash(),

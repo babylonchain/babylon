@@ -1,7 +1,6 @@
 package checkpointing
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -28,24 +27,25 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// note that this epochNum is obtained after the BeginBlocker of the epoching module is executed
 		// meaning that the epochNum has been incremented upon a new epoch
 		lch := ctx.BlockHeader().LastCommitHash
-		err := k.BuildRawCheckpoint(ctx, epoch.EpochNumber-1, lch)
+		ckpt, err := k.BuildRawCheckpoint(ctx, epoch.EpochNumber-1, lch)
 		if err != nil {
 			panic("failed to generate a raw checkpoint")
 		}
 
 		// emit BeginEpoch event
-		ctx.EventManager().EmitEvents(sdk.Events{
-			sdk.NewEvent(
-				types.EventTypeRawCheckpointGenerated,
-				sdk.NewAttribute(types.AttributeKeyEpochNumber, fmt.Sprint(epoch.EpochNumber)),
-			),
-		})
+		err = ctx.EventManager().EmitTypedEvent(
+			&types.EventCheckpointAccumulating{
+				Checkpoint: ckpt,
+			},
+		)
+		if err != nil {
+			panic(err)
+		}
 
 		go func() {
-			// TODO: inject client.Context
 			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
 			if err != nil {
-				ctx.Logger().Error("failed to send BLS signature")
+				panic(err)
 			}
 		}()
 	}
