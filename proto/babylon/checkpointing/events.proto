@@ -1,0 +1,30 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+import "babylon/checkpointing/checkpoint.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+message EventCheckpointAccumulating {
+    RawCheckpointWithMeta checkpoint = 1;
+}
+
+message EventCheckpointSealed {
+    RawCheckpointWithMeta checkpoint = 1;
+}
+
+message EventCheckpointSubmitted {
+    RawCheckpointWithMeta checkpoint = 1;
+}
+
+message EventCheckpointConfirmed {
+    RawCheckpointWithMeta checkpoint = 1;
+}
+
+message EventCheckpointFinalized {
+    RawCheckpointWithMeta checkpoint = 1;
+}
+
+message EventCheckpointForgotten {
+    RawCheckpointWithMeta checkpoint = 1;
+}

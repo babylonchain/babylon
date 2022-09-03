@@ -110,6 +110,15 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		return err
 	}
 
+	if updated && ckptWithMeta.Status == types.Sealed {
+		err = ctx.EventManager().EmitTypedEvent(
+			&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
+		)
+		if err != nil {
+			ctx.Logger().Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
+		}
+	}
+
 	return nil
 }
 
@@ -130,10 +139,14 @@ func (k Keeper) AddRawCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpo
 	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckptWithMeta)
 }
 
-func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash) error {
+func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash) (*types.RawCheckpointWithMeta, error) {
 	ckptWithMeta := types.NewCheckpointWithMeta(types.NewCheckpoint(epochNum, lch), types.Accumulating)
+	err := k.AddRawCheckpoint(ctx, ckptWithMeta)
+	if err != nil {
+		return nil, err
+	}
 
-	return k.AddRawCheckpoint(ctx, ckptWithMeta)
+	return ckptWithMeta, nil
 }
 
 // CheckpointEpoch verifies checkpoint from BTC and returns epoch number if
@@ -208,34 +221,58 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 
 // SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED
 func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, epoch uint64) {
-	k.setCheckpointStatus(ctx, epoch, types.Sealed, types.Submitted)
+	ckpt := k.setCheckpointStatus(ctx, epoch, types.Sealed, types.Submitted)
+	err := ctx.EventManager().EmitTypedEvent(
+		&types.EventCheckpointSubmitted{Checkpoint: ckpt},
+	)
+	if err != nil {
+		ctx.Logger().Error("failed to emit checkpoint submitted event for epoch %v", ckpt.Ckpt.EpochNum)
+	}
 }
 
 // SetCheckpointConfirmed sets the status of a checkpoint to CONFIRMED
 func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, epoch uint64) {
-	k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Confirmed)
+	ckpt := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Confirmed)
+	err := ctx.EventManager().EmitTypedEvent(
+		&types.EventCheckpointConfirmed{Checkpoint: ckpt},
+	)
+	if err != nil {
+		ctx.Logger().Error("failed to emit checkpoint confirmed event for epoch %v", ckpt.Ckpt.EpochNum)
+	}
 }
 
 // SetCheckpointFinalized sets the status of a checkpoint to FINALIZED
 func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
-	k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	ckpt := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
+	err := ctx.EventManager().EmitTypedEvent(
+		&types.EventCheckpointFinalized{Checkpoint: ckpt},
+	)
+	if err != nil {
+		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v", ckpt.Ckpt.EpochNum)
+	}
 }
 
 func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {
-	k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Sealed)
+	ckpt := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Sealed)
+	err := ctx.EventManager().EmitTypedEvent(
+		&types.EventCheckpointForgotten{Checkpoint: ckpt},
+	)
+	if err != nil {
+		ctx.Logger().Error("failed to emit checkpoint forgotten event for epoch %v", ckpt.Ckpt.EpochNum)
+	}
 }
 
-func (k Keeper) setCheckpointStatus(ctx sdk.Context, epoch uint64, from types.CheckpointStatus, to types.CheckpointStatus) {
+func (k Keeper) setCheckpointStatus(ctx sdk.Context, epoch uint64, from types.CheckpointStatus, to types.CheckpointStatus) *types.RawCheckpointWithMeta {
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, epoch)
 	if err != nil {
 		// TODO: ignore err for now
-		return
+		return nil
 	}
 	if ckptWithMeta.Status != from {
 		err = types.ErrInvalidCkptStatus.Wrapf("the status of the checkpoint should be %s", from.String())
 		if err != nil {
 			// TODO: ignore err for now
-			return
+			return nil
 		}
 	}
 	ckptWithMeta.Status = to
@@ -243,6 +280,7 @@ func (k Keeper) setCheckpointStatus(ctx sdk.Context, epoch uint64, from types.Ch
 	if err != nil {
 		panic("failed to update checkpoint status")
 	}
+	return ckptWithMeta
 }
 
 func (k Keeper) UpdateCheckpoint(ctx sdk.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
