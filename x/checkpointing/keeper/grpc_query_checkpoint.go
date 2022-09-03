@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -72,15 +73,21 @@ func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequ
 	return &types.QueryEpochStatusResponse{Status: ckptWithMeta.Status.String()}, nil
 }
 
-// EpochStatusCount returns the count of epochs with each status of the checkpoint
-func (k Keeper) EpochStatusCount(ctx context.Context, req *types.QueryEpochStatusCountRequest) (*types.QueryEpochStatusCountResponse, error) {
+// RecentEpochStatusCount returns the count of epochs with each status of the checkpoint
+func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRecentEpochStatusCountRequest) (*types.QueryRecentEpochStatusCountResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber
+	targetEpoch := tipEpoch - req.RecentEpochNum + 1
+	if targetEpoch < 0 {
+		return nil, errors.New("invalid query parameter")
+	}
 	// iterate epochs in the reverse order and count epoch numbers for each status
 	epochStatusCount := make(map[string]uint64, 0)
-	for e := req.EpochNum; e >= uint64(0); e-- {
+	for e := tipEpoch; e >= targetEpoch; e-- {
 		// reuse the EpochStatus query
 		epochStatusReq := &types.QueryEpochStatusRequest{EpochNum: e}
 		epochStatusRes, err := k.EpochStatus(ctx, epochStatusReq)
@@ -88,14 +95,14 @@ func (k Keeper) EpochStatusCount(ctx context.Context, req *types.QueryEpochStatu
 			return nil, err
 		}
 		// counts stop if a finalized epoch is reached since all the previous epochs are guaranteed to be finalized
-		if epochStatusRes.Status == types.Finalized.String() {
-			epochStatusCount[types.Finalized.String()] = e + 1
-			break
-		}
 		epochStatusCount[epochStatusRes.Status]++
 	}
 
-	return &types.QueryEpochStatusCountResponse{StatusCount: epochStatusCount}, nil
+	return &types.QueryRecentEpochStatusCountResponse{
+		TipEpoch:       tipEpoch,
+		RecentEpochNum: req.RecentEpochNum,
+		StatusCount:    epochStatusCount,
+	}, nil
 }
 
 func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {

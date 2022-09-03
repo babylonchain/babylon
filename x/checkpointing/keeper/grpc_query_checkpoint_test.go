@@ -1,8 +1,11 @@
 package keeper_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/mocks"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"math/rand"
 	"testing"
 
@@ -44,24 +47,37 @@ func FuzzQueryStatusCount(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
-		sdkCtx := sdk.WrapSDKContext(ctx)
 
-		// test querying a raw checkpoint with epoch number
+		// test querying recent epoch counts with each status in recent epochs
 		checkpoints := datagen.GenRandomSequenceRawCheckpointsWithMeta()
+		tipEpoch := checkpoints[len(checkpoints)-1].Ckpt.EpochNum
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		ek := mocks.NewMockEpochingKeeper(ctrl)
+		ek.EXPECT().GetEpoch(gomock.Any()).Return(epochingtypes.Epoch{EpochNumber: tipEpoch})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		sdkCtx := sdk.WrapSDKContext(ctx)
 		expectedCounts := make(map[string]uint64)
-		for _, ckpt := range checkpoints {
+		recentEpochNum := uint64(rand.Int63n(int64(tipEpoch)))
+		for e, ckpt := range checkpoints {
 			err := ckptKeeper.AddRawCheckpoint(
 				ctx,
 				ckpt,
 			)
 			require.NoError(t, err)
-			expectedCounts[ckpt.Status.String()]++
+			if uint64(e) >= tipEpoch-recentEpochNum+1 {
+				expectedCounts[ckpt.Status.String()]++
+			}
+		}
+		expectedResp := &types.QueryRecentEpochStatusCountResponse{
+			TipEpoch:       tipEpoch,
+			RecentEpochNum: recentEpochNum,
+			StatusCount:    expectedCounts,
 		}
 
-		countRequest := types.NewQueryEpochStatusCountRequest(uint64(len(checkpoints) - 1))
-		resp, err := ckptKeeper.EpochStatusCount(sdkCtx, countRequest)
+		countRequest := types.NewQueryRecentEpochStatusCountRequest(recentEpochNum)
+		resp, err := ckptKeeper.RecentEpochStatusCount(sdkCtx, countRequest)
 		require.NoError(t, err)
-		require.Equal(t, expectedCounts, resp.StatusCount)
+		require.Equal(t, expectedResp, resp)
 	})
 }

@@ -40,9 +40,9 @@ service Query {
     option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status/{epoch_num}";
   }
 
-  // EpochStatusCount queries the number of epochs with each status
-  rpc EpochStatusCount(QueryEpochStatusCountRequest) returns (QueryEpochStatusCountResponse) {
-    option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status_count/{epoch_num}";
+  // RecentEpochStatusCount queries the number of epochs with each status in recent epochs
+  rpc RecentEpochStatusCount(QueryRecentEpochStatusCountRequest) returns (QueryRecentEpochStatusCountResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status_count/{recent_epoch_num}";
   }
 
   // Parameters queries the parameters of the module.
@@ -145,17 +145,19 @@ message QueryEpochStatusResponse {
   string status = 1;
 }
 
-// QueryEpochStatusCountRequest is the request type for the Query/EpochStatusCount
+// QueryRecentEpochStatusCountRequest is the request type for the Query/EpochStatusCount
 // RPC method.
-message QueryEpochStatusCountRequest {
+message QueryRecentEpochStatusCountRequest {
   // epoch_num is the top epoch number that the count ends at
-  uint64 epoch_num = 1;
+  uint64 recent_epoch_num = 1;
 }
 
-// QueryEpochStatusCountResponse is the response type for the Query/EpochStatusCount
+// QueryRecentEpochStatusCountResponse is the response type for the Query/EpochStatusCount
 // RPC method.
-message QueryEpochStatusCountResponse {
-  map<string, uint64> status_count = 1;
+message QueryRecentEpochStatusCountResponse {
+  uint64 tip_epoch = 1;
+  uint64 recent_epoch_num = 2;
+  map<string, uint64> status_count = 3;
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
