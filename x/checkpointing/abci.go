@@ -35,18 +35,17 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// emit BeginEpoch event
 		err = ctx.EventManager().EmitTypedEvent(
 			&types.EventCheckpointAccumulating{
-				RawCheckpoint: ckpt,
+				Checkpoint: ckpt,
 			},
 		)
 		if err != nil {
-			ctx.Logger().Error("failed to emit checkpoint accumulating event for epoch %v", epoch.EpochNumber-1)
+			panic(err)
 		}
 
 		go func() {
-			// TODO: inject client.Context
 			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
 			if err != nil {
-				ctx.Logger().Error("failed to send BLS signature")
+				panic(err)
 			}
 		}()
 	}

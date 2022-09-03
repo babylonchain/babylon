@@ -110,9 +110,9 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		return err
 	}
 
-	if ckptWithMeta.Status == types.Sealed {
+	if updated && ckptWithMeta.Status == types.Sealed {
 		err = ctx.EventManager().EmitTypedEvent(
-			&types.EventCheckpointSealed{RawCheckpoint: ckptWithMeta},
+			&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
 		)
 		if err != nil {
 			ctx.Logger().Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
@@ -223,7 +223,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.Ra
 func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, epoch uint64) {
 	ckpt := k.setCheckpointStatus(ctx, epoch, types.Sealed, types.Submitted)
 	err := ctx.EventManager().EmitTypedEvent(
-		&types.EventCheckpointSubmitted{RawCheckpoint: ckpt},
+		&types.EventCheckpointSubmitted{Checkpoint: ckpt},
 	)
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint submitted event for epoch %v", ckpt.Ckpt.EpochNum)
@@ -234,7 +234,7 @@ func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, epoch uint64) {
 func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, epoch uint64) {
 	ckpt := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Confirmed)
 	err := ctx.EventManager().EmitTypedEvent(
-		&types.EventCheckpointConfirmed{RawCheckpoint: ckpt},
+		&types.EventCheckpointConfirmed{Checkpoint: ckpt},
 	)
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint confirmed event for epoch %v", ckpt.Ckpt.EpochNum)
@@ -245,7 +245,7 @@ func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, epoch uint64) {
 func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
 	ckpt := k.setCheckpointStatus(ctx, epoch, types.Confirmed, types.Finalized)
 	err := ctx.EventManager().EmitTypedEvent(
-		&types.EventCheckpointFinalized{RawCheckpoint: ckpt},
+		&types.EventCheckpointFinalized{Checkpoint: ckpt},
 	)
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v", ckpt.Ckpt.EpochNum)
@@ -255,7 +255,7 @@ func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
 func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {
 	ckpt := k.setCheckpointStatus(ctx, epoch, types.Submitted, types.Sealed)
 	err := ctx.EventManager().EmitTypedEvent(
-		&types.EventCheckpointForgotten{RawCheckpoint: ckpt},
+		&types.EventCheckpointForgotten{Checkpoint: ckpt},
 	)
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint forgotten event for epoch %v", ckpt.Ckpt.EpochNum)

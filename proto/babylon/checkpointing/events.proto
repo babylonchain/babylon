@@ -6,25 +6,25 @@ import "babylon/checkpointing/checkpoint.proto";
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
 message EventCheckpointAccumulating {
-    RawCheckpointWithMeta raw_checkpoint = 1;
+    RawCheckpointWithMeta checkpoint = 1;
 }
 
 message EventCheckpointSealed {
-    RawCheckpointWithMeta raw_checkpoint = 1;
+    RawCheckpointWithMeta checkpoint = 1;
 }
 
 message EventCheckpointSubmitted {
-    RawCheckpointWithMeta raw_checkpoint = 1;
+    RawCheckpointWithMeta checkpoint = 1;
 }
 
 message EventCheckpointConfirmed {
-    RawCheckpointWithMeta raw_checkpoint = 1;
+    RawCheckpointWithMeta checkpoint = 1;
 }
 
 message EventCheckpointFinalized {
-    RawCheckpointWithMeta raw_checkpoint = 1;
+    RawCheckpointWithMeta checkpoint = 1;
 }
 
 message EventCheckpointForgotten {
-    RawCheckpointWithMeta raw_checkpoint = 1;
+    RawCheckpointWithMeta checkpoint = 1;
 }
