@@ -18,12 +18,14 @@ message QueuedMessage {
   bytes tx_id = 1;
   // msg_id is the original message ID, i.e., hash of the marshaled message
   bytes msg_id = 2;
+  // block_height is the height when this msg is submitted to Babylon
+  uint64 block_height = 3;
   // msg is the actual message that is sent by a user and is queued by the epoching module
   oneof msg {
-    cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 3;
-    cosmos.staking.v1beta1.MsgDelegate msg_delegate = 4;
-    cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 5;
-    cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 6;
+    cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 4;
+    cosmos.staking.v1beta1.MsgDelegate msg_delegate = 5;
+    cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 6;
+    cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 7;
     // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
   }
 }

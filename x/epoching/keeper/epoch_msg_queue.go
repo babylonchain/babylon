@@ -9,69 +9,76 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
-// InitQueueLength initialises the msg queue length to 0
-func (k Keeper) InitQueueLength(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
+// InitMsgQueue initialises the msg queue length of the current epoch to 0
+func (k Keeper) InitMsgQueue(ctx sdk.Context) {
+	store := k.msgQueueLengthStore(ctx)
 
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	queueLenBytes := sdk.Uint64ToBigEndian(0)
-	store.Set(types.QueueLengthKey, queueLenBytes)
+	store.Set(epochNumberBytes, queueLenBytes)
 }
 
-// GetQueueLength fetches the number of queued messages
-func (k Keeper) GetQueueLength(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
+// GetQueueLength fetches the number of queued messages of a given epoch
+func (k Keeper) GetQueueLength(ctx sdk.Context, epochNumber uint64) uint64 {
+	store := k.msgQueueLengthStore(ctx)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 
 	// get queue len in bytes from DB
-	bz := store.Get(types.QueueLengthKey)
+	bz := store.Get(epochNumberBytes)
 	if bz == nil {
-		panic(types.ErrUnknownQueueLen)
+		return 0 // BBN has not reached this epoch yet
 	}
 	// unmarshal
 	return sdk.BigEndianToUint64(bz)
 }
 
-// setQueueLength sets the msg queue length
-func (k Keeper) setQueueLength(ctx sdk.Context, queueLen uint64) {
-	store := ctx.KVStore(k.storeKey)
-
-	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
-	store.Set(types.QueueLengthKey, queueLenBytes)
+// GetQueueLength fetches the number of queued messages of the current epoch
+func (k Keeper) GetCurrentQueueLength(ctx sdk.Context) uint64 {
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	return k.GetQueueLength(ctx, epochNumber)
 }
 
-// incQueueLength adds the queue length by 1
-func (k Keeper) incQueueLength(ctx sdk.Context) {
-	queueLen := k.GetQueueLength(ctx)
+// incCurrentQueueLength adds the queue length of the current epoch by 1
+func (k Keeper) incCurrentQueueLength(ctx sdk.Context) {
+	store := k.msgQueueLengthStore(ctx)
+
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+
+	queueLen := k.GetQueueLength(ctx, epochNumber)
 	incrementedQueueLen := queueLen + 1
-	k.setQueueLength(ctx, incrementedQueueLen)
+	incrementedQueueLenBytes := sdk.Uint64ToBigEndian(incrementedQueueLen)
+
+	store.Set(epochNumberBytes, incrementedQueueLenBytes)
 }
 
 // EnqueueMsg enqueues a message to the queue of the current epoch
 func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
-	// prefix: QueuedMsgKey
-	store := ctx.KVStore(k.storeKey)
-	queuedMsgStore := prefix.NewStore(store, types.QueuedMsgKey)
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	store := k.msgQueueStore(ctx, epochNumber)
 
-	// key: queueLenBytes
-	queueLen := k.GetQueueLength(ctx)
+	// key: index, in this case = queueLenBytes
+	queueLen := k.GetCurrentQueueLength(ctx)
 	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
 	// value: msgBytes
 	msgBytes, err := k.cdc.Marshal(&msg)
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
-	queuedMsgStore.Set(queueLenBytes, msgBytes)
+	store.Set(queueLenBytes, msgBytes)
 
 	// increment queue length
-	k.incQueueLength(ctx)
+	k.incCurrentQueueLength(ctx)
 }
 
-// GetEpochMsgs returns the set of messages queued in the current epoch
-func (k Keeper) GetEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
+// GetEpochMsgs returns the set of messages queued in a given epoch
+func (k Keeper) GetEpochMsgs(ctx sdk.Context, epochNumber uint64) []*types.QueuedMessage {
 	queuedMsgs := []*types.QueuedMessage{}
-	store := ctx.KVStore(k.storeKey)
+	store := k.msgQueueStore(ctx, epochNumber)
 
 	// add each queued msg to queuedMsgs
-	iterator := sdk.KVStorePrefixIterator(store, types.QueuedMsgKey)
+	iterator := sdk.KVStorePrefixIterator(store, nil)
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		queuedMsgBytes := iterator.Value()
@@ -85,20 +92,10 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 	return queuedMsgs
 }
 
-// ClearEpochMsgs removes all messages in the queue
-func (k Keeper) ClearEpochMsgs(ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
-
-	// remove all epoch msgs
-	iterator := sdk.KVStorePrefixIterator(store, types.QueuedMsgKey)
-	defer iterator.Close()
-	for ; iterator.Valid(); iterator.Next() {
-		key := iterator.Key()
-		store.Delete(key)
-	}
-
-	// set queue len to zero
-	k.setQueueLength(ctx, 0)
+// GetCurrentEpochMsgs returns the set of messages queued in the current epoch
+func (k Keeper) GetCurrentEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	return k.GetEpochMsgs(ctx, epochNumber)
 }
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
@@ -123,20 +120,21 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 
 	// Create a new Context based off of the existing Context with a MultiStore branch
 	// in case message processing fails. At this point, the MultiStore is a branch of a branch.
-	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId)
+	handlerCtx, msCache := cacheTxContext(ctx, msg.TxId, msg.MsgId, msg.BlockHeight)
 
 	// handle the unwrapped message
 	result, err := handler(handlerCtx, unwrappedMsgWithType)
-
-	if err == nil {
-		msCache.Write()
+	if err != nil {
+		return result, err
 	}
 
-	return result, err
+	msCache.Write()
+
+	return result, nil
 }
 
 // based on a function with the same name in `baseapp.go``
-func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte) (sdk.Context, sdk.CacheMultiStore) {
+func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (sdk.Context, sdk.CacheMultiStore) {
 	ms := ctx.MultiStore()
 	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824
 	msCache := ms.CacheMultiStore()
@@ -146,10 +144,31 @@ func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte) (sdk.Context, sd
 				map[string]interface{}{
 					"txHash":  fmt.Sprintf("%X", txid),
 					"msgHash": fmt.Sprintf("%X", msgid),
+					"height":  fmt.Sprintf("%d", height),
 				},
 			),
 		).(sdk.CacheMultiStore)
 	}
 
 	return ctx.WithMultiStore(msCache), msCache
+}
+
+// msgQueueStore returns the queue of msgs of a given epoch
+// prefix: MsgQueueKey || epochNumber
+// key: index
+// value: msg
+func (k Keeper) msgQueueStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
+	store := ctx.KVStore(k.storeKey)
+	msgQueueStore := prefix.NewStore(store, types.MsgQueueKey)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+	return prefix.NewStore(msgQueueStore, epochNumberBytes)
+}
+
+// msgQueueLengthStore returns the length of the msg queue of a given epoch
+// prefix: QueueLengthKey
+// key: epochNumber
+// value: queue length
+func (k Keeper) msgQueueLengthStore(ctx sdk.Context) prefix.Store {
+	store := ctx.KVStore(k.storeKey)
+	return prefix.NewStore(store, types.QueueLengthKey)
 }

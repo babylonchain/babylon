@@ -23,7 +23,7 @@ service Query {
 
   // EpochMsgs queries the messages of a given epoch
   rpc EpochMsgs(QueryEpochMsgsRequest) returns (QueryEpochMsgsResponse) {
-    option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs";
+    option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs/{epoch_num}";
   }
 }
 
@@ -49,6 +49,9 @@ message QueryCurrentEpochResponse {
 
 // QueryEpochMsgsRequest is request type for the Query/EpochMsgs RPC method
 message QueryEpochMsgsRequest {
+  // epoch_num is the number of epoch of the requested msg queue
+  uint64 epoch_num = 1;
+
   // pagination defines whether to have the pagination in the response
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }

@@ -25,17 +25,19 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
-		IncEpoch := k.IncEpoch(ctx)
+		incEpoch := k.IncEpoch(ctx)
+		// init the msg queue of this new epoch
+		k.InitMsgQueue(ctx)
 		// init the slashed voting power of this new epoch
 		k.InitSlashedVotingPower(ctx)
 		// store the current validator set
 		k.InitValidatorSet(ctx)
 		// trigger AfterEpochBegins hook
-		k.AfterEpochBegins(ctx, IncEpoch.EpochNumber)
+		k.AfterEpochBegins(ctx, incEpoch.EpochNumber)
 		// emit BeginEpoch event
 		err := ctx.EventManager().EmitTypedEvent(
 			&types.EventBeginEpoch{
-				EpochNumber: IncEpoch.EpochNumber,
+				EpochNumber: incEpoch.EpochNumber,
 			},
 		)
 		if err != nil {
@@ -59,7 +61,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsLastBlock(ctx) {
 		// get all msgs in the msg queue
-		queuedMsgs := k.GetEpochMsgs(ctx)
+		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
 		for _, msg := range queuedMsgs {
 			res, err := k.HandleQueuedMsg(ctx, msg)
@@ -72,6 +74,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 				err := ctx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
 						EpochNumber: epoch.EpochNumber,
+						Height:      msg.BlockHeight,
 						TxId:        msg.TxId,
 						MsgId:       msg.MsgId,
 						Error:       err.Error(),
@@ -102,8 +105,6 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 
 		// update validator set
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
-		// clear the current msg queue
-		k.ClearEpochMsgs(ctx)
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epoch.EpochNumber)
 		// emit EndEpoch event

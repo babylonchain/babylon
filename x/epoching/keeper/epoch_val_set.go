@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"github.com/babylonchain/babylon/x/epoching/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -28,6 +29,23 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.Valid
 		vals = append(vals, val)
 	}
 	return types.NewSortedValidatorSet(vals)
+}
+
+func (k Keeper) GetCurrentValidatorSet(ctx sdk.Context) types.ValidatorSet {
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	return k.GetValidatorSet(ctx, epochNumber)
+}
+
+func (k Keeper) GetValidatorPubkey(ctx sdk.Context, valAddr sdk.ValAddress) (cryptotypes.PubKey, bool) {
+	validator, found := k.stk.GetValidator(ctx, valAddr)
+	if !found {
+		return nil, false
+	}
+	pubkey, err := validator.ConsPubKey()
+	if err != nil {
+		return nil, false
+	}
+	return pubkey, true
 }
 
 // InitValidatorSet stores the validator set in the beginning of the current epoch
@@ -92,6 +110,11 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, val
 	return power.Int64(), nil
 }
 
+func (k Keeper) GetCurrentValidatorVotingPower(ctx sdk.Context, valAddr sdk.ValAddress) (int64, error) {
+	epochNumber := k.GetEpoch(ctx).EpochNumber
+	return k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+}
+
 // GetTotalVotingPower returns the total voting power of a given epoch
 func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
@@ -118,7 +141,7 @@ func (k Keeper) valSetStore(ctx sdk.Context, epochNumber uint64) prefix.Store {
 	return prefix.NewStore(valSetStore, epochNumberBytes)
 }
 
-// votingPowerStore returns the total voting power of the validator set of a give nepoch
+// votingPowerStore returns the total voting power of the validator set of a given epoch
 // prefix: ValidatorSetKey
 // key: epochNumber
 // value: total voting power (in int64 as per Cosmos SDK)

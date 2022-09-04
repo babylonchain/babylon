@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -41,9 +40,14 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 // EpochMsgs handles the QueryEpochMsgsRequest query
 func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (*types.QueryEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
+
+	epoch := k.GetEpoch(ctx)
+	if epoch.EpochNumber < req.EpochNum {
+		return nil, types.ErrUnknownEpochNumber
+	}
+
 	var msgs []*types.QueuedMessage
-	store := ctx.KVStore(k.storeKey)
-	epochMsgsStore := prefix.NewStore(store, types.QueuedMsgKey)
+	epochMsgsStore := k.msgQueueStore(ctx, req.EpochNum)
 
 	// handle pagination
 	// TODO (non-urgent): the epoch might end between pagination requests, leading inconsistent results by the time someone gets to the end. Possible fixes:

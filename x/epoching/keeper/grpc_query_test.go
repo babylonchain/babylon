@@ -108,6 +108,7 @@ func FuzzEpochMsgs(f *testing.F) {
 		}
 		// get epoch msgs
 		req := types.QueryEpochMsgsRequest{
+			EpochNum: 0,
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
@@ -120,5 +121,15 @@ func FuzzEpochMsgs(f *testing.F) {
 			_, ok := txidsMap[string(resp.Msgs[idx].TxId)]
 			require.True(t, ok)
 		}
+
+		// epoch 1 is out of scope
+		req = types.QueryEpochMsgsRequest{
+			EpochNum: 1,
+			Pagination: &query.PageRequest{
+				Limit: limit,
+			},
+		}
+		_, err = queryClient.EpochMsgs(wctx, &req)
+		require.Error(t, err)
 	})
 }

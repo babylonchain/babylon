@@ -5,6 +5,27 @@ import (
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
 
+func NewEpoch(epochNumber uint64, epochInterval uint64) Epoch {
+	return Epoch{
+		EpochNumber:          epochNumber,
+		CurrentEpochInterval: epochInterval,
+		FirstBlockHeight:     firstBlockHeight(epochNumber, epochInterval),
+	}
+}
+
+// firstBlockHeight returns the height of the first block of a given epoch and epoch interval
+// TODO (non-urgent): add support to variable epoch interval
+func firstBlockHeight(epochNumber uint64, epochInterval uint64) uint64 {
+	// example: in epoch 2, epoch interval is 5 blocks, FirstBlockHeight will be (2-1)*5+1 = 6
+	// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+	// 0 |     1     |     2      |
+	if epochNumber == 0 {
+		return 0
+	} else {
+		return (epochNumber-1)*epochInterval + 1
+	}
+}
+
 func (e Epoch) GetLastBlockHeight() uint64 {
 	if e.EpochNumber == 0 {
 		return 0
@@ -42,7 +63,7 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg
 // i.e., wrapped -> unwrapped -> QueuedMessage
-func NewQueuedMessage(txid []byte, msg sdk.Msg) (QueuedMessage, error) {
+func NewQueuedMessage(height uint64, txid []byte, msg sdk.Msg) (QueuedMessage, error) {
 	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, ...) inside isQueuedMessage_Msg
 	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	var qmsg isQueuedMessage_Msg
@@ -75,9 +96,10 @@ func NewQueuedMessage(txid []byte, msg sdk.Msg) (QueuedMessage, error) {
 	}
 
 	queuedMsg := QueuedMessage{
-		TxId:  txid,
-		MsgId: tmhash.Sum(msgBytes),
-		Msg:   qmsg,
+		TxId:        txid,
+		MsgId:       tmhash.Sum(msgBytes),
+		BlockHeight: height,
+		Msg:         qmsg,
 	}
 	return queuedMsg, nil
 }
