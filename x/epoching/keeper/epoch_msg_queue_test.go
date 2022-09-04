@@ -115,6 +115,8 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
+		epoch = keeper.GetEpoch(ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
 
 		// ensure epoch 2 has initialised an empty msg queue
 		require.Empty(t, keeper.GetCurrentEpochMsgs(ctx))
@@ -184,6 +186,8 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
+		epoch = keeper.GetEpoch(ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
 
 		// ensure epoch 2 has initialised an empty msg queue
 		require.Empty(t, keeper.GetCurrentEpochMsgs(ctx))
@@ -248,6 +252,15 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 			require.Equal(t, uint64(0), lc.ValLife[0].Height)
 		}
 
+		// ensure the validator's lifecycle data is generated
+		for _, val := range []sdk.ValAddress{val1, val2} {
+			lc := keeper.GetValLifecycle(ctx, val)
+			require.NotNil(t, lc)
+			require.Equal(t, 1, len(lc.ValLife))
+			require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+			require.Equal(t, uint64(0), lc.ValLife[0].Height)
+		}
+
 		// redelegate a random amount of tokens from val1 to val2
 		// same as undelegation, there can be `<=DefaultMaxEntries=7` concurrent redelegation requests for any tuple (delegatorAddr, srcValidatorAddr, dstValidatorAddr)
 		// See https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/delegation.go#L908-L910
@@ -266,6 +279,8 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
+		epoch = keeper.GetEpoch(ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
 

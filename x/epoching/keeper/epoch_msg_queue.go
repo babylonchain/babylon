@@ -39,7 +39,7 @@ func (k Keeper) GetCurrentQueueLength(ctx sdk.Context) uint64 {
 	return k.GetQueueLength(ctx, epochNumber)
 }
 
-// incCurrentQueueLength adds the queue length of the current epoch by 1
+// incCurrentQueueLength adds the queue length of the current epoch of the current epoch by 1
 func (k Keeper) incCurrentQueueLength(ctx sdk.Context) {
 	store := k.msgQueueLengthStore(ctx)
 
@@ -58,7 +58,7 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.msgQueueStore(ctx, epochNumber)
 
-	// key: index, in this case = queueLenBytes
+	// key: index, in this case = index, in this case = queueLenBytes
 	queueLen := k.GetCurrentQueueLength(ctx)
 	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
 	// value: msgBytes
@@ -133,6 +133,9 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 
 	// handle the unwrapped message
 	result, err := handler(handlerCtx, unwrappedMsgWithType)
+	if err != nil {
+		return result, err
+	}
 	if err != nil {
 		return result, err
 	}
