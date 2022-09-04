@@ -25,6 +25,11 @@ service Query {
   rpc EpochMsgs(QueryEpochMsgsRequest) returns (QueryEpochMsgsResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs/{epoch_num}";
   }
+
+  // ValidatorLifecycle queries the lifecycle of a given validator
+  rpc ValidatorLifecycle(QueryValidatorLifecycleRequest) returns (QueryValidatorLifecycleResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/validator_lifecycle/{val_addr}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -62,4 +67,12 @@ message QueryEpochMsgsResponse {
   repeated babylon.epoching.v1.QueuedMessage msgs = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryValidatorLifecycleRequest {
+  string val_addr = 1;
+}
+
+message QueryValidatorLifecycleResponse {
+  ValidatorLifecycle val_life = 1;
 }

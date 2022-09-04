@@ -6,7 +6,6 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
@@ -14,7 +13,7 @@ import (
 // TODO (fuzz tests): replace the following tests with fuzz ones
 func TestMsgWrappedDelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
-	msgSrvr, queryClient := helper.MsgSrvr, helper.QueryClient
+	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx := helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
@@ -27,22 +26,12 @@ func TestMsgWrappedDelegate(t *testing.T) {
 		{
 			"empty wrapped msg",
 			&stakingtypes.MsgDelegate{},
-			false,
+			true,
 		},
 	}
 	for _, tc := range testCases {
-
 		wrappedMsg := types.NewMsgWrappedDelegate(tc.req)
 		_, err := msgSrvr.WrappedDelegate(wctx, wrappedMsg)
-		require.NoError(t, err)
-
-		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
-			EpochNum:   uint64(1),
-			Pagination: &query.PageRequest{},
-		})
-		require.NoError(t, err)
-		require.Equal(t, 1, len(resp.Msgs))
-
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {
@@ -53,7 +42,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 
 func TestMsgWrappedUndelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
-	msgSrvr, queryClient := helper.MsgSrvr, helper.QueryClient
+	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx := helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
@@ -66,21 +55,12 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 		{
 			"empty wrapped msg",
 			&stakingtypes.MsgUndelegate{},
-			false,
+			true,
 		},
 	}
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
 		_, err := msgSrvr.WrappedUndelegate(wctx, wrappedMsg)
-		require.NoError(t, err)
-
-		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
-			EpochNum:   uint64(1),
-			Pagination: &query.PageRequest{},
-		})
-		require.NoError(t, err)
-		require.Equal(t, 1, len(resp.Msgs))
-
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {
@@ -91,7 +71,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
-	msgSrvr, queryClient := helper.MsgSrvr, helper.QueryClient
+	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx := helper.GenAndApplyEmptyBlock()
 	wctx := sdk.WrapSDKContext(ctx)
@@ -104,23 +84,13 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		{
 			"empty wrapped msg",
 			&stakingtypes.MsgBeginRedelegate{},
-			false,
+			true,
 		},
 	}
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedBeginRedelegate(tc.req)
 
 		_, err := msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
-		require.NoError(t, err)
-
-		resp, err := queryClient.EpochMsgs(wctx, &types.QueryEpochMsgsRequest{
-			EpochNum:   uint64(1),
-			Pagination: &query.PageRequest{},
-		})
-		require.NoError(t, err)
-		require.Equal(t, 1, len(resp.Msgs))
-
-		_, err = msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {

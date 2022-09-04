@@ -100,7 +100,11 @@ func (k Keeper) GetCurrentEpochMsgs(ctx sdk.Context) []*types.QueuedMessage {
 
 // HandleQueuedMsg unwraps a QueuedMessage and forwards it to the staking module
 func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk.Result, error) {
-	var unwrappedMsgWithType sdk.Msg
+	var (
+		unwrappedMsgWithType sdk.Msg
+		err                  error
+	)
+
 	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
@@ -113,6 +117,11 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
 	default:
 		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+	}
+
+	// failed to decode validator address
+	if err != nil {
+		panic(err)
 	}
 
 	// get the handler function from router
@@ -128,6 +137,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		return result, err
 	}
 
+	// release the cache
 	msCache.Write()
 
 	return result, nil

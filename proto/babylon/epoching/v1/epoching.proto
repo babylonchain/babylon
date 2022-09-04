@@ -29,3 +29,21 @@ message QueuedMessage {
     // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
   }
 }
+
+enum ValState {
+  CREATED = 0;
+  BONDED = 1;
+  UNBONDING = 2;
+  UNBONDED = 3;
+  REMOVED = 4;
+}
+
+message ValStateUpdate {
+  ValState state = 1;
+  uint64 height = 2;
+}
+
+message ValidatorLifecycle {
+  string val_addr = 1;
+  repeated ValStateUpdate val_life = 2;
+}

@@ -73,3 +73,17 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	}
 	return resp, nil
 }
+
+// ValidatorLifecycle handles the QueryValidatorLifecycleRequest query
+func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorLifecycleRequest) (*types.QueryValidatorLifecycleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	valAddr, err := sdk.ValAddressFromBech32(req.ValAddr)
+	if err != nil {
+		return nil, err
+	}
+	lc := k.GetValLifecycle(ctx, valAddr)
+	return &types.QueryValidatorLifecycleResponse{
+		ValLife: lc,
+	}, nil
+	// TODO: test this API
+}

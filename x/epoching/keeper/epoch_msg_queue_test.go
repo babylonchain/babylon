@@ -90,6 +90,13 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		valPower, err := keeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
 
+		// ensure the validator's lifecycle data is generated
+		lc := keeper.GetValLifecycle(ctx, val)
+		require.NotNil(t, lc)
+		require.Equal(t, 1, len(lc.ValLife))
+		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, uint64(0), lc.ValLife[0].Height)
+
 		// delegate a random amount of tokens to the validator
 		numNewDels := rand.Int63n(1000) + 1
 		for i := int64(0); i < numNewDels; i++ {
@@ -148,6 +155,13 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		val := valSet1[0].Addr // validator to be undelegated
 		valPower, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
+
+		// ensure the validator's lifecycle data is generated
+		lc := keeper.GetValLifecycle(ctx, val)
+		require.NotNil(t, lc)
+		require.Equal(t, 1, len(lc.ValLife))
+		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, uint64(0), lc.ValLife[0].Height)
 
 		// unbond a random amount of tokens from the validator
 		// Note that for any pair of delegator and validator, there can be `<=DefaultMaxEntries=7` concurrent undelegations at any time slot
@@ -224,6 +238,15 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		val2Power, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val2)
 		require.NoError(t, err)
 		require.Equal(t, val1Power, val2Power)
+
+		// ensure the validator's lifecycle data is generated
+		for _, val := range []sdk.ValAddress{val1, val2} {
+			lc := keeper.GetValLifecycle(ctx, val)
+			require.NotNil(t, lc)
+			require.Equal(t, 1, len(lc.ValLife))
+			require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+			require.Equal(t, uint64(0), lc.ValLife[0].Height)
+		}
 
 		// redelegate a random amount of tokens from val1 to val2
 		// same as undelegation, there can be `<=DefaultMaxEntries=7` concurrent redelegation requests for any tuple (delegatorAddr, srcValidatorAddr, dstValidatorAddr)
