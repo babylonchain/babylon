@@ -39,7 +39,7 @@ func (k Keeper) GetCurrentQueueLength(ctx sdk.Context) uint64 {
 	return k.GetQueueLength(ctx, epochNumber)
 }
 
-// incCurrentQueueLength adds the queue length of the current epoch of the current epoch by 1
+// incCurrentQueueLength adds the queue length of the current epoch by 1
 func (k Keeper) incCurrentQueueLength(ctx sdk.Context) {
 	store := k.msgQueueLengthStore(ctx)
 
