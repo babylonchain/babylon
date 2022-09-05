@@ -55,6 +55,9 @@ func (p Params) Validate() error {
 	if err := validateCheckpointFinalizationTimeout(p.CheckpointFinalizationTimeout); err != nil {
 		return err
 	}
+	if p.BtcConfirmationDepth >= p.CheckpointFinalizationTimeout {
+		return fmt.Errorf("BtcConfirmationDepth should be smaller than CheckpointFinalizationTimeout")
+	}
 
 	return nil
 }
