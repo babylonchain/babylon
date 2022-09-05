@@ -85,7 +85,7 @@ func (m *Params) GetCheckpointFinalizationTimeout() uint64 {
 }
 
 func init() {
-	proto.RegisterType((*Params)(nil), "babylon.btccheckpoint.Params")
+	proto.RegisterType((*Params)(nil), "babylon.btccheckpoint.v1.Params")
 }
 
 func init() {

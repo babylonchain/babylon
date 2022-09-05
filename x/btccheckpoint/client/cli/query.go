@@ -1,14 +1,12 @@
 package cli
 
 import (
+	"context"
 	"fmt"
-	// "strings"
 
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
@@ -26,6 +24,32 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams())
 	// this line is used by starport scaffolding # 1
+
+	cmd.AddCommand(CmdBtcCheckpointHeight())
+	return cmd
+}
+
+func CmdBtcCheckpointHeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "btc-height rawcheckpoint",
+		Short: "retrieve earliest btc height for given raw checkpoint",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := types.QueryBtcCheckpointHeightRequest{RawCheckpoint: args[0]}
+
+			res, err := queryClient.BtcCheckpointHeight(context.Background(), &params)
+
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
 
 	return cmd
 }
