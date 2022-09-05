@@ -79,7 +79,7 @@ func validateCheckpointFinalizationTimeout(i interface{}) error {
 	}
 
 	if v <= 0 {
-		return fmt.Errorf("BtcConfirmationDepth must be positive: %d", v)
+		return fmt.Errorf("CheckpointFinalizationTimeout must be positive: %d", v)
 	}
 
 	return nil
