@@ -24,8 +24,6 @@ func NewBTCCheckpointKeeper(
 	t testing.TB,
 	lk btcctypes.BTCLightClientKeeper,
 	ek btcctypes.CheckpointingKeeper,
-	kDeep uint64,
-	wDeep uint64,
 	powLimit *big.Int) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(btcctypes.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(btcctypes.MemStoreKey)
@@ -53,8 +51,6 @@ func NewBTCCheckpointKeeper(
 		paramsSubspace,
 		lk,
 		ek,
-		kDeep,
-		wDeep,
 		powLimit,
 		// use MainTag tests
 		txformat.MainTag,
