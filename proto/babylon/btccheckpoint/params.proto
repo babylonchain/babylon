@@ -7,7 +7,7 @@ option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
 
 // Params defines the parameters for the module.
 message Params { 
-    option (gogoproto.goproto_stringer) = false; 
+    option (gogoproto.equal)            = true;
 
     // btc_confirmation_depth is the confirmation depth in BTC.
     // A block is considered irreversible only when it is at least k-deep in BTC
