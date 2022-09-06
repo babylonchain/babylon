@@ -22,8 +22,6 @@ type (
 		paramstore            paramtypes.Subspace
 		btcLightClientKeeper  types.BTCLightClientKeeper
 		checkpointingKeeper   types.CheckpointingKeeper
-		kDeep                 uint64
-		wDeep                 uint64
 		powLimit              *big.Int
 		expectedCheckpointTag txformat.BabylonTag
 	}
@@ -36,9 +34,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
-	// Those are node level constants should go to some kind of global node config
-	kDeep uint64,
-	wDeep uint64,
+	// TODO: Those are node level constants should go to some kind of global node config
 	powLimit *big.Int,
 	expectedTag txformat.BabylonTag,
 ) Keeper {
@@ -54,8 +50,6 @@ func NewKeeper(
 		paramstore:            ps,
 		btcLightClientKeeper:  bk,
 		checkpointingKeeper:   ck,
-		kDeep:                 kDeep,
-		wDeep:                 wDeep,
 		powLimit:              powLimit,
 		expectedCheckpointTag: expectedTag,
 	}
@@ -266,11 +260,11 @@ func (k Keeper) checkSubmissionOnMainChain(ctx sdk.Context, sk types.SubmissionK
 }
 
 func (k Keeper) checkSubmissionConfirmed(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
-	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.kDeep)
+	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.GetParams(ctx).BtcConfirmationDepth)
 }
 
 func (k Keeper) checkSubmissionFinlized(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
-	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.wDeep)
+	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.GetParams(ctx).CheckpointFinalizationTimeout)
 }
 
 func (k Keeper) promoteUnconfirmedToConfirmed(ctx sdk.Context, sk types.SubmissionKey) {

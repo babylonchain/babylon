@@ -100,8 +100,8 @@ func getExpectedOpReturn(f []byte, s []byte) []byte {
 func TestSubmitValidNewCheckpoint(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	epoch := uint64(1)
-	kDeep := 2
-	wDeep := 4
+	defaultParams := btcctypes.DefaultParams()
+	kDeep := defaultParams.BtcConfirmationDepth
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
 	data1, data2 := txformat.MustEncodeCheckpointData(
@@ -124,7 +124,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	cc := btcctypes.NewMockCheckpointingKeeper(epoch)
 
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, uint64(kDeep), uint64(wDeep), chaincfg.SimNetParams.PowLimit)
+	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
 
 	proofs := BlockCreationResultToProofs([]*dg.BlockCreationResult{blck1, blck2})
 
@@ -186,8 +186,9 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 func TestStateTransitionOfValidSubmission(t *testing.T) {
 	rand.Seed(time.Now().Unix())
 	epoch := uint64(1)
-	kDeep := 2
-	wDeep := 4
+	defaultParams := btcctypes.DefaultParams()
+	kDeep := defaultParams.BtcConfirmationDepth
+	wDeep := defaultParams.CheckpointFinalizationTimeout
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
 	data1, data2 := txformat.MustEncodeCheckpointData(
@@ -207,7 +208,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	lc := btcctypes.NewMockBTCLightClientKeeper(int64(kDeep) - 1)
 	cc := btcctypes.NewMockCheckpointingKeeper(epoch)
 
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, uint64(kDeep), uint64(wDeep), chaincfg.SimNetParams.PowLimit)
+	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
 
 	proofs := BlockCreationResultToProofs([]*dg.BlockCreationResult{blck1, blck2})
 

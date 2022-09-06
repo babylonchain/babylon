@@ -19,10 +19,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc:     "valid genesis state",
+			desc: "valid genesis state",
 			genState: &types.GenesisState{
-
-				// this line is used by starport scaffolding # types/genesis/validField
+				Params: types.Params{
+					BtcConfirmationDepth:          124,
+					CheckpointFinalizationTimeout: 12222,
+				},
 			},
 			valid: true,
 		},
