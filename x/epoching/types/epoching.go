@@ -1,6 +1,8 @@
 package types
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
@@ -63,7 +65,7 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg
 // i.e., wrapped -> unwrapped -> QueuedMessage
-func NewQueuedMessage(height uint64, txid []byte, msg sdk.Msg) (QueuedMessage, error) {
+func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg sdk.Msg) (QueuedMessage, error) {
 	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, ...) inside isQueuedMessage_Msg
 	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	var qmsg isQueuedMessage_Msg
@@ -98,7 +100,8 @@ func NewQueuedMessage(height uint64, txid []byte, msg sdk.Msg) (QueuedMessage, e
 	queuedMsg := QueuedMessage{
 		TxId:        txid,
 		MsgId:       tmhash.Sum(msgBytes),
-		BlockHeight: height,
+		BlockHeight: blockHeight,
+		BlockTime:   &blockTime,
 		Msg:         qmsg,
 	}
 	return queuedMsg, nil

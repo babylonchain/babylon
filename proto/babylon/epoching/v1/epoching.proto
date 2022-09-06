@@ -1,6 +1,7 @@
 syntax = "proto3";
 package babylon.epoching.v1;
 
+import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 
@@ -20,12 +21,14 @@ message QueuedMessage {
   bytes msg_id = 2;
   // block_height is the height when this msg is submitted to Babylon
   uint64 block_height = 3;
+  // block_time is the timestamp when this msg is submitted to Babylon
+  google.protobuf.Timestamp block_time = 4 [(gogoproto.stdtime) = true];
   // msg is the actual message that is sent by a user and is queued by the epoching module
   oneof msg {
-    cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 4;
-    cosmos.staking.v1beta1.MsgDelegate msg_delegate = 5;
-    cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 6;
-    cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 7;
+    cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 5;
+    cosmos.staking.v1beta1.MsgDelegate msg_delegate = 6;
+    cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 7;
+    cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 8;
     // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
   }
 }

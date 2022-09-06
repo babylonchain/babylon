@@ -88,6 +88,7 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
+		mockCkptWithMeta.Status = types.Accumulating
 		epoch := mockCkptWithMeta.Ckpt.EpochNum
 
 		_ = ckptKeeper.AddRawCheckpoint(
