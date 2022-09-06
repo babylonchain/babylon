@@ -144,7 +144,7 @@ func TestBtcLightClientGenesis(t *testing.T) {
 			t.Fatalf("Test failed due to client error: %v to node with address %s", err, addresses[i])
 		}
 
-		if res.Header.Height != hardcodedHeaderHeight || !res.Header.Hash.Eq(&hardcodedHeader.Hash()) {
+		if res.Header.Height != hardcodedHeaderHeight || !res.Header.Hash.Eq(hardcodedHeader.Hash()) {
 			t.Errorf("Node with address %s started with unexpected header", addresses[i])
 		}
 	}
