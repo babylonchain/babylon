@@ -33,6 +33,10 @@ message QueuedMessage {
   }
 }
 
+message QueuedMessageList {
+  repeated QueuedMessage msgs = 1;
+}
+
 enum ValState {
   CREATED = 0;
   BONDED = 1;

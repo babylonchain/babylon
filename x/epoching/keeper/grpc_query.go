@@ -74,6 +74,31 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	return resp, nil
 }
 
+// LatestEpochMsgs handles the QueryLatestEpochMsgsRequest query
+// TODO: test this API
+func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMsgsRequest) (*types.QueryLatestEpochMsgsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// TODO: enforce limit of the number of epochs in each query
+
+	epoch := k.GetEpoch(ctx)
+	endEpoch := epoch.EpochNumber
+	beginEpoch := uint64(1) // epoch 0 does not have any queued msg
+	if epoch.EpochNumber > req.NumLatestEpochs {
+		beginEpoch = epoch.EpochNumber - req.NumLatestEpochs
+	}
+
+	msgMap := make(map[uint64]*types.QueuedMessageList)
+
+	for i := beginEpoch; i <= endEpoch; i++ {
+		msgs := k.GetEpochMsgs(ctx, i)
+		msgMap[i] = &types.QueuedMessageList{Msgs: msgs}
+	}
+
+	resp := &types.QueryLatestEpochMsgsResponse{EpochMsgMap: msgMap}
+	return resp, nil
+}
+
 // ValidatorLifecycle handles the QueryValidatorLifecycleRequest query
 func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorLifecycleRequest) (*types.QueryValidatorLifecycleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
