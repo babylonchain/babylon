@@ -97,7 +97,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	}
 
 	// accumulate BLS signatures
-	updated, err := ckptWithMeta.Accumulate(
+	updated, err := ckptWithMeta.Accumulate(ctx,
 		vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
 	if err != nil {
 		return err

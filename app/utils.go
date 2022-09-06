@@ -3,8 +3,8 @@ package app
 import (
 	"github.com/babylonchain/babylon/privval"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	tmconfig "github.com/tendermint/tendermint/config"
@@ -21,12 +21,12 @@ type PrivSigner struct {
 func InitClientContext(clientCtx client.Context, backend string) (*PrivSigner, error) {
 	// setup private validator
 	nodeCfg := tmconfig.DefaultConfig()
-	pvKeyFile := nodeCfg.PrivValidatorKeyFile()
+	pvKeyFile := filepath.Join(".testnet/node0/babylond", nodeCfg.PrivValidatorKeyFile())
 	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
 	if err != nil {
 		return nil, err
 	}
-	pvStateFile := nodeCfg.PrivValidatorStateFile()
+	pvStateFile := filepath.Join(".testnet/node0/babylond", nodeCfg.PrivValidatorStateFile())
 	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
 	if err != nil {
 		return nil, err
@@ -43,14 +43,26 @@ func InitClientContext(clientCtx client.Context, backend string) (*PrivSigner, e
 		WithTxConfig(encodingCfg.TxConfig).
 		WithAccountRetriever(types.AccountRetriever{}).
 		WithInput(os.Stdin).
-		WithBroadcastMode(flags.BroadcastAsync).
-		WithFromAddress(sdk.AccAddress(wrappedPV.GetAddress()))
-
-	kb, err := keyring.New(sdk.KeyringServiceName(), backend, DefaultNodeHome, clientCtx.Input)
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithFromAddress(sdk.AccAddress(wrappedPV.GetAddress())).
+		WithFeeGranterAddress(sdk.AccAddress(wrappedPV.GetAddress())).
+		WithViper("").
+		WithFromName("node0").
+		WithChainID("chain-test").
+		WithSkipConfirmation(true)
+	clientCtx, err = config.ReadFromClientConfig(clientCtx)
 	if err != nil {
 		return nil, err
 	}
-	clientCtx.WithKeyring(kb)
+	clientCtx.KeyringDir = "/Users/lanpo/Worksapce/babylon/.testnet/node0/babylond"
+	kb, err := client.NewKeyringFromBackend(clientCtx, backend)
+
+	//kb, err := keyring.New(sdk.KeyringServiceName(), backend, DefaultNodeHome, clientCtx.Input)
+	//kb, err := keyring.New(sdk.KeyringServiceName(), backend, keyringPath, clientCtx.Input)
+	if err != nil {
+		return nil, err
+	}
+	clientCtx = clientCtx.WithKeyring(kb).WithChainID("chain-test").WithBroadcastMode(flags.BroadcastBlock)
 
 	return &PrivSigner{
 		WrappedPV: wrappedPV,
