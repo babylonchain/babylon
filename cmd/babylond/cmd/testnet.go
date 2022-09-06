@@ -5,7 +5,11 @@ package cmd
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"net"
 	"os"
 	"path/filepath"
@@ -42,11 +46,16 @@ import (
 )
 
 var (
-	flagNodeDirPrefix     = "node-dir-prefix"
-	flagNumValidators     = "v"
-	flagOutputDir         = "output-dir"
-	flagNodeDaemonHome    = "node-daemon-home"
-	flagStartingIPAddress = "starting-ip-address"
+	flagNodeDirPrefix       = "node-dir-prefix"
+	flagNumValidators       = "v"
+	flagOutputDir           = "output-dir"
+	flagNodeDaemonHome      = "node-daemon-home"
+	flagStartingIPAddress   = "starting-ip-address"
+	flagBtcNetwork          = "btc-network"
+	flagBtcCheckpointTag    = "btc-checkpoint-tag"
+	flagEpochInterval       = "epoch-interval"
+	flagBaseBtcHeaderHex    = "btc-base-header"
+	flagBaseBtcHeaderHeight = "btc-base-header-height"
 )
 
 // get cmd to initialize all files for tendermint testnet and application
@@ -80,10 +89,23 @@ Example:
 			startingIPAddress, _ := cmd.Flags().GetString(flagStartingIPAddress)
 			numValidators, _ := cmd.Flags().GetInt(flagNumValidators)
 			algo, _ := cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
+			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
+			// No need to error check, since an invalid uint64 will
+			epochInterval, err := cmd.Flags().GetUint64(flagEpochInterval)
+			if err != nil {
+				return err
+			}
+			baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
+			baseBtcHeaderHeight, err := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
+			if err != nil {
+				return errors.New("base Bitcoin header height should be a uint64")
+			}
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, chainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
+				btcNetwork, btcCheckpointTag, epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight,
 			)
 		},
 	}
@@ -93,6 +115,12 @@ Example:
 	cmd.Flags().String(flagNodeDirPrefix, "node", "Prefix the directory name for each node with (node results in node0, node1, ...)")
 	cmd.Flags().String(flagNodeDaemonHome, "babylond", "Home directory of the node's daemon configuration")
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1", "Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
+	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, mainnet")
+	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.TestTag), "Tag to use for Bitcoin checkpoints. Available tags: BBT, BBN")
+	cmd.Flags().Uint64(flagEpochInterval, 10, "Number of blocks between epochs. Must be more than 0.")
+	// Simnet genesis header
+	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
+	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom), "Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
@@ -119,6 +147,11 @@ func InitTestnet(
 	keyringBackend,
 	algoStr string,
 	numValidators int,
+	btcNetwork string,
+	btcCheckpointTag string,
+	epochInterval uint64,
+	baseBtcHeaderHex string,
+	baseBtcHeaderHeight uint64,
 ) error {
 
 	if chainID == "" {
@@ -135,8 +168,11 @@ func InitTestnet(
 	babylonConfig.Telemetry.PrometheusRetentionTime = 60
 	babylonConfig.Telemetry.EnableHostnameLabel = false
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
-	// it makes sense in integration tests to use simnet due to lower difficulty
-	babylonConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+	// BTC related config. Default values "simnet" and "BBT"
+	babylonConfig.BtcConfig.Network = btcNetwork
+	babylonConfig.BtcConfig.CheckpointTag = btcCheckpointTag
+	// Explorer related config. Allow CORS connections.
+	babylonConfig.API.EnableUnsafeCORS = true
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -154,6 +190,14 @@ func InitTestnet(
 
 		nodeConfig.SetRoot(nodeDir)
 		nodeConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
+
+		// Explorer related config
+		// Allow all CORS requests
+		nodeConfig.RPC.CORSAllowedOrigins = []string{"*"}
+		// Enable Prometheus
+		nodeConfig.Instrumentation.Prometheus = true
+		// Set the number of simultaneous connections to unlimited
+		nodeConfig.Instrumentation.MaxOpenConnections = 0
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outputDir)
@@ -275,7 +319,8 @@ func InitTestnet(
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 	}
 
-	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles, genKeys, numValidators); err != nil {
+	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
+		genKeys, numValidators, epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight); err != nil {
 		return err
 	}
 
@@ -295,6 +340,7 @@ func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
 	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
+	epochInterval uint64, baseBtcHeaderHex string, baseBtcHeaderHeight uint64,
 ) error {
 
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
@@ -327,6 +373,27 @@ func initGenFiles(
 
 	checkpointGenState.GenesisKeys = genKeys
 	appGenState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&checkpointGenState)
+
+	// set the base BTC header in the genesis state
+	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(baseBtcHeaderHex)
+	if err != nil {
+		return err
+	}
+	work := btclightclienttypes.CalcWork(&baseBtcHeader)
+	baseBtcHeaderInfo := btclightclienttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), baseBtcHeaderHeight, &work)
+	var btclightclientGenState btclightclienttypes.GenesisState
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[btclightclienttypes.ModuleName], &btclightclientGenState)
+	btclightclientGenState.BaseBtcHeader = *baseBtcHeaderInfo
+	appGenState[btclightclienttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&btclightclientGenState)
+
+	// set the epoch interval in the genesis state
+	if epochInterval == 0 {
+		return errors.New(fmt.Sprintf("Invalid epoch interval %d", epochInterval))
+	}
+	var epochingGenState epochingtypes.GenesisState
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[epochingtypes.ModuleName], &epochingGenState)
+	epochingGenState.Params.EpochInterval = epochInterval
+	appGenState[epochingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&epochingGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
