@@ -365,8 +365,6 @@ func NewBabylonApp(
 			app.CheckpointingKeeper,
 			// TODO decide on proper values for those constants, also those should be taken
 			// from some global config
-			6,
-			10,
 			&powLimit,
 			btcConfig.CheckpointTag(),
 		)
