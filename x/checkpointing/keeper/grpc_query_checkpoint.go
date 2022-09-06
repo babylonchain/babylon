@@ -57,6 +57,53 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
 }
 
+// EpochStatus returns the status of the checkpoint at a given epoch
+func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequest) (*types.QueryEpochStatusResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	ckptWithMeta, err := k.CheckpointsState(sdkCtx).GetRawCkptWithMeta(req.EpochNum)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryEpochStatusResponse{Status: ckptWithMeta.Status}, nil
+}
+
+// RecentEpochStatusCount returns the count of epochs with each status of the checkpoint
+func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRecentEpochStatusCountRequest) (*types.QueryRecentEpochStatusCountResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber
+	targetEpoch := tipEpoch - req.EpochCount + 1
+	if targetEpoch < 0 {
+		targetEpoch = 0
+	}
+	// iterate epochs in the reverse order and count epoch numbers for each status
+	epochStatusCount := make(map[string]uint64, 0)
+	for e := tipEpoch; e >= targetEpoch; e-- {
+		// reuse the EpochStatus query
+		epochStatusReq := &types.QueryEpochStatusRequest{EpochNum: e}
+		epochStatusRes, err := k.EpochStatus(ctx, epochStatusReq)
+		if err != nil {
+			return nil, err
+		}
+		// counts stop if a finalized epoch is reached since all the previous epochs are guaranteed to be finalized
+		epochStatusCount[epochStatusRes.Status.String()]++
+	}
+
+	return &types.QueryRecentEpochStatusCountResponse{
+		TipEpoch:    tipEpoch,
+		EpochCount:  tipEpoch - targetEpoch + 1,
+		StatusCount: epochStatusCount,
+	}, nil
+}
+
 func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {
 	panic("TODO: implement this")
 }
