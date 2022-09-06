@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +23,7 @@ func (k *Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochBoundaryHeader tmpro
 
 	// unbond all mature validators till the epoch boundary from the unbonding queue
 	ctx.WithBlockHeader(epochBoundaryHeader)
-	k.stk.UnbondAllMatureValidators(ctx)
+	k.UnbondAllMatureValidators(ctx)
 	ctx.WithBlockHeader(currHeader)
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
@@ -107,4 +110,63 @@ func (k *Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.Valid
 	}
 
 	return validatorUpdates
+}
+
+// UnbondAllMatureValidators unbonds all the mature unbonding validators that have finished their unbonding period.
+// In addition, Babylon records the height of unbonding for each mature validator
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/validator.go#L396-L447)
+func (k Keeper) UnbondAllMatureValidators(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+
+	blockTime := ctx.BlockTime()
+	blockHeight := ctx.BlockHeight()
+
+	// unbondingValIterator will contains all validator addresses indexed under
+	// the ValidatorQueueKey prefix. Note, the entire index key is composed as
+	// ValidatorQueueKey | timeBzLen (8-byte big endian) | timeBz | heightBz (8-byte big endian),
+	// so it may be possible that certain validator addresses that are iterated
+	// over are not ready to unbond, so an explicit check is required.
+	unbondingValIterator := k.stk.ValidatorQueueIterator(ctx, blockTime, blockHeight)
+	defer unbondingValIterator.Close()
+
+	for ; unbondingValIterator.Valid(); unbondingValIterator.Next() {
+		key := unbondingValIterator.Key()
+		keyTime, keyHeight, err := stakingtypes.ParseValidatorQueueKey(key)
+		if err != nil {
+			panic(fmt.Errorf("failed to parse unbonding key: %w", err))
+		}
+
+		// All addresses for the given key have the same unbonding height and time.
+		// We only unbond if the height and time are less than the current height
+		// and time.
+		if keyHeight <= blockHeight && (keyTime.Before(blockTime) || keyTime.Equal(blockTime)) {
+			addrs := stakingtypes.ValAddresses{}
+			k.cdc.MustUnmarshal(unbondingValIterator.Value(), &addrs)
+
+			for _, valAddr := range addrs.Addresses {
+				addr, err := sdk.ValAddressFromBech32(valAddr)
+				if err != nil {
+					panic(err)
+				}
+				val, found := k.stk.GetValidator(ctx, addr)
+				if !found {
+					panic("validator in the unbonding queue was not found")
+				}
+
+				if !val.IsUnbonding() {
+					panic("unexpected validator in unbonding queue; status was not unbonding")
+				}
+
+				val = k.stk.UnbondingToUnbonded(ctx, val)
+				if val.GetDelegatorShares().IsZero() {
+					k.stk.RemoveValidator(ctx, val.GetOperator())
+				}
+
+				// Babylon modification: record the height when this validator becomes unbonded
+				k.RecordNewValState(ctx, addr, types.ValState_UNBONDED)
+			}
+
+			store.Delete(key)
+		}
+	}
 }

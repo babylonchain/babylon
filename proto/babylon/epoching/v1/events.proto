@@ -16,12 +16,13 @@ message EventEndEpoch {
 message EventHandleQueuedMsg {
     string original_event_type = 1;
     uint64 epoch_number = 2;
-    bytes tx_id = 3;
-    bytes msg_id = 4;
-    repeated bytes original_attributes = 5 [
+    uint64 height = 3;
+    bytes tx_id = 4;
+    bytes msg_id = 5;
+    repeated bytes original_attributes = 6 [
         (gogoproto.customtype) = "github.com/tendermint/tendermint/abci/types.EventAttribute"
     ];
-    string error = 6;
+    string error = 7;
 }
 
 message EventSlashThreshold {

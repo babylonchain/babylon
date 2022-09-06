@@ -94,10 +94,32 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 	}
 
 	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
-	h.App.EndBlock(abci.RequestEndBlock{Height: newHeight})
+	h.App.EndBlock(abci.RequestEndBlock{})
 	h.App.Commit()
 
 	h.Ctx = h.Ctx.WithBlockHeader(newHeader)
+	return h.Ctx
+}
+
+func (h *Helper) BeginBlock() sdk.Context {
+	newHeight := h.App.LastBlockHeight() + 1
+	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
+	valhash := CalculateValHash(valSet)
+	newHeader := tmproto.Header{
+		Height:             newHeight,
+		AppHash:            h.App.LastCommitID().Hash,
+		ValidatorsHash:     valhash,
+		NextValidatorsHash: valhash,
+	}
+
+	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
+	h.Ctx = h.Ctx.WithBlockHeader(newHeader)
+	return h.Ctx
+}
+
+func (h *Helper) EndBlock() sdk.Context {
+	h.App.EndBlock(abci.RequestEndBlock{})
+	h.App.Commit()
 	return h.Ctx
 }
 

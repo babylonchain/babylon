@@ -23,7 +23,12 @@ service Query {
 
   // EpochMsgs queries the messages of a given epoch
   rpc EpochMsgs(QueryEpochMsgsRequest) returns (QueryEpochMsgsResponse) {
-    option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs";
+    option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs/{epoch_num}";
+  }
+
+  // ValidatorLifecycle queries the lifecycle of a given validator
+  rpc ValidatorLifecycle(QueryValidatorLifecycleRequest) returns (QueryValidatorLifecycleResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/validator_lifecycle/{val_addr}";
   }
 }
 
@@ -49,6 +54,9 @@ message QueryCurrentEpochResponse {
 
 // QueryEpochMsgsRequest is request type for the Query/EpochMsgs RPC method
 message QueryEpochMsgsRequest {
+  // epoch_num is the number of epoch of the requested msg queue
+  uint64 epoch_num = 1;
+
   // pagination defines whether to have the pagination in the response
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
@@ -59,4 +67,12 @@ message QueryEpochMsgsResponse {
   repeated babylon.epoching.v1.QueuedMessage msgs = 1;
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+message QueryValidatorLifecycleRequest {
+  string val_addr = 1;
+}
+
+message QueryValidatorLifecycleResponse {
+  ValidatorLifecycle val_life = 1;
 }
