@@ -37,12 +37,12 @@ service Query {
 
   // EpochStatus queries the status of the checkpoint at a given epoch
   rpc EpochStatus(QueryEpochStatusRequest) returns (QueryEpochStatusResponse) {
-    option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status/{epoch_num}";
+    option (google.api.http).get = "/babylon/checkpointing/v1/epoch/{epoch_num}/status";
   }
 
   // RecentEpochStatusCount queries the number of epochs with each status in recent epochs
   rpc RecentEpochStatusCount(QueryRecentEpochStatusCountRequest) returns (QueryRecentEpochStatusCountResponse) {
-    option (google.api.http).get = "/babylon/checkpointing/v1/epoch_status_count/{recent_epoch_num}";
+    option (google.api.http).get = "/babylon/checkpointing/v1/epochs:status_count";
   }
 
   // Parameters queries the parameters of the module.
@@ -142,21 +142,21 @@ message QueryEpochStatusRequest {
 // QueryEpochStatusResponse is the response type for the Query/EpochStatus
 // RPC method.
 message QueryEpochStatusResponse {
-  string status = 1;
+  CheckpointStatus status = 1;
 }
 
 // QueryRecentEpochStatusCountRequest is the request type for the Query/EpochStatusCount
 // RPC method.
 message QueryRecentEpochStatusCountRequest {
-  // epoch_num is the top epoch number that the count ends at
-  uint64 recent_epoch_num = 1;
+  // epoch_count is the number of the most recent epochs to include in the aggregation
+  uint64 epoch_count = 1;
 }
 
 // QueryRecentEpochStatusCountResponse is the response type for the Query/EpochStatusCount
 // RPC method.
 message QueryRecentEpochStatusCountResponse {
   uint64 tip_epoch = 1;
-  uint64 recent_epoch_num = 2;
+  uint64 epoch_count = 2;
   map<string, uint64> status_count = 3;
 }
 

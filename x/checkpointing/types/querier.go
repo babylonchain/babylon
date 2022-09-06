@@ -20,5 +20,5 @@ func NewQueryEpochStatusRequest(epochNum uint64) *QueryEpochStatusRequest {
 }
 
 func NewQueryRecentEpochStatusCountRequest(epochNum uint64) *QueryRecentEpochStatusCountRequest {
-	return &QueryRecentEpochStatusCountRequest{RecentEpochNum: epochNum}
+	return &QueryRecentEpochStatusCountRequest{EpochCount: epochNum}
 }

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"errors"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -70,7 +69,7 @@ func (k Keeper) EpochStatus(ctx context.Context, req *types.QueryEpochStatusRequ
 		return nil, err
 	}
 
-	return &types.QueryEpochStatusResponse{Status: ckptWithMeta.Status.String()}, nil
+	return &types.QueryEpochStatusResponse{Status: ckptWithMeta.Status}, nil
 }
 
 // RecentEpochStatusCount returns the count of epochs with each status of the checkpoint
@@ -81,9 +80,9 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber
-	targetEpoch := tipEpoch - req.RecentEpochNum + 1
+	targetEpoch := tipEpoch - req.EpochCount + 1
 	if targetEpoch < 0 {
-		return nil, errors.New("invalid query parameter")
+		targetEpoch = 0
 	}
 	// iterate epochs in the reverse order and count epoch numbers for each status
 	epochStatusCount := make(map[string]uint64, 0)
@@ -95,13 +94,13 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 			return nil, err
 		}
 		// counts stop if a finalized epoch is reached since all the previous epochs are guaranteed to be finalized
-		epochStatusCount[epochStatusRes.Status]++
+		epochStatusCount[epochStatusRes.Status.String()]++
 	}
 
 	return &types.QueryRecentEpochStatusCountResponse{
-		TipEpoch:       tipEpoch,
-		RecentEpochNum: req.RecentEpochNum,
-		StatusCount:    epochStatusCount,
+		TipEpoch:    tipEpoch,
+		EpochCount:  tipEpoch - targetEpoch + 1,
+		StatusCount: epochStatusCount,
 	}, nil
 }
 

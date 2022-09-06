@@ -39,7 +39,7 @@ func FuzzQueryEpoch(f *testing.F) {
 		statusRequest := types.NewQueryEpochStatusRequest(mockCkptWithMeta.Ckpt.EpochNum)
 		statusResp, err := ckptKeeper.EpochStatus(sdkCtx, statusRequest)
 		require.NoError(t, err)
-		require.Equal(t, mockCkptWithMeta.Status.String(), statusResp.Status)
+		require.Equal(t, mockCkptWithMeta.Status, statusResp.Status)
 	})
 }
 
@@ -58,24 +58,24 @@ func FuzzQueryStatusCount(f *testing.F) {
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 		sdkCtx := sdk.WrapSDKContext(ctx)
 		expectedCounts := make(map[string]uint64)
-		recentEpochNum := uint64(rand.Int63n(int64(tipEpoch)))
+		epochCount := uint64(rand.Int63n(int64(tipEpoch)))
 		for e, ckpt := range checkpoints {
 			err := ckptKeeper.AddRawCheckpoint(
 				ctx,
 				ckpt,
 			)
 			require.NoError(t, err)
-			if uint64(e) >= tipEpoch-recentEpochNum+1 {
+			if uint64(e) >= tipEpoch-epochCount+1 {
 				expectedCounts[ckpt.Status.String()]++
 			}
 		}
 		expectedResp := &types.QueryRecentEpochStatusCountResponse{
-			TipEpoch:       tipEpoch,
-			RecentEpochNum: recentEpochNum,
-			StatusCount:    expectedCounts,
+			TipEpoch:    tipEpoch,
+			EpochCount:  epochCount,
+			StatusCount: expectedCounts,
 		}
 
-		countRequest := types.NewQueryRecentEpochStatusCountRequest(recentEpochNum)
+		countRequest := types.NewQueryRecentEpochStatusCountRequest(epochCount)
 		resp, err := ckptKeeper.RecentEpochStatusCount(sdkCtx, countRequest)
 		require.NoError(t, err)
 		require.Equal(t, expectedResp, resp)
