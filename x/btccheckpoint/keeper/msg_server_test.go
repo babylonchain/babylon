@@ -243,7 +243,6 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 
 	// fire tip change callback
 	k.OnTipChange(ctx)
-
 	// TODO customs Equality for submission keys to check this are really keys
 	// we are looking for
 	unc = k.GetAllUnconfirmedSubmissions(ctx)
