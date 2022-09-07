@@ -47,7 +47,8 @@ enum ValState {
 
 message ValStateUpdate {
   ValState state = 1;
-  uint64 height = 2;
+  uint64 block_height = 2;
+  google.protobuf.Timestamp block_time = 3 [(gogoproto.stdtime) = true];
 }
 
 message ValidatorLifecycle {

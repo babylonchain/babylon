@@ -20,9 +20,11 @@ func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state
 			ValLife: []*types.ValStateUpdate{},
 		}
 	}
+	height, time := ctx.BlockHeight(), ctx.BlockTime()
 	valStateUpdate := types.ValStateUpdate{
-		State:  state,
-		Height: uint64(ctx.BlockHeight()),
+		State:       state,
+		BlockHeight: uint64(height),
+		BlockTime:   &time,
 	}
 	lc.ValLife = append(lc.ValLife, &valStateUpdate)
 	k.SetValLifecycle(ctx, valAddr, lc)
