@@ -128,11 +128,10 @@ func TestTestnetRuninng(t *testing.T) {
 // Check all nodes are properly initialized to genesis
 // TODO ultimatly we would like to check genesis related to all modules here.
 func TestBtcLightClientGenesis(t *testing.T) {
-	// TODO currently btclightclient hardcodes this header in some function. Ultimately
-	// we would like to get it from config file, and assert here that each node
-	// start with genesis header from this config file
-	hardcodedHeaderHash, _ := bbn.NewBTCHeaderHashBytesFromHex("00000000000000000002bf1c218853bc920f41f74491e6c92c6bc6fdc881ab47")
-	hardcodedHeaderHeight := uint64(736056)
+	// The default testnet directory uses the simnet genesis header as its base
+	// with height 0.
+	hardcodedHeader, _ := bbn.NewBTCHeaderBytesFromHex("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000")
+	hardcodedHeaderHeight := uint64(0)
 
 	for i, c := range clients {
 		lc := lightclient.NewQueryClient(c)
@@ -145,13 +144,13 @@ func TestBtcLightClientGenesis(t *testing.T) {
 			t.Fatalf("Test failed due to client error: %v to node with address %s", err, addresses[i])
 		}
 
-		if res.Header.Height != hardcodedHeaderHeight || !res.Header.Hash.Eq(&hardcodedHeaderHash) {
+		if res.Header.Height != hardcodedHeaderHeight || !res.Header.Hash.Eq(hardcodedHeader.Hash()) {
 			t.Errorf("Node with address %s started with unexpected header", addresses[i])
 		}
 	}
 }
 
-func TestNodeProgres(t *testing.T) {
+func TestNodeProgress(t *testing.T) {
 
 	// most probably nodes are after block 1 at this point, but to make sure we are waiting
 	// for block 1

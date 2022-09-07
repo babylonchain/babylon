@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -27,7 +28,7 @@ func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
 		EpochNum:       epochNum,
 		LastCommitHash: &lch,
-		Bitmap:         nil,
+		Bitmap:         bitmap.New(104), // 13 bytes, holding 100 validators
 		BlsMultiSig:    nil,
 	}
 }
@@ -59,34 +60,40 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	}
 
 	// get validator and its index
-	val, _, err := vals.FindValidatorWithIndex(signerAddr)
+	val, index, err := vals.FindValidatorWithIndex(signerAddr)
 	if err != nil {
 		return false, err
 	}
 
 	// return an error if the validator has already voted
-	//if bitmap.Get(cm.Ckpt.Bitmap, index) {
-	//	return false, ErrCkptAlreadyVoted
-	//}
+	if bitmap.Get(cm.Ckpt.Bitmap, index) {
+		return false, ErrCkptAlreadyVoted
+	}
 
 	// aggregate BLS sig
-	//aggSig, err := bls12381.AggrSig(*cm.Ckpt.BlsMultiSig, sig)
-	//if err != nil {
-	//	return false, err
-	//}
-	cm.Ckpt.BlsMultiSig = &sig
-	ctx.Logger().Info("accumulating bls sig", "aggregate sig", fmt.Sprintf("%x", sig.Bytes()))
+	if cm.Ckpt.BlsMultiSig != nil {
+		aggSig, err := bls12381.AggrSig(*cm.Ckpt.BlsMultiSig, sig)
+		if err != nil {
+			return false, err
+		}
+		cm.Ckpt.BlsMultiSig = &aggSig
+	} else {
+		cm.Ckpt.BlsMultiSig = &sig
+	}
 
 	// aggregate BLS public key
-	//aggPK, err := bls12381.AggrPK(*cm.BlsAggrPk, signerBlsKey)
-	//if err != nil {
-	//	return false, err
-	//}
-	cm.BlsAggrPk = &signerBlsKey
-	ctx.Logger().Info("accumulating bls sig", "aggregate pk", fmt.Sprintf("%x", signerBlsKey.Bytes()))
+	if cm.BlsAggrPk != nil {
+		aggPK, err := bls12381.AggrPK(*cm.BlsAggrPk, signerBlsKey)
+		if err != nil {
+			return false, err
+		}
+		cm.BlsAggrPk = &aggPK
+	} else {
+		cm.BlsAggrPk = &signerBlsKey
+	}
 
 	// update bitmap
-	//bitmap.Set(cm.Ckpt.Bitmap, index, true)
+	bitmap.Set(cm.Ckpt.Bitmap, index, true)
 	ctx.Logger().Info("accumulating bls sig", "bitmap", fmt.Sprintf("%x", cm.Ckpt.Bitmap))
 
 	// accumulate voting power and update status when the threshold is reached
