@@ -100,6 +100,7 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 }
 
 // ValidatorLifecycle handles the QueryValidatorLifecycleRequest query
+// TODO: test this API
 func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorLifecycleRequest) (*types.QueryValidatorLifecycleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	valAddr, err := sdk.ValAddressFromBech32(req.ValAddr)
@@ -110,5 +111,4 @@ func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorL
 	return &types.QueryValidatorLifecycleResponse{
 		ValLife: lc,
 	}, nil
-	// TODO: test this API
 }

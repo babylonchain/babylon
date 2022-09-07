@@ -37,6 +37,9 @@ func (k Keeper) SetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress, lc *typ
 func (k Keeper) GetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.ValidatorLifecycle {
 	store := k.valLifecycleStore(ctx)
 	lcBytes := store.Get([]byte(valAddr))
+	if len(lcBytes) == 0 {
+		return nil
+	}
 	var lc types.ValidatorLifecycle
 	k.cdc.MustUnmarshal(lcBytes, &lc)
 	return &lc
