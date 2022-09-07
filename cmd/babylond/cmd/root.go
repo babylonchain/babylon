@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"io"
 	"os"
 	"path/filepath"
@@ -141,6 +140,10 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 
 func addModuleInitFlags(startCmd *cobra.Command) {
 	crisis.AddModuleInitFlags(startCmd)
+
+	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
+	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	startCmd.Flags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
 }
 
 func queryCommand() *cobra.Command {
@@ -215,7 +218,8 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
+	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
+	snapshotDir := filepath.Join(homeDir, "data", "snapshots")
 	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
 	if err != nil {
 		panic(err)
@@ -225,14 +229,20 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	// TODO: add a new flag to check whether the node is validator
-	//backend := appOpts.Get(flags.FlagKeyringBackend).(string)
-	clientCtx := client.Context{}
-	// TODO: comment the options below because those flags are not passed in integration test
-	//WithChainID(appOpts.Get(flags.FlagChainID).(string)).
-	//WithFromName(appOpts.Get(flags.FlagFrom).(string))
-	// TODO: use BackendTest of keyring for now because the current integration test does not pass FlagKeryingBackend
-	privSigner, err := app.InitClientContext(clientCtx, keyring.BackendTest)
+	backend := cast.ToString(appOpts.Get(flags.FlagKeyringBackend))
+	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	fromName := cast.ToString(appOpts.Get(flags.FlagFrom))
+
+	clientCtx, err := config.ReadFromClientConfig(client.Context{}.WithHomeDir(app.DefaultNodeHome).WithViper(""))
+	if err != nil {
+		panic(err)
+	}
+	clientCtx = clientCtx.
+		WithKeyringDir(homeDir).
+		WithChainID(chainID).
+		WithFromName(fromName).
+		WithInput(os.Stdin)
+	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, backend)
 	if err != nil {
 		panic(err)
 	}
@@ -270,11 +280,10 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	backend := appOpts.Get(flags.FlagKeyringBackend).(string)
 	clientCtx := client.Context{}.
 		WithChainID(appOpts.Get(flags.FlagChainID).(string)).
 		WithFromName(appOpts.Get(flags.FlagFrom).(string))
-	privSigner, err := app.InitClientContext(clientCtx, backend)
+	privSigner, err := app.InitPrivSigner(clientCtx, "", "")
 	if err != nil {
 		panic(err)
 	}

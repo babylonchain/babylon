@@ -1,7 +1,6 @@
 package checkpointing
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -44,7 +43,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		}
 
 		go func() {
-			ctx.Logger().Info("sending bls sig", "bls sig message for epoch", fmt.Sprintf("%v", epoch.EpochNumber-1))
 			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
 			if err != nil {
 				panic(err)

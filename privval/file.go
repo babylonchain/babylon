@@ -166,6 +166,9 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 // GetAddress returns the address of the validator.
 // Implements PrivValidator.
 func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
+	if pv.Key.AccAddress == "" {
+		return sdk.ValAddress{}
+	}
 	addr, err := sdk.AccAddressFromBech32(pv.Key.AccAddress)
 	if err != nil {
 		panic(err)

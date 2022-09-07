@@ -92,7 +92,10 @@ A brief description of the contents:
 
 ### Running the node
 ```console
-babylond start --home ./.testnet/node0/babylond
+babylond start --home ./.testnet/node0/babylond \
+       --keyring-backend       test \
+       --chain-id              chain-test \
+       --from                  node0
 ```
 
 ### Logs

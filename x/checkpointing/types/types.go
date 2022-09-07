@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
@@ -47,7 +46,6 @@ func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawChe
 // 4. accumulates voting power
 // it returns True if the checkpoint is updated
 func (cm *RawCheckpointWithMeta) Accumulate(
-	ctx sdk.Context,
 	vals epochingtypes.ValidatorSet,
 	signerAddr sdk.ValAddress,
 	signerBlsKey bls12381.PublicKey,
@@ -94,14 +92,12 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 
 	// update bitmap
 	bitmap.Set(cm.Ckpt.Bitmap, index, true)
-	ctx.Logger().Info("accumulating bls sig", "bitmap", fmt.Sprintf("%x", cm.Ckpt.Bitmap))
 
 	// accumulate voting power and update status when the threshold is reached
 	cm.PowerSum += uint64(val.Power)
 	if int64(cm.PowerSum) > totalPower/3 {
 		cm.Status = Sealed
 	}
-	ctx.Logger().Info("accumulating bls sig", "status", fmt.Sprintf("%v", cm.Status))
 
 	return true, nil
 }

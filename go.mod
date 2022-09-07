@@ -19,7 +19,7 @@ require (
 	github.com/supranational/blst v0.3.8
 	github.com/tendermint/tendermint v0.34.19
 	github.com/tendermint/tm-db v0.6.6
-	google.golang.org/genproto v0.0.0-20220822174746-9e6da59bd2fc
+	google.golang.org/genproto v0.0.0-20220719170305-83ca9fad585f
 	google.golang.org/grpc v1.48.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -28,7 +28,7 @@ require (
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/golang/mock v1.6.0
 	github.com/regen-network/cosmos-proto v0.3.1
-	google.golang.org/protobuf v1.28.1
+	google.golang.org/protobuf v1.28.0
 )
 
 require (
