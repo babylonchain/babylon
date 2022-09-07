@@ -217,10 +217,13 @@ func NewBabylonApp(
 	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, privSigner *PrivSigner,
 	appOpts servertypes.AppOptions, baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
+	// we could also take it from global object which should be initilised in rootCmd
+	// but this way it makes babylon app more testable
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
 	powLimit := btcConfig.PowLimit()
 	// WARNING: We are initiating global babylon btc config  as first so other modules
-	// can use it from start
+	// can use it from start. If it was already iniitlized in root cmd this will be
+	// noop
 	bbn.InitGlobalBtcConfig(btcConfig)
 
 	appCodec := encodingConfig.Marshaler
