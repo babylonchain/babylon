@@ -20,7 +20,7 @@ service Query {
 
   // BtcCheckpointHeight returns earliest block height for given rawcheckpoint
   rpc BtcCheckpointHeight(QueryBtcCheckpointHeightRequest) returns (QueryBtcCheckpointHeightResponse) {
-    option (google.api.http).get = "/babylon/btccheckpoint/v1/{raw_checkpoint}";
+    option (google.api.http).get = "/babylon/btccheckpoint/v1/{epoch_num}";
   }
 }
 
@@ -36,8 +36,8 @@ message QueryParamsResponse {
 // this line is used by starport scaffolding # 3
 
 message QueryBtcCheckpointHeightRequest {
-  // Hex encoded raw checkpoint bytes
-  string raw_checkpoint = 1;
+  // Number of epoch for which the earliest checkpointing btc height is requested
+  uint64 epoch_num = 1;
 }
 
 // QueryCurrentEpochResponse is response type for the Query/CurrentEpoch RPC method

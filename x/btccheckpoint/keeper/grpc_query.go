@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"math"
 
@@ -48,22 +47,11 @@ func (k Keeper) BtcCheckpointHeight(c context.Context, req *types.QueryBtcCheckp
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	rawCheckpointBytes, err := hex.DecodeString(req.GetRawCheckpoint())
-
-	if err != nil {
-		return nil, err
-	}
-
-	checkpointEpoch, err := k.GetCheckpointEpoch(ctx, rawCheckpointBytes)
-
-	if err != nil {
-		return nil, err
-	}
+	checkpointEpoch := req.GetEpochNum()
 
 	epochData := k.GetEpochData(ctx, checkpointEpoch)
 
-	// It is valid raw checkpoint (known to checkpointing module), but we do not have
-	// any submission fot it yet
+	// Check if we have any submission for given epoch
 	if epochData == nil || len(epochData.Key) == 0 {
 		return nil, errors.New("checkpoint for given epoch not yet submitted")
 	}

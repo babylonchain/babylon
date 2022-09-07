@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/spf13/cobra"
 
@@ -32,14 +33,20 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdBtcCheckpointHeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc-height rawcheckpoint",
-		Short: "retrieve earliest btc height for given raw checkpoint",
+		Short: "retrieve earliest btc height for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			params := types.QueryBtcCheckpointHeightRequest{RawCheckpoint: args[0]}
+			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+
+			if err != nil {
+				return err
+			}
+
+			params := types.QueryBtcCheckpointHeightRequest{EpochNum: epoch_num}
 
 			res, err := queryClient.BtcCheckpointHeight(context.Background(), &params)
 

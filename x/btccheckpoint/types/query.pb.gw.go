@@ -60,15 +60,15 @@ func request_Query_BtcCheckpointHeight_0(ctx context.Context, marshaler runtime.
 		_   = err
 	)
 
-	val, ok = pathParams["raw_checkpoint"]
+	val, ok = pathParams["epoch_num"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "raw_checkpoint")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
 	}
 
-	protoReq.RawCheckpoint, err = runtime.String(val)
+	protoReq.EpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "raw_checkpoint", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
 	}
 
 	msg, err := client.BtcCheckpointHeight(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -87,15 +87,15 @@ func local_request_Query_BtcCheckpointHeight_0(ctx context.Context, marshaler ru
 		_   = err
 	)
 
-	val, ok = pathParams["raw_checkpoint"]
+	val, ok = pathParams["epoch_num"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "raw_checkpoint")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
 	}
 
-	protoReq.RawCheckpoint, err = runtime.String(val)
+	protoReq.EpochNum, err = runtime.Uint64(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "raw_checkpoint", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
 	}
 
 	msg, err := server.BtcCheckpointHeight(ctx, &protoReq)
@@ -236,7 +236,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 var (
 	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btccheckpoint", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BtcCheckpointHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"babylon", "btccheckpoint", "v1", "raw_checkpoint"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_BtcCheckpointHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"babylon", "btccheckpoint", "v1", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
