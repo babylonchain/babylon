@@ -27,7 +27,7 @@ func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
 		EpochNum:       epochNum,
 		LastCommitHash: &lch,
-		Bitmap:         nil,
+		Bitmap:         bitmap.New(104), // 13 bytes, holding 100 validators
 		BlsMultiSig:    nil,
 	}
 }
@@ -69,18 +69,26 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	}
 
 	// aggregate BLS sig
-	aggSig, err := bls12381.AggrSig(*cm.Ckpt.BlsMultiSig, sig)
-	if err != nil {
-		return false, err
+	if cm.Ckpt.BlsMultiSig != nil {
+		aggSig, err := bls12381.AggrSig(*cm.Ckpt.BlsMultiSig, sig)
+		if err != nil {
+			return false, err
+		}
+		cm.Ckpt.BlsMultiSig = &aggSig
+	} else {
+		cm.Ckpt.BlsMultiSig = &sig
 	}
-	cm.Ckpt.BlsMultiSig = &aggSig
 
 	// aggregate BLS public key
-	aggPK, err := bls12381.AggrPK(*cm.BlsAggrPk, signerBlsKey)
-	if err != nil {
-		return false, err
+	if cm.BlsAggrPk != nil {
+		aggPK, err := bls12381.AggrPK(*cm.BlsAggrPk, signerBlsKey)
+		if err != nil {
+			return false, err
+		}
+		cm.BlsAggrPk = &aggPK
+	} else {
+		cm.BlsAggrPk = &signerBlsKey
 	}
-	cm.BlsAggrPk = &aggPK
 
 	// update bitmap
 	bitmap.Set(cm.Ckpt.Bitmap, index, true)
