@@ -41,7 +41,7 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 	// insert the message into the transaction
 	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
 	// TODO: hardcoded for now, will set fees as a parameter for the checkpointing module
-	fs.String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10uatom")
+	fs.String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10ubbn")
 	err = fs.Set(flags.FlagFees, "100stake")
 	//err = fs.Set(flags.FlagGasPrices, "1stake")
 	err = tx.GenerateOrBroadcastTxCLI(k.clientCtx, fs, msg)

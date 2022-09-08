@@ -9,7 +9,7 @@ import (
 
 func GenRandomValSet(n int) epochingtypes.ValidatorSet {
 	power := int64(10)
-	var valSet epochingtypes.ValidatorSet
+	var valSet []epochingtypes.Validator
 	for i := 0; i < n; i++ {
 		address := sdk.ValAddress(ed25519.GenPrivKey().PubKey().Address())
 		val := epochingtypes.Validator{
@@ -19,7 +19,7 @@ func GenRandomValSet(n int) epochingtypes.ValidatorSet {
 		valSet = append(valSet, val)
 	}
 
-	return valSet
+	return epochingtypes.NewSortedValidatorSet(valSet)
 }
 
 func GenRandomPubkeysAndSigs(n int, msg []byte) ([]bls12381.PublicKey, []bls12381.Signature) {

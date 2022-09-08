@@ -283,7 +283,9 @@ func (a appCreator) appExport(
 	clientCtx := client.Context{}.
 		WithChainID(appOpts.Get(flags.FlagChainID).(string)).
 		WithFromName(appOpts.Get(flags.FlagFrom).(string))
-	privSigner, err := app.InitPrivSigner(clientCtx, "", "")
+	nodeDir := ""
+	backend := ""
+	privSigner, err := app.InitPrivSigner(clientCtx, nodeDir, backend)
 	if err != nil {
 		panic(err)
 	}
