@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -85,29 +84,29 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 	endEpoch := epoch.EpochNumber
 	beginEpoch := uint64(1) // epoch 0 does not have any queued msg
 	if epoch.EpochNumber > req.EpochCount {
-		beginEpoch = epoch.EpochNumber - req.EpochCount
+		beginEpoch = epoch.EpochNumber - req.EpochCount + 1
 	}
 
 	latestEpochMsgs := []*types.QueuedMessageList{}
-	// prefix store of epoch msgs of all epochs, keyed by epoch number
-	store := ctx.KVStore(k.storeKey)
-	msgQueueStoreNoEpochNum := prefix.NewStore(store, types.MsgQueueKey)
 
-	pageRes, err := query.Paginate(msgQueueStoreNoEpochNum, req.Pagination, func(key, value []byte) error {
+	// iterate over queueLenStore since we only need to iterate over the epoch number
+	queueLenStore := k.msgQueueLengthStore(ctx)
+	pageRes, err := query.FilteredPaginate(queueLenStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		// unmarshal to epoch number
 		epochNumber := sdk.BigEndianToUint64(key)
 		// only return queued msgs within [beginEpoch, endEpoch]
 		if epochNumber < beginEpoch || endEpoch < epochNumber {
-			return nil
+			return false, nil
 		}
 
-		// TODO: any efficient way to make use of value to get epoch msgs?
-		msgList := &types.QueuedMessageList{
-			EpochNumber: epochNumber,
-			Msgs:        k.GetEpochMsgs(ctx, epochNumber),
+		if accumulate {
+			msgList := &types.QueuedMessageList{
+				EpochNumber: epochNumber,
+				Msgs:        k.GetEpochMsgs(ctx, epochNumber),
+			}
+			latestEpochMsgs = append(latestEpochMsgs, msgList)
 		}
-		latestEpochMsgs = append(latestEpochMsgs, msgList)
-		return nil
+		return true, nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
