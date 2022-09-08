@@ -79,7 +79,11 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber
+	// minus 1 is because the current epoch is not finished
+	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber - 1
+	if tipEpoch < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	targetEpoch := tipEpoch - req.EpochCount + 1
 	if targetEpoch < 0 {
 		targetEpoch = 0

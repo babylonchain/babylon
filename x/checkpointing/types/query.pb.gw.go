@@ -814,7 +814,7 @@ var (
 
 	pattern_Query_BlsPublicKeyList_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "checkpointing", "v1", "bls_public_keys", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EpochStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "checkpointing", "v1", "epoch", "epoch_num", "status"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EpochStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "checkpointing", "v1", "epochs", "epoch_num", "status"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_RecentEpochStatusCount_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "checkpointing", "v1", "epochs"}, "status_count", runtime.AssumeColonVerbOpt(false)))
 
