@@ -139,26 +139,19 @@ func local_request_Query_EpochMsgs_0(ctx context.Context, marshaler runtime.Mars
 
 }
 
+var (
+	filter_Query_LatestEpochMsgs_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+)
+
 func request_Query_LatestEpochMsgs_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq QueryLatestEpochMsgsRequest
 	var metadata runtime.ServerMetadata
 
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["num_latest_epochs"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "num_latest_epochs")
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
-	protoReq.NumLatestEpochs, err = runtime.Uint64(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "num_latest_epochs", err)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_LatestEpochMsgs_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := client.LatestEpochMsgs(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -170,22 +163,11 @@ func local_request_Query_LatestEpochMsgs_0(ctx context.Context, marshaler runtim
 	var protoReq QueryLatestEpochMsgsRequest
 	var metadata runtime.ServerMetadata
 
-	var (
-		val string
-		ok  bool
-		err error
-		_   = err
-	)
-
-	val, ok = pathParams["num_latest_epochs"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "num_latest_epochs")
+	if err := req.ParseForm(); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-
-	protoReq.NumLatestEpochs, err = runtime.Uint64(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "num_latest_epochs", err)
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_LatestEpochMsgs_0); err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
 	msg, err := server.LatestEpochMsgs(ctx, &protoReq)
@@ -502,9 +484,9 @@ var (
 
 	pattern_Query_CurrentEpoch_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "epoching", "v1", "current_epoch"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EpochMsgs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "epoching", "v1", "epoch_msgs", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EpochMsgs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "epoching", "v1", "epochs", "epoch_num", "messages"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_LatestEpochMsgs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "epoching", "v1", "latest_epoch_msgs", "num_latest_epochs"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_LatestEpochMsgs_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"babylon", "epoching", "v1", "epochs:latest", "messages"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_ValidatorLifecycle_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "epoching", "v1", "validator_lifecycle", "val_addr"}, "", runtime.AssumeColonVerbOpt(false)))
 )

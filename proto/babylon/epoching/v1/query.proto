@@ -23,12 +23,12 @@ service Query {
 
   // EpochMsgs queries the messages of a given epoch
   rpc EpochMsgs(QueryEpochMsgsRequest) returns (QueryEpochMsgsResponse) {
-    option (google.api.http).get = "/babylon/epoching/v1/epoch_msgs/{epoch_num}";
+    option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}/messages";
   }
 
   // LatestEpochMsgs queries the messages within a given number of most recent epochs
   rpc LatestEpochMsgs(QueryLatestEpochMsgsRequest) returns (QueryLatestEpochMsgsResponse) {
-    option (google.api.http).get = "/babylon/epoching/v1/latest_epoch_msgs/{num_latest_epochs}";
+    option (google.api.http).get = "/babylon/epoching/v1/epochs:latest/messages";
   }
 
   // ValidatorLifecycle queries the lifecycle of a given validator
@@ -76,16 +76,19 @@ message QueryEpochMsgsResponse {
 
 // QueryLatestEpochMsgsRequest is request type for the Query/LatestEpochMsgs RPC method
 message QueryLatestEpochMsgsRequest {
-  // num_latest_epochs is the number of latest epochs
-  uint64 num_latest_epochs = 1;
+  // epoch_count is the number of latest epochs
+  uint64 epoch_count = 1;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
 // QueryLatestEpochMsgsResponse is response type for the Query/LatestEpochMsgs RPC method
 message QueryLatestEpochMsgsResponse {
-  // epoch_msg_map is the map where
-  // - key is the epoch number
-  // - value is the list of queued messages in this epoch
-  map<uint64, babylon.epoching.v1.QueuedMessageList> epoch_msg_map = 1;
+  // epoch_msg_map is a list of QueuedMessageList
+  // each QueuedMessageList has a field identifying the epoch number
+  repeated babylon.epoching.v1.QueuedMessageList latest_epoch_msgs = 1;
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 message QueryValidatorLifecycleRequest {

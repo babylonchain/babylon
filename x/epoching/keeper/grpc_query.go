@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -79,23 +80,43 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMsgsRequest) (*types.QueryLatestEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// TODO: enforce limit of the number of epochs in each query
-
 	epoch := k.GetEpoch(ctx)
+	// the API will return epoch msgs between [beginEpoch, endEpoch]
 	endEpoch := epoch.EpochNumber
 	beginEpoch := uint64(1) // epoch 0 does not have any queued msg
-	if epoch.EpochNumber > req.NumLatestEpochs {
-		beginEpoch = epoch.EpochNumber - req.NumLatestEpochs
+	if epoch.EpochNumber > req.EpochCount {
+		beginEpoch = epoch.EpochNumber - req.EpochCount
 	}
 
-	msgMap := make(map[uint64]*types.QueuedMessageList)
+	latestEpochMsgs := []*types.QueuedMessageList{}
+	// prefix store of epoch msgs of all epochs, keyed by epoch number
+	store := ctx.KVStore(k.storeKey)
+	msgQueueStoreNoEpochNum := prefix.NewStore(store, types.MsgQueueKey)
 
-	for i := beginEpoch; i <= endEpoch; i++ {
-		msgs := k.GetEpochMsgs(ctx, i)
-		msgMap[i] = &types.QueuedMessageList{Msgs: msgs}
+	pageRes, err := query.Paginate(msgQueueStoreNoEpochNum, req.Pagination, func(key, value []byte) error {
+		// unmarshal to epoch number
+		epochNumber := sdk.BigEndianToUint64(key)
+		// only return queued msgs within [beginEpoch, endEpoch]
+		if epochNumber < beginEpoch || endEpoch < epochNumber {
+			return nil
+		}
+
+		// TODO: any efficient way to make use of value to get epoch msgs?
+		msgList := &types.QueuedMessageList{
+			EpochNumber: epochNumber,
+			Msgs:        k.GetEpochMsgs(ctx, epochNumber),
+		}
+		latestEpochMsgs = append(latestEpochMsgs, msgList)
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	resp := &types.QueryLatestEpochMsgsResponse{EpochMsgMap: msgMap}
+	resp := &types.QueryLatestEpochMsgsResponse{
+		LatestEpochMsgs: latestEpochMsgs,
+		Pagination:      pageRes,
+	}
 	return resp, nil
 }
 
