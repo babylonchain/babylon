@@ -5,6 +5,7 @@ import (
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -79,12 +80,23 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMsgsRequest) (*types.QueryLatestEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
-	epoch := k.GetEpoch(ctx)
-	// the API will return epoch msgs between [beginEpoch, endEpoch]
-	endEpoch := epoch.EpochNumber
-	beginEpoch := uint64(1) // epoch 0 does not have any queued msg
-	if epoch.EpochNumber > req.EpochCount {
-		beginEpoch = epoch.EpochNumber - req.EpochCount + 1
+	if req.EpochCount == 0 {
+		return nil, sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidRequest, "epoch_count should be specified and be larger than zero",
+		)
+	}
+
+	// the API will return epoch msgs between [min(1, end_epoch-epoch_count+1), end_epoch].
+	// NOTE:
+	// - epoch 0 does not have any queued msg
+	// - if not specified, endEpoch will be the current epoch
+	endEpoch := req.EndEpoch
+	if endEpoch == 0 {
+		endEpoch = k.GetEpoch(ctx).EpochNumber
+	}
+	beginEpoch := endEpoch - req.EpochCount + 1
+	if beginEpoch <= 1 {
+		beginEpoch = 1
 	}
 
 	latestEpochMsgs := []*types.QueuedMessageList{}
