@@ -160,3 +160,24 @@ node directories can be found under `.testnets`
 $ ls .testnets
 gentxs node0 node1 node2 node3
 ```
+
+## Running a full simnet
+
+We provide support for running a simnet with the following nodes:
+- 4 Babylon nodes
+- 1 vigilante reporter
+- 1 vigilante submitter
+- 1 BTC node running in simnet mode
+
+Initially, to build the simnet, Docker images for the vigilantes are required.
+To do that, follow the instructions on the Babylon Vigilante [repository](https://github.com/babylonchain/vigilante/).
+
+Afterwards, a vigilante configuration should be created. We provide a `vigilante.yaml`
+configuration that should work out of the box in this repository. However,
+it can be modified according to one's needs. In the future,
+we aim to automate the creation of this file in order to abstract this extra step.
+
+The simnet can be built using the following:
+```bash
+make simnet-start
+```

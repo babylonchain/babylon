@@ -443,6 +443,18 @@ localnet-build-env:
 localnet-build-dlv:
 	$(MAKE) -C contrib/images babylond-dlv
 
+localnet-build-simnet:
+	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
+			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
+	# volume in which the bitcoin configuration will be mounted
+	mkdir -p $(CURDIR)/.testnets/bitcoin
+	# TODO: Once vigilante implements a testnet command we will use that one instead of
+	#  		manually creating and copying the config file
+	mkdir -p $(CURDIR)/.testnets/vigilante
+	cp vigilante.yaml $(CURDIR)/.testnets/vigilante/vigilante.yaml
+	# Start the docker compose
+	docker-compose -f docker-compose-simnet.yaml up -d
+
 localnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
 			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
@@ -458,6 +470,16 @@ localnet-start: localnet-stop localnet-build-env localnet-build-nodes
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
 localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
+
+build-bitcoinsim:
+	$(MAKE) -C contrib/images bitcoinsim
+
+# simnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
+# TODO: add explorer
+simnet-start: simnet-stop localnet-build-env build-bitcoinsim localnet-build-simnet
+
+simnet-stop:
+	docker-compose -f docker-compose-simnet.yaml down
 
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes

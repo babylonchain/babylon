@@ -89,6 +89,50 @@ services:
       localnet:
         ipv4_address: 192.168.10.5
 
+  bitcoinsim:
+    build:
+      context: ./
+      dockerfile: ./contrib/images/bitcoinsim/Dockerfile
+    container_name: bitcoinsim
+    image: babylonchain/bitcoinsim:latest
+    environment:
+      - CLIENTHOST=bitcoinsim
+    ports:
+      - 18554-18556:18554-18556
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.6
+    volumes:
+      - ./.testnets/bitcoin:/bitcoinconf:Z
+  vigilante-reporter:
+    container_name: vigilante-reporter
+    image: babylonchain/vigilante-reporter
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.7
+    volumes:
+      - ./.testnets/bitcoin:/bitcoin
+      - ./.testnets/node0/babylond:/babylon
+      - ./.testnets/vigilante:/vigilante
+    depends_on:
+      - bitcoinsim
+      - babylondnode0
+    restart: on-failure:10
+  vigilante-submitter:
+    container_name: vigilante-submitter
+    image: babylonchain/vigilante-submitter
+    networks:
+      localnet:
+        ipv4_address: 192.168.10.8
+    volumes:
+      - ./.testnets/bitcoin:/bitcoin
+      - ./.testnets/node0/babylond:/babylon
+      - ./.testnets/vigilante:/vigilante
+    depends_on:
+      - bitcoinsim
+      - babylondnode0
+    restart: on-failure:10
+
 networks:
   localnet:
     driver: bridge

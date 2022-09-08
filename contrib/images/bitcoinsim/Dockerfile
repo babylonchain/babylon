@@ -24,6 +24,7 @@ COPY contrib/images/bitcoinsim/btcwallet_create.exp /bitcoinsim/btcwallet_create
 ENV RPCUSER=rpcuser
 ENV RPCPASS=rpcpass
 ENV PASSPHRASE=pass
+ENV BITCOINCONF="/bitcoinconf"
 ENV GENERATE_INTERVAL_SECS=30
 
 EXPOSE 18554 18555 18556
