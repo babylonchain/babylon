@@ -76,6 +76,11 @@ func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes
 	return err == nil
 }
 
+func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
+	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
+	return err == nil && depth >= 0
+}
+
 func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) (uint64, bool, error) {
 	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 
