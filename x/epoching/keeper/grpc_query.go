@@ -5,6 +5,7 @@ import (
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -74,7 +75,64 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	return resp, nil
 }
 
+// LatestEpochMsgs handles the QueryLatestEpochMsgsRequest query
+// TODO: test this API
+func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMsgsRequest) (*types.QueryLatestEpochMsgsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if req.EpochCount == 0 {
+		return nil, sdkerrors.Wrapf(
+			sdkerrors.ErrInvalidRequest, "epoch_count should be specified and be larger than zero",
+		)
+	}
+
+	// the API will return epoch msgs between [min(1, end_epoch-epoch_count+1), end_epoch].
+	// NOTE:
+	// - epoch 0 does not have any queued msg
+	// - if not specified, endEpoch will be the current epoch
+	endEpoch := req.EndEpoch
+	if endEpoch == 0 {
+		endEpoch = k.GetEpoch(ctx).EpochNumber
+	}
+	beginEpoch := endEpoch - req.EpochCount + 1
+	if beginEpoch <= 1 {
+		beginEpoch = 1
+	}
+
+	latestEpochMsgs := []*types.QueuedMessageList{}
+
+	// iterate over queueLenStore since we only need to iterate over the epoch number
+	queueLenStore := k.msgQueueLengthStore(ctx)
+	pageRes, err := query.FilteredPaginate(queueLenStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+		// unmarshal to epoch number
+		epochNumber := sdk.BigEndianToUint64(key)
+		// only return queued msgs within [beginEpoch, endEpoch]
+		if epochNumber < beginEpoch || endEpoch < epochNumber {
+			return false, nil
+		}
+
+		if accumulate {
+			msgList := &types.QueuedMessageList{
+				EpochNumber: epochNumber,
+				Msgs:        k.GetEpochMsgs(ctx, epochNumber),
+			}
+			latestEpochMsgs = append(latestEpochMsgs, msgList)
+		}
+		return true, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryLatestEpochMsgsResponse{
+		LatestEpochMsgs: latestEpochMsgs,
+		Pagination:      pageRes,
+	}
+	return resp, nil
+}
+
 // ValidatorLifecycle handles the QueryValidatorLifecycleRequest query
+// TODO: test this API
 func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorLifecycleRequest) (*types.QueryValidatorLifecycleResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 	valAddr, err := sdk.ValAddressFromBech32(req.ValAddr)
@@ -85,5 +143,4 @@ func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorL
 	return &types.QueryValidatorLifecycleResponse{
 		ValLife: lc,
 	}, nil
-	// TODO: test this API
 }

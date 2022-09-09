@@ -20,9 +20,11 @@ func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state
 			ValLife: []*types.ValStateUpdate{},
 		}
 	}
+	height, time := ctx.BlockHeight(), ctx.BlockTime()
 	valStateUpdate := types.ValStateUpdate{
-		State:  state,
-		Height: uint64(ctx.BlockHeight()),
+		State:       state,
+		BlockHeight: uint64(height),
+		BlockTime:   &time,
 	}
 	lc.ValLife = append(lc.ValLife, &valStateUpdate)
 	k.SetValLifecycle(ctx, valAddr, lc)
@@ -37,6 +39,9 @@ func (k Keeper) SetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress, lc *typ
 func (k Keeper) GetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.ValidatorLifecycle {
 	store := k.valLifecycleStore(ctx)
 	lcBytes := store.Get([]byte(valAddr))
+	if len(lcBytes) == 0 {
+		return nil
+	}
 	var lc types.ValidatorLifecycle
 	k.cdc.MustUnmarshal(lcBytes, &lc)
 	return &lc
