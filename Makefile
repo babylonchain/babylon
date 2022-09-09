@@ -451,19 +451,19 @@ localnet-build-nodes:
 	# TODO: Once vigilante implements a testnet command we will use that one instead of
 	#  		manually creating and copying the config file
 	mkdir -p $(CURDIR)/.testnets/vigilante
-	cp vigilante.yaml $(CURDIR)/.testnets/vigilante/vigilante.yaml
+	cp vigilante.yml $(CURDIR)/.testnets/vigilante/vigilante.yml
 	# Start the docker compose
 	docker-compose up -d
 
-build-bitcoinsim:
+localnet-bitcoinsim:
 	$(MAKE) -C contrib/images bitcoinsim
 
 # localnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
-localnet-start: localnet-stop localnet-build-env build-bitcoinsim localnet-build-nodes
+localnet-start: localnet-stop localnet-build-env localnet-bitcoinsim localnet-build-nodes
 
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv build-bitcoinsim localnet-build-nodes
+localnet-debug: localnet-stop localnet-build-dlv localnet-bitcoinsim localnet-build-nodes
 
 localnet-stop:
 	docker-compose down

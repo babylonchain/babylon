@@ -152,7 +152,8 @@ babylond --home .testnet/node0/babylond --chain-id chain-test \
 We provide support for running a multi-node testnet using Docker. To build the simnet:
 1. Create Docker images for the vigilante submitter and vigilante reporter using
    the instructions on the Babylon Vigilante [repository](https://github.com/babylonchain/vigilante/). 
-2. Create a vigilante configuration. We provide a `vigilante.yaml`
+2. Create a vigilante configuration. We provide a
+   [`vigilante.yml`](vigilante.yml)
    configuration that should work out of the box in this repository. However,
    it can be modified according to one's needs. In the future,
    we aim to automate the creation of this file in order to abstract this extra step.

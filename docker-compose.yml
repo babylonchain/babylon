@@ -104,6 +104,7 @@ services:
         ipv4_address: 192.168.10.6
     volumes:
       - ./.testnets/bitcoin:/bitcoinconf:Z
+
   vigilante-reporter:
     container_name: vigilante-reporter
     image: babylonchain/vigilante-reporter
@@ -118,6 +119,7 @@ services:
       - bitcoinsim
       - babylondnode0
     restart: on-failure:10
+
   vigilante-submitter:
     container_name: vigilante-submitter
     image: babylonchain/vigilante-submitter
@@ -132,6 +134,7 @@ services:
       - bitcoinsim
       - babylondnode0
     restart: on-failure:10
+
   explorer:
     container_name: explorer
     image: babylonchain/babylon-explorer
