@@ -443,7 +443,7 @@ localnet-build-env:
 localnet-build-dlv:
 	$(MAKE) -C contrib/images babylond-dlv
 
-localnet-build-simnet:
+localnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
 			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
 	# volume in which the bitcoin configuration will be mounted
@@ -453,33 +453,20 @@ localnet-build-simnet:
 	mkdir -p $(CURDIR)/.testnets/vigilante
 	cp vigilante.yaml $(CURDIR)/.testnets/vigilante/vigilante.yaml
 	# Start the docker compose
-	docker-compose -f docker-compose-simnet.yaml up -d
-
-localnet-build-nodes:
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
-			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
 	docker-compose up -d
-
-localnet-stop:
-	docker-compose down
-
-# localnet-start will run a 4-node testnet locally. The nodes are
-# based off the docker images in: ./contrib/images/babylond-env
-localnet-start: localnet-stop localnet-build-env localnet-build-nodes
-
-# localnet-debug will run a 4-node testnet locally in debug mode
-# you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
 
 build-bitcoinsim:
 	$(MAKE) -C contrib/images bitcoinsim
 
-# simnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
-# TODO: add explorer
-simnet-start: simnet-stop localnet-build-env build-bitcoinsim localnet-build-simnet
+# localnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
+localnet-start: localnet-stop localnet-build-env build-bitcoinsim localnet-build-nodes
 
-simnet-stop:
-	docker-compose -f docker-compose-simnet.yaml down
+# localnet-debug will run a 4-node testnet locally in debug mode
+# you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
+localnet-debug: localnet-stop localnet-build-dlv build-bitcoinsim localnet-build-nodes
+
+localnet-stop:
+	docker-compose down
 
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes

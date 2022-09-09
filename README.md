@@ -149,35 +149,33 @@ babylond --home .testnet/node0/babylond --chain-id chain-test \
 
 ## Running a multi-node testnet
 
-We provide support for running a multi-node testnet using Docker.
+We provide support for running a multi-node testnet using Docker. To build the simnet:
+1. Create Docker images for the vigilante submitter and vigilante reporter using
+   the instructions on the Babylon Vigilante [repository](https://github.com/babylonchain/vigilante/). 
+2. Create a vigilante configuration. We provide a `vigilante.yaml`
+   configuration that should work out of the box in this repository. However,
+   it can be modified according to one's needs. In the future,
+   we aim to automate the creation of this file in order to abstract this extra step.
+3. Create a Docker image for the explorer using the instructions on the Babylon 
+   explorer [repository](https://github.com/babylonchain/babylon-explorer/)
+4. Add nginx configuration in which requests on `localhost:26661` are forwarded to `localhost:26662`,
+   which is the port that we have designated for the explorer to run. Do that following the instructions
+   on the explorer [repository](https://github.com/babylonchain/babylon-explorer/).
+5. Start the testnet
 ```console
 make localnet-start
 ```
 
-This will lead to the generation of a testnet with 4 nodes. The corresponding
-node directories can be found under `.testnets`
+This will lead to the generation of a testnet with:
+- 4 Babylon nodes
+- 1 vigilante submitter
+- 1 vigilante reporter
+- 1 Bitcoin node running in simnet mode
+- 1 Babylon explorer
+
+The corresponding node directories, Bitcoin configuration, and
+vigilante configuration can be found under `.testnets`
 ```console
 $ ls .testnets
-gentxs node0 node1 node2 node3
-```
-
-## Running a full simnet
-
-We provide support for running a simnet with the following nodes:
-- 4 Babylon nodes
-- 1 vigilante reporter
-- 1 vigilante submitter
-- 1 BTC node running in simnet mode
-
-Initially, to build the simnet, Docker images for the vigilantes are required.
-To do that, follow the instructions on the Babylon Vigilante [repository](https://github.com/babylonchain/vigilante/).
-
-Afterwards, a vigilante configuration should be created. We provide a `vigilante.yaml`
-configuration that should work out of the box in this repository. However,
-it can be modified according to one's needs. In the future,
-we aim to automate the creation of this file in order to abstract this extra step.
-
-The simnet can be built using the following:
-```bash
-make simnet-start
+gentxs node0 node1 node2 node3 vigilante bitcoin
 ```
