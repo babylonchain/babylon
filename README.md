@@ -179,3 +179,5 @@ vigilante configuration can be found under `.testnets`
 $ ls .testnets
 gentxs node0 node1 node2 node3 vigilante bitcoin
 ```
+
+The explorer is accessible at `localhost:26661`.
