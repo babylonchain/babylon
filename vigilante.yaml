@@ -13,7 +13,7 @@ babylon:
   chain-id: chain-test
   rpc-addr: http://babylondnode0:26657
   grpc-addr: https://babylondnode0:9090
-  account-prefix: babylon
+  account-prefix: bbn
   keyring-backend: test
   gas-adjustment: 1.2
   gas-prices: 0.01ubbn
@@ -32,6 +32,6 @@ grpc:
 grpcweb:
   placeholder: grpcwebconfig
 submitter:
-  placeholder: submitterconfig
+  netparams: simnet
 reporter:
   netparams: simnet
