@@ -469,6 +469,8 @@ localnet-debug: localnet-stop localnet-build-dlv localnet-bitcoinsim localnet-bu
 
 localnet-stop:
 	docker-compose down
+	# remove .testnets dir if it exists
+	rm -rf .testnets
 
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes
