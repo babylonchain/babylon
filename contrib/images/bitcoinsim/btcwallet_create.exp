@@ -44,9 +44,11 @@ if {$force_conservative} {
 set RPCUSER [lindex $argv 0]
 set RPCPASS [lindex $argv 1]
 set PASSPHRASE [lindex $argv 2]
+set CERTFILE [lindex $argv 3]
+set KEYFILE [lindex $argv 4]
 
 set timeout -1
-spawn btcwallet --simnet -u $RPCUSER -P $RPCPASS --create
+spawn btcwallet --simnet -u $RPCUSER -P $RPCPASS --rpccert $CERTFILE --rpckey $KEYFILE --create
 match_max 100000
 expect -exact "Enter the private passphrase for your new wallet: "
 send -- "$PASSPHRASE\r"

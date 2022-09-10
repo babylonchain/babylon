@@ -445,19 +445,32 @@ localnet-build-dlv:
 
 localnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
-			  testnet init-files --v 4 -o /data --starting-ip-address 192.168.10.2 --keyring-backend=test
+			  testnet init-files --v 4 -o /data \
+			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
+			  --chain-id chain-test
+	# volume in which the bitcoin configuration will be mounted
+	mkdir -p $(CURDIR)/.testnets/bitcoin
+	# TODO: Once vigilante implements a testnet command we will use that one instead of
+	#  		manually creating and copying the config file
+	mkdir -p $(CURDIR)/.testnets/vigilante
+	cp vigilante.yml $(CURDIR)/.testnets/vigilante/vigilante.yml
+	# Start the docker compose
 	docker-compose up -d
 
-localnet-stop:
-	docker-compose down
+localnet-bitcoinsim:
+	$(MAKE) -C contrib/images bitcoinsim
 
-# localnet-start will run a 4-node testnet locally. The nodes are
-# based off the docker images in: ./contrib/images/babylond-env
-localnet-start: localnet-stop localnet-build-env localnet-build-nodes
+# localnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
+localnet-start: localnet-stop localnet-build-env localnet-bitcoinsim localnet-build-nodes
 
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
+localnet-debug: localnet-stop localnet-build-dlv localnet-bitcoinsim localnet-build-nodes
+
+localnet-stop:
+	docker-compose down
+	# remove .testnets dir if it exists
+	rm -rf .testnets
 
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes
