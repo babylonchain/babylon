@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"errors"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -229,9 +231,14 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	backend := cast.ToString(appOpts.Get(flags.FlagKeyringBackend))
-	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
-	fromName := cast.ToString(appOpts.Get(flags.FlagFrom))
+	// TODO: access the following parameters from config files
+	//backend := cast.ToString(appOpts.Get(flags.FlagKeyringBackend))
+	//chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	//fromName := cast.ToString(appOpts.Get(flags.FlagFrom))
+	backend := keyring.BackendTest
+	chainID := "chain-test"
+	paths := strings.Split(homeDir, "/")
+	fromName := paths[len(paths)-2]
 
 	clientCtx, err := config.ReadFromClientConfig(client.Context{}.WithHomeDir(app.DefaultNodeHome).WithViper(""))
 	if err != nil {
