@@ -149,7 +149,21 @@ babylond --home .testnet/node0/babylond --chain-id chain-test \
 
 ## Running a multi-node testnet
 
-We provide support for running a multi-node testnet using Docker. To build the simnet:
+We provide support for running a multi-node testnet using Docker. To build it
+
+```console
+make localnet-start
+```
+
+The corresponding node directories can be found under `.testnets`
+```console
+$ ls .testnets
+gentxs node0 node1 node2 node3
+```
+
+## Running the full stack
+
+We provide support for running the full Babylon stack using Docker. To build the simnet:
 1. Create Docker images for the vigilante submitter and vigilante reporter using
    the instructions on the Babylon Vigilante [repository](https://github.com/babylonchain/vigilante/). 
 2. Create a vigilante configuration. We provide a
@@ -164,7 +178,7 @@ We provide support for running a multi-node testnet using Docker. To build the s
    on the explorer [repository](https://github.com/babylonchain/babylon-explorer/).
 5. Start the testnet
 ```console
-make localnet-start
+make simnet-start
 ```
 
 This will lead to the generation of a testnet with:
