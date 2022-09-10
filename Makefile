@@ -462,8 +462,6 @@ localnet-debug: localnet-stop localnet-build-dlv localnet-bitcoinsim localnet-bu
 
 localnet-stop:
 	docker-compose down
-	# remove .testnets dir if it exists
-	rm -rf .testnets
 
 simnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
@@ -489,7 +487,7 @@ simnet-debug: localnet-stop localnet-build-dlv localnet-bitcoinsim simnet-build-
 simnet-stop:
 	docker-compose -f docker-compose-simnet.yml down
 	# remove .testnets dir if it exists
-	rm -rf .testnets
+	rm -rf $(CURDIR)/.testnets
 
 .PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
 localnet-build-dlv localnet-build-nodes
