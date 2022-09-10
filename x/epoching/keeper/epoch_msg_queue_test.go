@@ -95,7 +95,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		require.NotNil(t, lc)
 		require.Equal(t, 1, len(lc.ValLife))
 		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
-		require.Equal(t, uint64(0), lc.ValLife[0].Height)
+		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 
 		// delegate a random amount of tokens to the validator
 		numNewDels := rand.Int63n(1000) + 1
@@ -161,7 +161,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		require.NotNil(t, lc)
 		require.Equal(t, 1, len(lc.ValLife))
 		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
-		require.Equal(t, uint64(0), lc.ValLife[0].Height)
+		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 
 		// unbond a random amount of tokens from the validator
 		// Note that for any pair of delegator and validator, there can be `<=DefaultMaxEntries=7` concurrent undelegations at any time slot
@@ -245,7 +245,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 			require.NotNil(t, lc)
 			require.Equal(t, 1, len(lc.ValLife))
 			require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
-			require.Equal(t, uint64(0), lc.ValLife[0].Height)
+			require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 		}
 
 		// redelegate a random amount of tokens from val1 to val2

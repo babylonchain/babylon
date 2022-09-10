@@ -315,6 +315,125 @@ func (m *QueryEpochMsgsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryLatestEpochMsgsRequest is request type for the Query/LatestEpochMsgs RPC method
+// it returns epoch msgs within epoch [min(1, end_epoch-epoch_count+1), end_epoch]
+type QueryLatestEpochMsgsRequest struct {
+	// end_epoch is the number of the last epoch to query
+	EndEpoch uint64 `protobuf:"varint,1,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
+	// epoch_count is the number of epochs to query
+	EpochCount uint64             `protobuf:"varint,2,opt,name=epoch_count,json=epochCount,proto3" json:"epoch_count,omitempty"`
+	Pagination *query.PageRequest `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryLatestEpochMsgsRequest) Reset()         { *m = QueryLatestEpochMsgsRequest{} }
+func (m *QueryLatestEpochMsgsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryLatestEpochMsgsRequest) ProtoMessage()    {}
+func (*QueryLatestEpochMsgsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{6}
+}
+func (m *QueryLatestEpochMsgsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryLatestEpochMsgsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryLatestEpochMsgsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryLatestEpochMsgsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLatestEpochMsgsRequest.Merge(m, src)
+}
+func (m *QueryLatestEpochMsgsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryLatestEpochMsgsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLatestEpochMsgsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLatestEpochMsgsRequest proto.InternalMessageInfo
+
+func (m *QueryLatestEpochMsgsRequest) GetEndEpoch() uint64 {
+	if m != nil {
+		return m.EndEpoch
+	}
+	return 0
+}
+
+func (m *QueryLatestEpochMsgsRequest) GetEpochCount() uint64 {
+	if m != nil {
+		return m.EpochCount
+	}
+	return 0
+}
+
+func (m *QueryLatestEpochMsgsRequest) GetPagination() *query.PageRequest {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
+// QueryLatestEpochMsgsResponse is response type for the Query/LatestEpochMsgs RPC method
+type QueryLatestEpochMsgsResponse struct {
+	// epoch_msg_map is a list of QueuedMessageList
+	// each QueuedMessageList has a field identifying the epoch number
+	LatestEpochMsgs []*QueuedMessageList `protobuf:"bytes,1,rep,name=latest_epoch_msgs,json=latestEpochMsgs,proto3" json:"latest_epoch_msgs,omitempty"`
+	Pagination      *query.PageResponse  `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (m *QueryLatestEpochMsgsResponse) Reset()         { *m = QueryLatestEpochMsgsResponse{} }
+func (m *QueryLatestEpochMsgsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryLatestEpochMsgsResponse) ProtoMessage()    {}
+func (*QueryLatestEpochMsgsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_1821b530f2ec2711, []int{7}
+}
+func (m *QueryLatestEpochMsgsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryLatestEpochMsgsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryLatestEpochMsgsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryLatestEpochMsgsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryLatestEpochMsgsResponse.Merge(m, src)
+}
+func (m *QueryLatestEpochMsgsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryLatestEpochMsgsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryLatestEpochMsgsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryLatestEpochMsgsResponse proto.InternalMessageInfo
+
+func (m *QueryLatestEpochMsgsResponse) GetLatestEpochMsgs() []*QueuedMessageList {
+	if m != nil {
+		return m.LatestEpochMsgs
+	}
+	return nil
+}
+
+func (m *QueryLatestEpochMsgsResponse) GetPagination() *query.PageResponse {
+	if m != nil {
+		return m.Pagination
+	}
+	return nil
+}
+
 type QueryValidatorLifecycleRequest struct {
 	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
 }
@@ -323,7 +442,7 @@ func (m *QueryValidatorLifecycleRequest) Reset()         { *m = QueryValidatorLi
 func (m *QueryValidatorLifecycleRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryValidatorLifecycleRequest) ProtoMessage()    {}
 func (*QueryValidatorLifecycleRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1821b530f2ec2711, []int{6}
+	return fileDescriptor_1821b530f2ec2711, []int{8}
 }
 func (m *QueryValidatorLifecycleRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -367,7 +486,7 @@ func (m *QueryValidatorLifecycleResponse) Reset()         { *m = QueryValidatorL
 func (m *QueryValidatorLifecycleResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryValidatorLifecycleResponse) ProtoMessage()    {}
 func (*QueryValidatorLifecycleResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_1821b530f2ec2711, []int{7}
+	return fileDescriptor_1821b530f2ec2711, []int{9}
 }
 func (m *QueryValidatorLifecycleResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -410,6 +529,8 @@ func init() {
 	proto.RegisterType((*QueryCurrentEpochResponse)(nil), "babylon.epoching.v1.QueryCurrentEpochResponse")
 	proto.RegisterType((*QueryEpochMsgsRequest)(nil), "babylon.epoching.v1.QueryEpochMsgsRequest")
 	proto.RegisterType((*QueryEpochMsgsResponse)(nil), "babylon.epoching.v1.QueryEpochMsgsResponse")
+	proto.RegisterType((*QueryLatestEpochMsgsRequest)(nil), "babylon.epoching.v1.QueryLatestEpochMsgsRequest")
+	proto.RegisterType((*QueryLatestEpochMsgsResponse)(nil), "babylon.epoching.v1.QueryLatestEpochMsgsResponse")
 	proto.RegisterType((*QueryValidatorLifecycleRequest)(nil), "babylon.epoching.v1.QueryValidatorLifecycleRequest")
 	proto.RegisterType((*QueryValidatorLifecycleResponse)(nil), "babylon.epoching.v1.QueryValidatorLifecycleResponse")
 }
@@ -417,49 +538,56 @@ func init() {
 func init() { proto.RegisterFile("babylon/epoching/v1/query.proto", fileDescriptor_1821b530f2ec2711) }
 
 var fileDescriptor_1821b530f2ec2711 = []byte{
-	// 658 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x54, 0x4f, 0x4f, 0xd4, 0x4e,
-	0x18, 0xde, 0xf2, 0x03, 0x7e, 0x30, 0x80, 0x87, 0x01, 0x0d, 0x14, 0x2d, 0xa4, 0xa8, 0x10, 0x08,
-	0x1d, 0x77, 0x57, 0x4d, 0x0c, 0x27, 0xd7, 0xa8, 0x89, 0x11, 0x03, 0x7b, 0xf0, 0xe0, 0x65, 0x33,
-	0x6d, 0x87, 0xd2, 0xa4, 0xed, 0x94, 0x4e, 0xdb, 0xb8, 0x41, 0x12, 0xf5, 0x13, 0x98, 0x78, 0xe2,
-	0xbb, 0xf8, 0x01, 0x38, 0x92, 0x78, 0xf1, 0x64, 0x0c, 0xf8, 0x41, 0x4c, 0xdf, 0x99, 0x2e, 0x7f,
-	0x6c, 0x03, 0xde, 0x76, 0xdf, 0x79, 0x9e, 0xf7, 0x79, 0xde, 0x77, 0x9e, 0x29, 0x5a, 0xb0, 0xa9,
-	0xdd, 0x0f, 0x78, 0x44, 0x58, 0xcc, 0x9d, 0x5d, 0x3f, 0xf2, 0x48, 0xde, 0x24, 0x7b, 0x19, 0x4b,
-	0xfa, 0x56, 0x9c, 0xf0, 0x94, 0xe3, 0x69, 0x05, 0xb0, 0x4a, 0x80, 0x95, 0x37, 0xf5, 0x19, 0x8f,
-	0x7b, 0x1c, 0xce, 0x49, 0xf1, 0x4b, 0x42, 0xf5, 0xdb, 0x1e, 0xe7, 0x5e, 0xc0, 0x08, 0x8d, 0x7d,
-	0x42, 0xa3, 0x88, 0xa7, 0x34, 0xf5, 0x79, 0x24, 0xd4, 0xe9, 0xaa, 0xc3, 0x45, 0xc8, 0x05, 0xb1,
-	0xa9, 0x60, 0x52, 0x81, 0xe4, 0x4d, 0x9b, 0xa5, 0xb4, 0x49, 0x62, 0xea, 0xf9, 0x11, 0x80, 0x15,
-	0x76, 0xb1, 0xca, 0x55, 0x4c, 0x13, 0x1a, 0x96, 0xdd, 0xcc, 0x2a, 0xc4, 0xc0, 0x22, 0x60, 0xcc,
-	0x19, 0x84, 0xb7, 0x0b, 0x9d, 0x2d, 0x20, 0x76, 0xd9, 0x5e, 0xc6, 0x44, 0x6a, 0x6e, 0xa1, 0xe9,
-	0x0b, 0x55, 0x11, 0xf3, 0x48, 0x30, 0xfc, 0x04, 0x8d, 0x4a, 0x81, 0x59, 0x6d, 0x51, 0x5b, 0x99,
-	0x68, 0xcd, 0x5b, 0x15, 0x83, 0x5b, 0x92, 0xd4, 0x19, 0x3e, 0xfa, 0xb9, 0xd0, 0xe8, 0x2a, 0x82,
-	0xa9, 0xa3, 0x59, 0xe8, 0xf8, 0x2c, 0x4b, 0x12, 0x16, 0xa5, 0xcf, 0x0b, 0x7c, 0xa9, 0xe6, 0xa1,
-	0xb9, 0x8a, 0x33, 0xa5, 0xb9, 0x84, 0xa6, 0x1c, 0x59, 0xef, 0x81, 0x08, 0x48, 0x0f, 0x77, 0x27,
-	0x9d, 0x73, 0x60, 0x7c, 0x0f, 0xdd, 0x80, 0xc3, 0x9e, 0xcd, 0xb3, 0xc8, 0xa5, 0x49, 0x7f, 0x76,
-	0x08, 0x50, 0x53, 0x50, 0xed, 0xa8, 0xa2, 0xf9, 0x01, 0xdd, 0x04, 0x21, 0x20, 0x6d, 0x0a, 0xaf,
-	0x9c, 0x17, 0xcf, 0xa3, 0x71, 0xc9, 0x8f, 0xb2, 0x50, 0x09, 0x8c, 0x41, 0xe1, 0x4d, 0x16, 0xe2,
-	0x17, 0x08, 0x9d, 0x2d, 0x1f, 0x1a, 0x4f, 0xb4, 0xee, 0x5b, 0xf2, 0xa6, 0xac, 0xe2, 0xa6, 0x2c,
-	0x99, 0x05, 0x75, 0x53, 0xd6, 0x16, 0xf5, 0x98, 0x6a, 0xdc, 0x3d, 0xc7, 0x34, 0x0f, 0x35, 0x74,
-	0xeb, 0xb2, 0xbc, 0x1a, 0xf2, 0x31, 0x1a, 0x0e, 0x85, 0x57, 0xac, 0xf5, 0xbf, 0x95, 0x89, 0x96,
-	0x59, 0xb9, 0xd6, 0xed, 0x8c, 0x65, 0xcc, 0xdd, 0x64, 0x42, 0x14, 0xfd, 0x01, 0x8f, 0x5f, 0x56,
-	0x58, 0x5b, 0xbe, 0xd2, 0x9a, 0x14, 0xbd, 0xe0, 0x6d, 0x03, 0x19, 0x60, 0xed, 0x2d, 0x0d, 0x7c,
-	0x97, 0xa6, 0x3c, 0x79, 0xed, 0xef, 0x30, 0xa7, 0xef, 0x04, 0xe5, 0x24, 0x78, 0x0e, 0x8d, 0xe5,
-	0x34, 0xe8, 0x51, 0xd7, 0x4d, 0x60, 0x43, 0xe3, 0xdd, 0xff, 0x73, 0x1a, 0x3c, 0x75, 0xdd, 0xc4,
-	0x64, 0x68, 0xa1, 0x96, 0xac, 0x06, 0xec, 0x48, 0x76, 0xe0, 0xef, 0x30, 0x95, 0x9d, 0xe5, 0xca,
-	0x21, 0x2b, 0x5a, 0x14, 0x32, 0xc5, 0xbf, 0xd6, 0xa7, 0x11, 0x34, 0x02, 0x3a, 0xf8, 0xa3, 0x86,
-	0x46, 0x65, 0xca, 0xf0, 0x72, 0xdd, 0xae, 0x2e, 0x45, 0x5a, 0x5f, 0xb9, 0x1a, 0x28, 0xbd, 0x9a,
-	0x4b, 0x9f, 0xbf, 0xff, 0xfe, 0x3a, 0x74, 0x07, 0xcf, 0x93, 0xfa, 0x17, 0x86, 0x0f, 0x35, 0x34,
-	0x79, 0x3e, 0xaf, 0x78, 0xbd, 0xbe, 0x7f, 0x45, 0xe6, 0x75, 0xeb, 0xba, 0x70, 0x65, 0x6a, 0x15,
-	0x4c, 0xdd, 0xc5, 0x66, 0xa5, 0xa9, 0x0b, 0x2f, 0xa4, 0xf0, 0x36, 0x3e, 0xc8, 0x18, 0x5e, 0xad,
-	0x57, 0xba, 0xfc, 0x0e, 0xf4, 0xb5, 0x6b, 0x61, 0x95, 0xa5, 0x36, 0x58, 0x5a, 0xc7, 0x6b, 0xa4,
-	0xf6, 0x3b, 0xd3, 0x2b, 0x52, 0x4a, 0xf6, 0x07, 0x6f, 0xeb, 0x00, 0x7f, 0xd3, 0x10, 0xfe, 0xfb,
-	0x92, 0x71, 0xbb, 0x5e, 0xb8, 0x36, 0x92, 0xfa, 0xc3, 0x7f, 0x23, 0x29, 0xdb, 0x1b, 0x60, 0xfb,
-	0x11, 0x6e, 0x57, 0xda, 0xce, 0x4b, 0x22, 0x64, 0x15, 0x98, 0x64, 0xbf, 0x0c, 0xfe, 0x41, 0xe7,
-	0xd5, 0xd1, 0x89, 0xa1, 0x1d, 0x9f, 0x18, 0xda, 0xaf, 0x13, 0x43, 0xfb, 0x72, 0x6a, 0x34, 0x8e,
-	0x4f, 0x8d, 0xc6, 0x8f, 0x53, 0xa3, 0xf1, 0xee, 0x81, 0xe7, 0xa7, 0xbb, 0x99, 0x6d, 0x39, 0x3c,
-	0x2c, 0x1b, 0x3b, 0xbb, 0xd4, 0x8f, 0x06, 0x2a, 0xef, 0xcf, 0x74, 0xd2, 0x7e, 0xcc, 0x84, 0x3d,
-	0x0a, 0x5f, 0xe0, 0xf6, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xef, 0x4c, 0x80, 0x57, 0x5f, 0x06,
-	0x00, 0x00,
+	// 779 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x4f, 0x4f, 0x13, 0x4f,
+	0x18, 0xee, 0x02, 0xbf, 0xfe, 0x60, 0x0a, 0x12, 0x07, 0x34, 0xb0, 0xc5, 0x96, 0x2c, 0x0a, 0xa4,
+	0x84, 0x5d, 0xda, 0xa2, 0x89, 0x10, 0x0f, 0x96, 0xa8, 0x89, 0x01, 0x03, 0x3d, 0x78, 0xf0, 0xd2,
+	0x4c, 0x77, 0x87, 0x65, 0x93, 0xed, 0x4e, 0xd9, 0xd9, 0x6d, 0x6c, 0x90, 0xc4, 0xf8, 0x09, 0x4c,
+	0x3c, 0x71, 0x33, 0xf1, 0xe8, 0xdd, 0x8b, 0x7e, 0x00, 0x8e, 0x24, 0x5e, 0x3c, 0x19, 0x03, 0x7e,
+	0x10, 0xb3, 0x33, 0xb3, 0xf4, 0x8f, 0xb3, 0x02, 0xc6, 0x5b, 0xfb, 0xce, 0xf3, 0xbe, 0xcf, 0xf3,
+	0x3e, 0x33, 0xef, 0xbb, 0x20, 0x5f, 0x47, 0xf5, 0xb6, 0x4b, 0x3c, 0x03, 0x37, 0x89, 0xb9, 0xe7,
+	0x78, 0xb6, 0xd1, 0x2a, 0x1a, 0xfb, 0x21, 0xf6, 0xdb, 0x7a, 0xd3, 0x27, 0x01, 0x81, 0x13, 0x02,
+	0xa0, 0xc7, 0x00, 0xbd, 0x55, 0x54, 0x27, 0x6d, 0x62, 0x13, 0x76, 0x6e, 0x44, 0xbf, 0x38, 0x54,
+	0x9d, 0xb1, 0x09, 0xb1, 0x5d, 0x6c, 0xa0, 0xa6, 0x63, 0x20, 0xcf, 0x23, 0x01, 0x0a, 0x1c, 0xe2,
+	0x51, 0x71, 0x5a, 0x30, 0x09, 0x6d, 0x10, 0x6a, 0xd4, 0x11, 0xc5, 0x9c, 0xc1, 0x68, 0x15, 0xeb,
+	0x38, 0x40, 0x45, 0xa3, 0x89, 0x6c, 0xc7, 0x63, 0x60, 0x81, 0x9d, 0x95, 0xa9, 0x6a, 0x22, 0x1f,
+	0x35, 0xe2, 0x6a, 0x9a, 0x0c, 0x71, 0x2e, 0x91, 0x61, 0xb4, 0x49, 0x00, 0x77, 0x22, 0x9e, 0x6d,
+	0x96, 0x58, 0xc5, 0xfb, 0x21, 0xa6, 0x81, 0xb6, 0x0d, 0x26, 0x7a, 0xa2, 0xb4, 0x49, 0x3c, 0x8a,
+	0xe1, 0x7d, 0x90, 0xe6, 0x04, 0x53, 0xca, 0xac, 0xb2, 0x98, 0x29, 0x65, 0x75, 0x49, 0xe3, 0x3a,
+	0x4f, 0xaa, 0x0c, 0x1d, 0x7f, 0xcf, 0xa7, 0xaa, 0x22, 0x41, 0x53, 0xc1, 0x14, 0xab, 0xb8, 0x11,
+	0xfa, 0x3e, 0xf6, 0x82, 0x47, 0x11, 0x3e, 0x66, 0xb3, 0xc1, 0xb4, 0xe4, 0x4c, 0x70, 0xce, 0x81,
+	0x31, 0x93, 0xc7, 0x6b, 0x8c, 0x84, 0x51, 0x0f, 0x55, 0x47, 0xcd, 0x2e, 0x30, 0xbc, 0x03, 0xae,
+	0xb1, 0xc3, 0x5a, 0x9d, 0x84, 0x9e, 0x85, 0xfc, 0xf6, 0xd4, 0x00, 0x43, 0x8d, 0xb1, 0x68, 0x45,
+	0x04, 0xb5, 0x57, 0xe0, 0x06, 0x23, 0x62, 0x49, 0x5b, 0xd4, 0x8e, 0xfb, 0x85, 0x59, 0x30, 0xc2,
+	0xf3, 0xbd, 0xb0, 0x21, 0x08, 0x86, 0x59, 0xe0, 0x59, 0xd8, 0x80, 0x8f, 0x01, 0xe8, 0x98, 0xcf,
+	0x0a, 0x67, 0x4a, 0xf3, 0x3a, 0xbf, 0x29, 0x3d, 0xba, 0x29, 0x9d, 0xbf, 0x05, 0x71, 0x53, 0xfa,
+	0x36, 0xb2, 0xb1, 0x28, 0x5c, 0xed, 0xca, 0xd4, 0x8e, 0x14, 0x70, 0xb3, 0x9f, 0x5e, 0x34, 0x79,
+	0x0f, 0x0c, 0x35, 0xa8, 0x1d, 0xd9, 0x3a, 0xb8, 0x98, 0x29, 0x69, 0x52, 0x5b, 0x77, 0x42, 0x1c,
+	0x62, 0x6b, 0x0b, 0x53, 0x1a, 0xd5, 0x67, 0x78, 0xf8, 0x44, 0x22, 0x6d, 0xe1, 0x42, 0x69, 0x9c,
+	0xb4, 0x47, 0xdb, 0x07, 0x05, 0x64, 0x99, 0xb6, 0x4d, 0x14, 0x60, 0x1a, 0x48, 0x0d, 0xf2, 0xac,
+	0x9e, 0x1b, 0x18, 0xc6, 0x9e, 0xc5, 0xdd, 0xcf, 0x83, 0x0c, 0x77, 0xcf, 0x24, 0xa1, 0x17, 0x08,
+	0xeb, 0x01, 0x0b, 0x6d, 0x44, 0x91, 0x3e, 0x07, 0x07, 0xff, 0xda, 0xc1, 0xcf, 0x0a, 0x98, 0x91,
+	0xab, 0x14, 0x3e, 0x56, 0xc1, 0x75, 0x97, 0x1d, 0x71, 0xa5, 0xb5, 0x2e, 0x53, 0xe7, 0x2f, 0x36,
+	0x75, 0xd3, 0xa1, 0x41, 0x75, 0xdc, 0xed, 0xad, 0xfd, 0xef, 0x3c, 0x5e, 0x07, 0x39, 0x26, 0xfe,
+	0x39, 0x72, 0x1d, 0x0b, 0x05, 0xc4, 0xdf, 0x74, 0x76, 0xb1, 0xd9, 0x36, 0xdd, 0xb8, 0x57, 0x38,
+	0x0d, 0x86, 0x5b, 0xc8, 0xad, 0x21, 0xcb, 0xf2, 0x99, 0xc9, 0x23, 0xd5, 0xff, 0x5b, 0xc8, 0x7d,
+	0x68, 0x59, 0xbe, 0x86, 0x41, 0x3e, 0x31, 0x59, 0x34, 0x5f, 0xe1, 0xd9, 0xae, 0xb3, 0x8b, 0xc5,
+	0x7c, 0x2e, 0x48, 0x7b, 0x96, 0x94, 0x88, 0x68, 0xa2, 0x7f, 0xa5, 0x4f, 0x69, 0xf0, 0x1f, 0xe3,
+	0x81, 0xaf, 0x15, 0x90, 0xe6, 0x93, 0x0c, 0x17, 0x92, 0xac, 0xeb, 0x5b, 0x1b, 0xea, 0xe2, 0xc5,
+	0x40, 0xae, 0x55, 0x9b, 0x7b, 0xf3, 0xf5, 0xe7, 0xbb, 0x81, 0x5b, 0x30, 0x6b, 0x24, 0x6f, 0x31,
+	0x78, 0xa4, 0x80, 0xd1, 0xee, 0x9d, 0x00, 0x97, 0x93, 0xeb, 0x4b, 0xf6, 0x8a, 0xaa, 0x5f, 0x16,
+	0x2e, 0x44, 0x15, 0x98, 0xa8, 0xdb, 0x50, 0x93, 0x8a, 0xea, 0xd9, 0x42, 0xf0, 0xbd, 0x02, 0x46,
+	0x3a, 0x6f, 0xa4, 0x90, 0xcc, 0xd4, 0x3f, 0x4a, 0xea, 0xd2, 0xa5, 0xb0, 0x42, 0xd2, 0x1a, 0x93,
+	0xb4, 0x0a, 0x4b, 0x46, 0xe2, 0x2e, 0xa7, 0xc6, 0xc1, 0xf9, 0xee, 0x7a, 0x50, 0x38, 0x34, 0x1a,
+	0xfc, 0x31, 0x53, 0xf8, 0x51, 0x01, 0xe3, 0x7d, 0x83, 0x02, 0x57, 0x92, 0xc9, 0xe5, 0x93, 0xaf,
+	0x16, 0xaf, 0x90, 0x21, 0x44, 0x97, 0x99, 0xe8, 0x65, 0xb8, 0xf4, 0x07, 0xd1, 0x6b, 0x7c, 0xcc,
+	0x3a, 0x6a, 0xbf, 0x28, 0x00, 0xfe, 0xfe, 0x32, 0x61, 0x39, 0x99, 0x3e, 0x71, 0x8e, 0xd4, 0xd5,
+	0xab, 0x25, 0x09, 0xd9, 0xeb, 0x4c, 0xf6, 0x5d, 0x58, 0x96, 0xca, 0x6e, 0xc5, 0x89, 0x6c, 0xc0,
+	0x58, 0xa6, 0x71, 0x10, 0x4f, 0xeb, 0x61, 0xe5, 0xe9, 0xf1, 0x69, 0x4e, 0x39, 0x39, 0xcd, 0x29,
+	0x3f, 0x4e, 0x73, 0xca, 0xdb, 0xb3, 0x5c, 0xea, 0xe4, 0x2c, 0x97, 0xfa, 0x76, 0x96, 0x4b, 0xbd,
+	0x58, 0xb1, 0x9d, 0x60, 0x2f, 0xac, 0xeb, 0x26, 0x69, 0xc4, 0x85, 0xcd, 0x3d, 0xe4, 0x78, 0xe7,
+	0x2c, 0x2f, 0x3b, 0x3c, 0x41, 0xbb, 0x89, 0x69, 0x3d, 0xcd, 0x3e, 0xcd, 0xe5, 0x5f, 0x01, 0x00,
+	0x00, 0xff, 0xff, 0x26, 0x00, 0x9b, 0x25, 0x78, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -480,6 +608,8 @@ type QueryClient interface {
 	CurrentEpoch(ctx context.Context, in *QueryCurrentEpochRequest, opts ...grpc.CallOption) (*QueryCurrentEpochResponse, error)
 	// EpochMsgs queries the messages of a given epoch
 	EpochMsgs(ctx context.Context, in *QueryEpochMsgsRequest, opts ...grpc.CallOption) (*QueryEpochMsgsResponse, error)
+	// LatestEpochMsgs queries the messages within a given number of most recent epochs
+	LatestEpochMsgs(ctx context.Context, in *QueryLatestEpochMsgsRequest, opts ...grpc.CallOption) (*QueryLatestEpochMsgsResponse, error)
 	// ValidatorLifecycle queries the lifecycle of a given validator
 	ValidatorLifecycle(ctx context.Context, in *QueryValidatorLifecycleRequest, opts ...grpc.CallOption) (*QueryValidatorLifecycleResponse, error)
 }
@@ -519,6 +649,15 @@ func (c *queryClient) EpochMsgs(ctx context.Context, in *QueryEpochMsgsRequest, 
 	return out, nil
 }
 
+func (c *queryClient) LatestEpochMsgs(ctx context.Context, in *QueryLatestEpochMsgsRequest, opts ...grpc.CallOption) (*QueryLatestEpochMsgsResponse, error) {
+	out := new(QueryLatestEpochMsgsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Query/LatestEpochMsgs", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) ValidatorLifecycle(ctx context.Context, in *QueryValidatorLifecycleRequest, opts ...grpc.CallOption) (*QueryValidatorLifecycleResponse, error) {
 	out := new(QueryValidatorLifecycleResponse)
 	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Query/ValidatorLifecycle", in, out, opts...)
@@ -536,6 +675,8 @@ type QueryServer interface {
 	CurrentEpoch(context.Context, *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error)
 	// EpochMsgs queries the messages of a given epoch
 	EpochMsgs(context.Context, *QueryEpochMsgsRequest) (*QueryEpochMsgsResponse, error)
+	// LatestEpochMsgs queries the messages within a given number of most recent epochs
+	LatestEpochMsgs(context.Context, *QueryLatestEpochMsgsRequest) (*QueryLatestEpochMsgsResponse, error)
 	// ValidatorLifecycle queries the lifecycle of a given validator
 	ValidatorLifecycle(context.Context, *QueryValidatorLifecycleRequest) (*QueryValidatorLifecycleResponse, error)
 }
@@ -552,6 +693,9 @@ func (*UnimplementedQueryServer) CurrentEpoch(ctx context.Context, req *QueryCur
 }
 func (*UnimplementedQueryServer) EpochMsgs(ctx context.Context, req *QueryEpochMsgsRequest) (*QueryEpochMsgsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method EpochMsgs not implemented")
+}
+func (*UnimplementedQueryServer) LatestEpochMsgs(ctx context.Context, req *QueryLatestEpochMsgsRequest) (*QueryLatestEpochMsgsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LatestEpochMsgs not implemented")
 }
 func (*UnimplementedQueryServer) ValidatorLifecycle(ctx context.Context, req *QueryValidatorLifecycleRequest) (*QueryValidatorLifecycleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidatorLifecycle not implemented")
@@ -615,6 +759,24 @@ func _Query_EpochMsgs_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_LatestEpochMsgs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryLatestEpochMsgsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).LatestEpochMsgs(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Query/LatestEpochMsgs",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).LatestEpochMsgs(ctx, req.(*QueryLatestEpochMsgsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_ValidatorLifecycle_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryValidatorLifecycleRequest)
 	if err := dec(in); err != nil {
@@ -648,6 +810,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "EpochMsgs",
 			Handler:    _Query_EpochMsgs_Handler,
+		},
+		{
+			MethodName: "LatestEpochMsgs",
+			Handler:    _Query_LatestEpochMsgs_Handler,
 		},
 		{
 			MethodName: "ValidatorLifecycle",
@@ -859,6 +1025,100 @@ func (m *QueryEpochMsgsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryLatestEpochMsgsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLatestEpochMsgsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLatestEpochMsgsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.EpochCount != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.EpochCount))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.EndEpoch != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.EndEpoch))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryLatestEpochMsgsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryLatestEpochMsgsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryLatestEpochMsgsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pagination != nil {
+		{
+			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.LatestEpochMsgs) > 0 {
+		for iNdEx := len(m.LatestEpochMsgs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.LatestEpochMsgs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryValidatorLifecycleRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1003,6 +1263,44 @@ func (m *QueryEpochMsgsResponse) Size() (n int) {
 	_ = l
 	if len(m.Msgs) > 0 {
 		for _, e := range m.Msgs {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryLatestEpochMsgsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EndEpoch != 0 {
+		n += 1 + sovQuery(uint64(m.EndEpoch))
+	}
+	if m.EpochCount != 0 {
+		n += 1 + sovQuery(uint64(m.EpochCount))
+	}
+	if m.Pagination != nil {
+		l = m.Pagination.Size()
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryLatestEpochMsgsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.LatestEpochMsgs) > 0 {
+		for _, e := range m.LatestEpochMsgs {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -1482,6 +1780,250 @@ func (m *QueryEpochMsgsResponse) Unmarshal(dAtA []byte) error {
 			}
 			m.Msgs = append(m.Msgs, &QueuedMessage{})
 			if err := m.Msgs[len(m.Msgs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageResponse{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryLatestEpochMsgsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLatestEpochMsgsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLatestEpochMsgsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndEpoch", wireType)
+			}
+			m.EndEpoch = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EndEpoch |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochCount", wireType)
+			}
+			m.EpochCount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochCount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pagination == nil {
+				m.Pagination = &query.PageRequest{}
+			}
+			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryLatestEpochMsgsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryLatestEpochMsgsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryLatestEpochMsgsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LatestEpochMsgs", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LatestEpochMsgs = append(m.LatestEpochMsgs, &QueuedMessageList{})
+			if err := m.LatestEpochMsgs[len(m.LatestEpochMsgs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

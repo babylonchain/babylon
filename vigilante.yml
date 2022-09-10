@@ -1,0 +1,37 @@
+base:
+  placeholder: baseconfig
+btc:
+  no-client-tls: false
+  ca-file: /bitcoin/rpc.cert
+  endpoint: bitcoinsim:18556
+  net-params: simnet
+  username: rpcuser
+  password: rpcpass
+  reconnect-attempts: 3
+babylon:
+  key: node0
+  chain-id: chain-test
+  rpc-addr: http://babylondnode0:26657
+  grpc-addr: https://babylondnode0:9090
+  account-prefix: bbn
+  keyring-backend: test
+  gas-adjustment: 1.2
+  gas-prices: 0.01ubbn
+  key-directory: /babylon
+  debug: true
+  timeout: 20s
+  block-timeout: ""
+  output-format: json
+  sign-mode: direct
+grpc:
+  onetime-tls-key: true
+  rpc-key: ""
+  rpc-cert: "/vigilante/rpc.cert"
+  endpoints:
+    - localhost:8080
+grpcweb:
+  placeholder: grpcwebconfig
+submitter:
+  netparams: simnet
+reporter:
+  netparams: simnet

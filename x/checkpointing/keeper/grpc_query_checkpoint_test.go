@@ -54,7 +54,7 @@ func FuzzQueryStatusCount(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
-		ek.EXPECT().GetEpoch(gomock.Any()).Return(epochingtypes.Epoch{EpochNumber: tipEpoch})
+		ek.EXPECT().GetEpoch(gomock.Any()).Return(epochingtypes.Epoch{EpochNumber: tipEpoch + 1})
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 		sdkCtx := sdk.WrapSDKContext(ctx)
 		expectedCounts := make(map[string]uint64)

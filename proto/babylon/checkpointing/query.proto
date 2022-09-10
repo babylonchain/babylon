@@ -37,7 +37,7 @@ service Query {
 
   // EpochStatus queries the status of the checkpoint at a given epoch
   rpc EpochStatus(QueryEpochStatusRequest) returns (QueryEpochStatusResponse) {
-    option (google.api.http).get = "/babylon/checkpointing/v1/epoch/{epoch_num}/status";
+    option (google.api.http).get = "/babylon/checkpointing/v1/epochs/{epoch_num}/status";
   }
 
   // RecentEpochStatusCount queries the number of epochs with each status in recent epochs
