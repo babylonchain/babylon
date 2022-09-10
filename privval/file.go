@@ -40,6 +40,7 @@ func voteToStep(vote *tmproto.Vote) int8 {
 
 // WrappedFilePVKey wraps FilePVKey with BLS keys.
 type WrappedFilePVKey struct {
+	AccAddress string              `json:"acc_address"`
 	Address    types.Address       `json:"address"`
 	PubKey     tmcrypto.PubKey     `json:"pub_key"`
 	PrivKey    tmcrypto.PrivKey    `json:"priv_key"`
@@ -165,7 +166,19 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 // GetAddress returns the address of the validator.
 // Implements PrivValidator.
 func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
-	return sdk.ValAddress(pv.Key.Address)
+	if pv.Key.AccAddress == "" {
+		return sdk.ValAddress{}
+	}
+	addr, err := sdk.AccAddressFromBech32(pv.Key.AccAddress)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.ValAddress(addr)
+}
+
+func (pv *WrappedFilePV) SetAccAddress(addr sdk.AccAddress) {
+	pv.Key.AccAddress = addr.String()
+	pv.Key.Save()
 }
 
 // GetPubKey returns the public key of the validator.

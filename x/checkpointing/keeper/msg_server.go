@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"errors"
-
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	ed255192 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
