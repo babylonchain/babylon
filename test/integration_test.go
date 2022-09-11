@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package babylon_integration_test
+package babylon_integration
 
 import (
 	"context"
@@ -196,5 +196,46 @@ func TestNodeProgress(t *testing.T) {
 		if currentEpochResponse.CurrentEpoch != 2 {
 			t.Errorf("Epoch after 10 blocks, should equal 2. Curent epoch %d", currentEpochResponse.CurrentEpoch)
 		}
+	}
+}
+
+func TestSendTx(t *testing.T) {
+	// TODO fix hard coded paths
+	node0dataPath := "../.testnets/node0/babylond"
+	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
+
+	sender, err := NewTestTxSender(node0dataPath, node0genesisPath, clients[0])
+
+	if err != nil {
+		panic("failed to init sender")
+	}
+
+	tip1, err := sender.getBtcTip()
+
+	if err != nil {
+		t.Fatalf("Couldnot retrieve tip")
+	}
+
+	_, err = sender.insertNewEmptyHeader(tip1)
+
+	if err != nil {
+		t.Fatalf("could not insert new btc header")
+	}
+
+	// Waiting two blocks to avoid test flakiness
+	err = WaitForNextBtcBlock(sender.Conn)
+
+	if err != nil {
+		t.Fatalf("failed waiting for ew block")
+	}
+
+	tip2, err := sender.getBtcTip()
+
+	if err != nil {
+		t.Fatalf("Couldnot retrieve tip")
+	}
+
+	if tip2.Height != tip1.Height+1 {
+		t.Fatalf("Light client should progress by 1 one block")
 	}
 }
