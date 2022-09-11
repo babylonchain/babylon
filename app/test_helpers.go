@@ -94,7 +94,11 @@ func Setup(isCheckTx bool) *BabylonApp {
 // SetupPrivSigner sets up a PrivSigner for testing
 func SetupPrivSigner() (*PrivSigner, error) {
 	nodeCfg := tmconfig.DefaultConfig()
-	privSigner, _ := InitPrivSigner(client.Context{}, ".", keyring.BackendMemory)
+	kr, err := client.NewKeyringFromBackend(client.Context{}, keyring.BackendMemory)
+	if err != nil {
+		return nil, err
+	}
+	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr)
 	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil
 }
