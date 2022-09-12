@@ -133,7 +133,7 @@ Example:
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
 	// epoch args
-	cmd.Flags().Uint64(flagEpochInterval, 200, "Number of blocks between epochs. Must be more than 0.")
+	cmd.Flags().Uint64(flagEpochInterval, 10, "Number of blocks between epochs. Must be more than 0.")
 	// btclightclient args
 	// Simnet genesis header
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
