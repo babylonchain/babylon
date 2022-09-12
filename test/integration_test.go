@@ -176,9 +176,9 @@ func TestNodeProgress(t *testing.T) {
 	}
 
 	// TODO default epoch interval is equal to 10, we should retrieve it from config
-	// block 11 is first block of epoch 2, so if all clients are after block 11, they
+	// block 11 is first block of epoch 2, so if all clients are after block 12, they
 	// should be at epoch 2
-	waitForBlock(clients, 11)
+	waitForBlock(clients, 12)
 
 	for _, c := range clients {
 		epochingClient := epochingtypes.NewQueryClient(c)
@@ -222,11 +222,10 @@ func TestSendTx(t *testing.T) {
 		t.Fatalf("could not insert new btc header")
 	}
 
-	// Waiting two blocks to avoid test flakiness
 	err = WaitForNextBtcBlock(sender.Conn)
 
 	if err != nil {
-		t.Fatalf("failed waiting for ew block")
+		t.Fatalf("failed waiting for btc lightclient block")
 	}
 
 	tip2, err := sender.getBtcTip()

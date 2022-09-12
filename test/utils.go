@@ -13,15 +13,12 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	ctypes "github.com/cosmos/cosmos-sdk/types"
+	txservice "github.com/cosmos/cosmos-sdk/types/tx"
 	acctypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/tendermint/tendermint/types"
-
-	// epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	txservice "github.com/cosmos/cosmos-sdk/types/tx"
 	"google.golang.org/grpc"
 )
 
@@ -112,7 +109,7 @@ func (b *TestTxSender) insertNewEmptyHeader(currentTip *lightclient.BTCHeaderInf
 	}
 
 	//TODO 2stake and 200000 should probably not be hardcoded by taken from tx
-	//simulation ?
+	//simulation. For now this enough to pay for insert header transaction
 	txBytes := b.buildTx(msg, "2stake", 200000, acc.GetSequence())
 
 	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
@@ -167,6 +164,8 @@ func generateEmptyChildHeaderHexBytes(bh *wire.BlockHeader) string {
 	return bbn.NewBTCHeaderBytesFromBlockHeader(childHeader).MarshalHex()
 }
 
+// TODO following helpers could probably be generalized by taking function
+// as param
 // Tendermint blockchain helpers
 
 func LatestHeight(c *grpc.ClientConn) (int64, error) {
@@ -217,13 +216,6 @@ func WaitForNextBlock(c *grpc.ClientConn) error {
 	}
 
 	return err
-}
-
-func MustWaitForNextBlock(c *grpc.ClientConn) {
-	err := WaitForNextBlock(c)
-	if err != nil {
-		panic("Failed to produce next block")
-	}
 }
 
 // Btc blockchain helpers
