@@ -160,3 +160,15 @@ func (k Keeper) Tip(ctx context.Context, req *types.QueryTipRequest) (*types.Que
 
 	return &types.QueryTipResponse{Header: tip}, nil
 }
+
+func (k Keeper) BaseHeader(ctx context.Context, req *types.QueryBaseHeaderRequest) (*types.QueryBaseHeaderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	baseHeader := k.headersState(sdkCtx).GetBaseBTCHeader()
+
+	return &types.QueryBaseHeaderResponse{Header: baseHeader}, nil
+}

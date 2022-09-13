@@ -26,6 +26,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdContains())
 	cmd.AddCommand(CmdMainChain())
 	cmd.AddCommand(CmdTip())
+	cmd.AddCommand(CmdBaseHeader())
 
 	return cmd
 }
@@ -146,7 +147,7 @@ func CmdMainChain() *cobra.Command {
 func CmdTip() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tip",
-		Short: "retrieve tip of btc blockchain",
+		Short: "retrieve tip of the bitcoin blockchain",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -155,6 +156,31 @@ func CmdTip() *cobra.Command {
 
 			params := types.NewQueryTipRequest()
 			res, err := queryClient.Tip(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdBaseHeader() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "base-header",
+		Short: "retrieve base header of the bitcoin blockchain",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := types.NewQueryBaseHeaderRequest()
+			res, err := queryClient.BaseHeader(context.Background(), params)
 			if err != nil {
 				return err
 			}
