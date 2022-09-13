@@ -31,9 +31,13 @@ service Query {
     option (google.api.http).get = "/babylon/btclightclient/v1/mainchain";
   }
 
-  // BestHeader return best header on canonical chain
+  // Tip return best header on canonical chain
   rpc Tip(QueryTipRequest) returns (QueryTipResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/tip";
+  }
+
+  rpc BaseHeader(QueryBaseHeaderRequest) returns (QueryBaseHeaderResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/baseheader";
   }
 }
 
@@ -89,5 +93,12 @@ message QueryTipRequest {
 }
 
 message QueryTipResponse {
+  BTCHeaderInfo header = 1;
+}
+
+message QueryBaseHeaderRequest {
+}
+
+message QueryBaseHeaderResponse {
   BTCHeaderInfo header = 1;
 }
