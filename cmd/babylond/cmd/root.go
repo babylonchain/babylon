@@ -2,14 +2,13 @@ package cmd
 
 import (
 	"errors"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
 	bbn "github.com/babylonchain/babylon/types"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
@@ -251,25 +250,21 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	// TODO: access the following parameters from config files
-	//backend := cast.ToString(appOpts.Get(flags.FlagKeyringBackend))
-	//chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
-	//fromName := cast.ToString(appOpts.Get(flags.FlagFrom))
-	backend := keyring.BackendTest
-	chainID := "chain-test"
 	paths := strings.Split(homeDir, "/")
 	fromName := paths[len(paths)-2]
 
-	clientCtx, err := config.ReadFromClientConfig(client.Context{}.WithHomeDir(app.DefaultNodeHome).WithViper(""))
+	clientCtx, err := config.ReadFromClientConfig(
+		client.Context{}.
+			WithHomeDir(homeDir).
+			WithViper("").
+			WithKeyringDir(homeDir).
+			WithInput(os.Stdin).
+			WithFromName(fromName),
+	)
 	if err != nil {
 		panic(err)
 	}
-	clientCtx = clientCtx.
-		WithKeyringDir(homeDir).
-		WithChainID(chainID).
-		WithFromName(fromName).
-		WithInput(os.Stdin)
-	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, backend)
+	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, clientCtx.Keyring)
 	if err != nil {
 		panic(err)
 	}
@@ -307,19 +302,26 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	clientCtx := client.Context{}.
-		WithChainID(appOpts.Get(flags.FlagChainID).(string)).
-		WithFromName(appOpts.Get(flags.FlagFrom).(string))
-	nodeDir := ""
-	backend := ""
-	privSigner, err := app.InitPrivSigner(clientCtx, nodeDir, backend)
+	clientCtx, err := config.ReadFromClientConfig(
+		client.Context{}.
+			WithHomeDir(homePath).
+			WithViper("").
+			WithKeyringDir(homePath).
+			WithInput(os.Stdin),
+	)
+	kr, err := client.NewKeyringFromBackend(clientCtx, keyring.BackendMemory)
+	if err != nil {
+		panic(err)
+	}
+
+	privSigner, err := app.InitPrivSigner(clientCtx, homePath, kr)
 	if err != nil {
 		panic(err)
 	}
 	if height != -1 {
 		babylonApp = app.NewBabylonApp(logger, db, traceStore, false, map[int64]bool{}, homePath, uint(1), a.encCfg, privSigner, appOpts)
 
-		if err := babylonApp.LoadHeight(height); err != nil {
+		if err = babylonApp.LoadHeight(height); err != nil {
 			return servertypes.ExportedApp{}, err
 		}
 	} else {

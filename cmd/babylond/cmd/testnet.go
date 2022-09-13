@@ -7,15 +7,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/babylonchain/babylon/app"
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"net"
 	"os"
 	"path/filepath"
 
 	"github.com/babylonchain/babylon/app/params"
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 
 	"github.com/babylonchain/babylon/privval"
@@ -265,7 +266,7 @@ func InitTestnet(
 		}
 
 		// save private key seed words
-		if err := writeFile(fmt.Sprintf("%v.json", "key_seed"), nodeDir, cliPrint); err != nil {
+		if err = writeFile(fmt.Sprintf("%v.json", "key_seed"), nodeDir, cliPrint); err != nil {
 			return err
 		}
 
@@ -307,7 +308,7 @@ func InitTestnet(
 		}
 
 		txBuilder := clientCtx.TxConfig.NewTxBuilder()
-		if err := txBuilder.SetMsgs(createValMsg); err != nil {
+		if err = txBuilder.SetMsgs(createValMsg); err != nil {
 			return err
 		}
 
@@ -320,7 +321,7 @@ func InitTestnet(
 			WithKeybase(kb).
 			WithTxConfig(clientCtx.TxConfig)
 
-		if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
+		if err = tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
 			return err
 		}
 
@@ -329,13 +330,18 @@ func InitTestnet(
 			return err
 		}
 
-		if err := writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz); err != nil {
+		if err = writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz); err != nil {
 			return err
 		}
 
 		customTemplate := DefaultBabylonTemplate()
 		srvconfig.SetConfigTemplate(customTemplate)
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
+
+		// create and save client config
+		if _, err = app.CreateClientConfig(chainID, keyringBackend, nodeDir); err != nil {
+			return err
+		}
 	}
 
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
