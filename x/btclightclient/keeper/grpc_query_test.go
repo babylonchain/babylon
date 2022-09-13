@@ -353,7 +353,7 @@ func FuzzTipQuery(f *testing.F) {
 			t.Errorf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(tree.GetTip()) {
-			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetRoot().Hash, resp.Header.Hash)
+			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetTip().Hash, resp.Header.Hash)
 		}
 	})
 }
