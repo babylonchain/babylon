@@ -203,6 +203,8 @@ func TestSendTx(t *testing.T) {
 	// we are waiting for middle of the epoch to avoid race condidions with bls
 	// signer sending transaction and incrementing account sequence numbers
 	// which may cause header tx to fail.
+	// TODO: Create separate account for sending transactions to avoid race
+	// conditions with validator acounts.
 	waitForBlock(clients, 15)
 
 	// TODO fix hard coded paths
