@@ -200,6 +200,11 @@ func TestNodeProgress(t *testing.T) {
 }
 
 func TestSendTx(t *testing.T) {
+	// we are waiting for middle of the epoch to avoid race condidions with bls
+	// signer sending transaction and incrementing account sequence numbers
+	// which may cause header tx to fail.
+	waitForBlock(clients, 15)
+
 	// TODO fix hard coded paths
 	node0dataPath := "../.testnets/node0/babylond"
 	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
@@ -216,15 +221,16 @@ func TestSendTx(t *testing.T) {
 		t.Fatalf("Couldnot retrieve tip")
 	}
 
-	_, err = sender.insertNewEmptyHeader(tip1)
+	res, err := sender.insertNewEmptyHeader(tip1)
 
 	if err != nil {
 		t.Fatalf("could not insert new btc header")
 	}
 
-	err = WaitForNextBtcBlock(sender.Conn)
+	_, err = WaitBtcForHeight(sender.Conn, tip1.Height+1)
 
 	if err != nil {
+		t.Log(res.TxResponse)
 		t.Fatalf("failed waiting for btc lightclient block")
 	}
 
