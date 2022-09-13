@@ -109,7 +109,7 @@ func (b *TestTxSender) insertNewEmptyHeader(currentTip *lightclient.BTCHeaderInf
 	}
 
 	//TODO 2stake and 200000 should probably not be hardcoded by taken from tx
-	//simulation. For now this enough to pay for insert header transaction
+	//simulation. For now this enough to pay for insert header transaction.
 	txBytes := b.buildTx(msg, "2stake", 200000, acc.GetSequence())
 
 	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
@@ -239,7 +239,7 @@ func WaitForBtcHeightWithTimeout(c *grpc.ClientConn, h uint64, t time.Duration) 
 		select {
 		case <-timeout:
 			ticker.Stop()
-			return latestHeight, errors.New("timeout exceeded waiting for block")
+			return latestHeight, errors.New("timeout exceeded waiting for btc block")
 		case <-ticker.C:
 			latestH, err := BtcLatestHeight(c)
 			if err == nil {
@@ -253,7 +253,7 @@ func WaitForBtcHeightWithTimeout(c *grpc.ClientConn, h uint64, t time.Duration) 
 }
 
 func WaitBtcForHeight(c *grpc.ClientConn, h uint64) (uint64, error) {
-	return WaitForBtcHeightWithTimeout(c, h, 15*time.Second)
+	return WaitForBtcHeightWithTimeout(c, h, 30*time.Second)
 }
 
 func WaitForNextBtcBlock(c *grpc.ClientConn) error {
