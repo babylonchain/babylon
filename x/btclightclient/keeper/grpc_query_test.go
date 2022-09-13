@@ -318,6 +318,86 @@ func FuzzMainChainQuery(f *testing.F) {
 	})
 }
 
+func FuzzTipQuery(f *testing.F) {
+	/*
+		Checks:
+		1. If the request is nil, (nil, error) is returned
+		2. The query returns the tip BTC header
+
+		Data generation:
+		- Generate a random tree of headers and insert into storage
+	*/
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		sdkCtx := sdk.WrapSDKContext(ctx)
+
+		// Test nil input
+		resp, err := blcKeeper.Tip(sdkCtx, nil)
+		if resp != nil {
+			t.Errorf("Nil input led to a non-nil response")
+		}
+		if err == nil {
+			t.Errorf("Nil input led to a nil error")
+		}
+
+		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+
+		query := types.NewQueryTipRequest()
+		resp, err = blcKeeper.Tip(sdkCtx, query)
+		if err != nil {
+			t.Errorf("valid input led to an error: %s", err)
+		}
+		if resp == nil {
+			t.Errorf("Valid input led to nil response")
+		}
+		if !resp.Header.Eq(tree.GetTip()) {
+			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetTip().Hash, resp.Header.Hash)
+		}
+	})
+}
+
+func FuzzBaseHeaderQuery(f *testing.F) {
+	/*
+		Checks:
+		1. If the request is nil, (nil, error) is returned
+		2. The query returns the base BTC header
+
+		Data generation:
+		- Generate a random tree of headers and insert into storage.
+	*/
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
+		sdkCtx := sdk.WrapSDKContext(ctx)
+
+		// Test nil input
+		resp, err := blcKeeper.BaseHeader(sdkCtx, nil)
+		if resp != nil {
+			t.Errorf("Nil input led to a non-nil response")
+		}
+		if err == nil {
+			t.Errorf("Nil input led to a nil error")
+		}
+
+		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+
+		query := types.NewQueryBaseHeaderRequest()
+		resp, err = blcKeeper.BaseHeader(sdkCtx, query)
+		if err != nil {
+			t.Errorf("valid input led to an error: %s", err)
+		}
+		if resp == nil {
+			t.Errorf("Valid input led to nil response")
+		}
+		if !resp.Header.Eq(tree.GetRoot()) {
+			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetRoot().Hash, resp.Header.Hash)
+		}
+	})
+}
+
 // Constructors for PageRequest objects
 func constructRequestWithKeyAndLimit(key []byte, limit uint64) *query.PageRequest {
 	// If limit is 0, set one randomly

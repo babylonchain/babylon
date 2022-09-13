@@ -32,3 +32,7 @@ func NewQueryMainChainRequest(req *query.PageRequest) *QueryMainChainRequest {
 func NewQueryTipRequest() *QueryTipRequest {
 	return &QueryTipRequest{}
 }
+
+func NewQueryBaseHeaderRequest() *QueryBaseHeaderRequest {
+	return &QueryBaseHeaderRequest{}
+}
