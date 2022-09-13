@@ -21,10 +21,10 @@ COPY --from=build /go/bin/* /usr/bin/
 COPY wrapper.sh /bitcoinsim/wrapper.sh
 COPY btcwallet_create.exp /bitcoinsim/btcwallet_create.exp
 
-ENV RPCUSER=rpcuser
-ENV RPCPASS=rpcpass
-ENV PASSPHRASE=pass
-ENV BITCOINCONF="/bitcoinconf"
+ENV RPC_USER=rpcuser
+ENV RPC_PASS=rpcpass
+ENV WALLET_PASS=pass
+ENV BITCOIN_CONF="/bitcoinconf"
 ENV GENERATE_INTERVAL_SECS=30
 
 EXPOSE 18554 18555 18556

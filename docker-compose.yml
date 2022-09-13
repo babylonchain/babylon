@@ -96,7 +96,7 @@ services:
     container_name: bitcoinsim
     image: babylonchain/bitcoinsim:latest
     environment:
-      - CLIENTHOST=bitcoinsim
+      - CLIENT_HOST=bitcoinsim
     ports:
       - 18554-18556:18554-18556
     networks:

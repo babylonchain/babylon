@@ -41,20 +41,21 @@ if {$force_conservative} {
 #
 # -Don
 
-set RPCUSER [lindex $argv 0]
-set RPCPASS [lindex $argv 1]
-set PASSPHRASE [lindex $argv 2]
-set CERTFILE [lindex $argv 3]
-set KEYFILE [lindex $argv 4]
+set RPC_USER [lindex $argv 0]
+set RPC_PASS [lindex $argv 1]
+set WALLET_PASS [lindex $argv 2]
+set WALLET_CERT_FILE [lindex $argv 3]
+set WALLET_KEY_FILE [lindex $argv 4]
+set CA_FILE [lindex $argv 5]
 
 set timeout -1
-spawn btcwallet --simnet -u $RPCUSER -P $RPCPASS --rpccert $CERTFILE --rpckey $KEYFILE --create
+spawn btcwallet --simnet -u $RPC_USER -P $RPC_PASS --rpccert $WALLET_CERT_FILE --rpckey $WALLET_KEY_FILE --cafile $CA_FILE --create
 match_max 100000
 expect -exact "Enter the private passphrase for your new wallet: "
-send -- "$PASSPHRASE\r"
+send -- "$WALLET_PASS\r"
 expect -exact "\r
 Confirm passphrase: "
-send -- "$PASSPHRASE\r"
+send -- "$WALLET_PASS\r"
 expect -exact "\r
 Do you want to add an additional layer of encryption for public data? (n/no/y/yes) \[no\]: "
 send -- "n\r"

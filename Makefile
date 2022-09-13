@@ -458,7 +458,7 @@ localnet-start: localnet-stop localnet-build-env localnet-build-nodes
 
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv localnet-bitcoinsim localnet-build-nodes
+localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
 
 localnet-stop:
 	docker-compose down
