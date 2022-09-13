@@ -21,7 +21,8 @@ func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
 	if err != nil {
 		return nil, err
 	}
-	res := &QueryContainsRequest{Hash: &hashBytes}
+	marshaledHashBytes := hashBytes.MustMarshal()
+	res := &QueryContainsRequest{Hash: marshaledHashBytes}
 	return res, nil
 }
 

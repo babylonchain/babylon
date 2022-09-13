@@ -66,9 +66,7 @@ message QueryHashesResponse {
 // QueryContainsRequest is request type for the Query/Contains RPC method.
 // It involves checking whether a hash is maintained by the module.
 message QueryContainsRequest {
-  bytes hash = 1 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  bytes hash = 1;
 }
 
 // QueryContainsResponse is response type for the Query/Contains RPC method.

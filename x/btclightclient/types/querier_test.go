@@ -2,12 +2,13 @@ package types_test
 
 import (
 	"bytes"
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"math/rand"
-	"testing"
 )
 
 func TestNewQueryParamsRequest(t *testing.T) {
@@ -59,8 +60,8 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		if queryContains.Hash == nil {
 			t.Errorf("has an empty hash attribute")
 		}
-		if bytes.Compare(*(queryContains.Hash), btcHeaderHashBytes.MustMarshal()) != 0 {
-			t.Errorf("expected hash bytes %s got %s", btcHeaderHashBytes.MustMarshal(), *(queryContains.Hash))
+		if bytes.Compare(queryContains.Hash, btcHeaderHashBytes.MustMarshal()) != 0 {
+			t.Errorf("expected hash bytes %s got %s", btcHeaderHashBytes.MustMarshal(), queryContains.Hash)
 		}
 	})
 }
