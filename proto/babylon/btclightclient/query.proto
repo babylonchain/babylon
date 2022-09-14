@@ -79,7 +79,6 @@ message QueryContainsRequest {
   ];
 }
 
-
 // QueryContainsResponse is response type for the Query/Contains RPC method.
 message QueryContainsResponse {
   bool contains = 1;
@@ -88,7 +87,7 @@ message QueryContainsResponse {
 // QueryContainsRequest is request type for the temporary Query/ContainsBytes RPC method.
 // It involves checking whether a hash is maintained by the module.
 message QueryContainsBytesRequest {
-    bytes hash = 1;
+  bytes hash = 1;
 }
 
 // QueryContainsResponse is response type for the temporary Query/ContainsBytes RPC method.
