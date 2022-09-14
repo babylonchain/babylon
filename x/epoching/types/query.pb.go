@@ -316,7 +316,7 @@ func (m *QueryEpochMsgsResponse) GetPagination() *query.PageResponse {
 }
 
 // QueryLatestEpochMsgsRequest is request type for the Query/LatestEpochMsgs RPC method
-// it returns epoch msgs within epoch [min(1, end_epoch-epoch_count+1), end_epoch]
+// it returns epoch msgs within epoch [max(1, end_epoch-epoch_count+1), end_epoch]
 type QueryLatestEpochMsgsRequest struct {
 	// end_epoch is the number of the last epoch to query
 	EndEpoch uint64 `protobuf:"varint,1,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
