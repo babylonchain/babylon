@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package babylon_integration_test
+package babylon_integration
 
 import (
 	"context"
@@ -176,9 +176,9 @@ func TestNodeProgress(t *testing.T) {
 	}
 
 	// TODO default epoch interval is equal to 10, we should retrieve it from config
-	// block 11 is first block of epoch 2, so if all clients are after block 11, they
+	// block 11 is first block of epoch 2, so if all clients are after block 12, they
 	// should be at epoch 2
-	waitForBlock(clients, 11)
+	waitForBlock(clients, 12)
 
 	for _, c := range clients {
 		epochingClient := epochingtypes.NewQueryClient(c)
@@ -196,5 +196,53 @@ func TestNodeProgress(t *testing.T) {
 		if currentEpochResponse.CurrentEpoch != 2 {
 			t.Errorf("Epoch after 10 blocks, should equal 2. Curent epoch %d", currentEpochResponse.CurrentEpoch)
 		}
+	}
+}
+
+func TestSendTx(t *testing.T) {
+	// we are waiting for middle of the epoch to avoid race condidions with bls
+	// signer sending transaction and incrementing account sequence numbers
+	// which may cause header tx to fail.
+	// TODO: Create separate account for sending transactions to avoid race
+	// conditions with validator acounts.
+	waitForBlock(clients, 15)
+
+	// TODO fix hard coded paths
+	node0dataPath := "../.testnets/node0/babylond"
+	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
+
+	sender, err := NewTestTxSender(node0dataPath, node0genesisPath, clients[0])
+
+	if err != nil {
+		panic("failed to init sender")
+	}
+
+	tip1, err := sender.getBtcTip()
+
+	if err != nil {
+		t.Fatalf("Couldnot retrieve tip")
+	}
+
+	res, err := sender.insertNewEmptyHeader(tip1)
+
+	if err != nil {
+		t.Fatalf("could not insert new btc header")
+	}
+
+	_, err = WaitBtcForHeight(sender.Conn, tip1.Height+1)
+
+	if err != nil {
+		t.Log(res.TxResponse)
+		t.Fatalf("failed waiting for btc lightclient block")
+	}
+
+	tip2, err := sender.getBtcTip()
+
+	if err != nil {
+		t.Fatalf("Couldnot retrieve tip")
+	}
+
+	if tip2.Height != tip1.Height+1 {
+		t.Fatalf("Light client should progress by 1 one block")
 	}
 }

@@ -47,10 +47,10 @@ func opReturnScript(data []byte) []byte {
 	return script
 }
 
-// solveBlock mutates provided header.Nonce, until it solves proof of work puzzle
+// SolveBlock mutates provided header.Nonce, until it solves proof of work puzzle
 // WARNING: providing header with too large difficulty (header.Bits) will make this
 // function unfinishable.
-func solveBlock(header *wire.BlockHeader) bool {
+func SolveBlock(header *wire.BlockHeader) bool {
 	// sbResult is used by the solver goroutines to send results.
 	type sbResult struct {
 		found bool
@@ -250,7 +250,7 @@ func CreateBlock(
 	btcHeader.Bits = chaincfg.SimNetParams.GenesisBlock.Header.Bits
 	btcHeader.MerkleRoot = calcMerkleRoot(transactions)
 
-	solved := solveBlock(btcHeader)
+	solved := SolveBlock(btcHeader)
 
 	if !solved {
 		panic("Should solve block")
