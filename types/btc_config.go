@@ -68,14 +68,13 @@ func parseCheckpointTag(opts servertypes.AppOptions) txformat.BabylonTag {
 		panic("checkpoint-tag should be valid string")
 	}
 
-	if tag == string(txformat.MainTag) {
-		return txformat.MainTag
-	} else if tag == string(txformat.TestTag) {
-		return txformat.TestTag
-	} else {
-		panic("tag should be one of [BBN, BBT]")
+	tagBytes := []byte(tag)
+
+	if len(tagBytes) != txformat.TagLength {
+		panic("provided tag should have exactly 4 bytes")
 	}
 
+	return txformat.BabylonTag(tagBytes)
 }
 
 func ParseBtcOptionsFromConfig(opts servertypes.AppOptions) BtcConfig {

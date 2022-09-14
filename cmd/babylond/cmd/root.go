@@ -2,11 +2,12 @@ package cmd
 
 import (
 	"errors"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	bbn "github.com/babylonchain/babylon/types"
 
@@ -74,7 +75,6 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
-
 			err = server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig)
 
 			if err != nil {

@@ -7,7 +7,7 @@ import (
 	"errors"
 )
 
-type BabylonTag string
+type BabylonTag []byte
 
 type FormatVersion uint8
 
@@ -23,9 +23,7 @@ type BabylonData struct {
 }
 
 const (
-	TestTag BabylonTag = "BBT"
-
-	MainTag BabylonTag = "BBN"
+	TagLength = 4
 
 	CurrentVersion FormatVersion = 0
 
@@ -33,7 +31,8 @@ const (
 
 	secondPartIndex uint8 = 1
 
-	headerLength = 4
+	// 4bytes tag + 4 bits version + 4 bits part index
+	headerLength = TagLength + 1
 
 	LastCommitHashLength = 32
 
@@ -139,8 +138,9 @@ func EncodeCheckpointData(
 	blsSig []byte,
 	submitterAddress []byte,
 ) ([]byte, []byte, error) {
-	if tag != MainTag && tag != TestTag {
-		return nil, nil, errors.New("not allowed Tag value")
+
+	if len(tag) != TagLength {
+		return nil, nil, errors.New("tag should have 4 bytes")
 	}
 
 	if version > CurrentVersion {
@@ -194,9 +194,9 @@ func MustEncodeCheckpointData(
 func parseHeader(
 	data []byte,
 ) *formatHeader {
-	tagBytes := data[0:3]
+	tagBytes := data[:TagLength]
 
-	verHalf := data[3]
+	verHalf := data[TagLength]
 
 	header := formatHeader{
 		tag:     BabylonTag(tagBytes),
@@ -212,7 +212,7 @@ func (header *formatHeader) validateHeader(
 	supportedVersion FormatVersion,
 	expectedPart uint8,
 ) error {
-	if header.tag != expectedTag {
+	if !bytes.Equal(header.tag, expectedTag) {
 		return errors.New("data does not have expected tag")
 	}
 

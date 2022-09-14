@@ -5,11 +5,12 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	tmconfig "github.com/tendermint/tendermint/config"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	tmconfig "github.com/tendermint/tendermint/config"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
@@ -457,7 +458,7 @@ func (ao EmptyAppOptions) Get(o string) interface{} {
 	}
 
 	if o == "btc-config.checkpoint-tag" {
-		return string(txformat.MainTag)
+		return txformat.MainTagStr
 	}
 
 	return nil

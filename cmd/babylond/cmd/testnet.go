@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+
 	"github.com/babylonchain/babylon/app"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"net"
-	"os"
-	"path/filepath"
 
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -131,7 +132,7 @@ Example:
 	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	// btccheckpoint args
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, mainnet")
-	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.TestTag), "Tag to use for Bitcoin checkpoints.")
+	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefautTestTagStr), "Tag to use for Bitcoin checkpoints.")
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
 	// epoch args
@@ -187,7 +188,7 @@ func InitTestnet(
 	babylonConfig.Telemetry.PrometheusRetentionTime = 60
 	babylonConfig.Telemetry.EnableHostnameLabel = false
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
-	// BTC related config. Default values "simnet" and "BBT"
+	// BTC related config. Default values "simnet" and "BBT1"
 	babylonConfig.BtcConfig.Network = btcNetwork
 	babylonConfig.BtcConfig.CheckpointTag = btcCheckpointTag
 	// Explorer related config. Allow CORS connections.
