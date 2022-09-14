@@ -86,16 +86,17 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 		)
 	}
 
-	// the API will return epoch msgs between [max(1, end_epoch-epoch_count+1), end_epoch].
-	// NOTE: epoch 0 does not have any queued msg
+	// the API will return epoch msgs between [min(1, end_epoch-epoch_count+1), end_epoch].
+	// NOTE:
+	// - epoch 0 does not have any queued msg
+	// - if not specified, endEpoch will be the current epoch
 	endEpoch := req.EndEpoch
-	// If not specified, endEpoch will be the current epoch
 	if endEpoch == 0 {
 		endEpoch = k.GetEpoch(ctx).EpochNumber
 	}
-	beginEpoch := uint64(1)
-	if req.EpochCount < endEpoch { // i.e., 1 < endEpoch - req.EpochCount + 1
-		beginEpoch = endEpoch - req.EpochCount + 1
+	beginEpoch := endEpoch - req.EpochCount + 1
+	if beginEpoch <= 1 {
+		beginEpoch = 1
 	}
 
 	latestEpochMsgs := []*types.QueuedMessageList{}
