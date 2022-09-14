@@ -42,6 +42,7 @@ func GetTxCmd() *cobra.Command {
 
 func NewDelegateCmd() *cobra.Command {
 	bech32PrefixValAddr := params.Bech32PrefixAccAddr
+	denom := sdk.DefaultBondDenom // TODO: mainnet is expected to use "bbn". Add logic for choosing the correct denom
 
 	cmd := &cobra.Command{
 		Use:   "delegate [validator-addr] [amount]",
@@ -51,9 +52,9 @@ func NewDelegateCmd() *cobra.Command {
 			fmt.Sprintf(`Delegate an amount of liquid coins to a validator from your wallet.
 
 Example:
-$ %s tx epoching delegate %s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 1000stake --from mykey
+$ %s tx epoching delegate %s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 1000%s --from mykey
 `,
-				version.AppName, bech32PrefixValAddr,
+				version.AppName, bech32PrefixValAddr, denom,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -86,6 +87,7 @@ $ %s tx epoching delegate %s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 1000stake --
 
 func NewRedelegateCmd() *cobra.Command {
 	bech32PrefixValAddr := params.Bech32PrefixAccAddr
+	denom := sdk.DefaultBondDenom // TODO: mainnet is expected to use "bbn". Add logic for choosing the correct denom
 
 	cmd := &cobra.Command{
 		Use:   "redelegate [src-validator-addr] [dst-validator-addr] [amount]",
@@ -95,9 +97,9 @@ func NewRedelegateCmd() *cobra.Command {
 			fmt.Sprintf(`Redelegate an amount of illiquid staking tokens from one validator to another.
 
 Example:
-$ %s tx epoching redelegate %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj %s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 100stake --from mykey
+$ %s tx epoching redelegate %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj %s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 100%s --from mykey
 `,
-				version.AppName, bech32PrefixValAddr, bech32PrefixValAddr,
+				version.AppName, bech32PrefixValAddr, bech32PrefixValAddr, denom,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -135,6 +137,7 @@ $ %s tx epoching redelegate %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj %s1l2rsakp
 
 func NewUnbondCmd() *cobra.Command {
 	bech32PrefixValAddr := params.Bech32PrefixAccAddr
+	denom := sdk.DefaultBondDenom // TODO: mainnet is expected to use "bbn". Add logic for choosing the correct denom
 
 	cmd := &cobra.Command{
 		Use:   "unbond [validator-addr] [amount]",
@@ -144,9 +147,9 @@ func NewUnbondCmd() *cobra.Command {
 			fmt.Sprintf(`Unbond an amount of bonded shares from a validator.
 
 Example:
-$ %s tx epoching unbond %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj 100stake --from mykey
+$ %s tx epoching unbond %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj 100%s --from mykey
 `,
-				version.AppName, bech32PrefixValAddr,
+				version.AppName, bech32PrefixValAddr, denom,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
