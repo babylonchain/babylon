@@ -30,7 +30,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryParamsRequest is request type for the Query/Params RPC method.
+// QueryParamsRequest is the request type for the Query/Params RPC method.
 type QueryParamsRequest struct {
 }
 
@@ -67,7 +67,7 @@ func (m *QueryParamsRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
 
-// QueryParamsResponse is response type for the Query/Params RPC method.
+// QueryParamsResponse is the response type for the Query/Params RPC method.
 type QueryParamsResponse struct {
 	// params holds all the parameters of this module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
@@ -113,7 +113,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryCurrentEpochRequest is request type for the Query/CurrentEpoch RPC method
+// QueryCurrentEpochRequest is the request type for the Query/CurrentEpoch RPC method
 type QueryCurrentEpochRequest struct {
 }
 
@@ -150,7 +150,7 @@ func (m *QueryCurrentEpochRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryCurrentEpochRequest proto.InternalMessageInfo
 
-// QueryCurrentEpochResponse is response type for the Query/CurrentEpoch RPC method
+// QueryCurrentEpochResponse is the response type for the Query/CurrentEpoch RPC method
 type QueryCurrentEpochResponse struct {
 	// current_epoch is the current epoch number
 	CurrentEpoch uint64 `protobuf:"varint,1,opt,name=current_epoch,json=currentEpoch,proto3" json:"current_epoch,omitempty"`
@@ -205,7 +205,7 @@ func (m *QueryCurrentEpochResponse) GetEpochBoundary() uint64 {
 	return 0
 }
 
-// QueryEpochMsgsRequest is request type for the Query/EpochMsgs RPC method
+// QueryEpochMsgsRequest is the request type for the Query/EpochMsgs RPC method
 type QueryEpochMsgsRequest struct {
 	// epoch_num is the number of epoch of the requested msg queue
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
@@ -260,7 +260,7 @@ func (m *QueryEpochMsgsRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryEpochMsgsResponse is response type for the Query/EpochMsgs RPC method
+// QueryEpochMsgsResponse is the response type for the Query/EpochMsgs RPC method
 type QueryEpochMsgsResponse struct {
 	// msgs is the list of messages queued in the current epoch
 	Msgs []*QueuedMessage `protobuf:"bytes,1,rep,name=msgs,proto3" json:"msgs,omitempty"`
@@ -315,7 +315,7 @@ func (m *QueryEpochMsgsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryLatestEpochMsgsRequest is request type for the Query/LatestEpochMsgs RPC method
+// QueryLatestEpochMsgsRequest is the request type for the Query/LatestEpochMsgs RPC method
 // it returns epoch msgs within epoch [max(1, end_epoch-epoch_count+1), end_epoch]
 type QueryLatestEpochMsgsRequest struct {
 	// end_epoch is the number of the last epoch to query
@@ -379,7 +379,7 @@ func (m *QueryLatestEpochMsgsRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryLatestEpochMsgsResponse is response type for the Query/LatestEpochMsgs RPC method
+// QueryLatestEpochMsgsResponse is the response type for the Query/LatestEpochMsgs RPC method
 type QueryLatestEpochMsgsResponse struct {
 	// epoch_msg_map is a list of QueuedMessageList
 	// each QueuedMessageList has a field identifying the epoch number
