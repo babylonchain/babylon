@@ -108,7 +108,7 @@ func (b *TestTxSender) insertNewEmptyHeader(currentTip *lightclient.BTCHeaderInf
 		panic("retrieving sending account must succeed")
 	}
 
-	//TODO 2stake and 200000 should probably not be hardcoded by taken from tx
+	//TODO 3stake and 300000 should probably not be hardcoded by taken from tx
 	//simulation. For now this enough to pay for insert header transaction.
 	txBytes := b.buildTx(msg, "3stake", 300000, acc.GetSequence())
 
@@ -211,11 +211,12 @@ func WaitForNextBlock(c *grpc.ClientConn) error {
 	}
 
 	_, err = WaitForHeight(c, lastBlock+1)
+
 	if err != nil {
 		return err
 	}
 
-	return err
+	return nil
 }
 
 // Btc blockchain helpers
@@ -262,9 +263,10 @@ func WaitForNextBtcBlock(c *grpc.ClientConn) error {
 	}
 
 	_, err = WaitBtcForHeight(c, lastBlock+1)
+
 	if err != nil {
 		return err
 	}
 
-	return err
+	return nil
 }
