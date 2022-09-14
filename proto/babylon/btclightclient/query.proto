@@ -26,6 +26,14 @@ service Query {
     option (google.api.http).get = "/babylon/btclightclient/v1/contains";
   }
 
+  // ContainsBytes is a temporary method that
+  // checks whether a hash is maintained by the module.
+  // See discussion at https://github.com/babylonchain/babylon/pull/132
+  // for more details.
+  rpc ContainsBytes(QueryContainsBytesRequest) returns (QueryContainsBytesResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/containsBytes";
+  }
+
   // MainChain returns the canonical chain
   rpc MainChain(QueryMainChainRequest) returns (QueryMainChainResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/mainchain";
@@ -66,11 +74,25 @@ message QueryHashesResponse {
 // QueryContainsRequest is request type for the Query/Contains RPC method.
 // It involves checking whether a hash is maintained by the module.
 message QueryContainsRequest {
-  bytes hash = 1;
+  bytes hash = 1 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
+  ];
 }
+
 
 // QueryContainsResponse is response type for the Query/Contains RPC method.
 message QueryContainsResponse {
+  bool contains = 1;
+}
+
+// QueryContainsRequest is request type for the temporary Query/ContainsBytes RPC method.
+// It involves checking whether a hash is maintained by the module.
+message QueryContainsBytesRequest {
+    bytes hash = 1;
+}
+
+// QueryContainsResponse is response type for the temporary Query/ContainsBytes RPC method.
+message QueryContainsBytesResponse {
   bool contains = 1;
 }
 
