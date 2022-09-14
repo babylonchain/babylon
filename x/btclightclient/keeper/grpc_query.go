@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -56,9 +57,24 @@ func (k Keeper) Contains(ctx context.Context, req *types.QueryContainsRequest) (
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
+
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	contains := k.headersState(sdkCtx).HeaderExists(req.Hash)
 	return &types.QueryContainsResponse{Contains: contains}, nil
+}
+
+func (k Keeper) ContainsBytes(ctx context.Context, req *types.QueryContainsBytesRequest) (*types.QueryContainsBytesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	headerBytes, err := bbn.NewBTCHeaderHashBytesFromBytes(req.Hash)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	contains := k.headersState(sdkCtx).HeaderExists(&headerBytes)
+	return &types.QueryContainsBytesResponse{Contains: contains}, nil
 }
 
 func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest) (*types.QueryMainChainResponse, error) {
