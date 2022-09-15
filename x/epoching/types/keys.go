@@ -26,6 +26,7 @@ var (
 	SlashedVotingPowerKey  = []byte{0x16} // key prefix for the total slashed voting power in a single epoch
 	SlashedValidatorSetKey = []byte{0x17} // key prefix for slashed validator set
 	ValidatorLifecycleKey  = []byte{0x18} // key prefix for validator life cycle
+	DelegationLifecycleKey = []byte{0x19} // key prefix for delegation life cycle
 )
 
 func KeyPrefix(p string) []byte {

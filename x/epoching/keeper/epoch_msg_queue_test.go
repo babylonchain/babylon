@@ -94,7 +94,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		lc := keeper.GetValLifecycle(ctx, val)
 		require.NotNil(t, lc)
 		require.Equal(t, 1, len(lc.ValLife))
-		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, types.BondState_CREATED, lc.ValLife[0].State)
 		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 
 		// delegate a random amount of tokens to the validator
@@ -160,7 +160,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		lc := keeper.GetValLifecycle(ctx, val)
 		require.NotNil(t, lc)
 		require.Equal(t, 1, len(lc.ValLife))
-		require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+		require.Equal(t, types.BondState_CREATED, lc.ValLife[0].State)
 		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 
 		// unbond a random amount of tokens from the validator
@@ -244,7 +244,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 			lc := keeper.GetValLifecycle(ctx, val)
 			require.NotNil(t, lc)
 			require.Equal(t, 1, len(lc.ValLife))
-			require.Equal(t, types.ValState_CREATED, lc.ValLife[0].State)
+			require.Equal(t, types.BondState_CREATED, lc.ValLife[0].State)
 			require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 		}
 
