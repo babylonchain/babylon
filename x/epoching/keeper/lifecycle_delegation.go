@@ -45,7 +45,7 @@ func (k Keeper) GetDelegationLifecycle(ctx sdk.Context, delAddr sdk.AccAddress) 
 	return &lc
 }
 
-// valLifecycleStore returns the store of the delegation lifecycle
+// delegationLifecycleStore returns the store of the delegation lifecycle
 // prefix: DelegationLifecycleKey
 // key: del_addr
 // value: DelegationLifecycle object
