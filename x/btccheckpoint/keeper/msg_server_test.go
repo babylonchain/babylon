@@ -67,7 +67,7 @@ func getRandomCheckpointDataForEpoch(e uint64) testCheckpointData {
 // both f and s must be parts retrived from txformat.Encode
 func getExpectedOpReturn(f []byte, s []byte) []byte {
 	firstPartNoHeader, err := txformat.GetCheckpointData(
-		txformat.MainTag,
+		txformat.MainTag(),
 		txformat.CurrentVersion,
 		0,
 		f,
@@ -78,7 +78,7 @@ func getExpectedOpReturn(f []byte, s []byte) []byte {
 	}
 
 	secondPartNoHeader, err := txformat.GetCheckpointData(
-		txformat.MainTag,
+		txformat.MainTag(),
 		txformat.CurrentVersion,
 		1,
 		s,
@@ -105,7 +105,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
 	data1, data2 := txformat.MustEncodeCheckpointData(
-		txformat.MainTag,
+		txformat.MainTag(),
 		txformat.CurrentVersion,
 		checkpointData.epoch,
 		checkpointData.lastCommitHash,
@@ -192,7 +192,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
 	data1, data2 := txformat.MustEncodeCheckpointData(
-		txformat.MainTag,
+		txformat.MainTag(),
 		txformat.CurrentVersion,
 		checkpointData.epoch,
 		checkpointData.lastCommitHash,

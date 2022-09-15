@@ -15,7 +15,7 @@ type BtcConfig struct {
 func defaultBabylonBtcConfig() BtcConfig {
 	return BtcConfig{
 		Network:       string(bbn.BtcMainnet),
-		CheckpointTag: string(txformat.MainTag),
+		CheckpointTag: string(txformat.MainTagStr),
 	}
 }
 
@@ -46,10 +46,7 @@ network = "{{ .BtcConfig.Network }}"
 
 
 # Configures what tag should be prepended to op_return data in btc transaction
-# for it to be considered as valid babylon checkpoint
-# valid values are:
-# "BBT" for testing
-# "BBN" for production usage
+# for it to be considered as valid babylon checkpoint. Must have exactly 4 bytes.
 checkpoint-tag = "{{ .BtcConfig.CheckpointTag }}"
 `
 }
