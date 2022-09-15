@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+
 	"github.com/babylonchain/babylon/app"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"net"
-	"os"
-	"path/filepath"
 
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
