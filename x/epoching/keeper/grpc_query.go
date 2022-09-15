@@ -143,3 +143,17 @@ func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorL
 		ValLife: lc,
 	}, nil
 }
+
+// DelegationLifecycle handles the QueryDelegationLifecycleRequest query
+// TODO: test this API
+func (k Keeper) DelegationLifecycle(c context.Context, req *types.QueryDelegationLifecycleRequest) (*types.QueryDelegationLifecycleResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	delAddr, err := sdk.AccAddressFromBech32(req.DelAddr)
+	if err != nil {
+		return nil, err
+	}
+	lc := k.GetDelegationLifecycle(ctx, delAddr)
+	return &types.QueryDelegationLifecycleResponse{
+		DelLife: lc,
+	}, nil
+}

@@ -35,6 +35,11 @@ service Query {
   rpc ValidatorLifecycle(QueryValidatorLifecycleRequest) returns (QueryValidatorLifecycleResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/validator_lifecycle/{val_addr}";
   }
+
+  // DelegationLifecycle queries the lifecycle of a given delegation
+  rpc DelegationLifecycle(QueryDelegationLifecycleRequest) returns (QueryDelegationLifecycleResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/delegation_lifecycle/{del_addr}";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -100,4 +105,12 @@ message QueryValidatorLifecycleRequest {
 
 message QueryValidatorLifecycleResponse {
   ValidatorLifecycle val_life = 1;
+}
+
+message QueryDelegationLifecycleRequest {
+  string del_addr = 1;
+}
+
+message QueryDelegationLifecycleResponse {
+  DelegationLifecycle del_life = 1;
 }
