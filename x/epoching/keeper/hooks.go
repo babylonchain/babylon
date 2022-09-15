@@ -81,19 +81,23 @@ func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, f
 }
 
 func (h Hooks) AfterValidatorCreated(ctx sdk.Context, valAddr sdk.ValAddress) {
-	h.k.RecordNewValState(ctx, valAddr, types.ValState_CREATED)
+	h.k.RecordNewValState(ctx, valAddr, types.BondState_CREATED)
 }
 
 func (h Hooks) AfterValidatorRemoved(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.k.RecordNewValState(ctx, valAddr, types.ValState_REMOVED)
+	h.k.RecordNewValState(ctx, valAddr, types.BondState_REMOVED)
 }
 
 func (h Hooks) AfterValidatorBonded(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.k.RecordNewValState(ctx, valAddr, types.ValState_BONDED)
+	h.k.RecordNewValState(ctx, valAddr, types.BondState_BONDED)
 }
 
 func (h Hooks) AfterValidatorBeginUnbonding(ctx sdk.Context, consAddr sdk.ConsAddress, valAddr sdk.ValAddress) {
-	h.k.RecordNewValState(ctx, valAddr, types.ValState_UNBONDING)
+	h.k.RecordNewValState(ctx, valAddr, types.BondState_UNBONDING)
+}
+
+func (h Hooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
+	h.k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_REMOVED)
 }
 
 // Other staking hooks that are not used in the epoching module
@@ -101,8 +105,6 @@ func (h Hooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) 
 func (h Hooks) BeforeDelegationCreated(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 }
 func (h Hooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
-}
-func (h Hooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 }
 func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) {
 }

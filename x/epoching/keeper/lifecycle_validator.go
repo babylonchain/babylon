@@ -8,11 +8,8 @@ import (
 
 // TODO: add more tests on the lifecycle record
 
-// RecordNewValState adds a state for an existing validator lifecycle, including bonded, unbonding and unbonded
-// after MsgWrappedCreateValidator is handled, the validator becomes bonded
-// after MsgWrappedUndelegate is handled, the validator becomes unbonding
-// after the epoch carrying this validator's MsgWrappedUndelegate msg is checkpointed, the validator becomes unbonded
-func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state types.ValState) {
+// RecordNewValState adds a state for a validator lifecycle, including bonded, unbonding and unbonded
+func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state types.BondState) {
 	lc := k.GetValLifecycle(ctx, valAddr)
 	if lc == nil {
 		lc = &types.ValidatorLifecycle{
@@ -47,7 +44,7 @@ func (k Keeper) GetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.
 	return &lc
 }
 
-// valLifecycleStore returns the total voting power of the validator set of a given epoch
+// valLifecycleStore returns the store of the validator lifecycle
 // prefix: ValidatorLifecycleKey
 // key: val_addr
 // value: ValidatorLifecycle object

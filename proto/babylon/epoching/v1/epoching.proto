@@ -38,7 +38,7 @@ message QueuedMessageList {
   repeated QueuedMessage msgs = 2;
 }
 
-enum ValState {
+enum BondState {
   CREATED = 0;
   BONDED = 1;
   UNBONDING = 2;
@@ -47,7 +47,7 @@ enum ValState {
 }
 
 message ValStateUpdate {
-  ValState state = 1;
+  BondState state = 1;
   uint64 block_height = 2;
   google.protobuf.Timestamp block_time = 3 [(gogoproto.stdtime) = true];
 }
@@ -55,4 +55,16 @@ message ValStateUpdate {
 message ValidatorLifecycle {
   string val_addr = 1;
   repeated ValStateUpdate val_life = 2;
+}
+
+message DelegationStateUpdate {
+  BondState state = 1;
+  string val_addr = 2;
+  uint64 block_height = 3;
+  google.protobuf.Timestamp block_time = 4 [(gogoproto.stdtime) = true];
+}
+
+message DelegationLifecycle {
+  string del_addr = 1;
+  repeated DelegationStateUpdate del_life = 2;
 }

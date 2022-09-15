@@ -140,6 +140,50 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	// release the cache
 	msCache.Write()
 
+	// record lifecycle for delegation
+	switch unwrappedMsg := msg.Msg.(type) {
+	case *types.QueuedMessage_MsgCreateValidator:
+		// do nothing. validator state is recorded via hooks
+	case *types.QueuedMessage_MsgDelegate:
+		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgDelegate.DelegatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgDelegate.ValidatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		// created and bonded to the validator
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED)
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED)
+	case *types.QueuedMessage_MsgUndelegate:
+		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgUndelegate.DelegatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgUndelegate.ValidatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		// unbonding from the validator
+		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the validator
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_UNBONDING)
+	case *types.QueuedMessage_MsgBeginRedelegate:
+		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		srcValAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgBeginRedelegate.ValidatorSrcAddress)
+		if err != nil {
+			return nil, err
+		}
+		// unbonding from the source validator
+		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the source validator, created/bonded to the destination validator
+		k.RecordNewDelegationState(ctx, delAddr, srcValAddr, types.BondState_UNBONDING)
+	default:
+		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+	}
+
 	return result, nil
 }
 
