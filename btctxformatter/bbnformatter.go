@@ -5,11 +5,11 @@ package btctxformatter
 // in some separate document/config
 
 const (
-	MainTagStr string = "mbbn"
+	MainTagStr string = "bbnm"
 
 	testTagPrefix string = "bbt"
 
-	DefautTestTagStr string = testTagPrefix + "1"
+	DefautTestTagStr string = testTagPrefix + "0"
 )
 
 func MainTag() BabylonTag {
