@@ -143,7 +143,18 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	// record lifecycle for delegation
 	switch unwrappedMsg := msg.Msg.(type) {
 	case *types.QueuedMessage_MsgCreateValidator:
-		// do nothing. validator state is recorded via hooks
+		// handle self-delegation
+		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCreateValidator.DelegatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgCreateValidator.ValidatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		// self-bonded to the created validator
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED)
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED)
 	case *types.QueuedMessage_MsgDelegate:
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgDelegate.DelegatorAddress)
 		if err != nil {
