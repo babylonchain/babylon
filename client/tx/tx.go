@@ -2,6 +2,7 @@ package tx
 
 import (
 	"fmt"
+	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdktx "github.com/cosmos/cosmos-sdk/client/tx"
@@ -20,10 +21,11 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 		}
 	}
 
-	// TODO make the fee it dynamic
+	// TODO make the fee dynamic
 	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
 	fs.String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10ubbn")
-	err := fs.Set(flags.FlagFees, "100stake")
+	fee := fmt.Sprintf("100%s", appparams.BaseCoinUnit)
+	err := fs.Set(flags.FlagFees, fee)
 	if err != nil {
 		return nil, err
 	}
