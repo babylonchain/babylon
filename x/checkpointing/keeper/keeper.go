@@ -117,6 +117,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		if err != nil {
 			ctx.Logger().Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
 		}
+		ctx.Logger().Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
 	}
 
 	return nil
@@ -145,6 +146,7 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 	if err != nil {
 		return nil, err
 	}
+	ctx.Logger().Info(fmt.Sprintf("Checkpointing: a new raw checkpoint is built for epoch %v", epochNum))
 
 	return ckptWithMeta, nil
 }
@@ -280,6 +282,8 @@ func (k Keeper) setCheckpointStatus(ctx sdk.Context, epoch uint64, from types.Ch
 	if err != nil {
 		panic("failed to update checkpoint status")
 	}
+	statusChangeMsg := fmt.Sprintf("Checkpointing: checkpoint status for epoch %v successfully changed from %v to %v", epoch, from.String(), to.String())
+	ctx.Logger().Info(statusChangeMsg)
 	return ckptWithMeta
 }
 
