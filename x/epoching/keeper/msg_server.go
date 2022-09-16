@@ -60,6 +60,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{
+			DelegatorAddress: msg.Msg.DelegatorAddress,
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			Denom:            msg.Msg.Amount.GetDenom(),
@@ -112,6 +113,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedUndelegate{
+			DelegatorAddress: msg.Msg.DelegatorAddress,
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			Denom:            msg.Msg.Amount.GetDenom(),
@@ -166,6 +168,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 	k.EnqueueMsg(ctx, queuedMsg)
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedBeginRedelegate{
+			DelegatorAddress:            msg.Msg.DelegatorAddress,
 			SourceValidatorAddress:      msg.Msg.ValidatorSrcAddress,
 			DestinationValidatorAddress: msg.Msg.ValidatorDstAddress,
 			Amount:                      msg.Msg.Amount.Amount.Uint64(),
