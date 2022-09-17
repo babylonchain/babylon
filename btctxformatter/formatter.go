@@ -5,8 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 type BabylonTag []byte
@@ -22,6 +20,14 @@ type formatHeader struct {
 type BabylonData struct {
 	Data  []byte
 	Index uint8
+}
+
+type RawBtcCheckpoint struct {
+	Epoch            uint64
+	LastCommitHash   []byte
+	BitMap           []byte
+	SubmitterAddress []byte
+	BlsSig           []byte
 }
 
 const (
@@ -58,7 +64,7 @@ const (
 
 	secondPartLength = headerLength + BlsSigLength + firstPartHashLength
 
-	RawCheckpointLength = EpochLength + LastCommitHashLength + BitMapLength + BlsSigLength
+	RawBTCCheckpointLength = EpochLength + LastCommitHashLength + BitMapLength + BlsSigLength + AddressLength
 )
 
 func getVerHalf(version FormatVersion, halfNumber uint8) uint8 {
@@ -77,12 +83,12 @@ func encodeHeader(tag BabylonTag, version FormatVersion, halfNumber uint8) []byt
 	return data
 }
 
-func u64ToBEBytes(u uint64) []byte {
-	bytes := make([]byte, 8)
+func U64ToBEBytes(u uint64) []byte {
+	u64bytes := make([]byte, 8)
 
-	binary.BigEndian.PutUint64(bytes, u)
+	binary.BigEndian.PutUint64(u64bytes, u)
 
-	return bytes
+	return u64bytes
 }
 
 func encodeFirstOpRetrun(
@@ -98,7 +104,7 @@ func encodeFirstOpRetrun(
 
 	serializedBytes = append(serializedBytes, encodeHeader(tag, version, firstPartIndex)...)
 
-	serializedBytes = append(serializedBytes, u64ToBEBytes(epoch)...)
+	serializedBytes = append(serializedBytes, U64ToBEBytes(epoch)...)
 
 	serializedBytes = append(serializedBytes, lastCommitHash...)
 
@@ -136,11 +142,7 @@ func encodeSecondOpReturn(
 func EncodeCheckpointData(
 	tag BabylonTag,
 	version FormatVersion,
-	epoch uint64,
-	lastCommitHash []byte,
-	bitmap []byte,
-	blsSig []byte,
-	submitterAddress []byte,
+	rawBTCCheckpoint *RawBtcCheckpoint,
 ) ([]byte, []byte, error) {
 
 	if len(tag) != TagLength {
@@ -151,29 +153,37 @@ func EncodeCheckpointData(
 		return nil, nil, errors.New("invalid format version")
 	}
 
-	if len(lastCommitHash) != LastCommitHashLength {
+	if len(rawBTCCheckpoint.LastCommitHash) != LastCommitHashLength {
 		return nil, nil, errors.New("lastCommitHash should have 32 bytes")
 	}
 
-	if len(bitmap) != BitMapLength {
+	if len(rawBTCCheckpoint.BitMap) != BitMapLength {
 		return nil, nil, errors.New("bitmap should have 13 bytes")
 	}
 
-	if len(blsSig) != BlsSigLength {
+	if len(rawBTCCheckpoint.BlsSig) != BlsSigLength {
 		return nil, nil, errors.New("BlsSig should have 48 bytes")
 	}
 
-	if len(blsSig) != BlsSigLength {
-		return nil, nil, errors.New("BlsSig should have 48 bytes")
-	}
-
-	if len(submitterAddress) != AddressLength {
+	if len(rawBTCCheckpoint.SubmitterAddress) != AddressLength {
 		return nil, nil, errors.New("address should have 20 bytes")
 	}
 
-	var firstHalf = encodeFirstOpRetrun(tag, version, epoch, lastCommitHash, bitmap, submitterAddress)
+	var firstHalf = encodeFirstOpRetrun(
+		tag,
+		version,
+		rawBTCCheckpoint.Epoch,
+		rawBTCCheckpoint.LastCommitHash,
+		rawBTCCheckpoint.BitMap,
+		rawBTCCheckpoint.SubmitterAddress,
+	)
 
-	var secondHalf = encodeSecondOpReturn(tag, version, firstHalf, blsSig)
+	var secondHalf = encodeSecondOpReturn(
+		tag,
+		version,
+		firstHalf,
+		rawBTCCheckpoint.BlsSig,
+	)
 
 	return firstHalf, secondHalf, nil
 }
@@ -181,13 +191,9 @@ func EncodeCheckpointData(
 func MustEncodeCheckpointData(
 	tag BabylonTag,
 	version FormatVersion,
-	epoch uint64,
-	lastCommitHash []byte,
-	bitmap []byte,
-	blsSig []byte,
-	submitterAddress []byte,
+	rawBTCCheckpoint *RawBtcCheckpoint,
 ) ([]byte, []byte) {
-	f, s, err := EncodeCheckpointData(tag, version, epoch, lastCommitHash, bitmap, blsSig, submitterAddress)
+	f, s, err := EncodeCheckpointData(tag, version, rawBTCCheckpoint)
 	if err != nil {
 		panic(err)
 	}
@@ -299,41 +305,37 @@ func IsBabylonCheckpointData(
 
 // DecodeRawCheckpoint extracts epoch, lastCommitHash, bitmap, and blsSig from a
 // flat byte array and compose them into a RawCheckpoint struct
-func DecodeRawCheckpoint(ckptBytes []byte) (*types.RawCheckpoint, error) {
-	if len(ckptBytes) != RawCheckpointLength {
-		return nil, errors.New("raw checkpoint bytes length invalid")
+func DecodeRawCheckpoint(version FormatVersion, btcCkptBytes []byte) (*RawBtcCheckpoint, error) {
+	if version > CurrentVersion {
+		return nil, errors.New("not supported version")
 	}
+
+	if len(btcCkptBytes) != RawBTCCheckpointLength {
+		return nil, errors.New("invalid raw checkpoint data length")
+	}
+
 	var b bytes.Buffer
-	b.Write(ckptBytes)
+	b.Write(btcCkptBytes)
 	epochBytes := b.Next(EpochLength)
 	lchBytes := b.Next(LastCommitHashLength)
 	bitmapBytes := b.Next(BitMapLength)
+	addressBytes := b.Next(AddressLength)
 	blsSigBytes := b.Next(BlsSigLength)
 
-	var lch types.LastCommitHash
-	err := lch.Unmarshal(lchBytes)
-	if err != nil {
-		return nil, err
-	}
-	var blsSig bls12381.Signature
-	err = blsSig.Unmarshal(blsSigBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	rawCheckpoint := &types.RawCheckpoint{
-		EpochNum:       binary.BigEndian.Uint64(epochBytes),
-		LastCommitHash: &lch,
-		Bitmap:         bitmapBytes,
-		BlsMultiSig:    &blsSig,
+	rawCheckpoint := &RawBtcCheckpoint{
+		Epoch:            binary.BigEndian.Uint64(epochBytes),
+		LastCommitHash:   lchBytes,
+		BitMap:           bitmapBytes,
+		SubmitterAddress: addressBytes,
+		BlsSig:           blsSigBytes,
 	}
 
 	return rawCheckpoint, nil
 }
 
-// ComposeRawCheckpointData composes raw checkpoint data by connecting two parts
+// ConnectParts composes raw checkpoint data by connecting two parts
 // of checkpoint data and stripping off data that is not relevant to a raw checkpoint
-func ComposeRawCheckpointData(version FormatVersion, f []byte, s []byte) ([]byte, error) {
+func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 	if version > CurrentVersion {
 		return nil, errors.New("not supported version")
 	}
@@ -356,14 +358,12 @@ func ComposeRawCheckpointData(version FormatVersion, f []byte, s []byte) ([]byte
 		return nil, errors.New("parts do not connect")
 	}
 
-	addrStartIdx := len(f) - AddressLength
-
 	var dst []byte
 	// TODO this is not supper efficient
-	dst = append(dst, f[:addrStartIdx]...) // strip off the submitter address
+	dst = append(dst, f...) // strip off the submitter address
 	dst = append(dst, s[:hashStartIdx]...)
 
-	if len(dst) != RawCheckpointLength {
+	if len(dst) != RawBTCCheckpointLength {
 		return nil, errors.New("invalid raw checkpoint data length")
 	}
 

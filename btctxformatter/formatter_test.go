@@ -25,14 +25,17 @@ func FuzzEncodingDecoding(f *testing.F) {
 
 		babylonTag := BabylonTag(tag[:TagLength])
 
+		rawBTCCkpt := &RawBtcCheckpoint{
+			Epoch:            epoch,
+			LastCommitHash:   lastCommitHash,
+			BitMap:           bitMap,
+			SubmitterAddress: blsSig,
+			BlsSig:           address,
+		}
 		firstHalf, secondHalf, err := EncodeCheckpointData(
 			babylonTag,
 			CurrentVersion,
-			epoch,
-			lastCommitHash,
-			bitMap,
-			blsSig,
-			address,
+			rawBTCCkpt,
 		)
 
 		if err != nil {
@@ -60,30 +63,30 @@ func FuzzEncodingDecoding(f *testing.F) {
 			t.Errorf("Valid data should be properly decoded")
 		}
 
-		ckptData, err := ComposeRawCheckpointData(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
+		ckptData, err := ConnectParts(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
 		if err != nil {
 			t.Errorf("Parts should match. Error: %v", err)
 		}
 
-		ckpt, err := DecodeRawCheckpoint(ckptData)
+		ckpt, err := DecodeRawCheckpoint(CurrentVersion, ckptData)
 		if err != nil {
 			t.Errorf("Failed to unmarshal. Error: %v", err)
 		}
 
-		if ckpt.EpochNum != epoch {
-			t.Errorf("Epoch should match. Expected: %v. Got: %v", epoch, ckpt.EpochNum)
+		if ckpt.Epoch != epoch {
+			t.Errorf("Epoch should match. Expected: %v. Got: %v", epoch, ckpt.Epoch)
 		}
 
-		if !ckpt.LastCommitHash.Equal(lastCommitHash) {
+		if !bytes.Equal(lastCommitHash, ckpt.LastCommitHash) {
 			t.Errorf("LastCommitHash should match. Expected: %v. Got: %v", lastCommitHash, ckpt.LastCommitHash)
 		}
 
-		if !bytes.Equal(bitMap, ckpt.Bitmap) {
-			t.Errorf("Bitmap should match. Expected: %v. Got: %v", bitMap, ckpt.Bitmap)
+		if !bytes.Equal(bitMap, ckpt.BitMap) {
+			t.Errorf("Bitmap should match. Expected: %v. Got: %v", bitMap, ckpt.BitMap)
 		}
 
-		if !ckpt.BlsMultiSig.Equal(blsSig) {
-			t.Errorf("BLS signature should match. Expected: %v. Got: %v", blsSig, ckpt.BlsMultiSig)
+		if !bytes.Equal(blsSig, ckpt.BlsSig) {
+			t.Errorf("BLS signature should match. Expected: %v. Got: %v", blsSig, ckpt.BlsSig)
 		}
 	})
 }
