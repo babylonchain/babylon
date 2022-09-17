@@ -1,6 +1,7 @@
 package btctxformatter
 
 import (
+	"bytes"
 	"crypto/rand"
 	"testing"
 )
@@ -59,14 +60,30 @@ func FuzzEncodingDecoding(f *testing.F) {
 			t.Errorf("Valid data should be properly decoded")
 		}
 
-		data, err := ConnectParts(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
-
+		ckptData, err := ComposeRawCheckpointData(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
 		if err != nil {
 			t.Errorf("Parts should match. Error: %v", err)
 		}
 
-		if len(data) != ApplicationDataLength {
-			t.Errorf("Not expected application level data length. Have: %d, want: %d", len(data), ApplicationDataLength)
+		ckpt, err := DecodeRawCheckpoint(ckptData)
+		if err != nil {
+			t.Errorf("Failed to unmarshal. Error: %v", err)
+		}
+
+		if ckpt.EpochNum != epoch {
+			t.Errorf("Epoch should match. Expected: %v. Got: %v", epoch, ckpt.EpochNum)
+		}
+
+		if !ckpt.LastCommitHash.Equal(lastCommitHash) {
+			t.Errorf("LastCommitHash should match. Expected: %v. Got: %v", lastCommitHash, ckpt.LastCommitHash)
+		}
+
+		if !bytes.Equal(bitMap, ckpt.Bitmap) {
+			t.Errorf("Bitmap should match. Expected: %v. Got: %v", bitMap, ckpt.Bitmap)
+		}
+
+		if !ckpt.BlsMultiSig.Equal(blsSig) {
+			t.Errorf("BLS signature should match. Expected: %v. Got: %v", blsSig, ckpt.BlsMultiSig)
 		}
 	})
 }

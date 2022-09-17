@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
@@ -170,7 +171,7 @@ func (k Keeper) CheckpointEpoch(ctx sdk.Context, rawCkptBytes []byte) (uint64, e
 // conflicting checkpoint. A conflicting checkpoint indicates the existence
 // of a fork
 func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.RawCheckpointWithMeta, error) {
-	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+	ckpt, err := btctxformatter.DecodeRawCheckpoint(rawCkptBytes)
 	if err != nil {
 		return nil, err
 	}

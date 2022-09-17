@@ -88,7 +88,7 @@ func getExpectedOpReturn(f []byte, s []byte) []byte {
 		panic("ExpectedOpReturn provided second part should be valid checkpoint data")
 	}
 
-	connected, err := txformat.ConnectParts(txformat.CurrentVersion, firstPartNoHeader, secondPartNoHeader)
+	connected, err := txformat.ComposeRawCheckpointData(txformat.CurrentVersion, firstPartNoHeader, secondPartNoHeader)
 
 	if err != nil {
 		panic("ExpectedOpReturn parts should be connected")

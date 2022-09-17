@@ -67,13 +67,13 @@ func ParseTwoProofs(
 
 	// at this point we know we have two correctly formated babylon op return transacitons
 	// we need to check if parts match
-	fullTxData, err := txformat.ConnectParts(txformat.CurrentVersion, checkpointData[0], checkpointData[1])
+	rawCkptData, err := txformat.ComposeRawCheckpointData(txformat.CurrentVersion, checkpointData[0], checkpointData[1])
 
 	if err != nil {
 		return nil, err
 	}
 
-	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1], fullTxData)
+	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1], rawCkptData)
 
 	return &sub, nil
 }

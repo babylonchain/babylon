@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"errors"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 type BabylonTag []byte
@@ -45,16 +47,18 @@ const (
 
 	// First 10 bytes of sha256 of first part are appended to second part to ease up
 	// pairing of parts
-	hashLength = 10
+	firstPartHashLength = 10
 
 	BlsSigLength = 48
 
 	// 8 bytes are for 64bit unsigned epoch number
-	firstPartLength = headerLength + LastCommitHashLength + AddressLength + 8 + BitMapLength
+	EpochLength = 8
 
-	secondPartLength = headerLength + BlsSigLength + hashLength
+	firstPartLength = headerLength + LastCommitHashLength + AddressLength + EpochLength + BitMapLength
 
-	ApplicationDataLength = firstPartLength + secondPartLength - headerLength - headerLength - hashLength
+	secondPartLength = headerLength + BlsSigLength + firstPartHashLength
+
+	RawCheckpointLength = EpochLength + LastCommitHashLength + BitMapLength + BlsSigLength
 )
 
 func getVerHalf(version FormatVersion, halfNumber uint8) uint8 {
@@ -107,7 +111,7 @@ func encodeFirstOpRetrun(
 
 func getCheckSum(firstTxBytes []byte) []byte {
 	hash := sha256.Sum256(firstTxBytes)
-	return hash[0:hashLength]
+	return hash[0:firstPartHashLength]
 }
 
 func encodeSecondOpReturn(
@@ -293,7 +297,43 @@ func IsBabylonCheckpointData(
 	return nil, errors.New("not valid babylon data")
 }
 
-func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
+// DecodeRawCheckpoint extracts epoch, lastCommitHash, bitmap, and blsSig from a
+// flat byte array and compose them into a RawCheckpoint struct
+func DecodeRawCheckpoint(ckptBytes []byte) (*types.RawCheckpoint, error) {
+	if len(ckptBytes) != RawCheckpointLength {
+		return nil, errors.New("raw checkpoint bytes length invalid")
+	}
+	var b bytes.Buffer
+	b.Write(ckptBytes)
+	epochBytes := b.Next(EpochLength)
+	lchBytes := b.Next(LastCommitHashLength)
+	bitmapBytes := b.Next(BitMapLength)
+	blsSigBytes := b.Next(BlsSigLength)
+
+	var lch types.LastCommitHash
+	err := lch.Unmarshal(lchBytes)
+	if err != nil {
+		return nil, err
+	}
+	var blsSig bls12381.Signature
+	err = blsSig.Unmarshal(blsSigBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	rawCheckpoint := &types.RawCheckpoint{
+		EpochNum:       binary.BigEndian.Uint64(epochBytes),
+		LastCommitHash: &lch,
+		Bitmap:         bitmapBytes,
+		BlsMultiSig:    &blsSig,
+	}
+
+	return rawCheckpoint, nil
+}
+
+// ComposeRawCheckpointData composes raw checkpoint data by connecting two parts
+// of checkpoint data and stripping off data that is not relevant to a raw checkpoint
+func ComposeRawCheckpointData(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 	if version > CurrentVersion {
 		return nil, errors.New("not supported version")
 	}
@@ -308,18 +348,24 @@ func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 
 	firstHash := sha256.Sum256(f)
 
-	hashStartIdx := len(s) - hashLength
+	hashStartIdx := len(s) - firstPartHashLength
 
 	expectedHash := s[hashStartIdx:]
 
-	if !bytes.Equal(firstHash[:hashLength], expectedHash) {
+	if !bytes.Equal(firstHash[:firstPartHashLength], expectedHash) {
 		return nil, errors.New("parts do not connect")
 	}
 
+	addrStartIdx := len(f) - AddressLength
+
 	var dst []byte
 	// TODO this is not supper efficient
-	dst = append(dst, f...)
+	dst = append(dst, f[:addrStartIdx]...) // strip off the submitter address
 	dst = append(dst, s[:hashStartIdx]...)
+
+	if len(dst) != RawCheckpointLength {
+		return nil, errors.New("invalid raw checkpoint data length")
+	}
 
 	return dst, nil
 }
