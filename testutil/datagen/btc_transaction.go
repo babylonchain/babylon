@@ -7,8 +7,10 @@ import (
 	"math"
 	"math/rand"
 	"runtime"
+	"time"
 
 	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -210,6 +212,12 @@ func createSpendOpReturnTx(spend *spendableOut, fee btcutil.Amount, data []byte)
 	return spendTx
 }
 
+func CreatOpReturnTransaction(babylonData []byte) *wire.MsgTx {
+	out := makeSpendableOutWithRandOutPoint(1000)
+	tx := createSpendOpReturnTx(&out, lowFee, babylonData)
+	return tx
+}
+
 type BlockCreationResult struct {
 	HeaderBytes  bbn.BTCHeaderBytes
 	Transactions []string
@@ -270,4 +278,48 @@ func CreateBlock(
 	}
 
 	return &res
+}
+
+type BtcHeaderWithProof struct {
+	HeaderBytes bbn.BTCHeaderBytes
+	SpvProof    *btcctypes.BTCSpvProof
+}
+
+func CreateBlockWithTransaction(
+	ph *wire.BlockHeader,
+	babylonData []byte,
+) *BtcHeaderWithProof {
+
+	var transactions []*wire.MsgTx
+	// height does not matter here, as it is used only for calculation of reward
+	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))
+	transactions = append(transactions, CreatOpReturnTransaction(babylonData))
+
+	randHeader := GenRandomBtcdHeader()
+	randHeader.Version = ph.Version
+	randHeader.PrevBlock = ph.BlockHash()
+	randHeader.Bits = ph.Bits
+	randHeader.Timestamp = ph.Timestamp.Add(50 * time.Second)
+	randHeader.MerkleRoot = calcMerkleRoot(transactions)
+	SolveBlock(randHeader)
+
+	var txBytes [][]byte
+	for _, tx := range transactions {
+		buf := bytes.NewBuffer(make([]byte, 0, tx.SerializeSize()))
+		_ = tx.Serialize(buf)
+		txBytes = append(txBytes, buf.Bytes())
+	}
+
+	headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(randHeader)
+
+	proof, err := btcctypes.SpvProofFromHeaderAndTransactions(headerBytes.MustMarshal(), txBytes, 1)
+
+	if err != nil {
+		panic("couldnt calculate prroof")
+	}
+
+	return &BtcHeaderWithProof{
+		HeaderBytes: headerBytes,
+		SpvProof:    proof,
+	}
 }
