@@ -360,12 +360,8 @@ func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 
 	var dst []byte
 	// TODO this is not supper efficient
-	dst = append(dst, f...) // strip off the submitter address
+	dst = append(dst, f...)
 	dst = append(dst, s[:hashStartIdx]...)
-
-	if len(dst) != RawBTCCheckpointLength {
-		return nil, errors.New("invalid raw checkpoint data length")
-	}
 
 	return dst, nil
 }
