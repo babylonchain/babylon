@@ -22,6 +22,14 @@ type BabylonData struct {
 	Index uint8
 }
 
+type RawBtcCheckpoint struct {
+	Epoch            uint64
+	LastCommitHash   []byte
+	BitMap           []byte
+	SubmitterAddress []byte
+	BlsSig           []byte
+}
+
 const (
 	TagLength = 4
 
@@ -49,8 +57,10 @@ const (
 
 	BlsSigLength = 48
 
+	EpochLength = 8
+
 	// 8 bytes are for 64bit unsigned epoch number
-	firstPartLength = headerLength + LastCommitHashLength + AddressLength + 8 + BitMapLength
+	firstPartLength = headerLength + LastCommitHashLength + AddressLength + EpochLength + BitMapLength
 
 	secondPartLength = headerLength + BlsSigLength + hashLength
 
@@ -293,6 +303,9 @@ func IsBabylonCheckpointData(
 	return nil, errors.New("not valid babylon data")
 }
 
+// ConnectParts receives two parts of babylon op return, data check if they
+// are connected and return flat byte array which should represent:
+// epoch || last_commit_Hash || bitmap || submitter_address || blsSig
 func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 	if version > CurrentVersion {
 		return nil, errors.New("not supported version")
@@ -322,4 +335,30 @@ func ConnectParts(version FormatVersion, f []byte, s []byte) ([]byte, error) {
 	dst = append(dst, s[:hashStartIdx]...)
 
 	return dst, nil
+}
+
+func DecodeRawBtcCheckpoint(version FormatVersion, f []byte, s []byte) (*RawBtcCheckpoint, error) {
+	checkpointBytes, err := ConnectParts(version, f, s)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var b bytes.Buffer
+	b.Write(checkpointBytes)
+
+	epochBytes := b.Next(EpochLength)
+	lastCommitHashBytes := b.Next(LastCommitHashLength)
+	bitMapBytes := b.Next(BitMapLength)
+	submitterAddressBytes := b.Next(AddressLength)
+	blsSigBytes := b.Next(BlsSigLength)
+
+	return &RawBtcCheckpoint{
+		Epoch:            binary.BigEndian.Uint64(epochBytes),
+		LastCommitHash:   lastCommitHashBytes,
+		BitMap:           bitMapBytes,
+		SubmitterAddress: submitterAddressBytes,
+		BlsSig:           blsSigBytes,
+	}, nil
+
 }
