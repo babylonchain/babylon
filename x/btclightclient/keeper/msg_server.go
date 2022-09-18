@@ -16,9 +16,9 @@ type msgServer struct {
 	k Keeper
 }
 
-const BTCDifficultyMultiplier = 5 // TODO: get from config file
-
-func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader) (*types.MsgInsertHeaderResponse, error) {
+func MsgInsertHeaderWrapped(ctx context.Context, k Keeper, msg *types.MsgInsertHeader,
+	powLimit big.Int, reduceMinDifficulty bool, retargetAdjustmentFactor int64, powCheck bool,
+) (*types.MsgInsertHeaderResponse, error) {
 	// Perform the checks that checkBlockHeaderContext of btcd does
 	// https://github.com/btcsuite/btcd/blob/master/blockchain/validate.go#L644
 	// We skip the time, checkpoint, and version checks
@@ -38,7 +38,7 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 
 	parentHash := msg.Header.ParentHash()
 	// Retrieve parent
-	parent, err := m.k.headersState(sdkCtx).GetHeaderByHash(parentHash)
+	parent, err := k.headersState(sdkCtx).GetHeaderByHash(parentHash)
 	// parent does not exist
 	if err != nil {
 		return nil, err
@@ -123,18 +123,22 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 		  does BTC mainnet work to add clutter on the BBN chain, then we can tolerate that.
 	*/
 
-	powLimit := bbn.GetGlobalPowLimit()
-	msgBlock := &wire.MsgBlock{Header: *(msg.Header.ToBlockHeader())}
-	block := btcutil.NewBlock(msgBlock)
-	blockchain.CheckProofOfWork(block, &powLimit)
-	if !bbn.GetGlobalReduceMinDifficulty() {
+	if powCheck {
+		msgBlock := &wire.MsgBlock{Header: *(msg.Header.ToBlockHeader())}
+		block := btcutil.NewBlock(msgBlock)
+		err = blockchain.CheckProofOfWork(block, &powLimit)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !reduceMinDifficulty {
 		// The new block will either be the first block of a recalculation event
 		// which happens every 2,016 blocks or a normal block.
 		// In the second case, it's difficulty should be exactly the same as it's parent
 		// while in the second case it should have a maximum difference of a factor of 4 from it
 		// See: https://github.com/bitcoinbook/bitcoinbook/blob/develop/ch10.asciidoc#retargeting-to-adjust-difficulty
 		// We consolidate those into a single check.
-		retargetAdjustmentFactor := bbn.GetGlobalRetargetAdjustmentFactor()
 		oldDifficulty := blockchain.CompactToBig(parent.Header.Bits())
 		currentDifficulty := blockchain.CompactToBig(msg.Header.Bits())
 		maxCurrentDifficulty := new(big.Int).Mul(oldDifficulty, big.NewInt(retargetAdjustmentFactor))
@@ -145,11 +149,18 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	}
 
 	// All good, insert the header
-	err = m.k.InsertHeader(sdkCtx, msg.Header)
+	err = k.InsertHeader(sdkCtx, msg.Header)
 	if err != nil {
 		return nil, err
 	}
 	return &types.MsgInsertHeaderResponse{}, nil
+}
+
+func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader) (*types.MsgInsertHeaderResponse, error) {
+	powLimit := bbn.GetGlobalPowLimit()
+	reduceMinDifficulty := bbn.GetGlobalReduceMinDifficulty()
+	retargetAdjustmentFactor := bbn.GetGlobalRetargetAdjustmentFactor()
+	return MsgInsertHeaderWrapped(ctx, m.k, msg, powLimit, reduceMinDifficulty, retargetAdjustmentFactor, true)
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface
