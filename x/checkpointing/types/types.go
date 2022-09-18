@@ -168,21 +168,12 @@ func (lch *LastCommitHash) ValidateBasic() error {
 	return nil
 }
 
-func BytesToRawCkpt(cdc codec.BinaryCodec, bz []byte) (*RawCheckpoint, error) {
-	ckpt := new(RawCheckpoint)
-	err := cdc.Unmarshal(bz, ckpt)
-	return ckpt, err
-}
-
 func RawCkptToBytes(cdc codec.BinaryCodec, ckpt *RawCheckpoint) []byte {
 	return cdc.MustMarshal(ckpt)
 }
 
 // ValidateBasic does sanity checks on a raw checkpoint
 func (ckpt RawCheckpoint) ValidateBasic() error {
-	if ckpt.EpochNum == 0 {
-		return ErrInvalidRawCheckpoint.Wrapf("epoch number cannot be zero")
-	}
 	if ckpt.Bitmap == nil {
 		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
 	}

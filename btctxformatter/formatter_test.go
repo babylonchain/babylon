@@ -1,6 +1,7 @@
 package btctxformatter
 
 import (
+	"bytes"
 	"crypto/rand"
 	"testing"
 )
@@ -24,14 +25,17 @@ func FuzzEncodingDecoding(f *testing.F) {
 
 		babylonTag := BabylonTag(tag[:TagLength])
 
+		rawBTCCkpt := &RawBtcCheckpoint{
+			Epoch:            epoch,
+			LastCommitHash:   lastCommitHash,
+			BitMap:           bitMap,
+			SubmitterAddress: blsSig,
+			BlsSig:           address,
+		}
 		firstHalf, secondHalf, err := EncodeCheckpointData(
 			babylonTag,
 			CurrentVersion,
-			epoch,
-			lastCommitHash,
-			bitMap,
-			blsSig,
-			address,
+			rawBTCCkpt,
 		)
 
 		if err != nil {
@@ -59,14 +63,30 @@ func FuzzEncodingDecoding(f *testing.F) {
 			t.Errorf("Valid data should be properly decoded")
 		}
 
-		data, err := ConnectParts(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
-
+		ckptData, err := ConnectParts(CurrentVersion, decodedFirst.Data, decodedSecond.Data)
 		if err != nil {
 			t.Errorf("Parts should match. Error: %v", err)
 		}
 
-		if len(data) != ApplicationDataLength {
-			t.Errorf("Not expected application level data length. Have: %d, want: %d", len(data), ApplicationDataLength)
+		ckpt, err := DecodeRawCheckpoint(CurrentVersion, ckptData)
+		if err != nil {
+			t.Errorf("Failed to unmarshal. Error: %v", err)
+		}
+
+		if ckpt.Epoch != epoch {
+			t.Errorf("Epoch should match. Expected: %v. Got: %v", epoch, ckpt.Epoch)
+		}
+
+		if !bytes.Equal(lastCommitHash, ckpt.LastCommitHash) {
+			t.Errorf("LastCommitHash should match. Expected: %v. Got: %v", lastCommitHash, ckpt.LastCommitHash)
+		}
+
+		if !bytes.Equal(bitMap, ckpt.BitMap) {
+			t.Errorf("Bitmap should match. Expected: %v. Got: %v", bitMap, ckpt.BitMap)
+		}
+
+		if !bytes.Equal(blsSig, ckpt.BlsSig) {
+			t.Errorf("BLS signature should match. Expected: %v. Got: %v", blsSig, ckpt.BlsSig)
 		}
 	})
 }

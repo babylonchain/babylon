@@ -104,14 +104,17 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	kDeep := defaultParams.BtcConfirmationDepth
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
+	rawBTCCkpt := &txformat.RawBtcCheckpoint{
+		Epoch:            checkpointData.epoch,
+		LastCommitHash:   checkpointData.lastCommitHash,
+		BitMap:           checkpointData.bitmap,
+		SubmitterAddress: checkpointData.submitterAddress,
+		BlsSig:           checkpointData.blsSig,
+	}
 	data1, data2 := txformat.MustEncodeCheckpointData(
 		txformat.MainTag(),
 		txformat.CurrentVersion,
-		checkpointData.epoch,
-		checkpointData.lastCommitHash,
-		checkpointData.bitmap,
-		checkpointData.blsSig,
-		checkpointData.submitterAddress,
+		rawBTCCkpt,
 	)
 
 	blck1 := dg.CreateBlock(1, 7, 7, data1)
@@ -191,14 +194,17 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	wDeep := defaultParams.CheckpointFinalizationTimeout
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
 
+	rawBTCCkpt := &txformat.RawBtcCheckpoint{
+		Epoch:            checkpointData.epoch,
+		LastCommitHash:   checkpointData.lastCommitHash,
+		BitMap:           checkpointData.bitmap,
+		SubmitterAddress: checkpointData.submitterAddress,
+		BlsSig:           checkpointData.blsSig,
+	}
 	data1, data2 := txformat.MustEncodeCheckpointData(
 		txformat.MainTag(),
 		txformat.CurrentVersion,
-		checkpointData.epoch,
-		checkpointData.lastCommitHash,
-		checkpointData.bitmap,
-		checkpointData.blsSig,
-		checkpointData.submitterAddress,
+		rawBTCCkpt,
 	)
 
 	blck1 := dg.CreateBlock(1, 7, 7, data1)

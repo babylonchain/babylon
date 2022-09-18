@@ -1,6 +1,8 @@
 package types
 
 import (
+	"github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 )
@@ -39,4 +41,47 @@ func (m BlsSigHash) Bytes() []byte {
 
 func (m RawCkptHash) Bytes() []byte {
 	return m
+}
+
+func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {
+	btcCkpt, err := btctxformatter.DecodeRawCheckpoint(btctxformatter.CurrentVersion, btcCkptBytes)
+	var lch LastCommitHash
+	err = lch.Unmarshal(btcCkpt.LastCommitHash)
+	if err != nil {
+		return nil, err
+	}
+	var blsSig bls12381.Signature
+	err = blsSig.Unmarshal(btcCkpt.BlsSig)
+	if err != nil {
+		return nil, err
+	}
+	rawCheckpoint := &RawCheckpoint{
+		EpochNum:       btcCkpt.Epoch,
+		LastCommitHash: &lch,
+		Bitmap:         btcCkpt.BitMap,
+		BlsMultiSig:    &blsSig,
+	}
+
+	return rawCheckpoint, nil
+}
+
+func FromRawCkptToBTCCkpt(rawCkpt *RawCheckpoint, address []byte) (*btctxformatter.RawBtcCheckpoint, error) {
+	lchBytes, err := rawCkpt.LastCommitHash.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	blsSigBytes, err := rawCkpt.BlsMultiSig.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	btcCkpt := &btctxformatter.RawBtcCheckpoint{
+		Epoch:            rawCkpt.EpochNum,
+		LastCommitHash:   lchBytes,
+		BitMap:           rawCkpt.Bitmap,
+		SubmitterAddress: address,
+		BlsSig:           blsSigBytes,
+	}
+
+	return btcCkpt, nil
 }

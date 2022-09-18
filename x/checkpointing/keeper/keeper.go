@@ -156,8 +156,8 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 // the raw checkpoint and decides whether it is an invalid checkpoint or a
 // conflicting checkpoint. A conflicting checkpoint indicates the existence
 // of a fork
-func (k Keeper) CheckpointEpoch(ctx sdk.Context, rawCkptBytes []byte) (uint64, error) {
-	ckptWithMeta, err := k.verifyCkptBytes(ctx, rawCkptBytes)
+func (k Keeper) CheckpointEpoch(ctx sdk.Context, btcCkptBytes []byte) (uint64, error) {
+	ckptWithMeta, err := k.verifyCkptBytes(ctx, btcCkptBytes)
 	if err != nil {
 		return 0, err
 	}
@@ -169,8 +169,8 @@ func (k Keeper) CheckpointEpoch(ctx sdk.Context, rawCkptBytes []byte) (uint64, e
 // the raw checkpoint and decides whether it is an invalid checkpoint or a
 // conflicting checkpoint. A conflicting checkpoint indicates the existence
 // of a fork
-func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCkptBytes []byte) (*types.RawCheckpointWithMeta, error) {
-	ckpt, err := types.BytesToRawCkpt(k.cdc, rawCkptBytes)
+func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.RawCheckpointWithMeta, error) {
+	ckpt, err := types.FromBTCCkptBytesToRawCkpt(btcCkptBytes)
 	if err != nil {
 		return nil, err
 	}

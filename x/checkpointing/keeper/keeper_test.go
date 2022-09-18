@@ -52,32 +52,6 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 }
 
 /*
-	FuzzKeeperCheckpointEpoch checks
-	1. the rawCheckpointBytes is not valid, (0, err) should be returned
-	2. the rawCheckpointBytes is valid, the correct epoch number should be returned
-*/
-func FuzzKeeperCheckpointEpoch(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		ckptKeeper, ctx, cdc := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
-
-		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
-		ckptBytes := types.RawCkptToBytes(cdc, mockCkptWithMeta.Ckpt)
-		epoch, err := ckptKeeper.CheckpointEpoch(ctx, ckptBytes)
-		require.Equal(t, uint64(0), epoch)
-		require.Errorf(t, err, "invalid checkpoint bytes")
-		_ = ckptKeeper.AddRawCheckpoint(
-			ctx,
-			mockCkptWithMeta,
-		)
-		epoch, err = ckptKeeper.CheckpointEpoch(ctx, ckptBytes)
-		require.NoError(t, err)
-		require.Equal(t, mockCkptWithMeta.Ckpt.EpochNum, epoch)
-	})
-}
-
-/*
 	FuzzKeeperSetCheckpointStatus checks
 	if the checkpoint status is not correct, the status will not be changed
 */
