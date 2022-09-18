@@ -32,23 +32,26 @@ message EventSlashThreshold {
 }
 
 message EventWrappedDelegate {
-    string validator_address = 1;
-    uint64 amount = 2;
-    string denom = 3;
-    uint64 epoch_boundary = 4;
-}
-
-message EventWrappedUndelegate {
-    string validator_address = 1;
-    uint64 amount = 2;
-    string denom = 3;
-    uint64 epoch_boundary = 4;
-}
-
-message EventWrappedBeginRedelegate {
-    string source_validator_address = 1;
-    string destination_validator_address = 2;
+    string delegator_address = 1;
+    string validator_address = 2;
     uint64 amount = 3;
     string denom = 4;
     uint64 epoch_boundary = 5;
+}
+
+message EventWrappedUndelegate {
+    string delegator_address = 1;
+    string validator_address = 2;
+    uint64 amount = 3;
+    string denom = 4;
+    uint64 epoch_boundary = 5;
+}
+
+message EventWrappedBeginRedelegate {
+    string delegator_address = 1;
+    string source_validator_address = 2;
+    string destination_validator_address = 3;
+    uint64 amount = 4;
+    string denom = 5;
+    uint64 epoch_boundary = 6;
 }
