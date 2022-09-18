@@ -21,8 +21,10 @@ var (
 type SupportedBtcNetwork string
 
 type BtcConfig struct {
-	powLimit      *big.Int
-	checkPointTag txformat.BabylonTag
+	powLimit                 *big.Int
+	checkPointTag            txformat.BabylonTag
+	retargetAdjustmentFactor int64
+	reduceMinDifficulty      bool
 }
 
 const (
@@ -31,7 +33,7 @@ const (
 	BtcSimnet  SupportedBtcNetwork = "simnet"
 )
 
-func parsePowLimit(opts servertypes.AppOptions) *big.Int {
+func getParams(opts servertypes.AppOptions) chaincfg.Params {
 	valueInterface := opts.Get("btc-config.network")
 
 	if valueInterface == nil {
@@ -41,18 +43,30 @@ func parsePowLimit(opts servertypes.AppOptions) *big.Int {
 	network, err := cast.ToStringE(valueInterface)
 
 	if err != nil {
-		panic("Btcoin netowrk config should be valid string")
+		panic("Bitcoin netowrk config should be valid string")
 	}
 
 	if network == string(BtcMainnet) {
-		return chaincfg.MainNetParams.PowLimit
+		return chaincfg.MainNetParams
 	} else if network == string(BtcTestnet) {
-		return chaincfg.TestNet3Params.PowLimit
+		return chaincfg.TestNet3Params
 	} else if network == string(BtcSimnet) {
-		return chaincfg.SimNetParams.PowLimit
+		return chaincfg.SimNetParams
 	} else {
-		panic("Bicoin network should be one of [mainet, testnet, simnet]")
+		panic("Bitcoin network should be one of [mainet, testnet, simnet]")
 	}
+}
+
+func parsePowLimit(opts servertypes.AppOptions) *big.Int {
+	return getParams(opts).PowLimit
+}
+
+func parseRetargetAdjustmentFactor(opts servertypes.AppOptions) int64 {
+	return getParams(opts).RetargetAdjustmentFactor
+}
+
+func parseReduceMinDifficulty(opts servertypes.AppOptions) bool {
+	return getParams(opts).ReduceMinDifficulty
 }
 
 func parseCheckpointTag(opts servertypes.AppOptions) txformat.BabylonTag {
@@ -80,9 +94,13 @@ func parseCheckpointTag(opts servertypes.AppOptions) txformat.BabylonTag {
 func ParseBtcOptionsFromConfig(opts servertypes.AppOptions) BtcConfig {
 	powLimit := parsePowLimit(opts)
 	tag := parseCheckpointTag(opts)
+	retargetAdjustmentFactor := parseRetargetAdjustmentFactor(opts)
+	reduceMinDifficulty := parseReduceMinDifficulty(opts)
 	return BtcConfig{
-		powLimit:      powLimit,
-		checkPointTag: tag,
+		powLimit:                 powLimit,
+		retargetAdjustmentFactor: retargetAdjustmentFactor,
+		reduceMinDifficulty:      reduceMinDifficulty,
+		checkPointTag:            tag,
 	}
 }
 
@@ -100,6 +118,14 @@ func (c *BtcConfig) CheckpointTag() txformat.BabylonTag {
 	return c.checkPointTag
 }
 
+func (c *BtcConfig) RetargetAdjustmentFactor() int64 {
+	return c.retargetAdjustmentFactor
+}
+
+func (c *BtcConfig) ReduceMinDifficulty() bool {
+	return c.reduceMinDifficulty
+}
+
 func GetGlobalPowLimit() big.Int {
 	// We are making copy of pow limit to avoid anyone changing globally configured
 	// powlimit. If it start slowing things down, due to multiple copies needed to
@@ -110,4 +136,12 @@ func GetGlobalPowLimit() big.Int {
 
 func GetGlobalCheckPointTag() txformat.BabylonTag {
 	return btcConfig.checkPointTag
+}
+
+func GetGlobalRetargetAdjustmentFactor() int64 {
+	return btcConfig.RetargetAdjustmentFactor()
+}
+
+func GetGlobalReduceMinDifficulty() bool {
+	return btcConfig.ReduceMinDifficulty()
 }
