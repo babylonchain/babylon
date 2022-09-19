@@ -11,6 +11,7 @@ import (
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
+	btccheckpoint "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -92,11 +93,16 @@ func (b *TestTxSender) buildTx(msg ctypes.Msg, fees string, gas uint64, seqNr ui
 }
 
 func (b *TestTxSender) insertNewEmptyHeader(currentTip *lightclient.BTCHeaderInfo) (*txservice.BroadcastTxResponse, error) {
-	childHeaderHex := generateEmptyChildHeaderHexBytes(currentTip.Header.ToBlockHeader())
+	childHeader := generateEmptyChildHeaderBytes(currentTip.Header.ToBlockHeader())
+
+	return b.insertNewHeader(childHeader)
+}
+
+func (b *TestTxSender) insertNewHeader(headerBytes bbn.BTCHeaderBytes) (*txservice.BroadcastTxResponse, error) {
 
 	address := b.getSenderAddress()
 
-	msg, err := lightclient.NewMsgInsertHeader(address, childHeaderHex)
+	msg, err := lightclient.NewMsgInsertHeader(address, headerBytes.MarshalHex())
 
 	if err != nil {
 		panic("creating new header message must success ")
@@ -111,6 +117,31 @@ func (b *TestTxSender) insertNewEmptyHeader(currentTip *lightclient.BTCHeaderInf
 	//TODO 3stake and 300000 should probably not be hardcoded by taken from tx
 	//simulation. For now this enough to pay for insert header transaction.
 	txBytes := b.buildTx(msg, "3stake", 300000, acc.GetSequence())
+
+	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
+
+	sender := txservice.NewServiceClient(b.Conn)
+
+	return sender.BroadcastTx(context.Background(), &req)
+}
+
+func (b *TestTxSender) insertSpvProof(p1 *btccheckpoint.BTCSpvProof, p2 *btccheckpoint.BTCSpvProof) (*txservice.BroadcastTxResponse, error) {
+	address := b.getSenderAddress()
+
+	msg := btccheckpoint.MsgInsertBTCSpvProof{
+		Submitter: address.String(),
+		Proofs:    []*btccheckpoint.BTCSpvProof{p1, p2},
+	}
+
+	acc, err := b.getAccount()
+
+	if err != nil {
+		panic("retrieving sending account must succeed")
+	}
+
+	//TODO 3stake and 300000 should probably not be hardcoded by taken from tx
+	//simulation. For now this enough to pay for insert header transaction.
+	txBytes := b.buildTx(&msg, "3stake", 300000, acc.GetSequence())
 
 	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
 
@@ -159,9 +190,9 @@ func generateEmptyChildHeader(bh *wire.BlockHeader) *wire.BlockHeader {
 	return randHeader
 }
 
-func generateEmptyChildHeaderHexBytes(bh *wire.BlockHeader) string {
+func generateEmptyChildHeaderBytes(bh *wire.BlockHeader) bbn.BTCHeaderBytes {
 	childHeader := generateEmptyChildHeader(bh)
-	return bbn.NewBTCHeaderBytesFromBlockHeader(childHeader).MarshalHex()
+	return bbn.NewBTCHeaderBytesFromBlockHeader(childHeader)
 }
 
 // TODO following helpers could probably be generalized by taking function

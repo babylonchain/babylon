@@ -12,8 +12,11 @@ import (
 	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	ref "github.com/cosmos/cosmos-sdk/client/grpc/reflection"
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -205,7 +208,7 @@ func TestSendTx(t *testing.T) {
 	// which may cause header tx to fail.
 	// TODO: Create separate account for sending transactions to avoid race
 	// conditions with validator acounts.
-	waitForBlock(clients, 15)
+	waitForBlock(clients, 14)
 
 	// TODO fix hard coded paths
 	node0dataPath := "../.testnets/node0/babylond"
@@ -245,4 +248,173 @@ func TestSendTx(t *testing.T) {
 	if tip2.Height != tip1.Height+1 {
 		t.Fatalf("Light client should progress by 1 one block")
 	}
+}
+
+func getCheckpoint(t *testing.T, conn *grpc.ClientConn, epoch uint64) *checkpointingtypes.RawCheckpointWithMeta {
+	queryCheckpoint := checkpointingtypes.NewQueryClient(conn)
+
+	res, err := queryCheckpoint.RawCheckpoint(
+		context.Background(),
+		checkpointingtypes.NewQueryRawCheckpointRequest(epoch),
+	)
+
+	if err != nil {
+		t.Fatalf("Failed to retrieve epoch %d", epoch)
+	}
+
+	return res.RawCheckpoint
+}
+
+func TestSubmitCheckpoint(t *testing.T) {
+	node0dataPath := "../.testnets/node0/babylond"
+	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
+
+	// We are at least on 2 epoch due to `TestNodeProgress` test. At this point
+	// checkpoint for epoch 1 should already be sealed
+	testEpoch := uint64(1)
+
+	sender, err := NewTestTxSender(node0dataPath, node0genesisPath, clients[0])
+
+	if err != nil {
+		panic("failed to init sender")
+	}
+
+	rawCheckpoint := getCheckpoint(t, clients[0], testEpoch)
+
+	if rawCheckpoint.Status != checkpointingtypes.Sealed {
+		t.Fatalf("Expected checkpoint for epoch %d to be Sealed", testEpoch)
+	}
+
+	rawBtcCheckpoint, err := checkpointingtypes.FromRawCkptToBTCCkpt(
+		rawCheckpoint.Ckpt,
+		sender.getSenderAddress().Bytes(),
+	)
+
+	if err != nil {
+		t.Fatalf("Could not create raw btc checkpoint from raw chekpoint")
+	}
+
+	p1, p2 := txformat.MustEncodeCheckpointData(
+		txformat.BabylonTag(txformat.DefautTestTagStr),
+		txformat.CurrentVersion,
+		rawBtcCheckpoint,
+	)
+
+	currentTip, err := sender.getBtcTip()
+
+	if err != nil {
+		t.Fatalf("Could not retrieve btc tip")
+	}
+
+	firstSubmission := datagen.CreateBlockWithTransaction(currentTip.Header.ToBlockHeader(), p1)
+
+	secondSubmission := datagen.CreateBlockWithTransaction(firstSubmission.HeaderBytes.ToBlockHeader(), p2)
+
+	// first insert all headers
+	hresp1, err := sender.insertNewHeader(firstSubmission.HeaderBytes)
+
+	if err != nil {
+		t.Fatalf("Could not insert first header")
+	}
+
+	_, err = WaitBtcForHeight(clients[0], currentTip.Height+1)
+
+	if err != nil {
+		t.Log(hresp1.TxResponse)
+		t.Fatalf("failed waiting for btc lightclient block")
+	}
+
+	hresp2, err := sender.insertNewHeader(secondSubmission.HeaderBytes)
+
+	if err != nil {
+		t.Fatalf("Could not insert second header")
+	}
+
+	_, err = WaitBtcForHeight(clients[0], currentTip.Height+2)
+
+	if err != nil {
+		t.Log(hresp2.TxResponse)
+		t.Fatalf("failed waiting for btc lightclient block")
+	}
+
+	// At this point light client chain should be 3 long and inserting spv proofs
+	// should succeed
+	checkPointInsertResponse, err := sender.insertSpvProof(firstSubmission.SpvProof, secondSubmission.SpvProof)
+
+	if err != nil {
+		t.Log(checkPointInsertResponse.TxResponse)
+		t.Fatalf("failed to send spv proof")
+	}
+
+	err = WaitForNextBlock(clients[0])
+
+	if err != nil {
+		t.Fatalf("failed to wait for next babylon block")
+	}
+
+	rawCheckpoint = getCheckpoint(t, clients[0], testEpoch)
+
+	if rawCheckpoint.Status != checkpointingtypes.Submitted {
+		t.Fatalf("Expected checkpoint for epoch %d to be submitted", testEpoch)
+	}
+}
+
+func TestConfirmCheckpoint(t *testing.T) {
+	node0dataPath := "../.testnets/node0/babylond"
+	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
+
+	// We are at least on 2 epoch due to `TestNodeProgress` test. At this point
+	// checkpoint for epoch 1 should already be sealed
+	testEpoch := uint64(1)
+
+	sender, err := NewTestTxSender(node0dataPath, node0genesisPath, clients[0])
+
+	if err != nil {
+		panic("failed to init sender")
+	}
+
+	currentTip, err := sender.getBtcTip()
+
+	if err != nil {
+		t.Fatalf("Could not retrieve btc tip")
+	}
+
+	h1 := generateEmptyChildHeaderBytes(currentTip.Header.ToBlockHeader())
+	h2 := generateEmptyChildHeaderBytes(h1.ToBlockHeader())
+
+	// first insert 2 new headers,
+	hresp1, err := sender.insertNewHeader(h1)
+
+	if err != nil {
+		t.Fatalf("Could not insert first header")
+	}
+
+	_, err = WaitBtcForHeight(clients[0], currentTip.Height+1)
+
+	if err != nil {
+		t.Log(hresp1.TxResponse)
+		t.Fatalf("failed waiting for btc lightclient block")
+	}
+
+	hresp2, err := sender.insertNewHeader(h2)
+
+	if err != nil {
+		t.Fatalf("Could not insert second header")
+	}
+
+	_, err = WaitBtcForHeight(clients[0], currentTip.Height+2)
+
+	if err != nil {
+		t.Log(hresp2.TxResponse)
+		t.Fatalf("failed waiting for btc lightclient block")
+	}
+
+	// Btc light client chain has been extended by 2 blocks, it means that our checkpoint
+	// should be confirmed at this point
+	rawCheckpoint := getCheckpoint(t, clients[0], testEpoch)
+
+	if rawCheckpoint.Status != checkpointingtypes.Confirmed {
+		t.Fatalf("Expected checkpoint for epoch %d to be confirmed", testEpoch)
+	}
+
 }
