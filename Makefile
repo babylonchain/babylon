@@ -447,8 +447,7 @@ localnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
 			  testnet init-files --v 4 -o /data \
 			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
-			  --chain-id chain-test \
-				--btc-confirmation-depth 2
+			  --chain-id chain-test --btc-confirmation-depth 2
 	docker-compose up -d
 
 # localnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
