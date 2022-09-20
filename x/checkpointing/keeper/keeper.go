@@ -253,6 +253,7 @@ func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v", ckpt.Ckpt.EpochNum)
 	}
+	// finalise all unbonding validators/delegations in this epoch
 	k.epochingKeeper.ApplyMatureUnbonding(ctx, epoch)
 }
 

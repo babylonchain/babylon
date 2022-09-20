@@ -17,7 +17,7 @@ import (
 // - an unbonding/redelegation becomes mature when its corresponding epoch and all previous epochs have been checkpointed.
 // Triggered by the checkpointing module upon the above condition.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L32-L91)
-func (k *Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
+func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	currHeader := ctx.BlockHeader()
 
 	finalizedEpoch := k.GetHistoricalEpoch(ctx, epochNumber)
@@ -115,7 +115,7 @@ func (k *Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 // * Updates relevant indices.
 // Triggered upon every epoch.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L18-L30)
-func (k *Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.ValidatorUpdate {
+func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.ValidatorUpdate {
 	validatorUpdates, err := k.stk.ApplyAndReturnValidatorSetUpdates(ctx)
 	if err != nil {
 		panic(err)
