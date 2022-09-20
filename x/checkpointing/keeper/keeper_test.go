@@ -1,13 +1,16 @@
 package keeper_test
 
 import (
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/stretchr/testify/require"
 	"math/rand"
 	"testing"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/testutil/mocks"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 /*
@@ -59,7 +62,12 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		ek := mocks.NewMockEpochingKeeper(ctrl)
+		ek.EXPECT().ApplyMatureUnbonding(gomock.Any(), gomock.Any()).Return() // make ApplyMatureUnbonding do nothing
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
 		mockCkptWithMeta.Status = types.Accumulating

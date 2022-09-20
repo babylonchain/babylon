@@ -1,13 +1,14 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/mocks"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
-	"math/rand"
-	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
@@ -54,7 +55,7 @@ func FuzzQueryStatusCount(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
-		ek.EXPECT().GetEpoch(gomock.Any()).Return(epochingtypes.Epoch{EpochNumber: tipEpoch + 1})
+		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch + 1})
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 		sdkCtx := sdk.WrapSDKContext(ctx)
 		expectedCounts := make(map[string]uint64)
