@@ -6,4 +6,14 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
 // Params defines the parameters for the module.
-message Params { option (gogoproto.goproto_stringer) = false; }
+message Params {
+    option (gogoproto.goproto_stringer) = false;
+
+    // retry_sleep_time is the period for which the node sleeps before the first retry
+    // then the time grows exponentially
+    string retry_sleep_time = 1 [ (gogoproto.moretags) = "yaml:\"retry_sleep_time\"" ];
+
+    // max_retry_sleep_time is the maximum time that the node sleeps before a retry
+    // after that it timeouts
+    string max_retry_sleep_time = 2 [ (gogoproto.moretags) = "yaml:\"max_retry_sleep_time\"" ];
+}

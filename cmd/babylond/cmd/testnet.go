@@ -60,6 +60,8 @@ var (
 	flagBtcConfirmationDepth   = "btc-confirmation-depth"
 	flagBtcFinalizationTimeout = "btc-finalization-timeout"
 	flagEpochInterval          = "epoch-interval"
+	flagRetrySleepTime         = "retry-sleep-time"
+	flagMaxRetrySleepTime      = "max-retry-sleep-time"
 	flagBaseBtcHeaderHex       = "btc-base-header"
 	flagBaseBtcHeaderHeight    = "btc-base-header-height"
 	flagMaxActiveValidators    = "max-active-validators"
@@ -101,6 +103,8 @@ Example:
 			// btccheckpoint args
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
 			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
+			retrySleepTime, _ := cmd.Flags().GetString(flagRetrySleepTime)
+			maxRetrySleepTime, _ := cmd.Flags().GetString(flagMaxRetrySleepTime)
 			btcConfirmationDepth, _ := cmd.Flags().GetUint64(flagBtcConfirmationDepth)
 			btcFinalizationTimeout, _ := cmd.Flags().GetUint64(flagBtcFinalizationTimeout)
 			// epoching args
@@ -115,7 +119,7 @@ Example:
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, chainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				maxActiveValidators, btcNetwork, btcCheckpointTag, btcConfirmationDepth, btcFinalizationTimeout,
+				maxActiveValidators, btcNetwork, btcCheckpointTag, retrySleepTime, maxRetrySleepTime, btcConfirmationDepth, btcFinalizationTimeout,
 				epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight,
 			)
 		},
@@ -133,6 +137,8 @@ Example:
 	// btccheckpoint args
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, mainnet")
 	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefautTestTagStr), "Tag to use for Bitcoin checkpoints.")
+	cmd.Flags().String(flagRetrySleepTime, "5s", "Time waited for retry")
+	cmd.Flags().String(flagMaxRetrySleepTime, "5m", "Max time waited for retry")
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
 	// epoch args
@@ -167,6 +173,8 @@ func InitTestnet(
 	maxActiveValidators uint32,
 	btcNetwork string,
 	btcCheckpointTag string,
+	retrySleepTime string,
+	maxRetrySleepTime string,
 	btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64,
 	epochInterval uint64,
@@ -346,6 +354,7 @@ func InitTestnet(
 
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
 		genKeys, numValidators, maxActiveValidators, btcConfirmationDepth, btcFinalizationTimeout,
+		retrySleepTime, maxRetrySleepTime,
 		epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight); err != nil {
 		return err
 	}
@@ -367,6 +376,7 @@ func initGenFiles(
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
 	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
 	maxActiveValidators uint32, btcConfirmationDepth uint64, btcFinalizationTimeout uint64,
+	retrySleepTime string, maxRetrySleepTime string,
 	epochInterval uint64, baseBtcHeaderHex string, baseBtcHeaderHeight uint64,
 ) error {
 
@@ -397,6 +407,8 @@ func initGenFiles(
 	// set the BLS keys in the genesis state
 	var checkpointGenState checkpointingtypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[checkpointingtypes.ModuleName], &checkpointGenState)
+	checkpointGenState.Params.RetrySleepTime = retrySleepTime
+	checkpointGenState.Params.MaxRetrySleepTime = maxRetrySleepTime
 	checkpointGenState.GenesisKeys = genKeys
 	appGenState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&checkpointGenState)
 
