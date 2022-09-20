@@ -434,6 +434,9 @@ func initGenFiles(
 	var stakingGenState stakingtypes.GenesisState
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[stakingtypes.ModuleName], &stakingGenState)
 	stakingGenState.Params.MaxValidators = maxActiveValidators
+	// Babylon should enforce this value to be 0. However Cosmos enforces it to be positive so we use the smallest value 1
+	// Instead the timing of unbonding is decided by checkpoint states
+	stakingGenState.Params.UnbondingTime = 1
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")

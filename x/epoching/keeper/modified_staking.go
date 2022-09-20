@@ -24,17 +24,16 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	if err != nil {
 		panic(err)
 	}
-	epochBoundaryHeader := *finalizedEpoch.LastBlockHeader
+	epochBoundaryHeader := finalizedEpoch.LastBlockHeader
+
+	// temporarily set the header in ctx to be the last header in the finalised epoch
+	ctx = ctx.WithBlockHeader(*epochBoundaryHeader)
 
 	// unbond all mature validators till the epoch boundary from the unbonding queue
-	ctx.WithBlockHeader(epochBoundaryHeader)
 	k.unbondAllMatureValidators(ctx)
-	ctx.WithBlockHeader(currHeader)
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
-	ctx.WithBlockHeader(epochBoundaryHeader)
 	matureUnbonds := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
-	ctx.WithBlockHeader(currHeader)
 	ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations: %v", matureUnbonds))
 
 	// unbond all mature delegations
@@ -67,9 +66,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	}
 
 	// get all mature redelegations till the epoch boundary from the red queue.
-	ctx.WithBlockHeader(epochBoundaryHeader)
 	matureRedelegations := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
-	ctx.WithBlockHeader(currHeader)
 	ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations: %v", matureRedelegations))
 
 	// finish all mature redelegations
@@ -112,6 +109,9 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 			),
 		)
 	}
+
+	// recover the current header in context
+	ctx = ctx.WithBlockHeader(currHeader)
 }
 
 // ApplyAndReturnValidatorSetUpdates applies and return accumulated updates to the bonded validator set, including
@@ -131,7 +131,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.Valida
 	return validatorUpdates
 }
 
-// UnbondAllMatureValidators unbonds all the mature unbonding validators that have finished their unbonding period.
+// unbondAllMatureValidators unbonds all the mature unbonding validators that have finished their unbonding period.
 // In addition, Babylon records the height of unbonding for each mature validator
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/validator.go#L396-L447)
 func (k Keeper) unbondAllMatureValidators(ctx sdk.Context) {

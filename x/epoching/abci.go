@@ -1,6 +1,7 @@
 package epoching
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/babylonchain/babylon/x/epoching/keeper"
@@ -107,6 +108,8 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 
 		// update validator set
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
+		ctx.Logger().Info(fmt.Sprintf("Epoching: validator set update of epoch %d: %v", epoch.EpochNumber, validatorSetUpdate))
+
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epoch.EpochNumber)
 		// emit EndEpoch event
