@@ -3,6 +3,7 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
@@ -252,6 +253,7 @@ func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v", ckpt.Ckpt.EpochNum)
 	}
+	k.epochingKeeper.ApplyMatureUnbonding(ctx, epoch)
 }
 
 func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {

@@ -24,6 +24,7 @@ type EpochingKeeper interface {
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
 	GetValidatorSet(ctx sdk.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64
+	ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64)
 }
 
 // Event Hooks

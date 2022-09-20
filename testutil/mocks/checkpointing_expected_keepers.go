@@ -110,6 +110,18 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 	return m.recorder
 }
 
+// ApplyMatureUnbonding mocks base method.
+func (m *MockEpochingKeeper) ApplyMatureUnbonding(ctx types0.Context, epochNumber uint64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ApplyMatureUnbonding", ctx, epochNumber)
+}
+
+// ApplyMatureUnbonding indicates an expected call of ApplyMatureUnbonding.
+func (mr *MockEpochingKeeperMockRecorder) ApplyMatureUnbonding(ctx, epochNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyMatureUnbonding", reflect.TypeOf((*MockEpochingKeeper)(nil).ApplyMatureUnbonding), ctx, epochNumber)
+}
+
 // EnqueueMsg mocks base method.
 func (m *MockEpochingKeeper) EnqueueMsg(ctx types0.Context, msg types.QueuedMessage) {
 	m.ctrl.T.Helper()

@@ -3,6 +3,7 @@ package babylon.epoching.v1;
 
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
+import "tendermint/types/types.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
@@ -11,6 +12,7 @@ message Epoch {
   uint64 epoch_number = 1;
   uint64 current_epoch_interval = 2;
   uint64 first_block_height = 3;
+  tendermint.types.Header last_block_header = 4;
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
