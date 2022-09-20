@@ -19,7 +19,12 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 	return &msgServer{keeper}
 }
 
-func (m msgServer) isAncestor(ctx sdk.Context, fh *btypes.BTCHeaderHashBytes, sh *btypes.BTCHeaderHashBytes) (bool, error) {
+// sameAncestry checks whether the nodes are equal or are contained in the same chain
+func (m msgServer) sameAncestry(ctx sdk.Context, fh *btypes.BTCHeaderHashBytes, sh *btypes.BTCHeaderHashBytes) (bool, error) {
+	if fh.Eq(sh) {
+		return true, nil
+	}
+
 	isFirstAncestor, err := m.k.IsAncestor(ctx, fh, sh)
 
 	if err != nil {
@@ -64,14 +69,14 @@ func (m msgServer) checkAllHeadersAreKnown(ctx sdk.Context, rawSub *types.RawChe
 	}
 
 	// we have checked earlier that both blocks are known to header light client,
-	// so no need to check err.
-	isAncestor, err := m.isAncestor(ctx, &fh, &sh)
+	// so in case there is an error we should panic.
+	sameAncestry, err := m.sameAncestry(ctx, &fh, &sh)
 
 	if err != nil {
 		panic("Headers which are should have been known to btclight client")
 	}
 
-	if !isAncestor {
+	if !sameAncestry {
 		return types.ErrProvidedHeaderFromDifferentForks
 	}
 
@@ -101,7 +106,7 @@ func (m msgServer) checkHashesAreAncestors(ctx sdk.Context, hs []*btypes.BTCHead
 	}
 
 	for i := 1; i < len(hs); i++ {
-		anc, err := m.isAncestor(ctx, hs[i-1], hs[i])
+		anc, err := m.sameAncestry(ctx, hs[i-1], hs[i])
 
 		if err != nil {
 			// TODO: Light client lost knowledge of one of the chekpoint hashes.
@@ -139,8 +144,8 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 		if checkHashesFromOneBlock(hs) {
 			fh := rawSub.GetFirstBlockHash()
 			// all the hashes are from the same block, we only need to check if firstHash
-			// of new submission is ancestor of this one hash
-			anc, err := m.isAncestor(ctx, hs[0], &fh)
+			// of new submission is a descendant of this one hash
+			anc, err := m.sameAncestry(ctx, hs[0], &fh)
 			if err != nil {
 				// TODO: light client lost knowledge of blockhash from previous epoch
 				// (we know that this is not rawSub as we checked that earlier)
@@ -162,21 +167,26 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 				continue
 			}
 
-			lastHashFromSavedCheckpoint := hs[len(hs)-1]
-
+			// There might be a submission for a previous epoch that was made on
+			// a later BTC block. We want at least one ancestor of the first hash
+			// in the canonical chain.
 			fh := rawSub.GetFirstBlockHash()
 
-			// do not check err as all those hashes were checked in previous validation steps
-			anc, err := m.isAncestor(ctx, lastHashFromSavedCheckpoint, &fh)
+			for _, h := range hs {
+				// Those hashes were all checked in previous validation steps
+				// If there is an error, panic
+				anc, err := m.sameAncestry(ctx, h, &fh)
 
-			if err != nil {
-				panic("Unexpected anecestry error, all blocks should have been known at this point")
+				if err != nil {
+					panic("Unexpected anecestry error, all blocks should have been known at this point")
+				}
+
+				if anc {
+					// found ancestry stop checking
+					return true
+				}
 			}
 
-			if anc {
-				// found ancestry stop checking
-				return true
-			}
 		}
 	}
 
