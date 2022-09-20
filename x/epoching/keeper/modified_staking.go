@@ -20,8 +20,11 @@ import (
 func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	currHeader := ctx.BlockHeader()
 
-	finalizedEpoch := k.GetHistoricalEpoch(ctx, epochNumber)
-	epochBoundaryHeader := *(finalizedEpoch.LastBlockHeader)
+	finalizedEpoch, err := k.GetHistoricalEpoch(ctx, epochNumber)
+	if err != nil {
+		panic(err)
+	}
+	epochBoundaryHeader := *finalizedEpoch.LastBlockHeader
 
 	// unbond all mature validators till the epoch boundary from the unbonding queue
 	ctx.WithBlockHeader(epochBoundaryHeader)

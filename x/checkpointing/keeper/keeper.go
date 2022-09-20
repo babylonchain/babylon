@@ -302,7 +302,7 @@ func (k Keeper) GetBlsPubKey(ctx sdk.Context, address sdk.ValAddress) (bls12381.
 	return k.RegistrationState(ctx).GetBlsPubKey(address)
 }
 
-func (k Keeper) GetEpoch(ctx sdk.Context) epochingtypes.Epoch {
+func (k Keeper) GetEpoch(ctx sdk.Context) *epochingtypes.Epoch {
 	return k.epochingKeeper.GetEpoch(ctx)
 }
 

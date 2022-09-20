@@ -16,6 +16,11 @@ service Query {
     option (google.api.http).get = "/babylon/epoching/v1/params";
   }
 
+  // EpochInfo queries the information of a given epoch
+  rpc EpochInfo(QueryEpochInfoRequest) returns (QueryEpochInfoResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}/epoch_info";
+  }
+
   // CurrentEpoch queries the current epoch
   rpc CurrentEpoch(QueryCurrentEpochRequest) returns (QueryCurrentEpochResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/current_epoch";
@@ -49,6 +54,14 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   babylon.epoching.v1.Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+message QueryEpochInfoRequest {
+  uint64 epoch_num = 1;
+}
+
+message QueryEpochInfoResponse { 
+  babylon.epoching.v1.Epoch epoch = 1;
 }
 
 // QueryCurrentEpochRequest is the request type for the Query/CurrentEpoch RPC method

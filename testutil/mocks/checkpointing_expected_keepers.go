@@ -135,10 +135,10 @@ func (mr *MockEpochingKeeperMockRecorder) EnqueueMsg(ctx, msg interface{}) *gomo
 }
 
 // GetEpoch mocks base method.
-func (m *MockEpochingKeeper) GetEpoch(ctx types0.Context) types.Epoch {
+func (m *MockEpochingKeeper) GetEpoch(ctx types0.Context) *types.Epoch {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEpoch", ctx)
-	ret0, _ := ret[0].(types.Epoch)
+	ret0, _ := ret[0].(*types.Epoch)
 	return ret0
 }
 
