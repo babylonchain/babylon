@@ -18,7 +18,7 @@ import (
 // Triggered by the checkpointing module upon the above condition.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L32-L91)
 func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
-	currHeader := ctx.BlockHeader()
+	currentCtx := ctx // save the current ctx for emitting events and recording lifecycle
 
 	finalizedEpoch, err := k.GetHistoricalEpoch(ctx, epochNumber)
 	if err != nil {
@@ -27,15 +27,15 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	epochBoundaryHeader := finalizedEpoch.LastBlockHeader
 	epochBoundaryHeader.Time = epochBoundaryHeader.Time.Add(k.stk.GetParams(ctx).UnbondingTime) // nullifies the effect of UnbondingTime in staking module
 
-	// temporarily set the header in ctx to be the last header in the finalised epoch
+	// get a ctx with the last header in the finalised epoch
 	ctx = ctx.WithBlockHeader(*epochBoundaryHeader)
 
 	// unbond all mature validators till the epoch boundary from the unbonding queue
-	k.unbondAllMatureValidators(ctx)
+	k.unbondAllMatureValidators(currentCtx, ctx)
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
 	matureUnbonds := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
-	ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations: %v", matureUnbonds))
+	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations: %v", matureUnbonds))
 
 	// unbond all mature delegations
 	for _, dvPair := range matureUnbonds {
@@ -54,9 +54,9 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the validator
-		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_UNBONDED)
+		k.RecordNewDelegationState(currentCtx, delAddr, valAddr, types.BondState_UNBONDED)
 
-		ctx.EventManager().EmitEvent(
+		currentCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				stakingtypes.EventTypeCompleteUnbonding,
 				sdk.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
@@ -68,7 +68,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 	// get all mature redelegations till the epoch boundary from the red queue.
 	matureRedelegations := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
-	ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations: %v", matureRedelegations))
+	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations: %v", matureRedelegations))
 
 	// finish all mature redelegations
 	for _, dvvTriplet := range matureRedelegations {
@@ -96,11 +96,11 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		k.RecordNewDelegationState(ctx, delAddr, valSrcAddr, types.BondState_UNBONDED)
-		k.RecordNewDelegationState(ctx, delAddr, valDstAddr, types.BondState_CREATED)
-		k.RecordNewDelegationState(ctx, delAddr, valDstAddr, types.BondState_BONDED)
+		k.RecordNewDelegationState(currentCtx, delAddr, valSrcAddr, types.BondState_UNBONDED)
+		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_CREATED)
+		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_BONDED)
 
-		ctx.EventManager().EmitEvent(
+		currentCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				stakingtypes.EventTypeCompleteRedelegation,
 				sdk.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
@@ -110,9 +110,6 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 			),
 		)
 	}
-
-	// recover the current header in context
-	ctx = ctx.WithBlockHeader(currHeader)
 }
 
 // ApplyAndReturnValidatorSetUpdates applies and return accumulated updates to the bonded validator set, including
@@ -135,7 +132,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.Valida
 // unbondAllMatureValidators unbonds all the mature unbonding validators that have finished their unbonding period.
 // In addition, Babylon records the height of unbonding for each mature validator
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/validator.go#L396-L447)
-func (k Keeper) unbondAllMatureValidators(ctx sdk.Context) {
+func (k Keeper) unbondAllMatureValidators(currentCtx sdk.Context, ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
 
 	blockTime := ctx.BlockTime()
@@ -185,7 +182,7 @@ func (k Keeper) unbondAllMatureValidators(ctx sdk.Context) {
 				}
 
 				// Babylon modification: record the height when this validator becomes unbonded
-				k.RecordNewValState(ctx, addr, types.BondState_UNBONDED)
+				k.RecordNewValState(currentCtx, addr, types.BondState_UNBONDED)
 			}
 
 			store.Delete(key)
