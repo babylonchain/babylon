@@ -35,6 +35,8 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	ctx.WithBlockHeader(epochBoundaryHeader)
 	matureUnbonds := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
 	ctx.WithBlockHeader(currHeader)
+	ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations: %v", matureUnbonds))
+
 	// unbond all mature delegations
 	for _, dvPair := range matureUnbonds {
 		valAddr, err := sdk.ValAddressFromBech32(dvPair.ValidatorAddress)
@@ -68,6 +70,8 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	ctx.WithBlockHeader(epochBoundaryHeader)
 	matureRedelegations := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
 	ctx.WithBlockHeader(currHeader)
+	ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations: %v", matureRedelegations))
+
 	// finish all mature redelegations
 	for _, dvvTriplet := range matureRedelegations {
 		valSrcAddr, err := sdk.ValAddressFromBech32(dvvTriplet.ValidatorSrcAddress)
@@ -167,6 +171,8 @@ func (k Keeper) unbondAllMatureValidators(ctx sdk.Context) {
 				if !found {
 					panic("validator in the unbonding queue was not found")
 				}
+
+				ctx.Logger().Info(fmt.Sprintf("Epoching: start completing the unbonding validator: %v", addr))
 
 				if !val.IsUnbonding() {
 					panic("unexpected validator in unbonding queue; status was not unbonding")
