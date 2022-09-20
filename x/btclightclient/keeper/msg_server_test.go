@@ -3,6 +3,7 @@ package keeper_test
 import (
 	"context"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/chaincfg"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -41,11 +42,17 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		msgServer, blcKeeper, sdkCtx := setupMsgServer(t)
+		_, blcKeeper, sdkCtx := setupMsgServer(t)
+
+		defaultParams := chaincfg.MainNetParams
+		powLimit := defaultParams.PowLimit
+		reduceMinDifficulty := defaultParams.ReduceMinDifficulty
+		retargetAdjustmentFactor := defaultParams.RetargetAdjustmentFactor
 
 		// If the input message is nil, (nil, error) is returned
 		var msg *types.MsgInsertHeader = nil
-		resp, err := msgServer.InsertHeader(sdkCtx, msg)
+		resp, err := keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
+			retargetAdjustmentFactor, false)
 		if resp != nil {
 			t.Errorf("Nil message returned a response")
 		}
@@ -55,7 +62,8 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 
 		// If the message does not contain a header, (nil, error) is returned.
 		msg = &types.MsgInsertHeader{}
-		resp, err = msgServer.InsertHeader(sdkCtx, msg)
+		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
+			retargetAdjustmentFactor, false)
 		if resp != nil {
 			t.Errorf("Message without a header returned a response")
 		}
@@ -66,7 +74,8 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		// If the header has a parent that does not exist, (nil, error) is returned
 		headerParentNotExists := datagen.GenRandomBTCHeaderInfo().Header
 		msg = &types.MsgInsertHeader{Header: headerParentNotExists}
-		resp, err = msgServer.InsertHeader(sdkCtx, msg)
+		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
+			retargetAdjustmentFactor, false)
 		if resp != nil {
 			t.Errorf("Message with header with non-existent parent returned a response")
 		}
@@ -78,13 +87,13 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		// Construct a tree and insert it into storage
 		tree := genRandomTree(blcKeeper, ctx, uint64(2), 10)
 		parentHeader := tree.RandomNode()
-		// Do not work with different cases. Select a random integer between 1-BTCDifficultyMultiplier+1
-		// 1/BTCDifficultyMultiplier times, the work is going to be invalid
+		// Do not work with different cases. Select a random integer between 1-retargetAdjustmentFactor+1
+		// 1/retargetAdjustmentFactor times, the work is going to be invalid
 		parentHeaderDifficulty := parentHeader.Header.Difficulty()
-		// Avoid BTCDifficultyMultiplier itself, since the many conversions might lead to inconsistencies
-		mul := datagen.RandomInt(keeper.BTCDifficultyMultiplier-1) + 1
+		// Avoid retargetAdjustmentFactor itself, since the many conversions might lead to inconsistencies
+		mul := datagen.RandomInt(int(retargetAdjustmentFactor-1)) + 1
 		if datagen.OneInN(10) { // Give an invalid mul sometimes
-			mul = keeper.BTCDifficultyMultiplier + 1
+			mul = uint64(retargetAdjustmentFactor + 1)
 		}
 		headerDifficultyMul := sdk.NewUintFromBigInt(new(big.Int).Mul(parentHeaderDifficulty, big.NewInt(int64(mul))))
 		headerDifficultyDiv := sdk.NewUintFromBigInt(new(big.Int).Div(parentHeaderDifficulty, big.NewInt(int64(mul))))
@@ -92,27 +101,29 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		// Do tests
 		headerMoreWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyMul)
 		msg = &types.MsgInsertHeader{Header: headerMoreWork.Header}
-		resp, err = msgServer.InsertHeader(sdkCtx, msg)
-		if mul > keeper.BTCDifficultyMultiplier && resp != nil {
+		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
+			retargetAdjustmentFactor, false)
+		if mul > uint64(retargetAdjustmentFactor) && resp != nil {
 			t.Errorf("Invalid header work led to a response getting returned")
 		}
-		if mul > keeper.BTCDifficultyMultiplier && err == nil {
+		if mul > uint64(retargetAdjustmentFactor) && err == nil {
 			t.Errorf("Invalid header work did not lead to an error %d %s %s %s", mul, headerDifficultyMul, headerDifficultyDiv, parentHeaderDifficulty)
 		}
-		if mul <= keeper.BTCDifficultyMultiplier && err != nil {
+		if mul <= uint64(retargetAdjustmentFactor) && err != nil {
 			t.Errorf("Valid header work led to an error")
 		}
 
 		headerLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyDiv)
 		msg = &types.MsgInsertHeader{Header: headerLessWork.Header}
-		resp, err = msgServer.InsertHeader(sdkCtx, msg)
-		if mul > keeper.BTCDifficultyMultiplier && resp != nil {
+		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
+			retargetAdjustmentFactor, false)
+		if mul > uint64(retargetAdjustmentFactor) && resp != nil {
 			t.Errorf("Invalid header work led to a response getting returned")
 		}
-		if mul > keeper.BTCDifficultyMultiplier && err == nil {
+		if mul > uint64(retargetAdjustmentFactor) && err == nil {
 			t.Errorf("Invalid header work did not lead to an error")
 		}
-		if mul <= keeper.BTCDifficultyMultiplier && err != nil {
+		if mul <= uint64(retargetAdjustmentFactor) && err != nil {
 			t.Errorf("Valid header work led to an error %d %s", mul, err)
 		}
 	})
