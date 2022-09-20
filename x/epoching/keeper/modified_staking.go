@@ -25,6 +25,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 		panic(err)
 	}
 	epochBoundaryHeader := finalizedEpoch.LastBlockHeader
+	epochBoundaryHeader.Time = epochBoundaryHeader.Time.Add(k.stk.GetParams(ctx).UnbondingTime) // nullifies the effect of UnbondingTime in staking module
 
 	// temporarily set the header in ctx to be the last header in the finalised epoch
 	ctx = ctx.WithBlockHeader(*epochBoundaryHeader)
