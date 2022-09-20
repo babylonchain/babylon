@@ -10,7 +10,7 @@ const (
 	DefaultEpochNumber = 0
 )
 
-// setEpoch sets epoch number
+// setEpochNumber sets epoch number
 func (k Keeper) setEpochNumber(ctx sdk.Context, epochNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -75,10 +75,10 @@ func (k Keeper) GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*types.
 	return epoch, err
 }
 
-func (k Keeper) FinalizeEpoch(ctx sdk.Context) *types.Epoch {
+func (k Keeper) RecordLastBlockHeader(ctx sdk.Context) *types.Epoch {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
-		panic("FinalizeEpoch can only be invoked at the last block of an epoch")
+		panic("RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
 	header := ctx.BlockHeader()
 	epoch.LastBlockHeader = &header

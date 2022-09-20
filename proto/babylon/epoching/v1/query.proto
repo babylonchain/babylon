@@ -18,7 +18,7 @@ service Query {
 
   // EpochInfo queries the information of a given epoch
   rpc EpochInfo(QueryEpochInfoRequest) returns (QueryEpochInfoResponse) {
-    option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}/epoch_info";
+    option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}";
   }
 
   // CurrentEpoch queries the current epoch

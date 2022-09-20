@@ -64,10 +64,13 @@ func (BondState) EnumDescriptor() ([]byte, []int) {
 }
 
 type Epoch struct {
-	EpochNumber          uint64        `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
-	CurrentEpochInterval uint64        `protobuf:"varint,2,opt,name=current_epoch_interval,json=currentEpochInterval,proto3" json:"current_epoch_interval,omitempty"`
-	FirstBlockHeight     uint64        `protobuf:"varint,3,opt,name=first_block_height,json=firstBlockHeight,proto3" json:"first_block_height,omitempty"`
-	LastBlockHeader      *types.Header `protobuf:"bytes,4,opt,name=last_block_header,json=lastBlockHeader,proto3" json:"last_block_header,omitempty"`
+	EpochNumber          uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	CurrentEpochInterval uint64 `protobuf:"varint,2,opt,name=current_epoch_interval,json=currentEpochInterval,proto3" json:"current_epoch_interval,omitempty"`
+	FirstBlockHeight     uint64 `protobuf:"varint,3,opt,name=first_block_height,json=firstBlockHeight,proto3" json:"first_block_height,omitempty"`
+	// last_block_header is the header of the last block in this epoch.
+	// Babylon needs to remember the last header of each epoch to complete unbonding validators/delegations when a previous epoch's checkpoint is finalised.
+	// The last_block_header field is nil in the epoch's beginning, and is set upon the end of this epoch.
+	LastBlockHeader *types.Header `protobuf:"bytes,4,opt,name=last_block_header,json=lastBlockHeader,proto3" json:"last_block_header,omitempty"`
 }
 
 func (m *Epoch) Reset()         { *m = Epoch{} }

@@ -62,7 +62,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsLastBlock(ctx) {
 		// finalise this epoch, i.e., record the current header
-		k.FinalizeEpoch(ctx)
+		k.RecordLastBlockHeader(ctx)
 		// get all msgs in the msg queue
 		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper
