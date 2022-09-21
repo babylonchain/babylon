@@ -43,6 +43,7 @@ type StakingKeeper interface {
 	ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) sdk.Iterator
 	UnbondingToUnbonded(ctx sdk.Context, validator stakingtypes.Validator) stakingtypes.Validator
 	RemoveValidator(ctx sdk.Context, address sdk.ValAddress)
+	UnbondAllMatureValidators(ctx sdk.Context)
 }
 
 // Event Hooks
