@@ -133,7 +133,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.Valida
 // In addition, Babylon records the height of unbonding for each mature validator
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/validator.go#L396-L447)
 func (k Keeper) unbondAllMatureValidators(currentCtx sdk.Context, ctx sdk.Context) {
-	store := ctx.KVStore(k.storeKey)
+	store := currentCtx.KVStore(k.storeKey)
 
 	blockTime := ctx.BlockTime()
 	blockHeight := ctx.BlockHeight()
