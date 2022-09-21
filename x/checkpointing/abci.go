@@ -35,7 +35,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// emit BeginEpoch event
 		err = ctx.EventManager().EmitTypedEvent(
 			&types.EventCheckpointAccumulating{
-				Checkpoint: ckpt,
+				EpochNum: ckpt.Ckpt.EpochNum,
 			},
 		)
 		if err != nil {

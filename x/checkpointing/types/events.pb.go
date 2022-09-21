@@ -23,7 +23,7 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type EventCheckpointAccumulating struct {
-	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *EventCheckpointAccumulating) Reset()         { *m = EventCheckpointAccumulating{} }
@@ -59,15 +59,15 @@ func (m *EventCheckpointAccumulating) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventCheckpointAccumulating proto.InternalMessageInfo
 
-func (m *EventCheckpointAccumulating) GetCheckpoint() *RawCheckpointWithMeta {
+func (m *EventCheckpointAccumulating) GetEpochNum() uint64 {
 	if m != nil {
-		return m.Checkpoint
+		return m.EpochNum
 	}
-	return nil
+	return 0
 }
 
 type EventCheckpointSealed struct {
-	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *EventCheckpointSealed) Reset()         { *m = EventCheckpointSealed{} }
@@ -103,15 +103,15 @@ func (m *EventCheckpointSealed) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventCheckpointSealed proto.InternalMessageInfo
 
-func (m *EventCheckpointSealed) GetCheckpoint() *RawCheckpointWithMeta {
+func (m *EventCheckpointSealed) GetEpochNum() uint64 {
 	if m != nil {
-		return m.Checkpoint
+		return m.EpochNum
 	}
-	return nil
+	return 0
 }
 
 type EventCheckpointSubmitted struct {
-	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *EventCheckpointSubmitted) Reset()         { *m = EventCheckpointSubmitted{} }
@@ -147,15 +147,15 @@ func (m *EventCheckpointSubmitted) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventCheckpointSubmitted proto.InternalMessageInfo
 
-func (m *EventCheckpointSubmitted) GetCheckpoint() *RawCheckpointWithMeta {
+func (m *EventCheckpointSubmitted) GetEpochNum() uint64 {
 	if m != nil {
-		return m.Checkpoint
+		return m.EpochNum
 	}
-	return nil
+	return 0
 }
 
 type EventCheckpointConfirmed struct {
-	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *EventCheckpointConfirmed) Reset()         { *m = EventCheckpointConfirmed{} }
@@ -191,15 +191,15 @@ func (m *EventCheckpointConfirmed) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventCheckpointConfirmed proto.InternalMessageInfo
 
-func (m *EventCheckpointConfirmed) GetCheckpoint() *RawCheckpointWithMeta {
+func (m *EventCheckpointConfirmed) GetEpochNum() uint64 {
 	if m != nil {
-		return m.Checkpoint
+		return m.EpochNum
 	}
-	return nil
+	return 0
 }
 
 type EventCheckpointFinalized struct {
-	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *EventCheckpointFinalized) Reset()         { *m = EventCheckpointFinalized{} }
@@ -235,15 +235,15 @@ func (m *EventCheckpointFinalized) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventCheckpointFinalized proto.InternalMessageInfo
 
-func (m *EventCheckpointFinalized) GetCheckpoint() *RawCheckpointWithMeta {
+func (m *EventCheckpointFinalized) GetEpochNum() uint64 {
 	if m != nil {
-		return m.Checkpoint
+		return m.EpochNum
 	}
-	return nil
+	return 0
 }
 
 type EventCheckpointForgotten struct {
-	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *EventCheckpointForgotten) Reset()         { *m = EventCheckpointForgotten{} }
@@ -279,11 +279,11 @@ func (m *EventCheckpointForgotten) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventCheckpointForgotten proto.InternalMessageInfo
 
-func (m *EventCheckpointForgotten) GetCheckpoint() *RawCheckpointWithMeta {
+func (m *EventCheckpointForgotten) GetEpochNum() uint64 {
 	if m != nil {
-		return m.Checkpoint
+		return m.EpochNum
 	}
-	return nil
+	return 0
 }
 
 func init() {
@@ -300,23 +300,23 @@ func init() {
 }
 
 var fileDescriptor_9d41a0fa2283f67f = []byte{
-	// 256 bytes of a gzipped FileDescriptorProto
+	// 246 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4a, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0xce, 0x48, 0x4d, 0xce, 0x2e, 0xc8, 0xcf, 0xcc, 0x2b, 0xc9, 0xcc,
 	0x4b, 0xd7, 0x4f, 0x2d, 0x4b, 0xcd, 0x2b, 0x29, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92,
 	0x80, 0xaa, 0xd1, 0x43, 0x51, 0xa3, 0x57, 0x66, 0x28, 0xa5, 0x86, 0x5d, 0x37, 0x82, 0x07, 0x31,
-	0x41, 0x29, 0x8f, 0x4b, 0xda, 0x15, 0x64, 0xa2, 0x33, 0x5c, 0xc2, 0x31, 0x39, 0xb9, 0x34, 0xb7,
-	0x34, 0x27, 0x11, 0xa4, 0x5e, 0xc8, 0x9f, 0x8b, 0x0b, 0xa1, 0x45, 0x82, 0x51, 0x81, 0x51, 0x83,
-	0xdb, 0x48, 0x5f, 0x0f, 0x97, 0xad, 0x7a, 0x41, 0x89, 0xe5, 0x08, 0x83, 0xc2, 0x33, 0x4b, 0x32,
-	0x7c, 0x53, 0x4b, 0x12, 0x83, 0x90, 0x8c, 0x50, 0xca, 0xe0, 0x12, 0x45, 0xb3, 0x2f, 0x38, 0x35,
-	0x31, 0x27, 0x35, 0x85, 0xfa, 0x36, 0x65, 0x73, 0x49, 0xa0, 0xdb, 0x54, 0x9a, 0x94, 0x9b, 0x59,
-	0x52, 0x42, 0x1f, 0xcb, 0x9c, 0xf3, 0xf3, 0xd2, 0x32, 0x8b, 0x72, 0xe9, 0x63, 0x99, 0x5b, 0x66,
-	0x5e, 0x62, 0x4e, 0x66, 0x15, 0x9d, 0x2c, 0xcb, 0x2f, 0x4a, 0xcf, 0x2f, 0x29, 0x49, 0xcd, 0xa3,
-	0xba, 0x65, 0x4e, 0xfe, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c,
-	0xe3, 0x84, 0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7, 0x10, 0x65, 0x9a,
-	0x9e, 0x59, 0x92, 0x51, 0x9a, 0xa4, 0x97, 0x9c, 0x9f, 0xab, 0x0f, 0xb5, 0x20, 0x39, 0x23, 0x31,
-	0x33, 0x0f, 0xc6, 0xd1, 0xaf, 0x40, 0x4b, 0xe9, 0x25, 0x95, 0x05, 0xa9, 0xc5, 0x49, 0x6c, 0xe0,
-	0x54, 0x6e, 0x0c, 0x08, 0x00, 0x00, 0xff, 0xff, 0x2f, 0x76, 0x0b, 0x2a, 0x4d, 0x03, 0x00, 0x00,
+	0x41, 0xc9, 0x8a, 0x4b, 0xda, 0x15, 0x64, 0xa2, 0x33, 0x5c, 0xc2, 0x31, 0x39, 0xb9, 0x34, 0xb7,
+	0x34, 0x27, 0x11, 0xa4, 0x5e, 0x48, 0x9a, 0x8b, 0x33, 0xb5, 0x20, 0x3f, 0x39, 0x23, 0x3e, 0xaf,
+	0x34, 0x57, 0x82, 0x51, 0x81, 0x51, 0x83, 0x25, 0x88, 0x03, 0x2c, 0xe0, 0x57, 0x9a, 0xab, 0x64,
+	0xc2, 0x25, 0x8a, 0xa6, 0x37, 0x38, 0x35, 0x31, 0x27, 0x35, 0x05, 0xbf, 0x2e, 0x73, 0x2e, 0x09,
+	0x74, 0x5d, 0xa5, 0x49, 0xb9, 0x99, 0x25, 0x25, 0xa4, 0x6b, 0x74, 0xce, 0xcf, 0x4b, 0xcb, 0x2c,
+	0xca, 0x25, 0x5d, 0xa3, 0x5b, 0x66, 0x5e, 0x62, 0x4e, 0x66, 0x15, 0x19, 0x1a, 0xf3, 0x8b, 0xd2,
+	0xf3, 0x4b, 0x4a, 0x52, 0xf3, 0xf0, 0x6a, 0x74, 0xf2, 0x3f, 0xf1, 0x48, 0x8e, 0xf1, 0xc2, 0x23,
+	0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x27, 0x3c, 0x96, 0x63, 0xb8, 0xf0, 0x58, 0x8e, 0xe1, 0xc6,
+	0x63, 0x39, 0x86, 0x28, 0xd3, 0xf4, 0xcc, 0x92, 0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d,
+	0x68, 0x14, 0x25, 0x67, 0x24, 0x66, 0xe6, 0xc1, 0x38, 0xfa, 0x15, 0x68, 0x31, 0x56, 0x52, 0x59,
+	0x90, 0x5a, 0x9c, 0xc4, 0x06, 0x8e, 0x2d, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xe6, 0x53,
+	0xc0, 0xe7, 0x15, 0x02, 0x00, 0x00,
 }
 
 func (m *EventCheckpointAccumulating) Marshal() (dAtA []byte, err error) {
@@ -339,17 +339,10 @@ func (m *EventCheckpointAccumulating) MarshalToSizedBuffer(dAtA []byte) (int, er
 	_ = i
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		{
-			size, err := m.Checkpoint.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.EpochNum != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EpochNum))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -374,17 +367,10 @@ func (m *EventCheckpointSealed) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		{
-			size, err := m.Checkpoint.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.EpochNum != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EpochNum))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -409,17 +395,10 @@ func (m *EventCheckpointSubmitted) MarshalToSizedBuffer(dAtA []byte) (int, error
 	_ = i
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		{
-			size, err := m.Checkpoint.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.EpochNum != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EpochNum))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -444,17 +423,10 @@ func (m *EventCheckpointConfirmed) MarshalToSizedBuffer(dAtA []byte) (int, error
 	_ = i
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		{
-			size, err := m.Checkpoint.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.EpochNum != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EpochNum))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -479,17 +451,10 @@ func (m *EventCheckpointFinalized) MarshalToSizedBuffer(dAtA []byte) (int, error
 	_ = i
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		{
-			size, err := m.Checkpoint.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.EpochNum != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EpochNum))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -514,17 +479,10 @@ func (m *EventCheckpointForgotten) MarshalToSizedBuffer(dAtA []byte) (int, error
 	_ = i
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		{
-			size, err := m.Checkpoint.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.EpochNum != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.EpochNum))
 		i--
-		dAtA[i] = 0xa
+		dAtA[i] = 0x8
 	}
 	return len(dAtA) - i, nil
 }
@@ -546,9 +504,8 @@ func (m *EventCheckpointAccumulating) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		l = m.Checkpoint.Size()
-		n += 1 + l + sovEvents(uint64(l))
+	if m.EpochNum != 0 {
+		n += 1 + sovEvents(uint64(m.EpochNum))
 	}
 	return n
 }
@@ -559,9 +516,8 @@ func (m *EventCheckpointSealed) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		l = m.Checkpoint.Size()
-		n += 1 + l + sovEvents(uint64(l))
+	if m.EpochNum != 0 {
+		n += 1 + sovEvents(uint64(m.EpochNum))
 	}
 	return n
 }
@@ -572,9 +528,8 @@ func (m *EventCheckpointSubmitted) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		l = m.Checkpoint.Size()
-		n += 1 + l + sovEvents(uint64(l))
+	if m.EpochNum != 0 {
+		n += 1 + sovEvents(uint64(m.EpochNum))
 	}
 	return n
 }
@@ -585,9 +540,8 @@ func (m *EventCheckpointConfirmed) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		l = m.Checkpoint.Size()
-		n += 1 + l + sovEvents(uint64(l))
+	if m.EpochNum != 0 {
+		n += 1 + sovEvents(uint64(m.EpochNum))
 	}
 	return n
 }
@@ -598,9 +552,8 @@ func (m *EventCheckpointFinalized) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		l = m.Checkpoint.Size()
-		n += 1 + l + sovEvents(uint64(l))
+	if m.EpochNum != 0 {
+		n += 1 + sovEvents(uint64(m.EpochNum))
 	}
 	return n
 }
@@ -611,9 +564,8 @@ func (m *EventCheckpointForgotten) Size() (n int) {
 	}
 	var l int
 	_ = l
-	if m.Checkpoint != nil {
-		l = m.Checkpoint.Size()
-		n += 1 + l + sovEvents(uint64(l))
+	if m.EpochNum != 0 {
+		n += 1 + sovEvents(uint64(m.EpochNum))
 	}
 	return n
 }
@@ -654,10 +606,10 @@ func (m *EventCheckpointAccumulating) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
 			}
-			var msglen int
+			m.EpochNum = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -667,28 +619,11 @@ func (m *EventCheckpointAccumulating) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.EpochNum |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Checkpoint == nil {
-				m.Checkpoint = &RawCheckpointWithMeta{}
-			}
-			if err := m.Checkpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
@@ -740,10 +675,10 @@ func (m *EventCheckpointSealed) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
 			}
-			var msglen int
+			m.EpochNum = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -753,28 +688,11 @@ func (m *EventCheckpointSealed) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.EpochNum |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Checkpoint == nil {
-				m.Checkpoint = &RawCheckpointWithMeta{}
-			}
-			if err := m.Checkpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
@@ -826,10 +744,10 @@ func (m *EventCheckpointSubmitted) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
 			}
-			var msglen int
+			m.EpochNum = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -839,28 +757,11 @@ func (m *EventCheckpointSubmitted) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.EpochNum |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Checkpoint == nil {
-				m.Checkpoint = &RawCheckpointWithMeta{}
-			}
-			if err := m.Checkpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
@@ -912,10 +813,10 @@ func (m *EventCheckpointConfirmed) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
 			}
-			var msglen int
+			m.EpochNum = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -925,28 +826,11 @@ func (m *EventCheckpointConfirmed) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.EpochNum |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Checkpoint == nil {
-				m.Checkpoint = &RawCheckpointWithMeta{}
-			}
-			if err := m.Checkpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
@@ -998,10 +882,10 @@ func (m *EventCheckpointFinalized) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
 			}
-			var msglen int
+			m.EpochNum = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -1011,28 +895,11 @@ func (m *EventCheckpointFinalized) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.EpochNum |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Checkpoint == nil {
-				m.Checkpoint = &RawCheckpointWithMeta{}
-			}
-			if err := m.Checkpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
@@ -1084,10 +951,10 @@ func (m *EventCheckpointForgotten) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Checkpoint", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
 			}
-			var msglen int
+			m.EpochNum = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -1097,28 +964,11 @@ func (m *EventCheckpointForgotten) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.EpochNum |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Checkpoint == nil {
-				m.Checkpoint = &RawCheckpointWithMeta{}
-			}
-			if err := m.Checkpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvents(dAtA[iNdEx:])
