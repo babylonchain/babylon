@@ -167,26 +167,19 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 				continue
 			}
 
-			// There might be a submission for a previous epoch that was made on
-			// a later BTC block. We want at least one ancestor of the first hash
-			// in the canonical chain.
+			lastHashFromSavedCheckpoint := hs[len(hs)-1]
+
 			fh := rawSub.GetFirstBlockHash()
 
-			for _, h := range hs {
-				// Those hashes were all checked in previous validation steps
-				// If there is an error, panic
-				anc, err := m.sameAncestry(ctx, h, &fh)
-
-				if err != nil {
-					panic("Unexpected anecestry error, all blocks should have been known at this point")
-				}
-
-				if anc {
-					// found ancestry stop checking
-					return true
-				}
+			anc, err := m.sameAncestry(ctx, lastHashFromSavedCheckpoint, &fh)
+			if err != nil {
+				panic("Unexpected anecestry error, all blocks should have been known at this point")
 			}
 
+			if anc {
+				// found ancestry stop checking
+				return true
+			}
 		}
 	}
 
