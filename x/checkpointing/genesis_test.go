@@ -39,7 +39,7 @@ func TestInitGenesis(t *testing.T) {
 		genKeys[i] = genKey
 	}
 	genesisState := types.GenesisState{
-		Params:      types.Params{},
+		Params:      types.DefaultParams(),
 		GenesisKeys: genKeys,
 	}
 

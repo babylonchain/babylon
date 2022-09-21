@@ -259,7 +259,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 			WithViper("").
 			WithKeyringDir(homeDir).
 			WithInput(os.Stdin).
-			WithFromName(fromName).WithBroadcastMode(flags.BroadcastBlock),
+			WithFromName(fromName),
 	)
 	if err != nil {
 		panic(err)

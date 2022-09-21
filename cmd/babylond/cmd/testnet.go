@@ -103,10 +103,11 @@ Example:
 			// btccheckpoint args
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
 			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
-			retrySleepTime, _ := cmd.Flags().GetString(flagRetrySleepTime)
-			maxRetrySleepTime, _ := cmd.Flags().GetString(flagMaxRetrySleepTime)
 			btcConfirmationDepth, _ := cmd.Flags().GetUint64(flagBtcConfirmationDepth)
 			btcFinalizationTimeout, _ := cmd.Flags().GetUint64(flagBtcFinalizationTimeout)
+			// checkpointing args
+			retrySleepTime, _ := cmd.Flags().GetString(flagRetrySleepTime)
+			maxRetrySleepTime, _ := cmd.Flags().GetString(flagMaxRetrySleepTime)
 			// epoching args
 			epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 			// btclightclient args
@@ -119,7 +120,8 @@ Example:
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, chainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				maxActiveValidators, btcNetwork, btcCheckpointTag, retrySleepTime, maxRetrySleepTime, btcConfirmationDepth, btcFinalizationTimeout,
+				maxActiveValidators, btcNetwork, btcCheckpointTag, btcConfirmationDepth, btcFinalizationTimeout,
+				retrySleepTime, maxRetrySleepTime,
 				epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight,
 			)
 		},
@@ -137,10 +139,11 @@ Example:
 	// btccheckpoint args
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, mainnet")
 	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefautTestTagStr), "Tag to use for Bitcoin checkpoints.")
-	cmd.Flags().String(flagRetrySleepTime, "5s", "Time waited for retry")
-	cmd.Flags().String(flagMaxRetrySleepTime, "5m", "Max time waited for retry")
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
+	// checkpointing args
+	cmd.Flags().String(flagRetrySleepTime, "1s", "Time waited for retry")
+	cmd.Flags().String(flagMaxRetrySleepTime, "1m", "Max time waited for retry")
 	// epoch args
 	cmd.Flags().Uint64(flagEpochInterval, 10, "Number of blocks between epochs. Must be more than 0.")
 	// btclightclient args
@@ -173,10 +176,10 @@ func InitTestnet(
 	maxActiveValidators uint32,
 	btcNetwork string,
 	btcCheckpointTag string,
-	retrySleepTime string,
-	maxRetrySleepTime string,
 	btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64,
+	retrySleepTime string,
+	maxRetrySleepTime string,
 	epochInterval uint64,
 	baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64,
