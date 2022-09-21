@@ -38,6 +38,19 @@ func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequ
 	return resp, nil
 }
 
+// EpochInfo handles the QueryEpochInfoRequest query
+func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (*types.QueryEpochInfoResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+	epoch, err := k.GetHistoricalEpoch(ctx, req.EpochNum)
+	if err != nil {
+		return nil, err
+	}
+	resp := &types.QueryEpochInfoResponse{
+		Epoch: epoch,
+	}
+	return resp, nil
+}
+
 // EpochMsgs handles the QueryEpochMsgsRequest query
 func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (*types.QueryEpochMsgsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)

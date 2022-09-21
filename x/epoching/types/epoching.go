@@ -5,13 +5,15 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-func NewEpoch(epochNumber uint64, epochInterval uint64) Epoch {
+func NewEpoch(epochNumber uint64, epochInterval uint64, lastBlockHeader *tmproto.Header) Epoch {
 	return Epoch{
 		EpochNumber:          epochNumber,
 		CurrentEpochInterval: epochInterval,
 		FirstBlockHeight:     firstBlockHeight(epochNumber, epochInterval),
+		LastBlockHeader:      lastBlockHeader,
 	}
 }
 
