@@ -32,7 +32,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 	// unbond all mature validators till the last block of the given epoch
 	matureValidators := k.getAllMatureValidators(ctx)
-	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding validators: %v", matureValidators))
+	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding validators matured in epoch %d: %v", epochNumber, matureValidators))
 	k.stk.UnbondAllMatureValidators(ctx)
 	// record state update of being UNBONDED for mature validators
 	for _, valAddr := range matureValidators {
@@ -41,7 +41,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
 	matureUnbonds := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
-	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations: %v", matureUnbonds))
+	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations matured in epoch %d: %v", epochNumber, matureUnbonds))
 
 	// unbond all mature delegations
 	for _, dvPair := range matureUnbonds {
@@ -74,7 +74,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 	// get all mature redelegations till the epoch boundary from the red queue.
 	matureRedelegations := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
-	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations: %v", matureRedelegations))
+	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations matured in epoch %d: %v", epochNumber, matureRedelegations))
 
 	// finish all mature redelegations
 	for _, dvvTriplet := range matureRedelegations {
