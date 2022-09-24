@@ -50,19 +50,20 @@ import (
 )
 
 var (
-	flagNodeDirPrefix          = "node-dir-prefix"
-	flagNumValidators          = "v"
-	flagOutputDir              = "output-dir"
-	flagNodeDaemonHome         = "node-daemon-home"
-	flagStartingIPAddress      = "starting-ip-address"
-	flagBtcNetwork             = "btc-network"
-	flagBtcCheckpointTag       = "btc-checkpoint-tag"
-	flagBtcConfirmationDepth   = "btc-confirmation-depth"
-	flagBtcFinalizationTimeout = "btc-finalization-timeout"
-	flagEpochInterval          = "epoch-interval"
-	flagBaseBtcHeaderHex       = "btc-base-header"
-	flagBaseBtcHeaderHeight    = "btc-base-header-height"
-	flagMaxActiveValidators    = "max-active-validators"
+	flagNodeDirPrefix           = "node-dir-prefix"
+	flagNumValidators           = "v"
+	flagOutputDir               = "output-dir"
+	flagNodeDaemonHome          = "node-daemon-home"
+	flagStartingIPAddress       = "starting-ip-address"
+	flagBtcNetwork              = "btc-network"
+	flagBtcCheckpointTag        = "btc-checkpoint-tag"
+	flagBtcConfirmationDepth    = "btc-confirmation-depth"
+	flagBtcFinalizationTimeout  = "btc-finalization-timeout"
+	flagEpochInterval           = "epoch-interval"
+	flagBaseBtcHeaderHex        = "btc-base-header"
+	flagBaseBtcHeaderHeight     = "btc-base-header-height"
+	flagMaxActiveValidators     = "max-active-validators"
+	flagAdditionalSenderAccount = "additional-sender-account"
 )
 
 // get cmd to initialize all files for tendermint testnet and application
@@ -108,6 +109,7 @@ Example:
 			// btclightclient args
 			baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
 			baseBtcHeaderHeight, err := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
+			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
 			if err != nil {
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
@@ -116,7 +118,7 @@ Example:
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, chainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
 				maxActiveValidators, btcNetwork, btcCheckpointTag, btcConfirmationDepth, btcFinalizationTimeout,
-				epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight,
+				epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight, additionalAccount,
 			)
 		},
 	}
@@ -142,6 +144,7 @@ Example:
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
 	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
 	cmd.Flags().Uint32(flagMaxActiveValidators, 10, "Maximum number of validators.")
+	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
 
 	return cmd
 }
@@ -172,6 +175,7 @@ func InitTestnet(
 	epochInterval uint64,
 	baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64,
+	additionalAccount bool,
 ) error {
 
 	if chainID == "" {
@@ -234,6 +238,7 @@ func InitTestnet(
 
 		// generate account key
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
+
 		if err != nil {
 			return err
 		}
@@ -341,6 +346,38 @@ func InitTestnet(
 		// create and save client config
 		if _, err = app.CreateClientConfig(chainID, keyringBackend, nodeDir); err != nil {
 			return err
+		}
+	}
+
+	if additionalAccount {
+		for i := 0; i < numValidators; i++ {
+			nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
+			nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
+
+			// generate account key
+			kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
+
+			if err != nil {
+				return err
+			}
+			keyringAlgos, _ := kb.SupportedAlgorithms()
+			algo, err := keyring.NewSigningAlgoFromString(algoStr, keyringAlgos)
+			if err != nil {
+				return err
+			}
+			addr, _, err := testutil.GenerateSaveCoinKey(kb, "test-spending-key", "", true, algo)
+			if err != nil {
+				_ = os.RemoveAll(outputDir)
+				return err
+			}
+
+			coins := sdk.Coins{
+				sdk.NewCoin("testtoken", sdk.NewInt(1000000000)),
+				sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(500000000)),
+			}
+
+			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
+			genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 		}
 	}
 

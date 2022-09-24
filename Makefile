@@ -443,15 +443,27 @@ localnet-build-env:
 localnet-build-dlv:
 	$(MAKE) -C contrib/images babylond-dlv
 
+localnet-build-nodes-test:
+	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
+			  testnet init-files --v 4 -o /data \
+			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
+			  --chain-id chain-test --btc-confirmation-depth 2 --additional-sender-account true \
+			  --epoch-interval 5
+	docker-compose up -d
+
 localnet-build-nodes:
 	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
 			  testnet init-files --v 4 -o /data \
 			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
-			  --chain-id chain-test --btc-confirmation-depth 2
+			  --chain-id chain-test
 	docker-compose up -d
 
-# localnet-start will run a testnet with 4 nodes, a bitcoin instance, and a vigilante instance
+# localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
 localnet-start: localnet-stop localnet-build-env localnet-build-nodes
+
+# localnet-start-test will start with 4 nodes with test confiuration and low
+# epoch interval
+localnet-start-test: localnet-stop localnet-build-env localnet-build-nodes-test
 
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md

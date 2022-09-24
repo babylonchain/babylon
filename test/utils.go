@@ -49,9 +49,13 @@ func NewTestTxSender(
 		return nil, err
 	}
 
-	infos, _ := kb.List()
+	signer, err := kb.Key("test-spending-key")
 
-	signerInfo := infos[0]
+	if err != nil {
+		panic("test-spending-key should be defined for each node in integration test")
+	}
+
+	signerInfo := signer
 
 	return &TestTxSender{
 		keyring:    kb,
@@ -66,7 +70,7 @@ func (b *TestTxSender) getSenderAddress() ctypes.AccAddress {
 	return b.signerInfo.GetAddress()
 }
 
-func (b *TestTxSender) buildTx(msg ctypes.Msg, fees string, gas uint64, seqNr uint64) []byte {
+func (b *TestTxSender) buildTx(msg ctypes.Msg, fees string, gas uint64, seqNr uint64, accNumber uint64) []byte {
 	txFactory := tx.Factory{}
 
 	txFactory = txFactory.
@@ -75,7 +79,8 @@ func (b *TestTxSender) buildTx(msg ctypes.Msg, fees string, gas uint64, seqNr ui
 		WithChainID(b.chainId).
 		WithFees(fees).
 		WithGas(gas).
-		WithSequence(seqNr)
+		WithSequence(seqNr).
+		WithAccountNumber(accNumber)
 
 	txb1, _ := txFactory.BuildUnsignedTx(msg)
 
@@ -108,7 +113,7 @@ func (b *TestTxSender) insertNewHeader(headerBytes bbn.BTCHeaderBytes) (*txservi
 		panic("creating new header message must success ")
 	}
 
-	acc, err := b.getAccount()
+	acc, err := b.getSelfAccount()
 
 	if err != nil {
 		panic("retrieving sending account must succeed")
@@ -116,7 +121,7 @@ func (b *TestTxSender) insertNewHeader(headerBytes bbn.BTCHeaderBytes) (*txservi
 
 	//TODO 3stake and 300000 should probably not be hardcoded by taken from tx
 	//simulation. For now this enough to pay for insert header transaction.
-	txBytes := b.buildTx(msg, "3stake", 300000, acc.GetSequence())
+	txBytes := b.buildTx(msg, "3stake", 300000, acc.GetSequence(), acc.GetAccountNumber())
 
 	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
 
@@ -133,7 +138,7 @@ func (b *TestTxSender) insertSpvProof(p1 *btccheckpoint.BTCSpvProof, p2 *btcchec
 		Proofs:    []*btccheckpoint.BTCSpvProof{p1, p2},
 	}
 
-	acc, err := b.getAccount()
+	acc, err := b.getSelfAccount()
 
 	if err != nil {
 		panic("retrieving sending account must succeed")
@@ -141,7 +146,7 @@ func (b *TestTxSender) insertSpvProof(p1 *btccheckpoint.BTCSpvProof, p2 *btcchec
 
 	//TODO 3stake and 300000 should probably not be hardcoded by taken from tx
 	//simulation. For now this enough to pay for insert header transaction.
-	txBytes := b.buildTx(&msg, "3stake", 300000, acc.GetSequence())
+	txBytes := b.buildTx(&msg, "3stake", 300000, acc.GetSequence(), acc.GetAccountNumber())
 
 	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
 
@@ -162,12 +167,12 @@ func (b *TestTxSender) getBtcTip() (*lightclient.BTCHeaderInfo, error) {
 	return res.Header, nil
 }
 
-func (b *TestTxSender) getAccount() (acctypes.AccountI, error) {
+func (b *TestTxSender) getAccount(addr ctypes.AccAddress) (acctypes.AccountI, error) {
 	queryClient := acctypes.NewQueryClient(b.Conn)
 
 	res, _ := queryClient.Account(
 		context.Background(),
-		&acctypes.QueryAccountRequest{Address: b.getSenderAddress().String()},
+		&acctypes.QueryAccountRequest{Address: addr.String()},
 	)
 
 	var acc acctypes.AccountI
@@ -176,6 +181,44 @@ func (b *TestTxSender) getAccount() (acctypes.AccountI, error) {
 	}
 
 	return acc, nil
+}
+
+func (b *TestTxSender) getSelfAccount() (acctypes.AccountI, error) {
+	return b.getAccount(b.getSenderAddress())
+}
+
+func (b *TestTxSender) insertBTCHeaders(headers []bbn.BTCHeaderBytes) error {
+	if len(headers) == 0 {
+		return nil
+	}
+
+	for _, h := range headers {
+		currentTip, err := b.getBtcTip()
+
+		if err != nil {
+			return err
+		}
+
+		if h == nil {
+			_, err := b.insertNewEmptyHeader(currentTip)
+			if err != nil {
+				return err
+			}
+		} else {
+			_, err := b.insertNewHeader(h)
+			if err != nil {
+				return err
+			}
+		}
+
+		_, err = WaitBtcForHeight(b.Conn, currentTip.Height+1)
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func generateEmptyChildHeader(bh *wire.BlockHeader) *wire.BlockHeader {
@@ -284,7 +327,7 @@ func WaitForBtcHeightWithTimeout(c *grpc.ClientConn, h uint64, t time.Duration) 
 }
 
 func WaitBtcForHeight(c *grpc.ClientConn, h uint64) (uint64, error) {
-	return WaitForBtcHeightWithTimeout(c, h, 30*time.Second)
+	return WaitForBtcHeightWithTimeout(c, h, 15*time.Second)
 }
 
 func WaitForNextBtcBlock(c *grpc.ClientConn) error {
