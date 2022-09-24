@@ -170,24 +170,12 @@ func TestBtcLightClientGenesis(t *testing.T) {
 }
 
 func TestNodeProgress(t *testing.T) {
-	// most probably nodes are after block 1 at this point, but to make sure we are waiting
-	// for block 1
-	// blocks 1-5 are epoch 1 blocks.
-	waitForBlock(clients, 1)
-
-	for _, c := range clients {
-		currentEpoch := getCurrentEpoch(c)
-		if currentEpoch != 1 {
-			t.Fatalf("Initial epoch should equal 1. Current epoch %d", currentEpoch)
-		}
-	}
-
 	waitForBlock(clients, 7)
 
 	for _, c := range clients {
 		currentEpoch := getCurrentEpoch(c)
 		if currentEpoch != 2 {
-			t.Errorf("Epoch after 3 blocks, should equal 2. Curent epoch %d", currentEpoch)
+			t.Errorf("Epoch after 7 blocks, should equal 2. Curent epoch %d", currentEpoch)
 		}
 	}
 }
@@ -202,31 +190,15 @@ func TestSendTx(t *testing.T) {
 	if err != nil {
 		panic("failed to init sender")
 	}
+	tip1 := sender.GetBtcTip()
 
-	tip1, err := sender.getBtcTip()
-
-	if err != nil {
-		t.Fatalf("Couldnot retrieve tip")
-	}
-
-	res, err := sender.insertNewEmptyHeader(tip1)
+	err = sender.insertNEmptyBTCHeaders(1)
 
 	if err != nil {
 		t.Fatalf("could not insert new btc header")
 	}
 
-	_, err = WaitBtcForHeight(sender.Conn, tip1.Height+1)
-
-	if err != nil {
-		t.Log(res.TxResponse)
-		t.Fatalf("failed waiting for btc lightclient block")
-	}
-
-	tip2, err := sender.getBtcTip()
-
-	if err != nil {
-		t.Fatalf("Couldnot retrieve tip")
-	}
+	tip2 := sender.GetBtcTip()
 
 	if tip2.Height != tip1.Height+1 {
 		t.Fatalf("Light client should progress by 1 one block")
@@ -283,11 +255,7 @@ func TestSubmitCheckpoint(t *testing.T) {
 		rawBtcCheckpoint,
 	)
 
-	currentTip, err := sender.getBtcTip()
-
-	if err != nil {
-		t.Fatalf("Could not retrieve btc tip")
-	}
+	currentTip := sender.GetBtcTip()
 
 	firstSubmission := datagen.CreateBlockWithTransaction(currentTip.Header.ToBlockHeader(), p1)
 
@@ -295,6 +263,7 @@ func TestSubmitCheckpoint(t *testing.T) {
 
 	// first insert all headers
 	err = sender.insertBTCHeaders(
+		currentTip.Height,
 		[]bbn.BTCHeaderBytes{firstSubmission.HeaderBytes, secondSubmission.HeaderBytes},
 	)
 
@@ -338,8 +307,7 @@ func TestConfirmCheckpoint(t *testing.T) {
 		panic("failed to init sender")
 	}
 
-	// insert two empty btc headers
-	err = sender.insertBTCHeaders([]bbn.BTCHeaderBytes{nil, nil})
+	err = sender.insertNEmptyBTCHeaders(2)
 
 	if err != nil {
 		t.Fatalf("Could not insert two headers. Err: %s", err)
