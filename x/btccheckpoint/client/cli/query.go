@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
@@ -27,12 +28,13 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	// this line is used by starport scaffolding # 1
 
 	cmd.AddCommand(CmdBtcCheckpointHeight())
+	cmd.AddCommand(CmdEpochSubmissions())
 	return cmd
 }
 
 func CmdBtcCheckpointHeight() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-height rawcheckpoint",
+		Use:   "btc-height [epoch_number]",
 		Short: "retrieve earliest btc height for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -58,5 +60,43 @@ func CmdBtcCheckpointHeight() *cobra.Command {
 		},
 	}
 
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdEpochSubmissions() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "epoch-submissions [epoch_number]",
+		Short: "all checkpoint submissions for given epoch",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+
+			if err != nil {
+				return err
+			}
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			params := types.QueryEpochSubmissionsRequest{EpochNum: epoch_num, Pagination: pageReq}
+
+			res, err := queryClient.EpochSubmissions(context.Background(), &params)
+
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
