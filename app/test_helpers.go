@@ -458,7 +458,7 @@ func (ao EmptyAppOptions) Get(o string) interface{} {
 	}
 
 	if o == "btc-config.checkpoint-tag" {
-		return txformat.MainTagStr
+		return txformat.DefaultMainTagStr
 	}
 
 	return nil

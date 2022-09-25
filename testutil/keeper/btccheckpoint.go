@@ -53,7 +53,7 @@ func NewBTCCheckpointKeeper(
 		ek,
 		powLimit,
 		// use MainTag tests
-		txformat.MainTag(),
+		txformat.MainTag(0),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

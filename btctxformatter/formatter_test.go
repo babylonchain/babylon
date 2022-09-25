@@ -2,7 +2,7 @@ package btctxformatter
 
 import (
 	"bytes"
-	"crypto/rand"
+	"math/rand"
 	"testing"
 )
 
@@ -93,11 +93,11 @@ func FuzzEncodingDecoding(f *testing.F) {
 
 // This fuzzer checks if decoder won't panic with whatever bytes we point it at
 func FuzzDecodingWontPanic(f *testing.F) {
-	f.Add(randNBytes(firstPartLength))
-	f.Add(randNBytes(secondPartLength))
+	f.Add(randNBytes(firstPartLength), uint8(rand.Intn(99)))
+	f.Add(randNBytes(secondPartLength), uint8(rand.Intn(99)))
 
-	f.Fuzz(func(t *testing.T, bytes []byte) {
-		decoded, err := IsBabylonCheckpointData(MainTag(), CurrentVersion, bytes)
+	f.Fuzz(func(t *testing.T, bytes []byte, tagIdx uint8) {
+		decoded, err := IsBabylonCheckpointData(MainTag(tagIdx), CurrentVersion, bytes)
 
 		if err == nil {
 			if decoded.Index != 0 && decoded.Index != 1 {
