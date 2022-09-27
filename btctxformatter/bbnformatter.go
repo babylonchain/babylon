@@ -5,15 +5,17 @@ package btctxformatter
 // in some separate document/config
 
 const (
-	MainTagStr string = "bbnm"
-
+	mainTagPrefix string = "bbn"
 	testTagPrefix string = "bbt"
 
-	DefautTestTagStr string = testTagPrefix + "0"
+	DefaultTestTagStr string = testTagPrefix + "0"
+	DefaultMainTagStr string = testTagPrefix + "m"
 )
 
-func MainTag() BabylonTag {
-	return BabylonTag([]byte(MainTagStr))
+func MainTag(idx uint8) BabylonTag {
+	bytes := []byte(mainTagPrefix)
+	bytes = append(bytes, idx)
+	return BabylonTag(bytes)
 }
 
 func TestTag(idx uint8) BabylonTag {
