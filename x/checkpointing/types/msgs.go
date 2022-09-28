@@ -1,7 +1,9 @@
 package types
 
 import (
+	"errors"
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	ed255192 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -36,6 +38,7 @@ func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator)
 	}
 }
 
+// ValidateBasic validates stateless message elements
 func (m *MsgAddBlsSig) ValidateBasic() error {
 	// This function validates stateless message elements
 	_, err := sdk.ValAddressFromBech32(m.BlsSig.SignerAddress)
@@ -43,7 +46,14 @@ func (m *MsgAddBlsSig) ValidateBasic() error {
 		return err
 	}
 
-	// TODO: verify bls sig
+	err = m.BlsSig.BlsSig.ValidateBasic()
+	if err != nil {
+		return err
+	}
+	err = m.BlsSig.LastCommitHash.ValidateBasic()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -61,9 +71,12 @@ func (m *MsgWrappedCreateValidator) VerifyPoP(valPubkey cryptotypes.PubKey) bool
 	return m.Key.Pop.IsValid(*m.Key.Pubkey, valPubkey)
 }
 
+// ValidateBasic validates statelesss message elements
 func (m *MsgWrappedCreateValidator) ValidateBasic() error {
-	// This function validates stateless message elements
-	// TODO: verify bls sig
+	ok := m.VerifyPoP(&ed255192.PubKey{Key: m.MsgCreateValidator.Pubkey.Value})
+	if !ok {
+		return errors.New("the proof-of-possession is not valid")
+	}
 
 	return m.MsgCreateValidator.ValidateBasic()
 }

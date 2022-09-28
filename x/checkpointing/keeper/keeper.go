@@ -97,6 +97,16 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		return err
 	}
 
+	// verify BLS sig
+	msgBytes := append(sdk.Uint64ToBigEndian(sig.GetEpochNum()), *sig.LastCommitHash...)
+	ok, err := bls12381.Verify(*sig.BlsSig, signerBlsKey, msgBytes)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("BLS signature does not match the public key")
+	}
+
 	// accumulate BLS signatures
 	updated, err := ckptWithMeta.Accumulate(
 		vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
