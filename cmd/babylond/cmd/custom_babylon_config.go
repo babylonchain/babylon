@@ -15,7 +15,7 @@ type BtcConfig struct {
 func defaultBabylonBtcConfig() BtcConfig {
 	return BtcConfig{
 		Network:       string(bbn.BtcMainnet),
-		CheckpointTag: string(txformat.MainTagStr),
+		CheckpointTag: string(txformat.DefaultMainTagStr),
 	}
 }
 

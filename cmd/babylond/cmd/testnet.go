@@ -132,7 +132,7 @@ Example:
 	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	// btccheckpoint args
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, mainnet")
-	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefautTestTagStr), "Tag to use for Bitcoin checkpoints.")
+	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefaultTestTagStr), "Tag to use for Bitcoin checkpoints.")
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
 	// epoch args

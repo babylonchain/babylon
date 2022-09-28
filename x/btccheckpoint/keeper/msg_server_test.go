@@ -65,9 +65,9 @@ func getRandomCheckpointDataForEpoch(e uint64) testCheckpointData {
 }
 
 // both f and s must be parts retrived from txformat.Encode
-func getExpectedOpReturn(f []byte, s []byte) []byte {
+func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 	firstPartNoHeader, err := txformat.GetCheckpointData(
-		txformat.MainTag(),
+		tag,
 		txformat.CurrentVersion,
 		0,
 		f,
@@ -78,7 +78,7 @@ func getExpectedOpReturn(f []byte, s []byte) []byte {
 	}
 
 	secondPartNoHeader, err := txformat.GetCheckpointData(
-		txformat.MainTag(),
+		tag,
 		txformat.CurrentVersion,
 		1,
 		s,
@@ -103,6 +103,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	defaultParams := btcctypes.DefaultParams()
 	kDeep := defaultParams.BtcConfirmationDepth
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
+	tag := txformat.MainTag(0)
 
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
@@ -112,7 +113,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		BlsSig:           checkpointData.blsSig,
 	}
 	data1, data2 := txformat.MustEncodeCheckpointData(
-		txformat.MainTag(),
+		tag,
 		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)
@@ -120,7 +121,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	blck1 := dg.CreateBlock(1, 7, 7, data1)
 	blck2 := dg.CreateBlock(2, 14, 3, data2)
 
-	expectedOpReturn := getExpectedOpReturn(data1, data2)
+	expectedOpReturn := getExpectedOpReturn(tag, data1, data2)
 
 	// here we will only have valid unconfirmed submissions
 	lc := btcctypes.NewMockBTCLightClientKeeper(int64(kDeep) - 1)
@@ -193,6 +194,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	kDeep := defaultParams.BtcConfirmationDepth
 	wDeep := defaultParams.CheckpointFinalizationTimeout
 	checkpointData := getRandomCheckpointDataForEpoch(epoch)
+	tag := txformat.MainTag(0)
 
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
@@ -202,7 +204,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 		BlsSig:           checkpointData.blsSig,
 	}
 	data1, data2 := txformat.MustEncodeCheckpointData(
-		txformat.MainTag(),
+		tag,
 		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)

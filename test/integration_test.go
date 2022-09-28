@@ -295,7 +295,7 @@ func TestSubmitCheckpoint(t *testing.T) {
 	}
 
 	p1, p2 := txformat.MustEncodeCheckpointData(
-		txformat.BabylonTag(txformat.DefautTestTagStr),
+		txformat.BabylonTag(txformat.DefaultTestTagStr),
 		txformat.CurrentVersion,
 		rawBtcCheckpoint,
 	)
