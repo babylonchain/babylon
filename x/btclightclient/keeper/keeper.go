@@ -67,13 +67,13 @@ func (k Keeper) InsertHeader(ctx sdk.Context, header *bbn.BTCHeaderBytes) error 
 	// Check whether the header already exists, if yes reject
 	headerExists := k.headersState(ctx).HeaderExists(headerHash)
 	if headerExists {
-		return types.ErrDuplicateHeader.Wrap("header with provided hash already exists")
+		return types.ErrDuplicateHeader
 	}
 
 	// Check whether the parent exists, if not reject
 	parentExists := k.headersState(ctx).HeaderExists(parentHash)
 	if !parentExists {
-		return types.ErrHeaderParentDoesNotExist.Wrap("parent for provided hash is not maintained")
+		return types.ErrHeaderParentDoesNotExist
 	}
 
 	// Retrieve the height of the parent to calculate the current height

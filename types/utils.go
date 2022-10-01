@@ -1,6 +1,8 @@
 package types
 
-import "reflect"
+import (
+	"reflect"
+)
 
 func Reverse(s interface{}) {
 	n := reflect.ValueOf(s).Len()
