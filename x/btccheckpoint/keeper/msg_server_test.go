@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/hex"
 	"math/rand"
 	"testing"
@@ -54,6 +55,22 @@ type testCheckpointData struct {
 	submitterAddress []byte
 }
 
+type TestKeepers struct {
+	SdkCtx         sdk.Context
+	Ctx            context.Context
+	BTCLightClient *btcctypes.MockBTCLightClientKeeper
+	Checkpointing  *btcctypes.MockCheckpointingKeeper
+	BTCCheckpoint  *bkeeper.Keeper
+	MsgSrv         btcctypes.MsgServer
+}
+
+type TestRawCheckpointData struct {
+	Epoch            uint64
+	FirstPart        []byte
+	SecondPart       []byte
+	ExpectedOpReturn []byte
+}
+
 func getRandomCheckpointDataForEpoch(e uint64) testCheckpointData {
 	return testCheckpointData{
 		epoch:            e,
@@ -97,12 +114,74 @@ func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 	return connected
 }
 
-func TestSubmitValidNewCheckpoint(t *testing.T) {
-	rand.Seed(time.Now().Unix())
-	epoch := uint64(1)
-	defaultParams := btcctypes.DefaultParams()
-	kDeep := defaultParams.BtcConfirmationDepth
-	checkpointData := getRandomCheckpointDataForEpoch(epoch)
+func GenerateMessageWithRandomSubmitter(blockResults []*dg.BlockCreationResult) *btcctypes.MsgInsertBTCSpvProof {
+	proofs := BlockCreationResultToProofs(blockResults)
+
+	pk, _ := dg.NewPV().GetPubKey()
+
+	address := sdk.AccAddress(pk.Address().Bytes())
+
+	msg := btcctypes.MsgInsertBTCSpvProof{
+		Proofs:    proofs,
+		Submitter: address.String(),
+	}
+
+	return &msg
+}
+
+func InitTestKeepers(
+	t *testing.T,
+	initialLighClientDepth int64,
+	epoch uint64,
+) *TestKeepers {
+	lc := btcctypes.NewMockBTCLightClientKeeper(initialLighClientDepth)
+
+	cc := btcctypes.NewMockCheckpointingKeeper(epoch)
+
+	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
+
+	srv := bkeeper.NewMsgServerImpl(*k)
+
+	return &TestKeepers{
+		SdkCtx:         ctx,
+		Ctx:            sdk.WrapSDKContext(ctx),
+		BTCLightClient: lc,
+		Checkpointing:  cc,
+		BTCCheckpoint:  k,
+		MsgSrv:         srv,
+	}
+}
+
+func (k *TestKeepers) insertProofMsg(msg *btcctypes.MsgInsertBTCSpvProof) (*btcctypes.MsgInsertBTCSpvProofResponse, error) {
+	return k.MsgSrv.InsertBTCSpvProof(k.Ctx, msg)
+}
+
+func (k *TestKeepers) getEpochData(e uint64) *btcctypes.EpochData {
+	return k.BTCCheckpoint.GetEpochData(k.SdkCtx, e)
+}
+
+func (k *TestKeepers) getSubmissionData(key btcctypes.SubmissionKey) *btcctypes.SubmissionData {
+	return k.BTCCheckpoint.GetSubmissionData(k.SdkCtx, key)
+}
+
+func (k *TestKeepers) getUnconfirmedSubmissions() []btcctypes.SubmissionKey {
+	return k.BTCCheckpoint.GetAllUnconfirmedSubmissions(k.SdkCtx)
+}
+
+func (k *TestKeepers) getConfirmedSubmissions() []btcctypes.SubmissionKey {
+	return k.BTCCheckpoint.GetAllConfirmedSubmissions(k.SdkCtx)
+}
+
+func (k *TestKeepers) getFinalizedSubmissions() []btcctypes.SubmissionKey {
+	return k.BTCCheckpoint.GetAllFinalizedSubmissions(k.SdkCtx)
+}
+
+func (k *TestKeepers) onTipChange() {
+	k.BTCCheckpoint.OnTipChange(k.SdkCtx)
+}
+
+func RandomRawCheckpointDataForEpoch(e uint64) *TestRawCheckpointData {
+	checkpointData := getRandomCheckpointDataForEpoch(e)
 	tag := txformat.MainTag(0)
 
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
@@ -118,41 +197,71 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		rawBTCCkpt,
 	)
 
-	blck1 := dg.CreateBlock(1, 7, 7, data1)
-	blck2 := dg.CreateBlock(2, 14, 3, data2)
+	opReturn := getExpectedOpReturn(tag, data1, data2)
 
-	expectedOpReturn := getExpectedOpReturn(tag, data1, data2)
-
-	// here we will only have valid unconfirmed submissions
-	lc := btcctypes.NewMockBTCLightClientKeeper(int64(kDeep) - 1)
-
-	cc := btcctypes.NewMockCheckpointingKeeper(epoch)
-
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
-
-	proofs := BlockCreationResultToProofs([]*dg.BlockCreationResult{blck1, blck2})
-
-	pk, _ := dg.NewPV().GetPubKey()
-
-	address := sdk.AccAddress(pk.Address().Bytes())
-
-	msg := btcctypes.MsgInsertBTCSpvProof{
-		Proofs:    proofs,
-		Submitter: address.String(),
+	return &TestRawCheckpointData{
+		Epoch:            e,
+		FirstPart:        data1,
+		SecondPart:       data2,
+		ExpectedOpReturn: opReturn,
 	}
+}
 
-	srv := bkeeper.NewMsgServerImpl(*k)
+func TestRejectDuplicatedSubmission(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	epoch := uint64(1)
+	defaultParams := btcctypes.DefaultParams()
+	kDeep := defaultParams.BtcConfirmationDepth
+	raw := RandomRawCheckpointDataForEpoch(epoch)
 
-	sdkCtx := sdk.WrapSDKContext(ctx)
+	blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
 
-	_, err := srv.InsertBTCSpvProof(sdkCtx, &msg)
+	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
+
+	tk := InitTestKeepers(t, int64(kDeep)-1, epoch)
+
+	msg := GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
+
+	_, err := tk.insertProofMsg(msg)
 
 	if err != nil {
 		// fatal as other tests will panic if this fails
 		t.Fatalf("Unexpected message processing error: %v", err)
 	}
 
-	ed := k.GetEpochData(ctx, epoch)
+	_, err = tk.insertProofMsg(msg)
+
+	if err == nil {
+		t.Fatalf("Submission should have failed due to duplicated submission")
+	}
+
+	if err != btcctypes.ErrDuplicatedSubmission {
+		t.Fatalf("Error should indicate duplicated submissions")
+	}
+}
+
+func TestSubmitValidNewCheckpoint(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	epoch := uint64(1)
+	defaultParams := btcctypes.DefaultParams()
+	kDeep := defaultParams.BtcConfirmationDepth
+	raw := RandomRawCheckpointDataForEpoch(epoch)
+	blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
+	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
+
+	// here we will only have valid unconfirmed submissions
+	tk := InitTestKeepers(t, int64(kDeep)-1, epoch)
+
+	msg := GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
+
+	_, err := tk.insertProofMsg(msg)
+
+	if err != nil {
+		// fatal as other tests will panic if this fails
+		t.Fatalf("Unexpected message processing error: %v", err)
+	}
+
+	ed := tk.getEpochData(epoch)
 
 	if len(ed.Key) == 0 {
 		t.Errorf("There should be at least one key in epoch %d", epoch)
@@ -162,13 +271,13 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Epoch should be in submitted state after processing message")
 	}
 
-	if !bytes.Equal(expectedOpReturn, ed.RawCheckpoint) {
+	if !bytes.Equal(raw.ExpectedOpReturn, ed.RawCheckpoint) {
 		t.Errorf("Epoch does not contain expected op return data")
 	}
 
 	submissionKey := ed.Key[0]
 
-	submissionData := k.GetSubmissionData(ctx, *submissionKey)
+	submissionData := tk.getSubmissionData(*submissionKey)
 
 	if submissionData == nil {
 		t.Fatalf("Unexpected missing submission")
@@ -178,7 +287,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Submission data with invalid epoch")
 	}
 
-	allUnconfirmedSubmissions := k.GetAllUnconfirmedSubmissions(ctx)
+	allUnconfirmedSubmissions := tk.getUnconfirmedSubmissions()
 
 	// TODO Add custom equal fo submission key and transaction key to check
 	// it is expected key
@@ -193,68 +302,39 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	defaultParams := btcctypes.DefaultParams()
 	kDeep := defaultParams.BtcConfirmationDepth
 	wDeep := defaultParams.CheckpointFinalizationTimeout
-	checkpointData := getRandomCheckpointDataForEpoch(epoch)
-	tag := txformat.MainTag(0)
+	raw := RandomRawCheckpointDataForEpoch(epoch)
 
-	rawBTCCkpt := &txformat.RawBtcCheckpoint{
-		Epoch:            checkpointData.epoch,
-		LastCommitHash:   checkpointData.lastCommitHash,
-		BitMap:           checkpointData.bitmap,
-		SubmitterAddress: checkpointData.submitterAddress,
-		BlsSig:           checkpointData.blsSig,
-	}
-	data1, data2 := txformat.MustEncodeCheckpointData(
-		tag,
-		txformat.CurrentVersion,
-		rawBTCCkpt,
-	)
-
-	blck1 := dg.CreateBlock(1, 7, 7, data1)
-	blck2 := dg.CreateBlock(2, 14, 3, data2)
+	blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
+	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
 	// here we will only have valid unconfirmed submissions
-	lc := btcctypes.NewMockBTCLightClientKeeper(int64(kDeep) - 1)
-	cc := btcctypes.NewMockCheckpointingKeeper(epoch)
+	// here we will only have valid unconfirmed submissions
+	tk := InitTestKeepers(t, int64(kDeep)-1, epoch)
 
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
+	msg := GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
-	proofs := BlockCreationResultToProofs([]*dg.BlockCreationResult{blck1, blck2})
-
-	pk, _ := dg.NewPV().GetPubKey()
-
-	address := sdk.AccAddress(pk.Address().Bytes())
-
-	msg := btcctypes.MsgInsertBTCSpvProof{
-		Proofs:    proofs,
-		Submitter: address.String(),
-	}
-
-	srv := bkeeper.NewMsgServerImpl(*k)
-
-	sdkCtx := sdk.WrapSDKContext(ctx)
-
-	_, err := srv.InsertBTCSpvProof(sdkCtx, &msg)
+	_, err := tk.insertProofMsg(msg)
 
 	if err != nil {
 		t.Errorf("Unexpected message processing error: %v", err)
 	}
 
 	// TODO customs Equality for submission keys
-	unc := k.GetAllUnconfirmedSubmissions(ctx)
+	unc := tk.getUnconfirmedSubmissions()
 
 	if len(unc) != 1 {
 		t.Errorf("Unexpected missing unconfirmed submissions")
 	}
 
 	// Now we will return depth enough for moving submission to confirmed
-	lc.SetDepth(int64(kDeep))
+	tk.BTCLightClient.SetDepth(int64(kDeep))
 
 	// fire tip change callback
-	k.OnTipChange(ctx)
+	tk.onTipChange()
 	// TODO customs Equality for submission keys to check this are really keys
 	// we are looking for
-	unc = k.GetAllUnconfirmedSubmissions(ctx)
-	conf := k.GetAllConfirmedSubmissions(ctx)
+	unc = tk.getUnconfirmedSubmissions()
+	conf := tk.getConfirmedSubmissions()
 
 	if len(unc) != 0 {
 		t.Errorf("Unexpected not promoted submission")
@@ -264,18 +344,18 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 		t.Errorf("Unexpected missing confirmed submission")
 	}
 
-	ed := k.GetEpochData(ctx, epoch)
+	ed := tk.getEpochData(epoch)
 
 	if ed == nil || ed.Status != btcctypes.Confirmed {
 		t.Errorf("Epoch Data missing of in unexpected state")
 	}
 
-	lc.SetDepth(int64(wDeep))
-	k.OnTipChange(ctx)
+	tk.BTCLightClient.SetDepth(int64(wDeep))
+	tk.onTipChange()
 
-	unc = k.GetAllUnconfirmedSubmissions(ctx)
-	conf = k.GetAllConfirmedSubmissions(ctx)
-	fin := k.GetAllFinalizedSubmissions(ctx)
+	unc = tk.getUnconfirmedSubmissions()
+	conf = tk.getConfirmedSubmissions()
+	fin := tk.getFinalizedSubmissions()
 
 	if len(unc) != 0 {
 		t.Errorf("Unexpected not promoted unconfirmed submission")
@@ -289,7 +369,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 		t.Errorf("Unexpected missing finalized submission")
 	}
 
-	ed = k.GetEpochData(ctx, epoch)
+	ed = tk.getEpochData(epoch)
 
 	if ed == nil || ed.Status != btcctypes.Finalized {
 		t.Errorf("Epoch Data missing of in unexpected state")
