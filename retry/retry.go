@@ -46,7 +46,7 @@ func isExpectedErr(err error) bool {
 	return false
 }
 
-func Retry(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
+func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
 	if err := retryableFunc(); err != nil {
 		if isUnrecoverableErr(err) {
 			log.Warnf("Skip retry, error unrecoverable %v", err)
@@ -70,7 +70,7 @@ func Retry(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func()
 		log.Warnf("sleeping for %v sec: %v", sleep, err)
 		time.Sleep(sleep)
 
-		return Retry(2*sleep, maxSleepTime, retryableFunc)
+		return Do(2*sleep, maxSleepTime, retryableFunc)
 	}
 	return nil
 }
