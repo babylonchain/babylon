@@ -1,4 +1,4 @@
-package retry
+package types
 
 import (
 	"errors"
@@ -46,15 +46,15 @@ func isExpectedErr(err error) bool {
 	return false
 }
 
-func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
+func Retry(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
 	if err := retryableFunc(); err != nil {
 		if isUnrecoverableErr(err) {
-			log.Warnf("Skip retry, error unrecoverable %v", err)
+			logger.Error("Skip retry, error unrecoverable", "err", err)
 			return err
 		}
 
 		if isExpectedErr(err) {
-			log.Warnf("Skip retry, error expected %v", err)
+			logger.Error("Skip retry, error expected", "err", err)
 			return nil
 		}
 
@@ -63,14 +63,14 @@ func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() er
 		sleep = sleep + jitter/2
 
 		if sleep > maxSleepTime {
-			log.Info("retry timed out")
+			logger.Info("retry timed out")
 			return err
 		}
 
-		log.Warnf("sleeping for %v sec: %v", sleep, err)
+		logger.Info("starting exponential backoff", "sleep", sleep, "err", err)
 		time.Sleep(sleep)
 
-		return Do(2*sleep, maxSleepTime, retryableFunc)
+		return Retry(2*sleep, maxSleepTime, retryableFunc)
 	}
 	return nil
 }
