@@ -5,4 +5,4 @@ import (
 	"os"
 )
 
-var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+var logger = log.NewTMFmtLogger(log.NewSyncWriter(os.Stdout))
