@@ -1,4 +1,4 @@
-package types
+package retry
 
 import (
 	"github.com/tendermint/tendermint/libs/log"
