@@ -46,7 +46,7 @@ func isExpectedErr(err error) bool {
 	return false
 }
 
-func Retry(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
+func Do(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func() error) error {
 	if err := retryableFunc(); err != nil {
 		if isUnrecoverableErr(err) {
 			logger.Error("Skip retry, error unrecoverable", "err", err)
@@ -70,7 +70,7 @@ func Retry(sleep time.Duration, maxSleepTime time.Duration, retryableFunc func()
 		logger.Info("starting exponential backoff", "sleep", sleep, "err", err)
 		time.Sleep(sleep)
 
-		return Retry(2*sleep, maxSleepTime, retryableFunc)
+		return Do(2*sleep, maxSleepTime, retryableFunc)
 	}
 	return nil
 }
