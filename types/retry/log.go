@@ -2,7 +2,6 @@ package retry
 
 import (
 	"github.com/tendermint/tendermint/libs/log"
-	"os"
 )
 
-var logger = log.NewTMFmtLogger(log.NewSyncWriter(os.Stdout))
+var logger = log.MustNewDefaultLogger(log.LogFormatJSON, log.LogLevelDebug, true)

@@ -2,7 +2,6 @@ package app
 
 import (
 	"encoding/json"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -17,7 +16,8 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 	db := dbm.NewMemDB()
 	privSigner, err := SetupPrivSigner()
 	require.NoError(t, err)
-	app := NewBabylonApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
+	logger := log.MustNewDefaultLogger(log.LogFormatJSON, log.LogLevelDebug, true)
+	app := NewBabylonApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
 
 	for acc := range maccPerms {
 		require.True(
@@ -41,7 +41,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 	app.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	app2 := NewBabylonApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
+	app2 := NewBabylonApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
 	_, err = app2.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
@@ -56,7 +56,9 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 	db := dbm.NewMemDB()
 	privSigner, err := SetupPrivSigner()
 	require.NoError(t, err)
-	app := NewBabylonApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
+	logger := log.MustNewDefaultLogger(log.LogFormatJSON, log.LogLevelDebug, true)
+
+	app := NewBabylonApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
 	genesisState := NewDefaultGenesisState(encCfg.Marshaler)
 	stateBytes, err := json.MarshalIndent(genesisState, "", "  ")
 	require.NoError(t, err)
