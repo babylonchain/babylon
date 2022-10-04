@@ -35,7 +35,7 @@ jobs:
       - run: # sudo is needed, so that integration test binary have proper access to nodes keyring
           name: Run integration tests
           command: |
-            make localnet-start
+            make localnet-start-test
             sudo -E env "PATH=$PATH" make test-babylon-integration
             make localnet-stop
 

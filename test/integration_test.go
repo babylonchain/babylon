@@ -81,8 +81,24 @@ func waitForBlock(clients []*grpc.ClientConn, blockNumber int64) {
 			return
 		}
 
-		<-time.After(2 * time.Second)
+		<-time.After(1 * time.Second)
 	}
+}
+
+func getCurrentEpoch(conn *grpc.ClientConn) uint64 {
+	epochingClient := epochingtypes.NewQueryClient(conn)
+
+	currentEpochResponse, err := epochingClient.CurrentEpoch(
+		context.Background(),
+		&epochingtypes.QueryCurrentEpochRequest{},
+	)
+
+	if err != nil {
+		errorString := fmt.Sprintf("Query failed, testnet not running. Error: %v", err)
+		panic(errorString)
+	}
+
+	return currentEpochResponse.CurrentEpoch
 }
 
 func TestMain(m *testing.M) {
@@ -154,62 +170,19 @@ func TestBtcLightClientGenesis(t *testing.T) {
 }
 
 func TestNodeProgress(t *testing.T) {
-
-	// most probably nodes are after block 1 at this point, but to make sure we are waiting
-	// for block 1
-	// blocks 1-10 are epoch 1 blocks.
-	waitForBlock(clients, 1)
+	// Waiting for block 7, as tests are configured to run with epoch interval = 5,
+	// which means that at block 7 all clients will surely be in second epoch
+	waitForBlock(clients, 7)
 
 	for _, c := range clients {
-		epochingClient := epochingtypes.NewQueryClient(c)
-
-		currentEpochResponse, err := epochingClient.CurrentEpoch(
-			context.Background(),
-			&epochingtypes.QueryCurrentEpochRequest{},
-		)
-
-		if err != nil {
-			errorString := fmt.Sprintf("Query failed, testnet not running. Error: %v", err)
-			panic(errorString)
-		}
-
-		if currentEpochResponse.CurrentEpoch != 1 {
-			t.Fatalf("Initial epoch should equal 1. Current epoch %d", currentEpochResponse.CurrentEpoch)
-		}
-	}
-
-	// TODO default epoch interval is equal to 10, we should retrieve it from config
-	// block 11 is first block of epoch 2, so if all clients are after block 12, they
-	// should be at epoch 2
-	waitForBlock(clients, 12)
-
-	for _, c := range clients {
-		epochingClient := epochingtypes.NewQueryClient(c)
-
-		currentEpochResponse, err := epochingClient.CurrentEpoch(
-			context.Background(),
-			&epochingtypes.QueryCurrentEpochRequest{},
-		)
-
-		if err != nil {
-			errorString := fmt.Sprintf("Query failed, testnet not running. Error: %v", err)
-			panic(errorString)
-		}
-
-		if currentEpochResponse.CurrentEpoch != 2 {
-			t.Errorf("Epoch after 10 blocks, should equal 2. Curent epoch %d", currentEpochResponse.CurrentEpoch)
+		currentEpoch := getCurrentEpoch(c)
+		if currentEpoch != 2 {
+			t.Errorf("Epoch after 7 blocks, should equal 2. Current epoch %d", currentEpoch)
 		}
 	}
 }
 
 func TestSendTx(t *testing.T) {
-	// we are waiting for middle of the epoch to avoid race condidions with bls
-	// signer sending transaction and incrementing account sequence numbers
-	// which may cause header tx to fail.
-	// TODO: Create separate account for sending transactions to avoid race
-	// conditions with validator acounts.
-	waitForBlock(clients, 14)
-
 	// TODO fix hard coded paths
 	node0dataPath := "../.testnets/node0/babylond"
 	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
@@ -219,31 +192,15 @@ func TestSendTx(t *testing.T) {
 	if err != nil {
 		panic("failed to init sender")
 	}
+	tip1 := sender.GetBtcTip()
 
-	tip1, err := sender.getBtcTip()
-
-	if err != nil {
-		t.Fatalf("Couldnot retrieve tip")
-	}
-
-	res, err := sender.insertNewEmptyHeader(tip1)
+	err = sender.insertNEmptyBTCHeaders(1)
 
 	if err != nil {
 		t.Fatalf("could not insert new btc header")
 	}
 
-	_, err = WaitBtcForHeight(sender.Conn, tip1.Height+1)
-
-	if err != nil {
-		t.Log(res.TxResponse)
-		t.Fatalf("failed waiting for btc lightclient block")
-	}
-
-	tip2, err := sender.getBtcTip()
-
-	if err != nil {
-		t.Fatalf("Couldnot retrieve tip")
-	}
+	tip2 := sender.GetBtcTip()
 
 	if tip2.Height != tip1.Height+1 {
 		t.Fatalf("Light client should progress by 1 one block")
@@ -300,41 +257,20 @@ func TestSubmitCheckpoint(t *testing.T) {
 		rawBtcCheckpoint,
 	)
 
-	currentTip, err := sender.getBtcTip()
-
-	if err != nil {
-		t.Fatalf("Could not retrieve btc tip")
-	}
+	currentTip := sender.GetBtcTip()
 
 	firstSubmission := datagen.CreateBlockWithTransaction(currentTip.Header.ToBlockHeader(), p1)
 
 	secondSubmission := datagen.CreateBlockWithTransaction(firstSubmission.HeaderBytes.ToBlockHeader(), p2)
 
 	// first insert all headers
-	hresp1, err := sender.insertNewHeader(firstSubmission.HeaderBytes)
+	err = sender.insertBTCHeaders(
+		currentTip.Height,
+		[]bbn.BTCHeaderBytes{firstSubmission.HeaderBytes, secondSubmission.HeaderBytes},
+	)
 
 	if err != nil {
-		t.Fatalf("Could not insert first header")
-	}
-
-	_, err = WaitBtcForHeight(clients[0], currentTip.Height+1)
-
-	if err != nil {
-		t.Log(hresp1.TxResponse)
-		t.Fatalf("failed waiting for btc lightclient block")
-	}
-
-	hresp2, err := sender.insertNewHeader(secondSubmission.HeaderBytes)
-
-	if err != nil {
-		t.Fatalf("Could not insert second header")
-	}
-
-	_, err = WaitBtcForHeight(clients[0], currentTip.Height+2)
-
-	if err != nil {
-		t.Log(hresp2.TxResponse)
-		t.Fatalf("failed waiting for btc lightclient block")
+		t.Fatalf("Could not insert two headers. Err: %s", err)
 	}
 
 	// At this point light client chain should be 3 long and inserting spv proofs
@@ -373,40 +309,10 @@ func TestConfirmCheckpoint(t *testing.T) {
 		panic("failed to init sender")
 	}
 
-	currentTip, err := sender.getBtcTip()
+	err = sender.insertNEmptyBTCHeaders(2)
 
 	if err != nil {
-		t.Fatalf("Could not retrieve btc tip")
-	}
-
-	h1 := generateEmptyChildHeaderBytes(currentTip.Header.ToBlockHeader())
-	h2 := generateEmptyChildHeaderBytes(h1.ToBlockHeader())
-
-	// first insert 2 new headers,
-	hresp1, err := sender.insertNewHeader(h1)
-
-	if err != nil {
-		t.Fatalf("Could not insert first header")
-	}
-
-	_, err = WaitBtcForHeight(clients[0], currentTip.Height+1)
-
-	if err != nil {
-		t.Log(hresp1.TxResponse)
-		t.Fatalf("failed waiting for btc lightclient block")
-	}
-
-	hresp2, err := sender.insertNewHeader(h2)
-
-	if err != nil {
-		t.Fatalf("Could not insert second header")
-	}
-
-	_, err = WaitBtcForHeight(clients[0], currentTip.Height+2)
-
-	if err != nil {
-		t.Log(hresp2.TxResponse)
-		t.Fatalf("failed waiting for btc lightclient block")
+		t.Fatalf("Could not insert two headers. Err: %s", err)
 	}
 
 	// Btc light client chain has been extended by 2 blocks, it means that our checkpoint
