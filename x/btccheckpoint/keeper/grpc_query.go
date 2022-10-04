@@ -89,7 +89,7 @@ func getOffset(pageReq *query.PageRequest) uint64 {
 	}
 }
 
-func buildPagResponse(numOfKeys uint64, pageReq *query.PageRequest) *query.PageResponse {
+func buildPageResponse(numOfKeys uint64, pageReq *query.PageRequest) *query.PageResponse {
 	if pageReq == nil {
 		return &query.PageResponse{}
 	}
@@ -124,7 +124,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 
 		return &types.QueryEpochSubmissionsResponse{
 			Keys:       []*types.SubmissionKey{},
-			Pagination: buildPagResponse(0, req.Pagination),
+			Pagination: buildPageResponse(0, req.Pagination),
 		}, nil
 	}
 
@@ -134,7 +134,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 		// offset larger than number of keys return empty response
 		return &types.QueryEpochSubmissionsResponse{
 			Keys:       []*types.SubmissionKey{},
-			Pagination: buildPagResponse(numberOfKeys, req.Pagination),
+			Pagination: buildPageResponse(numberOfKeys, req.Pagination),
 		}, nil
 	}
 
@@ -150,6 +150,6 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 
 	return &types.QueryEpochSubmissionsResponse{
 		Keys:       responseKeys,
-		Pagination: buildPagResponse(numberOfKeys, req.Pagination),
+		Pagination: buildPageResponse(numberOfKeys, req.Pagination),
 	}, nil
 }

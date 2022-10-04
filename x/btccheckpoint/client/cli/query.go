@@ -34,7 +34,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 func CmdBtcCheckpointHeight() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-height [epoch_number]",
+		Use:   "btc-height <epoch_number>",
 		Short: "retrieve earliest btc height for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -66,7 +66,7 @@ func CmdBtcCheckpointHeight() *cobra.Command {
 
 func CmdEpochSubmissions() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "epoch-submissions [epoch_number]",
+		Use:   "epoch-submissions <epoch_number>",
 		Short: "all checkpoint submissions for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
