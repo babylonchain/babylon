@@ -119,7 +119,7 @@ func (b *TestTxSender) SendBtcHeadersTransaction(headers []bbn.BTCHeaderBytes) (
 		msg, err := lightclient.NewMsgInsertHeader(address, header.MarshalHex())
 
 		if err != nil {
-			panic("creating new header message must success ")
+			panic("creating new header message must succeed ")
 		}
 
 		msgs = append(msgs, msg)
