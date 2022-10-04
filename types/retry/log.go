@@ -5,5 +5,5 @@ import (
 	"os"
 )
 
-//TODO add log formatters
+// TODO add log formatters
 var logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
