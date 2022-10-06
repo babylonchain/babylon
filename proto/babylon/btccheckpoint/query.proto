@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/params.proto";
+import "babylon/btccheckpoint/btccheckpoint.proto";
 // this line is used by starport scaffolding # 1
 
 option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
@@ -17,10 +18,13 @@ service Query {
   }
   // this line is used by starport scaffolding # 2
 
-
   // BtcCheckpointHeight returns earliest block height for given rawcheckpoint
   rpc BtcCheckpointHeight(QueryBtcCheckpointHeightRequest) returns (QueryBtcCheckpointHeightResponse) {
     option (google.api.http).get = "/babylon/btccheckpoint/v1/{epoch_num}";
+  }
+
+  rpc EpochSubmissions(QueryEpochSubmissionsRequest) returns (QueryEpochSubmissionsResponse) {
+    option (google.api.http).get = "/babylon/btccheckpoint/v1/{epoch_num}/submissions";
   }
 }
 
@@ -44,4 +48,18 @@ message QueryBtcCheckpointHeightRequest {
 message QueryBtcCheckpointHeightResponse {
   // Earliest btc block number containing given raw checkpoint
   uint64 earliest_btc_block_number = 1;
+}
+
+message QueryEpochSubmissionsRequest {
+  // Number of epoch for which submissions are requested
+  uint64 epoch_num = 1;
+
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryEpochSubmissionsResponse {
+  // All submissions saved during an epoch.
+  repeated SubmissionKey keys = 1;
+
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

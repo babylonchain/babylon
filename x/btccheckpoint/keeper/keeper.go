@@ -104,9 +104,7 @@ func (k Keeper) GetCheckpointEpoch(ctx sdk.Context, c []byte) (uint64, error) {
 }
 
 func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
-	store := ctx.KVStore(k.storeKey)
-	kBytes := k.cdc.MustMarshal(&sk)
-	return store.Has(kBytes)
+	return k.GetSubmissionData(ctx, sk) != nil
 }
 
 // Return epoch data for given epoch, if there is not epoch data yet returns nil
