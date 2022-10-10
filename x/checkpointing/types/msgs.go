@@ -23,19 +23,14 @@ func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature
 	}}
 }
 
-func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator) *MsgWrappedCreateValidator {
-	return &MsgWrappedCreateValidator{
-
-		MsgCreateValidator: msgCreateVal,
-	}
-
+func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator, blsPK *bls12381.PublicKey, pop *ProofOfPossession) (*MsgWrappedCreateValidator, error) {
 	return &MsgWrappedCreateValidator{
 		Key: &BlsKey{
-			Pubkey: nil,
-			Pop:    nil,
+			Pubkey: blsPK,
+			Pop:    pop,
 		},
-		MsgCreateValidator: nil,
-	}
+		MsgCreateValidator: msgCreateVal,
+	}, nil
 }
 
 // ValidateBasic validates stateless message elements
@@ -73,12 +68,19 @@ func (m *MsgWrappedCreateValidator) VerifyPoP(valPubkey cryptotypes.PubKey) bool
 
 // ValidateBasic validates statelesss message elements
 func (m *MsgWrappedCreateValidator) ValidateBasic() error {
+	if m.MsgCreateValidator == nil {
+		return errors.New("MsgCreateValidator is nil")
+	}
+	err := m.MsgCreateValidator.ValidateBasic()
+	if err != nil {
+		return err
+	}
 	ok := m.VerifyPoP(&ed255192.PubKey{Key: m.MsgCreateValidator.Pubkey.Value})
 	if !ok {
 		return errors.New("the proof-of-possession is not valid")
 	}
 
-	return m.MsgCreateValidator.ValidateBasic()
+	return nil
 }
 
 func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
