@@ -2,11 +2,13 @@ package types
 
 import (
 	"errors"
-	"github.com/babylonchain/babylon/crypto/bls12381"
+
 	ed255192 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
 )
 
 var (
@@ -75,7 +77,7 @@ func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 	if err != nil {
 		return err
 	}
-	ok := m.VerifyPoP(&ed255192.PubKey{Key: m.MsgCreateValidator.Pubkey.Value})
+	ok := m.VerifyPoP(m.MsgCreateValidator.Pubkey.GetCachedValue().(*ed255192.PubKey))
 	if !ok {
 		return errors.New("the proof-of-possession is not valid")
 	}

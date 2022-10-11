@@ -3,11 +3,6 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmos "github.com/tendermint/tendermint/libs/os"
 	"path/filepath"
 
 	flag "github.com/spf13/pflag"
@@ -15,10 +10,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
+	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	tmconfig "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto/ed25519"
+	tmos "github.com/tendermint/tendermint/libs/os"
+
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 // copied from https://github.com/cosmos/cosmos-sdk/blob/7167371f87ae641012549922a292050562821dce/x/staking/client/cli/tx.go#L340
@@ -36,8 +38,8 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 		return txf, nil, err
 	}
 
-	var pk cryptotypes.PubKey
-	if err := clientCtx.Codec.UnmarshalInterfaceJSON([]byte(pkStr), &pk); err != nil {
+	pk, err := cryptocodec.FromTmPubKeyInterface(ed25519.PubKey(pkStr))
+	if err != nil {
 		return txf, nil, err
 	}
 
@@ -83,7 +85,7 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 	if err != nil {
 		return txf, nil, err
 	}
-	if err := msg.ValidateBasic(); err != nil {
+	if err := wrappedMsg.ValidateBasic(); err != nil {
 		return txf, nil, err
 	}
 
