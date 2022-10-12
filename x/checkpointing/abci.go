@@ -1,6 +1,8 @@
 package checkpointing
 
 import (
+	"fmt"
+	"github.com/babylonchain/babylon/types/retry"
 	"time"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -43,8 +45,17 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		}
 
 		go func() {
-			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
+			// TODO should read the parameters from config file
+			err = retry.Do(1*time.Second, 1*time.Minute, func() error {
+				_, err := k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
+				if err != nil {
+					return err
+				}
+				ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %v", epoch.EpochNumber-1))
+				return nil
+			})
 			if err != nil {
+				// failing to send a BLS-sig causes a panicking situation
 				panic(err)
 			}
 		}()

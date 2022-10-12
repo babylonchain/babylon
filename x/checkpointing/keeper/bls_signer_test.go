@@ -65,6 +65,7 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	ek.EXPECT().GetValidatorSet(ctx, gomock.Eq(epochNum)).Return(valSet)
 	signer.EXPECT().GetAddress().Return(addr1)
 	signer.EXPECT().SignMsgWithBls(gomock.Eq(signBytes)).Return(bls12381.Sign(blsPrivKey1, signBytes), nil)
-	err := ckptkeeper.SendBlsSig(ctx, epochNum, lch)
+	res, err := ckptkeeper.SendBlsSig(ctx, epochNum, lch)
 	require.NoError(t, err)
+	require.NotNil(t, res)
 }
