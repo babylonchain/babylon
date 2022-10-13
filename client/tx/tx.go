@@ -36,6 +36,8 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
 // given set of messages. It will also simulate gas requirements if necessary.
 // It will return an error upon failure.
+// The code is based on cosmos-sdk: https://github.com/cosmos/cosmos-sdk/blob/7781cdb3d20bc7ebac017452897ce1e6ab3903ef/client/tx/tx.go#L65
+// it treats non-zero response code as errors
 func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(clientCtx, txf)
 	if err != nil {

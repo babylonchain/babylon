@@ -1,8 +1,6 @@
 package checkpointing
 
 import (
-	"fmt"
-	"github.com/babylonchain/babylon/types/retry"
 	"time"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -19,7 +17,6 @@ import (
 // - extract the LastCommitHash from the block
 // - create a raw checkpoint with the status of ACCUMULATING
 // - start a BLS signer which creates a BLS sig transaction and distributes it to the network
-
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
@@ -45,15 +42,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		}
 
 		go func() {
-			// TODO should read the parameters from config file
-			err = retry.Do(1*time.Second, 1*time.Minute, func() error {
-				_, err := k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
-				if err != nil {
-					return err
-				}
-				ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %v", epoch.EpochNumber-1))
-				return nil
-			})
+			err := k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
 			if err != nil {
 				// failing to send a BLS-sig causes a panicking situation
 				panic(err)
