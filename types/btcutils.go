@@ -18,7 +18,8 @@ import (
 // since this might introduce undeterministic behavior
 func ValidateBTCHeader(header *wire.BlockHeader, powLimit *big.Int) error {
 	msgBlock := &wire.MsgBlock{Header: *header}
-
+	fmt.Println("Validating header")
+	fmt.Println(header)
 	block := btcutil.NewBlock(msgBlock)
 
 	// The upper limit for the power to be spent

@@ -221,10 +221,6 @@ func NewBabylonApp(
 	// but this way it makes babylon app more testable
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
 	powLimit := btcConfig.PowLimit()
-	// WARNING: We are initiating global babylon btc config  as first so other modules
-	// can use it from start. If it was already iniitlized in root cmd this will be
-	// noop
-	bbn.InitGlobalBtcConfig(btcConfig)
 
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -343,7 +339,9 @@ func NewBabylonApp(
 		appCodec,
 		keys[btclightclienttypes.StoreKey],
 		keys[btclightclienttypes.MemStoreKey],
-		app.GetSubspace(btclightclienttypes.ModuleName))
+		app.GetSubspace(btclightclienttypes.ModuleName),
+		btcConfig,
+	)
 
 	app.CheckpointingKeeper =
 		checkpointingkeeper.NewKeeper(
@@ -533,6 +531,7 @@ func NewBabylonApp(
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
 		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
+		NewBtcValidationDecorator(btcConfig),
 	)
 	app.SetAnteHandler(anteHandler)
 

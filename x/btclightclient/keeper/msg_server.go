@@ -2,13 +2,13 @@ package keeper
 
 import (
 	"context"
-	bbn "github.com/babylonchain/babylon/types"
+	"math/big"
+
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/big"
 )
 
 type msgServer struct {
@@ -128,7 +128,7 @@ func MsgInsertHeaderWrapped(ctx context.Context, k Keeper, msg *types.MsgInsertH
 		block := btcutil.NewBlock(msgBlock)
 		err = blockchain.CheckProofOfWork(block, &powLimit)
 		if err != nil {
-			return nil, err
+			return nil, types.ErrInvalidProofOfWOrk
 		}
 	}
 
@@ -157,10 +157,15 @@ func MsgInsertHeaderWrapped(ctx context.Context, k Keeper, msg *types.MsgInsertH
 }
 
 func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader) (*types.MsgInsertHeaderResponse, error) {
-	powLimit := bbn.GetGlobalPowLimit()
-	reduceMinDifficulty := bbn.GetGlobalReduceMinDifficulty()
-	retargetAdjustmentFactor := bbn.GetGlobalRetargetAdjustmentFactor()
-	return MsgInsertHeaderWrapped(ctx, m.k, msg, powLimit, reduceMinDifficulty, retargetAdjustmentFactor, true)
+	return MsgInsertHeaderWrapped(
+		ctx,
+		m.k,
+		msg,
+		m.k.btcConfig.PowLimit(),
+		m.k.btcConfig.ReduceMinDifficulty(),
+		m.k.btcConfig.RetargetAdjustmentFactor(),
+		true,
+	)
 }
 
 // NewMsgServerImpl returns an implementation of the MsgServer interface

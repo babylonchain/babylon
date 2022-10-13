@@ -201,7 +201,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, m.k.GetPowLimit(), m.k.GetExpectedTag())
 
 	if e != nil {
-		return nil, types.ErrInvalidCheckpointProof
+		return nil, types.ErrInvalidCheckpointProof.Wrap(e.Error())
 	}
 
 	// Get the SDK wrapped context

@@ -4,8 +4,6 @@ import (
 	fmt "fmt"
 	"math/big"
 
-	bbl "github.com/babylonchain/babylon/types"
-
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -79,20 +77,11 @@ func ParseTwoProofs(
 }
 
 func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
-	address, err := sdk.AccAddressFromBech32(m.Submitter)
+	// m.Proofs are validated in ante-handler
+	_, err := sdk.AccAddressFromBech32(m.Submitter)
 
 	if err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
-	}
-
-	// result of parsed proof is not needed, drop it
-	// whole parsing stuff is stateless
-	powLimit := bbl.GetGlobalPowLimit()
-
-	_, err = ParseTwoProofs(address, m.Proofs, &powLimit, bbl.GetGlobalCheckPointTag())
-
-	if err != nil {
-		return err
 	}
 
 	return nil
