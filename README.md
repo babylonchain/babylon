@@ -71,7 +71,7 @@ gentxs node0
 ```
 
 The `gentxs` directory contains the genesis transactions. It contains
-transactions that assign stake to a single address that is defined for each
+transactions that assign bbn tokens to a single address that is defined for each
 node.
 
 The `node0` directory contains the the following,
@@ -87,7 +87,7 @@ A brief description of the contents:
 - `keyring-test`: Contains the test keyring. This directory was created because
   we provided the `--keyring-backend test` flag. The `testnet` command, creates
   a validator node named `node{i}` (depends on the node name), and assigns
-  stake to it through a transaction written to `.testnet/gentxs/node{i}.json`.
+  bbn tokens to it through a transaction written to `.testnet/gentxs/node{i}.json`.
   The keys for this node can be pointed to by the `node{i}` name.
 
 ### Running the node
@@ -142,7 +142,7 @@ For example, in the `btclightclient` module, in order
 to submit a header, one should:
 ```console
 babylond --home .testnet/node0/babylond --chain-id chain-test \
-         --keyring-backend test --fees 100stake \
+         --keyring-backend test --fees 100bbn \
          --from node0 --broadcast-mode block \
          tx btclightclient insert-header <header-hex>
 ```

@@ -42,7 +42,7 @@ func GetTxCmd() *cobra.Command {
 
 func NewDelegateCmd() *cobra.Command {
 	bech32PrefixValAddr := params.Bech32PrefixAccAddr
-	denom := sdk.DefaultBondDenom // TODO: mainnet is expected to use "bbn". Add logic for choosing the correct denom
+	denom := params.DefaultBondDenom
 
 	cmd := &cobra.Command{
 		Use:   "delegate [validator-addr] [amount]",
@@ -87,7 +87,7 @@ $ %s tx epoching delegate %s1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 1000%s --fro
 
 func NewRedelegateCmd() *cobra.Command {
 	bech32PrefixValAddr := params.Bech32PrefixAccAddr
-	denom := sdk.DefaultBondDenom // TODO: mainnet is expected to use "bbn". Add logic for choosing the correct denom
+	denom := params.DefaultBondDenom
 
 	cmd := &cobra.Command{
 		Use:   "redelegate [src-validator-addr] [dst-validator-addr] [amount]",
@@ -137,7 +137,7 @@ $ %s tx epoching redelegate %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj %s1l2rsakp
 
 func NewUnbondCmd() *cobra.Command {
 	bech32PrefixValAddr := params.Bech32PrefixAccAddr
-	denom := sdk.DefaultBondDenom // TODO: mainnet is expected to use "bbn". Add logic for choosing the correct denom
+	denom := params.DefaultBondDenom
 
 	cmd := &cobra.Command{
 		Use:   "unbond [validator-addr] [amount]",

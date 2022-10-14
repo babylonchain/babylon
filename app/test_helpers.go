@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	appparams "github.com/babylonchain/babylon/app/params"
 	"strconv"
 	"testing"
 	"time"
@@ -148,18 +149,19 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
+	stakingGenesis.Params.BondDenom = appparams.DefaultBondDenom
 	genesisState[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
 
 	totalSupply := sdk.NewCoins()
 	for _, b := range balances {
 		// add genesis acc tokens and delegated tokens to total supply
-		totalSupply = totalSupply.Add(b.Coins.Add(sdk.NewCoin(sdk.DefaultBondDenom, totalBondAmt))...)
+		totalSupply = totalSupply.Add(b.Coins.Add(sdk.NewCoin(appparams.DefaultBondDenom, totalBondAmt))...)
 	}
 
 	// add bonded amount to bonded pool module account
 	balances = append(balances, banktypes.Balance{
 		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
-		Coins:   sdk.Coins{sdk.NewCoin(sdk.DefaultBondDenom, totalBondAmt)},
+		Coins:   sdk.Coins{sdk.NewCoin(appparams.DefaultBondDenom, totalBondAmt)},
 	})
 
 	// update total supply
@@ -345,7 +347,7 @@ func SignCheckDeliver(
 	tx, err := helpers.GenTx(
 		txCfg,
 		msgs,
-		sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
+		sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
 		helpers.DefaultGenTxGas,
 		chainID,
 		accNums,
@@ -395,7 +397,7 @@ func GenSequenceOfTxs(txGen client.TxConfig, msgs []sdk.Msg, accNums []uint64, i
 		txs[i], err = helpers.GenTx(
 			txGen,
 			msgs,
-			sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
+			sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
 			helpers.DefaultGenTxGas,
 			"",
 			accNums,

@@ -1,6 +1,7 @@
 package testepoching
 
 import (
+	appparams "github.com/babylonchain/babylon/app/params"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -62,7 +63,7 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	// ensure the genesis account has a sufficient amount of tokens
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.DefaultPowerReduction.MulRaw(10000000))),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdk.DefaultPowerReduction.MulRaw(10000000))),
 	}
 	GenAccs := []authtypes.GenesisAccount{acc}
 
@@ -126,7 +127,7 @@ func (h *Helper) EndBlock() sdk.Context {
 // CreateValidator calls handler to create a new staking validator
 // TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
 func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount sdk.Int, ok bool) {
-	coin := sdk.NewCoin(sdk.DefaultBondDenom, stakeAmount)
+	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
 	h.createValidator(addr, pk, coin, ok)
 }
 
@@ -134,7 +135,7 @@ func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, sta
 // TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
 func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey, valPower int64, ok bool) sdk.Int {
 	amount := h.StakingKeeper.TokensFromConsensusPower(h.Ctx, valPower)
-	coin := sdk.NewCoin(sdk.DefaultBondDenom, amount)
+	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	h.createValidator(addr, pk, coin, ok)
 	return amount
 }
@@ -142,7 +143,7 @@ func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes
 // CreateValidatorMsg returns a message used to create validator in this service.
 // TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
 func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount sdk.Int) *stakingtypes.MsgCreateValidator {
-	coin := sdk.NewCoin(sdk.DefaultBondDenom, stakeAmount)
+	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
 	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
 	require.NoError(h.t, err)
 	return msg
@@ -157,7 +158,7 @@ func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, coi
 
 // WrappedDelegate calls handler to delegate stake for a validator
 func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount sdk.Int) *sdk.Result {
-	coin := sdk.NewCoin(sdk.DefaultBondDenom, amount)
+	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
 	return h.Handle(wmsg, true)
@@ -165,7 +166,7 @@ func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, a
 
 // WrappedDelegateWithPower calls handler to delegate stake for a validator
 func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValAddress, power int64) *sdk.Result {
-	coin := sdk.NewCoin(sdk.DefaultBondDenom, h.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
+	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
 	return h.Handle(wmsg, true)
@@ -173,7 +174,7 @@ func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValA
 
 // WrappedUndelegate calls handler to unbound some stake from a validator.
 func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount sdk.Int) *sdk.Result {
-	unbondAmt := sdk.NewCoin(sdk.DefaultBondDenom, amount)
+	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgUndelegate(delegator, val, unbondAmt)
 	wmsg := types.NewMsgWrappedUndelegate(msg)
 	return h.Handle(wmsg, true)
@@ -181,7 +182,7 @@ func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress,
 
 // WrappedBeginRedelegate calls handler to redelegate some stake from a validator to another
 func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.ValAddress, dstVal sdk.ValAddress, amount sdk.Int) *sdk.Result {
-	unbondAmt := sdk.NewCoin(sdk.DefaultBondDenom, amount)
+	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgBeginRedelegate(delegator, srcVal, dstVal, unbondAmt)
 	wmsg := types.NewMsgWrappedBeginRedelegate(msg)
 	return h.Handle(wmsg, true)
