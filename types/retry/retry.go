@@ -4,6 +4,7 @@ import (
 	"errors"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"math/rand"
 	"time"
 )
@@ -15,6 +16,7 @@ var unrecoverableErrors = []error{
 	btcctypes.ErrUnknownHeader,
 	btcctypes.ErrNoCheckpointsForPreviousEpoch,
 	btcctypes.ErrInvalidCheckpointProof,
+	checkpointingtypes.ErrBlsPrivKeyDoesNotExist,
 	// TODO Add more errors here
 }
 
