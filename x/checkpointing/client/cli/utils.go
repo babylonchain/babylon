@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"path/filepath"
 
 	flag "github.com/spf13/pflag"
@@ -10,13 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmconfig "github.com/tendermint/tendermint/config"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 	tmos "github.com/tendermint/tendermint/libs/os"
 
 	"github.com/babylonchain/babylon/privval"
@@ -24,8 +23,7 @@ import (
 )
 
 // copied from https://github.com/cosmos/cosmos-sdk/blob/7167371f87ae641012549922a292050562821dce/x/staking/client/cli/tx.go#L340
-// except for NewMsgWrappedCreateValidator
-func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet) (tx.Factory, *types.MsgWrappedCreateValidator, error) {
+func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet) (tx.Factory, *staketypes.MsgCreateValidator, error) {
 	fAmount, _ := fs.GetString(cosmoscli.FlagAmount)
 	amount, err := sdk.ParseCoinNormalized(fAmount)
 	if err != nil {
@@ -38,8 +36,8 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 		return txf, nil, err
 	}
 
-	pk, err := cryptocodec.FromTmPubKeyInterface(ed25519.PubKey(pkStr))
-	if err != nil {
+	var pk cryptotypes.PubKey
+	if err := clientCtx.Codec.UnmarshalInterfaceJSON([]byte(pkStr), &pk); err != nil {
 		return txf, nil, err
 	}
 
@@ -77,6 +75,32 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 	msg, err := staketypes.NewMsgCreateValidator(
 		sdk.ValAddress(valAddr), pk, amount, description, commissionRates, minSelfDelegation,
 	)
+	if err != nil {
+		return txf, nil, err
+	}
+	if err := msg.ValidateBasic(); err != nil {
+		return txf, nil, err
+	}
+
+	genOnly, _ := fs.GetBool(flags.FlagGenerateOnly)
+	if genOnly {
+		ip, _ := fs.GetString(cosmoscli.FlagIP)
+		nodeID, _ := fs.GetString(cosmoscli.FlagNodeID)
+
+		if nodeID != "" && ip != "" {
+			txf = txf.WithMemo(fmt.Sprintf("%s@%s", nodeID, ip))
+		}
+	}
+
+	return txf, msg, nil
+}
+
+// buildWrappedCreateValidatorMsg builds a MsgWrappedCreateValidator that wraps MsgCreateValidator with BLS key
+func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *flag.FlagSet) (tx.Factory, *types.MsgWrappedCreateValidator, error) {
+	txf, msg, err := newBuildCreateValidatorMsg(clientCtx, txf, fs)
+	if err != nil {
+		return txf, nil, err
+	}
 
 	home, _ := fs.GetString(flags.FlagHome)
 	valKey, err := getValKeyFromFile(home)
@@ -87,16 +111,6 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 	}
 	if err := wrappedMsg.ValidateBasic(); err != nil {
 		return txf, nil, err
-	}
-
-	genOnly, _ := fs.GetBool(flags.FlagGenerateOnly)
-	if genOnly {
-		ip, _ := fs.GetString(cosmoscli.FlagIP)
-		nodeID, _ := fs.GetString(cosmoscli.FlagNodeID)
-
-		if nodeID != "" && ip != "" {
-			txf = txf.WithMemo(fmt.Sprintf("%s@%s:26656", nodeID, ip))
-		}
 	}
 
 	return txf, wrappedMsg, nil

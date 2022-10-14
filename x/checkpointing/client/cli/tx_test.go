@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"io"
 	"path/filepath"
 	"testing"
@@ -121,7 +122,10 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	cmd := checkpointcli.CmdWrappedCreateValidator()
 
 	consPrivKey := wrappedPV.GetValPrivKey()
-	consPubKeyBz := consPrivKey.PubKey().Bytes()
+	consPubKey, err := cryptocodec.FromTmPubKeyInterface(consPrivKey.PubKey())
+	require.NoError(err)
+	consPubKeyBz, err := s.clientCtx.Codec.MarshalInterfaceJSON(consPubKey)
+	require.NoError(err)
 	require.NotNil(consPubKeyBz)
 
 	testCases := []struct {

@@ -3,9 +3,10 @@ package privval
 import (
 	"errors"
 
+	tmcrypto "github.com/tendermint/tendermint/crypto"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	tmcrypto "github.com/tendermint/tendermint/crypto"
 )
 
 type ValidatorKeys struct {

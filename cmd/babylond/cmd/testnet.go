@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
 	"path/filepath"
@@ -23,7 +24,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	"github.com/spf13/cobra"
