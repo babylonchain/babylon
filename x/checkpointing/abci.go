@@ -17,7 +17,6 @@ import (
 // - extract the LastCommitHash from the block
 // - create a raw checkpoint with the status of ACCUMULATING
 // - start a BLS signer which creates a BLS sig transaction and distributes it to the network
-
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
@@ -43,8 +42,9 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		}
 
 		go func() {
-			err = k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
+			err := k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
 			if err != nil {
+				// failing to send a BLS-sig causes a panicking situation
 				panic(err)
 			}
 		}()

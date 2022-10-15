@@ -124,13 +124,11 @@ func (b *TestTxSender) SendBtcHeadersTransaction(headers []bbn.BTCHeaderBytes) (
 
 		msgs = append(msgs, msg)
 
-		//TODO 3stake and 300000 per msg should probably not be hardcoded by taken from tx
-		//simulation. For now this enough to pay for insert header transaction.
 		fees = fees + 3
 		gas = gas + 300000
 	}
 
-	feesString := fmt.Sprintf("%dstake", fees)
+	feesString := fmt.Sprintf("%d%s", fees, appparams.DefaultBondDenom)
 
 	txBytes := b.buildTx(feesString, gas, acc.GetSequence(), acc.GetAccountNumber(), msgs...)
 
@@ -174,9 +172,8 @@ func (b *TestTxSender) insertSpvProof(p1 *btccheckpoint.BTCSpvProof, p2 *btcchec
 		panic("retrieving sending account must succeed")
 	}
 
-	//TODO 3stake and 300000 should probably not be hardcoded by taken from tx
-	//simulation. For now this enough to pay for insert header transaction.
-	txBytes := b.buildTx("3stake", 300000, acc.GetSequence(), acc.GetAccountNumber(), &msg)
+	fee := fmt.Sprintf("3000%s", appparams.BaseCoinUnit)
+	txBytes := b.buildTx(fee, 300000, acc.GetSequence(), acc.GetAccountNumber(), &msg)
 
 	req := txservice.BroadcastTxRequest{TxBytes: txBytes, Mode: txservice.BroadcastMode_BROADCAST_MODE_SYNC}
 

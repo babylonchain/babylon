@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	appparams "github.com/babylonchain/babylon/app/params"
 	"math/rand"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 )
 
 var (
-	coinWithOnePower = sdk.NewInt64Coin(sdk.DefaultBondDenom, sdk.DefaultPowerReduction.Int64())
+	coinWithOnePower = sdk.NewInt64Coin(appparams.DefaultBondDenom, sdk.DefaultPowerReduction.Int64())
 )
 
 // FuzzEnqueueMsg tests EnqueueMsg. It enqueues some wrapped msgs, and check if the message queue includes the enqueued msgs or not

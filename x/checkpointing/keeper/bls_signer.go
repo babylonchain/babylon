@@ -1,12 +1,13 @@
 package keeper
 
 import (
+	"fmt"
+	"github.com/babylonchain/babylon/client/tx"
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/types/retry"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/pflag"
+	"time"
 )
 
 type BlsSigner interface {
@@ -38,16 +39,21 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 	// create MsgAddBlsSig message
 	msg := types.NewMsgAddBlsSig(epochNum, lch, blsSig, addr)
 
-	// insert the message into the transaction
-	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	// TODO: hardcoded for now, will set fees as a parameter for the checkpointing module
-	fs.String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10ubbn")
-	err = fs.Set(flags.FlagFees, "100stake")
-	//err = fs.Set(flags.FlagGasPrices, "1stake")
-	err = tx.GenerateOrBroadcastTxCLI(k.clientCtx, fs, msg)
+	// keep sending the message to Tendermint until success or timeout
+	// TODO should read the parameters from config file
+	err = retry.Do(1*time.Second, 1*time.Minute, func() error {
+		_, err := tx.SendMsgToTendermint(k.clientCtx, msg)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
 	if err != nil {
+		ctx.Logger().Error(fmt.Sprintf("Failed to send the BLS sig tx for epoch %v: %v", epochNum, err))
 		return err
 	}
+
+	ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %v", epochNum))
 
 	return nil
 }

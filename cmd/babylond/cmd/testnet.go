@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	appparams "github.com/babylonchain/babylon/app/params"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
@@ -14,10 +15,6 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 
 	"github.com/babylonchain/babylon/privval"
@@ -114,11 +111,13 @@ Example:
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
 
+			genesisParams := TestnetGenesisParams(maxActiveValidators, btcConfirmationDepth,
+				btcFinalizationTimeout, epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight)
+
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, chainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				maxActiveValidators, btcNetwork, btcCheckpointTag, btcConfirmationDepth, btcFinalizationTimeout,
-				epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight, additionalAccount,
+				btcNetwork, btcCheckpointTag, additionalAccount, genesisParams,
 			)
 		},
 	}
@@ -129,7 +128,7 @@ Example:
 	cmd.Flags().String(flagNodeDaemonHome, "babylond", "Home directory of the node's daemon configuration")
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1", "Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().String(server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom), "Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.01photino,0.001stake)")
+	cmd.Flags().String(server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", appparams.BaseCoinUnit), "Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.001bbn)")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
 	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	// btccheckpoint args
@@ -167,15 +166,10 @@ func InitTestnet(
 	keyringBackend,
 	algoStr string,
 	numValidators int,
-	maxActiveValidators uint32,
 	btcNetwork string,
 	btcCheckpointTag string,
-	btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64,
-	epochInterval uint64,
-	baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64,
 	additionalAccount bool,
+	genesisParams GenesisParams,
 ) error {
 
 	if chainID == "" {
@@ -279,7 +273,7 @@ func InitTestnet(
 		accStakingTokens := sdk.TokensFromConsensusPower(500, sdk.DefaultPowerReduction)
 		coins := sdk.Coins{
 			sdk.NewCoin("testtoken", accTokens),
-			sdk.NewCoin(sdk.DefaultBondDenom, accStakingTokens),
+			sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, accStakingTokens),
 		}
 
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
@@ -303,7 +297,7 @@ func InitTestnet(
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubkey,
-			sdk.NewCoin(sdk.DefaultBondDenom, valTokens),
+			sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
 			sdk.OneInt(),
@@ -373,7 +367,7 @@ func InitTestnet(
 
 			coins := sdk.Coins{
 				sdk.NewCoin("testtoken", sdk.NewInt(1000000000)),
-				sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(500000000)),
+				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(500000000)),
 			}
 
 			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
@@ -382,8 +376,7 @@ func InitTestnet(
 	}
 
 	if err := initGenFiles(clientCtx, mbm, chainID, genAccounts, genBalances, genFiles,
-		genKeys, numValidators, maxActiveValidators, btcConfirmationDepth, btcFinalizationTimeout,
-		epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight); err != nil {
+		genKeys, numValidators, genesisParams); err != nil {
 		return err
 	}
 
@@ -402,79 +395,28 @@ func InitTestnet(
 func initGenFiles(
 	clientCtx client.Context, mbm module.BasicManager, chainID string,
 	genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance,
-	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
-	maxActiveValidators uint32, btcConfirmationDepth uint64, btcFinalizationTimeout uint64,
-	epochInterval uint64, baseBtcHeaderHex string, baseBtcHeaderHeight uint64,
+	genFiles []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int, genesisParams GenesisParams,
 ) error {
 
 	appGenState := mbm.DefaultGenesis(clientCtx.Codec)
 
 	// set the accounts in the genesis state
-	var authGenState authtypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[authtypes.ModuleName], &authGenState)
-
 	accounts, err := authtypes.PackAccounts(genAccounts)
 	if err != nil {
 		return err
 	}
-
-	authGenState.Accounts = accounts
-	appGenState[authtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&authGenState)
+	genesisParams.AuthAccounts = accounts
 
 	// set the balances in the genesis state
-	var bankGenState banktypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[banktypes.ModuleName], &bankGenState)
+	genesisParams.BankGenBalances = banktypes.SanitizeGenesisBalances(genBalances)
 
-	bankGenState.Balances = banktypes.SanitizeGenesisBalances(genBalances)
-	for _, bal := range bankGenState.Balances {
-		bankGenState.Supply = bankGenState.Supply.Add(bal.Coins...)
-	}
-	appGenState[banktypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&bankGenState)
+	// set the bls keys for the checkpointing module
+	genesisParams.CheckpointingGenKeys = genKeys
 
-	// set the BLS keys in the genesis state
-	var checkpointGenState checkpointingtypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[checkpointingtypes.ModuleName], &checkpointGenState)
-	checkpointGenState.GenesisKeys = genKeys
-	appGenState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&checkpointGenState)
-
-	// Set the confirmation and finalization parameters
-	var btccheckpointGenState btccheckpointtypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[btccheckpointtypes.ModuleName], &btccheckpointGenState)
-	btccheckpointGenState.Params.BtcConfirmationDepth = btcConfirmationDepth
-	btccheckpointGenState.Params.CheckpointFinalizationTimeout = btcFinalizationTimeout
-	appGenState[btccheckpointtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&btccheckpointGenState)
-
-	// set the base BTC header in the genesis state
-	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(baseBtcHeaderHex)
+	appGenState, err = PrepareGenesis(clientCtx, appGenState, genesisParams)
 	if err != nil {
 		return err
 	}
-	work := btclightclienttypes.CalcWork(&baseBtcHeader)
-	baseBtcHeaderInfo := btclightclienttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), baseBtcHeaderHeight, &work)
-	var btclightclientGenState btclightclienttypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[btclightclienttypes.ModuleName], &btclightclientGenState)
-	btclightclientGenState.BaseBtcHeader = *baseBtcHeaderInfo
-	appGenState[btclightclienttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&btclightclientGenState)
-
-	// set the epoch interval in the genesis state
-	if epochInterval == 0 {
-		return errors.New(fmt.Sprintf("Invalid epoch interval %d", epochInterval))
-	}
-	var epochingGenState epochingtypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[epochingtypes.ModuleName], &epochingGenState)
-	epochingGenState.Params.EpochInterval = epochInterval
-	appGenState[epochingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&epochingGenState)
-
-	if maxActiveValidators == 0 {
-		return errors.New(fmt.Sprintf("Invalid max active validators value %d", maxActiveValidators))
-	}
-	var stakingGenState stakingtypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[stakingtypes.ModuleName], &stakingGenState)
-	stakingGenState.Params.MaxValidators = maxActiveValidators
-	// Babylon should enforce this value to be 0. However Cosmos enforces it to be positive so we use the smallest value 1
-	// Instead the timing of unbonding is decided by checkpoint states
-	stakingGenState.Params.UnbondingTime = 1
-	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {

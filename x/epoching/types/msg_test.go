@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	appparams "github.com/babylonchain/babylon/app/params"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -27,8 +28,8 @@ var (
 
 	emptyAddr sdk.ValAddress
 
-	coinPos  = sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000)
-	coinZero = sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)
+	coinPos  = sdk.NewInt64Coin(appparams.DefaultBondDenom, 1000)
+	coinZero = sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)
 )
 
 func TestMsgDecode(t *testing.T) {
@@ -107,13 +108,13 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		amount           sdk.Coin
 		expectPass       bool
 	}{
-		{"regular", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true},
+		{"regular", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), true},
 		{"no wrapped msg", nil, nil, nil, coinPos, false},
-		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false},
+		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 0), false},
 		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.Coin{}, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
-		{"empty source validator", sdk.AccAddress(valAddr1), emptyAddr, valAddr3, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
-		{"empty destination validator", sdk.AccAddress(valAddr1), valAddr2, emptyAddr, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
+		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
+		{"empty source validator", sdk.AccAddress(valAddr1), emptyAddr, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
+		{"empty destination validator", sdk.AccAddress(valAddr1), valAddr2, emptyAddr, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
 	}
 
 	for _, tc := range tests {
@@ -141,12 +142,12 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 		amount        sdk.Coin
 		expectPass    bool
 	}{
-		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), true},
+		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), true},
 		{"no wrapped msg", nil, nil, coinPos, false},
-		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(sdk.DefaultBondDenom, 0), false},
+		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(appparams.DefaultBondDenom, 0), false},
 		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
-		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, sdk.NewInt64Coin(sdk.DefaultBondDenom, 1), false},
+		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
+		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
 	}
 
 	for _, tc := range tests {
