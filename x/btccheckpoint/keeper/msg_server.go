@@ -36,49 +36,6 @@ func (m msgServer) onTheSameFork(ctx sdk.Context, fh *btypes.BTCHeaderHashBytes,
 	return isFirstAncestor || isSecondAncestor, nil
 }
 
-// Gets proof height in context of btclightclilent, also if proof is composed
-// from two different blocks checks that they are on the same fork.
-func (m msgServer) checkAllHeadersAreKnown(ctx sdk.Context, rawSub *types.RawCheckpointSubmission) error {
-	fh := rawSub.GetFirstBlockHash()
-	sh := rawSub.GetSecondBlockHash()
-
-	if fh.Eq(&sh) {
-		// both hashes are the same which means, two transactions with their respective
-		// proofs were provided in the same block. We only need to check one block for
-		// for height
-		if m.k.CheckHeaderIsKnown(ctx, &fh) {
-			return nil
-		} else {
-			return types.ErrUnknownHeader
-		}
-	}
-
-	// at this point we know that both transactions were in different blocks.
-	// we need to check two things:
-	// - if both blocks are known to header oracle
-	// - if both blocks are on the same fork i.e if second block is descendant of the
-	// first block
-	for _, hash := range []btypes.BTCHeaderHashBytes{fh, sh} {
-		if !m.k.CheckHeaderIsKnown(ctx, &hash) {
-			return types.ErrUnknownHeader
-		}
-	}
-
-	// we have checked earlier that both blocks are known to header light client,
-	// so no need to check err.
-	onTheSameFork, err := m.onTheSameFork(ctx, &fh, &sh)
-
-	if err != nil {
-		panic("Headers which are should have been known to btclight client")
-	}
-
-	if !onTheSameFork {
-		return types.ErrProvidedHeaderFromDifferentForks
-	}
-
-	return nil
-}
-
 // checkHashesFromOneBlock checks if all hashes are from the same block i.e
 // if all hashes are equal
 func checkHashesFromOneBlock(hs []*btypes.BTCHeaderHashBytes) bool {
@@ -205,10 +162,32 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, types.ErrDuplicatedSubmission
 	}
 
-	err = m.checkAllHeadersAreKnown(sdkCtx, rawSubmission)
+	submissionState, err := m.k.GetSubmissionBtcState(sdkCtx, submissionKey)
 
 	if err != nil {
-		return nil, err
+		return nil, types.ErrUnknownHeader
+	}
+
+	// If we have submission splitted between two blocks and at least one of them
+	// is on fork, we need to check if those blocks are on the same chain.
+	// In case of submission splitted between two blocks but on main chain, ancestry
+	// is implicit.
+	// TODO: Either get rid of accepting subbmisions on forks, or design some better
+	// mechanism to deal with that case
+	if !rawSubmission.InOneBlock() && submissionState == OnFork {
+		onTheSameFork, err := m.onTheSameFork(
+			sdkCtx,
+			&rawSubmission.Proof1.BlockHash,
+			&rawSubmission.Proof2.BlockHash,
+		)
+
+		if err != nil {
+			panic("Headers which are should have been known to btclight client")
+		}
+
+		if !onTheSameFork {
+			return nil, types.ErrProvidedHeaderFromDifferentForks
+		}
 	}
 
 	rawCheckpointBytes := rawSubmission.GetRawCheckPointBytes()
@@ -254,6 +233,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		epochNum,
 		submissionKey,
 		rawSubmission.GetSubmissionData(epochNum),
+		submissionState,
 		rawCheckpointBytes,
 	)
 

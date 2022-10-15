@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	"math"
 
 	"math/big"
 
@@ -25,6 +26,15 @@ type (
 		powLimit              *big.Int
 		expectedCheckpointTag txformat.BabylonTag
 	}
+
+	SubmissionBtcState int
+)
+
+const (
+	Submitted SubmissionBtcState = iota
+	Confirmed
+	Finalized
+	OnFork
 )
 
 func NewKeeper(
@@ -34,7 +44,6 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
-	// TODO: Those are node level constants should go to some kind of global node config
 	powLimit *big.Int,
 	expectedTag txformat.BabylonTag,
 ) Keeper {
@@ -55,6 +64,10 @@ func NewKeeper(
 	}
 }
 
+func (btcState SubmissionBtcState) onMainChain() bool {
+	return btcState != OnFork
+}
+
 func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
 }
@@ -71,28 +84,42 @@ func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbn.BTCHeaderHashBytes) (uint
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) CheckHeaderIsKnown(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
-	_, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
-	return err == nil
-}
-
 func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
 	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
 	return err == nil && depth >= 0
 }
 
-func (k Keeper) MainChainDepth(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) (uint64, bool, error) {
-	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
+func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcState, error) {
+	var submissionDepth uint64 = math.MaxUint64
+	for _, tk := range sk.Key {
+		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
 
-	if err != nil {
-		return 0, false, err
+		if err != nil {
+			// one of blocks is not known to light client
+			return OnFork, err
+		}
+
+		if blockDepth < 0 {
+			//  one of submission blocks is on fork, treat whole submission as being on fork
+			return OnFork, nil
+		}
+
+		d := uint64(blockDepth)
+
+		// lower depth of submission is treated as submission depth. I.e if submission
+		// is splited between blocks with depth 4 and 5 then submission depth is 4.
+		if d < submissionDepth {
+			submissionDepth = d
+		}
 	}
 
-	if depth < 0 {
-		return 0, false, nil
+	if submissionDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
+		return Finalized, nil
+	} else if submissionDepth >= k.GetParams(ctx).BtcConfirmationDepth {
+		return Confirmed, nil
+	} else {
+		return Submitted, nil
 	}
-
-	return uint64(depth), true, nil
 }
 
 func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error) {
@@ -133,6 +160,7 @@ func (k Keeper) AddEpochSubmission(
 	epochNum uint64,
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
+	submissionBtcState SubmissionBtcState,
 	epochRawCheckpoint []byte) error {
 
 	ed := k.GetEpochData(ctx, epochNum)
@@ -155,22 +183,19 @@ func (k Keeper) AddEpochSubmission(
 		return types.ErrEpochAlreadyConfirmedOrFinalized
 	}
 
-	onMainChain, err := k.checkSubmissionOnMainChain(ctx, sk)
-
-	if err != nil {
-		panic("All submissions should be known to light client during submission addition")
-	}
-
-	if ed.Status == types.Signed && onMainChain {
+	if ed.Status == types.Signed && submissionBtcState.onMainChain() {
 		// It is first epoch submission which is on the main chain, inform checkpointing module
-		// about it and change epoch status to submited
+		// about it and change epoch status to submited.
+		// Even if submission is confirmed or finalized, we first mark it as submitted.
+		// It will quickly reach next states, with new accepted btc headers
 		ed.Status = types.Submitted
 		k.checkpointingKeeper.SetCheckpointSubmitted(ctx, epochNum)
 	}
 
 	ed.AppendKey(sk)
-	// Even though it is submission which is on fork rather that main chain it still
-	// counts as unconfirmed submission.
+	// always start submission lifecycle from unconfirmed state, even if it is
+	// confirmed or finalized. It will quickly reach next states with btc
+	// light client blocks
 	k.addToUnconfirmed(ctx, sk)
 	k.saveEpochData(ctx, epochNum, ed)
 	k.saveSubmission(ctx, sk, sd)
@@ -222,54 +247,6 @@ func (k Keeper) getSubmissionDataExists(ctx sdk.Context, sk types.SubmissionKey)
 	return sd
 }
 
-// checkSubmissionNDeepOnMainChain checks if all headers from submission key are one the main
-// chain (which also guarantess that they have ancestry relationship or are the same header)
-// and are at least n blocks deep
-// returns error if at least one of the headers is no longer known to light client
-func (k Keeper) checkSubmissionNDeepOnMainChain(ctx sdk.Context, sk types.SubmissionKey, n uint64) (bool, bool, error) {
-	var onMain bool = true
-	var allAtLeastNDeep = true
-	for _, tk := range sk.Key {
-		depth, onMainChain, e := k.MainChainDepth(ctx, tk.Hash)
-		if e != nil {
-			return false, false, e
-		}
-
-		if !onMainChain {
-			onMain = false
-		}
-
-		if depth < n {
-			allAtLeastNDeep = false
-		}
-	}
-	return onMain, allAtLeastNDeep, nil
-}
-
-func (k Keeper) checkSubmissionOnMainChain(ctx sdk.Context, sk types.SubmissionKey) (bool, error) {
-	var onMain bool = true
-	for _, tk := range sk.Key {
-		_, onMainChain, e := k.MainChainDepth(ctx, tk.Hash)
-
-		if e != nil {
-			return false, e
-		}
-
-		if !onMainChain {
-			onMain = false
-		}
-	}
-	return onMain, nil
-}
-
-func (k Keeper) checkSubmissionConfirmed(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
-	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.GetParams(ctx).BtcConfirmationDepth)
-}
-
-func (k Keeper) checkSubmissionFinlized(ctx sdk.Context, sk types.SubmissionKey) (bool, bool, error) {
-	return k.checkSubmissionNDeepOnMainChain(ctx, sk, k.GetParams(ctx).CheckpointFinalizationTimeout)
-}
-
 func (k Keeper) promoteUnconfirmedToConfirmed(ctx sdk.Context, sk types.SubmissionKey) {
 	store := ctx.KVStore(k.storeKey)
 	subKey := k.cdc.MustMarshal(&sk)
@@ -318,7 +295,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		var sk types.SubmissionKey
 		k.cdc.MustUnmarshal(skBytes, &sk)
 
-		onMainChain, deepEnough, err := k.checkSubmissionConfirmed(ctx, sk)
+		subStatus, err := k.GetSubmissionBtcState(ctx, sk)
 
 		if err != nil {
 			// submission which was known to lighclient is no longer known
@@ -338,7 +315,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		// submission which was on main chain suddenly became orphaned. If all submissions
 		// of the epoch become orphaned we need to inform checkpoinitng module about it
 
-		if onMainChain && deepEnough {
+		if subStatus == Confirmed {
 			// we have new confirmed submission
 			newConfirmed = append(newConfirmed, sk)
 		}
@@ -413,7 +390,6 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		// this will be especially clear when working on rewards
 		k.promoteUnconfirmedToConfirmed(ctx, newConfirmedSubKey)
 	}
-
 }
 
 func (k Keeper) checkConfirmed(ctx sdk.Context) {
@@ -431,7 +407,7 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		var sk types.SubmissionKey
 		k.cdc.MustUnmarshal(skBytes, &sk)
 
-		onMainChain, deepEnough, err := k.checkSubmissionFinlized(ctx, sk)
+		subStatus, err := k.GetSubmissionBtcState(ctx, sk)
 
 		if err != nil {
 			// Previously confirmed submission is now unknown to btc light client.
@@ -445,9 +421,9 @@ func (k Keeper) checkConfirmed(ctx sdk.Context) {
 		}
 
 		// TODO consider if we should check if submission ended on fork. It would mean
-		// that something fishy is going on or we have some kind of bug in light client
+		// that something fishy is going on and reorg larger than K has happened
 
-		if onMainChain && deepEnough {
+		if subStatus == Finalized {
 			newFinalized = append(newFinalized, sk)
 		}
 	}
