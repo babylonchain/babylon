@@ -6,8 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/spf13/cobra"
 	"strconv"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
@@ -30,6 +32,7 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdTxAddBlsSig())
+	cmd.AddCommand(CmdWrappedCreateValidator())
 
 	return cmd
 }
@@ -72,6 +75,37 @@ func CmdTxAddBlsSig() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdWrappedCreateValidator() *cobra.Command {
+	cmd := cosmoscli.NewCreateValidatorCmd()
+	cmd.Long = strings.TrimSpace(
+		fmt.Sprintf(`create-validator will create a new validator initialized
+with a self-delegation to it using the BLS key generated for the validator (e.g., via babylond create-bls-key).
+
+This command creates a MsgWrappedCreateValidator message which is a wrapper of cosmos-sdk's
+create validator with a pair of BLS key. The BLS key should exist in priv_validator_key.json
+before running the command (e.g., via babylond create-bls-key).`))
+	cmd.RunE = func(cmd *cobra.Command, args []string) error {
+		clientCtx, err := client.GetClientTxContext(cmd)
+		if err != nil {
+			return err
+		}
+
+		txf := tx.NewFactoryCLI(clientCtx, cmd.Flags()).
+			WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
+		txf, msg, err := buildWrappedCreateValidatorMsg(clientCtx, txf, cmd.Flags())
+		if err != nil {
+			return err
+		}
+
+		return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
+	}
+
+	cmd.Flags().String(flags.FlagHome, "", "The node home directory")
+	_ = cmd.MarkFlagRequired(flags.FlagHome)
 
 	return cmd
 }
