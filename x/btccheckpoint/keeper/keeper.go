@@ -27,11 +27,11 @@ type (
 		expectedCheckpointTag txformat.BabylonTag
 	}
 
-	SubmissionBtcState int
+	SubmissionBtcStatus int
 )
 
 const (
-	Submitted SubmissionBtcState = iota
+	Submitted SubmissionBtcStatus = iota
 	Confirmed
 	Finalized
 	OnFork
@@ -64,7 +64,7 @@ func NewKeeper(
 	}
 }
 
-func (btcState SubmissionBtcState) onMainChain() bool {
+func (btcState SubmissionBtcStatus) onMainChain() bool {
 	return btcState != OnFork
 }
 
@@ -89,7 +89,7 @@ func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHas
 	return err == nil && depth >= 0
 }
 
-func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcState, error) {
+func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcStatus, error) {
 	var submissionDepth uint64 = math.MaxUint64
 	for _, tk := range sk.Key {
 		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
@@ -160,7 +160,7 @@ func (k Keeper) AddEpochSubmission(
 	epochNum uint64,
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
-	submissionBtcState SubmissionBtcState,
+	submissionBtcState SubmissionBtcStatus,
 	epochRawCheckpoint []byte) error {
 
 	ed := k.GetEpochData(ctx, epochNum)
@@ -196,15 +196,15 @@ func (k Keeper) AddEpochSubmission(
 	// always start submission lifecycle from unconfirmed state, even if it is
 	// confirmed or finalized. It will quickly reach next states with btc
 	// light client blocks
-	k.addToUnconfirmed(ctx, sk)
+	k.addToSubmitted(ctx, sk)
 	k.saveEpochData(ctx, epochNum, ed)
 	k.saveSubmission(ctx, sk, sd)
 	return nil
 }
 
-func (k Keeper) addToUnconfirmed(ctx sdk.Context, sk types.SubmissionKey) {
+func (k Keeper) addToSubmitted(ctx sdk.Context, sk types.SubmissionKey) {
 	store := ctx.KVStore(k.storeKey)
-	uk := types.UnconfiredSubmissionsKey(k.cdc, &sk)
+	uk := types.SubmittedSubmissionsKey(k.cdc, &sk)
 	v := k.cdc.MustMarshal(&sk)
 	store.Set(uk, v)
 }
@@ -247,10 +247,10 @@ func (k Keeper) getSubmissionDataExists(ctx sdk.Context, sk types.SubmissionKey)
 	return sd
 }
 
-func (k Keeper) promoteUnconfirmedToConfirmed(ctx sdk.Context, sk types.SubmissionKey) {
+func (k Keeper) promoteSubmittedToConfirmed(ctx sdk.Context, sk types.SubmissionKey) {
 	store := ctx.KVStore(k.storeKey)
 	subKey := k.cdc.MustMarshal(&sk)
-	unconfirmedKey := types.UnconfiredSubmissionsKey(k.cdc, &sk)
+	unconfirmedKey := types.SubmittedSubmissionsKey(k.cdc, &sk)
 	confirmedKey := types.ConfirmedSubmissionsKey(k.cdc, &sk)
 
 	// Promotion of submision from submitted state to confirmed state is just
@@ -279,14 +279,14 @@ func (k Keeper) promoteConfirmedToFinalized(ctx sdk.Context, sk types.Submission
 // Approach with iterator was taken as:
 // - There can be many unconfirmed submissions across many epochs
 // - pruning is a bit more streight forward with iterator apporoach
-func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
+func (k Keeper) checkSubmitted(ctx sdk.Context) {
 
 	newConfirmed := []types.SubmissionKey{}
 
 	store := ctx.KVStore(k.storeKey)
 
 	// iterator over all unconfirmed submissions
-	iterator := sdk.KVStorePrefixIterator(store, types.UnconfirmedIndexPrefix)
+	iterator := sdk.KVStorePrefixIterator(store, types.SubmittedIndexPrefix)
 
 	defer iterator.Close()
 
@@ -388,7 +388,7 @@ func (k Keeper) checkUnconfirmed(ctx sdk.Context) {
 		// Promote all newly confirmed keys
 		// It could be done in loop which handles epoch but it is a bit cleaner that way
 		// this will be especially clear when working on rewards
-		k.promoteUnconfirmedToConfirmed(ctx, newConfirmedSubKey)
+		k.promoteSubmittedToConfirmed(ctx, newConfirmedSubKey)
 	}
 }
 
@@ -503,7 +503,7 @@ func (k Keeper) getSubmissionsWithPrefix(ctx sdk.Context, prefix []byte) []types
 }
 
 func (k Keeper) GetAllUnconfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
-	return k.getSubmissionsWithPrefix(ctx, types.UnconfirmedIndexPrefix)
+	return k.getSubmissionsWithPrefix(ctx, types.SubmittedIndexPrefix)
 }
 
 func (k Keeper) GetAllConfirmedSubmissions(ctx sdk.Context) []types.SubmissionKey {
@@ -516,6 +516,6 @@ func (k Keeper) GetAllFinalizedSubmissions(ctx sdk.Context) []types.SubmissionKe
 
 // Callback to be called when btc light client tip change
 func (k Keeper) OnTipChange(ctx sdk.Context) {
-	k.checkUnconfirmed(ctx)
+	k.checkSubmitted(ctx)
 	k.checkConfirmed(ctx)
 }

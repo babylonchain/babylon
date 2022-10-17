@@ -52,29 +52,40 @@ func checkHashesFromOneBlock(hs []*btypes.BTCHeaderHashBytes) bool {
 	return true
 }
 
-func (m msgServer) checkHashesAreOnTheSameFork(ctx sdk.Context, hs []*btypes.BTCHeaderHashBytes) bool {
-	if len(hs) < 2 {
-		// cannot have ancestry relations with only 0 or 1 hash
-		return false
+// checkHashesAreOnTheSameFork checks if provided hases are on the same fork, if
+// one of the hashes is not known to light client it returns error
+func (m msgServer) checkHashesAreOnTheSameFork(ctx sdk.Context, hs []*btypes.BTCHeaderHashBytes) (bool, error) {
+
+	if len(hs) == 0 {
+		// with empty hashes, cannot check for ancestry
+		return false, nil
+	}
+
+	if len(hs) == 1 {
+		// there is only one hash, it is by defintion on one fork.
+		return true, nil
 	}
 
 	for i := 1; i < len(hs); i++ {
 		onTheSameFork, err := m.onTheSameFork(ctx, hs[i-1], hs[i])
 
 		if err != nil {
-			// TODO: Light client lost knowledge of one of the chekpoint hashes.
-			// decide what to do here. For now returning false, as we cannot check ancestry.
-			return false
+			return false, err
 		}
 
 		if !onTheSameFork {
 			// all block hashes are known to light client, but are no longer at the same
 			// fork. Checkpoint defacto lost its validity due to some reorg happening.
-			return false
+			return false, nil
 		}
 	}
 
-	return true
+	return true, nil
+}
+
+func (m msgServer) submissionKeyOnOneFork(ctx sdk.Context, key *types.SubmissionKey) (bool, error) {
+	keyHashes := key.GetKeyBlockHashes()
+	return m.checkHashesAreOnTheSameFork(ctx, keyHashes)
 }
 
 func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
@@ -116,7 +127,15 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 		} else {
 			// hashes are not from the same block i.e this checkpoint was split between
 			// at least two blocks, check if those blocks are still on the same fork
-			if !m.checkHashesAreOnTheSameFork(ctx, hs) {
+			onSameFork, err := m.checkHashesAreOnTheSameFork(ctx, hs)
+
+			if err != nil {
+				// Submission is no longer known to light client
+				// TODO it could probably be delted.
+				continue
+			}
+
+			if !onSameFork {
 				// checkpoint blockhashes no longer form a chain. Cannot check ancestry
 				// with new submission. Move to the next checkpoint
 				continue
@@ -174,15 +193,14 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// is implicit.
 	// TODO: Either get rid of accepting subbmisions on forks, or design some better
 	// mechanism to deal with that case
-	if !rawSubmission.InOneBlock() && submissionState == OnFork {
-		onTheSameFork, err := m.onTheSameFork(
+	if submissionState == OnFork {
+		onTheSameFork, err := m.submissionKeyOnOneFork(
 			sdkCtx,
-			&rawSubmission.Proof1.BlockHash,
-			&rawSubmission.Proof2.BlockHash,
+			&submissionKey,
 		)
 
 		if err != nil {
-			panic("Headers which are should have been known to btclight client")
+			panic("Headers which shoud have been known to btc light client")
 		}
 
 		if !onTheSameFork {
