@@ -22,11 +22,9 @@ func setupMsgServer(t testing.TB) (types.MsgServer, *keeper.Keeper, context.Cont
 func FuzzMsgServerInsertHeader(f *testing.F) {
 	/*
 		Test that:
-		1. if the input message is nil, (nil, error) is returned
-		2. if the msg does not contain a header, (nil, error) is returned
-		3. if the parent of the header does not exist, (nil, error) is returned
-		4. if the work of the header is not within the limits of the new header, (nil, error) is returned
-		5. if all checks pass, the header is inserted into storage and an (empty MsgInsertHeaderResponse, nil) is returned
+		1. if the parent of the header does not exist, (nil, error) is returned
+		2. if the work of the header is not within the limits of the new header, (nil, error) is returned
+		3. if all checks pass, the header is inserted into storage and an (empty MsgInsertHeaderResponse, nil) is returned
 		   - we do not need to perform insertion checks since those are performed on FuzzKeeperInsertHeader
 		Building:
 		- Construct a random tree and insert into storage
@@ -49,32 +47,11 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		reduceMinDifficulty := defaultParams.ReduceMinDifficulty
 		retargetAdjustmentFactor := defaultParams.RetargetAdjustmentFactor
 
-		// If the input message is nil, (nil, error) is returned
-		var msg *types.MsgInsertHeader = nil
-		resp, err := keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
-			retargetAdjustmentFactor, false)
-		if resp != nil {
-			t.Errorf("Nil message returned a response")
-		}
-		if err == nil {
-			t.Errorf("Nil message did not return an error")
-		}
-
-		// If the message does not contain a header, (nil, error) is returned.
-		msg = &types.MsgInsertHeader{}
-		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
-			retargetAdjustmentFactor, false)
-		if resp != nil {
-			t.Errorf("Message without a header returned a response")
-		}
-		if err == nil {
-			t.Errorf("Message without a header did not return an error")
-		}
-
 		// If the header has a parent that does not exist, (nil, error) is returned
+		var msg *types.MsgInsertHeader = nil
 		headerParentNotExists := datagen.GenRandomBTCHeaderInfo().Header
 		msg = &types.MsgInsertHeader{Header: headerParentNotExists}
-		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
+		resp, err := keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
 			retargetAdjustmentFactor, false)
 		if resp != nil {
 			t.Errorf("Message with header with non-existent parent returned a response")

@@ -25,14 +25,6 @@ func MsgInsertHeaderWrapped(ctx context.Context, k Keeper, msg *types.MsgInsertH
 	// TODO: Implement an AnteHandler that performs these checks
 	// 		 so as to not pollute the mempool with transactions
 	// 		 that will get rejected.
-	if msg == nil {
-		return nil, types.ErrEmptyMessage.Wrapf("message is nil")
-	}
-
-	if msg.Header == nil {
-		return nil, types.ErrEmptyMessage.Wrapf("message header is nit")
-	}
-
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
@@ -160,6 +152,20 @@ func (m msgServer) InsertHeader(ctx context.Context, msg *types.MsgInsertHeader)
 	powLimit := bbn.GetGlobalPowLimit()
 	reduceMinDifficulty := bbn.GetGlobalReduceMinDifficulty()
 	retargetAdjustmentFactor := bbn.GetGlobalRetargetAdjustmentFactor()
+
+	if msg == nil {
+		return nil, types.ErrEmptyMessage.Wrapf("message is nil")
+	}
+
+	if msg.Header == nil {
+		return nil, types.ErrEmptyMessage.Wrapf("message header is nit")
+	}
+
+	err := msg.ValidateHeader(&powLimit)
+	if err != nil {
+		return nil, err
+	}
+
 	return MsgInsertHeaderWrapped(ctx, m.k, msg, powLimit, reduceMinDifficulty, retargetAdjustmentFactor, true)
 }
 
