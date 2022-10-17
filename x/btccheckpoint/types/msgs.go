@@ -1,6 +1,7 @@
 package types
 
 import (
+	"errors"
 	fmt "fmt"
 	"math/big"
 
@@ -74,6 +75,29 @@ func ParseTwoProofs(
 	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1], rawCkptData)
 
 	return &sub, nil
+}
+
+func ParseSubmission(
+	m *MsgInsertBTCSpvProof,
+	powLimit *big.Int,
+	expectedTag txformat.BabylonTag) (*RawCheckpointSubmission, error) {
+	if m == nil {
+		return nil, errors.New("msgInsertBTCSpvProof can't nil")
+	}
+
+	address, err := sdk.AccAddressFromBech32(m.Submitter)
+
+	if err != nil {
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
+	}
+
+	sub, err := ParseTwoProofs(address, m.Proofs, powLimit, expectedTag)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return sub, nil
 }
 
 func (m *MsgInsertBTCSpvProof) ValidateBasic() error {

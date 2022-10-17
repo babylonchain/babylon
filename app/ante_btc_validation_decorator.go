@@ -5,7 +5,6 @@ import (
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 type BtcValidationDecorator struct {
@@ -26,20 +25,8 @@ func (bvd BtcValidationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 		for _, m := range tx.GetMsgs() {
 			switch msg := m.(type) {
 			case *btccheckpointtypes.MsgInsertBTCSpvProof:
-				address, err := sdk.AccAddressFromBech32(msg.Submitter)
-
-				if err != nil {
-					return ctx, sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
-				}
-
 				powLimit := bvd.BtcCfg.PowLimit()
-
-				_, err = btccheckpointtypes.ParseTwoProofs(
-					address,
-					msg.Proofs,
-					&powLimit,
-					bvd.BtcCfg.CheckpointTag(),
-				)
+				_, err := btccheckpointtypes.ParseSubmission(msg, &powLimit, bvd.BtcCfg.CheckpointTag())
 
 				if err != nil {
 					return ctx, btccheckpointtypes.ErrInvalidCheckpointProof.Wrap(err.Error())

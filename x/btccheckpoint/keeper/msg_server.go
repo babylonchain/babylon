@@ -6,7 +6,6 @@ import (
 	btypes "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 type msgServer struct {
@@ -191,17 +190,10 @@ func (m msgServer) checkHeaderIsDescentantOfPreviousEpoch(
 // TODO emit some events for external consumers. Those should be probably emited
 // at EndBlockerCallback
 func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
-
-	address, err := sdk.AccAddressFromBech32(req.Submitter)
+	rawSubmission, err := types.ParseSubmission(req, m.k.GetPowLimit(), m.k.GetExpectedTag())
 
 	if err != nil {
-		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
-	}
-
-	rawSubmission, e := types.ParseTwoProofs(address, req.Proofs, m.k.GetPowLimit(), m.k.GetExpectedTag())
-
-	if e != nil {
-		return nil, types.ErrInvalidCheckpointProof.Wrap(e.Error())
+		return nil, types.ErrInvalidCheckpointProof.Wrap(err.Error())
 	}
 
 	// Get the SDK wrapped context

@@ -18,6 +18,7 @@ import (
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	ref "github.com/cosmos/cosmos-sdk/client/grpc/reflection"
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"google.golang.org/grpc"
@@ -218,11 +219,9 @@ func TestFailInvalidBTCTransactions(t *testing.T) {
 		panic("failed to init sender")
 	}
 
-	h := datagen.GenRandomBtcdHeader()
+	hInfo := datagen.GenRandomBTCHeaderInfoWithInvalidHeader(chaincfg.SimNetParams.PowLimit)
 
-	hBytes := bbn.NewBTCHeaderBytesFromBlockHeader(h)
-
-	r, err := sender.SendBtcHeadersTransaction([]bbn.BTCHeaderBytes{hBytes})
+	r, err := sender.SendBtcHeadersTransaction([]bbn.BTCHeaderBytes{*hInfo.Header})
 
 	if err != nil {
 		t.Fatalf("could not insert new btc header")
