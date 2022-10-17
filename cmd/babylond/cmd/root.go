@@ -9,8 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	bbn "github.com/babylonchain/babylon/types"
-
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	tmcli "github.com/tendermint/tendermint/libs/cli"
@@ -81,17 +79,6 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			// command above initializes server context in given command, and merges
-			// all options inside srvCtx.Viper options. Therefore at this point all
-			// viper object should contain all info necessery to initalize global
-			// object
-			srvCtx := server.GetServerContextFromCmd(cmd)
-
-			btcConfig := bbn.ParseBtcOptionsFromConfig(srvCtx.Viper)
-			// WARNING: We are initiating global babylon btc config here in PersistentPreRunE,
-			// so all comands derived from root will be able to refence global object
-			// later
-			bbn.InitGlobalBtcConfig(btcConfig)
 			return nil
 		},
 	}

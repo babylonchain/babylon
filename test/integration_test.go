@@ -18,6 +18,7 @@ import (
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	ref "github.com/cosmos/cosmos-sdk/client/grpc/reflection"
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 	"google.golang.org/grpc"
@@ -204,6 +205,45 @@ func TestSendTx(t *testing.T) {
 
 	if tip2.Height != tip1.Height+1 {
 		t.Fatalf("Light client should progress by 1 one block")
+	}
+}
+
+func TestFailInvalidBTCTransactions(t *testing.T) {
+	// TODO fix hard coded paths
+	node0dataPath := "../.testnets/node0/babylond"
+	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
+
+	sender, err := NewTestTxSender(node0dataPath, node0genesisPath, clients[0])
+
+	if err != nil {
+		panic("failed to init sender")
+	}
+
+	hInfo := datagen.GenRandomBTCHeaderInfoWithInvalidHeader(chaincfg.SimNetParams.PowLimit)
+
+	r, err := sender.SendBtcHeadersTransaction([]bbn.BTCHeaderBytes{*hInfo.Header})
+
+	if err != nil {
+		t.Fatalf("could not insert new btc header")
+	}
+
+	if r.TxResponse.Code != 1105 || r.TxResponse.Codespace != "btclightclient" {
+		t.Fatalf("submitting invalid header should result with error")
+	}
+
+	currentTip := sender.GetBtcTip()
+
+	// bogus submissions
+	firstSubmission := datagen.CreateBlockWithTransaction(currentTip.Header.ToBlockHeader(), []byte{1})
+
+	secondSubmission := datagen.CreateBlockWithTransaction(firstSubmission.HeaderBytes.ToBlockHeader(), []byte{1})
+
+	// At this point light client chain should be 3 long and inserting spv proofs
+	// should succeed
+	r, _ = sender.insertSpvProof(firstSubmission.SpvProof, secondSubmission.SpvProof)
+
+	if r.TxResponse.Codespace != "btccheckpoint" || r.TxResponse.Code != 1100 {
+		t.Fatalf("submitting invalid proof should result with error")
 	}
 }
 

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -18,6 +19,7 @@ type (
 		memKey     sdk.StoreKey
 		hooks      types.BTCLightClientHooks
 		paramstore paramtypes.Subspace
+		btcConfig  bbn.BtcConfig
 	}
 )
 
@@ -26,7 +28,7 @@ func NewKeeper(
 	storeKey,
 	memKey sdk.StoreKey,
 	ps paramtypes.Subspace,
-
+	btcConfig bbn.BtcConfig,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -39,6 +41,7 @@ func NewKeeper(
 		memKey:     memKey,
 		hooks:      nil,
 		paramstore: ps,
+		btcConfig:  btcConfig,
 	}
 }
 

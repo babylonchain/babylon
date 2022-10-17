@@ -3,6 +3,8 @@ package keeper
 import (
 	"testing"
 
+	bapp "github.com/babylonchain/babylon/app"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -36,11 +38,15 @@ func BTCLightClientKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"BTCLightClientParams",
 	)
+
+	testCfg := bbn.ParseBtcOptionsFromConfig(bapp.EmptyAppOptions{})
+
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		memStoreKey,
 		paramsSubspace,
+		testCfg,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

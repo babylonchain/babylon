@@ -1,10 +1,9 @@
 package types
 
 import (
+	"errors"
 	fmt "fmt"
 	"math/big"
-
-	bbl "github.com/babylonchain/babylon/types"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -78,21 +77,35 @@ func ParseTwoProofs(
 	return &sub, nil
 }
 
-func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
+func ParseSubmission(
+	m *MsgInsertBTCSpvProof,
+	powLimit *big.Int,
+	expectedTag txformat.BabylonTag) (*RawCheckpointSubmission, error) {
+	if m == nil {
+		return nil, errors.New("msgInsertBTCSpvProof can't nil")
+	}
+
 	address, err := sdk.AccAddressFromBech32(m.Submitter)
 
 	if err != nil {
-		return sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
+		return nil, sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
 	}
 
-	// result of parsed proof is not needed, drop it
-	// whole parsing stuff is stateless
-	powLimit := bbl.GetGlobalPowLimit()
-
-	_, err = ParseTwoProofs(address, m.Proofs, &powLimit, bbl.GetGlobalCheckPointTag())
+	sub, err := ParseTwoProofs(address, m.Proofs, powLimit, expectedTag)
 
 	if err != nil {
-		return err
+		return nil, err
+	}
+
+	return sub, nil
+}
+
+func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
+	// m.Proofs are validated in ante-handler
+	_, err := sdk.AccAddressFromBech32(m.Submitter)
+
+	if err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
 	}
 
 	return nil

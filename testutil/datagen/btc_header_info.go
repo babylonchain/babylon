@@ -1,14 +1,16 @@
 package datagen
 
 import (
+	"math/big"
+	"math/rand"
+	"time"
+
 	bbn "github.com/babylonchain/babylon/types"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/rand"
-	"time"
 )
 
 func GenRandomBtcdHeader() *wire.BlockHeader {
@@ -145,6 +147,25 @@ func GenRandomBTCHeaderInfoWithBits(bits *sdk.Uint) *btclightclienttypes.BTCHead
 // GenRandomBTCHeaderInfo generates a random BTCHeaderInfo object
 func GenRandomBTCHeaderInfo() *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParent(nil)
+}
+
+func GenRandomBTCHeaderInfoWithInvalidHeader(powLimit *big.Int) *btclightclienttypes.BTCHeaderInfo {
+	var tries = 0
+	for {
+		info := GenRandomBTCHeaderInfo()
+
+		err := bbn.ValidateBTCHeader(info.Header.ToBlockHeader(), powLimit)
+
+		if err != nil {
+			return info
+		}
+
+		tries++
+
+		if tries >= 100 {
+			panic("Failed to generate invalid btc header in 100 random tries")
+		}
+	}
 }
 
 // MutateHash takes a hash as a parameter, copies it, modifies the copy, and returns the copy.

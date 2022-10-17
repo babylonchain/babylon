@@ -20,12 +20,12 @@ func NewMsgInsertHeader(signer sdk.AccAddress, headerHex string) (*MsgInsertHead
 
 func (msg *MsgInsertHeader) ValidateBasic() error {
 	// This function validates stateless message elements
+	// msg.Header is validated in ante-handler
 	_, err := sdk.AccAddressFromBech32(msg.Signer)
 	if err != nil {
 		return err
 	}
-	powLimit := bbn.GetGlobalPowLimit()
-	return msg.ValidateHeader(&powLimit)
+	return nil
 }
 
 func (msg *MsgInsertHeader) ValidateHeader(powLimit *big.Int) error {
