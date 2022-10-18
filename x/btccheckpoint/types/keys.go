@@ -23,11 +23,11 @@ const (
 )
 
 var (
-	SubmisionKeyPrefix     = []byte{3}
-	UnconfirmedIndexPrefix = []byte{4}
-	ConfirmedIndexPrefix   = []byte{5}
-	FinalizedIndexPrefix   = []byte{6}
-	EpochDataPrefix        = []byte{7}
+	SubmisionKeyPrefix   = []byte{3}
+	SubmittedIndexPrefix = []byte{4}
+	ConfirmedIndexPrefix = []byte{5}
+	FinalizedIndexPrefix = []byte{6}
+	EpochDataPrefix      = []byte{7}
 )
 
 func KeyPrefix(p string) []byte {
@@ -38,8 +38,8 @@ func PrefixedSubmisionKey(cdc codec.BinaryCodec, k *SubmissionKey) []byte {
 	return append(SubmisionKeyPrefix, cdc.MustMarshal(k)...)
 }
 
-func UnconfiredSubmissionsKey(cdc codec.BinaryCodec, k *SubmissionKey) []byte {
-	return append(UnconfirmedIndexPrefix, cdc.MustMarshal(k)...)
+func SubmittedSubmissionsKey(cdc codec.BinaryCodec, k *SubmissionKey) []byte {
+	return append(SubmittedIndexPrefix, cdc.MustMarshal(k)...)
 }
 
 func ConfirmedSubmissionsKey(cdc codec.BinaryCodec, k *SubmissionKey) []byte {

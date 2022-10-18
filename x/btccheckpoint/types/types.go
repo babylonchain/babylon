@@ -52,6 +52,12 @@ func (s *RawCheckpointSubmission) GetSecondBlockHash() types.BTCHeaderHashBytes 
 	return s.Proof2.BlockHash
 }
 
+func (s *RawCheckpointSubmission) InOneBlock() bool {
+	fh := s.GetFirstBlockHash()
+	sh := s.GetSecondBlockHash()
+	return fh.Eq(&sh)
+}
+
 func toTransactionKey(p *ParsedProof) TransactionKey {
 	hashBytes := p.BlockHash
 	return TransactionKey{
