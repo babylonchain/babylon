@@ -8,25 +8,24 @@ import (
 	"errors"
 	"fmt"
 	appparams "github.com/babylonchain/babylon/app/params"
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"net"
 	"os"
 	"path/filepath"
 
 	"github.com/babylonchain/babylon/app"
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	"github.com/spf13/cobra"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmos "github.com/tendermint/tendermint/libs/os"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
 	"github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 
@@ -84,38 +83,30 @@ Example:
 
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
+			genesisCliArgs := parseGenesisFlags(cmd)
 
 			outputDir, _ := cmd.Flags().GetString(flagOutputDir)
 			keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
-			chainID, _ := cmd.Flags().GetString(flags.FlagChainID)
 			minGasPrices, _ := cmd.Flags().GetString(server.FlagMinGasPrices)
 			nodeDirPrefix, _ := cmd.Flags().GetString(flagNodeDirPrefix)
 			nodeDaemonHome, _ := cmd.Flags().GetString(flagNodeDaemonHome)
 			startingIPAddress, _ := cmd.Flags().GetString(flagStartingIPAddress)
 			numValidators, _ := cmd.Flags().GetInt(flagNumValidators)
 			algo, _ := cmd.Flags().GetString(flags.FlagKeyAlgorithm)
-			// staking args
-			maxActiveValidators, _ := cmd.Flags().GetUint32(flagMaxActiveValidators)
-			// btccheckpoint args
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
 			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
-			btcConfirmationDepth, _ := cmd.Flags().GetUint64(flagBtcConfirmationDepth)
-			btcFinalizationTimeout, _ := cmd.Flags().GetUint64(flagBtcFinalizationTimeout)
-			// epoching args
-			epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
-			// btclightclient args
-			baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
-			baseBtcHeaderHeight, err := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
 			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
 			if err != nil {
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
 
-			genesisParams := TestnetGenesisParams(maxActiveValidators, btcConfirmationDepth,
-				btcFinalizationTimeout, epochInterval, baseBtcHeaderHex, baseBtcHeaderHeight)
+			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
+				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
+				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
+				genesisCliArgs.BaseBtcHeaderHeight)
 
 			return InitTestnet(
-				clientCtx, cmd, config, mbm, genBalIterator, outputDir, chainID, minGasPrices,
+				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
 				btcNetwork, btcCheckpointTag, additionalAccount, genesisParams,
 			)
@@ -127,23 +118,13 @@ Example:
 	cmd.Flags().String(flagNodeDirPrefix, "node", "Prefix the directory name for each node with (node results in node0, node1, ...)")
 	cmd.Flags().String(flagNodeDaemonHome, "babylond", "Home directory of the node's daemon configuration")
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1", "Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
-	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().String(server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", appparams.BaseCoinUnit), "Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.001bbn)")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
 	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
-	// btccheckpoint args
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, mainnet")
 	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefaultTestTagStr), "Tag to use for Bitcoin checkpoints.")
-	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
-	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
-	// epoch args
-	cmd.Flags().Uint64(flagEpochInterval, 10, "Number of blocks between epochs. Must be more than 0.")
-	// btclightclient args
-	// Simnet genesis header
-	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
-	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
-	cmd.Flags().Uint32(flagMaxActiveValidators, 10, "Maximum number of validators.")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
+	addGenesisFlags(cmd)
 
 	return cmd
 }
@@ -171,10 +152,6 @@ func InitTestnet(
 	additionalAccount bool,
 	genesisParams GenesisParams,
 ) error {
-
-	if chainID == "" {
-		chainID = "chain-" + tmrand.NewRand().Str(6)
-	}
 
 	nodeIDs := make([]string, numValidators)
 	valKeys := make([]*privval.ValidatorKeys, numValidators)
@@ -413,7 +390,7 @@ func initGenFiles(
 	// set the bls keys for the checkpointing module
 	genesisParams.CheckpointingGenKeys = genKeys
 
-	appGenState, err = PrepareGenesis(clientCtx, appGenState, genesisParams)
+	appGenState, _, err = PrepareGenesis(clientCtx, appGenState, &types.GenesisDoc{}, genesisParams, chainID)
 	if err != nil {
 		return err
 	}
