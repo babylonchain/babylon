@@ -30,7 +30,8 @@ import (
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "prepare-genesis",
+		Use:   "prepare-genesis <testnet|mainnet> <chain-id>",
+		Args:  cobra.ExactArgs(2),
 		Short: "Prepare a genesis file",
 		Long: `Prepare a genesis file.
 Example:
