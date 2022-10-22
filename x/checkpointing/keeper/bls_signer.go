@@ -2,12 +2,13 @@ package keeper
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/babylonchain/babylon/client/tx"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/types/retry"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"time"
 )
 
 type BlsSigner interface {

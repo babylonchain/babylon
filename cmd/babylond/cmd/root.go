@@ -266,7 +266,12 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 			WithViper("").
 			WithKeyringDir(homeDir).
 			WithInput(os.Stdin).
-			WithFromName(fromName),
+			WithFromName(fromName).
+			// Warning: It is important that ReadFromClientConfig receives context
+			// with already initialized codec. It creates keyring inside, and from cosmos
+			// 0.46.0 keyring requires codec. Without codec, operations performed by
+			// keyring ends with nil pointer exception (`panic`)
+			WithCodec(a.encCfg.Marshaler),
 	)
 	if err != nil {
 		panic(err)
@@ -319,8 +324,16 @@ func (a appCreator) appExport(
 			WithHomeDir(homePath).
 			WithViper("").
 			WithKeyringDir(homePath).
-			WithInput(os.Stdin),
+			WithInput(os.Stdin).
+			// Warning: It is important that ReadFromClientConfig receives context
+			// with already initialized codec. It creates keyring inside, and from cosmos
+			// 0.46.0 keyring requires codec. Without codec, operations performed by
+			// keyring ends with nil pointer exception (`panic`)
+			WithCodec(a.encCfg.Marshaler),
 	)
+	if err != nil {
+		panic(err)
+	}
 	kr, err := client.NewKeyringFromBackend(clientCtx, keyring.BackendMemory)
 	if err != nil {
 		panic(err)
