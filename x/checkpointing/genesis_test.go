@@ -1,6 +1,8 @@
 package checkpointing_test
 
 import (
+	"testing"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing"
@@ -9,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"testing"
 
 	simapp "github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -17,7 +18,7 @@ import (
 )
 
 func TestInitGenesis(t *testing.T) {
-	app := simapp.Setup(false)
+	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 	ckptKeeper := app.CheckpointingKeeper
 

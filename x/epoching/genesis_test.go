@@ -12,7 +12,7 @@ import (
 )
 
 func TestExportGenesis(t *testing.T) {
-	app := simapp.Setup(false)
+	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	app.EpochingKeeper.SetParams(ctx, types.DefaultParams())
@@ -21,7 +21,7 @@ func TestExportGenesis(t *testing.T) {
 }
 
 func TestInitGenesis(t *testing.T) {
-	app := simapp.Setup(false)
+	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	genesisState := types.GenesisState{

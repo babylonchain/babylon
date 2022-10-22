@@ -1,12 +1,10 @@
 package app
 
 import (
-	"encoding/json"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
@@ -15,9 +13,17 @@ import (
 func TestBabylonBlockedAddrs(t *testing.T) {
 	encCfg := MakeTestEncodingConfig()
 	db := dbm.NewMemDB()
-	privSigner, err := SetupPrivSigner()
-	require.NoError(t, err)
-	app := NewBabylonApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
+	signer, _ := SetupPrivSigner()
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	app := NewBabyblonAppWithCustomOptions(t, false, signer, SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		EncConfig:          encCfg,
+		HomePath:           DefaultNodeHome,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            EmptyAppOptions{},
+	})
 
 	for acc := range maccPerms {
 		require.True(
@@ -27,22 +33,12 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		)
 	}
 
-	genesisState := NewDefaultGenesisState(encCfg.Marshaler)
-	stateBytes, err := json.MarshalIndent(genesisState, "", "  ")
-	require.NoError(t, err)
-
-	// Initialize the chain
-	app.InitChain(
-		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-		},
-	)
 	app.Commit()
 
+	logger2 := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	// Making a new app object with the db, so that initchain hasn't been called
-	app2 := NewBabylonApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
-	_, err = app2.ExportAppStateAndValidators(false, []string{})
+	app2 := NewBabylonApp(logger2, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, signer, EmptyAppOptions{})
+	_, err := app2.ExportAppStateAndValidators(false, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
@@ -56,18 +52,17 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 	db := dbm.NewMemDB()
 	privSigner, err := SetupPrivSigner()
 	require.NoError(t, err)
-	app := NewBabylonApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, privSigner, EmptyAppOptions{})
-	genesisState := NewDefaultGenesisState(encCfg.Marshaler)
-	stateBytes, err := json.MarshalIndent(genesisState, "", "  ")
-	require.NoError(t, err)
+	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 
-	// Initialize the chain
-	app.InitChain(
-		abci.RequestInitChain{
-			Validators:    []abci.ValidatorUpdate{},
-			AppStateBytes: stateBytes,
-		},
-	)
+	app := NewBabyblonAppWithCustomOptions(t, false, privSigner, SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		EncConfig:          encCfg,
+		HomePath:           DefaultNodeHome,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            EmptyAppOptions{},
+	})
 
 	// make sure the upgrade keeper has version map in state
 	ctx := app.NewContext(false, tmproto.Header{})
