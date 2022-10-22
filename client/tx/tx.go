@@ -2,6 +2,7 @@ package tx
 
 import (
 	"fmt"
+
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -46,7 +47,7 @@ func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (
 		return nil, err
 	}
 
-	tx, err := sdktx.BuildUnsignedTx(txf, msgs...)
+	tx, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {
 		return nil, err
 	}

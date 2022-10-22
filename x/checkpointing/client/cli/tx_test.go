@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"io"
 	"path/filepath"
 	"testing"
+
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/golang/mock/gomock"
@@ -71,7 +72,7 @@ type CLITestSuite struct {
 
 func (s *CLITestSuite) SetupSuite() {
 	s.encCfg = app.MakeTestEncodingConfig()
-	s.kr = keyring.NewInMemory()
+	s.kr = keyring.NewInMemory(s.clientCtx.Codec)
 	ctrl := gomock.NewController(s.T())
 	mockAccountRetriever := mocks.NewMockAccountRetriever(ctrl)
 	mockAccountRetriever.EXPECT().EnsureExists(gomock.Any(), gomock.Any()).Return(nil)
@@ -100,7 +101,7 @@ func (s *CLITestSuite) SetupSuite() {
 		k, _, err := s.clientCtx.Keyring.NewMnemonic(fmt.Sprintf("NewWrappedValidator%v", i), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 		s.Require().NoError(err)
 
-		pub := k.GetPubKey()
+		pub, _ := k.GetPubKey()
 
 		newAddr := sdk.AccAddress(pub.Address())
 		s.addrs = append(s.addrs, newAddr)

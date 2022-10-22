@@ -104,7 +104,7 @@ func SimulateMsgWrappedDelegate(ak types.AccountKeeper, bk types.BankKeeper, stk
 		var fees sdk.Coins
 		account := ak.GetAccount(ctx, simAccount.Address)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
-		coins, hasNeg := spendable.SafeSub(sdk.Coins{bondAmt})
+		coins, hasNeg := spendable.SafeSub(sdk.Coins{bondAmt}...)
 		if !hasNeg {
 			fees, err = simtypes.RandomFees(r, ctx, coins)
 			if err != nil {

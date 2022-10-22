@@ -2,6 +2,8 @@ package keeper_test
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
@@ -14,7 +16,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/tmhash"
-	"testing"
 )
 
 var (
@@ -41,7 +42,10 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	cfg.TxConfig = encodingCfg.TxConfig
 	cfg.NumValidators = 1
 
-	testNetwork := network.New(t, cfg)
+	testNetwork, err := network.New(t, t.TempDir(), cfg)
+	if err != nil {
+		t.Fatalf("Failed to start test")
+	}
 	defer testNetwork.Cleanup()
 
 	val := testNetwork.Validators[0]
@@ -65,6 +69,6 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	ek.EXPECT().GetValidatorSet(ctx, gomock.Eq(epochNum)).Return(valSet)
 	signer.EXPECT().GetAddress().Return(addr1)
 	signer.EXPECT().SignMsgWithBls(gomock.Eq(signBytes)).Return(bls12381.Sign(blsPrivKey1, signBytes), nil)
-	err := ckptkeeper.SendBlsSig(ctx, epochNum, lch)
+	err = ckptkeeper.SendBlsSig(ctx, epochNum, lch)
 	require.NoError(t, err)
 }

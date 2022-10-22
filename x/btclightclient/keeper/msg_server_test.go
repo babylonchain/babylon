@@ -2,11 +2,13 @@ package keeper_test
 
 import (
 	"context"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/btcsuite/btcd/chaincfg"
 	"math/big"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/chaincfg"
 
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
@@ -95,8 +97,8 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		if datagen.OneInN(10) { // Give an invalid mul sometimes
 			mul = uint64(retargetAdjustmentFactor + 1)
 		}
-		headerDifficultyMul := sdk.NewUintFromBigInt(new(big.Int).Mul(parentHeaderDifficulty, big.NewInt(int64(mul))))
-		headerDifficultyDiv := sdk.NewUintFromBigInt(new(big.Int).Div(parentHeaderDifficulty, big.NewInt(int64(mul))))
+		headerDifficultyMul := sdkmath.NewUintFromBigInt(new(big.Int).Mul(parentHeaderDifficulty, big.NewInt(int64(mul))))
+		headerDifficultyDiv := sdkmath.NewUintFromBigInt(new(big.Int).Div(parentHeaderDifficulty, big.NewInt(int64(mul))))
 
 		// Do tests
 		headerMoreWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyMul)

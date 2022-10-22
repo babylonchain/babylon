@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	bbn "github.com/babylonchain/babylon/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/babylonchain/babylon/x/btclightclient/types"
@@ -15,8 +16,8 @@ import (
 type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
-		storeKey   sdk.StoreKey
-		memKey     sdk.StoreKey
+		storeKey   storetypes.StoreKey
+		memKey     storetypes.StoreKey
 		hooks      types.BTCLightClientHooks
 		paramstore paramtypes.Subspace
 		btcConfig  bbn.BtcConfig
@@ -26,7 +27,7 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	btcConfig bbn.BtcConfig,
 ) *Keeper {

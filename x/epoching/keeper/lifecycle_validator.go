@@ -9,7 +9,7 @@ import (
 // TODO: add more tests on the lifecycle record
 
 // RecordNewValState adds a state for a validator lifecycle, including bonded, unbonding and unbonded
-func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state types.BondState) {
+func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state types.BondState) error {
 	lc := k.GetValLifecycle(ctx, valAddr)
 	if lc == nil {
 		lc = &types.ValidatorLifecycle{
@@ -25,6 +25,7 @@ func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state
 	}
 	lc.ValLife = append(lc.ValLife, &valStateUpdate)
 	k.SetValLifecycle(ctx, valAddr, lc)
+	return nil
 }
 
 func (k Keeper) SetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress, lc *types.ValidatorLifecycle) {
