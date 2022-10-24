@@ -7,13 +7,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
+	"os"
+	"path/filepath"
+
 	appparams "github.com/babylonchain/babylon/app/params"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"net"
-	"os"
-	"path/filepath"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -208,7 +209,7 @@ func InitTestnet(
 		}
 
 		// generate account key
-		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
+		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec)
 
 		if err != nil {
 			return err
@@ -326,7 +327,7 @@ func InitTestnet(
 			nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
 
 			// generate account key
-			kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
+			kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf, clientCtx.Codec)
 
 			if err != nil {
 				return err

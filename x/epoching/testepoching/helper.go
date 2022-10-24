@@ -1,8 +1,9 @@
 package testepoching
 
 import (
-	appparams "github.com/babylonchain/babylon/app/params"
 	"testing"
+
+	appparams "github.com/babylonchain/babylon/app/params"
 
 	"github.com/stretchr/testify/require"
 
@@ -38,7 +39,7 @@ type Helper struct {
 
 // NewHelper creates the helper for testing the epoching module
 func NewHelper(t *testing.T) *Helper {
-	app := app.Setup(false)
+	app := app.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	epochingKeeper := app.EpochingKeeper

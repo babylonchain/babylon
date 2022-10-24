@@ -3,10 +3,11 @@ package cmd_test
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"testing"
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
@@ -81,7 +82,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 
 			if tc.withKeyring {
 				path := hd.CreateHDPath(118, 0, 0).String()
-				kr, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendMemory, home, nil)
+				kr, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendMemory, home, nil, clientCtx.Codec)
 				require.NoError(t, err)
 				_, _, err = kr.NewMnemonic(tc.addr, keyring.English, path, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 				require.NoError(t, err)

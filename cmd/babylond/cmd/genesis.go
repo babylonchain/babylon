@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+
 	appparams "github.com/babylonchain/babylon/app/params"
 	bbn "github.com/babylonchain/babylon/types"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -22,6 +23,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
@@ -135,8 +137,8 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 	appState[distributiontypes.ModuleName] = cdc.MustMarshalJSON(distributionGenState)
 
 	// gov module genesis
-	govGenState := govtypes.DefaultGenesisState()
-	govGenState.DepositParams = genesisParams.GovParams.DepositParams
+	govGenState := govv1.DefaultGenesisState()
+	govGenState.DepositParams = &genesisParams.GovParams.DepositParams
 	appState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
 	// crisis module genesis
@@ -167,7 +169,7 @@ type GenesisParams struct {
 	StakingParams      stakingtypes.Params
 	MintParams         minttypes.Params
 	DistributionParams distributiontypes.Params
-	GovParams          govtypes.Params
+	GovParams          govv1.Params
 
 	CrisisConstantFee    sdk.Coin
 	AuthAccounts         []*cdctypes.Any
@@ -216,7 +218,7 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.MintParams = minttypes.DefaultParams()
 	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
 
-	genParams.GovParams = govtypes.DefaultParams()
+	genParams.GovParams = govv1.DefaultParams()
 	genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdk.NewInt(2_500_000_000),

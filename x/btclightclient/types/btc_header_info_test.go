@@ -1,12 +1,14 @@
 package types_test
 
 import (
+	sdkmath "cosmossdk.io/math"
+
 	"bytes"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/btclightclient/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
 	"testing"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/btclightclient/types"
 )
 
 func FuzzNewHeaderInfo(f *testing.F) {
@@ -21,7 +23,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		expectedHeaderBytes := datagen.GenRandomBTCHeaderInfo().Header
 		expectedHeaderHashBytes := expectedHeaderBytes.Hash()
 		height := datagen.GenRandomBTCHeight()
-		work := sdk.NewUintFromBigInt(expectedHeaderBytes.Difficulty())
+		work := sdkmath.NewUintFromBigInt(expectedHeaderBytes.Difficulty())
 
 		headerInfo := types.NewBTCHeaderInfo(expectedHeaderBytes, expectedHeaderHashBytes, height, &work)
 		// Check that all attributes are properly set

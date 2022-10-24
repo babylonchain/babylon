@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"testing"
+
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -14,7 +16,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
-	"testing"
 )
 
 func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner, cliCtx client.Context) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
@@ -23,8 +24,8 @@ func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.Bl
 
 	db := tmdb.NewMemDB()
 	stateStore := store.NewCommitMultiStore(db)
-	stateStore.MountStoreWithDB(storeKey, sdk.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, sdk.StoreTypeMemory, nil)
+	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
+	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()

@@ -11,6 +11,8 @@ import (
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+	tmcfg "github.com/tendermint/tendermint/config"
+
 	tmcli "github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
@@ -26,6 +28,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
+
 	"github.com/cosmos/cosmos-sdk/snapshots"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -73,7 +77,9 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			}
 
 			customAppTemplate, customAppConfig := initAppConfig()
-			err = server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig)
+			customTMConfig := initTendermintConfig()
+
+			err = server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
 
 			if err != nil {
 				return err
@@ -86,6 +92,18 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	initRootCmd(rootCmd, encodingConfig)
 
 	return rootCmd, encodingConfig
+}
+
+// initTendermintConfig helps to override default Tendermint Config values.
+// return tmcfg.DefaultConfig if no custom configuration is required for the application.
+func initTendermintConfig() *tmcfg.Config {
+	cfg := tmcfg.DefaultConfig()
+
+	// these values put a higher strain on node memory
+	// cfg.P2P.MaxNumInboundPeers = 100
+	// cfg.P2P.MaxNumOutboundPeers = 40
+
+	return cfg
 }
 
 // initAppConfig helps to override default appConfig template and configs.
@@ -248,7 +266,12 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 			WithViper("").
 			WithKeyringDir(homeDir).
 			WithInput(os.Stdin).
-			WithFromName(fromName),
+			WithFromName(fromName).
+			// Warning: It is important that ReadFromClientConfig receives context
+			// with already initialized codec. It creates keyring inside, and from cosmos
+			// 0.46.0 keyring requires codec. Without codec, operations performed by
+			// keyring ends with nil pointer exception (`panic`)
+			WithCodec(a.encCfg.Marshaler),
 	)
 	if err != nil {
 		panic(err)
@@ -257,6 +280,11 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	if err != nil {
 		panic(err)
 	}
+
+	snapshotOptions := snapshottypes.NewSnapshotOptions(
+		cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval)),
+		cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent)),
+	)
 
 	return app.NewBabylonApp(
 		logger, db, traceStore, true, skipUpgradeHeights,
@@ -273,9 +301,9 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		baseapp.SetInterBlockCache(cache),
 		baseapp.SetTrace(cast.ToBool(appOpts.Get(server.FlagTrace))),
 		baseapp.SetIndexEvents(cast.ToStringSlice(appOpts.Get(server.FlagIndexEvents))),
-		baseapp.SetSnapshotStore(snapshotStore),
-		baseapp.SetSnapshotInterval(cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval))),
-		baseapp.SetSnapshotKeepRecent(cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent))),
+		baseapp.SetSnapshot(snapshotStore, snapshotOptions),
+		baseapp.SetIAVLCacheSize(cast.ToInt(appOpts.Get(server.FlagIAVLCacheSize))),
+		baseapp.SetIAVLDisableFastNode(cast.ToBool(appOpts.Get(server.FlagIAVLFastNode))),
 	)
 }
 
@@ -296,8 +324,16 @@ func (a appCreator) appExport(
 			WithHomeDir(homePath).
 			WithViper("").
 			WithKeyringDir(homePath).
-			WithInput(os.Stdin),
+			WithInput(os.Stdin).
+			// Warning: It is important that ReadFromClientConfig receives context
+			// with already initialized codec. It creates keyring inside, and from cosmos
+			// 0.46.0 keyring requires codec. Without codec, operations performed by
+			// keyring ends with nil pointer exception (`panic`)
+			WithCodec(a.encCfg.Marshaler),
 	)
+	if err != nil {
+		panic(err)
+	}
 	kr, err := client.NewKeyringFromBackend(clientCtx, keyring.BackendMemory)
 	if err != nil {
 		panic(err)

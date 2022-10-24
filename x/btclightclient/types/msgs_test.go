@@ -1,13 +1,16 @@
 package types_test
 
 import (
+	sdkmath "cosmossdk.io/math"
+
 	"bytes"
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/rand"
-	"testing"
 )
 
 func FuzzMsgInsertHeader(f *testing.F) {
@@ -34,12 +37,12 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		case 0:
 			// Valid input
 			// Set the work bits to the pow limit
-			bitsBig = sdk.NewUintFromBigInt(&maxDifficulty)
+			bitsBig = sdkmath.NewUintFromBigInt(&maxDifficulty)
 		case 1:
 			// Zero PoW
 			bitsBig = sdk.NewUint(0)
 		default:
-			bitsBig = sdk.NewUintFromBigInt(&maxDifficulty)
+			bitsBig = sdkmath.NewUintFromBigInt(&maxDifficulty)
 		}
 
 		// Generate a header with the provided modifications
@@ -51,7 +54,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		// the maximum that the bits field can contain is 2^23-1, meaning
 		// that there is still space for block hashes that are less than that
 		headerDifficulty := types.CalcWork(newHeader)
-		if headerDifficulty.GT(sdk.NewUintFromBigInt(&maxDifficulty)) {
+		if headerDifficulty.GT(sdkmath.NewUintFromBigInt(&maxDifficulty)) {
 			t.Skip()
 		}
 

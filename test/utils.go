@@ -27,7 +27,7 @@ import (
 type TestTxSender struct {
 	keyring    keyring.Keyring
 	encConfig  appparams.EncodingConfig
-	signerInfo keyring.Info
+	signerInfo *keyring.Record
 	chainId    string
 	Conn       *grpc.ClientConn
 }
@@ -37,8 +37,9 @@ func NewTestTxSender(
 	genesisPath string,
 	conn *grpc.ClientConn,
 ) (*TestTxSender, error) {
+	cfg := app.MakeTestEncodingConfig()
 
-	kb, err := keyring.New("babylond", "test", keyringPath, nil)
+	kb, err := keyring.New("babylond", "test", keyringPath, nil, cfg.Marshaler)
 
 	if err != nil {
 		return nil, err
@@ -60,7 +61,7 @@ func NewTestTxSender(
 
 	return &TestTxSender{
 		keyring:    kb,
-		encConfig:  app.MakeTestEncodingConfig(),
+		encConfig:  cfg,
 		signerInfo: signerInfo,
 		chainId:    genDoc.ChainID,
 		Conn:       conn,
@@ -68,7 +69,12 @@ func NewTestTxSender(
 }
 
 func (b *TestTxSender) getSenderAddress() ctypes.AccAddress {
-	return b.signerInfo.GetAddress()
+	addr, err := b.signerInfo.GetAddress()
+
+	if err != nil {
+		panic("Getting address from sender should always succeed")
+	}
+	return addr
 }
 
 func (b *TestTxSender) buildTx(fees string, gas uint64, seqNr uint64, accNumber uint64, msgs ...ctypes.Msg) []byte {
@@ -85,7 +91,7 @@ func (b *TestTxSender) buildTx(fees string, gas uint64, seqNr uint64, accNumber 
 
 	txb1, _ := txFactory.BuildUnsignedTx(msgs...)
 
-	if err := tx.Sign(txFactory, b.signerInfo.GetName(), txb1, true); err != nil {
+	if err := tx.Sign(txFactory, b.signerInfo.Name, txb1, true); err != nil {
 		panic("Tx should sign")
 	}
 

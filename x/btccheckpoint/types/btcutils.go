@@ -8,9 +8,9 @@ import (
 
 	"github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcutil"
 )
 
 const (
@@ -57,11 +57,13 @@ func min(a, b uint) uint {
 
 // createBranch takes as input flatenned representation of merkle tree i.e
 // for tree:
-//           r
-//     		 /  \
-//  		 d1    d2
-//      /  \   / \
-//     l1  l2 l3 l4
+//
+//	      r
+//	    /  \
+//	  d1    d2
+//	 /  \   / \
+//	l1  l2 l3 l4
+//
 // slice should look like [l1, l2, l3, l4, d1, d2, r]
 // also it takes number of leafs i.e nodes at lowest level of the tree and index
 // of the leaf which supposed to be proven

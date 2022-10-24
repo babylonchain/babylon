@@ -3,8 +3,9 @@ package keeper
 import (
 	"fmt"
 	"math"
-
 	"math/big"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
@@ -18,8 +19,8 @@ import (
 type (
 	Keeper struct {
 		cdc                   codec.BinaryCodec
-		storeKey              sdk.StoreKey
-		memKey                sdk.StoreKey
+		storeKey              storetypes.StoreKey
+		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		btcLightClientKeeper  types.BTCLightClientKeeper
 		checkpointingKeeper   types.CheckpointingKeeper
@@ -40,7 +41,7 @@ const (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
-	memKey sdk.StoreKey,
+	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
