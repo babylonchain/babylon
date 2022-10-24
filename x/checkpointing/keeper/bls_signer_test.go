@@ -43,9 +43,7 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	cfg.NumValidators = 1
 
 	testNetwork, err := network.New(t, t.TempDir(), cfg)
-	if err != nil {
-		t.Fatalf("Failed to start test")
-	}
+	require.NoError(t, err)
 	defer testNetwork.Cleanup()
 
 	val := testNetwork.Validators[0]

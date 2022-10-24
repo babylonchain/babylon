@@ -106,7 +106,14 @@ import (
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 )
 
-const appName = "BabylonApp"
+const (
+	appName = "BabylonApp"
+
+	// Custom prefix for application enviromental variables.
+	// From cosmos version 0.46 is is possible to have custom prefix for application
+	// enviromental variables - https://github.com/cosmos/cosmos-sdk/pull/10950
+	BabylonAppEnvPrefix = ""
+)
 
 var (
 	// DefaultNodeHome default home directories for the application daemon
@@ -276,7 +283,7 @@ func NewBabylonApp(
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms, sdk.Bech32MainPrefix,
+		appCodec, keys[authtypes.StoreKey], app.GetSubspace(authtypes.ModuleName), authtypes.ProtoBaseAccount, maccPerms, appparams.Bech32PrefixAccAddr,
 	)
 	app.BankKeeper = bankkeeper.NewBaseKeeper(
 		appCodec, keys[banktypes.StoreKey], app.AccountKeeper, app.GetSubspace(banktypes.ModuleName), app.ModuleAccountAddrs(),
@@ -324,10 +331,10 @@ func NewBabylonApp(
 	// TODO: Create IBC keeper
 
 	// register the proposal types
-	// Register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
 	// by granting the governance module the right to execute the message.
 	// See: https://github.com/cosmos/cosmos-sdk/blob/release/v0.46.x/x/gov/spec/01_concepts.md#proposal-messages
+	// TODO: investigate how to migrate to new proposal flow
 	govRouter := govv1beta1.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govv1beta1.ProposalHandler).
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).

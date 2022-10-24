@@ -58,11 +58,11 @@ func min(a, b uint) uint {
 // createBranch takes as input flatenned representation of merkle tree i.e
 // for tree:
 //
-//	         r
-//	   		 /  \
-//			 d1    d2
-//	    /  \   / \
-//	   l1  l2 l3 l4
+//	      r
+//	    /  \
+//	  d1    d2
+//	 /  \   / \
+//	l1  l2 l3 l4
 //
 // slice should look like [l1, l2, l3, l4, d1, d2, r]
 // also it takes number of leafs i.e nodes at lowest level of the tree and index

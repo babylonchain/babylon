@@ -16,7 +16,7 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	ksec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	tmconfig "github.com/tendermint/tendermint/config"
 
@@ -88,7 +88,10 @@ func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	return app, GenesisState{}
 }
 
-// NewSimappWithCustomOptions initializes a new SimApp with custom options.
+// NewBabyblonAppWithCustomOptions initializes a new BabylonApp with custom options.
+// Created Babylon application will have one validator with hardoced amout of tokens.
+// This is necessary as from cosmos-sdk 0.46 it is required that there is at least
+// one validator in validator set during InitGenesis abci call - https://github.com/cosmos/cosmos-sdk/pull/9697
 func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *PrivSigner, options SetupOptions) *BabylonApp {
 	t.Helper()
 
@@ -100,7 +103,7 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
 
 	// generate genesis account
-	senderPrivKey := ksec256k1.GenPrivKey()
+	senderPrivKey := sec256k1.GenPrivKey()
 
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	balance := banktypes.Balance{
@@ -204,7 +207,10 @@ func genesisStateWithValSet(t *testing.T,
 	return genesisState
 }
 
-// Setup initializes a new SimApp. A Nop logger is set in SimApp.
+// Setup initializes a new BabylonApp. A Nop logger is set in BabylonApp.
+// Created Babylon application will have one validator with hardoced amout of tokens.
+// This is necessary as from cosmos-sdk 0.46 it is required that there is at least
+// one validator in validator set during InitGenesis abci call - https://github.com/cosmos/cosmos-sdk/pull/9697
 func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 	t.Helper()
 
@@ -217,7 +223,7 @@ func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
 
 	// generate genesis account
-	senderPrivKey := ksec256k1.GenPrivKey()
+	senderPrivKey := sec256k1.GenPrivKey()
 	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
