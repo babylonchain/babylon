@@ -3,11 +3,12 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -58,7 +59,8 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 	}
 	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 
-	// setup client context
+	// TODO this should probably not create separate config, but rahter accept it
+	// as argument
 	encodingCfg := MakeTestEncodingConfig()
 	clientCtx = clientCtx.
 		WithInterfaceRegistry(encodingCfg.InterfaceRegistry).

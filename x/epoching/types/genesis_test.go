@@ -14,7 +14,7 @@ import (
 func TestGenesis(t *testing.T) {
 	// This test requires setting up the staking module
 	// Otherwise the epoching module cannot initialise the genesis validator set
-	app := app.Setup(false)
+	app := app.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 	keeper := app.EpochingKeeper
 

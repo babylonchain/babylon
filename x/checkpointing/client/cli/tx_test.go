@@ -4,20 +4,21 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"io"
 	"path/filepath"
 	"testing"
 
-	"github.com/gogo/protobuf/proto"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/tests/mocks"
 	"github.com/golang/mock/gomock"
+
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/tests/mocks"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 
@@ -71,7 +72,7 @@ type CLITestSuite struct {
 
 func (s *CLITestSuite) SetupSuite() {
 	s.encCfg = app.MakeTestEncodingConfig()
-	s.kr = keyring.NewInMemory()
+	s.kr = keyring.NewInMemory(s.encCfg.Marshaler)
 	ctrl := gomock.NewController(s.T())
 	mockAccountRetriever := mocks.NewMockAccountRetriever(ctrl)
 	mockAccountRetriever.EXPECT().EnsureExists(gomock.Any(), gomock.Any()).Return(nil)
@@ -94,13 +95,12 @@ func (s *CLITestSuite) SetupSuite() {
 		return s.baseCtx.WithClient(c)
 	}
 	s.clientCtx = ctxGen().WithOutput(&outBuf)
-
 	s.addrs = make([]sdk.AccAddress, 0)
 	for i := 0; i < 3; i++ {
 		k, _, err := s.clientCtx.Keyring.NewMnemonic(fmt.Sprintf("NewWrappedValidator%v", i), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 		s.Require().NoError(err)
 
-		pub := k.GetPubKey()
+		pub, _ := k.GetPubKey()
 
 		newAddr := sdk.AccAddress(pub.Address())
 		s.addrs = append(s.addrs, newAddr)
@@ -239,5 +239,6 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 }
 
 func TestCLITestSuite(t *testing.T) {
+	// t.Skip()
 	suite.Run(t, new(CLITestSuite))
 }
