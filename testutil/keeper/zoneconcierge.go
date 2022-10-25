@@ -22,7 +22,7 @@ import (
 	tmdb "github.com/tendermint/tm-db"
 )
 
-// zoneconciergeChannelKeeper is a stub of cosmosibckeeper.ChannelKeeper.
+// zoneconciergeChannelKeeper is a stub of ChannelKeeper
 type zoneconciergeChannelKeeper struct{}
 
 func (zoneconciergeChannelKeeper) GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool) {
@@ -38,14 +38,12 @@ func (zoneconciergeChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channel
 	return nil
 }
 
-// zoneconciergeportKeeper is a stub of cosmosibckeeper.PortKeeper
+// zoneconciergeportKeeper is a stub of PortKeeper
 type zoneconciergePortKeeper struct{}
 
 func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability {
 	return &capabilitytypes.Capability{}
 }
-
-
 
 func ZoneconciergeKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
@@ -70,14 +68,17 @@ func ZoneconciergeKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"ZoneconciergeParams",
 	)
 	k := keeper.NewKeeper(
-        appCodec,
-        storeKey,
-        memStoreKey,
-        paramsSubspace,
-        zoneconciergeChannelKeeper{},
-        zoneconciergePortKeeper{},
-        capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
-    )
+		appCodec,
+		storeKey,
+		memStoreKey,
+		paramsSubspace,
+		nil, // TODO: mock this keeper
+		zoneconciergeChannelKeeper{},
+		zoneconciergePortKeeper{},
+		nil, // TODO: mock this keeper
+		nil, // TODO: mock this keeper
+		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
+	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
 
