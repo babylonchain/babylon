@@ -52,7 +52,7 @@ func Test_GenBlsCmd(t *testing.T) {
 	genBlsCmd.SetArgs([]string{fmt.Sprintf("--%s=%s", flags.FlagHome, home)})
 
 	// create keyring to get the validator address
-	kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, home, bufio.NewReader(genBlsCmd.InOrStdin()))
+	kb, err := keyring.New(sdk.KeyringServiceName(), keyring.BackendTest, home, bufio.NewReader(genBlsCmd.InOrStdin()), clientCtx.Codec)
 	require.NoError(t, err)
 	keyringAlgos, _ := kb.SupportedAlgorithms()
 	algo, err := keyring.NewSigningAlgoFromString(string(hd.Secp256k1Type), keyringAlgos)
