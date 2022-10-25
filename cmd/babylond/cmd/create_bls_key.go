@@ -16,7 +16,7 @@ import (
 	"strings"
 )
 
-func createBlsKeyCmd() *cobra.Command {
+func CreateBlsKeyCmd() *cobra.Command {
 	bech32PrefixAccAddr := appparams.Bech32PrefixAccAddr
 
 	cmd := &cobra.Command{

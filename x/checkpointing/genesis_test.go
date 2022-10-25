@@ -28,14 +28,13 @@ func TestInitGenesis(t *testing.T) {
 		require.NoError(t, err)
 		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys.ValPubkey)
 		require.NoError(t, err)
-		genKey := &types.GenesisKey{
-			ValidatorAddress: sdk.ValAddress(valKeys.ValPubkey.Address()).String(),
-			BlsKey: &types.BlsKey{
-				Pubkey: &valKeys.BlsPubkey,
-				Pop:    valKeys.PoP,
-			},
-			ValPubkey: &cosmosed.PubKey{Key: valPubkey.Bytes()},
-		}
+		genKey, err := types.NewGenesisKey(
+			sdk.ValAddress(valKeys.ValPubkey.Address()),
+			&valKeys.BlsPubkey,
+			valKeys.PoP,
+			&cosmosed.PubKey{Key: valPubkey.Bytes()},
+		)
+		require.NoError(t, err)
 		genKeys[i] = genKey
 	}
 	genesisState := types.GenesisState{
