@@ -52,5 +52,16 @@ func LoadGenesisKeyFromFile(filePath string) (*GenesisKey, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = genBls.Validate()
+	if err != nil {
+		return nil, err
+	}
 	return genBls, nil
+}
+
+func (gk *GenesisKey) Validate() error {
+	if !gk.BlsKey.Pop.IsValid(*gk.BlsKey.Pubkey, gk.ValPubkey) {
+		return ErrInvalidPoP
+	}
+	return nil
 }

@@ -15,7 +15,7 @@ import (
 
 func GenBlsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "genbls",
+		Use:   "create-genesis-bls",
 		Short: "Create genesis BLS key file for the validator",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`genbls will create a BLS key file that consists of
@@ -47,7 +47,7 @@ $ babylond genbls --home ./
 			if err != nil {
 				return err
 			}
-			
+
 			cmd.PrintErrf("Genesis BLS keys written to %q\n", outputFileName)
 			return nil
 		},
