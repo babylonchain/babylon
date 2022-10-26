@@ -148,6 +148,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		CreateBlsKeyCmd(),
 		GenBlsCmd(),
+		AddGenBlsCmd(),
 		debug.Cmd(),
 		config.Cmd(),
 	)

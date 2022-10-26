@@ -1,12 +1,16 @@
 package types
 
 import (
-	"github.com/babylonchain/babylon/crypto/bls12381"
+	"encoding/json"
+	"io/ioutil"
+
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
-	"io/ioutil"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
 )
 
 // DefaultIndex is the default capability global index
@@ -64,4 +68,16 @@ func (gk *GenesisKey) Validate() error {
 		return ErrInvalidPoP
 	}
 	return nil
+}
+
+// GetGenesisStateFromAppState returns x/Checkpointing GenesisState given raw application
+// genesis state.
+func GetGenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMessage) GenesisState {
+	var genesisState GenesisState
+
+	if appState[ModuleName] != nil {
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+	}
+
+	return genesisState
 }

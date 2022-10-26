@@ -4,31 +4,28 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmconfig "github.com/tendermint/tendermint/config"
 	"path/filepath"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+	tmconfig "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-// pre-conditions of running gen-bls cmd are
-// 1. creation of keyring to get the validator address
-// 2. creation of BLS keys (bls_pub_key and pop)
 func Test_GenBlsCmd(t *testing.T) {
 	home := t.TempDir()
 	encodingConfig := app.MakeTestEncodingConfig()
