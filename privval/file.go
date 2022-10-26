@@ -1,9 +1,13 @@
 package privval
 
 import (
+	"errors"
 	"fmt"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/crypto/codec"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/ed25519"
@@ -13,9 +17,9 @@ import (
 	"github.com/tendermint/tendermint/privval"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"github.com/tendermint/tendermint/types"
-	"io/ioutil"
-	"os"
-	"path/filepath"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 // copied from github.com/tendermint/tendermint/privval/file.go"
@@ -40,12 +44,12 @@ func voteToStep(vote *tmproto.Vote) int8 {
 
 // WrappedFilePVKey wraps FilePVKey with BLS keys.
 type WrappedFilePVKey struct {
-	AccAddress string              `json:"acc_address"`
-	Address    types.Address       `json:"address"`
-	PubKey     tmcrypto.PubKey     `json:"pub_key"`
-	PrivKey    tmcrypto.PrivKey    `json:"priv_key"`
-	BlsPubKey  bls12381.PublicKey  `json:"bls_pub_key"`
-	BlsPrivKey bls12381.PrivateKey `json:"bls_priv_key"`
+	DelegatorAddress string              `json:"acc_address"`
+	Address          types.Address       `json:"address"`
+	PubKey           tmcrypto.PubKey     `json:"pub_key"`
+	PrivKey          tmcrypto.PrivKey    `json:"priv_key"`
+	BlsPubKey        bls12381.PublicKey  `json:"bls_pub_key"`
+	BlsPrivKey       bls12381.PrivateKey `json:"bls_priv_key"`
 
 	filePath string
 }
@@ -163,21 +167,57 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 	return pv
 }
 
-// GetAddress returns the address of the validator.
+// ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
+func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, err error) {
+	if !tmos.FileExists(filePath) {
+		return outputFileName, errors.New("export file path does not exist")
+	}
+
+	valAddress := pv.GetAddress()
+	if valAddress.Empty() {
+		return outputFileName, errors.New("validator address should not be empty")
+	}
+
+	validatorKey, err := NewValidatorKeys(pv.GetValPrivKey(), pv.GetBlsPrivKey())
+	if err != nil {
+		return outputFileName, err
+	}
+
+	pubkey, err := codec.FromTmPubKeyInterface(validatorKey.ValPubkey)
+	if err != nil {
+		return outputFileName, err
+	}
+
+	genbls, err := checkpointingtypes.NewGenesisKey(valAddress, &validatorKey.BlsPubkey, validatorKey.PoP, pubkey)
+	if err != nil {
+		return outputFileName, err
+	}
+
+	jsonBytes, err := tmjson.MarshalIndent(genbls, "", "  ")
+	if err != nil {
+		return outputFileName, err
+	}
+
+	outputFileName = filepath.Join(filePath, fmt.Sprintf("gen-bls-%s.json", valAddress.String()))
+	err = tempfile.WriteFileAtomic(outputFileName, jsonBytes, 0600)
+	return outputFileName, err
+}
+
+// GetAddress returns the delegator address of the validator.
 // Implements PrivValidator.
 func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
-	if pv.Key.AccAddress == "" {
+	if pv.Key.DelegatorAddress == "" {
 		return sdk.ValAddress{}
 	}
-	addr, err := sdk.AccAddressFromBech32(pv.Key.AccAddress)
+	addr, err := sdk.AccAddressFromBech32(pv.Key.DelegatorAddress)
 	if err != nil {
-		panic(err)
+		tmos.Exit(err.Error())
 	}
 	return sdk.ValAddress(addr)
 }
 
 func (pv *WrappedFilePV) SetAccAddress(addr sdk.AccAddress) {
-	pv.Key.AccAddress = addr.String()
+	pv.Key.DelegatorAddress = addr.String()
 	pv.Key.Save()
 }
 
