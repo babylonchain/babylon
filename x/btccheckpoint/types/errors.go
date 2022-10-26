@@ -14,5 +14,5 @@ var (
 	ErrUnknownHeader                     = sdkerrors.Register(ModuleName, 1103, "Proof headers are not known in BTCLightclient")
 	ErrProvidedHeaderFromDifferentForks  = sdkerrors.Register(ModuleName, 1104, "Proof header from different forks")
 	ErrProvidedHeaderDoesNotHaveAncestor = sdkerrors.Register(ModuleName, 1105, "Proof header does not have ancestor in previous epoch")
-	ErrEpochAlreadyConfirmedOrFinalized  = sdkerrors.Register(ModuleName, 1106, "Submission denied. Epoch already confirmed/finalized")
+	ErrEpochAlreadyFinalized             = sdkerrors.Register(ModuleName, 1106, "Submission denied. Epoch already finalized")
 )
