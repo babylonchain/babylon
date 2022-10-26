@@ -3,13 +3,13 @@ package keeper_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.ZoneconciergeKeeper(t)
+	k, ctx := testkeeper.ZoneConciergeKeeper(t)
 	params := types.DefaultParams()
 
 	k.SetParams(ctx, params)

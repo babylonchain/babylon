@@ -3,14 +3,14 @@ package keeper_test
 import (
 	"testing"
 
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
-	testkeeper 	"github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.ZoneconciergeKeeper(t)
+	keeper, ctx := testkeeper.ZoneConciergeKeeper(t)
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 	keeper.SetParams(ctx, params)

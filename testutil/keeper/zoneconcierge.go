@@ -45,7 +45,7 @@ func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabil
 	return &capabilitytypes.Capability{}
 }
 
-func ZoneconciergeKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
