@@ -170,7 +170,7 @@ var (
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
-		// TODO: decide ZonConcierge's permissiones here
+		// TODO: decide ZonConcierge's permissions here
 		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	}
 )
