@@ -1,0 +1,15 @@
+syntax = "proto3";
+package babylonchain.babylon.zoneconcierge;
+
+import "gogoproto/gogo.proto";
+import "babylon/zoneconcierge/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
+
+option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
+
+// GenesisState defines the zoneconcierge module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+  string port_id = 2;
+  // this line is used by starport scaffolding # genesis/proto/state
+}

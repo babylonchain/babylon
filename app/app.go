@@ -104,6 +104,15 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
+	// IBC-related
+	"github.com/babylonchain/babylon/x/zoneconcierge"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	ibc "github.com/cosmos/ibc-go/v5/modules/core"
+	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host" // ibc module puts types under `ibchost` rather than `ibctypes`
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 )
 
 const (
@@ -141,10 +150,16 @@ var (
 		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+
+		// Babylon modules
 		epoching.AppModuleBasic{},
 		btclightclient.AppModuleBasic{},
 		btccheckpoint.AppModuleBasic{},
 		checkpointing.AppModuleBasic{},
+
+		// IBC-related
+		ibc.AppModuleBasic{},
+		zoneconcierge.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -155,6 +170,8 @@ var (
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
+		// TODO: decide ZonConcierge's permissions here
+		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	}
 )
 
@@ -195,13 +212,18 @@ type BabylonApp struct {
 	EvidenceKeeper   evidencekeeper.Keeper
 	FeeGrantKeeper   feegrantkeeper.Keeper
 
-	EpochingKeeper epochingkeeper.Keeper
-
+	// Babylon modules
+	EpochingKeeper       epochingkeeper.Keeper
 	BTCLightClientKeeper btclightclientkeeper.Keeper
+	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
+	CheckpointingKeeper  checkpointingkeeper.Keeper
 
-	BtcCheckpointKeeper btccheckpointkeeper.Keeper
-
-	CheckpointingKeeper checkpointingkeeper.Keeper
+	// IBC-related modules
+	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	ZoneConciergeKeeper zckeeper.Keeper   // for cross-chain fungible token transfers
+	// make scoped keepers public for test purposes
+	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
+	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -248,10 +270,14 @@ func NewBabylonApp(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
+		// Babylon modules
 		epochingtypes.StoreKey,
 		btclightclienttypes.StoreKey,
 		btccheckpointtypes.StoreKey,
 		checkpointingtypes.StoreKey,
+		// IBC-related modules
+		ibchost.StoreKey,
+		zctypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
@@ -275,6 +301,11 @@ func NewBabylonApp(
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable()))
 
 	app.CapabilityKeeper = capabilitykeeper.NewKeeper(appCodec, keys[capabilitytypes.StoreKey], memKeys[capabilitytypes.MemStoreKey])
+
+	// grant capabilities for the ibc and ibc-transfer modules
+	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedZoneConciergeKeeper := app.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
+
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
 	app.CapabilityKeeper.Seal()
@@ -396,6 +427,38 @@ func NewBabylonApp(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
 	)
 
+	// Keepers for IBC-related modules
+	app.IBCKeeper = ibckeeper.NewKeeper(
+		appCodec,
+		keys[ibchost.StoreKey],
+		app.GetSubspace(ibchost.ModuleName),
+		app.StakingKeeper,
+		app.UpgradeKeeper,
+		scopedIBCKeeper,
+	)
+
+	zcKeeper := zckeeper.NewKeeper(
+		appCodec,
+		keys[zctypes.StoreKey],
+		keys[zctypes.MemStoreKey],
+		app.GetSubspace(zctypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		scopedZoneConciergeKeeper,
+	)
+	app.ZoneConciergeKeeper = *zcKeeper
+
+	// Create static IBC router, add ibc-tranfer module route, then set and seal it
+	ibcRouter := porttypes.NewRouter()
+	zcIBCModule := zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
+	ibcRouter.AddRoute(zctypes.ModuleName, zcIBCModule)
+	// Setting Router will finalize all routes by sealing router
+	// No more routes can be added
+	app.IBCKeeper.SetRouter(ibcRouter)
+
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
 		appCodec, keys[evidencetypes.StoreKey], &app.StakingKeeper, app.SlashingKeeper,
@@ -431,10 +494,14 @@ func NewBabylonApp(
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		// Babylon modules
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
+		// IBC-related modules
+		ibc.NewAppModule(app.IBCKeeper),
+		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -448,10 +515,14 @@ func NewBabylonApp(
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
 		paramstypes.ModuleName, vestingtypes.ModuleName,
+		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
+		// IBC-related modules
+		ibchost.ModuleName,
+		zctypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
 	// - how many validators can we slash in a single epoch and
@@ -465,10 +536,14 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
+		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
+		// IBC-related modules
+		ibchost.ModuleName,
+		zctypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers[:2], app.mm.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
@@ -484,10 +559,14 @@ func NewBabylonApp(
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
 		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
+		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
+		// IBC-related modules
+		ibchost.ModuleName,
+		zctypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
@@ -518,10 +597,14 @@ func NewBabylonApp(
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
+		// Babylon modules
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
+		// IBC-related modules
+		ibc.NewAppModule(app.IBCKeeper),
+		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	app.sm.RegisterStoreDecoders()
@@ -735,10 +818,14 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(slashingtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
+	// Babylon modules
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
 	paramsKeeper.Subspace(btclightclienttypes.ModuleName)
 	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
 	paramsKeeper.Subspace(checkpointingtypes.ModuleName)
+	// IBC-related modules
+	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper
 }
