@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -55,9 +54,10 @@ BLS keys in the checkpointing module's genesis state.'
 			// deduplicate
 			for _, gk := range gks {
 				if gk.ValidatorAddress == genKey.ValidatorAddress {
-					return errors.New("validator address already exist")
+					return errors.New("validator address already exists")
 				}
 			}
+
 			gks = append(gks, genKey)
 			checkpointingGenState.GenesisKeys = gks
 
