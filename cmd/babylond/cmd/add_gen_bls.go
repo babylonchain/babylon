@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 	tmos "github.com/tendermint/tendermint/libs/os"
 
@@ -56,6 +57,23 @@ BLS keys in the checkpointing module's genesis state.'
 				if gk.ValidatorAddress == genKey.ValidatorAddress {
 					return errors.New("validator address already exists")
 				}
+			}
+
+			genTxState := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+			foundInGenTx := false
+			for _, genTx := range genTxState.GenTxs {
+				tx, err := genutiltypes.ValidateAndGetGenTx(genTx, clientCtx.TxConfig.TxJSONDecoder())
+				if err != nil {
+					return err
+				}
+				msgs := tx.GetMsgs()
+				msgCreateValidator := msgs[0].(*stakingtypes.MsgCreateValidator)
+				if msgCreateValidator.ValidatorAddress == genKey.ValidatorAddress {
+					foundInGenTx = true
+				}
+			}
+			if !foundInGenTx {
+				return errors.New("corresponding genesis tx is not found, add genesis tx with the same validator address first")
 			}
 
 			gks = append(gks, genKey)
