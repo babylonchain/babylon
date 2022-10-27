@@ -178,10 +178,12 @@ func (k Keeper) AddEpochSubmission(
 		ed = &newEd
 	}
 
-	if ed.Status == types.Confirmed || ed.Status == types.Finalized {
-		// we already received submission which confirmed/finalized epoch, there is no
-		// need of accepting any more
-		return types.ErrEpochAlreadyConfirmedOrFinalized
+	if ed.Status == types.Finalized {
+		// we already finlized given epoch so we do not need any more submissions
+		// TODO We should probably compare new submmission with the exisiting submission
+		// which finalized the epoch. As it means we finalized epoch with not the best
+		// submission possible
+		return types.ErrEpochAlreadyFinalized
 	}
 
 	if ed.Status == types.Signed && submissionBtcState.onMainChain() {
