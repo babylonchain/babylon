@@ -24,10 +24,6 @@ type BTCLightClientKeeper interface {
 	// in case this is false it should return error
 	BlockHeight(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error)
 
-	// IsAncestor should check if childHash header is direct ancestor of parentHash
-	// if either of this header is not known to light clinet it should return error
-	IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error)
-
 	// MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
 	// Error is returned if header is unknown to lightclient
 	MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (int64, error)

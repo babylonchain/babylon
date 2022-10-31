@@ -62,10 +62,6 @@ func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header *bbn.BTCH
 	return uint64(10), nil
 }
 
-func (mb MockBTCLightClientKeeper) IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error) {
-	return true, nil
-}
-
 func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (int64, error) {
 	if ck.returnError {
 		return -1, errors.New("unknown header")
