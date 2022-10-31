@@ -8,8 +8,7 @@ import (
 )
 
 type MockBTCLightClientKeeper struct {
-	depth       int64
-	returnError bool
+	headers map[string]int64
 }
 
 type MockCheckpointingKeeper struct {
@@ -17,10 +16,9 @@ type MockCheckpointingKeeper struct {
 	returnError bool
 }
 
-func NewMockBTCLightClientKeeper(initialDepth int64) *MockBTCLightClientKeeper {
+func NewMockBTCLightClientKeeper() *MockBTCLightClientKeeper {
 	lc := MockBTCLightClientKeeper{
-		depth:       initialDepth,
-		returnError: false,
+		headers: make(map[string]int64),
 	}
 	return &lc
 }
@@ -45,16 +43,8 @@ func (mc *MockCheckpointingKeeper) ReturnSuccess() {
 	mc.returnError = false
 }
 
-func (mc *MockBTCLightClientKeeper) SetDepth(d int64) {
-	mc.depth = d
-}
-
-func (mc *MockBTCLightClientKeeper) ReturnError() {
-	mc.returnError = true
-}
-
-func (mc *MockBTCLightClientKeeper) ReturnSuccess() {
-	mc.returnError = false
+func (mc *MockBTCLightClientKeeper) SetDepth(header *bbn.BTCHeaderHashBytes, dd int64) {
+	mc.headers[header.String()] = dd
 }
 
 func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header *bbn.BTCHeaderHashBytes) (uint64, error) {
@@ -63,11 +53,12 @@ func (mb MockBTCLightClientKeeper) BlockHeight(ctx sdk.Context, header *bbn.BTCH
 }
 
 func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (int64, error) {
-	if ck.returnError {
-		return -1, errors.New("unknown header")
+	depth, ok := ck.headers[headerBytes.String()]
+	if ok {
+		return depth, nil
+	} else {
+		return 0, errors.New("unknown header")
 	}
-
-	return ck.depth, nil
 }
 
 func (ck MockCheckpointingKeeper) CheckpointEpoch(ctx sdk.Context, rawCheckpoint []byte) (uint64, error) {

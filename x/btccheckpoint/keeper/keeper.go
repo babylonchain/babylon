@@ -102,12 +102,12 @@ func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHas
 	return err == nil && depth >= 0
 }
 
-// GetSubmissionBtcDepth retruns depth of submission btc main chain or error if
+// GetSubmissionLowestDepth retruns depth of submission btc main chain or error if
 // - one of the submission blocks is unknown to btclightclient - submissionUnknownErr
 // - one of the submission blocks is on the fork - subbmisionOnForkErr
-// Submission depth is equal to depth of the most recent header of the submission
+// Submission lowest depth is equal to depth of the most recent header of the submission
 // submissionKey.
-func (k Keeper) GetSubmissionBtcDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
+func (k Keeper) GetSubmissionLowestDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
 	var submissionDepth uint64 = math.MaxUint64
 	for _, tk := range sk.Key {
 		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
@@ -134,8 +134,41 @@ func (k Keeper) GetSubmissionBtcDepth(ctx sdk.Context, sk types.SubmissionKey) (
 	return submissionDepth, nil
 }
 
+// GetSubmissionHighestDepth returns depth of submission btc main chain or error if
+// - one of the submission blocks is unknown to btclightclient - submissionUnknownErr
+// - one of the submission blocks is on the fork - subbmisionOnForkErr
+// Submission highest depth is equal to depth of the oldest header of the submission
+// submissionKey.
+func (k Keeper) GetSubmissionHighestDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
+	var depth uint64 = 0
+	for _, tk := range sk.Key {
+		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
+
+		if err != nil {
+			// one of blocks is not known to light client
+			return 0, submissionUnknownErr
+		}
+
+		if blockDepth < 0 {
+			//  one of submission blocks is on fork, treat whole submission as being on fork
+			return 0, subbmisionOnForkErr
+		}
+
+		d := uint64(blockDepth)
+
+		// lower depth of submission is treated as submission depth. I.e if submission
+		// is splited between blocks with depth 4 and 5 then submission depth is 4.
+		if d > depth {
+			depth = d
+		}
+	}
+
+	return depth, nil
+}
+
 func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcStatus, error) {
-	submissionDepth, err := k.GetSubmissionBtcDepth(ctx, sk)
+	// We determine status of submission by looking on the most fresh header
+	submissionDepth, err := k.GetSubmissionLowestDepth(ctx, sk)
 
 	if err != nil {
 		return Submitted, err
@@ -175,11 +208,11 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions
 // previous epoch submission is considered ancestor when:
 // - it is on main chain
-// - its depth is larger than the new submission depth
+// - its lowest depth is larger than highest depth of new submission
 func (k Keeper) checkAncestors(
 	ctx sdk.Context,
 	submisionEpoch uint64,
-	submissionBtcDepth uint64,
+	oldestHeaderDepth uint64,
 ) error {
 
 	if submisionEpoch <= 1 {
@@ -207,7 +240,7 @@ func (k Keeper) checkAncestors(
 			panic("Submission key composed of less than 2 transactions keys in database")
 		}
 
-		previousEpochSubmissionDepth, err := k.GetSubmissionBtcDepth(ctx, *sk)
+		lowest, err := k.GetSubmissionLowestDepth(ctx, *sk)
 
 		if err != nil {
 			// Previous epoch submission block either landed on fork or was pruned
@@ -215,10 +248,10 @@ func (k Keeper) checkAncestors(
 			continue
 		}
 
-		if previousEpochSubmissionDepth > submissionBtcDepth {
-			// previous epoch submission is deeper on the main chain than new submissions
-			// therefore we can be sure old submission headers are ancestors to new
-			// newsubmission headers.
+		if lowest > oldestHeaderDepth {
+			// previous epoch submission most fresh block is deeper in the chain
+			// than the new submission oldest block, therefore we can say there is
+			// implicit parent-child relationship between submission blocks
 			haveDescendant = true
 			break
 		}
