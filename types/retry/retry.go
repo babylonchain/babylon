@@ -2,18 +2,19 @@ package retry
 
 import (
 	"errors"
+	"math/rand"
+	"time"
+
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"math/rand"
-	"time"
 )
 
 // unrecoverableErrors is a list of errors which are unsafe and should not be retried.
 var unrecoverableErrors = []error{
 	btclctypes.ErrHeaderParentDoesNotExist,
 	btcctypes.ErrProvidedHeaderDoesNotHaveAncestor,
-	btcctypes.ErrUnknownHeader,
+	btcctypes.ErrInvalidHeader,
 	btcctypes.ErrNoCheckpointsForPreviousEpoch,
 	btcctypes.ErrInvalidCheckpointProof,
 	checkpointingtypes.ErrBlsPrivKeyDoesNotExist,
@@ -24,7 +25,7 @@ var unrecoverableErrors = []error{
 var expectedErrors = []error{
 	btclctypes.ErrDuplicateHeader,
 	btcctypes.ErrDuplicatedSubmission,
-	btcctypes.ErrUnknownHeader,
+	btcctypes.ErrInvalidHeader,
 	// TODO Add more errors here
 }
 
