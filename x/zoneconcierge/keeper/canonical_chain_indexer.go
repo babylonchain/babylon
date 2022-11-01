@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// canonicalChainStore returns the queue of msgs of a given epoch
+// canonicalChainStore stores the canonical chain of a CZ, formed as a list of IndexedHeader
 // prefix: CanonicalChainKey || chainID
 // key: height
 // value: IndexedHeader

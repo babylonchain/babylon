@@ -6,7 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// msgChainInfoStore returns the length of the msg queue of a given epoch
+// msgChainInfoStore stores the information of canonical chains and forks for CZs
 // prefix: ChainInfoKey
 // key: chainID
 // value: ChainInfo
