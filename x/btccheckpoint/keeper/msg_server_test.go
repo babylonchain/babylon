@@ -15,9 +15,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	// err "cosmos"
-	sdkerror "cosmossdk.io/errors"
+	"github.com/stretchr/testify/require"
 )
 
 func BlockCreationResultToProofs(inputs []*dg.BlockCreationResult) []*btcctypes.BTCSpvProof {
@@ -258,28 +256,14 @@ func TestRejectUnknownToBtcLightClient(t *testing.T) {
 
 	_, err := tk.insertProofMsg(msg)
 
-	if err == nil {
-		// fatal as other tests will panic if this fails
-		t.Fatalf("Processing submission with unknown blocks should fails")
-	}
-
-	if !sdkerror.IsOf(err, btcctypes.ErrInvalidHeader) {
-		t.Fatalf("Returned error should be invalid header error")
-	}
+	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
 
 	// even if one header is known, submission should still be considered invalid
 	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(1))
 
 	_, err = tk.insertProofMsg(msg)
 
-	if err == nil {
-		// fatal as other tests will panic if this fails
-		t.Fatalf("Processing submission with unknown blocks should fails")
-	}
-
-	if !sdkerror.IsOf(err, btcctypes.ErrInvalidHeader) {
-		t.Fatalf("Returned error should be invalid header error")
-	}
+	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
 }
 
 func TestRejectSubmissionsNotOnMainchain(t *testing.T) {
@@ -300,10 +284,7 @@ func TestRejectSubmissionsNotOnMainchain(t *testing.T) {
 
 	_, err := tk.insertProofMsg(msg)
 
-	if err == nil || !sdkerror.IsOf(err, btcctypes.ErrInvalidHeader) {
-		// fatal as other tests will panic if this fails
-		t.Fatalf("Processing msg should return ErrInvalidHeader error")
-	}
+	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
 
 	// one header on fork, one on main chain, fail
 	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(0))
@@ -311,20 +292,15 @@ func TestRejectSubmissionsNotOnMainchain(t *testing.T) {
 
 	_, err = tk.insertProofMsg(msg)
 
-	if err == nil || !sdkerror.IsOf(err, btcctypes.ErrInvalidHeader) {
-		// fatal as other tests will panic if this fails
-		t.Fatalf("Processing msg should return ErrInvalidHeader error")
-	}
+	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
 
-	// two headers on main chain, succes
+	// two headers on main chain, success
 	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(0))
 	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(0))
 
 	_, err = tk.insertProofMsg(msg)
 
-	if err != nil {
-		t.Fatalf("Processing msg should succeed")
-	}
+	require.NoError(t, err, "Processing msg should succeed")
 }
 
 func TestSubmitValidNewCheckpoint(t *testing.T) {
@@ -345,10 +321,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	_, err := tk.insertProofMsg(msg)
 
-	if err != nil {
-		// fatal as other tests will panic if this fails
-		t.Fatalf("Unexpected message processing error: %v", err)
-	}
+	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
 
 	ed := tk.getEpochData(epoch)
 
@@ -404,10 +377,12 @@ func TestRejectSubmissionWithoutSubmissionsForPreviousEpoch(t *testing.T) {
 
 	_, err := tk.insertProofMsg(msg)
 
-	if err == nil || !sdkerror.IsOf(err, btcctypes.ErrNoCheckpointsForPreviousEpoch) {
-		// fatal as other tests will panic if this fails
-		t.Fatalf("Processing msg should return ErrNoCheckpointsForPreviousEpoch error")
-	}
+	require.ErrorContainsf(
+		t,
+		err,
+		btcctypes.ErrNoCheckpointsForPreviousEpoch.Error(),
+		"Processing msg should return ErrNoCheckpointsForPreviousEpoch error",
+	)
 }
 
 func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T) {
@@ -427,9 +402,7 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 
 	_, err := tk.insertProofMsg(msg)
 
-	if err != nil {
-		t.Errorf("Unexpected message processing error: %v", err)
-	}
+	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
 
 	epoch2 := uint64(2)
 	raw2 := RandomRawCheckpointDataForEpoch(epoch2)
@@ -446,9 +419,12 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 
 	_, err = tk.insertProofMsg(msg2)
 
-	if err == nil || !sdkerror.IsOf(err, btcctypes.ErrProvidedHeaderDoesNotHaveAncestor) {
-		t.Errorf("Processing message should fail with ErrProvidedHeaderDoesNotHaveAncestor no with %v", err)
-	}
+	require.ErrorContainsf(
+		t,
+		err,
+		btcctypes.ErrProvidedHeaderDoesNotHaveAncestor.Error(),
+		"Processing msg should return ErrProvidedHeaderDoesNotHaveAncestor error",
+	)
 
 	// one header deeper than headers of previous epoch, one fresher, fail
 	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(7))
@@ -456,9 +432,12 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 
 	_, err = tk.insertProofMsg(msg2)
 
-	if err == nil || !sdkerror.IsOf(err, btcctypes.ErrProvidedHeaderDoesNotHaveAncestor) {
-		t.Errorf("Processing message should fail with ErrProvidedHeaderDoesNotHaveAncestor no with %v", err)
-	}
+	require.ErrorContainsf(
+		t,
+		err,
+		btcctypes.ErrProvidedHeaderDoesNotHaveAncestor.Error(),
+		"Processing msg should return ErrProvidedHeaderDoesNotHaveAncestor error",
+	)
 
 	// one header on the same depth as previous epoch, one fresher, fail
 	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(4))
@@ -466,9 +445,12 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 
 	_, err = tk.insertProofMsg(msg2)
 
-	if err == nil || !sdkerror.IsOf(err, btcctypes.ErrProvidedHeaderDoesNotHaveAncestor) {
-		t.Errorf("Processing message should fail with ErrProvidedHeaderDoesNotHaveAncestor no with %v", err)
-	}
+	require.ErrorContainsf(
+		t,
+		err,
+		btcctypes.ErrProvidedHeaderDoesNotHaveAncestor.Error(),
+		"Processing msg should return ErrProvidedHeaderDoesNotHaveAncestor error",
+	)
 
 	// Both Headers fresher that previous epoch, succeed
 	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(3))
@@ -476,9 +458,8 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 
 	_, err = tk.insertProofMsg(msg2)
 
-	if err != nil {
-		t.Errorf("Unexpected message processing error: %v", err)
-	}
+	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
+
 }
 
 func TestStateTransitionOfValidSubmission(t *testing.T) {

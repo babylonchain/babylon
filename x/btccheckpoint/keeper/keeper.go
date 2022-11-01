@@ -102,36 +102,56 @@ func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHas
 	return err == nil && depth >= 0
 }
 
+func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+	blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, headerHash)
+
+	if err != nil {
+		// one of blocks is not known to light client
+		return 0, submissionUnknownErr
+	}
+
+	if blockDepth < 0 {
+		//  one of submission blocks is on fork, treat whole submission as being on fork
+		return 0, subbmisionOnForkErr
+	}
+
+	return uint64(blockDepth), nil
+}
+
+func (k Keeper) getSubmissionDepth(
+	ctx sdk.Context,
+	sk types.SubmissionKey,
+	initial uint64,
+	comp func(new uint64, curr uint64) bool) (uint64, error) {
+	var depth = initial
+	for _, tk := range sk.Key {
+		d, err := k.headerDepth(ctx, tk.Hash)
+
+		if err != nil {
+			return 0, err
+		}
+
+		if comp(d, depth) {
+			depth = d
+		}
+	}
+	return depth, nil
+}
+
 // GetSubmissionLowestDepth retruns depth of submission btc main chain or error if
 // - one of the submission blocks is unknown to btclightclient - submissionUnknownErr
-// - one of the submission blocks is on the fork - subbmisionOnForkErr
+// - one of the submission blocks is on the fork - submisionOnForkErr
 // Submission lowest depth is equal to depth of the most recent header of the submission
 // submissionKey.
 func (k Keeper) GetSubmissionLowestDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
-	var submissionDepth uint64 = math.MaxUint64
-	for _, tk := range sk.Key {
-		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
+	comp := func(new uint64, curr uint64) bool { return new < curr }
 
-		if err != nil {
-			// one of blocks is not known to light client
-			return 0, submissionUnknownErr
-		}
-
-		if blockDepth < 0 {
-			//  one of submission blocks is on fork, treat whole submission as being on fork
-			return 0, subbmisionOnForkErr
-		}
-
-		d := uint64(blockDepth)
-
-		// lower depth of submission is treated as submission depth. I.e if submission
-		// is splited between blocks with depth 4 and 5 then submission depth is 4.
-		if d < submissionDepth {
-			submissionDepth = d
-		}
-	}
-
-	return submissionDepth, nil
+	return k.getSubmissionDepth(
+		ctx,
+		sk,
+		math.MaxUint64,
+		comp,
+	)
 }
 
 // GetSubmissionHighestDepth returns depth of submission btc main chain or error if
@@ -140,30 +160,14 @@ func (k Keeper) GetSubmissionLowestDepth(ctx sdk.Context, sk types.SubmissionKey
 // Submission highest depth is equal to depth of the oldest header of the submission
 // submissionKey.
 func (k Keeper) GetSubmissionHighestDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
-	var depth uint64 = 0
-	for _, tk := range sk.Key {
-		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
+	comp := func(new uint64, curr uint64) bool { return new > curr }
 
-		if err != nil {
-			// one of blocks is not known to light client
-			return 0, submissionUnknownErr
-		}
-
-		if blockDepth < 0 {
-			//  one of submission blocks is on fork, treat whole submission as being on fork
-			return 0, subbmisionOnForkErr
-		}
-
-		d := uint64(blockDepth)
-
-		// lower depth of submission is treated as submission depth. I.e if submission
-		// is splited between blocks with depth 4 and 5 then submission depth is 4.
-		if d > depth {
-			depth = d
-		}
-	}
-
-	return depth, nil
+	return k.getSubmissionDepth(
+		ctx,
+		sk,
+		0,
+		comp,
+	)
 }
 
 func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcStatus, error) {
