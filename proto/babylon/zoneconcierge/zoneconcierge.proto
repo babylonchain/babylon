@@ -1,0 +1,28 @@
+syntax = "proto3";
+package babylonchain.babylon.zoneconcierge;
+
+import "tendermint/types/types.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
+
+// IndexedHeader is the metadata of a CZ header
+message IndexedHeader {
+  // hash is the hash of this header
+  bytes hash = 1;
+  // height is the height of this header on CZ ledger
+  // (hash, height) jointly provides the position of the header on CZ ledger
+  uint64 height = 2;
+  // babylon_block_height is the height of the Babylon block that includes this header
+  uint64 babylon_block_height = 3;
+  // babylon_tx_hash is the hash of the tx that includes this header
+  // (babylon_block_height, babylon_tx_hash) jointly provides the position of the header on Babylon ledger
+  bytes babylon_tx_hash = 4;
+}
+
+// ChainInfo is the information of a CZ
+message ChainInfo {
+  // latest_header is the latest header in the canonical chain of CZ
+  tendermint.types.Header latest_header = 1;
+  // latest_fork is the latest fork, formed as a series of IndexedHeader (from low to high)
+  repeated IndexedHeader latest_fork = 2;
+}
