@@ -27,14 +27,13 @@ BLS keys in the checkpointing module's genesis state.'
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
-
 			config.SetRoot(clientCtx.HomeDir)
 
+			// load genesis BLS key
 			genKeyFilePath := args[0]
 			if !tmos.FileExists(genKeyFilePath) {
 				return errors.New("genesis BLS key file does not exist")
 			}
-
 			genKey, err := types.LoadGenesisKeyFromFile(genKeyFilePath)
 			if err != nil {
 				return err
@@ -44,21 +43,25 @@ BLS keys in the checkpointing module's genesis state.'
 				return err
 			}
 
+			// load genesis state
 			genFile := config.GenesisFile()
 			appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal genesis state: %w", err)
 			}
-
 			checkpointingGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+
+			// check duplication
 			gks := checkpointingGenState.GetGenesisKeys()
-			// deduplicate
 			for _, gk := range gks {
 				if gk.ValidatorAddress == genKey.ValidatorAddress {
 					return errors.New("validator address already exists")
 				}
 			}
 
+			// check correspondence of genesis transactions
+			// each genesis BLS key should have a corresponding
+			// genesis transaction
 			genTxState := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 			foundInGenTx := false
 			for _, genTx := range genTxState.GenTxs {
@@ -67,6 +70,9 @@ BLS keys in the checkpointing module's genesis state.'
 					return err
 				}
 				msgs := tx.GetMsgs()
+				if len(msgs) == 0 {
+					return errors.New("invalid genesis transaction")
+				}
 				msgCreateValidator := msgs[0].(*stakingtypes.MsgCreateValidator)
 				if msgCreateValidator.ValidatorAddress == genKey.ValidatorAddress {
 					foundInGenTx = true
