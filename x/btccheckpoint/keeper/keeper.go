@@ -29,13 +29,29 @@ type (
 	}
 
 	SubmissionBtcStatus int
+
+	submissionBtcError string
 )
 
 const (
 	Submitted SubmissionBtcStatus = iota
 	Confirmed
 	Finalized
-	OnFork
+)
+
+// Error interface for submissionBtcError
+func (e submissionBtcError) Error() string {
+	return string(e)
+}
+
+const (
+	submissionUnknownErr submissionBtcError = submissionBtcError(
+		"One of submission blocks is not known to btclightclient",
+	)
+
+	subbmisionOnForkErr submissionBtcError = submissionBtcError(
+		"One of submission blocks is not on the btc mainchain ",
+	)
 )
 
 func NewKeeper(
@@ -65,10 +81,6 @@ func NewKeeper(
 	}
 }
 
-func (btcState SubmissionBtcStatus) onMainChain() bool {
-	return btcState != OnFork
-}
-
 func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
 }
@@ -90,28 +102,80 @@ func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHas
 	return err == nil && depth >= 0
 }
 
-func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcStatus, error) {
-	var submissionDepth uint64 = math.MaxUint64
+func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+	blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, headerHash)
+
+	if err != nil {
+		// one of blocks is not known to light client
+		return 0, submissionUnknownErr
+	}
+
+	if blockDepth < 0 {
+		//  one of submission blocks is on fork, treat whole submission as being on fork
+		return 0, subbmisionOnForkErr
+	}
+
+	return uint64(blockDepth), nil
+}
+
+func (k Keeper) getSubmissionDepth(
+	ctx sdk.Context,
+	sk types.SubmissionKey,
+	initial uint64,
+	comp func(new uint64, curr uint64) bool) (uint64, error) {
+	var depth = initial
 	for _, tk := range sk.Key {
-		blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, tk.Hash)
+		d, err := k.headerDepth(ctx, tk.Hash)
 
 		if err != nil {
-			// one of blocks is not known to light client
-			return OnFork, err
+			return 0, err
 		}
 
-		if blockDepth < 0 {
-			//  one of submission blocks is on fork, treat whole submission as being on fork
-			return OnFork, nil
+		if comp(d, depth) {
+			depth = d
 		}
+	}
+	return depth, nil
+}
 
-		d := uint64(blockDepth)
+// GetSubmissionLowestDepth retruns depth of submission btc main chain or error if
+// - one of the submission blocks is unknown to btclightclient - submissionUnknownErr
+// - one of the submission blocks is on the fork - submisionOnForkErr
+// Submission lowest depth is equal to depth of the most recent header of the submission
+// submissionKey.
+func (k Keeper) GetSubmissionLowestDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
+	comp := func(new uint64, curr uint64) bool { return new < curr }
 
-		// lower depth of submission is treated as submission depth. I.e if submission
-		// is splited between blocks with depth 4 and 5 then submission depth is 4.
-		if d < submissionDepth {
-			submissionDepth = d
-		}
+	return k.getSubmissionDepth(
+		ctx,
+		sk,
+		math.MaxUint64,
+		comp,
+	)
+}
+
+// GetSubmissionHighestDepth returns depth of submission btc main chain or error if
+// - one of the submission blocks is unknown to btclightclient - submissionUnknownErr
+// - one of the submission blocks is on the fork - subbmisionOnForkErr
+// Submission highest depth is equal to depth of the oldest header of the submission
+// submissionKey.
+func (k Keeper) GetSubmissionHighestDepth(ctx sdk.Context, sk types.SubmissionKey) (uint64, error) {
+	comp := func(new uint64, curr uint64) bool { return new > curr }
+
+	return k.getSubmissionDepth(
+		ctx,
+		sk,
+		0,
+		comp,
+	)
+}
+
+func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (SubmissionBtcStatus, error) {
+	// We determine status of submission by looking on the most fresh header
+	submissionDepth, err := k.GetSubmissionLowestDepth(ctx, sk)
+
+	if err != nil {
+		return Submitted, err
 	}
 
 	if submissionDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
@@ -121,10 +185,6 @@ func (k Keeper) GetSubmissionBtcState(ctx sdk.Context, sk types.SubmissionKey) (
 	} else {
 		return Submitted, nil
 	}
-}
-
-func (k Keeper) IsAncestor(ctx sdk.Context, parentHash *bbn.BTCHeaderHashBytes, childHash *bbn.BTCHeaderHashBytes) (bool, error) {
-	return k.btcLightClientKeeper.IsAncestor(ctx, parentHash, childHash)
 }
 
 func (k Keeper) GetCheckpointEpoch(ctx sdk.Context, c []byte) (uint64, error) {
@@ -149,6 +209,65 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	return ed
 }
 
+// checkAncestors checks if there is at least one ancestor in previous epoch submissions
+// previous epoch submission is considered ancestor when:
+// - it is on main chain
+// - its lowest depth is larger than highest depth of new submission
+func (k Keeper) checkAncestors(
+	ctx sdk.Context,
+	submisionEpoch uint64,
+	oldestHeaderDepth uint64,
+) error {
+
+	if submisionEpoch <= 1 {
+		// do not need to check ancestors for epoch 0 and 1
+		return nil
+	}
+
+	// this is valid checkpoint for not initial epoch, we need to check previous epoch
+	// checkpoints
+	previousEpochData := k.GetEpochData(ctx, submisionEpoch-1)
+
+	// First check if there are any checkpoints for previous epoch at all.
+	if previousEpochData == nil {
+		return types.ErrNoCheckpointsForPreviousEpoch
+	}
+
+	if len(previousEpochData.Key) == 0 {
+		return types.ErrNoCheckpointsForPreviousEpoch
+	}
+
+	var haveDescendant = false
+
+	for _, sk := range previousEpochData.Key {
+		if len(sk.Key) < 2 {
+			panic("Submission key composed of less than 2 transactions keys in database")
+		}
+
+		lowest, err := k.GetSubmissionLowestDepth(ctx, *sk)
+
+		if err != nil {
+			// Previous epoch submission block either landed on fork or was pruned
+			// Submission will be pruned, so it should not be treated vaiable ancestor
+			continue
+		}
+
+		if lowest > oldestHeaderDepth {
+			// previous epoch submission most fresh block is deeper in the chain
+			// than the new submission oldest block, therefore we can say there is
+			// implicit parent-child relationship between submission blocks
+			haveDescendant = true
+			break
+		}
+	}
+
+	if !haveDescendant {
+		return types.ErrProvidedHeaderDoesNotHaveAncestor
+	}
+
+	return nil
+}
+
 func (k Keeper) saveEpochData(ctx sdk.Context, e uint64, ed *types.EpochData) {
 	store := ctx.KVStore(k.storeKey)
 	ek := types.GetEpochIndexKey(e)
@@ -156,13 +275,17 @@ func (k Keeper) saveEpochData(ctx sdk.Context, e uint64, ed *types.EpochData) {
 	store.Set(ek, eb)
 }
 
-func (k Keeper) AddEpochSubmission(
+// addEpochSubmission save given submission key and data to database and takes
+// car of updating any necessary indexes.
+// Provided submmission should be known to btclightclient and all of its blocks
+// should be on btc main chaing as viewed by btclightclient
+func (k Keeper) addEpochSubmission(
 	ctx sdk.Context,
 	epochNum uint64,
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
-	submissionBtcState SubmissionBtcStatus,
-	epochRawCheckpoint []byte) error {
+	epochRawCheckpoint []byte,
+) error {
 
 	ed := k.GetEpochData(ctx, epochNum)
 
@@ -186,7 +309,7 @@ func (k Keeper) AddEpochSubmission(
 		return types.ErrEpochAlreadyFinalized
 	}
 
-	if ed.Status == types.Signed && submissionBtcState.onMainChain() {
+	if ed.Status == types.Signed {
 		// It is first epoch submission which is on the main chain, inform checkpointing module
 		// about it and change epoch status to submited.
 		// Even if submission is confirmed or finalized, we first mark it as submitted.
