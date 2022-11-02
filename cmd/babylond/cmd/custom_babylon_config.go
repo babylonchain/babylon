@@ -41,7 +41,7 @@ func DefaultBabylonTemplate() string {
 [btc-config]
 
 # Configures which bitcoin network should be used for checkpointing
-# valid values are: [mainnet, testnet, simnet]
+# valid values are: [mainnet, testnet, simnet, regtest]
 network = "{{ .BtcConfig.Network }}"
 
 
