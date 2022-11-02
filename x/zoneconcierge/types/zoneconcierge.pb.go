@@ -25,16 +25,18 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // IndexedHeader is the metadata of a CZ header
 type IndexedHeader struct {
+	// chain_id is the ID of the chain
+	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// hash is the hash of this header
-	Hash []byte `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Hash []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
 	// height is the height of this header on CZ ledger
 	// (hash, height) jointly provides the position of the header on CZ ledger
-	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+	Height uint64 `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
 	// babylon_block_height is the height of the Babylon block that includes this header
-	BabylonBlockHeight uint64 `protobuf:"varint,3,opt,name=babylon_block_height,json=babylonBlockHeight,proto3" json:"babylon_block_height,omitempty"`
+	BabylonBlockHeight uint64 `protobuf:"varint,4,opt,name=babylon_block_height,json=babylonBlockHeight,proto3" json:"babylon_block_height,omitempty"`
 	// babylon_tx_hash is the hash of the tx that includes this header
 	// (babylon_block_height, babylon_tx_hash) jointly provides the position of the header on Babylon ledger
-	BabylonTxHash []byte `protobuf:"bytes,4,opt,name=babylon_tx_hash,json=babylonTxHash,proto3" json:"babylon_tx_hash,omitempty"`
+	BabylonTxHash []byte `protobuf:"bytes,5,opt,name=babylon_tx_hash,json=babylonTxHash,proto3" json:"babylon_tx_hash,omitempty"`
 }
 
 func (m *IndexedHeader) Reset()         { *m = IndexedHeader{} }
@@ -70,6 +72,13 @@ func (m *IndexedHeader) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_IndexedHeader proto.InternalMessageInfo
 
+func (m *IndexedHeader) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
 func (m *IndexedHeader) GetHash() []byte {
 	if m != nil {
 		return m.Hash
@@ -98,19 +107,75 @@ func (m *IndexedHeader) GetBabylonTxHash() []byte {
 	return nil
 }
 
+type Fork struct {
+	// chain_id is the ID of the chain
+	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
+	// blocks is the list of blocks on this fork
+	Blocks []*IndexedHeader `protobuf:"bytes,3,rep,name=blocks,proto3" json:"blocks,omitempty"`
+}
+
+func (m *Fork) Reset()         { *m = Fork{} }
+func (m *Fork) String() string { return proto.CompactTextString(m) }
+func (*Fork) ProtoMessage()    {}
+func (*Fork) Descriptor() ([]byte, []int) {
+	return fileDescriptor_c76d28ce8dde4532, []int{1}
+}
+func (m *Fork) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *Fork) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_Fork.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *Fork) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Fork.Merge(m, src)
+}
+func (m *Fork) XXX_Size() int {
+	return m.Size()
+}
+func (m *Fork) XXX_DiscardUnknown() {
+	xxx_messageInfo_Fork.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Fork proto.InternalMessageInfo
+
+func (m *Fork) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
+func (m *Fork) GetBlocks() []*IndexedHeader {
+	if m != nil {
+		return m.Blocks
+	}
+	return nil
+}
+
 // ChainInfo is the information of a CZ
 type ChainInfo struct {
+	// chain_id is the ID of the chain
+	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// latest_header is the latest header in the canonical chain of CZ
-	LatestHeader *types.Header `protobuf:"bytes,1,opt,name=latest_header,json=latestHeader,proto3" json:"latest_header,omitempty"`
+	LatestHeader *types.Header `protobuf:"bytes,2,opt,name=latest_header,json=latestHeader,proto3" json:"latest_header,omitempty"`
 	// latest_fork is the latest fork, formed as a series of IndexedHeader (from low to high)
-	LatestFork []*IndexedHeader `protobuf:"bytes,2,rep,name=latest_fork,json=latestFork,proto3" json:"latest_fork,omitempty"`
+	LatestFork *Fork `protobuf:"bytes,3,opt,name=latest_fork,json=latestFork,proto3" json:"latest_fork,omitempty"`
 }
 
 func (m *ChainInfo) Reset()         { *m = ChainInfo{} }
 func (m *ChainInfo) String() string { return proto.CompactTextString(m) }
 func (*ChainInfo) ProtoMessage()    {}
 func (*ChainInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_c76d28ce8dde4532, []int{1}
+	return fileDescriptor_c76d28ce8dde4532, []int{2}
 }
 func (m *ChainInfo) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -139,6 +204,13 @@ func (m *ChainInfo) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ChainInfo proto.InternalMessageInfo
 
+func (m *ChainInfo) GetChainId() string {
+	if m != nil {
+		return m.ChainId
+	}
+	return ""
+}
+
 func (m *ChainInfo) GetLatestHeader() *types.Header {
 	if m != nil {
 		return m.LatestHeader
@@ -146,7 +218,7 @@ func (m *ChainInfo) GetLatestHeader() *types.Header {
 	return nil
 }
 
-func (m *ChainInfo) GetLatestFork() []*IndexedHeader {
+func (m *ChainInfo) GetLatestFork() *Fork {
 	if m != nil {
 		return m.LatestFork
 	}
@@ -155,6 +227,7 @@ func (m *ChainInfo) GetLatestFork() []*IndexedHeader {
 
 func init() {
 	proto.RegisterType((*IndexedHeader)(nil), "babylonchain.babylon.zoneconcierge.IndexedHeader")
+	proto.RegisterType((*Fork)(nil), "babylonchain.babylon.zoneconcierge.Fork")
 	proto.RegisterType((*ChainInfo)(nil), "babylonchain.babylon.zoneconcierge.ChainInfo")
 }
 
@@ -163,28 +236,31 @@ func init() {
 }
 
 var fileDescriptor_c76d28ce8dde4532 = []byte{
-	// 328 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x51, 0x41, 0x4b, 0x33, 0x31,
-	0x10, 0x6d, 0xda, 0x52, 0xf8, 0xd2, 0x96, 0x0f, 0x82, 0xc8, 0x22, 0x12, 0x4a, 0x0f, 0x52, 0x2f,
-	0x59, 0xad, 0x78, 0xf4, 0x52, 0x41, 0xda, 0x93, 0xb0, 0x78, 0xf2, 0xb2, 0x64, 0x77, 0xa7, 0xcd,
-	0xd2, 0x36, 0x29, 0xd9, 0x08, 0x5b, 0x7f, 0x85, 0x17, 0xaf, 0xfe, 0x1e, 0x8f, 0x3d, 0x7a, 0x94,
-	0xf6, 0x8f, 0x48, 0x93, 0x14, 0x5d, 0x2f, 0x5e, 0x96, 0x7d, 0x99, 0x37, 0xf3, 0xde, 0x9b, 0xc1,
-	0xe7, 0x09, 0x4f, 0xd6, 0x0b, 0x25, 0xc3, 0x67, 0x25, 0x21, 0x55, 0x32, 0xcd, 0x41, 0xcf, 0xa0,
-	0x8a, 0xd8, 0x4a, 0x2b, 0xa3, 0x48, 0xdf, 0x53, 0x53, 0xc1, 0x73, 0xc9, 0x3c, 0x60, 0x15, 0xe6,
-	0xc9, 0xa9, 0x01, 0x99, 0x81, 0x5e, 0xe6, 0xd2, 0x84, 0x66, 0xbd, 0x82, 0xc2, 0x7d, 0xdd, 0x84,
-	0xfe, 0x2b, 0xc2, 0xdd, 0x89, 0xcc, 0xa0, 0x84, 0x6c, 0x0c, 0x3c, 0x03, 0x4d, 0x08, 0x6e, 0x0a,
-	0x5e, 0x88, 0x00, 0xf5, 0xd0, 0xa0, 0x13, 0xd9, 0x7f, 0x72, 0x8c, 0x5b, 0x02, 0xf2, 0x99, 0x30,
-	0x41, 0xbd, 0x87, 0x06, 0xcd, 0xc8, 0x23, 0x72, 0x81, 0x8f, 0xbc, 0x68, 0x9c, 0x2c, 0x54, 0x3a,
-	0x8f, 0x3d, 0xab, 0x61, 0x59, 0xc4, 0xd7, 0x46, 0xfb, 0xd2, 0xd8, 0x75, 0x9c, 0xe1, 0xff, 0x87,
-	0x0e, 0x53, 0xc6, 0x56, 0xa8, 0x69, 0x85, 0xba, 0xfe, 0xf9, 0xa1, 0x1c, 0xf3, 0x42, 0xf4, 0xdf,
-	0x10, 0xfe, 0x77, 0xbb, 0x4f, 0x35, 0x91, 0x53, 0x45, 0x6e, 0x70, 0x77, 0xc1, 0x0d, 0x14, 0x26,
-	0x16, 0xd6, 0xa4, 0x35, 0xd7, 0x1e, 0x06, 0xec, 0x3b, 0x1b, 0x73, 0xa9, 0x5c, 0x88, 0xa8, 0xe3,
-	0xe8, 0x3e, 0x52, 0x84, 0xdb, 0xbe, 0x7d, 0xaa, 0xf4, 0x3c, 0xa8, 0xf7, 0x1a, 0x83, 0xf6, 0xf0,
-	0x92, 0xfd, 0xbd, 0x3c, 0x56, 0x59, 0x4d, 0x84, 0xdd, 0x94, 0x3b, 0xa5, 0xe7, 0xa3, 0xfb, 0xf7,
-	0x2d, 0x45, 0x9b, 0x2d, 0x45, 0x9f, 0x5b, 0x8a, 0x5e, 0x76, 0xb4, 0xb6, 0xd9, 0xd1, 0xda, 0xc7,
-	0x8e, 0xd6, 0x1e, 0xaf, 0x67, 0xb9, 0x11, 0x4f, 0x09, 0x4b, 0xd5, 0x32, 0xfc, 0x29, 0x71, 0x00,
-	0x61, 0xf9, 0xeb, 0xb2, 0xd6, 0x79, 0xd2, 0xb2, 0x07, 0xb9, 0xfa, 0x0a, 0x00, 0x00, 0xff, 0xff,
-	0xd2, 0x91, 0x26, 0x17, 0xff, 0x01, 0x00, 0x00,
+	// 370 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xcf, 0x4a, 0xeb, 0x40,
+	0x18, 0xc5, 0x3b, 0xb7, 0xb9, 0xbd, 0xb7, 0x93, 0x96, 0x0b, 0xc3, 0x45, 0xa2, 0x48, 0x08, 0x5d,
+	0x48, 0xdc, 0x4c, 0xb4, 0xe2, 0xd2, 0x4d, 0x05, 0x69, 0x56, 0x42, 0x70, 0xe5, 0x26, 0xe4, 0xcf,
+	0xb4, 0x13, 0x9a, 0xce, 0x94, 0x64, 0x84, 0xd4, 0xa7, 0xf0, 0x51, 0x7c, 0x0c, 0x97, 0x5d, 0xba,
+	0x94, 0xf6, 0x45, 0x24, 0x5f, 0xa6, 0x68, 0x5d, 0x54, 0x37, 0x61, 0x4e, 0xe6, 0x7c, 0xe7, 0x7c,
+	0xfc, 0x18, 0x7c, 0x1a, 0x47, 0xf1, 0x32, 0x97, 0xc2, 0x7b, 0x94, 0x82, 0x25, 0x52, 0x24, 0x19,
+	0x2b, 0xa6, 0x6c, 0x57, 0xd1, 0x45, 0x21, 0x95, 0x24, 0x03, 0x6d, 0x4d, 0x78, 0x94, 0x09, 0xaa,
+	0x05, 0xdd, 0x71, 0x1e, 0x1d, 0x2b, 0x26, 0x52, 0x56, 0xcc, 0x33, 0xa1, 0x3c, 0xb5, 0x5c, 0xb0,
+	0xb2, 0xf9, 0x36, 0x09, 0x83, 0x67, 0x84, 0xfb, 0xbe, 0x48, 0x59, 0xc5, 0xd2, 0x31, 0x8b, 0x52,
+	0x56, 0x90, 0x43, 0xfc, 0x17, 0xe2, 0xc2, 0x2c, 0xb5, 0x90, 0x83, 0xdc, 0x6e, 0xf0, 0x07, 0xb4,
+	0x9f, 0x12, 0x82, 0x0d, 0x1e, 0x95, 0xdc, 0xfa, 0xe5, 0x20, 0xb7, 0x17, 0xc0, 0x99, 0x1c, 0xe0,
+	0x0e, 0x67, 0xd9, 0x94, 0x2b, 0xab, 0xed, 0x20, 0xd7, 0x08, 0xb4, 0x22, 0x67, 0xf8, 0xbf, 0xde,
+	0x27, 0x8c, 0x73, 0x99, 0xcc, 0x42, 0xed, 0x32, 0xc0, 0x45, 0xf4, 0xdd, 0xa8, 0xbe, 0x1a, 0x37,
+	0x13, 0x27, 0xf8, 0xdf, 0x76, 0x42, 0x55, 0x21, 0x14, 0xfd, 0x86, 0xa2, 0xbe, 0xfe, 0x7d, 0x57,
+	0x8d, 0xa3, 0x92, 0x0f, 0x72, 0x6c, 0xdc, 0xc8, 0x62, 0xb6, 0x6f, 0x51, 0x1f, 0x77, 0xa0, 0xb4,
+	0xb4, 0xda, 0x4e, 0xdb, 0x35, 0x87, 0xe7, 0xf4, 0x7b, 0x50, 0x74, 0x07, 0x43, 0xa0, 0x03, 0x6a,
+	0x40, 0xdd, 0x6b, 0x88, 0x15, 0x13, 0xb9, 0xaf, 0xf3, 0x0a, 0xf7, 0xf3, 0x48, 0xb1, 0x52, 0x85,
+	0x1c, 0x12, 0x80, 0x92, 0x39, 0xb4, 0xe8, 0x07, 0x7f, 0xda, 0x90, 0xd7, 0x0d, 0xbd, 0xc6, 0xae,
+	0xb1, 0xfb, 0xd8, 0xd4, 0xe3, 0x13, 0x59, 0xcc, 0x00, 0xa6, 0x39, 0x74, 0x7f, 0xb2, 0x77, 0x0d,
+	0x23, 0xc0, 0xcd, 0x70, 0x7d, 0x1e, 0xdd, 0xbe, 0xac, 0x6d, 0xb4, 0x5a, 0xdb, 0xe8, 0x6d, 0x6d,
+	0xa3, 0xa7, 0x8d, 0xdd, 0x5a, 0x6d, 0xec, 0xd6, 0xeb, 0xc6, 0x6e, 0xdd, 0x5f, 0x4e, 0x33, 0xc5,
+	0x1f, 0x62, 0x9a, 0xc8, 0xb9, 0xf7, 0x39, 0x79, 0x2b, 0xbc, 0xea, 0xcb, 0xa3, 0x83, 0x85, 0xe3,
+	0x0e, 0xbc, 0x95, 0x8b, 0xf7, 0x00, 0x00, 0x00, 0xff, 0xff, 0x2d, 0xdd, 0x74, 0x1a, 0x9a, 0x02,
+	0x00, 0x00,
 }
 
 func (m *IndexedHeader) Marshal() (dAtA []byte, err error) {
@@ -212,22 +288,73 @@ func (m *IndexedHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.BabylonTxHash)
 		i = encodeVarintZoneconcierge(dAtA, i, uint64(len(m.BabylonTxHash)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x2a
 	}
 	if m.BabylonBlockHeight != 0 {
 		i = encodeVarintZoneconcierge(dAtA, i, uint64(m.BabylonBlockHeight))
 		i--
-		dAtA[i] = 0x18
+		dAtA[i] = 0x20
 	}
 	if m.Height != 0 {
 		i = encodeVarintZoneconcierge(dAtA, i, uint64(m.Height))
 		i--
-		dAtA[i] = 0x10
+		dAtA[i] = 0x18
 	}
 	if len(m.Hash) > 0 {
 		i -= len(m.Hash)
 		copy(dAtA[i:], m.Hash)
 		i = encodeVarintZoneconcierge(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintZoneconcierge(dAtA, i, uint64(len(m.ChainId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *Fork) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *Fork) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Fork) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Blocks) > 0 {
+		for iNdEx := len(m.Blocks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Blocks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintZoneconcierge(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintZoneconcierge(dAtA, i, uint64(len(m.ChainId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -254,19 +381,17 @@ func (m *ChainInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.LatestFork) > 0 {
-		for iNdEx := len(m.LatestFork) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.LatestFork[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintZoneconcierge(dAtA, i, uint64(size))
+	if m.LatestFork != nil {
+		{
+			size, err := m.LatestFork.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
 			}
-			i--
-			dAtA[i] = 0x12
+			i -= size
+			i = encodeVarintZoneconcierge(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x1a
 	}
 	if m.LatestHeader != nil {
 		{
@@ -277,6 +402,13 @@ func (m *ChainInfo) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			i -= size
 			i = encodeVarintZoneconcierge(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.ChainId) > 0 {
+		i -= len(m.ChainId)
+		copy(dAtA[i:], m.ChainId)
+		i = encodeVarintZoneconcierge(dAtA, i, uint64(len(m.ChainId)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -300,6 +432,10 @@ func (m *IndexedHeader) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovZoneconcierge(uint64(l))
+	}
 	l = len(m.Hash)
 	if l > 0 {
 		n += 1 + l + sovZoneconcierge(uint64(l))
@@ -317,21 +453,42 @@ func (m *IndexedHeader) Size() (n int) {
 	return n
 }
 
+func (m *Fork) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovZoneconcierge(uint64(l))
+	}
+	if len(m.Blocks) > 0 {
+		for _, e := range m.Blocks {
+			l = e.Size()
+			n += 1 + l + sovZoneconcierge(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *ChainInfo) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.ChainId)
+	if l > 0 {
+		n += 1 + l + sovZoneconcierge(uint64(l))
+	}
 	if m.LatestHeader != nil {
 		l = m.LatestHeader.Size()
 		n += 1 + l + sovZoneconcierge(uint64(l))
 	}
-	if len(m.LatestFork) > 0 {
-		for _, e := range m.LatestFork {
-			l = e.Size()
-			n += 1 + l + sovZoneconcierge(uint64(l))
-		}
+	if m.LatestFork != nil {
+		l = m.LatestFork.Size()
+		n += 1 + l + sovZoneconcierge(uint64(l))
 	}
 	return n
 }
@@ -373,6 +530,38 @@ func (m *IndexedHeader) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowZoneconcierge
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
 			}
 			var byteLen int
@@ -405,7 +594,7 @@ func (m *IndexedHeader) Unmarshal(dAtA []byte) error {
 				m.Hash = []byte{}
 			}
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
 			}
@@ -424,7 +613,7 @@ func (m *IndexedHeader) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 3:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BabylonBlockHeight", wireType)
 			}
@@ -443,7 +632,7 @@ func (m *IndexedHeader) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 4:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field BabylonTxHash", wireType)
 			}
@@ -498,6 +687,122 @@ func (m *IndexedHeader) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *Fork) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowZoneconcierge
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: Fork: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: Fork: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowZoneconcierge
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Blocks", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowZoneconcierge
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Blocks = append(m.Blocks, &IndexedHeader{})
+			if err := m.Blocks[len(m.Blocks)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipZoneconcierge(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ChainInfo) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -528,6 +833,38 @@ func (m *ChainInfo) Unmarshal(dAtA []byte) error {
 		}
 		switch fieldNum {
 		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ChainId", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowZoneconcierge
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthZoneconcierge
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ChainId = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LatestHeader", wireType)
 			}
@@ -563,7 +900,7 @@ func (m *ChainInfo) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		case 2:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field LatestFork", wireType)
 			}
@@ -592,8 +929,10 @@ func (m *ChainInfo) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LatestFork = append(m.LatestFork, &IndexedHeader{})
-			if err := m.LatestFork[len(m.LatestFork)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if m.LatestFork == nil {
+				m.LatestFork = &Fork{}
+			}
+			if err := m.LatestFork.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
