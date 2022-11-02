@@ -7,7 +7,7 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // IndexedHeader is the metadata of a CZ header
 message IndexedHeader {
-  // chain_id is the ID of the chain
+  // chain_id is the unique ID of the chain
   string chain_id = 1;
   // hash is the hash of this header
   bytes hash = 2;
@@ -21,6 +21,16 @@ message IndexedHeader {
   bytes babylon_tx_hash = 5;
 }
 
+// Fork is a fork in a chain. It includes a list of `IndexedHeader`s, starting from the diverging block to the end of the fork.
+// For example, assuming the following blockchain
+// ```
+// A <- B <- C <- D <- E
+//            \ -- D1 <- E1
+// ```
+// Then the fork will be {chain_id, [C, D1, E1]} where each item is in struct `IndexedBlock`.
+// 
+// Note that each `IndexedHeader` in the fork should have a valid quorum certificate. 
+// Such forks exist since Babylon considers CZs might have dishonest majority.
 message Fork {
   // chain_id is the ID of the chain
   string chain_id = 1;

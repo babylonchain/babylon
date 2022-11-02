@@ -25,7 +25,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // IndexedHeader is the metadata of a CZ header
 type IndexedHeader struct {
-	// chain_id is the ID of the chain
+	// chain_id is the unique ID of the chain
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// hash is the hash of this header
 	Hash []byte `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
@@ -107,6 +107,16 @@ func (m *IndexedHeader) GetBabylonTxHash() []byte {
 	return nil
 }
 
+// Fork is a fork in a chain. It includes a list of `IndexedHeader`s, starting from the diverging block to the end of the fork.
+// For example, assuming the following blockchain
+// ```
+// A <- B <- C <- D <- E
+//            \ -- D1 <- E1
+// ```
+// Then the fork will be {chain_id, [C, D1, E1]} where each item is in struct `IndexedBlock`.
+//
+// Note that each `IndexedHeader` in the fork should have a valid quorum certificate.
+// Such forks exist since Babylon considers CZs might have dishonest majority.
 type Fork struct {
 	// chain_id is the ID of the chain
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
