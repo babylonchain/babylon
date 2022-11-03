@@ -6,6 +6,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+// GetFork returns a list of forked headers at a given height
 func (k Keeper) GetFork(ctx sdk.Context, chainID string, height uint64) *types.Fork {
 	store := k.forkStore(ctx, chainID)
 	forkBytes := store.Get(sdk.Uint64ToBigEndian(height))
@@ -17,14 +18,13 @@ func (k Keeper) GetFork(ctx sdk.Context, chainID string, height uint64) *types.F
 	return &fork
 }
 
-func (k Keeper) InsertFork(ctx sdk.Context, chainID string, blocks []*types.IndexedHeader) {
+// InsertForkHeader inserts a forked header to the list of forked headers at the same height
+func (k Keeper) InsertForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) {
 	store := k.forkStore(ctx, chainID)
-	fork := types.Fork{
-		ChainId: chainID,
-		Blocks:  blocks,
-	}
-	forkBytes := k.cdc.MustMarshal(&fork)
-	store.Set(sdk.Uint64ToBigEndian(blocks[0].Height), forkBytes)
+	fork := k.GetFork(ctx, chainID, header.Height)
+	fork.Headers = append(fork.Headers, header)
+	forkBytes := k.cdc.MustMarshal(fork)
+	store.Set(sdk.Uint64ToBigEndian(header.Height), forkBytes)
 }
 
 // forkStore stores the forks for each CZ
