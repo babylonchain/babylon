@@ -3,12 +3,10 @@ package cmd_test
 import (
 	"context"
 	"fmt"
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/testutil/cli"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/server/config"
+	"path/filepath"
+	"testing"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -21,8 +19,13 @@ import (
 	tmjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/libs/tempfile"
-	"path/filepath"
-	"testing"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/cli"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 // test adding genesis BLS keys without gentx
@@ -30,17 +33,17 @@ import (
 func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	home := t.TempDir()
 	logger := log.NewNopLogger()
-	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+	tmcfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 	require.NoError(t, err)
 
 	appCodec := app.MakeTestEncodingConfig().Marshaler
 	err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 	require.NoError(t, err)
 
-	serverCtx := server.NewContext(viper.New(), cfg, logger)
+	serverCtx := server.NewContext(viper.New(), tmcfg, logger)
 	clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
-	config := serverCtx.Config
-	config.SetRoot(clientCtx.HomeDir)
+	cfg := serverCtx.Config
+	cfg.SetRoot(clientCtx.HomeDir)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
@@ -64,6 +67,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 // error is expected if adding duplicate
 func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 	cfg := network.DefaultConfig()
+	config.SetConfigTemplate(config.DefaultConfigTemplate)
 	cfg.NumValidators = 1
 
 	testNetwork, err := network.New(t, t.TempDir(), cfg)
