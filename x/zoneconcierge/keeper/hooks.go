@@ -34,11 +34,15 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			err := sdkerrors.Wrapf(types.ErrForkNotFound, "fork at height %d should at least contain header %s", indexedHeader.Height, &indexedHeader.Hash)
 			panic(err)
 		}
-		h.k.UpdateLatestFork(ctx, indexedHeader.ChainId, fork)
+		if err := h.k.UpdateLatestFork(ctx, indexedHeader.ChainId, fork); err != nil {
+			panic(err)
+		}
 	} else {
 		// insert header to canonical chain index
 		h.k.InsertHeader(ctx, indexedHeader.ChainId, &indexedHeader)
 		// update the latest canonical header in chain info
-		h.k.UpdateLatestHeader(ctx, indexedHeader.ChainId, header.Header)
+		if err := h.k.UpdateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+			panic(err)
+		}
 	}
 }
