@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 	tmos "github.com/tendermint/tendermint/libs/os"
 
@@ -26,14 +27,13 @@ BLS keys in the checkpointing module's genesis state.'
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			serverCtx := server.GetServerContextFromCmd(cmd)
 			config := serverCtx.Config
-
 			config.SetRoot(clientCtx.HomeDir)
 
+			// load genesis BLS key
 			genKeyFilePath := args[0]
 			if !tmos.FileExists(genKeyFilePath) {
 				return errors.New("genesis BLS key file does not exist")
 			}
-
 			genKey, err := types.LoadGenesisKeyFromFile(genKeyFilePath)
 			if err != nil {
 				return err
@@ -43,19 +43,43 @@ BLS keys in the checkpointing module's genesis state.'
 				return err
 			}
 
+			// load genesis state
 			genFile := config.GenesisFile()
 			appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal genesis state: %w", err)
 			}
-
 			checkpointingGenState := types.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+
+			// check duplication
 			gks := checkpointingGenState.GetGenesisKeys()
-			// deduplicate
 			for _, gk := range gks {
 				if gk.ValidatorAddress == genKey.ValidatorAddress {
 					return errors.New("validator address already exists")
 				}
+			}
+
+			// check correspondence of genesis transactions
+			// each genesis BLS key should have a corresponding
+			// genesis transaction
+			genTxState := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
+			foundInGenTx := false
+			for _, genTx := range genTxState.GenTxs {
+				tx, err := genutiltypes.ValidateAndGetGenTx(genTx, clientCtx.TxConfig.TxJSONDecoder())
+				if err != nil {
+					return err
+				}
+				msgs := tx.GetMsgs()
+				if len(msgs) == 0 {
+					return errors.New("invalid genesis transaction")
+				}
+				msgCreateValidator := msgs[0].(*stakingtypes.MsgCreateValidator)
+				if msgCreateValidator.ValidatorAddress == genKey.ValidatorAddress {
+					foundInGenTx = true
+				}
+			}
+			if !foundInGenTx {
+				return errors.New("corresponding genesis tx is not found, add genesis tx with the same validator address first")
 			}
 
 			gks = append(gks, genKey)
