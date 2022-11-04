@@ -4,7 +4,6 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
@@ -23,7 +22,7 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) *types.ChainInfo {
 	return &chainInfo
 }
 
-func (k Keeper) UpdateLatestHeader(ctx sdk.Context, chainID string, header *tmtypes.Header) error {
+func (k Keeper) UpdateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	chainInfo := k.GetChainInfo(ctx, chainID)
 	if chainInfo == nil {
 		chainInfo = &types.ChainInfo{

@@ -1,8 +1,6 @@
 syntax = "proto3";
 package babylonchain.babylon.zoneconcierge;
 
-import "tendermint/types/types.proto";
-
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // IndexedHeader is the metadata of a CZ header
@@ -44,7 +42,7 @@ message ChainInfo {
   // chain_id is the ID of the chain
   string chain_id = 1;
   // latest_header is the latest header in the canonical chain of CZ
-  tendermint.types.Header latest_header = 2;
+  IndexedHeader latest_header = 2;
   // latest_fork is the latest fork, formed as a series of IndexedHeader (from low to high)
   Fork latest_fork = 3;
 }
