@@ -10,10 +10,9 @@ type Hooks struct {
 	k Keeper
 }
 
-// ensures Hooks implements StakingHooks interfaces
+// ensures Hooks implements ClientHooks interfaces
 var _ ibcclientkeeper.ClientHooks = Hooks{}
 
-// Create new distribution hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibctmtypes.Header) {
