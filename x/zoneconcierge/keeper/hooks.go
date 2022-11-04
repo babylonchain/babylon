@@ -16,5 +16,5 @@ var _ ibcclientkeeper.ClientHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibctmtypes.Header) {
-	panic("unimplemented")
+	panic("TODO: unimplemented")
 }
