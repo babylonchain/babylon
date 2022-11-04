@@ -13,4 +13,5 @@ var (
 	ErrInvalidVersion       = sdkerrors.Register(ModuleName, 1102, "invalid version")
 	ErrNoChainInfo          = sdkerrors.Register(ModuleName, 1103, "chain info does not exist")
 	ErrInvalidHeight        = sdkerrors.Register(ModuleName, 1104, "the indexed header has an invalid height")
+	ErrForkNotFound         = sdkerrors.Register(ModuleName, 1105, "cannot find fork")
 )
