@@ -1,301 +1,78 @@
 package cmd_test
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"testing"
+
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
-	types2 "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/types"
-	"testing"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/server"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	tmjson "github.com/tendermint/tendermint/libs/json"
+	"github.com/tendermint/tendermint/libs/log"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-var misMatchGenesis = `
-{
-  "chain_id": "chain-test",
-  "app_state": {
-    "checkpointing": {
-      "params": {},
-      "genesis_keys": [
-        {
-          "validator_address": "bbnvaloper18unlvcpj9kaa5y27ghgjtmmkcsm4gk075cz2sv",
-          "bls_key": {
-            "pubkey": "swnOf6PuVF1YDXeShKCx1M3RpNsN+rTyzUoNm9O7UJVseYbmIbqZ3WlAhHA+1bCFBImr3+bjKu0S1RZY8bOhfbRpNBNOIiSKoyGPDqKj5+BSwmIFU4IgKOd10KvYfb/J",
-            "pop": {
-              "ed25519_sig": "VAjE+l9R2ilrZxTZrmpYvEO0IIi7Y8VQacltHeAtau8MoXnxeBUbLJPIuENUBPRVzObGPpU0QMmmzJkpexdWBw==",
-              "bls_sig": "rF6wt1ZOVYM/xhWvh5RrIT3Lpwwtx6qRxuQh84fEInl2x5dNDSyrrA/60MIEMmm8"
-            }
-          },
-          "val_pubkey": {
-            "key": "PUoM/ErXICyPaiByrt7X/7/AgbP0URmtC7foTECOmoc="
-          }
-        }
-      ]
-    },
-    "genutil": {
-      "gen_txs": [
-        {
-          "body": {
-            "messages": [
-              {
-                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
-                "description": {
-                  "moniker": "node0",
-                  "identity": "",
-                  "website": "",
-                  "security_contact": "",
-                  "details": ""
-                },
-                "commission": {
-                  "rate": "1.000000000000000000",
-                  "max_rate": "1.000000000000000000",
-                  "max_change_rate": "1.000000000000000000"
-                },
-                "min_self_delegation": "1",
-                "delegator_address": "bbn1qck5qppfs7wkj20u94q60s8j5lsqy772rfktkm",
-                "validator_address": "bbnvaloper1qck5qppfs7wkj20u94q60s8j5lsqy7727tuk66",
-                "pubkey": {
-                  "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "ICl5MC/3coQYKSLGQqhIgU2Qr09fBv4tkYJ/j0d41As="
-                },
-                "value": {
-                  "denom": "ubbn",
-                  "amount": "100000000"
-                }
-              }
-            ],
-            "memo": "f9f9f5613f2010edbb6c6ed01633efadad8af269@192.168.10.2:26656",
-            "timeout_height": "0",
-            "extension_options": [],
-            "non_critical_extension_options": []
-          },
-          "auth_info": {
-            "signer_infos": [
-              {
-                "public_key": {
-                  "@type": "/cosmos.crypto.secp256k1.PubKey",
-                  "key": "AsOXpLQmKg88CzhYa4+c9LHKX0tlUlwyW1Lr0rf52KOp"
-                },
-                "mode_info": {
-                  "single": {
-                    "mode": "SIGN_MODE_DIRECT"
-                  }
-                },
-                "sequence": "0"
-              }
-            ],
-            "fee": {
-              "amount": [],
-              "gas_limit": "0",
-              "payer": "",
-              "granter": ""
-            },
-            "tip": null
-          },
-          "signatures": [
-            "CvhDhApWLoK/Hl7PmAfXh8sG8ZOzZI4KGKvwWF/65yxTwJYFnfb43u8sa3hKkpKEIZWJpiem662yTdR6mKZWmQ=="
-          ]
-        }
-      ]
-    }
-  }
-}
-`
-
-var validGenesis = `
-{
-  "chain_id": "chain-test",
-  "app_state": {
-    "checkpointing": {
-      "params": {},
-      "genesis_keys": [
-        {
-          "validator_address": "bbnvaloper1qck5qppfs7wkj20u94q60s8j5lsqy7727tuk66",
-          "bls_key": {
-            "pubkey": "qOS3pHu3OQWJAqjlFG18T+9OaQx/uY1cQ9OClmGUknL2CrO+VPpveRne7SKZojYFFuifNmpjN4bUGiRYmea7hdixpeIwFkArjxKcg264MqEcKM/UthduM+1o+lNjoxN5",
-            "pop": {
-              "ed25519_sig": "rgfes5KUA3B4lF5JjG6HRHIMb3kL+VJnMyIx4v08nBSjy+sqKvPqpxvNv6Wn+UfTXuWZ3yqRzKQyMWGsA6kPCQ==",
-              "bls_sig": "l/BmZn7fvctenvPqq1MB0emwKtcUfgpjvQuy+gI/AvUR27TyZNhlKcWAq+GRz/n3"
-            }
-          },
-          "val_pubkey": {
-            "key": "ICl5MC/3coQYKSLGQqhIgU2Qr09fBv4tkYJ/j0d41As="
-          }
-        },
-        {
-          "validator_address": "bbnvaloper18unlvcpj9kaa5y27ghgjtmmkcsm4gk075cz2sv",
-          "bls_key": {
-            "pubkey": "swnOf6PuVF1YDXeShKCx1M3RpNsN+rTyzUoNm9O7UJVseYbmIbqZ3WlAhHA+1bCFBImr3+bjKu0S1RZY8bOhfbRpNBNOIiSKoyGPDqKj5+BSwmIFU4IgKOd10KvYfb/J",
-            "pop": {
-              "ed25519_sig": "VAjE+l9R2ilrZxTZrmpYvEO0IIi7Y8VQacltHeAtau8MoXnxeBUbLJPIuENUBPRVzObGPpU0QMmmzJkpexdWBw==",
-              "bls_sig": "rF6wt1ZOVYM/xhWvh5RrIT3Lpwwtx6qRxuQh84fEInl2x5dNDSyrrA/60MIEMmm8"
-            }
-          },
-          "val_pubkey": {
-            "key": "PUoM/ErXICyPaiByrt7X/7/AgbP0URmtC7foTECOmoc="
-          }
-        }
-      ]
-    },
-    "genutil": {
-      "gen_txs": [
-        {
-          "body": {
-            "messages": [
-              {
-                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
-                "description": {
-                  "moniker": "node0",
-                  "identity": "",
-                  "website": "",
-                  "security_contact": "",
-                  "details": ""
-                },
-                "commission": {
-                  "rate": "1.000000000000000000",
-                  "max_rate": "1.000000000000000000",
-                  "max_change_rate": "1.000000000000000000"
-                },
-                "min_self_delegation": "1",
-                "delegator_address": "bbn1qck5qppfs7wkj20u94q60s8j5lsqy772rfktkm",
-                "validator_address": "bbnvaloper1qck5qppfs7wkj20u94q60s8j5lsqy7727tuk66",
-                "pubkey": {
-                  "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "ICl5MC/3coQYKSLGQqhIgU2Qr09fBv4tkYJ/j0d41As="
-                },
-                "value": {
-                  "denom": "ubbn",
-                  "amount": "100000000"
-                }
-              }
-            ],
-            "memo": "f9f9f5613f2010edbb6c6ed01633efadad8af269@192.168.10.2:26656",
-            "timeout_height": "0",
-            "extension_options": [],
-            "non_critical_extension_options": []
-          },
-          "auth_info": {
-            "signer_infos": [
-              {
-                "public_key": {
-                  "@type": "/cosmos.crypto.secp256k1.PubKey",
-                  "key": "AsOXpLQmKg88CzhYa4+c9LHKX0tlUlwyW1Lr0rf52KOp"
-                },
-                "mode_info": {
-                  "single": {
-                    "mode": "SIGN_MODE_DIRECT"
-                  }
-                },
-                "sequence": "0"
-              }
-            ],
-            "fee": {
-              "amount": [],
-              "gas_limit": "0",
-              "payer": "",
-              "granter": ""
-            },
-            "tip": null
-          },
-          "signatures": [
-            "CvhDhApWLoK/Hl7PmAfXh8sG8ZOzZI4KGKvwWF/65yxTwJYFnfb43u8sa3hKkpKEIZWJpiem662yTdR6mKZWmQ=="
-          ]
-        },
-        {
-          "body": {
-            "messages": [
-              {
-                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
-                "description": {
-                  "moniker": "node1",
-                  "identity": "",
-                  "website": "",
-                  "security_contact": "",
-                  "details": ""
-                },
-                "commission": {
-                  "rate": "1.000000000000000000",
-                  "max_rate": "1.000000000000000000",
-                  "max_change_rate": "1.000000000000000000"
-                },
-                "min_self_delegation": "1",
-                "delegator_address": "bbn18unlvcpj9kaa5y27ghgjtmmkcsm4gk07f6ghud",
-                "validator_address": "bbnvaloper18unlvcpj9kaa5y27ghgjtmmkcsm4gk075cz2sv",
-                "pubkey": {
-                  "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "PUoM/ErXICyPaiByrt7X/7/AgbP0URmtC7foTECOmoc="
-                },
-                "value": {
-                  "denom": "ubbn",
-                  "amount": "100000000"
-                }
-              }
-            ],
-            "memo": "b06768d9d68a3d5a0631b0540fb901559ab89964@192.168.10.3:26656",
-            "timeout_height": "0",
-            "extension_options": [],
-            "non_critical_extension_options": []
-          },
-          "auth_info": {
-            "signer_infos": [
-              {
-                "public_key": {
-                  "@type": "/cosmos.crypto.secp256k1.PubKey",
-                  "key": "AsgcC0fVVoNoQ70AJgw/7N3exxGUHVAJ+97EMPpkL+nP"
-                },
-                "mode_info": {
-                  "single": {
-                    "mode": "SIGN_MODE_DIRECT"
-                  }
-                },
-                "sequence": "0"
-              }
-            ],
-            "fee": {
-              "amount": [],
-              "gas_limit": "0",
-              "payer": "",
-              "granter": ""
-            },
-            "tip": null
-          },
-          "signatures": [
-            "SAgaaPAXNofY0wbbc9CQDcAW4HPU827i/ufD8MJup0x/aYUSMLhOr600EPtTtvoLk5sUp9o3kDDMvscb/nYdFQ=="
-          ]
-        }
-      ]
-    }
-  }
-}
-`
-
 func TestCheckCorrespondence(t *testing.T) {
-
+	homePath := t.TempDir()
 	encodingCft := app.MakeTestEncodingConfig()
 	clientCtx := client.Context{}.WithCodec(encodingCft.Marshaler).WithTxConfig(encodingCft.TxConfig)
 
+	// generate valid genesis doc
+	validGenState, genDoc := generateTestGenesisState(homePath, 2)
+	validGenDocJSON, err := tmjson.MarshalIndent(genDoc, "", "  ")
+	require.NoError(t, err)
+
+	// generate mismatched genesis doc by deleting one item from gentx and genKeys in different positions
+	gentxs := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, validGenState)
+	genKeys := types.GetGenesisStateFromAppState(clientCtx.Codec, validGenState)
+	gentxs.GenTxs = gentxs.GenTxs[:1]
+	genKeys.GenesisKeys = genKeys.GenesisKeys[1:]
+	genTxsBz, err := clientCtx.Codec.MarshalJSON(gentxs)
+	require.NoError(t, err)
+	genKeysBz, err := clientCtx.Codec.MarshalJSON(&genKeys)
+	require.NoError(t, err)
+	validGenState[genutiltypes.ModuleName] = genTxsBz
+	validGenState[types.ModuleName] = genKeysBz
+	misMatchedGenStateBz, err := json.Marshal(validGenState)
+	require.NoError(t, err)
+	genDoc.AppState = misMatchedGenStateBz
+	misMatchedGenDocJSON, err := tmjson.MarshalIndent(genDoc, "", "  ")
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name    string
-		genesis string
+		genesis []byte
 		expErr  bool
 	}{
 		{
 			"valid genesis gentx and BLS key pair",
-			validGenesis,
+			validGenDocJSON,
 			false,
 		},
 		{
 			"mismatched genesis state",
-			misMatchGenesis,
+			misMatchedGenDocJSON,
 			true,
 		},
 	}
 
 	for _, tc := range testCases {
-		genDoc, err := types.GenesisDocFromJSON([]byte(tc.genesis))
+		genDoc, err := tmtypes.GenesisDocFromJSON(tc.genesis)
 		require.NoError(t, err)
 		require.NotEmpty(t, genDoc)
-		genesisState, err := types2.GenesisStateFromGenDoc(*genDoc)
+		genesisState, err := genutiltypes.GenesisStateFromGenDoc(*genDoc)
 		require.NoError(t, err)
 		require.NotEmpty(t, genesisState)
 		err = cmd.CheckCorrespondence(clientCtx, genesisState)
@@ -305,4 +82,33 @@ func TestCheckCorrespondence(t *testing.T) {
 			require.NoError(t, err)
 		}
 	}
+}
+
+func generateTestGenesisState(home string, n int) (map[string]json.RawMessage, *tmtypes.GenesisDoc) {
+	encodingConfig := app.MakeTestEncodingConfig()
+	logger := log.NewNopLogger()
+	cfg, _ := genutiltest.CreateDefaultTendermintConfig(home)
+
+	_ = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Marshaler)
+
+	serverCtx := server.NewContext(viper.New(), cfg, logger)
+	clientCtx := client.Context{}.
+		WithCodec(encodingConfig.Marshaler).
+		WithHomeDir(home).
+		WithTxConfig(encodingConfig.TxConfig)
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
+	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
+	testnetCmd := cmd.TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{})
+	testnetCmd.SetArgs([]string{
+		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
+		fmt.Sprintf("--v=%v", n),
+		fmt.Sprintf("--output-dir=%s", home),
+	})
+	_ = testnetCmd.ExecuteContext(ctx)
+
+	genFile := cfg.GenesisFile()
+	appState, gendoc, _ := genutiltypes.GenesisStateFromGenFile(genFile)
+	return appState, gendoc
 }

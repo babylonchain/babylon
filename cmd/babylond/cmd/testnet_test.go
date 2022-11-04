@@ -36,7 +36,7 @@ func Test_TestnetCmd(t *testing.T) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
-	cmd := testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{})
+	cmd := TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{})
 	cmd.SetArgs([]string{fmt.Sprintf("--%s=test", flags.FlagKeyringBackend), fmt.Sprintf("--output-dir=%s", home)})
 	err = cmd.ExecuteContext(ctx)
 	require.NoError(t, err)

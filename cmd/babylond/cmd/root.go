@@ -145,7 +145,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		PrepareGenesisCmd(app.DefaultNodeHome, app.ModuleBasics),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
-		testnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
+		TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		CreateBlsKeyCmd(),
 		GenBlsCmd(),
 		AddGenBlsCmd(),
