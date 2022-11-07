@@ -27,25 +27,9 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const (
-	testChainID          = "gaiahub-0"
-	testChainIDRevision1 = "gaiahub-1"
+const ()
 
-	testClientID  = "tendermint-0"
-	testClientID2 = "tendermint-1"
-
-	height = 5
-
-	trustingPeriod time.Duration = time.Hour * 24 * 7 * 2
-	ubdPeriod      time.Duration = time.Hour * 24 * 7 * 3
-	maxClockDrift  time.Duration = time.Second * 10
-)
-
-var (
-	testClientHeight          = clienttypes.NewHeight(0, 5)
-	testClientHeightRevision1 = clienttypes.NewHeight(1, 5)
-	newClientHeight           = clienttypes.NewHeight(1, 1)
-)
+var ()
 
 type ZoneConciergeTestSuite struct {
 	suite.Suite
@@ -81,33 +65,31 @@ func (suite *ZoneConciergeTestSuite) setupBabylonApp() (ibctesting.TestingApp, m
 }
 
 func (suite *ZoneConciergeTestSuite) SetupTest() {
-	t := suite.T()
-
 	// set up 2 Test chains with default constructors
-	suite.coordinator = ibctesting.NewCoordinator(t, 2)
+	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
 	// replace the first test chain with a Babylon chain
 	ibctesting.DefaultTestingAppInit = suite.setupBabylonApp
-	chainID := ibctesting.GetChainID(1)
-	suite.coordinator.Chains[chainID] = ibctesting.NewTestChain(t, suite.coordinator, chainID)
+	babylonChainID := ibctesting.GetChainID(1)
+	suite.coordinator.Chains[babylonChainID] = ibctesting.NewTestChain(suite.T(), suite.coordinator, babylonChainID)
 
 	suite.babylonChain = suite.coordinator.GetChain(ibctesting.GetChainID(1))
 	suite.czChain = suite.coordinator.GetChain(ibctesting.GetChainID(2))
 
-	isCheckTx := false
 	suite.now = time.Date(2020, 1, 2, 0, 0, 0, 0, time.UTC)
 	suite.past = time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 	now2 := suite.now.Add(time.Hour)
-	app := simapp.Setup(isCheckTx)
+	app := simapp.Setup(false)
 
+	babylonChainHeight := uint64(5) // TODO: find out why it's 5 (any value > 0 is okay)
 	suite.cdc = app.AppCodec()
-	suite.ctx = app.BaseApp.NewContext(isCheckTx, tmproto.Header{Height: height, ChainID: testClientID, Time: now2})
+	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: int64(babylonChainHeight), ChainID: babylonChainID, Time: now2})
 	suite.keeper = &app.IBCKeeper.ClientKeeper
 	suite.privVal = ibctestingmock.NewPV()
 
 	pubKey, err := suite.privVal.GetPubKey()
 	suite.Require().NoError(err)
 
-	testClientHeightMinus1 := types.NewHeight(0, height-1)
+	testClientHeightMinus1 := types.NewHeight(0, babylonChainHeight-1)
 
 	validator := tmtypes.NewValidator(pubKey, 1)
 	suite.valSet = tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
@@ -116,6 +98,8 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	suite.signers = make(map[string]tmtypes.PrivValidator, 1)
 	suite.signers[validator.Address.String()] = suite.privVal
 
+	testClientHeight := clienttypes.NewHeight(0, babylonChainHeight)
+	testChainID := ibctesting.GetChainID(2)
 	suite.header = suite.babylonChain.CreateTMClientHeader(testChainID, int64(testClientHeight.RevisionHeight), testClientHeightMinus1, now2, suite.valSet, suite.valSet, suite.valSet, suite.signers)
 	suite.consensusState = ibctmtypes.NewConsensusState(suite.now, commitmenttypes.NewMerkleRoot([]byte("hash")), suite.valSetHash)
 
