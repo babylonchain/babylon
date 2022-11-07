@@ -27,6 +27,8 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
+// ZoneConciergeTestSuite provides a test suite for IBC functionalities in ZoneConcierge
+// (adapted from https://github.com/cosmos/ibc-go/blob/main/modules/core/02-client/keeper/keeper_test.go)
 type ZoneConciergeTestSuite struct {
 	suite.Suite
 
@@ -115,6 +117,8 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	}
 }
 
+// TestUpdateClientTendermint provides tests on verifying different headers from the IBC light client
+// (adapted from https://github.com/cosmos/ibc-go/blob/main/modules/core/02-client/keeper/client_test.go)
 func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 	var (
 		path         *ibctesting.Path
