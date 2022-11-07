@@ -53,6 +53,9 @@ func (e Epoch) IsFirstBlock(ctx sdk.Context) bool {
 }
 
 func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
+	if e.EpochNumber == 0 {
+		return false
+	}
 	return e.GetSecondBlockHeight() == uint64(ctx.BlockHeight())
 }
 
