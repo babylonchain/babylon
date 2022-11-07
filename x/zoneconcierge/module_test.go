@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/babylonchain/babylon/app"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -42,6 +43,7 @@ type ZoneConciergeTestSuite struct {
 	cdc            codec.Codec
 	ctx            sdk.Context
 	keeper         clientexported.ClientKeeper
+	zcKeeper       zckeeper.Keeper
 	consensusState *ibctmtypes.ConsensusState
 	header         *ibctmtypes.Header
 	valSet         *tmtypes.ValidatorSet
@@ -62,6 +64,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	// replace the first test chain with a Babylon chain
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(suite.T(), false)
+		suite.zcKeeper = babylonApp.ZoneConciergeKeeper
 		encCdc := app.MakeTestEncodingConfig()
 		return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -323,6 +326,20 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 
 					suite.Require().NoError(err)
 					suite.Require().Equal(expConsensusState, consensusState, "consensus state should have been updated on case %s", tc.name)
+
+					/* Extra Babylon checks */
+					ctx := suite.babylonChain.GetContext()
+					czChainID := suite.czChain.ChainID
+					updateHeaderHeight := uint64(updateHeader.Header.Height)
+					// updateHeader should be correctly recorded in canonical chain indexer
+					expUpdateHeader, err := suite.zcKeeper.GetHeader(ctx, czChainID, updateHeaderHeight)
+					suite.Require().NoError(err)
+					suite.Require().Equal(expUpdateHeader.Hash, updateHeader.Header.LastCommitHash)
+					suite.Require().Equal(expUpdateHeader.Height, updateHeaderHeight)
+					// updateHeader should be correctly recorded in chain info indexer
+					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
+					suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
 				}
 			} else {
 				suite.Require().Error(err)
