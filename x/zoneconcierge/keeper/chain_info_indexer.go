@@ -6,7 +6,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// TODO: init
+func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string, latestHeader *types.IndexedHeader) error {
+	store := k.chainInfoStore(ctx)
+	// the chain info should not exist at this point
+	if chainInfoBytes := store.Get([]byte(chainID)); len(chainInfoBytes) > 0 {
+		return types.ErrReInitChainInfo
+	}
+	chainInfo := &types.ChainInfo{
+		ChainId:      chainID,
+		LatestHeader: latestHeader,
+		LatestForks:  nil,
+	}
+	k.setChainInfo(ctx, chainInfo)
+	return nil
+}
 
 func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
 	store := k.chainInfoStore(ctx)
