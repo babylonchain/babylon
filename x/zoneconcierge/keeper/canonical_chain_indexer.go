@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,13 +20,11 @@ func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*type
 }
 
 func (k Keeper) InsertHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
-	store := k.canonicalChainStore(ctx, chainID)
-	// only accept header with a valid ancestor, except for the genesis
-	if header.Height > 0 {
-		if _, err := k.GetHeader(ctx, chainID, header.Height-1); err != nil {
-			return types.ErrNoValidAncestorHeader
-		}
+	if header == nil {
+		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
+	// NOTE: we can accept header without ancestor since IBC connection can be established at any height
+	store := k.canonicalChainStore(ctx, chainID)
 	store.Set(sdk.Uint64ToBigEndian(header.Height), k.cdc.MustMarshal(header))
 	return nil
 }

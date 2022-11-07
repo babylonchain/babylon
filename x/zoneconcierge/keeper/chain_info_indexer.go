@@ -1,61 +1,64 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string, latestHeader *types.IndexedHeader) error {
-	store := k.chainInfoStore(ctx)
-	// the chain info should not exist at this point
-	if store.Has([]byte(chainID)) {
-		return types.ErrReInitChainInfo
-	}
-	chainInfo := &types.ChainInfo{
-		ChainId:      chainID,
-		LatestHeader: latestHeader,
-		LatestForks:  nil,
-	}
-	k.setChainInfo(ctx, chainInfo)
-	return nil
-}
 
 func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
 	store := k.chainInfoStore(ctx)
 	store.Set([]byte(chainInfo.ChainId), k.cdc.MustMarshal(chainInfo))
 }
 
-func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo, error) {
+func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) *types.ChainInfo {
 	store := k.chainInfoStore(ctx)
-	// GetChainInfo can be invoked only after the chain info is initialised
+	// Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
+	// we can only check its existence every time, and return an empty one if it's not initialised yet.
 	if !store.Has([]byte(chainID)) {
-		return nil, types.ErrChainInfoNotFound
+		return &types.ChainInfo{
+			ChainId:      chainID,
+			LatestHeader: nil,
+			LatestForks: &types.Forks{
+				Headers: []*types.IndexedHeader{},
+			},
+		}
 	}
 	chainInfoBytes := store.Get([]byte(chainID))
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(chainInfoBytes, &chainInfo)
-	return &chainInfo, nil
+	return &chainInfo
 }
 
 func (k Keeper) UpdateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
-	chainInfo, err := k.GetChainInfo(ctx, chainID)
-	// new header can only be received after there exists chain info
-	if err != nil {
-		return err
+	if header == nil {
+		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
+	// NOTE: we can accept header without ancestor since IBC connection can be established at any height
+	chainInfo := k.GetChainInfo(ctx, chainID)
 	chainInfo.LatestHeader = header
 	k.setChainInfo(ctx, chainInfo)
 	return nil
 }
 
-func (k Keeper) UpdateLatestForks(ctx sdk.Context, chainID string, forks *types.Forks) error {
-	chainInfo, err := k.GetChainInfo(ctx, chainID)
-	// fork can only happen after there exists chain info
-	if err != nil {
-		return types.ErrChainInfoNotFound
+func (k Keeper) UpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+	if header == nil {
+		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
-	chainInfo.LatestForks = forks
+	chainInfo := k.GetChainInfo(ctx, chainID)
+	if len(chainInfo.LatestForks.Headers) == 0 { // no fork at the moment
+		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
+	} else if chainInfo.LatestForks.Headers[0].Height == header.Height { // there exists fork headers at the same height
+		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
+	} else if chainInfo.LatestForks.Headers[0].Height < header.Height { // this fork header is newer than the previous one
+		chainInfo.LatestForks = &types.Forks{
+			Headers: []*types.IndexedHeader{header},
+		}
+	} else { // this fork header is on a previous header
+		ctx.Logger().Info("received an old fork header at CZ height %d (current CZ height: %d)", header.Height, chainInfo.LatestHeader.Height)
+	}
+
 	k.setChainInfo(ctx, chainInfo)
 	return nil
 }

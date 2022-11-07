@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkerrors "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,12 +24,16 @@ func (k Keeper) GetForks(ctx sdk.Context, chainID string, height uint64) *types.
 }
 
 // InsertForkHeader inserts a forked header to the list of forked headers at the same height
-func (k Keeper) InsertForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) {
+func (k Keeper) InsertForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+	if header == nil {
+		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
+	}
 	store := k.forkStore(ctx, chainID)
 	forks := k.GetForks(ctx, chainID, header.Height) // if no fork at the height, forks will be an empty struct rather than nil
 	forks.Headers = append(forks.Headers, header)
 	forksBytes := k.cdc.MustMarshal(forks)
 	store.Set(sdk.Uint64ToBigEndian(header.Height), forksBytes)
+	return nil
 }
 
 // forkStore stores the forks for each CZ

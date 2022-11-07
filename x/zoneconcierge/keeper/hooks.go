@@ -1,7 +1,6 @@
 package keeper
 
 import (
-	sdkerrors "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
@@ -27,19 +26,18 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 	}
 	if isOnFork {
 		// insert header to fork index
-		h.k.InsertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader)
-		// update the latest fork in chain info
-		fork := h.k.GetForks(ctx, indexedHeader.ChainId, indexedHeader.Height)
-		if fork == nil {
-			err := sdkerrors.Wrapf(types.ErrForkNotFound, "fork at height %d should at least contain header %s", indexedHeader.Height, &indexedHeader.Hash)
+		if err := h.k.InsertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
-		if err := h.k.UpdateLatestForks(ctx, indexedHeader.ChainId, fork); err != nil {
+		// update the latest fork in chain info
+		if err := h.k.UpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	} else {
 		// insert header to canonical chain index
-		h.k.InsertHeader(ctx, indexedHeader.ChainId, &indexedHeader)
+		if err := h.k.InsertHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+			panic(err)
+		}
 		// update the latest canonical header in chain info
 		if err := h.k.UpdateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
