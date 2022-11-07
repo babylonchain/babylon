@@ -29,12 +29,12 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		// insert header to fork index
 		h.k.InsertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader)
 		// update the latest fork in chain info
-		fork := h.k.GetFork(ctx, indexedHeader.ChainId, indexedHeader.Height)
+		fork := h.k.GetForks(ctx, indexedHeader.ChainId, indexedHeader.Height)
 		if fork == nil {
 			err := sdkerrors.Wrapf(types.ErrForkNotFound, "fork at height %d should at least contain header %s", indexedHeader.Height, &indexedHeader.Hash)
 			panic(err)
 		}
-		if err := h.k.UpdateLatestFork(ctx, indexedHeader.ChainId, fork); err != nil {
+		if err := h.k.UpdateLatestForks(ctx, indexedHeader.ChainId, fork); err != nil {
 			panic(err)
 		}
 	} else {

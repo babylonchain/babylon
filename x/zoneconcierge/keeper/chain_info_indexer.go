@@ -30,7 +30,7 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo,
 	store := k.chainInfoStore(ctx)
 	// GetChainInfo can be invoked only after the chain info is initialised
 	if !store.Has([]byte(chainID)) {
-		return nil, types.ErrNoChainInfo
+		return nil, types.ErrChainInfoNotFound
 	}
 	chainInfoBytes := store.Get([]byte(chainID))
 	var chainInfo types.ChainInfo
@@ -53,7 +53,7 @@ func (k Keeper) UpdateLatestForks(ctx sdk.Context, chainID string, forks *types.
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	// fork can only happen after there exists chain info
 	if err != nil {
-		return types.ErrNoChainInfo
+		return types.ErrChainInfoNotFound
 	}
 	chainInfo.LatestForks = forks
 	k.setChainInfo(ctx, chainInfo)

@@ -12,7 +12,7 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
+	clientexported "github.com/cosmos/ibc-go/v5/modules/core/02-client/exported"
 	"github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v5/modules/core/23-commitment/types"
@@ -41,7 +41,7 @@ type ZoneConciergeTestSuite struct {
 	// System states of the simulated Babylon chain
 	cdc            codec.Codec
 	ctx            sdk.Context
-	keeper         *clientkeeper.Keeper
+	keeper         clientexported.ClientKeeper
 	consensusState *ibctmtypes.ConsensusState
 	header         *ibctmtypes.Header
 	valSet         *tmtypes.ValidatorSet
@@ -79,7 +79,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	babylonChainHeight := uint64(5) // TODO: find out why it's 5 (any value > 0 is okay)
 	suite.cdc = app.AppCodec()
 	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: int64(babylonChainHeight), ChainID: babylonChainID, Time: now2})
-	suite.keeper = &app.IBCKeeper.ClientKeeper
+	suite.keeper = app.IBCKeeper.ClientKeeper
 	suite.privVal = ibctestingmock.NewPV()
 
 	pubKey, err := suite.privVal.GetPubKey()

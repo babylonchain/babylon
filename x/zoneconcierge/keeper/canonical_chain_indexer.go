@@ -10,7 +10,7 @@ func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*type
 	store := k.canonicalChainStore(ctx, chainID)
 	heightBytes := sdk.Uint64ToBigEndian(height)
 	if !store.Has(heightBytes) {
-		return nil, types.ErrHeaderNotExist
+		return nil, types.ErrHeaderNotFound
 	}
 	headerBytes := store.Get(heightBytes)
 	var header types.IndexedHeader
