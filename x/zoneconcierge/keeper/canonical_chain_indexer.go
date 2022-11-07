@@ -6,20 +6,27 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) *types.IndexedHeader {
+func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
 	store := k.canonicalChainStore(ctx, chainID)
 	headerBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(headerBytes) == 0 {
-		return nil
+		return nil, types.ErrHeaderNotExist
 	}
 	var header types.IndexedHeader
 	k.cdc.MustUnmarshal(headerBytes, &header)
-	return &header
+	return &header, nil
 }
 
-func (k Keeper) InsertHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) {
+func (k Keeper) InsertHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	store := k.canonicalChainStore(ctx, chainID)
+	// only accept header with a valid ancestor, except for the genesis
+	if header.Height > 0 {
+		if _, err := k.GetHeader(ctx, chainID, header.Height-1); err != nil {
+			return types.ErrNoValidAncestorHeader
+		}
+	}
 	store.Set(sdk.Uint64ToBigEndian(header.Height), k.cdc.MustMarshal(header))
+	return nil
 }
 
 // canonicalChainStore stores the canonical chain of a CZ, formed as a list of IndexedHeader
