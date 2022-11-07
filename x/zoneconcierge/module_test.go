@@ -74,7 +74,7 @@ func TestZoneConciergeTestSuite(t *testing.T) {
 	suite.Run(t, new(ZoneConciergeTestSuite))
 }
 
-func (suite *ZoneConciergeTestSuite) SetupTestingBabylonApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
+func (suite *ZoneConciergeTestSuite) setupBabylonApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	babylonApp := app.Setup(suite.T(), false)
 	encCdc := app.MakeTestEncodingConfig()
 	return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
@@ -86,7 +86,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	// set up 2 Test chains with default constructors
 	suite.coordinator = ibctesting.NewCoordinator(t, 2)
 	// replace the first test chain with a Babylon chain
-	ibctesting.DefaultTestingAppInit = suite.SetupTestingBabylonApp
+	ibctesting.DefaultTestingAppInit = suite.setupBabylonApp
 	chainID := ibctesting.GetChainID(1)
 	suite.coordinator.Chains[chainID] = ibctesting.NewTestChain(t, suite.coordinator, chainID)
 
