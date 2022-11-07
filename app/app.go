@@ -652,6 +652,8 @@ func NewBabylonApp(
 	return app
 }
 
+// GetBaseApp returns the BaseApp of BabylonApp
+// required by ibctesting
 func (app *BabylonApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
