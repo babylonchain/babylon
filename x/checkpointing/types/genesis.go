@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -26,7 +27,12 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
+	addresses := make(map[string]struct{}, 0)
 	for _, gk := range gs.GenesisKeys {
+		if _, exists := addresses[gk.ValidatorAddress]; exists {
+			return errors.New("duplicate genesis key")
+		}
+		addresses[gk.ValidatorAddress] = struct{}{}
 		err := gk.Validate()
 		if err != nil {
 			return err
