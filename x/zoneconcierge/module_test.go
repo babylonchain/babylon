@@ -27,10 +27,6 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 )
 
-const ()
-
-var ()
-
 type ZoneConciergeTestSuite struct {
 	suite.Suite
 
@@ -58,17 +54,15 @@ func TestZoneConciergeTestSuite(t *testing.T) {
 	suite.Run(t, new(ZoneConciergeTestSuite))
 }
 
-func (suite *ZoneConciergeTestSuite) setupBabylonApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
-	babylonApp := app.Setup(suite.T(), false)
-	encCdc := app.MakeTestEncodingConfig()
-	return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
-}
-
 func (suite *ZoneConciergeTestSuite) SetupTest() {
 	// set up 2 Test chains with default constructors
 	suite.coordinator = ibctesting.NewCoordinator(suite.T(), 2)
 	// replace the first test chain with a Babylon chain
-	ibctesting.DefaultTestingAppInit = suite.setupBabylonApp
+	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
+		babylonApp := app.Setup(suite.T(), false)
+		encCdc := app.MakeTestEncodingConfig()
+		return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
+	}
 	babylonChainID := ibctesting.GetChainID(1)
 	suite.coordinator.Chains[babylonChainID] = ibctesting.NewTestChain(suite.T(), suite.coordinator, babylonChainID)
 
@@ -94,7 +88,6 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	validator := tmtypes.NewValidator(pubKey, 1)
 	suite.valSet = tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
 	suite.valSetHash = suite.valSet.Hash()
-
 	suite.signers = make(map[string]tmtypes.PrivValidator, 1)
 	suite.signers[validator.Address.String()] = suite.privVal
 
