@@ -9,7 +9,7 @@ import (
 func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string, latestHeader *types.IndexedHeader) error {
 	store := k.chainInfoStore(ctx)
 	// the chain info should not exist at this point
-	if chainInfoBytes := store.Get([]byte(chainID)); len(chainInfoBytes) > 0 {
+	if store.Has([]byte(chainID)) {
 		return types.ErrReInitChainInfo
 	}
 	chainInfo := &types.ChainInfo{
@@ -28,10 +28,11 @@ func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
 
 func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo, error) {
 	store := k.chainInfoStore(ctx)
-	chainInfoBytes := store.Get([]byte(chainID))
-	if len(chainInfoBytes) == 0 {
+	// GetChainInfo can be invoked only after the chain info is initialised
+	if !store.Has([]byte(chainID)) {
 		return nil, types.ErrNoChainInfo
 	}
+	chainInfoBytes := store.Get([]byte(chainID))
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(chainInfoBytes, &chainInfo)
 	return &chainInfo, nil

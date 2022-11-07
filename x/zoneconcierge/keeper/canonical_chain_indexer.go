@@ -8,10 +8,11 @@ import (
 
 func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
 	store := k.canonicalChainStore(ctx, chainID)
-	headerBytes := store.Get(sdk.Uint64ToBigEndian(height))
-	if len(headerBytes) == 0 {
+	heightBytes := sdk.Uint64ToBigEndian(height)
+	if !store.Has(heightBytes) {
 		return nil, types.ErrHeaderNotExist
 	}
+	headerBytes := store.Get(heightBytes)
 	var header types.IndexedHeader
 	k.cdc.MustUnmarshal(headerBytes, &header)
 	return &header, nil

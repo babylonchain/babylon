@@ -9,13 +9,14 @@ import (
 // GetForks returns a list of forked headers at a given height
 func (k Keeper) GetForks(ctx sdk.Context, chainID string, height uint64) *types.Forks {
 	store := k.forkStore(ctx, chainID)
-	forksBytes := store.Get(sdk.Uint64ToBigEndian(height))
+	heightBytes := sdk.Uint64ToBigEndian(height)
 	// if no fork at the moment, create an empty struct
-	if len(forksBytes) == 0 {
+	if !store.Has(heightBytes) {
 		return &types.Forks{
 			Headers: []*types.IndexedHeader{},
 		}
 	}
+	forksBytes := store.Get(heightBytes)
 	var forks types.Forks
 	k.cdc.MustUnmarshal(forksBytes, &forks)
 	return &forks
