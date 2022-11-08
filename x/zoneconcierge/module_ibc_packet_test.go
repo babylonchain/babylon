@@ -38,6 +38,7 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 	path := ibctesting.NewPath(suite.babylonChain, suite.czChain)
 
 	// set the port ID to be consistent with ZoneConcierge
+	// in practice, such negotiation is done by the handshake protocol driven by the relayer
 	path.EndpointA.ChannelConfig.PortID = zctypes.PortID
 	path.EndpointB.ChannelConfig.PortID = zctypes.PortID
 
