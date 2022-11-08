@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"bytes"
+
 	sdkerrors "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -30,6 +32,12 @@ func (k Keeper) InsertForkHeader(ctx sdk.Context, chainID string, header *types.
 	}
 	store := k.forkStore(ctx, chainID)
 	forks := k.GetForks(ctx, chainID, header.Height) // if no fork at the height, forks will be an empty struct rather than nil
+	// if the header is already in forks, discard this header and return directly
+	for _, h := range forks.Headers {
+		if bytes.Equal(h.Hash, header.Hash) {
+			return nil
+		}
+	}
 	forks.Headers = append(forks.Headers, header)
 	forksBytes := k.cdc.MustMarshal(forks)
 	store.Set(sdk.Uint64ToBigEndian(header.Height), forksBytes)

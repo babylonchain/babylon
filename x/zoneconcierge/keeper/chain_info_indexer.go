@@ -12,10 +12,12 @@ func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
 	store.Set([]byte(chainInfo.ChainId), k.cdc.MustMarshal(chainInfo))
 }
 
+// GetChainInfo returns the ChainInfo struct for a chain with a given ID
+// Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
+// we can only check its existence every time, and return an empty one if it's not initialised yet.
 func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) *types.ChainInfo {
 	store := k.chainInfoStore(ctx)
-	// Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
-	// we can only check its existence every time, and return an empty one if it's not initialised yet.
+
 	if !store.Has([]byte(chainID)) {
 		return &types.ChainInfo{
 			ChainId:      chainID,
@@ -47,18 +49,7 @@ func (k Keeper) UpdateLatestForkHeader(ctx sdk.Context, chainID string, header *
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 	chainInfo := k.GetChainInfo(ctx, chainID)
-	if len(chainInfo.LatestForks.Headers) == 0 { // no fork at the moment
-		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
-	} else if chainInfo.LatestForks.Headers[0].Height == header.Height { // there exists fork headers at the same height
-		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
-	} else if chainInfo.LatestForks.Headers[0].Height < header.Height { // this fork header is newer than the previous one
-		chainInfo.LatestForks = &types.Forks{
-			Headers: []*types.IndexedHeader{header},
-		}
-	} else { // this fork header is on a previous header
-		ctx.Logger().Info("received an old fork header at CZ height %d (current CZ height: %d)", header.Height, chainInfo.LatestHeader.Height)
-	}
-
+	chainInfo.TryToUpdateForkHeader(header)
 	k.setChainInfo(ctx, chainInfo)
 	return nil
 }
