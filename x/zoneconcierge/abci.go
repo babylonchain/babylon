@@ -18,9 +18,9 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 
 	for _, channel := range k.GetAllChannels(ctx) {
 		if channel.State == channeltypes.OPEN {
-			// if err := k.SendHeartbeatIBCPacket(ctx, channel); err != nil {
-			// 	panic(err)
-			// }
+			if err := k.SendHeartbeatIBCPacket(ctx, channel); err != nil {
+				panic(err)
+			}
 		}
 	}
 }
