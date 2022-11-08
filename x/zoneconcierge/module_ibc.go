@@ -9,7 +9,6 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 )
@@ -35,15 +34,14 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// Require portID is the portID module is bound to
-	boundPort := im.keeper.GetPort(ctx)
-	if boundPort != portID {
-		return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
-
-	if version != types.Version {
-		return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
-	}
+	// TODO: Require portID is the portID module is bound to
+	// boundPort := im.keeper.GetPort(ctx)
+	// if boundPort != portID {
+	// 	return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	// }
+	// if version != types.Version {
+	// 	return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
+	// }
 
 	// Claim channel capability passed back by IBC module
 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
@@ -65,15 +63,14 @@ func (im IBCModule) OnChanOpenTry(
 	counterpartyVersion string,
 ) (string, error) {
 
-	// Require portID is the portID module is bound to
-	boundPort := im.keeper.GetPort(ctx)
-	if boundPort != portID {
-		return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
-
-	if counterpartyVersion != types.Version {
-		return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
-	}
+	// TODO: Require portID is the portID module is bound to
+	// boundPort := im.keeper.GetPort(ctx)
+	// if boundPort != portID {
+	// 	return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	// }
+	// if counterpartyVersion != types.Version {
+	// 	return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
+	// }
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
 	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
@@ -146,13 +143,13 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error()))
 	}
 
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/recv
-	default:
-		err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return channeltypes.NewErrorAcknowledgement(err)
-	}
+	// // TODO (Babylon): Dispatch and process packet
+	// switch packet := modulePacketData.Packet.(type) {
+	// // this line is used by starport scaffolding # ibc/packet/module/recv
+	// default:
+	// 	err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
+	// 	return channeltypes.NewErrorAcknowledgement(err)
+	// }
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	return ack
@@ -179,13 +176,13 @@ func (im IBCModule) OnAcknowledgementPacket(
 
 	var eventType string
 
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/ack
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
+	// // TODO (Babylon): Dispatch and process packet
+	// switch packet := modulePacketData.Packet.(type) {
+	// // this line is used by starport scaffolding # ibc/packet/module/ack
+	// default:
+	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	// }
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -226,13 +223,13 @@ func (im IBCModule) OnTimeoutPacket(
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
 	}
 
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/timeout
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
+	// // TODO (Babylon): Dispatch and process packet
+	// switch packet := modulePacketData.Packet.(type) {
+	// // this line is used by starport scaffolding # ibc/packet/module/timeout
+	// default:
+	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	// }
 
 	return nil
 }
