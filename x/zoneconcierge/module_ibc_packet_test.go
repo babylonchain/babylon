@@ -2,6 +2,7 @@ package zoneconcierge_test
 
 import (
 	"encoding/json"
+	"math/rand"
 
 	"github.com/babylonchain/babylon/app"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
@@ -65,27 +66,31 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 	err = path.EndpointB.UpdateClient()
 	suite.Require().NoError(err)
 
-	// retrieve the send sequence number in Babylon
-	nextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
-	suite.True(found)
+	numTests := 10
+	for k := 0; k < numTests; k++ { // test suite does not support fuzz tests so we simulate it here
+		// retrieve the send sequence number in Babylon
+		nextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
+		suite.True(found)
 
-	// commit blocks to create some pending heartbeat packets
-	numBlocks := 10
-	for i := 0; i < numBlocks; i++ {
-		suite.coordinator.CommitBlock(suite.babylonChain)
+		// commit blocks to create some pending heartbeat packets
+		numBlocks := rand.Intn(10)
+		for i := 0; i < numBlocks; i++ {
+			suite.coordinator.CommitBlock(suite.babylonChain)
+		}
+
+		// retrieve the send sequence number in Babylon again
+		newNextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
+		suite.True(found)
+
+		// Assert the gap between two sequence numbers
+		// Note that CommitBlock triggers 2 times of BeginBlock
+		suite.Equal(uint64(numBlocks*2), newNextSeqSend-nextSeqSend)
+
+		// update clients to ensure no panic happens
+		err = path.EndpointA.UpdateClient()
+		suite.Require().NoError(err)
+		err = path.EndpointB.UpdateClient()
+		suite.Require().NoError(err)
 	}
 
-	// retrieve the send sequence number in Babylon again
-	newNextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
-	suite.True(found)
-
-	// Assert the gap between two sequence numbers
-	// Note that CommitBlock triggers 2 times of BeginBlock
-	suite.Equal(uint64(numBlocks*2), newNextSeqSend-nextSeqSend)
-
-	// update clients to ensure no panic happens
-	err = path.EndpointA.UpdateClient()
-	suite.Require().NoError(err)
-	err = path.EndpointB.UpdateClient()
-	suite.Require().NoError(err)
 }
