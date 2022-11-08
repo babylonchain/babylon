@@ -38,8 +38,13 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 		return sdkerrors.Wrap(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability")
 	}
 
-	// construct packet that includes no payload
-	packetData := &types.NoData{}
+	// timeout
+	curHeight := clienttypes.GetSelfHeight(ctx)
+	curHeight.RevisionHeight += 100 // TODO: parameterise timeout
+
+	// construct packet
+	// note that the data is not allowed to be empty
+	packetData := &types.Heartbeat{Msg: "hello"} // TODO: what to send for heartbeat packet?
 	packet := channeltypes.NewPacket(
 		k.cdc.MustMarshal(packetData),
 		sequence,
@@ -47,8 +52,8 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 		sourceChannel,
 		destinationPort,
 		destinationChannel,
-		clienttypes.ZeroHeight(), // zero-height timeout, i.e., the packet will never timeout
-		0,                        // zero-timestamp timeout, i.e., the packet will never timeout
+		curHeight, // if the packet is not relayed after thit height, then the packet will be timeout
+		uint64(0), // no need to set timeout timestamp if timeout height is set
 	)
 
 	// send packet
