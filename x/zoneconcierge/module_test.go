@@ -207,7 +207,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			// set updateHeader's consensus state in store to create duplicate UpdateClient scenario
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, updateHeader.GetHeight(), updateHeader.ConsensusState())
 		}, true, false},
-		{"misbehaviour detection: conflicting header", func() {
+		{"misbehaviour in dishonest majority CZ: conflicting header", func() {
 			clientID := path.EndpointA.ClientID
 
 			height1 := clienttypes.NewHeight(0, 1)
@@ -235,7 +235,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			conflictConsState.Root = commitmenttypes.NewMerkleRoot([]byte("conflicting apphash"))
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, updateHeader.GetHeight(), conflictConsState)
 		}, false, true}, // Babylon modification: fork headers are rejected before being passed to ClientState, and are recorded in the fork index
-		{"misbehaviour detection: monotonic time violation", func() {
+		{"misbehaviour in dishonest majority CZ: monotonic time violation", func() {
 			clientState := path.EndpointA.GetClientState().(*ibctmtypes.ClientState)
 			clientID := path.EndpointA.ClientID
 			trustedHeight := clientState.GetLatestHeight().(clienttypes.Height)
