@@ -110,6 +110,7 @@ import (
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	ibc "github.com/cosmos/ibc-go/v5/modules/core"
+	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
@@ -428,7 +429,7 @@ func NewBabylonApp(
 	)
 
 	// Keepers for IBC-related modules
-	app.IBCKeeper = ibckeeper.NewKeeper(
+	ibcKeeper := ibckeeper.NewKeeper(
 		appCodec,
 		keys[ibchost.StoreKey],
 		app.GetSubspace(ibchost.ModuleName),
@@ -442,13 +443,24 @@ func NewBabylonApp(
 		keys[zctypes.StoreKey],
 		keys[zctypes.MemStoreKey],
 		app.GetSubspace(zctypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper,
+		ibcKeeper.ChannelKeeper,
+		ibcKeeper.ChannelKeeper,
+		&ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		scopedZoneConciergeKeeper,
 	)
+
+	// replace IBC keeper's client keeper with our ExtendedKeeper
+	extendedClientKeeper := ibcclientkeeper.NewExtendedKeeper(appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), stakingKeeper, app.UpgradeKeeper)
+	// make zcKeeper to hooks onto extendedClientKeeper so that zcKeeper can receive notifications of new headers
+	extendedClientKeeper = *extendedClientKeeper.SetHooks(
+		ibcclientkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
+	)
+	ibcKeeper.ClientKeeper = extendedClientKeeper
+
+	// set IBC keeper and ZC keeper for app
+	app.IBCKeeper = ibcKeeper
 	app.ZoneConciergeKeeper = *zcKeeper
 
 	// Create static IBC router, add ibc-tranfer module route, then set and seal it
