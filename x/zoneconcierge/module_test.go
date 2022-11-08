@@ -8,11 +8,12 @@ import (
 	"time"
 
 	"github.com/babylonchain/babylon/app"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
+	clientexported "github.com/cosmos/ibc-go/v5/modules/core/02-client/exported"
 	"github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	clienttypes "github.com/cosmos/ibc-go/v5/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v5/modules/core/23-commitment/types"
@@ -41,7 +42,8 @@ type ZoneConciergeTestSuite struct {
 	// System states of the simulated Babylon chain
 	cdc            codec.Codec
 	ctx            sdk.Context
-	keeper         *clientkeeper.Keeper
+	keeper         clientexported.ClientKeeper
+	zcKeeper       zckeeper.Keeper
 	consensusState *ibctmtypes.ConsensusState
 	header         *ibctmtypes.Header
 	valSet         *tmtypes.ValidatorSet
@@ -62,6 +64,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	// replace the first test chain with a Babylon chain
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(suite.T(), false)
+		suite.zcKeeper = babylonApp.ZoneConciergeKeeper
 		encCdc := app.MakeTestEncodingConfig()
 		return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -79,7 +82,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	babylonChainHeight := uint64(5) // TODO: find out why it's 5 (any value > 0 is okay)
 	suite.cdc = app.AppCodec()
 	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: int64(babylonChainHeight), ChainID: babylonChainID, Time: now2})
-	suite.keeper = &app.IBCKeeper.ClientKeeper
+	suite.keeper = app.IBCKeeper.ClientKeeper
 	suite.privVal = ibctestingmock.NewPV()
 
 	pubKey, err := suite.privVal.GetPubKey()
@@ -140,10 +143,10 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 	}
 
 	cases := []struct {
-		name      string
-		malleate  func()
-		expPass   bool
-		expFreeze bool
+		name                 string
+		malleate             func()
+		expPass              bool
+		expDishonestMajority bool
 	}{
 		{"valid update", func() {
 			clientState := path.EndpointA.GetClientState().(*ibctmtypes.ClientState)
@@ -204,7 +207,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			// set updateHeader's consensus state in store to create duplicate UpdateClient scenario
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, updateHeader.GetHeight(), updateHeader.ConsensusState())
 		}, true, false},
-		{"misbehaviour detection: conflicting header", func() {
+		{"misbehaviour in dishonest majority CZ: conflicting header", func() {
 			clientID := path.EndpointA.ClientID
 
 			height1 := clienttypes.NewHeight(0, 1)
@@ -231,8 +234,8 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			conflictConsState := updateHeader.ConsensusState()
 			conflictConsState.Root = commitmenttypes.NewMerkleRoot([]byte("conflicting apphash"))
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, updateHeader.GetHeight(), conflictConsState)
-		}, true, true}, // TODO (Babylon): fork headers are rejected before being passed to ClientState
-		{"misbehaviour detection: monotonic time violation", func() {
+		}, false, true}, // Babylon modification: fork headers are rejected before being passed to ClientState, and are recorded in the fork index
+		{"misbehaviour in dishonest majority CZ: monotonic time violation", func() {
 			clientState := path.EndpointA.GetClientState().(*ibctmtypes.ClientState)
 			clientID := path.EndpointA.ClientID
 			trustedHeight := clientState.GetLatestHeight().(clienttypes.Height)
@@ -253,7 +256,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientState(suite.babylonChain.GetContext(), clientID, clientState)
 
 			updateHeader = createFutureUpdateFn(trustedHeight)
-		}, true, true}, // TODO (Babylon): non-monotonic headers are rejected before being passed to ClientState
+		}, false, true}, // Babylon modification: non-monotonic headers are rejected before being passed to ClientState, and are recorded in the fork index
 		{"client state not found", func() {
 			updateHeader = createFutureUpdateFn(path.EndpointA.GetClientState().GetLatestHeight().(clienttypes.Height))
 
@@ -300,32 +303,63 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 
 				newClientState := path.EndpointA.GetClientState()
 
-				if tc.expFreeze {
-					suite.Require().True(!newClientState.(*ibctmtypes.ClientState).FrozenHeight.IsZero(), "client did not freeze after conflicting header was submitted to UpdateClient")
-				} else {
-					expConsensusState := &ibctmtypes.ConsensusState{
-						Timestamp:          updateHeader.GetTime(),
-						Root:               commitmenttypes.NewMerkleRoot(updateHeader.Header.GetAppHash()),
-						NextValidatorsHash: updateHeader.Header.NextValidatorsHash,
-					}
+				// Babylon check: Babylon's IBC light client should never freeze
+				suite.Require().True(newClientState.(*ibctmtypes.ClientState).FrozenHeight.IsZero(), "Babylon's IBC light client should never freeze")
 
-					consensusState, found := suite.babylonChain.App.GetIBCKeeper().ClientKeeper.GetClientConsensusState(suite.babylonChain.GetContext(), path.EndpointA.ClientID, updateHeader.GetHeight())
-					suite.Require().True(found)
-
-					// Determine if clientState should be updated or not
-					if updateHeader.GetHeight().GT(clientState.GetLatestHeight()) {
-						// Header Height is greater than clientState latest Height, clientState should be updated with header.GetHeight()
-						suite.Require().Equal(updateHeader.GetHeight(), newClientState.GetLatestHeight(), "clientstate height did not update")
-					} else {
-						// Update will add past consensus state, clientState should not be updated at all
-						suite.Require().Equal(clientState.GetLatestHeight(), newClientState.GetLatestHeight(), "client state height updated for past header")
-					}
-
-					suite.Require().NoError(err)
-					suite.Require().Equal(expConsensusState, consensusState, "consensus state should have been updated on case %s", tc.name)
+				expConsensusState := &ibctmtypes.ConsensusState{
+					Timestamp:          updateHeader.GetTime(),
+					Root:               commitmenttypes.NewMerkleRoot(updateHeader.Header.GetAppHash()),
+					NextValidatorsHash: updateHeader.Header.NextValidatorsHash,
 				}
+
+				consensusState, found := suite.babylonChain.App.GetIBCKeeper().ClientKeeper.GetClientConsensusState(suite.babylonChain.GetContext(), path.EndpointA.ClientID, updateHeader.GetHeight())
+				suite.Require().True(found)
+
+				// Determine if clientState should be updated or not
+				if updateHeader.GetHeight().GT(clientState.GetLatestHeight()) {
+					// Header Height is greater than clientState latest Height, clientState should be updated with header.GetHeight()
+					suite.Require().Equal(updateHeader.GetHeight(), newClientState.GetLatestHeight(), "clientstate height did not update")
+				} else {
+					// Update will add past consensus state, clientState should not be updated at all
+					suite.Require().Equal(clientState.GetLatestHeight(), newClientState.GetLatestHeight(), "client state height updated for past header")
+				}
+
+				suite.Require().NoError(err)
+				suite.Require().Equal(expConsensusState, consensusState, "consensus state should have been updated on case %s", tc.name)
+
+				/* Extra Babylon checks */
+				ctx := suite.babylonChain.GetContext()
+				czChainID := suite.czChain.ChainID
+				updateHeaderHeight := uint64(updateHeader.Header.Height)
+				// updateHeader should be correctly recorded in canonical chain indexer
+				expUpdateHeader, err := suite.zcKeeper.GetHeader(ctx, czChainID, updateHeaderHeight)
+				suite.Require().NoError(err)
+				suite.Require().Equal(expUpdateHeader.Hash, updateHeader.Header.LastCommitHash)
+				suite.Require().Equal(expUpdateHeader.Height, updateHeaderHeight)
+				// updateHeader should be correctly recorded in chain info indexer
+				chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+				suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
+				suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
+
 			} else {
-				suite.Require().Error(err)
+				if tc.expDishonestMajority {
+					/* Extra Babylon checks */
+					ctx := suite.babylonChain.GetContext()
+					czChainID := suite.czChain.ChainID
+					updateHeaderHeight := uint64(updateHeader.Header.Height)
+					// updateHeader should be correctly recorded in fork indexer
+					expForks := suite.zcKeeper.GetForks(ctx, czChainID, updateHeaderHeight)
+					suite.Require().Equal(1, len(expForks.Headers))
+					suite.Require().Equal(expForks.Headers[0].Hash, updateHeader.Header.LastCommitHash)
+					suite.Require().Equal(expForks.Headers[0].Height, updateHeaderHeight)
+					// updateHeader should be correctly recorded in chain info indexer
+					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().Equal(1, len(chainInfo.LatestForks.Headers))
+					suite.Require().Equal(chainInfo.LatestForks.Headers[0].Hash, updateHeader.Header.LastCommitHash)
+					suite.Require().Equal(chainInfo.LatestForks.Headers[0].Height, updateHeaderHeight)
+				} else {
+					suite.Require().Error(err)
+				}
 			}
 		})
 	}
