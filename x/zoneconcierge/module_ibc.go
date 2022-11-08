@@ -34,15 +34,6 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// TODO: Require portID is the portID module is bound to
-	// boundPort := im.keeper.GetPort(ctx)
-	// if boundPort != portID {
-	// 	return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	// }
-	// if version != types.Version {
-	// 	return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
-	// }
-
 	// Claim channel capability passed back by IBC module
 	if err := im.keeper.ClaimCapability(ctx, chanCap, host.ChannelCapabilityPath(portID, channelID)); err != nil {
 		return "", err
@@ -62,16 +53,6 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-
-	// TODO: Require portID is the portID module is bound to
-	// boundPort := im.keeper.GetPort(ctx)
-	// if boundPort != portID {
-	// 	return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	// }
-	// if counterpartyVersion != types.Version {
-	// 	return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
-	// }
-
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
 	// (ie chainA and chainB both call ChanOpenInit before one of them calls ChanOpenTry)
 	// If module can already authenticate the capability then module already owns it so we don't need to claim

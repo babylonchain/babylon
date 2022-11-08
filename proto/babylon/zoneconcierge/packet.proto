@@ -7,12 +7,8 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 message ZoneconciergePacketData {
     oneof packet {
-        NoData noData = 1;
         Heartbeat heartbeart = 2;
     }
-}
-
-message NoData {
 }
 
 message Heartbeat {

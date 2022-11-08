@@ -84,7 +84,6 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	ibcmock "github.com/cosmos/ibc-go/v5/testing/mock"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
@@ -227,7 +226,6 @@ type BabylonApp struct {
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
-	ScopedIBCMockKeeper       capabilitykeeper.ScopedKeeper
 
 	// the module manager
 	mm *module.Manager
@@ -309,7 +307,6 @@ func NewBabylonApp(
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
 	scopedZoneConciergeKeeper := app.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
-	scopedIBCMockKeeper := app.CapabilityKeeper.ScopeToModule(ibcmock.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -667,7 +664,6 @@ func NewBabylonApp(
 
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedZoneConciergeKeeper = scopedZoneConciergeKeeper
-	app.ScopedIBCMockKeeper = scopedIBCMockKeeper
 
 	return app
 }
