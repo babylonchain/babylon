@@ -7,7 +7,7 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 message ZoneconciergePacketData {
     oneof packet {
-        Heartbeat heartbeart = 2;
+        Heartbeat heartbeart = 1;
     }
 }
 
