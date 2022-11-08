@@ -14,6 +14,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	for _, channel := range k.GetAllChannels(ctx) {
-		k.SendHeartbeatIBCPacket(ctx, channel) // TODO: error handling
+		if err := k.SendHeartbeatIBCPacket(ctx, channel); err != nil {
+			panic(err)
+		}
 	}
 }
