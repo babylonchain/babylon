@@ -54,12 +54,6 @@ var (
 	flagStartingIPAddress       = "starting-ip-address"
 	flagBtcNetwork              = "btc-network"
 	flagBtcCheckpointTag        = "btc-checkpoint-tag"
-	flagBtcConfirmationDepth    = "btc-confirmation-depth"
-	flagBtcFinalizationTimeout  = "btc-finalization-timeout"
-	flagEpochInterval           = "epoch-interval"
-	flagBaseBtcHeaderHex        = "btc-base-header"
-	flagBaseBtcHeaderHeight     = "btc-base-header-height"
-	flagMaxActiveValidators     = "max-active-validators"
 	flagAdditionalSenderAccount = "additional-sender-account"
 )
 
@@ -104,7 +98,7 @@ Example:
 			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-				genesisCliArgs.BaseBtcHeaderHeight)
+				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.GenesisTime)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,

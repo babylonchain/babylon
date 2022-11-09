@@ -4,6 +4,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	tmrand "github.com/tendermint/tendermint/libs/rand"
+	"time"
+)
+
+const (
+	flagMaxActiveValidators    = "max-active-validators"
+	flagBtcConfirmationDepth   = "btc-confirmation-depth"
+	flagEpochInterval          = "epoch-interval"
+	flagBtcFinalizationTimeout = "btc-finalization-timeout"
+	flagBaseBtcHeaderHex       = "btc-base-header"
+	flagBaseBtcHeaderHeight    = "btc-base-header-height"
+	flagGenesisTime            = "genesis-time"
 )
 
 type GenesisCLIArgs struct {
@@ -14,6 +25,7 @@ type GenesisCLIArgs struct {
 	EpochInterval          uint64
 	BaseBtcHeaderHex       string
 	BaseBtcHeaderHeight    uint64
+	GenesisTime            time.Time
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -29,6 +41,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// Genesis header for the simnet
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
 	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
+	cmd.Flags().Int64(flagGenesisTime, time.Now().Unix(), "Genesis time")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
@@ -39,10 +52,13 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 	baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
 	baseBtcHeaderHeight, _ := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
+	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
 	}
+
+	genesisTime := time.Unix(genesisTimeUnix, 0)
 
 	return &GenesisCLIArgs{
 		ChainID:                chainID,
@@ -52,5 +68,6 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		EpochInterval:          epochInterval,
 		BaseBtcHeaderHeight:    baseBtcHeaderHeight,
 		BaseBtcHeaderHex:       baseBtcHeaderHex,
+		GenesisTime:            genesisTime,
 	}
 }
