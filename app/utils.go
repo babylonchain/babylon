@@ -2,6 +2,7 @@ package app
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -92,6 +93,26 @@ func CreateClientConfig(chainID string, backend string, homePath string) (*confi
 	}
 
 	return cliConf, err
+}
+
+// ReadFromClientConfigWithFromName sets the first key name from a keyring as default fromName of client context
+func ReadFromClientConfigWithFromName(ctx client.Context) (client.Context, error) {
+	ctx, err := config.ReadFromClientConfig(ctx)
+	if err != nil {
+		return ctx, err
+	}
+	if ctx.FromName != "" {
+		return ctx, nil
+	}
+	keys, err := ctx.Keyring.List()
+	if err != nil {
+		return ctx, err
+	}
+	if len(keys) == 0 {
+		return ctx, errors.New("no keys in the keyring")
+	}
+	// pick the first key as default
+	return ctx.WithFromName(keys[0].Name), nil
 }
 
 func saveClientConfig(homePath string, cliConf *config.ClientConfig) error {

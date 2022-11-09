@@ -170,7 +170,7 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 
 	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	startCmd.Flags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
+	startCmd.Flags().String(flags.FlagFrom, "", "Name or address of private key with which to sign BLS-sig transactions")
 }
 
 func queryCommand() *cobra.Command {
@@ -257,9 +257,8 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	}
 
 	// fromName is the access name that will be used when signing BLS-sig transaction
-	fromName := cast.ToString(appOpts.Get("moniker"))
-
-	clientCtx, err := config.ReadFromClientConfig(
+	fromName := cast.ToString(appOpts.Get(flags.FlagFrom))
+	clientCtx, err := app.ReadFromClientConfigWithFromName(
 		client.Context{}.
 			WithHomeDir(homeDir).
 			WithViper("").
