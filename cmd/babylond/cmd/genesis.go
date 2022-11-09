@@ -3,6 +3,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
 	bbn "github.com/babylonchain/babylon/types"
@@ -63,9 +64,10 @@ Example:
 				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-					genesisCliArgs.BaseBtcHeaderHeight)
+					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.GenesisTime)
 			} else if network == "mainnet" {
 				// TODO: mainnet genesis params
+				panic("Mainnet params not implemented.")
 			} else {
 				return fmt.Errorf("please choose testnet or mainnet")
 			}
@@ -99,6 +101,7 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 
 	// Add ChainID
 	genDoc.ChainID = chainID
+	genDoc.GenesisTime = genesisParams.GenesisTime
 
 	// Set the confirmation and finalization parameters
 	btccheckpointGenState := btccheckpointtypes.DefaultGenesis()
@@ -164,6 +167,8 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 }
 
 type GenesisParams struct {
+	GenesisTime time.Time
+
 	NativeCoinMetadatas []banktypes.Metadata
 
 	StakingParams      stakingtypes.Params
@@ -182,8 +187,12 @@ type GenesisParams struct {
 }
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64, epochInterval uint64, baseBtcHeaderHex string, baseBtcHeaderHeight uint64) GenesisParams {
+	btcFinalizationTimeout uint64, epochInterval uint64, baseBtcHeaderHex string,
+	baseBtcHeaderHeight uint64, genesisTime time.Time) GenesisParams {
+
 	genParams := GenesisParams{}
+
+	genParams.GenesisTime = genesisTime
 
 	genParams.NativeCoinMetadatas = []banktypes.Metadata{
 		{
