@@ -2,7 +2,6 @@ package app
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -109,7 +108,8 @@ func ReadFromClientConfigWithFromName(ctx client.Context) (client.Context, error
 		return ctx, err
 	}
 	if len(keys) == 0 {
-		return ctx, errors.New("no keys in the keyring")
+		// assume the node operator has no intend to run a validator
+		return ctx, nil
 	}
 	// pick the first key as default
 	return ctx.WithFromName(keys[0].Name), nil
