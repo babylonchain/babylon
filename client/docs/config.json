@@ -1,0 +1,50 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "Babylon - gRPC Gateway docs",
+    "description": "A REST interface for state queries",
+    "version": "1.0.0"
+  },
+  "apis": [
+    {
+      "url": "./tmp-swagger-gen/babylon/btccheckpoint/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "BtcCheckpointParams"
+        }
+      }
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/btclightclient/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "BtcLightClientParams"
+        }
+      }
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/epoching/v1/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "EpochingParams"
+        }
+      }
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/checkpointing/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "CheckpointingParams"
+        }
+      }
+    },
+    {
+      "url":  "./tmp-swagger-gen/babylon/zoneconcierge/query.swagger.json",
+      "operationIds": {
+        "rename": {
+          "Params": "ZoneConciergeParams"
+        }
+      }
+    }
+  ]
+}
