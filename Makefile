@@ -152,25 +152,11 @@ go.sum: go.mod
 ###                              Documentation                              ###
 ###############################################################################
 
-update-swagger-docs: statik
-	$(BINDIR)/statik -src=client/docs/swagger-ui -dest=client/docs -f -m
-	@if [ -n "$(git status --porcelain)" ]; then \
-        echo "\033[91mSwagger docs are out of sync!!!\033[0m";\
-        exit 1;\
-    else \
-        echo "\033[92mSwagger docs are in sync\033[0m";\
-    fi
-.PHONY: update-swagger-docs
-
-godocs:
-	@echo "--> Wait a few seconds and visit http://localhost:6060/pkg/github.com/babylonchain/babylon/types"
-	godoc -http=:6060
-
 # This builds a docs site for each branch/tag in `./docs/versions`
 # and copies each site to a version prefixed path. The last entry inside
 # the `versions` file will be the default root index.html.
 build-docs: diagrams
-	@cd docs && \
+	@cd client/docs && \
 	while read -r branch path_prefix; do \
 		(git checkout $${branch} && npm install && VUEPRESS_BASE="/$${path_prefix}/" npm run build) ; \
 		mkdir -p ~/output/$${path_prefix} ; \
@@ -353,75 +339,22 @@ devdoc-update:
 containerProtoVer=v0.7
 containerProtoImage=tendermintdev/sdk-proto-gen:$(containerProtoVer)
 containerProtoGen=babylon-sdk-proto-gen-$(containerProtoVer)
+containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
 containerProtoFmt=babylon-sdk-proto-fmt-$(containerProtoVer)
 
-proto-all: proto-gen
+proto-all: proto-gen proto-doc proto-swagger-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
 	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) \
 		sh ./proto/scripts/protocgen.sh; fi
 
-.PHONY: proto-gen
+proto-swagger-gen:
+	@echo "Generating Protobuf Swagger"
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenSwagger}$$"; then docker start -a $(containerProtoGenSwagger); else docker run --name $(containerProtoGenSwagger) -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) \
+		sh ./proto/scripts/protoc-swagger-gen.sh; fi
 
-
-TM_URL              = https://raw.githubusercontent.com/tendermint/tendermint/v0.34.0-rc6/proto/tendermint
-GOGO_PROTO_URL      = https://raw.githubusercontent.com/regen-network/protobuf/cosmos
-BABYLON_PROTO_URL    = https://raw.githubusercontent.com/regen-network/cosmos-proto/master
-CONFIO_URL          = https://raw.githubusercontent.com/confio/ics23/v0.6.3
-
-TM_CRYPTO_TYPES     = third_party/proto/tendermint/crypto
-TM_ABCI_TYPES       = third_party/proto/tendermint/abci
-TM_TYPES            = third_party/proto/tendermint/types
-TM_VERSION          = third_party/proto/tendermint/version
-TM_LIBS             = third_party/proto/tendermint/libs/bits
-TM_P2P              = third_party/proto/tendermint/p2p
-
-GOGO_PROTO_TYPES    = third_party/proto/gogoproto
-BABYLON_PROTO_TYPES  = third_party/proto/babylon_proto
-CONFIO_TYPES        = third_party/proto/confio
-
-proto-update-deps:
-	@mkdir -p $(GOGO_PROTO_TYPES)
-	@curl -sSL $(GOGO_PROTO_URL)/gogoproto/gogo.proto > $(GOGO_PROTO_TYPES)/gogo.proto
-
-	@mkdir -p $(BABYLON_PROTO_TYPES)
-	@curl -sSL $(BABYLON_PROTO_URL)/babylon.proto > $(BABYLON_PROTO_TYPES)/babylon.proto
-
-## Importing of tendermint protobuf definitions currently requires the
-## use of `sed` in order to build properly with cosmos-sdk's proto file layout
-## (which is the standard Buf.build FILE_LAYOUT)
-## Issue link: https://github.com/tendermint/tendermint/issues/5021
-	@mkdir -p $(TM_ABCI_TYPES)
-	@curl -sSL $(TM_URL)/abci/types.proto > $(TM_ABCI_TYPES)/types.proto
-
-	@mkdir -p $(TM_VERSION)
-	@curl -sSL $(TM_URL)/version/types.proto > $(TM_VERSION)/types.proto
-
-	@mkdir -p $(TM_TYPES)
-	@curl -sSL $(TM_URL)/types/types.proto > $(TM_TYPES)/types.proto
-	@curl -sSL $(TM_URL)/types/evidence.proto > $(TM_TYPES)/evidence.proto
-	@curl -sSL $(TM_URL)/types/params.proto > $(TM_TYPES)/params.proto
-	@curl -sSL $(TM_URL)/types/validator.proto > $(TM_TYPES)/validator.proto
-	@curl -sSL $(TM_URL)/types/block.proto > $(TM_TYPES)/block.proto
-
-	@mkdir -p $(TM_CRYPTO_TYPES)
-	@curl -sSL $(TM_URL)/crypto/proof.proto > $(TM_CRYPTO_TYPES)/proof.proto
-	@curl -sSL $(TM_URL)/crypto/keys.proto > $(TM_CRYPTO_TYPES)/keys.proto
-
-	@mkdir -p $(TM_LIBS)
-	@curl -sSL $(TM_URL)/libs/bits/types.proto > $(TM_LIBS)/types.proto
-
-	@mkdir -p $(TM_P2P)
-	@curl -sSL $(TM_URL)/p2p/types.proto > $(TM_P2P)/types.proto
-
-	@mkdir -p $(CONFIO_TYPES)
-	@curl -sSL $(CONFIO_URL)/proofs.proto > $(CONFIO_TYPES)/proofs.proto
-## insert go package option into proofs.proto file
-## Issue link: https://github.com/confio/ics23/issues/32
-	@sed -i '4ioption go_package = "github.com/confio/ics23/go";' $(CONFIO_TYPES)/proofs.proto
-
-.PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
+.PHONY: proto-gen proto-swagger-gen
 
 ###############################################################################
 ###                                Localnet                                 ###
@@ -467,4 +400,4 @@ localnet-build-dlv localnet-build-nodes
 
 .PHONY: diagrams
 diagrams:
-	$(MAKE) -C docs/diagrams
+	$(MAKE) -C client/docs/diagrams
