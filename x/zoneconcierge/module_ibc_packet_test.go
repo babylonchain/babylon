@@ -84,8 +84,7 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 		suite.True(found)
 
 		// Assert the gap between two sequence numbers
-		// Note that CommitBlock triggers 2 times of BeginBlock
-		suite.Equal(uint64(numBlocks*2), newNextSeqSend-nextSeqSend)
+		suite.Equal(uint64(numBlocks), newNextSeqSend-nextSeqSend)
 
 		// update clients to ensure no panic happens
 		err = path.EndpointA.UpdateClient()

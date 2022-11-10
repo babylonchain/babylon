@@ -16,6 +16,11 @@ import (
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
+}
+
+func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
+
 	for _, channel := range k.GetAllChannels(ctx) {
 		if channel.State == channeltypes.OPEN {
 			if err := k.SendHeartbeatIBCPacket(ctx, channel); err != nil {
@@ -23,4 +28,6 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 			}
 		}
 	}
+
+	return []abci.ValidatorUpdate{}
 }
