@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"errors"
+	clicfg "github.com/babylonchain/babylon/client/config"
 	"io"
 	"os"
 	"path/filepath"
@@ -64,7 +65,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			initClientCtx, err = config.ReadFromClientConfig(initClientCtx)
+			initClientCtx, err = clicfg.ReadFromClientConfig(initClientCtx)
 			if err != nil {
 				return err
 			}
@@ -258,7 +259,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	// fromName is the access name that will be used when signing BLS-sig transaction
 	fromName := cast.ToString(appOpts.Get(flags.FlagFrom))
-	clientCtx, err := app.ReadFromClientConfigWithFromName(
+	clientCtx, err := clicfg.ReadFromClientConfig(
 		client.Context{}.
 			WithHomeDir(homeDir).
 			WithViper("").
@@ -317,7 +318,7 @@ func (a appCreator) appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	clientCtx, err := config.ReadFromClientConfig(
+	clientCtx, err := clicfg.ReadFromClientConfig(
 		client.Context{}.
 			WithHomeDir(homePath).
 			WithViper("").

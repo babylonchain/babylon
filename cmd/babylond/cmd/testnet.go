@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	clicfg "github.com/babylonchain/babylon/client/config"
 	"net"
 	"os"
 	"path/filepath"
@@ -16,7 +17,6 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
-	"github.com/babylonchain/babylon/app"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 
 	"github.com/babylonchain/babylon/privval"
@@ -316,7 +316,7 @@ func InitTestnet(
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), babylonConfig)
 
 		// create and save client config
-		if _, err = app.CreateClientConfig(chainID, keyringBackend, nodeDir); err != nil {
+		if _, err = clicfg.CreateClientConfig(chainID, keyringBackend, nodeDir, nodeDirName); err != nil {
 			return err
 		}
 	}
