@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client"
 	"os"
 	"path/filepath"
+
+	"github.com/cosmos/cosmos-sdk/client"
 )
 
 // Default constants
@@ -17,6 +18,7 @@ const (
 	fromName       = ""
 )
 
+// adapted from https://github.com/cosmos/cosmos-sdk/blob/6d32debf1aca4b7f1ed1429d87be1d02c315f02d/client/config/config.go
 type ClientConfig struct {
 	ChainID        string `mapstructure:"chain-id" json:"chain-id"`
 	KeyringBackend string `mapstructure:"keyring-backend" json:"keyring-backend"`

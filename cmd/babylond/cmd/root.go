@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"errors"
-	clicfg "github.com/babylonchain/babylon/client/config"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,7 +11,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
@@ -36,6 +34,7 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
+	clicfg "github.com/babylonchain/babylon/client/config"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -148,7 +147,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		GenBlsCmd(),
 		AddGenBlsCmd(),
 		debug.Cmd(),
-		config.Cmd(),
+		clicfg.Cmd(),
 	)
 
 	a := appCreator{encodingConfig}

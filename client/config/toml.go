@@ -31,6 +31,7 @@ from-name = "{{ .FromName }}"
 
 // writeConfigToFile parses defaultConfigTemplate, renders config using the template and writes it to
 // configFilePath.
+// adapted from https://github.com/cosmos/cosmos-sdk/blob/6d32debf1aca4b7f1ed1429d87be1d02c315f02d/client/config/toml.go
 func writeConfigToFile(configFilePath string, config *ClientConfig) error {
 	var buffer bytes.Buffer
 
