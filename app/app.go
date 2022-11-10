@@ -222,6 +222,7 @@ type BabylonApp struct {
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	ZoneConciergeKeeper zckeeper.Keeper   // for cross-chain fungible token transfers
+
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
@@ -660,6 +661,9 @@ func NewBabylonApp(
 			tmos.Exit(err.Error())
 		}
 	}
+
+	app.ScopedIBCKeeper = scopedIBCKeeper
+	app.ScopedZoneConciergeKeeper = scopedZoneConciergeKeeper
 
 	return app
 }

@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -97,4 +98,8 @@ func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Cap
 // passes to it
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
+}
+
+func (k Keeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
+	return k.channelKeeper.GetAllChannels(ctx)
 }

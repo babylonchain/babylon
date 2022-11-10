@@ -38,6 +38,10 @@ func (zoneconciergeChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channel
 	return nil
 }
 
+func (zoneconciergeChannelKeeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
+	return nil
+}
+
 // zoneconciergeportKeeper is a stub of PortKeeper
 type zoneconciergePortKeeper struct{}
 
