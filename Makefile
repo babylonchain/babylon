@@ -342,7 +342,7 @@ containerProtoGen=babylon-sdk-proto-gen-$(containerProtoVer)
 containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
 containerProtoFmt=babylon-sdk-proto-fmt-$(containerProtoVer)
 
-proto-all: proto-gen proto-doc proto-swagger-gen
+proto-all: proto-gen proto-swagger-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
