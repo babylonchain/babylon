@@ -218,6 +218,7 @@ func InitTestnet(
 			_ = os.RemoveAll(outputDir)
 			return err
 		}
+		babylonConfig.SignerConfig.KeyName = nodeDirName
 
 		// generate validator keys
 		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, addr)
