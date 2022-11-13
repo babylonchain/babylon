@@ -19,16 +19,27 @@ func defaultBabylonBtcConfig() BtcConfig {
 	}
 }
 
+func defaultSignerConfig() SignerConfig {
+	return SignerConfig{KeyName: ""}
+}
+
+type SignerConfig struct {
+	KeyName string `mapstructure:"key-name"`
+}
+
 type BabylonAppConfig struct {
 	serverconfig.Config `mapstructure:",squash"`
 
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
+
+	SignerConfig SignerConfig `mapstructure:"signer-config"`
 }
 
 func DefaultBabylonConfig() *BabylonAppConfig {
 	return &BabylonAppConfig{
-		Config:    *serverconfig.DefaultConfig(),
-		BtcConfig: defaultBabylonBtcConfig(),
+		Config:       *serverconfig.DefaultConfig(),
+		BtcConfig:    defaultBabylonBtcConfig(),
+		SignerConfig: defaultSignerConfig(),
 	}
 }
 
@@ -48,5 +59,10 @@ network = "{{ .BtcConfig.Network }}"
 # Configures what tag should be prepended to op_return data in btc transaction
 # for it to be considered as valid babylon checkpoint. Must have exactly 4 bytes.
 checkpoint-tag = "{{ .BtcConfig.CheckpointTag }}"
+
+[signer-config]
+
+# Configures which key that the BLS signer uses to sign BLS-sig transactions
+key-name = "{{ .SignerConfig.KeyName }}"
 `
 }
