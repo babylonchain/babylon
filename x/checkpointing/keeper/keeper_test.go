@@ -66,7 +66,6 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
-		ek.EXPECT().ApplyMatureUnbonding(gomock.Any(), gomock.Any()).Return() // make ApplyMatureUnbonding do nothing
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()

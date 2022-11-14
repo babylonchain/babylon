@@ -102,7 +102,13 @@ func (h Hooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, 
 	return h.k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_REMOVED)
 }
 
-// Other staking hooks that are not used in the epoching module
+func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+	// finalise all unbonding validators/delegations in this epoch
+	h.k.ApplyMatureUnbonding(ctx, epoch)
+	return nil
+}
+
+// Other hooks that are not used in the epoching module
 func (h Hooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	return nil
 }
@@ -115,3 +121,5 @@ func (h Hooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAd
 func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     { return nil }

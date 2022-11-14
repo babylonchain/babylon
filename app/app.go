@@ -457,7 +457,7 @@ func NewBabylonApp(
 			privSigner.ClientCtx,
 		)
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(app.ZoneConciergeKeeper.Hooks()),
+		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks()),
 	)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
