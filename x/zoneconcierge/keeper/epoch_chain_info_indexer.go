@@ -32,7 +32,7 @@ func (k Keeper) RecordEpochChainInfo(ctx sdk.Context, chainID string, epochNumbe
 
 // epochChainInfoStore stores each epoch's latest ChainInfo for a CZ
 // prefix: EpochChainInfoKey || chainID
-// key: height
+// key: epochNumber
 // value: ChainInfo
 func (k Keeper) epochChainInfoStore(ctx sdk.Context, chainID string) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
