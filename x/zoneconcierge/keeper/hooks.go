@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
@@ -13,6 +15,8 @@ type Hooks struct {
 
 // ensures Hooks implements ClientHooks interfaces
 var _ ibcclientkeeper.ClientHooks = Hooks{}
+var _ checkpointingtypes.CheckpointingHooks = Hooks{}
+var _ epochingtypes.EpochingHooks = Hooks{}
 
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
@@ -44,3 +48,19 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		}
 	}
 }
+
+func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
+	// TODO: upon an epoch has ended, index the current chain info for each CZ
+}
+
+func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+	// TODO: upon an epoch is finalised, set the last header/fork of this epoch to chain info for each CZ
+	return nil
+}
+
+// Other unused hooks
+
+func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error     { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error         { return nil }
+func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64)                          {}
+func (h Hooks) BeforeSlashThreshold(ctx sdk.Context, valSet epochingtypes.ValidatorSet) {}
