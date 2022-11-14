@@ -329,9 +329,6 @@ func NewBabylonApp(
 	epochingKeeper := epochingkeeper.NewKeeper(
 		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper,
 	)
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	app.EpochingKeeper = epochingKeeper
 
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
@@ -355,7 +352,7 @@ func NewBabylonApp(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), app.EpochingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), epochingKeeper.Hooks()),
 	)
 
 	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.MsgServiceRouter(), app.AccountKeeper)
@@ -432,6 +429,14 @@ func NewBabylonApp(
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added
 	app.IBCKeeper.SetRouter(ibcRouter)
+
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
+	// make ZoneConcierge to subscribe to the epoching's hooks
+	epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks()),
+	)
+	app.EpochingKeeper = epochingKeeper
 
 	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
 		appCodec,
