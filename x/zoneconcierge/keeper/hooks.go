@@ -50,11 +50,17 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 }
 
 func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
-	// TODO: upon an epoch has ended, index the current chain info for each CZ
+	// upon an epoch has ended, index the current chain info for each CZ
+	for _, chainID := range h.k.GetAllChainIDs(ctx) {
+		if err := h.k.RecordEpochChainInfo(ctx, chainID, epoch); err != nil {
+			panic(err) // this happens only when the chain info does not exist, which is a programming error
+		}
+	}
 }
 
 func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
-	// TODO: upon an epoch is finalised, set the last header/fork of this epoch to chain info for each CZ
+	// upon an epoch has been finalised, update the last finalised epoch
+	h.k.setFinalizedEpoch(ctx, epoch)
 	return nil
 }
 

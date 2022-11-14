@@ -54,6 +54,20 @@ func (k Keeper) UpdateLatestForkHeader(ctx sdk.Context, chainID string, header *
 	return nil
 }
 
+// GetAllChainIDs gets all chain IDs that integrate Babylon
+func (k Keeper) GetAllChainIDs(ctx sdk.Context) []string {
+	chainIDs := []string{}
+	iter := k.chainInfoStore(ctx).Iterator(nil, nil)
+	defer iter.Close()
+
+	for ; iter.Valid(); iter.Next() {
+		chainIDBytes := iter.Key()
+		chainID := string(chainIDBytes)
+		chainIDs = append(chainIDs, chainID)
+	}
+	return chainIDs
+}
+
 // msgChainInfoStore stores the information of canonical chains and forks for CZs
 // prefix: ChainInfoKey
 // key: chainID
