@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
@@ -13,6 +14,7 @@ type Hooks struct {
 
 // ensures Hooks implements ClientHooks interfaces
 var _ ibcclientkeeper.ClientHooks = Hooks{}
+var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
@@ -43,4 +45,19 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 	}
+}
+
+func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+	// TODO: xxx
+	return nil
+}
+
+// Other unused hooks
+
+func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error {
+	return nil
+}
+
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error {
+	return nil
 }

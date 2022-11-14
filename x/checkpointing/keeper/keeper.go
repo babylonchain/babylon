@@ -251,7 +251,11 @@ func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, epoch uint64) {
 		&types.EventCheckpointConfirmed{Checkpoint: ckpt},
 	)
 	if err != nil {
-		ctx.Logger().Error("failed to emit checkpoint confirmed event for epoch %v", ckpt.Ckpt.EpochNum)
+		ctx.Logger().Error("failed to emit checkpoint confirmed event for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+	}
+	// invoke hook
+	if err := k.AfterRawCheckpointConfirmed(ctx, epoch); err != nil {
+		ctx.Logger().Error("failed to trigger checkpoint confirmed hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 }
 
@@ -262,10 +266,14 @@ func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
 		&types.EventCheckpointFinalized{Checkpoint: ckpt},
 	)
 	if err != nil {
-		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v", ckpt.Ckpt.EpochNum)
+		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 	// finalise all unbonding validators/delegations in this epoch
 	k.epochingKeeper.ApplyMatureUnbonding(ctx, epoch)
+	// invoke hook, which is currently subscribed by ZoneConcierge
+	if err := k.AfterRawCheckpointFinalized(ctx, epoch); err != nil {
+		ctx.Logger().Error("failed to trigger checkpoint finalized hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+	}
 }
 
 func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {
