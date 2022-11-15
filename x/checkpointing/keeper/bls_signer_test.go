@@ -64,9 +64,8 @@ func TestKeeper_SendBlsSig(t *testing.T) {
 	signer := mocks.NewMockBlsSigner(ctrl)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, signer, clientCtx)
 
-	ek.EXPECT().GetValidatorSet(ctx, gomock.Eq(epochNum)).Return(valSet)
 	signer.EXPECT().GetAddress().Return(addr1)
 	signer.EXPECT().SignMsgWithBls(gomock.Eq(signBytes)).Return(bls12381.Sign(blsPrivKey1, signBytes), nil)
-	err = ckptkeeper.SendBlsSig(ctx, epochNum, lch)
+	err = ckptkeeper.SendBlsSig(ctx, epochNum, lch, valSet)
 	require.NoError(t, err)
 }
