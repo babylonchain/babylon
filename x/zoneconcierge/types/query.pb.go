@@ -116,6 +116,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
+// QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
 type QueryFinalizedChainInfoRequest struct {
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 }
@@ -160,12 +161,16 @@ func (m *QueryFinalizedChainInfoRequest) GetChainId() string {
 	return ""
 }
 
+// QueryFinalizedChainInfoResponse is response type for the Query/FinalizedChainInfo RPC method.
 type QueryFinalizedChainInfoResponse struct {
 	FinalizedChainInfo *ChainInfo `protobuf:"bytes,1,opt,name=finalized_chain_info,json=finalizedChainInfo,proto3" json:"finalized_chain_info,omitempty"`
-	//
-	ProofTxInBlock      *types.TxProof      `protobuf:"bytes,2,opt,name=proof_tx_in_block,json=proofTxInBlock,proto3" json:"proof_tx_in_block,omitempty"`
-	ProofBlockInEpoch   *crypto.ProofOps    `protobuf:"bytes,3,opt,name=proof_block_in_epoch,json=proofBlockInEpoch,proto3" json:"proof_block_in_epoch,omitempty"`
-	ProofEpochEnded     *crypto.ProofOps    `protobuf:"bytes,4,opt,name=proof_epoch_ended,json=proofEpochEnded,proto3" json:"proof_epoch_ended,omitempty"`
+	// proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
+	ProofTxInBlock *types.TxProof `protobuf:"bytes,2,opt,name=proof_tx_in_block,json=proofTxInBlock,proto3" json:"proof_tx_in_block,omitempty"`
+	// proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
+	ProofBlockInEpoch *crypto.ProofOps `protobuf:"bytes,3,opt,name=proof_block_in_epoch,json=proofBlockInEpoch,proto3" json:"proof_block_in_epoch,omitempty"`
+	// proof_epoch_ended is the proof that the epoch metadata is included in the Babylon ledger
+	ProofEpochEnded *crypto.ProofOps `protobuf:"bytes,4,opt,name=proof_epoch_ended,json=proofEpochEnded,proto3" json:"proof_epoch_ended,omitempty"`
+	// proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
 	ProofEpochSubmitted *types1.BTCSpvProof `protobuf:"bytes,5,opt,name=proof_epoch_submitted,json=proofEpochSubmitted,proto3" json:"proof_epoch_submitted,omitempty"`
 }
 

@@ -32,15 +32,20 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
+// QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
 message QueryFinalizedChainInfoRequest {
   string chain_id = 1;
 }
 
+// QueryFinalizedChainInfoResponse is response type for the Query/FinalizedChainInfo RPC method.
 message QueryFinalizedChainInfoResponse {
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
-  // 
+  // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
   tendermint.types.TxProof proof_tx_in_block = 2;
+  // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
   tendermint.crypto.ProofOps proof_block_in_epoch = 3;
+  // proof_epoch_ended is the proof that the epoch metadata is included in the Babylon ledger
   tendermint.crypto.ProofOps proof_epoch_ended = 4;
+  // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
   babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 5;
 }
