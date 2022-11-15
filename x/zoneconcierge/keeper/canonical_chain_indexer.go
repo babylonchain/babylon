@@ -19,7 +19,7 @@ func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*type
 	return &header, nil
 }
 
-func (k Keeper) InsertHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) insertHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}

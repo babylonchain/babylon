@@ -20,6 +20,7 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
+// AfterHeaderWithValidCommit is triggered upon each CZ header with a valid QC
 func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibctmtypes.Header, isOnFork bool) {
 	indexedHeader := types.IndexedHeader{
 		ChainId:            header.Header.ChainID,
@@ -30,34 +31,34 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 	}
 	if isOnFork {
 		// insert header to fork index
-		if err := h.k.InsertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.insertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 		// update the latest fork in chain info
-		if err := h.k.UpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.updateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	} else {
 		// insert header to canonical chain index
-		if err := h.k.InsertHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.insertHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 		// update the latest canonical header in chain info
-		if err := h.k.UpdateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.updateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	}
 }
 
+// AfterEpochEnds is triggered upon an epoch has ended
 func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 	// upon an epoch has ended, index the current chain info for each CZ
 	for _, chainID := range h.k.GetAllChainIDs(ctx) {
-		if err := h.k.RecordEpochChainInfo(ctx, chainID, epoch); err != nil {
-			panic(err) // this happens only when the chain info does not exist, which is a programming error
-		}
+		h.k.recordEpochChainInfo(ctx, chainID, epoch)
 	}
 }
 
+// AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
 	// upon an epoch has been finalised, update the last finalised epoch
 	h.k.setFinalizedEpoch(ctx, epoch)

@@ -19,15 +19,15 @@ func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber u
 	return &chainInfo, nil
 }
 
-// RecordEpochChainInfo records the chain info for a given epoch number of given chain ID
+// recordEpochChainInfo records the chain info for a given epoch number of given chain ID
 // where the latest chain info is retrieved from the chain info indexer
-func (k Keeper) RecordEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) error {
+func (k Keeper) recordEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) {
 	// get the latest known chain info
+	// NOTE: GetChainInfo returns an empty ChainInfo object when the ChainInfo does not exist
 	chainInfo := k.GetChainInfo(ctx, chainID)
 	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
 	store := k.epochChainInfoStore(ctx, chainID)
 	store.Set(sdk.Uint64ToBigEndian(epochNumber), k.cdc.MustMarshal(chainInfo))
-	return nil
 }
 
 // epochChainInfoStore stores each epoch's latest ChainInfo for a CZ
@@ -41,9 +41,9 @@ func (k Keeper) epochChainInfoStore(ctx sdk.Context, chainID string) prefix.Stor
 	return prefix.NewStore(epochChainInfoStore, chainIDBytes)
 }
 
-// getFinalizedEpoch gets the last finalised epoch
+// GetFinalizedEpoch gets the last finalised epoch
 // used upon querying the last BTC-finalised chain info for CZs
-func (k Keeper) getFinalizedEpoch(ctx sdk.Context) (uint64, error) {
+func (k Keeper) GetFinalizedEpoch(ctx sdk.Context) (uint64, error) {
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has(types.FinalizedEpochKey) {
 		return 0, types.ErrFinalizedEpochNotFound

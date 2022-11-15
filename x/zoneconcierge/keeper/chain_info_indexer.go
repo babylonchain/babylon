@@ -33,7 +33,7 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) *types.ChainInfo {
 	return &chainInfo
 }
 
-func (k Keeper) UpdateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
@@ -44,7 +44,7 @@ func (k Keeper) UpdateLatestHeader(ctx sdk.Context, chainID string, header *type
 	return nil
 }
 
-func (k Keeper) UpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) updateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
