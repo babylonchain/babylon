@@ -1,5 +1,5 @@
 syntax = "proto3";
-package babylonchain.babylon.zoneconcierge;
+package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 
