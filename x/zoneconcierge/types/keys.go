@@ -25,6 +25,8 @@ var (
 	ChainInfoKey      = []byte{0x12} // ChainInfoKey defines the key to store the chain info for each CZ in store
 	CanonicalChainKey = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each CZ in store
 	ForkKey           = []byte{0x14} // ForkKey defines the key to store the forks for each CZ in store
+	EpochChainInfoKey = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each CZ in store
+	FinalizedEpochKey = []byte{0x16} // FinalizedEpochKey defines the key to store the last finalised epoch
 )
 
 func KeyPrefix(p string) []byte {

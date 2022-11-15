@@ -25,8 +25,8 @@ func (k Keeper) GetForks(ctx sdk.Context, chainID string, height uint64) *types.
 	return &forks
 }
 
-// InsertForkHeader inserts a forked header to the list of forked headers at the same height
-func (k Keeper) InsertForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+// insertForkHeader inserts a forked header to the list of forked headers at the same height
+func (k Keeper) insertForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}

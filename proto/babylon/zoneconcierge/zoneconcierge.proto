@@ -1,5 +1,5 @@
 syntax = "proto3";
-package babylonchain.babylon.zoneconcierge;
+package babylon.zoneconcierge.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
