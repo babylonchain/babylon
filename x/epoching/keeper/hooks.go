@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -35,8 +36,9 @@ type Hooks struct {
 	k Keeper
 }
 
-// ensures Hooks implements StakingHooks interfaces
+// ensures Hooks implements StakingHooks and CheckpointingHooks interfaces
 var _ stakingtypes.StakingHooks = Hooks{}
+var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 
 // Create new distribution hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
