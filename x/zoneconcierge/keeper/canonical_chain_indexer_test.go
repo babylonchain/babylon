@@ -27,7 +27,6 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 			header, err := zcKeeper.GetHeader(ctx, czChain.ChainID, i)
 			require.NoError(t, err)
 			require.NotNil(t, header)
-
 			require.Equal(t, czChain.ChainID, header.ChainId)
 			require.Equal(t, i, header.Height)
 		}

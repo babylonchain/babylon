@@ -32,6 +32,7 @@ func SetupTest(t *testing.T) (*ibctesting.Coordinator, *ibctesting.TestChain, *i
 	return coordinator, babylonChain, czChain, zcKeeper
 }
 
+// SimulateHeadersViaHook generates a random non-zero number of canonical headers via the hook
 func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string) uint64 {
 	// invoke the hook a random number of times to simulate a random number of blocks
 	numHeaders := datagen.RandomInt(100) + 1
@@ -42,6 +43,7 @@ func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID strin
 	return numHeaders
 }
 
+// SimulateHeadersViaHook generates a random non-zero number of canonical headers and fork headers via the hook
 func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string) (uint64, uint64) {
 	// invoke the hook a random number of times to simulate a random number of blocks
 	numHeaders := datagen.RandomInt(100) + 1
