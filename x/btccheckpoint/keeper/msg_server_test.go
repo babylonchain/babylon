@@ -164,18 +164,6 @@ func (k *TestKeepers) getSubmissionData(key btcctypes.SubmissionKey) *btcctypes.
 	return k.BTCCheckpoint.GetSubmissionData(k.SdkCtx, key)
 }
 
-func (k *TestKeepers) getUnconfirmedSubmissions() []btcctypes.SubmissionKey {
-	return k.BTCCheckpoint.GetAllUnconfirmedSubmissions(k.SdkCtx)
-}
-
-func (k *TestKeepers) getConfirmedSubmissions() []btcctypes.SubmissionKey {
-	return k.BTCCheckpoint.GetAllConfirmedSubmissions(k.SdkCtx)
-}
-
-func (k *TestKeepers) getFinalizedSubmissions() []btcctypes.SubmissionKey {
-	return k.BTCCheckpoint.GetAllFinalizedSubmissions(k.SdkCtx)
-}
-
 func (k *TestKeepers) onTipChange() {
 	k.BTCCheckpoint.OnTipChange(k.SdkCtx)
 }
@@ -349,11 +337,11 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Submission data with invalid epoch")
 	}
 
-	allUnconfirmedSubmissions := tk.getUnconfirmedSubmissions()
+	ed1 := tk.getEpochData(epoch)
 
 	// TODO Add custom equal fo submission key and transaction key to check
 	// it is expected key
-	if len(allUnconfirmedSubmissions) == 0 {
+	if len(ed1.Key) == 0 {
 		t.Errorf("Unexpected missing unconfirmed submissions")
 	}
 }
@@ -488,10 +476,14 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	}
 
 	// TODO customs Equality for submission keys
-	unc := tk.getUnconfirmedSubmissions()
+	ed := tk.getEpochData(epoch)
 
-	if len(unc) != 1 {
-		t.Errorf("Unexpected missing unconfirmed submissions")
+	if len(ed.Key) != 1 {
+		t.Errorf("Unexpected missing submissions")
+	}
+
+	if ed.Status != btcctypes.Submitted {
+		t.Errorf("Epoch should be in submitted stated")
 	}
 
 	// Now we will return depth enough for moving submission to confirmed
@@ -502,46 +494,39 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	tk.onTipChange()
 	// TODO customs Equality for submission keys to check this are really keys
 	// we are looking for
-	unc = tk.getUnconfirmedSubmissions()
-	conf := tk.getConfirmedSubmissions()
+	ed = tk.getEpochData(epoch)
 
-	if len(unc) != 0 {
-		t.Errorf("Unexpected not promoted submission")
+	if len(ed.Key) != 1 {
+		t.Errorf("Unexpected missing submission")
 	}
 
-	if len(conf) != 1 {
-		t.Errorf("Unexpected missing confirmed submission")
-	}
-
-	ed := tk.getEpochData(epoch)
-
-	if ed == nil || ed.Status != btcctypes.Confirmed {
-		t.Errorf("Epoch Data missing of in unexpected state")
+	if ed.Status != btcctypes.Confirmed {
+		t.Errorf("Epoch should be in submitted stated")
 	}
 
 	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(wDeep))
 	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(wDeep))
+
 	tk.onTipChange()
-
-	unc = tk.getUnconfirmedSubmissions()
-	conf = tk.getConfirmedSubmissions()
-	fin := tk.getFinalizedSubmissions()
-
-	if len(unc) != 0 {
-		t.Errorf("Unexpected not promoted unconfirmed submission")
-	}
-
-	if len(conf) != 0 {
-		t.Errorf("Unexpected not promoted confirmed submission")
-	}
-
-	if len(fin) != 1 {
-		t.Errorf("Unexpected missing finalized submission")
-	}
-
 	ed = tk.getEpochData(epoch)
 
 	if ed == nil || ed.Status != btcctypes.Finalized {
 		t.Errorf("Epoch Data missing of in unexpected state")
+	}
+}
+
+func (k *TestKeepers) insertNBlocks(n int) {
+	for i := 1; i <= n; i++ {
+		raw := RandomRawCheckpointDataForEpoch(uint64(i))
+		blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
+		blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
+
+		msg := GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
+		k.Checkpointing.SetEpoch(uint64(i))
+		k.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(n-i))
+		k.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(n-i))
+
+		_, _ = k.insertProofMsg(msg)
+
 	}
 }

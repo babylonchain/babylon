@@ -101,7 +101,7 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
 	return EpochData{
 		Key:           []*SubmissionKey{},
-		Status:        Signed,
+		Status:        Submitted,
 		RawCheckpoint: rawCheckpointBytes,
 	}
 }
