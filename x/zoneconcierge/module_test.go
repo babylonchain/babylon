@@ -341,6 +341,10 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
 					suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
+				} else { // in the test case where Babylon receives a past CZ header, the latest header should be the last header
+					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().Equal(chainInfo.LatestHeader.Hash, suite.czChain.LastHeader.Header.LastCommitHash)
+					suite.Require().Equal(chainInfo.LatestHeader.Height, uint64(suite.czChain.LastHeader.Header.Height))
 				}
 			} else {
 				if tc.expDishonestMajority {
