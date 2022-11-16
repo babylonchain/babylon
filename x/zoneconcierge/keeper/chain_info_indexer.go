@@ -39,7 +39,7 @@ func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *type
 	}
 	// NOTE: we can accept header without ancestor since IBC connection can be established at any height
 	chainInfo := k.GetChainInfo(ctx, chainID)
-	chainInfo.LatestHeader = header
+	chainInfo.TryToUpdateHeader(header)
 	k.setChainInfo(ctx, chainInfo)
 	return nil
 }

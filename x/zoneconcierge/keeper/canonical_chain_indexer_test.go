@@ -27,8 +27,9 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 			header := &ibctmtypes.Header{
 				SignedHeader: &tmproto.SignedHeader{
 					Header: &tmproto.Header{
-						ChainID: czChain.ChainID,
-						Height:  int64(i),
+						ChainID:        czChain.ChainID,
+						Height:         int64(i),
+						LastCommitHash: datagen.GenRandomByteArray(32),
 					},
 				},
 			}

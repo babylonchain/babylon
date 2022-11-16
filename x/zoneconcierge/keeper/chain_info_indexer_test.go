@@ -27,8 +27,9 @@ func FuzzChainInfoIndexer_Canonical(f *testing.F) {
 			header := &ibctmtypes.Header{
 				SignedHeader: &tmproto.SignedHeader{
 					Header: &tmproto.Header{
-						ChainID: czChain.ChainID,
-						Height:  int64(i),
+						ChainID:        czChain.ChainID,
+						Height:         int64(i),
+						LastCommitHash: datagen.GenRandomByteArray(32),
 					},
 				},
 			}
@@ -60,8 +61,9 @@ func FuzzChainInfoIndexer_Fork(f *testing.F) {
 			header := &ibctmtypes.Header{
 				SignedHeader: &tmproto.SignedHeader{
 					Header: &tmproto.Header{
-						ChainID: czChain.ChainID,
-						Height:  int64(i),
+						ChainID:        czChain.ChainID,
+						Height:         int64(i),
+						LastCommitHash: datagen.GenRandomByteArray(32),
 					},
 				},
 			}
@@ -74,8 +76,9 @@ func FuzzChainInfoIndexer_Fork(f *testing.F) {
 			header := &ibctmtypes.Header{
 				SignedHeader: &tmproto.SignedHeader{
 					Header: &tmproto.Header{
-						ChainID: czChain.ChainID,
-						Height:  int64(numHeaders - 1),
+						ChainID:        czChain.ChainID,
+						Height:         int64(numHeaders - 1),
+						LastCommitHash: datagen.GenRandomByteArray(32),
 					},
 				},
 			}

@@ -337,10 +337,11 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 				suite.Require().Equal(expUpdateHeader.Hash, updateHeader.Header.LastCommitHash)
 				suite.Require().Equal(expUpdateHeader.Height, updateHeaderHeight)
 				// updateHeader should be correctly recorded in chain info indexer
-				chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
-				suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
-				suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
-
+				if tc.name != "valid past update" { // we exclude the case of past update since chain info indexer does not record past update
+					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
+					suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
+				}
 			} else {
 				if tc.expDishonestMajority {
 					/* Extra Babylon checks */
