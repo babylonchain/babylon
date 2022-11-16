@@ -5,7 +5,9 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 )
 
@@ -28,4 +30,31 @@ func SetupTest(t *testing.T) (*ibctesting.Coordinator, *ibctesting.TestChain, *i
 	czChain := coordinator.GetChain(ibctesting.GetChainID(2))
 
 	return coordinator, babylonChain, czChain, zcKeeper
+}
+
+func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string) uint64 {
+	// invoke the hook a random number of times to simulate a random number of blocks
+	numHeaders := datagen.RandomInt(100) + 1
+	for i := uint64(0); i < numHeaders; i++ {
+		header := datagen.GenRandomIBCTMHeader(chainID, i)
+		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
+	}
+	return numHeaders
+}
+
+func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string) (uint64, uint64) {
+	// invoke the hook a random number of times to simulate a random number of blocks
+	numHeaders := datagen.RandomInt(100) + 1
+	for i := uint64(0); i < numHeaders; i++ {
+		header := datagen.GenRandomIBCTMHeader(chainID, i)
+		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
+	}
+
+	// generate a number of fork headers
+	numForkHeaders := datagen.RandomInt(10) + 1
+	for i := uint64(0); i < numForkHeaders; i++ {
+		header := datagen.GenRandomIBCTMHeader(chainID, numHeaders-1)
+		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
+	}
+	return numHeaders, numForkHeaders
 }

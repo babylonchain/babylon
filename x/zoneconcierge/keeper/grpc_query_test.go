@@ -21,18 +21,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100)
-		for i := uint64(0); i < numHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
-		}
-
-		// generate a number of fork headers
-		numForkHeaders := int(datagen.RandomInt(10))
-		for i := 0; i < numForkHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, numHeaders-1)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
-		}
+		numHeaders, numForkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID)
 
 		// simulate the scenario that a random epoch has ended and finalised
 		epochNum := datagen.RandomInt(10)
@@ -44,6 +33,6 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		require.NoError(t, err)
 		chainInfo := resp.FinalizedChainInfo
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
-		require.Equal(t, numForkHeaders, len(chainInfo.LatestForks.Headers))
+		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 	})
 }

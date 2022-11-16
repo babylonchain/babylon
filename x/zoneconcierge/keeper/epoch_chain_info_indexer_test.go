@@ -20,18 +20,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100)
-		for i := uint64(0); i < numHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
-		}
-
-		// generate a number of fork headers
-		numForkHeaders := int(datagen.RandomInt(10))
-		for i := 0; i < numForkHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, numHeaders-1)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
-		}
+		numHeaders, numForkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID)
 
 		// simulate the scenario that a random epoch has ended
 		epochNum := datagen.RandomInt(10)
@@ -41,6 +30,6 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChain.ChainID, epochNum)
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
-		require.Equal(t, numForkHeaders, len(chainInfo.LatestForks.Headers))
+		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 	})
 }

@@ -20,11 +20,7 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100)
-		for i := uint64(0); i < numHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
-		}
+		numHeaders := SimulateHeadersViaHook(ctx, hooks, czChain.ChainID)
 
 		// check if the canonical chain index is correct or not
 		for i := uint64(0); i < numHeaders; i++ {

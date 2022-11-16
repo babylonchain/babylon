@@ -20,21 +20,10 @@ func FuzzForkIndexer(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100)
-		for i := uint64(0); i < numHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
-		}
-
-		// generate a number of fork headers
-		numForkHeaders := int(datagen.RandomInt(10))
-		for i := 0; i < numForkHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, numHeaders-1)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
-		}
+		numHeaders, numForkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID)
 
 		// check if the chain info is updated or not
 		forks := zcKeeper.GetForks(ctx, czChain.ChainID, numHeaders-1)
-		require.Equal(t, numForkHeaders, len(forks.Headers))
+		require.Equal(t, numForkHeaders, uint64(len(forks.Headers)))
 	})
 }

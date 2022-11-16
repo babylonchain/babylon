@@ -20,11 +20,7 @@ func FuzzChainInfoIndexer_Canonical(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100)
-		for i := uint64(0); i < numHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
-		}
+		numHeaders := SimulateHeadersViaHook(ctx, hooks, czChain.ChainID)
 
 		// check if the chain info is updated or not
 		chainInfo := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
@@ -46,21 +42,10 @@ func FuzzChainInfoIndexer_Fork(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100)
-		for i := uint64(0); i < numHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
-		}
-
-		// generate a number of fork headers
-		numForkHeaders := int(datagen.RandomInt(10))
-		for i := 0; i < numForkHeaders; i++ {
-			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, numHeaders-1)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
-		}
+		_, numForkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID)
 
 		// check if the chain info is updated or not
 		chainInfo := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
-		require.Equal(t, numForkHeaders, len(chainInfo.LatestForks.Headers))
+		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 	})
 }
