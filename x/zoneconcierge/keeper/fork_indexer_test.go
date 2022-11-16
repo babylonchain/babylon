@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func FuzzForkIndexer(f *testing.F) {
@@ -24,30 +22,14 @@ func FuzzForkIndexer(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100)
 		for i := uint64(0); i < numHeaders; i++ {
-			header := &ibctmtypes.Header{
-				SignedHeader: &tmproto.SignedHeader{
-					Header: &tmproto.Header{
-						ChainID:        czChain.ChainID,
-						Height:         int64(i),
-						LastCommitHash: datagen.GenRandomByteArray(32),
-					},
-				},
-			}
+			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, i)
 			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
 		}
 
 		// generate a number of fork headers
 		numForkHeaders := int(datagen.RandomInt(10))
 		for i := 0; i < numForkHeaders; i++ {
-			header := &ibctmtypes.Header{
-				SignedHeader: &tmproto.SignedHeader{
-					Header: &tmproto.Header{
-						ChainID:        czChain.ChainID,
-						Height:         int64(numHeaders - 1),
-						LastCommitHash: datagen.GenRandomByteArray(32),
-					},
-				},
-			}
+			header := datagen.GenRandomIBCTMHeader(czChain.ChainID, numHeaders-1)
 			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
 		}
 
