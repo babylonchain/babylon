@@ -157,7 +157,6 @@ func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *Subm
 	// at this point we know that both submissions youngest part happens to be in
 	// the same block. To resolve the tie we need to take into account index of
 	// latest transaction of the submissions
-
 	return newSubmission.LatestTxIndex < currentBestSubmission.LatestTxIndex
 }
 

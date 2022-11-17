@@ -313,7 +313,7 @@ func CreateBlockWithTransaction(
 
 	headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(randHeader)
 
-	proof, err := btcctypes.SpvProofFromHeaderAndTransactions(headerBytes.MustMarshal(), txBytes, 1)
+	proof, err := btcctypes.SpvProofFromHeaderAndTransactions(&headerBytes, txBytes, 1)
 
 	if err != nil {
 		panic("could not calculate proof")

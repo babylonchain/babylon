@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btcchaincfg "github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -134,7 +135,7 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 
 	for i, test := range tests {
 
-		headerBytes, _ := hex.DecodeString(test.header)
+		headerBytes, _ := bbn.NewBTCHeaderBytesFromHex(test.header)
 
 		var transactionBytes [][]byte
 
@@ -158,7 +159,7 @@ func TestParsingCorrectBtcProofs(t *testing.T) {
 			opReturnTx,
 			uint32(test.opReturnTransactionIdx),
 			cProof,
-			headerBytes,
+			&headerBytes,
 			btcchaincfg.TestNet3Params.PowLimit)
 
 		if err != nil {

@@ -254,7 +254,7 @@ func ParseProof(
 	btcTransaction []byte,
 	transactionIndex uint32,
 	merkleProof []byte,
-	btcHeader []byte,
+	btcHeader *types.BTCHeaderBytes,
 	powLimit *big.Int) (*ParsedProof, error) {
 	tx, e := ParseTransaction(btcTransaction)
 
@@ -262,7 +262,7 @@ func ParseProof(
 		return nil, e
 	}
 
-	header := types.BTCHeaderBytes(btcHeader).ToBlockHeader()
+	header := btcHeader.ToBlockHeader()
 
 	e = types.ValidateBTCHeader(header, powLimit)
 
@@ -295,7 +295,11 @@ func ParseProof(
 }
 
 // TODO: tests and benchmarking on this function
-func SpvProofFromHeaderAndTransactions(headerBytes []byte, transactions [][]byte, transactionIdx uint) (*BTCSpvProof, error) {
+func SpvProofFromHeaderAndTransactions(
+	headerBytes *types.BTCHeaderBytes,
+	transactions [][]byte,
+	transactionIdx uint,
+) (*BTCSpvProof, error) {
 	proof, e := CreateProofForIdx(transactions, transactionIdx)
 
 	if e != nil {
