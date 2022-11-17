@@ -8,7 +8,7 @@ import (
 
 // GetEpochChainInfo gets the latest chain info of a given epoch for a given chain ID
 func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) (*types.ChainInfo, error) {
-	store := k.canonicalChainStore(ctx, chainID)
+	store := k.epochChainInfoStore(ctx, chainID)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	if !store.Has(epochNumberBytes) {
 		return nil, types.ErrEpochChainInfoNotFound
