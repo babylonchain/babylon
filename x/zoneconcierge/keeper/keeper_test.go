@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 )
 
@@ -32,31 +33,34 @@ func SetupTest(t *testing.T) (*ibctesting.Coordinator, *ibctesting.TestChain, *i
 	return coordinator, babylonChain, czChain, zcKeeper
 }
 
-// SimulateHeadersViaHook generates a random non-zero number of canonical headers via the hook
-func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string) uint64 {
-	// invoke the hook a random number of times to simulate a random number of blocks
-	numHeaders := datagen.RandomInt(100) + 1
+// SimulateHeadersViaHook generates a non-zero number of canonical headers via the hook
+func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string, numHeaders uint64) []*ibctmtypes.Header {
+	headers := []*ibctmtypes.Header{}
+	// invoke the hook a number of times to simulate a number of blocks
 	for i := uint64(0); i < numHeaders; i++ {
 		header := datagen.GenRandomIBCTMHeader(chainID, i)
 		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
+		headers = append(headers, header)
 	}
-	return numHeaders
+	return headers
 }
 
 // SimulateHeadersViaHook generates a random non-zero number of canonical headers and fork headers via the hook
-func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string) (uint64, uint64) {
-	// invoke the hook a random number of times to simulate a random number of blocks
-	numHeaders := datagen.RandomInt(100) + 1
+func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string, numHeaders uint64, numForkHeaders uint64) ([]*ibctmtypes.Header, []*ibctmtypes.Header) {
+	headers := []*ibctmtypes.Header{}
+	// invoke the hook a number of times to simulate a number of blocks
 	for i := uint64(0); i < numHeaders; i++ {
 		header := datagen.GenRandomIBCTMHeader(chainID, i)
 		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
+		headers = append(headers, header)
 	}
 
 	// generate a number of fork headers
-	numForkHeaders := datagen.RandomInt(10) + 1
+	forkHeaders := []*ibctmtypes.Header{}
 	for i := uint64(0); i < numForkHeaders; i++ {
 		header := datagen.GenRandomIBCTMHeader(chainID, numHeaders-1)
 		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
+		forkHeaders = append(forkHeaders, header)
 	}
-	return numHeaders, numForkHeaders
+	return headers, forkHeaders
 }

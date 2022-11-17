@@ -35,7 +35,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 		// update the latest fork in chain info
-		if err := h.k.updateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.trpToUpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	} else {
@@ -44,7 +44,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 		// update the latest canonical header in chain info
-		if err := h.k.updateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.tryToUpdateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	}
