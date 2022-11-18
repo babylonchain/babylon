@@ -458,6 +458,36 @@ func (k Keeper) clearEpochData(
 	epochDataStore.Set(epoch, k.cdc.MustMarshal(currentEpoch))
 }
 
+// checkCheckpoints is the main function checking status of all submissions
+// on btc chain as viewed through btc light client.
+// Check works roughly as follows:
+// 1. Iterate over epochs either from last finalized epoch or first epoch epoch
+// ever, as for those epochs we do not need to check status of subbmissions of parent epoch.
+//
+// 2. For each epoch check status of every submissions:
+//   - if the submission is still on the main chain
+//   - if the deepest (best) submission of older epoch happened before given submission
+//   - how deep is the submission
+//
+// 3 	Mark each submission which is not known to btc light client or is on btc light fork as to delete
+//
+// 4. In each epoch choose best submission, ie the one which is deepest on btc
+//    chain. For depth determination, only the depth of the youngest block count
+//    i.e if the submission is split between block with depth 1 and 2, then submission
+//    depth = 1. In case of a draw i.e Two or more best submissions having the same
+//    youngest block, tie is resolved by comparing tx index. Submission with lower
+//    tx index is treated as better one.
+//
+// 5. After choosing best submission, the status of epoch is checked. If best
+//    submission depth >= k deep, epoch is treated as confirmed. If depth >= w deep
+//    epoch is treated as finalized.
+//
+// 6. If the epoch became finalized, delete all submissions except best one. If the
+//		epoch is to finalized, delete all submissions which were marked as to delete
+//
+// 7. If the epoch loses all of its submissions, delete all submissions from child
+// 		epoch as then we do not have parent for those.
+
 func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 	store := prefix.NewStore(
 		ctx.KVStore(k.storeKey),
