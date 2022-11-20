@@ -11,6 +11,17 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (*types.QueryChainListResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	chainIDs := k.GetAllChainIDs(ctx)
+	resp := &types.QueryChainListResponse{ChainIds: chainIDs}
+	return resp, nil
+}
+
 func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedChainInfoRequest) (*types.QueryFinalizedChainInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
