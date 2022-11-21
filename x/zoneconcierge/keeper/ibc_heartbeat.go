@@ -1,6 +1,9 @@
 package keeper
 
 import (
+	"fmt"
+	"time"
+
 	sdkerrors "cosmossdk.io/errors"
 	metrics "github.com/armon/go-metrics"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
@@ -39,8 +42,8 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 	}
 
 	// timeout
-	curHeight := clienttypes.GetSelfHeight(ctx)
-	curHeight.RevisionHeight += 100 // TODO: parameterise timeout
+	timeoutTime := uint64(ctx.BlockHeader().Time.Add(time.Hour * 24).UnixNano()) // TODO: parameterise
+	zeroheight := clienttypes.ZeroHeight()
 
 	// construct packet
 	// note that the data is not allowed to be empty
@@ -52,15 +55,17 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 		sourceChannel,
 		destinationPort,
 		destinationChannel,
-		curHeight, // if the packet is not relayed after thit height, then the packet will be timeout
-		uint64(0), // no need to set timeout timestamp if timeout height is set
+		zeroheight,  // no need to set timeout height if timeout timestamp is set
+		timeoutTime, // if the packet is not relayed after this time, then the packet will be timeout
 	)
 
 	// send packet
 	if err := k.ics4Wrapper.SendPacket(ctx, channelCap, packet); err != nil {
-		return err
+		// Failed/timeout packet should not make the system crash
+		k.Logger(ctx).Error(fmt.Sprintf("failed to send heartbeat IBC packet to channel %v port %s: %v", destinationChannel, destinationPort, err))
+	} else {
+		k.Logger(ctx).Info(fmt.Sprintf("successfully sent heartbeat IBC packet to channel %v port %s", destinationChannel, destinationPort))
 	}
-	k.Logger(ctx).Info("successfully sent heartbeat IBC packet to channel %v port %s", destinationChannel, destinationPort)
 
 	// metrics stuff
 	labels := []metrics.Label{
