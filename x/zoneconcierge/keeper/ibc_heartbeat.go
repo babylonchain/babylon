@@ -60,6 +60,7 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 	if err := k.ics4Wrapper.SendPacket(ctx, channelCap, packet); err != nil {
 		return err
 	}
+	k.Logger(ctx).Info("successfully sent heartbeat IBC packet to channel %v port %s", destinationChannel, destinationPort)
 
 	// metrics stuff
 	labels := []metrics.Label{
