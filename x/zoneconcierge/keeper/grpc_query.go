@@ -18,6 +18,7 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 
 	ctx := sdk.UnwrapSDKContext(c)
 	chainIDs := k.GetAllChainIDs(ctx)
+	// TODO: pagination for this API
 	resp := &types.QueryChainListResponse{ChainIds: chainIDs}
 	return resp, nil
 }
