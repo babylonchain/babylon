@@ -75,9 +75,10 @@ func (im IBCModule) OnChanOpenAck(
 	_,
 	counterpartyVersion string,
 ) error {
-	if counterpartyVersion != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
-	}
+	// // TODO (Babylon): check version consistency (this requires modifying CZ code)
+	// if counterpartyVersion != types.Version {
+	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
+	// }
 	return nil
 }
 
@@ -149,11 +150,6 @@ func (im IBCModule) OnAcknowledgementPacket(
 	}
 
 	// this line is used by starport scaffolding # oracle/packet/module/ack
-
-	var modulePacketData types.ZoneconciergePacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	}
 
 	var eventType string
 

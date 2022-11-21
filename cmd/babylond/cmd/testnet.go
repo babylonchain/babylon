@@ -332,19 +332,30 @@ func InitTestnet(
 			if err != nil {
 				return err
 			}
-			addr, _, err := testutil.GenerateSaveCoinKey(kb, "test-spending-key", "", true, algo)
+			addr, secret, err := testutil.GenerateSaveCoinKey(kb, "test-spending-key", "", true, algo)
 			if err != nil {
 				_ = os.RemoveAll(outputDir)
 				return err
 			}
 
+			// save mnemonic words for this key
+			info := map[string]string{"secret": secret}
+			cliPrint, err := json.Marshal(info)
+			if err != nil {
+				return err
+			}
+			if err = writeFile(fmt.Sprintf("%v.json", "additional_key_seed"), nodeDir, cliPrint); err != nil {
+				return err
+			}
+
 			coins := sdk.Coins{
 				sdk.NewCoin("testtoken", sdk.NewInt(1000000000)),
-				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(500000000)),
+				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(1000000000000)),
 			}
 
 			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 			genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
+
 		}
 	}
 
