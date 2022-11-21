@@ -220,9 +220,6 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	}
 	genParams.StakingParams.MaxValidators = maxActiveValidators
 	genParams.StakingParams.BondDenom = genParams.NativeCoinMetadatas[0].Base
-	// Babylon should enforce this value to be 0. However Cosmos enforces it to be positive so we use the smallest value 1
-	// Instead the timing of unbonding is decided by checkpoint states
-	genParams.StakingParams.UnbondingTime = 1
 
 	genParams.MintParams = minttypes.DefaultParams()
 	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
