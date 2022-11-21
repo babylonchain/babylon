@@ -350,8 +350,7 @@ func InitTestnet(
 
 			coins := sdk.Coins{
 				sdk.NewCoin("testtoken", sdk.NewInt(1000000000)),
-				sdk.NewCoin("bbn", sdk.NewInt(1000000000000)),
-				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(500000000)),
+				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(1000000000000)),
 			}
 
 			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})

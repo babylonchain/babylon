@@ -56,7 +56,7 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 		destinationPort,
 		destinationChannel,
 		zeroheight,  // no need to set timeout height if timeout timestamp is set
-		timeoutTime, // if the packet is not relayed after this time, then the packet will be timeout
+		timeoutTime, // if the packet is not relayed after this time, then the packet will be time out
 	)
 
 	// send packet
