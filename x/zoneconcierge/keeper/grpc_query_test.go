@@ -55,6 +55,31 @@ func FuzzChainList(f *testing.F) {
 	})
 }
 
+func FuzzChainInfo(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+
+		ctx := babylonChain.GetContext()
+		hooks := zcKeeper.Hooks()
+
+		// invoke the hook a random number of times to simulate a random number of blocks
+		numHeaders := datagen.RandomInt(100) + 1
+		numForkHeaders := datagen.RandomInt(10) + 1
+		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+
+		// check if the chain info of this epoch is recorded or not
+		resp, err := zcKeeper.ChainInfo(ctx, &zctypes.QueryChainInfoRequest{ChainId: czChain.ChainID})
+		require.NoError(t, err)
+		chainInfo := resp.ChainInfo
+		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
+		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
+	})
+}
+
 func FuzzFinalizedChainInfo(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
