@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -92,7 +93,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		czChainID := string(datagen.GenRandomByteArray(10))
 
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btccKeeper)
+		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btccKeeper, epochingKeeper)
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
@@ -113,6 +115,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			Status: btcctypes.Finalized,
 		}
 		btccKeeper.EXPECT().GetEpochData(gomock.Any(), gomock.Eq(epochNum)).Return(mockEpochData).AnyTimes()
+		// mock epoching keeper
+		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epochNum)).Return(&epochingtypes.Epoch{}, nil).AnyTimes()
 
 		// check if the chain info of this epoch is recorded or not
 		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChainID})

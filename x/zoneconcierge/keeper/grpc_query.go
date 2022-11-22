@@ -66,6 +66,12 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return nil, err
 	}
 
+	// find the metadata of this epoch
+	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+	if err != nil {
+		return nil, err
+	}
+
 	// find the btc checkpoint info of this epoch
 	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
 	if ed.Status != btcctypes.Finalized {
@@ -82,6 +88,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
+		EpochInfo:          epochInfo,
 		BtcCheckpointInfo:  bestSubmissionKey,
 	}
 	return resp, nil

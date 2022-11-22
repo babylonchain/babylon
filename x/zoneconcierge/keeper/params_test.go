@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.ZoneConciergeKeeper(t, nil)
+	k, ctx := testkeeper.ZoneConciergeKeeper(t, nil, nil)
 	params := types.DefaultParams()
 
 	k.SetParams(ctx, params)
