@@ -109,3 +109,7 @@ func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability
 func (k Keeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
 	return k.channelKeeper.GetAllChannels(ctx)
 }
+
+func (k *Keeper) SetBtcCheckpointKeeper(btccKeeper types.BtcCheckpointKeeper) {
+	k.btccKeeper = btccKeeper
+}
