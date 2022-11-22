@@ -70,12 +70,12 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	// - We can do nothing, in which case some records that have been inserted after the delete might be skipped because their keys are lower than the pagionation state.
 	pageRes, err := query.Paginate(epochMsgsStore, req.Pagination, func(key, value []byte) error {
 		// unmarshal to queuedMsg
-		var queuedMsg types.QueuedMessage
-		if err := k.cdc.Unmarshal(value, &queuedMsg); err != nil {
+		var queuedMsg sdk.Msg
+		if err := k.cdc.UnmarshalInterface(value, &queuedMsg); err != nil {
 			return err
 		}
 		// append to msgs
-		msgs = append(msgs, &queuedMsg)
+		msgs = append(msgs, queuedMsg.(*types.QueuedMessage))
 		return nil
 	})
 	if err != nil {

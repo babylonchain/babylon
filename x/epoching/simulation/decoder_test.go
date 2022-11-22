@@ -2,6 +2,7 @@ package simulation_test
 
 import (
 	"fmt"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -31,6 +32,7 @@ func TestDecodeStore(t *testing.T) {
 	queuedMsg := types.QueuedMessage{
 		TxId:  sdk.Uint64ToBigEndian(333),
 		MsgId: sdk.Uint64ToBigEndian(444),
+		Msg:   &types.QueuedMessage_MsgDelegate{MsgDelegate: &stakingtypes.MsgDelegate{}},
 	}
 	valSet := types.ValidatorSet{
 		types.Validator{
@@ -39,10 +41,12 @@ func TestDecodeStore(t *testing.T) {
 		},
 	}
 
+	marshaledQueueMsg, err := cdc.MarshalInterface(&queuedMsg)
+	require.NoError(t, err)
 	kvPairs := kv.Pairs{
 		Pairs: []kv.Pair{
 			{Key: types.EpochNumberKey, Value: sdk.Uint64ToBigEndian(epochNumber)},
-			{Key: types.MsgQueueKey, Value: cdc.MustMarshal(&queuedMsg)},
+			{Key: types.MsgQueueKey, Value: marshaledQueueMsg},
 			{Key: types.ValidatorSetKey, Value: valSet.MustMarshal()},
 			{Key: types.SlashedValidatorSetKey, Value: valSet.MustMarshal()},
 			{Key: types.VotingPowerKey, Value: oneBytes},
@@ -56,7 +60,7 @@ func TestDecodeStore(t *testing.T) {
 		expectedLog string
 	}{
 		{"EpochNumber", fmt.Sprintf("%v\n%v", epochNumber, epochNumber)},
-		{"QueuedMsg", fmt.Sprintf("%v\n%v", queuedMsg, queuedMsg)},
+		{"QueuedMsg", fmt.Sprintf("%v\n%v", queuedMsg.MsgId, queuedMsg.MsgId)},
 		{"ValidatorSet", fmt.Sprintf("%v\n%v", valSet, valSet)},
 		{"SlashedValidatorSet", fmt.Sprintf("%v\n%v", valSet, valSet)},
 		{"VotingPower", fmt.Sprintf("%v\n%v", sdk.NewInt(1), sdk.NewInt(1))},
