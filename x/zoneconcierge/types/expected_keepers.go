@@ -2,6 +2,7 @@ package types
 
 import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -63,4 +64,8 @@ type ScopedKeeper interface {
 
 type BtcCheckpointKeeper interface {
 	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
+}
+
+type EpochingKeeper interface {
+	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 }

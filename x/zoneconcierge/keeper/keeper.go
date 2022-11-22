@@ -19,13 +19,14 @@ type (
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
-		ics4Wrapper   types.ICS4Wrapper
-		channelKeeper types.ChannelKeeper
-		portKeeper    types.PortKeeper
-		authKeeper    types.AccountKeeper
-		bankKeeper    types.BankKeeper
-		btccKeeper    types.BtcCheckpointKeeper
-		scopedKeeper  types.ScopedKeeper
+		ics4Wrapper    types.ICS4Wrapper
+		channelKeeper  types.ChannelKeeper
+		portKeeper     types.PortKeeper
+		authKeeper     types.AccountKeeper
+		bankKeeper     types.BankKeeper
+		btccKeeper     types.BtcCheckpointKeeper
+		epochingKeeper types.EpochingKeeper
+		scopedKeeper   types.ScopedKeeper
 	}
 )
 
@@ -40,6 +41,7 @@ func NewKeeper(
 	authKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
+	epochingKeeper types.EpochingKeeper,
 	scopedKeeper types.ScopedKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -48,17 +50,18 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		paramstore:    ps,
-		ics4Wrapper:   ics4Wrapper,
-		channelKeeper: channelKeeper,
-		portKeeper:    portKeeper,
-		authKeeper:    authKeeper,
-		bankKeeper:    bankKeeper,
-		btccKeeper:    btccKeeper,
-		scopedKeeper:  scopedKeeper,
+		cdc:            cdc,
+		storeKey:       storeKey,
+		memKey:         memKey,
+		paramstore:     ps,
+		ics4Wrapper:    ics4Wrapper,
+		channelKeeper:  channelKeeper,
+		portKeeper:     portKeeper,
+		authKeeper:     authKeeper,
+		bankKeeper:     bankKeeper,
+		btccKeeper:     btccKeeper,
+		epochingKeeper: epochingKeeper,
+		scopedKeeper:   scopedKeeper,
 	}
 }
 

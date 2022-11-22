@@ -5,7 +5,6 @@ import (
 
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -49,7 +48,7 @@ func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabil
 	return &capabilitytypes.Capability{}
 }
 
-func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -82,6 +81,7 @@ func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper) (*k
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		btccKeeper,
+		epochingKeeper,
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 	)
 

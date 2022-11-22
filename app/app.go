@@ -447,6 +447,7 @@ func NewBabylonApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		btcCheckpointKeeper,
+		epochingKeeper,
 		scopedZoneConciergeKeeper,
 	)
 
