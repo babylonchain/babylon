@@ -65,7 +65,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		czChainID := string(datagen.GenRandomByteArray(10))
+		czChainIDLen := datagen.RandomInt(50) + 1
+		czChainID := string(datagen.GenRandomByteArray(czChainIDLen))
 
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
