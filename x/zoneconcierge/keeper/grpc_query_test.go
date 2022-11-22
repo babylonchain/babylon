@@ -71,7 +71,7 @@ func FuzzChainInfo(f *testing.F) {
 		numForkHeaders := datagen.RandomInt(10) + 1
 		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
 
-		// check if the chain info of this epoch is recorded or not
+		// check if the chain info of is recorded or not
 		resp, err := zcKeeper.ChainInfo(ctx, &zctypes.QueryChainInfoRequest{ChainId: czChain.ChainID})
 		require.NoError(t, err)
 		chainInfo := resp.ChainInfo
