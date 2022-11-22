@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -20,6 +22,24 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 	chainIDs := k.GetAllChainIDs(ctx)
 	// TODO: pagination for this API
 	resp := &types.QueryChainListResponse{ChainIds: chainIDs}
+	return resp, nil
+}
+
+// ChainInfo returns the latest info of a chain with given ID
+func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (*types.QueryChainInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// find the chain info of this epoch
+	chainInfo := k.GetChainInfo(ctx, req.ChainId)
+	resp := &types.QueryChainInfoResponse{ChainInfo: chainInfo}
 	return resp, nil
 }
 
@@ -46,10 +66,30 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return nil, err
 	}
 
+	// find the metadata of this epoch
+	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+	if err != nil {
+		return nil, err
+	}
+
+	// find the btc checkpoint info of this epoch
+	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
+	if ed.Status != btcctypes.Finalized {
+		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
+		panic(err)
+	}
+	if len(ed.Key) == 0 {
+		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
+		panic(err)
+	}
+	bestSubmissionKey := ed.Key[0]
+
 	// TODO: construct inclusion proofs
 
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
+		EpochInfo:          epochInfo,
+		BtcCheckpointInfo:  bestSubmissionKey,
 	}
 	return resp, nil
 }

@@ -416,6 +416,8 @@ func NewBabylonApp(
 		&ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
+		app.BtcCheckpointKeeper,
+		epochingKeeper,
 		scopedZoneConciergeKeeper,
 	)
 
@@ -494,6 +496,8 @@ func NewBabylonApp(
 			&powLimit,
 			btcConfig.CheckpointTag(),
 		)
+
+	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
 
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
