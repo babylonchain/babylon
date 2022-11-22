@@ -1,10 +1,10 @@
 package types
 
 import (
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-
 	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
@@ -59,4 +59,8 @@ type ScopedKeeper interface {
 	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 	LookupModules(ctx sdk.Context, name string) ([]string, *capabilitytypes.Capability, error)
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
+}
+
+type BtcCheckpointKeeper interface {
+	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
 }

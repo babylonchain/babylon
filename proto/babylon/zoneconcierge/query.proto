@@ -7,6 +7,7 @@ import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/tx.proto";
+import "babylon/btccheckpoint/btccheckpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/params.proto";
 import "babylon/zoneconcierge/zoneconcierge.proto";
@@ -55,12 +56,14 @@ message QueryFinalizedChainInfoResponse {
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
   // epoch_info is the metadata of the last BTC-finalised epoch
   babylon.epoching.v1.Epoch epoch_info = 2;
+  // btc_checkpoint_info is the metadata of the checkpoint of the last BTC-finalised epoch
+  babylon.btccheckpoint.v1.SubmissionKey btc_checkpoint_info = 3;
   // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
-  tendermint.types.TxProof proof_tx_in_block = 3;
+  tendermint.types.TxProof proof_tx_in_block = 4;
   // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
-  tendermint.crypto.ProofOps proof_block_in_epoch = 4;
+  tendermint.crypto.ProofOps proof_block_in_epoch = 5;
   // proof_epoch_ended is the proof that the epoch metadata is included in the Babylon ledger
-  tendermint.crypto.ProofOps proof_epoch_ended = 5;
+  tendermint.crypto.ProofOps proof_epoch_ended = 6;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
-  babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 6;
+  babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 7;
 }

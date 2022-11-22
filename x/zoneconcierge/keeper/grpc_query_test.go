@@ -6,8 +6,10 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -39,7 +41,7 @@ func FuzzChainList(f *testing.F) {
 		}
 
 		// make query to get actual chain IDs
-		resp, err := zcKeeper.ChainList(ctx, &types.QueryChainListRequest{})
+		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{})
 		require.NoError(t, err)
 		actualChainIDs := resp.ChainIds
 
@@ -59,23 +61,36 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		ctx := babylonChain.GetContext()
+		czChainID := string(datagen.GenRandomByteArray(10))
+
+		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btccKeeper)
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100) + 1
 		numForkHeaders := datagen.RandomInt(10) + 1
-		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+		SimulateHeadersAndForksViaHook(ctx, hooks, czChainID, numHeaders, numForkHeaders)
 
 		// simulate the scenario that a random epoch has ended and finalised
 		epochNum := datagen.RandomInt(10)
 		hooks.AfterEpochEnds(ctx, epochNum)
 		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
 
+		// mock btcckeeper
+		mockEpochData := &btcctypes.EpochData{
+			Key: []*btcctypes.SubmissionKey{
+				{Key: []*btcctypes.TransactionKey{}},
+			},
+			Status: btcctypes.Finalized,
+		}
+		btccKeeper.EXPECT().GetEpochData(gomock.Any(), gomock.Eq(epochNum)).Return(mockEpochData).AnyTimes()
+
 		// check if the chain info of this epoch is recorded or not
-		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChain.ChainID})
+		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChainID})
 		require.NoError(t, err)
 		chainInfo := resp.FinalizedChainInfo
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)

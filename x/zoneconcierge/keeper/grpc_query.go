@@ -2,7 +2,9 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -46,10 +48,23 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return nil, err
 	}
 
+	// find the btc checkpoint info of this epoch
+	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
+	if ed.Status != btcctypes.Finalized {
+		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
+		panic(err)
+	}
+	if len(ed.Key) == 0 {
+		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
+		panic(err)
+	}
+	bestSubmissionKey := ed.Key[0]
+
 	// TODO: construct inclusion proofs
 
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
+		BtcCheckpointInfo:  bestSubmissionKey,
 	}
 	return resp, nil
 }

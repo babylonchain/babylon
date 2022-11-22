@@ -24,6 +24,7 @@ type (
 		portKeeper    types.PortKeeper
 		authKeeper    types.AccountKeeper
 		bankKeeper    types.BankKeeper
+		btccKeeper    types.BtcCheckpointKeeper
 		scopedKeeper  types.ScopedKeeper
 	}
 )
@@ -38,6 +39,7 @@ func NewKeeper(
 	portKeeper types.PortKeeper,
 	authKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
 	scopedKeeper types.ScopedKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -55,6 +57,7 @@ func NewKeeper(
 		portKeeper:    portKeeper,
 		authKeeper:    authKeeper,
 		bankKeeper:    bankKeeper,
+		btccKeeper:    btccKeeper,
 		scopedKeeper:  scopedKeeper,
 	}
 }
