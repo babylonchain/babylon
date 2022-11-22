@@ -62,18 +62,24 @@ func FuzzChainInfo(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		ctx := babylonChain.GetContext()
+		czChainIDLen := datagen.RandomInt(50) + 1
+		czChainID := string(datagen.GenRandomByteArray(czChainIDLen))
+
+		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
+		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btccKeeper, epochingKeeper)
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100) + 1
 		numForkHeaders := datagen.RandomInt(10) + 1
-		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+		SimulateHeadersAndForksViaHook(ctx, hooks, czChainID, numHeaders, numForkHeaders)
 
 		// check if the chain info of is recorded or not
-		resp, err := zcKeeper.ChainInfo(ctx, &zctypes.QueryChainInfoRequest{ChainId: czChain.ChainID})
+		resp, err := zcKeeper.ChainInfo(ctx, &zctypes.QueryChainInfoRequest{ChainId: czChainID})
 		require.NoError(t, err)
 		chainInfo := resp.ChainInfo
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
