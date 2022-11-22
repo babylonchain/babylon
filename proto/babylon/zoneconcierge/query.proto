@@ -20,9 +20,15 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/params";
   }
+  // ChainList queries the list of chains that checkpoint to Babylon
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
     option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/chains";
   }
+  // ChainInfo queries the latest info of a chain in Babylon's view
+  rpc ChainInfo(QueryChainInfoRequest) returns (QueryChainInfoResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/chain_info/{chain_id}";
+  }
+  // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
   rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest) returns (QueryFinalizedChainInfoResponse) {
     option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/finalized_chain_info/{chain_id}";
   }
@@ -43,6 +49,17 @@ message QueryChainListRequest {}
 // QueryChainListResponse is response type for the Query/ChainList RPC method
 message QueryChainListResponse {
   repeated string chain_ids = 1;
+}
+
+// QueryChainInfoRequest is request type for the Query/ChainInfo RPC method.
+message QueryChainInfoRequest {
+  string chain_id = 1;
+}
+
+// QueryChainInfoResponse is response type for the Query/ChainInfo RPC method.
+message QueryChainInfoResponse {
+  // chain_info is the info of the CZ
+  babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
 }
 
 // QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
