@@ -412,7 +412,6 @@ func NewBabylonApp(
 		keys[zctypes.MemStoreKey],
 		app.GetSubspace(zctypes.ModuleName),
 		ibcKeeper.ChannelKeeper,
-		ibcKeeper.ChannelKeeper,
 		&ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,

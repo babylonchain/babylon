@@ -30,6 +30,7 @@ require (
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
+	github.com/cosmos/gogoproto v1.4.2
 	github.com/cosmos/ibc-go/v6 v6.0.0-00010101000000-000000000000
 	github.com/golang/mock v1.6.0
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
