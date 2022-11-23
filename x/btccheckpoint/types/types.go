@@ -17,6 +17,20 @@ type RawCheckpointSubmission struct {
 	checkpointData []byte
 }
 
+// SubmissionBtcInfo encapsualte important information about submission posistion
+// on btc ledger
+type SubmissionBtcInfo struct {
+	SubmissionKey SubmissionKey
+	// Depth of the oldest btc header of the submission
+	OldestBlockDepth uint64
+
+	// Depth of the youngest btc header of the submission
+	YoungestBlockDepth uint64
+
+	// Index of the latest transaction in youngest submission block
+	LatestTxIndex uint32
+}
+
 func NewRawCheckpointSubmission(
 	a sdk.AccAddress,
 	p1 ParsedProof,
@@ -101,7 +115,7 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
 	return EpochData{
 		Key:           []*SubmissionKey{},
-		Status:        Signed,
+		Status:        Submitted,
 		RawCheckpoint: rawCheckpointBytes,
 	}
 }
@@ -109,4 +123,31 @@ func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
 func (s *EpochData) AppendKey(k SubmissionKey) {
 	key := &k
 	s.Key = append(s.Key, key)
+}
+
+// HappenedAfter returns true if `this` submission happened after `that` submission
+func (submission *SubmissionBtcInfo) HappenedAfter(parentEpochSubmission *SubmissionBtcInfo) bool {
+	return submission.OldestBlockDepth < parentEpochSubmission.YoungestBlockDepth
+}
+
+// SubmissionDepth return depth of the submission. Due to the fact that submissions
+// are splitted between several btc blocks, in Babylon subbmission depth is the depth
+// of the youngest btc block
+func (submission *SubmissionBtcInfo) SubmissionDepth() uint64 {
+	return submission.YoungestBlockDepth
+}
+
+func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *SubmissionBtcInfo) bool {
+	if newSubmission.SubmissionDepth() > currentBestSubmission.SubmissionDepth() {
+		return true
+	}
+
+	if newSubmission.SubmissionDepth() < currentBestSubmission.SubmissionDepth() {
+		return false
+	}
+
+	// at this point we know that both submissions youngest part happens to be in
+	// the same block. To resolve the tie we need to take into account index of
+	// latest transaction of the submissions
+	return newSubmission.LatestTxIndex < currentBestSubmission.LatestTxIndex
 }
