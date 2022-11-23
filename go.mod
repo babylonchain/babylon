@@ -174,7 +174,7 @@ replace (
 
 	// slay the dragonberry
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
-	github.com/cosmos/ibc-go/v6 => github.com/babylonchain/ibc-go/v6 v6.0.0-20221123185715-d7ac7a2a1ead
+	github.com/cosmos/ibc-go/v6 => github.com/babylonchain/ibc-go/v6 v6.0.0-20221123202447-bc796c944c0f
 
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409
