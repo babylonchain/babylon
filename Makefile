@@ -45,7 +45,7 @@ ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
 endif
 
 ifeq (secp,$(findstring secp,$(BABYLON_BUILD_OPTIONS)))
-  build_tags += libsecp256k1_sdk
+  build_tags += libsecp256k1_sdk,pebbledb
 endif
 
 whitespace :=
@@ -56,10 +56,12 @@ build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 # process linker flags
 
 ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=babylon \
-		  -X github.com/cosmos/cosmos-sdk/version.AppName=babylond \
-		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-		  -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
+	  		-X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb \
+	  		-X github.com/tendermint/tm-db.ForceSync=1 \
+	  		-X github.com/cosmos/cosmos-sdk/version.AppName=babylond \
+	  		-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+	  		-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+	  		-X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
 # DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(BABYLON_BUILD_OPTIONS)))
