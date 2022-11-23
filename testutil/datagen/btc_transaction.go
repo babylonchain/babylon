@@ -9,6 +9,8 @@ import (
 	"runtime"
 	"time"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+
 	"github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -18,6 +20,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcutil"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var (
@@ -29,6 +32,21 @@ var (
 
 	lowFee = btcutil.Amount(1)
 )
+
+type testCheckpointData struct {
+	epoch            uint64
+	lastCommitHash   []byte
+	bitmap           []byte
+	blsSig           []byte
+	submitterAddress []byte
+}
+
+type TestRawCheckpointData struct {
+	Epoch            uint64
+	FirstPart        []byte
+	SecondPart       []byte
+	ExpectedOpReturn []byte
+}
 
 // standardCoinbaseScript returns a standard script suitable for use as the
 // signature script of the coinbase transaction of a new block.  In particular,
@@ -389,4 +407,149 @@ func GenRandomBabylonTx() *wire.MsgTx {
 	txs, _ := GenRandomBabylonTxPair()
 	idx := rand.Intn(2)
 	return txs[idx]
+}
+
+func BlockCreationResultToProofs(inputs []*BlockCreationResult) []*btcctypes.BTCSpvProof {
+	var spvs []*btcctypes.BTCSpvProof
+
+	for _, input := range inputs {
+		headerBytes, err := bbn.NewBTCHeaderBytesFromBytes(input.HeaderBytes)
+
+		if err != nil {
+			panic("created BlockCreationResult should always contain valid block ")
+		}
+
+		var txBytes [][]byte
+
+		for _, t := range input.Transactions {
+			tbytes, err := hex.DecodeString(t)
+
+			if err != nil {
+				panic("Inputs should contain valid hex encoded transactions")
+			}
+
+			txBytes = append(txBytes, tbytes)
+		}
+
+		spv, err := btcctypes.SpvProofFromHeaderAndTransactions(&headerBytes, txBytes, uint(input.BbnTxIndex))
+
+		if err != nil {
+			panic("Inputs should contain valid spv hex encoded data")
+		}
+
+		spvs = append(spvs, spv)
+	}
+
+	return spvs
+}
+
+func GenerateMessageWithRandomSubmitter(blockResults []*BlockCreationResult) *btcctypes.MsgInsertBTCSpvProof {
+	proofs := BlockCreationResultToProofs(blockResults)
+
+	pk, _ := NewPV().GetPubKey()
+
+	address := sdk.AccAddress(pk.Address().Bytes())
+
+	msg := btcctypes.MsgInsertBTCSpvProof{
+		Proofs:    proofs,
+		Submitter: address.String(),
+	}
+
+	return &msg
+}
+
+func getRandomCheckpointDataForEpoch(e uint64) testCheckpointData {
+	return testCheckpointData{
+		epoch:            e,
+		lastCommitHash:   GenRandomByteArray(txformat.LastCommitHashLength),
+		bitmap:           GenRandomByteArray(txformat.BitMapLength),
+		blsSig:           GenRandomByteArray(txformat.BlsSigLength),
+		submitterAddress: GenRandomByteArray(txformat.AddressLength),
+	}
+}
+
+// both f and s must be parts retrived from txformat.Encode
+func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
+	firstPartNoHeader, err := txformat.GetCheckpointData(
+		tag,
+		txformat.CurrentVersion,
+		0,
+		f,
+	)
+
+	if err != nil {
+		panic("ExpectedOpReturn provided first part should be valid checkpoint data")
+	}
+
+	secondPartNoHeader, err := txformat.GetCheckpointData(
+		tag,
+		txformat.CurrentVersion,
+		1,
+		s,
+	)
+
+	if err != nil {
+		panic("ExpectedOpReturn provided second part should be valid checkpoint data")
+	}
+
+	connected, err := txformat.ConnectParts(txformat.CurrentVersion, firstPartNoHeader, secondPartNoHeader)
+
+	if err != nil {
+		panic("ExpectedOpReturn parts should be connected")
+	}
+
+	return connected
+}
+
+func RandomRawCheckpointDataForEpoch(e uint64) *TestRawCheckpointData {
+	checkpointData := getRandomCheckpointDataForEpoch(e)
+	tag := txformat.MainTag(0)
+
+	rawBTCCkpt := &txformat.RawBtcCheckpoint{
+		Epoch:            checkpointData.epoch,
+		LastCommitHash:   checkpointData.lastCommitHash,
+		BitMap:           checkpointData.bitmap,
+		SubmitterAddress: checkpointData.submitterAddress,
+		BlsSig:           checkpointData.blsSig,
+	}
+	data1, data2 := txformat.MustEncodeCheckpointData(
+		tag,
+		txformat.CurrentVersion,
+		rawBTCCkpt,
+	)
+
+	opReturn := getExpectedOpReturn(tag, data1, data2)
+
+	return &TestRawCheckpointData{
+		Epoch:            e,
+		FirstPart:        data1,
+		SecondPart:       data2,
+		ExpectedOpReturn: opReturn,
+	}
+}
+
+// test helper to generate random number int in range, min and max must be non-negative
+func numInRange(min int, max int) int {
+	if min < 0 || max < 0 || min >= max {
+		panic("min and max maust be positve numbers. min must be smaller than max")
+	}
+
+	return rand.Intn(max-min) + min
+}
+
+func GenerateMessageWithRandomSubmitterForEpoch(epoch uint64) *btcctypes.MsgInsertBTCSpvProof {
+	numTransactions := 100
+	tx1 := numInRange(1, 99)
+
+	tx2 := numInRange(1, 99)
+	// in those tests epoch is not important
+	raw := RandomRawCheckpointDataForEpoch(epoch)
+
+	blck1 := CreateBlock(0, uint32(numTransactions), uint32(tx1), raw.FirstPart)
+
+	blck2 := CreateBlock(0, uint32(numTransactions), uint32(tx2), raw.SecondPart)
+
+	msg := GenerateMessageWithRandomSubmitter([]*BlockCreationResult{blck1, blck2})
+
+	return msg
 }

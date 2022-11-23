@@ -30,27 +30,15 @@ type (
 
 	submissionBtcError string
 
-	SubmissionBtcInfo struct {
-		SubmissionKey types.SubmissionKey
-		// Depth of the oldest btc header of the submission
-		OldestBlockDepth uint64
-
-		// Depth of the youngest btc header of the submission
-		YoungestBlockDepth uint64
-
-		// Index of the latest transaction in youngest submission block
-		LatestTxIndex uint32
-	}
-
-	EpochChangesSummary struct {
+	epochChangesSummary struct {
 		SubmissionsToDelete []*types.SubmissionKey
 		SubmissionsToKeep   []*types.SubmissionKey
-		EpochBestSubmission *SubmissionBtcInfo
+		EpochBestSubmission *types.SubmissionBtcInfo
 		BestSubmissionIdx   int
 	}
 
-	EpochInfo struct {
-		bestSubmission *SubmissionBtcInfo
+	epochInfo struct {
+		bestSubmission *types.SubmissionBtcInfo
 	}
 )
 
@@ -133,34 +121,7 @@ func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes)
 	return uint64(blockDepth), nil
 }
 
-// HappenedAfter returns true if `this` submission happened after `that` submission
-func (submission *SubmissionBtcInfo) HappenedAfter(parentEpochSubmission *SubmissionBtcInfo) bool {
-	return submission.OldestBlockDepth < parentEpochSubmission.YoungestBlockDepth
-}
-
-// SubmissionDepth return depth of the submission. Due to the fact that submissions
-// are splitted between several btc blocks, in Babylon subbmission depth is the depth
-// of the youngest btc block
-func (submission *SubmissionBtcInfo) SubmissionDepth() uint64 {
-	return submission.YoungestBlockDepth
-}
-
-func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *SubmissionBtcInfo) bool {
-	if newSubmission.SubmissionDepth() > currentBestSubmission.SubmissionDepth() {
-		return true
-	}
-
-	if newSubmission.SubmissionDepth() < currentBestSubmission.SubmissionDepth() {
-		return false
-	}
-
-	// at this point we know that both submissions youngest part happens to be in
-	// the same block. To resolve the tie we need to take into account index of
-	// latest transaction of the submissions
-	return newSubmission.LatestTxIndex < currentBestSubmission.LatestTxIndex
-}
-
-func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *SubmissionBtcInfo) types.BtcStatus {
+func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *types.SubmissionBtcInfo) types.BtcStatus {
 	subDepth := info.SubmissionDepth()
 	if subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
 		return types.Finalized
@@ -171,7 +132,7 @@ func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *SubmissionBtcInfo) 
 	}
 }
 
-func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*SubmissionBtcInfo, error) {
+func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
 
 	var lowest uint64 = math.MaxUint64
 	var highest uint64 = uint64(0)
@@ -196,7 +157,7 @@ func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*
 		}
 	}
 
-	return &SubmissionBtcInfo{
+	return &types.SubmissionBtcInfo{
 		SubmissionKey:      sk,
 		OldestBlockDepth:   highest,
 		YoungestBlockDepth: lowest,
@@ -233,7 +194,7 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 func (k Keeper) checkAncestors(
 	ctx sdk.Context,
 	submisionEpoch uint64,
-	newSubmissionInfo *SubmissionBtcInfo,
+	newSubmissionInfo *types.SubmissionBtcInfo,
 ) error {
 
 	if submisionEpoch <= 1 {
@@ -389,12 +350,12 @@ func (k Keeper) setLastFinalizedEpochNumber(ctx sdk.Context, epoch uint64) {
 
 func (k Keeper) getEpochChanges(
 	ctx sdk.Context,
-	parentEpochBestSubmission *SubmissionBtcInfo,
-	ed *types.EpochData) *EpochChangesSummary {
+	parentEpochBestSubmission *types.SubmissionBtcInfo,
+	ed *types.EpochData) *epochChangesSummary {
 
 	var submissionsToKeep []*types.SubmissionKey
 	var submissionsToDelete []*types.SubmissionKey
-	var currentEpochBestSubmission *SubmissionBtcInfo
+	var currentEpochBestSubmission *types.SubmissionBtcInfo
 	var bestSubmissionIdx int
 
 	for i, sk := range ed.Key {
@@ -437,7 +398,7 @@ func (k Keeper) getEpochChanges(
 		}
 	}
 
-	return &EpochChangesSummary{
+	return &epochChangesSummary{
 		SubmissionsToDelete: submissionsToDelete,
 		SubmissionsToKeep:   submissionsToKeep,
 		EpochBestSubmission: currentEpochBestSubmission,
@@ -507,7 +468,7 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 	it := store.Iterator(startingEpoch, nil)
 	defer it.Close()
 
-	var parentEpochInfo *EpochInfo
+	var parentEpochInfo *epochInfo
 
 	for ; it.Valid(); it.Next() {
 		var currentEpoch types.EpochData
@@ -533,7 +494,7 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 				panic("Finalized epoch submission must be on main chain")
 			}
 
-			parentEpochInfo = &EpochInfo{
+			parentEpochInfo = &epochInfo{
 				bestSubmission: subInfo,
 			}
 
@@ -552,11 +513,11 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 			k.checkpointingKeeper.SetCheckpointForgotten(ctx, epoch)
 			// set parent epoch with empty best submission, so child epoch will also
 			// get clearead
-			parentEpochInfo = &EpochInfo{}
+			parentEpochInfo = &epochInfo{}
 			continue
 		}
 
-		var epochChanges *EpochChangesSummary
+		var epochChanges *epochChangesSummary
 		if parentEpochInfo == nil {
 			// do not have parent epoch info, so this is first epoch, and we do not need
 			// to validate ancestry
@@ -572,7 +533,7 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 			k.checkpointingKeeper.SetCheckpointForgotten(ctx, epoch)
 			// set parent epoch with empty best submission, so child epoch will also
 			// get clearead
-			parentEpochInfo = &EpochInfo{}
+			parentEpochInfo = &epochInfo{}
 			continue
 		}
 
@@ -609,7 +570,7 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 			currentEpoch.Key = epochChanges.SubmissionsToKeep
 		}
 
-		parentEpochInfo = &EpochInfo{bestSubmission: epochChanges.EpochBestSubmission}
+		parentEpochInfo = &epochInfo{bestSubmission: epochChanges.EpochBestSubmission}
 		// save epoch with all applied changes
 		store.Set(it.Key(), k.cdc.MustMarshal(&currentEpoch))
 	}
