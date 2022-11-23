@@ -7,8 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
-	host "github.com/cosmos/ibc-go/v6/modules/core/24-host"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	"github.com/tendermint/tendermint/libs/log"
 )
 

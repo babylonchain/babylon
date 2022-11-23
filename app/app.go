@@ -109,14 +109,14 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
-	transfer "github.com/cosmos/ibc-go/v6/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v6/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v6/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v6/modules/core"
-	ibcclientkeeper "github.com/cosmos/ibc-go/v6/modules/core/02-client/keeper"
-	porttypes "github.com/cosmos/ibc-go/v6/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v6/modules/core/24-host" // ibc module puts types under `ibchost` rather than `ibctypes`
-	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
+	transfer "github.com/cosmos/ibc-go/v5/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v5/modules/core"
+	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
+	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
+	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host" // ibc module puts types under `ibchost` rather than `ibctypes`
+	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
 )
 
 const (

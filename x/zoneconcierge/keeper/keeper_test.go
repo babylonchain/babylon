@@ -8,8 +8,8 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v6/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 )
 
 // SetupTest creates a coordinator with 2 test chains, and a ZoneConcierge keeper.

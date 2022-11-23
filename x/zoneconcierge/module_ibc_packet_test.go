@@ -6,8 +6,8 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
-	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v6/testing"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 )
 
 // SetupTest creates a coordinator with 2 test chains.

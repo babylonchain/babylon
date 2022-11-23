@@ -7,7 +7,7 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
