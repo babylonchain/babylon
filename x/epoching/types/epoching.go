@@ -124,25 +124,25 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 }
 
 func (qm QueuedMessage) GetSigners() []sdk.AccAddress {
-	return qm.WithType().GetSigners()
+	return qm.UnwrapToSdkMsg().GetSigners()
 }
 
 func (qm QueuedMessage) ValidateBasic() error {
-	return qm.WithType().ValidateBasic()
+	return qm.UnwrapToSdkMsg().ValidateBasic()
 
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (qm QueuedMessage) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	var pubKey cryptotypes.PubKey
-	msgWithType, ok := qm.WithType().(*stakingtypes.MsgCreateValidator)
+	msgWithType, ok := qm.UnwrapToSdkMsg().(*stakingtypes.MsgCreateValidator)
 	if !ok {
 		return nil
 	}
 	return unpacker.UnpackAny(msgWithType.Pubkey, &pubKey)
 }
 
-func (qm *QueuedMessage) WithType() sdk.Msg {
+func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 	var unwrappedMsgWithType sdk.Msg
 	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := qm.Msg.(type) {

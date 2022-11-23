@@ -5,6 +5,7 @@ import (
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
@@ -23,10 +24,7 @@ import (
 // the epoching module, and delivered to the staking module
 // at epoch ends for execution
 func FuzzWrappedCreateValidator(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
+	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)

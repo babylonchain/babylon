@@ -84,7 +84,7 @@ func TestMsgDecode(t *testing.T) {
 	require.NoError(t, err)
 	err = cdc.UnmarshalInterface(qmsgSer, &qmsgUnmarshaled)
 	qmsg2, ok := qmsgUnmarshaled.(*types.QueuedMessage)
-	msgcreateval2 := qmsg2.WithType().(*stakingtypes.MsgCreateValidator)
+	msgcreateval2 := qmsg2.UnwrapToSdkMsg().(*stakingtypes.MsgCreateValidator)
 	require.NoError(t, err)
 	require.True(t, ok)
 	require.Equal(t, qmsg.MsgId, qmsg2.MsgId)

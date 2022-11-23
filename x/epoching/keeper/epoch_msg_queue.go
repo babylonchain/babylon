@@ -82,11 +82,15 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context, epochNumber uint64) []*types.Queue
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		queuedMsgBytes := iterator.Value()
-		var queuedMsg sdk.Msg
-		if err := k.cdc.UnmarshalInterface(queuedMsgBytes, &queuedMsg); err != nil {
+		var sdkMsg sdk.Msg
+		if err := k.cdc.UnmarshalInterface(queuedMsgBytes, &sdkMsg); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
-		queuedMsgs = append(queuedMsgs, queuedMsg.(*types.QueuedMessage))
+		queuedMsg, ok := sdkMsg.(*types.QueuedMessage)
+		if !ok {
+			panic("invalid queued message")
+		}
+		queuedMsgs = append(queuedMsgs, queuedMsg)
 	}
 
 	return queuedMsgs
@@ -104,7 +108,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		unwrappedMsgWithType sdk.Msg
 		err                  error
 	)
-	unwrappedMsgWithType = msg.WithType()
+	unwrappedMsgWithType = msg.UnwrapToSdkMsg()
 
 	// failed to decode validator address
 	if err != nil {

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,12 +71,16 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 	// - We can do nothing, in which case some records that have been inserted after the delete might be skipped because their keys are lower than the pagionation state.
 	pageRes, err := query.Paginate(epochMsgsStore, req.Pagination, func(key, value []byte) error {
 		// unmarshal to queuedMsg
-		var queuedMsg sdk.Msg
-		if err := k.cdc.UnmarshalInterface(value, &queuedMsg); err != nil {
+		var sdkMsg sdk.Msg
+		if err := k.cdc.UnmarshalInterface(value, &sdkMsg); err != nil {
 			return err
 		}
+		queuedMsg, ok := sdkMsg.(*types.QueuedMessage)
+		if !ok {
+			return errors.New("invalid queue message")
+		}
 		// append to msgs
-		msgs = append(msgs, queuedMsg.(*types.QueuedMessage))
+		msgs = append(msgs, queuedMsg)
 		return nil
 	})
 	if err != nil {
