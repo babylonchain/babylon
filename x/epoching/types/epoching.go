@@ -1,6 +1,10 @@
 package types
 
 import (
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -76,27 +80,34 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 	var qmsg isQueuedMessage_Msg
 	var msgBytes []byte
 	var err error
-	switch msg := msg.(type) {
+	switch msgWithType := msg.(type) {
 	case *MsgWrappedDelegate:
-		if msgBytes, err = msg.Msg.Marshal(); err != nil {
+		if msgBytes, err = msgWithType.Msg.Marshal(); err != nil {
 			return QueuedMessage{}, err
 		}
 		qmsg = &QueuedMessage_MsgDelegate{
-			MsgDelegate: msg.Msg,
+			MsgDelegate: msgWithType.Msg,
 		}
 	case *MsgWrappedBeginRedelegate:
-		if msgBytes, err = msg.Msg.Marshal(); err != nil {
+		if msgBytes, err = msgWithType.Msg.Marshal(); err != nil {
 			return QueuedMessage{}, err
 		}
 		qmsg = &QueuedMessage_MsgBeginRedelegate{
-			MsgBeginRedelegate: msg.Msg,
+			MsgBeginRedelegate: msgWithType.Msg,
 		}
 	case *MsgWrappedUndelegate:
-		if msgBytes, err = msg.Msg.Marshal(); err != nil {
+		if msgBytes, err = msgWithType.Msg.Marshal(); err != nil {
 			return QueuedMessage{}, err
 		}
 		qmsg = &QueuedMessage_MsgUndelegate{
-			MsgUndelegate: msg.Msg,
+			MsgUndelegate: msgWithType.Msg,
+		}
+	case *stakingtypes.MsgCreateValidator:
+		if msgBytes, err = msgWithType.Marshal(); err != nil {
+			return QueuedMessage{}, err
+		}
+		qmsg = &QueuedMessage_MsgCreateValidator{
+			MsgCreateValidator: msgWithType,
 		}
 	default:
 		return QueuedMessage{}, ErrUnwrappedMsgType
@@ -110,4 +121,41 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 		Msg:         qmsg,
 	}
 	return queuedMsg, nil
+}
+
+func (qm QueuedMessage) GetSigners() []sdk.AccAddress {
+	return qm.UnwrapToSdkMsg().GetSigners()
+}
+
+func (qm QueuedMessage) ValidateBasic() error {
+	return qm.UnwrapToSdkMsg().ValidateBasic()
+
+}
+
+// UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+func (qm QueuedMessage) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
+	var pubKey cryptotypes.PubKey
+	msgWithType, ok := qm.UnwrapToSdkMsg().(*stakingtypes.MsgCreateValidator)
+	if !ok {
+		return nil
+	}
+	return unpacker.UnpackAny(msgWithType.Pubkey, &pubKey)
+}
+
+func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
+	var unwrappedMsgWithType sdk.Msg
+	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+	switch unwrappedMsg := qm.Msg.(type) {
+	case *QueuedMessage_MsgCreateValidator:
+		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
+	case *QueuedMessage_MsgDelegate:
+		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
+	case *QueuedMessage_MsgUndelegate:
+		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
+	case *QueuedMessage_MsgBeginRedelegate:
+		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
+	default:
+		panic(sdkerrors.Wrap(ErrInvalidQueuedMessageType, qm.String()))
+	}
+	return unwrappedMsgWithType
 }

@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	appparams "github.com/babylonchain/babylon/app/params"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/rand"
 	"testing"
 
@@ -46,6 +47,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 			msg := types.QueuedMessage{
 				TxId:  sdk.Uint64ToBigEndian(i),
 				MsgId: sdk.Uint64ToBigEndian(i),
+				Msg:   &types.QueuedMessage_MsgDelegate{MsgDelegate: &stakingtypes.MsgDelegate{}},
 			}
 			keeper.EnqueueMsg(ctx, msg)
 		}
@@ -55,7 +57,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 		for i, msg := range epochMsgs {
 			require.Equal(t, sdk.Uint64ToBigEndian(uint64(i)), msg.TxId)
 			require.Equal(t, sdk.Uint64ToBigEndian(uint64(i)), msg.MsgId)
-			require.Nil(t, msg.Msg)
+			require.NotNil(t, msg)
 		}
 	})
 }

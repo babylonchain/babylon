@@ -62,7 +62,7 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 	queueLen := k.GetCurrentQueueLength(ctx)
 	queueLenBytes := sdk.Uint64ToBigEndian(queueLen)
 	// value: msgBytes
-	msgBytes, err := k.cdc.Marshal(&msg)
+	msgBytes, err := k.cdc.MarshalInterface(&msg)
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
 	}
@@ -82,11 +82,15 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context, epochNumber uint64) []*types.Queue
 	defer iterator.Close()
 	for ; iterator.Valid(); iterator.Next() {
 		queuedMsgBytes := iterator.Value()
-		var queuedMsg types.QueuedMessage
-		if err := k.cdc.Unmarshal(queuedMsgBytes, &queuedMsg); err != nil {
+		var sdkMsg sdk.Msg
+		if err := k.cdc.UnmarshalInterface(queuedMsgBytes, &sdkMsg); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
-		queuedMsgs = append(queuedMsgs, &queuedMsg)
+		queuedMsg, ok := sdkMsg.(*types.QueuedMessage)
+		if !ok {
+			panic("invalid queued message")
+		}
+		queuedMsgs = append(queuedMsgs, queuedMsg)
 	}
 
 	return queuedMsgs
@@ -104,20 +108,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		unwrappedMsgWithType sdk.Msg
 		err                  error
 	)
-
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
-	switch unwrappedMsg := msg.Msg.(type) {
-	case *types.QueuedMessage_MsgCreateValidator:
-		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
-	case *types.QueuedMessage_MsgDelegate:
-		unwrappedMsgWithType = unwrappedMsg.MsgDelegate
-	case *types.QueuedMessage_MsgUndelegate:
-		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
-	case *types.QueuedMessage_MsgBeginRedelegate:
-		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
-	default:
-		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
-	}
+	unwrappedMsgWithType = msg.UnwrapToSdkMsg()
 
 	// failed to decode validator address
 	if err != nil {

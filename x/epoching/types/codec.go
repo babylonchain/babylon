@@ -11,6 +11,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgWrappedDelegate{}, "epoching/WrappedDelegate", nil)
 	cdc.RegisterConcrete(&MsgWrappedUndelegate{}, "epoching/WrappedUndelegate", nil)
 	cdc.RegisterConcrete(&MsgWrappedBeginRedelegate{}, "epoching/WrappedBeginRedelegate", nil)
+	cdc.RegisterConcrete(&QueuedMessage{}, "epoching/QueuedMessage", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -26,6 +27,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgWrappedBeginRedelegate{},
+	)
+	registry.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&QueuedMessage{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

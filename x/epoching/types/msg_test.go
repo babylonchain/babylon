@@ -3,6 +3,7 @@ package types_test
 import (
 	appparams "github.com/babylonchain/babylon/app/params"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,7 @@ func TestMsgDecode(t *testing.T) {
 	registry := codectypes.NewInterfaceRegistry()
 	cryptocodec.RegisterInterfaces(registry)
 	types.RegisterInterfaces(registry)
+	stakingtypes.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
 	// pubkey serialisation/deserialisation
@@ -62,6 +64,31 @@ func TestMsgDecode(t *testing.T) {
 	require.Equal(t, msg.Msg.Amount, msg2.Msg.Amount)
 	require.Equal(t, msg.Msg.DelegatorAddress, msg2.Msg.DelegatorAddress)
 	require.Equal(t, msg.Msg.ValidatorAddress, msg2.Msg.ValidatorAddress)
+
+	var qmsgUnmarshaled sdk.Msg
+	var msgCreateValUnmarshaled sdk.Msg
+
+	commission1 := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+	msgcreateval1, err := stakingtypes.NewMsgCreateValidator(valAddr1, pk1, coinPos, stakingtypes.Description{}, commission1, sdk.OneInt())
+	require.NoError(t, err)
+	qmsg, err := types.NewQueuedMessage(1, time.Now(), []byte("tx id 1"), msgcreateval1)
+	require.NoError(t, err)
+	msgCreateval1Ser, err := cdc.MarshalInterface(msgcreateval1)
+	require.NoError(t, err)
+	err = cdc.UnmarshalInterface(msgCreateval1Ser, &msgCreateValUnmarshaled)
+	require.NoError(t, err)
+	msgcreateval3 := msgCreateValUnmarshaled.(*stakingtypes.MsgCreateValidator)
+	require.NotNil(t, msgcreateval3.Pubkey.GetCachedValue())
+
+	qmsgSer, err := cdc.MarshalInterface(&qmsg)
+	require.NoError(t, err)
+	err = cdc.UnmarshalInterface(qmsgSer, &qmsgUnmarshaled)
+	qmsg2, ok := qmsgUnmarshaled.(*types.QueuedMessage)
+	msgcreateval2 := qmsg2.UnwrapToSdkMsg().(*stakingtypes.MsgCreateValidator)
+	require.NoError(t, err)
+	require.True(t, ok)
+	require.Equal(t, qmsg.MsgId, qmsg2.MsgId)
+	require.True(t, msgcreateval1.Pubkey.Equal(msgcreateval2.Pubkey))
 }
 
 // test ValidateBasic for MsgWrappedDelegate
