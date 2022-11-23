@@ -5,20 +5,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-
-	"github.com/spf13/cast"
-	"github.com/spf13/cobra"
-	tmcfg "github.com/tendermint/tendermint/config"
-
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
-
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -26,11 +13,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-
 	"github.com/cosmos/cosmos-sdk/snapshots"
+	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
@@ -38,6 +25,16 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/spf13/cast"
+	"github.com/spf13/cobra"
+	tmcfg "github.com/tendermint/tendermint/config"
+	tmcli "github.com/tendermint/tendermint/libs/cli"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/app/params"
+	bbntypes "github.com/babylonchain/babylon/types"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -56,7 +53,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 
 	rootCmd := &cobra.Command{
 		Use:   "babylond",
-		Short: "simulation app",
+		Short: "Start the Babylon app",
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
 			// set the default command outputs
 			cmd.SetOut(cmd.OutOrStdout())
@@ -173,7 +170,6 @@ func addModuleInitFlags(startCmd *cobra.Command) {
 
 	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
 	startCmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	startCmd.Flags().String(flags.FlagFrom, "", "Name or address of private key with which to sign")
 }
 
 func queryCommand() *cobra.Command {
@@ -259,8 +255,8 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	paths := strings.Split(homeDir, "/")
-	fromName := paths[len(paths)-2]
+	// parse the key name that will be used for signing BLS-sig txs from app.toml
+	keyName := bbntypes.ParseKeyNameFromConfig(appOpts)
 
 	clientCtx, err := config.ReadFromClientConfig(
 		client.Context{}.
@@ -268,7 +264,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 			WithViper("").
 			WithKeyringDir(homeDir).
 			WithInput(os.Stdin).
-			WithFromName(fromName).
+			WithFromName(keyName).
 			// Warning: It is important that ReadFromClientConfig receives context
 			// with already initialized codec. It creates keyring inside, and from cosmos
 			// 0.46.0 keyring requires codec. Without codec, operations performed by

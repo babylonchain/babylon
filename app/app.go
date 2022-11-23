@@ -109,7 +109,11 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	transfer "github.com/cosmos/ibc-go/v5/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v5/modules/core"
+	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
@@ -159,6 +163,7 @@ var (
 
 		// IBC-related
 		ibc.AppModuleBasic{},
+		transfer.AppModuleBasic{},
 		zoneconcierge.AppModuleBasic{},
 	)
 
@@ -170,6 +175,7 @@ var (
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
+		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		// TODO: decide ZonConcierge's permissions here
 		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	}
@@ -219,10 +225,13 @@ type BabylonApp struct {
 	CheckpointingKeeper  checkpointingkeeper.Keeper
 
 	// IBC-related modules
-	IBCKeeper           *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	ZoneConciergeKeeper zckeeper.Keeper   // for cross-chain fungible token transfers
+	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
+	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
+
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
+	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedZoneConciergeKeeper capabilitykeeper.ScopedKeeper
 
 	// the module manager
@@ -277,6 +286,7 @@ func NewBabylonApp(
 		checkpointingtypes.StoreKey,
 		// IBC-related modules
 		ibchost.StoreKey,
+		ibctransfertypes.StoreKey,
 		zctypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -304,6 +314,7 @@ func NewBabylonApp(
 
 	// grant capabilities for the ibc and ibc-transfer modules
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibchost.ModuleName)
+	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedZoneConciergeKeeper := app.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
@@ -327,9 +338,6 @@ func NewBabylonApp(
 	epochingKeeper := epochingkeeper.NewKeeper(
 		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper,
 	)
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	app.EpochingKeeper = epochingKeeper
 
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec, keys[minttypes.StoreKey], app.GetSubspace(minttypes.ModuleName), &stakingKeeper,
@@ -353,7 +361,7 @@ func NewBabylonApp(
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
 	app.StakingKeeper = *stakingKeeper.SetHooks(
-		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), app.EpochingKeeper.Hooks()),
+		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks(), epochingKeeper.Hooks()),
 	)
 
 	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.MsgServiceRouter(), app.AccountKeeper)
@@ -388,6 +396,69 @@ func NewBabylonApp(
 		),
 	)
 
+	// Keepers for IBC-related modules
+	ibcKeeper := ibckeeper.NewKeeper(
+		appCodec,
+		keys[ibchost.StoreKey],
+		app.GetSubspace(ibchost.ModuleName),
+		app.StakingKeeper,
+		app.UpgradeKeeper,
+		scopedIBCKeeper,
+	)
+
+	zcKeeper := zckeeper.NewKeeper(
+		appCodec,
+		keys[zctypes.StoreKey],
+		keys[zctypes.MemStoreKey],
+		app.GetSubspace(zctypes.ModuleName),
+		ibcKeeper.ChannelKeeper,
+		ibcKeeper.ChannelKeeper,
+		&ibcKeeper.PortKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.BtcCheckpointKeeper,
+		epochingKeeper,
+		scopedZoneConciergeKeeper,
+	)
+
+	// replace IBC keeper's client keeper with our ExtendedKeeper
+	extendedClientKeeper := ibcclientkeeper.NewExtendedKeeper(appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), stakingKeeper, app.UpgradeKeeper)
+	// make zcKeeper to hooks onto extendedClientKeeper so that zcKeeper can receive notifications of new headers
+	extendedClientKeeper = *extendedClientKeeper.SetHooks(
+		ibcclientkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
+	)
+	ibcKeeper.ClientKeeper = extendedClientKeeper
+
+	// set IBC keeper and ZC keeper for app
+	app.IBCKeeper = ibcKeeper
+	app.ZoneConciergeKeeper = *zcKeeper
+
+	// Create Transfer Keepers
+	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+	)
+	transferModule := transfer.NewAppModule(app.TransferKeeper)
+
+	// Create static IBC router, add ibc-tranfer module route, then set and seal it
+	ibcRouter := porttypes.NewRouter()
+	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
+	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
+	zcIBCModule := zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
+	ibcRouter.AddRoute(zctypes.ModuleName, zcIBCModule)
+	// Setting Router will finalize all routes by sealing router
+	// No more routes can be added
+	app.IBCKeeper.SetRouter(ibcRouter)
+
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
+	// make ZoneConcierge to subscribe to the epoching's hooks
+	epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks()),
+	)
+	app.EpochingKeeper = epochingKeeper
+
 	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
 		appCodec,
 		keys[btclightclienttypes.StoreKey],
@@ -396,7 +467,7 @@ func NewBabylonApp(
 		btcConfig,
 	)
 
-	app.CheckpointingKeeper =
+	checkpointingKeeper :=
 		checkpointingkeeper.NewKeeper(
 			appCodec,
 			keys[checkpointingtypes.StoreKey],
@@ -406,6 +477,9 @@ func NewBabylonApp(
 			app.GetSubspace(checkpointingtypes.ModuleName),
 			privSigner.ClientCtx,
 		)
+	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks()),
+	)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations
@@ -423,41 +497,11 @@ func NewBabylonApp(
 			btcConfig.CheckpointTag(),
 		)
 
+	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
+
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
 	)
-
-	// Keepers for IBC-related modules
-	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec,
-		keys[ibchost.StoreKey],
-		app.GetSubspace(ibchost.ModuleName),
-		app.StakingKeeper,
-		app.UpgradeKeeper,
-		scopedIBCKeeper,
-	)
-
-	zcKeeper := zckeeper.NewKeeper(
-		appCodec,
-		keys[zctypes.StoreKey],
-		keys[zctypes.MemStoreKey],
-		app.GetSubspace(zctypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper,
-		app.IBCKeeper.ChannelKeeper,
-		&app.IBCKeeper.PortKeeper,
-		app.AccountKeeper,
-		app.BankKeeper,
-		scopedZoneConciergeKeeper,
-	)
-	app.ZoneConciergeKeeper = *zcKeeper
-
-	// Create static IBC router, add ibc-tranfer module route, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-	zcIBCModule := zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
-	ibcRouter.AddRoute(zctypes.ModuleName, zcIBCModule)
-	// Setting Router will finalize all routes by sealing router
-	// No more routes can be added
-	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
@@ -501,6 +545,7 @@ func NewBabylonApp(
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
 		// IBC-related modules
 		ibc.NewAppModule(app.IBCKeeper),
+		transferModule,
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
@@ -522,6 +567,7 @@ func NewBabylonApp(
 		checkpointingtypes.ModuleName,
 		// IBC-related modules
 		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
@@ -543,6 +589,7 @@ func NewBabylonApp(
 		checkpointingtypes.ModuleName,
 		// IBC-related modules
 		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
@@ -566,6 +613,7 @@ func NewBabylonApp(
 		checkpointingtypes.ModuleName,
 		// IBC-related modules
 		ibchost.ModuleName,
+		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 	)
 
@@ -604,6 +652,7 @@ func NewBabylonApp(
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
 		// IBC-related modules
 		ibc.NewAppModule(app.IBCKeeper),
+		transferModule,
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
@@ -649,7 +698,17 @@ func NewBabylonApp(
 		}
 	}
 
+	app.ScopedIBCKeeper = scopedIBCKeeper
+	app.ScopedZoneConciergeKeeper = scopedZoneConciergeKeeper
+	app.ScopedTransferKeeper = scopedTransferKeeper
+
 	return app
+}
+
+// GetBaseApp returns the BaseApp of BabylonApp
+// required by ibctesting
+func (app *BabylonApp) GetBaseApp() *baseapp.BaseApp {
+	return app.BaseApp
 }
 
 // Name returns the name of the App
@@ -825,6 +884,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(checkpointingtypes.ModuleName)
 	// IBC-related modules
 	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(zctypes.ModuleName)
 
 	return paramsKeeper

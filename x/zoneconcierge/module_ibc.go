@@ -35,14 +35,10 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
-	// Require portID is the portID module is bound to
+	// Require portID to be the one that ZoneConcierge is bound to
 	boundPort := im.keeper.GetPort(ctx)
 	if boundPort != portID {
 		return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
-
-	if version != types.Version {
-		return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 
 	// Claim channel capability passed back by IBC module
@@ -64,15 +60,10 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
-
-	// Require portID is the portID module is bound to
+	// Require portID to be the one that ZoneConcierge is bound to
 	boundPort := im.keeper.GetPort(ctx)
 	if boundPort != portID {
 		return "", sdkerrors.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
-	}
-
-	if counterpartyVersion != types.Version {
-		return "", sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
 	}
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
@@ -97,9 +88,10 @@ func (im IBCModule) OnChanOpenAck(
 	_,
 	counterpartyVersion string,
 ) error {
-	if counterpartyVersion != types.Version {
-		return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
-	}
+	// // TODO (Babylon): check version consistency (this requires modifying CZ code)
+	// if counterpartyVersion != types.Version {
+	// 	return sdkerrors.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
+	// }
 	return nil
 }
 
@@ -146,13 +138,13 @@ func (im IBCModule) OnRecvPacket(
 		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error()))
 	}
 
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/recv
-	default:
-		err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return channeltypes.NewErrorAcknowledgement(err)
-	}
+	// // TODO (Babylon): Dispatch and process packet
+	// switch packet := modulePacketData.Packet.(type) {
+	// // this line is used by starport scaffolding # ibc/packet/module/recv
+	// default:
+	// 	err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
+	// 	return channeltypes.NewErrorAcknowledgement(err)
+	// }
 
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
 	return ack
@@ -172,20 +164,15 @@ func (im IBCModule) OnAcknowledgementPacket(
 
 	// this line is used by starport scaffolding # oracle/packet/module/ack
 
-	var modulePacketData types.ZoneconciergePacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
-	}
-
 	var eventType string
 
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/ack
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
+	// // TODO (Babylon): Dispatch and process packet
+	// switch packet := modulePacketData.Packet.(type) {
+	// // this line is used by starport scaffolding # ibc/packet/module/ack
+	// default:
+	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	// }
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
@@ -226,13 +213,13 @@ func (im IBCModule) OnTimeoutPacket(
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error())
 	}
 
-	// Dispatch packet
-	switch packet := modulePacketData.Packet.(type) {
-	// this line is used by starport scaffolding # ibc/packet/module/timeout
-	default:
-		errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
-		return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
-	}
+	// // TODO (Babylon): Dispatch and process packet
+	// switch packet := modulePacketData.Packet.(type) {
+	// // this line is used by starport scaffolding # ibc/packet/module/timeout
+	// default:
+	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
+	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
+	// }
 
 	return nil
 }

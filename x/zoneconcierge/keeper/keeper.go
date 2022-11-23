@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v5/modules/core/24-host"
 	"github.com/tendermint/tendermint/libs/log"
 )
@@ -18,12 +19,14 @@ type (
 		memKey     storetypes.StoreKey
 		paramstore paramtypes.Subspace
 
-		ics4Wrapper   types.ICS4Wrapper
-		channelKeeper types.ChannelKeeper
-		portKeeper    types.PortKeeper
-		authKeeper    types.AccountKeeper
-		bankKeeper    types.BankKeeper
-		scopedKeeper  types.ScopedKeeper
+		ics4Wrapper    types.ICS4Wrapper
+		channelKeeper  types.ChannelKeeper
+		portKeeper     types.PortKeeper
+		authKeeper     types.AccountKeeper
+		bankKeeper     types.BankKeeper
+		btccKeeper     types.BtcCheckpointKeeper
+		epochingKeeper types.EpochingKeeper
+		scopedKeeper   types.ScopedKeeper
 	}
 )
 
@@ -37,6 +40,8 @@ func NewKeeper(
 	portKeeper types.PortKeeper,
 	authKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+	epochingKeeper types.EpochingKeeper,
 	scopedKeeper types.ScopedKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -45,16 +50,18 @@ func NewKeeper(
 	}
 
 	return &Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		paramstore:    ps,
-		ics4Wrapper:   ics4Wrapper,
-		channelKeeper: channelKeeper,
-		portKeeper:    portKeeper,
-		authKeeper:    authKeeper,
-		bankKeeper:    bankKeeper,
-		scopedKeeper:  scopedKeeper,
+		cdc:            cdc,
+		storeKey:       storeKey,
+		memKey:         memKey,
+		paramstore:     ps,
+		ics4Wrapper:    ics4Wrapper,
+		channelKeeper:  channelKeeper,
+		portKeeper:     portKeeper,
+		authKeeper:     authKeeper,
+		bankKeeper:     bankKeeper,
+		btccKeeper:     btccKeeper,
+		epochingKeeper: epochingKeeper,
+		scopedKeeper:   scopedKeeper,
 	}
 }
 
@@ -97,4 +104,12 @@ func (k Keeper) AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Cap
 // passes to it
 func (k Keeper) ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error {
 	return k.scopedKeeper.ClaimCapability(ctx, cap, name)
+}
+
+func (k Keeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
+	return k.channelKeeper.GetAllChannels(ctx)
+}
+
+func (k *Keeper) SetBtcCheckpointKeeper(btccKeeper types.BtcCheckpointKeeper) {
+	k.btccKeeper = btccKeeper
 }

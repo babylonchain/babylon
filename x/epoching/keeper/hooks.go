@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -35,8 +36,9 @@ type Hooks struct {
 	k Keeper
 }
 
-// ensures Hooks implements StakingHooks interfaces
+// ensures Hooks implements StakingHooks and CheckpointingHooks interfaces
 var _ stakingtypes.StakingHooks = Hooks{}
+var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 
 // Create new distribution hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
@@ -102,7 +104,13 @@ func (h Hooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, 
 	return h.k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_REMOVED)
 }
 
-// Other staking hooks that are not used in the epoching module
+func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+	// finalise all unbonding validators/delegations in this epoch
+	h.k.ApplyMatureUnbonding(ctx, epoch)
+	return nil
+}
+
+// Other hooks that are not used in the epoching module
 func (h Hooks) BeforeValidatorModified(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	return nil
 }
@@ -115,3 +123,5 @@ func (h Hooks) BeforeDelegationSharesModified(ctx sdk.Context, delAddr sdk.AccAd
 func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	return nil
 }
+func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     { return nil }

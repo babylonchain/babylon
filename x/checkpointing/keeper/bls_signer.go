@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"time"
 
 	"github.com/babylonchain/babylon/client/tx"
@@ -18,13 +19,12 @@ type BlsSigner interface {
 }
 
 // SendBlsSig prepares a BLS signature message and sends it to Tendermint
-func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash) error {
+func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash, valSet epochingtypes.ValidatorSet) error {
 	// get self address
-	curValSet := k.GetValidatorSet(ctx, epochNum)
 	addr := k.blsSigner.GetAddress()
 
 	// check if itself is the validator
-	_, _, err := curValSet.FindValidatorWithIndex(addr)
+	_, _, err := valSet.FindValidatorWithIndex(addr)
 	if err != nil {
 		// only send the BLS sig when the node itself is a validator, not being a validator is not an error
 		return nil

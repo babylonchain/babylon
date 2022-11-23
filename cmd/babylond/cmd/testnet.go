@@ -54,12 +54,6 @@ var (
 	flagStartingIPAddress       = "starting-ip-address"
 	flagBtcNetwork              = "btc-network"
 	flagBtcCheckpointTag        = "btc-checkpoint-tag"
-	flagBtcConfirmationDepth    = "btc-confirmation-depth"
-	flagBtcFinalizationTimeout  = "btc-finalization-timeout"
-	flagEpochInterval           = "epoch-interval"
-	flagBaseBtcHeaderHex        = "btc-base-header"
-	flagBaseBtcHeaderHeight     = "btc-base-header-height"
-	flagMaxActiveValidators     = "max-active-validators"
 	flagAdditionalSenderAccount = "additional-sender-account"
 )
 
@@ -104,7 +98,7 @@ Example:
 			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-				genesisCliArgs.BaseBtcHeaderHeight)
+				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.GenesisTime)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
@@ -224,6 +218,7 @@ func InitTestnet(
 			_ = os.RemoveAll(outputDir)
 			return err
 		}
+		babylonConfig.SignerConfig.KeyName = nodeDirName
 
 		// generate validator keys
 		nodeIDs[i], valKeys[i], err = datagen.InitializeNodeValidatorFiles(nodeConfig, addr)
@@ -337,19 +332,30 @@ func InitTestnet(
 			if err != nil {
 				return err
 			}
-			addr, _, err := testutil.GenerateSaveCoinKey(kb, "test-spending-key", "", true, algo)
+			addr, secret, err := testutil.GenerateSaveCoinKey(kb, "test-spending-key", "", true, algo)
 			if err != nil {
 				_ = os.RemoveAll(outputDir)
 				return err
 			}
 
+			// save mnemonic words for this key
+			info := map[string]string{"secret": secret}
+			cliPrint, err := json.Marshal(info)
+			if err != nil {
+				return err
+			}
+			if err = writeFile(fmt.Sprintf("%v.json", "additional_key_seed"), nodeDir, cliPrint); err != nil {
+				return err
+			}
+
 			coins := sdk.Coins{
 				sdk.NewCoin("testtoken", sdk.NewInt(1000000000)),
-				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(500000000)),
+				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(1000000000000)),
 			}
 
 			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
 			genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
+
 		}
 	}
 

@@ -24,7 +24,6 @@ type EpochingKeeper interface {
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
 	GetValidatorSet(ctx sdk.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64
-	ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64)
 }
 
 // Event Hooks
@@ -37,4 +36,5 @@ type EpochingKeeper interface {
 type CheckpointingHooks interface {
 	AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error // Must be called when a BLS key is registered
 	AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     // Must be called when a raw checkpoint is CONFIRMED
+	AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error     // Must be called when a raw checkpoint is FINALIZED
 }

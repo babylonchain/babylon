@@ -24,6 +24,7 @@ require (
 )
 
 require (
+	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
@@ -39,7 +40,7 @@ require (
 	github.com/99designs/keyring v1.2.1 // indirect
 	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
 	github.com/Workiva/go-datastructures v1.0.53 // indirect
-	github.com/armon/go-metrics v0.4.0 // indirect
+	github.com/armon/go-metrics v0.4.0
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
 	github.com/btcsuite/btclog v0.0.0-20170628155309-84c8d2346e9f // indirect
@@ -126,7 +127,6 @@ require (
 	cloud.google.com/go/compute v1.7.0 // indirect
 	cloud.google.com/go/iam v0.4.0 // indirect
 	cloud.google.com/go/storage v1.22.1 // indirect
-	cosmossdk.io/errors v1.0.0-beta.7 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/aws/aws-sdk-go v1.40.45 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
@@ -171,6 +171,7 @@ require (
 
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76
+	github.com/cosmos/ibc-go/v5 => github.com/babylonchain/ibc-go/v5 v5.0.1-0.20221107054049-dbf7e4efe6fd
 
 	// Fix upstream GHSA-h395-qcrw-5vmq vulnerability.
 	// TODO Remove it: https://github.com/cosmos/cosmos-sdk/issues/10409

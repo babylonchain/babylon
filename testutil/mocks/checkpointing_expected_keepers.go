@@ -110,18 +110,6 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 	return m.recorder
 }
 
-// ApplyMatureUnbonding mocks base method.
-func (m *MockEpochingKeeper) ApplyMatureUnbonding(ctx types0.Context, epochNumber uint64) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ApplyMatureUnbonding", ctx, epochNumber)
-}
-
-// ApplyMatureUnbonding indicates an expected call of ApplyMatureUnbonding.
-func (mr *MockEpochingKeeperMockRecorder) ApplyMatureUnbonding(ctx, epochNumber interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ApplyMatureUnbonding", reflect.TypeOf((*MockEpochingKeeper)(nil).ApplyMatureUnbonding), ctx, epochNumber)
-}
-
 // EnqueueMsg mocks base method.
 func (m *MockEpochingKeeper) EnqueueMsg(ctx types0.Context, msg types.QueuedMessage) {
 	m.ctrl.T.Helper()
@@ -225,4 +213,18 @@ func (m *MockCheckpointingHooks) AfterRawCheckpointConfirmed(ctx types0.Context,
 func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointConfirmed(ctx, epoch interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointConfirmed", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointConfirmed), ctx, epoch)
+}
+
+// AfterRawCheckpointFinalized mocks base method.
+func (m *MockCheckpointingHooks) AfterRawCheckpointFinalized(ctx types0.Context, epoch uint64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterRawCheckpointFinalized", ctx, epoch)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterRawCheckpointFinalized indicates an expected call of AfterRawCheckpointFinalized.
+func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointFinalized(ctx, epoch interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointFinalized", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointFinalized), ctx, epoch)
 }

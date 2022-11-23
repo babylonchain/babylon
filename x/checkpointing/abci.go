@@ -40,9 +40,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		if err != nil {
 			panic(err)
 		}
+		curValSet := k.GetValidatorSet(ctx, epoch.EpochNumber-1)
 
 		go func() {
-			err := k.SendBlsSig(ctx, epoch.EpochNumber-1, lch)
+			err := k.SendBlsSig(ctx, epoch.EpochNumber-1, lch, curValSet)
 			if err != nil {
 				// failing to send a BLS-sig causes a panicking situation
 				panic(err)

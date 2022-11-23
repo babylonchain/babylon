@@ -5,7 +5,6 @@ import (
 
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -38,6 +37,10 @@ func (zoneconciergeChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channel
 	return nil
 }
 
+func (zoneconciergeChannelKeeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
+	return nil
+}
+
 // zoneconciergeportKeeper is a stub of PortKeeper
 type zoneconciergePortKeeper struct{}
 
@@ -45,7 +48,7 @@ func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabil
 	return &capabilitytypes.Capability{}
 }
 
-func ZoneConciergeKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -77,6 +80,8 @@ func ZoneConciergeKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		zoneconciergePortKeeper{},
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
+		btccKeeper,
+		epochingKeeper,
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 	)
 

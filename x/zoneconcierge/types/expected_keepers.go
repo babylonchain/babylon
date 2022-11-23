@@ -1,10 +1,11 @@
 package types
 
 import (
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-
 	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
@@ -35,6 +36,7 @@ type ICS4Wrapper interface {
 type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
+	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
 }
 
 // ClientKeeper defines the expected IBC client keeper
@@ -58,4 +60,12 @@ type ScopedKeeper interface {
 	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 	LookupModules(ctx sdk.Context, name string) ([]string, *capabilitytypes.Capability, error)
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
+}
+
+type BtcCheckpointKeeper interface {
+	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
+}
+
+type EpochingKeeper interface {
+	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 }

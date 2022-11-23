@@ -1,11 +1,16 @@
 syntax = "proto3";
-package babylonchain.babylon.zoneconcierge;
+package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "tendermint/types/types.proto";
+import "tendermint/crypto/proof.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "babylon/btccheckpoint/tx.proto";
+import "babylon/btccheckpoint/btccheckpoint.proto";
+import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/params.proto";
-// this line is used by starport scaffolding # 1
+import "babylon/zoneconcierge/zoneconcierge.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -15,7 +20,18 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/params";
   }
-  // this line is used by starport scaffolding # 2
+  // ChainList queries the list of chains that checkpoint to Babylon
+  rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/chains";
+  }
+  // ChainInfo queries the latest info of a chain in Babylon's view
+  rpc ChainInfo(QueryChainInfoRequest) returns (QueryChainInfoResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/chain_info/{chain_id}";
+  }
+  // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
+  rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest) returns (QueryFinalizedChainInfoResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/zoneconcierge/finalized_chain_info/{chain_id}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -27,4 +43,44 @@ message QueryParamsResponse {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-// this line is used by starport scaffolding # 3
+// QueryChainListRequest is request type for the Query/ChainList RPC method
+message QueryChainListRequest {}
+
+// QueryChainListResponse is response type for the Query/ChainList RPC method
+message QueryChainListResponse {
+  repeated string chain_ids = 1;
+}
+
+// QueryChainInfoRequest is request type for the Query/ChainInfo RPC method.
+message QueryChainInfoRequest {
+  string chain_id = 1;
+}
+
+// QueryChainInfoResponse is response type for the Query/ChainInfo RPC method.
+message QueryChainInfoResponse {
+  // chain_info is the info of the CZ
+  babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
+}
+
+// QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
+message QueryFinalizedChainInfoRequest {
+  string chain_id = 1;
+}
+
+// QueryFinalizedChainInfoResponse is response type for the Query/FinalizedChainInfo RPC method.
+message QueryFinalizedChainInfoResponse {
+  // finalized_chain_info is the info of the CZ
+  babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
+  // epoch_info is the metadata of the last BTC-finalised epoch
+  babylon.epoching.v1.Epoch epoch_info = 2;
+  // btc_checkpoint_info is the metadata of the checkpoint of the last BTC-finalised epoch
+  babylon.btccheckpoint.v1.SubmissionKey btc_checkpoint_info = 3;
+  // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
+  tendermint.types.TxProof proof_tx_in_block = 4;
+  // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
+  tendermint.crypto.ProofOps proof_block_in_epoch = 5;
+  // proof_epoch_ended is the proof that the epoch metadata is included in the Babylon ledger
+  tendermint.crypto.ProofOps proof_epoch_ended = 6;
+  // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
+  babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 7;
+}

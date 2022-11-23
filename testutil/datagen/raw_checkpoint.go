@@ -1,11 +1,24 @@
 package datagen
 
 import (
+	"math/rand"
+
+	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/boljen/go-bitmap"
-	"math/rand"
 )
+
+func GetRandomRawBtcCheckpoint() *btctxformatter.RawBtcCheckpoint {
+	rawCkpt := GenRandomRawCheckpoint()
+	return &btctxformatter.RawBtcCheckpoint{
+		Epoch:            rawCkpt.EpochNum,
+		LastCommitHash:   *rawCkpt.LastCommitHash,
+		BitMap:           rawCkpt.Bitmap,
+		SubmitterAddress: GenRandomByteArray(btctxformatter.AddressLength),
+		BlsSig:           rawCkpt.BlsMultiSig.Bytes(),
+	}
+}
 
 func GenRandomRawCheckpointWithMeta() *types.RawCheckpointWithMeta {
 	ckptWithMeta := &types.RawCheckpointWithMeta{

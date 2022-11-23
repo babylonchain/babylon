@@ -23,3 +23,11 @@ func (k Keeper) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error
 	}
 	return nil
 }
+
+// AfterRawCheckpointFinalized - call hook if registered
+func (k Keeper) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+	if k.hooks != nil {
+		return k.hooks.AfterRawCheckpointFinalized(ctx, epoch)
+	}
+	return nil
+}
