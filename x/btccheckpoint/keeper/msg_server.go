@@ -36,7 +36,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, types.ErrDuplicatedSubmission
 	}
 
-	newSubmissionOldestHeaderDepth, err := m.k.GetSubmissionHighestDepth(sdkCtx, submissionKey)
+	newSubmissionOldestHeaderDepth, err := m.k.GetSubmissionBtcInfo(sdkCtx, submissionKey)
 
 	if err != nil {
 		return nil, types.ErrInvalidHeader.Wrap(err.Error())

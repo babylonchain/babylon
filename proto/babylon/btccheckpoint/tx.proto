@@ -1,6 +1,8 @@
 syntax = "proto3";
 package babylon.btccheckpoint.v1;
 
+import "gogoproto/gogo.proto";
+
 // this line is used by starport scaffolding # proto/tx/import
 
 option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
@@ -39,7 +41,9 @@ message BTCSpvProof {
   bytes merkle_nodes = 3;
   // Valid btc header which confirms btc_transaction.
   // Should have exactly 80 bytes
-  bytes confirming_btc_header = 4;
+  bytes confirming_btc_header = 4 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
+  ];
 }
 
 message MsgInsertBTCSpvProof {
