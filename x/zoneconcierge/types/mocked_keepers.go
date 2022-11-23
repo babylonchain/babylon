@@ -12,9 +12,9 @@ import (
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	types3 "github.com/cosmos/cosmos-sdk/x/capability/types"
-	types4 "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
-	types5 "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	exported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	types4 "github.com/cosmos/ibc-go/v6/modules/core/03-connection/types"
+	types5 "github.com/cosmos/ibc-go/v6/modules/core/04-channel/types"
+	exported "github.com/cosmos/ibc-go/v6/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
 )
 
