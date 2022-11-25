@@ -32,7 +32,7 @@ make build
 babylond init test
 
 # Get Genesis
-curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis >~/.babylond/config/genesis.json
+curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis > ~/.babylond/config/genesis.json
 
 # Get "trust_hash" and "trust_height".
 INTERVAL=100
