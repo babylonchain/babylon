@@ -7,7 +7,7 @@
 # Not for use on live nodes
 # For use when testing.
 # Assumes that ~/.babylond doesn't exist
-# can be modified to suit your purposes if ~/.evmosd does already exist
+# can be modified to suit your purposes if ~/.babylond does already exist
 
 set -uxe
 
