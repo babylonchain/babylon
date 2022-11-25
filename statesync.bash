@@ -50,9 +50,19 @@ export BABYLOND_P2P_MAX_NUM_OUTBOUND_PEERS=200
 export BABYLOND_STATESYNC_RPC_SERVERS="http://node.mainnet.babylonchain.io:26657,http://node.mainnet.babylonchain.io:26657"
 export BABYLOND_STATESYNC_TRUST_HEIGHT=$BLOCK_HEIGHT
 export BABYLOND_STATESYNC_TRUST_HASH=$TRUST_HASH
+# Export state sync variables.
+export BABYLOND_P2P_LADDR=tcp://0.0.0.0:2100
+export BABYLOND_RPC_LADDR=tcp://0.0.0.0:2101
+export BABYLOND_GRPC_ADDRESS=127.0.0.1:2102
+export BABYLOND_API_ADDRESS=tcp://127.0.0.1:2103
+export BABYLOND_NODE=tcp://127.0.0.1:2101
+
+
+
+
 
 # Fetch and set list of seeds from chain registry.
-export BABYLOND_P2P_PERSISTENT_PEERS=c12226489ac3f6ce1d7903d37cd204bc8f269018@node.mainnet.babylonchain.io:26656
+export BABYLOND_P2P_PERSISTENT_PEERS=226ad8bc898ff89449032b73458768f646aa30a3@node.mainnet.babylonchain.io:26656
 
 # Start chain.
 babylond start --x-crisis-skip-assert-invariants
