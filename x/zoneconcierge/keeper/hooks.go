@@ -27,6 +27,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		Hash:               header.Header.LastCommitHash,
 		Height:             uint64(header.Header.Height),
 		BabylonBlockHeight: uint64(ctx.BlockHeight()),
+		BabylonEpoch:       h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash:      txHash,
 	}
 	if isOnFork {

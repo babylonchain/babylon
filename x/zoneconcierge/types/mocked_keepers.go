@@ -535,6 +535,20 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 	return m.recorder
 }
 
+// GetEpoch mocks base method.
+func (m *MockEpochingKeeper) GetEpoch(ctx types1.Context) *types0.Epoch {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpoch", ctx)
+	ret0, _ := ret[0].(*types0.Epoch)
+	return ret0
+}
+
+// GetEpoch indicates an expected call of GetEpoch.
+func (mr *MockEpochingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpoch), ctx)
+}
+
 // GetHistoricalEpoch mocks base method.
 func (m *MockEpochingKeeper) GetHistoricalEpoch(ctx types1.Context, epochNumber uint64) (*types0.Epoch, error) {
 	m.ctrl.T.Helper()

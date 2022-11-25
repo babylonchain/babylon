@@ -68,4 +68,5 @@ type BtcCheckpointKeeper interface {
 
 type EpochingKeeper interface {
 	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
+	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch
 }
