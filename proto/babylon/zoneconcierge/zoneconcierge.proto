@@ -14,9 +14,11 @@ message IndexedHeader {
   uint64 height = 3;
   // babylon_block_height is the height of the Babylon block that includes this header
   uint64 babylon_block_height = 4;
+  // epoch is the epoch number of this header on Babylon ledger
+  uint64 babylon_epoch = 5;
   // babylon_tx_hash is the hash of the tx that includes this header
   // (babylon_block_height, babylon_tx_hash) jointly provides the position of the header on Babylon ledger
-  bytes babylon_tx_hash = 5;
+  bytes babylon_tx_hash = 6;
 }
 
 // Forks is a list of non-canonical `IndexedHeader`s at the same height.
