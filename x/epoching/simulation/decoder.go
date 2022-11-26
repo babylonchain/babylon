@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 
+	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,7 +47,7 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 
 		case bytes.Equal(kvA.Key[:1], types.VotingPowerKey),
 			bytes.Equal(kvA.Key[:1], types.SlashedVotingPowerKey):
-			var powerA, powerB sdk.Int
+			var powerA, powerB math.Int
 			if err := powerA.Unmarshal(kvA.Value); err != nil {
 				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 			}
