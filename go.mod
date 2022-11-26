@@ -29,7 +29,7 @@ require (
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce
-	github.com/cosmos/cosmos-proto v1.0.0-alpha7
+	github.com/cosmos/cosmos-proto v1.0.0-alpha8
 	github.com/cosmos/ibc-go/v5 v5.1.0
 	github.com/golang/mock v1.6.0
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
@@ -51,7 +51,7 @@ require (
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/go-bip39 v1.0.0
 	github.com/cosmos/iavl v0.19.4 // indirect
-	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.12.0 // indirect
 	github.com/cosmos/ledger-go v0.9.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
@@ -112,7 +112,7 @@ require (
 	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15 // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
-	github.com/zondax/hid v0.9.1-0.20220302062450-5552068d2266 // indirect
+	github.com/zondax/hid v0.9.1 // indirect
 	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/crypto v0.1.0 // indirect
 	golang.org/x/sys v0.1.0 // indirect
@@ -156,6 +156,7 @@ require (
 	github.com/regen-network/cosmos-proto v0.3.1 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/ulikunitz/xz v0.5.8 // indirect
+	github.com/zondax/ledger-go v0.14.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e // indirect
 	golang.org/x/net v0.1.0 // indirect

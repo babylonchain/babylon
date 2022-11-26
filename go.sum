@@ -236,6 +236,7 @@ github.com/cosmos/btcutil v1.0.4 h1:n7C2ngKXo7UC9gNyMNLbzqz7Asuf+7Qv4gnX/rOdQ44=
 github.com/cosmos/btcutil v1.0.4/go.mod h1:Ffqc8Hn6TJUdDgHBwIZLtrLQC1KdJ9jGJl/TvgUaxbU=
 github.com/cosmos/cosmos-proto v1.0.0-alpha7 h1:yqYUOHF2jopwZh4dVQp3xgqwftE5/2hkrwIV6vkUbO0=
 github.com/cosmos/cosmos-proto v1.0.0-alpha7/go.mod h1:dosO4pSAbJF8zWCzCoTWP7nNsjcvSUBQmniFxDg5daw=
+github.com/cosmos/cosmos-proto v1.0.0-alpha8/go.mod h1:6/p+Bc4O8JKeZqe0VqUGTX31eoYqemTT4C1hLCWsO7I=
 github.com/cosmos/cosmos-sdk v0.46.6 h1:K9EZsqOZ2jQX3bIQUpn7Hk/YCoaJWRLU56PzvpX8INk=
 github.com/cosmos/cosmos-sdk v0.46.6/go.mod h1:JNklMfXo7MhDF1j/jxZCmDyOYyqhVoKB22e8p1ATEqA=
 github.com/cosmos/cosmos-sdk/ics23/go v0.8.0 h1:iKclrn3YEOwk4jQHT2ulgzuXyxmzmPczUalMwW4XH9k=
@@ -251,6 +252,8 @@ github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76 h1:DdzS1m6o/pCqeZ
 github.com/cosmos/keyring v1.1.7-0.20210622111912-ef00f8ac3d76/go.mod h1:0mkLWIoZuQ7uBoospo5Q9zIpqq6rYCPJDSUdeCJvPM8=
 github.com/cosmos/ledger-cosmos-go v0.11.1 h1:9JIYsGnXP613pb2vPjFeMMjBI5lEDsEaF6oYorTy6J4=
 github.com/cosmos/ledger-cosmos-go v0.11.1/go.mod h1:J8//BsAGTo3OC/vDLjMRFLW6q0WAaXvHnVc7ZmE8iUY=
+github.com/cosmos/ledger-cosmos-go v0.12.0 h1:TsoQAwrbeR2ioRkfhronb+ubhX5Egrwrv/7y8oZIdVI=
+github.com/cosmos/ledger-cosmos-go v0.12.0/go.mod h1:wAKOrE4tZUzV9YDzJufeRQyv636YM4UOUwMbsxw5rG0=
 github.com/cosmos/ledger-go v0.9.2 h1:Nnao/dLwaVTk1Q5U9THldpUMMXU94BOTWPddSmVB6pI=
 github.com/cosmos/ledger-go v0.9.2/go.mod h1:oZJ2hHAZROdlHiwTg4t7kP+GKIIkBT+o6c9QWFanOyI=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
@@ -1005,6 +1008,10 @@ github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1
 github.com/zondax/hid v0.9.0/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
 github.com/zondax/hid v0.9.1-0.20220302062450-5552068d2266 h1:O9XLFXGkVswDFmH9LaYpqu+r/AAFWqr0DL6V00KEVFg=
 github.com/zondax/hid v0.9.1-0.20220302062450-5552068d2266/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
+github.com/zondax/hid v0.9.1 h1:gQe66rtmyZ8VeGFcOpbuH3r7erYtNEAezCAYu8LdkJo=
+github.com/zondax/hid v0.9.1/go.mod h1:l5wttcP0jwtdLjqjMMWFVEE7d1zO0jvSPA9OPZxWpEM=
+github.com/zondax/ledger-go v0.14.0 h1:dlMC7aO8Wss1CxBq2I96kZ69Nh1ligzbs8UWOtq/AsA=
+github.com/zondax/ledger-go v0.14.0/go.mod h1:fZ3Dqg6qcdXWSOJFKMG8GCTnD7slO/RL2feOQv8K320=
 go.etcd.io/bbolt v1.3.3/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.etcd.io/bbolt v1.3.6 h1:/ecaJf0sk1l4l6V4awd65v2C3ILy7MSj+s/x1ADCIMU=
 go.etcd.io/bbolt v1.3.6/go.mod h1:qXsaaIqmgQH0T+OPdb99Bf+PKfBBQVAdyD6TY9G8XM4=
