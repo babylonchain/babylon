@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -127,5 +126,5 @@ func writeConfigToFile(configFilePath string, config *config.ClientConfig) error
 		return err
 	}
 
-	return ioutil.WriteFile(configFilePath, buffer.Bytes(), 0600)
+	return os.WriteFile(configFilePath, buffer.Bytes(), 0600)
 }

@@ -145,6 +145,9 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		}
 		// self-bonded to the created validator
 		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED)
+		if err != nil {
+			return nil, err
+		}
 		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED)
 	case *types.QueuedMessage_MsgDelegate:
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgDelegate.DelegatorAddress)
@@ -189,7 +192,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 	return result, nil
 }
 
-// based on a function with the same name in `baseapp.go``
+// based on a function with the same name in `baseapp.go“
 func cacheTxContext(ctx sdk.Context, txid []byte, msgid []byte, height uint64) (sdk.Context, sdk.CacheMultiStore) {
 	ms := ctx.MultiStore()
 	// TODO: https://github.com/cosmos/cosmos-sdk/issues/2824

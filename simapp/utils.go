@@ -2,7 +2,7 @@ package simapp
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
@@ -39,7 +39,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 		logger = log.NewNopLogger()
 	}
 
-	dir, err := ioutil.TempDir("", dirPrefix)
+	dir, err := os.MkdirTemp("", dirPrefix)
 	if err != nil {
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
@@ -64,7 +64,7 @@ func SimulationOperations(app simapp.App, cdc codec.JSONCodec, config simtypes.C
 	}
 
 	if config.ParamsFile != "" {
-		bz, err := ioutil.ReadFile(config.ParamsFile)
+		bz, err := os.ReadFile(config.ParamsFile)
 		if err != nil {
 			panic(err)
 		}
