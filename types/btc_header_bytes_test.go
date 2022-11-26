@@ -3,10 +3,11 @@ package types_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/types"
 	"math/rand"
 	"testing"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/types"
 )
 
 func FuzzBTCHeaderBytesBytesOps(f *testing.F) {

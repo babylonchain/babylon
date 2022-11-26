@@ -2,12 +2,13 @@ package keeper_test
 
 import (
 	"fmt"
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/rand"
-	"testing"
 )
 
 func FuzzHeadersStateCreateHeader(f *testing.F) {
@@ -343,7 +344,7 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 		for i = 0; i < numHeaders; i++ {
 			headerInfo := datagen.GenRandomBTCHeaderInfoWithParent(baseHeader)
 			hashCount[headerInfo.Hash.MarshalHex()] = true
-			blcKeeper.InsertHeader(ctx, headerInfo.Header)
+			blcKeeper.InsertHeader(ctx, headerInfo.Header) //nolint:errcheck
 		}
 
 		var headersAdded uint64 = 0
@@ -458,8 +459,8 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 			t.Skip()
 		}
 		// Insert them into storage
-		blcKeeper.InsertHeader(ctx, childRoot1.Header)
-		blcKeeper.InsertHeader(ctx, childRoot2.Header)
+		blcKeeper.InsertHeader(ctx, childRoot1.Header) //nolint:errcheck
+		blcKeeper.InsertHeader(ctx, childRoot2.Header) //nolint:errcheck
 		// Add them into the data structures maintained by the tree
 		tree.Add(childRoot1, commonAncestor)
 		tree.Add(childRoot2, commonAncestor)

@@ -38,6 +38,7 @@ func b2Hash(m *btcctypes.MsgInsertBTCSpvProof) *bbn.BTCHeaderHashBytes {
 	return m.Proofs[1].ConfirmingBtcHeader.Hash()
 }
 
+//nolint:unused
 func b2TxIdx(m *btcctypes.MsgInsertBTCSpvProof) uint32 {
 	return m.Proofs[1].BtcTransactionIndex
 }

@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -14,8 +17,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"math/rand"
-	"testing"
 )
 
 // FuzzWrappedCreateValidator tests adding new validators via
@@ -104,7 +105,7 @@ func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreat
 		return nil, err
 	}
 	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := privval.BuildPoP(tmValPrivkey, blsPrivKey)
+	pop, _ := privval.BuildPoP(tmValPrivkey, blsPrivKey)
 	blsPubKey := blsPrivKey.PubKey()
 
 	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)
