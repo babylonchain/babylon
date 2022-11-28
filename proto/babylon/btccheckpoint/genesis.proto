@@ -3,12 +3,8 @@ package babylon.btccheckpoint.v1;
 
 import "gogoproto/gogo.proto";
 import "babylon/btccheckpoint/params.proto";
-// this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
 
 // GenesisState defines the btccheckpoint module's genesis state.
-message GenesisState {
-  Params params = 1 [ (gogoproto.nullable) = false ];
-  // this line is used by starport scaffolding # genesis/proto/state
-}
+message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
