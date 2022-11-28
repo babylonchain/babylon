@@ -13,8 +13,7 @@ set -uxe
 
 # Install with pebbledb
 # go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
-go mod tidy
-go install ./...
+make install
 
 # Install with goleveldb
 # go install ./...
@@ -34,7 +33,7 @@ curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis >~/.
 # Get "trust_hash" and "trust_height".
 # INTERVAL=100
 # LATEST_HEIGHT=$(curl -s http://node.mainnet.babylonchain.io:26657/block | jq -r .result.block.header.height)
-# BLOCK_HEIGHT=$(($LATEST_HEIGHT - $INTERVAL))
+# BLOCK_HEIGHT=((LATEST_HEIGHT - $INTERVAL))
 # TRUST_HASH=$(curl -s "http://node.mainnet.babylonchain.io:26657/block?height=$BLOCK_HEIGHT" | jq -r .result.block_id.hash)
 
 # Print out block and transaction hash from which to sync state.
