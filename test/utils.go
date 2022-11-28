@@ -164,6 +164,7 @@ func GenerateNEmptyHeaders(tip *bbn.BTCHeaderBytes, n uint64) []bbn.BTCHeaderByt
 	return headers
 }
 
+//nolint:unused
 func (b *TestTxSender) insertSpvProof(p1 *btccheckpoint.BTCSpvProof, p2 *btccheckpoint.BTCSpvProof) (*txservice.BroadcastTxResponse, error) {
 	address := b.getSenderAddress()
 
@@ -220,6 +221,7 @@ func (b *TestTxSender) getSelfAccount() (acctypes.AccountI, error) {
 	return b.getAccount(b.getSenderAddress())
 }
 
+//nolint:unused
 func (b *TestTxSender) insertBTCHeaders(currentTip uint64, headers []bbn.BTCHeaderBytes) error {
 	lenHeaders := len(headers)
 
@@ -242,6 +244,7 @@ func (b *TestTxSender) insertBTCHeaders(currentTip uint64, headers []bbn.BTCHead
 	return nil
 }
 
+//nolint:unused
 func (b *TestTxSender) insertNEmptyBTCHeaders(n uint64) error {
 	currentTip := b.GetBtcTip()
 	headers := GenerateNEmptyHeaders(currentTip.Header, n)

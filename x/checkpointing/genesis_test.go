@@ -47,7 +47,7 @@ func TestInitGenesis(t *testing.T) {
 	for i := 0; i < valNum; i++ {
 		addr, err := sdk.ValAddressFromBech32(genKeys[i].ValidatorAddress)
 		require.NoError(t, err)
-		blsKey, err := ckptKeeper.GetBlsPubKey(ctx, addr)
+		blsKey, _ := ckptKeeper.GetBlsPubKey(ctx, addr)
 		require.True(t, genKeys[i].BlsKey.Pubkey.Equal(blsKey))
 	}
 }
