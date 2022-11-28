@@ -1,7 +1,5 @@
 #!/bin/bash
 # microtick and bitcanna contributed significantly here.
-# Pebbledb state sync script.
-# invoke like: bash statesync.bash
 
 ## USAGE RUNDOWN
 # Not for use on live nodes
@@ -21,7 +19,7 @@ go mod tidy
 make build
 
 # Install with goleveldb
-# go install ./...
+go install ./...
 
 # NOTE: ABOVE YOU CAN USE ALTERNATIVE DATABASES, HERE ARE THE EXACT COMMANDS
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb' -tags rocksdb ./...
