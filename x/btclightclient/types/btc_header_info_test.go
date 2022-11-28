@@ -38,12 +38,12 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		}
 
 		gotHeaderBytes := headerInfo.Header.MustMarshal()
-		if bytes.Compare(expectedHeaderBytes.MustMarshal(), gotHeaderBytes) != 0 {
+		if !bytes.Equal(expectedHeaderBytes.MustMarshal(), gotHeaderBytes) {
 			t.Errorf("Expected header %s got %s", expectedHeaderBytes, gotHeaderBytes)
 		}
 
 		gotHashBytes := *headerInfo.Hash
-		if bytes.Compare(expectedHeaderHashBytes.MustMarshal(), gotHashBytes.MustMarshal()) != 0 {
+		if !bytes.Equal(expectedHeaderHashBytes.MustMarshal(), gotHashBytes.MustMarshal()) {
 			t.Errorf("Expected header hash %s got %s", expectedHeaderHashBytes, gotHashBytes)
 		}
 

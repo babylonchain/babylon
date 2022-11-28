@@ -46,7 +46,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 			}
 			t.Skip()
 		}
-		if bytes.Compare(m, bz) != 0 {
+		if !bytes.Equal(m, bz) {
 			t.Errorf("Marshal returned %s while %s was expected", m, bz)
 		}
 
@@ -61,7 +61,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 		if sz != len(bz) {
 			t.Errorf("MarhslTo marshalled %d bytes instead of %d", sz, len(bz))
 		}
-		if bytes.Compare(m, bz) != 0 {
+		if !bytes.Equal(m, bz) {
 			t.Errorf("MarshalTo copied %s while %s was expected", m, bz)
 		}
 

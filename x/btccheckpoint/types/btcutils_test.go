@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
+//nolint:unused
 func hashFromString(s string) *chainhash.Hash {
 	hash, e := chainhash.NewHashFromStr(s)
 	if e != nil {

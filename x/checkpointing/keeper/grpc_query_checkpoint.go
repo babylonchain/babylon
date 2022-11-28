@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -81,6 +82,7 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// minus 1 is because the current epoch is not finished
 	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber - 1
+	//nolint:staticcheck uint64 is always greater than 0 uint64 is always greater than 0
 	if tipEpoch < 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}

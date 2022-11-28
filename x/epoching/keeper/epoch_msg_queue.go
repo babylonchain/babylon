@@ -144,11 +144,11 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 			return nil, err
 		}
 		// self-bonded to the created validator
-		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED)
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 		if err != nil {
 			return nil, err
 		}
-		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED)
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 	case *types.QueuedMessage_MsgDelegate:
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgDelegate.DelegatorAddress)
 		if err != nil {
@@ -159,8 +159,8 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 			return nil, err
 		}
 		// created and bonded to the validator
-		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED)
-		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED)
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED)  //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 	case *types.QueuedMessage_MsgUndelegate:
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgUndelegate.DelegatorAddress)
 		if err != nil {
@@ -172,7 +172,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		}
 		// unbonding from the validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the validator
-		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_UNBONDING)
+		k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_UNBONDING) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 	case *types.QueuedMessage_MsgBeginRedelegate:
 		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgBeginRedelegate.DelegatorAddress)
 		if err != nil {
