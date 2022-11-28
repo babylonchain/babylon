@@ -52,8 +52,7 @@ export BABYLOND_STATESYNC_TRUST_HEIGHT=$BLOCK_HEIGHT
 export BABYLOND_STATESYNC_TRUST_HASH=$TRUST_HASH
 
 # Fetch and set list of seeds from chain registry.
-export NODE_ID=$(curl node.mainnet.babylonchain.io:26657/status | jq -r .result.node_info.id )
-export BABYLOND_P2P_PERSISTENT_PEERS=$NODE_ID@node.mainnet.babylonchain.io:26656
+export BABYLOND_P2P_PERSISTENT_PEERS=c12226489ac3f6ce1d7903d37cd204bc8f269018@node.mainnet.babylonchain.io:26656
 
 # Start chain.
 babylond start --x-crisis-skip-assert-invariants
