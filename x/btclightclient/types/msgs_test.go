@@ -1,11 +1,11 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
-
 	"bytes"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -63,13 +63,13 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		if err != nil {
 			t.Errorf("Valid parameters led to error")
 		}
-		if msgInsertHeader == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if msgInsertHeader == nil {
 			t.Errorf("nil returned")
 		}
-		if msgInsertHeader.Header == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if msgInsertHeader.Header == nil {
 			t.Errorf("nil header")
 		}
-		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) {
 			t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal())
 		}
 
@@ -82,5 +82,4 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			t.Errorf("Invalid message did not fail")
 		}
 	})
-
 }
