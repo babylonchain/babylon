@@ -159,10 +159,10 @@ func FuzzContainsQuery(f *testing.F) {
 		if err != nil {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
-		if resp == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if resp == nil {
 			t.Errorf("Valid input led to nil response")
 		}
-		if resp.Contains { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if resp.Contains {
 			t.Errorf("Non existent header hash led to true result")
 		}
 
@@ -172,10 +172,10 @@ func FuzzContainsQuery(f *testing.F) {
 		if err != nil {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
-		if resp == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if resp == nil {
 			t.Errorf("Valid input led to nil response")
 		}
-		if !resp.Contains { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if !resp.Contains {
 			t.Errorf("Existent header hash led to false result")
 		}
 	})
@@ -350,10 +350,10 @@ func FuzzTipQuery(f *testing.F) {
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}
-		if resp == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if resp == nil {
 			t.Errorf("Valid input led to nil response")
 		}
-		if !resp.Header.Eq(tree.GetTip()) { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if !resp.Header.Eq(tree.GetTip()) {
 			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetTip().Hash, resp.Header.Hash)
 		}
 	})
@@ -386,16 +386,15 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 		tree := genRandomTree(blcKeeper, ctx, 1, 10)
 
 		query := types.NewQueryBaseHeaderRequest()
-		//nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+
 		resp, err = blcKeeper.BaseHeader(sdkCtx, query)
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}
-		if resp == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
-
+		if resp == nil {
 			t.Errorf("Valid input led to nil response")
 		}
-		if !resp.Header.Eq(tree.GetRoot()) { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if !resp.Header.Eq(tree.GetRoot()) {
 			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetRoot().Hash, resp.Header.Hash)
 		}
 	})

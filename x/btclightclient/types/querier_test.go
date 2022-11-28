@@ -13,14 +13,12 @@ import (
 
 func TestNewQueryParamsRequest(t *testing.T) {
 	newQueryParams := types.NewQueryParamsRequest()
-	if newQueryParams == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
-
+	if newQueryParams == nil {
 		t.Errorf("A nil object was returned")
 	}
 
 	emptyQueryParams := types.QueryParamsRequest{}
-	if *newQueryParams != emptyQueryParams { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
-
+	if *newQueryParams != emptyQueryParams {
 		t.Errorf("expected an empty QueryParamsRequest")
 	}
 }
@@ -32,14 +30,14 @@ func TestNewQueryHashesRequest(t *testing.T) {
 		Key: headerHashBytes.MustMarshal(),
 	}
 	newQueryHashes := types.NewQueryHashesRequest(&req)
-	if newQueryHashes == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+	if newQueryHashes == nil {
 		t.Errorf("A nil object was returned")
 	}
 
 	expectedQueryHashes := types.QueryHashesRequest{
 		Pagination: &req,
 	}
-	if *newQueryHashes != expectedQueryHashes { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+	if *newQueryHashes != expectedQueryHashes {
 		t.Errorf("expected a QueryHashesRequest %s", expectedQueryHashes)
 	}
 }
@@ -56,13 +54,13 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 		if err != nil {
 			t.Errorf("returned error for valid hex %s", hexHash)
 		}
-		if queryContains == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if queryContains == nil {
 			t.Errorf("returned a nil reference to a query")
 		}
-		if queryContains.Hash == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if queryContains.Hash == nil {
 			t.Errorf("has an empty hash attribute")
 		}
-		if !bytes.Equal(*(queryContains.Hash), btcHeaderHashBytes.MustMarshal()) { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+		if !bytes.Equal(*(queryContains.Hash), btcHeaderHashBytes.MustMarshal()) {
 			t.Errorf("expected hash bytes %s got %s", btcHeaderHashBytes.MustMarshal(), *(queryContains.Hash))
 		}
 	})
@@ -74,14 +72,14 @@ func TestNewQueryMainChainRequest(t *testing.T) {
 		Key: headerBytes.MustMarshal(),
 	}
 	newQueryMainChain := types.NewQueryMainChainRequest(&req)
-	if newQueryMainChain == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+	if newQueryMainChain == nil {
 		t.Errorf("A nil object was returned")
 	}
 
 	expectedQueryMainChain := types.QueryMainChainRequest{
 		Pagination: &req,
 	}
-	if *newQueryMainChain != expectedQueryMainChain { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
+	if *newQueryMainChain != expectedQueryMainChain {
 		t.Errorf("expected a QueryMainChainRequest %s", expectedQueryMainChain)
 	}
 }
