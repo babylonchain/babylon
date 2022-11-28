@@ -170,7 +170,7 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 			}
 			t.Skip()
 		}
-		if bytes.Compare(h, jsonHex) != 0 {
+		if !bytes.Equal(h, jsonHex) {
 			t.Errorf("Marshal returned %s while %s was expected", h, jsonHex)
 		}
 

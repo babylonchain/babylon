@@ -184,7 +184,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 		}
 		// unbonding from the source validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		k.RecordNewDelegationState(ctx, delAddr, srcValAddr, types.BondState_UNBONDING)
+		k.RecordNewDelegationState(ctx, delAddr, srcValAddr, types.BondState_UNBONDING) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 	default:
 		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
