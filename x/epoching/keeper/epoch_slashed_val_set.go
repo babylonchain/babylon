@@ -54,7 +54,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) error {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
-	thisVotingPower, err := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	thisVotingPower, _ := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
 	thisVotingPowerBytes, err := sdk.NewInt(thisVotingPower).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))

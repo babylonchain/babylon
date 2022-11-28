@@ -224,7 +224,7 @@ func (header *formatHeader) validateHeader(
 	expectedPart uint8,
 ) error {
 	if !bytes.Equal(header.tag, expectedTag) {
-		return errors.New(fmt.Sprintf("data does not have expected tag, expected tag: %v, got tag: %v", expectedTag, header.tag))
+		return fmt.Errorf("data does not have expected tag, expected tag: %v, got tag: %v", expectedTag, header.tag)
 	}
 
 	if header.version > CurrentVersion {
