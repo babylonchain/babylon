@@ -31,6 +31,8 @@ const (
 )
 
 // copied from github.com/tendermint/tendermint/privval/file.go"
+//
+//nolint:unused
 func voteToStep(vote *tmproto.Vote) int8 {
 	switch vote.Type {
 	case tmproto.PrevoteType:

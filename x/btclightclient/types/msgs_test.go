@@ -69,7 +69,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		if msgInsertHeader.Header == nil {
 			t.Errorf("nil header")
 		}
-		if bytes.Compare(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) != 0 {
+		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) {
 			t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal())
 		}
 
