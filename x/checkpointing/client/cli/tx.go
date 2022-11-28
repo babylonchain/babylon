@@ -84,7 +84,7 @@ func CmdTxAddBlsSig() *cobra.Command {
 func CmdWrappedCreateValidator() *cobra.Command {
 	cmd := cosmoscli.NewCreateValidatorCmd()
 	cmd.Long = strings.TrimSpace(
-		fmt.Sprintf(`create-validator will create a new validator initialized
+		string(`create-validator will create a new validator initialized
 with a self-delegation to it using the BLS key generated for the validator (e.g., via babylond create-bls-key).
 
 This command creates a MsgWrappedCreateValidator message which is a wrapper of cosmos-sdk's
