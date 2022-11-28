@@ -26,6 +26,7 @@ make install
 
 # Initialize chain.
 babylond init test
+find ~/.babylond/config/app.toml -type f -exec sed -i 's/bbtm/bbn1/g' {} \;
 
 # Get Genesis
 curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis >~/.babylond/config/genesis.json
