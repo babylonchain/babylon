@@ -50,11 +50,11 @@ type BTCSpvProof struct {
 	// Index of transaction within the block. Index is needed to determine if
 	// currently hashed node is left or right.
 	BtcTransactionIndex uint32 `protobuf:"varint,2,opt,name=btc_transaction_index,json=btcTransactionIndex,proto3" json:"btc_transaction_index,omitempty"`
-	// List of concatenated intermediate merkle tree nodes, without root node and leaf node
-	// against which we calculate the proof.
-	// Each node has 32 byte length.
-	// Example proof can look like: 32_bytes_of_node1 || 32_bytes_of_node2 ||  32_bytes_of_node3
-	// so the length of the proof will always be divisible by 32.
+	// List of concatenated intermediate merkle tree nodes, without root node and
+	// leaf node against which we calculate the proof. Each node has 32 byte
+	// length. Example proof can look like: 32_bytes_of_node1 || 32_bytes_of_node2
+	// ||  32_bytes_of_node3 so the length of the proof will always be divisible
+	// by 32.
 	MerkleNodes []byte `protobuf:"bytes,3,opt,name=merkle_nodes,json=merkleNodes,proto3" json:"merkle_nodes,omitempty"`
 	// Valid btc header which confirms btc_transaction.
 	// Should have exactly 80 bytes

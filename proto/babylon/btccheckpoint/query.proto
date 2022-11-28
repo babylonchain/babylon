@@ -6,7 +6,6 @@ import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/params.proto";
 import "babylon/btccheckpoint/btccheckpoint.proto";
-// this line is used by starport scaffolding # 1
 
 option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
 
@@ -16,7 +15,6 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/btccheckpoint/v1/params";
   }
-  // this line is used by starport scaffolding # 2
 
   // BtcCheckpointHeight returns earliest block height for given rawcheckpoint
   rpc BtcCheckpointHeight(QueryBtcCheckpointHeightRequest) returns (QueryBtcCheckpointHeightResponse) {
@@ -36,8 +34,6 @@ message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
-
-// this line is used by starport scaffolding # 3
 
 message QueryBtcCheckpointHeightRequest {
   // Number of epoch for which the earliest checkpointing btc height is requested
