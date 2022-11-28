@@ -86,8 +86,10 @@ func TestAccumulativeAggregation(t *testing.T) {
 		require.Nil(t, err)
 	}
 	sig := Sign(sks[n-1], msgb)
-	aggSig, _ = AggrSig(aggSig, sig)
-	aggPK, _ = AggrPK(aggPK, pks[n-1])
+	aggSig, err = AggrSig(aggSig, sig)
+	require.Nil(t, err)
+	aggPK, err = AggrPK(aggPK, pks[n-1])
+	require.Nil(t, err)
 	res, err = Verify(aggSig, aggPK, msga)
 	require.False(t, res)
 	require.Nil(t, err)
