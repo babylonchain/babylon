@@ -11,14 +11,10 @@
 
 set -uxe
 
-# Set Golang environment variables.
-export GOPATH=~/go
-export PATH=$PATH:~/go/bin
-
 # Install with pebbledb
-go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
+# go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
 go mod tidy
-make build
+go install ./...
 
 # Install with goleveldb
 # go install ./...
@@ -27,12 +23,13 @@ make build
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb' -tags rocksdb ./...
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=badgerdb' -tags badgerdb ./...
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb' -tags boltdb ./...
+# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb' -tags pebbledb ./...
 
 # Initialize chain.
 babylond init test
 
 # Get Genesis
-curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis > ~/.babylond/config/genesis.json
+curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis >~/.babylond/config/genesis.json
 
 # Get "trust_hash" and "trust_height".
 # INTERVAL=100
@@ -52,7 +49,7 @@ export BABYLOND_STATESYNC_RPC_SERVERS="http://node.mainnet.babylonchain.io:26657
 # export BABYLOND_STATESYNC_TRUST_HASH=$TRUST_HASH
 
 # Fetch and set list of seeds from chain registry.
-export NODE_ID=$(curl node.mainnet.babylonchain.io:26657/status | jq -r .result.node_info.id )
+export NODE_ID=$(curl node.mainnet.babylonchain.io:26657/status | jq -r .result.node_info.id)
 export BABYLOND_P2P_PERSISTENT_PEERS=$NODE_ID@node.mainnet.babylonchain.io:26656
 
 # Start chain.
