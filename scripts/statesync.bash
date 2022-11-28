@@ -12,13 +12,13 @@
 set -uxe
 
 # Set Golang environment variables.
-export GOPATH=~/go
-export PATH=$PATH:~/go/bin
+# export GOPATH=~/go
+# export PATH=$PATH:~/go/bin
 
 # Install with pebbledb
-go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
-go mod tidy
-make build
+# go mod edit -replace github.com/tendermint/tm-db=github.com/baabeetaa/tm-db@pebble
+# go mod tidy
+make install
 
 # Install with goleveldb
 # go install ./...
@@ -27,9 +27,12 @@ make build
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb' -tags rocksdb ./...
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=badgerdb' -tags badgerdb ./...
 # go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb' -tags boltdb ./...
+# go install -ldflags '-w -s -X github.com/cosmos/cosmos-sdk/types.DBBackend=pebbledb' -tags pebbledb ./...
+
 
 # Initialize chain.
 babylond init test
+find ~/.babylond/config/app.toml -type f -exec sed -i 's/bbtm/bbn1/g' {} \;
 
 # Get Genesis
 curl http://node.mainnet.babylonchain.io:26657/genesis | jq .result.genesis > ~/.babylond/config/genesis.json
