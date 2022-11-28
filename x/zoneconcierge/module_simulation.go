@@ -23,10 +23,6 @@ var (
 	_ = baseapp.Paramspace
 )
 
-const (
-// this line is used by starport scaffolding # simapp/module/const
-)
-
 // GenerateGenesisState creates a randomized GenState of the module
 func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	accs := make([]string, len(simState.Accounts))
@@ -36,7 +32,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	zoneconciergeGenesis := types.GenesisState{
 		Params: types.DefaultParams(),
 		PortId: types.PortID,
-		// this line is used by starport scaffolding # simapp/module/genesisState
 	}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&zoneconciergeGenesis)
 }
@@ -58,8 +53,6 @@ func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {}
 // WeightedOperations returns the all the gov module operations with their respective weights.
 func (am AppModule) WeightedOperations(simState module.SimulationState) []simtypes.WeightedOperation {
 	operations := make([]simtypes.WeightedOperation, 0)
-
-	// this line is used by starport scaffolding # simapp/module/operation
 
 	return operations
 }

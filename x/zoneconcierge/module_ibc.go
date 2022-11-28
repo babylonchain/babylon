@@ -131,8 +131,6 @@ func (im IBCModule) OnRecvPacket(
 ) ibcexported.Acknowledgement {
 	var ack channeltypes.Acknowledgement
 
-	// this line is used by starport scaffolding # oracle/packet/module/recv
-
 	var modulePacketData types.ZoneconciergePacketData
 	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
 		return channeltypes.NewErrorAcknowledgement(sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error()))
@@ -140,7 +138,6 @@ func (im IBCModule) OnRecvPacket(
 
 	// // TODO (Babylon): Dispatch and process packet
 	// switch packet := modulePacketData.Packet.(type) {
-	// // this line is used by starport scaffolding # ibc/packet/module/recv
 	// default:
 	// 	err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
 	// 	return channeltypes.NewErrorAcknowledgement(err)
@@ -162,13 +159,10 @@ func (im IBCModule) OnAcknowledgementPacket(
 		return sdkerrors.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
 	}
 
-	// this line is used by starport scaffolding # oracle/packet/module/ack
-
 	var eventType string
 
 	// // TODO (Babylon): Dispatch and process packet
 	// switch packet := modulePacketData.Packet.(type) {
-	// // this line is used by starport scaffolding # ibc/packet/module/ack
 	// default:
 	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
 	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
@@ -215,7 +209,6 @@ func (im IBCModule) OnTimeoutPacket(
 
 	// // TODO (Babylon): Dispatch and process packet
 	// switch packet := modulePacketData.Packet.(type) {
-	// // this line is used by starport scaffolding # ibc/packet/module/timeout
 	// default:
 	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
 	// 	return sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
