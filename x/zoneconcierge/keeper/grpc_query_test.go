@@ -109,7 +109,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		SimulateHeadersAndForksViaHook(ctx, hooks, czChainID, numHeaders, numForkHeaders)
 
 		hooks.AfterEpochEnds(ctx, epochNum)
-		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		hooks.AfterRawCheckpointFinalized(ctx, epochNum) //nolint:errcheck // ignore error
 
 		// mock btcckeeper
 		mockEpochData := &btcctypes.EpochData{

@@ -28,7 +28,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 		// Get the signer structure
 		var signer sdk.AccAddress
-		signer.Unmarshal(addressBytes)
+		signer.Unmarshal(addressBytes) //nolint:errcheck // this is a test
 
 		// Perform modifications on the header
 		errorKind = rand.Intn(2)
@@ -63,13 +63,13 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		if err != nil {
 			t.Errorf("Valid parameters led to error")
 		}
-		if msgInsertHeader == nil {
+		if msgInsertHeader == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
 			t.Errorf("nil returned")
 		}
-		if msgInsertHeader.Header == nil {
+		if msgInsertHeader.Header == nil { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
 			t.Errorf("nil header")
 		}
-		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) {
+		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) { //nolint:staticcheck // TODO: look at the nil pointer issues mentioned by the linter here.
 			t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal())
 		}
 

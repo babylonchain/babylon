@@ -285,7 +285,7 @@ func LatestHeight(c *grpc.ClientConn) (int64, error) {
 		return 0, err
 	}
 
-	return latestResponse.Block.Header.Height, nil
+	return latestResponse.Block.Header.Height, nil //nolint:staticcheck // deprecated call, suggests to use sdk_block instead
 }
 
 func WaitForHeight(c *grpc.ClientConn, h int64) (int64, error) {
