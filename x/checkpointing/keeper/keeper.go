@@ -221,7 +221,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		sum += v.Power
 	}
 	if sum <= totalPower*1/3 {
-		return nil, errors.New("insufficient voting power")
+		return nil, types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
 	}
 	msgBytes := append(sdk.Uint64ToBigEndian(ckpt.GetEpochNum()), *ckpt.LastCommitHash...)
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
@@ -229,7 +229,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		return nil, err
 	}
 	if !ok {
-		return nil, errors.New("invalid BLS multi-sig")
+		return nil, types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
 	}
 
 	// multi-sig is valid but it does not match with the local checkpoint, meaning conflicting is observed

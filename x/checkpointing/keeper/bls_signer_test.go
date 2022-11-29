@@ -33,6 +33,10 @@ var (
 	}
 	valSet      = epochingtypes.ValidatorSet{val1, val2}
 	blsPrivKey1 = bls12381.GenPrivKey()
+	blsPubKey1  = blsPrivKey1.PubKey()
+	blsPrivKey2 = bls12381.GenPrivKey()
+	blsPubKey2  = blsPrivKey2.PubKey()
+	pubkeys     = []bls12381.PublicKey{blsPubKey1, blsPubKey2}
 )
 
 func TestKeeper_SendBlsSig(t *testing.T) {
