@@ -171,6 +171,9 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 func (k Keeper) CheckpointEpoch(ctx sdk.Context, btcCkptBytes []byte) (uint64, error) {
 	ckptWithMeta, err := k.verifyCkptBytes(ctx, btcCkptBytes)
 	if err != nil {
+		if errors.Is(err, types.ErrConflictingCheckpoint) {
+			panic(err)
+		}
 		return 0, err
 	}
 	return ckptWithMeta.Ckpt.EpochNum, nil
@@ -197,7 +200,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 	}
 
 	// a valid checkpoint should equal to the existing one according to epoch number
-	if ckptWithMeta.Ckpt.Equal(ckpt) {
+	if ckptWithMeta.Ckpt.Equal(ckpt) && ckptWithMeta.Status != types.Accumulating {
 		return ckptWithMeta, nil
 	}
 
@@ -220,7 +223,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 	if sum <= totalPower*1/3 {
 		return nil, errors.New("insufficient voting power")
 	}
-	msgBytes := ckpt.LastCommitHash.MustMarshal()
+	msgBytes := append(sdk.Uint64ToBigEndian(ckpt.GetEpochNum()), *ckpt.LastCommitHash...)
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
 	if err != nil {
 		return nil, err
@@ -229,8 +232,20 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		return nil, errors.New("invalid BLS multi-sig")
 	}
 
-	// TODO: needs to stall the node since a conflicting checkpoint is found
-	return nil, types.ErrInvalidRawCheckpoint.Wrapf("a conflicting checkpoint is found")
+	// multi-sig is valid but it does not match with the local checkpoint, meaning conflicting is observed
+	ctx.Logger().Error(types.ErrConflictingCheckpoint.Wrapf("epoch %v", ckpt.EpochNum).Error())
+	// report conflicting checkpoint event
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventConflictingCheckpoint{
+			ConflictingCheckpoint: ckpt,
+			LocalCheckpoint:       ckptWithMeta,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return nil, types.ErrConflictingCheckpoint
 }
 
 // SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED
