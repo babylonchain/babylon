@@ -26,20 +26,17 @@ message SubmissionKey {
   repeated TransactionKey key = 1;
 }
 
-enum EpochStatus {
+enum BtcStatus {
   option (gogoproto.goproto_enum_prefix) = false;
-  // SUBMITTED Epoch is in submitted state when at least on checkpoint from it
-  // is included in bitcoin
+  // SUBMITTED Epoch has Submitted btc status if there ever was at least one
+  // known submission on btc main chain
   EPOCH_STATUS_SUBMITTED = 0 [(gogoproto.enumvalue_customname) = "Submitted"];
-  // CONFIRMED Epoch is in confirmed state when at least on checkpoint from it
-  // is included in bitcoin and at least k-deep on main chain
+  // CONFIRMED Epoch has Confirmed btc status if there ever was at least one
+  // known submission on btc main chain which was k-deep
   EPOCH_STATUS_CONFIRMED = 1 [(gogoproto.enumvalue_customname) = "Confirmed"];
-  // FINALIZED Epoch is in confirmed state when at least on checkpoint from it
-  // is included in bitcoin and at least w-deep on main chain
+  // CONFIRMED Epoch has Finalized btc status if there is was at exactly one
+  // knon submission on btc main chain which is w-deep
   EPOCH_STATUS_FINALIZED = 2 [(gogoproto.enumvalue_customname) = "Finalized"];
-  // SIGNED Epoch does not have any submissions or all of its submission are not on
-  // main chain
-  EPOCH_STATUS_SIGNED = 3 [(gogoproto.enumvalue_customname) = "Signed"];
 }
 
 
@@ -68,8 +65,8 @@ message EpochData {
   // submission.
   repeated SubmissionKey key = 1;
 
-  // Current state of epoch.
-  EpochStatus status = 2;
+  // Current btc status of the epoch
+  BtcStatus status = 2;
 
   // Required to comunicate with checkpoint module about checkpoint status
   bytes raw_checkpoint = 3;

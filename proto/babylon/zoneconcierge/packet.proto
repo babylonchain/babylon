@@ -1,16 +1,10 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
-// this line is used by starport scaffolding # proto/packet/import
-
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 message ZoneconciergePacketData {
-    oneof packet {
-        Heartbeat heartbeart = 1;
-    }
+  oneof packet { Heartbeat heartbeart = 1; }
 }
 
-message Heartbeat {
-    string msg = 1;
-}
+message Heartbeat { string msg = 1; }

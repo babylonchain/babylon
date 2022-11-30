@@ -93,8 +93,13 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		czChainIDLen := datagen.RandomInt(50) + 1
 		czChainID := string(datagen.GenRandomByteArray(czChainIDLen))
 
+		// simulate the scenario that a random epoch has ended and finalised
+		epochNum := datagen.RandomInt(10)
+
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
+		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNum}).AnyTimes()
+
 		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btccKeeper, epochingKeeper)
 		hooks := zcKeeper.Hooks()
 
@@ -103,8 +108,6 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		numForkHeaders := datagen.RandomInt(10) + 1
 		SimulateHeadersAndForksViaHook(ctx, hooks, czChainID, numHeaders, numForkHeaders)
 
-		// simulate the scenario that a random epoch has ended and finalised
-		epochNum := datagen.RandomInt(10)
 		hooks.AfterEpochEnds(ctx, epochNum)
 		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
 
