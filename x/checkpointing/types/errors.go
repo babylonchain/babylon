@@ -15,4 +15,5 @@ var (
 	ErrBlsKeyDoesNotExist     = sdkerrors.Register(ModuleName, 1209, "BLS public key does not exist")
 	ErrBlsKeyAlreadyExist     = sdkerrors.Register(ModuleName, 1210, "BLS public key already exists")
 	ErrBlsPrivKeyDoesNotExist = sdkerrors.Register(ModuleName, 1211, "BLS private key does not exist")
+	ErrConflictingCheckpoint  = sdkerrors.Register(ModuleName, 1212, "Conflicting checkpoint is found")
 )

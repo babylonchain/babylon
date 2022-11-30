@@ -1,6 +1,10 @@
 package keeper_test
 
 import (
+	"github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/boljen/go-bitmap"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
 	"testing"
 
@@ -13,12 +17,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-/*
-	FuzzKeeperAddRawCheckpoint checks
-	1. if the RawCheckpointWithMeta object is nil, an error is returned
-	2. if the RawCheckpointWithMeta object does not exist when GetRawCheckpoint is called, an error is returned
-	3. if a RawCheckpointWithMeta object with the same epoch number already exists, an error is returned
-*/
+// FuzzKeeperAddRawCheckpoint checks
+// 1. if the RawCheckpointWithMeta object is nil, an error is returned
+// 2. if the RawCheckpointWithMeta object does not exist when GetRawCheckpoint is called, an error is returned
+// 3. if a RawCheckpointWithMeta object with the same epoch number already exists, an error is returned
 func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -54,10 +56,8 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 	})
 }
 
-/*
-	FuzzKeeperSetCheckpointStatus checks
-	if the checkpoint status is not correct, the status will not be changed
-*/
+// FuzzKeeperSetCheckpointStatus checks if the checkpoint status
+// is not correct, the status will not be changed
 func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -100,4 +100,106 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, types.Finalized, status)
 	})
+}
+
+// FuzzKeeperCheckpointEpoch checks the following scenarios
+// 1. given a valid slice of checkpoint bytes, should return its epoch number
+// 2. given a dummy checkpoint, should return ErrInvalidRawCheckpoint
+// 3. given a conflicting checkpoint, should panic
+func FuzzKeeperCheckpointEpoch(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 1)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		ek := mocks.NewMockEpochingKeeper(ctrl)
+		ek.EXPECT().GetValidatorSet(gomock.Any(), gomock.Any()).Return(valSet).AnyTimes()
+		ek.EXPECT().GetTotalVotingPower(gomock.Any(), gomock.Any()).Return(int64(20)).AnyTimes()
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		for i, val := range valSet {
+			err := ckptKeeper.CreateRegistration(ctx, pubkeys[i], val.Addr)
+			require.NoError(t, err)
+		}
+
+		// add local checkpoint, signed by the first validator
+		bm := bitmap.New(104)
+		bm.Set(0, true)
+		localCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
+		localCkptWithMeta.Status = types.Sealed
+		localCkptWithMeta.PowerSum = 10
+		localCkptWithMeta.Ckpt.Bitmap = bm
+		msgBytes := append(sdk.Uint64ToBigEndian(localCkptWithMeta.Ckpt.EpochNum), *localCkptWithMeta.Ckpt.LastCommitHash...)
+		sig := bls12381.Sign(blsPrivKey1, msgBytes)
+		localCkptWithMeta.Ckpt.BlsMultiSig = &sig
+		_ = ckptKeeper.AddRawCheckpoint(
+			ctx,
+			localCkptWithMeta,
+		)
+
+		// 1. check valid checkpoint
+		btcCkptBytes := makeBtcCkptBytes(
+			localCkptWithMeta.Ckpt.EpochNum,
+			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
+			localCkptWithMeta.Ckpt.Bitmap,
+			localCkptWithMeta.Ckpt.BlsMultiSig.Bytes(),
+			t,
+		)
+		epoch, err := ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+		require.NoError(t, err)
+		require.Equal(t, localCkptWithMeta.Ckpt.EpochNum, epoch)
+
+		// 2. check a checkpoint with invalid sig
+		btcCkptBytes = makeBtcCkptBytes(
+			localCkptWithMeta.Ckpt.EpochNum,
+			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
+			localCkptWithMeta.Ckpt.Bitmap,
+			datagen.GenRandomByteArray(btctxformatter.BlsSigLength),
+			t,
+		)
+		epoch, err = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
+
+		// 3. check a conflicting checkpoint; signed on a random lastcommithash
+		conflictLastCommitHash := datagen.GenRandomByteArray(btctxformatter.LastCommitHashLength)
+		msgBytes = append(sdk.Uint64ToBigEndian(localCkptWithMeta.Ckpt.EpochNum), conflictLastCommitHash...)
+		btcCkptBytes = makeBtcCkptBytes(
+			localCkptWithMeta.Ckpt.EpochNum,
+			conflictLastCommitHash,
+			localCkptWithMeta.Ckpt.Bitmap,
+			bls12381.Sign(blsPrivKey1, msgBytes),
+			t,
+		)
+		require.Panics(t, func() {
+			_, _ = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+		})
+	})
+}
+
+func makeBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) []byte {
+	tag := datagen.GenRandomByteArray(btctxformatter.TagLength)
+	babylonTag := btctxformatter.BabylonTag(tag[:btctxformatter.TagLength])
+	address := datagen.GenRandomByteArray(btctxformatter.AddressLength)
+
+	rawBTCCkpt := &btctxformatter.RawBtcCheckpoint{
+		Epoch:            epoch,
+		LastCommitHash:   lch,
+		BitMap:           bitmap,
+		SubmitterAddress: address,
+		BlsSig:           blsSig,
+	}
+	firstHalf, secondHalf, err := btctxformatter.EncodeCheckpointData(
+		babylonTag,
+		btctxformatter.CurrentVersion,
+		rawBTCCkpt,
+	)
+	require.NoError(t, err)
+	decodedFirst, err := btctxformatter.IsBabylonCheckpointData(babylonTag, btctxformatter.CurrentVersion, firstHalf)
+	require.NoError(t, err)
+	decodedSecond, err := btctxformatter.IsBabylonCheckpointData(babylonTag, btctxformatter.CurrentVersion, secondHalf)
+	require.NoError(t, err)
+	ckptData, err := btctxformatter.ConnectParts(btctxformatter.CurrentVersion, decodedFirst.Data, decodedSecond.Data)
+	require.NoError(t, err)
+
+	return ckptData
 }

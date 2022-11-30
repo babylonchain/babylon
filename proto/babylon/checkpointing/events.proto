@@ -28,3 +28,8 @@ message EventCheckpointFinalized {
 message EventCheckpointForgotten {
     RawCheckpointWithMeta checkpoint = 1;
 }
+
+message EventConflictingCheckpoint {
+    RawCheckpoint conflicting_checkpoint = 1;
+    RawCheckpointWithMeta local_checkpoint = 2;
+}

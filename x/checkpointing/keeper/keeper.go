@@ -171,6 +171,9 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 func (k Keeper) CheckpointEpoch(ctx sdk.Context, btcCkptBytes []byte) (uint64, error) {
 	ckptWithMeta, err := k.verifyCkptBytes(ctx, btcCkptBytes)
 	if err != nil {
+		if errors.Is(err, types.ErrConflictingCheckpoint) {
+			panic(err)
+		}
 		return 0, err
 	}
 	return ckptWithMeta.Ckpt.EpochNum, nil
@@ -196,8 +199,8 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		return nil, err
 	}
 
-	// a valid checkpoint should equal to the existing one according to epoch number
-	if ckptWithMeta.Ckpt.Equal(ckpt) {
+	// can skip the checks if it is identical with the local checkpoint that is not accumulating
+	if ckptWithMeta.Ckpt.Equal(ckpt) && ckptWithMeta.Status != types.Accumulating {
 		return ckptWithMeta, nil
 	}
 
@@ -218,19 +221,38 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		sum += v.Power
 	}
 	if sum <= totalPower*1/3 {
-		return nil, errors.New("insufficient voting power")
+		return nil, types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
 	}
-	msgBytes := ckpt.LastCommitHash.MustMarshal()
+	msgBytes := append(sdk.Uint64ToBigEndian(ckpt.GetEpochNum()), *ckpt.LastCommitHash...)
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
 	if err != nil {
 		return nil, err
 	}
 	if !ok {
-		return nil, errors.New("invalid BLS multi-sig")
+		return nil, types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
 	}
 
-	// TODO: needs to stall the node since a conflicting checkpoint is found
-	return nil, types.ErrInvalidRawCheckpoint.Wrapf("a conflicting checkpoint is found")
+	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
+	// same with that of the local checkpoint, it means it is valid except that
+	// it is signed by a different signer set
+	if ckptWithMeta.Ckpt.LastCommitHash.Equal(*ckpt.LastCommitHash) {
+		return ckptWithMeta, nil
+	}
+
+	// multi-sig is valid but the quorum is on a different branch, meaning conflicting is observed
+	ctx.Logger().Error(types.ErrConflictingCheckpoint.Wrapf("epoch %v", ckpt.EpochNum).Error())
+	// report conflicting checkpoint event
+	err = ctx.EventManager().EmitTypedEvent(
+		&types.EventConflictingCheckpoint{
+			ConflictingCheckpoint: ckpt,
+			LocalCheckpoint:       ckptWithMeta,
+		},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	return nil, types.ErrConflictingCheckpoint
 }
 
 // SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED
