@@ -199,7 +199,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		return nil, err
 	}
 
-	// a valid checkpoint should equal to the existing one according to epoch number
+	// can skip the checks if it is identical with the local checkpoint that is not accumulating
 	if ckptWithMeta.Ckpt.Equal(ckpt) && ckptWithMeta.Status != types.Accumulating {
 		return ckptWithMeta, nil
 	}
@@ -232,7 +232,14 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 		return nil, types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
 	}
 
-	// multi-sig is valid but it does not match with the local checkpoint, meaning conflicting is observed
+	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
+	// same with that of the local checkpoint, it means it is valid except that
+	// it is signed by a different signer set
+	if ckptWithMeta.Ckpt.LastCommitHash.Equal(*ckpt.LastCommitHash) {
+		return ckptWithMeta, nil
+	}
+
+	// multi-sig is valid but the quorum is on a different branch, meaning conflicting is observed
 	ctx.Logger().Error(types.ErrConflictingCheckpoint.Wrapf("epoch %v", ckpt.EpochNum).Error())
 	// report conflicting checkpoint event
 	err = ctx.EventManager().EmitTypedEvent(

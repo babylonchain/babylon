@@ -138,7 +138,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		)
 
 		// 1. check valid checkpoint
-		btcCkptBytes := generateBtcCkptBytes(
+		btcCkptBytes := makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
@@ -150,20 +150,20 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		require.Equal(t, localCkptWithMeta.Ckpt.EpochNum, epoch)
 
 		// 2. check a checkpoint with invalid sig
-		btcCkptBytes = generateBtcCkptBytes(
+		btcCkptBytes = makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
-			randNBytes(btctxformatter.BlsSigLength),
+			datagen.GenRandomByteArray(btctxformatter.BlsSigLength),
 			t,
 		)
 		epoch, err = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
 		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
 
 		// 3. check a conflicting checkpoint; signed on a random lastcommithash
-		conflictLastCommitHash := randNBytes(btctxformatter.LastCommitHashLength)
+		conflictLastCommitHash := datagen.GenRandomByteArray(btctxformatter.LastCommitHashLength)
 		msgBytes = append(sdk.Uint64ToBigEndian(localCkptWithMeta.Ckpt.EpochNum), conflictLastCommitHash...)
-		btcCkptBytes = generateBtcCkptBytes(
+		btcCkptBytes = makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			conflictLastCommitHash,
 			localCkptWithMeta.Ckpt.Bitmap,
@@ -176,16 +176,10 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 	})
 }
 
-func randNBytes(n int) []byte {
-	bytes := make([]byte, n)
-	rand.Read(bytes)
-	return bytes
-}
-
-func generateBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) []byte {
-	tag := randNBytes(btctxformatter.TagLength)
+func makeBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) []byte {
+	tag := datagen.GenRandomByteArray(btctxformatter.TagLength)
 	babylonTag := btctxformatter.BabylonTag(tag[:btctxformatter.TagLength])
-	address := randNBytes(btctxformatter.AddressLength)
+	address := datagen.GenRandomByteArray(btctxformatter.AddressLength)
 
 	rawBTCCkpt := &btctxformatter.RawBtcCheckpoint{
 		Epoch:            epoch,
