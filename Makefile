@@ -120,6 +120,8 @@ all: tools build lint test
 
 BUILD_TARGETS := build install
 
+PACKAGES_E2E=$(shell go list ./... | grep '/e2e')
+
 build: BUILD_ARGS=-o $(BUILDDIR)/
 build-linux:
 	GOOS=linux GOARCH=$(if $(findstring aarch64,$(shell uname -m)) || $(findstring arm64,$(shell uname -m)),arm64,amd64) LEDGER_ENABLED=false $(MAKE) build
@@ -404,6 +406,9 @@ localnet-start-test: localnet-stop localnet-build-env localnet-build-nodes-test
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
 localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
+
+test-e2e:
+	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 localnet-stop:
 	docker-compose down
