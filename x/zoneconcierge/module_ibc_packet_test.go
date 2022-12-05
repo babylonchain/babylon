@@ -83,8 +83,8 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 		newNextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		suite.True(found)
 
-		// Assert the gap between two sequence numbers
-		suite.Equal(uint64(numBlocks), newNextSeqSend-nextSeqSend)
+		// Assert the gap between two sequence numbers to be zero, since no packet is sent during these blocks
+		suite.Equal(newNextSeqSend, nextSeqSend)
 
 		// update clients to ensure no panic happens
 		err = path.EndpointA.UpdateClient()
