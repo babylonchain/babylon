@@ -15,10 +15,9 @@ import (
 	coretypes "github.com/cosmos/ibc-go/v5/modules/core/types"
 )
 
-// SendHeartbeatIBCPacket sends an empty IBC packet to a channel
-// Doing this periodically keeps the relayer awake to relay headers
+// SendIBCPacket sends an IBC packet to a channel
 // (adapted from https://github.com/cosmos/ibc-go/blob/v5.0.0/modules/apps/transfer/keeper/relay.go)
-func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.IdentifiedChannel) error {
+func (k Keeper) SendIBCPacket(ctx sdk.Context, channel channeltypes.IdentifiedChannel, packetData *types.ZoneconciergePacketData) error {
 	// get src/dst ports and channels
 	sourcePort := channel.PortId
 	sourceChannel := channel.ChannelId
@@ -45,9 +44,7 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 	timeoutTime := uint64(ctx.BlockHeader().Time.Add(time.Hour * 24).UnixNano()) // TODO: parameterise
 	zeroheight := clienttypes.ZeroHeight()
 
-	// construct packet
-	// note that the data is not allowed to be empty
-	packetData := &types.Heartbeat{Msg: "hello"} // TODO: what to send for heartbeat packet?
+	// construct packet from packet data
 	packet := channeltypes.NewPacket(
 		k.cdc.MustMarshal(packetData),
 		sequence,
@@ -62,9 +59,9 @@ func (k Keeper) SendHeartbeatIBCPacket(ctx sdk.Context, channel channeltypes.Ide
 	// send packet
 	if err := k.ics4Wrapper.SendPacket(ctx, channelCap, packet); err != nil {
 		// Failed/timeout packet should not make the system crash
-		k.Logger(ctx).Error(fmt.Sprintf("failed to send heartbeat IBC packet to channel %v port %s: %v", destinationChannel, destinationPort, err))
+		k.Logger(ctx).Error(fmt.Sprintf("failed to send IBC packet (sequence number: %d) to channel %v port %s: %v", packet.Sequence, destinationChannel, destinationPort, err))
 	} else {
-		k.Logger(ctx).Info(fmt.Sprintf("successfully sent heartbeat IBC packet to channel %v port %s", destinationChannel, destinationPort))
+		k.Logger(ctx).Info(fmt.Sprintf("successfully sent IBC packet (sequence number: %d) to channel %v port %s", packet.Sequence, destinationChannel, destinationPort))
 	}
 
 	// metrics stuff
