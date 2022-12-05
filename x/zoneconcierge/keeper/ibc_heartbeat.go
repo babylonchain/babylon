@@ -59,9 +59,9 @@ func (k Keeper) SendIBCPacket(ctx sdk.Context, channel channeltypes.IdentifiedCh
 	// send packet
 	if err := k.ics4Wrapper.SendPacket(ctx, channelCap, packet); err != nil {
 		// Failed/timeout packet should not make the system crash
-		k.Logger(ctx).Error(fmt.Sprintf("failed to send IBC packet %v to channel %v port %s: %v", packet, destinationChannel, destinationPort, err))
+		k.Logger(ctx).Error(fmt.Sprintf("failed to send IBC packet (sequence number: %d) to channel %v port %s: %v", packet.Sequence, destinationChannel, destinationPort, err))
 	} else {
-		k.Logger(ctx).Info(fmt.Sprintf("successfully sent IBC packet %v to channel %v port %s", packet, destinationChannel, destinationPort))
+		k.Logger(ctx).Info(fmt.Sprintf("successfully sent IBC packet (sequence number: %d) to channel %v port %s", packet.Sequence, destinationChannel, destinationPort))
 	}
 
 	// metrics stuff
