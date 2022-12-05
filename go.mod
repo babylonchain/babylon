@@ -32,6 +32,7 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-alpha8
 	github.com/cosmos/ibc-go/v5 v5.1.0
 	github.com/golang/mock v1.6.0
+	github.com/jinzhu/copier v0.3.5
 	google.golang.org/protobuf v1.28.2-0.20220831092852-f930b1dc76e8
 )
 
