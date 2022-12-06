@@ -92,11 +92,16 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	bestSubmissionKey := ed.Key[0]
 
 	// TODO: construct inclusion proofs
+	proofTxInBlock, err := k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
+	if err != nil {
+		return nil, err
+	}
 
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
 		EpochInfo:          epochInfo,
 		BtcCheckpointInfo:  bestSubmissionKey,
+		ProofTxInBlock:     proofTxInBlock,
 	}
 	return resp, nil
 }

@@ -1,6 +1,8 @@
 package types
 
 import (
+	context "context"
+
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,6 +11,7 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -69,4 +72,9 @@ type BtcCheckpointKeeper interface {
 type EpochingKeeper interface {
 	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch
+}
+
+// TMClient is a Tendermint client that allows to query tx inclusion proofs
+type TMClient interface {
+	Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error)
 }

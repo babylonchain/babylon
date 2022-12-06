@@ -48,7 +48,7 @@ func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabil
 	return &capabilitytypes.Capability{}
 }
 
-func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -82,6 +82,7 @@ func ZoneConciergeKeeper(t testing.TB, btccKeeper types.BtcCheckpointKeeper, epo
 		nil, // TODO: mock this keeper
 		btccKeeper,
 		epochingKeeper,
+		tmClient,
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 	)
 
