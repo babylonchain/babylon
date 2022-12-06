@@ -26,7 +26,7 @@ func FuzzEpochValSet(f *testing.F) {
 		for i := range getValSet {
 			consAddr, err := valSet[i].GetConsAddr()
 			require.NoError(t, err)
-			require.Equal(t, sdk.ValAddress(consAddr), getValSet[i].Addr)
+			require.Equal(t, sdk.ValAddress(consAddr), getValSet[i].GetValAddress())
 		}
 
 		// generate a random number of new blocks
@@ -41,7 +41,7 @@ func FuzzEpochValSet(f *testing.F) {
 		for i := range getValSet2 {
 			consAddr, err := valSet[i].GetConsAddr()
 			require.NoError(t, err)
-			require.Equal(t, sdk.ValAddress(consAddr), getValSet[i].Addr)
+			require.Equal(t, sdk.ValAddress(consAddr), getValSet[i].GetValAddress())
 		}
 	})
 }

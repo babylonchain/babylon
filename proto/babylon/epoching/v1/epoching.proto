@@ -73,3 +73,10 @@ message DelegationLifecycle {
   string del_addr = 1;
   repeated DelegationStateUpdate del_life = 2;
 }
+
+message Validator {
+  // addr is the validator's address (in sdk.ValAddress)
+  bytes addr = 1;
+  // power is the validator's voting power
+  int64 power = 2;
+}
