@@ -54,6 +54,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		require.Len(t, res.ValidatorWithBlsKeys, 1)
 		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKey, genesisBLSPubkey.Bytes())
 		require.Equal(t, res.ValidatorWithBlsKeys[0].ValidatorAddress, genesisVal.Addr.String())
+		require.Equal(t, res.ValidatorWithBlsKeys[0].VotingPower, uint64(1000))
 
 		// add n new validators via MsgWrappedCreateValidator
 		n := rand.Intn(3) + 1
@@ -89,6 +90,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		require.Len(t, expectedValSet, n+1)
 		for i, expectedVal := range expectedValSet {
 			require.Equal(t, expectedVal.Addr.String(), resp.ValidatorWithBlsKeys[i].ValidatorAddress)
+			require.Equal(t, uint64(expectedVal.Power), resp.ValidatorWithBlsKeys[i].VotingPower)
 		}
 
 		// 3.1 query BLS public keys when there are n+1 validators with limit pagination
