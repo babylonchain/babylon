@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/app"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -30,23 +31,25 @@ func TestProveTxInBlock(t *testing.T) {
 	_, babylonChain, _, zcKeeper := SetupTest(t)
 	ctx := babylonChain.GetContext()
 
+	// construct client context
 	val := testNetwork.Validators[0]
 	val.ClientCtx.FromAddress = val.Address
 	val.ClientCtx.FeePayer = val.Address
 	val.ClientCtx.FeeGranter = val.Address
 	require.NotEmpty(t, val.Address, val.ValAddress)
-	msg := stakingtypes.NewMsgDelegate(val.Address, val.ValAddress, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
-
 	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
 	fs.String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10ubbn")
 	fee := fmt.Sprintf("100%s", sdk.DefaultBondDenom)
 	err = fs.Set(flags.FlagFees, fee)
 	require.NoError(t, err)
 
+	// construct a tx
 	txf := tx.NewFactoryCLI(val.ClientCtx, fs).
 		WithTxConfig(val.ClientCtx.TxConfig).WithAccountRetriever(val.ClientCtx.AccountRetriever)
 	txf, err = txf.Prepare(val.ClientCtx)
 	require.NoError(t, err)
+	smsg := stakingtypes.NewMsgDelegate(val.Address, val.ValAddress, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
+	msg := epochingtypes.NewMsgWrappedDelegate(smsg)
 	txb, err := txf.BuildUnsignedTx(msg)
 	require.NoError(t, err)
 	keys, err := val.ClientCtx.Keyring.List()
@@ -55,7 +58,7 @@ func TestProveTxInBlock(t *testing.T) {
 	require.NoError(t, err)
 	txBytes, err := val.ClientCtx.TxConfig.TxEncoder()(txb.GetTx())
 	require.NoError(t, err)
-
+	// submit the tx to Tendermint
 	resp, err := val.RPCClient.BroadcastTxSync(ctx, txBytes)
 	require.NoError(t, err)
 
