@@ -64,7 +64,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			t.Errorf("Valid parameters led to error")
 		}
 		if msgInsertHeader == nil {
-			t.Errorf("nil returned")
+			t.Fatalf("nil returned")
 		}
 		if msgInsertHeader.Header == nil {
 			t.Errorf("nil header")

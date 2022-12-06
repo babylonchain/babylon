@@ -46,7 +46,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		// Test whether the tip and storages are set
 		tip := blcKeeper.HeadersState(ctx).GetTip()
 		if tip == nil {
-			t.Errorf("Creation of base header did not lead to creation of tip")
+			t.Fatalf("Creation of base header did not lead to creation of tip")
 		}
 		if !baseHeader.Eq(tip) {
 			t.Errorf("Tip does not correspond to the one submitted %s %s", baseHeader.Hash, tip.Hash)
@@ -83,7 +83,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
 		if tip == nil {
-			t.Errorf("Tip became nil instead of getting updated")
+			t.Fatalf("Tip became nil instead of getting updated")
 		}
 		if !childMostWork.Eq(tip) {
 			t.Errorf("Tip did not get properly updated")

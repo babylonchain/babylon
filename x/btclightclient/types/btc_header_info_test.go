@@ -27,7 +27,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		headerInfo := types.NewBTCHeaderInfo(expectedHeaderBytes, expectedHeaderHashBytes, height, &work)
 		// Check that all attributes are properly set
 		if headerInfo == nil {
-			t.Errorf("returned object is nil")
+			t.Fatalf("returned object is nil")
 		}
 		if headerInfo.Header == nil {
 			t.Errorf("Header inside header info is nil")
