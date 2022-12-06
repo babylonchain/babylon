@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/rand"
 	"testing"
+
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
@@ -18,9 +19,7 @@ import (
 // 2. When EpochInterval is 0, ensure `Validate` returns an error
 // 3. Randomly set the param via query and check if the param has been updated
 func FuzzParamsQuery(f *testing.F) {
-	f.Add(uint64(11111), int64(23))
-	f.Add(uint64(22222), int64(330))
-	f.Add(uint64(22222), int64(101))
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, epochInterval uint64, seed int64) {
 		rand.Seed(seed)
@@ -62,9 +61,7 @@ func FuzzParamsQuery(f *testing.F) {
 // 2. query the current epoch and boundary
 // 3. compare them with the correctly calculated ones
 func FuzzCurrentEpoch(f *testing.F) {
-	f.Add(uint64(1111))
-	f.Add(uint64(2222))
-	f.Add(uint64(3333))
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, increment uint64) {
 		helper := testepoching.NewHelper(t)
@@ -86,10 +83,7 @@ func FuzzCurrentEpoch(f *testing.F) {
 // 2. check the returned msg was previously enqueued
 // NOTE: Msgs in QueryEpochMsgsResponse are out-of-roder
 func FuzzEpochMsgs(f *testing.F) {
-	f.Add(int64(12))
-	f.Add(int64(44))
-	f.Add(int64(422))
-	f.Add(int64(4222))
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
@@ -135,5 +129,43 @@ func FuzzEpochMsgs(f *testing.F) {
 		}
 		_, err = queryClient.EpochMsgs(wctx, &req)
 		require.Error(t, err)
+	})
+}
+
+// FuzzEpochMsgs fuzzes queryClient.EpochValSet
+// TODO (stateful tests): create some random validators and check if the resulting validator set is consistent or not (require mocking MsgWrappedCreateValidator)
+func FuzzEpochValSetQuery(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		helper := testepoching.NewHelperWithValSet(t)
+		ctx, queryClient := helper.Ctx, helper.QueryClient
+
+		limit := uint64(rand.Int() % 100)
+		req := &types.QueryEpochValSetRequest{
+			EpochNum: 0,
+			Pagination: &query.PageRequest{
+				Limit: limit,
+			},
+		}
+
+		resp, err := queryClient.EpochValSet(ctx, req)
+		require.NoError(t, err)
+
+		// generate a random number of new blocks
+		numIncBlocks := rand.Uint64()%1000 + 1
+		for i := uint64(0); i < numIncBlocks; i++ {
+			ctx = helper.GenAndApplyEmptyBlock()
+		}
+
+		// check whether the validator set remains the same or not
+		resp2, err := queryClient.EpochValSet(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, len(resp.Validators), len(resp2.Validators))
+		for i := range resp2.Validators {
+			require.Equal(t, resp.Validators[i].Addr, resp2.Validators[i].Addr)
+		}
 	})
 }
