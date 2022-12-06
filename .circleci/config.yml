@@ -25,16 +25,16 @@ jobs:
           name: Build babylond
           command: make build
       - run:
-        name: Install golangci-lint
-        command: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
+          name: Install golangci-lint
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
       - save_cache:
           key: go-mod-v6-{{ checksum "go.sum" }}
           paths:
             - "/home/circleci/.go_workspace/pkg/mod"
       - run:
-        name: Lint
-        command: |
+          name: Lint
+          command: |
             golangci-lint run
       - run:
           name: Run tests
