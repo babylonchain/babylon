@@ -144,7 +144,7 @@ func FuzzContainsQuery(f *testing.F) {
 		// Test nil input
 		resp, err := blcKeeper.Contains(sdkCtx, nil)
 		if resp != nil {
-			t.Errorf("Nil input led to a non-nil response")
+			t.Fatalf("Nil input led to a non-nil response")
 		}
 		if err == nil {
 			t.Errorf("Nil input led to a nil error")
@@ -160,7 +160,7 @@ func FuzzContainsQuery(f *testing.F) {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
 		if resp == nil {
-			t.Errorf("Valid input led to nil response")
+			t.Fatalf("Valid input led to nil response")
 		}
 		if resp.Contains {
 			t.Errorf("Non existent header hash led to true result")
@@ -173,7 +173,7 @@ func FuzzContainsQuery(f *testing.F) {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
 		if resp == nil {
-			t.Errorf("Valid input led to nil response")
+			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Contains {
 			t.Errorf("Existent header hash led to false result")
