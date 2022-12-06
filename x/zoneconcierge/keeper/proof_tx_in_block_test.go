@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/app"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
 )
@@ -22,11 +21,14 @@ func TestProveTxInBlock(t *testing.T) {
 	encodingCfg := app.MakeTestEncodingConfig()
 	cfg.InterfaceRegistry = encodingCfg.InterfaceRegistry
 	cfg.TxConfig = encodingCfg.TxConfig
-	cfg.NumValidators = 1
+	cfg.NumValidators = 2
 	cfg.RPCAddress = "tcp://0.0.0.0:26657" // TODO: parameterise this
 	testNetwork, err := network.New(t, t.TempDir(), cfg)
 	require.NoError(t, err)
 	defer testNetwork.Cleanup()
+
+	// enter block 1 so that gentxs take effect and validators have tokens
+	testNetwork.WaitForNextBlock()
 
 	_, babylonChain, _, zcKeeper := SetupTest(t)
 	ctx := babylonChain.GetContext()
@@ -43,13 +45,16 @@ func TestProveTxInBlock(t *testing.T) {
 	err = fs.Set(flags.FlagFees, fee)
 	require.NoError(t, err)
 
-	// construct a tx
+	// construct a simple msg
+	coins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10)))
+	msg := banktypes.NewMsgSend(val.Address, testNetwork.Validators[1].Address, coins)
+
+	// construct a tx that includes this msg
 	txf := tx.NewFactoryCLI(val.ClientCtx, fs).
-		WithTxConfig(val.ClientCtx.TxConfig).WithAccountRetriever(val.ClientCtx.AccountRetriever)
+		WithTxConfig(val.ClientCtx.TxConfig).
+		WithAccountRetriever(val.ClientCtx.AccountRetriever)
 	txf, err = txf.Prepare(val.ClientCtx)
 	require.NoError(t, err)
-	smsg := stakingtypes.NewMsgDelegate(val.Address, val.ValAddress, sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(1000000)))
-	msg := epochingtypes.NewMsgWrappedDelegate(smsg)
 	txb, err := txf.BuildUnsignedTx(msg)
 	require.NoError(t, err)
 	keys, err := val.ClientCtx.Keyring.List()
@@ -58,11 +63,10 @@ func TestProveTxInBlock(t *testing.T) {
 	require.NoError(t, err)
 	txBytes, err := val.ClientCtx.TxConfig.TxEncoder()(txb.GetTx())
 	require.NoError(t, err)
+
 	// submit the tx to Tendermint
 	resp, err := val.RPCClient.BroadcastTxSync(ctx, txBytes)
 	require.NoError(t, err)
-
-	// height := resp.Height
 	txHash := resp.Hash
 
 	testNetwork.WaitForNextBlock()
