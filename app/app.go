@@ -407,9 +407,9 @@ func NewBabylonApp(
 		scopedIBCKeeper,
 	)
 
-	tmClient, err := client.NewClientFromNode("tcp://localhost:26657") // create a Tendermint client for ZoneConcierge
+	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
 	if err != nil {
-		panic(fmt.Errorf("couldn't get client from nodeURI: %v", err))
+		panic(fmt.Errorf("couldn't get client from nodeURI %s: %w", privSigner.ClientCtx.NodeURI, err))
 	}
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,

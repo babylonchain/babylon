@@ -71,7 +71,8 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 		WithFromAddress(sdk.AccAddress(wrappedPV.GetAddress())).
 		WithFeeGranterAddress(sdk.AccAddress(wrappedPV.GetAddress())).
 		WithSkipConfirmation(true).
-		WithKeyring(kr)
+		WithKeyring(kr).
+		WithNodeURI(nodeCfg.RPC.ListenAddress)
 
 	return &PrivSigner{
 		WrappedPV: wrappedPV,

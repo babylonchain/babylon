@@ -74,7 +74,7 @@ type EpochingKeeper interface {
 	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch
 }
 
-// TMClient is a Tendermint that allows to query tx inclusion proofs
+// TMClient is a Tendermint client that allows to query tx inclusion proofs
 type TMClient interface {
 	Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error)
 }
