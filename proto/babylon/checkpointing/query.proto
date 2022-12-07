@@ -173,4 +173,5 @@ message QueryParamsResponse {
 message ValidatorWithBlsKey {
   string validator_address = 1;
   bytes bls_pub_key = 2;
+  uint64 voting_power = 3;
 }

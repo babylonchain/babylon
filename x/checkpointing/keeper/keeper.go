@@ -349,6 +349,7 @@ func (k Keeper) GetBLSPubKeySet(ctx sdk.Context, epochNumber uint64) ([]*types.V
 		valWithblsKeys[i] = &types.ValidatorWithBlsKey{
 			ValidatorAddress: val.GetValAddressStr(),
 			BlsPubKey:        pubkey,
+			VotingPower:      uint64(val.Power),
 		}
 	}
 

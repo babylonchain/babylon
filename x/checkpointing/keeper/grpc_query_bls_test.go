@@ -54,6 +54,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		require.NoError(t, err)
 		require.Len(t, res.ValidatorWithBlsKeys, 1)
 		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKey, genesisBLSPubkey.Bytes())
+		require.Equal(t, res.ValidatorWithBlsKeys[0].VotingPower, uint64(1000))
 		require.Equal(t, res.ValidatorWithBlsKeys[0].ValidatorAddress, genesisVal.GetValAddressStr())
 
 		// add n new validators via MsgWrappedCreateValidator
@@ -89,6 +90,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		expectedValSet := ek.GetValidatorSet(ctx, 2)
 		require.Len(t, expectedValSet, n+1)
 		for i, expectedVal := range expectedValSet {
+			require.Equal(t, uint64(expectedVal.Power), resp.ValidatorWithBlsKeys[i].VotingPower)
 			require.Equal(t, expectedVal.GetValAddressStr(), resp.ValidatorWithBlsKeys[i].ValidatorAddress)
 		}
 
