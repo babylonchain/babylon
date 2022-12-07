@@ -102,7 +102,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// mock checkpointing keeper
 		// TODO: tests with a set of validators
 		checkpointingKeeper := zctypes.NewMockCheckpointingKeeper(ctrl)
-		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epochNum+1)).Return([]*checkpointingtypes.ValidatorWithBlsKey{}, nil).AnyTimes()
+		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epochNum)).Return([]*checkpointingtypes.ValidatorWithBlsKey{}, nil).AnyTimes()
 		// mock btccheckpoint keeper
 		// TODO: test with BTCSpvProofs
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)

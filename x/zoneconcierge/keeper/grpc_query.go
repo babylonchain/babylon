@@ -120,15 +120,8 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	// TODO: proof that the block is in this epoch
 
-	// validator set with BLS PKs
-	// This allows one to verify the epoch is sealed by the next epoch's validator set
-	// i.e., 1/3 validators of the next epoch signed the last_commit_hash of this epoch of this epoch's last block
-	//   AND validators of the next epoch match NextValidatorsHash of this epoch's last block
-	// TODO: enrich valset to allow calculating NextValidatorsHash
-	resp.NextValidatorSet, err = k.checkpointingKeeper.GetBLSPubKeySet(ctx, epochInfo.EpochNumber+1)
-	if err != nil {
-		return nil, err
-	}
+	// proof that the epoch is sealed
+	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)
 
 	// TODO: proof that the epoch's checkpoint is submitted to BTC
 	// i.e., a BTCSpvProof for the BtcSubmissionKey

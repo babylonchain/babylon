@@ -1,6 +1,11 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
+import "babylon/checkpointing/query.proto";
+import "babylon/checkpointing/checkpoint.proto";
+import "tendermint/types/types.proto";
+import "tendermint/crypto/proof.proto";
+
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // IndexedHeader is the metadata of a CZ header
@@ -47,4 +52,25 @@ message ChainInfo {
   IndexedHeader latest_header = 2;
   // latest_forks is the latest forks, formed as a series of IndexedHeader (from low to high)
   Forks latest_forks = 3;
+}
+
+// ProofEpochSealed is the proof that an epoch is sealed by the sealer header, i.e., the 2nd header of the next epoch
+// With the access of metadata
+// - Metadata of this epoch
+// - Raw checkpoint of this epoch
+// The verifier can perform the following verification rules:
+// - The raw checkpoint's `last_commit_hash` is same as in the sealer header
+// - More than 1/3 (in voting power) validators in the validator set of this epoch have signed `last_commit_hash` of the sealer header
+// - The epoch medatata is committed to the `app_hash` of the sealer header
+// - The validator set is committed to the `app_hash` of the sealer header
+message ProofEpochSealed {
+  // validator_set is the validator set of the sealed epoch
+  // This validator set has generated a BLS multisig on `last_commit_hash` of `sealer_header`, i.e., the 2nd header of the next epoch
+  repeated babylon.checkpointing.v1.ValidatorWithBlsKey validator_set = 1;
+  // sealer_header is the 2nd header of the next epoch
+  tendermint.types.Header sealer_header = 2;
+  // proof_epoch_info is the Merkle proof that the epoch's metadata is committed to `app_hash` of `sealer_header`
+  tendermint.crypto.ProofOps proof_epoch_info = 3;
+  // proof_epoch_info is the Merkle proof that the epoch's validator set is committed to `app_hash` of `sealer_header`
+  tendermint.crypto.ProofOps proof_epoch_val_set = 4;
 }
