@@ -1,6 +1,8 @@
 package datagen
 
 import (
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
 
 	"github.com/babylonchain/babylon/btctxformatter"
@@ -63,6 +65,61 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 	}
 
 	return checkpoints
+}
+
+func GenerateValidatorSetWithBLSPrivKeys(n int) (types.ValidatorWithBLSSet, []bls12381.PrivateKey) {
+	var (
+		valSet      []*types.ValidatorWithBlsKey
+		blsPrivKeys []bls12381.PrivateKey
+	)
+
+	for i := 0; i < n; i++ {
+		addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
+		blsPrivkey := bls12381.GenPrivKey()
+		val := &types.ValidatorWithBlsKey{
+			ValidatorAddress: addr.String(),
+			BlsPubKey:        blsPrivkey.PubKey(),
+			VotingPower:      1000,
+		}
+		valSet = append(valSet, val)
+		blsPrivKeys = append(blsPrivKeys, blsPrivkey)
+	}
+
+	return valSet, blsPrivKeys
+}
+
+func GenerateBLSSigs(keys []bls12381.PrivateKey, msg []byte) []bls12381.Signature {
+	var sigs []bls12381.Signature
+	for _, privkey := range keys {
+		sig := bls12381.Sign(privkey, msg)
+		sigs = append(sigs, sig)
+	}
+
+	return sigs
+}
+
+func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawCheckpoint {
+	// number of validators, at least 4
+	n := len(privKeys)
+	// ensure sufficient signers
+	signerNum := n/3 + 1
+	epochNum := GenRandomEpochNum()
+	lch := GenRandomLastCommitHash()
+	msgBytes := append(sdk.Uint64ToBigEndian(epochNum), lch.MustMarshal()...)
+	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
+	multiSig, _ := bls12381.AggrSigList(sigs)
+	bm := bitmap.New(13)
+	for i := 0; i < signerNum; i++ {
+		bm.Set(i, true)
+	}
+	btcCheckpoint := &types.RawCheckpoint{
+		EpochNum:       epochNum,
+		LastCommitHash: &lch,
+		Bitmap:         bm,
+		BlsMultiSig:    &multiSig,
+	}
+
+	return btcCheckpoint
 }
 
 func GenRandomEpochNum() uint64 {
