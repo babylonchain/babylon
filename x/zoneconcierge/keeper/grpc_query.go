@@ -99,18 +99,33 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return nil, err
 	}
 
+	resp := &types.QueryFinalizedChainInfoResponse{
+		FinalizedChainInfo: chainInfo,
+		// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
+		EpochInfo:        epochInfo,
+		RawCheckpoint:    rawCheckpoint,
+		BtcSubmissionKey: bestSubmissionKey,
+	}
+
+	// if the query does not want the proofs, return here
+	if !req.Prove {
+		return resp, nil
+	}
+
 	// Proof that the Babylon tx is in block
-	proofTxInBlock, err := k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
+	resp.ProofTxInBlock, err = k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
 	if err != nil {
 		return nil, err
 	}
 
 	// TODO: proof that the block is in this epoch
 
-	// TODO: proof that the epoch is sealed
+	// validator set with BLS PKs
+	// This allows one to verify the epoch is sealed by the next epoch's validator set
 	// i.e., 1/3 validators of the next epoch signed the last_commit_hash of this epoch of this epoch's last block
 	//   AND validators of the next epoch match NextValidatorsHash of this epoch's last block
-	nextValSet, err := k.checkpointingKeeper.GetBLSPubKeySet(ctx, epochInfo.EpochNumber+1)
+	// TODO: enrich valset to allow calculating NextValidatorsHash
+	resp.NextValidatorSet, err = k.checkpointingKeeper.GetBLSPubKeySet(ctx, epochInfo.EpochNumber+1)
 	if err != nil {
 		return nil, err
 	}
@@ -118,19 +133,5 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	// TODO: proof that the epoch's checkpoint is submitted to BTC
 	// i.e., a BTCSpvProof for the BtcSubmissionKey
 
-	resp := &types.QueryFinalizedChainInfoResponse{
-		FinalizedChainInfo: chainInfo,
-
-		// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
-		EpochInfo:        epochInfo,
-		RawCheckpoint:    rawCheckpoint,
-		BtcSubmissionKey: bestSubmissionKey,
-
-		// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
-		ProofTxInBlock: proofTxInBlock,
-		// TODO: proof that the block is in this epoch
-		NextValidatorSet: nextValSet,
-		// TODO: proof that the epoch's checkpoint is submitted to BTC
-	}
 	return resp, nil
 }

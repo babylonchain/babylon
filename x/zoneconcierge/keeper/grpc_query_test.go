@@ -138,7 +138,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
 
 		// check if the chain info of this epoch is recorded or not
-		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChainID})
+		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChainID, Prove: true})
 		require.NoError(t, err)
 		chainInfo := resp.FinalizedChainInfo
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
