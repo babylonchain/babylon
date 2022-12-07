@@ -110,16 +110,27 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	// TODO: proof that the epoch is sealed
 	// i.e., 1/3 validators of the next epoch signed the last_commit_hash of this epoch of this epoch's last block
 	//   AND validators of the next epoch match NextValidatorsHash of this epoch's last block
+	nextValSet, err := k.checkpointingKeeper.GetBLSPubKeySet(ctx, epochInfo.EpochNumber+1)
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO: proof that the epoch's checkpoint is submitted to BTC
 	// i.e., a BTCSpvProof for the BtcSubmissionKey
 
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
-		EpochInfo:          epochInfo,
-		RawCheckpoint:      rawCheckpoint,
-		BtcSubmissionKey:   bestSubmissionKey,
-		ProofTxInBlock:     proofTxInBlock,
+
+		// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
+		EpochInfo:        epochInfo,
+		RawCheckpoint:    rawCheckpoint,
+		BtcSubmissionKey: bestSubmissionKey,
+
+		// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
+		ProofTxInBlock: proofTxInBlock,
+		// TODO: proof that the block is in this epoch
+		NextValidatorSet: nextValSet,
+		// TODO: proof that the epoch's checkpoint is submitted to BTC
 	}
 	return resp, nil
 }

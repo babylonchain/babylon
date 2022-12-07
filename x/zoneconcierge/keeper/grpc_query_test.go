@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/golang/mock/gomock"
@@ -98,19 +99,25 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// simulate the scenario that a random epoch has ended and finalised
 		epochNum := datagen.RandomInt(10)
 
+		// mock checkpointing keeper
+		// TODO: tests with a set of validators
+		checkpointingKeeper := zctypes.NewMockCheckpointingKeeper(ctrl)
+		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epochNum+1)).Return([]*checkpointingtypes.ValidatorWithBlsKey{}, nil).AnyTimes()
 		// mock btccheckpoint keeper
+		// TODO: test with BTCSpvProofs
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
 		mockEpochData := &btcctypes.EpochData{
 			Key: []*btcctypes.SubmissionKey{
 				{Key: []*btcctypes.TransactionKey{}},
 			},
-			Status: btcctypes.Finalized,
+			Status:        btcctypes.Finalized,
+			RawCheckpoint: datagen.RandomRawCheckpointDataForEpoch(epochNum).ExpectedOpReturn,
 		}
 		btccKeeper.EXPECT().GetEpochData(gomock.Any(), gomock.Eq(epochNum)).Return(mockEpochData).AnyTimes()
 		// mock epoching keeper
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNum}).AnyTimes()
-		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epochNum)).Return(&epochingtypes.Epoch{}, nil).AnyTimes()
+		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epochNum)).Return(&epochingtypes.Epoch{EpochNumber: epochNum}, nil).AnyTimes()
 		// mock Tendermint client
 		// TODO: integration tests with Tendermint
 		tmClient := zctypes.NewMockTMClient(ctrl)
@@ -119,7 +126,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		}
 		tmClient.EXPECT().Tx(gomock.Any(), gomock.Any(), true).Return(resTx, nil).AnyTimes()
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, nil, btccKeeper, epochingKeeper, tmClient)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, btccKeeper, epochingKeeper, tmClient)
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks

@@ -8,6 +8,7 @@ import "tendermint/crypto/proof.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/tx.proto";
 import "babylon/btccheckpoint/btccheckpoint.proto";
+import "babylon/checkpointing/query.proto";
 import "babylon/checkpointing/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
 import "babylon/zoneconcierge/params.proto";
@@ -72,18 +73,25 @@ message QueryFinalizedChainInfoRequest {
 message QueryFinalizedChainInfoResponse {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
+
+  //// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
   // epoch_info is the metadata of the last BTC-finalised epoch
   babylon.epoching.v1.Epoch epoch_info = 2;
   // raw_checkpoint is the raw checkpoint of this epoch
   babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 3;
   // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
+
+	//// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
   // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
   tendermint.types.TxProof proof_tx_in_block = 5;
   // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
   tendermint.crypto.ProofOps proof_block_in_epoch = 6;
-  // proof_epoch_ended is the proof that the epoch metadata is included in the Babylon ledger
-  tendermint.crypto.ProofOps proof_epoch_ended = 7;
+  // next_validator_set is the validator set of the next epoch
+  // This allows to verify the epoch has sealed by the following verification rules:
+  // - >1/3 validators in next_validator_set have generated a BLS signature over LastCommitHash of the epoch's last block, AND
+  // - next_validator_set matches NextValidatorsHash of the epoch's last block
+  repeated babylon.checkpointing.v1.ValidatorWithBlsKey next_validator_set = 7;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
   babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 8;
 }
