@@ -56,7 +56,7 @@ message ChainInfo {
 
 // ProofEpochSealed is the proof that an epoch is sealed by the sealer header, i.e., the 2nd header of the next epoch
 // With the access of metadata
-// - Metadata of this epoch
+// - Metadata of this epoch, which includes the sealer header
 // - Raw checkpoint of this epoch
 // The verifier can perform the following verification rules:
 // - The raw checkpoint's `last_commit_hash` is same as in the sealer header
@@ -65,12 +65,10 @@ message ChainInfo {
 // - The validator set is committed to the `app_hash` of the sealer header
 message ProofEpochSealed {
   // validator_set is the validator set of the sealed epoch
-  // This validator set has generated a BLS multisig on `last_commit_hash` of `sealer_header`, i.e., the 2nd header of the next epoch
+  // This validator set has generated a BLS multisig on `last_commit_hash` of the sealer header
   repeated babylon.checkpointing.v1.ValidatorWithBlsKey validator_set = 1;
-  // sealer_header is the 2nd header of the next epoch
-  tendermint.types.Header sealer_header = 2;
-  // proof_epoch_info is the Merkle proof that the epoch's metadata is committed to `app_hash` of `sealer_header`
-  tendermint.crypto.ProofOps proof_epoch_info = 3;
-  // proof_epoch_info is the Merkle proof that the epoch's validator set is committed to `app_hash` of `sealer_header`
-  tendermint.crypto.ProofOps proof_epoch_val_set = 4;
+  // proof_epoch_info is the Merkle proof that the epoch's metadata is committed to `app_hash` of the sealer header
+  tendermint.crypto.ProofOps proof_epoch_info = 2;
+  // proof_epoch_info is the Merkle proof that the epoch's validator set is committed to `app_hash` of the sealer header
+  tendermint.crypto.ProofOps proof_epoch_val_set = 3;
 }

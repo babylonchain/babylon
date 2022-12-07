@@ -13,12 +13,11 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 		err   error                   = nil
 	)
 
+	// get the validator set of the sealed epoch
 	proof.ValidatorSet, err = k.checkpointingKeeper.GetBLSPubKeySet(ctx, epochNumber)
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO: record sealer header in epoch metadata
 
 	// TODO: proof of inclusion for epoch metadata in sealer header
 
@@ -27,6 +26,16 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 	return proof, nil
 }
 
+// VerifyEpochSealed verifies that the given `epoch` is sealed by the `rawCkpt` by using the given `proof`
+// The verification rules include:
+// - The raw checkpoint's last_commit_hash is same as in the header of the sealer epoch
+// - More than 1/3 (in voting power) validators in the validator set of this epoch have signed last_commit_hash of the sealer epoch
+// - The epoch medatata is committed to the app_hash of the sealer epoch
+// - The validator set is committed to the app_hash of the sealer epoch
 func VerifyEpochSealed(ctx sdk.Context, epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.RawCheckpoint, proof *types.ProofEpochSealed) error {
+	// TODO: Ensure The raw checkpoint's last_commit_hash is same as in the header of the sealer epoch
+	// TODO: Ensure More than 1/3 (in voting power) validators in the validator set of this epoch have signed last_commit_hash of the sealer epoch
+	// TODO: Ensure The epoch medatata is committed to the app_hash of the sealer epoch
+	// TODO: Ensure The validator set is committed to the app_hash of the sealer epoch
 	panic("TODO: implement me")
 }

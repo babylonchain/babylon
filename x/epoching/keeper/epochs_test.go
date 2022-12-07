@@ -4,16 +4,14 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/stretchr/testify/require"
 )
 
 func FuzzEpochs(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)

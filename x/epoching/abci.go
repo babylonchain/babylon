@@ -45,6 +45,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 			panic(err)
 		}
 	}
+
+	if epoch.IsSecondBlock(ctx) {
+		k.RecordSealerHeaderForPrevEpoch(ctx)
+	}
 }
 
 // EndBlocker is called at the end of every block.
