@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -14,8 +17,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"math/rand"
-	"testing"
 )
 
 // FuzzWrappedCreateValidator tests adding new validators via
@@ -76,7 +77,7 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 		for _, msg := range wcvMsgs {
 			found := false
 			for _, val := range valSet {
-				if msg.MsgCreateValidator.ValidatorAddress == val.Addr.String() {
+				if msg.MsgCreateValidator.ValidatorAddress == val.GetValAddressStr() {
 					found = true
 				}
 			}
