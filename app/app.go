@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -406,6 +407,10 @@ func NewBabylonApp(
 		scopedIBCKeeper,
 	)
 
+	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
+	if err != nil {
+		panic(fmt.Errorf("couldn't get client from nodeURI %s: %w", privSigner.ClientCtx.NodeURI, err))
+	}
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		keys[zctypes.StoreKey],
@@ -418,6 +423,7 @@ func NewBabylonApp(
 		app.BankKeeper,
 		app.BtcCheckpointKeeper,
 		epochingKeeper,
+		tmClient,
 		scopedZoneConciergeKeeper,
 	)
 

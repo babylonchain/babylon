@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -11,8 +14,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"testing"
 )
 
 // FuzzQueryBLSKeySet does the following checks
@@ -53,8 +54,8 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		require.NoError(t, err)
 		require.Len(t, res.ValidatorWithBlsKeys, 1)
 		require.Equal(t, res.ValidatorWithBlsKeys[0].BlsPubKey, genesisBLSPubkey.Bytes())
-		require.Equal(t, res.ValidatorWithBlsKeys[0].ValidatorAddress, genesisVal.Addr.String())
 		require.Equal(t, res.ValidatorWithBlsKeys[0].VotingPower, uint64(1000))
+		require.Equal(t, res.ValidatorWithBlsKeys[0].ValidatorAddress, genesisVal.GetValAddressStr())
 
 		// add n new validators via MsgWrappedCreateValidator
 		n := rand.Intn(3) + 1
@@ -89,8 +90,8 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		expectedValSet := ek.GetValidatorSet(ctx, 2)
 		require.Len(t, expectedValSet, n+1)
 		for i, expectedVal := range expectedValSet {
-			require.Equal(t, expectedVal.Addr.String(), resp.ValidatorWithBlsKeys[i].ValidatorAddress)
 			require.Equal(t, uint64(expectedVal.Power), resp.ValidatorWithBlsKeys[i].VotingPower)
+			require.Equal(t, expectedVal.GetValAddressStr(), resp.ValidatorWithBlsKeys[i].ValidatorAddress)
 		}
 
 		// 3.1 query BLS public keys when there are n+1 validators with limit pagination

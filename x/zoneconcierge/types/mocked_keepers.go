@@ -5,6 +5,7 @@
 package types
 
 import (
+	context "context"
 	reflect "reflect"
 
 	types "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -16,6 +17,7 @@ import (
 	types5 "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	exported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // MockAccountKeeper is a mock of AccountKeeper interface.
@@ -562,4 +564,42 @@ func (m *MockEpochingKeeper) GetHistoricalEpoch(ctx types1.Context, epochNumber 
 func (mr *MockEpochingKeeperMockRecorder) GetHistoricalEpoch(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHistoricalEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetHistoricalEpoch), ctx, epochNumber)
+}
+
+// MockTMClient is a mock of TMClient interface.
+type MockTMClient struct {
+	ctrl     *gomock.Controller
+	recorder *MockTMClientMockRecorder
+}
+
+// MockTMClientMockRecorder is the mock recorder for MockTMClient.
+type MockTMClientMockRecorder struct {
+	mock *MockTMClient
+}
+
+// NewMockTMClient creates a new mock instance.
+func NewMockTMClient(ctrl *gomock.Controller) *MockTMClient {
+	mock := &MockTMClient{ctrl: ctrl}
+	mock.recorder = &MockTMClientMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTMClient) EXPECT() *MockTMClientMockRecorder {
+	return m.recorder
+}
+
+// Tx mocks base method.
+func (m *MockTMClient) Tx(ctx context.Context, hash []byte, prove bool) (*coretypes.ResultTx, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Tx", ctx, hash, prove)
+	ret0, _ := ret[0].(*coretypes.ResultTx)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Tx indicates an expected call of Tx.
+func (mr *MockTMClientMockRecorder) Tx(ctx, hash, prove interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Tx", reflect.TypeOf((*MockTMClient)(nil).Tx), ctx, hash, prove)
 }

@@ -45,6 +45,11 @@ service Query {
   rpc DelegationLifecycle(QueryDelegationLifecycleRequest) returns (QueryDelegationLifecycleResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/delegation_lifecycle/{del_addr}";
   }
+
+  // EpochValSet queries the validator set of a given epoch
+  rpc EpochValSet(QueryEpochValSetRequest) returns (QueryEpochValSetResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}/validator_set";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -126,4 +131,15 @@ message QueryDelegationLifecycleRequest {
 
 message QueryDelegationLifecycleResponse {
   DelegationLifecycle del_life = 1;
+}
+
+message QueryEpochValSetRequest {
+  uint64 epoch_num = 1;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+message QueryEpochValSetResponse {
+  repeated babylon.epoching.v1.Validator validators = 1;
+  int64 total_voting_power = 2;
+  cosmos.base.query.v1beta1.PageResponse pagination = 3;
 }

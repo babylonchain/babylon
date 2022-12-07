@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"encoding/json"
 	"sort"
 
@@ -10,9 +11,12 @@ import (
 	"github.com/pkg/errors"
 )
 
-type Validator struct {
-	Addr  sdk.ValAddress `json:"addr"`
-	Power int64          `json:"power"`
+func (v *Validator) GetValAddress() sdk.ValAddress {
+	return sdk.ValAddress(v.Addr)
+}
+
+func (v *Validator) GetValAddressStr() string {
+	return v.GetValAddress().String()
 }
 
 type ValidatorSet []Validator
@@ -62,7 +66,7 @@ func (vs ValidatorSet) binarySearch(targetAddr sdk.ValAddress) int {
 		var mid = lo + (hi-lo)/2
 		midAddr := vs[mid].Addr
 
-		if midAddr.Equals(targetAddr) {
+		if bytes.Equal(midAddr, targetAddr) {
 			return mid
 		} else if sdk.BigEndianToUint64(midAddr) > sdk.BigEndianToUint64(targetAddr) {
 			hi = mid - 1

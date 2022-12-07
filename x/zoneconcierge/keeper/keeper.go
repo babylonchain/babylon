@@ -26,6 +26,7 @@ type (
 		bankKeeper     types.BankKeeper
 		btccKeeper     types.BtcCheckpointKeeper
 		epochingKeeper types.EpochingKeeper
+		tmClient       types.TMClient
 		scopedKeeper   types.ScopedKeeper
 	}
 )
@@ -42,6 +43,7 @@ func NewKeeper(
 	bankKeeper types.BankKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	epochingKeeper types.EpochingKeeper,
+	tmClient types.TMClient,
 	scopedKeeper types.ScopedKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -61,6 +63,7 @@ func NewKeeper(
 		bankKeeper:     bankKeeper,
 		btccKeeper:     btccKeeper,
 		epochingKeeper: epochingKeeper,
+		tmClient:       tmClient,
 		scopedKeeper:   scopedKeeper,
 	}
 }
