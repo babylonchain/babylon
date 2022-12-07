@@ -421,7 +421,8 @@ func NewBabylonApp(
 		&ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.BtcCheckpointKeeper,
+		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
+		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
 		epochingKeeper,
 		tmClient,
 		scopedZoneConciergeKeeper,
@@ -486,6 +487,7 @@ func NewBabylonApp(
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
 		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks()),
 	)
+	app.ZoneConciergeKeeper.SetCheckpointingKeeper(app.CheckpointingKeeper)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations
@@ -502,7 +504,6 @@ func NewBabylonApp(
 			&powLimit,
 			btcConfig.CheckpointTag(),
 		)
-
 	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
 
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(

@@ -119,7 +119,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		}
 		tmClient.EXPECT().Tx(gomock.Any(), gomock.Any(), true).Return(resTx, nil).AnyTimes()
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btccKeeper, epochingKeeper, tmClient)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, nil, btccKeeper, epochingKeeper, tmClient)
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks

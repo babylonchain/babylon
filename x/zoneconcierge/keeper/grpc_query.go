@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -73,13 +74,13 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
 	}
 
-	// find the metadata of this epoch
+	// find the epoch metadata
 	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the btc checkpoint info of this epoch
+	// find the btc checkpoint tx index of this epoch
 	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
 	if ed.Status != btcctypes.Finalized {
 		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
@@ -89,18 +90,35 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
 		panic(err)
 	}
-	bestSubmissionKey := ed.Key[0]
+	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
 
-	// TODO: construct inclusion proofs
+	// get raw checkpoint of this epoch
+	rawCheckpointBytes := ed.RawCheckpoint
+	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(rawCheckpointBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	// Proof that the Babylon tx is in block
 	proofTxInBlock, err := k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
 	if err != nil {
 		return nil, err
 	}
 
+	// TODO: proof that the block is in this epoch
+
+	// TODO: proof that the epoch is sealed
+	// i.e., 1/3 validators of the next epoch signed the last_commit_hash of this epoch of this epoch's last block
+	//   AND validators of the next epoch match NextValidatorsHash of this epoch's last block
+
+	// TODO: proof that the epoch's checkpoint is submitted to BTC
+	// i.e., a BTCSpvProof for the BtcSubmissionKey
+
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
 		EpochInfo:          epochInfo,
-		BtcCheckpointInfo:  bestSubmissionKey,
+		RawCheckpoint:      rawCheckpoint,
+		BtcSubmissionKey:   bestSubmissionKey,
 		ProofTxInBlock:     proofTxInBlock,
 	}
 	return resp, nil

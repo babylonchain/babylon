@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		PortId: types.PortID,
 	}
 
-	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil)
+	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil)
 	zoneconcierge.InitGenesis(ctx, *k, genesisState)
 	got := zoneconcierge.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
