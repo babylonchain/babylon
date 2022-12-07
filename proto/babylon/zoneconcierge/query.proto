@@ -85,7 +85,7 @@ message QueryFinalizedChainInfoResponse {
   // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
 
-	//// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
+  //// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
   // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
   tendermint.types.TxProof proof_tx_in_block = 5;
   // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
