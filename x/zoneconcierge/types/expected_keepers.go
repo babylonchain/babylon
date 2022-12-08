@@ -75,6 +75,10 @@ type CheckpointingKeeper interface {
 	GetBLSPubKeySet(ctx sdk.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
 }
 
+type CheckpointingKeeper interface {
+	GetBLSPubKeySet(ctx sdk.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
+}
+
 type EpochingKeeper interface {
 	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch

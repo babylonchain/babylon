@@ -350,14 +350,12 @@ func (m *QueryFinalizedChainInfoRequest) GetProve() bool {
 type QueryFinalizedChainInfoResponse struct {
 	// finalized_chain_info is the info of the CZ
 	FinalizedChainInfo *ChainInfo `protobuf:"bytes,1,opt,name=finalized_chain_info,json=finalizedChainInfo,proto3" json:"finalized_chain_info,omitempty"`
-	//// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
 	// epoch_info is the metadata of the last BTC-finalised epoch
 	EpochInfo *types.Epoch `protobuf:"bytes,2,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
 	// raw_checkpoint is the raw checkpoint of this epoch
 	RawCheckpoint *types1.RawCheckpoint `protobuf:"bytes,3,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
 	// btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
 	BtcSubmissionKey *types2.SubmissionKey `protobuf:"bytes,4,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
-	//// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
 	// proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
 	ProofTxInBlock *types3.TxProof `protobuf:"bytes,5,opt,name=proof_tx_in_block,json=proofTxInBlock,proto3" json:"proof_tx_in_block,omitempty"`
 	// proof_block_in_epoch is the proof that the Babylon block is in a certain epoch

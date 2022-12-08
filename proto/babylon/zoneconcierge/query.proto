@@ -77,7 +77,9 @@ message QueryFinalizedChainInfoResponse {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
 
-  //// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
+  /* 
+    The following fields include metadata related to this chain info
+  */
   // epoch_info is the metadata of the last BTC-finalised epoch
   babylon.epoching.v1.Epoch epoch_info = 2;
   // raw_checkpoint is the raw checkpoint of this epoch
@@ -85,7 +87,9 @@ message QueryFinalizedChainInfoResponse {
   // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
 
-  //// proofs that attest the chain info is indeed on BTC-finalised Babylon chain
+  /*
+    The following fields include proofs that attest the chain info is BTC-finalised
+  */
   // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
   tendermint.types.TxProof proof_tx_in_block = 5;
   // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
