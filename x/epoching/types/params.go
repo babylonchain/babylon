@@ -55,8 +55,8 @@ func validateEpochInterval(i interface{}) error {
 		return fmt.Errorf("invalid parameter type: %T", i)
 	}
 
-	if v <= 0 {
-		return fmt.Errorf("epoch interval must be positive: %d", v)
+	if v < 2 {
+		return fmt.Errorf("epoch interval must be at least 2: %d", v)
 	}
 
 	return nil

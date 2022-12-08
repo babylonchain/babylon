@@ -4,6 +4,7 @@ import (
 	context "context"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -67,6 +68,10 @@ type ScopedKeeper interface {
 
 type BtcCheckpointKeeper interface {
 	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
+}
+
+type CheckpointingKeeper interface {
+	GetBLSPubKeySet(ctx sdk.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
 }
 
 type EpochingKeeper interface {

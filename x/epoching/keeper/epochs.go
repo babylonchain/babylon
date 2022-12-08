@@ -86,6 +86,30 @@ func (k Keeper) RecordLastBlockHeader(ctx sdk.Context) *types.Epoch {
 	return epoch
 }
 
+// RecordSealerHeaderForPrevEpoch records the sealer header for the previous epoch,
+// where the sealer header of an epoch is the 2nd header of the next epoch
+// This validator set of the epoch has generated a BLS multisig on `last_commit_hash` of the sealer header
+func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx sdk.Context) *types.Epoch {
+	// get the sealer header
+	epoch := k.GetEpoch(ctx)
+	if !epoch.IsSecondBlock(ctx) {
+		panic("RecordSealerHeaderForPrevEpoch can only be invoked at the second header of a non-zero epoch")
+	}
+	header := ctx.BlockHeader()
+
+	// get the sealed epoch, i.e., the epoch earlier than the current epoch
+	sealedEpoch, err := k.GetHistoricalEpoch(ctx, epoch.EpochNumber-1)
+	if err != nil {
+		panic(err)
+	}
+
+	// record the sealer header for the sealed epoch
+	sealedEpoch.SealerHeader = &header
+	k.setEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
+
+	return sealedEpoch
+}
+
 // IncEpoch adds epoch number by 1
 func (k Keeper) IncEpoch(ctx sdk.Context) types.Epoch {
 	epochNumber := k.GetEpoch(ctx).EpochNumber

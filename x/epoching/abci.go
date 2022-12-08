@@ -13,10 +13,13 @@ import (
 )
 
 // BeginBlocker is called at the beginning of every block.
-// Upon each BeginBlock, if reaching the epoch beginning, then
+// Upon each BeginBlock,
+// - if reaching the epoch beginning, then
 //    - increment epoch number
 //    - trigger AfterEpochBegins hook
 //    - emit BeginEpoch event
+// - if reaching the sealer header, i.e., the 2nd header of a non-zero epoch, then
+//    - record the sealer header for the previous epoch
 // NOTE: we follow Cosmos SDK's slashing/evidence modules for MVP. No need to modify them at the moment.
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
@@ -44,6 +47,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		if err != nil {
 			panic(err)
 		}
+	}
+
+	if epoch.IsSecondBlock(ctx) {
+		k.RecordSealerHeaderForPrevEpoch(ctx)
 	}
 }
 
