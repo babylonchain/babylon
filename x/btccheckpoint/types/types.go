@@ -91,13 +91,11 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64) SubmissionData {
-
-	tBytes := [][]byte{rsc.Proof1.TransactionBytes, rsc.Proof2.TransactionBytes}
+func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, proofs []*BTCSpvProof) SubmissionData {
 	return SubmissionData{
-		Submitter:      rsc.Submitter.Bytes(),
-		Btctransaction: tBytes,
-		Epoch:          epochNum,
+		Submitter: rsc.Submitter.Bytes(),
+		Proofs:    proofs,
+		Epoch:     epochNum,
 	}
 }
 

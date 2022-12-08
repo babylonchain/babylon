@@ -58,6 +58,92 @@ func (BtcStatus) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_da8b9af3dbd18a36, []int{0}
 }
 
+// Consider we have a Merkle tree with following structure:
+//            ROOT
+//           /    \
+//      H1234      H5555
+//     /     \       \
+//   H12     H34      H55
+//  /  \    /  \     /
+// H1  H2  H3  H4  H5
+// L1  L2  L3  L4  L5
+// To prove L3 was part of ROOT we need:
+// - btc_transaction_index = 2 which in binary is 010
+// (where 0 means going left, 1 means going right in the tree)
+// - merkle_nodes we'd have H4 || H12 || H5555
+// By looking at 010 we would know that H4 is a right sibling,
+// H12 is left, H5555 is right again.
+type BTCSpvProof struct {
+	// Valid bitcoin transaction containing OP_RETURN opcode.
+	BtcTransaction []byte `protobuf:"bytes,1,opt,name=btc_transaction,json=btcTransaction,proto3" json:"btc_transaction,omitempty"`
+	// Index of transaction within the block. Index is needed to determine if
+	// currently hashed node is left or right.
+	BtcTransactionIndex uint32 `protobuf:"varint,2,opt,name=btc_transaction_index,json=btcTransactionIndex,proto3" json:"btc_transaction_index,omitempty"`
+	// List of concatenated intermediate merkle tree nodes, without root node and
+	// leaf node against which we calculate the proof. Each node has 32 byte
+	// length. Example proof can look like: 32_bytes_of_node1 || 32_bytes_of_node2
+	// ||  32_bytes_of_node3 so the length of the proof will always be divisible
+	// by 32.
+	MerkleNodes []byte `protobuf:"bytes,3,opt,name=merkle_nodes,json=merkleNodes,proto3" json:"merkle_nodes,omitempty"`
+	// Valid btc header which confirms btc_transaction.
+	// Should have exactly 80 bytes
+	ConfirmingBtcHeader *github_com_babylonchain_babylon_types.BTCHeaderBytes `protobuf:"bytes,4,opt,name=confirming_btc_header,json=confirmingBtcHeader,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderBytes" json:"confirming_btc_header,omitempty"`
+}
+
+func (m *BTCSpvProof) Reset()         { *m = BTCSpvProof{} }
+func (m *BTCSpvProof) String() string { return proto.CompactTextString(m) }
+func (*BTCSpvProof) ProtoMessage()    {}
+func (*BTCSpvProof) Descriptor() ([]byte, []int) {
+	return fileDescriptor_da8b9af3dbd18a36, []int{0}
+}
+func (m *BTCSpvProof) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BTCSpvProof) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BTCSpvProof.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BTCSpvProof) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCSpvProof.Merge(m, src)
+}
+func (m *BTCSpvProof) XXX_Size() int {
+	return m.Size()
+}
+func (m *BTCSpvProof) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCSpvProof.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BTCSpvProof proto.InternalMessageInfo
+
+func (m *BTCSpvProof) GetBtcTransaction() []byte {
+	if m != nil {
+		return m.BtcTransaction
+	}
+	return nil
+}
+
+func (m *BTCSpvProof) GetBtcTransactionIndex() uint32 {
+	if m != nil {
+		return m.BtcTransactionIndex
+	}
+	return 0
+}
+
+func (m *BTCSpvProof) GetMerkleNodes() []byte {
+	if m != nil {
+		return m.MerkleNodes
+	}
+	return nil
+}
+
 // Each provided OP_RETURN transaction can be idendtified by hash of block in
 // which transaction was included and transaction index in the block
 type TransactionKey struct {
@@ -69,7 +155,7 @@ func (m *TransactionKey) Reset()         { *m = TransactionKey{} }
 func (m *TransactionKey) String() string { return proto.CompactTextString(m) }
 func (*TransactionKey) ProtoMessage()    {}
 func (*TransactionKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_da8b9af3dbd18a36, []int{0}
+	return fileDescriptor_da8b9af3dbd18a36, []int{1}
 }
 func (m *TransactionKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -121,7 +207,7 @@ func (m *SubmissionKey) Reset()         { *m = SubmissionKey{} }
 func (m *SubmissionKey) String() string { return proto.CompactTextString(m) }
 func (*SubmissionKey) ProtoMessage()    {}
 func (*SubmissionKey) Descriptor() ([]byte, []int) {
-	return fileDescriptor_da8b9af3dbd18a36, []int{1}
+	return fileDescriptor_da8b9af3dbd18a36, []int{2}
 }
 func (m *SubmissionKey) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -166,19 +252,19 @@ type SubmissionData struct {
 	// Address of submitter of given checkpoint. Required to payup the reward to
 	// submitter of given checkpoint
 	Submitter []byte `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`
-	// Required to recover address of sender of btc transction to payup the reward.
-	// TODO: Maybe it is worth recovering senders while processing the InsertProof
-	// message, and store only those. Another point is that it is not that simple
-	// to recover sender of btc tx.
-	Btctransaction [][]byte `protobuf:"bytes,2,rep,name=btctransaction,proto3" json:"btctransaction,omitempty"`
-	Epoch          uint64   `protobuf:"varint,3,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	// proofs is the two `BTCSpvProof`s corresponding to the submission
+	// It is used for
+	// - recovering address of sender of btc transction to payup the reward.
+	// - allowing the ZoneConcierge module to prove the checkpoint is submitted to BTC
+	Proofs []*BTCSpvProof `protobuf:"bytes,2,rep,name=proofs,proto3" json:"proofs,omitempty"`
+	Epoch  uint64         `protobuf:"varint,3,opt,name=epoch,proto3" json:"epoch,omitempty"`
 }
 
 func (m *SubmissionData) Reset()         { *m = SubmissionData{} }
 func (m *SubmissionData) String() string { return proto.CompactTextString(m) }
 func (*SubmissionData) ProtoMessage()    {}
 func (*SubmissionData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_da8b9af3dbd18a36, []int{2}
+	return fileDescriptor_da8b9af3dbd18a36, []int{3}
 }
 func (m *SubmissionData) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -214,9 +300,9 @@ func (m *SubmissionData) GetSubmitter() []byte {
 	return nil
 }
 
-func (m *SubmissionData) GetBtctransaction() [][]byte {
+func (m *SubmissionData) GetProofs() []*BTCSpvProof {
 	if m != nil {
-		return m.Btctransaction
+		return m.Proofs
 	}
 	return nil
 }
@@ -244,7 +330,7 @@ func (m *EpochData) Reset()         { *m = EpochData{} }
 func (m *EpochData) String() string { return proto.CompactTextString(m) }
 func (*EpochData) ProtoMessage()    {}
 func (*EpochData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_da8b9af3dbd18a36, []int{3}
+	return fileDescriptor_da8b9af3dbd18a36, []int{4}
 }
 func (m *EpochData) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -296,6 +382,7 @@ func (m *EpochData) GetRawCheckpoint() []byte {
 
 func init() {
 	proto.RegisterEnum("babylon.btccheckpoint.v1.BtcStatus", BtcStatus_name, BtcStatus_value)
+	proto.RegisterType((*BTCSpvProof)(nil), "babylon.btccheckpoint.v1.BTCSpvProof")
 	proto.RegisterType((*TransactionKey)(nil), "babylon.btccheckpoint.v1.TransactionKey")
 	proto.RegisterType((*SubmissionKey)(nil), "babylon.btccheckpoint.v1.SubmissionKey")
 	proto.RegisterType((*SubmissionData)(nil), "babylon.btccheckpoint.v1.SubmissionData")
@@ -307,38 +394,98 @@ func init() {
 }
 
 var fileDescriptor_da8b9af3dbd18a36 = []byte{
-	// 486 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0xcf, 0x6e, 0xd3, 0x40,
-	0x10, 0xc6, 0xbd, 0x49, 0xa8, 0x94, 0x25, 0xb1, 0x22, 0xab, 0x42, 0x56, 0x84, 0x8c, 0x15, 0x04,
-	0xb8, 0x1c, 0x1c, 0x51, 0x84, 0xc4, 0xbf, 0x4b, 0xed, 0x38, 0x4a, 0x54, 0xda, 0x54, 0xb6, 0x7b,
-	0xe9, 0x25, 0x5a, 0x3b, 0x4b, 0xbc, 0x6a, 0xe2, 0x8d, 0xbc, 0x1b, 0x1a, 0xf3, 0x04, 0x88, 0x13,
-	0xe2, 0xce, 0x89, 0x1b, 0x4f, 0xc2, 0xb1, 0x47, 0xc4, 0x01, 0xa1, 0xe4, 0x45, 0x90, 0xd7, 0xa6,
-	0x21, 0x85, 0x88, 0xdb, 0xce, 0xf8, 0xf7, 0xcd, 0x7c, 0x33, 0x1a, 0xc3, 0xbd, 0x00, 0x05, 0xe9,
-	0x84, 0xc6, 0xed, 0x80, 0x87, 0x61, 0x84, 0xc3, 0xf3, 0x19, 0x25, 0x31, 0xdf, 0x8c, 0xcc, 0x59,
-	0x42, 0x39, 0x55, 0xd4, 0x02, 0x35, 0x37, 0x3f, 0xbe, 0x79, 0xd4, 0xdc, 0x1d, 0xd3, 0x31, 0x15,
-	0x50, 0x3b, 0x7b, 0xe5, 0x7c, 0x6b, 0x01, 0x65, 0x3f, 0x41, 0x31, 0x43, 0x21, 0x27, 0x34, 0x3e,
-	0xc4, 0xa9, 0xb2, 0x0b, 0x6f, 0x90, 0x78, 0x84, 0x17, 0x2a, 0xd0, 0x81, 0x51, 0x77, 0xf3, 0x40,
-	0x39, 0x81, 0x95, 0x08, 0xb1, 0x48, 0x2d, 0xe9, 0xc0, 0xa8, 0x59, 0x2f, 0xbf, 0xff, 0xb8, 0xf3,
-	0x74, 0x4c, 0x78, 0x34, 0x0f, 0xcc, 0x90, 0x4e, 0xdb, 0x45, 0xd3, 0x30, 0x42, 0x24, 0xfe, 0x1d,
-	0xb4, 0x79, 0x3a, 0xc3, 0xcc, 0xb4, 0x7c, 0xbb, 0x87, 0xd1, 0x08, 0x27, 0x3d, 0xc4, 0x22, 0x2b,
-	0xe5, 0x98, 0xb9, 0xa2, 0x52, 0xeb, 0x10, 0xd6, 0xbd, 0x79, 0x30, 0x25, 0x8c, 0x15, 0x8d, 0x9f,
-	0xc3, 0xf2, 0x39, 0x4e, 0x55, 0xa0, 0x97, 0x8d, 0x9b, 0xfb, 0x86, 0xb9, 0x6d, 0x10, 0x73, 0xd3,
-	0xaf, 0x9b, 0x89, 0x5a, 0x13, 0x28, 0xaf, 0x8b, 0x75, 0x10, 0x47, 0xca, 0x6d, 0x58, 0x65, 0x59,
-	0x86, 0x73, 0x9c, 0x88, 0x51, 0x6a, 0xee, 0x3a, 0xa1, 0xdc, 0x87, 0x72, 0xc0, 0x43, 0xbe, 0xae,
-	0xa4, 0x96, 0xf4, 0xb2, 0x51, 0x73, 0xaf, 0x65, 0xb3, 0x65, 0xe0, 0x19, 0x0d, 0x23, 0xb5, 0xac,
-	0x03, 0xa3, 0xe2, 0xe6, 0x41, 0xeb, 0x0b, 0x80, 0x55, 0x27, 0x7b, 0x89, 0x4e, 0xcf, 0xfe, 0xf4,
-	0xfd, 0x60, 0xbb, 0xef, 0x8d, 0x69, 0x85, 0x6d, 0xe5, 0x05, 0xdc, 0x61, 0x1c, 0xf1, 0x39, 0x13,
-	0x7b, 0x95, 0xf7, 0xef, 0x6e, 0x57, 0x5b, 0x3c, 0xf4, 0x04, 0xea, 0x16, 0x12, 0xe5, 0x1e, 0x94,
-	0x13, 0x74, 0x31, 0x5c, 0x63, 0xc2, 0x64, 0xcd, 0xad, 0x27, 0xe8, 0xc2, 0xbe, 0x4a, 0x3e, 0xfc,
-	0x08, 0x60, 0xf5, 0x4a, 0xac, 0xec, 0xc1, 0x5b, 0xce, 0xc9, 0xc0, 0xee, 0x0d, 0x3d, 0xff, 0xc0,
-	0x3f, 0xf5, 0x86, 0xde, 0xa9, 0x75, 0xd4, 0xf7, 0x7d, 0xa7, 0xd3, 0x90, 0x9a, 0xf5, 0xf7, 0x9f,
-	0xf4, 0xaa, 0x57, 0xec, 0x68, 0xf4, 0x17, 0x6a, 0x0f, 0x8e, 0xbb, 0x7d, 0xf7, 0xc8, 0xe9, 0x34,
-	0x40, 0x8e, 0xda, 0x34, 0x7e, 0x4d, 0x92, 0xe9, 0x3f, 0xd0, 0x6e, 0xff, 0xf8, 0xe0, 0x55, 0xff,
-	0xcc, 0xe9, 0x34, 0x4a, 0x39, 0xda, 0x25, 0x31, 0x9a, 0x90, 0xb7, 0x78, 0xd4, 0xac, 0xbc, 0xfb,
-	0xac, 0x49, 0xd6, 0xe0, 0xeb, 0x52, 0x03, 0x97, 0x4b, 0x0d, 0xfc, 0x5c, 0x6a, 0xe0, 0xc3, 0x4a,
-	0x93, 0x2e, 0x57, 0x9a, 0xf4, 0x6d, 0xa5, 0x49, 0x67, 0x4f, 0xfe, 0x77, 0x56, 0x8b, 0x6b, 0x7f,
-	0x81, 0x38, 0xb3, 0x60, 0x47, 0x9c, 0xf3, 0xe3, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x85, 0xdb,
-	0x51, 0xd6, 0x2b, 0x03, 0x00, 0x00,
+	// 592 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0xbf, 0x6f, 0xd3, 0x4e,
+	0x14, 0xc0, 0x73, 0x6d, 0xbe, 0x95, 0x72, 0x6d, 0xf2, 0xad, 0xae, 0x2d, 0xb2, 0x2a, 0xe4, 0x86,
+	0xa0, 0xaa, 0x29, 0x83, 0x23, 0x0a, 0x48, 0xe5, 0xd7, 0x50, 0x3b, 0xa9, 0x1a, 0x95, 0xfe, 0x90,
+	0xed, 0x2e, 0x5d, 0xac, 0xf3, 0xe5, 0x1a, 0x5b, 0x49, 0x7c, 0x96, 0xef, 0xd2, 0x26, 0xac, 0x2c,
+	0x88, 0x09, 0xb1, 0x33, 0xb1, 0xf1, 0x97, 0x30, 0x76, 0x44, 0x1d, 0x2a, 0x94, 0xfc, 0x19, 0x2c,
+	0xc8, 0x67, 0xd3, 0x24, 0x85, 0x80, 0xd8, 0xee, 0xbd, 0xf7, 0x79, 0xbf, 0x9f, 0x0d, 0x37, 0x5d,
+	0xec, 0xf6, 0xdb, 0x2c, 0xa8, 0xb8, 0x82, 0x10, 0x8f, 0x92, 0x56, 0xc8, 0xfc, 0x40, 0x4c, 0x4a,
+	0x5a, 0x18, 0x31, 0xc1, 0x90, 0x92, 0xa2, 0xda, 0xa4, 0xf1, 0xfc, 0xe1, 0xea, 0x72, 0x93, 0x35,
+	0x99, 0x84, 0x2a, 0xf1, 0x2b, 0xe1, 0x4b, 0xdf, 0x01, 0x9c, 0xd7, 0x6d, 0xc3, 0x0a, 0xcf, 0x8f,
+	0x23, 0xc6, 0xce, 0xd0, 0x06, 0xfc, 0xdf, 0x15, 0xc4, 0x11, 0x11, 0x0e, 0x38, 0x26, 0xc2, 0x67,
+	0x81, 0x02, 0x8a, 0xa0, 0xbc, 0x60, 0x16, 0x5c, 0x41, 0xec, 0x91, 0x16, 0x6d, 0xc1, 0x95, 0x5b,
+	0xa0, 0xe3, 0x07, 0x0d, 0xda, 0x53, 0x66, 0x8a, 0xa0, 0x9c, 0x37, 0x97, 0x26, 0xf1, 0x7a, 0x6c,
+	0x42, 0xf7, 0xe0, 0x42, 0x87, 0x46, 0xad, 0x36, 0x75, 0x02, 0xd6, 0xa0, 0x5c, 0x99, 0x95, 0x91,
+	0xe7, 0x13, 0xdd, 0x61, 0xac, 0x42, 0x6d, 0xb8, 0x42, 0x58, 0x70, 0xe6, 0x47, 0x1d, 0x3f, 0x68,
+	0x3a, 0x71, 0x06, 0x8f, 0xe2, 0x06, 0x8d, 0x94, 0x6c, 0xcc, 0xea, 0xdb, 0x57, 0xd7, 0x6b, 0x8f,
+	0x9b, 0xbe, 0xf0, 0xba, 0xae, 0x46, 0x58, 0xa7, 0x92, 0x76, 0x4b, 0x3c, 0xec, 0x07, 0x3f, 0x85,
+	0x8a, 0xe8, 0x87, 0x94, 0x6b, 0xba, 0x6d, 0xec, 0x49, 0x57, 0xbd, 0x2f, 0x28, 0x37, 0x97, 0x46,
+	0x61, 0x75, 0x41, 0x12, 0x4b, 0xa9, 0x07, 0x0b, 0x63, 0x45, 0xee, 0xd3, 0x3e, 0x5a, 0x86, 0xff,
+	0x25, 0x6d, 0x00, 0xd9, 0x46, 0x22, 0xa0, 0x63, 0x98, 0xf5, 0x30, 0xf7, 0x64, 0x6f, 0x0b, 0xfa,
+	0x8b, 0xab, 0xeb, 0xb5, 0xed, 0x7f, 0x2c, 0x62, 0x0f, 0x73, 0x2f, 0x29, 0x44, 0x46, 0x2a, 0xed,
+	0xc3, 0xbc, 0xd5, 0x75, 0x3b, 0x3e, 0xe7, 0x69, 0xe2, 0x67, 0x70, 0xb6, 0x45, 0xfb, 0x0a, 0x28,
+	0xce, 0x96, 0xe7, 0xb7, 0xca, 0xda, 0xb4, 0x35, 0x6a, 0x93, 0xf5, 0x9a, 0xb1, 0x53, 0xe9, 0x0d,
+	0x80, 0x85, 0x51, 0xb4, 0x2a, 0x16, 0x18, 0xdd, 0x85, 0x39, 0x1e, 0x6b, 0x84, 0xa0, 0x51, 0xba,
+	0xc1, 0x91, 0x02, 0xbd, 0x84, 0x73, 0x61, 0xbc, 0x6e, 0xae, 0xcc, 0xc8, 0x7c, 0xeb, 0xd3, 0xf3,
+	0x8d, 0x1d, 0x87, 0x99, 0x3a, 0xc5, 0x43, 0xa2, 0x21, 0x23, 0x9e, 0x5c, 0x60, 0xd6, 0x4c, 0x84,
+	0xd2, 0x67, 0x00, 0x73, 0xb5, 0xf8, 0x25, 0x0b, 0x78, 0x3a, 0xde, 0xcf, 0xc6, 0xf4, 0xf8, 0x13,
+	0x53, 0x90, 0xed, 0xa0, 0xe7, 0x70, 0x8e, 0x0b, 0x2c, 0xba, 0x5c, 0xce, 0xbb, 0xb0, 0x75, 0xff,
+	0x0f, 0xd5, 0x09, 0x62, 0x49, 0xd4, 0x4c, 0x5d, 0xd0, 0x3a, 0x2c, 0x44, 0xf8, 0xc2, 0x19, 0x61,
+	0xe9, 0x95, 0xe5, 0x23, 0x7c, 0x61, 0xdc, 0x28, 0x1f, 0x7c, 0x00, 0x30, 0x77, 0xe3, 0x8c, 0x36,
+	0xe1, 0x9d, 0xda, 0xf1, 0x91, 0xb1, 0xe7, 0x58, 0xf6, 0x8e, 0x7d, 0x62, 0x39, 0xd6, 0x89, 0x7e,
+	0x50, 0xb7, 0xed, 0x5a, 0x75, 0x31, 0xb3, 0x9a, 0x7f, 0xf7, 0xb1, 0x98, 0xb3, 0xd2, 0xd1, 0x35,
+	0x7e, 0x41, 0x8d, 0xa3, 0xc3, 0xdd, 0xba, 0x79, 0x50, 0xab, 0x2e, 0x82, 0x04, 0x35, 0x92, 0x3b,
+	0xfb, 0x0d, 0xba, 0x5b, 0x3f, 0xdc, 0x79, 0x55, 0x3f, 0xad, 0x55, 0x17, 0x67, 0x12, 0x74, 0xd7,
+	0x0f, 0x70, 0xdb, 0x7f, 0x4d, 0x1b, 0xab, 0xd9, 0xb7, 0x9f, 0xd4, 0x8c, 0x7e, 0xf4, 0x65, 0xa0,
+	0x82, 0xcb, 0x81, 0x0a, 0xbe, 0x0d, 0x54, 0xf0, 0x7e, 0xa8, 0x66, 0x2e, 0x87, 0x6a, 0xe6, 0xeb,
+	0x50, 0xcd, 0x9c, 0x3e, 0xf9, 0xdb, 0xb9, 0xf5, 0x6e, 0xfd, 0x1b, 0xe4, 0xf9, 0xb9, 0x73, 0xf2,
+	0x23, 0x7f, 0xf4, 0x23, 0x00, 0x00, 0xff, 0xff, 0x09, 0x57, 0x91, 0xe6, 0x41, 0x04, 0x00, 0x00,
+}
+
+func (m *BTCSpvProof) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BTCSpvProof) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BTCSpvProof) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ConfirmingBtcHeader != nil {
+		{
+			size := m.ConfirmingBtcHeader.Size()
+			i -= size
+			if _, err := m.ConfirmingBtcHeader.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintBtccheckpoint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.MerkleNodes) > 0 {
+		i -= len(m.MerkleNodes)
+		copy(dAtA[i:], m.MerkleNodes)
+		i = encodeVarintBtccheckpoint(dAtA, i, uint64(len(m.MerkleNodes)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.BtcTransactionIndex != 0 {
+		i = encodeVarintBtccheckpoint(dAtA, i, uint64(m.BtcTransactionIndex))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.BtcTransaction) > 0 {
+		i -= len(m.BtcTransaction)
+		copy(dAtA[i:], m.BtcTransaction)
+		i = encodeVarintBtccheckpoint(dAtA, i, uint64(len(m.BtcTransaction)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TransactionKey) Marshal() (dAtA []byte, err error) {
@@ -443,11 +590,16 @@ func (m *SubmissionData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x18
 	}
-	if len(m.Btctransaction) > 0 {
-		for iNdEx := len(m.Btctransaction) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Btctransaction[iNdEx])
-			copy(dAtA[i:], m.Btctransaction[iNdEx])
-			i = encodeVarintBtccheckpoint(dAtA, i, uint64(len(m.Btctransaction[iNdEx])))
+	if len(m.Proofs) > 0 {
+		for iNdEx := len(m.Proofs) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Proofs[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintBtccheckpoint(dAtA, i, uint64(size))
+			}
 			i--
 			dAtA[i] = 0x12
 		}
@@ -522,6 +674,30 @@ func encodeVarintBtccheckpoint(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *BTCSpvProof) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.BtcTransaction)
+	if l > 0 {
+		n += 1 + l + sovBtccheckpoint(uint64(l))
+	}
+	if m.BtcTransactionIndex != 0 {
+		n += 1 + sovBtccheckpoint(uint64(m.BtcTransactionIndex))
+	}
+	l = len(m.MerkleNodes)
+	if l > 0 {
+		n += 1 + l + sovBtccheckpoint(uint64(l))
+	}
+	if m.ConfirmingBtcHeader != nil {
+		l = m.ConfirmingBtcHeader.Size()
+		n += 1 + l + sovBtccheckpoint(uint64(l))
+	}
+	return n
+}
+
 func (m *TransactionKey) Size() (n int) {
 	if m == nil {
 		return 0
@@ -563,9 +739,9 @@ func (m *SubmissionData) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovBtccheckpoint(uint64(l))
 	}
-	if len(m.Btctransaction) > 0 {
-		for _, b := range m.Btctransaction {
-			l = len(b)
+	if len(m.Proofs) > 0 {
+		for _, e := range m.Proofs {
+			l = e.Size()
 			n += 1 + l + sovBtccheckpoint(uint64(l))
 		}
 	}
@@ -602,6 +778,178 @@ func sovBtccheckpoint(x uint64) (n int) {
 }
 func sozBtccheckpoint(x uint64) (n int) {
 	return sovBtccheckpoint(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *BTCSpvProof) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowBtccheckpoint
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BTCSpvProof: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BTCSpvProof: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcTransaction", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtccheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BtcTransaction = append(m.BtcTransaction[:0], dAtA[iNdEx:postIndex]...)
+			if m.BtcTransaction == nil {
+				m.BtcTransaction = []byte{}
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcTransactionIndex", wireType)
+			}
+			m.BtcTransactionIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtccheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BtcTransactionIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MerkleNodes", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtccheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MerkleNodes = append(m.MerkleNodes[:0], dAtA[iNdEx:postIndex]...)
+			if m.MerkleNodes == nil {
+				m.MerkleNodes = []byte{}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ConfirmingBtcHeader", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowBtccheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BTCHeaderBytes
+			m.ConfirmingBtcHeader = &v
+			if err := m.ConfirmingBtcHeader.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipBtccheckpoint(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthBtccheckpoint
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *TransactionKey) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -856,9 +1204,9 @@ func (m *SubmissionData) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Btctransaction", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Proofs", wireType)
 			}
-			var byteLen int
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowBtccheckpoint
@@ -868,23 +1216,25 @@ func (m *SubmissionData) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= int(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if byteLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthBtccheckpoint
 			}
-			postIndex := iNdEx + byteLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthBtccheckpoint
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Btctransaction = append(m.Btctransaction, make([]byte, postIndex-iNdEx))
-			copy(m.Btctransaction[len(m.Btctransaction)-1], dAtA[iNdEx:postIndex])
+			m.Proofs = append(m.Proofs, &BTCSpvProof{})
+			if err := m.Proofs[len(m.Proofs)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 3:
 			if wireType != 0 {

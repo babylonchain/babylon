@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var _ types.MsgServer = msgServer{}
+
 type msgServer struct {
 	k Keeper
 }
@@ -66,7 +68,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		sdkCtx,
 		epochNum,
 		submissionKey,
-		rawSubmission.GetSubmissionData(epochNum),
+		rawSubmission.GetSubmissionData(epochNum, req.Proofs),
 		rawCheckpointBytes,
 	)
 
@@ -76,5 +78,3 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	return &types.MsgInsertBTCSpvProofResponse{}, nil
 }
-
-var _ types.MsgServer = msgServer{}

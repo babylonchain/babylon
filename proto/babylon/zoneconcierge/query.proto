@@ -93,5 +93,5 @@ message QueryFinalizedChainInfoResponse {
   // proof_epoch_sealed is the proof that the epoch is sealed
   babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 7;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
-  babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 8;
+  repeated babylon.btccheckpoint.v1.BTCSpvProof proof_epoch_submitted = 8;
 }

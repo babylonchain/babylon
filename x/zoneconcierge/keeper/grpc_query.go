@@ -123,8 +123,14 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	// proof that the epoch is sealed
 	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)
 
-	// TODO: proof that the epoch's checkpoint is submitted to BTC
-	// i.e., a BTCSpvProof for the BtcSubmissionKey
+	// proof that the epoch's checkpoint is submitted to BTC
+	// i.e., the two `BTCSpvProof`s for the checkpoint
+	bestSubmissionData := k.btccKeeper.GetSubmissionData(ctx, *bestSubmissionKey)
+	if bestSubmissionData == nil {
+		err := fmt.Errorf("the best submission key for epoch %d has no submission data", finalizedEpoch)
+		panic(err)
+	}
+	resp.ProofEpochSubmitted = bestSubmissionData.Proofs
 
 	return resp, nil
 }
