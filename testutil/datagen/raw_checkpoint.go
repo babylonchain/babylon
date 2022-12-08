@@ -37,7 +37,7 @@ func GenRandomRawCheckpoint() *types.RawCheckpoint {
 	return &types.RawCheckpoint{
 		EpochNum:       GenRandomEpochNum(),
 		LastCommitHash: &randomHashBytes,
-		Bitmap:         bitmap.New(13),
+		Bitmap:         bitmap.New(types.BitmapBits),
 		BlsMultiSig:    &randomBLSSig,
 	}
 }
@@ -108,7 +108,7 @@ func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawC
 	msgBytes := append(sdk.Uint64ToBigEndian(epochNum), lch.MustMarshal()...)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
-	bm := bitmap.New(13)
+	bm := bitmap.New(types.BitmapBits)
 	for i := 0; i < signerNum; i++ {
 		bm.Set(i, true)
 	}

@@ -123,7 +123,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		}
 
 		// add local checkpoint, signed by the first validator
-		bm := bitmap.New(104)
+		bm := bitmap.New(types.BitmapBits)
 		bm.Set(0, true)
 		localCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
 		localCkptWithMeta.Status = types.Sealed
