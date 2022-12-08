@@ -1,11 +1,12 @@
 package types
 
 import (
+	"time"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
@@ -18,6 +19,7 @@ func NewEpoch(epochNumber uint64, epochInterval uint64, lastBlockHeader *tmproto
 		CurrentEpochInterval: epochInterval,
 		FirstBlockHeight:     firstBlockHeight(epochNumber, epochInterval),
 		LastBlockHeader:      lastBlockHeader,
+		// NOTE: SealerHeader will be set in the next epoch
 	}
 }
 
@@ -70,6 +72,14 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 		height := uint64(ctx.BlockHeight())
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
+}
+
+// ValidateBasic does sanity checks on Epoch
+func (e Epoch) ValidateBasic() error {
+	if e.CurrentEpochInterval < 2 {
+		return ErrInvalidEpoch.Wrapf("CurrentEpochInterval (%d) < 2", e.CurrentEpochInterval)
+	}
+	return nil
 }
 
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg
