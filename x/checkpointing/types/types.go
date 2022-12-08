@@ -14,7 +14,8 @@ import (
 
 const (
 	// HashSize is the size in bytes of a hash
-	HashSize = sha256.Size
+	HashSize   = sha256.Size
+	BitmapBits = 104 // 104 bits for 104 validators at top
 )
 
 type LastCommitHash []byte
@@ -27,7 +28,7 @@ func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 	return &RawCheckpoint{
 		EpochNum:       epochNum,
 		LastCommitHash: &lch,
-		Bitmap:         bitmap.New(104), // 13 bytes, holding 100 validators
+		Bitmap:         bitmap.New(BitmapBits), // 13 bytes, holding 100 validators
 		BlsMultiSig:    nil,
 	}
 }
