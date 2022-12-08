@@ -24,7 +24,7 @@ func FuzzEpochs(f *testing.F) {
 		require.Equal(t, epoch.FirstBlockHeight, uint64(0))
 
 		// set a random epoch interval
-		epochInterval := rand.Uint64()%100 + 1
+		epochInterval := rand.Uint64()%100 + 2 // the epoch interval should at at least 2
 		keeper.SetParams(ctx, types.Params{
 			EpochInterval: epochInterval,
 		})

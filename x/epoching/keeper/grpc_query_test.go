@@ -29,10 +29,10 @@ func FuzzParamsQuery(f *testing.F) {
 		epochInterval := datagen.RandomInt(20)
 		params.EpochInterval = epochInterval
 
-		// test the case of EpochInterval == 0
-		// after that, change EpochInterval to a random non-zero value
-		if epochInterval == 0 {
-			// validation should not pass with zero EpochInterval
+		// test the case of EpochInterval < 2
+		// after that, change EpochInterval to a random value until >=2
+		if epochInterval < 2 {
+			// validation should not pass with EpochInterval < 2
 			require.Error(t, params.Validate())
 			params.EpochInterval = uint64(rand.Int())
 		}
@@ -93,7 +93,7 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 		numMsgs := uint64(rand.Int() % 100)
-		limit := uint64(rand.Int() % 100)
+		limit := uint64(rand.Int()%100) + 1
 
 		txidsMap := map[string]bool{}
 		helper := testepoching.NewHelper(t)

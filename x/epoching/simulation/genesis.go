@@ -16,9 +16,9 @@ const (
 	EpochIntervalKey = "epoch_interval"
 )
 
-// genUnbondingTime returns randomized UnbondingTime
+// genEpochInterval returns randomized EpochInterval
 func genEpochInterval(r *rand.Rand) uint64 {
-	return uint64(r.Intn(10) + 1)
+	return uint64(r.Intn(10) + 2)
 }
 
 // RandomizedGenState generates a random GenesisState for staking
