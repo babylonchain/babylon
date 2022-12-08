@@ -63,12 +63,16 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, err
 	}
 
+	// construct TransactionInfo pair and the submission data
+	txsInfo := types.NewTxInfoPairFromValidSubmission(&submissionKey, req.Proofs)
+	submissionData := rawSubmission.GetSubmissionData(epochNum, txsInfo)
+
 	// Everything is fine, save new checkpoint and update Epoch data
 	err = m.k.addEpochSubmission(
 		sdkCtx,
 		epochNum,
 		submissionKey,
-		rawSubmission.GetSubmissionData(epochNum, req.Proofs),
+		submissionData,
 		rawCheckpointBytes,
 	)
 

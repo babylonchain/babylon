@@ -133,7 +133,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		err := fmt.Errorf("the best submission key for epoch %d has no submission data", finalizedEpoch)
 		panic(err) // this can only be a programming error
 	}
-	resp.ProofEpochSubmitted = bestSubmissionData.Proofs
+	resp.ProofEpochSubmitted = bestSubmissionData
 
 	return resp, nil
 }
