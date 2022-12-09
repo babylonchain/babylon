@@ -38,11 +38,11 @@ func GenRandomPubkeysAndSigs(n int, msg []byte) ([]bls12381.PublicKey, []bls1238
 	return blsPubkeys, blsSigs
 }
 
-func GenerateValidatorSetWithBLSPrivKeys(n int) (checkpointingtypes.ValidatorWithBLSSet, []bls12381.PrivateKey) {
-	var (
-		valSet      []*checkpointingtypes.ValidatorWithBlsKey
-		blsPrivKeys []bls12381.PrivateKey
-	)
+func GenerateValidatorSetWithBLSPrivKeys(n int) (*checkpointingtypes.ValidatorWithBlsKeySet, []bls12381.PrivateKey) {
+	valSet := &checkpointingtypes.ValidatorWithBlsKeySet{
+		ValSet: make([]*checkpointingtypes.ValidatorWithBlsKey, n),
+	}
+	blsPrivKeys := make([]bls12381.PrivateKey, n)
 
 	for i := 0; i < n; i++ {
 		addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -52,8 +52,8 @@ func GenerateValidatorSetWithBLSPrivKeys(n int) (checkpointingtypes.ValidatorWit
 			BlsPubKey:        blsPrivkey.PubKey(),
 			VotingPower:      1000,
 		}
-		valSet = append(valSet, val)
-		blsPrivKeys = append(blsPrivKeys, blsPrivkey)
+		valSet.ValSet[i] = val
+		blsPrivKeys[i] = blsPrivkey
 	}
 
 	return valSet, blsPrivKeys

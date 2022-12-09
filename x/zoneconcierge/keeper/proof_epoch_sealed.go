@@ -77,7 +77,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	/*
 		Ensure more than 1/3 (in voting power) validators of this epoch have signed (epoch_num || last_commit_hash) in the raw checkpoint
 	*/
-	valSet := checkpointingtypes.ValidatorWithBLSSet(proof.ValidatorSet)
+	valSet := checkpointingtypes.ValidatorWithBlsKeySet{ValSet: proof.ValidatorSet}
 	// filter validator set that contributes to the signature
 	signerSet, signerSetPower, err := valSet.FindSubsetWithPowerSum(rawCkpt.Bitmap)
 	if err != nil {
