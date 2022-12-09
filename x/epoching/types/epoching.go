@@ -63,6 +63,11 @@ func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
 	return e.GetSecondBlockHeight() == uint64(ctx.BlockHeight())
 }
 
+// IsFirstBlockOfNextEpoch checks whether the current block is the first block of
+// the next epoch
+// CONTRACT: IsFirstBlockOfNextEpoch can only be called by the epoching module
+// once upon the first block of a new epoch
+// other modules should use IsFirstBlock instead.
 func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 	if e.EpochNumber == 0 {
 		return ctx.BlockHeight() == 1

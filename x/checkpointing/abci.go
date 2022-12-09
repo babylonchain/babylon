@@ -1,6 +1,7 @@
 package checkpointing
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -22,6 +23,12 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 
 	// if this block is the second block of an epoch
 	epoch := k.GetEpoch(ctx)
+	if epoch.IsFirstBlock(ctx) {
+		err := k.InitValidatorBLSSet(ctx)
+		if err != nil {
+			panic(fmt.Errorf("failed to store validator BLS set"))
+		}
+	}
 	if epoch.IsSecondBlock(ctx) {
 		// note that this epochNum is obtained after the BeginBlocker of the epoching module is executed
 		// meaning that the epochNum has been incremented upon a new epoch

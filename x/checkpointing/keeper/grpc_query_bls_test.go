@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -33,12 +32,8 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		types.RegisterQueryServer(queryHelper, querier)
 		queryClient := types.NewQueryClient(queryHelper)
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
-		// add BLS pubkey to the genesis validator
-		valSet := ek.GetValidatorSet(helper.Ctx, 0)
-		require.Len(t, valSet, 1)
-		genesisVal := valSet[0]
-		genesisBLSPubkey := bls12381.GenPrivKey().PubKey()
-		err := ck.CreateRegistration(helper.Ctx, genesisBLSPubkey, genesisVal.Addr)
+		genesisVal := ek.GetValidatorSet(helper.Ctx, 0)[0]
+		genesisBLSPubkey, err := ck.GetBlsPubKey(helper.Ctx, genesisVal.Addr)
 		require.NoError(t, err)
 
 		// BeginBlock of block 1, and thus entering epoch 1

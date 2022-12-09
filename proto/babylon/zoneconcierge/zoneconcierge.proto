@@ -1,7 +1,7 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
-import "babylon/checkpointing/query.proto";
+import "babylon/checkpointing/bls_key.proto";
 import "babylon/checkpointing/checkpoint.proto";
 import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
