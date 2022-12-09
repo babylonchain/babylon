@@ -68,10 +68,10 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 }
 
 func GenerateValidatorSetWithBLSPrivKeys(n int) (*types.ValidatorWithBlsKeySet, []bls12381.PrivateKey) {
-	var (
-		valSet      *types.ValidatorWithBlsKeySet
-		blsPrivKeys []bls12381.PrivateKey
-	)
+	valSet := &types.ValidatorWithBlsKeySet{
+		ValSet: make([]*types.ValidatorWithBlsKey, n),
+	}
+	blsPrivKeys := make([]bls12381.PrivateKey, n)
 
 	for i := 0; i < n; i++ {
 		addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -81,8 +81,8 @@ func GenerateValidatorSetWithBLSPrivKeys(n int) (*types.ValidatorWithBlsKeySet, 
 			BlsPubKey:        blsPrivkey.PubKey(),
 			VotingPower:      1000,
 		}
-		valSet.ValSet = append(valSet.ValSet, val)
-		blsPrivKeys = append(blsPrivKeys, blsPrivkey)
+		valSet.ValSet[i] = val
+		blsPrivKeys[i] = blsPrivkey
 	}
 
 	return valSet, blsPrivKeys

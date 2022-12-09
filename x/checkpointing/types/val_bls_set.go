@@ -1,7 +1,6 @@
 package types
 
 import (
-	"errors"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -19,22 +18,18 @@ func BytesToValidatorBlsKeySet(cdc codec.BinaryCodec, bz []byte) (*ValidatorWith
 
 // FindSubsetWithPowerSum returns a subset and the sum of the voting Power
 // based on the given bitmap
-func (ks *ValidatorWithBlsKeySet) FindSubsetWithPowerSum(bm bitmap.Bitmap) (*ValidatorWithBlsKeySet, uint64, error) {
-	var (
-		sum    uint64
-		valSet *ValidatorWithBlsKeySet
-	)
-
-	for i := 0; i < bm.Len(); i++ {
+func (ks *ValidatorWithBlsKeySet) FindSubsetWithPowerSum(bm bitmap.Bitmap) (*ValidatorWithBlsKeySet, uint64) {
+	var sum uint64
+	valSet := &ValidatorWithBlsKeySet{
+		ValSet: make([]*ValidatorWithBlsKey, 0),
+	}
+	for i := 0; i < len(ks.ValSet); i++ {
 		if bm.Get(i) {
-			if i >= len(ks.ValSet) {
-				return valSet, sum, errors.New("invalid validator index")
-			}
 			valSet.ValSet = append(valSet.ValSet, ks.ValSet[i])
 			sum += ks.ValSet[i].VotingPower
 		}
 	}
-	return valSet, sum, nil
+	return valSet, sum
 }
 
 func (ks *ValidatorWithBlsKeySet) GetBLSKeySet() []bls12381.PublicKey {
