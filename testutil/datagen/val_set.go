@@ -2,8 +2,10 @@ package datagen
 
 import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -34,4 +36,25 @@ func GenRandomPubkeysAndSigs(n int, msg []byte) ([]bls12381.PublicKey, []bls1238
 	}
 
 	return blsPubkeys, blsSigs
+}
+
+func GenerateValidatorSetWithBLSPrivKeys(n int) (*checkpointingtypes.ValidatorWithBlsKeySet, []bls12381.PrivateKey) {
+	valSet := &checkpointingtypes.ValidatorWithBlsKeySet{
+		ValSet: make([]*checkpointingtypes.ValidatorWithBlsKey, n),
+	}
+	blsPrivKeys := make([]bls12381.PrivateKey, n)
+
+	for i := 0; i < n; i++ {
+		addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
+		blsPrivkey := bls12381.GenPrivKey()
+		val := &checkpointingtypes.ValidatorWithBlsKey{
+			ValidatorAddress: addr.String(),
+			BlsPubKey:        blsPrivkey.PubKey(),
+			VotingPower:      1000,
+		}
+		valSet.ValSet[i] = val
+		blsPrivKeys[i] = blsPrivkey
+	}
+
+	return valSet, blsPrivKeys
 }

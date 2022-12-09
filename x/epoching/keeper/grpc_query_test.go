@@ -72,14 +72,19 @@ func FuzzCurrentEpoch(f *testing.F) {
 		helper := testepoching.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
 		wctx := sdk.WrapSDKContext(ctx)
+
+		epochInterval := keeper.GetParams(ctx).EpochInterval
 		for i := uint64(0); i < increment; i++ {
+			// this ensures that IncEpoch is invoked only at the first header of each epoch
+			ctx = ctx.WithBlockHeader(*datagen.GenRandomTMHeader("chain-test", i*epochInterval+1))
+			wctx = sdk.WrapSDKContext(ctx)
 			keeper.IncEpoch(ctx)
 		}
 		req := types.QueryCurrentEpochRequest{}
 		resp, err := queryClient.CurrentEpoch(wctx, &req)
 		require.NoError(t, err)
 		require.Equal(t, increment, resp.CurrentEpoch)
-		require.Equal(t, increment*keeper.GetParams(ctx).EpochInterval, resp.EpochBoundary)
+		require.Equal(t, increment*epochInterval, resp.EpochBoundary)
 	})
 }
 

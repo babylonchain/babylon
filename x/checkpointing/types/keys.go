@@ -23,8 +23,9 @@ const (
 )
 
 var (
-	CheckpointsPrefix  = []byte{0x1} // reserve this namespace for checkpoints
-	RegistrationPrefix = []byte{0x2} // reserve this namespace for BLS keys
+	CheckpointsPrefix        = []byte{0x1} // reserve this namespace for checkpoints
+	RegistrationPrefix       = []byte{0x2} // reserve this namespace for BLS keys
+	ValidatorBlsKeySetPrefix = []byte{0x3} // reserve this namespace for validator BLS key set
 
 	CkptsObjectPrefix = append(CheckpointsPrefix, 0x0) // where we save the concrete BLS sig bytes
 
@@ -34,6 +35,11 @@ var (
 
 // CkptsObjectKey defines epoch
 func CkptsObjectKey(epoch uint64) []byte {
+	return sdk.Uint64ToBigEndian(epoch)
+}
+
+// ValidatorBlsKeySetKey defines epoch
+func ValidatorBlsKeySetKey(epoch uint64) []byte {
 	return sdk.Uint64ToBigEndian(epoch)
 }
 

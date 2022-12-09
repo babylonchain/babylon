@@ -54,7 +54,7 @@ func (k Keeper) InitEpoch(ctx sdk.Context) {
 		panic("InitEpoch can be invoked only at genesis")
 	}
 	epochInterval := k.GetParams(ctx).EpochInterval
-	epoch := types.NewEpoch(0, epochInterval, &header)
+	epoch := types.NewEpoch(0, epochInterval, 0, &header)
 	k.setEpochInfo(ctx, 0, &epoch)
 
 	k.setEpochNumber(ctx, 0)
@@ -111,13 +111,14 @@ func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx sdk.Context) *types.Epoch {
 }
 
 // IncEpoch adds epoch number by 1
+// CONTRACT: can only be invoked at the first block of an epoch
 func (k Keeper) IncEpoch(ctx sdk.Context) types.Epoch {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	incrementedEpochNumber := epochNumber + 1
 	k.setEpochNumber(ctx, incrementedEpochNumber)
 
 	epochInterval := k.GetParams(ctx).EpochInterval
-	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, nil)
+	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(ctx.BlockHeight()), nil)
 	k.setEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
 
 	return newEpoch
