@@ -17,7 +17,7 @@ import (
 
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
 	sigs := []bls12381.Signature{}
-	for i := 0; i < bm.Len(); i++ {
+	for i := 0; i < len(blsSKs); i++ {
 		if bitmap.Get(bm, i) {
 			sig := bls12381.Sign(blsSKs[i], msg)
 			sigs = append(sigs, sig)
