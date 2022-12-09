@@ -79,7 +79,7 @@ func FuzzProofEpochSealed(f *testing.F) {
 
 		// mock checkpointing keeper that produces the expected validator set
 		checkpointingKeeper := zctypes.NewMockCheckpointingKeeper(ctrl)
-		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(valSet, nil).AnyTimes()
+		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(valSet.ValSet, nil).AnyTimes()
 		// create zcKeeper and ctx
 		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, nil, nil, nil)
 

@@ -223,7 +223,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.Ra
 	if sum <= totalPower*1/3 {
 		return nil, types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
 	}
-	msgBytes := ckpt.SignedMsg()
+	msgBytes := append(sdk.Uint64ToBigEndian(ckpt.GetEpochNum()), *ckpt.LastCommitHash...)
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
 	if err != nil {
 		return nil, err
