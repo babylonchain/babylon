@@ -1,6 +1,8 @@
 package types
 
 import (
+	fmt "fmt"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -18,18 +20,24 @@ func BytesToValidatorBlsKeySet(cdc codec.BinaryCodec, bz []byte) (*ValidatorWith
 
 // FindSubsetWithPowerSum returns a subset and the sum of the voting Power
 // based on the given bitmap
-func (ks *ValidatorWithBlsKeySet) FindSubsetWithPowerSum(bm bitmap.Bitmap) (*ValidatorWithBlsKeySet, uint64) {
+func (ks *ValidatorWithBlsKeySet) FindSubsetWithPowerSum(bm bitmap.Bitmap) (*ValidatorWithBlsKeySet, uint64, error) {
 	var sum uint64
 	valSet := &ValidatorWithBlsKeySet{
 		ValSet: make([]*ValidatorWithBlsKey, 0),
 	}
+
+	// ensure bitmap is big enough to contain ks
+	if bm.Len() < len(ks.ValSet) {
+		return valSet, sum, fmt.Errorf("bitmap (with %d bits) is not large enough to contain the validator set with size %d", bm.Len(), len(ks.ValSet))
+	}
+
 	for i := 0; i < len(ks.ValSet); i++ {
 		if bm.Get(i) {
 			valSet.ValSet = append(valSet.ValSet, ks.ValSet[i])
 			sum += ks.ValSet[i].VotingPower
 		}
 	}
-	return valSet, sum
+	return valSet, sum, nil
 }
 
 func (ks *ValidatorWithBlsKeySet) GetBLSKeySet() []bls12381.PublicKey {

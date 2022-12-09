@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
+	fmt "fmt"
 	"sort"
 
 	"github.com/boljen/go-bitmap"
@@ -45,13 +46,19 @@ func (vs ValidatorSet) FindValidatorWithIndex(valAddr sdk.ValAddress) (*Validato
 	return &vs[index], index, nil
 }
 
-func (vs ValidatorSet) FindSubset(bitmap bitmap.Bitmap) (ValidatorSet, error) {
+func (vs ValidatorSet) FindSubset(bm bitmap.Bitmap) (ValidatorSet, error) {
 	valSet := make([]Validator, 0)
-	for i := 0; i < bitmap.Len(); i++ {
-		if bitmap.Get(i) {
-			if i >= len(vs) {
-				return nil, errors.New("invalid validator index")
-			}
+
+	// ensure bitmap is big enough to contain vs
+	if bm.Len() < len(vs) {
+		return valSet, fmt.Errorf("bitmap (with %d bits) is not large enough to contain the validator set with size %d", bm.Len(), len(vs))
+	}
+
+	// NOTE: we cannot use bm.Len() to iterate over the bitmap
+	// Our bm has 13 bytes = 104 bits, while the validator set has 100 validators
+	// If iterating over the 104 bits, then the last 4 bits will trigger the our of range error in ks
+	for i := 0; i < len(vs); i++ {
+		if bm.Get(i) {
 			valSet = append(valSet, vs[i])
 		}
 	}
