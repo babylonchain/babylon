@@ -31,6 +31,7 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 
 // VerifyEpochSealed verifies that the given `epoch` is sealed by the `rawCkpt` by using the given `proof`
 // The verification rules include:
+// - basic sanity checks
 // - The raw checkpoint's last_commit_hash is same as in the header of the sealer epoch
 // - More than 1/3 (in voting power) validators in the validator set of this epoch have signed last_commit_hash of the sealer epoch
 // - The epoch medatata is committed to the app_hash of the sealer epoch
@@ -54,12 +55,19 @@ func VerifyEpochSealed(ctx sdk.Context, epoch *epochingtypes.Epoch, rawCkpt *che
 		return err
 	}
 
+	// TODO: Ensure The epoch medatata is committed to the app_hash of the sealer header
+	// TODO: Ensure The validator set is committed to the app_hash of the sealer header
+
 	// ensure epoch number is same in epoch and rawCkpt
 	if epoch.EpochNumber != rawCkpt.EpochNum {
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to rawCkpt.EpochNum (%d)", epoch.EpochNumber, rawCkpt.EpochNum)
 	}
 
 	// ensure the raw checkpoint's last_commit_hash is same as in the header of the sealer header
+	// NOTE: since this proof is assembled by a Babylon node who has verified the checkpoint,
+	// the two lch values should always be the same, otherwise this Babylon node is malicious.
+	// This is different from the checkpoint verification rules in checkpointing,
+	// where a checkpoint with valid BLS multisig but different lch signals a dishonest majority equivocation.
 	lchInCkpt := rawCkpt.LastCommitHash
 	lchInSealerHeader := checkpointingtypes.LastCommitHash(epoch.SealerHeader.LastCommitHash)
 	if !lchInCkpt.Equal(lchInSealerHeader) {
@@ -79,23 +87,15 @@ func VerifyEpochSealed(ctx sdk.Context, epoch *epochingtypes.Epoch, rawCkpt *che
 	if signerSetPower <= valSet.GetTotalPower()*1/3 {
 		return fmt.Errorf("the BLS signature involves insufficient voting power")
 	}
-	// aggregate BLS PKs of the signer set
-	signerAggBLSPK, err := bls12381.AggrPKList(signerSet.GetBLSKeySet())
-	if err != nil {
-		return err
-	}
 	// verify BLS multisig
 	signedMsgBytes := rawCkpt.SignedMsg()
-	ok, err := bls12381.Verify(*rawCkpt.BlsMultiSig, signerAggBLSPK, signedMsgBytes)
+	ok, err := bls12381.VerifyMultiSig(*rawCkpt.BlsMultiSig, signerSet.GetBLSKeySet(), signedMsgBytes)
 	if err != nil {
 		return err
 	}
 	if !ok {
 		return fmt.Errorf("BLS signature does not match the public key")
 	}
-
-	// TODO: Ensure The epoch medatata is committed to the app_hash of the sealer epoch
-	// TODO: Ensure The validator set is committed to the app_hash of the sealer epoch
 
 	return nil
 }
