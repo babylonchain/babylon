@@ -1,15 +1,30 @@
 package datagen
 
 import (
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/rand"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/babylonchain/babylon/btctxformatter"
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/boljen/go-bitmap"
 )
+
+// GenRandomBitmap generates a random bitmap for the validator set
+// It returns a random bitmap and the number of validators in the subset
+func GenRandomBitmap() (bitmap.Bitmap, int) {
+	bmBytes := GenRandomByteArray(txformat.BitMapLength)
+	bm := bitmap.Bitmap(bmBytes)
+	numSubset := 0
+	for i := 0; i < bm.Len(); i++ {
+		if bitmap.Get(bm, i) {
+			numSubset++
+		}
+	}
+	return bm, numSubset
+}
 
 func GetRandomRawBtcCheckpoint() *btctxformatter.RawBtcCheckpoint {
 	rawCkpt := GenRandomRawCheckpoint()
@@ -37,7 +52,7 @@ func GenRandomRawCheckpoint() *types.RawCheckpoint {
 	return &types.RawCheckpoint{
 		EpochNum:       GenRandomEpochNum(),
 		LastCommitHash: &randomHashBytes,
-		Bitmap:         bitmap.New(13),
+		Bitmap:         bitmap.New(txformat.BitMapLength),
 		BlsMultiSig:    &randomBLSSig,
 	}
 }
@@ -65,27 +80,6 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 	}
 
 	return checkpoints
-}
-
-func GenerateValidatorSetWithBLSPrivKeys(n int) (types.ValidatorWithBLSSet, []bls12381.PrivateKey) {
-	var (
-		valSet      []*types.ValidatorWithBlsKey
-		blsPrivKeys []bls12381.PrivateKey
-	)
-
-	for i := 0; i < n; i++ {
-		addr := sdk.ValAddress(secp256k1.GenPrivKey().PubKey().Address())
-		blsPrivkey := bls12381.GenPrivKey()
-		val := &types.ValidatorWithBlsKey{
-			ValidatorAddress: addr.String(),
-			BlsPubKey:        blsPrivkey.PubKey(),
-			VotingPower:      1000,
-		}
-		valSet = append(valSet, val)
-		blsPrivKeys = append(blsPrivKeys, blsPrivkey)
-	}
-
-	return valSet, blsPrivKeys
 }
 
 func GenerateBLSSigs(keys []bls12381.PrivateKey, msg []byte) []bls12381.Signature {
@@ -120,11 +114,6 @@ func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawC
 	}
 
 	return btcCheckpoint
-}
-
-func GenRandomEpochNum() uint64 {
-	epochNum := rand.Int63n(100)
-	return uint64(epochNum)
 }
 
 func GenRandomLastCommitHash() types.LastCommitHash {

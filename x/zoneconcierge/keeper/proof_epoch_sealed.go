@@ -36,7 +36,7 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 // - More than 1/3 (in voting power) validators in the validator set of this epoch have signed last_commit_hash of the sealer epoch
 // - The epoch medatata is committed to the app_hash of the sealer epoch
 // - The validator set is committed to the app_hash of the sealer epoch
-func VerifyEpochSealed(ctx sdk.Context, epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.RawCheckpoint, proof *types.ProofEpochSealed) error {
+func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.RawCheckpoint, proof *types.ProofEpochSealed) error {
 	// nil check
 	if epoch == nil {
 		return fmt.Errorf("epoch is nil")

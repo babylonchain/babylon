@@ -13,26 +13,17 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-func NewEpoch(epochNumber uint64, epochInterval uint64, lastBlockHeader *tmproto.Header) Epoch {
+// NewEpoch constructs a new Epoch object
+// The relationship between block and epoch is as follows, assuming epoch interval of 5:
+// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+// 0 |     1     |     2      |
+func NewEpoch(epochNumber uint64, epochInterval uint64, firstBlockHeight uint64, lastBlockHeader *tmproto.Header) Epoch {
 	return Epoch{
 		EpochNumber:          epochNumber,
 		CurrentEpochInterval: epochInterval,
-		FirstBlockHeight:     firstBlockHeight(epochNumber, epochInterval),
+		FirstBlockHeight:     firstBlockHeight,
 		LastBlockHeader:      lastBlockHeader,
 		// NOTE: SealerHeader will be set in the next epoch
-	}
-}
-
-// firstBlockHeight returns the height of the first block of a given epoch and epoch interval
-// TODO (non-urgent): add support to variable epoch interval
-func firstBlockHeight(epochNumber uint64, epochInterval uint64) uint64 {
-	// example: in epoch 2, epoch interval is 5 blocks, FirstBlockHeight will be (2-1)*5+1 = 6
-	// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
-	// 0 |     1     |     2      |
-	if epochNumber == 0 {
-		return 0
-	} else {
-		return (epochNumber-1)*epochInterval + 1
 	}
 }
 
