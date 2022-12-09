@@ -72,7 +72,7 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 
 		// check whether the length of current validator set equals to 1 + n
 		// since one genesis validator was added when setup
-		valSet := ck.GetValidatorSet(ctx, 2)
+		valSet = ck.GetValidatorSet(ctx, 2)
 		require.Equal(t, len(wcvMsgs)+1, len(valSet))
 		for _, msg := range wcvMsgs {
 			found := false

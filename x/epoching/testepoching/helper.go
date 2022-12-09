@@ -1,6 +1,7 @@
 package testepoching
 
 import (
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	"testing"
 
 	appparams "github.com/babylonchain/babylon/app/params"
@@ -43,6 +44,15 @@ func NewHelper(t *testing.T) *Helper {
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	epochingKeeper := app.EpochingKeeper
+
+	// add BLS pubkey to the genesis validator
+	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
+	require.Len(t, valSet, 1)
+	genesisVal := valSet[0]
+	genesisBLSPubkey := bls12381.GenPrivKey().PubKey()
+	err := app.CheckpointingKeeper.CreateRegistration(ctx, genesisBLSPubkey, genesisVal.Addr)
+	require.NoError(t, err)
+
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
@@ -55,7 +65,7 @@ func NewHelper(t *testing.T) *Helper {
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
 func NewHelperWithValSet(t *testing.T) *Helper {
 	// generate the validator set with 10 validators
-	valSet, err := GenTmValidatorSet(10)
+	tmValSet, err := GenTmValidatorSet(10)
 	require.NoError(t, err)
 
 	// generate the genesis account
@@ -69,11 +79,20 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, valSet, GenAccs, balance)
+	app := app.SetupWithGenesisValSet(t, tmValSet, GenAccs, balance)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
+
+	// add BLS pubkey to the genesis validator
+	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
+	for _, val := range valSet {
+		blsPubkey := bls12381.GenPrivKey().PubKey()
+		err = app.CheckpointingKeeper.CreateRegistration(ctx, blsPubkey, val.Addr)
+		require.NoError(t, err)
+	}
+
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)

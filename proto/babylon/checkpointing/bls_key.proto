@@ -25,3 +25,16 @@ message ProofOfPossession {
     (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
   ];
 }
+
+// ValidatorWithBLSSet defines a set of validators with their BLS public keys
+message ValidatorWithBlsKeySet {
+  repeated ValidatorWithBlsKey val_set = 1;
+}
+
+// ValidatorWithBlsKey couples validator address, voting power, and its bls public key
+message ValidatorWithBlsKey {
+  string validator_address = 1;
+  bytes bls_pub_key = 2;
+  uint64 voting_power = 3;
+}
+

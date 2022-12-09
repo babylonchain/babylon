@@ -67,9 +67,9 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 	return checkpoints
 }
 
-func GenerateValidatorSetWithBLSPrivKeys(n int) (types.ValidatorWithBLSSet, []bls12381.PrivateKey) {
+func GenerateValidatorSetWithBLSPrivKeys(n int) (*types.ValidatorWithBlsKeySet, []bls12381.PrivateKey) {
 	var (
-		valSet      []*types.ValidatorWithBlsKey
+		valSet      *types.ValidatorWithBlsKeySet
 		blsPrivKeys []bls12381.PrivateKey
 	)
 
@@ -81,7 +81,7 @@ func GenerateValidatorSetWithBLSPrivKeys(n int) (types.ValidatorWithBLSSet, []bl
 			BlsPubKey:        blsPrivkey.PubKey(),
 			VotingPower:      1000,
 		}
-		valSet = append(valSet, val)
+		valSet.ValSet = append(valSet.ValSet, val)
 		blsPrivKeys = append(blsPrivKeys, blsPrivkey)
 	}
 

@@ -1,6 +1,7 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
+import "babylon/checkpointing/bls_key.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
@@ -167,11 +168,4 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [ (gogoproto.nullable) = false ];
-}
-
-// ValidatorWithBlsKey couples validator address and its bls public key
-message ValidatorWithBlsKey {
-  string validator_address = 1;
-  bytes bls_pub_key = 2;
-  uint64 voting_power = 3;
 }
