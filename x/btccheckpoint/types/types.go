@@ -157,15 +157,3 @@ func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *Tr
 		Proof:       proof,
 	}
 }
-
-// NewTxInfoPairFromValidSubmission returns a pair of TransactionInfo with a given
-// valid submission, including the submission key and the corresponding BTCSpvProofs
-// that have passed the verification
-// CONTRACT: this function can be used only after btcSpvProofs has passed verification
-func NewTxInfoPairFromValidSubmission(submissionKey *SubmissionKey, btcSpvProofs []*BTCSpvProof) []*TransactionInfo {
-	txs := make([]*TransactionInfo, len(submissionKey.Key))
-	for i, txKey := range submissionKey.Key {
-		txs[i] = NewTransactionInfo(txKey, btcSpvProofs[i].BtcTransaction, btcSpvProofs[i].MerkleNodes)
-	}
-	return txs
-}

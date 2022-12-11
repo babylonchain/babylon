@@ -64,7 +64,14 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	}
 
 	// construct TransactionInfo pair and the submission data
-	txsInfo := types.NewTxInfoPairFromValidSubmission(&submissionKey, req.Proofs)
+	txsInfo := make([]*types.TransactionInfo, len(submissionKey.Key))
+	for i := range submissionKey.Key {
+		// creating a per-loop `txKey` variable rather than assigning it in the `for` statement
+		// in order to prevent overwriting previous `txKey`
+		// see https://github.com/golang/go/discussions/56010
+		txKey := submissionKey.Key[i]
+		txsInfo[i] = types.NewTransactionInfo(txKey, req.Proofs[i].BtcTransaction, req.Proofs[i].MerkleNodes)
+	}
 	submissionData := rawSubmission.GetSubmissionData(epochNum, txsInfo)
 
 	// Everything is fine, save new checkpoint and update Epoch data
