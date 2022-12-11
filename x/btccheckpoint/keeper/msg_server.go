@@ -66,7 +66,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// construct TransactionInfo pair and the submission data
 	txsInfo := make([]*types.TransactionInfo, len(submissionKey.Key))
 	for i := range submissionKey.Key {
-		// creating a per-loop `txKey` variable rather than assigning it in the `for` statement
+		// creating a per-iteration `txKey` variable rather than assigning it in the `for` statement
 		// in order to prevent overwriting previous `txKey`
 		// see https://github.com/golang/go/discussions/56010
 		txKey := submissionKey.Key[i]
