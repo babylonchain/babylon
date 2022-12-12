@@ -127,7 +127,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 
 	// proof that the epoch's checkpoint is submitted to BTC
-	// i.e., the two `BTCSpvProof`s for the checkpoint
+	// i.e., the two `TransactionInfo`s for the checkpoint
 	bestSubmissionData := k.btccKeeper.GetSubmissionData(ctx, *bestSubmissionKey)
 	if bestSubmissionData == nil {
 		err := fmt.Errorf("the best submission key for epoch %d has no submission data", finalizedEpoch)
