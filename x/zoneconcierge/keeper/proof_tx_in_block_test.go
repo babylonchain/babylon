@@ -70,6 +70,7 @@ func TestProveTxInBlock(t *testing.T) {
 	txHash := resp.Hash
 
 	testNetwork.WaitForNextBlock()
+	testNetwork.WaitForNextBlock()
 
 	proof, err := zcKeeper.ProveTxInBlock(ctx, txHash)
 	require.NoError(t, err)

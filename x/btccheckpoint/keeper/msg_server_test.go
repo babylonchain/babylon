@@ -226,6 +226,17 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Submission data with invalid epoch")
 	}
 
+	if len(submissionData.TxsInfo) != 2 {
+		t.Errorf("Submission data with invalid TransactionInfo")
+	}
+
+	for i, txInfo := range submissionData.TxsInfo {
+		require.Equal(t, submissionKey.Key[i].Index, txInfo.Key.Index)
+		require.True(t, submissionKey.Key[i].Hash.Eq(txInfo.Key.Hash))
+		require.Equal(t, msg.Proofs[i].BtcTransaction, txInfo.Transaction)
+		require.Equal(t, msg.Proofs[i].MerkleNodes, txInfo.Proof)
+	}
+
 	ed1 := tk.getEpochData(epoch)
 
 	// TODO Add custom equal fo submission key and transaction key to check

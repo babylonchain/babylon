@@ -91,13 +91,11 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64) SubmissionData {
-
-	tBytes := [][]byte{rsc.Proof1.TransactionBytes, rsc.Proof2.TransactionBytes}
+func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
-		Submitter:      rsc.Submitter.Bytes(),
-		Btctransaction: tBytes,
-		Epoch:          epochNum,
+		Submitter: rsc.Submitter.Bytes(),
+		TxsInfo:   txsInfo,
+		Epoch:     epochNum,
 	}
 }
 
@@ -150,4 +148,12 @@ func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *Subm
 	// the same block. To resolve the tie we need to take into account index of
 	// latest transaction of the submissions
 	return newSubmission.LatestTxIndex < currentBestSubmission.LatestTxIndex
+}
+
+func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *TransactionInfo {
+	return &TransactionInfo{
+		Key:         txKey,
+		Transaction: txBytes,
+		Proof:       proof,
+	}
 }
