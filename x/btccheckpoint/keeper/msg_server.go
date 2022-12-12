@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+var _ types.MsgServer = msgServer{}
+
 type msgServer struct {
 	k Keeper
 }
@@ -61,12 +63,23 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, err
 	}
 
+	// construct TransactionInfo pair and the submission data
+	txsInfo := make([]*types.TransactionInfo, len(submissionKey.Key))
+	for i := range submissionKey.Key {
+		// creating a per-iteration `txKey` variable rather than assigning it in the `for` statement
+		// in order to prevent overwriting previous `txKey`
+		// see https://github.com/golang/go/discussions/56010
+		txKey := submissionKey.Key[i]
+		txsInfo[i] = types.NewTransactionInfo(txKey, req.Proofs[i].BtcTransaction, req.Proofs[i].MerkleNodes)
+	}
+	submissionData := rawSubmission.GetSubmissionData(epochNum, txsInfo)
+
 	// Everything is fine, save new checkpoint and update Epoch data
 	err = m.k.addEpochSubmission(
 		sdkCtx,
 		epochNum,
 		submissionKey,
-		rawSubmission.GetSubmissionData(epochNum),
+		submissionData,
 		rawCheckpointBytes,
 	)
 
@@ -76,5 +89,3 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	return &types.MsgInsertBTCSpvProofResponse{}, nil
 }
-
-var _ types.MsgServer = msgServer{}

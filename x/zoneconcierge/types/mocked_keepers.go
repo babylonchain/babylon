@@ -517,6 +517,20 @@ func (mr *MockBtcCheckpointKeeperMockRecorder) GetEpochData(ctx, e interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochData", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetEpochData), ctx, e)
 }
 
+// GetSubmissionData mocks base method.
+func (m *MockBtcCheckpointKeeper) GetSubmissionData(ctx types2.Context, sk types.SubmissionKey) *types.SubmissionData {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSubmissionData", ctx, sk)
+	ret0, _ := ret[0].(*types.SubmissionData)
+	return ret0
+}
+
+// GetSubmissionData indicates an expected call of GetSubmissionData.
+func (mr *MockBtcCheckpointKeeperMockRecorder) GetSubmissionData(ctx, sk interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubmissionData", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetSubmissionData), ctx, sk)
+}
+
 // MockCheckpointingKeeper is a mock of CheckpointingKeeper interface.
 type MockCheckpointingKeeper struct {
 	ctrl     *gomock.Controller

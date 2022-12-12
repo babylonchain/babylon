@@ -84,11 +84,11 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
 	if ed.Status != btcctypes.Finalized {
 		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
-		panic(err)
+		panic(err) // this can only be a programming error
 	}
 	if len(ed.Key) == 0 {
 		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
-		panic(err)
+		panic(err) // this can only be a programming error
 	}
 	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
 
@@ -122,9 +122,18 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	// proof that the epoch is sealed
 	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: proof that the epoch's checkpoint is submitted to BTC
-	// i.e., a BTCSpvProof for the BtcSubmissionKey
+	// proof that the epoch's checkpoint is submitted to BTC
+	// i.e., the two `TransactionInfo`s for the checkpoint
+	bestSubmissionData := k.btccKeeper.GetSubmissionData(ctx, *bestSubmissionKey)
+	if bestSubmissionData == nil {
+		err := fmt.Errorf("the best submission key for epoch %d has no submission data", finalizedEpoch)
+		panic(err) // this can only be a programming error
+	}
+	resp.ProofEpochSubmitted = bestSubmissionData.TxsInfo
 
 	return resp, nil
 }
