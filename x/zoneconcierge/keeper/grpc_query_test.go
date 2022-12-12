@@ -114,7 +114,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			RawCheckpoint: datagen.RandomRawCheckpointDataForEpoch(epochNum).ExpectedOpReturn,
 		}
 		btccKeeper.EXPECT().GetEpochData(gomock.Any(), gomock.Eq(epochNum)).Return(mockEpochData).AnyTimes()
-		btccKeeper.EXPECT().GetSubmissionData(gomock.Any(), gomock.Any()).Return(&btcctypes.SubmissionData{}).AnyTimes()
+		mockSubmissionData := &btcctypes.SubmissionData{TxsInfo: []*btcctypes.TransactionInfo{}}
+		btccKeeper.EXPECT().GetSubmissionData(gomock.Any(), gomock.Any()).Return(mockSubmissionData).AnyTimes()
 		// mock epoching keeper
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNum}).AnyTimes()
