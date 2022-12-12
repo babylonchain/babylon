@@ -1,17 +1,13 @@
 package keeper
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
 
 func getEpochInfoKey(epochNumber uint64) []byte {
@@ -24,24 +20,6 @@ func getValSetKey(epochNumber uint64) []byte {
 	valSetKey := checkpointingtypes.ValidatorBlsKeySetPrefix
 	valSetKey = append(valSetKey, sdk.Uint64ToBigEndian(epochNumber)...)
 	return valSetKey
-}
-
-// queryStore queries a KV pair in the KVStore, where
-// - moduleStoreKey is the store key of a module, e.g., zctypes.StoreKey
-// - key is the key of the queried KV pair, including the prefix, e.g., zctypes.EpochChainInfoKey || chainID in the chain info store
-// and returns
-// - key of this KV pair
-// - value of this KV pair
-// - Merkle proof of this KV pair
-// - error
-func (k Keeper) queryStore(moduleStoreKey string, key []byte, queryHeight int64) ([]byte, []byte, *tmcrypto.ProofOps, error) {
-	prefix := fmt.Sprintf("/store/%s/key", moduleStoreKey) // path of the entry in KVStore
-	opts := rpcclient.ABCIQueryOptions{
-		Height: queryHeight,
-		Prove:  true,
-	}
-	resp, err := k.tmClient.ABCIQueryWithOptions(context.Background(), prefix, key, opts)
-	return resp.Response.Key, resp.Response.Value, resp.Response.ProofOps, err
 }
 
 // ProveEpochSealed proves an epoch has been sealed, i.e.,
@@ -82,11 +60,6 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 	}
 
 	return proof, nil
-}
-
-func verifyStore(root []byte, keyWithPrefix []byte, value []byte, proof *tmcrypto.ProofOps) error {
-	prt := rootmulti.DefaultProofRuntime()
-	return prt.VerifyValue(proof, root, string(keyWithPrefix), value)
 }
 
 // VerifyEpochSealed verifies that the given `epoch` is sealed by the `rawCkpt` by using the given `proof`
