@@ -12,6 +12,8 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	"github.com/tendermint/tendermint/libs/bytes"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
@@ -82,4 +84,7 @@ type EpochingKeeper interface {
 // TMClient is a Tendermint client that allows to query tx inclusion proofs
 type TMClient interface {
 	Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error)
+	ABCIQuery(ctx context.Context, path string, data bytes.HexBytes) (*ctypes.ResultABCIQuery, error)
+	ABCIQueryWithOptions(ctx context.Context, path string, data bytes.HexBytes,
+		opts rpcclient.ABCIQueryOptions) (*ctypes.ResultABCIQuery, error)
 }

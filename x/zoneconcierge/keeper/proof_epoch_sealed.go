@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -8,7 +9,27 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
+	rpcclient "github.com/tendermint/tendermint/rpc/client"
 )
+
+// queryStore queries a KV pair in the KVStore, where
+// - moduleStoreKey is the store key of a module, e.g., zctypes.StoreKey
+// - key is the key of the queried KV pair, including the prefix, e.g., zctypes.EpochChainInfoKey || chainID in the chain info store
+// and returns
+// - key of this KV pair
+// - value of this KV pair
+// - Merkle proof of this KV pair
+// - error
+func (k Keeper) queryStore(ctx sdk.Context, moduleStoreKey string, key []byte) ([]byte, []byte, *tmcrypto.ProofOps, error) {
+	prefix := fmt.Sprintf("/store/%s/key", moduleStoreKey) // path of the entry in KVStore
+	opts := rpcclient.ABCIQueryOptions{
+		Height: ctx.BlockHeight(),
+		Prove:  true,
+	}
+	resp, err := k.tmClient.ABCIQueryWithOptions(context.Background(), prefix, key, opts)
+	return resp.Response.Key, resp.Response.Value, resp.Response.ProofOps, err
+}
 
 func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
 	var (
@@ -22,9 +43,21 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 		return nil, err
 	}
 
-	// TODO: proof of inclusion for epoch metadata in sealer header
+	// proof of inclusion for epoch metadata in sealer header
+	epochInfoKey := epochingtypes.EpochInfoKey
+	epochInfoKey = append(epochInfoKey, sdk.Uint64ToBigEndian(epochNumber)...)
+	_, _, proof.ProofEpochInfo, err = k.queryStore(ctx, epochingtypes.StoreKey, epochInfoKey)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: proof of inclusion for validator set in sealer header
+	// proof of inclusion for validator set in sealer header
+	valSetKey := checkpointingtypes.ValidatorBlsKeySetPrefix
+	valSetKey = append(valSetKey, sdk.Uint64ToBigEndian(epochNumber)...)
+	_, _, proof.ProofEpochValSet, err = k.queryStore(ctx, epochingtypes.StoreKey, valSetKey)
+	if err != nil {
+		return nil, err
+	}
 
 	return proof, nil
 }
