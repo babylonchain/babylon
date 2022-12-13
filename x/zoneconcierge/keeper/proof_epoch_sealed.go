@@ -145,8 +145,8 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return fmt.Errorf("BLS signature does not match the public key")
 	}
 
-	// get the Merkle root, i.e., the LastCommitHash of the sealer header
-	root := epoch.SealerHeader.LastCommitHash
+	// get the Merkle root, i.e., the AppHash of the sealer header
+	root := epoch.SealerHeader.AppHash
 
 	// Ensure The epoch medatata is committed to the app_hash of the sealer header
 	epochBytes, err := epoch.Marshal()

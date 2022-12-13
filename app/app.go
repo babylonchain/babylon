@@ -413,7 +413,7 @@ func NewBabylonApp(
 	if err != nil {
 		panic(fmt.Errorf("couldn't get client from nodeURI %s: %w", privSigner.ClientCtx.NodeURI, err))
 	}
-	// create querier for KVStoire
+	// create querier for KVStore
 	storeQuerier, ok := app.CommitMultiStore().(sdk.Queryable)
 	if !ok {
 		panic(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
