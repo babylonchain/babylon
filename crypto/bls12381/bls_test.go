@@ -1,8 +1,9 @@
 package bls12381
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 // Tests single BLS sig verification
@@ -86,7 +87,9 @@ func TestAccumulativeAggregation(t *testing.T) {
 	}
 	sig := Sign(sks[n-1], msgb)
 	aggSig, err = AggrSig(aggSig, sig)
+	require.Nil(t, err)
 	aggPK, err = AggrPK(aggPK, pks[n-1])
+	require.Nil(t, err)
 	res, err = Verify(aggSig, aggPK, msga)
 	require.False(t, res)
 	require.Nil(t, err)

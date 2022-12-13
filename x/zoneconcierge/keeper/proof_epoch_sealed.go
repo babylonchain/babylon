@@ -50,7 +50,7 @@ func (k Keeper) ProveValSet(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcry
 func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
 	var (
 		proof *types.ProofEpochSealed = &types.ProofEpochSealed{}
-		err   error                   = nil
+		err   error
 	)
 
 	// get the validator set of the sealed epoch
@@ -102,7 +102,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return err
 	} else if err := rawCkpt.ValidateBasic(); err != nil {
 		return err
-	} else if proof.ValidateBasic(); err != nil {
+	} else if err = proof.ValidateBasic(); err != nil {
 		return err
 	}
 

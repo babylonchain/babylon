@@ -3,10 +3,10 @@ package privval
 import (
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
-	"io/ioutil"
 	"os"
 	"path/filepath"
+
+	"github.com/cosmos/cosmos-sdk/crypto/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	tmcrypto "github.com/tendermint/tendermint/crypto"
@@ -31,6 +31,8 @@ const (
 )
 
 // copied from github.com/tendermint/tendermint/privval/file.go"
+//
+//nolint:unused
 func voteToStep(vote *tmproto.Vote) int8 {
 	switch vote.Type {
 	case tmproto.PrevoteType:
@@ -116,7 +118,7 @@ func LoadWrappedFilePVEmptyState(keyFilePath, stateFilePath string) *WrappedFile
 
 // If loadState is true, we load from the stateFilePath. Otherwise, we use an empty LastSignState.
 func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFilePV {
-	keyJSONBytes, err := ioutil.ReadFile(keyFilePath)
+	keyJSONBytes, err := os.ReadFile(keyFilePath)
 	if err != nil {
 		tmos.Exit(err.Error())
 	}
@@ -135,7 +137,7 @@ func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *Wrapp
 	pvState := privval.FilePVLastSignState{}
 
 	if loadState {
-		stateJSONBytes, err := ioutil.ReadFile(stateFilePath)
+		stateJSONBytes, err := os.ReadFile(stateFilePath)
 		if err != nil {
 			tmos.Exit(err.Error())
 		}

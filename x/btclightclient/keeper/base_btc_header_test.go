@@ -29,7 +29,7 @@ func FuzzKeeperBaseBTCHeader(f *testing.F) {
 		blcKeeper.SetBaseBTCHeader(ctx, *headerInfo1)
 		retrievedHeaderInfo = blcKeeper.GetBaseBTCHeader(ctx)
 		if retrievedHeaderInfo == nil {
-			t.Errorf("GetBaseBTCHeader returned nil when a BaseBTCHeader had been set")
+			t.Fatalf("GetBaseBTCHeader returned nil when a BaseBTCHeader had been set")
 		}
 		if !headerInfo1.Eq(retrievedHeaderInfo) {
 			t.Errorf("GetBaseBTCHeader did not set the provided BaseBTCHeader")

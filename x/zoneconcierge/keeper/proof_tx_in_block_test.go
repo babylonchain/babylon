@@ -28,7 +28,8 @@ func TestProveTxInBlock(t *testing.T) {
 	defer testNetwork.Cleanup()
 
 	// enter block 1 so that gentxs take effect and validators have tokens
-	testNetwork.WaitForNextBlock()
+	err = testNetwork.WaitForNextBlock()
+	require.NoError(t, err)
 
 	_, babylonChain, _, zcKeeper := SetupTest(t)
 	ctx := babylonChain.GetContext()
@@ -69,8 +70,10 @@ func TestProveTxInBlock(t *testing.T) {
 	require.NoError(t, err)
 	txHash := resp.Hash
 
-	testNetwork.WaitForNextBlock()
-	testNetwork.WaitForNextBlock()
+	err = testNetwork.WaitForNextBlock()
+	require.NoError(t, err)
+	err = testNetwork.WaitForNextBlock()
+	require.NoError(t, err)
 
 	proof, err := zcKeeper.ProveTxInBlock(ctx, txHash)
 	require.NoError(t, err)

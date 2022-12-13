@@ -2,20 +2,22 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/spf13/cobra"
-	"strconv"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
+//nolint:unused
 const (
 	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
 	listSeparator              = ","
@@ -82,7 +84,7 @@ func CmdTxAddBlsSig() *cobra.Command {
 func CmdWrappedCreateValidator() *cobra.Command {
 	cmd := cosmoscli.NewCreateValidatorCmd()
 	cmd.Long = strings.TrimSpace(
-		fmt.Sprintf(`create-validator will create a new validator initialized
+		string(`create-validator will create a new validator initialized
 with a self-delegation to it using the BLS key generated for the validator (e.g., via babylond create-bls-key).
 
 This command creates a MsgWrappedCreateValidator message which is a wrapper of cosmos-sdk's

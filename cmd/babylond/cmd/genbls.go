@@ -2,23 +2,22 @@ package cmd
 
 import (
 	"errors"
-	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmos "github.com/tendermint/tendermint/libs/os"
-	"path/filepath"
-	"strings"
 )
 
 func GenBlsCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-genesis-bls",
 		Short: "Create genesis BLS key file for the validator",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`genbls will create a BLS key file that consists of
+		Long: strings.TrimSpace(`genbls will create a BLS key file that consists of
 {address, bls_pub_key, pop, pub_key} where pop is the proof-of-possession that proves
 the ownership of bls_pub_key which is bonded with pub_key.
 
@@ -29,7 +28,6 @@ and the existence of priv_validator_key.json which contains the validator privat
 Example:
 $ babylond genbls --home ./
 `),
-		),
 
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)

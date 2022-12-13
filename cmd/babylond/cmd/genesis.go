@@ -73,6 +73,9 @@ Example:
 			}
 
 			appState, genDoc, err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID)
+			if err != nil {
+				return fmt.Errorf("failed to prepare genesis: %w", err)
+			}
 
 			if err = mbm.ValidateGenesis(clientCtx.Codec, clientCtx.TxConfig, appState); err != nil {
 				return fmt.Errorf("error validating genesis file: %s", err)

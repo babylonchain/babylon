@@ -246,7 +246,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
 	snapshotDir := filepath.Join(homeDir, "data", "snapshots")
-	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir)
+	snapshotDB, err := sdk.NewLevelDB("metadata", snapshotDir) //nolint:staticcheck // Prefer the old-fashioned way.
 	if err != nil {
 		panic(err)
 	}

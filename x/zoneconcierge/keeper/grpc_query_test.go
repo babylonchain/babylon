@@ -136,7 +136,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		SimulateHeadersAndForksViaHook(ctx, hooks, czChainID, numHeaders, numForkHeaders)
 
 		hooks.AfterEpochEnds(ctx, epoch.EpochNumber)
-		hooks.AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
+		err := hooks.AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
+		require.NoError(t, err)
 
 		// check if the chain info of this epoch is recorded or not
 		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChainID, Prove: true})

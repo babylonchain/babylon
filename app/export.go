@@ -46,7 +46,7 @@ func (app *BabylonApp) ExportAppStateAndValidators(
 
 // prepare for fresh start at zero height
 // NOTE zero height genesis is a temporary feature which will be deprecated
-//      in favour of export at a block height
+// in favour of export at a block height
 func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddrs []string) {
 	applyAllowedAddrs := false
 
@@ -109,7 +109,7 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
 		app.DistrKeeper.SetFeePool(ctx, feePool)
 
-		app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
+		app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator()) //nolint:errcheck // either we ignore the error here or propogate up the stack
 		return false
 	})
 
@@ -123,8 +123,8 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 		if err != nil {
 			panic(err)
 		}
-		app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr)
-		app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr)
+		app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, delAddr, valAddr) //nolint:errcheck // either we ignore the error here or propogate up the stack
+		app.DistrKeeper.Hooks().AfterDelegationModified(ctx, delAddr, valAddr) //nolint:errcheck // either we ignore the error here or propogate up the stack
 	}
 
 	// reset context height
