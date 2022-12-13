@@ -18,8 +18,6 @@ import (
 	types6 "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	exported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
-	bytes "github.com/tendermint/tendermint/libs/bytes"
-	client "github.com/tendermint/tendermint/rpc/client"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
@@ -642,36 +640,6 @@ func NewMockTMClient(ctrl *gomock.Controller) *MockTMClient {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockTMClient) EXPECT() *MockTMClientMockRecorder {
 	return m.recorder
-}
-
-// ABCIQuery mocks base method.
-func (m *MockTMClient) ABCIQuery(ctx context.Context, path string, data bytes.HexBytes) (*coretypes.ResultABCIQuery, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ABCIQuery", ctx, path, data)
-	ret0, _ := ret[0].(*coretypes.ResultABCIQuery)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ABCIQuery indicates an expected call of ABCIQuery.
-func (mr *MockTMClientMockRecorder) ABCIQuery(ctx, path, data interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ABCIQuery", reflect.TypeOf((*MockTMClient)(nil).ABCIQuery), ctx, path, data)
-}
-
-// ABCIQueryWithOptions mocks base method.
-func (m *MockTMClient) ABCIQueryWithOptions(ctx context.Context, path string, data bytes.HexBytes, opts client.ABCIQueryOptions) (*coretypes.ResultABCIQuery, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ABCIQueryWithOptions", ctx, path, data, opts)
-	ret0, _ := ret[0].(*coretypes.ResultABCIQuery)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ABCIQueryWithOptions indicates an expected call of ABCIQueryWithOptions.
-func (mr *MockTMClientMockRecorder) ABCIQueryWithOptions(ctx, path, data, opts interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ABCIQueryWithOptions", reflect.TypeOf((*MockTMClient)(nil).ABCIQueryWithOptions), ctx, path, data, opts)
 }
 
 // Tx mocks base method.

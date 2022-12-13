@@ -81,7 +81,7 @@ func FuzzProofEpochSealed(f *testing.F) {
 		checkpointingKeeper := zctypes.NewMockCheckpointingKeeper(ctrl)
 		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(valSet.ValSet, nil).AnyTimes()
 		// create zcKeeper and ctx
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, nil, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, nil, nil, nil, nil)
 
 		// prove
 		proof, err := zcKeeper.ProveEpochSealed(ctx, epoch.EpochNumber)

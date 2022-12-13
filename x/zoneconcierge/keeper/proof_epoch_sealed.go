@@ -8,6 +8,7 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 func getEpochInfoKey(epochNumber uint64) []byte {
@@ -16,10 +17,28 @@ func getEpochInfoKey(epochNumber uint64) []byte {
 	return epochInfoKey
 }
 
+func (k Keeper) ProveEpochInfo(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+	epochInfoKey := getEpochInfoKey(epoch.EpochNumber)
+	_, _, proof, err := k.QueryStore(ctx, epochingtypes.StoreKey, epochInfoKey, epoch.SealerHeader.Height)
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
+}
+
 func getValSetKey(epochNumber uint64) []byte {
 	valSetKey := checkpointingtypes.ValidatorBlsKeySetPrefix
 	valSetKey = append(valSetKey, sdk.Uint64ToBigEndian(epochNumber)...)
 	return valSetKey
+}
+
+func (k Keeper) ProveValSet(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+	valSetKey := getValSetKey(epoch.EpochNumber)
+	_, _, proof, err := k.QueryStore(ctx, epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
 }
 
 // ProveEpochSealed proves an epoch has been sealed, i.e.,
@@ -43,18 +62,15 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 	if err != nil {
 		return nil, err
 	}
-	sealedHeight := epoch.SealerHeader.Height
 
 	// proof of inclusion for epoch metadata in sealer header
-	epochInfoKey := getEpochInfoKey(epochNumber)
-	_, _, proof.ProofEpochInfo, err = k.queryStore(epochingtypes.StoreKey, epochInfoKey, sealedHeight)
+	proof.ProofEpochInfo, err = k.ProveEpochInfo(ctx, epoch)
 	if err != nil {
 		return nil, err
 	}
 
 	// proof of inclusion for validator set in sealer header
-	valSetKey := getValSetKey(epochNumber)
-	_, _, proof.ProofEpochValSet, err = k.queryStore(epochingtypes.StoreKey, valSetKey, sealedHeight)
+	proof.ProofEpochValSet, err = k.ProveValSet(ctx, epoch)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +151,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	if err != nil {
 		return err
 	}
-	if err := verifyStore(root, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
+	if err := VerifyStore(root, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
 		return err
 	}
 
@@ -144,7 +160,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	if err != nil {
 		return err
 	}
-	if err := verifyStore(root, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
+	if err := VerifyStore(root, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
 		return err
 	}
 

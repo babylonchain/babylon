@@ -30,6 +30,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -407,9 +408,15 @@ func NewBabylonApp(
 		scopedIBCKeeper,
 	)
 
+	// create Tendermint client
 	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
 	if err != nil {
 		panic(fmt.Errorf("couldn't get client from nodeURI %s: %w", privSigner.ClientCtx.NodeURI, err))
+	}
+	// create querier for KVStoire
+	storeQuerier, ok := app.CommitMultiStore().(sdk.Queryable)
+	if !ok {
+		panic(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
 	}
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
@@ -425,6 +432,7 @@ func NewBabylonApp(
 		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
 		epochingKeeper,
 		tmClient,
+		storeQuerier,
 		scopedZoneConciergeKeeper,
 	)
 
