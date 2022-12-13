@@ -11,6 +11,7 @@ import (
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/boljen/go-bitmap"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -33,14 +34,11 @@ func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byt
 // 3. Generate a BLS multisig with >1/3 random validators of the validator set
 // 4. Generate a checkpoint based on the above validator subset and the above sealer header
 // 5. Execute ProveEpochSealed where the mocked checkpointing keeper produces the above validator set
-// 6. (TODO: simulate blocks within these epochs, and generate inclusion proofs for valset and epoch metadata)
-// 7. Execute VerifyEpochSealed with above epoch, checkpoint and proof, and assert the outcome to be true
+// 6. Execute VerifyEpochSealed with above epoch, checkpoint and proof, and assert the outcome to be true
 //
 // Tested property: proof is valid only when
 // - BLS sig in proof is valid
-// - TODO: BLS val set has a valid inclusion proof
-// - TODO: epoch metadata has a valid inclusion proof
-func FuzzProofEpochSealed(f *testing.F) {
+func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -80,8 +78,12 @@ func FuzzProofEpochSealed(f *testing.F) {
 		// mock checkpointing keeper that produces the expected validator set
 		checkpointingKeeper := zctypes.NewMockCheckpointingKeeper(ctrl)
 		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(valSet.ValSet, nil).AnyTimes()
+		// mock epoching keeper
+		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
+		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(epoch).AnyTimes()
+		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(epoch, nil).AnyTimes()
 		// create zcKeeper and ctx
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, nil, nil, nil, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, nil, epochingKeeper, nil)
 
 		// prove
 		proof, err := zcKeeper.ProveEpochSealed(ctx, epoch.EpochNumber)
@@ -92,9 +94,30 @@ func FuzzProofEpochSealed(f *testing.F) {
 		if numSubSet <= numVals*1/3 { // BLS sig does not reach a quorum
 			require.LessOrEqual(t, subsetPower, uint64(numVals*1/3))
 			require.Error(t, err)
+			require.False(t, sdkerrors.IsOf(zctypes.ErrInvalidMerkleProof, err))
 		} else { // BLS sig has a valid quorum
 			require.Greater(t, subsetPower, valSet.GetTotalPower()*1/3)
-			require.NoError(t, err)
+			require.True(t, sdkerrors.IsOf(zctypes.ErrInvalidMerkleProof, err))
 		}
+	})
+}
+
+// - TODO: epoch metadata has a valid inclusion proof
+func FuzzProofEpochSealed_Epoch(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+	})
+}
+
+// - TODO: BLS val set has a valid inclusion proof
+func FuzzProofEpochSealed_ValSet(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
 	})
 }

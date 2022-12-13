@@ -8,6 +8,7 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
@@ -23,6 +24,7 @@ func (k Keeper) ProveEpochInfo(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tm
 	if err != nil {
 		return nil, err
 	}
+
 	return proof, nil
 }
 
@@ -152,7 +154,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return err
 	}
 	if err := VerifyStore(root, epochingtypes.StoreKey, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %w", err)
 	}
 
 	// Ensure The validator set is committed to the app_hash of the sealer header
@@ -161,7 +163,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return err
 	}
 	if err := VerifyStore(root, checkpointingtypes.StoreKey, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
-		return err
+		return sdkerrors.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %w", err)
 	}
 
 	return nil
