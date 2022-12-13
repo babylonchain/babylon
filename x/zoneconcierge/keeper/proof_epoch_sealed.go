@@ -151,7 +151,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	if err != nil {
 		return err
 	}
-	if err := VerifyStore(root, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
+	if err := VerifyStore(root, epochingtypes.StoreKey, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
 		return err
 	}
 
@@ -160,7 +160,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	if err != nil {
 		return err
 	}
-	if err := VerifyStore(root, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
+	if err := VerifyStore(root, checkpointingtypes.StoreKey, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
 		return err
 	}
 

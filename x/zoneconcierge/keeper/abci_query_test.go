@@ -25,9 +25,10 @@ func FuzzABCIQuery(f *testing.F) {
 		key, value, proof, err := zcKeeper.QueryStore(ctx, banktypes.StoreKey, banktypes.CreateAccountBalancesPrefix(val.Address), ctx.BlockHeight())
 
 		require.NoError(t, err)
+		require.NotNil(t, proof)
 		require.Equal(t, banktypes.CreateAccountBalancesPrefix(val.Address), key)
 
-		err = zckeeper.VerifyStore(ctx.BlockHeader().AppHash, key, value, proof)
+		err = zckeeper.VerifyStore(ctx.BlockHeader().AppHash, banktypes.StoreKey, key, value, proof)
 		require.NoError(t, err)
 	})
 }

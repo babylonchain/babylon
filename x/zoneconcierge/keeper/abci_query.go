@@ -1,12 +1,12 @@
 package keeper
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/crypto/merkle"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
@@ -40,7 +40,13 @@ func (k Keeper) QueryStore(ctx sdk.Context, moduleStoreKey string, key []byte, q
 
 // VerifyStore verifies whether a KV pair is committed to the Merkle root, with the assistance of a Merkle proof
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/store/rootmulti/proof_test.go)
-func VerifyStore(root []byte, key []byte, value []byte, proof *tmcrypto.ProofOps) error {
+func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, proof *tmcrypto.ProofOps) error {
 	prt := rootmulti.DefaultProofRuntime()
-	return prt.VerifyValue(proof, root, "/"+hex.EncodeToString(key), value)
+
+	keypath := merkle.KeyPath{}
+	keypath = keypath.AppendKey([]byte(moduleStoreKey), merkle.KeyEncodingURL)
+	keypath = keypath.AppendKey(key, merkle.KeyEncodingURL)
+	keypathStr := keypath.String()
+
+	return prt.VerifyAbsence(proof, root, keypathStr) // TODO: verify value rather than just existence
 }
