@@ -29,6 +29,11 @@ jobs:
           paths:
             - "/home/circleci/.go_workspace/pkg/mod"
       - run:
+          name: Lint
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1 
+            ./bin/golangci-lint run
+      - run:
           name: Run tests
           command: |
             make test
@@ -43,6 +48,6 @@ jobs:
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  build-and-test:
+  build-lint-test:
     jobs:
       - build

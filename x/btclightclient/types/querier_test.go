@@ -14,7 +14,7 @@ import (
 func TestNewQueryParamsRequest(t *testing.T) {
 	newQueryParams := types.NewQueryParamsRequest()
 	if newQueryParams == nil {
-		t.Errorf("A nil object was returned")
+		t.Fatalf("A nil object was returned")
 	}
 
 	emptyQueryParams := types.QueryParamsRequest{}
@@ -31,7 +31,7 @@ func TestNewQueryHashesRequest(t *testing.T) {
 	}
 	newQueryHashes := types.NewQueryHashesRequest(&req)
 	if newQueryHashes == nil {
-		t.Errorf("A nil object was returned")
+		t.Fatalf("A nil object was returned")
 	}
 
 	expectedQueryHashes := types.QueryHashesRequest{
@@ -55,12 +55,12 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 			t.Errorf("returned error for valid hex %s", hexHash)
 		}
 		if queryContains == nil {
-			t.Errorf("returned a nil reference to a query")
+			t.Fatalf("returned a nil reference to a query")
 		}
 		if queryContains.Hash == nil {
 			t.Errorf("has an empty hash attribute")
 		}
-		if bytes.Compare(*(queryContains.Hash), btcHeaderHashBytes.MustMarshal()) != 0 {
+		if !bytes.Equal(*(queryContains.Hash), btcHeaderHashBytes.MustMarshal()) {
 			t.Errorf("expected hash bytes %s got %s", btcHeaderHashBytes.MustMarshal(), *(queryContains.Hash))
 		}
 	})
@@ -73,7 +73,7 @@ func TestNewQueryMainChainRequest(t *testing.T) {
 	}
 	newQueryMainChain := types.NewQueryMainChainRequest(&req)
 	if newQueryMainChain == nil {
-		t.Errorf("A nil object was returned")
+		t.Fatalf("A nil object was returned")
 	}
 
 	expectedQueryMainChain := types.QueryMainChainRequest{

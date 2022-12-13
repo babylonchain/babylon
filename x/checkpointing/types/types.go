@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
@@ -201,8 +202,5 @@ func BytesToCkptWithMeta(cdc codec.BinaryCodec, bz []byte) (*RawCheckpointWithMe
 }
 
 func (m RawCkptHash) Equals(h RawCkptHash) bool {
-	if bytes.Compare(m.Bytes(), h.Bytes()) == 0 {
-		return true
-	}
-	return false
+	return bytes.Equal(m.Bytes(), h.Bytes())
 }

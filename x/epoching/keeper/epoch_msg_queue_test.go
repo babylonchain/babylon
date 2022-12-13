@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	appparams "github.com/babylonchain/babylon/app/params"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"math/rand"
 	"testing"
+
+	appparams "github.com/babylonchain/babylon/app/params"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -142,7 +143,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		rand.Seed(seed)
 
 		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
@@ -150,7 +151,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx = helper.BeginBlock()
+		ctx := helper.BeginBlock()
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -219,7 +220,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		rand.Seed(seed)
 
 		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
@@ -227,7 +228,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx = helper.BeginBlock()
+		ctx := helper.BeginBlock()
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 

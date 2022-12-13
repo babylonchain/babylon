@@ -1,11 +1,11 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
-
 	"bytes"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -28,7 +28,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 		// Get the signer structure
 		var signer sdk.AccAddress
-		signer.Unmarshal(addressBytes)
+		signer.Unmarshal(addressBytes) //nolint:errcheck // this is a test
 
 		// Perform modifications on the header
 		errorKind = rand.Intn(2)
@@ -64,12 +64,12 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			t.Errorf("Valid parameters led to error")
 		}
 		if msgInsertHeader == nil {
-			t.Errorf("nil returned")
+			t.Fatalf("nil returned")
 		}
 		if msgInsertHeader.Header == nil {
 			t.Errorf("nil header")
 		}
-		if bytes.Compare(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) != 0 {
+		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) {
 			t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal())
 		}
 
@@ -82,5 +82,4 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			t.Errorf("Invalid message did not fail")
 		}
 	})
-
 }

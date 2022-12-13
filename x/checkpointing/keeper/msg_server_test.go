@@ -106,6 +106,9 @@ func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreat
 	}
 	blsPrivKey := bls12381.GenPrivKey()
 	pop, err := privval.BuildPoP(tmValPrivkey, blsPrivKey)
+	if err != nil {
+		return nil, err
+	}
 	blsPubKey := blsPrivKey.PubKey()
 
 	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)

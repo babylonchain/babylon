@@ -157,7 +157,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 			datagen.GenRandomByteArray(btctxformatter.BlsSigLength),
 			t,
 		)
-		epoch, err = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+		_, err = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
 		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
 
 		// 3. check a conflicting checkpoint; signed on a random lastcommithash

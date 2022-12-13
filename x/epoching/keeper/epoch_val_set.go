@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -18,7 +19,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.Valid
 	for ; iterator.Valid(); iterator.Next() {
 		addr := sdk.ValAddress(iterator.Key())
 		powerBytes := iterator.Value()
-		var power sdk.Int
+		var power math.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}
@@ -102,7 +103,7 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, val
 	if powerBytes == nil {
 		return 0, types.ErrUnknownValidator
 	}
-	var power sdk.Int
+	var power math.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
 		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
@@ -123,7 +124,7 @@ func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
 	if powerBytes == nil {
 		panic(types.ErrUnknownTotalVotingPower)
 	}
-	var power sdk.Int
+	var power math.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
 		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}

@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	"math/rand"
-	"testing"
 
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
@@ -143,7 +144,7 @@ func FuzzContainsQuery(f *testing.F) {
 		// Test nil input
 		resp, err := blcKeeper.Contains(sdkCtx, nil)
 		if resp != nil {
-			t.Errorf("Nil input led to a non-nil response")
+			t.Fatalf("Nil input led to a non-nil response")
 		}
 		if err == nil {
 			t.Errorf("Nil input led to a nil error")
@@ -159,7 +160,7 @@ func FuzzContainsQuery(f *testing.F) {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
 		if resp == nil {
-			t.Errorf("Valid input led to nil response")
+			t.Fatalf("Valid input led to nil response")
 		}
 		if resp.Contains {
 			t.Errorf("Non existent header hash led to true result")
@@ -172,7 +173,7 @@ func FuzzContainsQuery(f *testing.F) {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
 		if resp == nil {
-			t.Errorf("Valid input led to nil response")
+			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Contains {
 			t.Errorf("Existent header hash led to false result")
@@ -350,7 +351,7 @@ func FuzzTipQuery(f *testing.F) {
 			t.Errorf("valid input led to an error: %s", err)
 		}
 		if resp == nil {
-			t.Errorf("Valid input led to nil response")
+			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(tree.GetTip()) {
 			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetTip().Hash, resp.Header.Hash)
@@ -385,12 +386,13 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 		tree := genRandomTree(blcKeeper, ctx, 1, 10)
 
 		query := types.NewQueryBaseHeaderRequest()
+
 		resp, err = blcKeeper.BaseHeader(sdkCtx, query)
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}
 		if resp == nil {
-			t.Errorf("Valid input led to nil response")
+			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(tree.GetRoot()) {
 			t.Errorf("Invalid header returned. Expected %s, got %s", tree.GetRoot().Hash, resp.Header.Hash)
