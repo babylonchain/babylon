@@ -8,6 +8,7 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
@@ -23,8 +24,10 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 	}
 
 	// TODO: proof of inclusion for epoch metadata in sealer header
+	proof.ProofEpochInfo = &tmcrypto.ProofOps{}
 
 	// TODO: proof of inclusion for validator set in sealer header
+	proof.ProofEpochValSet = &tmcrypto.ProofOps{}
 
 	return proof, nil
 }
