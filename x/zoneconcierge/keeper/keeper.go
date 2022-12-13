@@ -28,6 +28,7 @@ type (
 		btccKeeper          types.BtcCheckpointKeeper
 		epochingKeeper      types.EpochingKeeper
 		tmClient            types.TMClient
+		storeQuerier        sdk.Queryable
 		scopedKeeper        types.ScopedKeeper
 	}
 )
@@ -46,6 +47,7 @@ func NewKeeper(
 	btccKeeper types.BtcCheckpointKeeper,
 	epochingKeeper types.EpochingKeeper,
 	tmClient types.TMClient,
+	storeQuerier sdk.Queryable,
 	scopedKeeper types.ScopedKeeper,
 ) *Keeper {
 	// set KeyTable if it has not already been set
@@ -67,6 +69,7 @@ func NewKeeper(
 		btccKeeper:          btccKeeper,
 		epochingKeeper:      epochingKeeper,
 		tmClient:            tmClient,
+		storeQuerier:        storeQuerier,
 		scopedKeeper:        scopedKeeper,
 	}
 }

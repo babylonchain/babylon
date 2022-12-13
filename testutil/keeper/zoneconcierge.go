@@ -16,7 +16,9 @@ import (
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 )
@@ -46,6 +48,18 @@ type zoneconciergePortKeeper struct{}
 
 func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabilitytypes.Capability {
 	return &capabilitytypes.Capability{}
+}
+
+type zoneconciergeStoreQuerier struct{}
+
+func (zoneconciergeStoreQuerier) Query(req abci.RequestQuery) abci.ResponseQuery {
+	return abci.ResponseQuery{
+		ProofOps: &tmcrypto.ProofOps{
+			Ops: []tmcrypto.ProofOp{
+				tmcrypto.ProofOp{},
+			},
+		},
+	}
 }
 
 func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
@@ -84,6 +98,7 @@ func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKe
 		btccKeeper,
 		epochingKeeper,
 		tmClient,
+		zoneconciergeStoreQuerier{},
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 	)
 

@@ -8,12 +8,48 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
+func getEpochInfoKey(epochNumber uint64) []byte {
+	epochInfoKey := epochingtypes.EpochInfoKey
+	epochInfoKey = append(epochInfoKey, sdk.Uint64ToBigEndian(epochNumber)...)
+	return epochInfoKey
+}
+
+func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+	epochInfoKey := getEpochInfoKey(epoch.EpochNumber)
+	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, epochInfoKey, epoch.SealerHeader.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	return proof, nil
+}
+
+func getValSetKey(epochNumber uint64) []byte {
+	valSetKey := checkpointingtypes.ValidatorBlsKeySetPrefix
+	valSetKey = append(valSetKey, sdk.Uint64ToBigEndian(epochNumber)...)
+	return valSetKey
+}
+
+func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+	valSetKey := getValSetKey(epoch.EpochNumber)
+	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
+	if err != nil {
+		return nil, err
+	}
+	return proof, nil
+}
+
+// ProveEpochSealed proves an epoch has been sealed, i.e.,
+// - the epoch's validator set has a valid multisig over the sealer header
+// - the epoch's validator set is committed to the sealer header's last_commit_hash
+// - the epoch's metadata is committed to the sealer header's last_commit_hash
 func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
 	var (
-		proof *types.ProofEpochSealed = &types.ProofEpochSealed{}
+		proof = &types.ProofEpochSealed{}
 		err   error
 	)
 
@@ -23,11 +59,23 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 		return nil, err
 	}
 
-	// TODO: proof of inclusion for epoch metadata in sealer header
-	proof.ProofEpochInfo = &tmcrypto.ProofOps{}
+	// get sealer header and the query height
+	epoch, err := k.epochingKeeper.GetHistoricalEpoch(ctx, epochNumber)
+	if err != nil {
+		return nil, err
+	}
 
-	// TODO: proof of inclusion for validator set in sealer header
-	proof.ProofEpochValSet = &tmcrypto.ProofOps{}
+	// proof of inclusion for epoch metadata in sealer header
+	proof.ProofEpochInfo, err = k.ProveEpochInfo(epoch)
+	if err != nil {
+		return nil, err
+	}
+
+	// proof of inclusion for validator set in sealer header
+	proof.ProofEpochValSet, err = k.ProveValSet(epoch)
+	if err != nil {
+		return nil, err
+	}
 
 	return proof, nil
 }
@@ -57,9 +105,6 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	} else if err = proof.ValidateBasic(); err != nil {
 		return err
 	}
-
-	// TODO: Ensure The epoch medatata is committed to the app_hash of the sealer header
-	// TODO: Ensure The validator set is committed to the app_hash of the sealer header
 
 	// ensure epoch number is same in epoch and rawCkpt
 	if epoch.EpochNumber != rawCkpt.EpochNum {
@@ -98,6 +143,27 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	}
 	if !ok {
 		return fmt.Errorf("BLS signature does not match the public key")
+	}
+
+	// get the Merkle root, i.e., the AppHash of the sealer header
+	root := epoch.SealerHeader.AppHash
+
+	// Ensure The epoch medatata is committed to the app_hash of the sealer header
+	epochBytes, err := epoch.Marshal()
+	if err != nil {
+		return err
+	}
+	if err := VerifyStore(root, epochingtypes.StoreKey, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %w", err)
+	}
+
+	// Ensure The validator set is committed to the app_hash of the sealer header
+	valSetBytes, err := valSet.Marshal()
+	if err != nil {
+		return err
+	}
+	if err := VerifyStore(root, checkpointingtypes.StoreKey, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
+		return sdkerrors.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %w", err)
 	}
 
 	return nil
