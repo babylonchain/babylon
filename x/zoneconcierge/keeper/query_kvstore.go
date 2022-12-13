@@ -17,7 +17,7 @@ import (
 // - value of this KV pair
 // - Merkle proof of this KV pair
 // - error
-// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/client/query.go)
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/baseapp/abci.go#L774-L795)
 func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64) ([]byte, []byte, *tmcrypto.ProofOps, error) {
 	// construct the query path for ABCI query
 	// path := fmt.Sprintf("/store/%s/key", moduleStoreKey) // e.g., "/store/epoching/key"
