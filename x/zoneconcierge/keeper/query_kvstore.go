@@ -20,8 +20,9 @@ import (
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/baseapp/abci.go#L774-L795)
 func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64) ([]byte, []byte, *tmcrypto.ProofOps, error) {
 	// construct the query path for ABCI query
-	// path := fmt.Sprintf("/store/%s/key", moduleStoreKey) // e.g., "/store/epoching/key"
-	path := fmt.Sprintf("/%s/key", moduleStoreKey) // e.g., "/store/epoching/key"
+	// since we are querying the DB directly, the path will not need prefix "/store" as done in ABCIQuery
+	// Instead, it will be formed as "/<moduleStoreKey>/key", e.g., "/epoching/key"
+	path := fmt.Sprintf("/%s/key", moduleStoreKey)
 
 	// query the KV with Merkle proof
 	resp := k.storeQuerier.Query(abci.RequestQuery{
