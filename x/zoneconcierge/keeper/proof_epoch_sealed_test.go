@@ -11,7 +11,6 @@ import (
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/boljen/go-bitmap"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -94,10 +93,11 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		if numSubSet <= numVals*1/3 { // BLS sig does not reach a quorum
 			require.LessOrEqual(t, subsetPower, uint64(numVals*1/3))
 			require.Error(t, err)
-			require.False(t, sdkerrors.IsOf(zctypes.ErrInvalidMerkleProof, err))
+			require.NotErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		} else { // BLS sig has a valid quorum
 			require.Greater(t, subsetPower, valSet.GetTotalPower()*1/3)
-			require.True(t, sdkerrors.IsOf(zctypes.ErrInvalidMerkleProof, err))
+			require.Error(t, err)
+			require.ErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		}
 	})
 }

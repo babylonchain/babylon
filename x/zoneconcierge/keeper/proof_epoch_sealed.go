@@ -18,7 +18,7 @@ func getEpochInfoKey(epochNumber uint64) []byte {
 	return epochInfoKey
 }
 
-func (k Keeper) ProveEpochInfo(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	epochInfoKey := getEpochInfoKey(epoch.EpochNumber)
 	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, epochInfoKey, epoch.SealerHeader.Height)
 	if err != nil {
@@ -34,7 +34,7 @@ func getValSetKey(epochNumber uint64) []byte {
 	return valSetKey
 }
 
-func (k Keeper) ProveValSet(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	valSetKey := getValSetKey(epoch.EpochNumber)
 	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
 	if err != nil {
@@ -49,7 +49,7 @@ func (k Keeper) ProveValSet(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcry
 // - the epoch's metadata is committed to the sealer header's last_commit_hash
 func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
 	var (
-		proof *types.ProofEpochSealed = &types.ProofEpochSealed{}
+		proof = &types.ProofEpochSealed{}
 		err   error
 	)
 
@@ -66,13 +66,13 @@ func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.Pr
 	}
 
 	// proof of inclusion for epoch metadata in sealer header
-	proof.ProofEpochInfo, err = k.ProveEpochInfo(ctx, epoch)
+	proof.ProofEpochInfo, err = k.ProveEpochInfo(epoch)
 	if err != nil {
 		return nil, err
 	}
 
 	// proof of inclusion for validator set in sealer header
-	proof.ProofEpochValSet, err = k.ProveValSet(ctx, epoch)
+	proof.ProofEpochValSet, err = k.ProveValSet(epoch)
 	if err != nil {
 		return nil, err
 	}
