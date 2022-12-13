@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/merkle"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
@@ -19,7 +18,7 @@ import (
 // - Merkle proof of this KV pair
 // - error
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/client/query.go)
-func (k Keeper) QueryStore(ctx sdk.Context, moduleStoreKey string, key []byte, queryHeight int64) ([]byte, []byte, *tmcrypto.ProofOps, error) {
+func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64) ([]byte, []byte, *tmcrypto.ProofOps, error) {
 	// construct the query path for ABCI query
 	// path := fmt.Sprintf("/store/%s/key", moduleStoreKey) // e.g., "/store/epoching/key"
 	path := fmt.Sprintf("/%s/key", moduleStoreKey) // e.g., "/store/epoching/key"

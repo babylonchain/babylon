@@ -19,7 +19,7 @@ func getEpochInfoKey(epochNumber uint64) []byte {
 
 func (k Keeper) ProveEpochInfo(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	epochInfoKey := getEpochInfoKey(epoch.EpochNumber)
-	_, _, proof, err := k.QueryStore(ctx, epochingtypes.StoreKey, epochInfoKey, epoch.SealerHeader.Height)
+	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, epochInfoKey, epoch.SealerHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func getValSetKey(epochNumber uint64) []byte {
 
 func (k Keeper) ProveValSet(ctx sdk.Context, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	valSetKey := getValSetKey(epoch.EpochNumber)
-	_, _, proof, err := k.QueryStore(ctx, epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
+	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
 	if err != nil {
 		return nil, err
 	}
