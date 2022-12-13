@@ -16,13 +16,14 @@ func FuzzABCIQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, _, zcKeeper := SetupTest(t)
+		coordinator, babylonChain, _, zcKeeper := SetupTest(t)
+		coordinator.CommitNBlocks(babylonChain, 10)
+		// babylonChain.NextBlock()
+
 		ctx := babylonChain.GetContext()
 		val := babylonChain.Vals.Validators[0]
 
-		babylonChain.NextBlock()
-
-		key, value, proof, err := zcKeeper.QueryStore(ctx, banktypes.StoreKey, banktypes.CreateAccountBalancesPrefix(val.Address), ctx.BlockHeight())
+		key, value, proof, err := zcKeeper.QueryStore(ctx, banktypes.StoreKey, banktypes.CreateAccountBalancesPrefix(val.Address), ctx.BlockHeight()-1)
 
 		require.NoError(t, err)
 		require.NotNil(t, proof)
