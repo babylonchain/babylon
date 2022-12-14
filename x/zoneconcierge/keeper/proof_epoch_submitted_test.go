@@ -45,13 +45,13 @@ func FuzzProofEpochSubmitted(f *testing.F) {
 
 		// get 2 tx info for the ckpt parts
 		txsInfo := []*btcctypes.TransactionInfo{
-			&btcctypes.TransactionInfo{
-				Key:         &btcctypes.TransactionKey{uint32(idxs[0]), btcBlocks[0].HeaderBytes.Hash()},
+			{
+				Key:         &btcctypes.TransactionKey{Index: uint32(idxs[0]), Hash: btcBlocks[0].HeaderBytes.Hash()},
 				Transaction: msgInsertBtcSpvProof.Proofs[0].BtcTransaction,
 				Proof:       msgInsertBtcSpvProof.Proofs[0].MerkleNodes,
 			},
-			&btcctypes.TransactionInfo{
-				Key:         &btcctypes.TransactionKey{uint32(idxs[1]), btcBlocks[1].HeaderBytes.Hash()},
+			{
+				Key:         &btcctypes.TransactionKey{Index: uint32(idxs[1]), Hash: btcBlocks[1].HeaderBytes.Hash()},
 				Transaction: msgInsertBtcSpvProof.Proofs[1].BtcTransaction,
 				Proof:       msgInsertBtcSpvProof.Proofs[1].MerkleNodes,
 			},
