@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
@@ -76,7 +78,7 @@ func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 	return balancesResp.GetBalances(), nil
 }
 
-func (n *NodeConfig) QuerySupplyOf(denom string) (sdk.Int, error) {
+func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/supply/%s", denom)
 	bz, err := n.QueryGRPCGateway(path)
 	require.NoError(n.t, err)
