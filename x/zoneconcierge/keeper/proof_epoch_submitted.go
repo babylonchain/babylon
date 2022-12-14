@@ -69,7 +69,7 @@ func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*
 	}
 
 	// decode parsedProof to checkpoint data
-	var checkpointData [][]byte
+	checkpointData := [][]byte{}
 	for i, proof := range parsedProofs {
 		data, err := txformat.GetCheckpointData(
 			babylonTag,
