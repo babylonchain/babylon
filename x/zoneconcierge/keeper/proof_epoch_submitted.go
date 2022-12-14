@@ -8,20 +8,18 @@ import (
 	"github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // ProveEpochSubmitted generates proof that the epoch's checkpoint is submitted to BTC
 // i.e., the two `TransactionInfo`s for the checkpoint
-func (k Keeper) ProveEpochSubmitted(ctx sdk.Context, sk btcctypes.SubmissionKey) []*btcctypes.TransactionInfo {
+func (k Keeper) ProveEpochSubmitted(ctx sdk.Context, sk btcctypes.SubmissionKey) ([]*btcctypes.TransactionInfo, error) {
 	bestSubmissionData := k.btccKeeper.GetSubmissionData(ctx, sk)
 	if bestSubmissionData == nil {
-		err := fmt.Errorf("the best submission key for epoch has no submission data")
-		panic(err) // this can only be a programming error
+		return nil, fmt.Errorf("the best submission key for epoch %d has no submission data", bestSubmissionData.Epoch)
 	}
-	return bestSubmissionData.TxsInfo
+	return bestSubmissionData.TxsInfo, nil
 }
 
 // VerifyEpochSubmitted verifies whether an epoch's checkpoint has been included in BTC or not
@@ -29,16 +27,12 @@ func (k Keeper) ProveEpochSubmitted(ctx sdk.Context, sk btcctypes.SubmissionKey)
 // - basic sanity checks
 // - Merkle proofs in txsInfo are valid
 // - the raw ckpt decoded from txsInfo is same as the expected rawCkpt
-func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*btcctypes.TransactionInfo, btcHeaders []*wire.BlockHeader, btcNetParams wire.BitcoinNet, babylonTag txformat.BabylonTag) error {
+func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*btcctypes.TransactionInfo, btcHeaders []*wire.BlockHeader, powLimit *big.Int, babylonTag txformat.BabylonTag) error {
 	// basic sanity check
 	if rawCkpt == nil {
 		return fmt.Errorf("rawCkpt is nil")
-	} else if txsInfo == nil {
-		return fmt.Errorf("txsInfo is nil")
 	} else if len(txsInfo) != txformat.NumberOfParts {
 		return fmt.Errorf("txsInfo contains %d parts rather than %d", len(txsInfo), txformat.NumberOfParts)
-	} else if btcHeaders == nil {
-		return fmt.Errorf("btcHeaders is nil")
 	} else if len(btcHeaders) != txformat.NumberOfParts {
 		return fmt.Errorf("btcHeaders contains %d parts rather than %d", len(btcHeaders), txformat.NumberOfParts)
 	}
@@ -51,7 +45,6 @@ func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*
 	}
 
 	// verify Merkle proofs for each tx info
-	powLimit := getPoWLimit(btcNetParams)
 	parsedProofs := []*btcctypes.ParsedProof{}
 	for i, txInfo := range txsInfo {
 		btcHeaderBytes := types.NewBTCHeaderBytesFromBlockHeader(btcHeaders[i])
@@ -98,19 +91,4 @@ func VerifyEpochSubmitted(rawCkpt *checkpointingtypes.RawCheckpoint, txsInfo []*
 	}
 
 	return nil
-}
-
-func getPoWLimit(btcNetParams wire.BitcoinNet) *big.Int {
-	switch btcNetParams {
-	case wire.MainNet:
-		return chaincfg.MainNetParams.PowLimit
-	case wire.TestNet:
-		return chaincfg.RegressionNetParams.PowLimit
-	case wire.TestNet3:
-		return chaincfg.TestNet3Params.PowLimit
-	case wire.SimNet:
-		return chaincfg.SimNetParams.PowLimit
-	default:
-		panic(fmt.Errorf("invalid btcNetParams: %v", btcNetParams))
-	}
 }

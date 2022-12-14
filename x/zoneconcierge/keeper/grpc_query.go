@@ -128,7 +128,13 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	// proof that the epoch's checkpoint is submitted to BTC
 	// i.e., the two `TransactionInfo`s for the checkpoint
-	resp.ProofEpochSubmitted = k.ProveEpochSubmitted(ctx, *bestSubmissionKey)
+	resp.ProofEpochSubmitted, err = k.ProveEpochSubmitted(ctx, *bestSubmissionKey)
+	if err != nil {
+		// The only error in ProveEpochSubmitted is the nil bestSubmission.
+		// Since the epoch w.r.t. the bestSubmissionKey is finalised, this
+		// can only be a programming error, so we should panic here.
+		panic(err)
+	}
 
 	return resp, nil
 }

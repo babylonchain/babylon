@@ -9,6 +9,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 )
@@ -58,11 +59,11 @@ func FuzzProofEpochSubmitted(f *testing.F) {
 		}
 
 		// net param, babylonTag
-		var btcNetParams wire.BitcoinNet = wire.SimNet
-		var babylonTag txformat.BabylonTag = txformat.MainTag(0)
+		powLimit := chaincfg.SimNetParams.PowLimit
+		babylonTag := txformat.MainTag(0)
 
 		// verify
-		err = zckeeper.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, btcNetParams, babylonTag)
+		err = zckeeper.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, powLimit, babylonTag)
 		require.NoError(t, err)
 	})
 }
