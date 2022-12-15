@@ -105,8 +105,10 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 		return err
 	}
 
-	relayerNodeA := chainConfigA.NodeConfigs[0]
-	relayerNodeB := chainConfigB.NodeConfigs[0]
+	// we are using non validator nodes as validator are constantly sending bls
+	// transactions, which makes relayer operations failing
+	relayerNodeA := chainConfigA.NodeConfigs[2]
+	relayerNodeB := chainConfigB.NodeConfigs[2]
 
 	hermesResource, err := bc.containerManager.RunHermesResource(
 		chainConfigA.Id,

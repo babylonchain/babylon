@@ -36,10 +36,8 @@ func InitChain(id, dataDir string, nodeConfigs []*NodeConfig, votingPeriod, expe
 	}
 
 	for _, node := range chain.nodes {
-		if node.isValidator {
-			if err := node.initNodeConfigs(peers); err != nil {
-				return nil, err
-			}
+		if err := node.initNodeConfigs(peers); err != nil {
+			return nil, err
 		}
 	}
 

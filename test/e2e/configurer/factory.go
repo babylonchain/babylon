@@ -23,6 +23,10 @@ type Configurer interface {
 }
 
 var (
+	// Last nodes are non validator nodes to serve as the ones using relayer. Out
+	// validator are constantly sending bls transactions which make relayer operatrions
+	// fail constantly
+
 	// each started validator containers corresponds to one of
 	// the configurations below.
 	validatorConfigsChainA = []*initialization.NodeConfig{
@@ -46,6 +50,15 @@ var (
 			SnapshotKeepRecent: 2,
 			IsValidator:        true,
 		},
+		{
+			Name:               "babylon-default-a-3",
+			Pruning:            "nothing",
+			PruningKeepRecent:  "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   1500,
+			SnapshotKeepRecent: 2,
+			IsValidator:        false,
+		},
 	}
 	validatorConfigsChainB = []*initialization.NodeConfig{
 		{
@@ -65,6 +78,15 @@ var (
 			SnapshotInterval:   1500,
 			SnapshotKeepRecent: 2,
 			IsValidator:        true,
+		},
+		{
+			Name:               "babylon-default-b-3",
+			Pruning:            "nothing",
+			PruningKeepRecent:  "0",
+			PruningInterval:    "0",
+			SnapshotInterval:   1500,
+			SnapshotKeepRecent: 2,
+			IsValidator:        false,
 		},
 	}
 )
