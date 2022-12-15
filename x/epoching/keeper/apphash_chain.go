@@ -60,19 +60,6 @@ func (k Keeper) GetAllAppHashsForEpoch(ctx sdk.Context, epochNumber uint64) ([][
 	return appHashs, nil
 }
 
-// RecordAppHashRoot calculates the Merkle root of all AppHashs in the current epoch, and stores it to epoch metadata
-func (k Keeper) RecordAppHashRoot(ctx sdk.Context) error {
-	epoch := k.GetEpoch(ctx)
-	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch.EpochNumber)
-	if err != nil {
-		return err
-	}
-	appHashRoot := merkle.HashFromByteSlices(appHashs)
-	epoch.AppHashRoot = appHashRoot
-	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
-	return nil
-}
-
 // ProveAppHashInEpoch generates a proof that the given appHash is in a given epoch
 func (k Keeper) ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error) {
 	// ensure height is inside this epoch

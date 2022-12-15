@@ -5,6 +5,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/merkle"
 )
 
 const (
@@ -83,6 +84,22 @@ func (k Keeper) RecordLastBlockHeader(ctx sdk.Context) error {
 	}
 	header := ctx.BlockHeader()
 	epoch.LastBlockHeader = &header
+	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
+	return nil
+}
+
+// RecordAppHashRoot calculates the Merkle root of all AppHashs in the current epoch, and stores it to epoch metadata
+func (k Keeper) RecordAppHashRoot(ctx sdk.Context) error {
+	epoch := k.GetEpoch(ctx)
+	if !epoch.IsLastBlock(ctx) {
+		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordAppHashRoot can only be invoked at the last block of an epoch")
+	}
+	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch.EpochNumber)
+	if err != nil {
+		return err
+	}
+	appHashRoot := merkle.HashFromByteSlices(appHashs)
+	epoch.AppHashRoot = appHashRoot
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
 	return nil
 }
