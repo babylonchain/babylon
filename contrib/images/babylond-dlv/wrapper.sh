@@ -11,7 +11,7 @@ if ! [ -f "${BINARY}" ]; then
 	exit 1
 fi
 
-export BABYLONDHOME="${BABYLONDHOME:-/data/node0/babylond"}
+export BABYLONDHOME="${HOME:-/data/node0/babylond"}
 
 if [ "$DEBUG" -eq 1 ]; then
   dlv --listen=:2345 --continue --headless=true --api-version=2 --accept-multiclient exec "${BINARY}" -- --home "${BABYLONDHOME}" "$@"

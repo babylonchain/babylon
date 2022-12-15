@@ -10,7 +10,7 @@ if ! [ -f "${BINARY}" ]; then
 	exit 1
 fi
 
-export BABYLONDHOME=${BABYLONDHOME:-/data/node0/babylond}
+export BABYLONDHOME=${HOME:-/data/node0/babylond}
 
 if [ -d "$(dirname "${BABYLONDHOME}"/"${LOG}")" ]; then
   "${BINARY}" --home "${BABYLONDHOME}" "$@" 2>&1 | tee "${BABYLONDHOME}/${LOG}"
