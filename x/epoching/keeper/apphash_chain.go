@@ -80,7 +80,7 @@ func (k Keeper) ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber 
 	if err != nil {
 		return nil, err
 	}
-	if height < epoch.FirstBlockHeight || uint64(epoch.LastBlockHeader.Height) < height {
+	if !epoch.WithinBoundary(height) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHeight, "the given height %d is not in epoch %d (interval [%d, %d])", height, epoch.EpochNumber, epoch.FirstBlockHeight, uint64(epoch.LastBlockHeader.Height))
 	}
 
@@ -111,7 +111,7 @@ func VerifyAppHashInclusion(appHash []byte, appHashRoot []byte, proof *tmcrypto.
 
 	unwrappedProof, err := merkle.ProofFromProto(proof)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to unwrap proof: %w", err)
 	}
 	return unwrappedProof.Verify(appHashRoot, appHash)
 }
