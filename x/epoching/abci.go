@@ -14,6 +14,7 @@ import (
 
 // BeginBlocker is called at the beginning of every block.
 // Upon each BeginBlock,
+// - record the current AppHash
 // - if reaching the epoch beginning, then
 //    - increment epoch number
 //    - trigger AfterEpochBegins hook
@@ -23,6 +24,9 @@ import (
 // NOTE: we follow Cosmos SDK's slashing/evidence modules for MVP. No need to modify them at the moment.
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
+
+	// record the current AppHash
+	k.SetCurrentAppHash(ctx)
 
 	// if this block is the first block of the next epoch
 	// note that we haven't incremented the epoch number yet
@@ -69,7 +73,13 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsLastBlock(ctx) {
 		// finalise this epoch, i.e., record the current header
-		k.RecordLastBlockHeader(ctx)
+		if err := k.RecordLastBlockHeader(ctx); err != nil {
+			panic(err)
+		}
+		// record the Merkle root of all AppHashs in this epoch
+		if err := k.RecordAppHashRoot(ctx); err != nil {
+			panic(err)
+		}
 		// get all msgs in the msg queue
 		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
 		// forward each msg in the msg queue to the right keeper

@@ -1,8 +1,10 @@
 package testepoching
 
 import (
-	"github.com/babylonchain/babylon/crypto/bls12381"
 	"testing"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/testutil/datagen"
 
 	"cosmossdk.io/math"
 	appparams "github.com/babylonchain/babylon/app/params"
@@ -110,7 +112,7 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            h.App.LastCommitID().Hash,
+		AppHash:            datagen.GenRandomByteArray(32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
 	}
@@ -129,7 +131,7 @@ func (h *Helper) BeginBlock() sdk.Context {
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            h.App.LastCommitID().Hash,
+		AppHash:            datagen.GenRandomByteArray(32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
 	}
