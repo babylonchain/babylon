@@ -6,7 +6,7 @@ services:
     image: "babylonchain/babylond"
     environment:
       - DEBUG=1
-      - ID=0
+      - HOME=/data/node0/babylond
       - LOG=${LOG:-babylond.log}
     cap_add:
       - SYS_PTRACE
@@ -28,7 +28,7 @@ services:
     image: "babylonchain/babylond"
     environment:
       - DEBUG=0
-      - ID=1
+      - HOME=/data/node1/babylond
       - LOG=${LOG:-babylond.log}
     cap_add:
       - SYS_PTRACE
@@ -50,7 +50,7 @@ services:
     image: "babylonchain/babylond"
     environment:
       - DEBUG=0
-      - ID=2
+      - HOME=/data/node2/babylond
       - LOG=${LOG:-babylond.log}
     cap_add:
       - SYS_PTRACE
@@ -72,7 +72,7 @@ services:
     image: "babylonchain/babylond"
     environment:
       - DEBUG=0
-      - ID=3
+      - HOME=/data/node3/babylond
       - LOG=${LOG:-babylond.log}
     cap_add:
       - SYS_PTRACE

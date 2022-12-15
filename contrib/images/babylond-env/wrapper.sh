@@ -3,7 +3,6 @@ set -euo pipefail
 set -x
 
 BINARY=/babylond/${BINARY:-babylond}
-ID=${ID:-0}
 LOG=${LOG:-babylond.log}
 
 if ! [ -f "${BINARY}" ]; then
@@ -11,7 +10,7 @@ if ! [ -f "${BINARY}" ]; then
 	exit 1
 fi
 
-export BABYLONDHOME="/data/node${ID}/babylond"
+export BABYLONDHOME=${BABYLONDHOME:-/data/node0/babylond}
 
 if [ -d "$(dirname "${BABYLONDHOME}"/"${LOG}")" ]; then
   "${BINARY}" --home "${BABYLONDHOME}" "$@" 2>&1 | tee "${BABYLONDHOME}/${LOG}"
