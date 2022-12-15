@@ -97,8 +97,8 @@ func (k Keeper) ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber 
 	return proofs[idx].ToProto(), nil
 }
 
-// VerifyAppHashInEpoch verifies whether the given appHash is in the Merkle tree w.r.t. the appHashRoot
-func VerifyAppHashInEpoch(appHash []byte, appHashRoot []byte, proof *tmcrypto.Proof) error {
+// VerifyAppHashInclusion verifies whether the given appHash is in the Merkle tree w.r.t. the appHashRoot
+func VerifyAppHashInclusion(appHash []byte, appHashRoot []byte, proof *tmcrypto.Proof) error {
 	if len(appHash) != sha256.Size {
 		return fmt.Errorf("appHash with length %d is not a Sha256 hash", len(appHash))
 	}
