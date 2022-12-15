@@ -118,7 +118,11 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return nil, err
 	}
 
-	// TODO: proof that the block is in this epoch
+	// proof that the block is in this epoch
+	resp.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeader, epochInfo)
+	if err != nil {
+		return nil, err
+	}
 
 	// proof that the epoch is sealed
 	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)

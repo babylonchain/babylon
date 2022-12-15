@@ -92,8 +92,8 @@ message QueryFinalizedChainInfoResponse {
   */
   // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
   tendermint.types.TxProof proof_tx_in_block = 5;
-  // proof_block_in_epoch is the proof that the Babylon block is in a certain epoch
-  tendermint.crypto.ProofOps proof_block_in_epoch = 6;
+  // proof_header_in_epoch is the proof that the Babylon header is in a certain epoch
+  tendermint.crypto.Proof proof_header_in_epoch = 6;
   // proof_epoch_sealed is the proof that the epoch is sealed
   babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 7;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
