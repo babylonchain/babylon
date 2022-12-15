@@ -54,8 +54,12 @@ func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {
 	if err != nil {
 		return nil, err
 	}
+	return FromBTCCkptToRawCkpt(btcCkpt)
+}
+
+func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpoint, error) {
 	var lch LastCommitHash
-	err = lch.Unmarshal(btcCkpt.LastCommitHash)
+	err := lch.Unmarshal(btcCkpt.LastCommitHash)
 	if err != nil {
 		return nil, err
 	}

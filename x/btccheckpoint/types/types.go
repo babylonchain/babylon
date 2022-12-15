@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -156,4 +158,17 @@ func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *Tr
 		Transaction: txBytes,
 		Proof:       proof,
 	}
+}
+
+func (ti *TransactionInfo) ValidateBasic() error {
+	if ti.Key == nil {
+		return fmt.Errorf("key in TransactionInfo is nil")
+	}
+	if ti.Transaction == nil {
+		return fmt.Errorf("transaction in TransactionInfo is nil")
+	}
+	if ti.Proof == nil {
+		return fmt.Errorf("proof in TransactionInfo is nil")
+	}
+	return nil
 }
