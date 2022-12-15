@@ -8,6 +8,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
+
+	"github.com/babylonchain/babylon/privval"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -26,7 +30,6 @@ import (
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
 	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
@@ -41,7 +44,7 @@ type internalNode struct {
 	mnemonic     string
 	keyInfo      *keyring.Record
 	privateKey   cryptotypes.PrivKey
-	consensusKey privval.FilePVKey
+	consensusKey privval.WrappedFilePVKey
 	nodeKey      p2p.NodeKey
 	peerId       string
 	isValidator  bool
@@ -165,7 +168,15 @@ func (n *internalNode) createConsensusKey() error {
 		return err
 	}
 
-	filePV := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+	// privval.LoadOrGenWrappedFilePV()
+	privKey := tmed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
+	blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(n.mnemonic))
+	filePV := privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
+
+	accAddress, _ := n.keyInfo.GetAddress()
+	filePV.Save()
+	filePV.SetAccAddress(accAddress)
+
 	n.consensusKey = filePV.Key
 
 	return nil

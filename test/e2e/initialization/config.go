@@ -6,6 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/babylonchain/babylon/privval"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -217,6 +221,11 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, checkpointingtypes.ModuleName, checkpointingtypes.DefaultGenesis(), updateCheckpointingGenesis(chain))
+	if err != nil {
+		return err
+	}
+
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -299,5 +308,50 @@ func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {
 			genTxs = append(genTxs, txRaw)
 		}
 		genUtilGenState.GenTxs = genTxs
+	}
+}
+
+func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.GenesisState) {
+	return func(checkpointingGenState *checkpointingtypes.GenesisState) {
+		var genKeys []*checkpointingtypes.GenesisKey
+
+		for _, node := range c.nodes {
+			if !node.isValidator {
+				continue
+			}
+
+			proofOfPossession, err := privval.BuildPoP(node.consensusKey.PrivKey, node.consensusKey.BlsPrivKey)
+
+			if err != nil {
+				panic("It should be possible to build proof of possesion from validator private keys")
+			}
+
+			valPubKey, err := cryptocodec.FromTmPubKeyInterface(node.consensusKey.PubKey)
+
+			if err != nil {
+				panic("It should be possible retrieve validator public key")
+			}
+
+			da, err := sdk.AccAddressFromBech32(node.consensusKey.DelegatorAddress)
+
+			if err != nil {
+				panic("is should be possible to get validator address from delegator address")
+			}
+
+			va := sdk.ValAddress(da)
+
+			genKey := &checkpointingtypes.GenesisKey{
+				ValidatorAddress: va.String(),
+				BlsKey: &checkpointingtypes.BlsKey{
+					Pubkey: &node.consensusKey.BlsPubKey,
+					Pop:    proofOfPossession,
+				},
+				ValPubkey: valPubKey.(*ed25519.PubKey),
+			}
+
+			genKeys = append(genKeys, genKey)
+		}
+
+		checkpointingGenState.GenesisKeys = genKeys
 	}
 }
