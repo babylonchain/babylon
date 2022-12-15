@@ -26,7 +26,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	// record the current AppHash
-	k.SetCurrentAppHash(ctx)
+	k.RecordAppHash(ctx)
 
 	// if this block is the first block of the next epoch
 	// note that we haven't incremented the epoch number yet

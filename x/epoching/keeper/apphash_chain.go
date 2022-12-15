@@ -29,8 +29,8 @@ func (k Keeper) GetAppHash(ctx sdk.Context, height uint64) ([]byte, error) {
 	return appHash, nil
 }
 
-// SetCurrentAppHash stores the AppHash of the current header to KVStore
-func (k Keeper) SetCurrentAppHash(ctx sdk.Context) {
+// RecordAppHash stores the AppHash of the current header to KVStore
+func (k Keeper) RecordAppHash(ctx sdk.Context) {
 	header := ctx.BlockHeader()
 	height := uint64(header.Height)
 	k.setAppHash(ctx, height, header.AppHash)
