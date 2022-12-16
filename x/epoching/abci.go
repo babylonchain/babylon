@@ -73,7 +73,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	epoch := k.GetEpoch(ctx)
 	if epoch.IsLastBlock(ctx) {
 		// finalise this epoch, i.e., record the current header and the Merkle root of all AppHashs in this epoch
-		if err := k.RecordLastBlockHeaderAndAppHashRoot(ctx); err != nil {
+		if err := k.RecordLastHeaderAndAppHashRoot(ctx); err != nil {
 			panic(err)
 		}
 		// get all msgs in the msg queue

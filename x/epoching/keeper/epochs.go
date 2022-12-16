@@ -77,9 +77,9 @@ func (k Keeper) GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*types.
 	return epoch, err
 }
 
-// RecordLastBlockHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
+// RecordLastHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
 // for the current epoch, and stores the epoch metadata to KVStore
-func (k Keeper) RecordLastBlockHeaderAndAppHashRoot(ctx sdk.Context) error {
+func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx sdk.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
 		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
