@@ -77,29 +77,24 @@ func (k Keeper) GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*types.
 	return epoch, err
 }
 
-func (k Keeper) RecordLastBlockHeader(ctx sdk.Context) error {
+// RecordLastBlockHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
+// for the current epoch, and stores the epoch metadata to KVStore
+func (k Keeper) RecordLastBlockHeaderAndAppHashRoot(ctx sdk.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
 		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
+	// record last block header
 	header := ctx.BlockHeader()
 	epoch.LastBlockHeader = &header
-	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
-	return nil
-}
-
-// RecordAppHashRoot calculates the Merkle root of all AppHashs in the current epoch, and stores it to epoch metadata
-func (k Keeper) RecordAppHashRoot(ctx sdk.Context) error {
-	epoch := k.GetEpoch(ctx)
-	if !epoch.IsLastBlock(ctx) {
-		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordAppHashRoot can only be invoked at the last block of an epoch")
-	}
-	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch.EpochNumber)
+	// calculate and record the Merkle root
+	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
 	if err != nil {
 		return err
 	}
 	appHashRoot := merkle.HashFromByteSlices(appHashs)
 	epoch.AppHashRoot = appHashRoot
+	// save back to KVStore
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
 	return nil
 }

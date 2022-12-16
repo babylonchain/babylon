@@ -42,7 +42,7 @@ func FuzzAppHashChain(f *testing.F) {
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
 		// ensure appHashs are same as expectedAppHashs
-		appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch.EpochNumber)
+		appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, expectedAppHashs, appHashs)
 

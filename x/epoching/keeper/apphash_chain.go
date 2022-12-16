@@ -37,11 +37,7 @@ func (k Keeper) RecordAppHash(ctx sdk.Context) {
 }
 
 // GetAllAppHashsForEpoch fetches all AppHashs in the given epoch
-func (k Keeper) GetAllAppHashsForEpoch(ctx sdk.Context, epochNumber uint64) ([][]byte, error) {
-	epoch, err := k.GetHistoricalEpoch(ctx, epochNumber)
-	if err != nil {
-		return nil, err
-	}
+func (k Keeper) GetAllAppHashsForEpoch(ctx sdk.Context, epoch *types.Epoch) ([][]byte, error) {
 	// if this epoch is the most recent AND has not ended, then we cannot get all AppHashs for this epoch
 	if k.GetEpoch(ctx).EpochNumber == epoch.EpochNumber && !epoch.IsLastBlock(ctx) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidHeight, "GetAllAppHashsForEpoch can only be invoked when this epoch has ended")
@@ -75,7 +71,7 @@ func (k Keeper) ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber 
 	idx := height - epoch.FirstBlockHeight
 
 	// fetch all AppHashs, calculate Merkle tree and proof
-	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epochNumber)
+	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
 	if err != nil {
 		return nil, err
 	}
