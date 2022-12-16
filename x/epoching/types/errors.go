@@ -20,4 +20,5 @@ var (
 	ErrNoWrappedMsg              = sdkerrors.Register(ModuleName, 10, "the wrapped msg contains no msg inside.")
 	ErrZeroEpochMsg              = sdkerrors.Register(ModuleName, 11, "the 0-th epoch does not handle messages")
 	ErrInvalidEpoch              = sdkerrors.Register(ModuleName, 12, "the epoch is invalid")
+	ErrInvalidHeight             = sdkerrors.Register(ModuleName, 13, "the height is invalid")
 )

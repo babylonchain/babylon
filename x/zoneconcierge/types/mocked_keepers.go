@@ -18,6 +18,7 @@ import (
 	types6 "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	exported "github.com/cosmos/ibc-go/v5/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
+	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
@@ -617,6 +618,21 @@ func (m *MockEpochingKeeper) GetHistoricalEpoch(ctx types2.Context, epochNumber 
 func (mr *MockEpochingKeeperMockRecorder) GetHistoricalEpoch(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHistoricalEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetHistoricalEpoch), ctx, epochNumber)
+}
+
+// ProveAppHashInEpoch mocks base method.
+func (m *MockEpochingKeeper) ProveAppHashInEpoch(ctx types2.Context, height, epochNumber uint64) (*crypto.Proof, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProveAppHashInEpoch", ctx, height, epochNumber)
+	ret0, _ := ret[0].(*crypto.Proof)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ProveAppHashInEpoch indicates an expected call of ProveAppHashInEpoch.
+func (mr *MockEpochingKeeperMockRecorder) ProveAppHashInEpoch(ctx, height, epochNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProveAppHashInEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).ProveAppHashInEpoch), ctx, height, epochNumber)
 }
 
 // MockTMClient is a mock of TMClient interface.

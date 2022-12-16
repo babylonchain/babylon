@@ -17,8 +17,8 @@ message IndexedHeader {
   // height is the height of this header on CZ ledger
   // (hash, height) jointly provides the position of the header on CZ ledger
   uint64 height = 3;
-  // babylon_block_height is the height of the Babylon block that includes this header
-  uint64 babylon_block_height = 4;
+  // babylon_header is the header of the babylon block that includes this CZ header
+  tendermint.types.Header babylon_header = 4;
   // epoch is the epoch number of this header on Babylon ledger
   uint64 babylon_epoch = 5;
   // babylon_tx_hash is the hash of the tx that includes this header

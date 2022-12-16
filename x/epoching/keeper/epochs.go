@@ -4,6 +4,8 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/merkle"
 )
 
 const (
@@ -75,15 +77,26 @@ func (k Keeper) GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*types.
 	return epoch, err
 }
 
-func (k Keeper) RecordLastBlockHeader(ctx sdk.Context) *types.Epoch {
+// RecordLastHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
+// for the current epoch, and stores the epoch metadata to KVStore
+func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx sdk.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
-		panic("RecordLastBlockHeader can only be invoked at the last block of an epoch")
+		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
+	// record last block header
 	header := ctx.BlockHeader()
 	epoch.LastBlockHeader = &header
+	// calculate and record the Merkle root
+	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
+	if err != nil {
+		return err
+	}
+	appHashRoot := merkle.HashFromByteSlices(appHashs)
+	epoch.AppHashRoot = appHashRoot
+	// save back to KVStore
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
-	return epoch
+	return nil
 }
 
 // RecordSealerHeaderForPrevEpoch records the sealer header for the previous epoch,

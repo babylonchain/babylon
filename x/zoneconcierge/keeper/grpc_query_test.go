@@ -12,6 +12,7 @@ import (
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 )
@@ -119,6 +120,8 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(epoch).AnyTimes()
 		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(epoch, nil).AnyTimes()
+		epochingKeeper.EXPECT().ProveAppHashInEpoch(gomock.Any(), gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(&tmcrypto.Proof{}, nil).AnyTimes()
+
 		// mock Tendermint client
 		// TODO: integration tests with Tendermint
 		tmClient := zctypes.NewMockTMClient(ctrl)

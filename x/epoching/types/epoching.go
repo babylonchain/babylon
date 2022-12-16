@@ -70,6 +70,15 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 	}
 }
 
+// WithinBoundary checks whether the given height is within this epoch or not
+func (e Epoch) WithinBoundary(height uint64) bool {
+	if height < e.FirstBlockHeight || height > uint64(e.LastBlockHeader.Height) {
+		return false
+	} else {
+		return true
+	}
+}
+
 // ValidateBasic does sanity checks on Epoch
 func (e Epoch) ValidateBasic() error {
 	if e.CurrentEpochInterval < 2 {

@@ -12,6 +12,7 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
@@ -78,6 +79,7 @@ type CheckpointingKeeper interface {
 type EpochingKeeper interface {
 	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch
+	ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error)
 }
 
 // TMClient is a Tendermint client that allows to query tx inclusion proofs

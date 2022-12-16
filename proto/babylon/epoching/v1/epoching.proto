@@ -16,9 +16,12 @@ message Epoch {
   // Babylon needs to remember the last header of each epoch to complete unbonding validators/delegations when a previous epoch's checkpoint is finalised.
   // The last_block_header field is nil in the epoch's beginning, and is set upon the end of this epoch.
   tendermint.types.Header last_block_header = 4;
+  // app_hash_root is the Merkle root of all AppHashs in this epoch
+  // It will be used for proving a block is in an epoch
+  bytes app_hash_root = 5;
   // sealer_header is the 2nd header of the next epoch
   // This validator set has generated a BLS multisig on `last_commit_hash` of the sealer header
-  tendermint.types.Header sealer_header = 5;
+  tendermint.types.Header sealer_header = 6;
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
