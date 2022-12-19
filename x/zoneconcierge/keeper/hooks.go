@@ -37,7 +37,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 		// update the latest fork in chain info
-		if err := h.k.trpToUpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.tryToUpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	} else {
