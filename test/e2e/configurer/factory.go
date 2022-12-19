@@ -24,10 +24,10 @@ type Configurer interface {
 
 var (
 	// Last nodes are non validator nodes to serve as the ones using relayer. Out
-	// validator are constantly sending bls transactions which make relayer operatrions
+	// validators are constantly sending bls transactions which make relayer operatrions
 	// fail constantly
 
-	// each started validator containers corresponds to one of
+	// each started validator container corresponds to one of
 	// the configurations below.
 	validatorConfigsChainA = []*initialization.NodeConfig{
 		{

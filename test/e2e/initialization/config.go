@@ -329,13 +329,13 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 			valPubKey, err := cryptocodec.FromTmPubKeyInterface(node.consensusKey.PubKey)
 
 			if err != nil {
-				panic("It should be possible retrieve validator public key")
+				panic("It should be possible to retrieve validator public key")
 			}
 
 			da, err := sdk.AccAddressFromBech32(node.consensusKey.DelegatorAddress)
 
 			if err != nil {
-				panic("is should be possible to get validator address from delegator address")
+				panic("It should be possible to get validator address from delegator address")
 			}
 
 			va := sdk.ValAddress(da)
