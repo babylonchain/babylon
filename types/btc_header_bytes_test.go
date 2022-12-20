@@ -3,10 +3,11 @@ package types_test
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/types"
 	"math/rand"
 	"testing"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/types"
 )
 
 func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
@@ -45,7 +46,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 			}
 			t.Skip()
 		}
-		if bytes.Compare(m, bz) != 0 {
+		if !bytes.Equal(m, bz) {
 			t.Errorf("Marshal returned %s while %s was expected", m, bz)
 		}
 
@@ -60,7 +61,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 		if sz != len(bz) {
 			t.Errorf("MarhslTo marshalled %d bytes instead of %d", sz, len(bz))
 		}
-		if bytes.Compare(m, bz) != 0 {
+		if !bytes.Equal(m, bz) {
 			t.Errorf("MarshalTo copied %s while %s was expected", m, bz)
 		}
 
@@ -160,7 +161,7 @@ func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
 			}
 			t.Skip()
 		}
-		if bytes.Compare(h, jsonHex) != 0 {
+		if !bytes.Equal(h, jsonHex) {
 			t.Errorf("Marshal returned %s while %s was expected", h, jsonHex)
 		}
 		if invalidHeader {

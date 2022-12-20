@@ -2,7 +2,6 @@
 
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 PACKAGES_SIMTEST=$(shell go list ./... | grep '/simulation')
-VERSION := $(shell echo $(shell git describe --always --match "v*") | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
@@ -11,6 +10,19 @@ HTTPS_GIT := https://github.com/babylonchain/babylon.git
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 SIMAPP = ./simapp
+
+BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+COMMIT := $(shell git log -1 --format='%H')
+
+# don't override user values
+ifeq (,$(VERSION))
+  # Find a name that exactly describes the current commit (e.g. a version tag)
+  VERSION := $(shell git describe --exact-match 2>/dev/null)
+  # if VERSION is empty, then populate it with branch's name and raw commit hash
+  ifeq (,$(VERSION))
+    VERSION := $(BRANCH)-$(COMMIT)
+  endif
+endif
 
 export GO111MODULE = on
 
@@ -107,6 +119,8 @@ all: tools build lint test
 ###############################################################################
 
 BUILD_TARGETS := build install
+
+PACKAGES_E2E=$(shell go list ./... | grep '/e2e')
 
 build: BUILD_ARGS=-o $(BUILDDIR)/
 build-linux:
@@ -392,6 +406,9 @@ localnet-start-test: localnet-stop localnet-build-env localnet-build-nodes-test
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
 localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
+
+test-e2e:
+	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 localnet-stop:
 	docker-compose down

@@ -38,6 +38,7 @@ func b2Hash(m *btcctypes.MsgInsertBTCSpvProof) *bbn.BTCHeaderHashBytes {
 	return m.Proofs[1].ConfirmingBtcHeader.Hash()
 }
 
+//nolint:unused
 func b2TxIdx(m *btcctypes.MsgInsertBTCSpvProof) uint32 {
 	return m.Proofs[1].BtcTransactionIndex
 }
@@ -224,6 +225,17 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	if submissionData.Epoch != epoch {
 		t.Errorf("Submission data with invalid epoch")
+	}
+
+	if len(submissionData.TxsInfo) != 2 {
+		t.Errorf("Submission data with invalid TransactionInfo")
+	}
+
+	for i, txInfo := range submissionData.TxsInfo {
+		require.Equal(t, submissionKey.Key[i].Index, txInfo.Key.Index)
+		require.True(t, submissionKey.Key[i].Hash.Eq(txInfo.Key.Hash))
+		require.Equal(t, msg.Proofs[i].BtcTransaction, txInfo.Transaction)
+		require.Equal(t, msg.Proofs[i].MerkleNodes, txInfo.Proof)
 	}
 
 	ed1 := tk.getEpochData(epoch)

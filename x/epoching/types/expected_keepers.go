@@ -3,6 +3,7 @@ package types
 import (
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -39,7 +40,7 @@ type StakingKeeper interface {
 	BondDenom(ctx sdk.Context) string
 	HasReceivingRedelegation(ctx sdk.Context, delAddr sdk.AccAddress, valDstAddr sdk.ValAddress) bool
 	HasMaxRedelegationEntries(ctx sdk.Context, delegatorAddr sdk.AccAddress, validatorSrcAddr, validatorDstAddr sdk.ValAddress) bool
-	ValidateUnbondAmount(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, amt sdk.Int) (sdk.Dec, error)
+	ValidateUnbondAmount(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, amt math.Int) (sdk.Dec, error)
 	ValidatorQueueIterator(ctx sdk.Context, endTime time.Time, endHeight int64) sdk.Iterator
 	UnbondingToUnbonded(ctx sdk.Context, validator stakingtypes.Validator) stakingtypes.Validator
 	RemoveValidator(ctx sdk.Context, address sdk.ValAddress)

@@ -4,6 +4,8 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/tendermint/tendermint/crypto/merkle"
 )
 
 const (
@@ -54,7 +56,7 @@ func (k Keeper) InitEpoch(ctx sdk.Context) {
 		panic("InitEpoch can be invoked only at genesis")
 	}
 	epochInterval := k.GetParams(ctx).EpochInterval
-	epoch := types.NewEpoch(0, epochInterval, &header)
+	epoch := types.NewEpoch(0, epochInterval, 0, &header)
 	k.setEpochInfo(ctx, 0, &epoch)
 
 	k.setEpochNumber(ctx, 0)
@@ -75,25 +77,61 @@ func (k Keeper) GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*types.
 	return epoch, err
 }
 
-func (k Keeper) RecordLastBlockHeader(ctx sdk.Context) *types.Epoch {
+// RecordLastHeaderAndAppHashRoot records the last header and Merkle root of all AppHashs
+// for the current epoch, and stores the epoch metadata to KVStore
+func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx sdk.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
-		panic("RecordLastBlockHeader can only be invoked at the last block of an epoch")
+		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
+	// record last block header
 	header := ctx.BlockHeader()
 	epoch.LastBlockHeader = &header
+	// calculate and record the Merkle root
+	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
+	if err != nil {
+		return err
+	}
+	appHashRoot := merkle.HashFromByteSlices(appHashs)
+	epoch.AppHashRoot = appHashRoot
+	// save back to KVStore
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
-	return epoch
+	return nil
+}
+
+// RecordSealerHeaderForPrevEpoch records the sealer header for the previous epoch,
+// where the sealer header of an epoch is the 2nd header of the next epoch
+// This validator set of the epoch has generated a BLS multisig on `last_commit_hash` of the sealer header
+func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx sdk.Context) *types.Epoch {
+	// get the sealer header
+	epoch := k.GetEpoch(ctx)
+	if !epoch.IsSecondBlock(ctx) {
+		panic("RecordSealerHeaderForPrevEpoch can only be invoked at the second header of a non-zero epoch")
+	}
+	header := ctx.BlockHeader()
+
+	// get the sealed epoch, i.e., the epoch earlier than the current epoch
+	sealedEpoch, err := k.GetHistoricalEpoch(ctx, epoch.EpochNumber-1)
+	if err != nil {
+		panic(err)
+	}
+
+	// record the sealer header for the sealed epoch
+	sealedEpoch.SealerHeader = &header
+	k.setEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
+
+	return sealedEpoch
 }
 
 // IncEpoch adds epoch number by 1
+// CONTRACT: can only be invoked at the first block of an epoch
 func (k Keeper) IncEpoch(ctx sdk.Context) types.Epoch {
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	incrementedEpochNumber := epochNumber + 1
 	k.setEpochNumber(ctx, incrementedEpochNumber)
 
 	epochInterval := k.GetParams(ctx).EpochInterval
-	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, nil)
+	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(ctx.BlockHeight()), nil)
 	k.setEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
 
 	return newEpoch

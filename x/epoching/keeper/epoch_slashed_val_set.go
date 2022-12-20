@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -40,7 +41,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 		panic(types.ErrUnknownSlashedVotingPower)
 	}
 	// get value
-	var slashedVotingPower sdk.Int
+	var slashedVotingPower math.Int
 	if err := slashedVotingPower.Unmarshal(bz); err != nil {
 		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 	}
@@ -54,6 +55,9 @@ func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) err
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	store := k.slashedValSetStore(ctx, epochNumber)
 	thisVotingPower, err := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
+	if err != nil {
+		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+	}
 	thisVotingPowerBytes, err := sdk.NewInt(thisVotingPower).Marshal()
 	if err != nil {
 		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
@@ -87,7 +91,7 @@ func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber uint64) types.
 		if powerBytes == nil {
 			panic(types.ErrUnknownValidator)
 		}
-		var power sdk.Int
+		var power math.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
 			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
 		}

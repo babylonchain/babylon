@@ -3,6 +3,10 @@ package testepoching
 import (
 	"testing"
 
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/testutil/datagen"
+
+	"cosmossdk.io/math"
 	appparams "github.com/babylonchain/babylon/app/params"
 
 	"github.com/stretchr/testify/require"
@@ -43,6 +47,15 @@ func NewHelper(t *testing.T) *Helper {
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	epochingKeeper := app.EpochingKeeper
+
+	// add BLS pubkey to the genesis validator
+	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
+	require.Len(t, valSet, 1)
+	genesisVal := valSet[0]
+	genesisBLSPubkey := bls12381.GenPrivKey().PubKey()
+	err := app.CheckpointingKeeper.CreateRegistration(ctx, genesisBLSPubkey, genesisVal.Addr)
+	require.NoError(t, err)
+
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
@@ -55,7 +68,7 @@ func NewHelper(t *testing.T) *Helper {
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
 func NewHelperWithValSet(t *testing.T) *Helper {
 	// generate the validator set with 10 validators
-	valSet, err := GenTmValidatorSet(10)
+	tmValSet, err := GenTmValidatorSet(10)
 	require.NoError(t, err)
 
 	// generate the genesis account
@@ -69,11 +82,20 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, valSet, GenAccs, balance)
+	app := app.SetupWithGenesisValSet(t, tmValSet, GenAccs, balance)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
+
+	// add BLS pubkey to the genesis validator
+	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
+	for _, val := range valSet {
+		blsPubkey := bls12381.GenPrivKey().PubKey()
+		err = app.CheckpointingKeeper.CreateRegistration(ctx, blsPubkey, val.Addr)
+		require.NoError(t, err)
+	}
+
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
@@ -90,7 +112,7 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            h.App.LastCommitID().Hash,
+		AppHash:            datagen.GenRandomByteArray(32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
 	}
@@ -109,7 +131,7 @@ func (h *Helper) BeginBlock() sdk.Context {
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            h.App.LastCommitID().Hash,
+		AppHash:            datagen.GenRandomByteArray(32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
 	}
@@ -127,14 +149,14 @@ func (h *Helper) EndBlock() sdk.Context {
 
 // CreateValidator calls handler to create a new staking validator
 // TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount sdk.Int, ok bool) {
+func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount math.Int, ok bool) {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
 	h.createValidator(addr, pk, coin, ok)
 }
 
 // CreateValidatorWithValPower calls handler to create a new staking validator with zero commission
 // TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey, valPower int64, ok bool) sdk.Int {
+func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey, valPower int64, ok bool) math.Int {
 	amount := h.StakingKeeper.TokensFromConsensusPower(h.Ctx, valPower)
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	h.createValidator(addr, pk, coin, ok)
@@ -143,7 +165,7 @@ func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes
 
 // CreateValidatorMsg returns a message used to create validator in this service.
 // TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount sdk.Int) *stakingtypes.MsgCreateValidator {
+func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount math.Int) *stakingtypes.MsgCreateValidator {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
 	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
 	require.NoError(h.t, err)
@@ -158,7 +180,7 @@ func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, coi
 }
 
 // WrappedDelegate calls handler to delegate stake for a validator
-func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount sdk.Int) *sdk.Result {
+func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount math.Int) *sdk.Result {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
@@ -174,7 +196,7 @@ func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValA
 }
 
 // WrappedUndelegate calls handler to unbound some stake from a validator.
-func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount sdk.Int) *sdk.Result {
+func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount math.Int) *sdk.Result {
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgUndelegate(delegator, val, unbondAmt)
 	wmsg := types.NewMsgWrappedUndelegate(msg)
@@ -182,7 +204,7 @@ func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress,
 }
 
 // WrappedBeginRedelegate calls handler to redelegate some stake from a validator to another
-func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.ValAddress, dstVal sdk.ValAddress, amount sdk.Int) *sdk.Result {
+func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.ValAddress, dstVal sdk.ValAddress, amount math.Int) *sdk.Result {
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgBeginRedelegate(delegator, srcVal, dstVal, unbondAmt)
 	wmsg := types.NewMsgWrappedBeginRedelegate(msg)

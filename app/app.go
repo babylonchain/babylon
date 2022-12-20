@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -29,6 +30,7 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/testutil/testdata"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
@@ -406,6 +408,16 @@ func NewBabylonApp(
 		scopedIBCKeeper,
 	)
 
+	// create Tendermint client
+	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
+	if err != nil {
+		panic(fmt.Errorf("couldn't get client from nodeURI %s: %w", privSigner.ClientCtx.NodeURI, err))
+	}
+	// create querier for KVStore
+	storeQuerier, ok := app.CommitMultiStore().(sdk.Queryable)
+	if !ok {
+		panic(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
+	}
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		keys[zctypes.StoreKey],
@@ -416,8 +428,11 @@ func NewBabylonApp(
 		&ibcKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.BtcCheckpointKeeper,
+		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
+		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
 		epochingKeeper,
+		tmClient,
+		storeQuerier,
 		scopedZoneConciergeKeeper,
 	)
 
@@ -480,6 +495,7 @@ func NewBabylonApp(
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
 		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks()),
 	)
+	app.ZoneConciergeKeeper.SetCheckpointingKeeper(app.CheckpointingKeeper)
 
 	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
 	// change to correct implementations
@@ -496,7 +512,6 @@ func NewBabylonApp(
 			&powLimit,
 			btcConfig.CheckpointTag(),
 		)
-
 	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
 
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(

@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -14,8 +17,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/ed25519"
-	"math/rand"
-	"testing"
 )
 
 // FuzzWrappedCreateValidator tests adding new validators via
@@ -71,12 +72,12 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 
 		// check whether the length of current validator set equals to 1 + n
 		// since one genesis validator was added when setup
-		valSet := ck.GetValidatorSet(ctx, 2)
+		valSet = ck.GetValidatorSet(ctx, 2)
 		require.Equal(t, len(wcvMsgs)+1, len(valSet))
 		for _, msg := range wcvMsgs {
 			found := false
 			for _, val := range valSet {
-				if msg.MsgCreateValidator.ValidatorAddress == val.Addr.String() {
+				if msg.MsgCreateValidator.ValidatorAddress == val.GetValAddressStr() {
 					found = true
 				}
 			}
@@ -105,6 +106,9 @@ func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreat
 	}
 	blsPrivKey := bls12381.GenPrivKey()
 	pop, err := privval.BuildPoP(tmValPrivkey, blsPrivKey)
+	if err != nil {
+		return nil, err
+	}
 	blsPubKey := blsPrivKey.PubKey()
 
 	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)

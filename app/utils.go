@@ -3,7 +3,6 @@ package app
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"text/template"
@@ -71,7 +70,8 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 		WithFromAddress(sdk.AccAddress(wrappedPV.GetAddress())).
 		WithFeeGranterAddress(sdk.AccAddress(wrappedPV.GetAddress())).
 		WithSkipConfirmation(true).
-		WithKeyring(kr)
+		WithKeyring(kr).
+		WithNodeURI(nodeCfg.RPC.ListenAddress)
 
 	return &PrivSigner{
 		WrappedPV: wrappedPV,
@@ -127,5 +127,5 @@ func writeConfigToFile(configFilePath string, config *config.ClientConfig) error
 		return err
 	}
 
-	return ioutil.WriteFile(configFilePath, buffer.Bytes(), 0600)
+	return os.WriteFile(configFilePath, buffer.Bytes(), 0600)
 }

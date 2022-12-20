@@ -3,7 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
-	"io/ioutil"
+	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -59,7 +59,7 @@ func NewGenesisKey(delAddr sdk.ValAddress, blsPubKey *bls12381.PublicKey, pop *P
 }
 
 func LoadGenesisKeyFromFile(filePath string) (*GenesisKey, error) {
-	genBlsJSONBytes, err := ioutil.ReadFile(filePath)
+	genBlsJSONBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}

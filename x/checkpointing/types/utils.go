@@ -27,6 +27,12 @@ func (m RawCheckpoint) Hash() RawCkptHash {
 	return hash(fields)
 }
 
+// SignedMsg is the message corresponding to the BLS sig in this raw checkpoint
+// Its value should be (epoch_number || last_commit_hash)
+func (m RawCheckpoint) SignedMsg() []byte {
+	return append(sdk.Uint64ToBigEndian(m.EpochNum), *m.LastCommitHash...)
+}
+
 func hash(fields [][]byte) []byte {
 	var bz []byte
 	for _, b := range fields {
@@ -45,8 +51,15 @@ func (m RawCkptHash) Bytes() []byte {
 
 func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {
 	btcCkpt, err := btctxformatter.DecodeRawCheckpoint(btctxformatter.CurrentVersion, btcCkptBytes)
+	if err != nil {
+		return nil, err
+	}
+	return FromBTCCkptToRawCkpt(btcCkpt)
+}
+
+func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpoint, error) {
 	var lch LastCommitHash
-	err = lch.Unmarshal(btcCkpt.LastCommitHash)
+	err := lch.Unmarshal(btcCkpt.LastCommitHash)
 	if err != nil {
 		return nil, err
 	}

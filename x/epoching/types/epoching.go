@@ -1,36 +1,29 @@
 package types
 
 import (
+	"time"
+
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
-func NewEpoch(epochNumber uint64, epochInterval uint64, lastBlockHeader *tmproto.Header) Epoch {
+// NewEpoch constructs a new Epoch object
+// The relationship between block and epoch is as follows, assuming epoch interval of 5:
+// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
+// 0 |     1     |     2      |
+func NewEpoch(epochNumber uint64, epochInterval uint64, firstBlockHeight uint64, lastBlockHeader *tmproto.Header) Epoch {
 	return Epoch{
 		EpochNumber:          epochNumber,
 		CurrentEpochInterval: epochInterval,
-		FirstBlockHeight:     firstBlockHeight(epochNumber, epochInterval),
+		FirstBlockHeight:     firstBlockHeight,
 		LastBlockHeader:      lastBlockHeader,
-	}
-}
-
-// firstBlockHeight returns the height of the first block of a given epoch and epoch interval
-// TODO (non-urgent): add support to variable epoch interval
-func firstBlockHeight(epochNumber uint64, epochInterval uint64) uint64 {
-	// example: in epoch 2, epoch interval is 5 blocks, FirstBlockHeight will be (2-1)*5+1 = 6
-	// 0 | 1 2 3 4 5 | 6 7 8 9 10 |
-	// 0 |     1     |     2      |
-	if epochNumber == 0 {
-		return 0
-	} else {
-		return (epochNumber-1)*epochInterval + 1
+		// NOTE: SealerHeader will be set in the next epoch
 	}
 }
 
@@ -63,6 +56,11 @@ func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
 	return e.GetSecondBlockHeight() == uint64(ctx.BlockHeight())
 }
 
+// IsFirstBlockOfNextEpoch checks whether the current block is the first block of
+// the next epoch
+// CONTRACT: IsFirstBlockOfNextEpoch can only be called by the epoching module
+// once upon the first block of a new epoch
+// other modules should use IsFirstBlock instead.
 func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 	if e.EpochNumber == 0 {
 		return ctx.BlockHeight() == 1
@@ -70,6 +68,23 @@ func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
 		height := uint64(ctx.BlockHeight())
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
+}
+
+// WithinBoundary checks whether the given height is within this epoch or not
+func (e Epoch) WithinBoundary(height uint64) bool {
+	if height < e.FirstBlockHeight || height > uint64(e.LastBlockHeader.Height) {
+		return false
+	} else {
+		return true
+	}
+}
+
+// ValidateBasic does sanity checks on Epoch
+func (e Epoch) ValidateBasic() error {
+	if e.CurrentEpochInterval < 2 {
+		return ErrInvalidEpoch.Wrapf("CurrentEpochInterval (%d) < 2", e.CurrentEpochInterval)
+	}
+	return nil
 }
 
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg

@@ -18,7 +18,7 @@ func FuzzEpoch(f *testing.F) {
 
 		// generate a random epoch
 		epochNumber := rand.Uint64() + 1
-		curEpochInterval := rand.Uint64()%100 + 1
+		curEpochInterval := rand.Uint64()%100 + 2
 		firstBlockHeight := rand.Uint64() + 1
 
 		// genesis block case with some probability

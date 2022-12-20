@@ -1347,6 +1347,96 @@ paths:
                       proposer_address:
                         type: string
                         format: byte
+                  app_hash_root:
+                    type: string
+                    format: byte
+                    title: >-
+                      app_hash_root is the Merkle root of all AppHashs in this
+                      epoch
+
+                      It will be used for proving a block is in an epoch
+                  sealer_header:
+                    title: >-
+                      sealer_header is the 2nd header of the next epoch
+
+                      This validator set has generated a BLS multisig on
+                      `last_commit_hash` of the sealer header
+                    type: object
+                    properties:
+                      version:
+                        title: basic block info
+                        type: object
+                        properties:
+                          block:
+                            type: string
+                            format: uint64
+                          app:
+                            type: string
+                            format: uint64
+                        description: >-
+                          Consensus captures the consensus rules for processing
+                          a block in the blockchain,
+
+                          including all blockchain data structures and the rules
+                          of the application's
+
+                          state transition machine.
+                      chain_id:
+                        type: string
+                      height:
+                        type: string
+                        format: int64
+                      time:
+                        type: string
+                        format: date-time
+                      last_block_id:
+                        title: prev block info
+                        type: object
+                        properties:
+                          hash:
+                            type: string
+                            format: byte
+                          part_set_header:
+                            type: object
+                            properties:
+                              total:
+                                type: integer
+                                format: int64
+                              hash:
+                                type: string
+                                format: byte
+                            title: PartsetHeader
+                      last_commit_hash:
+                        type: string
+                        format: byte
+                        title: hashes of block data
+                      data_hash:
+                        type: string
+                        format: byte
+                      validators_hash:
+                        type: string
+                        format: byte
+                        title: hashes from the app output from the prev block
+                      next_validators_hash:
+                        type: string
+                        format: byte
+                      consensus_hash:
+                        type: string
+                        format: byte
+                      app_hash:
+                        type: string
+                        format: byte
+                      last_results_hash:
+                        type: string
+                        format: byte
+                      evidence_hash:
+                        type: string
+                        format: byte
+                        title: consensus info
+                      proposer_address:
+                        type: string
+                        format: byte
+                    description: Header defines the structure of a Tendermint block header.
         default:
           description: An unexpected error response.
           schema:
@@ -2160,6 +2250,316 @@ paths:
       parameters:
         - name: epoch_num
           description: epoch_num is the number of epoch of the requested msg queue
+          in: path
+          required: true
+          type: string
+          format: uint64
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
+  /babylon/epoching/v1/epochs/{epoch_num}/validator_set:
+    get:
+      summary: EpochValSet queries the validator set of a given epoch
+      operationId: EpochValSet
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              validators:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    addr:
+                      type: string
+                      format: byte
+                      title: addr is the validator's address (in sdk.ValAddress)
+                    power:
+                      type: string
+                      format: int64
+                      title: power is the validator's voting power
+              total_voting_power:
+                type: string
+                format: int64
+              pagination:
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: epoch_num
           in: path
           required: true
           type: string
@@ -3395,9 +3795,12 @@ paths:
                     bls_pub_key:
                       type: string
                       format: byte
+                    voting_power:
+                      type: string
+                      format: uint64
                   title: >-
-                    ValidatorWithBlsKey couples validator address and its bls
-                    public key
+                    ValidatorWithBlsKey couples validator address, voting power,
+                    and its bls public key
               pagination:
                 description: pagination defines the pagination in the response.
                 type: object
@@ -4298,12 +4701,88 @@ paths:
 
                           (hash, height) jointly provides the position of the
                           header on CZ ledger
-                      babylon_block_height:
-                        type: string
-                        format: uint64
+                      babylon_header:
                         title: >-
-                          babylon_block_height is the height of the Babylon
-                          block that includes this header
+                          babylon_header is the header of the babylon block that
+                          includes this CZ header
+                        type: object
+                        properties:
+                          version:
+                            title: basic block info
+                            type: object
+                            properties:
+                              block:
+                                type: string
+                                format: uint64
+                              app:
+                                type: string
+                                format: uint64
+                            description: >-
+                              Consensus captures the consensus rules for
+                              processing a block in the blockchain,
+
+                              including all blockchain data structures and the
+                              rules of the application's
+
+                              state transition machine.
+                          chain_id:
+                            type: string
+                          height:
+                            type: string
+                            format: int64
+                          time:
+                            type: string
+                            format: date-time
+                          last_block_id:
+                            title: prev block info
+                            type: object
+                            properties:
+                              hash:
+                                type: string
+                                format: byte
+                              part_set_header:
+                                type: object
+                                properties:
+                                  total:
+                                    type: integer
+                                    format: int64
+                                  hash:
+                                    type: string
+                                    format: byte
+                                title: PartsetHeader
+                          last_commit_hash:
+                            type: string
+                            format: byte
+                            title: hashes of block data
+                          data_hash:
+                            type: string
+                            format: byte
+                          validators_hash:
+                            type: string
+                            format: byte
+                            title: hashes from the app output from the prev block
+                          next_validators_hash:
+                            type: string
+                            format: byte
+                          consensus_hash:
+                            type: string
+                            format: byte
+                          app_hash:
+                            type: string
+                            format: byte
+                          last_results_hash:
+                            type: string
+                            format: byte
+                          evidence_hash:
+                            type: string
+                            format: byte
+                            title: consensus info
+                          proposer_address:
+                            type: string
+                            format: byte
+                        description: >-
+                          Header defines the structure of a Tendermint block
+                          header.
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -4345,12 +4824,90 @@ paths:
 
                                 (hash, height) jointly provides the position of
                                 the header on CZ ledger
-                            babylon_block_height:
-                              type: string
-                              format: uint64
+                            babylon_header:
                               title: >-
-                                babylon_block_height is the height of the
-                                Babylon block that includes this header
+                                babylon_header is the header of the babylon
+                                block that includes this CZ header
+                              type: object
+                              properties:
+                                version:
+                                  title: basic block info
+                                  type: object
+                                  properties:
+                                    block:
+                                      type: string
+                                      format: uint64
+                                    app:
+                                      type: string
+                                      format: uint64
+                                  description: >-
+                                    Consensus captures the consensus rules for
+                                    processing a block in the blockchain,
+
+                                    including all blockchain data structures and
+                                    the rules of the application's
+
+                                    state transition machine.
+                                chain_id:
+                                  type: string
+                                height:
+                                  type: string
+                                  format: int64
+                                time:
+                                  type: string
+                                  format: date-time
+                                last_block_id:
+                                  title: prev block info
+                                  type: object
+                                  properties:
+                                    hash:
+                                      type: string
+                                      format: byte
+                                    part_set_header:
+                                      type: object
+                                      properties:
+                                        total:
+                                          type: integer
+                                          format: int64
+                                        hash:
+                                          type: string
+                                          format: byte
+                                      title: PartsetHeader
+                                last_commit_hash:
+                                  type: string
+                                  format: byte
+                                  title: hashes of block data
+                                data_hash:
+                                  type: string
+                                  format: byte
+                                validators_hash:
+                                  type: string
+                                  format: byte
+                                  title: >-
+                                    hashes from the app output from the prev
+                                    block
+                                next_validators_hash:
+                                  type: string
+                                  format: byte
+                                consensus_hash:
+                                  type: string
+                                  format: byte
+                                app_hash:
+                                  type: string
+                                  format: byte
+                                last_results_hash:
+                                  type: string
+                                  format: byte
+                                evidence_hash:
+                                  type: string
+                                  format: byte
+                                  title: consensus info
+                                proposer_address:
+                                  type: string
+                                  format: byte
+                              description: >-
+                                Header defines the structure of a Tendermint
+                                block header.
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -4852,12 +5409,88 @@ paths:
 
                           (hash, height) jointly provides the position of the
                           header on CZ ledger
-                      babylon_block_height:
-                        type: string
-                        format: uint64
+                      babylon_header:
                         title: >-
-                          babylon_block_height is the height of the Babylon
-                          block that includes this header
+                          babylon_header is the header of the babylon block that
+                          includes this CZ header
+                        type: object
+                        properties:
+                          version:
+                            title: basic block info
+                            type: object
+                            properties:
+                              block:
+                                type: string
+                                format: uint64
+                              app:
+                                type: string
+                                format: uint64
+                            description: >-
+                              Consensus captures the consensus rules for
+                              processing a block in the blockchain,
+
+                              including all blockchain data structures and the
+                              rules of the application's
+
+                              state transition machine.
+                          chain_id:
+                            type: string
+                          height:
+                            type: string
+                            format: int64
+                          time:
+                            type: string
+                            format: date-time
+                          last_block_id:
+                            title: prev block info
+                            type: object
+                            properties:
+                              hash:
+                                type: string
+                                format: byte
+                              part_set_header:
+                                type: object
+                                properties:
+                                  total:
+                                    type: integer
+                                    format: int64
+                                  hash:
+                                    type: string
+                                    format: byte
+                                title: PartsetHeader
+                          last_commit_hash:
+                            type: string
+                            format: byte
+                            title: hashes of block data
+                          data_hash:
+                            type: string
+                            format: byte
+                          validators_hash:
+                            type: string
+                            format: byte
+                            title: hashes from the app output from the prev block
+                          next_validators_hash:
+                            type: string
+                            format: byte
+                          consensus_hash:
+                            type: string
+                            format: byte
+                          app_hash:
+                            type: string
+                            format: byte
+                          last_results_hash:
+                            type: string
+                            format: byte
+                          evidence_hash:
+                            type: string
+                            format: byte
+                            title: consensus info
+                          proposer_address:
+                            type: string
+                            format: byte
+                        description: >-
+                          Header defines the structure of a Tendermint block
+                          header.
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -4899,12 +5532,90 @@ paths:
 
                                 (hash, height) jointly provides the position of
                                 the header on CZ ledger
-                            babylon_block_height:
-                              type: string
-                              format: uint64
+                            babylon_header:
                               title: >-
-                                babylon_block_height is the height of the
-                                Babylon block that includes this header
+                                babylon_header is the header of the babylon
+                                block that includes this CZ header
+                              type: object
+                              properties:
+                                version:
+                                  title: basic block info
+                                  type: object
+                                  properties:
+                                    block:
+                                      type: string
+                                      format: uint64
+                                    app:
+                                      type: string
+                                      format: uint64
+                                  description: >-
+                                    Consensus captures the consensus rules for
+                                    processing a block in the blockchain,
+
+                                    including all blockchain data structures and
+                                    the rules of the application's
+
+                                    state transition machine.
+                                chain_id:
+                                  type: string
+                                height:
+                                  type: string
+                                  format: int64
+                                time:
+                                  type: string
+                                  format: date-time
+                                last_block_id:
+                                  title: prev block info
+                                  type: object
+                                  properties:
+                                    hash:
+                                      type: string
+                                      format: byte
+                                    part_set_header:
+                                      type: object
+                                      properties:
+                                        total:
+                                          type: integer
+                                          format: int64
+                                        hash:
+                                          type: string
+                                          format: byte
+                                      title: PartsetHeader
+                                last_commit_hash:
+                                  type: string
+                                  format: byte
+                                  title: hashes of block data
+                                data_hash:
+                                  type: string
+                                  format: byte
+                                validators_hash:
+                                  type: string
+                                  format: byte
+                                  title: >-
+                                    hashes from the app output from the prev
+                                    block
+                                next_validators_hash:
+                                  type: string
+                                  format: byte
+                                consensus_hash:
+                                  type: string
+                                  format: byte
+                                app_hash:
+                                  type: string
+                                  format: byte
+                                last_results_hash:
+                                  type: string
+                                  format: byte
+                                evidence_hash:
+                                  type: string
+                                  format: byte
+                                  title: consensus info
+                                proposer_address:
+                                  type: string
+                                  format: byte
+                              description: >-
+                                Header defines the structure of a Tendermint
+                                block header.
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -5052,10 +5763,128 @@ paths:
                       proposer_address:
                         type: string
                         format: byte
-              btc_checkpoint_info:
+                  app_hash_root:
+                    type: string
+                    format: byte
+                    title: >-
+                      app_hash_root is the Merkle root of all AppHashs in this
+                      epoch
+
+                      It will be used for proving a block is in an epoch
+                  sealer_header:
+                    title: >-
+                      sealer_header is the 2nd header of the next epoch
+
+                      This validator set has generated a BLS multisig on
+                      `last_commit_hash` of the sealer header
+                    type: object
+                    properties:
+                      version:
+                        title: basic block info
+                        type: object
+                        properties:
+                          block:
+                            type: string
+                            format: uint64
+                          app:
+                            type: string
+                            format: uint64
+                        description: >-
+                          Consensus captures the consensus rules for processing
+                          a block in the blockchain,
+
+                          including all blockchain data structures and the rules
+                          of the application's
+
+                          state transition machine.
+                      chain_id:
+                        type: string
+                      height:
+                        type: string
+                        format: int64
+                      time:
+                        type: string
+                        format: date-time
+                      last_block_id:
+                        title: prev block info
+                        type: object
+                        properties:
+                          hash:
+                            type: string
+                            format: byte
+                          part_set_header:
+                            type: object
+                            properties:
+                              total:
+                                type: integer
+                                format: int64
+                              hash:
+                                type: string
+                                format: byte
+                            title: PartsetHeader
+                      last_commit_hash:
+                        type: string
+                        format: byte
+                        title: hashes of block data
+                      data_hash:
+                        type: string
+                        format: byte
+                      validators_hash:
+                        type: string
+                        format: byte
+                        title: hashes from the app output from the prev block
+                      next_validators_hash:
+                        type: string
+                        format: byte
+                      consensus_hash:
+                        type: string
+                        format: byte
+                      app_hash:
+                        type: string
+                        format: byte
+                      last_results_hash:
+                        type: string
+                        format: byte
+                      evidence_hash:
+                        type: string
+                        format: byte
+                        title: consensus info
+                      proposer_address:
+                        type: string
+                        format: byte
+                    description: Header defines the structure of a Tendermint block header.
+              raw_checkpoint:
+                title: raw_checkpoint is the raw checkpoint of this epoch
+                type: object
+                properties:
+                  epoch_num:
+                    type: string
+                    format: uint64
+                    title: >-
+                      epoch_num defines the epoch number the raw checkpoint is
+                      for
+                  last_commit_hash:
+                    type: string
+                    format: byte
+                    title: >-
+                      last_commit_hash defines the 'LastCommitHash' that
+                      individual BLS sigs are signed on
+                  bitmap:
+                    type: string
+                    format: byte
+                    title: >-
+                      bitmap defines the bitmap that indicates the signers of
+                      the BLS multi sig
+                  bls_multi_sig:
+                    type: string
+                    format: byte
+                    title: >-
+                      bls_multi_sig defines the multi sig that is aggregated
+                      from individual BLS sigs
+              btc_submission_key:
                 title: >-
-                  btc_checkpoint_info is the metadata of the checkpoint of the
-                  last BTC-finalised epoch
+                  btc_submission_key is position of two BTC txs that include the
+                  raw checkpoint of this epoch
                 type: object
                 properties:
                   key:
@@ -5107,117 +5936,172 @@ paths:
                 description: >-
                   TxProof represents a Merkle proof of the presence of a
                   transaction in the Merkle tree.
-              proof_block_in_epoch:
-                title: >-
-                  proof_block_in_epoch is the proof that the Babylon block is in
-                  a certain epoch
+              proof_header_in_epoch:
                 type: object
                 properties:
-                  ops:
+                  total:
+                    type: string
+                    format: int64
+                  index:
+                    type: string
+                    format: int64
+                  leaf_hash:
+                    type: string
+                    format: byte
+                  aunts:
+                    type: array
+                    items:
+                      type: string
+                      format: byte
+                title: >-
+                  proof_header_in_epoch is the proof that the Babylon header is
+                  in a certain epoch
+              proof_epoch_sealed:
+                title: proof_epoch_sealed is the proof that the epoch is sealed
+                type: object
+                properties:
+                  validator_set:
                     type: array
                     items:
                       type: object
                       properties:
-                        type:
+                        validator_address:
                           type: string
-                        key:
-                          type: string
-                          format: byte
-                        data:
+                        bls_pub_key:
                           type: string
                           format: byte
+                        voting_power:
+                          type: string
+                          format: uint64
                       title: >-
-                        ProofOp defines an operation used for calculating Merkle
-                        root
+                        ValidatorWithBlsKey couples validator address, voting
+                        power, and its bls public key
+                    title: >-
+                      validator_set is the validator set of the sealed epoch
 
-                        The data could be arbitrary format, providing nessecary
-                        data
+                      This validator set has generated a BLS multisig on
+                      `last_commit_hash` of the sealer header
+                  proof_epoch_info:
+                    title: >-
+                      proof_epoch_info is the Merkle proof that the epoch's
+                      metadata is committed to `app_hash` of the sealer header
+                    type: object
+                    properties:
+                      ops:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            key:
+                              type: string
+                              format: byte
+                            data:
+                              type: string
+                              format: byte
+                          title: >-
+                            ProofOp defines an operation used for calculating
+                            Merkle root
 
-                        for example neighbouring node hash
-              proof_epoch_ended:
-                title: >-
-                  proof_epoch_ended is the proof that the epoch metadata is
-                  included in the Babylon ledger
-                type: object
-                properties:
-                  ops:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        type:
-                          type: string
-                        key:
-                          type: string
-                          format: byte
-                        data:
-                          type: string
-                          format: byte
-                      title: >-
-                        ProofOp defines an operation used for calculating Merkle
-                        root
+                            The data could be arbitrary format, providing
+                            nessecary data
 
-                        The data could be arbitrary format, providing nessecary
-                        data
+                            for example neighbouring node hash
+                  proof_epoch_val_set:
+                    title: >-
+                      proof_epoch_info is the Merkle proof that the epoch's
+                      validator set is committed to `app_hash` of the sealer
+                      header
+                    type: object
+                    properties:
+                      ops:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            key:
+                              type: string
+                              format: byte
+                            data:
+                              type: string
+                              format: byte
+                          title: >-
+                            ProofOp defines an operation used for calculating
+                            Merkle root
 
-                        for example neighbouring node hash
+                            The data could be arbitrary format, providing
+                            nessecary data
+
+                            for example neighbouring node hash
               proof_epoch_submitted:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    key:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                          format: int64
+                        hash:
+                          type: string
+                          format: byte
+                      title: >-
+                        Each provided OP_RETURN transaction can be idendtified
+                        by hash of block in
+
+                        which transaction was included and transaction index in
+                        the block
+                      description: >-
+                        key is the position (txIdx, blockHash) of this tx on BTC
+                        blockchain
+
+                        Although it is already a part of SubmissionKey, we store
+                        it here again
+
+                        to make TransactionInfo self-contained.
+
+                        For example, storing the key allows TransactionInfo to
+                        not relay on 
+
+                        the fact that TransactionInfo will be ordered in the
+                        same order as 
+
+                        TransactionKeys in SubmissionKey.
+                    transaction:
+                      type: string
+                      format: byte
+                      title: transaction is the full transaction in bytes
+                    proof:
+                      type: string
+                      format: byte
+                      title: >-
+                        proof is the Merkle proof that this tx is included in
+                        the position in `key`
+
+                        TODO: maybe it could use here better format as we
+                        already processed and 
+
+                        valideated the proof?
+                  title: >-
+                    TransactionInfo is the info of a tx that contains Babylon
+                    checkpoint, including
+
+                    - the position of the tx on BTC blockchain
+
+                    - the full tx content
+
+                    - the Merkle proof that this tx is on the above position
                 title: >-
                   proof_epoch_submitted is the proof that the epoch's checkpoint
                   is included in BTC ledger
-                type: object
-                properties:
-                  btc_transaction:
-                    type: string
-                    format: byte
-                    description: Valid bitcoin transaction containing OP_RETURN opcode.
-                  btc_transaction_index:
-                    type: integer
-                    format: int64
-                    description: >-
-                      Index of transaction within the block. Index is needed to
-                      determine if
 
-                      currently hashed node is left or right.
-                  merkle_nodes:
-                    type: string
-                    format: byte
-                    description: >-
-                      List of concatenated intermediate merkle tree nodes,
-                      without root node and
-
-                      leaf node against which we calculate the proof. Each node
-                      has 32 byte
-
-                      length. Example proof can look like: 32_bytes_of_node1 ||
-                      32_bytes_of_node2
-
-                      ||  32_bytes_of_node3 so the length of the proof will
-                      always be divisible
-
-                      by 32.
-                  confirming_btc_header:
-                    type: string
-                    format: byte
-                    title: |-
-                      Valid btc header which confirms btc_transaction.
-                      Should have exactly 80 bytes
-                description: |-
-                  Consider we have a Merkle tree with following structure:
-                             ROOT
-                            /    \
-                       H1234      H5555
-                      /     \       \
-                    H12     H34      H55
-                   /  \    /  \     /
-                  H1  H2  H3  H4  H5
-                  L1  L2  L3  L4  L5
-                  To prove L3 was part of ROOT we need:
-                  - btc_transaction_index = 2 which in binary is 010
-                  (where 0 means going left, 1 means going right in the tree)
-                  - merkle_nodes we'd have H4 || H12 || H5555
-                  By looking at 010 we would know that H4 is a right sibling,
-                  H12 is left, H5555 is right again.
+                  It is the two TransactionInfo in the best (i.e., earliest)
+                  checkpoint submission
             description: >-
               QueryFinalizedChainInfoResponse is response type for the
               Query/FinalizedChainInfo RPC method.
@@ -5415,9 +6299,17 @@ paths:
                         }
       parameters:
         - name: chain_id
+          description: chain_id is the ID of the CZ
           in: path
           required: true
           type: string
+        - name: prove
+          description: >-
+            prove indicates whether the querier wants to get proofs of this
+            timestamp.
+          in: query
+          required: false
+          type: boolean
       tags:
         - Query
   /babylon/zoneconcierge/v1/params:
@@ -6551,6 +7443,94 @@ definitions:
           proposer_address:
             type: string
             format: byte
+      app_hash_root:
+        type: string
+        format: byte
+        title: |-
+          app_hash_root is the Merkle root of all AppHashs in this epoch
+          It will be used for proving a block is in an epoch
+      sealer_header:
+        title: >-
+          sealer_header is the 2nd header of the next epoch
+
+          This validator set has generated a BLS multisig on `last_commit_hash`
+          of the sealer header
+        type: object
+        properties:
+          version:
+            title: basic block info
+            type: object
+            properties:
+              block:
+                type: string
+                format: uint64
+              app:
+                type: string
+                format: uint64
+            description: >-
+              Consensus captures the consensus rules for processing a block in
+              the blockchain,
+
+              including all blockchain data structures and the rules of the
+              application's
+
+              state transition machine.
+          chain_id:
+            type: string
+          height:
+            type: string
+            format: int64
+          time:
+            type: string
+            format: date-time
+          last_block_id:
+            title: prev block info
+            type: object
+            properties:
+              hash:
+                type: string
+                format: byte
+              part_set_header:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    format: int64
+                  hash:
+                    type: string
+                    format: byte
+                title: PartsetHeader
+          last_commit_hash:
+            type: string
+            format: byte
+            title: hashes of block data
+          data_hash:
+            type: string
+            format: byte
+          validators_hash:
+            type: string
+            format: byte
+            title: hashes from the app output from the prev block
+          next_validators_hash:
+            type: string
+            format: byte
+          consensus_hash:
+            type: string
+            format: byte
+          app_hash:
+            type: string
+            format: byte
+          last_results_hash:
+            type: string
+            format: byte
+          evidence_hash:
+            type: string
+            format: byte
+            title: consensus info
+          proposer_address:
+            type: string
+            format: byte
+        description: Header defines the structure of a Tendermint block header.
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -6703,6 +7683,94 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
+          app_hash_root:
+            type: string
+            format: byte
+            title: |-
+              app_hash_root is the Merkle root of all AppHashs in this epoch
+              It will be used for proving a block is in an epoch
+          sealer_header:
+            title: >-
+              sealer_header is the 2nd header of the next epoch
+
+              This validator set has generated a BLS multisig on
+              `last_commit_hash` of the sealer header
+            type: object
+            properties:
+              version:
+                title: basic block info
+                type: object
+                properties:
+                  block:
+                    type: string
+                    format: uint64
+                  app:
+                    type: string
+                    format: uint64
+                description: >-
+                  Consensus captures the consensus rules for processing a block
+                  in the blockchain,
+
+                  including all blockchain data structures and the rules of the
+                  application's
+
+                  state transition machine.
+              chain_id:
+                type: string
+              height:
+                type: string
+                format: int64
+              time:
+                type: string
+                format: date-time
+              last_block_id:
+                title: prev block info
+                type: object
+                properties:
+                  hash:
+                    type: string
+                    format: byte
+                  part_set_header:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        format: int64
+                      hash:
+                        type: string
+                        format: byte
+                    title: PartsetHeader
+              last_commit_hash:
+                type: string
+                format: byte
+                title: hashes of block data
+              data_hash:
+                type: string
+                format: byte
+              validators_hash:
+                type: string
+                format: byte
+                title: hashes from the app output from the prev block
+              next_validators_hash:
+                type: string
+                format: byte
+              consensus_hash:
+                type: string
+                format: byte
+              app_hash:
+                type: string
+                format: byte
+              last_results_hash:
+                type: string
+                format: byte
+              evidence_hash:
+                type: string
+                format: byte
+                title: consensus info
+              proposer_address:
+                type: string
+                format: byte
+            description: Header defines the structure of a Tendermint block header.
   babylon.epoching.v1.QueryEpochMsgsResponse:
     type: object
     properties:
@@ -7100,6 +8168,51 @@ definitions:
     title: >-
       QueryEpochMsgsResponse is the response type for the Query/EpochMsgs RPC
       method
+  babylon.epoching.v1.QueryEpochValSetResponse:
+    type: object
+    properties:
+      validators:
+        type: array
+        items:
+          type: object
+          properties:
+            addr:
+              type: string
+              format: byte
+              title: addr is the validator's address (in sdk.ValAddress)
+            power:
+              type: string
+              format: int64
+              title: power is the validator's voting power
+      total_voting_power:
+        type: string
+        format: int64
+      pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
   babylon.epoching.v1.QueryLatestEpochMsgsResponse:
     type: object
     properties:
@@ -8287,6 +9400,17 @@ definitions:
       block_time:
         type: string
         format: date-time
+  babylon.epoching.v1.Validator:
+    type: object
+    properties:
+      addr:
+        type: string
+        format: byte
+        title: addr is the validator's address (in sdk.ValAddress)
+      power:
+        type: string
+        format: int64
+        title: power is the validator's voting power
   babylon.epoching.v1.ValidatorLifecycle:
     type: object
     properties:
@@ -8814,7 +9938,12 @@ definitions:
             bls_pub_key:
               type: string
               format: byte
-          title: ValidatorWithBlsKey couples validator address and its bls public key
+            voting_power:
+              type: string
+              format: uint64
+          title: >-
+            ValidatorWithBlsKey couples validator address, voting power, and its
+            bls public key
       pagination:
         description: pagination defines the pagination in the response.
         type: object
@@ -9282,58 +10411,60 @@ definitions:
       bls_pub_key:
         type: string
         format: byte
-    title: ValidatorWithBlsKey couples validator address and its bls public key
-  babylon.btccheckpoint.v1.BTCSpvProof:
+      voting_power:
+        type: string
+        format: uint64
+    title: >-
+      ValidatorWithBlsKey couples validator address, voting power, and its bls
+      public key
+  babylon.btccheckpoint.v1.TransactionInfo:
     type: object
     properties:
-      btc_transaction:
-        type: string
-        format: byte
-        description: Valid bitcoin transaction containing OP_RETURN opcode.
-      btc_transaction_index:
-        type: integer
-        format: int64
+      key:
+        type: object
+        properties:
+          index:
+            type: integer
+            format: int64
+          hash:
+            type: string
+            format: byte
+        title: >-
+          Each provided OP_RETURN transaction can be idendtified by hash of
+          block in
+
+          which transaction was included and transaction index in the block
         description: |-
-          Index of transaction within the block. Index is needed to determine if
-          currently hashed node is left or right.
-      merkle_nodes:
+          key is the position (txIdx, blockHash) of this tx on BTC blockchain
+          Although it is already a part of SubmissionKey, we store it here again
+          to make TransactionInfo self-contained.
+          For example, storing the key allows TransactionInfo to not relay on 
+          the fact that TransactionInfo will be ordered in the same order as 
+          TransactionKeys in SubmissionKey.
+      transaction:
         type: string
         format: byte
-        description: >-
-          List of concatenated intermediate merkle tree nodes, without root node
-          and
-
-          leaf node against which we calculate the proof. Each node has 32 byte
-
-          length. Example proof can look like: 32_bytes_of_node1 ||
-          32_bytes_of_node2
-
-          ||  32_bytes_of_node3 so the length of the proof will always be
-          divisible
-
-          by 32.
-      confirming_btc_header:
+        title: transaction is the full transaction in bytes
+      proof:
         type: string
         format: byte
-        title: |-
-          Valid btc header which confirms btc_transaction.
-          Should have exactly 80 bytes
-    description: |-
-      Consider we have a Merkle tree with following structure:
-                 ROOT
-                /    \
-           H1234      H5555
-          /     \       \
-        H12     H34      H55
-       /  \    /  \     /
-      H1  H2  H3  H4  H5
-      L1  L2  L3  L4  L5
-      To prove L3 was part of ROOT we need:
-      - btc_transaction_index = 2 which in binary is 010
-      (where 0 means going left, 1 means going right in the tree)
-      - merkle_nodes we'd have H4 || H12 || H5555
-      By looking at 010 we would know that H4 is a right sibling,
-      H12 is left, H5555 is right again.
+        title: >-
+          proof is the Merkle proof that this tx is included in the position in
+          `key`
+
+          TODO: maybe it could use here better format as we already processed
+          and 
+
+          valideated the proof?
+    title: >-
+      TransactionInfo is the info of a tx that contains Babylon checkpoint,
+      including
+
+      - the position of the tx on BTC blockchain
+
+      - the full tx content
+
+      - the Merkle proof that this tx is on the above position
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:
@@ -9359,12 +10490,86 @@ definitions:
 
               (hash, height) jointly provides the position of the header on CZ
               ledger
-          babylon_block_height:
-            type: string
-            format: uint64
+          babylon_header:
             title: >-
-              babylon_block_height is the height of the Babylon block that
-              includes this header
+              babylon_header is the header of the babylon block that includes
+              this CZ header
+            type: object
+            properties:
+              version:
+                title: basic block info
+                type: object
+                properties:
+                  block:
+                    type: string
+                    format: uint64
+                  app:
+                    type: string
+                    format: uint64
+                description: >-
+                  Consensus captures the consensus rules for processing a block
+                  in the blockchain,
+
+                  including all blockchain data structures and the rules of the
+                  application's
+
+                  state transition machine.
+              chain_id:
+                type: string
+              height:
+                type: string
+                format: int64
+              time:
+                type: string
+                format: date-time
+              last_block_id:
+                title: prev block info
+                type: object
+                properties:
+                  hash:
+                    type: string
+                    format: byte
+                  part_set_header:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        format: int64
+                      hash:
+                        type: string
+                        format: byte
+                    title: PartsetHeader
+              last_commit_hash:
+                type: string
+                format: byte
+                title: hashes of block data
+              data_hash:
+                type: string
+                format: byte
+              validators_hash:
+                type: string
+                format: byte
+                title: hashes from the app output from the prev block
+              next_validators_hash:
+                type: string
+                format: byte
+              consensus_hash:
+                type: string
+                format: byte
+              app_hash:
+                type: string
+                format: byte
+              last_results_hash:
+                type: string
+                format: byte
+              evidence_hash:
+                type: string
+                format: byte
+                title: consensus info
+              proposer_address:
+                type: string
+                format: byte
+            description: Header defines the structure of a Tendermint block header.
           babylon_epoch:
             type: string
             format: uint64
@@ -9403,12 +10608,86 @@ definitions:
 
                     (hash, height) jointly provides the position of the header
                     on CZ ledger
-                babylon_block_height:
-                  type: string
-                  format: uint64
+                babylon_header:
                   title: >-
-                    babylon_block_height is the height of the Babylon block that
-                    includes this header
+                    babylon_header is the header of the babylon block that
+                    includes this CZ header
+                  type: object
+                  properties:
+                    version:
+                      title: basic block info
+                      type: object
+                      properties:
+                        block:
+                          type: string
+                          format: uint64
+                        app:
+                          type: string
+                          format: uint64
+                      description: >-
+                        Consensus captures the consensus rules for processing a
+                        block in the blockchain,
+
+                        including all blockchain data structures and the rules
+                        of the application's
+
+                        state transition machine.
+                    chain_id:
+                      type: string
+                    height:
+                      type: string
+                      format: int64
+                    time:
+                      type: string
+                      format: date-time
+                    last_block_id:
+                      title: prev block info
+                      type: object
+                      properties:
+                        hash:
+                          type: string
+                          format: byte
+                        part_set_header:
+                          type: object
+                          properties:
+                            total:
+                              type: integer
+                              format: int64
+                            hash:
+                              type: string
+                              format: byte
+                          title: PartsetHeader
+                    last_commit_hash:
+                      type: string
+                      format: byte
+                      title: hashes of block data
+                    data_hash:
+                      type: string
+                      format: byte
+                    validators_hash:
+                      type: string
+                      format: byte
+                      title: hashes from the app output from the prev block
+                    next_validators_hash:
+                      type: string
+                      format: byte
+                    consensus_hash:
+                      type: string
+                      format: byte
+                    app_hash:
+                      type: string
+                      format: byte
+                    last_results_hash:
+                      type: string
+                      format: byte
+                    evidence_hash:
+                      type: string
+                      format: byte
+                      title: consensus info
+                    proposer_address:
+                      type: string
+                      format: byte
+                  description: Header defines the structure of a Tendermint block header.
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -9477,12 +10756,86 @@ definitions:
 
                 (hash, height) jointly provides the position of the header on CZ
                 ledger
-            babylon_block_height:
-              type: string
-              format: uint64
+            babylon_header:
               title: >-
-                babylon_block_height is the height of the Babylon block that
-                includes this header
+                babylon_header is the header of the babylon block that includes
+                this CZ header
+              type: object
+              properties:
+                version:
+                  title: basic block info
+                  type: object
+                  properties:
+                    block:
+                      type: string
+                      format: uint64
+                    app:
+                      type: string
+                      format: uint64
+                  description: >-
+                    Consensus captures the consensus rules for processing a
+                    block in the blockchain,
+
+                    including all blockchain data structures and the rules of
+                    the application's
+
+                    state transition machine.
+                chain_id:
+                  type: string
+                height:
+                  type: string
+                  format: int64
+                time:
+                  type: string
+                  format: date-time
+                last_block_id:
+                  title: prev block info
+                  type: object
+                  properties:
+                    hash:
+                      type: string
+                      format: byte
+                    part_set_header:
+                      type: object
+                      properties:
+                        total:
+                          type: integer
+                          format: int64
+                        hash:
+                          type: string
+                          format: byte
+                      title: PartsetHeader
+                last_commit_hash:
+                  type: string
+                  format: byte
+                  title: hashes of block data
+                data_hash:
+                  type: string
+                  format: byte
+                validators_hash:
+                  type: string
+                  format: byte
+                  title: hashes from the app output from the prev block
+                next_validators_hash:
+                  type: string
+                  format: byte
+                consensus_hash:
+                  type: string
+                  format: byte
+                app_hash:
+                  type: string
+                  format: byte
+                last_results_hash:
+                  type: string
+                  format: byte
+                evidence_hash:
+                  type: string
+                  format: byte
+                  title: consensus info
+                proposer_address:
+                  type: string
+                  format: byte
+              description: Header defines the structure of a Tendermint block header.
             babylon_epoch:
               type: string
               format: uint64
@@ -9542,12 +10895,86 @@ definitions:
 
           (hash, height) jointly provides the position of the header on CZ
           ledger
-      babylon_block_height:
-        type: string
-        format: uint64
+      babylon_header:
         title: >-
-          babylon_block_height is the height of the Babylon block that includes
-          this header
+          babylon_header is the header of the babylon block that includes this
+          CZ header
+        type: object
+        properties:
+          version:
+            title: basic block info
+            type: object
+            properties:
+              block:
+                type: string
+                format: uint64
+              app:
+                type: string
+                format: uint64
+            description: >-
+              Consensus captures the consensus rules for processing a block in
+              the blockchain,
+
+              including all blockchain data structures and the rules of the
+              application's
+
+              state transition machine.
+          chain_id:
+            type: string
+          height:
+            type: string
+            format: int64
+          time:
+            type: string
+            format: date-time
+          last_block_id:
+            title: prev block info
+            type: object
+            properties:
+              hash:
+                type: string
+                format: byte
+              part_set_header:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    format: int64
+                  hash:
+                    type: string
+                    format: byte
+                title: PartsetHeader
+          last_commit_hash:
+            type: string
+            format: byte
+            title: hashes of block data
+          data_hash:
+            type: string
+            format: byte
+          validators_hash:
+            type: string
+            format: byte
+            title: hashes from the app output from the prev block
+          next_validators_hash:
+            type: string
+            format: byte
+          consensus_hash:
+            type: string
+            format: byte
+          app_hash:
+            type: string
+            format: byte
+          last_results_hash:
+            type: string
+            format: byte
+          evidence_hash:
+            type: string
+            format: byte
+            title: consensus info
+          proposer_address:
+            type: string
+            format: byte
+        description: Header defines the structure of a Tendermint block header.
       babylon_epoch:
         type: string
         format: uint64
@@ -9564,6 +10991,96 @@ definitions:
   babylon.zoneconcierge.v1.Params:
     type: object
     description: Params defines the parameters for the module.
+  babylon.zoneconcierge.v1.ProofEpochSealed:
+    type: object
+    properties:
+      validator_set:
+        type: array
+        items:
+          type: object
+          properties:
+            validator_address:
+              type: string
+            bls_pub_key:
+              type: string
+              format: byte
+            voting_power:
+              type: string
+              format: uint64
+          title: >-
+            ValidatorWithBlsKey couples validator address, voting power, and its
+            bls public key
+        title: >-
+          validator_set is the validator set of the sealed epoch
+
+          This validator set has generated a BLS multisig on `last_commit_hash`
+          of the sealer header
+      proof_epoch_info:
+        title: >-
+          proof_epoch_info is the Merkle proof that the epoch's metadata is
+          committed to `app_hash` of the sealer header
+        type: object
+        properties:
+          ops:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                key:
+                  type: string
+                  format: byte
+                data:
+                  type: string
+                  format: byte
+              title: |-
+                ProofOp defines an operation used for calculating Merkle root
+                The data could be arbitrary format, providing nessecary data
+                for example neighbouring node hash
+      proof_epoch_val_set:
+        title: >-
+          proof_epoch_info is the Merkle proof that the epoch's validator set is
+          committed to `app_hash` of the sealer header
+        type: object
+        properties:
+          ops:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                key:
+                  type: string
+                  format: byte
+                data:
+                  type: string
+                  format: byte
+              title: |-
+                ProofOp defines an operation used for calculating Merkle root
+                The data could be arbitrary format, providing nessecary data
+                for example neighbouring node hash
+    title: >-
+      ProofEpochSealed is the proof that an epoch is sealed by the sealer
+      header, i.e., the 2nd header of the next epoch
+
+      With the access of metadata
+
+      - Metadata of this epoch, which includes the sealer header
+
+      - Raw checkpoint of this epoch
+
+      The verifier can perform the following verification rules:
+
+      - The raw checkpoint's `last_commit_hash` is same as in the sealer header
+
+      - More than 1/3 (in voting power) validators in the validator set of this
+      epoch have signed `last_commit_hash` of the sealer header
+
+      - The epoch medatata is committed to the `app_hash` of the sealer header
+
+      - The validator set is committed to the `app_hash` of the sealer header
   babylon.zoneconcierge.v1.QueryChainInfoResponse:
     type: object
     properties:
@@ -9593,12 +11110,86 @@ definitions:
 
                   (hash, height) jointly provides the position of the header on
                   CZ ledger
-              babylon_block_height:
-                type: string
-                format: uint64
+              babylon_header:
                 title: >-
-                  babylon_block_height is the height of the Babylon block that
-                  includes this header
+                  babylon_header is the header of the babylon block that
+                  includes this CZ header
+                type: object
+                properties:
+                  version:
+                    title: basic block info
+                    type: object
+                    properties:
+                      block:
+                        type: string
+                        format: uint64
+                      app:
+                        type: string
+                        format: uint64
+                    description: >-
+                      Consensus captures the consensus rules for processing a
+                      block in the blockchain,
+
+                      including all blockchain data structures and the rules of
+                      the application's
+
+                      state transition machine.
+                  chain_id:
+                    type: string
+                  height:
+                    type: string
+                    format: int64
+                  time:
+                    type: string
+                    format: date-time
+                  last_block_id:
+                    title: prev block info
+                    type: object
+                    properties:
+                      hash:
+                        type: string
+                        format: byte
+                      part_set_header:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            format: int64
+                          hash:
+                            type: string
+                            format: byte
+                        title: PartsetHeader
+                  last_commit_hash:
+                    type: string
+                    format: byte
+                    title: hashes of block data
+                  data_hash:
+                    type: string
+                    format: byte
+                  validators_hash:
+                    type: string
+                    format: byte
+                    title: hashes from the app output from the prev block
+                  next_validators_hash:
+                    type: string
+                    format: byte
+                  consensus_hash:
+                    type: string
+                    format: byte
+                  app_hash:
+                    type: string
+                    format: byte
+                  last_results_hash:
+                    type: string
+                    format: byte
+                  evidence_hash:
+                    type: string
+                    format: byte
+                    title: consensus info
+                  proposer_address:
+                    type: string
+                    format: byte
+                description: Header defines the structure of a Tendermint block header.
               babylon_epoch:
                 type: string
                 format: uint64
@@ -9638,12 +11229,88 @@ definitions:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
-                    babylon_block_height:
-                      type: string
-                      format: uint64
+                    babylon_header:
                       title: >-
-                        babylon_block_height is the height of the Babylon block
-                        that includes this header
+                        babylon_header is the header of the babylon block that
+                        includes this CZ header
+                      type: object
+                      properties:
+                        version:
+                          title: basic block info
+                          type: object
+                          properties:
+                            block:
+                              type: string
+                              format: uint64
+                            app:
+                              type: string
+                              format: uint64
+                          description: >-
+                            Consensus captures the consensus rules for
+                            processing a block in the blockchain,
+
+                            including all blockchain data structures and the
+                            rules of the application's
+
+                            state transition machine.
+                        chain_id:
+                          type: string
+                        height:
+                          type: string
+                          format: int64
+                        time:
+                          type: string
+                          format: date-time
+                        last_block_id:
+                          title: prev block info
+                          type: object
+                          properties:
+                            hash:
+                              type: string
+                              format: byte
+                            part_set_header:
+                              type: object
+                              properties:
+                                total:
+                                  type: integer
+                                  format: int64
+                                hash:
+                                  type: string
+                                  format: byte
+                              title: PartsetHeader
+                        last_commit_hash:
+                          type: string
+                          format: byte
+                          title: hashes of block data
+                        data_hash:
+                          type: string
+                          format: byte
+                        validators_hash:
+                          type: string
+                          format: byte
+                          title: hashes from the app output from the prev block
+                        next_validators_hash:
+                          type: string
+                          format: byte
+                        consensus_hash:
+                          type: string
+                          format: byte
+                        app_hash:
+                          type: string
+                          format: byte
+                        last_results_hash:
+                          type: string
+                          format: byte
+                        evidence_hash:
+                          type: string
+                          format: byte
+                          title: consensus info
+                        proposer_address:
+                          type: string
+                          format: byte
+                      description: >-
+                        Header defines the structure of a Tendermint block
+                        header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -9731,12 +11398,86 @@ definitions:
 
                   (hash, height) jointly provides the position of the header on
                   CZ ledger
-              babylon_block_height:
-                type: string
-                format: uint64
+              babylon_header:
                 title: >-
-                  babylon_block_height is the height of the Babylon block that
-                  includes this header
+                  babylon_header is the header of the babylon block that
+                  includes this CZ header
+                type: object
+                properties:
+                  version:
+                    title: basic block info
+                    type: object
+                    properties:
+                      block:
+                        type: string
+                        format: uint64
+                      app:
+                        type: string
+                        format: uint64
+                    description: >-
+                      Consensus captures the consensus rules for processing a
+                      block in the blockchain,
+
+                      including all blockchain data structures and the rules of
+                      the application's
+
+                      state transition machine.
+                  chain_id:
+                    type: string
+                  height:
+                    type: string
+                    format: int64
+                  time:
+                    type: string
+                    format: date-time
+                  last_block_id:
+                    title: prev block info
+                    type: object
+                    properties:
+                      hash:
+                        type: string
+                        format: byte
+                      part_set_header:
+                        type: object
+                        properties:
+                          total:
+                            type: integer
+                            format: int64
+                          hash:
+                            type: string
+                            format: byte
+                        title: PartsetHeader
+                  last_commit_hash:
+                    type: string
+                    format: byte
+                    title: hashes of block data
+                  data_hash:
+                    type: string
+                    format: byte
+                  validators_hash:
+                    type: string
+                    format: byte
+                    title: hashes from the app output from the prev block
+                  next_validators_hash:
+                    type: string
+                    format: byte
+                  consensus_hash:
+                    type: string
+                    format: byte
+                  app_hash:
+                    type: string
+                    format: byte
+                  last_results_hash:
+                    type: string
+                    format: byte
+                  evidence_hash:
+                    type: string
+                    format: byte
+                    title: consensus info
+                  proposer_address:
+                    type: string
+                    format: byte
+                description: Header defines the structure of a Tendermint block header.
               babylon_epoch:
                 type: string
                 format: uint64
@@ -9776,12 +11517,88 @@ definitions:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
-                    babylon_block_height:
-                      type: string
-                      format: uint64
+                    babylon_header:
                       title: >-
-                        babylon_block_height is the height of the Babylon block
-                        that includes this header
+                        babylon_header is the header of the babylon block that
+                        includes this CZ header
+                      type: object
+                      properties:
+                        version:
+                          title: basic block info
+                          type: object
+                          properties:
+                            block:
+                              type: string
+                              format: uint64
+                            app:
+                              type: string
+                              format: uint64
+                          description: >-
+                            Consensus captures the consensus rules for
+                            processing a block in the blockchain,
+
+                            including all blockchain data structures and the
+                            rules of the application's
+
+                            state transition machine.
+                        chain_id:
+                          type: string
+                        height:
+                          type: string
+                          format: int64
+                        time:
+                          type: string
+                          format: date-time
+                        last_block_id:
+                          title: prev block info
+                          type: object
+                          properties:
+                            hash:
+                              type: string
+                              format: byte
+                            part_set_header:
+                              type: object
+                              properties:
+                                total:
+                                  type: integer
+                                  format: int64
+                                hash:
+                                  type: string
+                                  format: byte
+                              title: PartsetHeader
+                        last_commit_hash:
+                          type: string
+                          format: byte
+                          title: hashes of block data
+                        data_hash:
+                          type: string
+                          format: byte
+                        validators_hash:
+                          type: string
+                          format: byte
+                          title: hashes from the app output from the prev block
+                        next_validators_hash:
+                          type: string
+                          format: byte
+                        consensus_hash:
+                          type: string
+                          format: byte
+                        app_hash:
+                          type: string
+                          format: byte
+                        last_results_hash:
+                          type: string
+                          format: byte
+                        evidence_hash:
+                          type: string
+                          format: byte
+                          title: consensus info
+                        proposer_address:
+                          type: string
+                          format: byte
+                      description: >-
+                        Header defines the structure of a Tendermint block
+                        header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -9927,10 +11744,124 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
-      btc_checkpoint_info:
+          app_hash_root:
+            type: string
+            format: byte
+            title: |-
+              app_hash_root is the Merkle root of all AppHashs in this epoch
+              It will be used for proving a block is in an epoch
+          sealer_header:
+            title: >-
+              sealer_header is the 2nd header of the next epoch
+
+              This validator set has generated a BLS multisig on
+              `last_commit_hash` of the sealer header
+            type: object
+            properties:
+              version:
+                title: basic block info
+                type: object
+                properties:
+                  block:
+                    type: string
+                    format: uint64
+                  app:
+                    type: string
+                    format: uint64
+                description: >-
+                  Consensus captures the consensus rules for processing a block
+                  in the blockchain,
+
+                  including all blockchain data structures and the rules of the
+                  application's
+
+                  state transition machine.
+              chain_id:
+                type: string
+              height:
+                type: string
+                format: int64
+              time:
+                type: string
+                format: date-time
+              last_block_id:
+                title: prev block info
+                type: object
+                properties:
+                  hash:
+                    type: string
+                    format: byte
+                  part_set_header:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        format: int64
+                      hash:
+                        type: string
+                        format: byte
+                    title: PartsetHeader
+              last_commit_hash:
+                type: string
+                format: byte
+                title: hashes of block data
+              data_hash:
+                type: string
+                format: byte
+              validators_hash:
+                type: string
+                format: byte
+                title: hashes from the app output from the prev block
+              next_validators_hash:
+                type: string
+                format: byte
+              consensus_hash:
+                type: string
+                format: byte
+              app_hash:
+                type: string
+                format: byte
+              last_results_hash:
+                type: string
+                format: byte
+              evidence_hash:
+                type: string
+                format: byte
+                title: consensus info
+              proposer_address:
+                type: string
+                format: byte
+            description: Header defines the structure of a Tendermint block header.
+      raw_checkpoint:
+        title: raw_checkpoint is the raw checkpoint of this epoch
+        type: object
+        properties:
+          epoch_num:
+            type: string
+            format: uint64
+            title: epoch_num defines the epoch number the raw checkpoint is for
+          last_commit_hash:
+            type: string
+            format: byte
+            title: >-
+              last_commit_hash defines the 'LastCommitHash' that individual BLS
+              sigs are signed on
+          bitmap:
+            type: string
+            format: byte
+            title: >-
+              bitmap defines the bitmap that indicates the signers of the BLS
+              multi sig
+          bls_multi_sig:
+            type: string
+            format: byte
+            title: >-
+              bls_multi_sig defines the multi sig that is aggregated from
+              individual BLS sigs
+      btc_submission_key:
         title: >-
-          btc_checkpoint_info is the metadata of the checkpoint of the last
-          BTC-finalised epoch
+          btc_submission_key is position of two BTC txs that include the raw
+          checkpoint of this epoch
         type: object
         properties:
           key:
@@ -9982,109 +11913,169 @@ definitions:
         description: >-
           TxProof represents a Merkle proof of the presence of a transaction in
           the Merkle tree.
-      proof_block_in_epoch:
+      proof_header_in_epoch:
+        type: object
+        properties:
+          total:
+            type: string
+            format: int64
+          index:
+            type: string
+            format: int64
+          leaf_hash:
+            type: string
+            format: byte
+          aunts:
+            type: array
+            items:
+              type: string
+              format: byte
         title: >-
-          proof_block_in_epoch is the proof that the Babylon block is in a
+          proof_header_in_epoch is the proof that the Babylon header is in a
           certain epoch
+      proof_epoch_sealed:
+        title: proof_epoch_sealed is the proof that the epoch is sealed
         type: object
         properties:
-          ops:
+          validator_set:
             type: array
             items:
               type: object
               properties:
-                type:
+                validator_address:
                   type: string
-                key:
-                  type: string
-                  format: byte
-                data:
+                bls_pub_key:
                   type: string
                   format: byte
-              title: |-
-                ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
-                for example neighbouring node hash
-      proof_epoch_ended:
-        title: >-
-          proof_epoch_ended is the proof that the epoch metadata is included in
-          the Babylon ledger
-        type: object
-        properties:
-          ops:
-            type: array
-            items:
-              type: object
-              properties:
-                type:
+                voting_power:
                   type: string
-                key:
-                  type: string
-                  format: byte
-                data:
-                  type: string
-                  format: byte
-              title: |-
-                ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
-                for example neighbouring node hash
+                  format: uint64
+              title: >-
+                ValidatorWithBlsKey couples validator address, voting power, and
+                its bls public key
+            title: >-
+              validator_set is the validator set of the sealed epoch
+
+              This validator set has generated a BLS multisig on
+              `last_commit_hash` of the sealer header
+          proof_epoch_info:
+            title: >-
+              proof_epoch_info is the Merkle proof that the epoch's metadata is
+              committed to `app_hash` of the sealer header
+            type: object
+            properties:
+              ops:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
+
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
+          proof_epoch_val_set:
+            title: >-
+              proof_epoch_info is the Merkle proof that the epoch's validator
+              set is committed to `app_hash` of the sealer header
+            type: object
+            properties:
+              ops:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
+
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
       proof_epoch_submitted:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: object
+              properties:
+                index:
+                  type: integer
+                  format: int64
+                hash:
+                  type: string
+                  format: byte
+              title: >-
+                Each provided OP_RETURN transaction can be idendtified by hash
+                of block in
+
+                which transaction was included and transaction index in the
+                block
+              description: >-
+                key is the position (txIdx, blockHash) of this tx on BTC
+                blockchain
+
+                Although it is already a part of SubmissionKey, we store it here
+                again
+
+                to make TransactionInfo self-contained.
+
+                For example, storing the key allows TransactionInfo to not relay
+                on 
+
+                the fact that TransactionInfo will be ordered in the same order
+                as 
+
+                TransactionKeys in SubmissionKey.
+            transaction:
+              type: string
+              format: byte
+              title: transaction is the full transaction in bytes
+            proof:
+              type: string
+              format: byte
+              title: >-
+                proof is the Merkle proof that this tx is included in the
+                position in `key`
+
+                TODO: maybe it could use here better format as we already
+                processed and 
+
+                valideated the proof?
+          title: >-
+            TransactionInfo is the info of a tx that contains Babylon
+            checkpoint, including
+
+            - the position of the tx on BTC blockchain
+
+            - the full tx content
+
+            - the Merkle proof that this tx is on the above position
         title: >-
           proof_epoch_submitted is the proof that the epoch's checkpoint is
           included in BTC ledger
-        type: object
-        properties:
-          btc_transaction:
-            type: string
-            format: byte
-            description: Valid bitcoin transaction containing OP_RETURN opcode.
-          btc_transaction_index:
-            type: integer
-            format: int64
-            description: >-
-              Index of transaction within the block. Index is needed to
-              determine if
 
-              currently hashed node is left or right.
-          merkle_nodes:
-            type: string
-            format: byte
-            description: >-
-              List of concatenated intermediate merkle tree nodes, without root
-              node and
-
-              leaf node against which we calculate the proof. Each node has 32
-              byte
-
-              length. Example proof can look like: 32_bytes_of_node1 ||
-              32_bytes_of_node2
-
-              ||  32_bytes_of_node3 so the length of the proof will always be
-              divisible
-
-              by 32.
-          confirming_btc_header:
-            type: string
-            format: byte
-            title: |-
-              Valid btc header which confirms btc_transaction.
-              Should have exactly 80 bytes
-        description: |-
-          Consider we have a Merkle tree with following structure:
-                     ROOT
-                    /    \
-               H1234      H5555
-              /     \       \
-            H12     H34      H55
-           /  \    /  \     /
-          H1  H2  H3  H4  H5
-          L1  L2  L3  L4  L5
-          To prove L3 was part of ROOT we need:
-          - btc_transaction_index = 2 which in binary is 010
-          (where 0 means going left, 1 means going right in the tree)
-          - merkle_nodes we'd have H4 || H12 || H5555
-          By looking at 010 we would know that H4 is a right sibling,
-          H12 is left, H5555 is right again.
+          It is the two TransactionInfo in the best (i.e., earliest) checkpoint
+          submission
     description: >-
       QueryFinalizedChainInfoResponse is response type for the
       Query/FinalizedChainInfo RPC method.

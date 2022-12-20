@@ -43,7 +43,7 @@ func TestRandomizedGenState(t *testing.T) {
 	var epochingGenesis types.GenesisState
 	simState.Cdc.MustUnmarshalJSON(simState.GenState[types.ModuleName], &epochingGenesis)
 
-	require.Equal(t, uint64(0x1), epochingGenesis.Params.EpochInterval)
+	require.Equal(t, uint64(0x2), epochingGenesis.Params.EpochInterval)
 }
 
 // TestRandomizedGenState1 tests abnormal scenarios of applying RandomizedGenState.

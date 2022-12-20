@@ -1,11 +1,11 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
-
 	"bytes"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
@@ -15,7 +15,6 @@ func FuzzNewHeaderInfo(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
 		rand.Seed(seed)
@@ -28,7 +27,7 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		headerInfo := types.NewBTCHeaderInfo(expectedHeaderBytes, expectedHeaderHashBytes, height, &work)
 		// Check that all attributes are properly set
 		if headerInfo == nil {
-			t.Errorf("returned object is nil")
+			t.Fatalf("returned object is nil")
 		}
 		if headerInfo.Header == nil {
 			t.Errorf("Header inside header info is nil")
@@ -38,12 +37,12 @@ func FuzzNewHeaderInfo(f *testing.F) {
 		}
 
 		gotHeaderBytes := headerInfo.Header.MustMarshal()
-		if bytes.Compare(expectedHeaderBytes.MustMarshal(), gotHeaderBytes) != 0 {
+		if !bytes.Equal(expectedHeaderBytes.MustMarshal(), gotHeaderBytes) {
 			t.Errorf("Expected header %s got %s", expectedHeaderBytes, gotHeaderBytes)
 		}
 
 		gotHashBytes := *headerInfo.Hash
-		if bytes.Compare(expectedHeaderHashBytes.MustMarshal(), gotHashBytes.MustMarshal()) != 0 {
+		if !bytes.Equal(expectedHeaderHashBytes.MustMarshal(), gotHashBytes.MustMarshal()) {
 			t.Errorf("Expected header hash %s got %s", expectedHeaderHashBytes, gotHashBytes)
 		}
 

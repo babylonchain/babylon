@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"cosmossdk.io/math"
 	"errors"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -174,4 +175,42 @@ func (k Keeper) DelegationLifecycle(c context.Context, req *types.QueryDelegatio
 	return &types.QueryDelegationLifecycleResponse{
 		DelLife: lc,
 	}, nil
+}
+
+func (k Keeper) EpochValSet(c context.Context, req *types.QueryEpochValSetRequest) (*types.QueryEpochValSetResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	epoch := k.GetEpoch(ctx)
+	if epoch.EpochNumber < req.EpochNum {
+		return nil, types.ErrUnknownEpochNumber
+	}
+
+	totalVotingPower := k.GetTotalVotingPower(ctx, epoch.EpochNumber)
+
+	vals := []*types.Validator{}
+	epochValSetStore := k.valSetStore(ctx, epoch.EpochNumber)
+	pageRes, err := query.Paginate(epochValSetStore, req.Pagination, func(key, value []byte) error {
+		// Here key is the validator's ValAddress, and value is the voting power
+		var power math.Int
+		if err := power.Unmarshal(value); err != nil {
+			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error())) // this only happens upon a programming error
+		}
+		val := types.Validator{
+			Addr:  key,
+			Power: power.Int64(),
+		}
+		// append to msgs
+		vals = append(vals, &val)
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryEpochValSetResponse{
+		Validators:       vals,
+		TotalVotingPower: totalVotingPower,
+		Pagination:       pageRes,
+	}
+	return resp, nil
 }

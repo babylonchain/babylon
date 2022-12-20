@@ -503,8 +503,6 @@ func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 
 func RandomRawCheckpointDataForEpoch(e uint64) *TestRawCheckpointData {
 	checkpointData := getRandomCheckpointDataForEpoch(e)
-	tag := txformat.MainTag(0)
-
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
 		LastCommitHash:   checkpointData.lastCommitHash,
@@ -512,16 +510,20 @@ func RandomRawCheckpointDataForEpoch(e uint64) *TestRawCheckpointData {
 		SubmitterAddress: checkpointData.submitterAddress,
 		BlsSig:           checkpointData.blsSig,
 	}
+	return EncodeRawCkptToTestData(rawBTCCkpt)
+}
+
+func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawCheckpointData {
+	tag := txformat.MainTag(0)
 	data1, data2 := txformat.MustEncodeCheckpointData(
 		tag,
 		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)
-
 	opReturn := getExpectedOpReturn(tag, data1, data2)
 
 	return &TestRawCheckpointData{
-		Epoch:            e,
+		Epoch:            rawBTCCkpt.Epoch,
 		FirstPart:        data1,
 		SecondPart:       data2,
 		ExpectedOpReturn: opReturn,

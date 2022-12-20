@@ -52,7 +52,7 @@ func (k Keeper) tryToUpdateLatestHeader(ctx sdk.Context, chainID string, header 
 	return nil
 }
 
-func (k Keeper) trpToUpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}

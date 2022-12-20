@@ -1,7 +1,10 @@
 package types
 
 import (
+	context "context"
+
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -9,6 +12,8 @@ import (
 	connectiontypes "github.com/cosmos/ibc-go/v5/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v5/modules/core/exported"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
+	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.
@@ -64,9 +69,20 @@ type ScopedKeeper interface {
 
 type BtcCheckpointKeeper interface {
 	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
+	GetSubmissionData(ctx sdk.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
+}
+
+type CheckpointingKeeper interface {
+	GetBLSPubKeySet(ctx sdk.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
 }
 
 type EpochingKeeper interface {
 	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch
+	ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error)
+}
+
+// TMClient is a Tendermint client that allows to query tx inclusion proofs
+type TMClient interface {
+	Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error)
 }

@@ -3,8 +3,9 @@ package cli
 import (
 	"errors"
 	"fmt"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"path/filepath"
+
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 
 	flag "github.com/spf13/pflag"
 
@@ -104,8 +105,10 @@ func buildWrappedCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs
 
 	home, _ := fs.GetString(flags.FlagHome)
 	valKey, err := getValKeyFromFile(home)
+	if err != nil {
+		return txf, nil, err
+	}
 	wrappedMsg, err := types.NewMsgWrappedCreateValidator(msg, &valKey.BlsPubkey, valKey.PoP)
-
 	if err != nil {
 		return txf, nil, err
 	}

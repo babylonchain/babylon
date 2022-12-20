@@ -43,7 +43,7 @@ func FuzzSlashedValSet(f *testing.F) {
 		sortVals(excpectedSlashedVals)
 		actualSlashedVals = types.NewSortedValidatorSet(actualSlashedVals)
 		for i := range actualSlashedVals {
-			require.Equal(t, excpectedSlashedVals[i], actualSlashedVals[i].Addr)
+			require.Equal(t, excpectedSlashedVals[i], actualSlashedVals[i].GetValAddress())
 		}
 
 		// go to the 1st block and thus epoch 1

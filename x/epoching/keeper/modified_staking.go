@@ -36,7 +36,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	k.stk.UnbondAllMatureValidators(ctx)
 	// record state update of being UNBONDED for mature validators
 	for _, valAddr := range matureValidators {
-		k.RecordNewValState(currentCtx, valAddr, types.BondState_UNBONDED)
+		k.RecordNewValState(currentCtx, valAddr, types.BondState_UNBONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 	}
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
@@ -60,7 +60,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the validator
-		k.RecordNewDelegationState(currentCtx, delAddr, valAddr, types.BondState_UNBONDED)
+		k.RecordNewDelegationState(currentCtx, delAddr, valAddr, types.BondState_UNBONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 
 		currentCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -102,9 +102,9 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		k.RecordNewDelegationState(currentCtx, delAddr, valSrcAddr, types.BondState_UNBONDED)
-		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_CREATED)
-		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_BONDED)
+		k.RecordNewDelegationState(currentCtx, delAddr, valSrcAddr, types.BondState_UNBONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
+		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_CREATED)  //nolint:errcheck // either we ignore the error here, or propoagate up the stack
+		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_BONDED)   //nolint:errcheck // either we ignore the error here, or propoagate up the stack
 
 		currentCtx.EventManager().EmitEvent(
 			sdk.NewEvent(

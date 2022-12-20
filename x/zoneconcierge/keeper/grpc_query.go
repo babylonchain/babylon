@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -73,30 +74,71 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
 	}
 
-	// find the metadata of this epoch
+	// find the epoch metadata
 	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the btc checkpoint info of this epoch
+	// find the btc checkpoint tx index of this epoch
 	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
 	if ed.Status != btcctypes.Finalized {
 		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
-		panic(err)
+		panic(err) // this can only be a programming error
 	}
 	if len(ed.Key) == 0 {
 		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
-		panic(err)
+		panic(err) // this can only be a programming error
 	}
-	bestSubmissionKey := ed.Key[0]
+	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
 
-	// TODO: construct inclusion proofs
+	// get raw checkpoint of this epoch
+	rawCheckpointBytes := ed.RawCheckpoint
+	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(rawCheckpointBytes)
+	if err != nil {
+		return nil, err
+	}
 
 	resp := &types.QueryFinalizedChainInfoResponse{
 		FinalizedChainInfo: chainInfo,
-		EpochInfo:          epochInfo,
-		BtcCheckpointInfo:  bestSubmissionKey,
+		// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
+		EpochInfo:        epochInfo,
+		RawCheckpoint:    rawCheckpoint,
+		BtcSubmissionKey: bestSubmissionKey,
 	}
+
+	// if the query does not want the proofs, return here
+	if !req.Prove {
+		return resp, nil
+	}
+
+	// Proof that the Babylon tx is in block
+	resp.ProofTxInBlock, err = k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
+	if err != nil {
+		return nil, err
+	}
+
+	// proof that the block is in this epoch
+	resp.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeader, epochInfo)
+	if err != nil {
+		return nil, err
+	}
+
+	// proof that the epoch is sealed
+	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)
+	if err != nil {
+		return nil, err
+	}
+
+	// proof that the epoch's checkpoint is submitted to BTC
+	// i.e., the two `TransactionInfo`s for the checkpoint
+	resp.ProofEpochSubmitted, err = k.ProveEpochSubmitted(ctx, *bestSubmissionKey)
+	if err != nil {
+		// The only error in ProveEpochSubmitted is the nil bestSubmission.
+		// Since the epoch w.r.t. the bestSubmissionKey is finalised, this
+		// can only be a programming error, so we should panic here.
+		panic(err)
+	}
+
 	return resp, nil
 }

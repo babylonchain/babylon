@@ -22,13 +22,14 @@ func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterHeaderWithValidCommit is triggered upon each CZ header with a valid QC
 func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibctmtypes.Header, isOnFork bool) {
+	babylonHeader := ctx.BlockHeader()
 	indexedHeader := types.IndexedHeader{
-		ChainId:            header.Header.ChainID,
-		Hash:               header.Header.LastCommitHash,
-		Height:             uint64(header.Header.Height),
-		BabylonBlockHeight: uint64(ctx.BlockHeight()),
-		BabylonEpoch:       h.k.GetEpoch(ctx).EpochNumber,
-		BabylonTxHash:      txHash,
+		ChainId:       header.Header.ChainID,
+		Hash:          header.Header.LastCommitHash,
+		Height:        uint64(header.Header.Height),
+		BabylonHeader: &babylonHeader,
+		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
+		BabylonTxHash: txHash,
 	}
 	if isOnFork {
 		// insert header to fork index
@@ -36,7 +37,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 		// update the latest fork in chain info
-		if err := h.k.trpToUpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.tryToUpdateLatestForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	} else {
