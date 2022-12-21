@@ -37,7 +37,7 @@ service Query {
     option (google.api.http).get = "/babylon/checkpointing/v1/epochs:status_count";
   }
 
-  // LastCheckpointWithStatus queries the last checkpoint with a given status
+  // LastCheckpointWithStatus queries the last checkpoint with a given status or a more matured status
   rpc LastCheckpointWithStatus(QueryLastCheckpointWithStatusRequest) returns (QueryLastCheckpointWithStatusResponse);
 
   // Parameters queries the parameters of the module.

@@ -93,22 +93,34 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
-		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch})
+		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch}).AnyTimes()
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(tipEpoch)
 		finalizedEpoch := datagen.RandomInt(int(tipEpoch))
 		for e := uint64(0); e < tipEpoch; e++ {
 			if e <= finalizedEpoch {
 				checkpoints[int(e)].Status = types.Finalized
+			} else {
+				checkpoints[int(e)].Status = types.Sealed
 			}
 			err := ckptKeeper.AddRawCheckpoint(ctx, checkpoints[int(e)])
 			require.NoError(t, err)
 		}
+		// request the last finalized checkpoint
 		req := types.NewQueryLastCheckpointWithStatus(types.Finalized)
 		expectedResp := &types.QueryLastCheckpointWithStatusResponse{
 			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
 		}
 		resp, err := ckptKeeper.LastCheckpointWithStatus(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, expectedResp, resp)
+
+		// request the last confirmed checkpoint
+		req = types.NewQueryLastCheckpointWithStatus(types.Confirmed)
+		expectedResp = &types.QueryLastCheckpointWithStatusResponse{
+			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
+		}
+		resp, err = ckptKeeper.LastCheckpointWithStatus(ctx, req)
 		require.NoError(t, err)
 		require.Equal(t, expectedResp, resp)
 	})

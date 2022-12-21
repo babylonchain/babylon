@@ -824,7 +824,7 @@ type QueryClient interface {
 	EpochStatus(ctx context.Context, in *QueryEpochStatusRequest, opts ...grpc.CallOption) (*QueryEpochStatusResponse, error)
 	// RecentEpochStatusCount queries the number of epochs with each status in recent epochs
 	RecentEpochStatusCount(ctx context.Context, in *QueryRecentEpochStatusCountRequest, opts ...grpc.CallOption) (*QueryRecentEpochStatusCountResponse, error)
-	// LastCheckpointWithStatus queries the last checkpoint with a given status
+	// LastCheckpointWithStatus queries the last checkpoint with a given status or a more matured status
 	LastCheckpointWithStatus(ctx context.Context, in *QueryLastCheckpointWithStatusRequest, opts ...grpc.CallOption) (*QueryLastCheckpointWithStatusResponse, error)
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
@@ -913,7 +913,7 @@ type QueryServer interface {
 	EpochStatus(context.Context, *QueryEpochStatusRequest) (*QueryEpochStatusResponse, error)
 	// RecentEpochStatusCount queries the number of epochs with each status in recent epochs
 	RecentEpochStatusCount(context.Context, *QueryRecentEpochStatusCountRequest) (*QueryRecentEpochStatusCountResponse, error)
-	// LastCheckpointWithStatus queries the last checkpoint with a given status
+	// LastCheckpointWithStatus queries the last checkpoint with a given status or a more matured status
 	LastCheckpointWithStatus(context.Context, *QueryLastCheckpointWithStatusRequest) (*QueryLastCheckpointWithStatusResponse, error)
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)

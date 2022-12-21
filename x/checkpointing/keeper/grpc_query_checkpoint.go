@@ -109,7 +109,9 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	}, nil
 }
 
-// LastCheckpointWithStatus returns the last checkpoint with a given status
+// LastCheckpointWithStatus returns the last checkpoint with the given status
+// if the checkpoint with the given status does not exist, return the last
+// checkpoint that is more mature than the given status
 func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLastCheckpointWithStatusRequest) (*types.QueryLastCheckpointWithStatusResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -125,7 +127,7 @@ func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLa
 		if err != nil {
 			return nil, fmt.Errorf("failed to get the raw checkpoint at epoch %v: %w", e, err)
 		}
-		if ckpt.Status == req.Status {
+		if ckpt.Status == req.Status || ckpt.IsMoreMatureThanStatus(req.Status) {
 			return &types.QueryLastCheckpointWithStatusResponse{RawCheckpoint: ckpt.Ckpt}, nil
 		}
 	}
