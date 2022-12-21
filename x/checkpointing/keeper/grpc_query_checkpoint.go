@@ -120,8 +120,8 @@ func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLa
 	if err != nil {
 		return nil, fmt.Errorf("failed to get the last checkpointed epoch number: %w", err)
 	}
-	for e := tipCheckpointedEpoch; e >= 0; e-- {
-		ckpt, err := k.GetRawCheckpoint(sdkCtx, e)
+	for e := int(tipCheckpointedEpoch); e >= 0; e-- {
+		ckpt, err := k.GetRawCheckpoint(sdkCtx, uint64(e))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get the raw checkpoint at epoch %v: %w", e, err)
 		}
