@@ -104,6 +104,10 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	return true, nil
 }
 
+func (cm *RawCheckpointWithMeta) IsMoreMatureThanStatus(status CheckpointStatus) bool {
+	return cm.Status > status
+}
+
 func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
 	bz, err := hex.DecodeString(s)
 	if err != nil {
