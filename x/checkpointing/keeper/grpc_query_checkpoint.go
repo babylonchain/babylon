@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -80,10 +81,9 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// minus 1 is because the current epoch is not finished
-	tipEpoch := k.GetEpoch(sdkCtx).EpochNumber - 1
-	if tipEpoch < 0 { //nolint:staticcheck // uint64 doesn't go below zero but we want to let people know that's an invalid request.
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	tipEpoch, err := k.GetLastCheckpointedEpoch(sdkCtx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the last checkpointed epoch")
 	}
 	targetEpoch := tipEpoch - req.EpochCount + 1
 	if targetEpoch < 0 { //nolint:staticcheck // uint64 doesn't go below zero
@@ -109,10 +109,39 @@ func (k Keeper) RecentEpochStatusCount(ctx context.Context, req *types.QueryRece
 	}, nil
 }
 
-func (k Keeper) RecentRawCheckpointList(c context.Context, req *types.QueryRecentRawCheckpointListRequest) (*types.QueryRecentRawCheckpointListResponse, error) {
-	panic("TODO: implement this")
+// LastCheckpointWithStatus returns the last checkpoint with a given status
+func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLastCheckpointWithStatusRequest) (*types.QueryLastCheckpointWithStatusResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	tipCheckpointedEpoch, err := k.GetLastCheckpointedEpoch(sdkCtx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get the last checkpointed epoch number: %w", err)
+	}
+	for e := tipCheckpointedEpoch; e >= 0; e-- {
+		ckpt, err := k.GetRawCheckpoint(sdkCtx, e)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get the raw checkpoint at epoch %v: %w", e, err)
+		}
+		if ckpt.Status == req.Status {
+			return &types.QueryLastCheckpointWithStatusResponse{RawCheckpoint: ckpt.Ckpt}, nil
+		}
+	}
+	return nil, fmt.Errorf("cannot find checkpoint with status %v", req.Status)
 }
 
-func (k Keeper) LatestCheckpoint(c context.Context, req *types.QueryLatestCheckpointRequest) (*types.QueryLatestCheckpointResponse, error) {
-	panic("TODO: implement this")
+// GetLastCheckpointedEpoch returns the last epoch number that associates with a checkpoint
+func (k Keeper) GetLastCheckpointedEpoch(ctx sdk.Context) (uint64, error) {
+	// minus 1 is because the current epoch is not finished
+	tipEpoch := k.GetEpoch(ctx).EpochNumber - 1
+	if tipEpoch < 0 { //nolint:staticcheck // uint64 doesn't go below zero but we want to let people know that's an invalid request.
+		return 0, fmt.Errorf("tip epoch number must not be negative")
+	}
+	_, err := k.GetRawCheckpoint(ctx, tipEpoch)
+	if err != nil {
+		return 0, fmt.Errorf("cannot get raw checkpoint at epoch %v", tipEpoch)
+	}
+	return tipEpoch, nil
 }

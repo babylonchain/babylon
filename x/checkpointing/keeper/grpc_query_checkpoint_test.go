@@ -82,3 +82,34 @@ func FuzzQueryStatusCount(f *testing.F) {
 		require.Equal(t, expectedResp, resp)
 	})
 }
+
+func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		// test querying recent epoch counts with each status in recent epochs
+		tipEpoch := datagen.RandomInt(100) + 10
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		ek := mocks.NewMockEpochingKeeper(ctrl)
+		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(tipEpoch)
+		finalizedEpoch := datagen.RandomInt(int(tipEpoch))
+		for e := uint64(0); e < tipEpoch; e++ {
+			if e <= finalizedEpoch {
+				checkpoints[int(e)].Status = types.Finalized
+			}
+			err := ckptKeeper.AddRawCheckpoint(ctx, checkpoints[int(e)])
+			require.NoError(t, err)
+		}
+		req := types.NewQueryLastCheckpointWithStatus(types.Finalized)
+		expectedResp := &types.QueryLastCheckpointWithStatusResponse{
+			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
+		}
+		resp, err := ckptKeeper.LastCheckpointWithStatus(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, expectedResp, resp)
+	})
+}
