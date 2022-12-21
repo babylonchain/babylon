@@ -142,9 +142,6 @@ func (k Keeper) GetLastCheckpointedEpoch(ctx sdk.Context) (uint64, error) {
 	}
 	// minus 1 is because the current epoch is not finished
 	tipEpoch := curEpoch - 1
-	if tipEpoch < 0 { //nolint:staticcheck // uint64 doesn't go below zero but we want to let people know that's an invalid request.
-		return 0, fmt.Errorf("tip epoch number must not be negative")
-	}
 	_, err := k.GetRawCheckpoint(ctx, tipEpoch)
 	if err != nil {
 		return 0, fmt.Errorf("cannot get raw checkpoint at epoch %v", tipEpoch)
