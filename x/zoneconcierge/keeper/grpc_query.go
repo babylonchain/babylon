@@ -8,6 +8,7 @@ import (
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -41,6 +42,37 @@ func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (
 	// find the chain info of this epoch
 	chainInfo := k.GetChainInfo(ctx, req.ChainId)
 	resp := &types.QueryChainInfoResponse{ChainInfo: chainInfo}
+	return resp, nil
+}
+
+// ListHeaders returns all headers of a chain with given ID, with pagination support
+func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersRequest) (*types.QueryListHeadersResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	headers := []*types.IndexedHeader{}
+	store := k.canonicalChainStore(ctx, req.ChainId)
+	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+		var header types.IndexedHeader
+		k.cdc.MustUnmarshal(value, &header)
+		headers = append(headers, &header)
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryListHeadersResponse{
+		Headers:    headers,
+		Pagination: pageRes,
+	}
 	return resp, nil
 }
 
