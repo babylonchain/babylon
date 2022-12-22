@@ -10,6 +10,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
@@ -81,6 +82,39 @@ func FuzzChainInfo(f *testing.F) {
 		chainInfo := resp.ChainInfo
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
+	})
+}
+
+func FuzzListHeaders(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+
+		ctx := babylonChain.GetContext()
+		hooks := zcKeeper.Hooks()
+
+		// invoke the hook a random number of times to simulate a random number of blocks
+		numHeaders := datagen.RandomInt(100) + 1
+		numForkHeaders := datagen.RandomInt(10) + 1
+		headers, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+
+		// a request with randomised pagination
+		limit := datagen.RandomInt(int(numHeaders)) + 1
+		req := &zctypes.QueryListHeadersRequest{
+			ChainId: czChain.ChainID,
+			Pagination: &query.PageRequest{
+				Limit: limit,
+			},
+		}
+		resp, err := zcKeeper.ListHeaders(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, int(limit), len(resp.Headers))
+		for i := uint64(0); i < limit; i++ {
+			require.Equal(t, headers[i].Header.LastCommitHash, resp.Headers[i].Hash)
+		}
 	})
 }
 
