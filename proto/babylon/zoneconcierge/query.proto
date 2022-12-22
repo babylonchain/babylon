@@ -30,6 +30,10 @@ service Query {
   rpc ChainInfo(QueryChainInfoRequest) returns (QueryChainInfoResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}";
   }
+  // ListHeaders queries the headers of a chain in Babylon's view, with pagination support
+  rpc ListHeaders(QueryListHeadersRequest) returns (QueryListHeadersResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/headers/{chain_id}";
+  }
   // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
   rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest) returns (QueryFinalizedChainInfoResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}";
@@ -62,6 +66,21 @@ message QueryChainInfoRequest {
 message QueryChainInfoResponse {
   // chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
+}
+
+// QueryListHeadersRequest is request type for the Query/ListHeaders RPC method.
+message QueryListHeadersRequest {
+  string chain_id = 1;
+  // pagination defines whether to have the pagination in the response
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListHeadersResponse is response type for the Query/ListHeaders RPC method.
+message QueryListHeadersResponse {
+  // headers is the list of headers
+  repeated babylon.zoneconcierge.v1.IndexedHeader headers = 1;
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
