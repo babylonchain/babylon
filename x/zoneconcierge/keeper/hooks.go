@@ -41,12 +41,19 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 	} else {
+		// ensure the header is the latest one, otherwise ignore it
+		// NOTE: while an old header is considered acceptable in IBC-Go (see Case_valid_past_update), but
+		// ZoneConcierge should not checkpoint it since Babylon requires monotonic checkpointing
+		if !h.k.GetChainInfo(ctx, indexedHeader.ChainId).IsLatestHeader(&indexedHeader) {
+			return
+		}
+
 		// insert header to canonical chain index
 		if err := h.k.insertHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 		// update the latest canonical header in chain info
-		if err := h.k.tryToUpdateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.updateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	}
