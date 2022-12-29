@@ -24,4 +24,4 @@ cd ..
 cp -r github.com/babylonchain/babylon/* ./
 rm -rf github.com
 
-go mod tidy -compat=1.18
+go mod tidy -compat=1.19
