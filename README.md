@@ -2,11 +2,11 @@
 
 ## Requirements
 
-- Go 1.18
+- Go 1.19
 
 ## Development requirements
 
-- Go 1.18
+- Go 1.19
 - Docker
 
 ## Building
@@ -92,7 +92,7 @@ A brief description of the contents:
 
 ### Running the node
 ```console
-babylond start --home ./.testnet/node0/babylond 
+babylond start --home ./.testnet/node0/babylond
 ```
 
 ### Logs
