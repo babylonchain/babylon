@@ -43,6 +43,12 @@ jobs:
             make localnet-start-test
             sudo -E env "PATH=$PATH" make test-babylon-integration
             make localnet-stop
+      # TODO: If CI tests will take to long consider having only this e2e test
+      # instead of separate integration tests and e2e tests.
+      - run:
+          name: Run e2e tests
+          command: |
+            make test-e2e
 
 
 # Invoke jobs via workflows
