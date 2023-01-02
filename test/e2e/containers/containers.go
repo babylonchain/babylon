@@ -206,8 +206,11 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
 		Cmd:        []string{"start"},
+		Env: []string{
+			"HOME=/babylondata",
+		},
 		Mounts: []string{
-			fmt.Sprintf("%s/:/data/node0/babylond", valCondifDir),
+			fmt.Sprintf("%s/:/babylondata", valCondifDir),
 		},
 	}
 
