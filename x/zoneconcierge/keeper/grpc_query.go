@@ -45,6 +45,27 @@ func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (
 	return resp, nil
 }
 
+// EpochChainInfo returns the info of a chain with given ID in a given epoch
+func (k Keeper) EpochChainInfo(c context.Context, req *types.QueryEpochChainInfoRequest) (*types.QueryEpochChainInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// find the chain info of the given epoch
+	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, req.EpochNum)
+	if err != nil {
+		return nil, err
+	}
+	resp := &types.QueryEpochChainInfoResponse{ChainInfo: chainInfo}
+	return resp, nil
+}
+
 // ListHeaders returns all headers of a chain with given ID, with pagination support
 func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersRequest) (*types.QueryListHeadersResponse, error) {
 	if req == nil {
