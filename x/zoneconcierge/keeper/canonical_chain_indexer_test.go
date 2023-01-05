@@ -14,7 +14,8 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()

@@ -14,7 +14,8 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
@@ -33,5 +34,42 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
+	})
+}
+
+func FuzzGetEpochHeaders(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
+		epochingKeeper := babylonApp.EpochingKeeper
+
+		ctx := babylonChain.GetContext()
+		hooks := zcKeeper.Hooks()
+
+		// enter a random epoch
+		epochNum := datagen.RandomInt(10) + 1
+		for i := uint64(0); i < epochNum; i++ {
+			epochingKeeper.IncEpoch(ctx)
+		}
+
+		// invoke the hook a random number of times to simulate a random number of blocks
+		numHeaders := datagen.RandomInt(100) + 1
+		numForkHeaders := datagen.RandomInt(10) + 1
+		expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+
+		// end this epoch so that the chain info is recorded
+		hooks.AfterEpochEnds(ctx, epochNum)
+
+		// check if the headers are same as expected
+		headers, err := zcKeeper.GetEpochHeaders(ctx, czChain.ChainID, epochNum)
+		require.NoError(t, err)
+		require.Equal(t, len(expectedHeaders), len(headers))
+		for i := 0; i < len(expectedHeaders); i++ {
+			require.Equal(t, expectedHeaders[i].Header.LastCommitHash, headers[i].Hash)
+		}
 	})
 }
