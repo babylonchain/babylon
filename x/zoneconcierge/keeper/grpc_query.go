@@ -145,7 +145,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	// It's possible that the chain info's epoch is way before the last finalised epoch
 	// e.g., when there is no relayer for many epochs
-	// NOTE: if an epoch is finalisedm then all of its previous epochs are also finalised
+	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
 	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
 		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
 	}
