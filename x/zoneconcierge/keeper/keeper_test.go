@@ -46,11 +46,11 @@ func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID strin
 }
 
 // SimulateHeadersViaHook generates a random non-zero number of canonical headers and fork headers via the hook
-func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string, numHeaders uint64, numForkHeaders uint64) ([]*ibctmtypes.Header, []*ibctmtypes.Header) {
+func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string, startHeight uint64, numHeaders uint64, numForkHeaders uint64) ([]*ibctmtypes.Header, []*ibctmtypes.Header) {
 	headers := []*ibctmtypes.Header{}
 	// invoke the hook a number of times to simulate a number of blocks
 	for i := uint64(0); i < numHeaders; i++ {
-		header := datagen.GenRandomIBCTMHeader(chainID, i)
+		header := datagen.GenRandomIBCTMHeader(chainID, startHeight+i)
 		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
 		headers = append(headers, header)
 	}
@@ -58,7 +58,7 @@ func SimulateHeadersAndForksViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chain
 	// generate a number of fork headers
 	forkHeaders := []*ibctmtypes.Header{}
 	for i := uint64(0); i < numForkHeaders; i++ {
-		header := datagen.GenRandomIBCTMHeader(chainID, numHeaders-1)
+		header := datagen.GenRandomIBCTMHeader(chainID, startHeight+numHeaders-1)
 		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, true)
 		forkHeaders = append(forkHeaders, header)
 	}

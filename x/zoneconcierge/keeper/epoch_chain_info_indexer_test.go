@@ -22,7 +22,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100) + 1
 		numForkHeaders := datagen.RandomInt(10) + 1
-		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// simulate the scenario that a random epoch has ended
 		epochNum := datagen.RandomInt(10)

@@ -134,17 +134,6 @@ func request_Query_EpochChainInfo_0(ctx context.Context, marshaler runtime.Marsh
 		_   = err
 	)
 
-	val, ok = pathParams["epoch_num"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
-	}
-
-	protoReq.EpochNum, err = runtime.Uint64(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
-	}
-
 	val, ok = pathParams["chain_id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
@@ -154,6 +143,17 @@ func request_Query_EpochChainInfo_0(ctx context.Context, marshaler runtime.Marsh
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+	}
+
+	val, ok = pathParams["epoch_num"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
+	}
+
+	protoReq.EpochNum, err = runtime.Uint64(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
 	}
 
 	msg, err := client.EpochChainInfo(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -172,17 +172,6 @@ func local_request_Query_EpochChainInfo_0(ctx context.Context, marshaler runtime
 		_   = err
 	)
 
-	val, ok = pathParams["epoch_num"]
-	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
-	}
-
-	protoReq.EpochNum, err = runtime.Uint64(val)
-
-	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
-	}
-
 	val, ok = pathParams["chain_id"]
 	if !ok {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "chain_id")
@@ -192,6 +181,17 @@ func local_request_Query_EpochChainInfo_0(ctx context.Context, marshaler runtime
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "chain_id", err)
+	}
+
+	val, ok = pathParams["epoch_num"]
+	if !ok {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "epoch_num")
+	}
+
+	protoReq.EpochNum, err = runtime.Uint64(val)
+
+	if err != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "epoch_num", err)
 	}
 
 	msg, err := server.EpochChainInfo(ctx, &protoReq)
@@ -658,7 +658,7 @@ var (
 
 	pattern_Query_ChainInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "zoneconcierge", "v1", "chain_info", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_EpochChainInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "zoneconcierge", "v1", "epochs", "epoch_num", "chain_info", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_EpochChainInfo_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "zoneconcierge", "v1", "chain_info", "chain_id", "epochs", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_ListHeaders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "zoneconcierge", "v1", "headers", "chain_id"}, "", runtime.AssumeColonVerbOpt(false)))
 
