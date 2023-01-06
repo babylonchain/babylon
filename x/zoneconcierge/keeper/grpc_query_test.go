@@ -190,7 +190,7 @@ func FuzzListEpochHeaders(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100) + 1
 		numForkHeaders := datagen.RandomInt(10) + 1
-		expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+		expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// end this epoch so that the chain info is recorded
 		hooks.AfterEpochEnds(ctx, epochNum)
