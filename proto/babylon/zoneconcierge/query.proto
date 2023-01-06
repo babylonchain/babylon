@@ -32,7 +32,7 @@ service Query {
   }
   // EpochChainInfo queries the latest info of a chain in a given epoch of Babylon's view
   rpc EpochChainInfo(QueryEpochChainInfoRequest) returns (QueryEpochChainInfoResponse) {
-    option (google.api.http).get = "/babylon/zoneconcierge/v1/epochs/{epoch_num}/chain_info/{chain_id}";
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}/epochs/{epoch_num}";
   }
   // ListHeaders queries the headers of a chain in Babylon's view, with pagination support
   rpc ListHeaders(QueryListHeadersRequest) returns (QueryListHeadersResponse) {

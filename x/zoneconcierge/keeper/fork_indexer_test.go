@@ -23,7 +23,7 @@ func FuzzForkIndexer(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100) + 1
 		numForkHeaders := datagen.RandomInt(10) + 1
-		_, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+		_, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// check if the fork is updated or not
 		forks := zcKeeper.GetForks(ctx, czChain.ChainID, numHeaders-1)
