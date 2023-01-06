@@ -97,7 +97,8 @@ func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersReques
 	return resp, nil
 }
 
-// ListEpochHeaders returns all headers of a chain with given ID, with pagination support
+// ListEpochHeaders returns all headers of a chain with given ID
+// TODO: support pagination in this RPC
 func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHeadersRequest) (*types.QueryListEpochHeadersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
