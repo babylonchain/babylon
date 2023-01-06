@@ -40,7 +40,7 @@ service Query {
   }
   // ListEpochHeaders queries the headers of a chain timestamped in a given epoch of Babylon, with pagination support
   rpc ListEpochHeaders(QueryListEpochHeadersRequest) returns (QueryListEpochHeadersResponse) {
-    option (google.api.http).get = "/babylon/zoneconcierge/v1/epochs/{epoch_num}/headers/{chain_id}";
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}";
   }
   // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
   rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest) returns (QueryFinalizedChainInfoResponse) {

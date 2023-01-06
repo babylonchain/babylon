@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -50,26 +51,47 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		// enter a random epoch
-		epochNum := datagen.RandomInt(10) + 1
-		for i := uint64(0); i < epochNum; i++ {
-			epochingKeeper.IncEpoch(ctx)
+		numReqs := datagen.RandomInt(5) + 1
+
+		epochNumList := []uint64{datagen.RandomInt(10) + 1}
+		nextHeightList := []uint64{0}
+		numHeadersList := []uint64{}
+		expectedHeadersMap := map[uint64][]*ibctmtypes.Header{}
+		numForkHeadersList := []uint64{}
+
+		// we test the scenario of ending an epoch for multiple times, in order to ensure that
+		// consecutive epoch infos do not affect each other.
+		for i := uint64(0); i < numReqs; i++ {
+			// enter a random epoch
+			for i := uint64(0); i < epochNumList[i]; i++ {
+				epochingKeeper.IncEpoch(ctx)
+			}
+
+			// generate a random number of headers and fork headers
+			numHeadersList = append(numHeadersList, datagen.RandomInt(100)+1)
+			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(10)+1)
+			// trigger hooks to append these headers and fork headers
+			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeadersMap[epochNumList[i]] = expectedHeaders
+			// prepare nextHeight for the next request
+			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
+
+			// simulate the scenario that a random epoch has ended
+			hooks.AfterEpochEnds(ctx, epochNumList[i])
+			// prepare epochNum for the next request
+			epochNumList = append(epochNumList, epochNumList[i]+datagen.RandomInt(10)+1)
 		}
 
-		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100) + 1
-		numForkHeaders := datagen.RandomInt(10) + 1
-		expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
-
-		// end this epoch so that the chain info is recorded
-		hooks.AfterEpochEnds(ctx, epochNum)
-
-		// check if the headers are same as expected
-		headers, err := zcKeeper.GetEpochHeaders(ctx, czChain.ChainID, epochNum)
-		require.NoError(t, err)
-		require.Equal(t, len(expectedHeaders), len(headers))
-		for i := 0; i < len(expectedHeaders); i++ {
-			require.Equal(t, expectedHeaders[i].Header.LastCommitHash, headers[i].Hash)
+		// attest the correctness of epoch info for each tested epoch
+		for i := uint64(0); i < numReqs; i++ {
+			epochNum := epochNumList[i]
+			// check if the headers are same as expected
+			headers, err := zcKeeper.GetEpochHeaders(ctx, czChain.ChainID, epochNum)
+			require.NoError(t, err)
+			require.Equal(t, len(expectedHeadersMap[epochNum]), len(headers))
+			for i := 0; i < len(expectedHeadersMap[epochNum]); i++ {
+				require.Equal(t, expectedHeadersMap[epochNum][i].Header.LastCommitHash, headers[i].Hash)
+			}
 		}
 	})
 }

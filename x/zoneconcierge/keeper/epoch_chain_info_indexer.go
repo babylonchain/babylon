@@ -31,7 +31,6 @@ func (k Keeper) GetEpochHeaders(ctx sdk.Context, chainID string, epochNumber uin
 	}
 	// it's possible that this epoch's snapshot is not updated for many epochs
 	// this implies that this epoch does not timestamp any header for this chain at all
-	// and the query should return empty
 	if epochChainInfo.LatestHeader.BabylonEpoch < epochNumber {
 		return nil, types.ErrEpochHeadersNotFound
 	}
