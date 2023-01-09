@@ -14,8 +14,8 @@ import (
 
 // ProveEpochSubmitted generates proof that the epoch's checkpoint is submitted to BTC
 // i.e., the two `TransactionInfo`s for the checkpoint
-func (k Keeper) ProveEpochSubmitted(ctx sdk.Context, sk btcctypes.SubmissionKey) ([]*btcctypes.TransactionInfo, error) {
-	bestSubmissionData := k.btccKeeper.GetSubmissionData(ctx, sk)
+func (k Keeper) ProveEpochSubmitted(ctx sdk.Context, sk *btcctypes.SubmissionKey) ([]*btcctypes.TransactionInfo, error) {
+	bestSubmissionData := k.btccKeeper.GetSubmissionData(ctx, *sk)
 	if bestSubmissionData == nil {
 		return nil, fmt.Errorf("the best submission key for epoch %d has no submission data", bestSubmissionData.Epoch)
 	}

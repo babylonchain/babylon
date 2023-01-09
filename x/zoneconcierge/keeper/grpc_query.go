@@ -2,13 +2,14 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -132,46 +133,20 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// find the last finalised epoch
-	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	// find the last finalised chain info and the earliest epoch that snapshots this epoch
+	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the chain info of this epoch
-	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
-	if err != nil {
-		return nil, err
-	}
-
-	// It's possible that the chain info's epoch is way before the last finalised epoch
-	// e.g., when there is no relayer for many epochs
-	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
-	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
-		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
-	}
-
-	// find the epoch metadata
+	// find the epoch metadata of the finalised epoch
 	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the btc checkpoint tx index of this epoch
-	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
-	if ed.Status != btcctypes.Finalized {
-		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
-		panic(err) // this can only be a programming error
-	}
-	if len(ed.Key) == 0 {
-		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
-		panic(err) // this can only be a programming error
-	}
-	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
-
-	// get raw checkpoint of this epoch
-	rawCheckpointBytes := ed.RawCheckpoint
-	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(rawCheckpointBytes)
+	// find the raw checkpoint and the best submission key for the finalised epoch
+	rawCheckpoint, bestSubmissionKey, err := k.GetInfoForFinalizedEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -190,32 +165,50 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 
 	// Proof that the Babylon tx is in block
-	resp.ProofTxInBlock, err = k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
+	resp.ProofTxInBlock, resp.ProofHeaderInEpoch, resp.ProofEpochSealed, resp.ProofEpochSubmitted, err = k.proveFinalizedChainInfo(ctx, chainInfo, epochInfo, bestSubmissionKey)
 	if err != nil {
 		return nil, err
+	}
+
+	return resp, nil
+}
+
+// ProveFinalizedChainInfo generates proofs that a chainInfo has been finalised by the given epoch with epochInfo
+// It includes proofTxInBlock, proofHeaderInEpoch, proofEpochSealed and proofEpochSubmitted
+// The proofs can be verified by a verifier with access to a BTC and Babylon light client
+// CONTRACT: this is only a private helper function for simplifying the implementation of RPC calls
+func (k Keeper) proveFinalizedChainInfo(
+	ctx sdk.Context,
+	chainInfo *types.ChainInfo,
+	epochInfo *epochingtypes.Epoch,
+	bestSubmissionKey *btcctypes.SubmissionKey,
+) (*tmproto.TxProof, *tmcrypto.Proof, *types.ProofEpochSealed, []*btcctypes.TransactionInfo, error) {
+	// Proof that the Babylon tx is in block
+	proofTxInBlock, err := k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
+	if err != nil {
+		return nil, nil, nil, nil, err
 	}
 
 	// proof that the block is in this epoch
-	resp.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeader, epochInfo)
+	proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeader, epochInfo)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// proof that the epoch is sealed
-	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)
+	proofEpochSealed, err := k.ProveEpochSealed(ctx, epochInfo.EpochNumber)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, nil, err
 	}
 
 	// proof that the epoch's checkpoint is submitted to BTC
 	// i.e., the two `TransactionInfo`s for the checkpoint
-	resp.ProofEpochSubmitted, err = k.ProveEpochSubmitted(ctx, *bestSubmissionKey)
+	proofEpochSubmitted, err := k.ProveEpochSubmitted(ctx, bestSubmissionKey)
 	if err != nil {
 		// The only error in ProveEpochSubmitted is the nil bestSubmission.
 		// Since the epoch w.r.t. the bestSubmissionKey is finalised, this
 		// can only be a programming error, so we should panic here.
 		panic(err)
 	}
-
-	return resp, nil
+	return proofTxInBlock, proofHeaderInEpoch, proofEpochSealed, proofEpochSubmitted, nil
 }
