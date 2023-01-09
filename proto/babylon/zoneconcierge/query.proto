@@ -156,7 +156,6 @@ message QueryFinalizedChainInfoResponse {
   repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 8;
 }
 
-
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the Query/FinalizedChainInfoUntilHeight RPC method.
 message QueryFinalizedChainInfoUntilHeightRequest {
   // chain_id is the ID of the CZ

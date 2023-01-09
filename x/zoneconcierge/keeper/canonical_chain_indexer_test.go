@@ -67,7 +67,7 @@ func FuzzFindClosestHeader(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, headers[len(headers)-1].Header.LastCommitHash, header.Hash)
 
-		// skip some a non-zero number of headers in between
+		// skip a non-zero number of headers in between, in order to create a gap of non-timestamped headers
 		gap := datagen.RandomInt(10) + 1
 
 		// simulate a random number of blocks

@@ -10,9 +10,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GetCkptInfoForFinalizedEpoch gets the raw checkpoint and the associated best submission of a finalised epoch
+// getCkptInfoForFinalizedEpoch gets the raw checkpoint and the associated best submission of a finalised epoch
 // CONTRACT: the function can only take an epoch that has already been finalised as input
-func (k Keeper) GetCkptInfoForFinalizedEpoch(ctx sdk.Context, epochNumber uint64) (*checkpointingtypes.RawCheckpoint, *btcctypes.SubmissionKey, error) {
+func (k Keeper) getCkptInfoForFinalizedEpoch(ctx sdk.Context, epochNumber uint64) (*checkpointingtypes.RawCheckpoint, *btcctypes.SubmissionKey, error) {
 	// find the btc checkpoint tx index of this epoch
 	ed := k.btccKeeper.GetEpochData(ctx, epochNumber)
 	if ed.Status != btcctypes.Finalized {

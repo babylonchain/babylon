@@ -133,7 +133,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// find the last finalised chain info and the earliest epoch that snapshots this epoch
+	// find the last finalised chain info and the earliest epoch that snapshots this chain info
 	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
 	if err != nil {
 		return nil, err
@@ -146,7 +146,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 
 	// find the raw checkpoint and the best submission key for the finalised epoch
-	rawCheckpoint, bestSubmissionKey, err := k.GetCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+	rawCheckpoint, bestSubmissionKey, err := k.getCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +185,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	ctx := sdk.UnwrapSDKContext(c)
 	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
 
-	// find and assign the last finalised chain info and the earliest epoch that snapshots this epoch
+	// find and assign the last finalised chain info and the earliest epoch that snapshots this chain info
 	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
 	if err != nil {
 		return nil, err
@@ -200,12 +200,12 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		}
 
 		// find and assign the raw checkpoint and the best submission key for the finalised epoch
-		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.GetCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.getCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
 	} else { // the requested height is before the last finalised chain info
-		// starting from the requested height, find backward until a timestamped header
+		// starting from the requested height, iterate backward until a timestamped header
 		closestHeader, err := k.FindClosestHeader(ctx, req.ChainId, req.Height)
 		if err != nil {
 			return nil, err
@@ -220,7 +220,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		if err != nil {
 			return nil, err
 		}
-		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.GetCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.getCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -240,7 +240,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	return resp, nil
 }
 
-// ProveFinalizedChainInfo generates proofs that a chainInfo has been finalised by the given epoch with epochInfo
+// proveFinalizedChainInfo generates proofs that a chainInfo has been finalised by the given epoch with epochInfo
 // It includes proofTxInBlock, proofHeaderInEpoch, proofEpochSealed and proofEpochSubmitted
 // The proofs can be verified by a verifier with access to a BTC and Babylon light client
 // CONTRACT: this is only a private helper function for simplifying the implementation of RPC calls

@@ -10,7 +10,6 @@ import (
 )
 
 // FindClosestHeader finds the IndexedHeader that is closest to (but not after) the given height
-// TODO: test
 func (k Keeper) FindClosestHeader(ctx sdk.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
 	chainInfo := k.GetChainInfo(ctx, chainID)
 	if chainInfo.LatestHeader == nil {
@@ -26,6 +25,7 @@ func (k Keeper) FindClosestHeader(ctx sdk.Context, chainID string, height uint64
 	store := k.canonicalChainStore(ctx, chainID)
 	heightBytes := sdk.Uint64ToBigEndian(height)
 	iter := store.ReverseIterator(nil, heightBytes)
+	defer iter.Close()
 	// if there is no key within range [0, height], return error
 	if !iter.Valid() {
 		return nil, fmt.Errorf("chain with ID %s does not have a timestamped header before height %d", chainID, height)
