@@ -34,6 +34,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChain.ChainID, epochNum)
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
+		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 	})
 }
