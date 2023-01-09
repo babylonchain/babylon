@@ -9,9 +9,8 @@ import (
 	"strings"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
-	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
-
 	"github.com/babylonchain/babylon/privval"
+	bbn "github.com/babylonchain/babylon/types"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -28,6 +27,7 @@ import (
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
 	tmconfig "github.com/tendermint/tendermint/config"
+	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/p2p"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -129,6 +129,8 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.StateSync.SnapshotInterval = nodeConfig.SnapshotInterval
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
 	appConfig.SignerConfig.KeyName = ValidatorWalletName
+	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+	appConfig.BtcConfig.CheckpointTag = BabylonOpReturnTag
 
 	customTemplate := cmd.DefaultBabylonTemplate()
 

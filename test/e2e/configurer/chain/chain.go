@@ -151,7 +151,7 @@ func (c *Config) SendIBC(dstChain *Config, recipient string, token sdk.Coin) {
 // The default node is the first one created. Returns error if no
 // ndoes created.
 func (c *Config) GetDefaultNode() (*NodeConfig, error) {
-	return c.getNodeAtIndex(defaultNodeIndex)
+	return c.GetNodeAtIndex(defaultNodeIndex)
 }
 
 // GetPersistentPeers returns persistent peers from every node
@@ -164,7 +164,7 @@ func (c *Config) GetPersistentPeers() []string {
 	return peers
 }
 
-func (c *Config) getNodeAtIndex(nodeIndex int) (*NodeConfig, error) {
+func (c *Config) GetNodeAtIndex(nodeIndex int) (*NodeConfig, error) {
 	if nodeIndex > len(c.NodeConfigs) {
 		return nil, fmt.Errorf("node index (%d) is greter than the number of nodes available (%d)", nodeIndex, len(c.NodeConfigs))
 	}
