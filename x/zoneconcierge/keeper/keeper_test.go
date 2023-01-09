@@ -8,7 +8,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
 )
 
