@@ -262,15 +262,17 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		checkpointingKeeper.EXPECT().GetBLSPubKeySet(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return([]*checkpointingtypes.ValidatorWithBlsKey{}, nil).AnyTimes()
 		// mock btccheckpoint keeper
 		// TODO: test with BTCSpvProofs
+		randomRawCkpt := datagen.GenRandomRawCheckpoint()
+		randomRawCkpt.EpochNum = epoch.EpochNumber
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
-		mockEpochData := &btcctypes.EpochData{
-			Key: []*btcctypes.SubmissionKey{
-				{Key: []*btcctypes.TransactionKey{}},
+		btccKeeper.EXPECT().GetEpochDataWithBestSubmission(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(
+			btcctypes.Finalized,
+			randomRawCkpt,
+			&btcctypes.SubmissionKey{
+				Key: []*btcctypes.TransactionKey{},
 			},
-			Status:        btcctypes.Finalized,
-			RawCheckpoint: datagen.RandomRawCheckpointDataForEpoch(epoch.EpochNumber).ExpectedOpReturn,
-		}
-		btccKeeper.EXPECT().GetEpochData(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(mockEpochData).AnyTimes()
+			nil,
+		).AnyTimes()
 		mockSubmissionData := &btcctypes.SubmissionData{TxsInfo: []*btcctypes.TransactionInfo{}}
 		btccKeeper.EXPECT().GetSubmissionData(gomock.Any(), gomock.Any()).Return(mockSubmissionData).AnyTimes()
 		// mock epoching keeper

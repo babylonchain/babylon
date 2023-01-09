@@ -8,6 +8,7 @@ import (
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -173,7 +174,7 @@ func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
 	return k.GetSubmissionData(ctx, sk) != nil
 }
 
-// Return epoch data for given epoch, if there is not epoch data yet returns nil
+// GetEpochData returns epoch data for given epoch, if there is not epoch data yet returns nil
 func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.GetEpochIndexKey(e))
@@ -185,6 +186,27 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	ed := &types.EpochData{}
 	k.cdc.MustUnmarshal(bytes, ed)
 	return ed
+}
+
+// GetEpochDataWithBestSubmission gets the status, raw checkpoint bytes,
+// and the best submission of a given epoch
+func (k Keeper) GetEpochDataWithBestSubmission(ctx sdk.Context, epochNumber uint64) (types.BtcStatus, *checkpointingtypes.RawCheckpoint, *types.SubmissionKey, error) {
+	// find the btc checkpoint tx index of this epoch
+	ed := k.GetEpochData(ctx, epochNumber)
+	if ed == nil {
+		return 0, nil, nil, types.ErrNoCheckpointsForPreviousEpoch
+	}
+	if len(ed.Key) == 0 {
+		return 0, nil, nil, types.ErrNoCheckpointsForPreviousEpoch
+	}
+	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
+
+	// get raw checkpoint of this epoch
+	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(ed.RawCheckpoint)
+	if err != nil {
+		return 0, nil, nil, err
+	}
+	return ed.Status, rawCheckpoint, bestSubmissionKey, nil
 }
 
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions

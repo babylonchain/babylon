@@ -14,23 +14,15 @@ import (
 // CONTRACT: the function can only take an epoch that has already been finalised as input
 func (k Keeper) getCkptInfoForFinalizedEpoch(ctx sdk.Context, epochNumber uint64) (*checkpointingtypes.RawCheckpoint, *btcctypes.SubmissionKey, error) {
 	// find the btc checkpoint tx index of this epoch
-	ed := k.btccKeeper.GetEpochData(ctx, epochNumber)
-	if ed.Status != btcctypes.Finalized {
-		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", epochNumber, ed.Status.String())
-		panic(err) // this can only be a programming error
-	}
-	if len(ed.Key) == 0 {
-		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", epochNumber)
-		panic(err) // this can only be a programming error
-	}
-	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
-
-	// get raw checkpoint of this epoch
-	rawCheckpointBytes := ed.RawCheckpoint
-	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(rawCheckpointBytes)
+	btcStatus, rawCheckpoint, bestSubmissionKey, err := k.btccKeeper.GetEpochDataWithBestSubmission(ctx, epochNumber)
 	if err != nil {
-		return nil, bestSubmissionKey, err
+		return nil, nil, err
 	}
+	if btcStatus != btcctypes.Finalized {
+		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", epochNumber, btcStatus.String())
+		panic(err) // this can only be a programming error
+	}
+
 	return rawCheckpoint, bestSubmissionKey, nil
 }
 
