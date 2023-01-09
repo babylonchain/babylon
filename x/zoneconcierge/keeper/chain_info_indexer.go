@@ -33,16 +33,25 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) *types.ChainInfo {
 	return &chainInfo
 }
 
+// updateLatestHeader updates the chainInfo w.r.t. the given header, including
+// - replace the old latest header with the given one
+// - increment the number of timestamped headers
 func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 	chainInfo := k.GetChainInfo(ctx, chainID)
-	chainInfo.LatestHeader = header
+	chainInfo.LatestHeader = header     // replace the old latest header with the given one
+	chainInfo.TimestampedHeadersCount++ // increment the number of timestamped headers
 	k.setChainInfo(ctx, chainInfo)
 	return nil
 }
 
+// tryToUpdateLatestForkHeader tries to update the chainInfo w.r.t. the given fork header
+// - If no fork exists, add this fork header as the latest one
+// - If there is a fork header at the same height, add this fork to the set of latest fork headers
+// - If this fork header is newer than the previous one, replace the old fork headers with this fork header
+// - If this fork header is older than the current latest fork, ignore
 func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
@@ -57,7 +66,7 @@ func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, hea
 		// there exists fork headers at the same height, add this fork header to the set of latest fork headers
 		chainInfo.LatestForks.Headers = append(chainInfo.LatestForks.Headers, header)
 	} else if chainInfo.LatestForks.Headers[0].Height < header.Height {
-		// this fork header is newer than the previous one, add this fork header as the latest one
+		// this fork header is newer than the previous one, replace the old fork headers with this fork header
 		chainInfo.LatestForks = &types.Forks{
 			Headers: []*types.IndexedHeader{header},
 		}
