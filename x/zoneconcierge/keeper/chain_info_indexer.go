@@ -36,6 +36,9 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) *types.ChainInfo {
 // updateLatestHeader updates the chainInfo w.r.t. the given header, including
 // - replace the old latest header with the given one
 // - increment the number of timestamped headers
+// Note that this function is triggered only upon receiving headers from the relayer,
+// and only a subset of headers in CZ are relayed. Thus TimestampedHeadersCount is not
+// equal to the total number of headers in CZ.
 func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
