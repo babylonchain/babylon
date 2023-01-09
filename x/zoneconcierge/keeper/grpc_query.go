@@ -146,7 +146,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 
 	// find the raw checkpoint and the best submission key for the finalised epoch
-	rawCheckpoint, bestSubmissionKey, err := k.GetInfoForFinalizedEpoch(ctx, finalizedEpoch)
+	rawCheckpoint, bestSubmissionKey, err := k.GetCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +164,75 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return resp, nil
 	}
 
-	// Proof that the Babylon tx is in block
+	// generate all proofs
 	resp.ProofTxInBlock, resp.ProofHeaderInEpoch, resp.ProofEpochSealed, resp.ProofEpochSubmitted, err = k.proveFinalizedChainInfo(ctx, chainInfo, epochInfo, bestSubmissionKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.QueryFinalizedChainInfoUntilHeightRequest) (*types.QueryFinalizedChainInfoUntilHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
+
+	// find and assign the last finalised chain info and the earliest epoch that snapshots this epoch
+	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
+	if err != nil {
+		return nil, err
+	}
+	resp.FinalizedChainInfo = chainInfo
+
+	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info
+		// find and assign the epoch metadata of the finalised epoch
+		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		// find and assign the raw checkpoint and the best submission key for the finalised epoch
+		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.GetCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+	} else { // the requested height is before the last finalised chain info
+		// starting from the requested height, find backward until a timestamped header
+		closestHeader, err := k.FindClosestHeader(ctx, req.ChainId, req.Height)
+		if err != nil {
+			return nil, err
+		}
+		// assign the finalizedEpoch, and retrieve epoch info, raw ckpt and submission key
+		finalizedEpoch = closestHeader.BabylonEpoch
+		resp.FinalizedChainInfo, err = k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.GetCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// if the query does not want the proofs, return here
+	if !req.Prove {
+		return resp, nil
+	}
+
+	// generate all proofs
+	resp.ProofTxInBlock, resp.ProofHeaderInEpoch, resp.ProofEpochSealed, resp.ProofEpochSubmitted, err = k.proveFinalizedChainInfo(ctx, resp.FinalizedChainInfo, resp.EpochInfo, resp.BtcSubmissionKey)
 	if err != nil {
 		return nil, err
 	}
