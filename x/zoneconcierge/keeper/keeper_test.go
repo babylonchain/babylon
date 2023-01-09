@@ -34,11 +34,11 @@ func SetupTest(t *testing.T) (*ibctesting.Coordinator, *ibctesting.TestChain, *i
 }
 
 // SimulateHeadersViaHook generates a non-zero number of canonical headers via the hook
-func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string, numHeaders uint64) []*ibctmtypes.Header {
+func SimulateHeadersViaHook(ctx sdk.Context, hooks zckeeper.Hooks, chainID string, startHeight uint64, numHeaders uint64) []*ibctmtypes.Header {
 	headers := []*ibctmtypes.Header{}
 	// invoke the hook a number of times to simulate a number of blocks
 	for i := uint64(0); i < numHeaders; i++ {
-		header := datagen.GenRandomIBCTMHeader(chainID, i)
+		header := datagen.GenRandomIBCTMHeader(chainID, startHeight+i)
 		hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
 		headers = append(headers, header)
 	}
