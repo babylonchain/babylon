@@ -16,11 +16,13 @@ import (
 // Upon each BeginBlock,
 // - record the current AppHash
 // - if reaching the epoch beginning, then
-//    - increment epoch number
-//    - trigger AfterEpochBegins hook
-//    - emit BeginEpoch event
+//   - increment epoch number
+//   - trigger AfterEpochBegins hook
+//   - emit BeginEpoch event
+//
 // - if reaching the sealer header, i.e., the 2nd header of a non-zero epoch, then
-//    - record the sealer header for the previous epoch
+//   - record the sealer header for the previous epoch
+//
 // NOTE: we follow Cosmos SDK's slashing/evidence modules for MVP. No need to modify them at the moment.
 func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
@@ -40,6 +42,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		k.InitSlashedVotingPower(ctx)
 		// store the current validator set
 		k.InitValidatorSet(ctx)
+		// record new epoch state
+		if err := k.RecordNewEpochState(ctx, incEpoch.EpochNumber, types.EpochState_STARTED); err != nil {
+			panic(err)
+		}
 		// trigger AfterEpochBegins hook
 		k.AfterEpochBegins(ctx, incEpoch.EpochNumber)
 		// emit BeginEpoch event
@@ -123,6 +129,10 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
 		ctx.Logger().Info(fmt.Sprintf("Epoching: validator set update of epoch %d: %v", epoch.EpochNumber, validatorSetUpdate))
 
+		// record new epoch state
+		if err := k.RecordNewEpochState(ctx, epoch.EpochNumber, types.EpochState_ENDED); err != nil {
+			panic(err)
+		}
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epoch.EpochNumber)
 		// emit EndEpoch event

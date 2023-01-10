@@ -86,3 +86,23 @@ message Validator {
   // power is the validator's voting power
   int64 power = 2;
 }
+
+enum EpochState {
+  STARTED = 0;
+  ENDED = 1;
+  SEALED = 2;
+  SUBMITTED = 3;
+  CONFIRMED = 4;
+  FINALIZED = 5;
+}
+
+message EpochStateUpdate {
+  EpochState state = 1;
+  uint64 block_height = 2;
+  google.protobuf.Timestamp block_time = 3 [(gogoproto.stdtime) = true];
+}
+
+message EpochLifecycle {
+  uint64 epoch_number = 1;
+  repeated EpochStateUpdate epoch_life = 2;
+}

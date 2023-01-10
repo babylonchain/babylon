@@ -104,7 +104,23 @@ func (h Hooks) BeforeDelegationRemoved(ctx sdk.Context, delAddr sdk.AccAddress, 
 	return h.k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_REMOVED)
 }
 
+func (h Hooks) AfterRawCheckpointSealed(ctx sdk.Context, epoch uint64) error {
+	// record new epoch state
+	return h.k.RecordNewEpochState(ctx, epoch, types.EpochState_SEALED)
+}
+func (h Hooks) AfterRawCheckpointSubmitted(ctx sdk.Context, epoch uint64) error {
+	// record new epoch state
+	return h.k.RecordNewEpochState(ctx, epoch, types.EpochState_SUBMITTED)
+}
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error {
+	// record new epoch state
+	return h.k.RecordNewEpochState(ctx, epoch, types.EpochState_CONFIRMED)
+}
 func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+	// record new epoch state
+	if err := h.k.RecordNewEpochState(ctx, epoch, types.EpochState_FINALIZED); err != nil {
+		return err
+	}
 	// finalise all unbonding validators/delegations in this epoch
 	h.k.ApplyMatureUnbonding(ctx, epoch)
 	return nil
@@ -124,6 +140,3 @@ func (h Hooks) AfterDelegationModified(ctx sdk.Context, delAddr sdk.AccAddress, 
 	return nil
 }
 func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error { return nil }
-func (h Hooks) AfterRawCheckpointSealed(ctx sdk.Context, epoch uint64) error        { return nil }
-func (h Hooks) AfterRawCheckpointSubmitted(ctx sdk.Context, epoch uint64) error     { return nil }
-func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     { return nil }

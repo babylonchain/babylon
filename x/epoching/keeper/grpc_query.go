@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"errors"
+
+	"cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,6 +32,9 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 
 // CurrentEpoch handles the QueryCurrentEpochRequest query
 func (k Keeper) CurrentEpoch(c context.Context, req *types.QueryCurrentEpochRequest) (*types.QueryCurrentEpochResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 	epoch := k.GetEpoch(ctx)
 	resp := &types.QueryCurrentEpochResponse{
@@ -55,6 +59,9 @@ func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (
 
 // EpochMsgs handles the QueryEpochMsgsRequest query
 func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (*types.QueryEpochMsgsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 
 	epoch := k.GetEpoch(ctx)
@@ -97,6 +104,9 @@ func (k Keeper) EpochMsgs(c context.Context, req *types.QueryEpochMsgsRequest) (
 // LatestEpochMsgs handles the QueryLatestEpochMsgsRequest query
 // TODO: test this API
 func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMsgsRequest) (*types.QueryLatestEpochMsgsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 
 	if req.EpochCount == 0 {
@@ -152,6 +162,9 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 // ValidatorLifecycle handles the QueryValidatorLifecycleRequest query
 // TODO: test this API
 func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorLifecycleRequest) (*types.QueryValidatorLifecycleResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 	valAddr, err := sdk.ValAddressFromBech32(req.ValAddr)
 	if err != nil {
@@ -166,6 +179,9 @@ func (k Keeper) ValidatorLifecycle(c context.Context, req *types.QueryValidatorL
 // DelegationLifecycle handles the QueryDelegationLifecycleRequest query
 // TODO: test this API
 func (k Keeper) DelegationLifecycle(c context.Context, req *types.QueryDelegationLifecycleRequest) (*types.QueryDelegationLifecycleResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 	delAddr, err := sdk.AccAddressFromBech32(req.DelAddr)
 	if err != nil {
@@ -178,6 +194,9 @@ func (k Keeper) DelegationLifecycle(c context.Context, req *types.QueryDelegatio
 }
 
 func (k Keeper) EpochValSet(c context.Context, req *types.QueryEpochValSetRequest) (*types.QueryEpochValSetResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
 	ctx := sdk.UnwrapSDKContext(c)
 
 	epoch := k.GetEpoch(ctx)
@@ -213,4 +232,17 @@ func (k Keeper) EpochValSet(c context.Context, req *types.QueryEpochValSetReques
 		Pagination:       pageRes,
 	}
 	return resp, nil
+}
+
+// EpochLifecycle handles the QueryEpochLifecycleRequest query
+// TODO: test this API
+func (k Keeper) EpochLifecycle(c context.Context, req *types.QueryEpochLifecycleRequest) (*types.QueryEpochLifecycleResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	lc := k.GetEpochLifecycle(ctx, req.EpochNum)
+	return &types.QueryEpochLifecycleResponse{
+		EpochLife: lc,
+	}, nil
 }

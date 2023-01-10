@@ -50,6 +50,11 @@ service Query {
   rpc EpochValSet(QueryEpochValSetRequest) returns (QueryEpochValSetResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}/validator_set";
   }
+
+  // EpochLifecycle queries the lifecycle of a given epoch
+  rpc EpochLifecycle(QueryEpochLifecycleRequest) returns (QueryEpochLifecycleResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}/lifecycle";
+  }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -142,4 +147,12 @@ message QueryEpochValSetResponse {
   repeated babylon.epoching.v1.Validator validators = 1;
   int64 total_voting_power = 2;
   cosmos.base.query.v1beta1.PageResponse pagination = 3;
+}
+
+message QueryEpochLifecycleRequest {
+  uint64 epoch_num = 1;
+}
+
+message QueryEpochLifecycleResponse {
+  EpochLifecycle epoch_life = 1;
 }
