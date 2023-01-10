@@ -22,7 +22,7 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
   }
-  // Header queries the CZ header at a given height.
+  // Header queries the CZ header and fork headers at a given height.
   rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}/header/{height}";
   }
