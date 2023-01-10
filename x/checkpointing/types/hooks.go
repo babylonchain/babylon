@@ -22,6 +22,24 @@ func (h MultiCheckpointingHooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr 
 	return nil
 }
 
+func (h MultiCheckpointingHooks) AfterRawCheckpointSealed(ctx sdk.Context, epoch uint64) error {
+	for i := range h {
+		if err := h[i].AfterRawCheckpointSealed(ctx, epoch); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (h MultiCheckpointingHooks) AfterRawCheckpointSubmitted(ctx sdk.Context, epoch uint64) error {
+	for i := range h {
+		if err := h[i].AfterRawCheckpointSubmitted(ctx, epoch); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (h MultiCheckpointingHooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error {
 	for i := range h {
 		if err := h[i].AfterRawCheckpointConfirmed(ctx, epoch); err != nil {

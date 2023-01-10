@@ -129,6 +129,9 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		if err != nil {
 			ctx.Logger().Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
 		}
+		if err := k.AfterRawCheckpointSealed(ctx, ckptWithMeta.Ckpt.EpochNum); err != nil {
+			ctx.Logger().Error("failed to trigger checkpoint sealed hook for epoch %v: %v", ckptWithMeta.Ckpt.EpochNum, err)
+		}
 		ctx.Logger().Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
 	}
 
@@ -263,6 +266,10 @@ func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, epoch uint64) {
 	)
 	if err != nil {
 		ctx.Logger().Error("failed to emit checkpoint submitted event for epoch %v", ckpt.Ckpt.EpochNum)
+	}
+	// invoke hook
+	if err := k.AfterRawCheckpointSubmitted(ctx, epoch); err != nil {
+		ctx.Logger().Error("failed to trigger checkpoint submitted hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 }
 
