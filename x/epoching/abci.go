@@ -17,6 +17,7 @@ import (
 // - record the current AppHash
 // - if reaching the epoch beginning, then
 //   - increment epoch number
+//   - record epoch lifecycle
 //   - trigger AfterEpochBegins hook
 //   - emit BeginEpoch event
 //
@@ -43,9 +44,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// store the current validator set
 		k.InitValidatorSet(ctx)
 		// record new epoch state
-		if err := k.RecordNewEpochState(ctx, incEpoch.EpochNumber, types.EpochState_STARTED); err != nil {
-			panic(err)
-		}
+		k.RecordNewEpochState(ctx, incEpoch.EpochNumber, types.EpochState_STARTED)
 		// trigger AfterEpochBegins hook
 		k.AfterEpochBegins(ctx, incEpoch.EpochNumber)
 		// emit BeginEpoch event
@@ -67,6 +66,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 // EndBlocker is called at the end of every block.
 // If reaching an epoch boundary, then
 // - forward validator-related msgs (bonded -> unbonding) to the staking module
+// - record epoch lifecycle
 // - trigger AfterEpochEnds hook
 // - emit EndEpoch event
 // NOTE: The epoching module is not responsible for checkpoint-assisted unbonding (unbonding -> unbonded). Instead, it wraps the staking module and exposes interfaces to the checkpointing module. The checkpointing module will do the actual checkpoint-assisted unbonding upon each EndBlock.
@@ -130,9 +130,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 		ctx.Logger().Info(fmt.Sprintf("Epoching: validator set update of epoch %d: %v", epoch.EpochNumber, validatorSetUpdate))
 
 		// record new epoch state
-		if err := k.RecordNewEpochState(ctx, epoch.EpochNumber, types.EpochState_ENDED); err != nil {
-			panic(err)
-		}
+		k.RecordNewEpochState(ctx, epoch.EpochNumber, types.EpochState_ENDED)
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epoch.EpochNumber)
 		// emit EndEpoch event

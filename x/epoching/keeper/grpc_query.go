@@ -235,7 +235,6 @@ func (k Keeper) EpochValSet(c context.Context, req *types.QueryEpochValSetReques
 }
 
 // EpochLifecycle handles the QueryEpochLifecycleRequest query
-// TODO: test this API
 func (k Keeper) EpochLifecycle(c context.Context, req *types.QueryEpochLifecycleRequest) (*types.QueryEpochLifecycleResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")

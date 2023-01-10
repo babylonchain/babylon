@@ -49,7 +49,8 @@ func FuzzEpochLifecycle(f *testing.F) {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
 		curHeight += numNewBlocks
-		hooks.AfterRawCheckpointSealed(ctx, 1)
+		err := hooks.AfterRawCheckpointSealed(ctx, 1)
+		require.NoError(t, err)
 		lc = keeper.GetEpochLifecycle(ctx, 1)
 		require.Len(t, lc.EpochLife, 3) // started, ended, sealed
 		require.Equal(t, types.EpochState_SEALED, lc.EpochLife[2].State)
@@ -61,7 +62,8 @@ func FuzzEpochLifecycle(f *testing.F) {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
 		curHeight += numNewBlocks
-		hooks.AfterRawCheckpointSubmitted(ctx, 1)
+		err = hooks.AfterRawCheckpointSubmitted(ctx, 1)
+		require.NoError(t, err)
 		lc = keeper.GetEpochLifecycle(ctx, 1)
 		require.Len(t, lc.EpochLife, 4) // started, ended, sealed, submitted
 		require.Equal(t, types.EpochState_SUBMITTED, lc.EpochLife[3].State)
@@ -73,7 +75,8 @@ func FuzzEpochLifecycle(f *testing.F) {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
 		curHeight += numNewBlocks
-		hooks.AfterRawCheckpointConfirmed(ctx, 1)
+		err = hooks.AfterRawCheckpointConfirmed(ctx, 1)
+		require.NoError(t, err)
 		lc = keeper.GetEpochLifecycle(ctx, 1)
 		require.Len(t, lc.EpochLife, 5) // started, ended, sealed, submitted, confirmed
 		require.Equal(t, types.EpochState_CONFIRMED, lc.EpochLife[4].State)
@@ -85,7 +88,8 @@ func FuzzEpochLifecycle(f *testing.F) {
 			ctx = helper.GenAndApplyEmptyBlock()
 		}
 		curHeight += numNewBlocks
-		hooks.AfterRawCheckpointFinalized(ctx, 1)
+		err = hooks.AfterRawCheckpointFinalized(ctx, 1)
+		require.NoError(t, err)
 		lc = keeper.GetEpochLifecycle(ctx, 1)
 		require.Len(t, lc.EpochLife, 6) // started, ended, sealed, submitted, confirmed, finalised
 		require.Equal(t, types.EpochState_FINALIZED, lc.EpochLife[5].State)

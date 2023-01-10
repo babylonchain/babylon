@@ -7,7 +7,7 @@ import (
 )
 
 // RecordNewEpochState adds a state for an epoch lifecycle, including
-func (k Keeper) RecordNewEpochState(ctx sdk.Context, epochNumber uint64, state types.EpochState) error {
+func (k Keeper) RecordNewEpochState(ctx sdk.Context, epochNumber uint64, state types.EpochState) {
 	lc := k.GetEpochLifecycle(ctx, epochNumber)
 	if lc == nil {
 		lc = &types.EpochLifecycle{
@@ -23,7 +23,6 @@ func (k Keeper) RecordNewEpochState(ctx sdk.Context, epochNumber uint64, state t
 	}
 	lc.EpochLife = append(lc.EpochLife, &epochStateUpdate)
 	k.SetEpochLifecycle(ctx, epochNumber, lc)
-	return nil
 }
 
 func (k Keeper) SetEpochLifecycle(ctx sdk.Context, epochNumber uint64, lc *types.EpochLifecycle) {
