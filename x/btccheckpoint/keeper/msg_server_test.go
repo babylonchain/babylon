@@ -73,7 +73,7 @@ func (k *TestKeepers) setEpoch(epoch uint64) {
 	k.Checkpointing.SetEpoch(epoch)
 }
 
-func (k *TestKeepers) getEpochData(e uint64) *btcctypes.EpochData {
+func (k *TestKeepers) GetEpochData(e uint64) *btcctypes.EpochData {
 	return k.BTCCheckpoint.GetEpochData(k.SdkCtx, e)
 }
 
@@ -201,7 +201,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	require.NoErrorf(t, err, "Unexpected message processing error: %v", err)
 
-	ed := tk.getEpochData(epoch)
+	ed := tk.GetEpochData(epoch)
 
 	if len(ed.Key) == 0 {
 		t.Errorf("There should be at least one key in epoch %d", epoch)
@@ -238,7 +238,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		require.Equal(t, msg.Proofs[i].MerkleNodes, txInfo.Proof)
 	}
 
-	ed1 := tk.getEpochData(epoch)
+	ed1 := tk.GetEpochData(epoch)
 
 	// TODO Add custom equal fo submission key and transaction key to check
 	// it is expected key
@@ -395,7 +395,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 
 	for i := 1; i <= 3; i++ {
 		// all 3 epoch must have two  submissions
-		ed := tk.getEpochData(uint64(i))
+		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
 		require.Len(t, ed.Key, 2)
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
@@ -409,7 +409,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 	tk.onTipChange()
 
 	for i := 1; i <= 3; i++ {
-		ed := tk.getEpochData(uint64(i))
+		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
 
 		if i == 1 {
@@ -430,7 +430,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 
 	for i := 1; i <= 3; i++ {
 		// all 3 epoch must have two  submissions
-		ed := tk.getEpochData(uint64(i))
+		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
 		require.Len(t, ed.Key, 0)
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
@@ -461,7 +461,7 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 	_, err = tk.insertProofMsg(msg3)
 	require.NoError(t, err, "failed to insert submission")
 
-	ed := tk.getEpochData(uint64(1))
+	ed := tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
 	require.Len(t, ed.Key, 3)
 
@@ -475,7 +475,7 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 
 	tk.onTipChange()
 
-	ed = tk.getEpochData(uint64(1))
+	ed = tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
 	require.Len(t, ed.Key, 1)
 	require.Equal(t, ed.Status, btcctypes.Finalized)
@@ -504,7 +504,7 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 	_, err = tk.insertProofMsg(msg2)
 	require.NoError(t, err, "failed to insert submission")
 
-	ed := tk.getEpochData(uint64(1))
+	ed := tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
 	require.Len(t, ed.Key, 2)
 
@@ -518,7 +518,7 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 
 	tk.onTipChange()
 
-	ed = tk.getEpochData(uint64(1))
+	ed = tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
 	require.Len(t, ed.Key, 1)
 	require.Equal(t, ed.Status, btcctypes.Finalized)
@@ -561,7 +561,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	}
 
 	// TODO customs Equality for submission keys
-	ed := tk.getEpochData(epoch)
+	ed := tk.GetEpochData(epoch)
 
 	if len(ed.Key) != 1 {
 		t.Errorf("Unexpected missing submissions")
@@ -579,7 +579,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	tk.onTipChange()
 	// TODO customs Equality for submission keys to check this are really keys
 	// we are looking for
-	ed = tk.getEpochData(epoch)
+	ed = tk.GetEpochData(epoch)
 
 	if len(ed.Key) != 1 {
 		t.Errorf("Unexpected missing submission")
@@ -594,7 +594,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 
 	tk.onTipChange()
 
-	ed = tk.getEpochData(epoch)
+	ed = tk.GetEpochData(epoch)
 
 	if ed == nil || ed.Status != btcctypes.Finalized {
 		t.Errorf("Epoch Data missing of in unexpected state")
