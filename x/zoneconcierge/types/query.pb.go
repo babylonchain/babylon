@@ -1174,7 +1174,7 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// Header queries the CZ header at a given height.
+	// Header queries the CZ header and fork headers at a given height.
 	Header(ctx context.Context, in *QueryHeaderRequest, opts ...grpc.CallOption) (*QueryHeaderResponse, error)
 	// ChainList queries the list of chains that checkpoint to Babylon
 	ChainList(ctx context.Context, in *QueryChainListRequest, opts ...grpc.CallOption) (*QueryChainListResponse, error)
@@ -1285,7 +1285,7 @@ func (c *queryClient) FinalizedChainInfoUntilHeight(ctx context.Context, in *Que
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// Header queries the CZ header at a given height.
+	// Header queries the CZ header and fork headers at a given height.
 	Header(context.Context, *QueryHeaderRequest) (*QueryHeaderResponse, error)
 	// ChainList queries the list of chains that checkpoint to Babylon
 	ChainList(context.Context, *QueryChainListRequest) (*QueryChainListResponse, error)

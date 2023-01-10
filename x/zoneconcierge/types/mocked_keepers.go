@@ -502,10 +502,10 @@ func (m *MockBtcCheckpointKeeper) EXPECT() *MockBtcCheckpointKeeperMockRecorder 
 	return m.recorder
 }
 
-// GetEpochDataWithBestSubmission mocks base method.
-func (m *MockBtcCheckpointKeeper) GetEpochDataWithBestSubmission(ctx types2.Context, e uint64) (types.BtcStatus, *types0.RawCheckpoint, *types.SubmissionKey, error) {
+// GetFinalizedEpochDataWithBestSubmission mocks base method.
+func (m *MockBtcCheckpointKeeper) GetFinalizedEpochDataWithBestSubmission(ctx types2.Context, e uint64) (types.BtcStatus, *types0.RawCheckpoint, *types.SubmissionKey, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEpochDataWithBestSubmission", ctx, e)
+	ret := m.ctrl.Call(m, "GetFinalizedEpochDataWithBestSubmission", ctx, e)
 	ret0, _ := ret[0].(types.BtcStatus)
 	ret1, _ := ret[1].(*types0.RawCheckpoint)
 	ret2, _ := ret[2].(*types.SubmissionKey)
@@ -513,10 +513,10 @@ func (m *MockBtcCheckpointKeeper) GetEpochDataWithBestSubmission(ctx types2.Cont
 	return ret0, ret1, ret2, ret3
 }
 
-// GetEpochDataWithBestSubmission indicates an expected call of GetEpochDataWithBestSubmission.
-func (mr *MockBtcCheckpointKeeperMockRecorder) GetEpochDataWithBestSubmission(ctx, e interface{}) *gomock.Call {
+// GetFinalizedEpochDataWithBestSubmission indicates an expected call of GetFinalizedEpochDataWithBestSubmission.
+func (mr *MockBtcCheckpointKeeperMockRecorder) GetFinalizedEpochDataWithBestSubmission(ctx, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochDataWithBestSubmission", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetEpochDataWithBestSubmission), ctx, e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalizedEpochDataWithBestSubmission", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetFinalizedEpochDataWithBestSubmission), ctx, e)
 }
 
 // GetSubmissionData mocks base method.
