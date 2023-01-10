@@ -146,7 +146,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 
 	// find the raw checkpoint and the best submission key for the finalised epoch
-	rawCheckpoint, bestSubmissionKey, err := k.getCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+	_, rawCheckpoint, bestSubmissionKey, err := k.btccKeeper.GetEpochDataWithBestSubmission(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		}
 
 		// find and assign the raw checkpoint and the best submission key for the finalised epoch
-		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.getCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetEpochDataWithBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -220,7 +220,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		if err != nil {
 			return nil, err
 		}
-		resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.getCkptInfoForFinalizedEpoch(ctx, finalizedEpoch)
+		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetEpochDataWithBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
