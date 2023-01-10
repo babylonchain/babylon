@@ -106,7 +106,7 @@ func FuzzHeader(f *testing.F) {
 		headers, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// find header at a random height and assert correctness against the expected header
-		randomHeight := datagen.RandomInt(int(numHeaders))
+		randomHeight := datagen.RandomInt(int(numHeaders - 1))
 		resp, err := zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChain.ChainID, Height: randomHeight})
 		require.NoError(t, err)
 		require.Equal(t, headers[randomHeight].Header.LastCommitHash, resp.Header.Hash)
