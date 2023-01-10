@@ -88,6 +88,41 @@ func FuzzChainInfo(f *testing.F) {
 	})
 }
 
+func FuzzHeader(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
+
+		ctx := babylonChain.GetContext()
+		hooks := zcKeeper.Hooks()
+
+		// invoke the hook a random number of times to simulate a random number of blocks
+		numHeaders := datagen.RandomInt(100) + 1
+		numForkHeaders := datagen.RandomInt(10) + 1
+		headers, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+
+		// find header at a random height and assert correctness against the expected header
+		randomHeight := datagen.RandomInt(int(numHeaders))
+		resp, err := zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChain.ChainID, Height: randomHeight})
+		require.NoError(t, err)
+		require.Equal(t, headers[randomHeight].Header.LastCommitHash, resp.Header.Hash)
+		require.Len(t, resp.ForkHeaders.Headers, 0)
+
+		// find the last header and fork headers then assert correctness
+		resp, err = zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChain.ChainID, Height: numHeaders - 1})
+		require.NoError(t, err)
+		require.Equal(t, headers[numHeaders-1].Header.LastCommitHash, resp.Header.Hash)
+		require.Len(t, resp.ForkHeaders.Headers, int(numForkHeaders))
+		for i := 0; i < int(numForkHeaders); i++ {
+			require.Equal(t, forkHeaders[i].Header.LastCommitHash, resp.ForkHeaders.Headers[i].Hash)
+		}
+	})
+}
+
 func FuzzEpochChainInfo(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

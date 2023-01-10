@@ -22,6 +22,10 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
   }
+  // Header queries the CZ header at a given height.
+  rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}/header/{height}";
+  }
   // ChainList queries the list of chains that checkpoint to Babylon
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chains";
@@ -59,6 +63,18 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryHeaderRequest is request type for the Query/Header RPC method.
+message QueryHeaderRequest {
+  string chain_id = 1;
+  uint64 height = 2;
+}
+
+// QueryParamsResponse is response type for the Query/Header RPC method.
+message QueryHeaderResponse {
+  babylon.zoneconcierge.v1.IndexedHeader header = 1;
+  babylon.zoneconcierge.v1.Forks fork_headers = 2;
 }
 
 // QueryChainListRequest is request type for the Query/ChainList RPC method
