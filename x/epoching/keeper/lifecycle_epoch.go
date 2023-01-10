@@ -6,8 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// TODO: add more tests on the lifecycle record
-
 // RecordNewEpochState adds a state for an epoch lifecycle, including
 func (k Keeper) RecordNewEpochState(ctx sdk.Context, epochNumber uint64, state types.EpochState) error {
 	lc := k.GetEpochLifecycle(ctx, epochNumber)
