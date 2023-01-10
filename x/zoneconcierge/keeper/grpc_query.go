@@ -46,6 +46,31 @@ func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (
 	return resp, nil
 }
 
+// Header returns the header and fork headers at a given height
+func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types.QueryHeaderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	header, err := k.GetHeader(ctx, req.ChainId, req.Height)
+	if err != nil {
+		return nil, err
+	}
+	forks := k.GetForks(ctx, req.ChainId, req.Height)
+	resp := &types.QueryHeaderResponse{
+		Header:      header,
+		ForkHeaders: forks,
+	}
+
+	return resp, nil
+}
+
 // EpochChainInfo returns the info of a chain with given ID in a given epoch
 func (k Keeper) EpochChainInfo(c context.Context, req *types.QueryEpochChainInfoRequest) (*types.QueryEpochChainInfoResponse, error) {
 	if req == nil {
