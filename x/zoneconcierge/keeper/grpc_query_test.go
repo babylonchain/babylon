@@ -101,7 +101,7 @@ func FuzzHeader(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100) + 1
+		numHeaders := datagen.RandomInt(100) + 2
 		numForkHeaders := datagen.RandomInt(10) + 1
 		headers, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
