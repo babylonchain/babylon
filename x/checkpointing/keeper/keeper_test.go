@@ -1,12 +1,13 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/boljen/go-bitmap"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/rand"
-	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
@@ -68,37 +69,86 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 
+		/* new accumulating checkpoint*/
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
 		mockCkptWithMeta.Status = types.Accumulating
+		mockCkptWithMeta.RecordStateUpdate(ctx, types.Accumulating)
 		epoch := mockCkptWithMeta.Ckpt.EpochNum
+		require.Len(t, mockCkptWithMeta.Lifecycle, 1)
+		require.Equal(t, curStateUpdate(ctx, types.Accumulating), mockCkptWithMeta.Lifecycle[0])
 
-		_ = ckptKeeper.AddRawCheckpoint(
+		err := ckptKeeper.AddRawCheckpoint(
 			ctx,
 			mockCkptWithMeta,
 		)
+		require.NoError(t, err)
+
+		/* incorrect state transition of a checkpoint */
+		// ensure status and lifecycle from an incorrect state transition
+		// will not be recorded
 		ckptKeeper.SetCheckpointSubmitted(ctx, epoch)
 		status, err := ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, types.Accumulating, status)
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 1)
+		require.Equal(t, curStateUpdate(ctx, types.Accumulating), mockCkptWithMeta.Lifecycle[0])
+
+		/* Accumulating -> Sealed */
+		ctx = updateRandomCtx(ctx)
 		mockCkptWithMeta.Status = types.Sealed
+		mockCkptWithMeta.RecordStateUpdate(ctx, types.Sealed)
 		err = ckptKeeper.UpdateCheckpoint(ctx, mockCkptWithMeta)
 		require.NoError(t, err)
+		// ensure status is updated
+		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		require.NoError(t, err)
+		require.Equal(t, types.Sealed, status)
+		// ensure state update of Sealed is recorded
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 2)
+		require.Equal(t, curStateUpdate(ctx, types.Sealed), mockCkptWithMeta.Lifecycle[1])
+
+		/* Sealed -> Submitted */
+		ctx = updateRandomCtx(ctx)
 		ckptKeeper.SetCheckpointSubmitted(ctx, epoch)
+		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, types.Submitted, status)
+		// ensure state update of Submitted is recorded
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 3)
+		require.Equal(t, curStateUpdate(ctx, types.Submitted), mockCkptWithMeta.Lifecycle[2])
+
+		/* Submitted -> Confirmed */
+		ctx = updateRandomCtx(ctx)
 		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
+		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, types.Confirmed, status)
-		ckptKeeper.SetCheckpointConfirmed(ctx, epoch)
-		status, err = ckptKeeper.GetStatus(ctx, epoch)
+		// ensure state update of Confirmed is recorded
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
 		require.NoError(t, err)
-		require.Equal(t, types.Confirmed, status)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 4)
+		require.Equal(t, curStateUpdate(ctx, types.Confirmed), mockCkptWithMeta.Lifecycle[3])
+
+		/* Confirmed -> Finalized */
+		ctx = updateRandomCtx(ctx)
 		ckptKeeper.SetCheckpointFinalized(ctx, epoch)
+		// ensure status is updated
 		status, err = ckptKeeper.GetStatus(ctx, epoch)
 		require.NoError(t, err)
 		require.Equal(t, types.Finalized, status)
+		// ensure state update of Finalized is recorded
+		mockCkptWithMeta, err = ckptKeeper.GetRawCheckpoint(ctx, epoch)
+		require.NoError(t, err)
+		require.Len(t, mockCkptWithMeta.Lifecycle, 5)
+		require.Equal(t, curStateUpdate(ctx, types.Finalized), mockCkptWithMeta.Lifecycle[4])
 	})
 }
 
@@ -202,4 +252,18 @@ func makeBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t 
 	require.NoError(t, err)
 
 	return ckptData
+}
+
+func curStateUpdate(ctx sdk.Context, status types.CheckpointStatus) *types.CheckpointStateUpdate {
+	height, time := ctx.BlockHeight(), ctx.BlockTime()
+	return &types.CheckpointStateUpdate{
+		State:       status,
+		BlockHeight: uint64(height),
+		BlockTime:   &time,
+	}
+}
+
+func updateRandomCtx(ctx sdk.Context) sdk.Context {
+	header := datagen.GenRandomTMHeader("test", datagen.RandomInt(1000))
+	return ctx.WithBlockHeader(*header)
 }
