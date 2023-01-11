@@ -147,29 +147,8 @@ message QueryFinalizedChainInfoRequest {
 message QueryFinalizedChainInfoResponse {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
-
-  /* 
-    The following fields include metadata related to this chain info
-  */
-  // epoch_info is the metadata of the last BTC-finalised epoch
-  babylon.epoching.v1.Epoch epoch_info = 2;
-  // raw_checkpoint is the raw checkpoint of this epoch
-  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 3;
-  // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
-  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
-
-  /*
-    The following fields include proofs that attest the chain info is BTC-finalised
-  */
-  // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
-  tendermint.types.TxProof proof_tx_in_block = 5;
-  // proof_header_in_epoch is the proof that the Babylon header is in a certain epoch
-  tendermint.crypto.Proof proof_header_in_epoch = 6;
-  // proof_epoch_sealed is the proof that the epoch is sealed
-  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 7;
-  // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
-  // It is the two TransactionInfo in the best (i.e., earliest) checkpoint submission
-  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 8;
+  // proof is the proof that the chain info is finalized
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 2;
 }
 
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the Query/FinalizedChainInfoUntilHeight RPC method.
@@ -187,27 +166,6 @@ message QueryFinalizedChainInfoUntilHeightRequest {
 message QueryFinalizedChainInfoUntilHeightResponse {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
-
-  /* 
-    The following fields include metadata related to this chain info
-  */
-  // epoch_info is the metadata of the last BTC-finalised epoch
-  babylon.epoching.v1.Epoch epoch_info = 2;
-  // raw_checkpoint is the raw checkpoint of this epoch
-  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 3;
-  // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
-  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
-
-  /*
-    The following fields include proofs that attest the chain info is BTC-finalised
-  */
-  // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
-  tendermint.types.TxProof proof_tx_in_block = 5;
-  // proof_header_in_epoch is the proof that the Babylon header is in a certain epoch
-  tendermint.crypto.Proof proof_header_in_epoch = 6;
-  // proof_epoch_sealed is the proof that the epoch is sealed
-  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 7;
-  // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
-  // It is the two TransactionInfo in the best (i.e., earliest) checkpoint submission
-  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 8;
+  // proof is the proof that the chain info is finalized
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 2;
 }
