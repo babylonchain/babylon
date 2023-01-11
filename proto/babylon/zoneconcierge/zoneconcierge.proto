@@ -84,16 +84,6 @@ message ProofEpochSealed {
 
 // ProofFinalizedChainInfo is a set of proofs that attest a chain info is BTC-finalised
 message ProofFinalizedChainInfo {
-  /* 
-    The following fields include metadata related to this chain info
-  */
-  // epoch_info is the metadata of the last BTC-finalised epoch
-  babylon.epoching.v1.Epoch epoch_info = 1;
-  // raw_checkpoint is the raw checkpoint of this epoch
-  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 2;
-  // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
-  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 3;
-
   /*
     The following fields include proofs that attest the chain info is BTC-finalised
   */

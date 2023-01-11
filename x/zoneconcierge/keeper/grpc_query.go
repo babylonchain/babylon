@@ -3,9 +3,6 @@ package keeper
 import (
 	"context"
 
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -165,25 +162,25 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 	resp.FinalizedChainInfo = chainInfo
 
-	// if the query does not want the proofs, return here
-	if !req.Prove {
-		return resp, nil
-	}
-
 	// find the epoch metadata of the finalised epoch
-	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+	resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
 
 	// find the raw checkpoint and the best submission key for the finalised epoch
-	_, rawCheckpoint, btcSubmissionKey, err := k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+	_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
 
+	// if the query does not want the proofs, return here
+	if !req.Prove {
+		return resp, nil
+	}
+
 	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, epochInfo, rawCheckpoint, btcSubmissionKey)
+	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.RawCheckpoint, resp.BtcSubmissionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -210,26 +207,15 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	}
 	resp.FinalizedChainInfo = chainInfo
 
-	// if the query does not want the proofs, return here
-	if !req.Prove {
-		return resp, nil
-	}
-
-	var (
-		epochInfo        *epochingtypes.Epoch
-		rawCheckpoint    *checkpointingtypes.RawCheckpoint
-		btcSubmissionKey *btcctypes.SubmissionKey
-	)
-
 	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info
 		// find and assign the epoch metadata of the finalised epoch
-		epochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
 
 		// find and assign the raw checkpoint and the best submission key for the finalised epoch
-		_, rawCheckpoint, btcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -246,18 +232,23 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 			return nil, err
 		}
 		resp.FinalizedChainInfo = chainInfo
-		epochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
-		_, rawCheckpoint, btcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
 	}
 
+	// if the query does not want the proofs, return here
+	if !req.Prove {
+		return resp, nil
+	}
+
 	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, epochInfo, rawCheckpoint, btcSubmissionKey)
+	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.RawCheckpoint, resp.BtcSubmissionKey)
 	if err != nil {
 		return nil, err
 	}

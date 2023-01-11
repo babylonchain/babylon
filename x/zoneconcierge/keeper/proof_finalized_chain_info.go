@@ -21,11 +21,7 @@ func (k Keeper) proveFinalizedChainInfo(
 ) (*types.ProofFinalizedChainInfo, error) {
 	var (
 		err   error
-		proof = &types.ProofFinalizedChainInfo{
-			EpochInfo:        epochInfo,
-			RawCheckpoint:    rawCheckpoint,
-			BtcSubmissionKey: bestSubmissionKey,
-		}
+		proof = &types.ProofFinalizedChainInfo{}
 	)
 
 	// Proof that the Babylon tx is in block
