@@ -1,6 +1,7 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
+import "google/protobuf/timestamp.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
@@ -37,6 +38,9 @@ message RawCheckpointWithMeta {
   ];
   // power_sum defines the accumulated voting power for the checkpoint
   uint64 power_sum = 4;
+  // lifecycle defines the lifecycle of this checkpoint, i.e., each state transition and
+  // the time (in both timestamp and block height) of this transition.
+  repeated CheckpointStateUpdate lifecycle = 5;
 }
 
 // CkptStatus is the status of a checkpoint.
@@ -53,6 +57,14 @@ enum CheckpointStatus {
   CKPT_STATUS_CONFIRMED = 3 [(gogoproto.enumvalue_customname) = "Confirmed"];
   // FINALIZED defines a checkpoint that is w-deep on BTC.
   CKPT_STATUS_FINALIZED = 4 [(gogoproto.enumvalue_customname) = "Finalized"];
+}
+
+message CheckpointStateUpdate {
+  option (gogoproto.equal)            = true;
+
+  CheckpointStatus state = 1;
+  uint64 block_height = 2;
+  google.protobuf.Timestamp block_time = 3 [(gogoproto.stdtime) = true];
 }
 
 // BlsSig wraps the BLS sig with meta data.
