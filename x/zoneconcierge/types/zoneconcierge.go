@@ -77,6 +77,17 @@ func (ci *ChainInfo) ValidateBasic() error {
 		return ErrInvalidChainInfo.Wrap("ChainID is empty")
 	} else if ci.LatestHeader == nil {
 		return ErrInvalidChainInfo.Wrap("LatestHeader is nil")
+	} else if ci.LatestForks == nil {
+		return ErrInvalidChainInfo.Wrap("LatestForks is nil")
 	}
+	if err := ci.LatestHeader.ValidateBasic(); err != nil {
+		return err
+	}
+	for _, forkHeader := range ci.LatestForks.Headers {
+		if err := forkHeader.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
