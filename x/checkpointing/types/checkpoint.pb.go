@@ -205,9 +205,12 @@ func (m *RawCheckpointWithMeta) GetLifecycle() []*CheckpointStateUpdate {
 }
 
 type CheckpointStateUpdate struct {
-	State       CheckpointStatus `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"state,omitempty"`
-	BlockHeight uint64           `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	BlockTime   *time.Time       `protobuf:"bytes,3,opt,name=block_time,json=blockTime,proto3,stdtime" json:"block_time,omitempty"`
+	// state defines the event of a state transition towards this state
+	State CheckpointStatus `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"state,omitempty"`
+	// block_height is the height of the Babylon block that triggers the state update
+	BlockHeight uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	// block_time is the timestamp in the Babylon block that triggers the state update
+	BlockTime *time.Time `protobuf:"bytes,3,opt,name=block_time,json=blockTime,proto3,stdtime" json:"block_time,omitempty"`
 }
 
 func (m *CheckpointStateUpdate) Reset()         { *m = CheckpointStateUpdate{} }

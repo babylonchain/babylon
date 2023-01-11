@@ -62,8 +62,11 @@ enum CheckpointStatus {
 message CheckpointStateUpdate {
   option (gogoproto.equal)            = true;
 
+  // state defines the event of a state transition towards this state
   CheckpointStatus state = 1;
+  // block_height is the height of the Babylon block that triggers the state update
   uint64 block_height = 2;
+  // block_time is the timestamp in the Babylon block that triggers the state update
   google.protobuf.Timestamp block_time = 3 [(gogoproto.stdtime) = true];
 }
 
