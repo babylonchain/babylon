@@ -1,10 +1,12 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
-import "babylon/checkpointing/bls_key.proto";
-import "babylon/checkpointing/checkpoint.proto";
 import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
+import "babylon/btccheckpoint/btccheckpoint.proto";
+import "babylon/checkpointing/bls_key.proto";
+import "babylon/checkpointing/query.proto";
+import "babylon/checkpointing/checkpoint.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -73,4 +75,20 @@ message ProofEpochSealed {
   tendermint.crypto.ProofOps proof_epoch_info = 2;
   // proof_epoch_info is the Merkle proof that the epoch's validator set is committed to `app_hash` of the sealer header
   tendermint.crypto.ProofOps proof_epoch_val_set = 3;
+}
+
+// ProofFinalizedChainInfo is a set of proofs that attest a chain info is BTC-finalised
+message ProofFinalizedChainInfo {
+  /*
+    The following fields include proofs that attest the chain info is BTC-finalised
+  */
+  // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
+  tendermint.types.TxProof proof_tx_in_block = 4;
+  // proof_header_in_epoch is the proof that the Babylon header is in a certain epoch
+  tendermint.crypto.Proof proof_header_in_epoch = 5;
+  // proof_epoch_sealed is the proof that the epoch is sealed
+  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 6;
+  // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
+  // It is the two TransactionInfo in the best (i.e., earliest) checkpoint submission
+  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 7;
 }

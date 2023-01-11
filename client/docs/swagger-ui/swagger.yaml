@@ -6697,19 +6697,43 @@ paths:
 
                         which transaction was included and transaction index in
                         the block
-              proof_tx_in_block:
-                title: >-
-                  proof_tx_in_block is the proof that tx that carries the header
-                  is included in a certain Babylon block
+              proof:
+                title: proof is the proof that the chain info is finalized
                 type: object
                 properties:
-                  root_hash:
-                    type: string
-                    format: byte
-                  data:
-                    type: string
-                    format: byte
-                  proof:
+                  proof_tx_in_block:
+                    title: >-
+                      proof_tx_in_block is the proof that tx that carries the
+                      header is included in a certain Babylon block
+                    type: object
+                    properties:
+                      root_hash:
+                        type: string
+                        format: byte
+                      data:
+                        type: string
+                        format: byte
+                      proof:
+                        type: object
+                        properties:
+                          total:
+                            type: string
+                            format: int64
+                          index:
+                            type: string
+                            format: int64
+                          leaf_hash:
+                            type: string
+                            format: byte
+                          aunts:
+                            type: array
+                            items:
+                              type: string
+                              format: byte
+                    description: >-
+                      TxProof represents a Merkle proof of the presence of a
+                      transaction in the Merkle tree.
+                  proof_header_in_epoch:
                     type: object
                     properties:
                       total:
@@ -6726,175 +6750,156 @@ paths:
                         items:
                           type: string
                           format: byte
-                description: >-
-                  TxProof represents a Merkle proof of the presence of a
-                  transaction in the Merkle tree.
-              proof_header_in_epoch:
-                type: object
-                properties:
-                  total:
-                    type: string
-                    format: int64
-                  index:
-                    type: string
-                    format: int64
-                  leaf_hash:
-                    type: string
-                    format: byte
-                  aunts:
-                    type: array
-                    items:
-                      type: string
-                      format: byte
-                title: >-
-                  proof_header_in_epoch is the proof that the Babylon header is
-                  in a certain epoch
-              proof_epoch_sealed:
-                title: proof_epoch_sealed is the proof that the epoch is sealed
-                type: object
-                properties:
-                  validator_set:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        validator_address:
-                          type: string
-                        bls_pub_key:
-                          type: string
-                          format: byte
-                        voting_power:
-                          type: string
-                          format: uint64
-                      title: >-
-                        ValidatorWithBlsKey couples validator address, voting
-                        power, and its bls public key
                     title: >-
-                      validator_set is the validator set of the sealed epoch
-
-                      This validator set has generated a BLS multisig on
-                      `last_commit_hash` of the sealer header
-                  proof_epoch_info:
-                    title: >-
-                      proof_epoch_info is the Merkle proof that the epoch's
-                      metadata is committed to `app_hash` of the sealer header
+                      proof_header_in_epoch is the proof that the Babylon header
+                      is in a certain epoch
+                  proof_epoch_sealed:
+                    title: proof_epoch_sealed is the proof that the epoch is sealed
                     type: object
                     properties:
-                      ops:
+                      validator_set:
                         type: array
                         items:
                           type: object
                           properties:
-                            type:
+                            validator_address:
                               type: string
-                            key:
-                              type: string
-                              format: byte
-                            data:
+                            bls_pub_key:
                               type: string
                               format: byte
+                            voting_power:
+                              type: string
+                              format: uint64
                           title: >-
-                            ProofOp defines an operation used for calculating
-                            Merkle root
+                            ValidatorWithBlsKey couples validator address,
+                            voting power, and its bls public key
+                        title: >-
+                          validator_set is the validator set of the sealed epoch
 
-                            The data could be arbitrary format, providing
-                            nessecary data
+                          This validator set has generated a BLS multisig on
+                          `last_commit_hash` of the sealer header
+                      proof_epoch_info:
+                        title: >-
+                          proof_epoch_info is the Merkle proof that the epoch's
+                          metadata is committed to `app_hash` of the sealer
+                          header
+                        type: object
+                        properties:
+                          ops:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                type:
+                                  type: string
+                                key:
+                                  type: string
+                                  format: byte
+                                data:
+                                  type: string
+                                  format: byte
+                              title: >-
+                                ProofOp defines an operation used for
+                                calculating Merkle root
 
-                            for example neighbouring node hash
-                  proof_epoch_val_set:
-                    title: >-
-                      proof_epoch_info is the Merkle proof that the epoch's
-                      validator set is committed to `app_hash` of the sealer
-                      header
-                    type: object
-                    properties:
-                      ops:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            type:
-                              type: string
-                            key:
-                              type: string
-                              format: byte
-                            data:
-                              type: string
-                              format: byte
-                          title: >-
-                            ProofOp defines an operation used for calculating
-                            Merkle root
+                                The data could be arbitrary format, providing
+                                nessecary data
 
-                            The data could be arbitrary format, providing
-                            nessecary data
+                                for example neighbouring node hash
+                      proof_epoch_val_set:
+                        title: >-
+                          proof_epoch_info is the Merkle proof that the epoch's
+                          validator set is committed to `app_hash` of the sealer
+                          header
+                        type: object
+                        properties:
+                          ops:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                type:
+                                  type: string
+                                key:
+                                  type: string
+                                  format: byte
+                                data:
+                                  type: string
+                                  format: byte
+                              title: >-
+                                ProofOp defines an operation used for
+                                calculating Merkle root
 
-                            for example neighbouring node hash
-              proof_epoch_submitted:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    key:
+                                The data could be arbitrary format, providing
+                                nessecary data
+
+                                for example neighbouring node hash
+                  proof_epoch_submitted:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        index:
-                          type: integer
-                          format: int64
-                        hash:
+                        key:
+                          type: object
+                          properties:
+                            index:
+                              type: integer
+                              format: int64
+                            hash:
+                              type: string
+                              format: byte
+                          title: >-
+                            Each provided OP_RETURN transaction can be
+                            idendtified by hash of block in
+
+                            which transaction was included and transaction index
+                            in the block
+                          description: >-
+                            key is the position (txIdx, blockHash) of this tx on
+                            BTC blockchain
+
+                            Although it is already a part of SubmissionKey, we
+                            store it here again
+
+                            to make TransactionInfo self-contained.
+
+                            For example, storing the key allows TransactionInfo
+                            to not relay on 
+
+                            the fact that TransactionInfo will be ordered in the
+                            same order as 
+
+                            TransactionKeys in SubmissionKey.
+                        transaction:
                           type: string
                           format: byte
+                          title: transaction is the full transaction in bytes
+                        proof:
+                          type: string
+                          format: byte
+                          title: >-
+                            proof is the Merkle proof that this tx is included
+                            in the position in `key`
+
+                            TODO: maybe it could use here better format as we
+                            already processed and 
+
+                            valideated the proof?
                       title: >-
-                        Each provided OP_RETURN transaction can be idendtified
-                        by hash of block in
+                        TransactionInfo is the info of a tx that contains
+                        Babylon checkpoint, including
 
-                        which transaction was included and transaction index in
-                        the block
-                      description: >-
-                        key is the position (txIdx, blockHash) of this tx on BTC
-                        blockchain
+                        - the position of the tx on BTC blockchain
 
-                        Although it is already a part of SubmissionKey, we store
-                        it here again
+                        - the full tx content
 
-                        to make TransactionInfo self-contained.
+                        - the Merkle proof that this tx is on the above position
+                    title: >-
+                      proof_epoch_submitted is the proof that the epoch's
+                      checkpoint is included in BTC ledger
 
-                        For example, storing the key allows TransactionInfo to
-                        not relay on 
-
-                        the fact that TransactionInfo will be ordered in the
-                        same order as 
-
-                        TransactionKeys in SubmissionKey.
-                    transaction:
-                      type: string
-                      format: byte
-                      title: transaction is the full transaction in bytes
-                    proof:
-                      type: string
-                      format: byte
-                      title: >-
-                        proof is the Merkle proof that this tx is included in
-                        the position in `key`
-
-                        TODO: maybe it could use here better format as we
-                        already processed and 
-
-                        valideated the proof?
-                  title: >-
-                    TransactionInfo is the info of a tx that contains Babylon
-                    checkpoint, including
-
-                    - the position of the tx on BTC blockchain
-
-                    - the full tx content
-
-                    - the Merkle proof that this tx is on the above position
-                title: >-
-                  proof_epoch_submitted is the proof that the epoch's checkpoint
-                  is included in BTC ledger
-
-                  It is the two TransactionInfo in the best (i.e., earliest)
-                  checkpoint submission
+                      It is the two TransactionInfo in the best (i.e., earliest)
+                      checkpoint submission
             description: >-
               QueryFinalizedChainInfoResponse is response type for the
               Query/FinalizedChainInfo RPC method.
@@ -7644,19 +7649,43 @@ paths:
 
                         which transaction was included and transaction index in
                         the block
-              proof_tx_in_block:
-                title: >-
-                  proof_tx_in_block is the proof that tx that carries the header
-                  is included in a certain Babylon block
+              proof:
+                title: proof is the proof that the chain info is finalized
                 type: object
                 properties:
-                  root_hash:
-                    type: string
-                    format: byte
-                  data:
-                    type: string
-                    format: byte
-                  proof:
+                  proof_tx_in_block:
+                    title: >-
+                      proof_tx_in_block is the proof that tx that carries the
+                      header is included in a certain Babylon block
+                    type: object
+                    properties:
+                      root_hash:
+                        type: string
+                        format: byte
+                      data:
+                        type: string
+                        format: byte
+                      proof:
+                        type: object
+                        properties:
+                          total:
+                            type: string
+                            format: int64
+                          index:
+                            type: string
+                            format: int64
+                          leaf_hash:
+                            type: string
+                            format: byte
+                          aunts:
+                            type: array
+                            items:
+                              type: string
+                              format: byte
+                    description: >-
+                      TxProof represents a Merkle proof of the presence of a
+                      transaction in the Merkle tree.
+                  proof_header_in_epoch:
                     type: object
                     properties:
                       total:
@@ -7673,175 +7702,156 @@ paths:
                         items:
                           type: string
                           format: byte
-                description: >-
-                  TxProof represents a Merkle proof of the presence of a
-                  transaction in the Merkle tree.
-              proof_header_in_epoch:
-                type: object
-                properties:
-                  total:
-                    type: string
-                    format: int64
-                  index:
-                    type: string
-                    format: int64
-                  leaf_hash:
-                    type: string
-                    format: byte
-                  aunts:
-                    type: array
-                    items:
-                      type: string
-                      format: byte
-                title: >-
-                  proof_header_in_epoch is the proof that the Babylon header is
-                  in a certain epoch
-              proof_epoch_sealed:
-                title: proof_epoch_sealed is the proof that the epoch is sealed
-                type: object
-                properties:
-                  validator_set:
-                    type: array
-                    items:
-                      type: object
-                      properties:
-                        validator_address:
-                          type: string
-                        bls_pub_key:
-                          type: string
-                          format: byte
-                        voting_power:
-                          type: string
-                          format: uint64
-                      title: >-
-                        ValidatorWithBlsKey couples validator address, voting
-                        power, and its bls public key
                     title: >-
-                      validator_set is the validator set of the sealed epoch
-
-                      This validator set has generated a BLS multisig on
-                      `last_commit_hash` of the sealer header
-                  proof_epoch_info:
-                    title: >-
-                      proof_epoch_info is the Merkle proof that the epoch's
-                      metadata is committed to `app_hash` of the sealer header
+                      proof_header_in_epoch is the proof that the Babylon header
+                      is in a certain epoch
+                  proof_epoch_sealed:
+                    title: proof_epoch_sealed is the proof that the epoch is sealed
                     type: object
                     properties:
-                      ops:
+                      validator_set:
                         type: array
                         items:
                           type: object
                           properties:
-                            type:
+                            validator_address:
                               type: string
-                            key:
-                              type: string
-                              format: byte
-                            data:
+                            bls_pub_key:
                               type: string
                               format: byte
+                            voting_power:
+                              type: string
+                              format: uint64
                           title: >-
-                            ProofOp defines an operation used for calculating
-                            Merkle root
+                            ValidatorWithBlsKey couples validator address,
+                            voting power, and its bls public key
+                        title: >-
+                          validator_set is the validator set of the sealed epoch
 
-                            The data could be arbitrary format, providing
-                            nessecary data
+                          This validator set has generated a BLS multisig on
+                          `last_commit_hash` of the sealer header
+                      proof_epoch_info:
+                        title: >-
+                          proof_epoch_info is the Merkle proof that the epoch's
+                          metadata is committed to `app_hash` of the sealer
+                          header
+                        type: object
+                        properties:
+                          ops:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                type:
+                                  type: string
+                                key:
+                                  type: string
+                                  format: byte
+                                data:
+                                  type: string
+                                  format: byte
+                              title: >-
+                                ProofOp defines an operation used for
+                                calculating Merkle root
 
-                            for example neighbouring node hash
-                  proof_epoch_val_set:
-                    title: >-
-                      proof_epoch_info is the Merkle proof that the epoch's
-                      validator set is committed to `app_hash` of the sealer
-                      header
-                    type: object
-                    properties:
-                      ops:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            type:
-                              type: string
-                            key:
-                              type: string
-                              format: byte
-                            data:
-                              type: string
-                              format: byte
-                          title: >-
-                            ProofOp defines an operation used for calculating
-                            Merkle root
+                                The data could be arbitrary format, providing
+                                nessecary data
 
-                            The data could be arbitrary format, providing
-                            nessecary data
+                                for example neighbouring node hash
+                      proof_epoch_val_set:
+                        title: >-
+                          proof_epoch_info is the Merkle proof that the epoch's
+                          validator set is committed to `app_hash` of the sealer
+                          header
+                        type: object
+                        properties:
+                          ops:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                type:
+                                  type: string
+                                key:
+                                  type: string
+                                  format: byte
+                                data:
+                                  type: string
+                                  format: byte
+                              title: >-
+                                ProofOp defines an operation used for
+                                calculating Merkle root
 
-                            for example neighbouring node hash
-              proof_epoch_submitted:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    key:
+                                The data could be arbitrary format, providing
+                                nessecary data
+
+                                for example neighbouring node hash
+                  proof_epoch_submitted:
+                    type: array
+                    items:
                       type: object
                       properties:
-                        index:
-                          type: integer
-                          format: int64
-                        hash:
+                        key:
+                          type: object
+                          properties:
+                            index:
+                              type: integer
+                              format: int64
+                            hash:
+                              type: string
+                              format: byte
+                          title: >-
+                            Each provided OP_RETURN transaction can be
+                            idendtified by hash of block in
+
+                            which transaction was included and transaction index
+                            in the block
+                          description: >-
+                            key is the position (txIdx, blockHash) of this tx on
+                            BTC blockchain
+
+                            Although it is already a part of SubmissionKey, we
+                            store it here again
+
+                            to make TransactionInfo self-contained.
+
+                            For example, storing the key allows TransactionInfo
+                            to not relay on 
+
+                            the fact that TransactionInfo will be ordered in the
+                            same order as 
+
+                            TransactionKeys in SubmissionKey.
+                        transaction:
                           type: string
                           format: byte
+                          title: transaction is the full transaction in bytes
+                        proof:
+                          type: string
+                          format: byte
+                          title: >-
+                            proof is the Merkle proof that this tx is included
+                            in the position in `key`
+
+                            TODO: maybe it could use here better format as we
+                            already processed and 
+
+                            valideated the proof?
                       title: >-
-                        Each provided OP_RETURN transaction can be idendtified
-                        by hash of block in
+                        TransactionInfo is the info of a tx that contains
+                        Babylon checkpoint, including
 
-                        which transaction was included and transaction index in
-                        the block
-                      description: >-
-                        key is the position (txIdx, blockHash) of this tx on BTC
-                        blockchain
+                        - the position of the tx on BTC blockchain
 
-                        Although it is already a part of SubmissionKey, we store
-                        it here again
+                        - the full tx content
 
-                        to make TransactionInfo self-contained.
+                        - the Merkle proof that this tx is on the above position
+                    title: >-
+                      proof_epoch_submitted is the proof that the epoch's
+                      checkpoint is included in BTC ledger
 
-                        For example, storing the key allows TransactionInfo to
-                        not relay on 
-
-                        the fact that TransactionInfo will be ordered in the
-                        same order as 
-
-                        TransactionKeys in SubmissionKey.
-                    transaction:
-                      type: string
-                      format: byte
-                      title: transaction is the full transaction in bytes
-                    proof:
-                      type: string
-                      format: byte
-                      title: >-
-                        proof is the Merkle proof that this tx is included in
-                        the position in `key`
-
-                        TODO: maybe it could use here better format as we
-                        already processed and 
-
-                        valideated the proof?
-                  title: >-
-                    TransactionInfo is the info of a tx that contains Babylon
-                    checkpoint, including
-
-                    - the position of the tx on BTC blockchain
-
-                    - the full tx content
-
-                    - the Merkle proof that this tx is on the above position
-                title: >-
-                  proof_epoch_submitted is the proof that the epoch's checkpoint
-                  is included in BTC ledger
-
-                  It is the two TransactionInfo in the best (i.e., earliest)
-                  checkpoint submission
+                      It is the two TransactionInfo in the best (i.e., earliest)
+                      checkpoint submission
             description: >-
               QueryFinalizedChainInfoUntilHeightResponse is response type for
               the Query/FinalizedChainInfoUntilHeight RPC method.
@@ -13628,6 +13638,207 @@ definitions:
       - The epoch medatata is committed to the `app_hash` of the sealer header
 
       - The validator set is committed to the `app_hash` of the sealer header
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo:
+    type: object
+    properties:
+      proof_tx_in_block:
+        title: >-
+          proof_tx_in_block is the proof that tx that carries the header is
+          included in a certain Babylon block
+        type: object
+        properties:
+          root_hash:
+            type: string
+            format: byte
+          data:
+            type: string
+            format: byte
+          proof:
+            type: object
+            properties:
+              total:
+                type: string
+                format: int64
+              index:
+                type: string
+                format: int64
+              leaf_hash:
+                type: string
+                format: byte
+              aunts:
+                type: array
+                items:
+                  type: string
+                  format: byte
+        description: >-
+          TxProof represents a Merkle proof of the presence of a transaction in
+          the Merkle tree.
+      proof_header_in_epoch:
+        type: object
+        properties:
+          total:
+            type: string
+            format: int64
+          index:
+            type: string
+            format: int64
+          leaf_hash:
+            type: string
+            format: byte
+          aunts:
+            type: array
+            items:
+              type: string
+              format: byte
+        title: >-
+          proof_header_in_epoch is the proof that the Babylon header is in a
+          certain epoch
+      proof_epoch_sealed:
+        title: proof_epoch_sealed is the proof that the epoch is sealed
+        type: object
+        properties:
+          validator_set:
+            type: array
+            items:
+              type: object
+              properties:
+                validator_address:
+                  type: string
+                bls_pub_key:
+                  type: string
+                  format: byte
+                voting_power:
+                  type: string
+                  format: uint64
+              title: >-
+                ValidatorWithBlsKey couples validator address, voting power, and
+                its bls public key
+            title: >-
+              validator_set is the validator set of the sealed epoch
+
+              This validator set has generated a BLS multisig on
+              `last_commit_hash` of the sealer header
+          proof_epoch_info:
+            title: >-
+              proof_epoch_info is the Merkle proof that the epoch's metadata is
+              committed to `app_hash` of the sealer header
+            type: object
+            properties:
+              ops:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
+
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
+          proof_epoch_val_set:
+            title: >-
+              proof_epoch_info is the Merkle proof that the epoch's validator
+              set is committed to `app_hash` of the sealer header
+            type: object
+            properties:
+              ops:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
+
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
+      proof_epoch_submitted:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              type: object
+              properties:
+                index:
+                  type: integer
+                  format: int64
+                hash:
+                  type: string
+                  format: byte
+              title: >-
+                Each provided OP_RETURN transaction can be idendtified by hash
+                of block in
+
+                which transaction was included and transaction index in the
+                block
+              description: >-
+                key is the position (txIdx, blockHash) of this tx on BTC
+                blockchain
+
+                Although it is already a part of SubmissionKey, we store it here
+                again
+
+                to make TransactionInfo self-contained.
+
+                For example, storing the key allows TransactionInfo to not relay
+                on 
+
+                the fact that TransactionInfo will be ordered in the same order
+                as 
+
+                TransactionKeys in SubmissionKey.
+            transaction:
+              type: string
+              format: byte
+              title: transaction is the full transaction in bytes
+            proof:
+              type: string
+              format: byte
+              title: >-
+                proof is the Merkle proof that this tx is included in the
+                position in `key`
+
+                TODO: maybe it could use here better format as we already
+                processed and 
+
+                valideated the proof?
+          title: >-
+            TransactionInfo is the info of a tx that contains Babylon
+            checkpoint, including
+
+            - the position of the tx on BTC blockchain
+
+            - the full tx content
+
+            - the Merkle proof that this tx is on the above position
+        title: >-
+          proof_epoch_submitted is the proof that the epoch's checkpoint is
+          included in BTC ledger
+
+          It is the two TransactionInfo in the best (i.e., earliest) checkpoint
+          submission
+    title: >-
+      ProofFinalizedChainInfo is a set of proofs that attest a chain info is
+      BTC-finalised
   babylon.zoneconcierge.v1.QueryChainInfoResponse:
     type: object
     properties:
@@ -14726,19 +14937,43 @@ definitions:
 
                 which transaction was included and transaction index in the
                 block
-      proof_tx_in_block:
-        title: >-
-          proof_tx_in_block is the proof that tx that carries the header is
-          included in a certain Babylon block
+      proof:
+        title: proof is the proof that the chain info is finalized
         type: object
         properties:
-          root_hash:
-            type: string
-            format: byte
-          data:
-            type: string
-            format: byte
-          proof:
+          proof_tx_in_block:
+            title: >-
+              proof_tx_in_block is the proof that tx that carries the header is
+              included in a certain Babylon block
+            type: object
+            properties:
+              root_hash:
+                type: string
+                format: byte
+              data:
+                type: string
+                format: byte
+              proof:
+                type: object
+                properties:
+                  total:
+                    type: string
+                    format: int64
+                  index:
+                    type: string
+                    format: int64
+                  leaf_hash:
+                    type: string
+                    format: byte
+                  aunts:
+                    type: array
+                    items:
+                      type: string
+                      format: byte
+            description: >-
+              TxProof represents a Merkle proof of the presence of a transaction
+              in the Merkle tree.
+          proof_header_in_epoch:
             type: object
             properties:
               total:
@@ -14755,172 +14990,154 @@ definitions:
                 items:
                   type: string
                   format: byte
-        description: >-
-          TxProof represents a Merkle proof of the presence of a transaction in
-          the Merkle tree.
-      proof_header_in_epoch:
-        type: object
-        properties:
-          total:
-            type: string
-            format: int64
-          index:
-            type: string
-            format: int64
-          leaf_hash:
-            type: string
-            format: byte
-          aunts:
-            type: array
-            items:
-              type: string
-              format: byte
-        title: >-
-          proof_header_in_epoch is the proof that the Babylon header is in a
-          certain epoch
-      proof_epoch_sealed:
-        title: proof_epoch_sealed is the proof that the epoch is sealed
-        type: object
-        properties:
-          validator_set:
-            type: array
-            items:
-              type: object
-              properties:
-                validator_address:
-                  type: string
-                bls_pub_key:
-                  type: string
-                  format: byte
-                voting_power:
-                  type: string
-                  format: uint64
-              title: >-
-                ValidatorWithBlsKey couples validator address, voting power, and
-                its bls public key
             title: >-
-              validator_set is the validator set of the sealed epoch
-
-              This validator set has generated a BLS multisig on
-              `last_commit_hash` of the sealer header
-          proof_epoch_info:
-            title: >-
-              proof_epoch_info is the Merkle proof that the epoch's metadata is
-              committed to `app_hash` of the sealer header
+              proof_header_in_epoch is the proof that the Babylon header is in a
+              certain epoch
+          proof_epoch_sealed:
+            title: proof_epoch_sealed is the proof that the epoch is sealed
             type: object
             properties:
-              ops:
+              validator_set:
                 type: array
                 items:
                   type: object
                   properties:
-                    type:
+                    validator_address:
                       type: string
-                    key:
-                      type: string
-                      format: byte
-                    data:
+                    bls_pub_key:
                       type: string
                       format: byte
+                    voting_power:
+                      type: string
+                      format: uint64
                   title: >-
-                    ProofOp defines an operation used for calculating Merkle
-                    root
+                    ValidatorWithBlsKey couples validator address, voting power,
+                    and its bls public key
+                title: >-
+                  validator_set is the validator set of the sealed epoch
 
-                    The data could be arbitrary format, providing nessecary data
+                  This validator set has generated a BLS multisig on
+                  `last_commit_hash` of the sealer header
+              proof_epoch_info:
+                title: >-
+                  proof_epoch_info is the Merkle proof that the epoch's metadata
+                  is committed to `app_hash` of the sealer header
+                type: object
+                properties:
+                  ops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        key:
+                          type: string
+                          format: byte
+                        data:
+                          type: string
+                          format: byte
+                      title: >-
+                        ProofOp defines an operation used for calculating Merkle
+                        root
 
-                    for example neighbouring node hash
-          proof_epoch_val_set:
-            title: >-
-              proof_epoch_info is the Merkle proof that the epoch's validator
-              set is committed to `app_hash` of the sealer header
-            type: object
-            properties:
-              ops:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                    key:
-                      type: string
-                      format: byte
-                    data:
-                      type: string
-                      format: byte
-                  title: >-
-                    ProofOp defines an operation used for calculating Merkle
-                    root
+                        The data could be arbitrary format, providing nessecary
+                        data
 
-                    The data could be arbitrary format, providing nessecary data
+                        for example neighbouring node hash
+              proof_epoch_val_set:
+                title: >-
+                  proof_epoch_info is the Merkle proof that the epoch's
+                  validator set is committed to `app_hash` of the sealer header
+                type: object
+                properties:
+                  ops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        key:
+                          type: string
+                          format: byte
+                        data:
+                          type: string
+                          format: byte
+                      title: >-
+                        ProofOp defines an operation used for calculating Merkle
+                        root
 
-                    for example neighbouring node hash
-      proof_epoch_submitted:
-        type: array
-        items:
-          type: object
-          properties:
-            key:
+                        The data could be arbitrary format, providing nessecary
+                        data
+
+                        for example neighbouring node hash
+          proof_epoch_submitted:
+            type: array
+            items:
               type: object
               properties:
-                index:
-                  type: integer
-                  format: int64
-                hash:
+                key:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                      format: int64
+                    hash:
+                      type: string
+                      format: byte
+                  title: >-
+                    Each provided OP_RETURN transaction can be idendtified by
+                    hash of block in
+
+                    which transaction was included and transaction index in the
+                    block
+                  description: >-
+                    key is the position (txIdx, blockHash) of this tx on BTC
+                    blockchain
+
+                    Although it is already a part of SubmissionKey, we store it
+                    here again
+
+                    to make TransactionInfo self-contained.
+
+                    For example, storing the key allows TransactionInfo to not
+                    relay on 
+
+                    the fact that TransactionInfo will be ordered in the same
+                    order as 
+
+                    TransactionKeys in SubmissionKey.
+                transaction:
                   type: string
                   format: byte
+                  title: transaction is the full transaction in bytes
+                proof:
+                  type: string
+                  format: byte
+                  title: >-
+                    proof is the Merkle proof that this tx is included in the
+                    position in `key`
+
+                    TODO: maybe it could use here better format as we already
+                    processed and 
+
+                    valideated the proof?
               title: >-
-                Each provided OP_RETURN transaction can be idendtified by hash
-                of block in
+                TransactionInfo is the info of a tx that contains Babylon
+                checkpoint, including
 
-                which transaction was included and transaction index in the
-                block
-              description: >-
-                key is the position (txIdx, blockHash) of this tx on BTC
-                blockchain
+                - the position of the tx on BTC blockchain
 
-                Although it is already a part of SubmissionKey, we store it here
-                again
+                - the full tx content
 
-                to make TransactionInfo self-contained.
+                - the Merkle proof that this tx is on the above position
+            title: >-
+              proof_epoch_submitted is the proof that the epoch's checkpoint is
+              included in BTC ledger
 
-                For example, storing the key allows TransactionInfo to not relay
-                on 
-
-                the fact that TransactionInfo will be ordered in the same order
-                as 
-
-                TransactionKeys in SubmissionKey.
-            transaction:
-              type: string
-              format: byte
-              title: transaction is the full transaction in bytes
-            proof:
-              type: string
-              format: byte
-              title: >-
-                proof is the Merkle proof that this tx is included in the
-                position in `key`
-
-                TODO: maybe it could use here better format as we already
-                processed and 
-
-                valideated the proof?
-          title: >-
-            TransactionInfo is the info of a tx that contains Babylon
-            checkpoint, including
-
-            - the position of the tx on BTC blockchain
-
-            - the full tx content
-
-            - the Merkle proof that this tx is on the above position
-        title: >-
-          proof_epoch_submitted is the proof that the epoch's checkpoint is
-          included in BTC ledger
-
-          It is the two TransactionInfo in the best (i.e., earliest) checkpoint
-          submission
+              It is the two TransactionInfo in the best (i.e., earliest)
+              checkpoint submission
     description: >-
       QueryFinalizedChainInfoResponse is response type for the
       Query/FinalizedChainInfo RPC method.
@@ -15442,19 +15659,43 @@ definitions:
 
                 which transaction was included and transaction index in the
                 block
-      proof_tx_in_block:
-        title: >-
-          proof_tx_in_block is the proof that tx that carries the header is
-          included in a certain Babylon block
+      proof:
+        title: proof is the proof that the chain info is finalized
         type: object
         properties:
-          root_hash:
-            type: string
-            format: byte
-          data:
-            type: string
-            format: byte
-          proof:
+          proof_tx_in_block:
+            title: >-
+              proof_tx_in_block is the proof that tx that carries the header is
+              included in a certain Babylon block
+            type: object
+            properties:
+              root_hash:
+                type: string
+                format: byte
+              data:
+                type: string
+                format: byte
+              proof:
+                type: object
+                properties:
+                  total:
+                    type: string
+                    format: int64
+                  index:
+                    type: string
+                    format: int64
+                  leaf_hash:
+                    type: string
+                    format: byte
+                  aunts:
+                    type: array
+                    items:
+                      type: string
+                      format: byte
+            description: >-
+              TxProof represents a Merkle proof of the presence of a transaction
+              in the Merkle tree.
+          proof_header_in_epoch:
             type: object
             properties:
               total:
@@ -15471,172 +15712,154 @@ definitions:
                 items:
                   type: string
                   format: byte
-        description: >-
-          TxProof represents a Merkle proof of the presence of a transaction in
-          the Merkle tree.
-      proof_header_in_epoch:
-        type: object
-        properties:
-          total:
-            type: string
-            format: int64
-          index:
-            type: string
-            format: int64
-          leaf_hash:
-            type: string
-            format: byte
-          aunts:
-            type: array
-            items:
-              type: string
-              format: byte
-        title: >-
-          proof_header_in_epoch is the proof that the Babylon header is in a
-          certain epoch
-      proof_epoch_sealed:
-        title: proof_epoch_sealed is the proof that the epoch is sealed
-        type: object
-        properties:
-          validator_set:
-            type: array
-            items:
-              type: object
-              properties:
-                validator_address:
-                  type: string
-                bls_pub_key:
-                  type: string
-                  format: byte
-                voting_power:
-                  type: string
-                  format: uint64
-              title: >-
-                ValidatorWithBlsKey couples validator address, voting power, and
-                its bls public key
             title: >-
-              validator_set is the validator set of the sealed epoch
-
-              This validator set has generated a BLS multisig on
-              `last_commit_hash` of the sealer header
-          proof_epoch_info:
-            title: >-
-              proof_epoch_info is the Merkle proof that the epoch's metadata is
-              committed to `app_hash` of the sealer header
+              proof_header_in_epoch is the proof that the Babylon header is in a
+              certain epoch
+          proof_epoch_sealed:
+            title: proof_epoch_sealed is the proof that the epoch is sealed
             type: object
             properties:
-              ops:
+              validator_set:
                 type: array
                 items:
                   type: object
                   properties:
-                    type:
+                    validator_address:
                       type: string
-                    key:
-                      type: string
-                      format: byte
-                    data:
+                    bls_pub_key:
                       type: string
                       format: byte
+                    voting_power:
+                      type: string
+                      format: uint64
                   title: >-
-                    ProofOp defines an operation used for calculating Merkle
-                    root
+                    ValidatorWithBlsKey couples validator address, voting power,
+                    and its bls public key
+                title: >-
+                  validator_set is the validator set of the sealed epoch
 
-                    The data could be arbitrary format, providing nessecary data
+                  This validator set has generated a BLS multisig on
+                  `last_commit_hash` of the sealer header
+              proof_epoch_info:
+                title: >-
+                  proof_epoch_info is the Merkle proof that the epoch's metadata
+                  is committed to `app_hash` of the sealer header
+                type: object
+                properties:
+                  ops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        key:
+                          type: string
+                          format: byte
+                        data:
+                          type: string
+                          format: byte
+                      title: >-
+                        ProofOp defines an operation used for calculating Merkle
+                        root
 
-                    for example neighbouring node hash
-          proof_epoch_val_set:
-            title: >-
-              proof_epoch_info is the Merkle proof that the epoch's validator
-              set is committed to `app_hash` of the sealer header
-            type: object
-            properties:
-              ops:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type:
-                      type: string
-                    key:
-                      type: string
-                      format: byte
-                    data:
-                      type: string
-                      format: byte
-                  title: >-
-                    ProofOp defines an operation used for calculating Merkle
-                    root
+                        The data could be arbitrary format, providing nessecary
+                        data
 
-                    The data could be arbitrary format, providing nessecary data
+                        for example neighbouring node hash
+              proof_epoch_val_set:
+                title: >-
+                  proof_epoch_info is the Merkle proof that the epoch's
+                  validator set is committed to `app_hash` of the sealer header
+                type: object
+                properties:
+                  ops:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                        key:
+                          type: string
+                          format: byte
+                        data:
+                          type: string
+                          format: byte
+                      title: >-
+                        ProofOp defines an operation used for calculating Merkle
+                        root
 
-                    for example neighbouring node hash
-      proof_epoch_submitted:
-        type: array
-        items:
-          type: object
-          properties:
-            key:
+                        The data could be arbitrary format, providing nessecary
+                        data
+
+                        for example neighbouring node hash
+          proof_epoch_submitted:
+            type: array
+            items:
               type: object
               properties:
-                index:
-                  type: integer
-                  format: int64
-                hash:
+                key:
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                      format: int64
+                    hash:
+                      type: string
+                      format: byte
+                  title: >-
+                    Each provided OP_RETURN transaction can be idendtified by
+                    hash of block in
+
+                    which transaction was included and transaction index in the
+                    block
+                  description: >-
+                    key is the position (txIdx, blockHash) of this tx on BTC
+                    blockchain
+
+                    Although it is already a part of SubmissionKey, we store it
+                    here again
+
+                    to make TransactionInfo self-contained.
+
+                    For example, storing the key allows TransactionInfo to not
+                    relay on 
+
+                    the fact that TransactionInfo will be ordered in the same
+                    order as 
+
+                    TransactionKeys in SubmissionKey.
+                transaction:
                   type: string
                   format: byte
+                  title: transaction is the full transaction in bytes
+                proof:
+                  type: string
+                  format: byte
+                  title: >-
+                    proof is the Merkle proof that this tx is included in the
+                    position in `key`
+
+                    TODO: maybe it could use here better format as we already
+                    processed and 
+
+                    valideated the proof?
               title: >-
-                Each provided OP_RETURN transaction can be idendtified by hash
-                of block in
+                TransactionInfo is the info of a tx that contains Babylon
+                checkpoint, including
 
-                which transaction was included and transaction index in the
-                block
-              description: >-
-                key is the position (txIdx, blockHash) of this tx on BTC
-                blockchain
+                - the position of the tx on BTC blockchain
 
-                Although it is already a part of SubmissionKey, we store it here
-                again
+                - the full tx content
 
-                to make TransactionInfo self-contained.
+                - the Merkle proof that this tx is on the above position
+            title: >-
+              proof_epoch_submitted is the proof that the epoch's checkpoint is
+              included in BTC ledger
 
-                For example, storing the key allows TransactionInfo to not relay
-                on 
-
-                the fact that TransactionInfo will be ordered in the same order
-                as 
-
-                TransactionKeys in SubmissionKey.
-            transaction:
-              type: string
-              format: byte
-              title: transaction is the full transaction in bytes
-            proof:
-              type: string
-              format: byte
-              title: >-
-                proof is the Merkle proof that this tx is included in the
-                position in `key`
-
-                TODO: maybe it could use here better format as we already
-                processed and 
-
-                valideated the proof?
-          title: >-
-            TransactionInfo is the info of a tx that contains Babylon
-            checkpoint, including
-
-            - the position of the tx on BTC blockchain
-
-            - the full tx content
-
-            - the Merkle proof that this tx is on the above position
-        title: >-
-          proof_epoch_submitted is the proof that the epoch's checkpoint is
-          included in BTC ledger
-
-          It is the two TransactionInfo in the best (i.e., earliest) checkpoint
-          submission
+              It is the two TransactionInfo in the best (i.e., earliest)
+              checkpoint submission
     description: >-
       QueryFinalizedChainInfoUntilHeightResponse is response type for the
       Query/FinalizedChainInfoUntilHeight RPC method.
