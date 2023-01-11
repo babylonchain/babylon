@@ -36,8 +36,9 @@ func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
 
 func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawCheckpointWithMeta {
 	return &RawCheckpointWithMeta{
-		Ckpt:   ckpt,
-		Status: status,
+		Ckpt:      ckpt,
+		Status:    status,
+		Lifecycle: []*CheckpointStateUpdate{},
 	}
 }
 
@@ -46,35 +47,35 @@ func NewCheckpointWithMeta(ckpt *RawCheckpoint, status CheckpointStatus) *RawChe
 // 2. aggregates the BLS public key
 // 3. updates Bitmap
 // 4. accumulates voting power
-// it returns True if the checkpoint is updated
+// it returns nil if the checkpoint is updated, otherwise it returns an error
 func (cm *RawCheckpointWithMeta) Accumulate(
 	vals epochingtypes.ValidatorSet,
 	signerAddr sdk.ValAddress,
 	signerBlsKey bls12381.PublicKey,
 	sig bls12381.Signature,
-	totalPower int64) (bool, error) {
+	totalPower int64) error {
 
 	// the checkpoint should be accumulating
 	if cm.Status != Accumulating {
-		return false, ErrCkptNotAccumulating
+		return ErrCkptNotAccumulating
 	}
 
 	// get validator and its index
 	val, index, err := vals.FindValidatorWithIndex(signerAddr)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	// return an error if the validator has already voted
 	if bitmap.Get(cm.Ckpt.Bitmap, index) {
-		return false, ErrCkptAlreadyVoted
+		return ErrCkptAlreadyVoted
 	}
 
 	// aggregate BLS sig
 	if cm.Ckpt.BlsMultiSig != nil {
 		aggSig, err := bls12381.AggrSig(*cm.Ckpt.BlsMultiSig, sig)
 		if err != nil {
-			return false, err
+			return err
 		}
 		cm.Ckpt.BlsMultiSig = &aggSig
 	} else {
@@ -85,7 +86,7 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 	if cm.BlsAggrPk != nil {
 		aggPK, err := bls12381.AggrPK(*cm.BlsAggrPk, signerBlsKey)
 		if err != nil {
-			return false, err
+			return err
 		}
 		cm.BlsAggrPk = &aggPK
 	} else {
@@ -101,11 +102,23 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 		cm.Status = Sealed
 	}
 
-	return true, nil
+	return nil
 }
 
 func (cm *RawCheckpointWithMeta) IsMoreMatureThanStatus(status CheckpointStatus) bool {
 	return cm.Status > status
+}
+
+// RecordStateUpdate appends a new state update to the raw ckpt with meta
+// where the time/height are captured by the current ctx
+func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx sdk.Context, status CheckpointStatus) {
+	height, time := ctx.BlockHeight(), ctx.BlockTime()
+	stateUpdate := &CheckpointStateUpdate{
+		State:       status,
+		BlockHeight: uint64(height),
+		BlockTime:   &time,
+	}
+	cm.Lifecycle = append(cm.Lifecycle, stateUpdate)
 }
 
 func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
