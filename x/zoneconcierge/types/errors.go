@@ -21,4 +21,5 @@ var (
 	ErrFinalizedEpochNotFound  = sdkerrors.Register(ModuleName, 1110, "cannot find a finalized epoch")
 	ErrInvalidProofEpochSealed = sdkerrors.Register(ModuleName, 1111, "invalid ProofEpochSealed")
 	ErrInvalidMerkleProof      = sdkerrors.Register(ModuleName, 1112, "invalid Merkle inclusion proof")
+	ErrInvalidChainInfo        = sdkerrors.Register(ModuleName, 1113, "invalid chain info")
 )

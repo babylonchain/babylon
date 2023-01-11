@@ -58,3 +58,7 @@ func (k Keeper) proveFinalizedChainInfo(
 
 	return proof, nil
 }
+
+// TODO: implement a standalone verifier VerifyFinalizedChainInfo that
+// verifies whether a chainInfo is finalised or not, with access to
+// Bitcoin and Babylon light clients
