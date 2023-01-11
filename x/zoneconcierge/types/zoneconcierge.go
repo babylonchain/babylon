@@ -46,10 +46,8 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 		return false
 	} else if ih.BabylonEpoch != ih2.BabylonEpoch {
 		return false
-	} else if !bytes.Equal(ih.BabylonTxHash, ih2.BabylonTxHash) {
-		return false
 	}
-	return true
+	return bytes.Equal(ih.BabylonTxHash, ih2.BabylonTxHash)
 }
 
 func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
@@ -71,10 +69,7 @@ func (ci *ChainInfo) Equal(ci2 *ChainInfo) bool {
 			return false
 		}
 	}
-	if ci.TimestampedHeadersCount != ci2.TimestampedHeadersCount {
-		return false
-	}
-	return true
+	return ci.TimestampedHeadersCount == ci2.TimestampedHeadersCount
 }
 
 func (ci *ChainInfo) ValidateBasic() error {

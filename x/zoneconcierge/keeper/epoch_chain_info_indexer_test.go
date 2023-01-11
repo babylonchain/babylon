@@ -42,10 +42,6 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
-
-		// check function ChainInfoExists
-		err = zcKeeper.ChainInfoExists(ctx, chainInfo)
-		require.NoError(t, err)
 	})
 }
 

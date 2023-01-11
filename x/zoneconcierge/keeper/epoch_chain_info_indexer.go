@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -90,26 +88,6 @@ func (k Keeper) GetEpochHeaders(ctx sdk.Context, chainID string, epochNumber uin
 	bbn.Reverse(headers)
 
 	return headers, nil
-}
-
-// ChainInfoExists checks whether the given chainInfo exists on Babylon or not
-func (k Keeper) ChainInfoExists(ctx sdk.Context, chainInfo *types.ChainInfo) error {
-	if chainInfo == nil {
-		return fmt.Errorf("nil chainInfo")
-	}
-	if err := chainInfo.ValidateBasic(); err != nil {
-		return err
-	}
-
-	expectedChainInfo, err := k.GetEpochChainInfo(ctx, chainInfo.ChainId, chainInfo.LatestHeader.BabylonEpoch)
-	if err != nil {
-		return err
-	}
-
-	if !chainInfo.Equal(expectedChainInfo) {
-		return types.ErrInvalidChainInfo.Wrapf("chainInfo does not match: expected chainInfo in KVStore: %v", expectedChainInfo)
-	}
-	return nil
 }
 
 // recordEpochChainInfo records the chain info for a given epoch number of given chain ID
