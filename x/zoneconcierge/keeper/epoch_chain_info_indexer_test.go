@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
 )
 
