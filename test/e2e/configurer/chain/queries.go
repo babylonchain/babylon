@@ -54,7 +54,7 @@ func (n *NodeConfig) QueryGRPCGateway(path string, parameters ...string) ([]byte
 		}
 
 		return resp.StatusCode != http.StatusServiceUnavailable
-	}, time.Minute, time.Second*1, "failed to execute HTTP request")
+	}, time.Minute, time.Millisecond*10, "failed to execute HTTP request")
 
 	defer resp.Body.Close()
 
@@ -197,17 +197,17 @@ func (n *NodeConfig) QueryFinalizedChainInfo(chainId string) (*zctypes.QueryFina
 	return &finalizedResponse, nil
 }
 
-func (n *NodeConfig) QueryCheckpointChains() (*zctypes.QueryChainListResponse, error) {
+func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains")
 	require.NoError(n.t, err)
 	var chainsResponse zctypes.QueryChainListResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &chainsResponse); err != nil {
 		return nil, err
 	}
-	return &chainsResponse, nil
+	return &chainsResponse.ChainIds, nil
 }
 
-func (n *NodeConfig) QueryCheckpointChainInfo(chainId string) (*zctypes.QueryChainInfoResponse, error) {
+func (n *NodeConfig) QueryCheckpointChainInfo(chainId string) (*zctypes.ChainInfo, error) {
 	infoPath := fmt.Sprintf("/babylon/zoneconcierge/v1/chain_info/%s", chainId)
 	bz, err := n.QueryGRPCGateway(infoPath)
 	require.NoError(n.t, err)
@@ -215,5 +215,5 @@ func (n *NodeConfig) QueryCheckpointChainInfo(chainId string) (*zctypes.QueryCha
 	if err := util.Cdc.UnmarshalJSON(bz, &infoResponse); err != nil {
 		return nil, err
 	}
-	return &infoResponse, nil
+	return infoResponse.ChainInfo, nil
 }

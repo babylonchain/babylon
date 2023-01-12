@@ -34,7 +34,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdTxInsertSpvProofsBytes())
+	cmd.AddCommand(CmdTxInsertSpvProofs())
 
 	return cmd
 }
@@ -42,9 +42,9 @@ func GetTxCmd() *cobra.Command {
 // TODO this api is not super friendly i.e it is not easy to provide hex encoded
 // proto serialized blobs. It would be good to have version which takes some
 // other format like json or maybe path to file
-func CmdTxInsertSpvProofsBytes() *cobra.Command {
+func CmdTxInsertSpvProofs() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "insert-proofs [proof-bytes] [proof-bytes]",
+		Use:   "insert-proofs [proof-hex-string] [proof-hex-string]",
 		Short: "submit proof bytes",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {

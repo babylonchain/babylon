@@ -130,18 +130,13 @@ func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errormsg string
 
 func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
 	var latestBlockHeight uint64
-	for i := 0; i < waitUntilrepeatMax; i++ {
+	n.WaitForCondition(func() bool {
 		btcTip, err := n.QueryTip()
 		require.NoError(n.t, err)
 		latestBlockHeight = btcTip.Height
 
-		if latestBlockHeight < height {
-			time.Sleep(waitUntilRepeatPauseTime)
-			continue
-		}
-		return
-	}
-	n.t.Errorf("node %s timed out waiting for condition, latest btc block height was %d", n.Name, latestBlockHeight)
+		return latestBlockHeight >= height
+	}, fmt.Sprintf("Timed out waiting for btc height %d", height))
 }
 
 func (n *NodeConfig) extractOperatorAddressIfValidator() error {
