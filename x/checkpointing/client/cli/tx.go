@@ -106,8 +106,5 @@ before running the command (e.g., via babylond create-bls-key).`))
 		return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 	}
 
-	cmd.Flags().String(flags.FlagHome, "", "The node home directory")
-	_ = cmd.MarkFlagRequired(flags.FlagHome)
-
 	return cmd
 }
