@@ -2,6 +2,8 @@ package cli
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -105,6 +107,17 @@ before running the command (e.g., via babylond create-bls-key).`))
 
 		return tx.GenerateOrBroadcastTxWithFactory(clientCtx, txf, msg)
 	}
+	// HACK: test cases need to setup the path where the priv validator BLS key is going to be set
+	// so we redefine the FlagHome here. Since we can't import `app` due to a cyclic dependency,
+	// we have to duplicate the definition here.
+	// If this changes, the `DefaultHomeDir` flag at `app/app.go` needs to change as well.
+	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		panic(err)
+	}
+
+	defaultNodeHome := filepath.Join(userHomeDir, ".babylond")
+	cmd.Flags().String(flags.FlagHome, defaultNodeHome, "The node home directory")
 
 	return cmd
 }

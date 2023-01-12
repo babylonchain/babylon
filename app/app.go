@@ -247,6 +247,7 @@ type BabylonApp struct {
 }
 
 func init() {
+	// Note: If this changes, the home directory under x/checkpointing/client/cli/tx.go needs to change as well
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		panic(err)
