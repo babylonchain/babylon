@@ -111,6 +111,34 @@ func (n *NodeConfig) WaitUntil(doneCondition func(syncInfo coretypes.SyncInfo) b
 	n.t.Errorf("node %s timed out waiting for condition, latest block height was %d", n.Name, latestBlockHeight)
 }
 
+func (n *NodeConfig) LatestBlockNumber() uint64 {
+	status, err := n.rpcClient.Status(context.Background())
+	require.NoError(n.t, err)
+	return uint64(status.SyncInfo.LatestBlockHeight)
+}
+
+func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errormsg string) {
+	for i := 0; i < waitUntilrepeatMax; i++ {
+		if !doneCondition() {
+			time.Sleep(waitUntilRepeatPauseTime)
+			continue
+		}
+		return
+	}
+	n.t.Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errormsg)
+}
+
+func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
+	var latestBlockHeight uint64
+	n.WaitForCondition(func() bool {
+		btcTip, err := n.QueryTip()
+		require.NoError(n.t, err)
+		latestBlockHeight = btcTip.Height
+
+		return latestBlockHeight >= height
+	}, fmt.Sprintf("Timed out waiting for btc height %d", height))
+}
+
 func (n *NodeConfig) extractOperatorAddressIfValidator() error {
 	if !n.IsValidator {
 		n.t.Logf("node (%s) is not a validator, skipping", n.Name)

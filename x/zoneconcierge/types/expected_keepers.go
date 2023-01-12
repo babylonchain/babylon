@@ -68,7 +68,7 @@ type ScopedKeeper interface {
 }
 
 type BtcCheckpointKeeper interface {
-	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
+	GetFinalizedEpochDataWithBestSubmission(ctx sdk.Context, e uint64) (btcctypes.BtcStatus, *checkpointingtypes.RawCheckpoint, *btcctypes.SubmissionKey, error)
 	GetSubmissionData(ctx sdk.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
 }
 

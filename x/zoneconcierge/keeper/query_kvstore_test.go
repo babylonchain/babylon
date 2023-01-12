@@ -17,7 +17,9 @@ func FuzzQueryStore(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, _, zcKeeper := SetupTest(t)
+		_, babylonChain, _, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
+
 		babylonChain.NextBlock()
 		babylonChain.NextBlock()
 

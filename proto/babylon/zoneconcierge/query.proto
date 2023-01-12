@@ -3,8 +3,6 @@ package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "tendermint/types/types.proto";
-import "tendermint/crypto/proof.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/tx.proto";
 import "babylon/btccheckpoint/btccheckpoint.proto";
@@ -22,6 +20,10 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
   }
+  // Header queries the CZ header and fork headers at a given height.
+  rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}/header/{height}";
+  }
   // ChainList queries the list of chains that checkpoint to Babylon
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chains";
@@ -30,13 +32,25 @@ service Query {
   rpc ChainInfo(QueryChainInfoRequest) returns (QueryChainInfoResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}";
   }
+  // EpochChainInfo queries the latest info of a chain in a given epoch of Babylon's view
+  rpc EpochChainInfo(QueryEpochChainInfoRequest) returns (QueryEpochChainInfoResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chain_info/{chain_id}/epochs/{epoch_num}";
+  }
   // ListHeaders queries the headers of a chain in Babylon's view, with pagination support
   rpc ListHeaders(QueryListHeadersRequest) returns (QueryListHeadersResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/headers/{chain_id}";
   }
+  // ListEpochHeaders queries the headers of a chain timestamped in a given epoch of Babylon, with pagination support
+  rpc ListEpochHeaders(QueryListEpochHeadersRequest) returns (QueryListEpochHeadersResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}";
+  }
   // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
   rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest) returns (QueryFinalizedChainInfoResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}";
+  }
+  // FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than the provided CZ height, with proofs
+  rpc FinalizedChainInfoUntilHeight(QueryFinalizedChainInfoUntilHeightRequest) returns (QueryFinalizedChainInfoUntilHeightResponse) {
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}/height/{height}";
   }
 }
 
@@ -47,6 +61,18 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryHeaderRequest is request type for the Query/Header RPC method.
+message QueryHeaderRequest {
+  string chain_id = 1;
+  uint64 height = 2;
+}
+
+// QueryParamsResponse is response type for the Query/Header RPC method.
+message QueryHeaderResponse {
+  babylon.zoneconcierge.v1.IndexedHeader header = 1;
+  babylon.zoneconcierge.v1.Forks fork_headers = 2;
 }
 
 // QueryChainListRequest is request type for the Query/ChainList RPC method
@@ -68,6 +94,18 @@ message QueryChainInfoResponse {
   babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
 }
 
+// QueryEpochChainInfoRequest is request type for the Query/EpochChainInfo RPC method.
+message QueryEpochChainInfoRequest {
+  uint64 epoch_num = 1;
+  string chain_id = 2;
+}
+
+// QueryEpochChainInfoResponse is response type for the Query/EpochChainInfo RPC method.
+message QueryEpochChainInfoResponse {
+  // chain_info is the info of the CZ
+  babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
+}
+
 // QueryListHeadersRequest is request type for the Query/ListHeaders RPC method.
 message QueryListHeadersRequest {
   string chain_id = 1;
@@ -83,6 +121,18 @@ message QueryListHeadersResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryListEpochHeadersRequest is request type for the Query/ListEpochHeaders RPC method.
+message QueryListEpochHeadersRequest {
+  uint64 epoch_num = 1;
+  string chain_id = 2;
+}
+
+// QueryListEpochHeadersResponse is response type for the Query/ListEpochHeaders RPC method.
+message QueryListEpochHeadersResponse {
+  // headers is the list of headers
+  repeated babylon.zoneconcierge.v1.IndexedHeader headers = 1;
+}
+
 // QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
 message QueryFinalizedChainInfoRequest {
   // chain_id is the ID of the CZ
@@ -96,9 +146,6 @@ message QueryFinalizedChainInfoResponse {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
 
-  /* 
-    The following fields include metadata related to this chain info
-  */
   // epoch_info is the metadata of the last BTC-finalised epoch
   babylon.epoching.v1.Epoch epoch_info = 2;
   // raw_checkpoint is the raw checkpoint of this epoch
@@ -106,16 +153,33 @@ message QueryFinalizedChainInfoResponse {
   // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
   babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
 
-  /*
-    The following fields include proofs that attest the chain info is BTC-finalised
-  */
-  // proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
-  tendermint.types.TxProof proof_tx_in_block = 5;
-  // proof_header_in_epoch is the proof that the Babylon header is in a certain epoch
-  tendermint.crypto.Proof proof_header_in_epoch = 6;
-  // proof_epoch_sealed is the proof that the epoch is sealed
-  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 7;
-  // proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
-  // It is the two TransactionInfo in the best (i.e., earliest) checkpoint submission
-  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 8;
+  // proof is the proof that the chain info is finalized
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
+}
+
+// QueryFinalizedChainInfoUntilHeightRequest is request type for the Query/FinalizedChainInfoUntilHeight RPC method.
+message QueryFinalizedChainInfoUntilHeightRequest {
+  // chain_id is the ID of the CZ
+  string chain_id = 1;
+  // height is the height of the CZ chain
+  // such that the returned finalised chain info will be no later than this height
+  uint64 height = 2;
+  // prove indicates whether the querier wants to get proofs of this timestamp
+  bool prove = 3;
+}
+
+// QueryFinalizedChainInfoUntilHeightResponse is response type for the Query/FinalizedChainInfoUntilHeight RPC method.
+message QueryFinalizedChainInfoUntilHeightResponse {
+  // finalized_chain_info is the info of the CZ
+  babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
+  
+  // epoch_info is the metadata of the last BTC-finalised epoch
+  babylon.epoching.v1.Epoch epoch_info = 2;
+  // raw_checkpoint is the raw checkpoint of this epoch
+  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 3;
+  // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
+  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
+
+  // proof is the proof that the chain info is finalized
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
 }

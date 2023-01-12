@@ -1,9 +1,11 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/babylonchain/babylon/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -171,4 +173,21 @@ func (ti *TransactionInfo) ValidateBasic() error {
 		return fmt.Errorf("proof in TransactionInfo is nil")
 	}
 	return nil
+}
+
+func NewSpvProofFromHexBytes(c codec.Codec, proof string) (*BTCSpvProof, error) {
+	bytes, err := hex.DecodeString(proof)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var p BTCSpvProof
+	err = c.Unmarshal(bytes, &p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }

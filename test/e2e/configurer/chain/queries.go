@@ -16,6 +16,9 @@ import (
 	tmabcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
+	blc "github.com/babylonchain/babylon/x/btclightclient/types"
+	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, parameters ...string) ([]byte, error) {
@@ -128,4 +131,89 @@ func (n *NodeConfig) QueryListSnapshots() ([]*tmabcitypes.Snapshot, error) {
 	}
 
 	return listSnapshots.Snapshots, nil
+}
+
+// func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {
+// 	path := fmt.Sprintf("/cosmwasm/wasm/v1/code/%d/contracts", codeId)
+// 	bz, err := n.QueryGRPCGateway(path)
+
+// 	require.NoError(n.t, err)
+
+// 	var contractsResponse wasmtypes.QueryContractsByCodeResponse
+// 	if err := util.Cdc.UnmarshalJSON(bz, &contractsResponse); err != nil {
+// 		return nil, err
+// 	}
+
+// 	return contractsResponse.Contracts, nil
+// }
+
+func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
+	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
+	bz, err := n.QueryGRPCGateway(path)
+	require.NoError(n.t, err)
+
+	var checkpointingResponse ct.QueryRawCheckpointResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &checkpointingResponse); err != nil {
+		return nil, err
+	}
+
+	return checkpointingResponse.RawCheckpoint, nil
+}
+
+func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
+	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader")
+	require.NoError(n.t, err)
+
+	var blcResponse blc.QueryBaseHeaderResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &blcResponse); err != nil {
+		return nil, err
+	}
+
+	return blcResponse.Header, nil
+}
+
+func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
+	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/tip")
+	require.NoError(n.t, err)
+
+	var blcResponse blc.QueryTipResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &blcResponse); err != nil {
+		return nil, err
+	}
+
+	return blcResponse.Header, nil
+}
+
+func (n *NodeConfig) QueryFinalizedChainInfo(chainId string) (*zctypes.QueryFinalizedChainInfoResponse, error) {
+	finalizedPath := fmt.Sprintf("babylon/zoneconcierge/v1/finalized_chain_info/%s", chainId)
+	bz, err := n.QueryGRPCGateway(finalizedPath)
+	require.NoError(n.t, err)
+
+	var finalizedResponse zctypes.QueryFinalizedChainInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &finalizedResponse); err != nil {
+		return nil, err
+	}
+
+	return &finalizedResponse, nil
+}
+
+func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
+	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains")
+	require.NoError(n.t, err)
+	var chainsResponse zctypes.QueryChainListResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &chainsResponse); err != nil {
+		return nil, err
+	}
+	return &chainsResponse.ChainIds, nil
+}
+
+func (n *NodeConfig) QueryCheckpointChainInfo(chainId string) (*zctypes.ChainInfo, error) {
+	infoPath := fmt.Sprintf("/babylon/zoneconcierge/v1/chain_info/%s", chainId)
+	bz, err := n.QueryGRPCGateway(infoPath)
+	require.NoError(n.t, err)
+	var infoResponse zctypes.QueryChainInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &infoResponse); err != nil {
+		return nil, err
+	}
+	return infoResponse.ChainInfo, nil
 }

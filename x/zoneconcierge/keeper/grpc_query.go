@@ -2,10 +2,7 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -45,6 +42,52 @@ func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (
 	return resp, nil
 }
 
+// Header returns the header and fork headers at a given height
+func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types.QueryHeaderResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	header, err := k.GetHeader(ctx, req.ChainId, req.Height)
+	if err != nil {
+		return nil, err
+	}
+	forks := k.GetForks(ctx, req.ChainId, req.Height)
+	resp := &types.QueryHeaderResponse{
+		Header:      header,
+		ForkHeaders: forks,
+	}
+
+	return resp, nil
+}
+
+// EpochChainInfo returns the info of a chain with given ID in a given epoch
+func (k Keeper) EpochChainInfo(c context.Context, req *types.QueryEpochChainInfoRequest) (*types.QueryEpochChainInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// find the chain info of the given epoch
+	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, req.EpochNum)
+	if err != nil {
+		return nil, err
+	}
+	resp := &types.QueryEpochChainInfoResponse{ChainInfo: chainInfo}
+	return resp, nil
+}
+
 // ListHeaders returns all headers of a chain with given ID, with pagination support
 func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersRequest) (*types.QueryListHeadersResponse, error) {
 	if req == nil {
@@ -76,7 +119,9 @@ func (k Keeper) ListHeaders(c context.Context, req *types.QueryListHeadersReques
 	return resp, nil
 }
 
-func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedChainInfoRequest) (*types.QueryFinalizedChainInfoResponse, error) {
+// ListEpochHeaders returns all headers of a chain with given ID
+// TODO: support pagination in this RPC
+func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHeadersRequest) (*types.QueryListEpochHeadersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -87,56 +132,46 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// find the last finalised epoch
-	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	headers, err := k.GetEpochHeaders(ctx, req.ChainId, req.EpochNum)
 	if err != nil {
 		return nil, err
 	}
 
-	// find the chain info of this epoch
-	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
+	resp := &types.QueryListEpochHeadersResponse{
+		Headers: headers,
+	}
+	return resp, nil
+}
+
+func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedChainInfoRequest) (*types.QueryFinalizedChainInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	resp := &types.QueryFinalizedChainInfoResponse{}
+
+	// find the last finalised chain info and the earliest epoch that snapshots this chain info
+	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
+	if err != nil {
+		return nil, err
+	}
+	resp.FinalizedChainInfo = chainInfo
+
+	// find the epoch metadata of the finalised epoch
+	resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
 
-	// It's possible that the chain info's epoch is way before the last finalised epoch
-	// e.g., when there is no relayer for many epochs
-	// NOTE: if an epoch is finalisedm then all of its previous epochs are also finalised
-	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
-		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
-	}
-
-	// find the epoch metadata
-	epochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+	// find the raw checkpoint and the best submission key for the finalised epoch
+	_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
-	}
-
-	// find the btc checkpoint tx index of this epoch
-	ed := k.btccKeeper.GetEpochData(ctx, finalizedEpoch)
-	if ed.Status != btcctypes.Finalized {
-		err := fmt.Errorf("epoch %d should have been finalized, but is in status %s", finalizedEpoch, ed.Status.String())
-		panic(err) // this can only be a programming error
-	}
-	if len(ed.Key) == 0 {
-		err := fmt.Errorf("finalized epoch %d should have at least 1 checkpoint submission", finalizedEpoch)
-		panic(err) // this can only be a programming error
-	}
-	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
-
-	// get raw checkpoint of this epoch
-	rawCheckpointBytes := ed.RawCheckpoint
-	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(rawCheckpointBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	resp := &types.QueryFinalizedChainInfoResponse{
-		FinalizedChainInfo: chainInfo,
-		// metadata related to this chain info, including the epoch, the raw checkpoint of this epoch, and the BTC tx index of the raw checkpoint
-		EpochInfo:        epochInfo,
-		RawCheckpoint:    rawCheckpoint,
-		BtcSubmissionKey: bestSubmissionKey,
 	}
 
 	// if the query does not want the proofs, return here
@@ -144,32 +179,78 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return resp, nil
 	}
 
-	// Proof that the Babylon tx is in block
-	resp.ProofTxInBlock, err = k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
+	// generate all proofs
+	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.RawCheckpoint, resp.BtcSubmissionKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// proof that the block is in this epoch
-	resp.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeader, epochInfo)
+	return resp, nil
+}
+
+func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.QueryFinalizedChainInfoUntilHeightRequest) (*types.QueryFinalizedChainInfoUntilHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
+
+	// find and assign the last finalised chain info and the earliest epoch that snapshots this chain info
+	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
 	if err != nil {
 		return nil, err
 	}
+	resp.FinalizedChainInfo = chainInfo
 
-	// proof that the epoch is sealed
-	resp.ProofEpochSealed, err = k.ProveEpochSealed(ctx, finalizedEpoch)
-	if err != nil {
-		return nil, err
+	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info
+		// find and assign the epoch metadata of the finalised epoch
+		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		// find and assign the raw checkpoint and the best submission key for the finalised epoch
+		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+	} else { // the requested height is before the last finalised chain info
+		// starting from the requested height, iterate backward until a timestamped header
+		closestHeader, err := k.FindClosestHeader(ctx, req.ChainId, req.Height)
+		if err != nil {
+			return nil, err
+		}
+		// assign the finalizedEpoch, and retrieve epoch info, raw ckpt and submission key
+		finalizedEpoch = closestHeader.BabylonEpoch
+		chainInfo, err = k.GetEpochChainInfo(ctx, req.ChainId, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+		resp.FinalizedChainInfo = chainInfo
+		resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	// proof that the epoch's checkpoint is submitted to BTC
-	// i.e., the two `TransactionInfo`s for the checkpoint
-	resp.ProofEpochSubmitted, err = k.ProveEpochSubmitted(ctx, *bestSubmissionKey)
+	// if the query does not want the proofs, return here
+	if !req.Prove {
+		return resp, nil
+	}
+
+	// generate all proofs
+	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.RawCheckpoint, resp.BtcSubmissionKey)
 	if err != nil {
-		// The only error in ProveEpochSubmitted is the nil bestSubmission.
-		// Since the epoch w.r.t. the bestSubmissionKey is finalised, this
-		// can only be a programming error, so we should panic here.
-		panic(err)
+		return nil, err
 	}
 
 	return resp, nil

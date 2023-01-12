@@ -140,6 +140,33 @@ func GenRandomBTCHeaderInfoWithParent(parent *btclightclienttypes.BTCHeaderInfo)
 	return GenRandomBTCHeaderInfoWithParentAndBits(parent, nil)
 }
 
+// GenRandomValidBTCHeaderInfoWithParent generates random BTCHeaderInfo object
+// with valid proof of work.
+// WARNING: if parent is from network with a lot of work (mainnet) it may never finish
+// use only with simnet headers
+func GenRandomValidBTCHeaderInfoWithParent(parent btclightclienttypes.BTCHeaderInfo) *btclightclienttypes.BTCHeaderInfo {
+	randHeader := GenRandomBtcdHeader()
+	parentHeader := parent.Header.ToBlockHeader()
+
+	randHeader.Version = parentHeader.Version
+	randHeader.PrevBlock = parentHeader.BlockHash()
+	randHeader.Bits = parentHeader.Bits
+	randHeader.Timestamp = parentHeader.Timestamp.Add(50 * time.Second)
+	SolveBlock(randHeader)
+
+	headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(randHeader)
+
+	accumulatedWork := btclightclienttypes.CalcWork(&headerBytes)
+	accumulatedWork = btclightclienttypes.CumulativeWork(accumulatedWork, *parent.Work)
+
+	return &btclightclienttypes.BTCHeaderInfo{
+		Header: &headerBytes,
+		Hash:   headerBytes.Hash(),
+		Height: parent.Height + 1,
+		Work:   &accumulatedWork,
+	}
+}
+
 func GenRandomBTCHeaderInfoWithBits(bits *sdk.Uint) *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParentAndBits(nil, bits)
 }
