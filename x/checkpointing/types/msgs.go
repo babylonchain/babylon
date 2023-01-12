@@ -78,7 +78,10 @@ func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 		return err
 	}
 	var pubKey ed255192.PubKey
-	pubKey.Unmarshal(m.MsgCreateValidator.Pubkey.GetValue())
+	err = pubKey.Unmarshal(m.MsgCreateValidator.Pubkey.GetValue())
+	if err != nil {
+		return err
+	}
 	ok := m.VerifyPoP(&pubKey)
 	if !ok {
 		return errors.New("the proof-of-possession is not valid")
