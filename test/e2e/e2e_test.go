@@ -4,6 +4,8 @@
 package e2e
 
 import (
+	"fmt"
+
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -43,6 +45,17 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	// TODO Add more assertion here. Maybe check proofs ?
 	s.Equal(fininfo.FinalizedChainInfo.ChainId, initialization.ChainBID)
 	s.Equal(fininfo.EpochInfo.EpochNumber, uint64(2))
+
+	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+
+	heightAtFinishedEpoch, err := nonValidatorNode.QueryLightClientHeighEpochEnd(currEpoch - 1)
+	s.NoError(err)
+
+	if heightAtFinishedEpoch == 0 {
+		// we can only assert, that btc lc height is larger than 0.
+		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
+	}
 
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
