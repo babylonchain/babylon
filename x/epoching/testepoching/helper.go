@@ -17,7 +17,6 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -145,38 +144,6 @@ func (h *Helper) EndBlock() sdk.Context {
 	h.App.EndBlock(abci.RequestEndBlock{})
 	h.App.Commit()
 	return h.Ctx
-}
-
-// CreateValidator calls handler to create a new staking validator
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount math.Int, ok bool) {
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
-	h.createValidator(addr, pk, coin, ok)
-}
-
-// CreateValidatorWithValPower calls handler to create a new staking validator with zero commission
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey, valPower int64, ok bool) math.Int {
-	amount := h.StakingKeeper.TokensFromConsensusPower(h.Ctx, valPower)
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
-	h.createValidator(addr, pk, coin, ok)
-	return amount
-}
-
-// CreateValidatorMsg returns a message used to create validator in this service.
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount math.Int) *stakingtypes.MsgCreateValidator {
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
-	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
-	require.NoError(h.t, err)
-	return msg
-}
-
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, coin sdk.Coin, ok bool) {
-	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
-	require.NoError(h.t, err)
-	h.Handle(msg, ok)
 }
 
 // WrappedDelegate calls handler to delegate stake for a validator
