@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"context"
+	"github.com/babylonchain/babylon/x/checkpointing/keeper"
+	"github.com/cosmos/cosmos-sdk/types/query"
 	"math/rand"
 	"testing"
 
@@ -124,4 +127,60 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, expectedResp, resp)
 	})
+}
+
+func FuzzQueryRawCheckpointList(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		tipEpoch := datagen.RandomInt(100) + 10
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		ek := mocks.NewMockEpochingKeeper(ctrl)
+		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch}).AnyTimes()
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(tipEpoch)
+		finalizedEpoch := datagen.RandomInt(int(tipEpoch))
+
+		// add Sealed and Finalized checkpoints
+		for e := uint64(0); e <= tipEpoch; e++ {
+			if e <= finalizedEpoch {
+				checkpoints[int(e)].Status = types.Finalized
+			} else {
+				checkpoints[int(e)].Status = types.Sealed
+			}
+			err := ckptKeeper.AddRawCheckpoint(ctx, checkpoints[int(e)])
+			require.NoError(t, err)
+		}
+
+		finalizedCheckpoints := checkpoints[:finalizedEpoch]
+		testRawCheckpointListWithType(t, ckptKeeper, ctx, finalizedCheckpoints, 0, types.Finalized)
+		sealedCheckpoints := checkpoints[finalizedEpoch+1:]
+		testRawCheckpointListWithType(t, ckptKeeper, ctx, sealedCheckpoints, finalizedEpoch+1, types.Sealed)
+	})
+}
+
+func testRawCheckpointListWithType(
+	t *testing.T,
+	ckptKeeper *keeper.Keeper,
+	ctx context.Context,
+	checkpointList []*types.RawCheckpointWithMeta,
+	baseEpoch uint64,
+	status types.CheckpointStatus,
+) {
+	limit := datagen.RandomInt(len(checkpointList)+1) + 1
+	pagination := &query.PageRequest{Limit: limit}
+	req := types.NewQueryRawCheckpointListRequest(pagination, status)
+
+	for ckptsRetrieved := uint64(0); ckptsRetrieved < uint64(len(checkpointList)); ckptsRetrieved += limit {
+		resp, err := ckptKeeper.RawCheckpointList(ctx, req)
+		require.NoError(t, err)
+		for i, ckpt := range resp.RawCheckpoints {
+			require.Equal(t, baseEpoch+ckptsRetrieved+uint64(i), ckpt.Ckpt.EpochNum)
+			require.Equal(t, status, ckpt.Status)
+		}
+		pagination = &query.PageRequest{Key: resp.Pagination.NextKey, Limit: limit}
+		req = types.NewQueryRawCheckpointListRequest(pagination, status)
+	}
 }
