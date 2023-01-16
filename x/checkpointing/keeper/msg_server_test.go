@@ -22,7 +22,7 @@ import (
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power
 // It ensures that validators with zero voting power (i.e., with tokens fewer than sdk.DefaultPowerReduction)
-// are unbonded, thus are not included in the validator
+// are unbonded, thus are not included in the validator set
 func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
