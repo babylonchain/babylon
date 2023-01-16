@@ -3,7 +3,7 @@ go 1.19
 module github.com/babylonchain/babylon
 
 require (
-	github.com/btcsuite/btcd v0.22.1
+	github.com/btcsuite/btcd v0.22.3
 	github.com/cosmos/cosmos-sdk v0.46.6
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
