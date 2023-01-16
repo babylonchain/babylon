@@ -83,8 +83,8 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 }
 
 func GenSequenceRawCheckpointsWithMeta(tipEpoch uint64) []*types.RawCheckpointWithMeta {
-	ckpts := make([]*types.RawCheckpointWithMeta, int(tipEpoch))
-	for e := uint64(0); e < tipEpoch; e++ {
+	ckpts := make([]*types.RawCheckpointWithMeta, int(tipEpoch)+1)
+	for e := uint64(0); e <= tipEpoch; e++ {
 		ckpt := GenRandomRawCheckpointWithMeta()
 		ckpt.Ckpt.EpochNum = e
 		ckpts[int(e)] = ckpt

@@ -31,7 +31,9 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 			}
 			if ckptWithMeta.Status == req.Status {
 				checkpointList = append(checkpointList, ckptWithMeta)
+				return true, nil
 			}
+			return false, nil
 		}
 		return true, nil
 	})
