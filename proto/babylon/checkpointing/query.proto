@@ -38,7 +38,9 @@ service Query {
   }
 
   // LastCheckpointWithStatus queries the last checkpoint with a given status or a more matured status
-  rpc LastCheckpointWithStatus(QueryLastCheckpointWithStatusRequest) returns (QueryLastCheckpointWithStatusResponse);
+  rpc LastCheckpointWithStatus(QueryLastCheckpointWithStatusRequest) returns (QueryLastCheckpointWithStatusResponse) {
+    option (google.api.http).get = "/babylon/checkpointing/v1/last_raw_checkpoint/{status}";
+  }
 
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
