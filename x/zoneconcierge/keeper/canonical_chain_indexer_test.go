@@ -35,7 +35,8 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 		}
 
 		// check if the chain info is updated or not
-		chainInfo := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
+		chainInfo, err := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
+		require.NoError(t, err)
 		require.NotNil(t, chainInfo.LatestHeader)
 		require.Equal(t, czChain.ChainID, chainInfo.LatestHeader.ChainId)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)

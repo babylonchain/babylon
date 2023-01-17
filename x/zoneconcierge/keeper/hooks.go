@@ -31,6 +31,17 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash: txHash,
 	}
+
+	// initialise chain info if not exist
+	chainInfo, err := h.k.GetChainInfo(ctx, indexedHeader.ChainId)
+	if err != nil {
+		// chain info does not exist yet, initialise chain info for this chain
+		chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	if isOnFork {
 		// insert header to fork index
 		if err := h.k.insertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
@@ -44,7 +55,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		// ensure the header is the latest one, otherwise ignore it
 		// NOTE: while an old header is considered acceptable in IBC-Go (see Case_valid_past_update), but
 		// ZoneConcierge should not checkpoint it since Babylon requires monotonic checkpointing
-		if !h.k.GetChainInfo(ctx, indexedHeader.ChainId).IsLatestHeader(&indexedHeader) {
+		if !chainInfo.IsLatestHeader(&indexedHeader) {
 			return
 		}
 

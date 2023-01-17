@@ -94,8 +94,11 @@ func (k Keeper) GetEpochHeaders(ctx sdk.Context, chainID string, epochNumber uin
 // where the latest chain info is retrieved from the chain info indexer
 func (k Keeper) recordEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) {
 	// get the latest known chain info
-	// NOTE: GetChainInfo returns an empty ChainInfo object when the ChainInfo does not exist
-	chainInfo := k.GetChainInfo(ctx, chainID)
+	chainInfo, err := k.GetChainInfo(ctx, chainID)
+	if err != nil {
+		// chain info does not exist yet, nothing to record
+		return
+	}
 	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
 	store := k.epochChainInfoStore(ctx, chainID)
 	store.Set(sdk.Uint64ToBigEndian(epochNumber), k.cdc.MustMarshal(chainInfo))

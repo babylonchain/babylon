@@ -11,9 +11,9 @@ import (
 
 // FindClosestHeader finds the IndexedHeader that is closest to (but not after) the given height
 func (k Keeper) FindClosestHeader(ctx sdk.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
-	chainInfo := k.GetChainInfo(ctx, chainID)
-	if chainInfo.LatestHeader == nil {
-		return nil, fmt.Errorf("chain with ID %s does not have a timestamped header", chainID)
+	chainInfo, err := k.GetChainInfo(ctx, chainID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get chain info for chain with ID %s: %w", chainID, err)
 	}
 
 	// if the given height is no lower than the latest header, return the latest header directly

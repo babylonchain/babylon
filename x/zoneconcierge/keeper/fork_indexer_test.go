@@ -35,7 +35,8 @@ func FuzzForkIndexer(f *testing.F) {
 		}
 
 		// check if the chain info is updated or not
-		chainInfo := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
+		chainInfo, err := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
+		require.NoError(t, err)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 		for i := range forks.Headers {
 			require.Equal(t, czChain.ChainID, chainInfo.LatestForks.Headers[i].ChainId)
