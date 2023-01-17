@@ -17,7 +17,12 @@ service Query {
 
   // FinishedEpochBtcHeight btc light client height at provided epoch finish
   rpc FinishedEpochBtcHeight(QueryFinishedEpochBtcHeightRequest) returns (QueryFinishedEpochBtcHeightResponse) {
-    option (google.api.http).get = "/babylon/monitor/v1/{epoch_num}";
+    option (google.api.http).get = "/babylon/monitor/v1/epochs/{epoch_num}";
+  }
+
+  // ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
+  rpc ReportedCheckpointBtcHeight(QueryReportedCheckpointBtcHeightRequest) returns (QueryReportedCheckpointBtcHeightResponse) {
+    option (google.api.http).get = "/babylon/monitor/v1/checkpoints/{checkpoint_id}";
   }
 }
 
@@ -35,6 +40,15 @@ message QueryFinishedEpochBtcHeightRequest {
 }
 
 message QueryFinishedEpochBtcHeightResponse {
-  // height of btc ligh client when epoch ended
+  // height of btc light client when epoch ended
+  uint64 btc_light_client_height = 1;
+}
+
+message QueryReportedCheckpointBtcHeightRequest {
+  bytes checkpoint_id = 1;
+}
+
+message QueryReportedCheckpointBtcHeightResponse {
+  // height of btc light client when checkpoint is reported
   uint64 btc_light_client_height = 1;
 }

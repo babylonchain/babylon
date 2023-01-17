@@ -158,7 +158,7 @@ func (m *QueryFinishedEpochBtcHeightRequest) GetEpochNum() uint64 {
 }
 
 type QueryFinishedEpochBtcHeightResponse struct {
-	// height of btc ligh client when epoch ended
+	// height of btc light client when epoch ended
 	BtcLightClientHeight uint64 `protobuf:"varint,1,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
 }
 
@@ -202,44 +202,145 @@ func (m *QueryFinishedEpochBtcHeightResponse) GetBtcLightClientHeight() uint64 {
 	return 0
 }
 
+type QueryReportedCheckpointBtcHeightRequest struct {
+	CheckpointId []byte `protobuf:"bytes,1,opt,name=checkpoint_id,json=checkpointId,proto3" json:"checkpoint_id,omitempty"`
+}
+
+func (m *QueryReportedCheckpointBtcHeightRequest) Reset() {
+	*m = QueryReportedCheckpointBtcHeightRequest{}
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryReportedCheckpointBtcHeightRequest) ProtoMessage()    {}
+func (*QueryReportedCheckpointBtcHeightRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b70877a7534d1c4, []int{4}
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryReportedCheckpointBtcHeightRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryReportedCheckpointBtcHeightRequest.Merge(m, src)
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryReportedCheckpointBtcHeightRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryReportedCheckpointBtcHeightRequest proto.InternalMessageInfo
+
+func (m *QueryReportedCheckpointBtcHeightRequest) GetCheckpointId() []byte {
+	if m != nil {
+		return m.CheckpointId
+	}
+	return nil
+}
+
+type QueryReportedCheckpointBtcHeightResponse struct {
+	// height of btc light client when checkpoint is reported
+	BtcLightClientHeight uint64 `protobuf:"varint,1,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
+}
+
+func (m *QueryReportedCheckpointBtcHeightResponse) Reset() {
+	*m = QueryReportedCheckpointBtcHeightResponse{}
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryReportedCheckpointBtcHeightResponse) ProtoMessage()    {}
+func (*QueryReportedCheckpointBtcHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3b70877a7534d1c4, []int{5}
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryReportedCheckpointBtcHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryReportedCheckpointBtcHeightResponse.Merge(m, src)
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryReportedCheckpointBtcHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryReportedCheckpointBtcHeightResponse proto.InternalMessageInfo
+
+func (m *QueryReportedCheckpointBtcHeightResponse) GetBtcLightClientHeight() uint64 {
+	if m != nil {
+		return m.BtcLightClientHeight
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.monitor.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.monitor.v1.QueryParamsResponse")
 	proto.RegisterType((*QueryFinishedEpochBtcHeightRequest)(nil), "babylon.monitor.v1.QueryFinishedEpochBtcHeightRequest")
 	proto.RegisterType((*QueryFinishedEpochBtcHeightResponse)(nil), "babylon.monitor.v1.QueryFinishedEpochBtcHeightResponse")
+	proto.RegisterType((*QueryReportedCheckpointBtcHeightRequest)(nil), "babylon.monitor.v1.QueryReportedCheckpointBtcHeightRequest")
+	proto.RegisterType((*QueryReportedCheckpointBtcHeightResponse)(nil), "babylon.monitor.v1.QueryReportedCheckpointBtcHeightResponse")
 }
 
 func init() { proto.RegisterFile("babylon/monitor/query.proto", fileDescriptor_3b70877a7534d1c4) }
 
 var fileDescriptor_3b70877a7534d1c4 = []byte{
-	// 426 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0xcd, 0xaa, 0xd3, 0x40,
-	0x14, 0x4e, 0x2e, 0xd7, 0xa2, 0xe3, 0x6e, 0x2c, 0x2a, 0xb9, 0x97, 0x5c, 0x8d, 0xe0, 0x15, 0x17,
-	0x19, 0x72, 0xc5, 0x9f, 0xad, 0x15, 0x45, 0x41, 0xfc, 0xe9, 0x52, 0x84, 0x30, 0x33, 0x0e, 0xc9,
-	0x40, 0x32, 0x27, 0xcd, 0x4c, 0x8a, 0x45, 0xba, 0xf1, 0x09, 0x04, 0xdf, 0xc4, 0xad, 0x2f, 0xd0,
-	0x65, 0xc1, 0x8d, 0x2b, 0x91, 0xd6, 0x07, 0x91, 0x4c, 0xa6, 0x05, 0xdb, 0x5a, 0x71, 0x97, 0x9c,
-	0xef, 0xe7, 0x7c, 0xe7, 0x9c, 0x41, 0x47, 0x8c, 0xb2, 0x49, 0x01, 0x8a, 0x94, 0xa0, 0xa4, 0x81,
-	0x9a, 0x8c, 0x1a, 0x51, 0x4f, 0xe2, 0xaa, 0x06, 0x03, 0x18, 0x3b, 0x30, 0x76, 0x60, 0x3c, 0x4e,
-	0x82, 0x7e, 0x06, 0x19, 0x58, 0x98, 0xb4, 0x5f, 0x1d, 0x33, 0x38, 0xce, 0x00, 0xb2, 0x42, 0x10,
-	0x5a, 0x49, 0x42, 0x95, 0x02, 0x43, 0x8d, 0x04, 0xa5, 0x1d, 0x7a, 0x9b, 0x83, 0x2e, 0x41, 0x13,
-	0x46, 0xb5, 0xe8, 0x1a, 0x90, 0x71, 0xc2, 0x84, 0xa1, 0x09, 0xa9, 0x68, 0x26, 0x95, 0x25, 0xaf,
-	0x9c, 0x36, 0x03, 0x55, 0xb4, 0xa6, 0xa5, 0x73, 0x8a, 0xfa, 0x08, 0xbf, 0x6e, 0xf5, 0xaf, 0x6c,
-	0x71, 0x28, 0x46, 0x8d, 0xd0, 0x26, 0x7a, 0x89, 0x2e, 0xfd, 0x51, 0xd5, 0x15, 0x28, 0x2d, 0xf0,
-	0x03, 0xd4, 0xeb, 0xc4, 0x57, 0xfd, 0x6b, 0xfe, 0xad, 0x8b, 0x67, 0x41, 0xbc, 0x3d, 0x4f, 0xdc,
-	0x69, 0x06, 0x87, 0xb3, 0x1f, 0x27, 0xde, 0xd0, 0xf1, 0xa3, 0x87, 0x28, 0xb2, 0x86, 0x4f, 0xa4,
-	0x92, 0x3a, 0x17, 0xef, 0x1e, 0x57, 0xc0, 0xf3, 0x81, 0xe1, 0x4f, 0x85, 0xcc, 0x72, 0xe3, 0xda,
-	0xe2, 0x23, 0x74, 0x41, 0xb4, 0x40, 0xaa, 0x9a, 0xd2, 0xb6, 0x38, 0x1c, 0x9e, 0xb7, 0x85, 0x17,
-	0x4d, 0x19, 0xbd, 0x45, 0x37, 0xf6, 0x5a, 0xb8, 0x8c, 0x77, 0xd1, 0x15, 0x66, 0x78, 0x5a, 0xb4,
-	0xc5, 0x94, 0x17, 0x52, 0x28, 0x93, 0xe6, 0x96, 0xe2, 0x1c, 0xfb, 0xcc, 0xf0, 0xe7, 0xed, 0xff,
-	0x23, 0x0b, 0x76, 0xf2, 0xb3, 0xaf, 0x07, 0xe8, 0x9c, 0xb5, 0xc7, 0x53, 0xd4, 0xeb, 0x46, 0xc0,
-	0x37, 0x77, 0x8d, 0xb7, 0xbd, 0xad, 0xe0, 0xf4, 0x9f, 0xbc, 0x2e, 0x5b, 0x14, 0x7d, 0xfc, 0xf6,
-	0xeb, 0xf3, 0xc1, 0x31, 0x0e, 0xc8, 0xe6, 0x4d, 0xc6, 0x89, 0x3b, 0x0b, 0xfe, 0xe2, 0xa3, 0xcb,
-	0xbb, 0x47, 0xc4, 0xf7, 0xfe, 0xda, 0x67, 0xef, 0x5a, 0x83, 0xfb, 0xff, 0xad, 0x73, 0x79, 0x4f,
-	0x6d, 0xde, 0xeb, 0xf8, 0x64, 0x57, 0xde, 0x0f, 0xeb, 0x53, 0x4d, 0x07, 0xcf, 0x66, 0x8b, 0xd0,
-	0x9f, 0x2f, 0x42, 0xff, 0xe7, 0x22, 0xf4, 0x3f, 0x2d, 0x43, 0x6f, 0xbe, 0x0c, 0xbd, 0xef, 0xcb,
-	0xd0, 0x7b, 0x43, 0x32, 0x69, 0xf2, 0x86, 0xc5, 0x1c, 0xca, 0x95, 0x09, 0xcf, 0xa9, 0x54, 0x6b,
-	0xc7, 0xf7, 0x6b, 0x4f, 0x33, 0xa9, 0x84, 0x66, 0x3d, 0xfb, 0x2e, 0xef, 0xfc, 0x0e, 0x00, 0x00,
-	0xff, 0xff, 0x3f, 0x2c, 0xa9, 0x89, 0x48, 0x03, 0x00, 0x00,
+	// 515 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0x41, 0x6b, 0xd4, 0x40,
+	0x14, 0xde, 0xc8, 0xba, 0xe8, 0x58, 0x2f, 0xe3, 0xa2, 0x92, 0x2d, 0x51, 0x52, 0x68, 0x17, 0x0f,
+	0x19, 0x52, 0xd1, 0x0a, 0x7a, 0x71, 0x8b, 0x62, 0x41, 0xaa, 0xe6, 0x28, 0x42, 0x98, 0xcc, 0x0e,
+	0xc9, 0xe0, 0x66, 0x66, 0x9a, 0x99, 0x2c, 0x2e, 0x65, 0x2f, 0xfe, 0x02, 0x41, 0xf0, 0xbf, 0xf8,
+	0x0f, 0x7a, 0xac, 0x78, 0xf1, 0x24, 0xb2, 0xeb, 0x0f, 0x91, 0x4c, 0xa6, 0x5b, 0xda, 0xdd, 0xee,
+	0xa2, 0xde, 0x92, 0xf7, 0xbd, 0xf7, 0x7d, 0xdf, 0xcb, 0xfb, 0x08, 0xe8, 0x24, 0x38, 0x19, 0x0d,
+	0x04, 0x47, 0xb9, 0xe0, 0x4c, 0x8b, 0x02, 0x1d, 0x94, 0xb4, 0x18, 0x05, 0xb2, 0x10, 0x5a, 0x40,
+	0x68, 0xc1, 0xc0, 0x82, 0xc1, 0x30, 0x74, 0xdb, 0xa9, 0x48, 0x85, 0x81, 0x51, 0xf5, 0x54, 0x77,
+	0xba, 0xeb, 0xa9, 0x10, 0xe9, 0x80, 0x22, 0x2c, 0x19, 0xc2, 0x9c, 0x0b, 0x8d, 0x35, 0x13, 0x5c,
+	0x59, 0xf4, 0x1e, 0x11, 0x2a, 0x17, 0x0a, 0x25, 0x58, 0xd1, 0x5a, 0x00, 0x0d, 0xc3, 0x84, 0x6a,
+	0x1c, 0x22, 0x89, 0x53, 0xc6, 0x4d, 0xf3, 0x09, 0xd3, 0x79, 0x43, 0x12, 0x17, 0x38, 0xb7, 0x4c,
+	0x7e, 0x1b, 0xc0, 0x37, 0xd5, 0xfc, 0x6b, 0x53, 0x8c, 0xe8, 0x41, 0x49, 0x95, 0xf6, 0x5f, 0x81,
+	0x1b, 0x67, 0xaa, 0x4a, 0x0a, 0xae, 0x28, 0x7c, 0x04, 0x5a, 0xf5, 0xf0, 0x6d, 0xe7, 0xae, 0xd3,
+	0xbd, 0xb6, 0xed, 0x06, 0xf3, 0xfb, 0x04, 0xf5, 0x4c, 0xaf, 0x79, 0xf4, 0xf3, 0x4e, 0x23, 0xb2,
+	0xfd, 0xfe, 0x53, 0xe0, 0x1b, 0xc2, 0xe7, 0x8c, 0x33, 0x95, 0xd1, 0xfe, 0x33, 0x29, 0x48, 0xd6,
+	0xd3, 0xe4, 0x05, 0x65, 0x69, 0xa6, 0xad, 0x2c, 0xec, 0x80, 0xab, 0xb4, 0x02, 0x62, 0x5e, 0xe6,
+	0x46, 0xa2, 0x19, 0x5d, 0x31, 0x85, 0xfd, 0x32, 0xf7, 0xdf, 0x81, 0x8d, 0xa5, 0x14, 0xd6, 0xe3,
+	0x03, 0x70, 0x2b, 0xd1, 0x24, 0x1e, 0x54, 0xc5, 0x98, 0x0c, 0x18, 0xe5, 0x3a, 0xce, 0x4c, 0x8b,
+	0x65, 0x6c, 0x27, 0x9a, 0xbc, 0xac, 0xde, 0x77, 0x0d, 0x58, 0x8f, 0xfb, 0xfb, 0x60, 0xcb, 0xb0,
+	0x47, 0x54, 0x8a, 0x42, 0xd3, 0xfe, 0x6e, 0x46, 0xc9, 0x7b, 0x29, 0x18, 0xd7, 0x73, 0x2e, 0x37,
+	0xc0, 0x75, 0x32, 0x43, 0x63, 0xd6, 0x37, 0xbc, 0x6b, 0xd1, 0xda, 0x69, 0x71, 0xaf, 0xef, 0x63,
+	0xd0, 0x5d, 0xcd, 0xf7, 0x5f, 0x96, 0xb7, 0xbf, 0x34, 0xc1, 0x65, 0xa3, 0x01, 0xc7, 0xa0, 0x55,
+	0x7f, 0x75, 0xb8, 0xb9, 0xe8, 0x22, 0xf3, 0x07, 0x76, 0xb7, 0x56, 0xf6, 0xd5, 0xde, 0x7c, 0xff,
+	0xe3, 0xf7, 0xdf, 0x9f, 0x2f, 0xad, 0x43, 0x17, 0x9d, 0x8f, 0xd1, 0x30, 0xb4, 0x49, 0x82, 0x5f,
+	0x1d, 0x70, 0x73, 0xf1, 0x55, 0xe0, 0xc3, 0x0b, 0x75, 0x96, 0x26, 0xc1, 0xdd, 0xf9, 0xeb, 0x39,
+	0xeb, 0x37, 0x30, 0x7e, 0xbb, 0x70, 0x73, 0x91, 0x5f, 0x93, 0x25, 0x85, 0x0e, 0x67, 0x21, 0x1b,
+	0xc3, 0x6f, 0x0e, 0xe8, 0x2c, 0xb9, 0x11, 0x7c, 0x7c, 0xa1, 0x91, 0xd5, 0x49, 0x71, 0x9f, 0xfc,
+	0xdb, 0xb0, 0x5d, 0x65, 0xc7, 0xac, 0x12, 0x42, 0xb4, 0x68, 0x95, 0xd3, 0xb0, 0x29, 0x74, 0x78,
+	0x26, 0x8e, 0xe3, 0xde, 0xde, 0xd1, 0xc4, 0x73, 0x8e, 0x27, 0x9e, 0xf3, 0x6b, 0xe2, 0x39, 0x9f,
+	0xa6, 0x5e, 0xe3, 0x78, 0xea, 0x35, 0x7e, 0x4c, 0xbd, 0xc6, 0x5b, 0x94, 0x32, 0x9d, 0x95, 0x49,
+	0x40, 0x44, 0x7e, 0x42, 0x4a, 0x32, 0xcc, 0xf8, 0x4c, 0xe1, 0xc3, 0x4c, 0x43, 0x8f, 0x24, 0x55,
+	0x49, 0xcb, 0xfc, 0x25, 0xee, 0xff, 0x09, 0x00, 0x00, 0xff, 0xff, 0xbe, 0x38, 0xe7, 0x24, 0xd6,
+	0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -258,6 +359,8 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// FinishedEpochBtcHeight btc light client height at provided epoch finish
 	FinishedEpochBtcHeight(ctx context.Context, in *QueryFinishedEpochBtcHeightRequest, opts ...grpc.CallOption) (*QueryFinishedEpochBtcHeightResponse, error)
+	// ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
+	ReportedCheckpointBtcHeight(ctx context.Context, in *QueryReportedCheckpointBtcHeightRequest, opts ...grpc.CallOption) (*QueryReportedCheckpointBtcHeightResponse, error)
 }
 
 type queryClient struct {
@@ -286,12 +389,23 @@ func (c *queryClient) FinishedEpochBtcHeight(ctx context.Context, in *QueryFinis
 	return out, nil
 }
 
+func (c *queryClient) ReportedCheckpointBtcHeight(ctx context.Context, in *QueryReportedCheckpointBtcHeightRequest, opts ...grpc.CallOption) (*QueryReportedCheckpointBtcHeightResponse, error) {
+	out := new(QueryReportedCheckpointBtcHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.monitor.v1.Query/ReportedCheckpointBtcHeight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// FinishedEpochBtcHeight btc light client height at provided epoch finish
 	FinishedEpochBtcHeight(context.Context, *QueryFinishedEpochBtcHeightRequest) (*QueryFinishedEpochBtcHeightResponse, error)
+	// ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
+	ReportedCheckpointBtcHeight(context.Context, *QueryReportedCheckpointBtcHeightRequest) (*QueryReportedCheckpointBtcHeightResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -303,6 +417,9 @@ func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsReq
 }
 func (*UnimplementedQueryServer) FinishedEpochBtcHeight(ctx context.Context, req *QueryFinishedEpochBtcHeightRequest) (*QueryFinishedEpochBtcHeightResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FinishedEpochBtcHeight not implemented")
+}
+func (*UnimplementedQueryServer) ReportedCheckpointBtcHeight(ctx context.Context, req *QueryReportedCheckpointBtcHeightRequest) (*QueryReportedCheckpointBtcHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ReportedCheckpointBtcHeight not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -345,6 +462,24 @@ func _Query_FinishedEpochBtcHeight_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ReportedCheckpointBtcHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryReportedCheckpointBtcHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ReportedCheckpointBtcHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.monitor.v1.Query/ReportedCheckpointBtcHeight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ReportedCheckpointBtcHeight(ctx, req.(*QueryReportedCheckpointBtcHeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.monitor.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -356,6 +491,10 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FinishedEpochBtcHeight",
 			Handler:    _Query_FinishedEpochBtcHeight_Handler,
+		},
+		{
+			MethodName: "ReportedCheckpointBtcHeight",
+			Handler:    _Query_ReportedCheckpointBtcHeight_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -474,6 +613,64 @@ func (m *QueryFinishedEpochBtcHeightResponse) MarshalToSizedBuffer(dAtA []byte) 
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryReportedCheckpointBtcHeightRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryReportedCheckpointBtcHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryReportedCheckpointBtcHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.CheckpointId) > 0 {
+		i -= len(m.CheckpointId)
+		copy(dAtA[i:], m.CheckpointId)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.CheckpointId)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryReportedCheckpointBtcHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryReportedCheckpointBtcHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryReportedCheckpointBtcHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.BtcLightClientHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BtcLightClientHeight))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -518,6 +715,31 @@ func (m *QueryFinishedEpochBtcHeightRequest) Size() (n int) {
 }
 
 func (m *QueryFinishedEpochBtcHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BtcLightClientHeight != 0 {
+		n += 1 + sovQuery(uint64(m.BtcLightClientHeight))
+	}
+	return n
+}
+
+func (m *QueryReportedCheckpointBtcHeightRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.CheckpointId)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryReportedCheckpointBtcHeightResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -764,6 +986,159 @@ func (m *QueryFinishedEpochBtcHeightResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: QueryFinishedEpochBtcHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcLightClientHeight", wireType)
+			}
+			m.BtcLightClientHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BtcLightClientHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryReportedCheckpointBtcHeightRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryReportedCheckpointBtcHeightRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryReportedCheckpointBtcHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CheckpointId", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CheckpointId = append(m.CheckpointId[:0], dAtA[iNdEx:postIndex]...)
+			if m.CheckpointId == nil {
+				m.CheckpointId = []byte{}
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryReportedCheckpointBtcHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryReportedCheckpointBtcHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryReportedCheckpointBtcHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
