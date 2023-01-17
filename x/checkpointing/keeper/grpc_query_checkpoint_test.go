@@ -174,12 +174,12 @@ func testRawCheckpointListWithType(
 	pagination := &query.PageRequest{Limit: limit, CountTotal: true}
 	req := types.NewQueryRawCheckpointListRequest(pagination, status)
 
+	resp, err := ckptKeeper.RawCheckpointList(ctx, req)
+	require.NoError(t, err)
+	require.Equal(t, uint64(len(checkpointList)), resp.Pagination.Total)
 	for ckptsRetrieved := uint64(0); ckptsRetrieved < uint64(len(checkpointList)); ckptsRetrieved += limit {
 		resp, err := ckptKeeper.RawCheckpointList(ctx, req)
 		require.NoError(t, err)
-		if ckptsRetrieved == 0 {
-			require.Equal(t, uint64(len(checkpointList)), resp.Pagination.Total)
-		}
 		for i, ckpt := range resp.RawCheckpoints {
 			require.Equal(t, baseEpoch+ckptsRetrieved+uint64(i), ckpt.Ckpt.EpochNum)
 			require.Equal(t, status, ckpt.Status)
