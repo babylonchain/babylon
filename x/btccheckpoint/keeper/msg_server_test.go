@@ -45,11 +45,10 @@ func b2TxIdx(m *btcctypes.MsgInsertBTCSpvProof) uint32 {
 
 func InitTestKeepers(
 	t *testing.T,
-	epoch uint64,
 ) *TestKeepers {
 	lc := btcctypes.NewMockBTCLightClientKeeper()
 
-	cc := btcctypes.NewMockCheckpointingKeeper(epoch)
+	cc := btcctypes.NewMockCheckpointingKeeper()
 
 	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
 
@@ -67,10 +66,6 @@ func InitTestKeepers(
 
 func (k *TestKeepers) insertProofMsg(msg *btcctypes.MsgInsertBTCSpvProof) (*btcctypes.MsgInsertBTCSpvProofResponse, error) {
 	return k.MsgSrv.InsertBTCSpvProof(k.Ctx, msg)
-}
-
-func (k *TestKeepers) setEpoch(epoch uint64) {
-	k.Checkpointing.SetEpoch(epoch)
 }
 
 func (k *TestKeepers) GetEpochData(e uint64) *btcctypes.EpochData {
@@ -94,7 +89,7 @@ func TestRejectDuplicatedSubmission(t *testing.T) {
 
 	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
@@ -128,7 +123,7 @@ func TestRejectUnknownToBtcLightClient(t *testing.T) {
 	blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
 	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
@@ -152,7 +147,7 @@ func TestRejectSubmissionsNotOnMainchain(t *testing.T) {
 	blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
 	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
@@ -189,7 +184,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
 	// here we will only have valid unconfirmed submissions
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
@@ -255,7 +250,7 @@ func TestRejectSubmissionWithoutSubmissionsForPreviousEpoch(t *testing.T) {
 	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
 	// here we will only have valid unconfirmed submissions
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
@@ -281,7 +276,7 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	epoch1Block2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
 	// here we will only have valid unconfirmed submissions
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{epoch1Block1, epoch1Block2})
 
 	// Now we will return depth enough for moving submission to be submitted
@@ -296,9 +291,6 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	raw2, _ := dg.RandomRawCheckpointDataForEpoch(epoch2)
 	epoch2Block1 := dg.CreateBlock(1, 19, 2, raw2.FirstPart)
 	epoch2Block2 := dg.CreateBlock(2, 14, 7, raw2.SecondPart)
-	// Submitting checkpoints for epoch 2, there should be at least one submission
-	// for epoch 1, with headers deeper in chain that in this new submission
-	tk.Checkpointing.SetEpoch(epoch2)
 	msg2 := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{epoch2Block1, epoch2Block2})
 
 	// Both headers are deeper than epoch 1 submission, fail
@@ -352,7 +344,7 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 
 func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	tk := InitTestKeepers(t, uint64(1))
+	tk := InitTestKeepers(t)
 
 	msg1 := dg.GenerateMessageWithRandomSubmitterForEpoch(1)
 	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(5))
@@ -436,7 +428,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 
 func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	tk := InitTestKeepers(t, uint64(1))
+	tk := InitTestKeepers(t)
 	defaultParams := btcctypes.DefaultParams()
 	wDeep := defaultParams.CheckpointFinalizationTimeout
 
@@ -485,7 +477,7 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 
 func TestTxIdxShouldBreakTies(t *testing.T) {
 	rand.Seed(time.Now().Unix())
-	tk := InitTestKeepers(t, uint64(1))
+	tk := InitTestKeepers(t)
 	defaultParams := btcctypes.DefaultParams()
 	wDeep := defaultParams.CheckpointFinalizationTimeout
 
@@ -543,7 +535,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	blck1 := dg.CreateBlock(1, 7, 7, raw.FirstPart)
 	blck2 := dg.CreateBlock(2, 14, 3, raw.SecondPart)
 
-	tk := InitTestKeepers(t, epoch)
+	tk := InitTestKeepers(t)
 
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 

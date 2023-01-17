@@ -13,7 +13,6 @@ type MockBTCLightClientKeeper struct {
 }
 
 type MockCheckpointingKeeper struct {
-	epoch       uint64
 	returnError bool
 }
 
@@ -24,16 +23,11 @@ func NewMockBTCLightClientKeeper() *MockBTCLightClientKeeper {
 	return &lc
 }
 
-func NewMockCheckpointingKeeper(epoch uint64) *MockCheckpointingKeeper {
+func NewMockCheckpointingKeeper() *MockCheckpointingKeeper {
 	mc := MockCheckpointingKeeper{
-		epoch:       epoch,
 		returnError: false,
 	}
 	return &mc
-}
-
-func (mc *MockCheckpointingKeeper) SetEpoch(e uint64) {
-	mc.epoch = e
 }
 
 func (mc *MockCheckpointingKeeper) ReturnError() {
