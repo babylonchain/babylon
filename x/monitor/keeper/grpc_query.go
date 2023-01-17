@@ -18,7 +18,7 @@ func (k Keeper) FinishedEpochBtcHeight(c context.Context, req *types.QueryFinish
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	btcHeight, err := k.LighclientHeightAtEpochEnd(ctx, req.EpochNum)
+	btcHeight, err := k.LightclientHeightAtEpochEnd(ctx, req.EpochNum)
 
 	if err != nil {
 		return nil, err

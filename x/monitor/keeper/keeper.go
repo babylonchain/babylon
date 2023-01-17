@@ -48,7 +48,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func bytesToUint64(bytes []byte) (uint64, error) {
 	if len(bytes) != 8 {
-		return 0, fmt.Errorf("Epoch bytes must have exactly 8 bytes")
+		return 0, fmt.Errorf("epoch bytes must have exactly 8 bytes")
 	}
 
 	return sdk.BigEndianToUint64(bytes), nil
@@ -60,7 +60,7 @@ func (k Keeper) updateBtcLightClientHeightForEpoch(ctx sdk.Context, epoch uint64
 	store.Set(types.GetEpochEndLightClientHeightKey(epoch), sdk.Uint64ToBigEndian(currentTipHeight))
 }
 
-func (k Keeper) LighclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint64, error) {
+func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint64, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	btcHeightBytes := store.Get(types.GetEpochEndLightClientHeightKey(epoch))
