@@ -24,18 +24,17 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 
 	store := k.CheckpointsState(sdkCtx).checkpoints
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
-		if accumulate {
-			ckptWithMeta, err := types.BytesToCkptWithMeta(k.cdc, value)
-			if err != nil {
-				return false, err
-			}
-			if ckptWithMeta.Status == req.Status {
-				checkpointList = append(checkpointList, ckptWithMeta)
-				return true, nil
-			}
-			return false, nil
+		ckptWithMeta, err := types.BytesToCkptWithMeta(k.cdc, value)
+		if err != nil {
+			return false, err
 		}
-		return true, nil
+		if ckptWithMeta.Status == req.Status {
+			if accumulate {
+				checkpointList = append(checkpointList, ckptWithMeta)
+			}
+			return true, nil
+		}
+		return false, nil
 	})
 
 	if err != nil {
