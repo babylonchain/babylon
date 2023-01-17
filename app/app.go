@@ -102,6 +102,9 @@ import (
 	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonchain/babylon/x/monitor"
+	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
+	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -162,6 +165,7 @@ var (
 		btclightclient.AppModuleBasic{},
 		btccheckpoint.AppModuleBasic{},
 		checkpointing.AppModuleBasic{},
+		monitor.AppModuleBasic{},
 
 		// IBC-related
 		ibc.AppModuleBasic{},
@@ -225,6 +229,7 @@ type BabylonApp struct {
 	BTCLightClientKeeper btclightclientkeeper.Keeper
 	BtcCheckpointKeeper  btccheckpointkeeper.Keeper
 	CheckpointingKeeper  checkpointingkeeper.Keeper
+	MonitorKeeper        monitorkeeper.Keeper
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -287,6 +292,7 @@ func NewBabylonApp(
 		btclightclienttypes.StoreKey,
 		btccheckpointtypes.StoreKey,
 		checkpointingtypes.StoreKey,
+		monitortypes.StoreKey,
 		// IBC-related modules
 		ibchost.StoreKey,
 		ibctransfertypes.StoreKey,
@@ -467,14 +473,6 @@ func NewBabylonApp(
 	// No more routes can be added
 	app.IBCKeeper.SetRouter(ibcRouter)
 
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	// make ZoneConcierge to subscribe to the epoching's hooks
-	epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks()),
-	)
-	app.EpochingKeeper = epochingKeeper
-
 	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
 		appCodec,
 		keys[btclightclienttypes.StoreKey],
@@ -482,6 +480,22 @@ func NewBabylonApp(
 		app.GetSubspace(btclightclienttypes.ModuleName),
 		btcConfig,
 	)
+
+	app.MonitorKeeper = monitorkeeper.NewKeeper(
+		appCodec,
+		keys[monitortypes.StoreKey],
+		keys[monitortypes.StoreKey],
+		app.GetSubspace(monitortypes.ModuleName),
+		&btclightclientKeeper,
+	)
+
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
+	// make ZoneConcierge to subscribe to the epoching's hooks
+	epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
+	)
+	app.EpochingKeeper = epochingKeeper
 
 	checkpointingKeeper :=
 		checkpointingkeeper.NewKeeper(
@@ -559,6 +573,7 @@ func NewBabylonApp(
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
+		monitor.NewAppModule(appCodec, app.MonitorKeeper, app.AccountKeeper, app.BankKeeper),
 		// IBC-related modules
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
@@ -581,6 +596,7 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
+		monitortypes.ModuleName,
 		// IBC-related modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -603,6 +619,7 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
+		monitortypes.ModuleName,
 		// IBC-related modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -627,6 +644,7 @@ func NewBabylonApp(
 		btclightclienttypes.ModuleName,
 		btccheckpointtypes.ModuleName,
 		checkpointingtypes.ModuleName,
+		monitortypes.ModuleName,
 		// IBC-related modules
 		ibchost.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -666,6 +684,7 @@ func NewBabylonApp(
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
 		btccheckpoint.NewAppModule(appCodec, app.BtcCheckpointKeeper, app.AccountKeeper, app.BankKeeper),
 		checkpointing.NewAppModule(appCodec, app.CheckpointingKeeper, app.AccountKeeper, app.BankKeeper),
+		monitor.NewAppModule(appCodec, app.MonitorKeeper, app.AccountKeeper, app.BankKeeper),
 		// IBC-related modules
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
@@ -898,6 +917,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(btclightclienttypes.ModuleName)
 	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
 	paramsKeeper.Subspace(checkpointingtypes.ModuleName)
+	paramsKeeper.Subspace(monitortypes.ModuleName)
 	// IBC-related modules
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)

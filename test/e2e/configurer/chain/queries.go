@@ -18,6 +18,8 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	etypes "github.com/babylonchain/babylon/x/epoching/types"
+	mtypes "github.com/babylonchain/babylon/x/monitor/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
@@ -216,4 +218,25 @@ func (n *NodeConfig) QueryCheckpointChainInfo(chainId string) (*zctypes.ChainInf
 		return nil, err
 	}
 	return infoResponse.ChainInfo, nil
+}
+
+func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
+	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/current_epoch")
+	require.NoError(n.t, err)
+	var epochResponse etypes.QueryCurrentEpochResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &epochResponse); err != nil {
+		return 0, err
+	}
+	return epochResponse.CurrentEpoch, nil
+}
+
+func (n *NodeConfig) QueryLightClientHeighEpochEnd(epoch uint64) (uint64, error) {
+	monitorPath := fmt.Sprintf("/babylon/monitor/v1/%d", epoch)
+	bz, err := n.QueryGRPCGateway(monitorPath)
+	require.NoError(n.t, err)
+	var mResponse mtypes.QueryFinishedEpochBtcHeightResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &mResponse); err != nil {
+		return 0, err
+	}
+	return mResponse.BtcLightClientHeight, nil
 }

@@ -236,3 +236,7 @@ func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbn.BTCHeaderHashBy
 	// Return whether the last element of the ancestry is equal to the parent
 	return ancestry[len(ancestry)-1].Eq(parentHeader), nil
 }
+
+func (k Keeper) GetTipInfo(ctx sdk.Context) *types.BTCHeaderInfo {
+	return k.headersState(ctx).GetTip()
+}
