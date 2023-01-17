@@ -503,14 +503,13 @@ func (m *MockBtcCheckpointKeeper) EXPECT() *MockBtcCheckpointKeeperMockRecorder 
 }
 
 // GetFinalizedEpochDataWithBestSubmission mocks base method.
-func (m *MockBtcCheckpointKeeper) GetFinalizedEpochDataWithBestSubmission(ctx types2.Context, e uint64) (types.BtcStatus, *types0.RawCheckpoint, *types.SubmissionKey, error) {
+func (m *MockBtcCheckpointKeeper) GetFinalizedEpochDataWithBestSubmission(ctx types2.Context, e uint64) (types.BtcStatus, *types.SubmissionKey, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetFinalizedEpochDataWithBestSubmission", ctx, e)
 	ret0, _ := ret[0].(types.BtcStatus)
-	ret1, _ := ret[1].(*types0.RawCheckpoint)
-	ret2, _ := ret[2].(*types.SubmissionKey)
-	ret3, _ := ret[3].(error)
-	return ret0, ret1, ret2, ret3
+	ret1, _ := ret[1].(*types.SubmissionKey)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // GetFinalizedEpochDataWithBestSubmission indicates an expected call of GetFinalizedEpochDataWithBestSubmission.
@@ -569,6 +568,21 @@ func (m *MockCheckpointingKeeper) GetBLSPubKeySet(ctx types2.Context, epochNumbe
 func (mr *MockCheckpointingKeeperMockRecorder) GetBLSPubKeySet(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBLSPubKeySet", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetBLSPubKeySet), ctx, epochNumber)
+}
+
+// GetRawCheckpoint mocks base method.
+func (m *MockCheckpointingKeeper) GetRawCheckpoint(ctx types2.Context, epochNumber uint64) (*types0.RawCheckpointWithMeta, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRawCheckpoint", ctx, epochNumber)
+	ret0, _ := ret[0].(*types0.RawCheckpointWithMeta)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRawCheckpoint indicates an expected call of GetRawCheckpoint.
+func (mr *MockCheckpointingKeeperMockRecorder) GetRawCheckpoint(ctx, epochNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawCheckpoint", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetRawCheckpoint), ctx, epochNumber)
 }
 
 // MockEpochingKeeper is a mock of EpochingKeeper interface.

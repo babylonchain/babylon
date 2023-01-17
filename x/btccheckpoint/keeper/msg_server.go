@@ -44,18 +44,21 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, types.ErrInvalidHeader.Wrap(err.Error())
 	}
 
-	rawCheckpointBytes := rawSubmission.GetRawCheckPointBytes()
 	// At this point:
 	// - every proof of inclusion is valid i.e every transaction is proved to be
 	// part of provided block and contains some OP_RETURN data
 	// - header is proved to be part of the chain we know about through BTCLightClient
 	// - this is new checkpoint submission
-	// Get info about this checkpoints epoch
-	epochNum, err := m.k.GetCheckpointEpoch(sdkCtx, rawCheckpointBytes)
+	// Verify if this is expected checkpoint
+	err = m.k.checkpointingKeeper.VerifyCheckpoint(sdkCtx, rawSubmission.CheckpointData)
 
 	if err != nil {
 		return nil, err
 	}
+
+	// Add this point we know this valid checkpoint for this epoch as this was validated
+	// by checkpointing module
+	epochNum := rawSubmission.CheckpointData.Epoch
 
 	err = m.k.checkAncestors(sdkCtx, epochNum, newSubmissionOldestHeaderDepth)
 
@@ -80,7 +83,6 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		epochNum,
 		submissionKey,
 		submissionData,
-		rawCheckpointBytes,
 	)
 
 	if err != nil {

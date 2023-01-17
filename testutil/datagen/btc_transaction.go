@@ -501,7 +501,7 @@ func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 	return connected
 }
 
-func RandomRawCheckpointDataForEpoch(e uint64) *TestRawCheckpointData {
+func RandomRawCheckpointDataForEpoch(e uint64) (*TestRawCheckpointData, *txformat.RawBtcCheckpoint) {
 	checkpointData := getRandomCheckpointDataForEpoch(e)
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
@@ -510,7 +510,7 @@ func RandomRawCheckpointDataForEpoch(e uint64) *TestRawCheckpointData {
 		SubmitterAddress: checkpointData.submitterAddress,
 		BlsSig:           checkpointData.blsSig,
 	}
-	return EncodeRawCkptToTestData(rawBTCCkpt)
+	return EncodeRawCkptToTestData(rawBTCCkpt), rawBTCCkpt
 }
 
 func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawCheckpointData {
@@ -545,7 +545,7 @@ func GenerateMessageWithRandomSubmitterForEpoch(epoch uint64) *btcctypes.MsgInse
 
 	tx2 := numInRange(1, 99)
 	// in those tests epoch is not important
-	raw := RandomRawCheckpointDataForEpoch(epoch)
+	raw, _ := RandomRawCheckpointDataForEpoch(epoch)
 
 	blck1 := CreateBlock(0, uint32(numTransactions), uint32(tx1), raw.FirstPart)
 

@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -61,12 +62,12 @@ func (ck MockBTCLightClientKeeper) MainChainDepth(ctx sdk.Context, headerBytes *
 	}
 }
 
-func (ck MockCheckpointingKeeper) CheckpointEpoch(ctx sdk.Context, rawCheckpoint []byte) (uint64, error) {
+func (ck MockCheckpointingKeeper) VerifyCheckpoint(ctx sdk.Context, checkpoint txformat.RawBtcCheckpoint) error {
 	if ck.returnError {
-		return 0, errors.New("bad checkpoints")
+		return errors.New("bad checkpoints")
 	}
 
-	return ck.epoch, nil
+	return nil
 }
 
 // SetCheckpointSubmitted Informs checkpointing module that checkpoint was

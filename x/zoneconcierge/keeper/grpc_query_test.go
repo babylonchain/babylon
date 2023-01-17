@@ -300,9 +300,13 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		randomRawCkpt := datagen.GenRandomRawCheckpoint()
 		randomRawCkpt.EpochNum = epoch.EpochNumber
 		btccKeeper := zctypes.NewMockBtcCheckpointKeeper(ctrl)
+		checkpointingKeeper.EXPECT().GetRawCheckpoint(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(
+			&checkpointingtypes.RawCheckpointWithMeta{
+				Ckpt: randomRawCkpt,
+			}, nil,
+		).AnyTimes()
 		btccKeeper.EXPECT().GetFinalizedEpochDataWithBestSubmission(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(
 			btcctypes.Finalized,
-			randomRawCkpt,
 			&btcctypes.SubmissionKey{
 				Key: []*btcctypes.TransactionKey{},
 			},

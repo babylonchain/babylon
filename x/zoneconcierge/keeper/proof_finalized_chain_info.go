@@ -2,7 +2,6 @@ package keeper
 
 import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +15,6 @@ func (k Keeper) proveFinalizedChainInfo(
 	ctx sdk.Context,
 	chainInfo *types.ChainInfo,
 	epochInfo *epochingtypes.Epoch,
-	rawCheckpoint *checkpointingtypes.RawCheckpoint,
 	bestSubmissionKey *btcctypes.SubmissionKey,
 ) (*types.ProofFinalizedChainInfo, error) {
 	var (

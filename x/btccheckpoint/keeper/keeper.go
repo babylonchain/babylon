@@ -8,7 +8,6 @@ import (
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -166,10 +165,6 @@ func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*
 	}, nil
 }
 
-func (k Keeper) GetCheckpointEpoch(ctx sdk.Context, c []byte) (uint64, error) {
-	return k.checkpointingKeeper.CheckpointEpoch(ctx, c)
-}
-
 func (k Keeper) SubmissionExists(ctx sdk.Context, sk types.SubmissionKey) bool {
 	return k.GetSubmissionData(ctx, sk) != nil
 }
@@ -179,7 +174,9 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	store := ctx.KVStore(k.storeKey)
 	bytes := store.Get(types.GetEpochIndexKey(e))
 
-	if len(bytes) == 0 {
+	// note: Cannot check len(bytes) == 0, as empty bytes encoding of types.EpochData
+	// is epoch data with Status == Submitted and no valid submissions
+	if bytes == nil {
 		return nil
 	}
 
@@ -190,26 +187,21 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 
 // GetFinalizedEpochDataWithBestSubmission gets the status, raw checkpoint bytes,
 // and the best submission of a given epoch
-func (k Keeper) GetFinalizedEpochDataWithBestSubmission(ctx sdk.Context, epochNumber uint64) (types.BtcStatus, *checkpointingtypes.RawCheckpoint, *types.SubmissionKey, error) {
+func (k Keeper) GetFinalizedEpochDataWithBestSubmission(ctx sdk.Context, epochNumber uint64) (types.BtcStatus, *types.SubmissionKey, error) {
 	// find the btc checkpoint tx index of this epoch
 	ed := k.GetEpochData(ctx, epochNumber)
 	if ed == nil {
-		return 0, nil, nil, types.ErrNoCheckpointsForPreviousEpoch
+		return 0, nil, types.ErrNoCheckpointsForPreviousEpoch
 	}
 	if ed.Status != types.Finalized {
-		return 0, nil, nil, fmt.Errorf("epoch %d has not been finalized yet", epochNumber)
+		return 0, nil, fmt.Errorf("epoch %d has not been finalized yet", epochNumber)
 	}
 	if len(ed.Key) == 0 {
-		return 0, nil, nil, types.ErrNoCheckpointsForPreviousEpoch
+		return 0, nil, types.ErrNoCheckpointsForPreviousEpoch
 	}
 	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
 
-	// get raw checkpoint of this epoch
-	rawCheckpoint, err := checkpointingtypes.FromBTCCkptBytesToRawCkpt(ed.RawCheckpoint)
-	if err != nil {
-		return 0, nil, nil, err
-	}
-	return ed.Status, rawCheckpoint, bestSubmissionKey, nil
+	return ed.Status, bestSubmissionKey, nil
 }
 
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions
@@ -287,7 +279,6 @@ func (k Keeper) addEpochSubmission(
 	epochNum uint64,
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
-	epochRawCheckpoint []byte,
 ) error {
 
 	ed := k.GetEpochData(ctx, epochNum)
@@ -300,7 +291,7 @@ func (k Keeper) addEpochSubmission(
 	// if ed is nil, it means it is our first submission for this epoch
 	if ed == nil {
 		// we do not have any data saved yet
-		newEd := types.NewEmptyEpochData(epochRawCheckpoint)
+		newEd := types.NewEmptyEpochData()
 		ed = &newEd
 	}
 
@@ -436,7 +427,6 @@ func (k Keeper) clearEpochData(
 	epoch []byte,
 	epochDataStore prefix.Store,
 	currentEpoch *types.EpochData) {
-
 	for _, sk := range currentEpoch.Key {
 		k.deleteSubmission(ctx, *sk)
 	}
