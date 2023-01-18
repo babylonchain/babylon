@@ -188,32 +188,32 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		)
 
 		// 1. check valid checkpoint
-		btcCkptBytes := makeBtcCkptBytes(
+		rawBtcCheckpoint := makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
 			localCkptWithMeta.Ckpt.BlsMultiSig.Bytes(),
 			t,
 		)
-		epoch, err := ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+
+		err := ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
 		require.NoError(t, err)
-		require.Equal(t, localCkptWithMeta.Ckpt.EpochNum, epoch)
 
 		// 2. check a checkpoint with invalid sig
-		btcCkptBytes = makeBtcCkptBytes(
+		rawBtcCheckpoint = makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
 			datagen.GenRandomByteArray(btctxformatter.BlsSigLength),
 			t,
 		)
-		_, err = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+		err = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
 		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
 
 		// 3. check a conflicting checkpoint; signed on a random lastcommithash
 		conflictLastCommitHash := datagen.GenRandomByteArray(btctxformatter.LastCommitHashLength)
 		msgBytes = append(sdk.Uint64ToBigEndian(localCkptWithMeta.Ckpt.EpochNum), conflictLastCommitHash...)
-		btcCkptBytes = makeBtcCkptBytes(
+		rawBtcCheckpoint = makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			conflictLastCommitHash,
 			localCkptWithMeta.Ckpt.Bitmap,
@@ -221,12 +221,12 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 			t,
 		)
 		require.Panics(t, func() {
-			_, _ = ckptKeeper.CheckpointEpoch(ctx, btcCkptBytes)
+				_ = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
 		})
 	})
 }
 
-func makeBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) []byte {
+func makeBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {
 	tag := datagen.GenRandomByteArray(btctxformatter.TagLength)
 	babylonTag := btctxformatter.BabylonTag(tag[:btctxformatter.TagLength])
 	address := datagen.GenRandomByteArray(btctxformatter.AddressLength)
@@ -251,7 +251,10 @@ func makeBtcCkptBytes(epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t 
 	ckptData, err := btctxformatter.ConnectParts(btctxformatter.CurrentVersion, decodedFirst.Data, decodedSecond.Data)
 	require.NoError(t, err)
 
-	return ckptData
+	rawCheckpoint, err := btctxformatter.DecodeRawCheckpoint(btctxformatter.CurrentVersion, ckptData)
+	require.NoError(t, err)
+
+	return rawCheckpoint
 }
 
 func curStateUpdate(ctx sdk.Context, status types.CheckpointStatus) *types.CheckpointStateUpdate {

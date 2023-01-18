@@ -168,8 +168,16 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 		return nil, err
 	}
 
+	rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+
+	if err != nil {
+		return nil, err
+	}
+
+	resp.RawCheckpoint = rawCheckpoint.Ckpt
+
 	// find the raw checkpoint and the best submission key for the finalised epoch
-	_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+	_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
@@ -180,7 +188,7 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	}
 
 	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.RawCheckpoint, resp.BtcSubmissionKey)
+	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.BtcSubmissionKey)
 	if err != nil {
 		return nil, err
 	}
@@ -214,8 +222,16 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 			return nil, err
 		}
 
+		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+
+		if err != nil {
+			return nil, err
+		}
+
+		resp.RawCheckpoint = rawCheckpoint.Ckpt
+
 		// find and assign the raw checkpoint and the best submission key for the finalised epoch
-		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+		_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -236,7 +252,16 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		if err != nil {
 			return nil, err
 		}
-		_, resp.RawCheckpoint, resp.BtcSubmissionKey, err = k.btccKeeper.GetFinalizedEpochDataWithBestSubmission(ctx, finalizedEpoch)
+
+		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+
+		if err != nil {
+			return nil, err
+		}
+
+		resp.RawCheckpoint = rawCheckpoint.Ckpt
+
+		_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -248,7 +273,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	}
 
 	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.RawCheckpoint, resp.BtcSubmissionKey)
+	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.BtcSubmissionKey)
 	if err != nil {
 		return nil, err
 	}

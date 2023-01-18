@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
@@ -166,20 +168,19 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 	return ckptWithMeta, nil
 }
 
-// CheckpointEpoch verifies checkpoint from BTC and returns epoch number if
-// it equals to the existing raw checkpoint. Otherwise, it further verifies
+// VerifyCheckpoint verifies checkpoint from BTC. It verifies
 // the raw checkpoint and decides whether it is an invalid checkpoint or a
 // conflicting checkpoint. A conflicting checkpoint indicates the existence
 // of a fork
-func (k Keeper) CheckpointEpoch(ctx sdk.Context, btcCkptBytes []byte) (uint64, error) {
-	ckptWithMeta, err := k.verifyCkptBytes(ctx, btcCkptBytes)
+func (k Keeper) VerifyCheckpoint(ctx sdk.Context, checkpoint txformat.RawBtcCheckpoint) error {
+	_, err := k.verifyCkptBytes(ctx, &checkpoint)
 	if err != nil {
 		if errors.Is(err, types.ErrConflictingCheckpoint) {
 			panic(err)
 		}
-		return 0, err
+		return err
 	}
-	return ckptWithMeta.Ckpt.EpochNum, nil
+	return nil
 }
 
 // verifyCkptBytes verifies checkpoint from BTC. A checkpoint is valid if
@@ -187,8 +188,8 @@ func (k Keeper) CheckpointEpoch(ctx sdk.Context, btcCkptBytes []byte) (uint64, e
 // the raw checkpoint and decides whether it is an invalid checkpoint or a
 // conflicting checkpoint. A conflicting checkpoint indicates the existence
 // of a fork
-func (k Keeper) verifyCkptBytes(ctx sdk.Context, btcCkptBytes []byte) (*types.RawCheckpointWithMeta, error) {
-	ckpt, err := types.FromBTCCkptBytesToRawCkpt(btcCkptBytes)
+func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcCheckpoint) (*types.RawCheckpointWithMeta, error) {
+	ckpt, err := types.FromBTCCkptToRawCkpt(rawCheckpoint)
 	if err != nil {
 		return nil, err
 	}
