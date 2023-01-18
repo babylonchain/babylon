@@ -242,7 +242,7 @@ func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error
 }
 
 func (n *NodeConfig) QueryLightClientHeightCheckpointReported(ckptHash []byte) (uint64, error) {
-	monitorPath := fmt.Sprintf("/babylon/monitor/v1/checkpoints/%d", ckptHash)
+	monitorPath := fmt.Sprintf("/babylon/monitor/v1/checkpoints/%x", ckptHash)
 	bz, err := n.QueryGRPCGateway(monitorPath)
 	require.NoError(n.t, err)
 	var mResponse mtypes.QueryReportedCheckpointBtcHeightResponse

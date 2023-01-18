@@ -49,7 +49,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)
 
-	heightAtFinishedEpoch, err := nonValidatorNode.QueryLightClientHeighEpochEnd(currEpoch - 1)
+	heightAtFinishedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
 	s.NoError(err)
 
 	if heightAtFinishedEpoch == 0 {
