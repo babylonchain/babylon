@@ -91,13 +91,13 @@ func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint
 	return btcHeight, nil
 }
 
-func (k Keeper) LightclientHeightAtCheckpointReported(ctx sdk.Context, hash *ckpttypes.RawCkptHash) (uint64, error) {
+func (k Keeper) LightclientHeightAtCheckpointReported(ctx sdk.Context, hash []byte) (uint64, error) {
 	store := ctx.KVStore(k.storeKey)
 
-	btcHeightBytes := store.Get(types.GetCheckpointReportedLightClientHeightKey(*hash))
+	btcHeightBytes := store.Get(types.GetCheckpointReportedLightClientHeightKey(hash))
 
 	if len(btcHeightBytes) == 0 {
-		return 0, types.ErrCheckpointNotReported.Wrapf("checkpoint hash: %x", hash.Bytes())
+		return 0, types.ErrCheckpointNotReported.Wrapf("checkpoint hash: %x", hash)
 	}
 
 	btcHeight, err := bytesToUint64(btcHeightBytes)

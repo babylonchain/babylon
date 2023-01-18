@@ -45,9 +45,7 @@ message QueryFinishedEpochBtcHeightResponse {
 }
 
 message QueryReportedCheckpointBtcHeightRequest {
-  bytes ckpt_hash = 1[
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/x/checkpointing/types.RawCkptHash"
-  ];
+  bytes ckpt_hash = 1;
 }
 
 message QueryReportedCheckpointBtcHeightResponse {
