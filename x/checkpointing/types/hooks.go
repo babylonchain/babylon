@@ -39,3 +39,9 @@ func (h MultiCheckpointingHooks) AfterRawCheckpointFinalized(ctx sdk.Context, ep
 	}
 	return nil
 }
+
+func (h MultiCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *RawCheckpoint) {
+	for i := range h {
+		h[i].AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+	}
+}

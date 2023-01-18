@@ -191,7 +191,7 @@ func (k Keeper) VerifyCheckpoint(ctx sdk.Context, checkpoint txformat.RawBtcChec
 func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcCheckpoint) (*types.RawCheckpointWithMeta, error) {
 	ckpt, err := types.FromBTCCkptToRawCkpt(rawCheckpoint)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode raw checkpoint from BTC raw checkpoint: %w", err)
 	}
 	// sanity check
 	err = ckpt.ValidateBasic()
@@ -200,7 +200,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	}
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, ckpt.EpochNum)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch the raw checkpoint at epoch %d from database: %w", ckpt.EpochNum, err)
 	}
 
 	// can skip the checks if it is identical with the local checkpoint that is not accumulating
@@ -213,7 +213,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
 	signerSet, err := k.GetValidatorSet(ctx, ckpt.EpochNum).FindSubset(ckpt.Bitmap)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get the signer set via bitmap of epoch %d: %w", ckpt.EpochNum, err)
 	}
 	var sum int64
 	signersPubKeys := make([]bls12381.PublicKey, len(signerSet))
@@ -235,6 +235,9 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	if !ok {
 		return nil, types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
 	}
+
+	// record verified checkpoint
+	k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
 
 	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
 	// same with that of the local checkpoint, it means it is valid except that

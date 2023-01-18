@@ -31,3 +31,10 @@ func (k Keeper) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error
 	}
 	return nil
 }
+
+// AfterRawCheckpointBlsSigVerified - call hook if the checkpoint is finalized
+func (k Keeper) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *types.RawCheckpoint) {
+	if k.hooks != nil {
+		k.hooks.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+	}
+}
