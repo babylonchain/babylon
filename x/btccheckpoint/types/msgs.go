@@ -72,7 +72,13 @@ func ParseTwoProofs(
 		return nil, err
 	}
 
-	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1], rawCkptData)
+	rawCheckpoint, err := txformat.DecodeRawCheckpoint(txformat.CurrentVersion, rawCkptData)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sub := NewRawCheckpointSubmission(submitter, *parsedProofs[0], *parsedProofs[1], *rawCheckpoint)
 
 	return &sub, nil
 }
