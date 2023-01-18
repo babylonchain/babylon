@@ -56,7 +56,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 		return nil, err
 	}
 
-	// Add this point we know this valid checkpoint for this epoch as this was validated
+	// At this point we know this is a valid checkpoint for this epoch as this was validated
 	// by checkpointing module
 	epochNum := rawSubmission.CheckpointData.Epoch
 

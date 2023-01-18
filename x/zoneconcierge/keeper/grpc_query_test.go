@@ -305,7 +305,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 				Ckpt: randomRawCkpt,
 			}, nil,
 		).AnyTimes()
-		btccKeeper.EXPECT().GetFinalizedEpochDataWithBestSubmission(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(
+		btccKeeper.EXPECT().GetBestSubmission(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(
 			btcctypes.Finalized,
 			&btcctypes.SubmissionKey{
 				Key: []*btcctypes.TransactionKey{},
