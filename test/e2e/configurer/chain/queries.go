@@ -230,11 +230,22 @@ func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 	return epochResponse.CurrentEpoch, nil
 }
 
-func (n *NodeConfig) QueryLightClientHeighEpochEnd(epoch uint64) (uint64, error) {
-	monitorPath := fmt.Sprintf("/babylon/monitor/v1/%d", epoch)
+func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error) {
+	monitorPath := fmt.Sprintf("/babylon/monitor/v1/epochs/%d", epoch)
 	bz, err := n.QueryGRPCGateway(monitorPath)
 	require.NoError(n.t, err)
 	var mResponse mtypes.QueryFinishedEpochBtcHeightResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &mResponse); err != nil {
+		return 0, err
+	}
+	return mResponse.BtcLightClientHeight, nil
+}
+
+func (n *NodeConfig) QueryLightClientHeightCheckpointReported(ckptHash []byte) (uint64, error) {
+	monitorPath := fmt.Sprintf("/babylon/monitor/v1/checkpoints/%d", ckptHash)
+	bz, err := n.QueryGRPCGateway(monitorPath)
+	require.NoError(n.t, err)
+	var mResponse mtypes.QueryReportedCheckpointBtcHeightResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &mResponse); err != nil {
 		return 0, err
 	}
