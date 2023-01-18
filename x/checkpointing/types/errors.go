@@ -16,4 +16,5 @@ var (
 	ErrBlsKeyAlreadyExist     = sdkerrors.Register(ModuleName, 1210, "BLS public key already exists")
 	ErrBlsPrivKeyDoesNotExist = sdkerrors.Register(ModuleName, 1211, "BLS private key does not exist")
 	ErrConflictingCheckpoint  = sdkerrors.Register(ModuleName, 1212, "Conflicting checkpoint is found")
+	ErrInvalidLastCommitHash  = sdkerrors.Register(ModuleName, 1213, "Provided last commit hash is Invalid")
 )

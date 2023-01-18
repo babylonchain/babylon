@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"fmt"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"time"
+
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 
 	"github.com/babylonchain/babylon/client/tx"
 	"github.com/babylonchain/babylon/crypto/bls12381"
