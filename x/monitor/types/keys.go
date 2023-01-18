@@ -1,6 +1,7 @@
 package types
 
 import (
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -22,7 +23,8 @@ const (
 )
 
 var (
-	EpochEndLightClientHeightPrefix = []byte{1}
+	EpochEndLightClientHeightPrefix           = []byte{1}
+	CheckpointReportedLightClientHeightPrefix = []byte{2}
 )
 
 func KeyPrefix(p string) []byte {
@@ -31,4 +33,8 @@ func KeyPrefix(p string) []byte {
 
 func GetEpochEndLightClientHeightKey(e uint64) []byte {
 	return append(EpochEndLightClientHeightPrefix, sdk.Uint64ToBigEndian(e)...)
+}
+
+func GetCheckpointReportedLightClientHeightKey(hash checkpointingtypes.RawCkptHash) []byte {
+	return append(CheckpointReportedLightClientHeightPrefix, hash.Bytes()...)
 }

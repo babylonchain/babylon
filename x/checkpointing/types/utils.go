@@ -1,6 +1,8 @@
 package types
 
 import (
+	"crypto/sha256"
+	"errors"
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -47,6 +49,27 @@ func (m BlsSigHash) Bytes() []byte {
 
 func (m RawCkptHash) Bytes() []byte {
 	return m
+}
+
+func (m RawCkptHash) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	return len(m)
+}
+
+func (m RawCkptHash) MarshalTo(data []byte) (int, error) {
+	copy(data, m)
+	return len(data), nil
+}
+
+func (m *RawCkptHash) Unmarshal(data []byte) error {
+	if len(data) != sha256.Size {
+		return errors.New("invalid raw checkpoint hash length")
+	}
+
+	*m = data
+	return nil
 }
 
 func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {

@@ -22,7 +22,7 @@ service Query {
 
   // ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
   rpc ReportedCheckpointBtcHeight(QueryReportedCheckpointBtcHeightRequest) returns (QueryReportedCheckpointBtcHeightResponse) {
-    option (google.api.http).get = "/babylon/monitor/v1/checkpoints/{checkpoint_id}";
+    option (google.api.http).get = "/babylon/monitor/v1/checkpoints/{ckpt_hash}";
   }
 }
 
@@ -45,7 +45,9 @@ message QueryFinishedEpochBtcHeightResponse {
 }
 
 message QueryReportedCheckpointBtcHeightRequest {
-  bytes checkpoint_id = 1;
+  bytes ckpt_hash = 1[
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/x/checkpointing/types.RawCkptHash"
+  ];
 }
 
 message QueryReportedCheckpointBtcHeightResponse {

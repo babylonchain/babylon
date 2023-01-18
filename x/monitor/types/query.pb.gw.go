@@ -116,15 +116,15 @@ func request_Query_ReportedCheckpointBtcHeight_0(ctx context.Context, marshaler 
 		_   = err
 	)
 
-	val, ok = pathParams["checkpoint_id"]
+	val, ok = pathParams["ckpt_hash"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "checkpoint_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ckpt_hash")
 	}
 
-	protoReq.CheckpointId, err = runtime.Bytes(val)
+	protoReq.CkptHash, err = runtime.Bytes(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "checkpoint_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ckpt_hash", err)
 	}
 
 	msg, err := client.ReportedCheckpointBtcHeight(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -143,15 +143,15 @@ func local_request_Query_ReportedCheckpointBtcHeight_0(ctx context.Context, mars
 		_   = err
 	)
 
-	val, ok = pathParams["checkpoint_id"]
+	val, ok = pathParams["ckpt_hash"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "checkpoint_id")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ckpt_hash")
 	}
 
-	protoReq.CheckpointId, err = runtime.Bytes(val)
+	protoReq.CkptHash, err = runtime.Bytes(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "checkpoint_id", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ckpt_hash", err)
 	}
 
 	msg, err := server.ReportedCheckpointBtcHeight(ctx, &protoReq)
@@ -343,7 +343,7 @@ var (
 
 	pattern_Query_FinishedEpochBtcHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "monitor", "v1", "epochs", "epoch_num"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ReportedCheckpointBtcHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "monitor", "v1", "checkpoints", "checkpoint_id"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ReportedCheckpointBtcHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "monitor", "v1", "checkpoints", "ckpt_hash"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
