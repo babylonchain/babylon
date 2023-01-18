@@ -64,9 +64,13 @@ func (k Keeper) updateBtcLightClientHeightForEpoch(ctx sdk.Context, epoch uint64
 func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx sdk.Context, ckpt *ckpttypes.RawCheckpoint) {
 	store := ctx.KVStore(k.storeKey)
 	ckptHash := ckpt.Hash()
+
+	// if the checkpoint exists, meaning an earlier checkpoint with a lower btc height is already recorded
+	// we should keep the lower btc height in the store
 	if store.Has(ckptHash) {
 		return
 	}
+
 	currentTipHeight := k.btcLightClientKeeper.GetTipInfo(ctx).Height
 	store.Set(types.GetCheckpointReportedLightClientHeightKey(ckptHash), sdk.Uint64ToBigEndian(currentTipHeight))
 }
