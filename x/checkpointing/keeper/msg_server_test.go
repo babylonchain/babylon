@@ -163,6 +163,31 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 	})
 }
 
+func TestInvalidLastCommitHash(t *testing.T) {
+	helper := testepoching.NewHelperWithValSet(t)
+	ck := helper.App.CheckpointingKeeper
+	msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+	// needed to init total voting power
+	helper.BeginBlock()
+
+	epoch := uint64(1)
+	validLch := datagen.GenRandomByteArray(32)
+	// correct checkpoint for epoch 1
+	_, err := ck.BuildRawCheckpoint(helper.Ctx, epoch, validLch)
+	require.NoError(t, err)
+
+	// Malicious validator created message with valid bls signature but for invalid
+	// commit hash
+	invalidLch := datagen.GenRandomByteArray(32)
+	val0Info := helper.ValBlsPrivKeys[0]
+	signBytes := append(sdk.Uint64ToBigEndian(epoch), invalidLch...)
+	sig := bls12381.Sign(val0Info.BlsKey, signBytes)
+	msg := types.NewMsgAddBlsSig(epoch, invalidLch, sig, val0Info.Address)
+
+	_, err = msgServer.AddBlsSig(helper.Ctx, msg)
+	require.ErrorIs(t, err, types.ErrInvalidLastCommitHash)
+}
+
 func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreateValidator, error) {
 	tmValPrivkey := ed25519.GenPrivKey()
 	bondTokens := sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)

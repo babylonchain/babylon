@@ -8,7 +8,6 @@ import (
 
 	"cosmossdk.io/math"
 	appparams "github.com/babylonchain/babylon/app/params"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/app"
@@ -26,6 +25,11 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
+type ValidatorInfo struct {
+	BlsKey  bls12381.PrivateKey
+	Address sdk.ValAddress
+}
+
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
 type Helper struct {
 	t *testing.T
@@ -37,7 +41,8 @@ type Helper struct {
 	QueryClient    types.QueryClient
 	StakingKeeper  *stakingkeeper.Keeper
 
-	GenAccs []authtypes.GenesisAccount
+	GenAccs        []authtypes.GenesisAccount
+	ValBlsPrivKeys []ValidatorInfo
 }
 
 // NewHelper creates the helper for testing the epoching module
@@ -51,7 +56,8 @@ func NewHelper(t *testing.T) *Helper {
 	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
 	require.Len(t, valSet, 1)
 	genesisVal := valSet[0]
-	genesisBLSPubkey := bls12381.GenPrivKey().PubKey()
+	blsPrivKey := bls12381.GenPrivKey()
+	genesisBLSPubkey := blsPrivKey.PubKey()
 	err := app.CheckpointingKeeper.CreateRegistration(ctx, genesisBLSPubkey, genesisVal.Addr)
 	require.NoError(t, err)
 
@@ -61,7 +67,20 @@ func NewHelper(t *testing.T) *Helper {
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, nil}
+	return &Helper{
+		t,
+		ctx,
+		app,
+		&epochingKeeper,
+		msgSrvr,
+		queryClient,
+		&app.StakingKeeper,
+		nil,
+		[]ValidatorInfo{ValidatorInfo{
+			blsPrivKey,
+			genesisVal.Addr,
+		}},
+	}
 }
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
@@ -86,22 +105,23 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
-
+	valInfos := []ValidatorInfo{}
 	// add BLS pubkey to the genesis validator
 	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
 	for _, val := range valSet {
-		blsPubkey := bls12381.GenPrivKey().PubKey()
+		blsPrivKey := bls12381.GenPrivKey()
+		valInfos = append(valInfos, ValidatorInfo{blsPrivKey, val.Addr})
+		blsPubkey := blsPrivKey.PubKey()
 		err = app.CheckpointingKeeper.CreateRegistration(ctx, blsPubkey, val.Addr)
 		require.NoError(t, err)
 	}
-
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs}
+	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs, valInfos}
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
