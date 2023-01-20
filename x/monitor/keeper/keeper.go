@@ -101,11 +101,11 @@ func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint
 	store := ctx.KVStore(k.storeKey)
 
 	btcHeightBytes := store.Get(types.GetEpochEndLightClientHeightKey(epoch))
-
-	if len(btcHeightBytes) == 0 {
+	// nil would be returned if key does not exist
+	if btcHeightBytes == nil {
 		// we do not have any key under given epoch, most probably epoch did not finish
 		// yet
-		return 0, types.ErrEpochNotFinishedYet
+		return 0, types.ErrEpochNotFinishedYet.Wrapf("epoch %d", epoch)
 	}
 
 	btcHeight, err := bytesToUint64(btcHeightBytes)
@@ -126,8 +126,8 @@ func (k Keeper) LightclientHeightAtCheckpointReported(ctx sdk.Context, hashStrin
 	}
 
 	btcHeightBytes := store.Get(storeKey)
-
-	if len(btcHeightBytes) == 0 {
+	// nil would be returned if key does not exist
+	if btcHeightBytes == nil {
 		return 0, types.ErrCheckpointNotReported.Wrapf("checkpoint hash: %s", hashString)
 	}
 
