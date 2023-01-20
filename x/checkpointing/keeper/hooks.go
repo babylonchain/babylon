@@ -24,6 +24,13 @@ func (k Keeper) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error
 	return nil
 }
 
+func (k Keeper) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
+	if k.hooks != nil {
+		return k.hooks.AfterRawCheckpointForgotten(ctx, ckpt)
+	}
+	return nil
+}
+
 // AfterRawCheckpointFinalized - call hook if the checkpoint is finalized
 func (k Keeper) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
 	if k.hooks != nil {
@@ -32,9 +39,10 @@ func (k Keeper) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error
 	return nil
 }
 
-// AfterRawCheckpointBlsSigVerified - call hook if the checkpoint is finalized
-func (k Keeper) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *types.RawCheckpoint) {
+// AfterRawCheckpointBlsSigVerified - call hook if the checkpoint's BLS sig is verified
+func (k Keeper) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *types.RawCheckpoint) error {
 	if k.hooks != nil {
-		k.hooks.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+		return k.hooks.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
 	}
+	return nil
 }

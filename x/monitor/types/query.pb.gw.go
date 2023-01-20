@@ -121,7 +121,7 @@ func request_Query_ReportedCheckpointBtcHeight_0(ctx context.Context, marshaler 
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ckpt_hash")
 	}
 
-	protoReq.CkptHash, err = runtime.Bytes(val)
+	protoReq.CkptHash, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ckpt_hash", err)
@@ -148,7 +148,7 @@ func local_request_Query_ReportedCheckpointBtcHeight_0(ctx context.Context, mars
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "ckpt_hash")
 	}
 
-	protoReq.CkptHash, err = runtime.Bytes(val)
+	protoReq.CkptHash, err = runtime.String(val)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "ckpt_hash", err)

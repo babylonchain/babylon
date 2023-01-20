@@ -45,7 +45,8 @@ message QueryFinishedEpochBtcHeightResponse {
 }
 
 message QueryReportedCheckpointBtcHeightRequest {
-  bytes ckpt_hash = 1;
+  // ckpt_hash is hex encoded byte string of the hash of the checkpoint
+  string ckpt_hash = 1;
 }
 
 message QueryReportedCheckpointBtcHeightResponse {

@@ -31,6 +31,13 @@ func (h MultiCheckpointingHooks) AfterRawCheckpointConfirmed(ctx sdk.Context, ep
 	return nil
 }
 
+func (h MultiCheckpointingHooks) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *RawCheckpoint) error {
+	for i := range h {
+		return h[i].AfterRawCheckpointForgotten(ctx, ckpt)
+	}
+	return nil
+}
+
 func (h MultiCheckpointingHooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
 	for i := range h {
 		if err := h[i].AfterRawCheckpointFinalized(ctx, epoch); err != nil {
@@ -40,8 +47,9 @@ func (h MultiCheckpointingHooks) AfterRawCheckpointFinalized(ctx sdk.Context, ep
 	return nil
 }
 
-func (h MultiCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *RawCheckpoint) {
+func (h MultiCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *RawCheckpoint) error {
 	for i := range h {
-		h[i].AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+		return h[i].AfterRawCheckpointBlsSigVerified(ctx, ckpt)
 	}
+	return nil
 }

@@ -61,18 +61,40 @@ func (k Keeper) updateBtcLightClientHeightForEpoch(ctx sdk.Context, epoch uint64
 	store.Set(types.GetEpochEndLightClientHeightKey(epoch), sdk.Uint64ToBigEndian(currentTipHeight))
 }
 
-func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx sdk.Context, ckpt *ckpttypes.RawCheckpoint) {
+func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx sdk.Context, ckpt *ckpttypes.RawCheckpoint) error {
 	store := ctx.KVStore(k.storeKey)
-	ckptHash := ckpt.Hash()
+	ckptHashStr := ckpt.HashStr()
 
 	// if the checkpoint exists, meaning an earlier checkpoint with a lower btc height is already recorded
 	// we should keep the lower btc height in the store
-	if store.Has(ckptHash) {
-		return
+	if store.Has([]byte(ckptHashStr)) {
+		ctx.Logger().With("module", fmt.Sprintf("checkpoint %s is already recorded", ckptHashStr))
+		return nil
+	}
+
+	storeKey, err := types.GetCheckpointReportedLightClientHeightKey(ckptHashStr)
+	if err != nil {
+		return err
 	}
 
 	currentTipHeight := k.btcLightClientKeeper.GetTipInfo(ctx).Height
-	store.Set(types.GetCheckpointReportedLightClientHeightKey(ckptHash), sdk.Uint64ToBigEndian(currentTipHeight))
+	store.Set(storeKey, sdk.Uint64ToBigEndian(currentTipHeight))
+
+	return nil
+}
+
+func (k Keeper) removeCheckpointRecord(ctx sdk.Context, ckpt *ckpttypes.RawCheckpoint) error {
+	store := ctx.KVStore(k.storeKey)
+	ckptHashStr := ckpt.HashStr()
+
+	storeKey, err := types.GetCheckpointReportedLightClientHeightKey(ckptHashStr)
+	if err != nil {
+		return err
+	}
+
+	store.Delete(storeKey)
+
+	return nil
 }
 
 func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint64, error) {
@@ -95,13 +117,18 @@ func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint
 	return btcHeight, nil
 }
 
-func (k Keeper) LightclientHeightAtCheckpointReported(ctx sdk.Context, hash []byte) (uint64, error) {
+func (k Keeper) LightclientHeightAtCheckpointReported(ctx sdk.Context, hashString string) (uint64, error) {
 	store := ctx.KVStore(k.storeKey)
 
-	btcHeightBytes := store.Get(types.GetCheckpointReportedLightClientHeightKey(hash))
+	storeKey, err := types.GetCheckpointReportedLightClientHeightKey(hashString)
+	if err != nil {
+		return 0, err
+	}
+
+	btcHeightBytes := store.Get(storeKey)
 
 	if len(btcHeightBytes) == 0 {
-		return 0, types.ErrCheckpointNotReported.Wrapf("checkpoint hash: %x", hash)
+		return 0, types.ErrCheckpointNotReported.Wrapf("checkpoint hash: %s", hashString)
 	}
 
 	btcHeight, err := bytesToUint64(btcHeightBytes)

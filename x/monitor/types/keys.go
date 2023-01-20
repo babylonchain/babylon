@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -34,6 +36,10 @@ func GetEpochEndLightClientHeightKey(e uint64) []byte {
 	return append(EpochEndLightClientHeightPrefix, sdk.Uint64ToBigEndian(e)...)
 }
 
-func GetCheckpointReportedLightClientHeightKey(hash []byte) []byte {
-	return append(CheckpointReportedLightClientHeightPrefix, hash...)
+func GetCheckpointReportedLightClientHeightKey(hashString string) ([]byte, error) {
+	hashBytes, err := types.FromStringToCkptHash(hashString)
+	if err != nil {
+		return nil, fmt.Errorf("invalid hash string %s: %w", hashString, err)
+	}
+	return append(CheckpointReportedLightClientHeightPrefix, hashBytes...), nil
 }

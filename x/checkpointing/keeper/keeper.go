@@ -237,7 +237,10 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	}
 
 	// record verified checkpoint
-	k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+	err = k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+	if err != nil {
+		return nil, err
+	}
 
 	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
 	// same with that of the local checkpoint, it means it is valid except that
