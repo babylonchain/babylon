@@ -141,7 +141,7 @@ func (k Keeper) GetLastCheckpointedEpoch(ctx sdk.Context) (uint64, error) {
 	if curEpoch <= 0 {
 		return 0, fmt.Errorf("current epoch should be more than 0")
 	}
-	// minus 1 is because the current epoch is not finished
+	// minus 1 is because the current epoch is not ended
 	tipEpoch := curEpoch - 1
 	_, err := k.GetRawCheckpoint(ctx, tipEpoch)
 	if err != nil {

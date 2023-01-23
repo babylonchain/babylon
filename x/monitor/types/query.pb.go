@@ -113,22 +113,22 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-type QueryFinishedEpochBtcHeightRequest struct {
+type QueryEndedEpochBtcHeightRequest struct {
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
-func (m *QueryFinishedEpochBtcHeightRequest) Reset()         { *m = QueryFinishedEpochBtcHeightRequest{} }
-func (m *QueryFinishedEpochBtcHeightRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryFinishedEpochBtcHeightRequest) ProtoMessage()    {}
-func (*QueryFinishedEpochBtcHeightRequest) Descriptor() ([]byte, []int) {
+func (m *QueryEndedEpochBtcHeightRequest) Reset()         { *m = QueryEndedEpochBtcHeightRequest{} }
+func (m *QueryEndedEpochBtcHeightRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryEndedEpochBtcHeightRequest) ProtoMessage()    {}
+func (*QueryEndedEpochBtcHeightRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b70877a7534d1c4, []int{2}
 }
-func (m *QueryFinishedEpochBtcHeightRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryEndedEpochBtcHeightRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinishedEpochBtcHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryEndedEpochBtcHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinishedEpochBtcHeightRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryEndedEpochBtcHeightRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -138,42 +138,42 @@ func (m *QueryFinishedEpochBtcHeightRequest) XXX_Marshal(b []byte, deterministic
 		return b[:n], nil
 	}
 }
-func (m *QueryFinishedEpochBtcHeightRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinishedEpochBtcHeightRequest.Merge(m, src)
+func (m *QueryEndedEpochBtcHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEndedEpochBtcHeightRequest.Merge(m, src)
 }
-func (m *QueryFinishedEpochBtcHeightRequest) XXX_Size() int {
+func (m *QueryEndedEpochBtcHeightRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinishedEpochBtcHeightRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinishedEpochBtcHeightRequest.DiscardUnknown(m)
+func (m *QueryEndedEpochBtcHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryEndedEpochBtcHeightRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinishedEpochBtcHeightRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryEndedEpochBtcHeightRequest proto.InternalMessageInfo
 
-func (m *QueryFinishedEpochBtcHeightRequest) GetEpochNum() uint64 {
+func (m *QueryEndedEpochBtcHeightRequest) GetEpochNum() uint64 {
 	if m != nil {
 		return m.EpochNum
 	}
 	return 0
 }
 
-type QueryFinishedEpochBtcHeightResponse struct {
+type QueryEndedEpochBtcHeightResponse struct {
 	// height of btc light client when epoch ended
 	BtcLightClientHeight uint64 `protobuf:"varint,1,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
 }
 
-func (m *QueryFinishedEpochBtcHeightResponse) Reset()         { *m = QueryFinishedEpochBtcHeightResponse{} }
-func (m *QueryFinishedEpochBtcHeightResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryFinishedEpochBtcHeightResponse) ProtoMessage()    {}
-func (*QueryFinishedEpochBtcHeightResponse) Descriptor() ([]byte, []int) {
+func (m *QueryEndedEpochBtcHeightResponse) Reset()         { *m = QueryEndedEpochBtcHeightResponse{} }
+func (m *QueryEndedEpochBtcHeightResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryEndedEpochBtcHeightResponse) ProtoMessage()    {}
+func (*QueryEndedEpochBtcHeightResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_3b70877a7534d1c4, []int{3}
 }
-func (m *QueryFinishedEpochBtcHeightResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryEndedEpochBtcHeightResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryFinishedEpochBtcHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryEndedEpochBtcHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryFinishedEpochBtcHeightResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryEndedEpochBtcHeightResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -183,19 +183,19 @@ func (m *QueryFinishedEpochBtcHeightResponse) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
-func (m *QueryFinishedEpochBtcHeightResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryFinishedEpochBtcHeightResponse.Merge(m, src)
+func (m *QueryEndedEpochBtcHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryEndedEpochBtcHeightResponse.Merge(m, src)
 }
-func (m *QueryFinishedEpochBtcHeightResponse) XXX_Size() int {
+func (m *QueryEndedEpochBtcHeightResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryFinishedEpochBtcHeightResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryFinishedEpochBtcHeightResponse.DiscardUnknown(m)
+func (m *QueryEndedEpochBtcHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryEndedEpochBtcHeightResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryFinishedEpochBtcHeightResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryEndedEpochBtcHeightResponse proto.InternalMessageInfo
 
-func (m *QueryFinishedEpochBtcHeightResponse) GetBtcLightClientHeight() uint64 {
+func (m *QueryEndedEpochBtcHeightResponse) GetBtcLightClientHeight() uint64 {
 	if m != nil {
 		return m.BtcLightClientHeight
 	}
@@ -299,8 +299,8 @@ func (m *QueryReportedCheckpointBtcHeightResponse) GetBtcLightClientHeight() uin
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.monitor.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.monitor.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryFinishedEpochBtcHeightRequest)(nil), "babylon.monitor.v1.QueryFinishedEpochBtcHeightRequest")
-	proto.RegisterType((*QueryFinishedEpochBtcHeightResponse)(nil), "babylon.monitor.v1.QueryFinishedEpochBtcHeightResponse")
+	proto.RegisterType((*QueryEndedEpochBtcHeightRequest)(nil), "babylon.monitor.v1.QueryEndedEpochBtcHeightRequest")
+	proto.RegisterType((*QueryEndedEpochBtcHeightResponse)(nil), "babylon.monitor.v1.QueryEndedEpochBtcHeightResponse")
 	proto.RegisterType((*QueryReportedCheckpointBtcHeightRequest)(nil), "babylon.monitor.v1.QueryReportedCheckpointBtcHeightRequest")
 	proto.RegisterType((*QueryReportedCheckpointBtcHeightResponse)(nil), "babylon.monitor.v1.QueryReportedCheckpointBtcHeightResponse")
 }
@@ -309,38 +309,38 @@ func init() { proto.RegisterFile("babylon/monitor/query.proto", fileDescriptor_3
 
 var fileDescriptor_3b70877a7534d1c4 = []byte{
 	// 515 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0x5d, 0x6b, 0xd4, 0x40,
-	0x14, 0xdd, 0x48, 0x5d, 0xda, 0xf1, 0x6d, 0x5c, 0x54, 0xb2, 0x25, 0x4a, 0x84, 0x76, 0x51, 0xcc,
-	0xb0, 0x2d, 0x7e, 0x80, 0xbe, 0xb8, 0xc5, 0x52, 0x41, 0xfc, 0xd8, 0x47, 0x11, 0xc2, 0x64, 0x3a,
-	0x64, 0x86, 0x6e, 0x66, 0xa6, 0x99, 0xc9, 0xe2, 0x52, 0xf6, 0xc5, 0x5f, 0x20, 0xfa, 0x6b, 0xfc,
-	0x07, 0x7d, 0x11, 0x0a, 0xbe, 0xf8, 0x24, 0xb2, 0xeb, 0x0f, 0x91, 0x4c, 0xa6, 0x01, 0xdb, 0x74,
-	0x17, 0xf5, 0x2d, 0xb9, 0xe7, 0x9e, 0x73, 0xcf, 0xcd, 0x3d, 0x04, 0x74, 0x13, 0x9c, 0x4c, 0x46,
-	0x52, 0xa0, 0x4c, 0x0a, 0x6e, 0x64, 0x8e, 0x0e, 0x0b, 0x9a, 0x4f, 0x22, 0x95, 0x4b, 0x23, 0x21,
-	0x74, 0x60, 0xe4, 0xc0, 0x68, 0xdc, 0xf7, 0x3b, 0xa9, 0x4c, 0xa5, 0x85, 0x51, 0xf9, 0x54, 0x75,
-	0xfa, 0xeb, 0xa9, 0x94, 0xe9, 0x88, 0x22, 0xac, 0x38, 0xc2, 0x42, 0x48, 0x83, 0x0d, 0x97, 0x42,
-	0x3b, 0xf4, 0x0e, 0x91, 0x3a, 0x93, 0x1a, 0x25, 0x58, 0xd3, 0x6a, 0x00, 0x1a, 0xf7, 0x13, 0x6a,
-	0x70, 0x1f, 0x29, 0x9c, 0x72, 0x61, 0x9b, 0x4f, 0x95, 0xce, 0x1a, 0x52, 0x38, 0xc7, 0x99, 0x53,
-	0x0a, 0x3b, 0x00, 0xbe, 0x29, 0xf9, 0xaf, 0x6d, 0x71, 0x48, 0x0f, 0x0b, 0xaa, 0x4d, 0xf8, 0x0a,
-	0x5c, 0xfd, 0xa3, 0xaa, 0x95, 0x14, 0x9a, 0xc2, 0x47, 0xa0, 0x5d, 0x91, 0x6f, 0x78, 0xb7, 0xbc,
-	0xde, 0x95, 0x2d, 0x3f, 0x3a, 0xbf, 0x4f, 0x54, 0x71, 0x06, 0x2b, 0xc7, 0x3f, 0x6e, 0xb6, 0x86,
-	0xae, 0x3f, 0x7c, 0x0a, 0x42, 0x2b, 0xb8, 0xcb, 0x05, 0xd7, 0x8c, 0xee, 0x3f, 0x53, 0x92, 0xb0,
-	0x81, 0x21, 0x7b, 0x94, 0xa7, 0xcc, 0xb8, 0xb1, 0xb0, 0x0b, 0xd6, 0x68, 0x09, 0xc4, 0xa2, 0xc8,
-	0xec, 0x88, 0x95, 0xe1, 0xaa, 0x2d, 0xbc, 0x2c, 0xb2, 0xf0, 0x1d, 0xb8, 0xbd, 0x50, 0xc2, 0x79,
-	0xbc, 0x0f, 0xae, 0x27, 0x86, 0xc4, 0xa3, 0xb2, 0x18, 0x93, 0x11, 0xa7, 0xc2, 0xc4, 0xcc, 0xb6,
-	0x38, 0xc5, 0x4e, 0x62, 0xc8, 0x8b, 0xf2, 0x7d, 0xc7, 0x82, 0x15, 0x3d, 0xdc, 0x05, 0x9b, 0x56,
-	0x7d, 0x48, 0x95, 0xcc, 0x0d, 0xdd, 0xdf, 0x61, 0x94, 0x1c, 0x28, 0xc9, 0x85, 0x69, 0x72, 0x49,
-	0x0e, 0x94, 0x89, 0x19, 0xd6, 0xcc, 0x6a, 0xae, 0x0d, 0x57, 0xcb, 0xc2, 0x1e, 0xd6, 0x2c, 0xc4,
-	0xa0, 0xb7, 0x5c, 0xe7, 0xbf, 0xac, 0x6e, 0x7d, 0x5a, 0x01, 0x97, 0xed, 0x0c, 0x38, 0x05, 0xed,
-	0xea, 0x6b, 0xc3, 0x8d, 0xa6, 0x4b, 0x9c, 0x3f, 0xac, 0xbf, 0xb9, 0xb4, 0xaf, 0xf2, 0x16, 0x86,
-	0x1f, 0xbe, 0xfd, 0xfa, 0x7c, 0x69, 0x1d, 0xfa, 0xe8, 0x6c, 0x7c, 0xc6, 0x7d, 0x97, 0x20, 0xf8,
-	0xc5, 0x03, 0xd7, 0x9a, 0xaf, 0x01, 0x1f, 0x5c, 0x38, 0x67, 0x61, 0x02, 0xfc, 0x87, 0x7f, 0xcd,
-	0x73, 0x7e, 0x23, 0xeb, 0xb7, 0x07, 0x37, 0x9a, 0xfc, 0xda, 0x0c, 0x69, 0x74, 0x54, 0x87, 0x6b,
-	0x0a, 0xbf, 0x7a, 0xa0, 0xbb, 0xe0, 0x46, 0xf0, 0xf1, 0x85, 0x46, 0x96, 0x27, 0xc4, 0x7f, 0xf2,
-	0x6f, 0x64, 0xb7, 0xca, 0xb6, 0x5d, 0xe5, 0x1e, 0xbc, 0xdb, 0xb4, 0x0a, 0xa9, 0x89, 0x1a, 0x1d,
-	0xd5, 0x31, 0x9c, 0x0e, 0x9e, 0x1f, 0xcf, 0x02, 0xef, 0x64, 0x16, 0x78, 0x3f, 0x67, 0x81, 0xf7,
-	0x71, 0x1e, 0xb4, 0x4e, 0xe6, 0x41, 0xeb, 0xfb, 0x3c, 0x68, 0xbd, 0x45, 0x29, 0x37, 0xac, 0x48,
-	0x22, 0x22, 0xb3, 0x53, 0x41, 0xc2, 0x30, 0x17, 0xb5, 0xfa, 0xfb, 0x5a, 0xdf, 0x4c, 0x14, 0xd5,
-	0x49, 0xdb, 0xfe, 0x19, 0xb6, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0x83, 0xf8, 0xba, 0x32, 0xca,
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xa4, 0x54, 0x4f, 0x6b, 0xd4, 0x4e,
+	0x18, 0xde, 0xfc, 0xd8, 0xdf, 0xd2, 0x8e, 0xb7, 0xe9, 0x82, 0x92, 0x2d, 0x69, 0xc9, 0xa1, 0x5d,
+	0x14, 0x33, 0x6c, 0x57, 0x41, 0x50, 0x3c, 0x6c, 0xa9, 0x54, 0x10, 0xff, 0xe4, 0xa6, 0x97, 0x30,
+	0x99, 0x1d, 0x92, 0xa1, 0x9b, 0x99, 0x69, 0x66, 0xb2, 0xb8, 0x94, 0xbd, 0x78, 0xf3, 0x26, 0xf8,
+	0x45, 0xfc, 0x18, 0xbd, 0x08, 0x05, 0x2f, 0x9e, 0x44, 0x76, 0xfd, 0x20, 0x92, 0xc9, 0x34, 0x60,
+	0x9b, 0x75, 0x51, 0x6f, 0xc9, 0xfb, 0xbc, 0xcf, 0xf3, 0x3e, 0x6f, 0xde, 0x87, 0x80, 0x5e, 0x8c,
+	0xe3, 0xd9, 0x44, 0x70, 0x94, 0x09, 0xce, 0xb4, 0xc8, 0xd1, 0x69, 0x41, 0xf3, 0x59, 0x20, 0x73,
+	0xa1, 0x05, 0x84, 0x16, 0x0c, 0x2c, 0x18, 0x4c, 0x07, 0x6e, 0x37, 0x11, 0x89, 0x30, 0x30, 0x2a,
+	0x9f, 0xaa, 0x4e, 0x77, 0x3b, 0x11, 0x22, 0x99, 0x50, 0x84, 0x25, 0x43, 0x98, 0x73, 0xa1, 0xb1,
+	0x66, 0x82, 0x2b, 0x8b, 0xde, 0x26, 0x42, 0x65, 0x42, 0xa1, 0x18, 0x2b, 0x5a, 0x0d, 0x40, 0xd3,
+	0x41, 0x4c, 0x35, 0x1e, 0x20, 0x89, 0x13, 0xc6, 0x4d, 0xf3, 0xa5, 0xd2, 0x55, 0x43, 0x12, 0xe7,
+	0x38, 0xb3, 0x4a, 0x7e, 0x17, 0xc0, 0x57, 0x25, 0xff, 0xa5, 0x29, 0x86, 0xf4, 0xb4, 0xa0, 0x4a,
+	0xfb, 0x2f, 0xc0, 0xd6, 0x2f, 0x55, 0x25, 0x05, 0x57, 0x14, 0x3e, 0x00, 0x9d, 0x8a, 0x7c, 0xcb,
+	0xd9, 0x75, 0xfa, 0x37, 0x0e, 0xdc, 0xe0, 0xfa, 0x3e, 0x41, 0xc5, 0x19, 0xb5, 0xcf, 0xbf, 0xed,
+	0xb4, 0x42, 0xdb, 0xef, 0x3f, 0x06, 0x3b, 0x46, 0xf0, 0x88, 0x8f, 0xe9, 0xf8, 0x48, 0x0a, 0x92,
+	0x8e, 0x34, 0x39, 0xa6, 0x2c, 0x49, 0xb5, 0x9d, 0x09, 0x7b, 0x60, 0x93, 0x96, 0x40, 0xc4, 0x8b,
+	0xcc, 0xe8, 0xb7, 0xc3, 0x0d, 0x53, 0x78, 0x5e, 0x64, 0xfe, 0x6b, 0xb0, 0xbb, 0x9a, 0x6f, 0xdd,
+	0xdd, 0x07, 0x37, 0x63, 0x4d, 0xa2, 0x49, 0x59, 0x8c, 0xc8, 0x84, 0x51, 0xae, 0xa3, 0xd4, 0xb4,
+	0x58, 0xb9, 0x6e, 0xac, 0xc9, 0xb3, 0xf2, 0xfd, 0xd0, 0x80, 0x15, 0xdd, 0x7f, 0x02, 0xf6, 0x8d,
+	0x74, 0x48, 0xa5, 0xc8, 0x35, 0x1d, 0x1f, 0xa6, 0x94, 0x9c, 0x48, 0xc1, 0xb8, 0x6e, 0xb2, 0x48,
+	0x4e, 0xa4, 0x8e, 0x52, 0xac, 0x52, 0xa3, 0xb9, 0x19, 0x6e, 0x94, 0x85, 0x63, 0xac, 0x52, 0x1f,
+	0x83, 0xfe, 0x7a, 0x9d, 0x7f, 0xb2, 0x7a, 0xf0, 0xbe, 0x0d, 0xfe, 0x37, 0x33, 0xe0, 0x1c, 0x74,
+	0xaa, 0xef, 0x0c, 0xf7, 0x9a, 0x6e, 0x70, 0xfd, 0xa4, 0xee, 0xfe, 0xda, 0xbe, 0xca, 0x9b, 0xef,
+	0xbf, 0xfb, 0xf2, 0xe3, 0xe3, 0x7f, 0xdb, 0xd0, 0x45, 0x57, 0x83, 0x33, 0x1d, 0xd8, 0xec, 0xc0,
+	0x4f, 0x0e, 0xd8, 0x6a, 0x38, 0x05, 0x1c, 0xae, 0x1c, 0xb2, 0xfa, 0xf0, 0xee, 0xbd, 0x3f, 0x23,
+	0x59, 0x9b, 0x81, 0xb1, 0xd9, 0x87, 0x7b, 0x4d, 0x36, 0x4d, 0x6e, 0x14, 0x3a, 0xab, 0x03, 0x35,
+	0x87, 0x9f, 0x1d, 0xd0, 0xfb, 0xcd, 0x69, 0xe0, 0xc3, 0x95, 0x2e, 0xd6, 0x07, 0xc3, 0x7d, 0xf4,
+	0x77, 0x64, 0xbb, 0xca, 0xd0, 0xac, 0x72, 0x17, 0xde, 0x69, 0x5a, 0x85, 0xd4, 0x44, 0x85, 0xce,
+	0xea, 0xf4, 0xcd, 0x47, 0x4f, 0xcf, 0x17, 0x9e, 0x73, 0xb1, 0xf0, 0x9c, 0xef, 0x0b, 0xcf, 0xf9,
+	0xb0, 0xf4, 0x5a, 0x17, 0x4b, 0xaf, 0xf5, 0x75, 0xe9, 0xb5, 0xde, 0xa0, 0x84, 0xe9, 0xb4, 0x88,
+	0x03, 0x22, 0xb2, 0x4b, 0x41, 0x92, 0x62, 0xc6, 0x6b, 0xf5, 0xb7, 0xb5, 0xbe, 0x9e, 0x49, 0xaa,
+	0xe2, 0x8e, 0xf9, 0x15, 0x0c, 0x7f, 0x06, 0x00, 0x00, 0xff, 0xff, 0x7b, 0x8a, 0xb1, 0xb8, 0xbb,
 	0x04, 0x00, 0x00,
 }
 
@@ -358,9 +358,9 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// FinishedEpochBtcHeight btc light client height at provided epoch finish
-	FinishedEpochBtcHeight(ctx context.Context, in *QueryFinishedEpochBtcHeightRequest, opts ...grpc.CallOption) (*QueryFinishedEpochBtcHeightResponse, error)
-	// ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
+	// EndedEpochBtcHeight returns the BTC light client height at provided epoch finish
+	EndedEpochBtcHeight(ctx context.Context, in *QueryEndedEpochBtcHeightRequest, opts ...grpc.CallOption) (*QueryEndedEpochBtcHeightResponse, error)
+	// ReportedCheckpointBtcHeight returns the BTC light client height at which the checkpoint with the given hash is reported back to Babylon
 	ReportedCheckpointBtcHeight(ctx context.Context, in *QueryReportedCheckpointBtcHeightRequest, opts ...grpc.CallOption) (*QueryReportedCheckpointBtcHeightResponse, error)
 }
 
@@ -381,9 +381,9 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) FinishedEpochBtcHeight(ctx context.Context, in *QueryFinishedEpochBtcHeightRequest, opts ...grpc.CallOption) (*QueryFinishedEpochBtcHeightResponse, error) {
-	out := new(QueryFinishedEpochBtcHeightResponse)
-	err := c.cc.Invoke(ctx, "/babylon.monitor.v1.Query/FinishedEpochBtcHeight", in, out, opts...)
+func (c *queryClient) EndedEpochBtcHeight(ctx context.Context, in *QueryEndedEpochBtcHeightRequest, opts ...grpc.CallOption) (*QueryEndedEpochBtcHeightResponse, error) {
+	out := new(QueryEndedEpochBtcHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.monitor.v1.Query/EndedEpochBtcHeight", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -403,9 +403,9 @@ func (c *queryClient) ReportedCheckpointBtcHeight(ctx context.Context, in *Query
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// FinishedEpochBtcHeight btc light client height at provided epoch finish
-	FinishedEpochBtcHeight(context.Context, *QueryFinishedEpochBtcHeightRequest) (*QueryFinishedEpochBtcHeightResponse, error)
-	// ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
+	// EndedEpochBtcHeight returns the BTC light client height at provided epoch finish
+	EndedEpochBtcHeight(context.Context, *QueryEndedEpochBtcHeightRequest) (*QueryEndedEpochBtcHeightResponse, error)
+	// ReportedCheckpointBtcHeight returns the BTC light client height at which the checkpoint with the given hash is reported back to Babylon
 	ReportedCheckpointBtcHeight(context.Context, *QueryReportedCheckpointBtcHeightRequest) (*QueryReportedCheckpointBtcHeightResponse, error)
 }
 
@@ -416,8 +416,8 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) FinishedEpochBtcHeight(ctx context.Context, req *QueryFinishedEpochBtcHeightRequest) (*QueryFinishedEpochBtcHeightResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method FinishedEpochBtcHeight not implemented")
+func (*UnimplementedQueryServer) EndedEpochBtcHeight(ctx context.Context, req *QueryEndedEpochBtcHeightRequest) (*QueryEndedEpochBtcHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EndedEpochBtcHeight not implemented")
 }
 func (*UnimplementedQueryServer) ReportedCheckpointBtcHeight(ctx context.Context, req *QueryReportedCheckpointBtcHeightRequest) (*QueryReportedCheckpointBtcHeightResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportedCheckpointBtcHeight not implemented")
@@ -445,20 +445,20 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_FinishedEpochBtcHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryFinishedEpochBtcHeightRequest)
+func _Query_EndedEpochBtcHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryEndedEpochBtcHeightRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).FinishedEpochBtcHeight(ctx, in)
+		return srv.(QueryServer).EndedEpochBtcHeight(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.monitor.v1.Query/FinishedEpochBtcHeight",
+		FullMethod: "/babylon.monitor.v1.Query/EndedEpochBtcHeight",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).FinishedEpochBtcHeight(ctx, req.(*QueryFinishedEpochBtcHeightRequest))
+		return srv.(QueryServer).EndedEpochBtcHeight(ctx, req.(*QueryEndedEpochBtcHeightRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -490,8 +490,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "FinishedEpochBtcHeight",
-			Handler:    _Query_FinishedEpochBtcHeight_Handler,
+			MethodName: "EndedEpochBtcHeight",
+			Handler:    _Query_EndedEpochBtcHeight_Handler,
 		},
 		{
 			MethodName: "ReportedCheckpointBtcHeight",
@@ -558,7 +558,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinishedEpochBtcHeightRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryEndedEpochBtcHeightRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -568,12 +568,12 @@ func (m *QueryFinishedEpochBtcHeightRequest) Marshal() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinishedEpochBtcHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryEndedEpochBtcHeightRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinishedEpochBtcHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryEndedEpochBtcHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -586,7 +586,7 @@ func (m *QueryFinishedEpochBtcHeightRequest) MarshalToSizedBuffer(dAtA []byte) (
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryFinishedEpochBtcHeightResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryEndedEpochBtcHeightResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -596,12 +596,12 @@ func (m *QueryFinishedEpochBtcHeightResponse) Marshal() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *QueryFinishedEpochBtcHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryEndedEpochBtcHeightResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryFinishedEpochBtcHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryEndedEpochBtcHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -703,7 +703,7 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinishedEpochBtcHeightRequest) Size() (n int) {
+func (m *QueryEndedEpochBtcHeightRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -715,7 +715,7 @@ func (m *QueryFinishedEpochBtcHeightRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryFinishedEpochBtcHeightResponse) Size() (n int) {
+func (m *QueryEndedEpochBtcHeightResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -891,7 +891,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinishedEpochBtcHeightRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryEndedEpochBtcHeightRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -914,10 +914,10 @@ func (m *QueryFinishedEpochBtcHeightRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinishedEpochBtcHeightRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryEndedEpochBtcHeightRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinishedEpochBtcHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryEndedEpochBtcHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -960,7 +960,7 @@ func (m *QueryFinishedEpochBtcHeightRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryFinishedEpochBtcHeightResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryEndedEpochBtcHeightResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -983,10 +983,10 @@ func (m *QueryFinishedEpochBtcHeightResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryFinishedEpochBtcHeightResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryEndedEpochBtcHeightResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryFinishedEpochBtcHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryEndedEpochBtcHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:

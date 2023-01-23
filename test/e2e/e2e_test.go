@@ -49,10 +49,10 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)
 
-	heightAtFinishedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
+	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
 	s.NoError(err)
 
-	if heightAtFinishedEpoch == 0 {
+	if heightAtEndedEpoch == 0 {
 		// we can only assert, that btc lc height is larger than 0.
 		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
 	}

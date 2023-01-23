@@ -15,12 +15,12 @@ service Query {
     option (google.api.http).get = "/babylon/monitor/v1/params";
   }
 
-  // FinishedEpochBtcHeight btc light client height at provided epoch finish
-  rpc FinishedEpochBtcHeight(QueryFinishedEpochBtcHeightRequest) returns (QueryFinishedEpochBtcHeightResponse) {
+  // EndedEpochBtcHeight returns the BTC light client height at provided epoch finish
+  rpc EndedEpochBtcHeight(QueryEndedEpochBtcHeightRequest) returns (QueryEndedEpochBtcHeightResponse) {
     option (google.api.http).get = "/babylon/monitor/v1/epochs/{epoch_num}";
   }
 
-  // ReportedCheckpointBtcHeight btc light client height at provided checkpoint reported
+  // ReportedCheckpointBtcHeight returns the BTC light client height at which the checkpoint with the given hash is reported back to Babylon
   rpc ReportedCheckpointBtcHeight(QueryReportedCheckpointBtcHeightRequest) returns (QueryReportedCheckpointBtcHeightResponse) {
     option (google.api.http).get = "/babylon/monitor/v1/checkpoints/{ckpt_hash}";
   }
@@ -35,11 +35,11 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryFinishedEpochBtcHeightRequest {
+message QueryEndedEpochBtcHeightRequest {
   uint64 epoch_num = 1;
 }
 
-message QueryFinishedEpochBtcHeightResponse {
+message QueryEndedEpochBtcHeightResponse {
   // height of btc light client when epoch ended
   uint64 btc_light_client_height = 1;
 }

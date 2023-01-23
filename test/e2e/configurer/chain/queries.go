@@ -234,7 +234,7 @@ func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error
 	monitorPath := fmt.Sprintf("/babylon/monitor/v1/epochs/%d", epoch)
 	bz, err := n.QueryGRPCGateway(monitorPath)
 	require.NoError(n.t, err)
-	var mResponse mtypes.QueryFinishedEpochBtcHeightResponse
+	var mResponse mtypes.QueryEndedEpochBtcHeightResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &mResponse); err != nil {
 		return 0, err
 	}

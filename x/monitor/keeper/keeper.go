@@ -68,7 +68,7 @@ func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx sdk.Context, ckpt *c
 	// if the checkpoint exists, meaning an earlier checkpoint with a lower btc height is already recorded
 	// we should keep the lower btc height in the store
 	if store.Has([]byte(ckptHashStr)) {
-		ctx.Logger().With("module", fmt.Sprintf("checkpoint %s is already recorded", ckptHashStr))
+		k.Logger(ctx).With("module", fmt.Sprintf("checkpoint %s is already recorded", ckptHashStr))
 		return nil
 	}
 
@@ -105,7 +105,7 @@ func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint
 	if btcHeightBytes == nil {
 		// we do not have any key under given epoch, most probably epoch did not finish
 		// yet
-		return 0, types.ErrEpochNotFinishedYet.Wrapf("epoch %d", epoch)
+		return 0, types.ErrEpochNotEnded.Wrapf("epoch %d", epoch)
 	}
 
 	btcHeight, err := bytesToUint64(btcHeightBytes)

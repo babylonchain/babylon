@@ -8,6 +8,6 @@ import (
 
 // x/monitor module sentinel errors
 var (
-	ErrEpochNotFinishedYet   = sdkerrors.Register(ModuleName, 1100, "Epoch not finished yet")
+	ErrEpochNotEnded         = sdkerrors.Register(ModuleName, 1100, "Epoch not ended yet")
 	ErrCheckpointNotReported = sdkerrors.Register(ModuleName, 1101, "Checkpoint not reported yet")
 )
