@@ -87,6 +87,11 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 		return nil
 	}
 
+	if !sig.LastCommitHash.Equal(*ckptWithMeta.Ckpt.LastCommitHash) {
+		// processed BlsSig message is for invalid last commit hash
+		return types.ErrInvalidLastCommitHash
+	}
+
 	// get signer's address
 	signerAddr, err := sdk.ValAddressFromBech32(sig.SignerAddress)
 	if err != nil {
