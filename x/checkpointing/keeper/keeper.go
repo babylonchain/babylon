@@ -127,12 +127,12 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 			&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
 		)
 		if err != nil {
-			ctx.Logger().Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
+			k.Logger(ctx).Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
 		}
 		// record state update of Sealed
 		ckptWithMeta.RecordStateUpdate(ctx, types.Sealed)
 		// log in console
-		ctx.Logger().Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
+		k.Logger(ctx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
 	}
 
 	// if reaching this line, it means ckptWithMeta is updated,
@@ -168,7 +168,7 @@ func (k Keeper) BuildRawCheckpoint(ctx sdk.Context, epochNum uint64, lch types.L
 	if err != nil {
 		return nil, err
 	}
-	ctx.Logger().Info(fmt.Sprintf("Checkpointing: a new raw checkpoint is built for epoch %v", epochNum))
+	k.Logger(ctx).Info(fmt.Sprintf("Checkpointing: a new raw checkpoint is built for epoch %v", epochNum))
 
 	return ckptWithMeta, nil
 }
@@ -196,7 +196,7 @@ func (k Keeper) VerifyCheckpoint(ctx sdk.Context, checkpoint txformat.RawBtcChec
 func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcCheckpoint) (*types.RawCheckpointWithMeta, error) {
 	ckpt, err := types.FromBTCCkptToRawCkpt(rawCheckpoint)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to decode raw checkpoint from BTC raw checkpoint: %w", err)
 	}
 	// sanity check
 	err = ckpt.ValidateBasic()
@@ -205,7 +205,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	}
 	ckptWithMeta, err := k.GetRawCheckpoint(ctx, ckpt.EpochNum)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch the raw checkpoint at epoch %d from database: %w", ckpt.EpochNum, err)
 	}
 
 	// can skip the checks if it is identical with the local checkpoint that is not accumulating
@@ -218,7 +218,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
 	signerSet, err := k.GetValidatorSet(ctx, ckpt.EpochNum).FindSubset(ckpt.Bitmap)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to get the signer set via bitmap of epoch %d: %w", ckpt.EpochNum, err)
 	}
 	var sum int64
 	signersPubKeys := make([]bls12381.PublicKey, len(signerSet))
@@ -241,6 +241,12 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 		return nil, types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
 	}
 
+	// record verified checkpoint
+	err = k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+	if err != nil {
+		return nil, err
+	}
+
 	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
 	// same with that of the local checkpoint, it means it is valid except that
 	// it is signed by a different signer set
@@ -249,7 +255,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	}
 
 	// multi-sig is valid but the quorum is on a different branch, meaning conflicting is observed
-	ctx.Logger().Error(types.ErrConflictingCheckpoint.Wrapf("epoch %v", ckpt.EpochNum).Error())
+	k.Logger(ctx).Error(types.ErrConflictingCheckpoint.Wrapf("epoch %v", ckpt.EpochNum).Error())
 	// report conflicting checkpoint event
 	err = ctx.EventManager().EmitTypedEvent(
 		&types.EventConflictingCheckpoint{
@@ -272,7 +278,7 @@ func (k Keeper) SetCheckpointSubmitted(ctx sdk.Context, epoch uint64) {
 		&types.EventCheckpointSubmitted{Checkpoint: ckpt},
 	)
 	if err != nil {
-		ctx.Logger().Error("failed to emit checkpoint submitted event for epoch %v", ckpt.Ckpt.EpochNum)
+		k.Logger(ctx).Error("failed to emit checkpoint submitted event for epoch %v", ckpt.Ckpt.EpochNum)
 	}
 }
 
@@ -284,11 +290,11 @@ func (k Keeper) SetCheckpointConfirmed(ctx sdk.Context, epoch uint64) {
 		&types.EventCheckpointConfirmed{Checkpoint: ckpt},
 	)
 	if err != nil {
-		ctx.Logger().Error("failed to emit checkpoint confirmed event for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+		k.Logger(ctx).Error("failed to emit checkpoint confirmed event for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 	// invoke hook
 	if err := k.AfterRawCheckpointConfirmed(ctx, epoch); err != nil {
-		ctx.Logger().Error("failed to trigger checkpoint confirmed hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+		k.Logger(ctx).Error("failed to trigger checkpoint confirmed hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 }
 
@@ -300,11 +306,11 @@ func (k Keeper) SetCheckpointFinalized(ctx sdk.Context, epoch uint64) {
 		&types.EventCheckpointFinalized{Checkpoint: ckpt},
 	)
 	if err != nil {
-		ctx.Logger().Error("failed to emit checkpoint finalized event for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+		k.Logger(ctx).Error("failed to emit checkpoint finalized event for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 	// invoke hook, which is currently subscribed by ZoneConcierge
 	if err := k.AfterRawCheckpointFinalized(ctx, epoch); err != nil {
-		ctx.Logger().Error("failed to trigger checkpoint finalized hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
+		k.Logger(ctx).Error("failed to trigger checkpoint finalized hook for epoch %v: %v", ckpt.Ckpt.EpochNum, err)
 	}
 }
 
@@ -316,7 +322,7 @@ func (k Keeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {
 		&types.EventCheckpointForgotten{Checkpoint: ckpt},
 	)
 	if err != nil {
-		ctx.Logger().Error("failed to emit checkpoint forgotten event for epoch %v", ckpt.Ckpt.EpochNum)
+		k.Logger(ctx).Error("failed to emit checkpoint forgotten event for epoch %v", ckpt.Ckpt.EpochNum)
 	}
 }
 
@@ -342,7 +348,7 @@ func (k Keeper) setCheckpointStatus(ctx sdk.Context, epoch uint64, from types.Ch
 		panic("failed to update checkpoint status")
 	}
 	statusChangeMsg := fmt.Sprintf("Checkpointing: checkpoint status for epoch %v successfully changed from %v to %v", epoch, from.String(), to.String())
-	ctx.Logger().Info(statusChangeMsg)
+	k.Logger(ctx).Info(statusChangeMsg)
 	return ckptWithMeta
 }
 

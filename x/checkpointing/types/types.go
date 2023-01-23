@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -216,8 +215,4 @@ func BytesToCkptWithMeta(cdc codec.BinaryCodec, bz []byte) (*RawCheckpointWithMe
 	ckptWithMeta := new(RawCheckpointWithMeta)
 	err := cdc.Unmarshal(bz, ckptWithMeta)
 	return ckptWithMeta, err
-}
-
-func (m RawCkptHash) Equals(h RawCkptHash) bool {
-	return bytes.Equal(m.Bytes(), h.Bytes())
 }
