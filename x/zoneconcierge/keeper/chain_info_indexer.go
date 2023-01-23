@@ -64,8 +64,7 @@ func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *type
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
 		// chain info has not been initialised yet
-		// this can only be a programming error
-		panic(err)
+		return err
 	}
 	chainInfo.LatestHeader = header     // replace the old latest header with the given one
 	chainInfo.TimestampedHeadersCount++ // increment the number of timestamped headers

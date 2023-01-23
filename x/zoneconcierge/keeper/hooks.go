@@ -5,6 +5,7 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 )
@@ -35,9 +36,13 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 	// initialise chain info if not exist
 	chainInfo, err := h.k.GetChainInfo(ctx, indexedHeader.ChainId)
 	if err != nil {
-		// chain info does not exist yet, initialise chain info for this chain
-		chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
-		if err != nil {
+		if sdkerrors.IsOf(err, types.ErrEpochChainInfoNotFound) {
+			// chain info does not exist yet, initialise chain info for this chain
+			chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
+			if err != nil {
+				panic(err)
+			}
+		} else {
 			panic(err)
 		}
 	}
