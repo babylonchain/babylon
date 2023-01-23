@@ -1,6 +1,8 @@
 package types
 
 import (
+	"bytes"
+	"encoding/hex"
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,6 +29,10 @@ func (m RawCheckpoint) Hash() RawCkptHash {
 	return hash(fields)
 }
 
+func (m RawCheckpoint) HashStr() string {
+	return m.Hash().String()
+}
+
 // SignedMsg is the message corresponding to the BLS sig in this raw checkpoint
 // Its value should be (epoch_number || last_commit_hash)
 func (m RawCheckpoint) SignedMsg() []byte {
@@ -47,6 +53,18 @@ func (m BlsSigHash) Bytes() []byte {
 
 func (m RawCkptHash) Bytes() []byte {
 	return m
+}
+
+func (m RawCkptHash) Equals(h RawCkptHash) bool {
+	return bytes.Equal(m.Bytes(), h.Bytes())
+}
+
+func (m RawCkptHash) String() string {
+	return hex.EncodeToString(m)
+}
+
+func FromStringToCkptHash(s string) (RawCkptHash, error) {
+	return hex.DecodeString(s)
 }
 
 func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {

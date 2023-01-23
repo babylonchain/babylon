@@ -11,7 +11,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) FinishedEpochBtcHeight(c context.Context, req *types.QueryFinishedEpochBtcHeightRequest) (*types.QueryFinishedEpochBtcHeightResponse, error) {
+func (k Keeper) EndedEpochBtcHeight(c context.Context, req *types.QueryEndedEpochBtcHeightRequest) (*types.QueryEndedEpochBtcHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -24,5 +24,21 @@ func (k Keeper) FinishedEpochBtcHeight(c context.Context, req *types.QueryFinish
 		return nil, err
 	}
 
-	return &types.QueryFinishedEpochBtcHeightResponse{BtcLightClientHeight: btcHeight}, nil
+	return &types.QueryEndedEpochBtcHeightResponse{BtcLightClientHeight: btcHeight}, nil
+}
+
+func (k Keeper) ReportedCheckpointBtcHeight(c context.Context, req *types.QueryReportedCheckpointBtcHeightRequest) (*types.QueryReportedCheckpointBtcHeightResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	btcHeight, err := k.LightclientHeightAtCheckpointReported(ctx, req.CkptHash)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryReportedCheckpointBtcHeightResponse{BtcLightClientHeight: btcHeight}, nil
 }

@@ -95,7 +95,6 @@ func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 // one validator in validator set during InitGenesis abci call - https://github.com/cosmos/cosmos-sdk/pull/9697
 func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *PrivSigner, options SetupOptions) *BabylonApp {
 	t.Helper()
-
 	privVal := datagen.NewPV()
 	pubKey, err := privVal.GetPubKey()
 	require.NoError(t, err)

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -18,7 +19,7 @@ type RawCheckpointSubmission struct {
 	Submitter      sdk.AccAddress
 	Proof1         ParsedProof
 	Proof2         ParsedProof
-	checkpointData []byte
+	CheckpointData btctxformatter.RawBtcCheckpoint
 }
 
 // SubmissionBtcInfo encapsualte important information about submission posistion
@@ -39,13 +40,13 @@ func NewRawCheckpointSubmission(
 	a sdk.AccAddress,
 	p1 ParsedProof,
 	p2 ParsedProof,
-	checkpointData []byte,
+	checkpointData btctxformatter.RawBtcCheckpoint,
 ) RawCheckpointSubmission {
 	r := RawCheckpointSubmission{
 		Submitter:      a,
 		Proof1:         p1,
 		Proof2:         p2,
-		checkpointData: checkpointData,
+		CheckpointData: checkpointData,
 	}
 
 	return r
@@ -53,13 +54,6 @@ func NewRawCheckpointSubmission(
 
 func (s *RawCheckpointSubmission) GetProofs() []*ParsedProof {
 	return []*ParsedProof{&s.Proof1, &s.Proof2}
-}
-
-func (s *RawCheckpointSubmission) GetRawCheckPointBytes() []byte {
-	checkpointDataCopy := make([]byte, len(s.checkpointData))
-	// return copy, to avoid someone modifing original
-	copy(checkpointDataCopy, s.checkpointData)
-	return checkpointDataCopy
 }
 
 func (s *RawCheckpointSubmission) GetFirstBlockHash() types.BTCHeaderHashBytes {
@@ -97,9 +91,10 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 
 func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
-		Submitter: rsc.Submitter.Bytes(),
-		TxsInfo:   txsInfo,
-		Epoch:     epochNum,
+		VigilanteAddress: rsc.Submitter.Bytes(),
+		SubmitterAddress: rsc.CheckpointData.SubmitterAddress,
+		TxsInfo:          txsInfo,
+		Epoch:            epochNum,
 	}
 }
 
@@ -114,11 +109,10 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 	return hashes
 }
 
-func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
+func NewEmptyEpochData() EpochData {
 	return EpochData{
-		Key:           []*SubmissionKey{},
-		Status:        Submitted,
-		RawCheckpoint: rawCheckpointBytes,
+		Key:    []*SubmissionKey{},
+		Status: Submitted,
 	}
 }
 

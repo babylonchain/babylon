@@ -87,7 +87,14 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error 
 
 // Other unused hooks
 
-func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error     { return nil }
-func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error         { return nil }
+func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     { return nil }
+
+func (h Hooks) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+	return nil
+}
+func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+	return nil
+}
 func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64)                          {}
 func (h Hooks) BeforeSlashThreshold(ctx sdk.Context, valSet epochingtypes.ValidatorSet) {}
