@@ -104,7 +104,7 @@ func FuzzEpochsInfo(f *testing.F) {
 		epochInterval := keeper.GetParams(ctx).EpochInterval
 		for i := uint64(0); i < numEpochs-1; i++ {
 			for j := uint64(0); j < epochInterval; j++ {
-				ctx = helper.GenAndApplyEmptyBlock()
+				helper.GenAndApplyEmptyBlock()
 			}
 		}
 
