@@ -21,7 +21,9 @@ service Query {
     option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}";
   }
 
-  // EpochsInfo range-queries the information of epochs
+  // EpochsInfo queries the metadata of epochs in a given range, depending on the
+  // parameters in the pagination request. Th main use case will be querying the
+  // latest epochs in time order.
   rpc EpochsInfo(QueryEpochsInfoRequest) returns (QueryEpochsInfoResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/epochs";
   }
