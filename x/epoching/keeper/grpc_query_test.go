@@ -91,7 +91,7 @@ func FuzzCurrentEpoch(f *testing.F) {
 // FuzzEpochMsgsQuery fuzzes queryClient.EpochMsgs
 // 1. randomly generate msgs and limit in pagination
 // 2. check the returned msg was previously enqueued
-// NOTE: Msgs in QueryEpochMsgsResponse are out-of-roder
+// NOTE: Msgs in QueryEpochMsgsResponse are out-of-order
 func FuzzEpochMsgsQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
