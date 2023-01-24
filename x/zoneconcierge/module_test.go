@@ -340,7 +340,8 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 					suite.Require().Equal(expUpdateHeader.Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(expUpdateHeader.Height, updateHeaderHeight)
 					// updateHeader should be correctly recorded in chain info indexer
-					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					chainInfo, err := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().NoError(err)
 					suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
 				} else {
@@ -348,7 +349,8 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 					_, err := suite.zcKeeper.GetHeader(ctx, czChainID, updateHeaderHeight)
 					suite.Require().Error(err)
 					// the latest header in chain info indexer should be the last header
-					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					chainInfo, err := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().NoError(err)
 					suite.Require().Equal(chainInfo.LatestHeader.Hash, suite.czChain.LastHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestHeader.Height, uint64(suite.czChain.LastHeader.Header.Height))
 				}
@@ -364,7 +366,8 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 					suite.Require().Equal(expForks.Headers[0].Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(expForks.Headers[0].Height, updateHeaderHeight)
 					// updateHeader should be correctly recorded in chain info indexer
-					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					chainInfo, err := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().NoError(err)
 					suite.Require().Equal(1, len(chainInfo.LatestForks.Headers))
 					suite.Require().Equal(chainInfo.LatestForks.Headers[0].Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestForks.Headers[0].Height, updateHeaderHeight)
