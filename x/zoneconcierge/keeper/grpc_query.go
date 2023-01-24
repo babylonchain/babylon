@@ -37,7 +37,10 @@ func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// find the chain info of this epoch
-	chainInfo := k.GetChainInfo(ctx, req.ChainId)
+	chainInfo, err := k.GetChainInfo(ctx, req.ChainId)
+	if err != nil {
+		return nil, err
+	}
 	resp := &types.QueryChainInfoResponse{ChainInfo: chainInfo}
 	return resp, nil
 }
