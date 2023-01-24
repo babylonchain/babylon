@@ -21,6 +21,11 @@ service Query {
     option (google.api.http).get = "/babylon/btccheckpoint/v1/{epoch_num}";
   }
 
+  // BtcCheckpointsHeightAndHash returns earliest block height and hash for a range of epochs
+  rpc BtcCheckpointsHeightAndHash(QueryBtcCheckpointsHeightAndHashRequest) returns (QueryBtcCheckpointsHeightAndHashResponse) {
+    option (google.api.http).get = "/babylon/btccheckpoint/v1";
+  }
+
   rpc EpochSubmissions(QueryEpochSubmissionsRequest) returns (QueryEpochSubmissionsResponse) {
     option (google.api.http).get = "/babylon/btccheckpoint/v1/{epoch_num}/submissions";
   }
@@ -45,6 +50,20 @@ message QueryBtcCheckpointHeightAndHashResponse {
   // Earliest btc block number containing given raw checkpoint
   uint64 earliest_btc_block_number = 1;
   bytes earliest_btc_block_hash = 2;
+}
+
+message QueryBtcCheckpointsHeightAndHashRequest {
+  // pagination defines whether to have the pagination in the response
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryBtcCheckpointsHeightAndHashResponse is response type for the Query/BtcCheckpointsHeightAndHash RPC method
+message QueryBtcCheckpointsHeightAndHashResponse {
+  repeated uint64 earliest_btc_block_numbers = 1;
+  repeated bytes earliest_btc_block_hashs = 2;
+
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 3;
 }
 
 message QueryEpochSubmissionsRequest {

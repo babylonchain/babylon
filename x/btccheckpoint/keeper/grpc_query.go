@@ -7,6 +7,7 @@ import (
 	"math"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -97,6 +98,49 @@ func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBt
 	resp := &types.QueryBtcCheckpointHeightAndHashResponse{
 		EarliestBtcBlockNumber: lowestHeaderNumber,
 		EarliestBtcBlockHash:   lowestHeaderHash,
+	}
+	return resp, nil
+}
+
+func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryBtcCheckpointsHeightAndHashRequest) (*types.QueryBtcCheckpointsHeightAndHashResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	store := ctx.KVStore(k.storeKey)
+	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
+
+	btcNumbers := []uint64{}
+	btcHashs := [][]byte{}
+	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
+	pageRes, err := query.Paginate(epochDataStore, req.Pagination, func(key, value []byte) error {
+		var epochData types.EpochData
+		k.cdc.MustUnmarshal(value, &epochData)
+
+		// Check if we have any submission for given epoch
+		if len(epochData.Key) == 0 {
+			return errors.New("checkpoint for given epoch not yet submitted")
+		}
+
+		lowestHeaderNumber, lowestHeaderHash, err := k.lowestBtcHeightAndHashInKeys(ctx, epochData.Key)
+		if err != nil {
+			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch data: %w", err)
+		}
+		btcNumbers = append(btcNumbers, lowestHeaderNumber)
+		btcHashs = append(btcHashs, lowestHeaderHash)
+
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryBtcCheckpointsHeightAndHashResponse{
+		EarliestBtcBlockNumbers: btcNumbers,
+		EarliestBtcBlockHashs:   btcHashs,
+		Pagination:              pageRes,
 	}
 	return resp, nil
 }
