@@ -19,7 +19,7 @@ func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo
 		return nil, fmt.Errorf("chainID is empty")
 	}
 	// ensure chain info has not been initialised yet
-	if _, err := k.GetChainInfo(ctx, chainID); err == nil {
+	if k.HasChainInfo(ctx, chainID) {
 		return nil, sdkerrors.Wrapf(types.ErrInvalidChainInfo, "chain info has already initialized")
 	}
 
@@ -34,6 +34,14 @@ func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo
 
 	k.setChainInfo(ctx, chainInfo)
 	return chainInfo, nil
+}
+
+// HasChainInfo returns whether the chain info exists for a given ID
+// Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
+// we can only check its existence every time, and return an empty one if it's not initialised yet.
+func (k Keeper) HasChainInfo(ctx sdk.Context, chainID string) bool {
+	store := k.chainInfoStore(ctx)
+	return store.Has([]byte(chainID))
 }
 
 // GetChainInfo returns the ChainInfo struct for a chain with a given ID
@@ -64,7 +72,7 @@ func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *type
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
 		// chain info has not been initialised yet
-		return err
+		return fmt.Errorf("failed to get chain info of %s: %w", chainID, err)
 	}
 	chainInfo.LatestHeader = header     // replace the old latest header with the given one
 	chainInfo.TimestampedHeadersCount++ // increment the number of timestamped headers

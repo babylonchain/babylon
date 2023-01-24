@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
@@ -40,10 +42,10 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			// chain info does not exist yet, initialise chain info for this chain
 			chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
 			if err != nil {
-				panic(err)
+				panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
 			}
 		} else {
-			panic(err)
+			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ChainId, err))
 		}
 	}
 

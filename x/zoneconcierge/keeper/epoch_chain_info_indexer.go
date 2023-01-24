@@ -96,7 +96,7 @@ func (k Keeper) recordEpochChainInfo(ctx sdk.Context, chainID string, epochNumbe
 	// get the latest known chain info
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
-		// chain info does not exist yet, nothing to record
+		k.Logger(ctx).Debug("chain info does not exist yet, nothing to record")
 		return
 	}
 	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
