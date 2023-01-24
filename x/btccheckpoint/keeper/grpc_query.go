@@ -14,14 +14,15 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) lowestBtcHeight(ctx sdk.Context, subKey *types.SubmissionKey) (uint64, error) {
+func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.SubmissionKey) (uint64, []byte, error) {
 	// initializing to max, as then every header number will be smaller
 	var lowestHeaderNumber uint64 = math.MaxUint64
+	var lowestHeaderHash []byte
 
 	for _, tk := range subKey.Key {
 
 		if !k.CheckHeaderIsOnMainChain(ctx, tk.Hash) {
-			return 0, errors.New("one of submission headers not on main chain")
+			return 0, nil, errors.New("one of submission headers not on main chain")
 		}
 
 		headerNumber, err := k.GetBlockHeight(ctx, tk.Hash)
@@ -35,13 +36,14 @@ func (k Keeper) lowestBtcHeight(ctx sdk.Context, subKey *types.SubmissionKey) (u
 
 		if headerNumber < lowestHeaderNumber {
 			lowestHeaderNumber = headerNumber
+			lowestHeaderHash = *tk.Hash
 		}
 	}
 
-	return lowestHeaderNumber, nil
+	return lowestHeaderNumber, lowestHeaderHash, nil
 }
 
-func (k Keeper) BtcCheckpointHeight(c context.Context, req *types.QueryBtcCheckpointHeightRequest) (*types.QueryBtcCheckpointHeightResponse, error) {
+func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBtcCheckpointHeightAndHashRequest) (*types.QueryBtcCheckpointHeightAndHashResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -58,11 +60,12 @@ func (k Keeper) BtcCheckpointHeight(c context.Context, req *types.QueryBtcCheckp
 	}
 
 	var lowestHeaderNumber uint64 = math.MaxUint64
+	var lowestHeaderHash []byte
 
 	// we need to go for each submission in given epoch
 	for _, submissionKey := range epochData.Key {
 
-		headerNumber, err := k.lowestBtcHeight(ctx, submissionKey)
+		headerNumber, headerHash, err := k.lowestBtcHeightAndHash(ctx, submissionKey)
 
 		if err != nil {
 			// submission is not valid for some reason, ignore it
@@ -71,6 +74,7 @@ func (k Keeper) BtcCheckpointHeight(c context.Context, req *types.QueryBtcCheckp
 
 		if headerNumber < lowestHeaderNumber {
 			lowestHeaderNumber = headerNumber
+			lowestHeaderHash = headerHash
 		}
 	}
 
@@ -78,7 +82,11 @@ func (k Keeper) BtcCheckpointHeight(c context.Context, req *types.QueryBtcCheckp
 		return nil, errors.New("there is no valid submission for given raw checkpoint")
 	}
 
-	return &types.QueryBtcCheckpointHeightResponse{EarliestBtcBlockNumber: lowestHeaderNumber}, nil
+	resp := &types.QueryBtcCheckpointHeightAndHashResponse{
+		EarliestBtcBlockNumber: lowestHeaderNumber,
+		EarliestBtcBlockHash:   lowestHeaderHash,
+	}
+	return resp, nil
 }
 
 func getOffset(pageReq *query.PageRequest) uint64 {
