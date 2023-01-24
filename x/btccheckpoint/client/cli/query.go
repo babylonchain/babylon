@@ -26,15 +26,15 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams())
 
-	cmd.AddCommand(CmdBtcCheckpointHeight())
+	cmd.AddCommand(CmdBtcCheckpointHeightAndHash())
 	cmd.AddCommand(CmdEpochSubmissions())
 	return cmd
 }
 
-func CmdBtcCheckpointHeight() *cobra.Command {
+func CmdBtcCheckpointHeightAndHash() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-height <epoch_number>",
-		Short: "retrieve earliest btc height for given epoch",
+		Use:   "btc-height-hash <epoch_number>",
+		Short: "retrieve earliest btc height and hash for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -47,15 +47,15 @@ func CmdBtcCheckpointHeight() *cobra.Command {
 				return err
 			}
 
-			params := types.QueryBtcCheckpointHeightRequest{EpochNum: epoch_num}
+			req := types.QueryBtcCheckpointHeightAndHashRequest{EpochNum: epoch_num}
 
-			res, err := queryClient.BtcCheckpointHeight(context.Background(), &params)
+			resp, err := queryClient.BtcCheckpointHeightAndHash(context.Background(), &req)
 
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(resp)
 		},
 	}
 

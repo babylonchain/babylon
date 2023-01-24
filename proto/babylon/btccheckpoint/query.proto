@@ -16,8 +16,8 @@ service Query {
     option (google.api.http).get = "/babylon/btccheckpoint/v1/params";
   }
 
-  // BtcCheckpointHeight returns earliest block height for given rawcheckpoint
-  rpc BtcCheckpointHeight(QueryBtcCheckpointHeightRequest) returns (QueryBtcCheckpointHeightResponse) {
+  // BtcCheckpointHeightAndHash returns earliest block height and hash for given rawcheckpoint
+  rpc BtcCheckpointHeightAndHash(QueryBtcCheckpointHeightAndHashRequest) returns (QueryBtcCheckpointHeightAndHashResponse) {
     option (google.api.http).get = "/babylon/btccheckpoint/v1/{epoch_num}";
   }
 
@@ -35,15 +35,16 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryBtcCheckpointHeightRequest {
+message QueryBtcCheckpointHeightAndHashRequest {
   // Number of epoch for which the earliest checkpointing btc height is requested
   uint64 epoch_num = 1;
 }
 
-// QueryCurrentEpochResponse is response type for the Query/CurrentEpoch RPC method
-message QueryBtcCheckpointHeightResponse {
+// QueryBtcCheckpointHeightAndHashResponse is response type for the Query/BtcCheckpointHeightAndHash RPC method
+message QueryBtcCheckpointHeightAndHashResponse {
   // Earliest btc block number containing given raw checkpoint
   uint64 earliest_btc_block_number = 1;
+  bytes earliest_btc_block_hash = 2;
 }
 
 message QueryEpochSubmissionsRequest {

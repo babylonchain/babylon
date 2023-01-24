@@ -74,9 +74,9 @@ paths:
   /babylon/btccheckpoint/v1/{epoch_num}:
     get:
       summary: >-
-        BtcCheckpointHeight returns earliest block height for given
-        rawcheckpoint
-      operationId: BtcCheckpointHeight
+        BtcCheckpointHeightAndHash returns earliest block height and hash for
+        given rawcheckpoint
+      operationId: BtcCheckpointHeightAndHash
       responses:
         '200':
           description: A successful response.
@@ -87,9 +87,12 @@ paths:
                 type: string
                 format: uint64
                 title: Earliest btc block number containing given raw checkpoint
+              earliest_btc_block_hash:
+                type: string
+                format: byte
             title: >-
-              QueryCurrentEpochResponse is response type for the
-              Query/CurrentEpoch RPC method
+              QueryBtcCheckpointHeightAndHashResponse is response type for the
+              Query/BtcCheckpointHeightAndHash RPC method
         default:
           description: An unexpected error response.
           schema:
@@ -4035,6 +4038,81 @@ paths:
           format: uint64
       tags:
         - Query
+  /babylon/checkpointing/v1/last_raw_checkpoint/{status}:
+    get:
+      summary: >-
+        LastCheckpointWithStatus queries the last checkpoint with a given status
+        or a more matured status
+      operationId: LastCheckpointWithStatus
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              raw_checkpoint:
+                type: object
+                properties:
+                  epoch_num:
+                    type: string
+                    format: uint64
+                    title: >-
+                      epoch_num defines the epoch number the raw checkpoint is
+                      for
+                  last_commit_hash:
+                    type: string
+                    format: byte
+                    title: >-
+                      last_commit_hash defines the 'LastCommitHash' that
+                      individual BLS sigs are signed on
+                  bitmap:
+                    type: string
+                    format: byte
+                    title: >-
+                      bitmap defines the bitmap that indicates the signers of
+                      the BLS multi sig
+                  bls_multi_sig:
+                    type: string
+                    format: byte
+                    title: >-
+                      bls_multi_sig defines the multi sig that is aggregated
+                      from individual BLS sigs
+                title: RawCheckpoint wraps the BLS multi sig with meta data
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: status
+          in: path
+          required: true
+          type: string
+          enum:
+            - CKPT_STATUS_ACCUMULATING
+            - CKPT_STATUS_SEALED
+            - CKPT_STATUS_SUBMITTED
+            - CKPT_STATUS_CONFIRMED
+            - CKPT_STATUS_FINALIZED
+      tags:
+        - Query
   /babylon/checkpointing/v1/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -6864,10 +6942,10 @@ paths:
                             to make TransactionInfo self-contained.
 
                             For example, storing the key allows TransactionInfo
-                            to not relay on 
+                            to not relay on
 
                             the fact that TransactionInfo will be ordered in the
-                            same order as 
+                            same order as
 
                             TransactionKeys in SubmissionKey.
                         transaction:
@@ -6882,7 +6960,7 @@ paths:
                             in the position in `key`
 
                             TODO: maybe it could use here better format as we
-                            already processed and 
+                            already processed and
 
                             valideated the proof?
                       title: >-
@@ -7816,10 +7894,10 @@ paths:
                             to make TransactionInfo self-contained.
 
                             For example, storing the key allows TransactionInfo
-                            to not relay on 
+                            to not relay on
 
                             the fact that TransactionInfo will be ordered in the
-                            same order as 
+                            same order as
 
                             TransactionKeys in SubmissionKey.
                         transaction:
@@ -7834,7 +7912,7 @@ paths:
                             in the position in `key`
 
                             TODO: maybe it could use here better format as we
-                            already processed and 
+                            already processed and
 
                             valideated the proof?
                       title: >-
@@ -9068,16 +9146,19 @@ definitions:
 
           (w in research paper)
     description: Params defines the parameters for the module.
-  babylon.btccheckpoint.v1.QueryBtcCheckpointHeightResponse:
+  babylon.btccheckpoint.v1.QueryBtcCheckpointHeightAndHashResponse:
     type: object
     properties:
       earliest_btc_block_number:
         type: string
         format: uint64
         title: Earliest btc block number containing given raw checkpoint
+      earliest_btc_block_hash:
+        type: string
+        format: byte
     title: >-
-      QueryCurrentEpochResponse is response type for the Query/CurrentEpoch RPC
-      method
+      QueryBtcCheckpointHeightAndHashResponse is response type for the
+      Query/BtcCheckpointHeightAndHash RPC method
   babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse:
     type: object
     properties:
@@ -12989,8 +13070,8 @@ definitions:
           key is the position (txIdx, blockHash) of this tx on BTC blockchain
           Although it is already a part of SubmissionKey, we store it here again
           to make TransactionInfo self-contained.
-          For example, storing the key allows TransactionInfo to not relay on 
-          the fact that TransactionInfo will be ordered in the same order as 
+          For example, storing the key allows TransactionInfo to not relay on
+          the fact that TransactionInfo will be ordered in the same order as
           TransactionKeys in SubmissionKey.
       transaction:
         type: string
@@ -13004,7 +13085,7 @@ definitions:
           `key`
 
           TODO: maybe it could use here better format as we already processed
-          and 
+          and
 
           valideated the proof?
     title: >-
@@ -13800,10 +13881,10 @@ definitions:
                 to make TransactionInfo self-contained.
 
                 For example, storing the key allows TransactionInfo to not relay
-                on 
+                on
 
                 the fact that TransactionInfo will be ordered in the same order
-                as 
+                as
 
                 TransactionKeys in SubmissionKey.
             transaction:
@@ -13818,7 +13899,7 @@ definitions:
                 position in `key`
 
                 TODO: maybe it could use here better format as we already
-                processed and 
+                processed and
 
                 valideated the proof?
           title: >-
@@ -15102,10 +15183,10 @@ definitions:
                     to make TransactionInfo self-contained.
 
                     For example, storing the key allows TransactionInfo to not
-                    relay on 
+                    relay on
 
                     the fact that TransactionInfo will be ordered in the same
-                    order as 
+                    order as
 
                     TransactionKeys in SubmissionKey.
                 transaction:
@@ -15120,7 +15201,7 @@ definitions:
                     position in `key`
 
                     TODO: maybe it could use here better format as we already
-                    processed and 
+                    processed and
 
                     valideated the proof?
               title: >-
@@ -15824,10 +15905,10 @@ definitions:
                     to make TransactionInfo self-contained.
 
                     For example, storing the key allows TransactionInfo to not
-                    relay on 
+                    relay on
 
                     the fact that TransactionInfo will be ordered in the same
-                    order as 
+                    order as
 
                     TransactionKeys in SubmissionKey.
                 transaction:
@@ -15842,7 +15923,7 @@ definitions:
                     position in `key`
 
                     TODO: maybe it could use here better format as we already
-                    processed and 
+                    processed and
 
                     valideated the proof?
               title: >-
