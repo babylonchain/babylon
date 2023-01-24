@@ -1242,6 +1242,488 @@ paths:
           type: string
       tags:
         - Query
+  /babylon/epoching/v1/epochs:
+    get:
+      summary: EpochsInfo range-queries the information of epochs
+      operationId: EpochsInfo
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              epochs:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    epoch_number:
+                      type: string
+                      format: uint64
+                    current_epoch_interval:
+                      type: string
+                      format: uint64
+                    first_block_height:
+                      type: string
+                      format: uint64
+                    last_block_header:
+                      description: >-
+                        last_block_header is the header of the last block in
+                        this epoch.
+
+                        Babylon needs to remember the last header of each epoch
+                        to complete unbonding validators/delegations when a
+                        previous epoch's checkpoint is finalised.
+
+                        The last_block_header field is nil in the epoch's
+                        beginning, and is set upon the end of this epoch.
+                      type: object
+                      properties:
+                        version:
+                          title: basic block info
+                          type: object
+                          properties:
+                            block:
+                              type: string
+                              format: uint64
+                            app:
+                              type: string
+                              format: uint64
+                          description: >-
+                            Consensus captures the consensus rules for
+                            processing a block in the blockchain,
+
+                            including all blockchain data structures and the
+                            rules of the application's
+
+                            state transition machine.
+                        chain_id:
+                          type: string
+                        height:
+                          type: string
+                          format: int64
+                        time:
+                          type: string
+                          format: date-time
+                        last_block_id:
+                          title: prev block info
+                          type: object
+                          properties:
+                            hash:
+                              type: string
+                              format: byte
+                            part_set_header:
+                              type: object
+                              properties:
+                                total:
+                                  type: integer
+                                  format: int64
+                                hash:
+                                  type: string
+                                  format: byte
+                              title: PartsetHeader
+                        last_commit_hash:
+                          type: string
+                          format: byte
+                          title: hashes of block data
+                        data_hash:
+                          type: string
+                          format: byte
+                        validators_hash:
+                          type: string
+                          format: byte
+                          title: hashes from the app output from the prev block
+                        next_validators_hash:
+                          type: string
+                          format: byte
+                        consensus_hash:
+                          type: string
+                          format: byte
+                        app_hash:
+                          type: string
+                          format: byte
+                        last_results_hash:
+                          type: string
+                          format: byte
+                        evidence_hash:
+                          type: string
+                          format: byte
+                          title: consensus info
+                        proposer_address:
+                          type: string
+                          format: byte
+                    app_hash_root:
+                      type: string
+                      format: byte
+                      title: >-
+                        app_hash_root is the Merkle root of all AppHashs in this
+                        epoch
+
+                        It will be used for proving a block is in an epoch
+                    sealer_header:
+                      title: >-
+                        sealer_header is the 2nd header of the next epoch
+
+                        This validator set has generated a BLS multisig on
+                        `last_commit_hash` of the sealer header
+                      type: object
+                      properties:
+                        version:
+                          title: basic block info
+                          type: object
+                          properties:
+                            block:
+                              type: string
+                              format: uint64
+                            app:
+                              type: string
+                              format: uint64
+                          description: >-
+                            Consensus captures the consensus rules for
+                            processing a block in the blockchain,
+
+                            including all blockchain data structures and the
+                            rules of the application's
+
+                            state transition machine.
+                        chain_id:
+                          type: string
+                        height:
+                          type: string
+                          format: int64
+                        time:
+                          type: string
+                          format: date-time
+                        last_block_id:
+                          title: prev block info
+                          type: object
+                          properties:
+                            hash:
+                              type: string
+                              format: byte
+                            part_set_header:
+                              type: object
+                              properties:
+                                total:
+                                  type: integer
+                                  format: int64
+                                hash:
+                                  type: string
+                                  format: byte
+                              title: PartsetHeader
+                        last_commit_hash:
+                          type: string
+                          format: byte
+                          title: hashes of block data
+                        data_hash:
+                          type: string
+                          format: byte
+                        validators_hash:
+                          type: string
+                          format: byte
+                          title: hashes from the app output from the prev block
+                        next_validators_hash:
+                          type: string
+                          format: byte
+                        consensus_hash:
+                          type: string
+                          format: byte
+                        app_hash:
+                          type: string
+                          format: byte
+                        last_results_hash:
+                          type: string
+                          format: byte
+                        evidence_hash:
+                          type: string
+                          format: byte
+                          title: consensus info
+                        proposer_address:
+                          type: string
+                          format: byte
+                      description: >-
+                        Header defines the structure of a Tendermint block
+                        header.
+              pagination:
+                title: pagination defines the pagination in the response
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+
+                     Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                     Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+
+                    JSON
+
+                    ====
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
   /babylon/epoching/v1/epochs/{epoch_num}:
     get:
       summary: EpochInfo queries the information of a given epoch
@@ -4036,6 +4518,81 @@ paths:
           required: false
           type: string
           format: uint64
+      tags:
+        - Query
+  /babylon/checkpointing/v1/last_raw_checkpoint/{status}:
+    get:
+      summary: >-
+        LastCheckpointWithStatus queries the last checkpoint with a given status
+        or a more matured status
+      operationId: LastCheckpointWithStatus
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              raw_checkpoint:
+                type: object
+                properties:
+                  epoch_num:
+                    type: string
+                    format: uint64
+                    title: >-
+                      epoch_num defines the epoch number the raw checkpoint is
+                      for
+                  last_commit_hash:
+                    type: string
+                    format: byte
+                    title: >-
+                      last_commit_hash defines the 'LastCommitHash' that
+                      individual BLS sigs are signed on
+                  bitmap:
+                    type: string
+                    format: byte
+                    title: >-
+                      bitmap defines the bitmap that indicates the signers of
+                      the BLS multi sig
+                  bls_multi_sig:
+                    type: string
+                    format: byte
+                    title: >-
+                      bls_multi_sig defines the multi sig that is aggregated
+                      from individual BLS sigs
+                title: RawCheckpoint wraps the BLS multi sig with meta data
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: status
+          in: path
+          required: true
+          type: string
+          enum:
+            - CKPT_STATUS_ACCUMULATING
+            - CKPT_STATUS_SEALED
+            - CKPT_STATUS_SUBMITTED
+            - CKPT_STATUS_CONFIRMED
+            - CKPT_STATUS_FINALIZED
       tags:
         - Query
   /babylon/checkpointing/v1/last_raw_checkpoint/{status}:
@@ -10785,6 +11342,223 @@ definitions:
         type: string
         format: int64
       pagination:
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+  babylon.epoching.v1.QueryEpochsInfoResponse:
+    type: object
+    properties:
+      epochs:
+        type: array
+        items:
+          type: object
+          properties:
+            epoch_number:
+              type: string
+              format: uint64
+            current_epoch_interval:
+              type: string
+              format: uint64
+            first_block_height:
+              type: string
+              format: uint64
+            last_block_header:
+              description: >-
+                last_block_header is the header of the last block in this epoch.
+
+                Babylon needs to remember the last header of each epoch to
+                complete unbonding validators/delegations when a previous
+                epoch's checkpoint is finalised.
+
+                The last_block_header field is nil in the epoch's beginning, and
+                is set upon the end of this epoch.
+              type: object
+              properties:
+                version:
+                  title: basic block info
+                  type: object
+                  properties:
+                    block:
+                      type: string
+                      format: uint64
+                    app:
+                      type: string
+                      format: uint64
+                  description: >-
+                    Consensus captures the consensus rules for processing a
+                    block in the blockchain,
+
+                    including all blockchain data structures and the rules of
+                    the application's
+
+                    state transition machine.
+                chain_id:
+                  type: string
+                height:
+                  type: string
+                  format: int64
+                time:
+                  type: string
+                  format: date-time
+                last_block_id:
+                  title: prev block info
+                  type: object
+                  properties:
+                    hash:
+                      type: string
+                      format: byte
+                    part_set_header:
+                      type: object
+                      properties:
+                        total:
+                          type: integer
+                          format: int64
+                        hash:
+                          type: string
+                          format: byte
+                      title: PartsetHeader
+                last_commit_hash:
+                  type: string
+                  format: byte
+                  title: hashes of block data
+                data_hash:
+                  type: string
+                  format: byte
+                validators_hash:
+                  type: string
+                  format: byte
+                  title: hashes from the app output from the prev block
+                next_validators_hash:
+                  type: string
+                  format: byte
+                consensus_hash:
+                  type: string
+                  format: byte
+                app_hash:
+                  type: string
+                  format: byte
+                last_results_hash:
+                  type: string
+                  format: byte
+                evidence_hash:
+                  type: string
+                  format: byte
+                  title: consensus info
+                proposer_address:
+                  type: string
+                  format: byte
+            app_hash_root:
+              type: string
+              format: byte
+              title: |-
+                app_hash_root is the Merkle root of all AppHashs in this epoch
+                It will be used for proving a block is in an epoch
+            sealer_header:
+              title: >-
+                sealer_header is the 2nd header of the next epoch
+
+                This validator set has generated a BLS multisig on
+                `last_commit_hash` of the sealer header
+              type: object
+              properties:
+                version:
+                  title: basic block info
+                  type: object
+                  properties:
+                    block:
+                      type: string
+                      format: uint64
+                    app:
+                      type: string
+                      format: uint64
+                  description: >-
+                    Consensus captures the consensus rules for processing a
+                    block in the blockchain,
+
+                    including all blockchain data structures and the rules of
+                    the application's
+
+                    state transition machine.
+                chain_id:
+                  type: string
+                height:
+                  type: string
+                  format: int64
+                time:
+                  type: string
+                  format: date-time
+                last_block_id:
+                  title: prev block info
+                  type: object
+                  properties:
+                    hash:
+                      type: string
+                      format: byte
+                    part_set_header:
+                      type: object
+                      properties:
+                        total:
+                          type: integer
+                          format: int64
+                        hash:
+                          type: string
+                          format: byte
+                      title: PartsetHeader
+                last_commit_hash:
+                  type: string
+                  format: byte
+                  title: hashes of block data
+                data_hash:
+                  type: string
+                  format: byte
+                validators_hash:
+                  type: string
+                  format: byte
+                  title: hashes from the app output from the prev block
+                next_validators_hash:
+                  type: string
+                  format: byte
+                consensus_hash:
+                  type: string
+                  format: byte
+                app_hash:
+                  type: string
+                  format: byte
+                last_results_hash:
+                  type: string
+                  format: byte
+                evidence_hash:
+                  type: string
+                  format: byte
+                  title: consensus info
+                proposer_address:
+                  type: string
+                  format: byte
+              description: Header defines the structure of a Tendermint block header.
+      pagination:
+        title: pagination defines the pagination in the response
         type: object
         properties:
           next_key:

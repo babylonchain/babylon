@@ -88,10 +88,46 @@ func FuzzCurrentEpoch(f *testing.F) {
 	})
 }
 
+func FuzzEpochsInfo(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+		numEpochs := datagen.RandomInt(10) + 1
+		limit := datagen.RandomInt(10) + 1
+
+		helper := testepoching.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
+		wctx := sdk.WrapSDKContext(ctx)
+
+		// enque the first block of the numEpochs'th epoch
+		epochInterval := keeper.GetParams(ctx).EpochInterval
+		for i := uint64(0); i < numEpochs-1; i++ {
+			for j := uint64(0); j < epochInterval; j++ {
+				helper.GenAndApplyEmptyBlock()
+			}
+		}
+
+		// get epoch msgs
+		req := types.QueryEpochsInfoRequest{
+			Pagination: &query.PageRequest{
+				Limit: limit,
+			},
+		}
+		resp, err := queryClient.EpochsInfo(wctx, &req)
+		require.NoError(t, err)
+
+		require.Equal(t, testepoching.Min(numEpochs, limit), uint64(len(resp.Epochs)))
+		for i, epoch := range resp.Epochs {
+			require.Equal(t, uint64(i), epoch.EpochNumber)
+		}
+	})
+}
+
 // FuzzEpochMsgsQuery fuzzes queryClient.EpochMsgs
 // 1. randomly generate msgs and limit in pagination
 // 2. check the returned msg was previously enqueued
-// NOTE: Msgs in QueryEpochMsgsResponse are out-of-roder
+// NOTE: Msgs in QueryEpochMsgsResponse are out-of-order
 func FuzzEpochMsgsQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 

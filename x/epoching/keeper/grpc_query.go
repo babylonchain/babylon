@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"errors"
+
+	"cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -50,6 +51,34 @@ func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (
 	resp := &types.QueryEpochInfoResponse{
 		Epoch: epoch,
 	}
+	return resp, nil
+}
+
+// EpochsInfo handles the QueryEpochsInfoRequest query
+func (k Keeper) EpochsInfo(c context.Context, req *types.QueryEpochsInfoRequest) (*types.QueryEpochsInfoResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	epochInfoStore := k.epochInfoStore(ctx)
+	epochs := []*types.Epoch{}
+	pageRes, err := query.Paginate(epochInfoStore, req.Pagination, func(key, value []byte) error {
+		// unmarshal to epoch metadata
+		var epoch types.Epoch
+		if err := k.cdc.Unmarshal(value, &epoch); err != nil {
+			return err
+		}
+		// append to epochs list
+		epochs = append(epochs, &epoch)
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryEpochsInfoResponse{
+		Epochs:     epochs,
+		Pagination: pageRes,
+	}
+
 	return resp, nil
 }
 
