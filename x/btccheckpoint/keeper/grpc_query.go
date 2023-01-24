@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -43,6 +44,35 @@ func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.Submission
 	return lowestHeaderNumber, lowestHeaderHash, nil
 }
 
+func (k Keeper) lowestBtcHeightAndHashInKeys(ctx sdk.Context, subKeys []*types.SubmissionKey) (uint64, []byte, error) {
+	if len(subKeys) == 0 {
+		return 0, nil, errors.New("empty subKeys")
+	}
+
+	// initializing to max, as then every header number will be smaller
+	var lowestHeaderNumber uint64 = math.MaxUint64
+	var lowestHeaderHash []byte
+
+	for _, subKey := range subKeys {
+		headerNumber, headerHash, err := k.lowestBtcHeightAndHash(ctx, subKey)
+		if err != nil {
+			// submission is not valid for some reason, ignore it
+			continue
+		}
+
+		if headerNumber < lowestHeaderNumber {
+			lowestHeaderNumber = headerNumber
+			lowestHeaderHash = headerHash
+		}
+	}
+
+	if lowestHeaderNumber == math.MaxUint64 {
+		return 0, nil, errors.New("there is no valid submission for given raw checkpoint")
+	}
+
+	return lowestHeaderNumber, lowestHeaderHash, nil
+}
+
 func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBtcCheckpointHeightAndHashRequest) (*types.QueryBtcCheckpointHeightAndHashResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -59,27 +89,9 @@ func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBt
 		return nil, errors.New("checkpoint for given epoch not yet submitted")
 	}
 
-	var lowestHeaderNumber uint64 = math.MaxUint64
-	var lowestHeaderHash []byte
-
-	// we need to go for each submission in given epoch
-	for _, submissionKey := range epochData.Key {
-
-		headerNumber, headerHash, err := k.lowestBtcHeightAndHash(ctx, submissionKey)
-
-		if err != nil {
-			// submission is not valid for some reason, ignore it
-			continue
-		}
-
-		if headerNumber < lowestHeaderNumber {
-			lowestHeaderNumber = headerNumber
-			lowestHeaderHash = headerHash
-		}
-	}
-
-	if lowestHeaderNumber == math.MaxUint64 {
-		return nil, errors.New("there is no valid submission for given raw checkpoint")
+	lowestHeaderNumber, lowestHeaderHash, err := k.lowestBtcHeightAndHashInKeys(ctx, epochData.Key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch data: %w", err)
 	}
 
 	resp := &types.QueryBtcCheckpointHeightAndHashResponse{
