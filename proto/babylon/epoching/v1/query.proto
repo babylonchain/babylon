@@ -76,7 +76,7 @@ message QueryEpochInfoResponse {
 
 message QueryEpochsInfoRequest {
   // pagination defines whether to have the pagination in the response
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
 message QueryEpochsInfoResponse {
