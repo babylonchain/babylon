@@ -17,7 +17,7 @@ import (
 var _ types.QueryServer = Keeper{}
 
 func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.SubmissionKey) (uint64, []byte, error) {
-	// initializing to max, as then every header number will be smaller
+	// initializing to max, as then every header height will be smaller
 	var lowestHeaderNumber uint64 = math.MaxUint64
 	var lowestHeaderHash []byte
 
@@ -50,7 +50,7 @@ func (k Keeper) lowestBtcHeightAndHashInKeys(ctx sdk.Context, subKeys []*types.S
 		return 0, nil, errors.New("empty subKeys")
 	}
 
-	// initializing to max, as then every header number will be smaller
+	// initializing to max, as then every header height will be smaller
 	var lowestHeaderNumber uint64 = math.MaxUint64
 	var lowestHeaderHash []byte
 
@@ -92,7 +92,7 @@ func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBt
 
 	lowestHeaderNumber, lowestHeaderHash, err := k.lowestBtcHeightAndHashInKeys(ctx, epochData.Key)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch data: %w", err)
+		return nil, fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", req.EpochNum, err)
 	}
 
 	resp := &types.QueryBtcCheckpointHeightAndHashResponse{
@@ -113,9 +113,10 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
 
 	btcNumbers := []uint64{}
-	btcHashs := [][]byte{}
+	btcHashes := [][]byte{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
 	pageRes, err := query.Paginate(epochDataStore, req.Pagination, func(key, value []byte) error {
+		epochNum := sdk.BigEndianToUint64(key)
 		var epochData types.EpochData
 		k.cdc.MustUnmarshal(value, &epochData)
 
@@ -126,10 +127,10 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 
 		lowestHeaderNumber, lowestHeaderHash, err := k.lowestBtcHeightAndHashInKeys(ctx, epochData.Key)
 		if err != nil {
-			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch data: %w", err)
+			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", epochNum, err)
 		}
 		btcNumbers = append(btcNumbers, lowestHeaderNumber)
-		btcHashs = append(btcHashs, lowestHeaderHash)
+		btcHashes = append(btcHashes, lowestHeaderHash)
 
 		return nil
 	})
@@ -139,7 +140,7 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 
 	resp := &types.QueryBtcCheckpointsHeightAndHashResponse{
 		EarliestBtcBlockNumbers: btcNumbers,
-		EarliestBtcBlockHashs:   btcHashs,
+		EarliestBtcBlockHashes:  btcHashes,
 		Pagination:              pageRes,
 	}
 	return resp, nil

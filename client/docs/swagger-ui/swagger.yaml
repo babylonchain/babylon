@@ -21,7 +21,7 @@ paths:
                 items:
                   type: string
                   format: uint64
-              earliest_btc_block_hashs:
+              earliest_btc_block_hashes:
                 type: array
                 items:
                   type: string
@@ -9791,7 +9791,7 @@ definitions:
         items:
           type: string
           format: uint64
-      earliest_btc_block_hashs:
+      earliest_btc_block_hashes:
         type: array
         items:
           type: string
