@@ -4,6 +4,141 @@ info:
   description: A REST interface for state queries
   version: 1.0.0
 paths:
+  /babylon/btccheckpoint/v1:
+    get:
+      summary: >-
+        BtcCheckpointsHeightAndHash returns earliest block height and hash for a
+        range of epochs
+      operationId: BtcCheckpointsHeightAndHash
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              earliest_btc_block_numbers:
+                type: array
+                items:
+                  type: string
+                  format: uint64
+              earliest_btc_block_hashes:
+                type: array
+                items:
+                  type: string
+                  format: byte
+              pagination:
+                title: pagination defines the pagination in the response
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+                description: >-
+                  PageResponse is to be embedded in gRPC response messages where
+                  the
+
+                  corresponding request message has used PageRequest.
+
+                   message SomeResponse {
+                           repeated Bar results = 1;
+                           PageResponse page = 2;
+                   }
+            title: >-
+              QueryBtcCheckpointsHeightAndHashResponse is response type for the
+              Query/BtcCheckpointsHeightAndHash RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
   /babylon/btccheckpoint/v1/params:
     get:
       summary: Parameters queries the parameters of the module.
@@ -1244,7 +1379,14 @@ paths:
         - Query
   /babylon/epoching/v1/epochs:
     get:
-      summary: EpochsInfo range-queries the information of epochs
+      summary: >-
+        EpochsInfo queries the metadata of epochs in a given range, depending on
+        the
+
+        parameters in the pagination request. Th main use case will be querying
+        the
+
+        latest epochs in time order.
       operationId: EpochsInfo
       responses:
         '200':
@@ -4518,81 +4660,6 @@ paths:
           required: false
           type: string
           format: uint64
-      tags:
-        - Query
-  /babylon/checkpointing/v1/last_raw_checkpoint/{status}:
-    get:
-      summary: >-
-        LastCheckpointWithStatus queries the last checkpoint with a given status
-        or a more matured status
-      operationId: LastCheckpointWithStatus
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              raw_checkpoint:
-                type: object
-                properties:
-                  epoch_num:
-                    type: string
-                    format: uint64
-                    title: >-
-                      epoch_num defines the epoch number the raw checkpoint is
-                      for
-                  last_commit_hash:
-                    type: string
-                    format: byte
-                    title: >-
-                      last_commit_hash defines the 'LastCommitHash' that
-                      individual BLS sigs are signed on
-                  bitmap:
-                    type: string
-                    format: byte
-                    title: >-
-                      bitmap defines the bitmap that indicates the signers of
-                      the BLS multi sig
-                  bls_multi_sig:
-                    type: string
-                    format: byte
-                    title: >-
-                      bls_multi_sig defines the multi sig that is aggregated
-                      from individual BLS sigs
-                title: RawCheckpoint wraps the BLS multi sig with meta data
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
-      parameters:
-        - name: status
-          in: path
-          required: true
-          type: string
-          enum:
-            - CKPT_STATUS_ACCUMULATING
-            - CKPT_STATUS_SEALED
-            - CKPT_STATUS_SUBMITTED
-            - CKPT_STATUS_CONFIRMED
-            - CKPT_STATUS_FINALIZED
       tags:
         - Query
   /babylon/checkpointing/v1/last_raw_checkpoint/{status}:
@@ -9716,6 +9783,49 @@ definitions:
     title: >-
       QueryBtcCheckpointHeightAndHashResponse is response type for the
       Query/BtcCheckpointHeightAndHash RPC method
+  babylon.btccheckpoint.v1.QueryBtcCheckpointsHeightAndHashResponse:
+    type: object
+    properties:
+      earliest_btc_block_numbers:
+        type: array
+        items:
+          type: string
+          format: uint64
+      earliest_btc_block_hashes:
+        type: array
+        items:
+          type: string
+          format: byte
+      pagination:
+        title: pagination defines the pagination in the response
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+        description: |-
+          PageResponse is to be embedded in gRPC response messages where the
+          corresponding request message has used PageRequest.
+
+           message SomeResponse {
+                   repeated Bar results = 1;
+                   PageResponse page = 2;
+           }
+    title: >-
+      QueryBtcCheckpointsHeightAndHashResponse is response type for the
+      Query/BtcCheckpointsHeightAndHash RPC method
   babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse:
     type: object
     properties:

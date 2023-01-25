@@ -1018,7 +1018,9 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// EpochInfo queries the information of a given epoch
 	EpochInfo(ctx context.Context, in *QueryEpochInfoRequest, opts ...grpc.CallOption) (*QueryEpochInfoResponse, error)
-	// EpochsInfo range-queries the information of epochs
+	// EpochsInfo queries the metadata of epochs in a given range, depending on the
+	// parameters in the pagination request. Th main use case will be querying the
+	// latest epochs in time order.
 	EpochsInfo(ctx context.Context, in *QueryEpochsInfoRequest, opts ...grpc.CallOption) (*QueryEpochsInfoResponse, error)
 	// CurrentEpoch queries the current epoch
 	CurrentEpoch(ctx context.Context, in *QueryCurrentEpochRequest, opts ...grpc.CallOption) (*QueryCurrentEpochResponse, error)
@@ -1129,7 +1131,9 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// EpochInfo queries the information of a given epoch
 	EpochInfo(context.Context, *QueryEpochInfoRequest) (*QueryEpochInfoResponse, error)
-	// EpochsInfo range-queries the information of epochs
+	// EpochsInfo queries the metadata of epochs in a given range, depending on the
+	// parameters in the pagination request. Th main use case will be querying the
+	// latest epochs in time order.
 	EpochsInfo(context.Context, *QueryEpochsInfoRequest) (*QueryEpochsInfoResponse, error)
 	// CurrentEpoch queries the current epoch
 	CurrentEpoch(context.Context, *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error)

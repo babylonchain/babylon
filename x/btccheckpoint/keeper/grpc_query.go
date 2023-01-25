@@ -3,9 +3,11 @@ package keeper
 import (
 	"context"
 	"errors"
+	"fmt"
 	"math"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -15,7 +17,7 @@ import (
 var _ types.QueryServer = Keeper{}
 
 func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.SubmissionKey) (uint64, []byte, error) {
-	// initializing to max, as then every header number will be smaller
+	// initializing to max, as then every header height will be smaller
 	var lowestHeaderNumber uint64 = math.MaxUint64
 	var lowestHeaderHash []byte
 
@@ -43,6 +45,35 @@ func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.Submission
 	return lowestHeaderNumber, lowestHeaderHash, nil
 }
 
+func (k Keeper) lowestBtcHeightAndHashInKeys(ctx sdk.Context, subKeys []*types.SubmissionKey) (uint64, []byte, error) {
+	if len(subKeys) == 0 {
+		return 0, nil, errors.New("empty subKeys")
+	}
+
+	// initializing to max, as then every header height will be smaller
+	var lowestHeaderNumber uint64 = math.MaxUint64
+	var lowestHeaderHash []byte
+
+	for _, subKey := range subKeys {
+		headerNumber, headerHash, err := k.lowestBtcHeightAndHash(ctx, subKey)
+		if err != nil {
+			// submission is not valid for some reason, ignore it
+			continue
+		}
+
+		if headerNumber < lowestHeaderNumber {
+			lowestHeaderNumber = headerNumber
+			lowestHeaderHash = headerHash
+		}
+	}
+
+	if lowestHeaderNumber == math.MaxUint64 {
+		return 0, nil, errors.New("there is no valid submission for given raw checkpoint")
+	}
+
+	return lowestHeaderNumber, lowestHeaderHash, nil
+}
+
 func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBtcCheckpointHeightAndHashRequest) (*types.QueryBtcCheckpointHeightAndHashResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -59,32 +90,58 @@ func (k Keeper) BtcCheckpointHeightAndHash(c context.Context, req *types.QueryBt
 		return nil, errors.New("checkpoint for given epoch not yet submitted")
 	}
 
-	var lowestHeaderNumber uint64 = math.MaxUint64
-	var lowestHeaderHash []byte
-
-	// we need to go for each submission in given epoch
-	for _, submissionKey := range epochData.Key {
-
-		headerNumber, headerHash, err := k.lowestBtcHeightAndHash(ctx, submissionKey)
-
-		if err != nil {
-			// submission is not valid for some reason, ignore it
-			continue
-		}
-
-		if headerNumber < lowestHeaderNumber {
-			lowestHeaderNumber = headerNumber
-			lowestHeaderHash = headerHash
-		}
-	}
-
-	if lowestHeaderNumber == math.MaxUint64 {
-		return nil, errors.New("there is no valid submission for given raw checkpoint")
+	lowestHeaderNumber, lowestHeaderHash, err := k.lowestBtcHeightAndHashInKeys(ctx, epochData.Key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", req.EpochNum, err)
 	}
 
 	resp := &types.QueryBtcCheckpointHeightAndHashResponse{
 		EarliestBtcBlockNumber: lowestHeaderNumber,
 		EarliestBtcBlockHash:   lowestHeaderHash,
+	}
+	return resp, nil
+}
+
+func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryBtcCheckpointsHeightAndHashRequest) (*types.QueryBtcCheckpointsHeightAndHashResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	store := ctx.KVStore(k.storeKey)
+	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
+
+	btcNumbers := []uint64{}
+	btcHashes := [][]byte{}
+	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
+	pageRes, err := query.Paginate(epochDataStore, req.Pagination, func(key, value []byte) error {
+		epochNum := sdk.BigEndianToUint64(key)
+		var epochData types.EpochData
+		k.cdc.MustUnmarshal(value, &epochData)
+
+		// Check if we have any submission for given epoch
+		if len(epochData.Key) == 0 {
+			return errors.New("checkpoint for given epoch not yet submitted")
+		}
+
+		lowestHeaderNumber, lowestHeaderHash, err := k.lowestBtcHeightAndHashInKeys(ctx, epochData.Key)
+		if err != nil {
+			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", epochNum, err)
+		}
+		btcNumbers = append(btcNumbers, lowestHeaderNumber)
+		btcHashes = append(btcHashes, lowestHeaderHash)
+
+		return nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryBtcCheckpointsHeightAndHashResponse{
+		EarliestBtcBlockNumbers: btcNumbers,
+		EarliestBtcBlockHashes:  btcHashes,
+		Pagination:              pageRes,
 	}
 	return resp, nil
 }
