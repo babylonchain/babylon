@@ -16,7 +16,7 @@ paths:
           schema:
             type: object
             properties:
-              epoch_nums:
+              epoch_numbers:
                 type: array
                 items:
                   type: string
@@ -9791,7 +9791,7 @@ definitions:
   babylon.btccheckpoint.v1.QueryBtcCheckpointsHeightAndHashResponse:
     type: object
     properties:
-      epoch_nums:
+      epoch_numbers:
         type: array
         items:
           type: string

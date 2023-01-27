@@ -141,7 +141,7 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 	}
 
 	resp := &types.QueryBtcCheckpointsHeightAndHashResponse{
-		EpochNums:               epochNumbers,
+		EpochNumbers:            epochNumbers,
 		EarliestBtcBlockNumbers: btcNumbers,
 		EarliestBtcBlockHashes:  btcHashes,
 		Pagination:              pageRes,
