@@ -16,6 +16,11 @@ paths:
           schema:
             type: object
             properties:
+              epoch_nums:
+                type: array
+                items:
+                  type: string
+                  format: uint64
               earliest_btc_block_numbers:
                 type: array
                 items:
@@ -9786,6 +9791,11 @@ definitions:
   babylon.btccheckpoint.v1.QueryBtcCheckpointsHeightAndHashResponse:
     type: object
     properties:
+      epoch_nums:
+        type: array
+        items:
+          type: string
+          format: uint64
       earliest_btc_block_numbers:
         type: array
         items:

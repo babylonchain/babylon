@@ -59,11 +59,12 @@ message QueryBtcCheckpointsHeightAndHashRequest {
 
 // QueryBtcCheckpointsHeightAndHashResponse is response type for the Query/BtcCheckpointsHeightAndHash RPC method
 message QueryBtcCheckpointsHeightAndHashResponse {
-  repeated uint64 earliest_btc_block_numbers = 1;
-  repeated bytes earliest_btc_block_hashes = 2;
+  repeated uint64 epoch_nums = 1;
+  repeated uint64 earliest_btc_block_numbers = 2;
+  repeated bytes earliest_btc_block_hashes = 3;
 
   // pagination defines the pagination in the response
-  cosmos.base.query.v1beta1.PageResponse pagination = 3;
+  cosmos.base.query.v1beta1.PageResponse pagination = 4;
 }
 
 message QueryEpochSubmissionsRequest {

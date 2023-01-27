@@ -112,6 +112,7 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 	store := ctx.KVStore(k.storeKey)
 	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
 
+	epochNumbers := []uint64{}
 	btcNumbers := []uint64{}
 	btcHashes := [][]byte{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
@@ -131,6 +132,7 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 		}
 		btcNumbers = append(btcNumbers, lowestHeaderNumber)
 		btcHashes = append(btcHashes, lowestHeaderHash)
+		epochNumbers = append(epochNumbers, epochNum)
 
 		return nil
 	})
@@ -139,6 +141,7 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 	}
 
 	resp := &types.QueryBtcCheckpointsHeightAndHashResponse{
+		EpochNums:               epochNumbers,
 		EarliestBtcBlockNumbers: btcNumbers,
 		EarliestBtcBlockHashes:  btcHashes,
 		Pagination:              pageRes,
