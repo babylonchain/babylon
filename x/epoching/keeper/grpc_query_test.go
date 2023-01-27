@@ -129,16 +129,10 @@ func FuzzEpochsInfo_QueryParams(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
-		numEpochs := datagen.RandomInt(10) + 1
+		numEpochs := datagen.RandomInt(10) + 2
 
-		var startEpoch, endEpoch uint64
-		for {
-			endEpoch = datagen.RandomInt(int(numEpochs))
-			if endEpoch != 0 {
-				break
-			}
-		}
-		startEpoch = datagen.RandomInt(int(endEpoch))
+		endEpoch := rand.Uint64()%(numEpochs-1) + 1
+		startEpoch := rand.Uint64() % endEpoch
 
 		helper := testepoching.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
