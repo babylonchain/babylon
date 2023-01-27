@@ -109,9 +109,23 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 
 	ctx := sdk.UnwrapSDKContext(c)
 
+	// parse start_epoch and end_epoch and forward to the pagination request
+	if req.EndEpoch > 0 {
+		// this query uses start_epoch and end_epoch to specify range
+		if req.StartEpoch > req.EndEpoch {
+			return nil, fmt.Errorf("StartEpoch (%d) should not be larger than EndEpoch (%d)", req.StartEpoch, req.EndEpoch)
+		}
+		req.Pagination = &query.PageRequest{
+			Key:     sdk.Uint64ToBigEndian(req.StartEpoch),
+			Limit:   req.EndEpoch - req.StartEpoch + 1,
+			Reverse: false,
+		}
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
 
+	epochNumbers := []uint64{}
 	btcNumbers := []uint64{}
 	btcHashes := [][]byte{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
@@ -129,8 +143,11 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 		if err != nil {
 			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", epochNum, err)
 		}
+
+		// append all lists
 		btcNumbers = append(btcNumbers, lowestHeaderNumber)
 		btcHashes = append(btcHashes, lowestHeaderHash)
+		epochNumbers = append(epochNumbers, epochNum)
 
 		return nil
 	})
@@ -139,6 +156,7 @@ func (k Keeper) BtcCheckpointsHeightAndHash(c context.Context, req *types.QueryB
 	}
 
 	resp := &types.QueryBtcCheckpointsHeightAndHashResponse{
+		EpochNumbers:            epochNumbers,
 		EarliestBtcBlockNumbers: btcNumbers,
 		EarliestBtcBlockHashes:  btcHashes,
 		Pagination:              pageRes,
