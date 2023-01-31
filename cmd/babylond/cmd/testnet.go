@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
@@ -55,6 +56,7 @@ var (
 	flagBtcNetwork              = "btc-network"
 	flagBtcCheckpointTag        = "btc-checkpoint-tag"
 	flagAdditionalSenderAccount = "additional-sender-account"
+	flagTimeBetweenBlocks       = "time-between-blocks-seconds"
 )
 
 // TestnetCmd initializes all files for tendermint testnet and application
@@ -91,6 +93,7 @@ Example:
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
 			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
 			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
+			timeBetweenBlocks, _ := cmd.Flags().GetUint64(flagTimeBetweenBlocks)
 			if err != nil {
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
@@ -103,7 +106,7 @@ Example:
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				btcNetwork, btcCheckpointTag, additionalAccount, genesisParams,
+				btcNetwork, btcCheckpointTag, additionalAccount, timeBetweenBlocks, genesisParams,
 			)
 		},
 	}
@@ -119,6 +122,7 @@ Example:
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, regtest, mainnet")
 	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefaultTestTagStr), "Tag to use for Bitcoin checkpoints.")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
+	cmd.Flags().Uint64(flagTimeBetweenBlocks, 10, "Time between blocks in seconds")
 	addGenesisFlags(cmd)
 
 	return cmd
@@ -145,6 +149,7 @@ func InitTestnet(
 	btcNetwork string,
 	btcCheckpointTag string,
 	additionalAccount bool,
+	timeBetweenBlocks uint64,
 	genesisParams GenesisParams,
 ) error {
 
@@ -163,6 +168,8 @@ func InitTestnet(
 	babylonConfig.BtcConfig.CheckpointTag = btcCheckpointTag
 	// Explorer related config. Allow CORS connections.
 	babylonConfig.API.EnableUnsafeCORS = true
+	// Time between blocks
+	nodeConfig.Consensus.TimeoutCommit = time.Second * time.Duration(timeBetweenBlocks)
 
 	var (
 		genAccounts []authtypes.GenesisAccount
