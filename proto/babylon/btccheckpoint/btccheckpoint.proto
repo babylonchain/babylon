@@ -124,3 +124,15 @@ message EpochData {
   BtcStatus status = 2;
 }
 
+message BTCCheckpointInfo {
+  // epoch number of this checkpoint
+  uint64 epoch_number = 1;
+  // height of earliest BTC block that includes this checkpoint
+  uint64 earliest_btc_block_number = 2;
+  // hash of earliest BTC block that includes this checkpoint
+  bytes earliest_btc_block_hash = 3;
+  // list of reporters' addresses
+  repeated bytes vigilante_address_list = 4;
+  // list of submitters' addresses
+  repeated bytes submitter_address_list = 5;
+}

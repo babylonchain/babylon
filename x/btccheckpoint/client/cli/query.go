@@ -33,7 +33,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 func CmdBtcCheckpointHeightAndHash() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-height-hash <epoch_number>",
+		Use:   "btc-height-hash <epochNumber>",
 		Short: "retrieve earliest btc height and hash for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -41,15 +41,15 @@ func CmdBtcCheckpointHeightAndHash() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+			epochNum, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
 				return err
 			}
 
-			req := types.QueryBtcCheckpointHeightAndHashRequest{EpochNum: epoch_num}
+			req := types.QueryBtcCheckpointInfoRequest{EpochNum: epochNum}
 
-			resp, err := queryClient.BtcCheckpointHeightAndHash(context.Background(), &req)
+			resp, err := queryClient.BtcCheckpointInfo(context.Background(), &req)
 
 			if err != nil {
 				return err
@@ -65,7 +65,7 @@ func CmdBtcCheckpointHeightAndHash() *cobra.Command {
 
 func CmdEpochSubmissions() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "epoch-submissions <epoch_number>",
+		Use:   "epoch-submissions <epochNumber>",
 		Short: "all checkpoint submissions for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,7 @@ func CmdEpochSubmissions() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+			epochNum, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
 				return err
@@ -84,7 +84,7 @@ func CmdEpochSubmissions() *cobra.Command {
 				return err
 			}
 
-			params := types.QueryEpochSubmissionsRequest{EpochNum: epoch_num, Pagination: pageReq}
+			params := types.QueryEpochSubmissionsRequest{EpochNum: epochNum, Pagination: pageReq}
 
 			res, err := queryClient.EpochSubmissions(context.Background(), &params)
 

@@ -6,31 +6,45 @@ info:
 paths:
   /babylon/btccheckpoint/v1:
     get:
-      summary: >-
-        BtcCheckpointsHeightAndHash returns earliest block height and hash for a
-        range of epochs
-      operationId: BtcCheckpointsHeightAndHash
+      summary: BtcCheckpointsInfo returns checkpoint info for a range of epochs
+      operationId: BtcCheckpointsInfo
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              epoch_numbers:
+              info_list:
                 type: array
                 items:
-                  type: string
-                  format: uint64
-              earliest_btc_block_numbers:
-                type: array
-                items:
-                  type: string
-                  format: uint64
-              earliest_btc_block_hashes:
-                type: array
-                items:
-                  type: string
-                  format: byte
+                  type: object
+                  properties:
+                    epoch_number:
+                      type: string
+                      format: uint64
+                      title: epoch number of this checkpoint
+                    earliest_btc_block_number:
+                      type: string
+                      format: uint64
+                      title: >-
+                        height of earliest BTC block that includes this
+                        checkpoint
+                    earliest_btc_block_hash:
+                      type: string
+                      format: byte
+                      title: hash of earliest BTC block that includes this checkpoint
+                    vigilante_address_list:
+                      type: array
+                      items:
+                        type: string
+                        format: byte
+                      title: list of reporters' addresses
+                    submitter_address_list:
+                      type: array
+                      items:
+                        type: string
+                        format: byte
+                      title: list of submitters' addresses
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -61,8 +75,8 @@ paths:
                            PageResponse page = 2;
                    }
             title: >-
-              QueryBtcCheckpointsHeightAndHashResponse is response type for the
-              Query/BtcCheckpointsHeightAndHash RPC method
+              QueryBtcCheckpointsInfoResponse is response type for the
+              Query/BtcCheckpointsInfo RPC method
         default:
           description: An unexpected error response.
           schema:
@@ -223,26 +237,44 @@ paths:
         - Query
   /babylon/btccheckpoint/v1/{epoch_num}:
     get:
-      summary: >-
-        BtcCheckpointHeightAndHash returns earliest block height and hash for
-        given rawcheckpoint
-      operationId: BtcCheckpointHeightAndHash
+      summary: BtcCheckpointInfo returns checkpoint info for a given epoch
+      operationId: BtcCheckpointInfo
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              earliest_btc_block_number:
-                type: string
-                format: uint64
-                title: Earliest btc block number containing given raw checkpoint
-              earliest_btc_block_hash:
-                type: string
-                format: byte
+              info:
+                type: object
+                properties:
+                  epoch_number:
+                    type: string
+                    format: uint64
+                    title: epoch number of this checkpoint
+                  earliest_btc_block_number:
+                    type: string
+                    format: uint64
+                    title: height of earliest BTC block that includes this checkpoint
+                  earliest_btc_block_hash:
+                    type: string
+                    format: byte
+                    title: hash of earliest BTC block that includes this checkpoint
+                  vigilante_address_list:
+                    type: array
+                    items:
+                      type: string
+                      format: byte
+                    title: list of reporters' addresses
+                  submitter_address_list:
+                    type: array
+                    items:
+                      type: string
+                      format: byte
+                    title: list of submitters' addresses
             title: >-
-              QueryBtcCheckpointHeightAndHashResponse is response type for the
-              Query/BtcCheckpointHeightAndHash RPC method
+              QueryBtcCheckpointInfoResponse is response type for the
+              Query/BtcCheckpointInfo RPC method
         default:
           description: An unexpected error response.
           schema:
@@ -9766,6 +9798,33 @@ paths:
       tags:
         - Query
 definitions:
+  babylon.btccheckpoint.v1.BTCCheckpointInfo:
+    type: object
+    properties:
+      epoch_number:
+        type: string
+        format: uint64
+        title: epoch number of this checkpoint
+      earliest_btc_block_number:
+        type: string
+        format: uint64
+        title: height of earliest BTC block that includes this checkpoint
+      earliest_btc_block_hash:
+        type: string
+        format: byte
+        title: hash of earliest BTC block that includes this checkpoint
+      vigilante_address_list:
+        type: array
+        items:
+          type: string
+          format: byte
+        title: list of reporters' addresses
+      submitter_address_list:
+        type: array
+        items:
+          type: string
+          format: byte
+        title: list of submitters' addresses
   babylon.btccheckpoint.v1.Params:
     type: object
     properties:
@@ -9795,37 +9854,71 @@ definitions:
 
           (w in research paper)
     description: Params defines the parameters for the module.
-  babylon.btccheckpoint.v1.QueryBtcCheckpointHeightAndHashResponse:
+  babylon.btccheckpoint.v1.QueryBtcCheckpointInfoResponse:
     type: object
     properties:
-      earliest_btc_block_number:
-        type: string
-        format: uint64
-        title: Earliest btc block number containing given raw checkpoint
-      earliest_btc_block_hash:
-        type: string
-        format: byte
+      info:
+        type: object
+        properties:
+          epoch_number:
+            type: string
+            format: uint64
+            title: epoch number of this checkpoint
+          earliest_btc_block_number:
+            type: string
+            format: uint64
+            title: height of earliest BTC block that includes this checkpoint
+          earliest_btc_block_hash:
+            type: string
+            format: byte
+            title: hash of earliest BTC block that includes this checkpoint
+          vigilante_address_list:
+            type: array
+            items:
+              type: string
+              format: byte
+            title: list of reporters' addresses
+          submitter_address_list:
+            type: array
+            items:
+              type: string
+              format: byte
+            title: list of submitters' addresses
     title: >-
-      QueryBtcCheckpointHeightAndHashResponse is response type for the
-      Query/BtcCheckpointHeightAndHash RPC method
-  babylon.btccheckpoint.v1.QueryBtcCheckpointsHeightAndHashResponse:
+      QueryBtcCheckpointInfoResponse is response type for the
+      Query/BtcCheckpointInfo RPC method
+  babylon.btccheckpoint.v1.QueryBtcCheckpointsInfoResponse:
     type: object
     properties:
-      epoch_numbers:
+      info_list:
         type: array
         items:
-          type: string
-          format: uint64
-      earliest_btc_block_numbers:
-        type: array
-        items:
-          type: string
-          format: uint64
-      earliest_btc_block_hashes:
-        type: array
-        items:
-          type: string
-          format: byte
+          type: object
+          properties:
+            epoch_number:
+              type: string
+              format: uint64
+              title: epoch number of this checkpoint
+            earliest_btc_block_number:
+              type: string
+              format: uint64
+              title: height of earliest BTC block that includes this checkpoint
+            earliest_btc_block_hash:
+              type: string
+              format: byte
+              title: hash of earliest BTC block that includes this checkpoint
+            vigilante_address_list:
+              type: array
+              items:
+                type: string
+                format: byte
+              title: list of reporters' addresses
+            submitter_address_list:
+              type: array
+              items:
+                type: string
+                format: byte
+              title: list of submitters' addresses
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -9854,8 +9947,8 @@ definitions:
                    PageResponse page = 2;
            }
     title: >-
-      QueryBtcCheckpointsHeightAndHashResponse is response type for the
-      Query/BtcCheckpointsHeightAndHash RPC method
+      QueryBtcCheckpointsInfoResponse is response type for the
+      Query/BtcCheckpointsInfo RPC method
   babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse:
     type: object
     properties:
