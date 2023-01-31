@@ -16,7 +16,7 @@ import (
 // Modelling proofs as separate Proof1 and Proof2, as this is more explicit than
 // []*ParsedProof.
 type RawCheckpointSubmission struct {
-	Submitter      sdk.AccAddress
+	Reporter       sdk.AccAddress
 	Proof1         ParsedProof
 	Proof2         ParsedProof
 	CheckpointData btctxformatter.RawBtcCheckpoint
@@ -43,7 +43,7 @@ func NewRawCheckpointSubmission(
 	checkpointData btctxformatter.RawBtcCheckpoint,
 ) RawCheckpointSubmission {
 	r := RawCheckpointSubmission{
-		Submitter:      a,
+		Reporter:       a,
 		Proof1:         p1,
 		Proof2:         p2,
 		CheckpointData: checkpointData,
@@ -91,10 +91,12 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 
 func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
-		VigilanteAddress: rsc.Submitter.Bytes(),
-		SubmitterAddress: rsc.CheckpointData.SubmitterAddress,
-		TxsInfo:          txsInfo,
-		Epoch:            epochNum,
+		VigilanteAddresses: &CheckpointAddresses{
+			Reporter:  rsc.Reporter.Bytes(),
+			Submitter: rsc.CheckpointData.SubmitterAddress,
+		},
+		TxsInfo: txsInfo,
+		Epoch:   epochNum,
 	}
 }
 
