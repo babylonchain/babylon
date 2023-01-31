@@ -33,7 +33,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 func CmdBtcCheckpointHeightAndHash() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-height-hash <epochNumber>",
+		Use:   "btc-height-hash <epoch_number>",
 		Short: "retrieve earliest btc height and hash for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
