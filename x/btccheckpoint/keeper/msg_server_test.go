@@ -222,7 +222,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Submission data with invalid TransactionInfo")
 	}
 
-	if !bytes.Equal(rawBtcCheckpoint.SubmitterAddress, submissionData.SubmitterAddress) {
+	if !bytes.Equal(rawBtcCheckpoint.SubmitterAddress, submissionData.VigilanteAddresses.Submitter) {
 		t.Errorf("Submission data does not contain expected submitter address")
 	}
 

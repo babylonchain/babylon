@@ -33,18 +33,28 @@ paths:
                       type: string
                       format: byte
                       title: hash of earliest BTC block that includes this checkpoint
-                    reporter_address_list:
+                    vigilante_address_list:
                       type: array
                       items:
-                        type: string
-                        format: byte
-                      title: list of reporters' addresses
-                    submitter_address_list:
-                      type: array
-                      items:
-                        type: string
-                        format: byte
-                      title: list of submitters' addresses
+                        type: object
+                        properties:
+                          submitter:
+                            type: string
+                            format: byte
+                            description: >-
+                              TODO: this could probably be better typed
+
+                              Address of the checkpoint submitter, extracted
+                              from the checkpoint itself.
+                          reporter:
+                            type: string
+                            format: byte
+                            title: >-
+                              Address of the reporter which reported the
+                              submissions, calculated from
+
+                              submission message MsgInsertBTCSpvProof itself
+                      title: list of vigilantes' addresses
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -260,18 +270,28 @@ paths:
                     type: string
                     format: byte
                     title: hash of earliest BTC block that includes this checkpoint
-                  reporter_address_list:
+                  vigilante_address_list:
                     type: array
                     items:
-                      type: string
-                      format: byte
-                    title: list of reporters' addresses
-                  submitter_address_list:
-                    type: array
-                    items:
-                      type: string
-                      format: byte
-                    title: list of submitters' addresses
+                      type: object
+                      properties:
+                        submitter:
+                          type: string
+                          format: byte
+                          description: >-
+                            TODO: this could probably be better typed
+
+                            Address of the checkpoint submitter, extracted from
+                            the checkpoint itself.
+                        reporter:
+                          type: string
+                          format: byte
+                          title: >-
+                            Address of the reporter which reported the
+                            submissions, calculated from
+
+                            submission message MsgInsertBTCSpvProof itself
+                    title: list of vigilantes' addresses
             title: >-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
@@ -9813,18 +9833,47 @@ definitions:
         type: string
         format: byte
         title: hash of earliest BTC block that includes this checkpoint
-      reporter_address_list:
+      vigilante_address_list:
         type: array
         items:
-          type: string
-          format: byte
-        title: list of reporters' addresses
-      submitter_address_list:
-        type: array
-        items:
-          type: string
-          format: byte
-        title: list of submitters' addresses
+          type: object
+          properties:
+            submitter:
+              type: string
+              format: byte
+              description: >-
+                TODO: this could probably be better typed
+
+                Address of the checkpoint submitter, extracted from the
+                checkpoint itself.
+            reporter:
+              type: string
+              format: byte
+              title: >-
+                Address of the reporter which reported the submissions,
+                calculated from
+
+                submission message MsgInsertBTCSpvProof itself
+        title: list of vigilantes' addresses
+  babylon.btccheckpoint.v1.CheckpointAddresses:
+    type: object
+    properties:
+      submitter:
+        type: string
+        format: byte
+        description: >-
+          TODO: this could probably be better typed
+
+          Address of the checkpoint submitter, extracted from the checkpoint
+          itself.
+      reporter:
+        type: string
+        format: byte
+        title: >-
+          Address of the reporter which reported the submissions, calculated
+          from
+
+          submission message MsgInsertBTCSpvProof itself
   babylon.btccheckpoint.v1.Params:
     type: object
     properties:
@@ -9872,18 +9921,28 @@ definitions:
             type: string
             format: byte
             title: hash of earliest BTC block that includes this checkpoint
-          reporter_address_list:
+          vigilante_address_list:
             type: array
             items:
-              type: string
-              format: byte
-            title: list of reporters' addresses
-          submitter_address_list:
-            type: array
-            items:
-              type: string
-              format: byte
-            title: list of submitters' addresses
+              type: object
+              properties:
+                submitter:
+                  type: string
+                  format: byte
+                  description: >-
+                    TODO: this could probably be better typed
+
+                    Address of the checkpoint submitter, extracted from the
+                    checkpoint itself.
+                reporter:
+                  type: string
+                  format: byte
+                  title: >-
+                    Address of the reporter which reported the submissions,
+                    calculated from
+
+                    submission message MsgInsertBTCSpvProof itself
+            title: list of vigilantes' addresses
     title: >-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -9907,18 +9966,28 @@ definitions:
               type: string
               format: byte
               title: hash of earliest BTC block that includes this checkpoint
-            reporter_address_list:
+            vigilante_address_list:
               type: array
               items:
-                type: string
-                format: byte
-              title: list of reporters' addresses
-            submitter_address_list:
-              type: array
-              items:
-                type: string
-                format: byte
-              title: list of submitters' addresses
+                type: object
+                properties:
+                  submitter:
+                    type: string
+                    format: byte
+                    description: >-
+                      TODO: this could probably be better typed
+
+                      Address of the checkpoint submitter, extracted from the
+                      checkpoint itself.
+                  reporter:
+                    type: string
+                    format: byte
+                    title: >-
+                      Address of the reporter which reported the submissions,
+                      calculated from
+
+                      submission message MsgInsertBTCSpvProof itself
+              title: list of vigilantes' addresses
       pagination:
         title: pagination defines the pagination in the response
         type: object

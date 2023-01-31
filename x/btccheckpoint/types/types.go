@@ -91,10 +91,12 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 
 func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
-		ReporterAddress:  rsc.Reporter.Bytes(),
-		SubmitterAddress: rsc.CheckpointData.SubmitterAddress,
-		TxsInfo:          txsInfo,
-		Epoch:            epochNum,
+		VigilanteAddresses: &CheckpointAddresses{
+			Reporter:  rsc.Reporter.Bytes(),
+			Submitter: rsc.CheckpointData.SubmitterAddress,
+		},
+		TxsInfo: txsInfo,
+		Epoch:   epochNum,
 	}
 }
 

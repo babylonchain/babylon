@@ -98,19 +98,14 @@ message TransactionInfo {
 // depth/block number info, without context (i.e info about chain) is pretty useless
 // and blockshash in enough to retrieve is from lightclient
 message SubmissionData {
-  // TODO: this could probably be better typed
-  // Address of the reporter which reported the submissions, calculated from
-  // submission message MsgInsertBTCSpvProof itself
-  bytes reporter_address = 1;
-
-  // Address of the checkpoint submitter, extracted from the checkpoint itself.
-  bytes submitter_address = 2;
+  // address of the submitter and reporter
+  CheckpointAddresses vigilante_addresses = 1;
   // txs_info is the two `TransactionInfo`s corresponding to the submission
   // It is used for
   // - recovering address of sender of btc transction to payup the reward.
   // - allowing the ZoneConcierge module to prove the checkpoint is submitted to BTC
-  repeated TransactionInfo txs_info = 3;
-  uint64 epoch = 4;
+  repeated TransactionInfo txs_info = 2;
+  uint64 epoch = 3;
 }
 
 // Data stored in db and indexed by epoch number
@@ -124,6 +119,15 @@ message EpochData {
   BtcStatus status = 2;
 }
 
+message CheckpointAddresses {
+  // TODO: this could probably be better typed
+  // Address of the checkpoint submitter, extracted from the checkpoint itself.
+  bytes submitter = 1;
+  // Address of the reporter which reported the submissions, calculated from
+  // submission message MsgInsertBTCSpvProof itself
+  bytes reporter = 2;
+}
+
 message BTCCheckpointInfo {
   // epoch number of this checkpoint
   uint64 epoch_number = 1;
@@ -131,8 +135,6 @@ message BTCCheckpointInfo {
   uint64 earliest_btc_block_number = 2;
   // hash of earliest BTC block that includes this checkpoint
   bytes earliest_btc_block_hash = 3;
-  // list of reporters' addresses
-  repeated bytes reporter_address_list = 4;
-  // list of submitters' addresses
-  repeated bytes submitter_address_list = 5;
+  // list of vigilantes' addresses
+  repeated CheckpointAddresses vigilante_address_list = 4;
 }
