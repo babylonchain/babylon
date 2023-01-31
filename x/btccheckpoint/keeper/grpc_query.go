@@ -53,7 +53,7 @@ func (k Keeper) getCheckpointInfo(ctx sdk.Context, epochNum uint64, subKeys []*t
 	info := types.BTCCheckpointInfo{
 		EpochNumber:            epochNum,
 		EarliestBtcBlockNumber: math.MaxUint64, // initializing to max, as then every header height will be smaller
-		VigilanteAddressList:   [][]byte{},
+		ReporterAddressList:    [][]byte{},
 		SubmitterAddressList:   [][]byte{},
 	}
 
@@ -78,7 +78,7 @@ func (k Keeper) getCheckpointInfo(ctx sdk.Context, epochNum uint64, subKeys []*t
 		}
 		// append vigilante addresses
 		info.SubmitterAddressList = append(info.SubmitterAddressList, sd.SubmitterAddress)
-		info.VigilanteAddressList = append(info.VigilanteAddressList, sd.VigilanteAddress)
+		info.ReporterAddressList = append(info.ReporterAddressList, sd.ReporterAddress)
 	}
 
 	if info.EarliestBtcBlockNumber == math.MaxUint64 {

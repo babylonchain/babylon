@@ -99,9 +99,9 @@ message TransactionInfo {
 // and blockshash in enough to retrieve is from lightclient
 message SubmissionData {
   // TODO: this could probably be better typed
-  // Address of the vigiliatne which submitted the submissions, calculated from
-  // submission message itself
-  bytes vigilante_address = 1;
+  // Address of the reporter which reported the submissions, calculated from
+  // submission message MsgInsertBTCSpvProof itself
+  bytes reporter_address = 1;
 
   // Address of the checkpoint submitter, extracted from the checkpoint itself.
   bytes submitter_address = 2;
@@ -132,7 +132,7 @@ message BTCCheckpointInfo {
   // hash of earliest BTC block that includes this checkpoint
   bytes earliest_btc_block_hash = 3;
   // list of reporters' addresses
-  repeated bytes vigilante_address_list = 4;
+  repeated bytes reporter_address_list = 4;
   // list of submitters' addresses
   repeated bytes submitter_address_list = 5;
 }

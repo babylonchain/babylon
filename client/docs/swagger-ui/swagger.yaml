@@ -33,7 +33,7 @@ paths:
                       type: string
                       format: byte
                       title: hash of earliest BTC block that includes this checkpoint
-                    vigilante_address_list:
+                    reporter_address_list:
                       type: array
                       items:
                         type: string
@@ -260,7 +260,7 @@ paths:
                     type: string
                     format: byte
                     title: hash of earliest BTC block that includes this checkpoint
-                  vigilante_address_list:
+                  reporter_address_list:
                     type: array
                     items:
                       type: string
@@ -9813,7 +9813,7 @@ definitions:
         type: string
         format: byte
         title: hash of earliest BTC block that includes this checkpoint
-      vigilante_address_list:
+      reporter_address_list:
         type: array
         items:
           type: string
@@ -9872,7 +9872,7 @@ definitions:
             type: string
             format: byte
             title: hash of earliest BTC block that includes this checkpoint
-          vigilante_address_list:
+          reporter_address_list:
             type: array
             items:
               type: string
@@ -9907,7 +9907,7 @@ definitions:
               type: string
               format: byte
               title: hash of earliest BTC block that includes this checkpoint
-            vigilante_address_list:
+            reporter_address_list:
               type: array
               items:
                 type: string
