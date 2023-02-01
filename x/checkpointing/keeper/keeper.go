@@ -244,7 +244,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	// record verified checkpoint
 	err = k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to record verified checkpoint of epoch %d for monitoring: %w", ckpt.EpochNum, err)
 	}
 
 	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
