@@ -6,5 +6,5 @@ For user facing docs, visit the [Babylon documentation page](https://docs.babylo
 
 ## Contents
 
-- [Development Requirements](./dev-reqs)
-- [Running a node for testing purposes](./run-node)
+- [Development Requirements](./dev-reqs.md)
+- [Running a node for testing purposes](./run-node.md)
