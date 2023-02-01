@@ -28,7 +28,7 @@ make install
 
 ## Documentation
 
-For the most up to date documentation please visit [docs.babylonchain.io](https://docs.babylonchain.io)
+For the most up-to-date documentation please visit [docs.babylonchain.io](https://docs.babylonchain.io)
 
 ## Joining the testnet
 
