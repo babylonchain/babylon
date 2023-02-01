@@ -2,7 +2,7 @@
 
 This page contains documentation targeted at individuals that want to contribute to the Babylon repository.
 
-For user facing docs, visit the [Babylon documentation page](https://docs.babylonchain.io).
+For user-facing docs, visit the [Babylon documentation page](https://docs.babylonchain.io).
 
 ## Contents
 
