@@ -7,7 +7,7 @@ Bringing Bitcoin security to Cosmos and beyond.
 
 ## Build and install
 
-The babylond application based on the Cosmos SDK is the main application of the Babylon network. 
+The babylond application based on the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk) is the main application of the Babylon network. 
 This repository is used to build the necessary binaries to join the Babylon network.
 
 ### Requirements
