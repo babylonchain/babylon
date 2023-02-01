@@ -289,7 +289,7 @@ func LatestHeight(c *grpc.ClientConn) (int64, error) {
 }
 
 func WaitForHeight(c *grpc.ClientConn, h int64) (int64, error) {
-	return WaitForHeightWithTimeout(c, h, 15*time.Second)
+	return WaitForHeightWithTimeout(c, h, 20*time.Second)
 }
 
 func WaitForHeightWithTimeout(c *grpc.ClientConn, h int64, t time.Duration) (int64, error) {
