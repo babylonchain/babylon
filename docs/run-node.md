@@ -6,7 +6,7 @@ used in its place.
 
 ### Generating the node configuration
 The configuration for a single node can be created through the `testnet`
-command. While the testnet command can create an arbitrary number of nodes that
+command. While the `testnet` command can create an arbitrary number of nodes that
 communicate on a testnet, here we focus on the setup of a single node.
 ```console
 babylond testnet \
