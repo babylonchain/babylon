@@ -76,11 +76,16 @@ message QueryHeaderResponse {
 }
 
 // QueryChainListRequest is request type for the Query/ChainList RPC method
-message QueryChainListRequest {}
+message QueryChainListRequest {
+  // pagination defines whether to have the pagination in the response
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
 
 // QueryChainListResponse is response type for the Query/ChainList RPC method
 message QueryChainListResponse {
   repeated string chain_ids = 1;
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryChainInfoRequest is request type for the Query/ChainInfo RPC method.

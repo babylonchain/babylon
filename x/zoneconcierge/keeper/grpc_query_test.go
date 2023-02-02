@@ -20,7 +20,7 @@ import (
 )
 
 func FuzzChainList(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
@@ -32,33 +32,38 @@ func FuzzChainList(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times with random chain IDs
-		numHeaders := datagen.RandomInt(100)
-		expectedChainIDs := []string{}
+		numHeaders := datagen.RandomInt(100) + 1
+		allChainIDs := []string{}
 		for i := uint64(0); i < numHeaders; i++ {
 			var chainID string
 			// simulate the scenario that some headers belong to the same chain
 			if i > 0 && datagen.OneInN(2) {
-				chainID = expectedChainIDs[rand.Intn(len(expectedChainIDs))]
+				chainID = allChainIDs[rand.Intn(len(allChainIDs))]
 			} else {
 				chainID = datagen.GenRandomHexStr(30)
-				expectedChainIDs = append(expectedChainIDs, chainID)
+				allChainIDs = append(allChainIDs, chainID)
 			}
 			header := datagen.GenRandomIBCTMHeader(chainID, 0)
 			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
 		}
 
+		limit := datagen.RandomInt(len(allChainIDs)-1) + 1
+
 		// make query to get actual chain IDs
-		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{})
+		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{
+			Pagination: &query.PageRequest{
+				Limit: limit,
+			},
+		})
 		require.NoError(t, err)
 		actualChainIDs := resp.ChainIds
 
-		// sort them and assert equality
-		sort.Strings(expectedChainIDs)
+		// sort them and assert actualChainIDs is a subset of allChainIDs
+		// NOTE: chain IDs in KVStore are in different orders than allChainIDs
+		sort.Strings(allChainIDs)
 		sort.Strings(actualChainIDs)
-		require.Equal(t, len(expectedChainIDs), len(actualChainIDs))
-		for i := 0; i < len(expectedChainIDs); i++ {
-			require.Equal(t, expectedChainIDs[i], actualChainIDs[i])
-		}
+		require.Equal(t, limit, uint64(len(actualChainIDs)))
+		require.True(t, subset(actualChainIDs, allChainIDs))
 	})
 }
 
@@ -347,4 +352,23 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 	})
+}
+
+// subset return whether a is a sublist of b. Both a and b must be (weakly) ascending.
+// (adapted from https://stackoverflow.com/questions/18879109/subset-check-with-slices-in-go)
+func subset(a, b []string) bool {
+	for len(a) > 0 {
+		switch {
+		case len(b) == 0:
+			return false
+		case a[0] == b[0]:
+			a = a[1:]
+			b = b[1:]
+		case a[0] < b[0]:
+			return false
+		case a[0] > b[0]:
+			b = b[1:]
+		}
+	}
+	return true
 }
