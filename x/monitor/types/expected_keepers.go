@@ -20,4 +20,5 @@ type BankKeeper interface {
 
 type BTCLightClientKeeper interface {
 	GetTipInfo(ctx sdk.Context) *lc.BTCHeaderInfo
+	GetBaseBTCHeader(ctx sdk.Context) *lc.BTCHeaderInfo
 }

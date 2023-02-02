@@ -508,7 +508,7 @@ func NewBabylonApp(
 			privSigner.ClientCtx,
 		)
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks()),
+		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)
 	app.ZoneConciergeKeeper.SetCheckpointingKeeper(app.CheckpointingKeeper)
 

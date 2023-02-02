@@ -65,16 +65,16 @@ func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx sdk.Context, ckpt *c
 	store := ctx.KVStore(k.storeKey)
 	ckptHashStr := ckpt.HashStr()
 
-	// if the checkpoint exists, meaning an earlier checkpoint with a lower btc height is already recorded
-	// we should keep the lower btc height in the store
-	if store.Has([]byte(ckptHashStr)) {
-		k.Logger(ctx).With("module", fmt.Sprintf("checkpoint %s is already recorded", ckptHashStr))
-		return nil
-	}
-
 	storeKey, err := types.GetCheckpointReportedLightClientHeightKey(ckptHashStr)
 	if err != nil {
 		return err
+	}
+
+	// if the checkpoint exists, meaning an earlier checkpoint with a lower btc height is already recorded
+	// we should keep the lower btc height in the store
+	if store.Has(storeKey) {
+		k.Logger(ctx).With("module", fmt.Sprintf("checkpoint %s is already recorded", ckptHashStr))
+		return nil
 	}
 
 	currentTipHeight := k.btcLightClientKeeper.GetTipInfo(ctx).Height
@@ -98,6 +98,10 @@ func (k Keeper) removeCheckpointRecord(ctx sdk.Context, ckpt *ckpttypes.RawCheck
 }
 
 func (k Keeper) LightclientHeightAtEpochEnd(ctx sdk.Context, epoch uint64) (uint64, error) {
+	if epoch == 0 {
+		return k.btcLightClientKeeper.GetBaseBTCHeader(ctx).Height, nil
+	}
+
 	store := ctx.KVStore(k.storeKey)
 
 	btcHeightBytes := store.Get(types.GetEpochEndLightClientHeightKey(epoch))

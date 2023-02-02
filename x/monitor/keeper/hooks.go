@@ -16,8 +16,7 @@ type Hooks struct {
 	k Keeper
 }
 
-var _ HandledHooks = Hooks{}
-
+// Create new distribution hooks
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64) {}

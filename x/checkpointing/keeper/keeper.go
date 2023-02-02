@@ -3,7 +3,6 @@ package keeper
 import (
 	"errors"
 	"fmt"
-
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -210,6 +209,11 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 
 	// can skip the checks if it is identical with the local checkpoint that is not accumulating
 	if ckptWithMeta.Ckpt.Equal(ckpt) && ckptWithMeta.Status != types.Accumulating {
+		// record verified checkpoint
+		err = k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
+		if err != nil {
+			return nil, fmt.Errorf("failed to record verified checkpoint of epoch %d for monitoring: %w", ckpt.EpochNum, err)
+		}
 		return ckptWithMeta, nil
 	}
 
@@ -244,7 +248,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	// record verified checkpoint
 	err = k.AfterRawCheckpointBlsSigVerified(ctx, ckpt)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to record verified checkpoint of epoch %d for monitoring: %w", ckpt.EpochNum, err)
 	}
 
 	// now the checkpoint's multi-sig is valid, if the lastcommithash is the
@@ -268,6 +272,10 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	}
 
 	return nil, types.ErrConflictingCheckpoint
+}
+
+func (k *Keeper) SetEpochingKeeper(ek types.EpochingKeeper) {
+	k.epochingKeeper = ek
 }
 
 // SetCheckpointSubmitted sets the status of a checkpoint to SUBMITTED,
