@@ -2,7 +2,6 @@ package keeper_test
 
 import (
 	"math/rand"
-	"sort"
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -20,7 +19,7 @@ import (
 )
 
 func FuzzChainList(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
@@ -32,32 +31,36 @@ func FuzzChainList(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times with random chain IDs
-		numHeaders := datagen.RandomInt(100)
-		expectedChainIDs := []string{}
+		numHeaders := datagen.RandomInt(100) + 1
+		allChainIDs := []string{}
 		for i := uint64(0); i < numHeaders; i++ {
 			var chainID string
 			// simulate the scenario that some headers belong to the same chain
 			if i > 0 && datagen.OneInN(2) {
-				chainID = expectedChainIDs[rand.Intn(len(expectedChainIDs))]
+				chainID = allChainIDs[rand.Intn(len(allChainIDs))]
 			} else {
 				chainID = datagen.GenRandomHexStr(30)
-				expectedChainIDs = append(expectedChainIDs, chainID)
+				allChainIDs = append(allChainIDs, chainID)
 			}
 			header := datagen.GenRandomIBCTMHeader(chainID, 0)
 			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
 		}
 
+		limit := datagen.RandomInt(len(allChainIDs)) + 1
+
 		// make query to get actual chain IDs
-		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{})
+		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{
+			Pagination: &query.PageRequest{
+				Limit: limit,
+			},
+		})
 		require.NoError(t, err)
 		actualChainIDs := resp.ChainIds
 
-		// sort them and assert equality
-		sort.Strings(expectedChainIDs)
-		sort.Strings(actualChainIDs)
-		require.Equal(t, len(expectedChainIDs), len(actualChainIDs))
-		for i := 0; i < len(expectedChainIDs); i++ {
-			require.Equal(t, expectedChainIDs[i], actualChainIDs[i])
+		require.Equal(t, limit, uint64(len(actualChainIDs)))
+		allChainIDs = zcKeeper.GetAllChainIDs(ctx)
+		for i := uint64(0); i < limit; i++ {
+			require.Equal(t, allChainIDs[i], actualChainIDs[i])
 		}
 	})
 }

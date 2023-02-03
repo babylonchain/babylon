@@ -207,7 +207,7 @@ func (m *QueryBtcCheckpointInfoResponse) GetInfo() *BTCCheckpointInfo {
 type QueryBtcCheckpointsInfoRequest struct {
 	StartEpoch uint64 `protobuf:"varint,1,opt,name=start_epoch,json=startEpoch,proto3" json:"start_epoch,omitempty"`
 	EndEpoch   uint64 `protobuf:"varint,2,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
-	// pagination defines whether to have the pagination in the response
+	// pagination defines whether to have the pagination in the request
 	Pagination *query.PageRequest `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
