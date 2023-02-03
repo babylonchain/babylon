@@ -80,7 +80,7 @@ message QueryEpochsInfoRequest {
   uint64 start_epoch = 1;
   uint64 end_epoch = 2;
 
-  // pagination defines whether to have the pagination in the response
+  // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
@@ -107,7 +107,7 @@ message QueryEpochMsgsRequest {
   // epoch_num is the number of epoch of the requested msg queue
   uint64 epoch_num = 1;
 
-  // pagination defines whether to have the pagination in the response
+  // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 

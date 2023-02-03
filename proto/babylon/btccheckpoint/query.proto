@@ -55,7 +55,7 @@ message QueryBtcCheckpointsInfoRequest {
   uint64 start_epoch = 1;
   uint64 end_epoch = 2;
 
-  // pagination defines whether to have the pagination in the response
+  // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 

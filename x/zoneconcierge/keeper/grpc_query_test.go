@@ -47,7 +47,7 @@ func FuzzChainList(f *testing.F) {
 			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), header, false)
 		}
 
-		limit := datagen.RandomInt(len(allChainIDs)-1) + 1
+		limit := datagen.RandomInt(len(allChainIDs)) + 1
 
 		// make query to get actual chain IDs
 		resp, err := zcKeeper.ChainList(ctx, &zctypes.QueryChainListRequest{
