@@ -6740,6 +6740,9 @@ paths:
                 type: array
                 items:
                   type: string
+                title: >-
+                  chain_ids are IDs of the chains in ascending alphabetical
+                  order
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -15375,6 +15378,7 @@ definitions:
         type: array
         items:
           type: string
+        title: chain_ids are IDs of the chains in ascending alphabetical order
       pagination:
         title: pagination defines the pagination in the response
         type: object

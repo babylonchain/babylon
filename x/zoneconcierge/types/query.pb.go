@@ -224,7 +224,7 @@ func (m *QueryHeaderResponse) GetForkHeaders() *Forks {
 
 // QueryChainListRequest is request type for the Query/ChainList RPC method
 type QueryChainListRequest struct {
-	// pagination defines whether to have the pagination in the response
+	// pagination defines whether to have the pagination in the request
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
@@ -270,6 +270,7 @@ func (m *QueryChainListRequest) GetPagination() *query.PageRequest {
 
 // QueryChainListResponse is response type for the Query/ChainList RPC method
 type QueryChainListResponse struct {
+	// chain_ids are IDs of the chains in ascending alphabetical order
 	ChainIds []string `protobuf:"bytes,1,rep,name=chain_ids,json=chainIds,proto3" json:"chain_ids,omitempty"`
 	// pagination defines the pagination in the response
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -515,7 +516,7 @@ func (m *QueryEpochChainInfoResponse) GetChainInfo() *ChainInfo {
 // QueryListHeadersRequest is request type for the Query/ListHeaders RPC method.
 type QueryListHeadersRequest struct {
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
-	// pagination defines whether to have the pagination in the response
+	// pagination defines whether to have the pagination in the request
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
