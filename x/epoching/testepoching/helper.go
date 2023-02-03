@@ -8,7 +8,6 @@ import (
 
 	"cosmossdk.io/math"
 	appparams "github.com/babylonchain/babylon/app/params"
-
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/app"
@@ -17,7 +16,6 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -26,6 +24,11 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
+
+type ValidatorInfo struct {
+	BlsKey  bls12381.PrivateKey
+	Address sdk.ValAddress
+}
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
 type Helper struct {
@@ -38,7 +41,8 @@ type Helper struct {
 	QueryClient    types.QueryClient
 	StakingKeeper  *stakingkeeper.Keeper
 
-	GenAccs []authtypes.GenesisAccount
+	GenAccs        []authtypes.GenesisAccount
+	ValBlsPrivKeys []ValidatorInfo
 }
 
 // NewHelper creates the helper for testing the epoching module
@@ -52,7 +56,8 @@ func NewHelper(t *testing.T) *Helper {
 	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
 	require.Len(t, valSet, 1)
 	genesisVal := valSet[0]
-	genesisBLSPubkey := bls12381.GenPrivKey().PubKey()
+	blsPrivKey := bls12381.GenPrivKey()
+	genesisBLSPubkey := blsPrivKey.PubKey()
 	err := app.CheckpointingKeeper.CreateRegistration(ctx, genesisBLSPubkey, genesisVal.Addr)
 	require.NoError(t, err)
 
@@ -62,7 +67,20 @@ func NewHelper(t *testing.T) *Helper {
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, nil}
+	return &Helper{
+		t,
+		ctx,
+		app,
+		&epochingKeeper,
+		msgSrvr,
+		queryClient,
+		&app.StakingKeeper,
+		nil,
+		[]ValidatorInfo{ValidatorInfo{
+			blsPrivKey,
+			genesisVal.Addr,
+		}},
+	}
 }
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
@@ -87,22 +105,23 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
-
+	valInfos := []ValidatorInfo{}
 	// add BLS pubkey to the genesis validator
 	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
 	for _, val := range valSet {
-		blsPubkey := bls12381.GenPrivKey().PubKey()
+		blsPrivKey := bls12381.GenPrivKey()
+		valInfos = append(valInfos, ValidatorInfo{blsPrivKey, val.Addr})
+		blsPubkey := blsPrivKey.PubKey()
 		err = app.CheckpointingKeeper.CreateRegistration(ctx, blsPubkey, val.Addr)
 		require.NoError(t, err)
 	}
-
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs}
+	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs, valInfos}
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
@@ -145,38 +164,6 @@ func (h *Helper) EndBlock() sdk.Context {
 	h.App.EndBlock(abci.RequestEndBlock{})
 	h.App.Commit()
 	return h.Ctx
-}
-
-// CreateValidator calls handler to create a new staking validator
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount math.Int, ok bool) {
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
-	h.createValidator(addr, pk, coin, ok)
-}
-
-// CreateValidatorWithValPower calls handler to create a new staking validator with zero commission
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey, valPower int64, ok bool) math.Int {
-	amount := h.StakingKeeper.TokensFromConsensusPower(h.Ctx, valPower)
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
-	h.createValidator(addr, pk, coin, ok)
-	return amount
-}
-
-// CreateValidatorMsg returns a message used to create validator in this service.
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, stakeAmount math.Int) *stakingtypes.MsgCreateValidator {
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
-	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
-	require.NoError(h.t, err)
-	return msg
-}
-
-// TODO: change to the wrapped version in the checkpointing module (require modifying checkpointing module)
-func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, coin sdk.Coin, ok bool) {
-	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
-	require.NoError(h.t, err)
-	h.Handle(msg, ok)
 }
 
 // WrappedDelegate calls handler to delegate stake for a validator

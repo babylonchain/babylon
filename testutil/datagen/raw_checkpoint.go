@@ -82,6 +82,16 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 	return checkpoints
 }
 
+func GenSequenceRawCheckpointsWithMeta(tipEpoch uint64) []*types.RawCheckpointWithMeta {
+	ckpts := make([]*types.RawCheckpointWithMeta, int(tipEpoch)+1)
+	for e := uint64(0); e <= tipEpoch; e++ {
+		ckpt := GenRandomRawCheckpointWithMeta()
+		ckpt.Ckpt.EpochNum = e
+		ckpts[int(e)] = ckpt
+	}
+	return ckpts
+}
+
 func GenerateBLSSigs(keys []bls12381.PrivateKey, msg []byte) []bls12381.Signature {
 	var sigs []bls12381.Signature
 	for _, privkey := range keys {

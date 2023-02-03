@@ -1,4 +1,4 @@
-FROM golang:1.18-alpine AS build
+FROM golang:1.19-alpine AS build
 RUN apk add build-base git linux-headers libc-dev
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 WORKDIR /work
@@ -16,7 +16,7 @@ COPY --from=build /work/build/babylond /babylond/
 COPY --from=build /go/bin/dlv /usr/local/bin
 WORKDIR /babylond
 
-EXPOSE 26656 26657 2345
+EXPOSE 26656 26657 2345 1317
 ENTRYPOINT ["/usr/bin/wrapper.sh"]
 CMD ["start", "--log_format", "plain"]
 STOPSIGNAL SIGTERM

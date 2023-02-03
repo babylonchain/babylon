@@ -14,7 +14,8 @@ func FuzzForkIndexer(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		rand.Seed(seed)
 
-		_, babylonChain, czChain, zcKeeper := SetupTest(t)
+		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
@@ -22,7 +23,7 @@ func FuzzForkIndexer(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(100) + 1
 		numForkHeaders := datagen.RandomInt(10) + 1
-		_, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, numHeaders, numForkHeaders)
+		_, forkHeaders := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// check if the fork is updated or not
 		forks := zcKeeper.GetForks(ctx, czChain.ChainID, numHeaders-1)
@@ -34,7 +35,8 @@ func FuzzForkIndexer(f *testing.F) {
 		}
 
 		// check if the chain info is updated or not
-		chainInfo := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
+		chainInfo, err := zcKeeper.GetChainInfo(ctx, czChain.ChainID)
+		require.NoError(t, err)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 		for i := range forks.Headers {
 			require.Equal(t, czChain.ChainID, chainInfo.LatestForks.Headers[i].ChainId)

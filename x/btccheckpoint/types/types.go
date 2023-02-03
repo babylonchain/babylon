@@ -1,9 +1,12 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 
+	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,10 +16,10 @@ import (
 // Modelling proofs as separate Proof1 and Proof2, as this is more explicit than
 // []*ParsedProof.
 type RawCheckpointSubmission struct {
-	Submitter      sdk.AccAddress
+	Reporter       sdk.AccAddress
 	Proof1         ParsedProof
 	Proof2         ParsedProof
-	checkpointData []byte
+	CheckpointData btctxformatter.RawBtcCheckpoint
 }
 
 // SubmissionBtcInfo encapsualte important information about submission posistion
@@ -37,13 +40,13 @@ func NewRawCheckpointSubmission(
 	a sdk.AccAddress,
 	p1 ParsedProof,
 	p2 ParsedProof,
-	checkpointData []byte,
+	checkpointData btctxformatter.RawBtcCheckpoint,
 ) RawCheckpointSubmission {
 	r := RawCheckpointSubmission{
-		Submitter:      a,
+		Reporter:       a,
 		Proof1:         p1,
 		Proof2:         p2,
-		checkpointData: checkpointData,
+		CheckpointData: checkpointData,
 	}
 
 	return r
@@ -51,13 +54,6 @@ func NewRawCheckpointSubmission(
 
 func (s *RawCheckpointSubmission) GetProofs() []*ParsedProof {
 	return []*ParsedProof{&s.Proof1, &s.Proof2}
-}
-
-func (s *RawCheckpointSubmission) GetRawCheckPointBytes() []byte {
-	checkpointDataCopy := make([]byte, len(s.checkpointData))
-	// return copy, to avoid someone modifing original
-	copy(checkpointDataCopy, s.checkpointData)
-	return checkpointDataCopy
 }
 
 func (s *RawCheckpointSubmission) GetFirstBlockHash() types.BTCHeaderHashBytes {
@@ -95,9 +91,12 @@ func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 
 func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
-		Submitter: rsc.Submitter.Bytes(),
-		TxsInfo:   txsInfo,
-		Epoch:     epochNum,
+		VigilanteAddresses: &CheckpointAddresses{
+			Reporter:  rsc.Reporter.Bytes(),
+			Submitter: rsc.CheckpointData.SubmitterAddress,
+		},
+		TxsInfo: txsInfo,
+		Epoch:   epochNum,
 	}
 }
 
@@ -112,11 +111,10 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 	return hashes
 }
 
-func NewEmptyEpochData(rawCheckpointBytes []byte) EpochData {
+func NewEmptyEpochData() EpochData {
 	return EpochData{
-		Key:           []*SubmissionKey{},
-		Status:        Submitted,
-		RawCheckpoint: rawCheckpointBytes,
+		Key:    []*SubmissionKey{},
+		Status: Submitted,
 	}
 }
 
@@ -171,4 +169,21 @@ func (ti *TransactionInfo) ValidateBasic() error {
 		return fmt.Errorf("proof in TransactionInfo is nil")
 	}
 	return nil
+}
+
+func NewSpvProofFromHexBytes(c codec.Codec, proof string) (*BTCSpvProof, error) {
+	bytes, err := hex.DecodeString(proof)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var p BTCSpvProof
+	err = c.Unmarshal(bytes, &p)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &p, nil
 }

@@ -81,14 +81,14 @@ message TransactionInfo {
   // key is the position (txIdx, blockHash) of this tx on BTC blockchain
   // Although it is already a part of SubmissionKey, we store it here again
   // to make TransactionInfo self-contained.
-  // For example, storing the key allows TransactionInfo to not relay on 
-  // the fact that TransactionInfo will be ordered in the same order as 
+  // For example, storing the key allows TransactionInfo to not relay on
+  // the fact that TransactionInfo will be ordered in the same order as
   // TransactionKeys in SubmissionKey.
   TransactionKey key = 1;
   // transaction is the full transaction in bytes
   bytes transaction = 2;
   // proof is the Merkle proof that this tx is included in the position in `key`
-  // TODO: maybe it could use here better format as we already processed and 
+  // TODO: maybe it could use here better format as we already processed and
   // valideated the proof?
   bytes proof = 3;
 }
@@ -98,10 +98,8 @@ message TransactionInfo {
 // depth/block number info, without context (i.e info about chain) is pretty useless
 // and blockshash in enough to retrieve is from lightclient
 message SubmissionData {
-  // TODO: this could probably be better typed
-  // Address of submitter of given checkpoint. Required to payup the reward to
-  // submitter of given checkpoint
-  bytes submitter = 1;
+  // address of the submitter and reporter
+  CheckpointAddresses vigilante_addresses = 1;
   // txs_info is the two `TransactionInfo`s corresponding to the submission
   // It is used for
   // - recovering address of sender of btc transction to payup the reward.
@@ -119,8 +117,24 @@ message EpochData {
 
   // Current btc status of the epoch
   BtcStatus status = 2;
-
-  // Required to comunicate with checkpoint module about checkpoint status
-  bytes raw_checkpoint = 3;
 }
 
+message CheckpointAddresses {
+  // TODO: this could probably be better typed
+  // Address of the checkpoint submitter, extracted from the checkpoint itself.
+  bytes submitter = 1;
+  // Address of the reporter which reported the submissions, calculated from
+  // submission message MsgInsertBTCSpvProof itself
+  bytes reporter = 2;
+}
+
+message BTCCheckpointInfo {
+  // epoch number of this checkpoint
+  uint64 epoch_number = 1;
+  // height of earliest BTC block that includes this checkpoint
+  uint64 earliest_btc_block_number = 2;
+  // hash of earliest BTC block that includes this checkpoint
+  bytes earliest_btc_block_hash = 3;
+  // list of vigilantes' addresses
+  repeated CheckpointAddresses vigilante_address_list = 4;
+}

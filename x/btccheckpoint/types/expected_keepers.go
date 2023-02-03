@@ -1,7 +1,9 @@
 package types
 
 import (
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
@@ -30,10 +32,7 @@ type BTCLightClientKeeper interface {
 }
 
 type CheckpointingKeeper interface {
-	// CheckpointEpoch should return epoch index if provided rawCheckpoint
-	// passes all checkpointing validations and error otherwise
-	CheckpointEpoch(ctx sdk.Context, rawCheckpoint []byte) (uint64, error)
-
+	VerifyCheckpoint(ctx sdk.Context, checkpoint txformat.RawBtcCheckpoint) error
 	// It quite mouthfull to have 4 different methods to operate on checkpoint state
 	// but this approach decouples both modules a bit more than having some kind
 	// of shared enum passed into the methods. Both modules are free to evolve their

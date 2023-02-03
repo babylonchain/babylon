@@ -502,18 +502,20 @@ func (m *MockBtcCheckpointKeeper) EXPECT() *MockBtcCheckpointKeeperMockRecorder 
 	return m.recorder
 }
 
-// GetEpochData mocks base method.
-func (m *MockBtcCheckpointKeeper) GetEpochData(ctx types2.Context, e uint64) *types.EpochData {
+// GetBestSubmission mocks base method.
+func (m *MockBtcCheckpointKeeper) GetBestSubmission(ctx types2.Context, e uint64) (types.BtcStatus, *types.SubmissionKey, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEpochData", ctx, e)
-	ret0, _ := ret[0].(*types.EpochData)
-	return ret0
+	ret := m.ctrl.Call(m, "GetBestSubmission", ctx, e)
+	ret0, _ := ret[0].(types.BtcStatus)
+	ret1, _ := ret[1].(*types.SubmissionKey)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
-// GetEpochData indicates an expected call of GetEpochData.
-func (mr *MockBtcCheckpointKeeperMockRecorder) GetEpochData(ctx, e interface{}) *gomock.Call {
+// GetBestSubmission indicates an expected call of GetBestSubmission.
+func (mr *MockBtcCheckpointKeeperMockRecorder) GetBestSubmission(ctx, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochData", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetEpochData), ctx, e)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBestSubmission", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetBestSubmission), ctx, e)
 }
 
 // GetSubmissionData mocks base method.
@@ -566,6 +568,21 @@ func (m *MockCheckpointingKeeper) GetBLSPubKeySet(ctx types2.Context, epochNumbe
 func (mr *MockCheckpointingKeeperMockRecorder) GetBLSPubKeySet(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBLSPubKeySet", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetBLSPubKeySet), ctx, epochNumber)
+}
+
+// GetRawCheckpoint mocks base method.
+func (m *MockCheckpointingKeeper) GetRawCheckpoint(ctx types2.Context, epochNumber uint64) (*types0.RawCheckpointWithMeta, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRawCheckpoint", ctx, epochNumber)
+	ret0, _ := ret[0].(*types0.RawCheckpointWithMeta)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRawCheckpoint indicates an expected call of GetRawCheckpoint.
+func (mr *MockCheckpointingKeeperMockRecorder) GetRawCheckpoint(ctx, epochNumber interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRawCheckpoint", reflect.TypeOf((*MockCheckpointingKeeper)(nil).GetRawCheckpoint), ctx, epochNumber)
 }
 
 // MockEpochingKeeper is a mock of EpochingKeeper interface.

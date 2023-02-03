@@ -1,10 +1,13 @@
 package keeper
 
 import (
+	"fmt"
+
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 )
@@ -31,6 +34,21 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash: txHash,
 	}
+
+	// initialise chain info if not exist
+	chainInfo, err := h.k.GetChainInfo(ctx, indexedHeader.ChainId)
+	if err != nil {
+		if sdkerrors.IsOf(err, types.ErrEpochChainInfoNotFound) {
+			// chain info does not exist yet, initialise chain info for this chain
+			chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
+			if err != nil {
+				panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
+			}
+		} else {
+			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ChainId, err))
+		}
+	}
+
 	if isOnFork {
 		// insert header to fork index
 		if err := h.k.insertForkHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
@@ -41,12 +59,19 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 			panic(err)
 		}
 	} else {
+		// ensure the header is the latest one, otherwise ignore it
+		// NOTE: while an old header is considered acceptable in IBC-Go (see Case_valid_past_update), but
+		// ZoneConcierge should not checkpoint it since Babylon requires monotonic checkpointing
+		if !chainInfo.IsLatestHeader(&indexedHeader) {
+			return
+		}
+
 		// insert header to canonical chain index
 		if err := h.k.insertHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 		// update the latest canonical header in chain info
-		if err := h.k.tryToUpdateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
+		if err := h.k.updateLatestHeader(ctx, indexedHeader.ChainId, &indexedHeader); err != nil {
 			panic(err)
 		}
 	}
@@ -69,7 +94,14 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error 
 
 // Other unused hooks
 
-func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error     { return nil }
-func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error         { return nil }
+func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     { return nil }
+
+func (h Hooks) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+	return nil
+}
+func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+	return nil
+}
 func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64)                          {}
 func (h Hooks) BeforeSlashThreshold(ctx sdk.Context, valSet epochingtypes.ValidatorSet) {}

@@ -21,6 +21,13 @@ service Query {
     option (google.api.http).get = "/babylon/epoching/v1/epochs/{epoch_num=*}";
   }
 
+  // EpochsInfo queries the metadata of epochs in a given range, depending on the
+  // parameters in the pagination request. Th main use case will be querying the
+  // latest epochs in time order.
+  rpc EpochsInfo(QueryEpochsInfoRequest) returns (QueryEpochsInfoResponse) {
+    option (google.api.http).get = "/babylon/epoching/v1/epochs";
+  }
+
   // CurrentEpoch queries the current epoch
   rpc CurrentEpoch(QueryCurrentEpochRequest) returns (QueryCurrentEpochResponse) {
     option (google.api.http).get = "/babylon/epoching/v1/current_epoch";
@@ -69,6 +76,21 @@ message QueryEpochInfoResponse {
   babylon.epoching.v1.Epoch epoch = 1;
 }
 
+message QueryEpochsInfoRequest {
+  uint64 start_epoch = 1;
+  uint64 end_epoch = 2;
+
+  // pagination defines whether to have the pagination in the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+message QueryEpochsInfoResponse {
+  repeated babylon.epoching.v1.Epoch epochs = 1;
+  
+  // pagination defines the pagination in the response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
 // QueryCurrentEpochRequest is the request type for the Query/CurrentEpoch RPC method
 message QueryCurrentEpochRequest {}
 
@@ -85,7 +107,7 @@ message QueryEpochMsgsRequest {
   // epoch_num is the number of epoch of the requested msg queue
   uint64 epoch_num = 1;
 
-  // pagination defines whether to have the pagination in the response
+  // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 

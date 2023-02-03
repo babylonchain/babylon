@@ -26,36 +26,36 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams())
 
-	cmd.AddCommand(CmdBtcCheckpointHeight())
+	cmd.AddCommand(CmdBtcCheckpointHeightAndHash())
 	cmd.AddCommand(CmdEpochSubmissions())
 	return cmd
 }
 
-func CmdBtcCheckpointHeight() *cobra.Command {
+func CmdBtcCheckpointHeightAndHash() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-height <epoch_number>",
-		Short: "retrieve earliest btc height for given epoch",
+		Use:   "btc-height-hash <epoch_number>",
+		Short: "retrieve earliest btc height and hash for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+			epochNum, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
 				return err
 			}
 
-			params := types.QueryBtcCheckpointHeightRequest{EpochNum: epoch_num}
+			req := types.QueryBtcCheckpointInfoRequest{EpochNum: epochNum}
 
-			res, err := queryClient.BtcCheckpointHeight(context.Background(), &params)
+			resp, err := queryClient.BtcCheckpointInfo(context.Background(), &req)
 
 			if err != nil {
 				return err
 			}
 
-			return clientCtx.PrintProto(res)
+			return clientCtx.PrintProto(resp)
 		},
 	}
 
@@ -65,7 +65,7 @@ func CmdBtcCheckpointHeight() *cobra.Command {
 
 func CmdEpochSubmissions() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "epoch-submissions <epoch_number>",
+		Use:   "epoch-submissions <epochNumber>",
 		Short: "all checkpoint submissions for given epoch",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,7 @@ func CmdEpochSubmissions() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
+			epochNum, err := strconv.ParseUint(args[0], 10, 64)
 
 			if err != nil {
 				return err
@@ -84,7 +84,7 @@ func CmdEpochSubmissions() *cobra.Command {
 				return err
 			}
 
-			params := types.QueryEpochSubmissionsRequest{EpochNum: epoch_num, Pagination: pageReq}
+			params := types.QueryEpochSubmissionsRequest{EpochNum: epochNum, Pagination: pageReq}
 
 			res, err := queryClient.EpochSubmissions(context.Background(), &params)
 

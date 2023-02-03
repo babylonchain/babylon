@@ -331,18 +331,26 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 				ctx := suite.babylonChain.GetContext()
 				czChainID := suite.czChain.ChainID
 				updateHeaderHeight := uint64(updateHeader.Header.Height)
-				// updateHeader should be correctly recorded in canonical chain indexer
-				expUpdateHeader, err := suite.zcKeeper.GetHeader(ctx, czChainID, updateHeaderHeight)
-				suite.Require().NoError(err)
-				suite.Require().Equal(expUpdateHeader.Hash, updateHeader.Header.LastCommitHash)
-				suite.Require().Equal(expUpdateHeader.Height, updateHeaderHeight)
+
 				// updateHeader should be correctly recorded in chain info indexer
 				if tc.name != "valid past update" { // we exclude the case of past update since chain info indexer does not record past update
-					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					// updateHeader should be correctly recorded in canonical chain indexer
+					expUpdateHeader, err := suite.zcKeeper.GetHeader(ctx, czChainID, updateHeaderHeight)
+					suite.Require().NoError(err)
+					suite.Require().Equal(expUpdateHeader.Hash, updateHeader.Header.LastCommitHash)
+					suite.Require().Equal(expUpdateHeader.Height, updateHeaderHeight)
+					// updateHeader should be correctly recorded in chain info indexer
+					chainInfo, err := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().NoError(err)
 					suite.Require().Equal(chainInfo.LatestHeader.Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestHeader.Height, updateHeaderHeight)
-				} else { // in the test case where Babylon receives a past CZ header, the latest header should be the last header
-					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+				} else {
+					// there should be no header in updateHeaderHeight
+					_, err := suite.zcKeeper.GetHeader(ctx, czChainID, updateHeaderHeight)
+					suite.Require().Error(err)
+					// the latest header in chain info indexer should be the last header
+					chainInfo, err := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().NoError(err)
 					suite.Require().Equal(chainInfo.LatestHeader.Hash, suite.czChain.LastHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestHeader.Height, uint64(suite.czChain.LastHeader.Header.Height))
 				}
@@ -358,7 +366,8 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 					suite.Require().Equal(expForks.Headers[0].Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(expForks.Headers[0].Height, updateHeaderHeight)
 					// updateHeader should be correctly recorded in chain info indexer
-					chainInfo := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					chainInfo, err := suite.zcKeeper.GetChainInfo(ctx, czChainID)
+					suite.Require().NoError(err)
 					suite.Require().Equal(1, len(chainInfo.LatestForks.Headers))
 					suite.Require().Equal(chainInfo.LatestForks.Headers[0].Hash, updateHeader.Header.LastCommitHash)
 					suite.Require().Equal(chainInfo.LatestForks.Headers[0].Height, updateHeaderHeight)

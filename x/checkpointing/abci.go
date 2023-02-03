@@ -26,7 +26,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	if epoch.IsFirstBlock(ctx) {
 		err := k.InitValidatorBLSSet(ctx)
 		if err != nil {
-			panic(fmt.Errorf("failed to store validator BLS set"))
+			panic(fmt.Errorf("failed to store validator BLS set: %w", err))
 		}
 	}
 	if epoch.IsSecondBlock(ctx) {

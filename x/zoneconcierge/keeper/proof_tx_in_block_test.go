@@ -31,7 +31,9 @@ func TestProveTxInBlock(t *testing.T) {
 	err = testNetwork.WaitForNextBlock()
 	require.NoError(t, err)
 
-	_, babylonChain, _, zcKeeper := SetupTest(t)
+	_, babylonChain, _, babylonApp := SetupTest(t)
+	zcKeeper := babylonApp.ZoneConciergeKeeper
+
 	ctx := babylonChain.GetContext()
 
 	// construct client context

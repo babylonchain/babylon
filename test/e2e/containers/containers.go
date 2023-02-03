@@ -61,7 +61,7 @@ func (m *Manager) ExecTxCmd(t *testing.T, chainId string, containerName string, 
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
 func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
-	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=block", "--yes", "--keyring-backend=test", "--log_format=json"}
+	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=block", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/babylondata"}
 	txCommand := append(command, allTxArgs...)
 	return m.ExecCmd(t, containerName, txCommand, successStr)
 }
@@ -206,8 +206,11 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
 		Cmd:        []string{"start"},
+		Env: []string{
+			"HOME=/babylondata",
+		},
 		Mounts: []string{
-			fmt.Sprintf("%s/:/data/node0/babylond", valCondifDir),
+			fmt.Sprintf("%s/:/babylondata", valCondifDir),
 		},
 	}
 

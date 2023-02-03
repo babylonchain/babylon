@@ -7,6 +7,9 @@ import (
 	"time"
 
 	"github.com/babylonchain/babylon/privval"
+	bbn "github.com/babylonchain/babylon/types"
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -40,9 +43,12 @@ type NodeConfig struct {
 
 const (
 	// common
-	BabylonDenom        = "ubbn"
-	MinGasPrice         = "0.000"
-	ValidatorWalletName = "val"
+	BabylonDenom                 = "ubbn"
+	MinGasPrice                  = "0.000"
+	ValidatorWalletName          = "val"
+	BabylonOpReturnTag           = "bbni"
+	BabylonBtcConfirmationPeriod = 2
+	BabylonBtcFinalizationPeriod = 4
 	// chainA
 	ChainAID        = "bbn-test-a"
 	BabylonBalanceA = 200000000000
@@ -226,6 +232,16 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, blctypes.ModuleName, blctypes.DefaultGenesis(), updateBtcLightClientGenesis)
+	if err != nil {
+		return err
+	}
+
+	err = updateModuleGenesis(appGenState, btccheckpointtypes.ModuleName, btccheckpointtypes.DefaultGenesis(), updateBtccheckpointGenesis)
+	if err != nil {
+		return err
+	}
+
 	bz, err := json.MarshalIndent(appGenState, "", "  ")
 	if err != nil {
 		return err
@@ -276,6 +292,23 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 
 func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
 	crisisGenState.ConstantFee.Denom = BabylonDenom
+}
+
+func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
+	blcGenState.Params = blctypes.DefaultParams()
+	btcSimnetGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
+	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcSimnetGenesisHex)
+	if err != nil {
+		panic(err)
+	}
+	work := blctypes.CalcWork(&baseBtcHeader)
+	blcGenState.BaseBtcHeader = *blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)
+}
+
+func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {
+	btccheckpointGenState.Params = btccheckpointtypes.DefaultParams()
+	btccheckpointGenState.Params.BtcConfirmationDepth = BabylonBtcConfirmationPeriod
+	btccheckpointGenState.Params.CheckpointFinalizationTimeout = BabylonBtcFinalizationPeriod
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {

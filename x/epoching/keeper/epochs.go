@@ -137,6 +137,10 @@ func (k Keeper) IncEpoch(ctx sdk.Context) types.Epoch {
 	return newEpoch
 }
 
+// epochInfoStore returns the store for epoch metadata
+// prefix: EpochInfoKey
+// key: epochNumber
+// value: epoch metadata
 func (k Keeper) epochInfoStore(ctx sdk.Context) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	return prefix.NewStore(store, types.EpochInfoKey)

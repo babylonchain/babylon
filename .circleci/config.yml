@@ -9,7 +9,7 @@ jobs:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     machine:
-      image: ubuntu-2204:2022.07.1
+      image: ubuntu-2204:2022.10.1
       resource_class: large
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
@@ -31,7 +31,7 @@ jobs:
       - run:
           name: Lint
           command: |
-            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1 
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
             ./bin/golangci-lint run
       - run:
           name: Run tests
@@ -43,6 +43,12 @@ jobs:
             make localnet-start-test
             sudo -E env "PATH=$PATH" make test-babylon-integration
             make localnet-stop
+      # TODO: If CI tests will take to long consider having only this e2e test
+      # instead of separate integration tests and e2e tests.
+      - run:
+          name: Run e2e tests
+          command: |
+            make test-e2e
 
 
 # Invoke jobs via workflows
