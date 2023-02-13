@@ -110,16 +110,6 @@ paths:
                       type: string
                       format: byte
       parameters:
-        - name: start_epoch
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: end_epoch
-          in: query
-          required: false
-          type: string
-          format: uint64
         - name: pagination.key
           description: |-
             key is a value returned in PageResponse.next_key to begin
@@ -1875,16 +1865,6 @@ paths:
                           "value": "1.212s"
                         }
       parameters:
-        - name: start_epoch
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: end_epoch
-          in: query
-          required: false
-          type: string
-          format: uint64
         - name: pagination.key
           description: |-
             key is a value returned in PageResponse.next_key to begin

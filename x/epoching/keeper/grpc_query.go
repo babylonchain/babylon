@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"cosmossdk.io/math"
 
@@ -58,19 +57,6 @@ func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (
 // EpochsInfo handles the QueryEpochsInfoRequest query
 func (k Keeper) EpochsInfo(c context.Context, req *types.QueryEpochsInfoRequest) (*types.QueryEpochsInfoResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// parse start_epoch and end_epoch and forward to the pagination request
-	if req.EndEpoch > 0 {
-		// this query uses start_epoch and end_epoch to specify range
-		if req.StartEpoch > req.EndEpoch {
-			return nil, fmt.Errorf("StartEpoch (%d) should not be larger than EndEpoch (%d)", req.StartEpoch, req.EndEpoch)
-		}
-		req.Pagination = &query.PageRequest{
-			Key:     sdk.Uint64ToBigEndian(req.StartEpoch),
-			Limit:   req.EndEpoch - req.StartEpoch + 1,
-			Reverse: false,
-		}
-	}
 
 	epochInfoStore := k.epochInfoStore(ctx)
 	epochs := []*types.Epoch{}
