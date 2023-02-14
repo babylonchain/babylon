@@ -52,11 +52,8 @@ message QueryBtcCheckpointInfoResponse {
 
 // QueryBtcCheckpointsInfoRequest is request type for the Query/BtcCheckpointsInfo RPC method
 message QueryBtcCheckpointsInfoRequest {
-  uint64 start_epoch = 1;
-  uint64 end_epoch = 2;
-
   // pagination defines whether to have the pagination in the request
-  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
 // QueryBtcCheckpointsInfoResponse is response type for the Query/BtcCheckpointsInfo RPC method

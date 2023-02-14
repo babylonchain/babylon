@@ -121,19 +121,6 @@ func (k Keeper) BtcCheckpointsInfo(c context.Context, req *types.QueryBtcCheckpo
 
 	ctx := sdk.UnwrapSDKContext(c)
 
-	// parse start_epoch and end_epoch and forward to the pagination request
-	if req.EndEpoch > 0 {
-		// this query uses start_epoch and end_epoch to specify range
-		if req.StartEpoch > req.EndEpoch {
-			return nil, fmt.Errorf("StartEpoch (%d) should not be larger than EndEpoch (%d)", req.StartEpoch, req.EndEpoch)
-		}
-		req.Pagination = &query.PageRequest{
-			Key:     sdk.Uint64ToBigEndian(req.StartEpoch),
-			Limit:   req.EndEpoch - req.StartEpoch + 1,
-			Reverse: false,
-		}
-	}
-
 	store := ctx.KVStore(k.storeKey)
 	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
 
