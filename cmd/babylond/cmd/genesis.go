@@ -64,7 +64,8 @@ Example:
 				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.GenesisTime)
+					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
+					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GenesisTime)
 			} else if network == "mainnet" {
 				// TODO: mainnet genesis params
 				panic("Mainnet params not implemented.")
@@ -191,7 +192,8 @@ type GenesisParams struct {
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, epochInterval uint64, baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64, genesisTime time.Time) GenesisParams {
+	baseBtcHeaderHeight uint64, inflationRateChange float64,
+	inflationMin float64, inflationMax float64, genesisTime time.Time) GenesisParams {
 
 	genParams := GenesisParams{}
 
@@ -226,6 +228,10 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 
 	genParams.MintParams = minttypes.DefaultParams()
 	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
+	// This should always work as inflation rate is already a float64
+	genParams.MintParams.InflationRateChange = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationRateChange))
+	genParams.MintParams.InflationMin = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationMin))
+	genParams.MintParams.InflationMax = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationMax))
 
 	genParams.GovParams = govv1.DefaultParams()
 	genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
