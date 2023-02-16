@@ -6,6 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdktx "github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/types"
 )
 
 func SendMsgToTendermint(clientCtx client.Context, msg sdk.Msg) (*sdk.TxResponse, error) {
@@ -19,7 +21,7 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 		}
 	}
 
-	// TODO gasAdjustment and gasPrices could be moved to the checkpoinging params
+	gasPrice, gasAdjustment := types.MustGetGasSettings(clientCtx.HomeDir, clientCtx.Viper)
 	txf := sdktx.Factory{}.
 		WithTxConfig(clientCtx.TxConfig).
 		WithAccountRetriever(clientCtx.AccountRetriever).
@@ -27,10 +29,8 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 		WithChainID(clientCtx.ChainID).
 		WithFeeGranter(clientCtx.FeeGranter).
 		WithFeePayer(clientCtx.FeePayer).
-		WithGasAdjustment(1.5).
-		WithGasPrices("0.01ubbn")
-	// WithFees("100ubbn")
-	// sdktx.NewFactoryCLI()
+		WithGasPrices(gasPrice).
+		WithGasAdjustment(gasAdjustment)
 
 	return BroadcastTx(clientCtx, txf, msgs...)
 }
@@ -51,14 +51,6 @@ func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (
 		return nil, err
 	}
 	txf = txf.WithGas(adjusted)
-	// txf.WithGas(adjusted)
-	// gasPriceAmount, err := txf.GasPrices()[0].Amount.Float64()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// feeAmount := float64(adjusted) * 0.01
-	// txf = txf.WithFees(fmt.Sprintf("%fubbn", feeAmount))
-	// txf = txf.WithFees("100ubbn")
 
 	tx, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {
