@@ -4,11 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/babylonchain/babylon/testutil/mocks"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
@@ -16,6 +11,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/testutil/mocks"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 var (
