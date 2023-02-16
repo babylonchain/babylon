@@ -14,10 +14,12 @@ const (
 	flagBtcFinalizationTimeout = "btc-finalization-timeout"
 	flagBaseBtcHeaderHex       = "btc-base-header"
 	flagBaseBtcHeaderHeight    = "btc-base-header-height"
-	flagGenesisTime            = "genesis-time"
 	flagInflationRateChange    = "inflation-rate-change"
 	flagInflationMax           = "inflation-max"
 	flagInflationMin           = "inflation-min"
+	flagGoalBonded             = "goal-bonded"
+	flagBlocksPerYear          = "blocks-per-year"
+	flagGenesisTime            = "genesis-time"
 )
 
 type GenesisCLIArgs struct {
@@ -31,6 +33,8 @@ type GenesisCLIArgs struct {
 	InflationRateChange    float64
 	InflationMax           float64
 	InflationMin           float64
+	GoalBonded             float64
+	BlocksPerYear          uint64
 	GenesisTime            time.Time
 }
 
@@ -47,10 +51,12 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// Genesis header for the simnet
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
 	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
-	cmd.Flags().Int64(flagGenesisTime, time.Now().Unix(), "Genesis time")
 	cmd.Flags().Float64(flagInflationRateChange, 0.13, "Inflation rate change")
 	cmd.Flags().Float64(flagInflationMax, 0.2, "Maximum inflation")
 	cmd.Flags().Float64(flagInflationMin, 0.07, "Minimum inflation")
+	cmd.Flags().Float64(flagGoalBonded, 0.67, "Bonded tokens goal")
+	cmd.Flags().Uint64(flagBlocksPerYear, 6311520, "Blocks per year")
+	cmd.Flags().Int64(flagGenesisTime, time.Now().Unix(), "Genesis time")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
@@ -65,6 +71,8 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
 	inflationMax, _ := cmd.Flags().GetFloat64(flagInflationMax)
 	inflationMin, _ := cmd.Flags().GetFloat64(flagInflationMin)
+	goalBonded, _ := cmd.Flags().GetFloat64(flagGoalBonded)
+	blocksPerYear, _ := cmd.Flags().GetUint64(flagBlocksPerYear)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
@@ -84,5 +92,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		InflationRateChange:    inflationRateChange,
 		InflationMax:           inflationMax,
 		InflationMin:           inflationMin,
+		GoalBonded:             goalBonded,
+		BlocksPerYear:          blocksPerYear,
 	}
 }
