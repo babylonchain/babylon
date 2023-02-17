@@ -1,13 +1,16 @@
 package cmd
 
 import (
-	"fmt"
-
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
-	"github.com/babylonchain/babylon/app/params"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
+)
+
+const (
+	defaultKeyName       = "default"
+	defaultGasPrice      = "0.01ubbn"
+	defaultGasAdjustment = 1.2
 )
 
 type BtcConfig struct {
@@ -25,9 +28,9 @@ func defaultBabylonBtcConfig() BtcConfig {
 
 func defaultSignerConfig() SignerConfig {
 	return SignerConfig{
-		KeyName:       "",
-		GasPrice:      fmt.Sprintf("0.01%s", params.BaseCoinUnit),
-		GasAdjustment: 1.2,
+		KeyName:       defaultKeyName,
+		GasPrice:      defaultGasPrice,
+		GasAdjustment: defaultGasAdjustment,
 	}
 }
 

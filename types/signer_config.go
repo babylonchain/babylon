@@ -32,9 +32,13 @@ func parseGasPriceFromConfig(opts servertypes.AppOptions) (string, error) {
 		return "", errors.New("signer gas price should be valid string")
 	}
 
-	_, err = sdk.ParseCoinNormalized(gasPrice)
+	coin, err := sdk.ParseCoinNormalized(gasPrice)
 	if err != nil {
 		return "", errors.New("signer gas price is invalid")
+	}
+
+	if !coin.Amount.IsPositive() {
+		return "", errors.New("gas price should be positive")
 	}
 
 	return gasPrice, nil
