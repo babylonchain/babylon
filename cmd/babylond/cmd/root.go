@@ -274,7 +274,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	if err != nil {
 		panic(err)
 	}
-	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, clientCtx.Keyring)
+	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, clientCtx.Keyring, a.encCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -337,7 +337,7 @@ func (a appCreator) appExport(
 		panic(err)
 	}
 
-	privSigner, err := app.InitPrivSigner(clientCtx, homePath, kr)
+	privSigner, err := app.InitPrivSigner(clientCtx, homePath, kr, a.encCfg)
 	if err != nil {
 		panic(err)
 	}

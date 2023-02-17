@@ -16,6 +16,7 @@ import (
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmos "github.com/tendermint/tendermint/libs/os"
 
+	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/privval"
 )
 
@@ -43,7 +44,7 @@ type PrivSigner struct {
 	ClientCtx client.Context
 }
 
-func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring) (*PrivSigner, error) {
+func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring, encodingCfg appparams.EncodingConfig) (*PrivSigner, error) {
 	// setup private validator
 	nodeCfg := tmconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
@@ -60,7 +61,6 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 
 	// TODO this should probably not create separate config, but rahter accept it
 	// as argument
-	encodingCfg := MakeTestEncodingConfig()
 	clientCtx = clientCtx.
 		WithInterfaceRegistry(encodingCfg.InterfaceRegistry).
 		WithCodec(encodingCfg.Marshaler).
