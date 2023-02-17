@@ -9,8 +9,8 @@ import (
 
 const (
 	defaultKeyName       = "default"
-	defaultGasPrice      = "0.01ubbn"
-	defaultGasAdjustment = 1.2
+	defaultGasPrice      = "0.02ubbn"
+	defaultGasAdjustment = 1.5
 )
 
 type BtcConfig struct {
