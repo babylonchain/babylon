@@ -9,7 +9,7 @@ import (
 
 const (
 	defaultKeyName       = "default"
-	defaultGasPrice      = "0.02ubbn"
+	defaultGasPrice      = "0.01ubbn"
 	defaultGasAdjustment = 1.5
 )
 
