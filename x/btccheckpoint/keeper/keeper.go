@@ -20,6 +20,7 @@ type (
 	Keeper struct {
 		cdc                   codec.BinaryCodec
 		storeKey              storetypes.StoreKey
+		tstoreKey             storetypes.StoreKey
 		memKey                storetypes.StoreKey
 		paramstore            paramtypes.Subspace
 		btcLightClientKeeper  types.BTCLightClientKeeper
@@ -60,6 +61,7 @@ const (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
+	tstoreKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	bk types.BTCLightClientKeeper,
@@ -75,6 +77,7 @@ func NewKeeper(
 	return Keeper{
 		cdc:                   cdc,
 		storeKey:              storeKey,
+		tstoreKey:             tstoreKey,
 		memKey:                memKey,
 		paramstore:            ps,
 		btcLightClientKeeper:  bk,
@@ -345,6 +348,21 @@ func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *type
 // Callback to be called when btc light client tip change
 func (k Keeper) OnTipChange(ctx sdk.Context) {
 	k.checkCheckpoints(ctx)
+}
+
+func (k Keeper) setBtcLightClientUpdated(ctx sdk.Context) {
+	store := ctx.TransientStore(k.tstoreKey)
+	store.Set(types.GetBtcLigtClientUpdatedKey(), []byte{1})
+}
+
+// BtcLightClientUpdated checks if btc light client was updated during block execution
+func (k Keeper) BtcLightClientUpdated(ctx sdk.Context) bool {
+	// transient store is cleared after each block execution, therfore if
+	// BtcLightClientKey is set, it means setBtcLightClientUpdated was called during
+	// current block execution
+	store := ctx.TransientStore(k.tstoreKey)
+	lcUpdated := store.Get(types.GetBtcLigtClientUpdatedKey())
+	return len(lcUpdated) > 0
 }
 
 func (k Keeper) getLastFinalizedEpochNumber(ctx sdk.Context) uint64 {

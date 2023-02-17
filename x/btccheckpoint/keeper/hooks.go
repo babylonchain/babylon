@@ -21,11 +21,11 @@ var _ HandledHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 func (h Hooks) AfterBTCRollBack(ctx sdk.Context, headerInfo *ltypes.BTCHeaderInfo) {
-	h.k.OnTipChange(ctx)
+	h.k.setBtcLightClientUpdated(ctx)
 }
 
 func (h Hooks) AfterBTCRollForward(ctx sdk.Context, headerInfo *ltypes.BTCHeaderInfo) {
-	h.k.OnTipChange(ctx)
+	h.k.setBtcLightClientUpdated(ctx)
 }
 
 func (h Hooks) AfterBTCHeaderInserted(ctx sdk.Context, headerInfo *ltypes.BTCHeaderInfo) {}
