@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -50,6 +51,11 @@ func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (
 	if err != nil {
 		return nil, err
 	}
+
+	if adjusted <= 0 {
+		return nil, errors.New("calculated gas should be positive")
+	}
+
 	txf = txf.WithGas(adjusted)
 
 	tx, err := txf.BuildUnsignedTx(msgs...)

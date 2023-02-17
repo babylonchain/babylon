@@ -81,6 +81,7 @@ func MustGetGasSettings(configPath string, v *viper.Viper) (string, float64) {
 	if err != nil {
 		panic(err)
 	}
+
 	gasAdjustment, err = parseGasAdjustmentFromConfig(v)
 	if err != nil {
 		panic(err)
