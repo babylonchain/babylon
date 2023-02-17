@@ -2,8 +2,11 @@ package keeper
 
 import (
 	"context"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -23,6 +26,8 @@ var _ types.MsgServer = msgServer{}
 // AddBlsSig adds BLS sig messages and changes a raw checkpoint status to SEALED if sufficient voting power is accumulated
 func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	ctx.Logger().Info(fmt.Sprintf("received BLS sig for epoch %d from %s", msg.BlsSig.EpochNum, msg.GetSigners()))
 
 	err := m.k.addBlsSig(ctx, msg.BlsSig)
 	if err != nil {
