@@ -57,7 +57,7 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 		return err
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %d, tx hash: %s, gas used: %d", epochNum, res.TxHash, res.GasUsed))
+	ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %d, tx hash: %s, gas used: %d, gas wanted: %d", epochNum, res.TxHash, res.GasUsed, res.GasWanted))
 
 	return nil
 }
