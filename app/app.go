@@ -298,7 +298,8 @@ func NewBabylonApp(
 		ibctransfertypes.StoreKey,
 		zctypes.StoreKey,
 	)
-	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
+	tkeys := sdk.NewTransientStoreKeys(
+		paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
 	// NOTE: The testingkey is just mounted for testing purposes. Actual applications should
 	// not include this key.
 	memKeys := sdk.NewMemoryStoreKeys(capabilitytypes.MemStoreKey, "testingkey")
@@ -518,6 +519,7 @@ func NewBabylonApp(
 		btccheckpointkeeper.NewKeeper(
 			appCodec,
 			keys[btccheckpointtypes.StoreKey],
+			tkeys[btccheckpointtypes.TStoreKey],
 			keys[btccheckpointtypes.MemStoreKey],
 			app.GetSubspace(btccheckpointtypes.ModuleName),
 			&btclightclientKeeper,
