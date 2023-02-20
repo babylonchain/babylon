@@ -26,6 +26,7 @@ func NewBTCCheckpointKeeper(
 	ek btcctypes.CheckpointingKeeper,
 	powLimit *big.Int) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(btcctypes.StoreKey)
+	tstoreKey := sdk.NewTransientStoreKey(btcctypes.TStoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(btcctypes.MemStoreKey)
 
 	db := tmdb.NewMemDB()
@@ -47,6 +48,7 @@ func NewBTCCheckpointKeeper(
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
+		tstoreKey,
 		memStoreKey,
 		paramsSubspace,
 		lk,
