@@ -3,17 +3,19 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type (
@@ -136,7 +138,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 
 	// if reaching this line, it means ckptWithMeta is updated,
 	// and we need to write the updated ckptWithMeta back to KVStore
-	if err := k.UpdateCheckpoint(ctx, ckptWithMeta); err != nil {
+	if err = k.UpdateCheckpoint(ctx, ckptWithMeta); err != nil {
 		return err
 	}
 
