@@ -15,9 +15,10 @@ import (
 
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
+	"github.com/babylonchain/babylon/testutil/datagen"
+
 	"github.com/babylonchain/babylon/app/params"
 	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/testutil/datagen"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -79,7 +80,7 @@ type SetupOptions struct {
 
 func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
-	encCdc := MakeTestEncodingConfig()
+	encCdc := MakeEncodingConfig()
 	privSigner, err := SetupPrivSigner()
 	if err != nil {
 		panic(err)
@@ -244,7 +245,7 @@ func SetupPrivSigner() (*PrivSigner, error) {
 	if err != nil {
 		return nil, err
 	}
-	encodingCfg := appparams.MakeTestEncodingConfig()
+	encodingCfg := appparams.MakeEncodingConfig()
 	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, encodingCfg)
 	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil

@@ -8,12 +8,6 @@ import (
 
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 
-	"github.com/babylonchain/babylon/app"
-	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpoint "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -22,6 +16,13 @@ import (
 	acctypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/tendermint/tendermint/types"
 	"google.golang.org/grpc"
+
+	"github.com/babylonchain/babylon/app"
+	appparams "github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	btccheckpoint "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 )
 
 type TestTxSender struct {
@@ -37,7 +38,7 @@ func NewTestTxSender(
 	genesisPath string,
 	conn *grpc.ClientConn,
 ) (*TestTxSender, error) {
-	cfg := app.MakeTestEncodingConfig()
+	cfg := app.MakeEncodingConfig()
 
 	kb, err := keyring.New("babylond", "test", keyringPath, nil, cfg.Marshaler)
 

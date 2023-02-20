@@ -59,8 +59,6 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 	}
 	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 
-	// TODO this should probably not create separate config, but rahter accept it
-	// as argument
 	clientCtx = clientCtx.
 		WithInterfaceRegistry(encodingCfg.InterfaceRegistry).
 		WithCodec(encodingCfg.Marshaler).

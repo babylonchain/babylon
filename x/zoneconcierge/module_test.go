@@ -7,8 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonchain/babylon/app"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -26,6 +24,9 @@ import (
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/babylonchain/babylon/app"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 )
 
 // ZoneConciergeTestSuite provides a test suite for IBC functionalities in ZoneConcierge
@@ -65,7 +66,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(suite.T(), false)
 		suite.zcKeeper = babylonApp.ZoneConciergeKeeper
-		encCdc := app.MakeTestEncodingConfig()
+		encCdc := app.MakeEncodingConfig()
 		return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
 	}
 	babylonChainID := ibctesting.GetChainID(1)

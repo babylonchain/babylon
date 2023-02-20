@@ -2,17 +2,19 @@ package simulation_test
 
 import (
 	"fmt"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"testing"
 
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/stretchr/testify/require"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/kv"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/x/epoching/simulation"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/kv"
 )
 
 // nolint:deadcode,unused,varcheck
@@ -25,7 +27,7 @@ var (
 )
 
 func TestDecodeStore(t *testing.T) {
-	cdc := app.MakeTestEncodingConfig().Marshaler
+	cdc := app.MakeEncodingConfig().Marshaler
 	dec := simulation.NewDecodeStore(cdc)
 
 	epochNumber := uint64(123)
