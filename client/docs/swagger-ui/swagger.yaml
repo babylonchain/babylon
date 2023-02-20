@@ -33,6 +33,68 @@ paths:
                       type: string
                       format: byte
                       title: hash of earliest BTC block that includes this checkpoint
+                    earliest_btc_block_txs:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          key:
+                            description: >-
+                              key is the position (txIdx, blockHash) of this tx
+                              on BTC blockchain
+
+                              Although it is already a part of SubmissionKey, we
+                              store it here again
+
+                              to make TransactionInfo self-contained.
+
+                              For example, storing the key allows
+                              TransactionInfo to not relay on
+
+                              the fact that TransactionInfo will be ordered in
+                              the same order as
+
+                              TransactionKeys in SubmissionKey.
+                            type: object
+                            properties:
+                              index:
+                                type: integer
+                                format: int64
+                              hash:
+                                type: string
+                                format: byte
+                            title: >-
+                              Each provided OP_RETURN transaction can be
+                              idendtified by hash of block in
+
+                              which transaction was included and transaction
+                              index in the block
+                          transaction:
+                            type: string
+                            format: byte
+                            title: transaction is the full transaction in bytes
+                          proof:
+                            type: string
+                            format: byte
+                            title: >-
+                              proof is the Merkle proof that this tx is included
+                              in the position in `key`
+
+                              TODO: maybe it could use here better format as we
+                              already processed and
+
+                              valideated the proof?
+                        title: >-
+                          TransactionInfo is the info of a tx that contains
+                          Babylon checkpoint, including
+
+                          - the position of the tx on BTC blockchain
+
+                          - the full tx content
+
+                          - the Merkle proof that this tx is on the above
+                          position
+                      title: the BTC checkpoint transactions on the above block
                     vigilante_address_list:
                       type: array
                       items:
@@ -260,6 +322,67 @@ paths:
                     type: string
                     format: byte
                     title: hash of earliest BTC block that includes this checkpoint
+                  earliest_btc_block_txs:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key:
+                          description: >-
+                            key is the position (txIdx, blockHash) of this tx on
+                            BTC blockchain
+
+                            Although it is already a part of SubmissionKey, we
+                            store it here again
+
+                            to make TransactionInfo self-contained.
+
+                            For example, storing the key allows TransactionInfo
+                            to not relay on
+
+                            the fact that TransactionInfo will be ordered in the
+                            same order as
+
+                            TransactionKeys in SubmissionKey.
+                          type: object
+                          properties:
+                            index:
+                              type: integer
+                              format: int64
+                            hash:
+                              type: string
+                              format: byte
+                          title: >-
+                            Each provided OP_RETURN transaction can be
+                            idendtified by hash of block in
+
+                            which transaction was included and transaction index
+                            in the block
+                        transaction:
+                          type: string
+                          format: byte
+                          title: transaction is the full transaction in bytes
+                        proof:
+                          type: string
+                          format: byte
+                          title: >-
+                            proof is the Merkle proof that this tx is included
+                            in the position in `key`
+
+                            TODO: maybe it could use here better format as we
+                            already processed and
+
+                            valideated the proof?
+                      title: >-
+                        TransactionInfo is the info of a tx that contains
+                        Babylon checkpoint, including
+
+                        - the position of the tx on BTC blockchain
+
+                        - the full tx content
+
+                        - the Merkle proof that this tx is on the above position
+                    title: the BTC checkpoint transactions on the above block
                   vigilante_address_list:
                     type: array
                     items:
@@ -9902,6 +10025,67 @@ definitions:
         type: string
         format: byte
         title: hash of earliest BTC block that includes this checkpoint
+      earliest_btc_block_txs:
+        type: array
+        items:
+          type: object
+          properties:
+            key:
+              description: >-
+                key is the position (txIdx, blockHash) of this tx on BTC
+                blockchain
+
+                Although it is already a part of SubmissionKey, we store it here
+                again
+
+                to make TransactionInfo self-contained.
+
+                For example, storing the key allows TransactionInfo to not relay
+                on
+
+                the fact that TransactionInfo will be ordered in the same order
+                as
+
+                TransactionKeys in SubmissionKey.
+              type: object
+              properties:
+                index:
+                  type: integer
+                  format: int64
+                hash:
+                  type: string
+                  format: byte
+              title: >-
+                Each provided OP_RETURN transaction can be idendtified by hash
+                of block in
+
+                which transaction was included and transaction index in the
+                block
+            transaction:
+              type: string
+              format: byte
+              title: transaction is the full transaction in bytes
+            proof:
+              type: string
+              format: byte
+              title: >-
+                proof is the Merkle proof that this tx is included in the
+                position in `key`
+
+                TODO: maybe it could use here better format as we already
+                processed and
+
+                valideated the proof?
+          title: >-
+            TransactionInfo is the info of a tx that contains Babylon
+            checkpoint, including
+
+            - the position of the tx on BTC blockchain
+
+            - the full tx content
+
+            - the Merkle proof that this tx is on the above position
+        title: the BTC checkpoint transactions on the above block
       vigilante_address_list:
         type: array
         items:
@@ -9990,6 +10174,67 @@ definitions:
             type: string
             format: byte
             title: hash of earliest BTC block that includes this checkpoint
+          earliest_btc_block_txs:
+            type: array
+            items:
+              type: object
+              properties:
+                key:
+                  description: >-
+                    key is the position (txIdx, blockHash) of this tx on BTC
+                    blockchain
+
+                    Although it is already a part of SubmissionKey, we store it
+                    here again
+
+                    to make TransactionInfo self-contained.
+
+                    For example, storing the key allows TransactionInfo to not
+                    relay on
+
+                    the fact that TransactionInfo will be ordered in the same
+                    order as
+
+                    TransactionKeys in SubmissionKey.
+                  type: object
+                  properties:
+                    index:
+                      type: integer
+                      format: int64
+                    hash:
+                      type: string
+                      format: byte
+                  title: >-
+                    Each provided OP_RETURN transaction can be idendtified by
+                    hash of block in
+
+                    which transaction was included and transaction index in the
+                    block
+                transaction:
+                  type: string
+                  format: byte
+                  title: transaction is the full transaction in bytes
+                proof:
+                  type: string
+                  format: byte
+                  title: >-
+                    proof is the Merkle proof that this tx is included in the
+                    position in `key`
+
+                    TODO: maybe it could use here better format as we already
+                    processed and
+
+                    valideated the proof?
+              title: >-
+                TransactionInfo is the info of a tx that contains Babylon
+                checkpoint, including
+
+                - the position of the tx on BTC blockchain
+
+                - the full tx content
+
+                - the Merkle proof that this tx is on the above position
+            title: the BTC checkpoint transactions on the above block
           vigilante_address_list:
             type: array
             items:
@@ -10035,6 +10280,67 @@ definitions:
               type: string
               format: byte
               title: hash of earliest BTC block that includes this checkpoint
+            earliest_btc_block_txs:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    description: >-
+                      key is the position (txIdx, blockHash) of this tx on BTC
+                      blockchain
+
+                      Although it is already a part of SubmissionKey, we store
+                      it here again
+
+                      to make TransactionInfo self-contained.
+
+                      For example, storing the key allows TransactionInfo to not
+                      relay on
+
+                      the fact that TransactionInfo will be ordered in the same
+                      order as
+
+                      TransactionKeys in SubmissionKey.
+                    type: object
+                    properties:
+                      index:
+                        type: integer
+                        format: int64
+                      hash:
+                        type: string
+                        format: byte
+                    title: >-
+                      Each provided OP_RETURN transaction can be idendtified by
+                      hash of block in
+
+                      which transaction was included and transaction index in
+                      the block
+                  transaction:
+                    type: string
+                    format: byte
+                    title: transaction is the full transaction in bytes
+                  proof:
+                    type: string
+                    format: byte
+                    title: >-
+                      proof is the Merkle proof that this tx is included in the
+                      position in `key`
+
+                      TODO: maybe it could use here better format as we already
+                      processed and
+
+                      valideated the proof?
+                title: >-
+                  TransactionInfo is the info of a tx that contains Babylon
+                  checkpoint, including
+
+                  - the position of the tx on BTC blockchain
+
+                  - the full tx content
+
+                  - the Merkle proof that this tx is on the above position
+              title: the BTC checkpoint transactions on the above block
             vigilante_address_list:
               type: array
               items:
@@ -10232,6 +10538,54 @@ definitions:
       is only 33 (1  byte for prefix encoding and 32 byte hash), so there should
 
       be other strong arguments for this optimization
+  babylon.btccheckpoint.v1.TransactionInfo:
+    type: object
+    properties:
+      key:
+        description: |-
+          key is the position (txIdx, blockHash) of this tx on BTC blockchain
+          Although it is already a part of SubmissionKey, we store it here again
+          to make TransactionInfo self-contained.
+          For example, storing the key allows TransactionInfo to not relay on
+          the fact that TransactionInfo will be ordered in the same order as
+          TransactionKeys in SubmissionKey.
+        type: object
+        properties:
+          index:
+            type: integer
+            format: int64
+          hash:
+            type: string
+            format: byte
+        title: >-
+          Each provided OP_RETURN transaction can be idendtified by hash of
+          block in
+
+          which transaction was included and transaction index in the block
+      transaction:
+        type: string
+        format: byte
+        title: transaction is the full transaction in bytes
+      proof:
+        type: string
+        format: byte
+        title: >-
+          proof is the Merkle proof that this tx is included in the position in
+          `key`
+
+          TODO: maybe it could use here better format as we already processed
+          and
+
+          valideated the proof?
+    title: >-
+      TransactionInfo is the info of a tx that contains Babylon checkpoint,
+      including
+
+      - the position of the tx on BTC blockchain
+
+      - the full tx content
+
+      - the Merkle proof that this tx is on the above position
   babylon.btccheckpoint.v1.TransactionKey:
     type: object
     properties:
@@ -14194,54 +14548,6 @@ definitions:
     title: >-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
-  babylon.btccheckpoint.v1.TransactionInfo:
-    type: object
-    properties:
-      key:
-        type: object
-        properties:
-          index:
-            type: integer
-            format: int64
-          hash:
-            type: string
-            format: byte
-        title: >-
-          Each provided OP_RETURN transaction can be idendtified by hash of
-          block in
-
-          which transaction was included and transaction index in the block
-        description: |-
-          key is the position (txIdx, blockHash) of this tx on BTC blockchain
-          Although it is already a part of SubmissionKey, we store it here again
-          to make TransactionInfo self-contained.
-          For example, storing the key allows TransactionInfo to not relay on
-          the fact that TransactionInfo will be ordered in the same order as
-          TransactionKeys in SubmissionKey.
-      transaction:
-        type: string
-        format: byte
-        title: transaction is the full transaction in bytes
-      proof:
-        type: string
-        format: byte
-        title: >-
-          proof is the Merkle proof that this tx is included in the position in
-          `key`
-
-          TODO: maybe it could use here better format as we already processed
-          and
-
-          valideated the proof?
-    title: >-
-      TransactionInfo is the info of a tx that contains Babylon checkpoint,
-      including
-
-      - the position of the tx on BTC blockchain
-
-      - the full tx content
-
-      - the Merkle proof that this tx is on the above position
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:

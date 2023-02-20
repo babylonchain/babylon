@@ -134,7 +134,11 @@ message BTCCheckpointInfo {
   // height of earliest BTC block that includes this checkpoint
   uint64 earliest_btc_block_number = 2;
   // hash of earliest BTC block that includes this checkpoint
-  bytes earliest_btc_block_hash = 3;
+  bytes earliest_btc_block_hash = 3 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
+  ];
+  // the BTC checkpoint transactions on the above block
+  repeated TransactionInfo earliest_btc_block_txs = 4;
   // list of vigilantes' addresses
-  repeated CheckpointAddresses vigilante_address_list = 4;
+  repeated CheckpointAddresses vigilante_address_list = 5;
 }

@@ -329,8 +329,8 @@ func (k Keeper) deleteSubmission(ctx sdk.Context, sk types.SubmissionKey) {
 	store.Delete(kBytes)
 }
 
-// GetSubmissionData return submission data for given key, return nil if there is not data
-// under givem key
+// GetSubmissionData returns submission data for a given key or nil if there is no data
+// under the given key
 func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *types.SubmissionData {
 	store := ctx.KVStore(k.storeKey)
 	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
@@ -345,7 +345,7 @@ func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *type
 	return &sd
 }
 
-// Callback to be called when btc light client tip change
+// Callback to be called when btc light client tip changes
 func (k Keeper) OnTipChange(ctx sdk.Context) {
 	k.checkCheckpoints(ctx)
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	bbntypes "github.com/babylonchain/babylon/types"
 	"math"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -16,10 +17,10 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.SubmissionKey) (uint64, []byte, error) {
+func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.SubmissionKey) (uint64, *bbntypes.BTCHeaderHashBytes, error) {
 	// initializing to max, as then every header height will be smaller
 	var lowestHeaderNumber uint64 = math.MaxUint64
-	var lowestHeaderHash []byte
+	var lowestHeaderHash *bbntypes.BTCHeaderHashBytes
 
 	for _, tk := range subKey.Key {
 
@@ -38,7 +39,7 @@ func (k Keeper) lowestBtcHeightAndHash(ctx sdk.Context, subKey *types.Submission
 
 		if headerNumber < lowestHeaderNumber {
 			lowestHeaderNumber = headerNumber
-			lowestHeaderHash = *tk.Hash
+			lowestHeaderHash = tk.Hash
 		}
 	}
 
@@ -74,6 +75,7 @@ func (k Keeper) getCheckpointInfo(ctx sdk.Context, epochNum uint64, subKeys []*t
 		if headerNumber < info.EarliestBtcBlockNumber {
 			info.EarliestBtcBlockNumber = headerNumber
 			info.EarliestBtcBlockHash = headerHash
+			info.EarliestBtcBlockTxs = sd.TxsInfo
 		}
 		// append vigilante addresses
 		vAddrs := *sd.VigilanteAddresses // make a new copy
