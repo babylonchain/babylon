@@ -76,6 +76,7 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 		ClientCtx: clientCtx,
 	}, nil
 }
+
 func CreateClientConfig(chainID string, backend string, homePath string) (*config.ClientConfig, error) {
 	cliConf := &config.ClientConfig{
 		ChainID:        chainID,
