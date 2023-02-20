@@ -352,7 +352,7 @@ func (k Keeper) OnTipChange(ctx sdk.Context) {
 
 func (k Keeper) setBtcLightClientUpdated(ctx sdk.Context) {
 	store := ctx.TransientStore(k.tstoreKey)
-	store.Set(types.GetBtcLigtClientUpdatedKey(), []byte{1})
+	store.Set(types.GetBtcLightClientUpdatedKey(), []byte{1})
 }
 
 // BtcLightClientUpdated checks if btc light client was updated during block execution
@@ -361,7 +361,7 @@ func (k Keeper) BtcLightClientUpdated(ctx sdk.Context) bool {
 	// BtcLightClientKey is set, it means setBtcLightClientUpdated was called during
 	// current block execution
 	store := ctx.TransientStore(k.tstoreKey)
-	lcUpdated := store.Get(types.GetBtcLigtClientUpdatedKey())
+	lcUpdated := store.Get(types.GetBtcLightClientUpdatedKey())
 	return len(lcUpdated) > 0
 }
 

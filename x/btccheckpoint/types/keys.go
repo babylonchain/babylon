@@ -25,14 +25,14 @@ const (
 
 	LatestFinalizedEpochKey = "latestFinalizedEpoch"
 
-	btcLighClientUpdated = "btcLightClientUpdated"
+	btcLightClientUpdated = "btcLightClientUpdated"
 )
 
 var (
 	SubmisionKeyPrefix       = []byte{3}
 	EpochDataPrefix          = []byte{4}
 	LastFinalizedEpochKey    = append([]byte{5}, []byte(LatestFinalizedEpochKey)...)
-	BtcLightClientUpdatedKey = append([]byte{6}, []byte(btcLighClientUpdated)...)
+	BtcLightClientUpdatedKey = append([]byte{6}, []byte(btcLightClientUpdated)...)
 )
 
 func KeyPrefix(p string) []byte {
@@ -51,6 +51,6 @@ func GetLatestFinalizedEpochKey() []byte {
 	return LastFinalizedEpochKey
 }
 
-func GetBtcLigtClientUpdatedKey() []byte {
+func GetBtcLightClientUpdatedKey() []byte {
 	return BtcLightClientUpdatedKey
 }
