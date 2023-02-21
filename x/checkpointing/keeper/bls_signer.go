@@ -33,7 +33,7 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 	}
 
 	// get BLS signature by signing
-	signBytes := append(sdk.Uint64ToBigEndian(epochNum), lch...)
+	signBytes := GetSignBytes(epochNum, lch)
 	blsSig, err := k.blsSigner.SignMsgWithBls(signBytes)
 	if err != nil {
 		return err

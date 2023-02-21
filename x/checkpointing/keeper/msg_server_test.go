@@ -5,6 +5,12 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/ed25519"
+
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -13,11 +19,6 @@ import (
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power
@@ -163,57 +164,216 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 	})
 }
 
-func TestInvalidLastCommitHash(t *testing.T) {
-	helper := testepoching.NewHelperWithValSet(t)
-	ck := helper.App.CheckpointingKeeper
-	msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
-	// needed to init total voting power
-	helper.BeginBlock()
+// FuzzAddBlsSig_NoError tests adding BLS signatures via MsgAddBlsSig
+// it covers the following scenarios that would not cause errors:
+// 1. a BLS signature is successfully accumulated and the checkpoint remains ACCUMULATING
+// 2. a BLS signature is successfully accumulated and the checkpoint is changed to SEALED
+// 3. a BLS signature is rejected if the checkpoint is not ACCUMULATING
+func FuzzAddBlsSig_NoError(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
 
-	epoch := uint64(1)
-	validLch := datagen.GenRandomByteArray(32)
-	// correct checkpoint for epoch 1
-	_, err := ck.BuildRawCheckpoint(helper.Ctx, epoch, validLch)
-	require.NoError(t, err)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
 
-	// Malicious validator created message with valid bls signature but for invalid
-	// commit hash
-	invalidLch := datagen.GenRandomByteArray(32)
-	val0Info := helper.ValBlsPrivKeys[0]
-	signBytes := append(sdk.Uint64ToBigEndian(epoch), invalidLch...)
-	sig := bls12381.Sign(val0Info.BlsKey, signBytes)
-	msg := types.NewMsgAddBlsSig(epoch, invalidLch, sig, val0Info.Address)
+		helper := testepoching.NewHelperWithValSet(t)
+		ek := helper.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
-	_, err = msgServer.AddBlsSig(helper.Ctx, msg)
-	require.ErrorIs(t, err, types.ErrInvalidLastCommitHash)
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx := helper.BeginBlock()
+		epoch := ek.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
+		for i := uint64(0); i < 2; i++ {
+			ctx = helper.GenAndApplyEmptyBlock()
+		}
+		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
+		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
+		require.NoError(t, err)
+
+		// add BLS signatures
+		n := len(helper.ValBlsPrivKeys)
+		totalPower := uint64(ck.GetTotalVotingPower(ctx, endingEpoch))
+		for i := 0; i < n; i++ {
+			lch := ctx.BlockHeader().LastCommitHash
+			blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
+			addr := helper.ValBlsPrivKeys[i].Address
+			signBytes := checkpointingkeeper.GetSignBytes(endingEpoch, lch)
+			blsSig := bls12381.Sign(blsPrivKey, signBytes)
+
+			// create MsgAddBlsSig message
+			msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
+			_, err = msgServer.AddBlsSig(ctx, msg)
+			require.NoError(t, err)
+			afterCkpt, err := ck.GetRawCheckpoint(ctx, endingEpoch)
+			require.NoError(t, err)
+			if afterCkpt.PowerSum <= totalPower/3 {
+				require.True(t, afterCkpt.Status == types.Accumulating)
+			} else {
+				require.True(t, afterCkpt.Status == types.Sealed)
+			}
+		}
+	})
+}
+
+// FuzzAddBlsSig_Error tests adding BLS signatures via MsgAddBlsSig
+// in a scenario where the signer is not in the checkpoint's validator set
+func FuzzAddBlsSig_NotInValSet(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		helper := testepoching.NewHelperWithValSet(t)
+		ek := helper.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx := helper.BeginBlock()
+		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
+		for i := uint64(0); i < 2; i++ {
+			ctx = helper.GenAndApplyEmptyBlock()
+		}
+		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
+		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
+		require.NoError(t, err)
+
+		// build BLS sig from a random validator (not in the validator set)
+		lch := ctx.BlockHeader().LastCommitHash
+		blsPrivKey := bls12381.GenPrivKey()
+		valAddr := datagen.GenRandomValidatorAddress()
+		signBytes := checkpointingkeeper.GetSignBytes(endingEpoch, lch)
+		blsSig := bls12381.Sign(blsPrivKey, signBytes)
+		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, valAddr)
+
+		_, err = msgServer.AddBlsSig(ctx, msg)
+		require.Error(t, err, types.ErrCkptDoesNotExist)
+	})
+}
+
+// FuzzAddBlsSig_CkptNotExist tests adding BLS signatures via MsgAddBlsSig
+// in a scenario where the corresponding checkpoint does not exist
+func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		helper := testepoching.NewHelperWithValSet(t)
+		ek := helper.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx := helper.BeginBlock()
+		epoch := ek.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// build BLS signature from a random validator of the validator set
+		n := len(helper.ValBlsPrivKeys)
+		i := rand.Intn(n)
+		lch := ctx.BlockHeader().LastCommitHash
+		blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
+		addr := helper.ValBlsPrivKeys[i].Address
+		signBytes := checkpointingkeeper.GetSignBytes(epoch.EpochNumber-1, lch)
+		blsSig := bls12381.Sign(blsPrivKey, signBytes)
+		msg := types.NewMsgAddBlsSig(epoch.EpochNumber-1, lch, blsSig, addr)
+
+		// add the BLS signature
+		_, err := msgServer.AddBlsSig(ctx, msg)
+		require.Error(t, err, types.ErrCkptDoesNotExist)
+	})
+}
+
+// FuzzAddBlsSig_WrongLastCommitHash tests adding BLS signatures via MsgAddBlsSig
+// in a scenario where the signature is signed over wrong last_commit_hash
+// 4. a BLS signature is rejected if the signature is invalid
+func FuzzAddBlsSig_WrongLastCommitHash(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		helper := testepoching.NewHelperWithValSet(t)
+		ek := helper.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx := helper.BeginBlock()
+		epoch := ek.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
+		for i := uint64(0); i < 2; i++ {
+			ctx = helper.GenAndApplyEmptyBlock()
+		}
+		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
+		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
+		require.NoError(t, err)
+
+		// build BLS sig from a random validator
+		n := len(helper.ValBlsPrivKeys)
+		i := rand.Intn(n)
+		// inject random last commit hash
+		lch := datagen.GenRandomLastCommitHash()
+		blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
+		addr := helper.ValBlsPrivKeys[i].Address
+		signBytes := checkpointingkeeper.GetSignBytes(endingEpoch, lch)
+		blsSig := bls12381.Sign(blsPrivKey, signBytes)
+		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
+
+		// add the BLS signature
+		_, err = msgServer.AddBlsSig(ctx, msg)
+		require.Error(t, err, types.ErrInvalidLastCommitHash)
+	})
+}
+
+// FuzzAddBlsSig_InvalidSignature tests adding BLS signatures via MsgAddBlsSig
+// in a scenario where the signature is invalid
+func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		helper := testepoching.NewHelperWithValSet(t)
+		ek := helper.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx := helper.BeginBlock()
+		epoch := ek.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
+		for i := uint64(0); i < 2; i++ {
+			ctx = helper.GenAndApplyEmptyBlock()
+		}
+		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
+		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
+		require.NoError(t, err)
+
+		// build BLS sig from a random validator
+		n := len(helper.ValBlsPrivKeys)
+		i := rand.Intn(n)
+		// inject random last commit hash
+		lch := ctx.BlockHeader().LastCommitHash
+		addr := helper.ValBlsPrivKeys[i].Address
+		blsSig := datagen.GenRandomBlsMultiSig()
+		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
+
+		// add the BLS signature message
+		_, err = msgServer.AddBlsSig(ctx, msg)
+		require.Error(t, err, types.ErrInvalidBlsSignature)
+	})
 }
 
 func buildMsgWrappedCreateValidator(addr sdk.AccAddress) (*types.MsgWrappedCreateValidator, error) {
-	tmValPrivkey := ed25519.GenPrivKey()
 	bondTokens := sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction)
-	bondCoin := sdk.NewCoin(appparams.DefaultBondDenom, bondTokens)
-	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
-	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
-
-	pk, err := codec.FromTmPubKeyInterface(tmValPrivkey.PubKey())
-	if err != nil {
-		return nil, err
-	}
-
-	createValidatorMsg, err := stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(addr), pk, bondCoin, description, commission, sdk.OneInt(),
-	)
-	if err != nil {
-		return nil, err
-	}
-	blsPrivKey := bls12381.GenPrivKey()
-	pop, err := privval.BuildPoP(tmValPrivkey, blsPrivKey)
-	if err != nil {
-		return nil, err
-	}
-	blsPubKey := blsPrivKey.PubKey()
-
-	return types.NewMsgWrappedCreateValidator(createValidatorMsg, &blsPubKey, pop)
+	return buildMsgWrappedCreateValidatorWithAmount(addr, bondTokens)
 }
 
 func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens math.Int) (*types.MsgWrappedCreateValidator, error) {

@@ -3,13 +3,13 @@ package datagen
 import (
 	"math/rand"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/boljen/go-bitmap"
 
 	"github.com/babylonchain/babylon/btctxformatter"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/boljen/go-bitmap"
 )
 
 // GenRandomBitmap generates a random bitmap for the validator set
@@ -109,7 +109,7 @@ func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawC
 	signerNum := n/3 + 1
 	epochNum := GenRandomEpochNum()
 	lch := GenRandomLastCommitHash()
-	msgBytes := append(sdk.Uint64ToBigEndian(epochNum), lch.MustMarshal()...)
+	msgBytes := keeper.GetSignBytes(epochNum, lch)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
 	bm := bitmap.New(types.BitmapBits)
