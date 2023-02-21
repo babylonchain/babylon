@@ -22,11 +22,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/privval"
-	testutilcli "github.com/babylonchain/babylon/testutil/cli"
-	checkpointcli "github.com/babylonchain/babylon/x/checkpointing/client/cli"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmbytes "github.com/tendermint/tendermint/libs/bytes"
@@ -35,6 +30,12 @@ import (
 	rpcclientmock "github.com/tendermint/tendermint/rpc/client/mock"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/privval"
+	testutilcli "github.com/babylonchain/babylon/testutil/cli"
+	checkpointcli "github.com/babylonchain/babylon/x/checkpointing/client/cli"
 )
 
 type mockTendermintRPC struct {
@@ -70,7 +71,7 @@ type CLITestSuite struct {
 }
 
 func (s *CLITestSuite) SetupSuite() {
-	s.encCfg = app.MakeTestEncodingConfig()
+	s.encCfg = app.GetEncodingConfig()
 	s.kr = keyring.NewInMemory(s.encCfg.Marshaler)
 	ctrl := gomock.NewController(s.T())
 	mockAccountRetriever := mocks.NewMockAccountRetriever(ctrl)

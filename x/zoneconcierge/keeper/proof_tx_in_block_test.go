@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
@@ -13,12 +11,15 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 )
 
 func TestProveTxInBlock(t *testing.T) {
 	// setup virtual network
 	cfg := network.DefaultConfig()
-	encodingCfg := app.MakeTestEncodingConfig()
+	encodingCfg := app.GetEncodingConfig()
 	cfg.InterfaceRegistry = encodingCfg.InterfaceRegistry
 	cfg.TxConfig = encodingCfg.TxConfig
 	cfg.NumValidators = 2

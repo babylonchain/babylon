@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	"github.com/babylonchain/babylon/app"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+
+	"github.com/babylonchain/babylon/app"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 // SetupTest creates a coordinator with 2 test chains.
@@ -17,7 +18,7 @@ func (suite *ZoneConciergeTestSuite) SetupTestForIBCPackets() {
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(suite.T(), false)
 		suite.zcKeeper = babylonApp.ZoneConciergeKeeper
-		encCdc := app.MakeTestEncodingConfig()
+		encCdc := app.GetEncodingConfig()
 		genesis := app.NewDefaultGenesisState(encCdc.Marshaler)
 		return babylonApp, genesis
 	}

@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 )
 
 // SetupTest creates a coordinator with 2 test chains, and a ZoneConcierge keeper.
@@ -20,7 +21,7 @@ func SetupTest(t *testing.T) (*ibctesting.Coordinator, *ibctesting.TestChain, *i
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(t, false)
 		bbnApp = babylonApp
-		encCdc := app.MakeTestEncodingConfig()
+		encCdc := app.GetEncodingConfig()
 		genesis := app.NewDefaultGenesisState(encCdc.Marshaler)
 		return babylonApp, genesis
 	}

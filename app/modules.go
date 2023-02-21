@@ -23,5 +23,5 @@ func (app *BabylonApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 }
 
 func (app *BabylonApp) GetTxConfig() client.TxConfig {
-	return MakeTestEncodingConfig().TxConfig
+	return GetEncodingConfig().TxConfig
 }

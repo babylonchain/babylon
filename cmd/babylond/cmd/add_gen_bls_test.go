@@ -3,9 +3,10 @@ package cmd_test
 import (
 	"context"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/server/config"
 	"path/filepath"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/server/config"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -36,7 +37,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	tmcfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 	require.NoError(t, err)
 
-	appCodec := app.MakeTestEncodingConfig().Marshaler
+	appCodec := app.GetEncodingConfig().Marshaler
 	err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 	require.NoError(t, err)
 

@@ -13,13 +13,13 @@ import (
 	"cosmossdk.io/math"
 	tmconfig "github.com/tendermint/tendermint/config"
 
-	"github.com/babylonchain/babylon/app/params"
-	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/testutil/datagen"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/testutil/datagen"
+
+	"github.com/babylonchain/babylon/app/params"
+	appparams "github.com/babylonchain/babylon/app/params"
+
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -43,6 +43,9 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
+
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in
@@ -77,7 +80,7 @@ type SetupOptions struct {
 
 func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
-	encCdc := MakeTestEncodingConfig()
+	encCdc := GetEncodingConfig()
 	privSigner, err := SetupPrivSigner()
 	if err != nil {
 		panic(err)
@@ -242,7 +245,8 @@ func SetupPrivSigner() (*PrivSigner, error) {
 	if err != nil {
 		return nil, err
 	}
-	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr)
+	encodingCfg := appparams.GetEncodingConfig()
+	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, encodingCfg)
 	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil
 }

@@ -12,13 +12,10 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/babylonchain/babylon/app"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonchain/babylon/app"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/cosmos/cosmos-sdk/simapp/helpers"
@@ -38,6 +35,11 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 // Get flags every time the simulator is run
@@ -77,7 +79,7 @@ func TestFullAppSimulation(t *testing.T) {
 
 	privSigner, err := app.SetupPrivSigner()
 	require.NoError(t, err)
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// run randomized simulation
@@ -117,7 +119,7 @@ func TestAppImportExport(t *testing.T) {
 
 	privSigner, err := app.SetupPrivSigner()
 	require.NoError(t, err)
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -157,7 +159,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	var genesisState app.GenesisState
@@ -221,7 +223,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	privSigner, err := app.SetupPrivSigner()
 	require.NoError(t, err)
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -266,7 +268,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	newBabylon.InitChain(abci.RequestInitChain{
@@ -319,7 +321,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			db := dbm.NewMemDB()
 			privSigner, err := app.SetupPrivSigner()
 			require.NoError(t, err)
-			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
