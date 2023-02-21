@@ -71,7 +71,7 @@ type CLITestSuite struct {
 }
 
 func (s *CLITestSuite) SetupSuite() {
-	s.encCfg = app.MakeEncodingConfig()
+	s.encCfg = app.GetEncodingConfig()
 	s.kr = keyring.NewInMemory(s.encCfg.Marshaler)
 	ctrl := gomock.NewController(s.T())
 	mockAccountRetriever := mocks.NewMockAccountRetriever(ctrl)

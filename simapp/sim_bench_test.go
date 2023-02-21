@@ -39,7 +39,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -93,7 +93,7 @@ func BenchmarkInvariants(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(

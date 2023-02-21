@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 )
 
-// MakeEncodingConfig creates an EncodingConfig for an amino based test configuration.
-func MakeEncodingConfig() EncodingConfig {
+// GetEncodingConfig creates an EncodingConfig for an amino based test configuration.
+func GetEncodingConfig() EncodingConfig {
 	amino := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
 	marshaler := codec.NewProtoCodec(interfaceRegistry)

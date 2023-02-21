@@ -22,7 +22,7 @@ func init() {
 }
 
 func initEncodingConfigAndCdc() (params.EncodingConfig, codec.Codec) {
-	encodingConfig := babylonApp.MakeEncodingConfig()
+	encodingConfig := babylonApp.GetEncodingConfig()
 
 	encodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*sdk.Msg)(nil),

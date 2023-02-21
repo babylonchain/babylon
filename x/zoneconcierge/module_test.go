@@ -66,7 +66,7 @@ func (suite *ZoneConciergeTestSuite) SetupTest() {
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(suite.T(), false)
 		suite.zcKeeper = babylonApp.ZoneConciergeKeeper
-		encCdc := app.MakeEncodingConfig()
+		encCdc := app.GetEncodingConfig()
 		return babylonApp, app.NewDefaultGenesisState(encCdc.Marshaler)
 	}
 	babylonChainID := ibctesting.GetChainID(1)

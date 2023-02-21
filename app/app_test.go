@@ -11,7 +11,7 @@ import (
 )
 
 func TestBabylonBlockedAddrs(t *testing.T) {
-	encCfg := MakeEncodingConfig()
+	encCfg := GetEncodingConfig()
 	db := dbm.NewMemDB()
 	signer, _ := SetupPrivSigner()
 	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
@@ -48,7 +48,7 @@ func TestGetMaccPerms(t *testing.T) {
 }
 
 func TestUpgradeStateOnGenesis(t *testing.T) {
-	encCfg := MakeEncodingConfig()
+	encCfg := GetEncodingConfig()
 	db := dbm.NewMemDB()
 	privSigner, err := SetupPrivSigner()
 	require.NoError(t, err)

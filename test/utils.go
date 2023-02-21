@@ -38,7 +38,7 @@ func NewTestTxSender(
 	genesisPath string,
 	conn *grpc.ClientConn,
 ) (*TestTxSender, error) {
-	cfg := app.MakeEncodingConfig()
+	cfg := app.GetEncodingConfig()
 
 	kb, err := keyring.New("babylond", "test", keyringPath, nil, cfg.Marshaler)
 

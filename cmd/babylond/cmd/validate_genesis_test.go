@@ -26,7 +26,7 @@ import (
 
 func TestCheckCorrespondence(t *testing.T) {
 	homePath := t.TempDir()
-	encodingCft := app.MakeEncodingConfig()
+	encodingCft := app.GetEncodingConfig()
 	clientCtx := client.Context{}.WithCodec(encodingCft.Marshaler).WithTxConfig(encodingCft.TxConfig)
 
 	// generate valid genesis doc
@@ -85,7 +85,7 @@ func TestCheckCorrespondence(t *testing.T) {
 }
 
 func generateTestGenesisState(home string, n int) (map[string]json.RawMessage, *tmtypes.GenesisDoc) {
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.GetEncodingConfig()
 	logger := log.NewNopLogger()
 	cfg, _ := genutiltest.CreateDefaultTendermintConfig(home)
 

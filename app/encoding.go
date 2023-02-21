@@ -6,15 +6,15 @@ import (
 	appparams "github.com/babylonchain/babylon/app/params"
 )
 
-var encodingConfig appparams.EncodingConfig = MakeEncodingConfig()
+var encodingConfig = makeEncodingConfig()
 
 func GetEncodingConfig() appparams.EncodingConfig {
 	return encodingConfig
 }
 
-// MakeEncodingConfig creates an EncodingConfig.
-func MakeEncodingConfig() appparams.EncodingConfig {
-	encodingConfig := appparams.MakeEncodingConfig()
+// makeEncodingConfig creates an EncodingConfig.
+func makeEncodingConfig() appparams.EncodingConfig {
+	encodingConfig := appparams.GetEncodingConfig()
 	std.RegisterLegacyAminoCodec(encodingConfig.Amino)
 	std.RegisterInterfaces(encodingConfig.InterfaceRegistry)
 	ModuleBasics.RegisterLegacyAminoCodec(encodingConfig.Amino)

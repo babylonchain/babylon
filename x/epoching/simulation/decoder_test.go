@@ -27,7 +27,7 @@ var (
 )
 
 func TestDecodeStore(t *testing.T) {
-	cdc := app.MakeEncodingConfig().Marshaler
+	cdc := app.GetEncodingConfig().Marshaler
 	dec := simulation.NewDecodeStore(cdc)
 
 	epochNumber := uint64(123)

@@ -21,7 +21,7 @@ func SetupTest(t *testing.T) (*ibctesting.Coordinator, *ibctesting.TestChain, *i
 	ibctesting.DefaultTestingAppInit = func() (ibctesting.TestingApp, map[string]json.RawMessage) {
 		babylonApp := app.Setup(t, false)
 		bbnApp = babylonApp
-		encCdc := app.MakeEncodingConfig()
+		encCdc := app.GetEncodingConfig()
 		genesis := app.NewDefaultGenesisState(encCdc.Marshaler)
 		return babylonApp, genesis
 	}

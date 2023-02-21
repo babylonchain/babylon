@@ -19,7 +19,7 @@ import (
 func TestProveTxInBlock(t *testing.T) {
 	// setup virtual network
 	cfg := network.DefaultConfig()
-	encodingCfg := app.MakeEncodingConfig()
+	encodingCfg := app.GetEncodingConfig()
 	cfg.InterfaceRegistry = encodingCfg.InterfaceRegistry
 	cfg.TxConfig = encodingCfg.TxConfig
 	cfg.NumValidators = 2

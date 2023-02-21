@@ -80,7 +80,7 @@ type SetupOptions struct {
 
 func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
-	encCdc := MakeEncodingConfig()
+	encCdc := GetEncodingConfig()
 	privSigner, err := SetupPrivSigner()
 	if err != nil {
 		panic(err)
@@ -245,7 +245,7 @@ func SetupPrivSigner() (*PrivSigner, error) {
 	if err != nil {
 		return nil, err
 	}
-	encodingCfg := appparams.MakeEncodingConfig()
+	encodingCfg := appparams.GetEncodingConfig()
 	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, encodingCfg)
 	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil
