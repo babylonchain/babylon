@@ -7,13 +7,10 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 
 	"cosmossdk.io/math"
-	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/x/epoching"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	appparams "github.com/babylonchain/babylon/app/params"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,6 +20,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/x/epoching"
+	"github.com/babylonchain/babylon/x/epoching/keeper"
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type ValidatorInfo struct {
@@ -131,9 +133,10 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            datagen.GenRandomByteArray(32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
+		AppHash:            datagen.GenRandomByteArray(32),
+		LastCommitHash:     datagen.GenRandomLastCommitHash(),
 	}
 
 	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})

@@ -3,12 +3,12 @@ package types_test
 import (
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/client"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 )
 
 // a single validator
@@ -18,7 +18,7 @@ func TestRawCheckpointWithMeta_Accumulate1(t *testing.T) {
 	totalPower := int64(10)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 	lch := datagen.GenRandomLastCommitHash()
-	msg := append(sdk.Uint64ToBigEndian(epochNum), lch...)
+	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)
 	require.NoError(t, err)
@@ -40,7 +40,7 @@ func TestRawCheckpointWithMeta_Accumulate4(t *testing.T) {
 	totalPower := int64(10) * int64(n)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 	lch := datagen.GenRandomLastCommitHash()
-	msg := append(sdk.Uint64ToBigEndian(epochNum), lch...)
+	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)
 	require.NoError(t, err)

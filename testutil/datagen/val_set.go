@@ -1,19 +1,20 @@
 package datagen
 
 import (
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func GenRandomValSet(n int) epochingtypes.ValidatorSet {
 	power := int64(10)
 	var valSet []epochingtypes.Validator
 	for i := 0; i < n; i++ {
-		address := sdk.ValAddress(ed25519.GenPrivKey().PubKey().Address())
+		address := GenRandomValidatorAddress()
 		val := epochingtypes.Validator{
 			Addr:  address,
 			Power: power,
@@ -22,6 +23,10 @@ func GenRandomValSet(n int) epochingtypes.ValidatorSet {
 	}
 
 	return epochingtypes.NewSortedValidatorSet(valSet)
+}
+
+func GenRandomValidatorAddress() sdk.ValAddress {
+	return sdk.ValAddress(ed25519.GenPrivKey().PubKey().Address())
 }
 
 func GenRandomPubkeysAndSigs(n int, msg []byte) ([]bls12381.PublicKey, []bls12381.Signature) {

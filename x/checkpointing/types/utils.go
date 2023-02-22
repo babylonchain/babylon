@@ -3,10 +3,12 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
-	"github.com/babylonchain/babylon/btctxformatter"
-	"github.com/babylonchain/babylon/crypto/bls12381"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+
+	"github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/crypto/bls12381"
 )
 
 func (m BlsSig) Hash() BlsSigHash {
@@ -115,4 +117,8 @@ func FromRawCkptToBTCCkpt(rawCkpt *RawCheckpoint, address []byte) (*btctxformatt
 	}
 
 	return btcCkpt, nil
+}
+
+func GetSignBytes(epoch uint64, hash []byte) []byte {
+	return append(sdk.Uint64ToBigEndian(epoch), hash...)
 }
