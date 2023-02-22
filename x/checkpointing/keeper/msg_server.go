@@ -43,6 +43,11 @@ func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*t
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// stateless checks on the inside `MsgCreateValidator` msg
+	if err := m.k.epochingKeeper.CheckMsgCreateValidator(ctx, msg.MsgCreateValidator); err != nil {
+		return nil, err
+	}
+
 	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)
 	if err != nil {
 		return nil, err

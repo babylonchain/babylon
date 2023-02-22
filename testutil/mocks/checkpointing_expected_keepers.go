@@ -7,9 +7,11 @@ package mocks
 import (
 	reflect "reflect"
 
-	types "github.com/babylonchain/babylon/x/epoching/types"
-	types0 "github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/cosmos-sdk/x/auth/types"
+	types "github.com/babylonchain/babylon/x/checkpointing/types"
+	types0 "github.com/babylonchain/babylon/x/epoching/types"
+	types1 "github.com/cosmos/cosmos-sdk/types"
+	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
+	types3 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,10 +39,10 @@ func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
 }
 
 // GetAccount mocks base method.
-func (m *MockAccountKeeper) GetAccount(ctx types0.Context, addr types0.AccAddress) types1.AccountI {
+func (m *MockAccountKeeper) GetAccount(ctx types1.Context, addr types1.AccAddress) types2.AccountI {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccount", ctx, addr)
-	ret0, _ := ret[0].(types1.AccountI)
+	ret0, _ := ret[0].(types2.AccountI)
 	return ret0
 }
 
@@ -74,10 +76,10 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 }
 
 // SpendableCoins mocks base method.
-func (m *MockBankKeeper) SpendableCoins(ctx types0.Context, addr types0.AccAddress) types0.Coins {
+func (m *MockBankKeeper) SpendableCoins(ctx types1.Context, addr types1.AccAddress) types1.Coins {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SpendableCoins", ctx, addr)
-	ret0, _ := ret[0].(types0.Coins)
+	ret0, _ := ret[0].(types1.Coins)
 	return ret0
 }
 
@@ -110,8 +112,22 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 	return m.recorder
 }
 
+// CheckMsgCreateValidator mocks base method.
+func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx types1.Context, msg *types3.MsgCreateValidator) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckMsgCreateValidator", ctx, msg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// CheckMsgCreateValidator indicates an expected call of CheckMsgCreateValidator.
+func (mr *MockEpochingKeeperMockRecorder) CheckMsgCreateValidator(ctx, msg interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckMsgCreateValidator", reflect.TypeOf((*MockEpochingKeeper)(nil).CheckMsgCreateValidator), ctx, msg)
+}
+
 // EnqueueMsg mocks base method.
-func (m *MockEpochingKeeper) EnqueueMsg(ctx types0.Context, msg types.QueuedMessage) {
+func (m *MockEpochingKeeper) EnqueueMsg(ctx types1.Context, msg types0.QueuedMessage) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnqueueMsg", ctx, msg)
 }
@@ -123,10 +139,10 @@ func (mr *MockEpochingKeeperMockRecorder) EnqueueMsg(ctx, msg interface{}) *gomo
 }
 
 // GetEpoch mocks base method.
-func (m *MockEpochingKeeper) GetEpoch(ctx types0.Context) *types.Epoch {
+func (m *MockEpochingKeeper) GetEpoch(ctx types1.Context) *types0.Epoch {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEpoch", ctx)
-	ret0, _ := ret[0].(*types.Epoch)
+	ret0, _ := ret[0].(*types0.Epoch)
 	return ret0
 }
 
@@ -137,7 +153,7 @@ func (mr *MockEpochingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call
 }
 
 // GetTotalVotingPower mocks base method.
-func (m *MockEpochingKeeper) GetTotalVotingPower(ctx types0.Context, epochNumber uint64) int64 {
+func (m *MockEpochingKeeper) GetTotalVotingPower(ctx types1.Context, epochNumber uint64) int64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTotalVotingPower", ctx, epochNumber)
 	ret0, _ := ret[0].(int64)
@@ -151,10 +167,10 @@ func (mr *MockEpochingKeeperMockRecorder) GetTotalVotingPower(ctx, epochNumber i
 }
 
 // GetValidatorSet mocks base method.
-func (m *MockEpochingKeeper) GetValidatorSet(ctx types0.Context, epochNumer uint64) types.ValidatorSet {
+func (m *MockEpochingKeeper) GetValidatorSet(ctx types1.Context, epochNumer uint64) types0.ValidatorSet {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorSet", ctx, epochNumer)
-	ret0, _ := ret[0].(types.ValidatorSet)
+	ret0, _ := ret[0].(types0.ValidatorSet)
 	return ret0
 }
 
@@ -188,7 +204,7 @@ func (m *MockCheckpointingHooks) EXPECT() *MockCheckpointingHooksMockRecorder {
 }
 
 // AfterBlsKeyRegistered mocks base method.
-func (m *MockCheckpointingHooks) AfterBlsKeyRegistered(ctx types0.Context, valAddr types0.ValAddress) error {
+func (m *MockCheckpointingHooks) AfterBlsKeyRegistered(ctx types1.Context, valAddr types1.ValAddress) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterBlsKeyRegistered", ctx, valAddr)
 	ret0, _ := ret[0].(error)
@@ -201,8 +217,22 @@ func (mr *MockCheckpointingHooksMockRecorder) AfterBlsKeyRegistered(ctx, valAddr
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterBlsKeyRegistered", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterBlsKeyRegistered), ctx, valAddr)
 }
 
+// AfterRawCheckpointBlsSigVerified mocks base method.
+func (m *MockCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx types1.Context, ckpt *types.RawCheckpoint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterRawCheckpointBlsSigVerified", ctx, ckpt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterRawCheckpointBlsSigVerified indicates an expected call of AfterRawCheckpointBlsSigVerified.
+func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointBlsSigVerified(ctx, ckpt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointBlsSigVerified", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointBlsSigVerified), ctx, ckpt)
+}
+
 // AfterRawCheckpointConfirmed mocks base method.
-func (m *MockCheckpointingHooks) AfterRawCheckpointConfirmed(ctx types0.Context, epoch uint64) error {
+func (m *MockCheckpointingHooks) AfterRawCheckpointConfirmed(ctx types1.Context, epoch uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterRawCheckpointConfirmed", ctx, epoch)
 	ret0, _ := ret[0].(error)
@@ -216,7 +246,7 @@ func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointConfirmed(ctx, e
 }
 
 // AfterRawCheckpointFinalized mocks base method.
-func (m *MockCheckpointingHooks) AfterRawCheckpointFinalized(ctx types0.Context, epoch uint64) error {
+func (m *MockCheckpointingHooks) AfterRawCheckpointFinalized(ctx types1.Context, epoch uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterRawCheckpointFinalized", ctx, epoch)
 	ret0, _ := ret[0].(error)
@@ -227,4 +257,18 @@ func (m *MockCheckpointingHooks) AfterRawCheckpointFinalized(ctx types0.Context,
 func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointFinalized(ctx, epoch interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointFinalized", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointFinalized), ctx, epoch)
+}
+
+// AfterRawCheckpointForgotten mocks base method.
+func (m *MockCheckpointingHooks) AfterRawCheckpointForgotten(ctx types1.Context, ckpt *types.RawCheckpoint) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AfterRawCheckpointForgotten", ctx, ckpt)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// AfterRawCheckpointForgotten indicates an expected call of AfterRawCheckpointForgotten.
+func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointForgotten(ctx, ckpt interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AfterRawCheckpointForgotten", reflect.TypeOf((*MockCheckpointingHooks)(nil).AfterRawCheckpointForgotten), ctx, ckpt)
 }
