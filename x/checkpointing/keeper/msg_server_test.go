@@ -200,7 +200,7 @@ func FuzzAddBlsSig_NoError(f *testing.F) {
 			lch := ctx.BlockHeader().LastCommitHash
 			blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
 			addr := helper.ValBlsPrivKeys[i].Address
-			signBytes := checkpointingkeeper.GetSignBytes(endingEpoch, lch)
+			signBytes := types.GetSignBytes(endingEpoch, lch)
 			blsSig := bls12381.Sign(blsPrivKey, signBytes)
 
 			// create MsgAddBlsSig message
@@ -245,7 +245,7 @@ func FuzzAddBlsSig_NotInValSet(f *testing.F) {
 		lch := ctx.BlockHeader().LastCommitHash
 		blsPrivKey := bls12381.GenPrivKey()
 		valAddr := datagen.GenRandomValidatorAddress()
-		signBytes := checkpointingkeeper.GetSignBytes(endingEpoch, lch)
+		signBytes := types.GetSignBytes(endingEpoch, lch)
 		blsSig := bls12381.Sign(blsPrivKey, signBytes)
 		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, valAddr)
 
@@ -278,7 +278,7 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 		lch := ctx.BlockHeader().LastCommitHash
 		blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
 		addr := helper.ValBlsPrivKeys[i].Address
-		signBytes := checkpointingkeeper.GetSignBytes(epoch.EpochNumber-1, lch)
+		signBytes := types.GetSignBytes(epoch.EpochNumber-1, lch)
 		blsSig := bls12381.Sign(blsPrivKey, signBytes)
 		msg := types.NewMsgAddBlsSig(epoch.EpochNumber-1, lch, blsSig, addr)
 
@@ -321,7 +321,7 @@ func FuzzAddBlsSig_WrongLastCommitHash(f *testing.F) {
 		lch := datagen.GenRandomLastCommitHash()
 		blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
 		addr := helper.ValBlsPrivKeys[i].Address
-		signBytes := checkpointingkeeper.GetSignBytes(endingEpoch, lch)
+		signBytes := types.GetSignBytes(endingEpoch, lch)
 		blsSig := bls12381.Sign(blsPrivKey, signBytes)
 		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
 

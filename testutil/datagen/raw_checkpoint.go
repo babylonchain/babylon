@@ -8,7 +8,6 @@ import (
 	"github.com/babylonchain/babylon/btctxformatter"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
@@ -109,7 +108,7 @@ func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawC
 	signerNum := n/3 + 1
 	epochNum := GenRandomEpochNum()
 	lch := GenRandomLastCommitHash()
-	msgBytes := keeper.GetSignBytes(epochNum, lch)
+	msgBytes := types.GetSignBytes(epochNum, lch)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
 	bm := bitmap.New(types.BitmapBits)

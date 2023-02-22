@@ -107,7 +107,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	}
 
 	// verify BLS sig
-	signBytes := GetSignBytes(sig.GetEpochNum(), *sig.LastCommitHash)
+	signBytes := types.GetSignBytes(sig.GetEpochNum(), *sig.LastCommitHash)
 	ok, err := bls12381.Verify(*sig.BlsSig, signerBlsKey, signBytes)
 	if err != nil {
 		return err
@@ -238,7 +238,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	if sum <= totalPower*1/3 {
 		return nil, types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
 	}
-	msgBytes := GetSignBytes(ckpt.GetEpochNum(), *ckpt.LastCommitHash)
+	msgBytes := types.GetSignBytes(ckpt.GetEpochNum(), *ckpt.LastCommitHash)
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
 	if err != nil {
 		return nil, err

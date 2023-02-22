@@ -8,7 +8,6 @@ import (
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	checkpointing "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
@@ -19,7 +18,7 @@ func TestRawCheckpointWithMeta_Accumulate1(t *testing.T) {
 	totalPower := int64(10)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 	lch := datagen.GenRandomLastCommitHash()
-	msg := checkpointing.GetSignBytes(epochNum, lch)
+	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)
 	require.NoError(t, err)
@@ -41,7 +40,7 @@ func TestRawCheckpointWithMeta_Accumulate4(t *testing.T) {
 	totalPower := int64(10) * int64(n)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 	lch := datagen.GenRandomLastCommitHash()
-	msg := checkpointing.GetSignBytes(epochNum, lch)
+	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)
 	require.NoError(t, err)

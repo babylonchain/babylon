@@ -4,12 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/btctxformatter"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-
 	"github.com/boljen/go-bitmap"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/crypto/bls12381"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/golang/mock/gomock"
@@ -182,7 +181,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		localCkptWithMeta.Status = types.Sealed
 		localCkptWithMeta.PowerSum = 10
 		localCkptWithMeta.Ckpt.Bitmap = bm
-		msgBytes := keeper.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, *localCkptWithMeta.Ckpt.LastCommitHash)
+		msgBytes := types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, *localCkptWithMeta.Ckpt.LastCommitHash)
 		sig := bls12381.Sign(blsPrivKey1, msgBytes)
 		localCkptWithMeta.Ckpt.BlsMultiSig = &sig
 		_ = ckptKeeper.AddRawCheckpoint(
@@ -215,7 +214,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 
 		// 3. check a conflicting checkpoint; signed on a random lastcommithash
 		conflictLastCommitHash := datagen.GenRandomByteArray(btctxformatter.LastCommitHashLength)
-		msgBytes = keeper.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictLastCommitHash)
+		msgBytes = types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictLastCommitHash)
 		rawBtcCheckpoint = makeBtcCkptBytes(
 			localCkptWithMeta.Ckpt.EpochNum,
 			conflictLastCommitHash,
