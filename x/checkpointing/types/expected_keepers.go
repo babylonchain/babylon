@@ -4,6 +4,7 @@ import (
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)
@@ -24,6 +25,7 @@ type EpochingKeeper interface {
 	EnqueueMsg(ctx sdk.Context, msg epochingtypes.QueuedMessage)
 	GetValidatorSet(ctx sdk.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64
+	CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCreateValidator) error
 }
 
 // Event Hooks
