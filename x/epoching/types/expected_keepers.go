@@ -45,7 +45,7 @@ type StakingKeeper interface {
 	UnbondingToUnbonded(ctx sdk.Context, validator stakingtypes.Validator) stakingtypes.Validator
 	RemoveValidator(ctx sdk.Context, address sdk.ValAddress)
 	UnbondAllMatureValidators(ctx sdk.Context)
-	GetValidatorByConsAddr(ctx sdk.Context, consAddr sdk.ConsAddress) (validator stakingtypes.Validator, found bool)
+	GetValidatorByConsAddr(ctx sdk.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, bool)
 }
 
 // Event Hooks
