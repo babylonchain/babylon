@@ -23,8 +23,6 @@ import (
 
 	"github.com/babylonchain/babylon/app/params"
 	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/cosmos/cosmos-sdk/testutil/network"
-
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
@@ -36,7 +34,8 @@ import (
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/testutil/sims"
+	"github.com/cosmos/cosmos-sdk/testutil/network"
+	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -122,7 +121,7 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 		app.InitChain(
 			abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: sims.DefaultConsensusParams,
+				ConsensusParams: simsutils.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
 			},
 		)
@@ -318,7 +317,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	app.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: sims.DefaultConsensusParams,
+			ConsensusParams: simsutils.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -355,7 +354,7 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 	app.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: sims.DefaultConsensusParams,
+			ConsensusParams: simsutils.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -493,12 +492,12 @@ func SignCheckDeliver(
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tx, err := sims.GenSignedMockTx(
+	tx, err := simsutils.GenSignedMockTx(
 		r,
 		txCfg,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
-		sims.DefaultGenTxGas,
+		simsutils.DefaultGenTxGas,
 		chainID,
 		accNums,
 		accSeqs,
@@ -545,12 +544,12 @@ func GenSequenceOfTxs(txGen client.TxConfig, msgs []sdk.Msg, accNums []uint64, i
 	var err error
 	for i := 0; i < numToGenerate; i++ {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		txs[i], err = sims.GenSignedMockTx(
+		txs[i], err = simsutils.GenSignedMockTx(
 			r,
 			txGen,
 			msgs,
 			sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
-			sims.DefaultGenTxGas,
+			simsutils.DefaultGenTxGas,
 			"",
 			accNums,
 			initSeqNums,
@@ -682,7 +681,8 @@ func NewTestNetworkFixture() network.TestFixture {
 			0,
 			encCdc,
 			sig,
-			sims.NewAppOptionsWithFlagHome(val.GetCtx().Config.RootDir))
+			EmptyAppOptions{},
+		)
 	}
 
 	return network.TestFixture{

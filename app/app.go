@@ -305,9 +305,9 @@ func NewBabylonApp(
 	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	keys := sdk.NewKVStoreKeys(
-		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
+		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey,
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
-		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
+		govtypes.StoreKey, paramstypes.StoreKey, consensusparamtypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey,
 		authzkeeper.StoreKey,
 		// Babylon modules
@@ -400,6 +400,15 @@ func NewBabylonApp(
 
 	app.AuthzKeeper = authzkeeper.NewKeeper(keys[authzkeeper.StoreKey], appCodec, app.MsgServiceRouter(), app.AccountKeeper)
 
+	app.IBCKeeper = ibckeeper.NewKeeper(
+		appCodec,
+		keys[ibcexported.StoreKey],
+		app.GetSubspace(ibcexported.ModuleName),
+		app.StakingKeeper,
+		app.UpgradeKeeper,
+		scopedIBCKeeper,
+	)
+
 	// ... other modules keepers
 	// TODO: Create IBC keeper
 
@@ -431,16 +440,6 @@ func NewBabylonApp(
 		),
 	)
 
-	// Keepers for IBC-related modules
-	ibcKeeper := ibckeeper.NewKeeper(
-		appCodec,
-		keys[ibcexported.StoreKey],
-		app.GetSubspace(ibcexported.ModuleName),
-		app.StakingKeeper,
-		app.UpgradeKeeper,
-		scopedIBCKeeper,
-	)
-
 	// create Tendermint client
 	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
 	if err != nil {
@@ -456,9 +455,9 @@ func NewBabylonApp(
 		keys[zctypes.StoreKey],
 		keys[zctypes.MemStoreKey],
 		app.GetSubspace(zctypes.ModuleName),
-		ibcKeeper.ChannelKeeper,
-		ibcKeeper.ChannelKeeper,
-		&ibcKeeper.PortKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
 		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
@@ -475,10 +474,8 @@ func NewBabylonApp(
 	extendedClientKeeper = *extendedClientKeeper.SetHooks(
 		ibcclientkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
 	)
-	ibcKeeper.ClientKeeper = extendedClientKeeper
+	app.IBCKeeper.ClientKeeper = extendedClientKeeper
 
-	// set IBC keeper and ZC keeper for app
-	app.IBCKeeper = ibcKeeper
 	app.ZoneConciergeKeeper = *zcKeeper
 
 	// Create Transfer Keepers
@@ -617,7 +614,7 @@ func NewBabylonApp(
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
-		paramstypes.ModuleName, vestingtypes.ModuleName,
+		paramstypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName,
 		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
@@ -640,7 +637,7 @@ func NewBabylonApp(
 		slashingtypes.ModuleName, minttypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
-		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
+		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName,
 		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,
@@ -665,7 +662,7 @@ func NewBabylonApp(
 		slashingtypes.ModuleName, govtypes.ModuleName, minttypes.ModuleName, crisistypes.ModuleName,
 		genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName,
-		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName,
+		paramstypes.ModuleName, upgradetypes.ModuleName, vestingtypes.ModuleName, consensusparamtypes.ModuleName,
 		// Babylon modules
 		epochingtypes.ModuleName,
 		btclightclienttypes.ModuleName,

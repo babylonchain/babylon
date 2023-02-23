@@ -6,8 +6,8 @@ package types
 import (
 	fmt "fmt"
 	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -59,12 +59,14 @@ func (BtcStatus) EnumDescriptor() ([]byte, []int) {
 }
 
 // Consider we have a Merkle tree with following structure:
-//            ROOT
-//           /    \
-//      H1234      H5555
-//     /     \       \
-//   H12     H34      H55
-//  /  \    /  \     /
+//
+//	          ROOT
+//	         /    \
+//	    H1234      H5555
+//	   /     \       \
+//	 H12     H34      H55
+//	/  \    /  \     /
+//
 // H1  H2  H3  H4  H5
 // L1  L2  L3  L4  L5
 // To prove L3 was part of ROOT we need:
