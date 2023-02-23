@@ -19,6 +19,7 @@ import (
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power
@@ -94,6 +95,43 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 			}
 		}
 		require.Equal(t, len(wcvMsgs)+1, count)
+	})
+}
+
+// FuzzWrappedCreateValidator_InsufficientBalance tests adding a new validator
+// but the delegator has insufficient balance to perform delegating
+func FuzzWrappedCreateValidator_InsufficientBalance(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		// a genesis validator is generate for setup
+		helper := testepoching.NewHelper(t)
+		ek := helper.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
+
+		// BeginBlock of block 1, and thus entering epoch 1
+		ctx := helper.BeginBlock()
+		epoch := ek.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		n := rand.Intn(3) + 1
+		balance := rand.Int63n(100)
+		addrs := app.AddTestAddrs(helper.App, helper.Ctx, n, sdk.NewInt(balance))
+
+		// add n new validators with value more than the delegator balance via MsgWrappedCreateValidator
+		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
+		for i := 0; i < n; i++ {
+			// make sure the value is more than the balance
+			value := sdk.NewInt(balance).Add(sdk.NewInt(rand.Int63n(100)))
+			msg, err := buildMsgWrappedCreateValidatorWithAmount(addrs[i], value)
+			require.NoError(t, err)
+			wcvMsgs[i] = msg
+			_, err = msgServer.WrappedCreateValidator(ctx, msg)
+			require.ErrorIs(t, err, epochingtypes.ErrInsufficientBalance)
+		}
 	})
 }
 

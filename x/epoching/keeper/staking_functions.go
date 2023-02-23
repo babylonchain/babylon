@@ -5,9 +5,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
-// CheckMsgCreateValidator performs stateless checks on a given `MsgCreateValidator` message
+// CheckMsgCreateValidator performs checks on a given `MsgCreateValidator` message
 // The checkpointing module will use this function to verify the `MsgCreateValidator` message
 // inside a `MsgWrappedCreateValidator` message.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.10/x/staking/keeper/msg_server.go#L34-L108)
@@ -89,8 +91,14 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// sanity check on delegator address
-	if _, err := sdk.AccAddressFromBech32(msg.DelegatorAddress); err != nil {
+	delegatorAddr, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
+	if err != nil {
 		return err
+	}
+
+	balance := k.bk.GetBalance(ctx, delegatorAddr, msg.Value.GetDenom())
+	if msg.Value.IsGTE(balance) {
+		return types.ErrInsufficientBalance
 	}
 
 	return nil
