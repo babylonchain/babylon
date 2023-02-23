@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -15,7 +16,7 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-func AddGenBlsCmd() *cobra.Command {
+func AddGenBlsCmd(validator genutiltypes.MessageValidator) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add-genesis-bls [genesis_bls_file]",
 		Short: "Add a genesis BLS key to genesis.json",
@@ -65,7 +66,7 @@ BLS keys in the checkpointing module's genesis state.'
 			genTxState := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, appState)
 			foundInGenTx := false
 			for _, genTx := range genTxState.GenTxs {
-				tx, err := genutiltypes.ValidateAndGetGenTx(genTx, clientCtx.TxConfig.TxJSONDecoder())
+				tx, err := genutiltypes.ValidateAndGetGenTx(genTx, clientCtx.TxConfig.TxJSONDecoder(), validator)
 				if err != nil {
 					return err
 				}

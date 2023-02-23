@@ -25,7 +25,7 @@ const chainUpgradeGuide = "https://github.com/cosmos/cosmos-sdk/blob/a51aa517c46
 // 2. each genesis BLS key or gentx should have a corresponding gentx or genesis
 // BLS key
 // modified based on "https://github.com/cosmos/cosmos-sdk/blob/6d32debf1aca4b7f1ed1429d87be1d02c315f02d/x/genutil/client/cli/validate_genesis.go"
-func ValidateGenesisCmd(mbm module.BasicManager) *cobra.Command {
+func ValidateGenesisCmd(mbm module.BasicManager, validator genutiltypes.MessageValidator) *cobra.Command {
 	return &cobra.Command{
 		Use:   "validate-genesis [file]",
 		Args:  cobra.RangeArgs(0, 1),
@@ -58,7 +58,7 @@ func ValidateGenesisCmd(mbm module.BasicManager) *cobra.Command {
 				return fmt.Errorf("error validating genesis file %s: %s", genesis, err.Error())
 			}
 
-			if err = CheckCorrespondence(clientCtx, genState); err != nil {
+			if err = CheckCorrespondence(clientCtx, genState, validator); err != nil {
 				return fmt.Errorf("error validating genesis file correspondence %s: %s", genesis, err.Error())
 			}
 
@@ -86,7 +86,7 @@ func validateGenDoc(importGenesisFile string) (*tmtypes.GenesisDoc, error) {
 
 // CheckCorrespondence checks that each genesis tx/BLS key should have one
 // corresponding BLS key/genesis tx
-func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage) error {
+func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage, validator genutiltypes.MessageValidator) error {
 	checkpointingGenState := types.GetGenesisStateFromAppState(ctx.Codec, genesis)
 	gks := checkpointingGenState.GetGenesisKeys()
 	genTxState := genutiltypes.GetGenesisStateFromAppState(ctx.Codec, genesis)
@@ -105,7 +105,7 @@ func CheckCorrespondence(ctx client.Context, genesis map[string]json.RawMessage)
 	}
 	// ensure every gentx has a match with BLS key by address
 	for _, genTx := range genTxState.GenTxs {
-		tx, err := genutiltypes.ValidateAndGetGenTx(genTx, ctx.TxConfig.TxJSONDecoder())
+		tx, err := genutiltypes.ValidateAndGetGenTx(genTx, ctx.TxConfig.TxJSONDecoder(), validator)
 		if err != nil {
 			return err
 		}

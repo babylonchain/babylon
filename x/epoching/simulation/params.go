@@ -10,8 +10,8 @@ import (
 
 // ParamChanges defines the parameters that can be modified by param change proposals on the simulation
 // TODO: add support of changing EpochInterval on-the-fly
-func ParamChanges(r *rand.Rand) []simtypes.ParamChange {
-	return []simtypes.ParamChange{
+func ParamChanges(r *rand.Rand) []simtypes.LegacyParamChange {
+	return []simtypes.LegacyParamChange{
 		// simulation.NewSimParamChange(types.ModuleName, string(types.KeyEpochInterval),
 		// 	func(r *rand.Rand) string {
 		// 		return fmt.Sprintf("%d", genEpochInterval(r))

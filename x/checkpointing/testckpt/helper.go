@@ -59,7 +59,7 @@ func NewHelper(t *testing.T, n int) *Helper {
 		CheckpointingKeeper: &checkpointingKeeper,
 		MsgSrvr:             msgSrvr,
 		QueryClient:         queryClient,
-		StakingKeeper:       &stakingKeeper,
+		StakingKeeper:       stakingKeeper,
 		EpochingKeeper:      &epochingKeeper,
 		GenAccs:             accs,
 	}

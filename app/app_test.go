@@ -4,6 +4,7 @@ import (
 	"os"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
@@ -38,7 +39,7 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 	logger2 := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 	// Making a new app object with the db, so that initchain hasn't been called
 	app2 := NewBabylonApp(logger2, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, signer, EmptyAppOptions{})
-	_, err := app2.ExportAppStateAndValidators(false, []string{})
+	_, err := app2.ExportAppStateAndValidators(false, []string{}, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
@@ -68,6 +69,8 @@ func TestUpgradeStateOnGenesis(t *testing.T) {
 	ctx := app.NewContext(false, tmproto.Header{})
 	vm := app.UpgradeKeeper.GetModuleVersionMap(ctx)
 	for v, i := range app.mm.Modules {
-		require.Equal(t, vm[v], i.ConsensusVersion())
+		if i, ok := i.(module.HasConsensusVersion); ok {
+			require.Equal(t, vm[v], i.ConsensusVersion())
+		}
 	}
 }

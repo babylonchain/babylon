@@ -146,7 +146,10 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 
 	// gov module genesis
 	govGenState := govv1.DefaultGenesisState()
-	govGenState.DepositParams = &genesisParams.GovParams.DepositParams
+	govGenState.DepositParams = &govv1.DepositParams{
+		MinDeposit:       genesisParams.GovParams.MinDeposit,
+		MaxDepositPeriod: genesisParams.GovParams.MaxDepositPeriod,
+	}
 	appState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
 	// crisis module genesis
@@ -238,7 +241,7 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.MintParams.GoalBonded = sdk.MustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
-	genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
+	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdk.NewInt(2_500_000_000),
 	))

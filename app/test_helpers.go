@@ -6,9 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"os"
 	"strconv"
 	"testing"
 	"time"
+
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"cosmossdk.io/math"
 	tmconfig "github.com/tendermint/tendermint/config"
@@ -19,7 +23,10 @@ import (
 
 	"github.com/babylonchain/babylon/app/params"
 	appparams "github.com/babylonchain/babylon/app/params"
+	"github.com/cosmos/cosmos-sdk/testutil/network"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -29,7 +36,7 @@ import (
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -43,29 +50,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
-
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
 )
-
-// DefaultConsensusParams defines the default Tendermint consensus params used in
-// Babylon testing.
-var DefaultConsensusParams = &abci.ConsensusParams{
-	Block: &abci.BlockParams{
-		MaxBytes: 200000,
-		MaxGas:   2000000,
-	},
-	Evidence: &tmproto.EvidenceParams{
-		MaxAgeNumBlocks: 302400,
-		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
-		MaxBytes:        10000,
-	},
-	Validator: &tmproto.ValidatorParams{
-		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
-		},
-	},
-}
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.
 type SetupOptions struct {
@@ -137,7 +122,7 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 		app.InitChain(
 			abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: DefaultConsensusParams,
+				ConsensusParams: sims.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
 			},
 		)
@@ -204,7 +189,13 @@ func genesisStateWithValSet(t *testing.T,
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	return genesisState
@@ -311,7 +302,13 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -321,7 +318,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	app.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: DefaultConsensusParams,
+			ConsensusParams: sims.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -341,7 +338,13 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 		totalSupply = totalSupply.Add(b.Coins...)
 	}
 
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -352,7 +355,7 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 	app.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: DefaultConsensusParams,
+			ConsensusParams: sims.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -490,12 +493,12 @@ func SignCheckDeliver(
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tx, err := helpers.GenSignedMockTx(
+	tx, err := sims.GenSignedMockTx(
 		r,
 		txCfg,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
-		helpers.DefaultGenTxGas,
+		sims.DefaultGenTxGas,
 		chainID,
 		accNums,
 		accSeqs,
@@ -542,12 +545,12 @@ func GenSequenceOfTxs(txGen client.TxConfig, msgs []sdk.Msg, accNums []uint64, i
 	var err error
 	for i := 0; i < numToGenerate; i++ {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		txs[i], err = helpers.GenSignedMockTx(
+		txs[i], err = sims.GenSignedMockTx(
 			r,
 			txGen,
 			msgs,
 			sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
-			helpers.DefaultGenTxGas,
+			sims.DefaultGenTxGas,
 			"",
 			accNums,
 			initSeqNums,
@@ -641,4 +644,55 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 	}
 
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, minttypes.ModuleName, recipientMod, amounts)
+}
+
+// NewTestNetworkFixture returns a new simapp AppConstructor for network simulation tests
+func NewTestNetworkFixture() network.TestFixture {
+	dir, err := os.MkdirTemp("", "simapp")
+	if err != nil {
+		panic(fmt.Sprintf("failed creating temporary directory: %v", err))
+	}
+	defer os.RemoveAll(dir)
+
+	db := dbm.NewMemDB()
+	encCdc := GetEncodingConfig()
+	privSigner, err := SetupPrivSigner()
+
+	if err != nil {
+		panic(err)
+	}
+
+	// app := NewBabylonApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, sims.NewAppOptionsWithFlagHome(dir))
+	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCdc, privSigner, EmptyAppOptions{})
+
+	appCtr := func(val network.ValidatorI) servertypes.Application {
+		sig, err := SetupPrivSigner()
+
+		if err != nil {
+			panic(err)
+		}
+
+		return NewBabylonApp(
+			val.GetCtx().Logger,
+			dbm.NewMemDB(),
+			nil,
+			true,
+			map[int64]bool{},
+			DefaultNodeHome,
+			0,
+			encCdc,
+			sig,
+			sims.NewAppOptionsWithFlagHome(val.GetCtx().Config.RootDir))
+	}
+
+	return network.TestFixture{
+		AppConstructor: appCtr,
+		GenesisState:   app.DefaultGenesis(),
+		EncodingConfig: testutil.TestEncodingConfig{
+			InterfaceRegistry: app.InterfaceRegistry(),
+			Codec:             app.AppCodec(),
+			TxConfig:          app.TxConfig(),
+			Amino:             app.LegacyAmino(),
+		},
+	}
 }

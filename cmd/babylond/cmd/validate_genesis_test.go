@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/cmd/babylond/cmd"
@@ -68,6 +69,8 @@ func TestCheckCorrespondence(t *testing.T) {
 		},
 	}
 
+	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+
 	for _, tc := range testCases {
 		genDoc, err := tmtypes.GenesisDocFromJSON(tc.genesis)
 		require.NoError(t, err)
@@ -75,7 +78,7 @@ func TestCheckCorrespondence(t *testing.T) {
 		genesisState, err := genutiltypes.GenesisStateFromGenDoc(*genDoc)
 		require.NoError(t, err)
 		require.NotEmpty(t, genesisState)
-		err = cmd.CheckCorrespondence(clientCtx, genesisState)
+		err = cmd.CheckCorrespondence(clientCtx, genesisState, gentxModule.GenTxValidator)
 		if tc.expErr {
 			require.Error(t, err)
 		} else {

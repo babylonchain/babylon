@@ -3,10 +3,10 @@ package epoching
 import (
 	"math/rand"
 
+	simappparams "github.com/babylonchain/babylon/app/params"
 	epochingsimulation "github.com/babylonchain/babylon/x/epoching/simulation"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -32,7 +32,7 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 }
 
 // RandomizedParams creates randomized  param changes for the simulator
-func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.ParamChange {
+func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.LegacyParamChange {
 	return epochingsimulation.ParamChanges(r)
 }
 

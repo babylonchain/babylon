@@ -10,7 +10,7 @@ import (
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/tests/mocks"
+	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/golang/mock/gomock"
 
 	"github.com/gogo/protobuf/proto"
@@ -74,7 +74,7 @@ func (s *CLITestSuite) SetupSuite() {
 	s.encCfg = app.GetEncodingConfig()
 	s.kr = keyring.NewInMemory(s.encCfg.Marshaler)
 	ctrl := gomock.NewController(s.T())
-	mockAccountRetriever := mocks.NewMockAccountRetriever(ctrl)
+	mockAccountRetriever := mock.NewMockAccountRetriever(ctrl)
 	mockAccountRetriever.EXPECT().EnsureExists(gomock.Any(), gomock.Any()).Return(nil)
 	mockAccountRetriever.EXPECT().GetAccountNumberSequence(gomock.Any(), gomock.Any()).Return(uint64(0), uint64(0), nil)
 	s.baseCtx = client.Context{}.

@@ -3,14 +3,15 @@ package zoneconcierge
 import (
 	"math/rand"
 
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
+
+	simappparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/testutil/sample"
 	zoneconciergesimulation "github.com/babylonchain/babylon/x/zoneconcierge/simulation"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 )
 
@@ -42,9 +43,9 @@ func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedP
 }
 
 // RandomizedParams creates randomized  param changes for the simulator
-func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
+func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.LegacyParamChange {
 
-	return []simtypes.ParamChange{}
+	return []simtypes.LegacyParamChange{}
 }
 
 // RegisterStoreDecoder registers a decoder

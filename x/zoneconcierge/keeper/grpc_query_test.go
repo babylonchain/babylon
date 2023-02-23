@@ -10,7 +10,7 @@ import (
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"

@@ -76,7 +76,7 @@ func NewHelper(t *testing.T) *Helper {
 		&epochingKeeper,
 		msgSrvr,
 		queryClient,
-		&app.StakingKeeper,
+		app.StakingKeeper,
 		nil,
 		[]ValidatorInfo{ValidatorInfo{
 			blsPrivKey,
@@ -123,7 +123,7 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs, valInfos}
+	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, app.StakingKeeper, GenAccs, valInfos}
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
