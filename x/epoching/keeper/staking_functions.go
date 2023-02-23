@@ -9,7 +9,7 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
-// CheckMsgCreateValidator performs stateless checks on a given `MsgCreateValidator` message
+// CheckMsgCreateValidator performs checks on a given `MsgCreateValidator` message
 // The checkpointing module will use this function to verify the `MsgCreateValidator` message
 // inside a `MsgWrappedCreateValidator` message.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.10/x/staking/keeper/msg_server.go#L34-L108)
