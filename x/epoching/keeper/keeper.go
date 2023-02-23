@@ -3,13 +3,14 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type (
@@ -19,6 +20,7 @@ type (
 		memKey     storetypes.StoreKey
 		hooks      types.EpochingHooks
 		paramstore paramtypes.Subspace
+		bk         types.BankKeeper
 		stk        types.StakingKeeper
 		router     *baseapp.MsgServiceRouter
 	}
@@ -29,6 +31,7 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
+	bk types.BankKeeper,
 	stk types.StakingKeeper,
 ) Keeper {
 	// set KeyTable if it has not already been set
@@ -42,6 +45,7 @@ func NewKeeper(
 		memKey:     memKey,
 		paramstore: ps,
 		hooks:      nil,
+		bk:         bk,
 		stk:        stk,
 	}
 }

@@ -5,6 +5,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 // CheckMsgCreateValidator performs stateless checks on a given `MsgCreateValidator` message
@@ -89,8 +91,14 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// sanity check on delegator address
-	if _, err := sdk.AccAddressFromBech32(msg.DelegatorAddress); err != nil {
+	delegatorAddr, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
+	if err != nil {
 		return err
+	}
+
+	balance := k.bk.GetBalance(ctx, delegatorAddr, msg.Value.GetDenom())
+	if msg.Value.IsGTE(balance) {
+		return types.ErrInsufficientBalance
 	}
 
 	return nil

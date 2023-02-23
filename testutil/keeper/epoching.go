@@ -3,8 +3,6 @@ package keeper
 import (
 	"testing"
 
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/store"
@@ -15,6 +13,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
+
+	"github.com/babylonchain/babylon/x/epoching/keeper"
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
@@ -42,6 +43,7 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		paramsSubspace,
 		// TODO: make this compile at the moment, will fix for integrated testing
+		nil,
 		nil,
 	)
 

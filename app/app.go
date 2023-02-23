@@ -10,7 +10,6 @@ import (
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
-	bbn "github.com/babylonchain/babylon/types"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
@@ -19,7 +18,8 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	appparams "github.com/babylonchain/babylon/app/params"
+	bbn "github.com/babylonchain/babylon/types"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -87,8 +87,15 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+	appparams "github.com/babylonchain/babylon/app/params"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint"
 	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
@@ -105,16 +112,8 @@ import (
 	"github.com/babylonchain/babylon/x/monitor"
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	// IBC-related
-	"github.com/babylonchain/babylon/x/zoneconcierge"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
-	transfer "github.com/cosmos/ibc-go/v5/modules/apps/transfer"
+	"github.com/cosmos/ibc-go/v5/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v5/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v5/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v5/modules/core"
@@ -122,6 +121,11 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v5/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v5/modules/core/24-host" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibckeeper "github.com/cosmos/ibc-go/v5/modules/core/keeper"
+
+	// IBC-related
+	"github.com/babylonchain/babylon/x/zoneconcierge"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 const (
@@ -346,7 +350,7 @@ func NewBabylonApp(
 
 	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
 	epochingKeeper := epochingkeeper.NewKeeper(
-		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), &app.StakingKeeper,
+		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), app.BankKeeper, &app.StakingKeeper,
 	)
 
 	app.MintKeeper = mintkeeper.NewKeeper(

@@ -21,4 +21,5 @@ var (
 	ErrZeroEpochMsg              = sdkerrors.Register(ModuleName, 11, "the 0-th epoch does not handle messages")
 	ErrInvalidEpoch              = sdkerrors.Register(ModuleName, 12, "the epoch is invalid")
 	ErrInvalidHeight             = sdkerrors.Register(ModuleName, 13, "the height is invalid")
+	ErrInsufficientBalance       = sdkerrors.Register(ModuleName, 14, "the delegator has insufficient balance to perform delegate")
 )
