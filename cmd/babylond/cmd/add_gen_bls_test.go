@@ -70,7 +70,8 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 // test adding genesis BLS keys with gentx
 // error is expected if adding duplicate
 func Test_AddGenBlsCmdWithGentx(t *testing.T) {
-	cfg := network.DefaultConfig(app.NewTestNetworkFixture)
+	min := network.MinimumAppConfig()
+	cfg, _ := network.DefaultConfigWithAppConfig(min)
 	config.SetConfigTemplate(config.DefaultConfigTemplate)
 	cfg.NumValidators = 1
 

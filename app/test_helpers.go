@@ -6,13 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
-	"os"
 	"strconv"
 	"testing"
 	"time"
-
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 
 	"cosmossdk.io/math"
 	tmconfig "github.com/tendermint/tendermint/config"
@@ -34,7 +30,6 @@ import (
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/testutil/network"
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -643,56 +638,4 @@ func FundModuleAccount(bankKeeper bankkeeper.Keeper, ctx sdk.Context, recipientM
 	}
 
 	return bankKeeper.SendCoinsFromModuleToModule(ctx, minttypes.ModuleName, recipientMod, amounts)
-}
-
-// NewTestNetworkFixture returns a new simapp AppConstructor for network simulation tests
-func NewTestNetworkFixture() network.TestFixture {
-	dir, err := os.MkdirTemp("", "simapp")
-	if err != nil {
-		panic(fmt.Sprintf("failed creating temporary directory: %v", err))
-	}
-	defer os.RemoveAll(dir)
-
-	db := dbm.NewMemDB()
-	encCdc := GetEncodingConfig()
-	privSigner, err := SetupPrivSigner()
-
-	if err != nil {
-		panic(err)
-	}
-
-	// app := NewBabylonApp(log.NewNopLogger(), dbm.NewMemDB(), nil, true, sims.NewAppOptionsWithFlagHome(dir))
-	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCdc, privSigner, EmptyAppOptions{})
-
-	appCtr := func(val network.ValidatorI) servertypes.Application {
-		sig, err := SetupPrivSigner()
-
-		if err != nil {
-			panic(err)
-		}
-
-		return NewBabylonApp(
-			val.GetCtx().Logger,
-			dbm.NewMemDB(),
-			nil,
-			true,
-			map[int64]bool{},
-			DefaultNodeHome,
-			0,
-			encCdc,
-			sig,
-			EmptyAppOptions{},
-		)
-	}
-
-	return network.TestFixture{
-		AppConstructor: appCtr,
-		GenesisState:   app.DefaultGenesis(),
-		EncodingConfig: testutil.TestEncodingConfig{
-			InterfaceRegistry: app.InterfaceRegistry(),
-			Codec:             app.AppCodec(),
-			TxConfig:          app.TxConfig(),
-			Amino:             app.LegacyAmino(),
-		},
-	}
 }

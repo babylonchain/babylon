@@ -184,7 +184,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 		{"valid duplicate update", func() {
 			clientID := path.EndpointA.ClientID
 
-			height1 := clienttypes.NewHeight(0, 1)
+			height1 := clienttypes.NewHeight(1, 1)
 
 			// store previous consensus state
 			prevConsState := &ibctmtypes.ConsensusState{
@@ -193,7 +193,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			}
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, height1, prevConsState)
 
-			height5 := clienttypes.NewHeight(0, 5)
+			height5 := clienttypes.NewHeight(1, 5)
 			// store next consensus state to check that trustedHeight does not need to be hightest consensus state before header height
 			nextConsState := &ibctmtypes.ConsensusState{
 				Timestamp:          suite.past.Add(time.Minute),
@@ -201,7 +201,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			}
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, height5, nextConsState)
 
-			height3 := clienttypes.NewHeight(0, 3)
+			height3 := clienttypes.NewHeight(1, 3)
 			// updateHeader will fill in consensus state between prevConsState and suite.consState
 			// clientState should not be updated
 			updateHeader = createPastUpdateFn(height3, height1)
@@ -211,7 +211,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 		{"misbehaviour in dishonest majority CZ: conflicting header", func() {
 			clientID := path.EndpointA.ClientID
 
-			height1 := clienttypes.NewHeight(0, 1)
+			height1 := clienttypes.NewHeight(1, 1)
 			// store previous consensus state
 			prevConsState := &ibctmtypes.ConsensusState{
 				Timestamp:          suite.past,
@@ -219,7 +219,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			}
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, height1, prevConsState)
 
-			height5 := clienttypes.NewHeight(0, 5)
+			height5 := clienttypes.NewHeight(1, 5)
 			// store next consensus state to check that trustedHeight does not need to be hightest consensus state before header height
 			nextConsState := &ibctmtypes.ConsensusState{
 				Timestamp:          suite.past.Add(time.Minute),
@@ -227,7 +227,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			}
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, height5, nextConsState)
 
-			height3 := clienttypes.NewHeight(0, 3)
+			height3 := clienttypes.NewHeight(1, 3)
 			// updateHeader will fill in consensus state between prevConsState and suite.consState
 			// clientState should not be updated
 			updateHeader = createPastUpdateFn(height3, height1)

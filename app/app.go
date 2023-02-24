@@ -136,6 +136,7 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 )
 
 const (
@@ -188,6 +189,7 @@ var (
 
 		// IBC-related
 		ibc.AppModuleBasic{},
+		ibctm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		zoneconcierge.AppModuleBasic{},
 	)
@@ -374,7 +376,7 @@ func NewBabylonApp(
 
 	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
 	epochingKeeper := epochingkeeper.NewKeeper(
-		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), app.BankKeeper, &app.StakingKeeper,
+		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), app.BankKeeper, app.StakingKeeper,
 	)
 
 	app.MintKeeper = mintkeeper.NewKeeper(appCodec, keys[minttypes.StoreKey], app.StakingKeeper, app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())

@@ -1,13 +1,13 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
-	"math/rand"
-	"testing"
 )
 
 func FuzzKeeperIsHeaderKDeep(f *testing.F) {
@@ -369,10 +369,10 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 		// Get the new tip
 		newTip := blcKeeper.HeadersState(ctx).GetTip()
 
-		// Get event names. Those will be useful to test the types of the emitted events
-		rollForwardName := proto.MessageName(&types.EventBTCRollForward{})
-		rollBackName := proto.MessageName(&types.EventBTCRollBack{})
-		headerInsertedName := proto.MessageName(&types.EventBTCHeaderInserted{})
+		// Get event types. Those will be useful to test the types of the emitted events
+		rollForwadType, _ := sdk.TypedEventToEvent(&types.EventBTCRollForward{})
+		rollBackType, _ := sdk.TypedEventToEvent(&types.EventBTCRollBack{})
+		headerInsertedType, _ := sdk.TypedEventToEvent(&types.EventBTCHeaderInserted{})
 
 		// The headerInserted hook call should contain the new header
 		if len(mockHooks.AfterBTCHeaderInsertedStore) != 1 {
@@ -385,8 +385,9 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 		if len(ctx.EventManager().Events()) == 0 {
 			t.Fatalf("No events were triggered")
 		}
+
 		// The header creation event should have been the one that was first generated
-		if ctx.EventManager().Events()[0].Type != headerInsertedName {
+		if ctx.EventManager().Events()[0].Type != headerInsertedType.Type {
 			t.Errorf("The first event does not have the BTCHeaderInserted type")
 		}
 
@@ -413,7 +414,7 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 				t.Fatalf("We expected only two events. One for header creation and one for rolling forward.")
 			}
 			// The second event should be the roll forward one
-			if ctx.EventManager().Events()[1].Type != rollForwardName {
+			if ctx.EventManager().Events()[1].Type != rollForwadType.Type {
 				t.Errorf("The second event does not have the roll forward type")
 			}
 		} else if oldTip.Work.GT(*header.Work) {
@@ -474,10 +475,10 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			rollForwardCnt := 0
 			rollBackCnt := 0
 			for i := 0; i < len(invokedEvents); i++ {
-				if invokedEvents[i].Type == rollForwardName {
+				if invokedEvents[i].Type == rollForwadType.Type {
 					rollForwardCnt += 1
 				}
-				if invokedEvents[i].Type == rollBackName {
+				if invokedEvents[i].Type == rollBackType.Type {
 					rollBackCnt += 1
 				}
 			}
