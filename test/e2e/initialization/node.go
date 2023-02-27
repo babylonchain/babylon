@@ -131,6 +131,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.SignerConfig.KeyName = ValidatorWalletName
 	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
 	appConfig.BtcConfig.CheckpointTag = BabylonOpReturnTag
+	appConfig.GRPC.Address = "0.0.0.0:9090"
 
 	customTemplate := cmd.DefaultBabylonTemplate()
 
