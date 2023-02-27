@@ -18,7 +18,7 @@ import (
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmos "github.com/tendermint/tendermint/libs/os"
-
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -70,7 +70,7 @@ func newBuildCreateValidatorMsg(clientCtx client.Context, txf tx.Factory, fs *fl
 
 	minSelfDelegation, ok := sdk.NewIntFromString(msbStr)
 	if !ok {
-		return txf, nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
+		return txf, nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "minimum self delegation must be a positive integer")
 	}
 
 	msg, err := staketypes.NewMsgCreateValidator(

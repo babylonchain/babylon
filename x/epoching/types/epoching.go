@@ -3,9 +3,9 @@ package types
 import (
 	"time"
 
+	errorsmod "cosmossdk.io/errors"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -170,7 +170,7 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 	case *QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
 	default:
-		panic(sdkerrors.Wrap(ErrInvalidQueuedMessageType, qm.String()))
+		panic(errorsmod.Wrap(ErrInvalidQueuedMessageType, qm.String()))
 	}
 	return unwrappedMsgWithType
 }

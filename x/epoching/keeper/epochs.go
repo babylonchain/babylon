@@ -1,10 +1,10 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/tendermint/tendermint/crypto/merkle"
 )
 
@@ -82,7 +82,7 @@ func (k Keeper) GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*types.
 func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx sdk.Context) error {
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
-		return sdkerrors.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
+		return errorsmod.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
 	// record last block header
 	header := ctx.BlockHeader()

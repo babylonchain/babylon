@@ -3,7 +3,7 @@ package keeper
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,7 +20,7 @@ func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo
 	}
 	// ensure chain info has not been initialised yet
 	if k.HasChainInfo(ctx, chainID) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidChainInfo, "chain info has already initialized")
+		return nil, errorsmod.Wrapf(types.ErrInvalidChainInfo, "chain info has already initialized")
 	}
 
 	chainInfo := &types.ChainInfo{
@@ -67,7 +67,7 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo,
 // equal to the total number of headers in CZ.
 func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
-		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
+		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
@@ -88,12 +88,12 @@ func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *type
 // - If this fork header is older than the current latest fork, ignore
 func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
-		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
+		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
+		return errorsmod.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
 	}
 
 	if len(chainInfo.LatestForks.Headers) == 0 {

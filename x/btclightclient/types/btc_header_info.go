@@ -1,11 +1,11 @@
 package types
 
 import (
+	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewBTCHeaderInfo(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint64, work *sdk.Uint) *BTCHeaderInfo {
+func NewBTCHeaderInfo(header *bbn.BTCHeaderBytes, headerHash *bbn.BTCHeaderHashBytes, height uint64, work *sdkmath.Uint) *BTCHeaderInfo {
 	return &BTCHeaderInfo{
 		Header: header,
 		Hash:   headerHash,

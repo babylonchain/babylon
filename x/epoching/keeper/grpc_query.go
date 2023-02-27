@@ -6,6 +6,7 @@ import (
 
 	"cosmossdk.io/math"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -129,7 +130,7 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 	ctx := sdk.UnwrapSDKContext(c)
 
 	if req.EpochCount == 0 {
-		return nil, sdkerrors.Wrapf(
+		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "epoch_count should be specified and be larger than zero",
 		)
 	}
@@ -222,7 +223,7 @@ func (k Keeper) EpochValSet(c context.Context, req *types.QueryEpochValSetReques
 		// Here key is the validator's ValAddress, and value is the voting power
 		var power math.Int
 		if err := power.Unmarshal(value); err != nil {
-			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error())) // this only happens upon a programming error
+			panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error())) // this only happens upon a programming error
 		}
 		val := types.Validator{
 			Addr:  key,

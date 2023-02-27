@@ -29,8 +29,7 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	bbn "github.com/babylonchain/babylon/types"
-
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -450,7 +449,7 @@ func NewBabylonApp(
 	// create querier for KVStore
 	storeQuerier, ok := app.CommitMultiStore().(sdk.Queryable)
 	if !ok {
-		panic(sdkerrors.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
+		panic(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
 	}
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,

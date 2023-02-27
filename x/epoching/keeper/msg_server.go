@@ -8,6 +8,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/tendermint/tendermint/crypto/tmhash"
+	errorsmod "cosmossdk.io/errors"
 )
 
 type msgServer struct {
@@ -39,7 +40,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 	}
 	bondDenom := k.stk.BondDenom(ctx)
 	if msg.Msg.Amount.Denom != bondDenom {
-		return nil, sdkerrors.Wrapf(
+		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
 		)
 	}
@@ -92,7 +93,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	}
 	bondDenom := k.stk.BondDenom(ctx)
 	if msg.Msg.Amount.Denom != bondDenom {
-		return nil, sdkerrors.Wrapf(
+		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
 		)
 	}
@@ -145,7 +146,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 	}
 	bondDenom := k.stk.BondDenom(ctx)
 	if msg.Msg.Amount.Denom != bondDenom {
-		return nil, sdkerrors.Wrapf(
+		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
 		)
 	}

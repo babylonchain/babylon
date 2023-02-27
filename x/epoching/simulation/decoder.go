@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 )
 
@@ -37,11 +37,11 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			bytes.Equal(kvA.Key[:1], types.SlashedValidatorSetKey):
 			valSetA, err := types.NewValidatorSetFromBytes(kvA.Value)
 			if err != nil {
-				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+				panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			valSetB, err := types.NewValidatorSetFromBytes(kvB.Value)
 			if err != nil {
-				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+				panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			return fmt.Sprintf("%v\n%v", valSetA, valSetB)
 
@@ -49,10 +49,10 @@ func NewDecodeStore(cdc codec.Codec) func(kvA, kvB kv.Pair) string {
 			bytes.Equal(kvA.Key[:1], types.SlashedVotingPowerKey):
 			var powerA, powerB math.Int
 			if err := powerA.Unmarshal(kvA.Value); err != nil {
-				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+				panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			if err := powerB.Unmarshal(kvA.Value); err != nil {
-				panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+				panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 			}
 			return fmt.Sprintf("%v\n%v", powerA, powerB)
 

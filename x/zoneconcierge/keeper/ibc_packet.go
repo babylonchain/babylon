@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	sdkerrors "cosmossdk.io/errors"
+	errorsmod "cosmossdk.io/errors"
 	metrics "github.com/armon/go-metrics"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
@@ -28,7 +28,7 @@ func (k Keeper) SendIBCPacket(ctx sdk.Context, channel channeltypes.IdentifiedCh
 	// See spec for this logic: https://github.com/cosmos/ibc/tree/master/spec/app/ics-020-fungible-token-transfer#packet-relay
 	channelCap, ok := k.scopedKeeper.GetCapability(ctx, host.ChannelCapabilityPath(sourcePort, sourceChannel))
 	if !ok {
-		return sdkerrors.Wrapf(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability: sourcePort: %s, sourceChannel: %s", sourcePort, sourceChannel)
+		return errorsmod.Wrapf(channeltypes.ErrChannelCapabilityNotFound, "module does not own channel capability: sourcePort: %s, sourceChannel: %s", sourcePort, sourceChannel)
 	}
 
 	// timeout
