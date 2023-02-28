@@ -12,10 +12,8 @@ const (
 	// name of babylon container produced by running `make localnet-build-env`
 	BabylonContainerName = "babylonchain/babylond"
 
-	// TODO currently using image hosted by osmolab we should probably use our own
-	// Hermes repo/version for relayer
-	relayerRepository = "osmolabs/hermes"
-	relayerTag        = "0.13.0"
+	relayerRepository = "informalsystems/hermes"
+	relayerTag        = "1.2.0"
 )
 
 // Returns ImageConfig needed for running e2e test.

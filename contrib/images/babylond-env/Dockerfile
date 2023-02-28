@@ -15,7 +15,7 @@ VOLUME /babylond
 COPY --from=build /work/build/babylond /babylond/
 WORKDIR /babylond
 
-EXPOSE 26656 26657 1317
+EXPOSE 26656 26657 1317 9090
 ENTRYPOINT ["/usr/bin/wrapper.sh"]
 CMD ["start", "--log_format", "plain"]
 STOPSIGNAL SIGTERM
