@@ -234,8 +234,7 @@ func (s headersState) GetMainChain() []*types.BTCHeaderInfo {
 }
 
 // GetHighestCommonAncestor traverses the ancestors of both headers
-//
-//	to identify the common ancestor with the highest height
+// to identify the common ancestor with the highest height
 func (s headersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, header2 *types.BTCHeaderInfo) *types.BTCHeaderInfo {
 	// The algorithm works as follows:
 	// 1. Initialize a hashmap hash -> bool denoting whether the hash

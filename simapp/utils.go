@@ -6,7 +6,7 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
-
+	simappparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/app"
 	"github.com/cosmos/cosmos-sdk/codec"
 
@@ -29,7 +29,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 	}
 
 	config := NewConfigFromFlags()
-	config.ChainID = "simulation-app"
+	config.ChainID = simappparams.SimAppChainID
 
 	var logger log.Logger
 	if FlagVerboseValue {

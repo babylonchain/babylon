@@ -1,8 +1,6 @@
 package epoching
 
 import (
-	"math/rand"
-
 	simappparams "github.com/babylonchain/babylon/app/params"
 	epochingsimulation "github.com/babylonchain/babylon/x/epoching/simulation"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -29,11 +27,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 // ProposalContents doesn't return any content functions for governance proposals
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalMsg {
 	return nil
-}
-
-// RandomizedParams creates randomized  param changes for the simulator
-func (am AppModule) RandomizedParams(r *rand.Rand) []simtypes.LegacyParamChange {
-	return epochingsimulation.ParamChanges(r)
 }
 
 // RegisterStoreDecoder registers a decoder

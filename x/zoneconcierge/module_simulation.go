@@ -1,8 +1,6 @@
 package zoneconcierge
 
 import (
-	"math/rand"
-
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	simappparams "github.com/babylonchain/babylon/app/params"
@@ -40,12 +38,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 // ProposalContents doesn't return any content functions for governance proposals
 func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalMsg {
 	return nil
-}
-
-// RandomizedParams creates randomized  param changes for the simulator
-func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.LegacyParamChange {
-
-	return []simtypes.LegacyParamChange{}
 }
 
 // RegisterStoreDecoder registers a decoder

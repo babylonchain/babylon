@@ -146,8 +146,7 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 
 	// gov module genesis
 	govGenState := govv1.DefaultGenesisState()
-	govGenState.Params.MinDeposit = genesisParams.GovParams.MinDeposit
-	govGenState.Params.MaxDepositPeriod = genesisParams.GovParams.MaxDepositPeriod
+	govGenState.Params = &genesisParams.GovParams
 	appState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
 	// crisis module genesis
