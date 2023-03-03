@@ -86,7 +86,9 @@ paths:
                               valideated the proof?
                         title: >-
                           TransactionInfo is the info of a tx that contains
-                          Babylon checkpoint, including
+                          Babylon checkpoint,
+
+                          including
 
                           - the position of the tx on BTC blockchain
 
@@ -146,7 +148,7 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
-            title: >-
+            title: |-
               QueryBtcCheckpointsInfoResponse is response type for the
               Query/BtcCheckpointsInfo RPC method
         default:
@@ -259,17 +261,19 @@ paths:
                     format: uint64
                     title: >-
                       checkpoint_finalization_timeout is the maximum time window
-                      (measured in BTC blocks) between a checkpoint
+                      (measured in BTC
+
+                      blocks) between a checkpoint
 
                       - being submitted to BTC, and
 
                       - being reported back to BBN
 
                       If a checkpoint has not been reported back within w BTC
-                      blocks, then BBN has dishonest majority and is stalling
-                      checkpoints
+                      blocks, then BBN
 
-                      (w in research paper)
+                      has dishonest majority and is stalling checkpoints (w in
+                      research paper)
             description: >-
               QueryParamsResponse is response type for the Query/Params RPC
               method.
@@ -375,7 +379,9 @@ paths:
                             valideated the proof?
                       title: >-
                         TransactionInfo is the info of a tx that contains
-                        Babylon checkpoint, including
+                        Babylon checkpoint,
+
+                        including
 
                         - the position of the tx on BTC blockchain
 
@@ -405,7 +411,7 @@ paths:
 
                             submission message MsgInsertBTCSpvProof itself
                     title: list of vigilantes' addresses
-            title: >-
+            title: |-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
         default:
@@ -432,7 +438,7 @@ paths:
                       format: byte
       parameters:
         - name: epoch_num
-          description: >-
+          description: |-
             Number of epoch for which the earliest checkpointing btc height is
             requested
           in: path
@@ -479,20 +485,19 @@ paths:
                     submission we need list of transaction keys.
 
                     Each submission can generally be identified by this list of
-                    (txIdx, blockHash)
+                    (txIdx,
 
-                    tuples.
+                    blockHash) tuples. Note: this could possibly be optimized as
+                    if transactions
 
-                    Note: this could possibly be optimized as if transactions
-                    were in one block
+                    were in one block they would have the same block hash and
+                    different indexes,
 
-                    they would have the same block hash and different indexes,
-                    but each blockhash
+                    but each blockhash is only 33 (1  byte for prefix encoding
+                    and 32 byte hash),
 
-                    is only 33 (1  byte for prefix encoding and 32 byte hash),
-                    so there should
-
-                    be other strong arguments for this optimization
+                    so there should be other strong arguments for this
+                    optimization
                 description: All submissions saved during an epoch.
               pagination:
                 type: object
@@ -720,7 +725,9 @@ paths:
                 type: boolean
             description: >-
               QueryContainsResponse is response type for the temporary
-              Query/ContainsBytes RPC method.
+              Query/ContainsBytes
+
+              RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -1126,7 +1133,9 @@ paths:
                 title: epoch_boundary is the height of this epoch's last block
             title: >-
               QueryCurrentEpochResponse is the response type for the
-              Query/CurrentEpoch RPC method
+              Query/CurrentEpoch RPC
+
+              method
         default:
           description: An unexpected error response.
           schema:
@@ -1559,12 +1568,11 @@ paths:
     get:
       summary: >-
         EpochsInfo queries the metadata of epochs in a given range, depending on
-        the
 
-        parameters in the pagination request. Th main use case will be querying
-        the
+        the parameters in the pagination request. Th main use case will be
+        querying
 
-        latest epochs in time order.
+        the latest epochs in time order.
       operationId: EpochsInfo
       responses:
         '200':
@@ -1592,11 +1600,15 @@ paths:
                         this epoch.
 
                         Babylon needs to remember the last header of each epoch
-                        to complete unbonding validators/delegations when a
-                        previous epoch's checkpoint is finalised.
+                        to complete
 
-                        The last_block_header field is nil in the epoch's
-                        beginning, and is set upon the end of this epoch.
+                        unbonding validators/delegations when a previous epoch's
+                        checkpoint is
+
+                        finalised. The last_block_header field is nil in the
+                        epoch's beginning, and
+
+                        is set upon the end of this epoch.
                       type: object
                       properties:
                         version:
@@ -1685,7 +1697,9 @@ paths:
                         sealer_header is the 2nd header of the next epoch
 
                         This validator set has generated a BLS multisig on
-                        `last_commit_hash` of the sealer header
+                        `last_commit_hash` of
+
+                        the sealer header
                       type: object
                       properties:
                         version:
@@ -2071,11 +2085,15 @@ paths:
                       epoch.
 
                       Babylon needs to remember the last header of each epoch to
-                      complete unbonding validators/delegations when a previous
-                      epoch's checkpoint is finalised.
+                      complete
 
-                      The last_block_header field is nil in the epoch's
-                      beginning, and is set upon the end of this epoch.
+                      unbonding validators/delegations when a previous epoch's
+                      checkpoint is
+
+                      finalised. The last_block_header field is nil in the
+                      epoch's beginning, and
+
+                      is set upon the end of this epoch.
                     type: object
                     properties:
                       version:
@@ -2164,7 +2182,9 @@ paths:
                       sealer_header is the 2nd header of the next epoch
 
                       This validator set has generated a BLS multisig on
-                      `last_commit_hash` of the sealer header
+                      `last_commit_hash` of
+
+                      the sealer header
                     type: object
                     properties:
                       version:
@@ -2823,7 +2843,9 @@ paths:
                         destination validator.
                   title: >-
                     QueuedMessage is a message that can change the validator set
-                    and is delayed to the epoch boundary
+                    and is delayed
+
+                    to the epoch boundary
                 title: msgs is the list of messages queued in the current epoch
               pagination:
                 title: pagination defines the pagination in the response
@@ -2856,7 +2878,9 @@ paths:
                    }
             title: >-
               QueryEpochMsgsResponse is the response type for the
-              Query/EpochMsgs RPC method
+              Query/EpochMsgs RPC
+
+              method
         default:
           description: An unexpected error response.
           schema:
@@ -3426,7 +3450,9 @@ paths:
     get:
       summary: >-
         LatestEpochMsgs queries the messages within a given number of most
-        recent epochs
+        recent
+
+        epochs
       operationId: LatestEpochMsgs
       responses:
         '200':
@@ -3822,7 +3848,9 @@ paths:
                               a destination validator.
                         title: >-
                           QueuedMessage is a message that can change the
-                          validator set and is delayed to the epoch boundary
+                          validator set and is delayed
+
+                          to the epoch boundary
                 title: >-
                   epoch_msg_map is a list of QueuedMessageList
 
@@ -3856,7 +3884,7 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
-            title: >-
+            title: |-
               QueryLatestEpochMsgsResponse is the response type for the
               Query/LatestEpochMsgs RPC method
         default:
@@ -4574,7 +4602,9 @@ paths:
     get:
       summary: >-
         BlsPublicKeyList queries a list of bls public keys of the validators at
-        a given epoch number.
+        a
+
+        given epoch number.
       operationId: BlsPublicKeyList
       responses:
         '200':
@@ -4597,7 +4627,9 @@ paths:
                       format: uint64
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
-                    and its bls public key
+                    and its bls
+
+                    public key
               pagination:
                 description: pagination defines the pagination in the response.
                 type: object
@@ -4617,11 +4649,9 @@ paths:
                       PageRequest.count_total
 
                       was set, its value is undefined otherwise
-            description: >-
+            description: |-
               QueryBlsPublicKeyListResponse is the response type for the
-              Query/BlsPublicKeys
-
-              RPC method.
+              Query/BlsPublicKeys RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -4773,7 +4803,7 @@ paths:
         - Query
   /babylon/checkpointing/v1/epochs:status_count:
     get:
-      summary: >-
+      summary: |-
         RecentEpochStatusCount queries the number of epochs with each status in
         recent epochs
       operationId: RecentEpochStatusCount
@@ -4794,11 +4824,9 @@ paths:
                 additionalProperties:
                   type: string
                   format: uint64
-            description: >-
+            description: |-
               QueryRecentEpochStatusCountResponse is the response type for the
-              Query/EpochStatusCount
-
-              RPC method.
+              Query/EpochStatusCount RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -4825,7 +4853,9 @@ paths:
         - name: epoch_count
           description: >-
             epoch_count is the number of the most recent epochs to include in
-            the aggregation.
+            the
+
+            aggregation.
           in: query
           required: false
           type: string
@@ -4836,7 +4866,9 @@ paths:
     get:
       summary: >-
         LastCheckpointWithStatus queries the last checkpoint with a given status
-        or a more matured status
+        or
+
+        a more matured status
       operationId: LastCheckpointWithStatus
       responses:
         '200':
@@ -4858,7 +4890,9 @@ paths:
                     format: byte
                     title: >-
                       last_commit_hash defines the 'LastCommitHash' that
-                      individual BLS sigs are signed on
+                      individual BLS sigs are
+
+                      signed on
                   bitmap:
                     type: string
                     format: byte
@@ -4870,7 +4904,9 @@ paths:
                     format: byte
                     title: >-
                       bls_multi_sig defines the multi sig that is aggregated
-                      from individual BLS sigs
+                      from individual BLS
+
+                      sigs
                 title: RawCheckpoint wraps the BLS multi sig with meta data
         default:
           description: An unexpected error response.
@@ -4974,7 +5010,9 @@ paths:
                         format: byte
                         title: >-
                           last_commit_hash defines the 'LastCommitHash' that
-                          individual BLS sigs are signed on
+                          individual BLS sigs are
+
+                          signed on
                       bitmap:
                         type: string
                         format: byte
@@ -4986,7 +5024,9 @@ paths:
                         format: byte
                         title: >-
                           bls_multi_sig defines the multi sig that is aggregated
-                          from individual BLS sigs
+                          from individual BLS
+
+                          sigs
                     title: RawCheckpoint wraps the BLS multi sig with meta data
                   status:
                     type: string
@@ -5046,18 +5086,24 @@ paths:
                           format: uint64
                           title: >-
                             block_height is the height of the Babylon block that
-                            triggers the state update
+                            triggers the state
+
+                            update
                         block_time:
                           type: string
                           format: date-time
                           title: >-
                             block_time is the timestamp in the Babylon block
-                            that triggers the state update
+                            that triggers the state
+
+                            update
                     description: >-
                       lifecycle defines the lifecycle of this checkpoint, i.e.,
-                      each state transition and
+                      each state
 
-                      the time (in both timestamp and block height) of this
+                      transition and the time (in both timestamp and block
+                      height) of this
+
                       transition.
                 description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
             description: >-
@@ -5125,7 +5171,9 @@ paths:
                           format: byte
                           title: >-
                             last_commit_hash defines the 'LastCommitHash' that
-                            individual BLS sigs are signed on
+                            individual BLS sigs are
+
+                            signed on
                         bitmap:
                           type: string
                           format: byte
@@ -5137,7 +5185,9 @@ paths:
                           format: byte
                           title: >-
                             bls_multi_sig defines the multi sig that is
-                            aggregated from individual BLS sigs
+                            aggregated from individual BLS
+
+                            sigs
                       title: RawCheckpoint wraps the BLS multi sig with meta data
                     status:
                       type: string
@@ -5197,18 +5247,24 @@ paths:
                             format: uint64
                             title: >-
                               block_height is the height of the Babylon block
-                              that triggers the state update
+                              that triggers the state
+
+                              update
                           block_time:
                             type: string
                             format: date-time
                             title: >-
                               block_time is the timestamp in the Babylon block
-                              that triggers the state update
+                              that triggers the state
+
+                              update
                       description: >-
                         lifecycle defines the lifecycle of this checkpoint,
-                        i.e., each state transition and
+                        i.e., each state
 
-                        the time (in both timestamp and block height) of this
+                        transition and the time (in both timestamp and block
+                        height) of this
+
                         transition.
                   description: >-
                     RawCheckpointWithMeta wraps the raw checkpoint with meta
@@ -5235,11 +5291,9 @@ paths:
                       PageRequest.count_total
 
                       was set, its value is undefined otherwise
-            description: >-
+            description: |-
               QueryRawCheckpointListResponse is the response type for the
-              Query/RawCheckpoints
-
-              RPC method.
+              Query/RawCheckpoints RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -5371,7 +5425,9 @@ paths:
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
-                          includes this CZ header
+                          includes this CZ
+
+                          header
                         type: object
                         properties:
                           version:
@@ -5464,11 +5520,15 @@ paths:
                           this header
 
                           (babylon_block_height, babylon_tx_hash) jointly
-                          provides the position of the header on Babylon ledger
+                          provides the position of
+
+                          the header on Babylon ledger
                   latest_forks:
                     title: >-
                       latest_forks is the latest forks, formed as a series of
-                      IndexedHeader (from low to high)
+                      IndexedHeader (from
+
+                      low to high)
                     type: object
                     properties:
                       headers:
@@ -5494,7 +5554,9 @@ paths:
                             babylon_header:
                               title: >-
                                 babylon_header is the header of the babylon
-                                block that includes this CZ header
+                                block that includes this CZ
+
+                                header
                               type: object
                               properties:
                                 version:
@@ -5589,8 +5651,9 @@ paths:
                                 includes this header
 
                                 (babylon_block_height, babylon_tx_hash) jointly
-                                provides the position of the header on Babylon
-                                ledger
+                                provides the position of
+
+                                the header on Babylon ledger
                           title: IndexedHeader is the metadata of a CZ header
                         title: >-
                           blocks is the list of non-canonical indexed headers at
@@ -5613,22 +5676,27 @@ paths:
 
 
                       Note that each `IndexedHeader` in the fork should have a
-                      valid quorum certificate. 
+                      valid quorum
 
-                      Such forks exist since Babylon considers CZs might have
-                      dishonest majority.
+                      certificate. Such forks exist since Babylon considers CZs
+                      might have
 
-                      Also note that the IBC-Go implementation will only
-                      consider the first header in a fork valid, since
+                      dishonest majority. Also note that the IBC-Go
+                      implementation will only
 
-                      the subsequent headers cannot be verified without knowing
-                      the validator set in the previous header.
+                      consider the first header in a fork valid, since the
+                      subsequent headers
+
+                      cannot be verified without knowing the validator set in
+                      the previous header.
                   timestamped_headers_count:
                     type: string
                     format: uint64
                     title: >-
                       timestamped_headers_count is the number of timestamped
-                      headers in CZ's canonical chain
+                      headers in CZ's
+
+                      canonical chain
             description: >-
               QueryChainInfoResponse is response type for the Query/ChainInfo
               RPC method.
@@ -5832,7 +5900,7 @@ paths:
         - Query
   /babylon/zoneconcierge/v1/chain_info/{chain_id}/epochs/{epoch_num}:
     get:
-      summary: >-
+      summary: |-
         EpochChainInfo queries the latest info of a chain in a given epoch of
         Babylon's view
       operationId: EpochChainInfo
@@ -5871,7 +5939,9 @@ paths:
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
-                          includes this CZ header
+                          includes this CZ
+
+                          header
                         type: object
                         properties:
                           version:
@@ -5964,11 +6034,15 @@ paths:
                           this header
 
                           (babylon_block_height, babylon_tx_hash) jointly
-                          provides the position of the header on Babylon ledger
+                          provides the position of
+
+                          the header on Babylon ledger
                   latest_forks:
                     title: >-
                       latest_forks is the latest forks, formed as a series of
-                      IndexedHeader (from low to high)
+                      IndexedHeader (from
+
+                      low to high)
                     type: object
                     properties:
                       headers:
@@ -5994,7 +6068,9 @@ paths:
                             babylon_header:
                               title: >-
                                 babylon_header is the header of the babylon
-                                block that includes this CZ header
+                                block that includes this CZ
+
+                                header
                               type: object
                               properties:
                                 version:
@@ -6089,8 +6165,9 @@ paths:
                                 includes this header
 
                                 (babylon_block_height, babylon_tx_hash) jointly
-                                provides the position of the header on Babylon
-                                ledger
+                                provides the position of
+
+                                the header on Babylon ledger
                           title: IndexedHeader is the metadata of a CZ header
                         title: >-
                           blocks is the list of non-canonical indexed headers at
@@ -6113,25 +6190,32 @@ paths:
 
 
                       Note that each `IndexedHeader` in the fork should have a
-                      valid quorum certificate. 
+                      valid quorum
 
-                      Such forks exist since Babylon considers CZs might have
-                      dishonest majority.
+                      certificate. Such forks exist since Babylon considers CZs
+                      might have
 
-                      Also note that the IBC-Go implementation will only
-                      consider the first header in a fork valid, since
+                      dishonest majority. Also note that the IBC-Go
+                      implementation will only
 
-                      the subsequent headers cannot be verified without knowing
-                      the validator set in the previous header.
+                      consider the first header in a fork valid, since the
+                      subsequent headers
+
+                      cannot be verified without knowing the validator set in
+                      the previous header.
                   timestamped_headers_count:
                     type: string
                     format: uint64
                     title: >-
                       timestamped_headers_count is the number of timestamped
-                      headers in CZ's canonical chain
+                      headers in CZ's
+
+                      canonical chain
             description: >-
               QueryEpochChainInfoResponse is response type for the
-              Query/EpochChainInfo RPC method.
+              Query/EpochChainInfo RPC
+
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -6366,7 +6450,9 @@ paths:
                   babylon_header:
                     title: >-
                       babylon_header is the header of the babylon block that
-                      includes this CZ header
+                      includes this CZ
+
+                      header
                     type: object
                     properties:
                       version:
@@ -6455,7 +6541,9 @@ paths:
                       header
 
                       (babylon_block_height, babylon_tx_hash) jointly provides
-                      the position of the header on Babylon ledger
+                      the position of
+
+                      the header on Babylon ledger
                 title: IndexedHeader is the metadata of a CZ header
               fork_headers:
                 type: object
@@ -6483,7 +6571,9 @@ paths:
                         babylon_header:
                           title: >-
                             babylon_header is the header of the babylon block
-                            that includes this CZ header
+                            that includes this CZ
+
+                            header
                           type: object
                           properties:
                             version:
@@ -6576,8 +6666,9 @@ paths:
                             this header
 
                             (babylon_block_height, babylon_tx_hash) jointly
-                            provides the position of the header on Babylon
-                            ledger
+                            provides the position of
+
+                            the header on Babylon ledger
                       title: IndexedHeader is the metadata of a CZ header
                     title: >-
                       blocks is the list of non-canonical indexed headers at the
@@ -6600,16 +6691,19 @@ paths:
 
 
                   Note that each `IndexedHeader` in the fork should have a valid
-                  quorum certificate. 
+                  quorum
 
-                  Such forks exist since Babylon considers CZs might have
-                  dishonest majority.
+                  certificate. Such forks exist since Babylon considers CZs
+                  might have
 
-                  Also note that the IBC-Go implementation will only consider
-                  the first header in a fork valid, since
+                  dishonest majority. Also note that the IBC-Go implementation
+                  will only
 
-                  the subsequent headers cannot be verified without knowing the
-                  validator set in the previous header.
+                  consider the first header in a fork valid, since the
+                  subsequent headers
+
+                  cannot be verified without knowing the validator set in the
+                  previous header.
             description: >-
               QueryParamsResponse is response type for the Query/Header RPC
               method.
@@ -7156,7 +7250,9 @@ paths:
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
-                          includes this CZ header
+                          includes this CZ
+
+                          header
                         type: object
                         properties:
                           version:
@@ -7249,11 +7345,15 @@ paths:
                           this header
 
                           (babylon_block_height, babylon_tx_hash) jointly
-                          provides the position of the header on Babylon ledger
+                          provides the position of
+
+                          the header on Babylon ledger
                   latest_forks:
                     title: >-
                       latest_forks is the latest forks, formed as a series of
-                      IndexedHeader (from low to high)
+                      IndexedHeader (from
+
+                      low to high)
                     type: object
                     properties:
                       headers:
@@ -7279,7 +7379,9 @@ paths:
                             babylon_header:
                               title: >-
                                 babylon_header is the header of the babylon
-                                block that includes this CZ header
+                                block that includes this CZ
+
+                                header
                               type: object
                               properties:
                                 version:
@@ -7374,8 +7476,9 @@ paths:
                                 includes this header
 
                                 (babylon_block_height, babylon_tx_hash) jointly
-                                provides the position of the header on Babylon
-                                ledger
+                                provides the position of
+
+                                the header on Babylon ledger
                           title: IndexedHeader is the metadata of a CZ header
                         title: >-
                           blocks is the list of non-canonical indexed headers at
@@ -7398,22 +7501,27 @@ paths:
 
 
                       Note that each `IndexedHeader` in the fork should have a
-                      valid quorum certificate. 
+                      valid quorum
 
-                      Such forks exist since Babylon considers CZs might have
-                      dishonest majority.
+                      certificate. Such forks exist since Babylon considers CZs
+                      might have
 
-                      Also note that the IBC-Go implementation will only
-                      consider the first header in a fork valid, since
+                      dishonest majority. Also note that the IBC-Go
+                      implementation will only
 
-                      the subsequent headers cannot be verified without knowing
-                      the validator set in the previous header.
+                      consider the first header in a fork valid, since the
+                      subsequent headers
+
+                      cannot be verified without knowing the validator set in
+                      the previous header.
                   timestamped_headers_count:
                     type: string
                     format: uint64
                     title: >-
                       timestamped_headers_count is the number of timestamped
-                      headers in CZ's canonical chain
+                      headers in CZ's
+
+                      canonical chain
               epoch_info:
                 title: epoch_info is the metadata of the last BTC-finalised epoch
                 type: object
@@ -7433,11 +7541,15 @@ paths:
                       epoch.
 
                       Babylon needs to remember the last header of each epoch to
-                      complete unbonding validators/delegations when a previous
-                      epoch's checkpoint is finalised.
+                      complete
 
-                      The last_block_header field is nil in the epoch's
-                      beginning, and is set upon the end of this epoch.
+                      unbonding validators/delegations when a previous epoch's
+                      checkpoint is
+
+                      finalised. The last_block_header field is nil in the
+                      epoch's beginning, and
+
+                      is set upon the end of this epoch.
                     type: object
                     properties:
                       version:
@@ -7526,7 +7638,9 @@ paths:
                       sealer_header is the 2nd header of the next epoch
 
                       This validator set has generated a BLS multisig on
-                      `last_commit_hash` of the sealer header
+                      `last_commit_hash` of
+
+                      the sealer header
                     type: object
                     properties:
                       version:
@@ -7618,7 +7732,9 @@ paths:
                     format: byte
                     title: >-
                       last_commit_hash defines the 'LastCommitHash' that
-                      individual BLS sigs are signed on
+                      individual BLS sigs are
+
+                      signed on
                   bitmap:
                     type: string
                     format: byte
@@ -7630,11 +7746,15 @@ paths:
                     format: byte
                     title: >-
                       bls_multi_sig defines the multi sig that is aggregated
-                      from individual BLS sigs
+                      from individual BLS
+
+                      sigs
               btc_submission_key:
                 title: >-
                   btc_submission_key is position of two BTC txs that include the
-                  raw checkpoint of this epoch
+                  raw
+
+                  checkpoint of this epoch
                 type: object
                 properties:
                   key:
@@ -7661,7 +7781,9 @@ paths:
                   proof_tx_in_block:
                     title: >-
                       proof_tx_in_block is the proof that tx that carries the
-                      header is included in a certain Babylon block
+                      header is included
+
+                      in a certain Babylon block
                     type: object
                     properties:
                       root_hash:
@@ -7709,7 +7831,9 @@ paths:
                           format: byte
                     title: >-
                       proof_header_in_epoch is the proof that the Babylon header
-                      is in a certain epoch
+                      is in a certain
+
+                      epoch
                   proof_epoch_sealed:
                     title: proof_epoch_sealed is the proof that the epoch is sealed
                     type: object
@@ -7729,17 +7853,22 @@ paths:
                               format: uint64
                           title: >-
                             ValidatorWithBlsKey couples validator address,
-                            voting power, and its bls public key
+                            voting power, and its bls
+
+                            public key
                         title: >-
                           validator_set is the validator set of the sealed epoch
 
                           This validator set has generated a BLS multisig on
-                          `last_commit_hash` of the sealer header
+                          `last_commit_hash` of
+
+                          the sealer header
                       proof_epoch_info:
                         title: >-
                           proof_epoch_info is the Merkle proof that the epoch's
-                          metadata is committed to `app_hash` of the sealer
-                          header
+                          metadata is committed
+
+                          to `app_hash` of the sealer header
                         type: object
                         properties:
                           ops:
@@ -7766,8 +7895,9 @@ paths:
                       proof_epoch_val_set:
                         title: >-
                           proof_epoch_info is the Merkle proof that the epoch's
-                          validator set is committed to `app_hash` of the sealer
-                          header
+                          validator set is
+
+                          committed to `app_hash` of the sealer header
                         type: object
                         properties:
                           ops:
@@ -7844,7 +7974,9 @@ paths:
                             valideated the proof?
                       title: >-
                         TransactionInfo is the info of a tx that contains
-                        Babylon checkpoint, including
+                        Babylon checkpoint,
+
+                        including
 
                         - the position of the tx on BTC blockchain
 
@@ -7853,11 +7985,13 @@ paths:
                         - the Merkle proof that this tx is on the above position
                     title: >-
                       proof_epoch_submitted is the proof that the epoch's
-                      checkpoint is included in BTC ledger
+                      checkpoint is included
 
-                      It is the two TransactionInfo in the best (i.e., earliest)
+                      in BTC ledger It is the two TransactionInfo in the best
+                      (i.e., earliest)
+
                       checkpoint submission
-            description: >-
+            description: |-
               QueryFinalizedChainInfoResponse is response type for the
               Query/FinalizedChainInfo RPC method.
         default:
@@ -8070,7 +8204,9 @@ paths:
     get:
       summary: >-
         FinalizedChainInfoUntilHeight queries the BTC-finalised info no later
-        than the provided CZ height, with proofs
+        than
+
+        the provided CZ height, with proofs
       operationId: FinalizedChainInfoUntilHeight
       responses:
         '200':
@@ -8107,7 +8243,9 @@ paths:
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
-                          includes this CZ header
+                          includes this CZ
+
+                          header
                         type: object
                         properties:
                           version:
@@ -8200,11 +8338,15 @@ paths:
                           this header
 
                           (babylon_block_height, babylon_tx_hash) jointly
-                          provides the position of the header on Babylon ledger
+                          provides the position of
+
+                          the header on Babylon ledger
                   latest_forks:
                     title: >-
                       latest_forks is the latest forks, formed as a series of
-                      IndexedHeader (from low to high)
+                      IndexedHeader (from
+
+                      low to high)
                     type: object
                     properties:
                       headers:
@@ -8230,7 +8372,9 @@ paths:
                             babylon_header:
                               title: >-
                                 babylon_header is the header of the babylon
-                                block that includes this CZ header
+                                block that includes this CZ
+
+                                header
                               type: object
                               properties:
                                 version:
@@ -8325,8 +8469,9 @@ paths:
                                 includes this header
 
                                 (babylon_block_height, babylon_tx_hash) jointly
-                                provides the position of the header on Babylon
-                                ledger
+                                provides the position of
+
+                                the header on Babylon ledger
                           title: IndexedHeader is the metadata of a CZ header
                         title: >-
                           blocks is the list of non-canonical indexed headers at
@@ -8349,22 +8494,27 @@ paths:
 
 
                       Note that each `IndexedHeader` in the fork should have a
-                      valid quorum certificate. 
+                      valid quorum
 
-                      Such forks exist since Babylon considers CZs might have
-                      dishonest majority.
+                      certificate. Such forks exist since Babylon considers CZs
+                      might have
 
-                      Also note that the IBC-Go implementation will only
-                      consider the first header in a fork valid, since
+                      dishonest majority. Also note that the IBC-Go
+                      implementation will only
 
-                      the subsequent headers cannot be verified without knowing
-                      the validator set in the previous header.
+                      consider the first header in a fork valid, since the
+                      subsequent headers
+
+                      cannot be verified without knowing the validator set in
+                      the previous header.
                   timestamped_headers_count:
                     type: string
                     format: uint64
                     title: >-
                       timestamped_headers_count is the number of timestamped
-                      headers in CZ's canonical chain
+                      headers in CZ's
+
+                      canonical chain
               epoch_info:
                 title: epoch_info is the metadata of the last BTC-finalised epoch
                 type: object
@@ -8384,11 +8534,15 @@ paths:
                       epoch.
 
                       Babylon needs to remember the last header of each epoch to
-                      complete unbonding validators/delegations when a previous
-                      epoch's checkpoint is finalised.
+                      complete
 
-                      The last_block_header field is nil in the epoch's
-                      beginning, and is set upon the end of this epoch.
+                      unbonding validators/delegations when a previous epoch's
+                      checkpoint is
+
+                      finalised. The last_block_header field is nil in the
+                      epoch's beginning, and
+
+                      is set upon the end of this epoch.
                     type: object
                     properties:
                       version:
@@ -8477,7 +8631,9 @@ paths:
                       sealer_header is the 2nd header of the next epoch
 
                       This validator set has generated a BLS multisig on
-                      `last_commit_hash` of the sealer header
+                      `last_commit_hash` of
+
+                      the sealer header
                     type: object
                     properties:
                       version:
@@ -8569,7 +8725,9 @@ paths:
                     format: byte
                     title: >-
                       last_commit_hash defines the 'LastCommitHash' that
-                      individual BLS sigs are signed on
+                      individual BLS sigs are
+
+                      signed on
                   bitmap:
                     type: string
                     format: byte
@@ -8581,11 +8739,15 @@ paths:
                     format: byte
                     title: >-
                       bls_multi_sig defines the multi sig that is aggregated
-                      from individual BLS sigs
+                      from individual BLS
+
+                      sigs
               btc_submission_key:
                 title: >-
                   btc_submission_key is position of two BTC txs that include the
-                  raw checkpoint of this epoch
+                  raw
+
+                  checkpoint of this epoch
                 type: object
                 properties:
                   key:
@@ -8612,7 +8774,9 @@ paths:
                   proof_tx_in_block:
                     title: >-
                       proof_tx_in_block is the proof that tx that carries the
-                      header is included in a certain Babylon block
+                      header is included
+
+                      in a certain Babylon block
                     type: object
                     properties:
                       root_hash:
@@ -8660,7 +8824,9 @@ paths:
                           format: byte
                     title: >-
                       proof_header_in_epoch is the proof that the Babylon header
-                      is in a certain epoch
+                      is in a certain
+
+                      epoch
                   proof_epoch_sealed:
                     title: proof_epoch_sealed is the proof that the epoch is sealed
                     type: object
@@ -8680,17 +8846,22 @@ paths:
                               format: uint64
                           title: >-
                             ValidatorWithBlsKey couples validator address,
-                            voting power, and its bls public key
+                            voting power, and its bls
+
+                            public key
                         title: >-
                           validator_set is the validator set of the sealed epoch
 
                           This validator set has generated a BLS multisig on
-                          `last_commit_hash` of the sealer header
+                          `last_commit_hash` of
+
+                          the sealer header
                       proof_epoch_info:
                         title: >-
                           proof_epoch_info is the Merkle proof that the epoch's
-                          metadata is committed to `app_hash` of the sealer
-                          header
+                          metadata is committed
+
+                          to `app_hash` of the sealer header
                         type: object
                         properties:
                           ops:
@@ -8717,8 +8888,9 @@ paths:
                       proof_epoch_val_set:
                         title: >-
                           proof_epoch_info is the Merkle proof that the epoch's
-                          validator set is committed to `app_hash` of the sealer
-                          header
+                          validator set is
+
+                          committed to `app_hash` of the sealer header
                         type: object
                         properties:
                           ops:
@@ -8795,7 +8967,9 @@ paths:
                             valideated the proof?
                       title: >-
                         TransactionInfo is the info of a tx that contains
-                        Babylon checkpoint, including
+                        Babylon checkpoint,
+
+                        including
 
                         - the position of the tx on BTC blockchain
 
@@ -8804,13 +8978,17 @@ paths:
                         - the Merkle proof that this tx is on the above position
                     title: >-
                       proof_epoch_submitted is the proof that the epoch's
-                      checkpoint is included in BTC ledger
+                      checkpoint is included
 
-                      It is the two TransactionInfo in the best (i.e., earliest)
+                      in BTC ledger It is the two TransactionInfo in the best
+                      (i.e., earliest)
+
                       checkpoint submission
             description: >-
               QueryFinalizedChainInfoUntilHeightResponse is response type for
-              the Query/FinalizedChainInfoUntilHeight RPC method.
+              the
+
+              Query/FinalizedChainInfoUntilHeight RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -9013,7 +9191,9 @@ paths:
             height is the height of the CZ chain
 
             such that the returned finalised chain info will be no later than
-            this height
+            this
+
+            height
           in: path
           required: true
           type: string
@@ -9029,7 +9209,7 @@ paths:
         - Query
   /babylon/zoneconcierge/v1/headers/{chain_id}:
     get:
-      summary: >-
+      summary: |-
         ListHeaders queries the headers of a chain in Babylon's view, with
         pagination support
       operationId: ListHeaders
@@ -9062,7 +9242,9 @@ paths:
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
-                        includes this CZ header
+                        includes this CZ
+
+                        header
                       type: object
                       properties:
                         version:
@@ -9155,7 +9337,9 @@ paths:
                         header
 
                         (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of the header on Babylon ledger
+                        the position of
+
+                        the header on Babylon ledger
                   title: IndexedHeader is the metadata of a CZ header
                 title: headers is the list of headers
               pagination:
@@ -9189,7 +9373,9 @@ paths:
                    }
             description: >-
               QueryListHeadersResponse is response type for the
-              Query/ListHeaders RPC method.
+              Query/ListHeaders RPC
+
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -9446,7 +9632,7 @@ paths:
         - Query
   /babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}:
     get:
-      summary: >-
+      summary: |-
         ListEpochHeaders queries the headers of a chain timestamped in a given
         epoch of Babylon, with pagination support
       operationId: ListEpochHeaders
@@ -9479,7 +9665,9 @@ paths:
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
-                        includes this CZ header
+                        includes this CZ
+
+                        header
                       type: object
                       properties:
                         version:
@@ -9572,12 +9760,16 @@ paths:
                         header
 
                         (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of the header on Babylon ledger
+                        the position of
+
+                        the header on Babylon ledger
                   title: IndexedHeader is the metadata of a CZ header
                 title: headers is the list of headers
             description: >-
               QueryListEpochHeadersResponse is response type for the
-              Query/ListEpochHeaders RPC method.
+              Query/ListEpochHeaders
+
+              RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -10059,7 +10251,9 @@ definitions:
                 valideated the proof?
           title: >-
             TransactionInfo is the info of a tx that contains Babylon
-            checkpoint, including
+            checkpoint,
+
+            including
 
             - the position of the tx on BTC blockchain
 
@@ -10126,16 +10320,19 @@ definitions:
         format: uint64
         title: >-
           checkpoint_finalization_timeout is the maximum time window (measured
-          in BTC blocks) between a checkpoint
+          in BTC
+
+          blocks) between a checkpoint
 
           - being submitted to BTC, and
 
           - being reported back to BBN
 
           If a checkpoint has not been reported back within w BTC blocks, then
-          BBN has dishonest majority and is stalling checkpoints
+          BBN
 
-          (w in research paper)
+          has dishonest majority and is stalling checkpoints (w in research
+          paper)
     description: Params defines the parameters for the module.
   babylon.btccheckpoint.v1.QueryBtcCheckpointInfoResponse:
     type: object
@@ -10208,7 +10405,9 @@ definitions:
                     valideated the proof?
               title: >-
                 TransactionInfo is the info of a tx that contains Babylon
-                checkpoint, including
+                checkpoint,
+
+                including
 
                 - the position of the tx on BTC blockchain
 
@@ -10238,7 +10437,7 @@ definitions:
 
                     submission message MsgInsertBTCSpvProof itself
             title: list of vigilantes' addresses
-    title: >-
+    title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
   babylon.btccheckpoint.v1.QueryBtcCheckpointsInfoResponse:
@@ -10314,7 +10513,9 @@ definitions:
                       valideated the proof?
                 title: >-
                   TransactionInfo is the info of a tx that contains Babylon
-                  checkpoint, including
+                  checkpoint,
+
+                  including
 
                   - the position of the tx on BTC blockchain
 
@@ -10371,7 +10572,7 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    title: >-
+    title: |-
       QueryBtcCheckpointsInfoResponse is response type for the
       Query/BtcCheckpointsInfo RPC method
   babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse:
@@ -10406,20 +10607,17 @@ definitions:
             submission we need list of transaction keys.
 
             Each submission can generally be identified by this list of (txIdx,
-            blockHash)
 
-            tuples.
+            blockHash) tuples. Note: this could possibly be optimized as if
+            transactions
 
-            Note: this could possibly be optimized as if transactions were in
-            one block
+            were in one block they would have the same block hash and different
+            indexes,
 
-            they would have the same block hash and different indexes, but each
-            blockhash
+            but each blockhash is only 33 (1  byte for prefix encoding and 32
+            byte hash),
 
-            is only 33 (1  byte for prefix encoding and 32 byte hash), so there
-            should
-
-            be other strong arguments for this optimization
+            so there should be other strong arguments for this optimization
         description: All submissions saved during an epoch.
       pagination:
         type: object
@@ -10469,16 +10667,19 @@ definitions:
             format: uint64
             title: >-
               checkpoint_finalization_timeout is the maximum time window
-              (measured in BTC blocks) between a checkpoint
+              (measured in BTC
+
+              blocks) between a checkpoint
 
               - being submitted to BTC, and
 
               - being reported back to BBN
 
               If a checkpoint has not been reported back within w BTC blocks,
-              then BBN has dishonest majority and is stalling checkpoints
+              then BBN
 
-              (w in research paper)
+              has dishonest majority and is stalling checkpoints (w in research
+              paper)
     description: QueryParamsResponse is response type for the Query/Params RPC method.
   babylon.btccheckpoint.v1.SubmissionKey:
     type: object
@@ -10506,19 +10707,17 @@ definitions:
       submission we need list of transaction keys.
 
       Each submission can generally be identified by this list of (txIdx,
-      blockHash)
 
-      tuples.
+      blockHash) tuples. Note: this could possibly be optimized as if
+      transactions
 
-      Note: this could possibly be optimized as if transactions were in one
-      block
+      were in one block they would have the same block hash and different
+      indexes,
 
-      they would have the same block hash and different indexes, but each
-      blockhash
+      but each blockhash is only 33 (1  byte for prefix encoding and 32 byte
+      hash),
 
-      is only 33 (1  byte for prefix encoding and 32 byte hash), so there should
-
-      be other strong arguments for this optimization
+      so there should be other strong arguments for this optimization
   babylon.btccheckpoint.v1.TransactionInfo:
     type: object
     properties:
@@ -10558,14 +10757,11 @@ definitions:
           and
 
           valideated the proof?
-    title: >-
+    title: |-
       TransactionInfo is the info of a tx that contains Babylon checkpoint,
       including
-
       - the position of the tx on BTC blockchain
-
       - the full tx content
-
       - the Merkle proof that this tx is on the above position
   babylon.btccheckpoint.v1.TransactionKey:
     type: object
@@ -11032,7 +11228,9 @@ definitions:
         type: boolean
     description: >-
       QueryContainsResponse is response type for the temporary
-      Query/ContainsBytes RPC method.
+      Query/ContainsBytes
+
+      RPC method.
   babylon.btclightclient.v1.QueryContainsResponse:
     type: object
     properties:
@@ -11221,11 +11419,13 @@ definitions:
           last_block_header is the header of the last block in this epoch.
 
           Babylon needs to remember the last header of each epoch to complete
-          unbonding validators/delegations when a previous epoch's checkpoint is
-          finalised.
 
-          The last_block_header field is nil in the epoch's beginning, and is
-          set upon the end of this epoch.
+          unbonding validators/delegations when a previous epoch's checkpoint is
+
+          finalised. The last_block_header field is nil in the epoch's
+          beginning, and
+
+          is set upon the end of this epoch.
         type: object
         properties:
           version:
@@ -11312,7 +11512,9 @@ definitions:
           sealer_header is the 2nd header of the next epoch
 
           This validator set has generated a BLS multisig on `last_commit_hash`
-          of the sealer header
+          of
+
+          the sealer header
         type: object
         properties:
           version:
@@ -11410,7 +11612,9 @@ definitions:
         title: epoch_boundary is the height of this epoch's last block
     title: >-
       QueryCurrentEpochResponse is the response type for the Query/CurrentEpoch
-      RPC method
+      RPC
+
+      method
   babylon.epoching.v1.QueryDelegationLifecycleResponse:
     type: object
     properties:
@@ -11461,10 +11665,14 @@ definitions:
               last_block_header is the header of the last block in this epoch.
 
               Babylon needs to remember the last header of each epoch to
-              complete unbonding validators/delegations when a previous epoch's
-              checkpoint is finalised.
+              complete
 
-              The last_block_header field is nil in the epoch's beginning, and
+              unbonding validators/delegations when a previous epoch's
+              checkpoint is
+
+              finalised. The last_block_header field is nil in the epoch's
+              beginning, and
+
               is set upon the end of this epoch.
             type: object
             properties:
@@ -11552,7 +11760,9 @@ definitions:
               sealer_header is the 2nd header of the next epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of the sealer header
+              `last_commit_hash` of
+
+              the sealer header
             type: object
             properties:
               version:
@@ -11993,7 +12203,9 @@ definitions:
                 validator.
           title: >-
             QueuedMessage is a message that can change the validator set and is
-            delayed to the epoch boundary
+            delayed
+
+            to the epoch boundary
         title: msgs is the list of messages queued in the current epoch
       pagination:
         title: pagination defines the pagination in the response
@@ -12022,7 +12234,7 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    title: >-
+    title: |-
       QueryEpochMsgsResponse is the response type for the Query/EpochMsgs RPC
       method
   babylon.epoching.v1.QueryEpochValSetResponse:
@@ -12092,10 +12304,14 @@ definitions:
                 last_block_header is the header of the last block in this epoch.
 
                 Babylon needs to remember the last header of each epoch to
-                complete unbonding validators/delegations when a previous
-                epoch's checkpoint is finalised.
+                complete
 
-                The last_block_header field is nil in the epoch's beginning, and
+                unbonding validators/delegations when a previous epoch's
+                checkpoint is
+
+                finalised. The last_block_header field is nil in the epoch's
+                beginning, and
+
                 is set upon the end of this epoch.
               type: object
               properties:
@@ -12183,7 +12399,9 @@ definitions:
                 sealer_header is the 2nd header of the next epoch
 
                 This validator set has generated a BLS multisig on
-                `last_commit_hash` of the sealer header
+                `last_commit_hash` of
+
+                the sealer header
               type: object
               properties:
                 version:
@@ -12669,7 +12887,9 @@ definitions:
                       destination validator.
                 title: >-
                   QueuedMessage is a message that can change the validator set
-                  and is delayed to the epoch boundary
+                  and is delayed
+
+                  to the epoch boundary
         title: |-
           epoch_msg_map is a list of QueuedMessageList
           each QueuedMessageList has a field identifying the epoch number
@@ -12699,7 +12919,7 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    title: >-
+    title: |-
       QueryLatestEpochMsgsResponse is the response type for the
       Query/LatestEpochMsgs RPC method
   babylon.epoching.v1.QueryParamsResponse:
@@ -13084,7 +13304,9 @@ definitions:
           validator.
     title: >-
       QueuedMessage is a message that can change the validator set and is
-      delayed to the epoch boundary
+      delayed
+
+      to the epoch boundary
   babylon.epoching.v1.QueuedMessageList:
     type: object
     properties:
@@ -13452,7 +13674,9 @@ definitions:
                 validator.
           title: >-
             QueuedMessage is a message that can change the validator set and is
-            delayed to the epoch boundary
+            delayed
+
+            to the epoch boundary
   babylon.epoching.v1.ValStateUpdate:
     type: object
     properties:
@@ -14001,13 +14225,17 @@ definitions:
         format: uint64
         title: >-
           block_height is the height of the Babylon block that triggers the
-          state update
+          state
+
+          update
       block_time:
         type: string
         format: date-time
         title: >-
           block_time is the timestamp in the Babylon block that triggers the
-          state update
+          state
+
+          update
   babylon.checkpointing.v1.CheckpointStatus:
     type: string
     enum:
@@ -14046,7 +14274,9 @@ definitions:
               format: uint64
           title: >-
             ValidatorWithBlsKey couples validator address, voting power, and its
-            bls public key
+            bls
+
+            public key
       pagination:
         description: pagination defines the pagination in the response.
         type: object
@@ -14066,11 +14296,9 @@ definitions:
               PageRequest.count_total
 
               was set, its value is undefined otherwise
-    description: >-
+    description: |-
       QueryBlsPublicKeyListResponse is the response type for the
-      Query/BlsPublicKeys
-
-      RPC method.
+      Query/BlsPublicKeys RPC method.
   babylon.checkpointing.v1.QueryEpochStatusResponse:
     type: object
     properties:
@@ -14109,7 +14337,9 @@ definitions:
             format: byte
             title: >-
               last_commit_hash defines the 'LastCommitHash' that individual BLS
-              sigs are signed on
+              sigs are
+
+              signed on
           bitmap:
             type: string
             format: byte
@@ -14121,7 +14351,9 @@ definitions:
             format: byte
             title: >-
               bls_multi_sig defines the multi sig that is aggregated from
-              individual BLS sigs
+              individual BLS
+
+              sigs
         title: RawCheckpoint wraps the BLS multi sig with meta data
   babylon.checkpointing.v1.QueryParamsResponse:
     type: object
@@ -14150,7 +14382,9 @@ definitions:
                   format: byte
                   title: >-
                     last_commit_hash defines the 'LastCommitHash' that
-                    individual BLS sigs are signed on
+                    individual BLS sigs are
+
+                    signed on
                 bitmap:
                   type: string
                   format: byte
@@ -14162,7 +14396,9 @@ definitions:
                   format: byte
                   title: >-
                     bls_multi_sig defines the multi sig that is aggregated from
-                    individual BLS sigs
+                    individual BLS
+
+                    sigs
               title: RawCheckpoint wraps the BLS multi sig with meta data
             status:
               type: string
@@ -14222,18 +14458,24 @@ definitions:
                     format: uint64
                     title: >-
                       block_height is the height of the Babylon block that
-                      triggers the state update
+                      triggers the state
+
+                      update
                   block_time:
                     type: string
                     format: date-time
                     title: >-
                       block_time is the timestamp in the Babylon block that
-                      triggers the state update
+                      triggers the state
+
+                      update
               description: >-
                 lifecycle defines the lifecycle of this checkpoint, i.e., each
-                state transition and
+                state
 
-                the time (in both timestamp and block height) of this
+                transition and the time (in both timestamp and block height) of
+                this
+
                 transition.
           description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
         title: the order is going from the newest to oldest based on the epoch number
@@ -14256,11 +14498,9 @@ definitions:
               PageRequest.count_total
 
               was set, its value is undefined otherwise
-    description: >-
+    description: |-
       QueryRawCheckpointListResponse is the response type for the
-      Query/RawCheckpoints
-
-      RPC method.
+      Query/RawCheckpoints RPC method.
   babylon.checkpointing.v1.QueryRawCheckpointResponse:
     type: object
     properties:
@@ -14279,7 +14519,9 @@ definitions:
                 format: byte
                 title: >-
                   last_commit_hash defines the 'LastCommitHash' that individual
-                  BLS sigs are signed on
+                  BLS sigs are
+
+                  signed on
               bitmap:
                 type: string
                 format: byte
@@ -14291,7 +14533,9 @@ definitions:
                 format: byte
                 title: >-
                   bls_multi_sig defines the multi sig that is aggregated from
-                  individual BLS sigs
+                  individual BLS
+
+                  sigs
             title: RawCheckpoint wraps the BLS multi sig with meta data
           status:
             type: string
@@ -14349,18 +14593,25 @@ definitions:
                   format: uint64
                   title: >-
                     block_height is the height of the Babylon block that
-                    triggers the state update
+                    triggers the state
+
+                    update
                 block_time:
                   type: string
                   format: date-time
                   title: >-
                     block_time is the timestamp in the Babylon block that
-                    triggers the state update
+                    triggers the state
+
+                    update
             description: >-
               lifecycle defines the lifecycle of this checkpoint, i.e., each
-              state transition and
+              state
 
-              the time (in both timestamp and block height) of this transition.
+              transition and the time (in both timestamp and block height) of
+              this
+
+              transition.
         description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
     description: >-
       QueryRawCheckpointResponse is the response type for the
@@ -14381,11 +14632,9 @@ definitions:
         additionalProperties:
           type: string
           format: uint64
-    description: >-
+    description: |-
       QueryRecentEpochStatusCountResponse is the response type for the
-      Query/EpochStatusCount
-
-      RPC method.
+      Query/EpochStatusCount RPC method.
   babylon.checkpointing.v1.RawCheckpoint:
     type: object
     properties:
@@ -14398,7 +14647,9 @@ definitions:
         format: byte
         title: >-
           last_commit_hash defines the 'LastCommitHash' that individual BLS sigs
-          are signed on
+          are
+
+          signed on
       bitmap:
         type: string
         format: byte
@@ -14410,7 +14661,9 @@ definitions:
         format: byte
         title: >-
           bls_multi_sig defines the multi sig that is aggregated from individual
-          BLS sigs
+          BLS
+
+          sigs
     title: RawCheckpoint wraps the BLS multi sig with meta data
   babylon.checkpointing.v1.RawCheckpointWithMeta:
     type: object
@@ -14427,7 +14680,9 @@ definitions:
             format: byte
             title: >-
               last_commit_hash defines the 'LastCommitHash' that individual BLS
-              sigs are signed on
+              sigs are
+
+              signed on
           bitmap:
             type: string
             format: byte
@@ -14439,7 +14694,9 @@ definitions:
             format: byte
             title: >-
               bls_multi_sig defines the multi sig that is aggregated from
-              individual BLS sigs
+              individual BLS
+
+              sigs
         title: RawCheckpoint wraps the BLS multi sig with meta data
       status:
         type: string
@@ -14495,18 +14752,21 @@ definitions:
               format: uint64
               title: >-
                 block_height is the height of the Babylon block that triggers
-                the state update
+                the state
+
+                update
             block_time:
               type: string
               format: date-time
               title: >-
                 block_time is the timestamp in the Babylon block that triggers
-                the state update
-        description: >-
-          lifecycle defines the lifecycle of this checkpoint, i.e., each state
-          transition and
+                the state
 
-          the time (in both timestamp and block height) of this transition.
+                update
+        description: |-
+          lifecycle defines the lifecycle of this checkpoint, i.e., each state
+          transition and the time (in both timestamp and block height) of this
+          transition.
     description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
   babylon.checkpointing.v1.ValidatorWithBlsKey:
     type: object
@@ -14519,7 +14779,7 @@ definitions:
       voting_power:
         type: string
         format: uint64
-    title: >-
+    title: |-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
   babylon.zoneconcierge.v1.ChainInfo:
@@ -14550,7 +14810,9 @@ definitions:
           babylon_header:
             title: >-
               babylon_header is the header of the babylon block that includes
-              this CZ header
+              this CZ
+
+              header
             type: object
             properties:
               version:
@@ -14638,11 +14900,15 @@ definitions:
               babylon_tx_hash is the hash of the tx that includes this header
 
               (babylon_block_height, babylon_tx_hash) jointly provides the
-              position of the header on Babylon ledger
+              position of
+
+              the header on Babylon ledger
       latest_forks:
         title: >-
           latest_forks is the latest forks, formed as a series of IndexedHeader
-          (from low to high)
+          (from
+
+          low to high)
         type: object
         properties:
           headers:
@@ -14668,7 +14934,9 @@ definitions:
                 babylon_header:
                   title: >-
                     babylon_header is the header of the babylon block that
-                    includes this CZ header
+                    includes this CZ
+
+                    header
                   type: object
                   properties:
                     version:
@@ -14757,7 +15025,9 @@ definitions:
                     header
 
                     (babylon_block_height, babylon_tx_hash) jointly provides the
-                    position of the header on Babylon ledger
+                    position of
+
+                    the header on Babylon ledger
               title: IndexedHeader is the metadata of a CZ header
             title: >-
               blocks is the list of non-canonical indexed headers at the same
@@ -14779,20 +15049,20 @@ definitions:
 
 
           Note that each `IndexedHeader` in the fork should have a valid quorum
-          certificate. 
 
-          Such forks exist since Babylon considers CZs might have dishonest
-          majority.
+          certificate. Such forks exist since Babylon considers CZs might have
 
-          Also note that the IBC-Go implementation will only consider the first
-          header in a fork valid, since
+          dishonest majority. Also note that the IBC-Go implementation will only
 
-          the subsequent headers cannot be verified without knowing the
-          validator set in the previous header.
+          consider the first header in a fork valid, since the subsequent
+          headers
+
+          cannot be verified without knowing the validator set in the previous
+          header.
       timestamped_headers_count:
         type: string
         format: uint64
-        title: >-
+        title: |-
           timestamped_headers_count is the number of timestamped headers in CZ's
           canonical chain
     title: ChainInfo is the information of a CZ
@@ -14822,7 +15092,9 @@ definitions:
             babylon_header:
               title: >-
                 babylon_header is the header of the babylon block that includes
-                this CZ header
+                this CZ
+
+                header
               type: object
               properties:
                 version:
@@ -14910,7 +15182,9 @@ definitions:
                 babylon_tx_hash is the hash of the tx that includes this header
 
                 (babylon_block_height, babylon_tx_hash) jointly provides the
-                position of the header on Babylon ledger
+                position of
+
+                the header on Babylon ledger
           title: IndexedHeader is the metadata of a CZ header
         title: blocks is the list of non-canonical indexed headers at the same height
     description: >-
@@ -14930,16 +15204,15 @@ definitions:
 
 
       Note that each `IndexedHeader` in the fork should have a valid quorum
-      certificate. 
 
-      Such forks exist since Babylon considers CZs might have dishonest
-      majority.
+      certificate. Such forks exist since Babylon considers CZs might have
 
-      Also note that the IBC-Go implementation will only consider the first
-      header in a fork valid, since
+      dishonest majority. Also note that the IBC-Go implementation will only
 
-      the subsequent headers cannot be verified without knowing the validator
-      set in the previous header.
+      consider the first header in a fork valid, since the subsequent headers
+
+      cannot be verified without knowing the validator set in the previous
+      header.
   babylon.zoneconcierge.v1.IndexedHeader:
     type: object
     properties:
@@ -14961,7 +15234,9 @@ definitions:
       babylon_header:
         title: >-
           babylon_header is the header of the babylon block that includes this
-          CZ header
+          CZ
+
+          header
         type: object
         properties:
           version:
@@ -15049,7 +15324,9 @@ definitions:
           babylon_tx_hash is the hash of the tx that includes this header
 
           (babylon_block_height, babylon_tx_hash) jointly provides the position
-          of the header on Babylon ledger
+          of
+
+          the header on Babylon ledger
     title: IndexedHeader is the metadata of a CZ header
   babylon.zoneconcierge.v1.Params:
     type: object
@@ -15072,16 +15349,22 @@ definitions:
               format: uint64
           title: >-
             ValidatorWithBlsKey couples validator address, voting power, and its
-            bls public key
+            bls
+
+            public key
         title: >-
           validator_set is the validator set of the sealed epoch
 
           This validator set has generated a BLS multisig on `last_commit_hash`
-          of the sealer header
+          of
+
+          the sealer header
       proof_epoch_info:
         title: >-
           proof_epoch_info is the Merkle proof that the epoch's metadata is
-          committed to `app_hash` of the sealer header
+          committed
+
+          to `app_hash` of the sealer header
         type: object
         properties:
           ops:
@@ -15102,7 +15385,7 @@ definitions:
                 The data could be arbitrary format, providing nessecary data
                 for example neighbouring node hash
       proof_epoch_val_set:
-        title: >-
+        title: |-
           proof_epoch_info is the Merkle proof that the epoch's validator set is
           committed to `app_hash` of the sealer header
         type: object
@@ -15126,9 +15409,9 @@ definitions:
                 for example neighbouring node hash
     title: >-
       ProofEpochSealed is the proof that an epoch is sealed by the sealer
-      header, i.e., the 2nd header of the next epoch
+      header,
 
-      With the access of metadata
+      i.e., the 2nd header of the next epoch With the access of metadata
 
       - Metadata of this epoch, which includes the sealer header
 
@@ -15139,6 +15422,7 @@ definitions:
       - The raw checkpoint's `last_commit_hash` is same as in the sealer header
 
       - More than 1/3 (in voting power) validators in the validator set of this
+
       epoch have signed `last_commit_hash` of the sealer header
 
       - The epoch medatata is committed to the `app_hash` of the sealer header
@@ -15150,7 +15434,9 @@ definitions:
       proof_tx_in_block:
         title: >-
           proof_tx_in_block is the proof that tx that carries the header is
-          included in a certain Babylon block
+          included
+
+          in a certain Babylon block
         type: object
         properties:
           root_hash:
@@ -15198,7 +15484,9 @@ definitions:
               format: byte
         title: >-
           proof_header_in_epoch is the proof that the Babylon header is in a
-          certain epoch
+          certain
+
+          epoch
       proof_epoch_sealed:
         title: proof_epoch_sealed is the proof that the epoch is sealed
         type: object
@@ -15218,16 +15506,22 @@ definitions:
                   format: uint64
               title: >-
                 ValidatorWithBlsKey couples validator address, voting power, and
-                its bls public key
+                its bls
+
+                public key
             title: >-
               validator_set is the validator set of the sealed epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of the sealer header
+              `last_commit_hash` of
+
+              the sealer header
           proof_epoch_info:
             title: >-
               proof_epoch_info is the Merkle proof that the epoch's metadata is
-              committed to `app_hash` of the sealer header
+              committed
+
+              to `app_hash` of the sealer header
             type: object
             properties:
               ops:
@@ -15253,7 +15547,9 @@ definitions:
           proof_epoch_val_set:
             title: >-
               proof_epoch_info is the Merkle proof that the epoch's validator
-              set is committed to `app_hash` of the sealer header
+              set is
+
+              committed to `app_hash` of the sealer header
             type: object
             properties:
               ops:
@@ -15329,7 +15625,9 @@ definitions:
                 valideated the proof?
           title: >-
             TransactionInfo is the info of a tx that contains Babylon
-            checkpoint, including
+            checkpoint,
+
+            including
 
             - the position of the tx on BTC blockchain
 
@@ -15338,11 +15636,13 @@ definitions:
             - the Merkle proof that this tx is on the above position
         title: >-
           proof_epoch_submitted is the proof that the epoch's checkpoint is
-          included in BTC ledger
+          included
 
-          It is the two TransactionInfo in the best (i.e., earliest) checkpoint
-          submission
-    title: >-
+          in BTC ledger It is the two TransactionInfo in the best (i.e.,
+          earliest)
+
+          checkpoint submission
+    title: |-
       ProofFinalizedChainInfo is a set of proofs that attest a chain info is
       BTC-finalised
   babylon.zoneconcierge.v1.QueryChainInfoResponse:
@@ -15377,7 +15677,9 @@ definitions:
               babylon_header:
                 title: >-
                   babylon_header is the header of the babylon block that
-                  includes this CZ header
+                  includes this CZ
+
+                  header
                 type: object
                 properties:
                   version:
@@ -15466,11 +15768,15 @@ definitions:
                   header
 
                   (babylon_block_height, babylon_tx_hash) jointly provides the
-                  position of the header on Babylon ledger
+                  position of
+
+                  the header on Babylon ledger
           latest_forks:
             title: >-
               latest_forks is the latest forks, formed as a series of
-              IndexedHeader (from low to high)
+              IndexedHeader (from
+
+              low to high)
             type: object
             properties:
               headers:
@@ -15496,7 +15802,9 @@ definitions:
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
-                        includes this CZ header
+                        includes this CZ
+
+                        header
                       type: object
                       properties:
                         version:
@@ -15589,7 +15897,9 @@ definitions:
                         header
 
                         (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of the header on Babylon ledger
+                        the position of
+
+                        the header on Babylon ledger
                   title: IndexedHeader is the metadata of a CZ header
                 title: >-
                   blocks is the list of non-canonical indexed headers at the
@@ -15612,22 +15922,27 @@ definitions:
 
 
               Note that each `IndexedHeader` in the fork should have a valid
-              quorum certificate. 
+              quorum
 
-              Such forks exist since Babylon considers CZs might have dishonest
-              majority.
+              certificate. Such forks exist since Babylon considers CZs might
+              have
 
-              Also note that the IBC-Go implementation will only consider the
-              first header in a fork valid, since
+              dishonest majority. Also note that the IBC-Go implementation will
+              only
 
-              the subsequent headers cannot be verified without knowing the
-              validator set in the previous header.
+              consider the first header in a fork valid, since the subsequent
+              headers
+
+              cannot be verified without knowing the validator set in the
+              previous header.
           timestamped_headers_count:
             type: string
             format: uint64
             title: >-
               timestamped_headers_count is the number of timestamped headers in
-              CZ's canonical chain
+              CZ's
+
+              canonical chain
     description: >-
       QueryChainInfoResponse is response type for the Query/ChainInfo RPC
       method.
@@ -15699,7 +16014,9 @@ definitions:
               babylon_header:
                 title: >-
                   babylon_header is the header of the babylon block that
-                  includes this CZ header
+                  includes this CZ
+
+                  header
                 type: object
                 properties:
                   version:
@@ -15788,11 +16105,15 @@ definitions:
                   header
 
                   (babylon_block_height, babylon_tx_hash) jointly provides the
-                  position of the header on Babylon ledger
+                  position of
+
+                  the header on Babylon ledger
           latest_forks:
             title: >-
               latest_forks is the latest forks, formed as a series of
-              IndexedHeader (from low to high)
+              IndexedHeader (from
+
+              low to high)
             type: object
             properties:
               headers:
@@ -15818,7 +16139,9 @@ definitions:
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
-                        includes this CZ header
+                        includes this CZ
+
+                        header
                       type: object
                       properties:
                         version:
@@ -15911,7 +16234,9 @@ definitions:
                         header
 
                         (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of the header on Babylon ledger
+                        the position of
+
+                        the header on Babylon ledger
                   title: IndexedHeader is the metadata of a CZ header
                 title: >-
                   blocks is the list of non-canonical indexed headers at the
@@ -15934,25 +16259,32 @@ definitions:
 
 
               Note that each `IndexedHeader` in the fork should have a valid
-              quorum certificate. 
+              quorum
 
-              Such forks exist since Babylon considers CZs might have dishonest
-              majority.
+              certificate. Such forks exist since Babylon considers CZs might
+              have
 
-              Also note that the IBC-Go implementation will only consider the
-              first header in a fork valid, since
+              dishonest majority. Also note that the IBC-Go implementation will
+              only
 
-              the subsequent headers cannot be verified without knowing the
-              validator set in the previous header.
+              consider the first header in a fork valid, since the subsequent
+              headers
+
+              cannot be verified without knowing the validator set in the
+              previous header.
           timestamped_headers_count:
             type: string
             format: uint64
             title: >-
               timestamped_headers_count is the number of timestamped headers in
-              CZ's canonical chain
+              CZ's
+
+              canonical chain
     description: >-
       QueryEpochChainInfoResponse is response type for the Query/EpochChainInfo
-      RPC method.
+      RPC
+
+      method.
   babylon.zoneconcierge.v1.QueryFinalizedChainInfoResponse:
     type: object
     properties:
@@ -15985,7 +16317,9 @@ definitions:
               babylon_header:
                 title: >-
                   babylon_header is the header of the babylon block that
-                  includes this CZ header
+                  includes this CZ
+
+                  header
                 type: object
                 properties:
                   version:
@@ -16074,11 +16408,15 @@ definitions:
                   header
 
                   (babylon_block_height, babylon_tx_hash) jointly provides the
-                  position of the header on Babylon ledger
+                  position of
+
+                  the header on Babylon ledger
           latest_forks:
             title: >-
               latest_forks is the latest forks, formed as a series of
-              IndexedHeader (from low to high)
+              IndexedHeader (from
+
+              low to high)
             type: object
             properties:
               headers:
@@ -16104,7 +16442,9 @@ definitions:
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
-                        includes this CZ header
+                        includes this CZ
+
+                        header
                       type: object
                       properties:
                         version:
@@ -16197,7 +16537,9 @@ definitions:
                         header
 
                         (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of the header on Babylon ledger
+                        the position of
+
+                        the header on Babylon ledger
                   title: IndexedHeader is the metadata of a CZ header
                 title: >-
                   blocks is the list of non-canonical indexed headers at the
@@ -16220,22 +16562,27 @@ definitions:
 
 
               Note that each `IndexedHeader` in the fork should have a valid
-              quorum certificate. 
+              quorum
 
-              Such forks exist since Babylon considers CZs might have dishonest
-              majority.
+              certificate. Such forks exist since Babylon considers CZs might
+              have
 
-              Also note that the IBC-Go implementation will only consider the
-              first header in a fork valid, since
+              dishonest majority. Also note that the IBC-Go implementation will
+              only
 
-              the subsequent headers cannot be verified without knowing the
-              validator set in the previous header.
+              consider the first header in a fork valid, since the subsequent
+              headers
+
+              cannot be verified without knowing the validator set in the
+              previous header.
           timestamped_headers_count:
             type: string
             format: uint64
             title: >-
               timestamped_headers_count is the number of timestamped headers in
-              CZ's canonical chain
+              CZ's
+
+              canonical chain
       epoch_info:
         title: epoch_info is the metadata of the last BTC-finalised epoch
         type: object
@@ -16254,10 +16601,14 @@ definitions:
               last_block_header is the header of the last block in this epoch.
 
               Babylon needs to remember the last header of each epoch to
-              complete unbonding validators/delegations when a previous epoch's
-              checkpoint is finalised.
+              complete
 
-              The last_block_header field is nil in the epoch's beginning, and
+              unbonding validators/delegations when a previous epoch's
+              checkpoint is
+
+              finalised. The last_block_header field is nil in the epoch's
+              beginning, and
+
               is set upon the end of this epoch.
             type: object
             properties:
@@ -16345,7 +16696,9 @@ definitions:
               sealer_header is the 2nd header of the next epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of the sealer header
+              `last_commit_hash` of
+
+              the sealer header
             type: object
             properties:
               version:
@@ -16435,7 +16788,9 @@ definitions:
             format: byte
             title: >-
               last_commit_hash defines the 'LastCommitHash' that individual BLS
-              sigs are signed on
+              sigs are
+
+              signed on
           bitmap:
             type: string
             format: byte
@@ -16447,9 +16802,11 @@ definitions:
             format: byte
             title: >-
               bls_multi_sig defines the multi sig that is aggregated from
-              individual BLS sigs
+              individual BLS
+
+              sigs
       btc_submission_key:
-        title: >-
+        title: |-
           btc_submission_key is position of two BTC txs that include the raw
           checkpoint of this epoch
         type: object
@@ -16478,7 +16835,9 @@ definitions:
           proof_tx_in_block:
             title: >-
               proof_tx_in_block is the proof that tx that carries the header is
-              included in a certain Babylon block
+              included
+
+              in a certain Babylon block
             type: object
             properties:
               root_hash:
@@ -16526,7 +16885,9 @@ definitions:
                   format: byte
             title: >-
               proof_header_in_epoch is the proof that the Babylon header is in a
-              certain epoch
+              certain
+
+              epoch
           proof_epoch_sealed:
             title: proof_epoch_sealed is the proof that the epoch is sealed
             type: object
@@ -16546,16 +16907,22 @@ definitions:
                       format: uint64
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
-                    and its bls public key
+                    and its bls
+
+                    public key
                 title: >-
                   validator_set is the validator set of the sealed epoch
 
                   This validator set has generated a BLS multisig on
-                  `last_commit_hash` of the sealer header
+                  `last_commit_hash` of
+
+                  the sealer header
               proof_epoch_info:
                 title: >-
                   proof_epoch_info is the Merkle proof that the epoch's metadata
-                  is committed to `app_hash` of the sealer header
+                  is committed
+
+                  to `app_hash` of the sealer header
                 type: object
                 properties:
                   ops:
@@ -16582,7 +16949,9 @@ definitions:
               proof_epoch_val_set:
                 title: >-
                   proof_epoch_info is the Merkle proof that the epoch's
-                  validator set is committed to `app_hash` of the sealer header
+                  validator set is
+
+                  committed to `app_hash` of the sealer header
                 type: object
                 properties:
                   ops:
@@ -16659,7 +17028,9 @@ definitions:
                     valideated the proof?
               title: >-
                 TransactionInfo is the info of a tx that contains Babylon
-                checkpoint, including
+                checkpoint,
+
+                including
 
                 - the position of the tx on BTC blockchain
 
@@ -16668,11 +17039,13 @@ definitions:
                 - the Merkle proof that this tx is on the above position
             title: >-
               proof_epoch_submitted is the proof that the epoch's checkpoint is
-              included in BTC ledger
+              included
 
-              It is the two TransactionInfo in the best (i.e., earliest)
+              in BTC ledger It is the two TransactionInfo in the best (i.e.,
+              earliest)
+
               checkpoint submission
-    description: >-
+    description: |-
       QueryFinalizedChainInfoResponse is response type for the
       Query/FinalizedChainInfo RPC method.
   babylon.zoneconcierge.v1.QueryFinalizedChainInfoUntilHeightResponse:
@@ -16707,7 +17080,9 @@ definitions:
               babylon_header:
                 title: >-
                   babylon_header is the header of the babylon block that
-                  includes this CZ header
+                  includes this CZ
+
+                  header
                 type: object
                 properties:
                   version:
@@ -16796,11 +17171,15 @@ definitions:
                   header
 
                   (babylon_block_height, babylon_tx_hash) jointly provides the
-                  position of the header on Babylon ledger
+                  position of
+
+                  the header on Babylon ledger
           latest_forks:
             title: >-
               latest_forks is the latest forks, formed as a series of
-              IndexedHeader (from low to high)
+              IndexedHeader (from
+
+              low to high)
             type: object
             properties:
               headers:
@@ -16826,7 +17205,9 @@ definitions:
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
-                        includes this CZ header
+                        includes this CZ
+
+                        header
                       type: object
                       properties:
                         version:
@@ -16919,7 +17300,9 @@ definitions:
                         header
 
                         (babylon_block_height, babylon_tx_hash) jointly provides
-                        the position of the header on Babylon ledger
+                        the position of
+
+                        the header on Babylon ledger
                   title: IndexedHeader is the metadata of a CZ header
                 title: >-
                   blocks is the list of non-canonical indexed headers at the
@@ -16942,22 +17325,27 @@ definitions:
 
 
               Note that each `IndexedHeader` in the fork should have a valid
-              quorum certificate. 
+              quorum
 
-              Such forks exist since Babylon considers CZs might have dishonest
-              majority.
+              certificate. Such forks exist since Babylon considers CZs might
+              have
 
-              Also note that the IBC-Go implementation will only consider the
-              first header in a fork valid, since
+              dishonest majority. Also note that the IBC-Go implementation will
+              only
 
-              the subsequent headers cannot be verified without knowing the
-              validator set in the previous header.
+              consider the first header in a fork valid, since the subsequent
+              headers
+
+              cannot be verified without knowing the validator set in the
+              previous header.
           timestamped_headers_count:
             type: string
             format: uint64
             title: >-
               timestamped_headers_count is the number of timestamped headers in
-              CZ's canonical chain
+              CZ's
+
+              canonical chain
       epoch_info:
         title: epoch_info is the metadata of the last BTC-finalised epoch
         type: object
@@ -16976,10 +17364,14 @@ definitions:
               last_block_header is the header of the last block in this epoch.
 
               Babylon needs to remember the last header of each epoch to
-              complete unbonding validators/delegations when a previous epoch's
-              checkpoint is finalised.
+              complete
 
-              The last_block_header field is nil in the epoch's beginning, and
+              unbonding validators/delegations when a previous epoch's
+              checkpoint is
+
+              finalised. The last_block_header field is nil in the epoch's
+              beginning, and
+
               is set upon the end of this epoch.
             type: object
             properties:
@@ -17067,7 +17459,9 @@ definitions:
               sealer_header is the 2nd header of the next epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of the sealer header
+              `last_commit_hash` of
+
+              the sealer header
             type: object
             properties:
               version:
@@ -17157,7 +17551,9 @@ definitions:
             format: byte
             title: >-
               last_commit_hash defines the 'LastCommitHash' that individual BLS
-              sigs are signed on
+              sigs are
+
+              signed on
           bitmap:
             type: string
             format: byte
@@ -17169,9 +17565,11 @@ definitions:
             format: byte
             title: >-
               bls_multi_sig defines the multi sig that is aggregated from
-              individual BLS sigs
+              individual BLS
+
+              sigs
       btc_submission_key:
-        title: >-
+        title: |-
           btc_submission_key is position of two BTC txs that include the raw
           checkpoint of this epoch
         type: object
@@ -17200,7 +17598,9 @@ definitions:
           proof_tx_in_block:
             title: >-
               proof_tx_in_block is the proof that tx that carries the header is
-              included in a certain Babylon block
+              included
+
+              in a certain Babylon block
             type: object
             properties:
               root_hash:
@@ -17248,7 +17648,9 @@ definitions:
                   format: byte
             title: >-
               proof_header_in_epoch is the proof that the Babylon header is in a
-              certain epoch
+              certain
+
+              epoch
           proof_epoch_sealed:
             title: proof_epoch_sealed is the proof that the epoch is sealed
             type: object
@@ -17268,16 +17670,22 @@ definitions:
                       format: uint64
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
-                    and its bls public key
+                    and its bls
+
+                    public key
                 title: >-
                   validator_set is the validator set of the sealed epoch
 
                   This validator set has generated a BLS multisig on
-                  `last_commit_hash` of the sealer header
+                  `last_commit_hash` of
+
+                  the sealer header
               proof_epoch_info:
                 title: >-
                   proof_epoch_info is the Merkle proof that the epoch's metadata
-                  is committed to `app_hash` of the sealer header
+                  is committed
+
+                  to `app_hash` of the sealer header
                 type: object
                 properties:
                   ops:
@@ -17304,7 +17712,9 @@ definitions:
               proof_epoch_val_set:
                 title: >-
                   proof_epoch_info is the Merkle proof that the epoch's
-                  validator set is committed to `app_hash` of the sealer header
+                  validator set is
+
+                  committed to `app_hash` of the sealer header
                 type: object
                 properties:
                   ops:
@@ -17381,7 +17791,9 @@ definitions:
                     valideated the proof?
               title: >-
                 TransactionInfo is the info of a tx that contains Babylon
-                checkpoint, including
+                checkpoint,
+
+                including
 
                 - the position of the tx on BTC blockchain
 
@@ -17390,11 +17802,13 @@ definitions:
                 - the Merkle proof that this tx is on the above position
             title: >-
               proof_epoch_submitted is the proof that the epoch's checkpoint is
-              included in BTC ledger
+              included
 
-              It is the two TransactionInfo in the best (i.e., earliest)
+              in BTC ledger It is the two TransactionInfo in the best (i.e.,
+              earliest)
+
               checkpoint submission
-    description: >-
+    description: |-
       QueryFinalizedChainInfoUntilHeightResponse is response type for the
       Query/FinalizedChainInfoUntilHeight RPC method.
   babylon.zoneconcierge.v1.QueryHeaderResponse:
@@ -17421,7 +17835,9 @@ definitions:
           babylon_header:
             title: >-
               babylon_header is the header of the babylon block that includes
-              this CZ header
+              this CZ
+
+              header
             type: object
             properties:
               version:
@@ -17509,7 +17925,9 @@ definitions:
               babylon_tx_hash is the hash of the tx that includes this header
 
               (babylon_block_height, babylon_tx_hash) jointly provides the
-              position of the header on Babylon ledger
+              position of
+
+              the header on Babylon ledger
         title: IndexedHeader is the metadata of a CZ header
       fork_headers:
         type: object
@@ -17537,7 +17955,9 @@ definitions:
                 babylon_header:
                   title: >-
                     babylon_header is the header of the babylon block that
-                    includes this CZ header
+                    includes this CZ
+
+                    header
                   type: object
                   properties:
                     version:
@@ -17626,7 +18046,9 @@ definitions:
                     header
 
                     (babylon_block_height, babylon_tx_hash) jointly provides the
-                    position of the header on Babylon ledger
+                    position of
+
+                    the header on Babylon ledger
               title: IndexedHeader is the metadata of a CZ header
             title: >-
               blocks is the list of non-canonical indexed headers at the same
@@ -17648,16 +18070,16 @@ definitions:
 
 
           Note that each `IndexedHeader` in the fork should have a valid quorum
-          certificate. 
 
-          Such forks exist since Babylon considers CZs might have dishonest
-          majority.
+          certificate. Such forks exist since Babylon considers CZs might have
 
-          Also note that the IBC-Go implementation will only consider the first
-          header in a fork valid, since
+          dishonest majority. Also note that the IBC-Go implementation will only
 
-          the subsequent headers cannot be verified without knowing the
-          validator set in the previous header.
+          consider the first header in a fork valid, since the subsequent
+          headers
+
+          cannot be verified without knowing the validator set in the previous
+          header.
     description: QueryParamsResponse is response type for the Query/Header RPC method.
   babylon.zoneconcierge.v1.QueryListEpochHeadersResponse:
     type: object
@@ -17685,7 +18107,9 @@ definitions:
             babylon_header:
               title: >-
                 babylon_header is the header of the babylon block that includes
-                this CZ header
+                this CZ
+
+                header
               type: object
               properties:
                 version:
@@ -17773,12 +18197,16 @@ definitions:
                 babylon_tx_hash is the hash of the tx that includes this header
 
                 (babylon_block_height, babylon_tx_hash) jointly provides the
-                position of the header on Babylon ledger
+                position of
+
+                the header on Babylon ledger
           title: IndexedHeader is the metadata of a CZ header
         title: headers is the list of headers
     description: >-
       QueryListEpochHeadersResponse is response type for the
-      Query/ListEpochHeaders RPC method.
+      Query/ListEpochHeaders
+
+      RPC method.
   babylon.zoneconcierge.v1.QueryListHeadersResponse:
     type: object
     properties:
@@ -17805,7 +18233,9 @@ definitions:
             babylon_header:
               title: >-
                 babylon_header is the header of the babylon block that includes
-                this CZ header
+                this CZ
+
+                header
               type: object
               properties:
                 version:
@@ -17893,7 +18323,9 @@ definitions:
                 babylon_tx_hash is the hash of the tx that includes this header
 
                 (babylon_block_height, babylon_tx_hash) jointly provides the
-                position of the header on Babylon ledger
+                position of
+
+                the header on Babylon ledger
           title: IndexedHeader is the metadata of a CZ header
         title: headers is the list of headers
       pagination:
@@ -17923,7 +18355,7 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    description: >-
+    description: |-
       QueryListHeadersResponse is response type for the Query/ListHeaders RPC
       method.
   babylon.zoneconcierge.v1.QueryParamsResponse:
