@@ -45,10 +45,11 @@ jobs:
             make localnet-stop
       # TODO: If CI tests will take to long consider having only this e2e test
       # instead of separate integration tests and e2e tests.
-      - run:
-          name: Run e2e tests
-          command: |
-            make test-e2e
+      # TODO: re-enable e2e test after bumping heremes releyer
+      # - run:
+      #     name: Run e2e tests
+      #     command: |
+      #       make test-e2e
 
 
 # Invoke jobs via workflows

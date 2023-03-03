@@ -1,11 +1,11 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // setSlashedVotingPower sets the total amount of voting power that has been slashed in the epoch
@@ -17,7 +17,7 @@ func (k Keeper) setSlashedVotingPower(ctx sdk.Context, epochNumber uint64, power
 	// value: power
 	powerBytes, err := sdk.NewInt(power).Marshal()
 	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	store.Set(epochNumberBytes, powerBytes)
@@ -43,7 +43,7 @@ func (k Keeper) GetSlashedVotingPower(ctx sdk.Context, epochNumber uint64) int64
 	// get value
 	var slashedVotingPower math.Int
 	if err := slashedVotingPower.Unmarshal(bz); err != nil {
-		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return slashedVotingPower.Int64()
@@ -56,11 +56,11 @@ func (k Keeper) AddSlashedValidator(ctx sdk.Context, valAddr sdk.ValAddress) err
 	store := k.slashedValSetStore(ctx, epochNumber)
 	thisVotingPower, err := k.GetValidatorVotingPower(ctx, epochNumber, valAddr)
 	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 	}
 	thisVotingPowerBytes, err := sdk.NewInt(thisVotingPower).Marshal()
 	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 	}
 
 	// insert into "set of slashed addresses" as KV pair, where
@@ -93,7 +93,7 @@ func (k Keeper) GetSlashedValidators(ctx sdk.Context, epochNumber uint64) types.
 		}
 		var power math.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
-			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+			panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		val := types.Validator{Addr: addr, Power: power.Int64()}
 		valSet = append(valSet, val)

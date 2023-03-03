@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"math/rand"
 
-	channeltypes "github.com/cosmos/ibc-go/v5/modules/core/04-channel/types"
-	ibctesting "github.com/cosmos/ibc-go/v5/testing"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 
 	"github.com/babylonchain/babylon/app"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"

@@ -165,6 +165,7 @@ func InitTestnet(
 	babylonConfig.BtcConfig.CheckpointTag = btcCheckpointTag
 	// Explorer related config. Allow CORS connections.
 	babylonConfig.API.EnableUnsafeCORS = true
+	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -449,7 +450,14 @@ func collectGenFiles(
 			return err
 		}
 
-		nodeAppState, err := genutil.GenAppStateFromConfig(clientCtx.Codec, clientCtx.TxConfig, nodeConfig, initCfg, *genDoc, genBalIterator)
+		nodeAppState, err := genutil.GenAppStateFromConfig(
+			clientCtx.Codec,
+			clientCtx.TxConfig,
+			nodeConfig, initCfg,
+			*genDoc,
+			genBalIterator,
+			genutiltypes.DefaultMessageValidator,
+		)
 		if err != nil {
 			return err
 		}

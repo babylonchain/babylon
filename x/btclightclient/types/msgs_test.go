@@ -32,7 +32,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 		// Perform modifications on the header
 		errorKind = rand.Intn(2)
-		var bitsBig sdk.Uint
+		var bitsBig sdkmath.Uint
 		switch errorKind {
 		case 0:
 			// Valid input

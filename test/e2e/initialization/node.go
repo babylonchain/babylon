@@ -125,12 +125,15 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.BaseConfig.PruningKeepRecent = nodeConfig.PruningKeepRecent
 	appConfig.BaseConfig.PruningInterval = nodeConfig.PruningInterval
 	appConfig.API.Enable = true
+	appConfig.API.Address = "tcp://0.0.0.0:1317"
 	appConfig.MinGasPrices = fmt.Sprintf("%s%s", MinGasPrice, BabylonDenom)
 	appConfig.StateSync.SnapshotInterval = nodeConfig.SnapshotInterval
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
 	appConfig.SignerConfig.KeyName = ValidatorWalletName
 	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
 	appConfig.BtcConfig.CheckpointTag = BabylonOpReturnTag
+	appConfig.GRPC.Enable = true
+	appConfig.GRPC.Address = "0.0.0.0:9090"
 
 	customTemplate := cmd.DefaultBabylonTemplate()
 

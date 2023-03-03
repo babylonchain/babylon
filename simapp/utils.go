@@ -6,11 +6,10 @@ import (
 
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
-
+	simappparams "github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/app"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/staking"
@@ -30,7 +29,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 	}
 
 	config := NewConfigFromFlags()
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = simappparams.SimAppChainID
 
 	var logger log.Logger
 	if FlagVerboseValue {
@@ -44,7 +43,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
 
-	db, err := sdk.NewLevelDB(dbName, dir) //nolint:staticcheck // Prefer the old-fashioned way.
+	db, err := dbm.NewDB(dbName, dbm.BackendType(config.DBBackend), dir)
 	if err != nil {
 		return simtypes.Config{}, nil, "", nil, false, err
 	}
@@ -57,7 +56,7 @@ func SetupSimulation(dirPrefix, dbName string) (simtypes.Config, dbm.DB, string,
 // NOTE: the code is same as https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/utils.go#L50-L73,
 // except that this function modifies the default weights given in Cosmos SDK.
 // Specifically, Babylon does not want unwrapped message types in the staking module.
-func SimulationOperations(app simapp.App, cdc codec.JSONCodec, config simtypes.Config) []simtypes.WeightedOperation {
+func SimulationOperations(app app.App, cdc codec.JSONCodec, config simtypes.Config) []simtypes.WeightedOperation {
 	simState := module.SimulationState{
 		AppParams: make(simtypes.AppParams),
 		Cdc:       cdc,
@@ -74,10 +73,6 @@ func SimulationOperations(app simapp.App, cdc codec.JSONCodec, config simtypes.C
 			panic(err)
 		}
 	}
-
-	simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
-	simState.Contents = app.SimulationManager().GetProposalContents(simState)
-
 	// get weighted operations from all modules, except for the staking module whose messages will be rejected by Babylon
 	sm := app.SimulationManager()
 	appWOps := make([]simtypes.WeightedOperation, 0, len(sm.Modules))

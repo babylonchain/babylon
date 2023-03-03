@@ -23,6 +23,8 @@ import (
 )
 
 // copied from github.com/tendermint/tendermint/privval/file.go"
+//
+//nolint:unused
 const (
 	stepNone      int8 = 0 // Used to distinguish the initial state
 	stepPropose   int8 = 1

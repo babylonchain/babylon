@@ -200,11 +200,12 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 
 		// ensure the genesis account has these unbonding tokens
 		unbondingDels := helper.StakingKeeper.GetAllUnbondingDelegations(ctx, genAddr)
-		require.Equal(t, 1, len(unbondingDels))                              // there is only 1 type of tokens
-		require.Equal(t, numNewUndels, int64(len(unbondingDels[0].Entries))) // there are numNewUndels entries
-		for _, entry := range unbondingDels[0].Entries {
-			require.Equal(t, coinWithOnePower.Amount, entry.Balance) // each unbonding delegation entry has tokens of 1 voting power
-		}
+		require.Equal(t, 1, len(unbondingDels)) // there is only 1 type of tokens
+
+		// from cosmos v47, all undelegations made at the same height are represented
+		// by one entry see: https://github.com/cosmos/cosmos-sdk/pull/12967
+		require.Equal(t, 1, len(unbondingDels[0].Entries))
+		require.Equal(t, unbondingDels[0].Entries[0].Balance, coinWithOnePower.Amount.MulRaw(numNewUndels))
 	})
 }
 

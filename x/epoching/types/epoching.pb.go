@@ -6,9 +6,9 @@ package types
 import (
 	fmt "fmt"
 	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
-	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
 	types "github.com/tendermint/tendermint/proto/tendermint/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
@@ -815,7 +815,7 @@ func (m *QueuedMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if m.BlockTime != nil {
-		n3, err3 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err3 != nil {
 			return 0, err3
 		}
@@ -993,7 +993,7 @@ func (m *ValStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.BlockTime != nil {
-		n8, err8 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n8, err8 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err8 != nil {
 			return 0, err8
 		}
@@ -1080,7 +1080,7 @@ func (m *DelegationStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.BlockTime != nil {
-		n9, err9 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n9, err9 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err9 != nil {
 			return 0, err9
 		}
@@ -1247,7 +1247,7 @@ func (m *QueuedMessage) Size() (n int) {
 		n += 1 + sovEpoching(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovEpoching(uint64(l))
 	}
 	if m.Msg != nil {
@@ -1335,7 +1335,7 @@ func (m *ValStateUpdate) Size() (n int) {
 		n += 1 + sovEpoching(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovEpoching(uint64(l))
 	}
 	return n
@@ -1377,7 +1377,7 @@ func (m *DelegationStateUpdate) Size() (n int) {
 		n += 1 + sovEpoching(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovEpoching(uint64(l))
 	}
 	return n
@@ -1785,7 +1785,7 @@ func (m *QueuedMessage) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2152,7 +2152,7 @@ func (m *ValStateUpdate) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2424,7 +2424,7 @@ func (m *DelegationStateUpdate) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

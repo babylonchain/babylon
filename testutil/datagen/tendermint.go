@@ -3,7 +3,7 @@ package datagen
 import (
 	"time"
 
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 

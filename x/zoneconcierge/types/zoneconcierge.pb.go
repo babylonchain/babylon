@@ -7,7 +7,7 @@ import (
 	fmt "fmt"
 	types2 "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	types1 "github.com/babylonchain/babylon/x/checkpointing/types"
-	proto "github.com/gogo/protobuf/proto"
+	proto "github.com/cosmos/gogoproto/proto"
 	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 	types "github.com/tendermint/tendermint/proto/tendermint/types"
 	io "io"
@@ -123,8 +123,10 @@ func (m *IndexedHeader) GetBabylonTxHash() []byte {
 // For example, assuming the following blockchain
 // ```
 // A <- B <- C <- D <- E
-//            \ -- D1
-//            \ -- D2
+//
+//	\ -- D1
+//	\ -- D2
+//
 // ```
 // Then the fork will be {[D1, D2]} where each item is in struct `IndexedBlock`.
 //

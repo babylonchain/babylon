@@ -8,9 +8,9 @@ import (
 	fmt "fmt"
 	github_com_babylonchain_babylon_crypto_bls12381 "github.com/babylonchain/babylon/crypto/bls12381"
 	_ "github.com/cosmos/cosmos-proto"
+	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
-	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
@@ -663,7 +663,7 @@ func (m *CheckpointStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.BlockTime != nil {
-		n2, err2 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n2, err2 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err2 != nil {
 			return 0, err2
 		}
@@ -821,7 +821,7 @@ func (m *CheckpointStateUpdate) Size() (n int) {
 		n += 1 + sovCheckpoint(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovCheckpoint(uint64(l))
 	}
 	return n
@@ -1322,7 +1322,7 @@ func (m *CheckpointStateUpdate) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

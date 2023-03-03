@@ -4,7 +4,7 @@ import (
 	"math/big"
 	"math/rand"
 	"time"
-
+	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
@@ -85,7 +85,7 @@ func GenRandomBTCHeaderNonce() uint32 {
 // `Timestamp` attribute will be later than the parent's `Timestamp`.
 // If the `bitsBig` argument is not `nil`, then the `Bits` attribute
 // of the BTC header will point to the compact form of big integer.
-func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdk.Uint) bbn.BTCHeaderBytes {
+func GenRandomBTCHeaderBytes(parent *btclightclienttypes.BTCHeaderInfo, bitsBig *sdkmath.Uint) bbn.BTCHeaderBytes {
 	btcdHeader := GenRandomBtcdHeader()
 
 	if bitsBig != nil {
@@ -114,7 +114,7 @@ func GenRandomBTCHeight() uint64 {
 
 // GenRandomBTCHeaderInfoWithParentAndBits generates a BTCHeaderInfo object in which the `header.PrevBlock` points to the `parent`
 // and the `Work` property points to the accumulated work (parent.Work + header.Work). Less bits as a parameter, means more difficulty.
-func GenRandomBTCHeaderInfoWithParentAndBits(parent *btclightclienttypes.BTCHeaderInfo, bits *sdk.Uint) *btclightclienttypes.BTCHeaderInfo {
+func GenRandomBTCHeaderInfoWithParentAndBits(parent *btclightclienttypes.BTCHeaderInfo, bits *sdkmath.Uint) *btclightclienttypes.BTCHeaderInfo {
 	header := GenRandomBTCHeaderBytes(parent, bits)
 	height := GenRandomBTCHeight()
 	if parent != nil {
@@ -167,7 +167,7 @@ func GenRandomValidBTCHeaderInfoWithParent(parent btclightclienttypes.BTCHeaderI
 	}
 }
 
-func GenRandomBTCHeaderInfoWithBits(bits *sdk.Uint) *btclightclienttypes.BTCHeaderInfo {
+func GenRandomBTCHeaderInfoWithBits(bits *sdkmath.Uint) *btclightclienttypes.BTCHeaderInfo {
 	return GenRandomBTCHeaderInfoWithParentAndBits(nil, bits)
 }
 

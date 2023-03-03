@@ -1,5 +1,7 @@
 package configurer
 
+import "time"
+
 type setupFn func(configurer Configurer) error
 
 func baseSetup(configurer Configurer) error {
@@ -14,7 +16,7 @@ func withIBC(setupHandler setupFn) setupFn {
 		if err := setupHandler(configurer); err != nil {
 			return err
 		}
-
+		time.Sleep(5 * time.Second)
 		if err := configurer.RunIBC(); err != nil {
 			return err
 		}

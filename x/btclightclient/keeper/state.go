@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -94,7 +95,7 @@ func (s headersState) GetHeaderHeight(hash *bbn.BTCHeaderHashBytes) (uint64, err
 }
 
 // GetHeaderWork Retrieve the work of a header
-func (s headersState) GetHeaderWork(hash *bbn.BTCHeaderHashBytes) (*sdk.Uint, error) {
+func (s headersState) GetHeaderWork(hash *bbn.BTCHeaderHashBytes) (*sdkmath.Uint, error) {
 	// Keyed by hash
 	hashKey := types.HeadersObjectHeightKey(hash)
 	// Retrieve the raw bytes for the work
@@ -104,7 +105,7 @@ func (s headersState) GetHeaderWork(hash *bbn.BTCHeaderHashBytes) (*sdk.Uint, er
 	}
 
 	// Convert to *big.Int form
-	work := new(sdk.Uint)
+	work := new(sdkmath.Uint)
 	err := work.Unmarshal(bz)
 	if err != nil {
 		panic("Stored header cannot be unmarshalled to sdk.Uint")
@@ -185,7 +186,8 @@ func (s headersState) getDescendingHeadersUpTo(startHeight uint64, depth uint64)
 }
 
 // GetHeaderAncestryUpTo returns a list of headers starting from the header parameter and leading to
-// 						 the header that has a `depth` distance from it.
+//
+//	the header that has a `depth` distance from it.
 func (s headersState) GetHeaderAncestryUpTo(currentHeader *types.BTCHeaderInfo, depth uint64) []*types.BTCHeaderInfo {
 	// Retrieve a collection of headers in descending height order
 	// Use depth+1 since we want all headers at the depth height.
@@ -209,7 +211,8 @@ func (s headersState) GetHeaderAncestryUpTo(currentHeader *types.BTCHeaderInfo, 
 }
 
 // GetMainChainUpTo returns the current canonical chain as a collection of block headers
-// 				    starting from the tip and ending on the header that has a depth distance from it.
+//
+//	starting from the tip and ending on the header that has a depth distance from it.
 func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {
@@ -219,7 +222,8 @@ func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 }
 
 // GetMainChain retrieves the main chain as a collection of block headers starting from the tip
-// 				and ending on the base BTC header.
+//
+//	and ending on the base BTC header.
 func (s headersState) GetMainChain() []*types.BTCHeaderInfo {
 	if !s.TipExists() {
 		return nil
@@ -230,7 +234,7 @@ func (s headersState) GetMainChain() []*types.BTCHeaderInfo {
 }
 
 // GetHighestCommonAncestor traverses the ancestors of both headers
-//  						to identify the common ancestor with the highest height
+// to identify the common ancestor with the highest height
 func (s headersState) GetHighestCommonAncestor(header1 *types.BTCHeaderInfo, header2 *types.BTCHeaderInfo) *types.BTCHeaderInfo {
 	// The algorithm works as follows:
 	// 1. Initialize a hashmap hash -> bool denoting whether the hash

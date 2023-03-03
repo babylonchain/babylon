@@ -6,10 +6,12 @@ set -ex
 mkdir -p /root/.hermes/
 touch /root/.hermes/config.toml
 
+echo $BBN_A_E2E_VAL_MNEMONIC > /root/.hermes/BBN_A_MNEMONIC.txt
+echo $BBN_B_E2E_VAL_MNEMONIC > /root/.hermes/BBN_B_MNEMONIC.txt
 # setup Hermes relayer configuration
 tee /root/.hermes/config.toml <<EOF
 [global]
-log_level = 'info'
+log_level = 'trace'
 [mode]
 [mode.clients]
 enabled = true
@@ -18,7 +20,7 @@ misbehaviour = true
 [mode.connections]
 enabled = false
 [mode.channels]
-enabled = false
+enabled = true
 [mode.packets]
 enabled = true
 clear_interval = 100
@@ -43,7 +45,7 @@ key_name = 'val01-bbn-a'
 store_prefix = 'ibc'
 max_gas = 6000000
 gas_price = { price = 0.000, denom = 'ubbn' }
-gas_adjustment = 1.0
+gas_multiplier = 1.1
 clock_drift = '1m' # to accomdate docker containers
 trusting_period = '239seconds'
 trust_threshold = { numerator = '1', denominator = '3' }
@@ -58,15 +60,15 @@ key_name = 'val01-bbn-b'
 store_prefix = 'ibc'
 max_gas = 6000000
 gas_price = { price = 0.000, denom = 'ubbn' }
-gas_adjustment = 1.0
+gas_multiplier = 1.1
 clock_drift = '1m' # to accomdate docker containers
 trusting_period = '239seconds'
 trust_threshold = { numerator = '1', denominator = '3' }
 EOF
 
 # import keys
-hermes keys restore ${BBN_B_E2E_CHAIN_ID} -n "val01-bbn-b" -m "${BBN_B_E2E_VAL_MNEMONIC}"
-hermes keys restore ${BBN_A_E2E_CHAIN_ID} -n "val01-bbn-a" -m "${BBN_A_E2E_VAL_MNEMONIC}"
+hermes keys add --chain ${BBN_B_E2E_CHAIN_ID} --key-name "val01-bbn-b" --mnemonic-file /root/.hermes/BBN_B_MNEMONIC.txt
+hermes keys add --chain ${BBN_A_E2E_CHAIN_ID} --key-name "val01-bbn-a" --mnemonic-file /root/.hermes/BBN_A_MNEMONIC.txt
 
 # start Hermes relayer
 hermes start
