@@ -99,6 +99,9 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 func initTendermintConfig() *tmcfg.Config {
 	cfg := tmcfg.DefaultConfig()
 
+	// Modify RPC
+
+	cfg.RPC.MaxBodyBytes = 2000000
 	// these values put a higher strain on node memory
 	// cfg.P2P.MaxNumInboundPeers = 100
 	// cfg.P2P.MaxNumOutboundPeers = 40
