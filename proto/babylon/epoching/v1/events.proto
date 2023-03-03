@@ -5,53 +5,49 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
-message EventBeginEpoch {
-    uint64 epoch_number = 1;
-}
+message EventBeginEpoch { uint64 epoch_number = 1; }
 
-message EventEndEpoch {
-    uint64 epoch_number = 1;
-}
+message EventEndEpoch { uint64 epoch_number = 1; }
 
 message EventHandleQueuedMsg {
-    string original_event_type = 1;
-    uint64 epoch_number = 2;
-    uint64 height = 3;
-    bytes tx_id = 4;
-    bytes msg_id = 5;
-    repeated bytes original_attributes = 6 [
-        (gogoproto.customtype) = "github.com/tendermint/tendermint/abci/types.EventAttribute"
-    ];
-    string error = 7;
+  string original_event_type = 1;
+  uint64 epoch_number = 2;
+  uint64 height = 3;
+  bytes tx_id = 4;
+  bytes msg_id = 5;
+  repeated bytes original_attributes = 6
+      [ (gogoproto.customtype) =
+            "github.com/tendermint/tendermint/abci/types.EventAttribute" ];
+  string error = 7;
 }
 
 message EventSlashThreshold {
-    int64 slashed_voting_power = 1;
-    int64 total_voting_power = 2;
-    repeated bytes slashed_validators = 3;
+  int64 slashed_voting_power = 1;
+  int64 total_voting_power = 2;
+  repeated bytes slashed_validators = 3;
 }
 
 message EventWrappedDelegate {
-    string delegator_address = 1;
-    string validator_address = 2;
-    uint64 amount = 3;
-    string denom = 4;
-    uint64 epoch_boundary = 5;
+  string delegator_address = 1;
+  string validator_address = 2;
+  uint64 amount = 3;
+  string denom = 4;
+  uint64 epoch_boundary = 5;
 }
 
 message EventWrappedUndelegate {
-    string delegator_address = 1;
-    string validator_address = 2;
-    uint64 amount = 3;
-    string denom = 4;
-    uint64 epoch_boundary = 5;
+  string delegator_address = 1;
+  string validator_address = 2;
+  uint64 amount = 3;
+  string denom = 4;
+  uint64 epoch_boundary = 5;
 }
 
 message EventWrappedBeginRedelegate {
-    string delegator_address = 1;
-    string source_validator_address = 2;
-    string destination_validator_address = 3;
-    uint64 amount = 4;
-    string denom = 5;
-    uint64 epoch_boundary = 6;
+  string delegator_address = 1;
+  string source_validator_address = 2;
+  string destination_validator_address = 3;
+  uint64 amount = 4;
+  string denom = 5;
+  uint64 epoch_boundary = 6;
 }

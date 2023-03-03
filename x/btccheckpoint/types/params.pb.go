@@ -29,11 +29,12 @@ type Params struct {
 	// A block is considered irreversible only when it is at least k-deep in BTC
 	// (k in research paper)
 	BtcConfirmationDepth uint64 `protobuf:"varint,1,opt,name=btc_confirmation_depth,json=btcConfirmationDepth,proto3" json:"btc_confirmation_depth,omitempty" yaml:"btc_confirmation_depth"`
-	// checkpoint_finalization_timeout is the maximum time window (measured in BTC blocks) between a checkpoint
+	// checkpoint_finalization_timeout is the maximum time window (measured in BTC
+	// blocks) between a checkpoint
 	// - being submitted to BTC, and
 	// - being reported back to BBN
-	// If a checkpoint has not been reported back within w BTC blocks, then BBN has dishonest majority and is stalling checkpoints
-	// (w in research paper)
+	// If a checkpoint has not been reported back within w BTC blocks, then BBN
+	// has dishonest majority and is stalling checkpoints (w in research paper)
 	CheckpointFinalizationTimeout uint64 `protobuf:"varint,2,opt,name=checkpoint_finalization_timeout,json=checkpointFinalizationTimeout,proto3" json:"checkpoint_finalization_timeout,omitempty" yaml:"checkpoint_finalization_timeout"`
 }
 

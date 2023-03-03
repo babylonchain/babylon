@@ -114,7 +114,8 @@ func (m *QueryParamsResponse) GetParams() Params {
 }
 
 type QueryBtcCheckpointInfoRequest struct {
-	// Number of epoch for which the earliest checkpointing btc height is requested
+	// Number of epoch for which the earliest checkpointing btc height is
+	// requested
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
@@ -158,7 +159,8 @@ func (m *QueryBtcCheckpointInfoRequest) GetEpochNum() uint64 {
 	return 0
 }
 
-// QueryBtcCheckpointInfoResponse is response type for the Query/BtcCheckpointInfo RPC method
+// QueryBtcCheckpointInfoResponse is response type for the
+// Query/BtcCheckpointInfo RPC method
 type QueryBtcCheckpointInfoResponse struct {
 	Info *BTCCheckpointInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
@@ -203,7 +205,8 @@ func (m *QueryBtcCheckpointInfoResponse) GetInfo() *BTCCheckpointInfo {
 	return nil
 }
 
-// QueryBtcCheckpointsInfoRequest is request type for the Query/BtcCheckpointsInfo RPC method
+// QueryBtcCheckpointsInfoRequest is request type for the
+// Query/BtcCheckpointsInfo RPC method
 type QueryBtcCheckpointsInfoRequest struct {
 	// pagination defines whether to have the pagination in the request
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -249,7 +252,8 @@ func (m *QueryBtcCheckpointsInfoRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryBtcCheckpointsInfoResponse is response type for the Query/BtcCheckpointsInfo RPC method
+// QueryBtcCheckpointsInfoResponse is response type for the
+// Query/BtcCheckpointsInfo RPC method
 type QueryBtcCheckpointsInfoResponse struct {
 	InfoList []*BTCCheckpointInfo `protobuf:"bytes,1,rep,name=info_list,json=infoList,proto3" json:"info_list,omitempty"`
 	// pagination defines the pagination in the response

@@ -11,7 +11,7 @@ option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 // GenesisState defines the checkpointing module's genesis state.
 message GenesisState {
   // params defines all the paramaters of related to checkpointing
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 
   repeated GenesisKey genesis_keys = 2;
 }

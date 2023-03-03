@@ -414,7 +414,8 @@ func (m *QueryChainInfoResponse) GetChainInfo() *ChainInfo {
 	return nil
 }
 
-// QueryEpochChainInfoRequest is request type for the Query/EpochChainInfo RPC method.
+// QueryEpochChainInfoRequest is request type for the Query/EpochChainInfo RPC
+// method.
 type QueryEpochChainInfoRequest struct {
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 	ChainId  string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
@@ -467,7 +468,8 @@ func (m *QueryEpochChainInfoRequest) GetChainId() string {
 	return ""
 }
 
-// QueryEpochChainInfoResponse is response type for the Query/EpochChainInfo RPC method.
+// QueryEpochChainInfoResponse is response type for the Query/EpochChainInfo RPC
+// method.
 type QueryEpochChainInfoResponse struct {
 	// chain_info is the info of the CZ
 	ChainInfo *ChainInfo `protobuf:"bytes,1,opt,name=chain_info,json=chainInfo,proto3" json:"chain_info,omitempty"`
@@ -567,7 +569,8 @@ func (m *QueryListHeadersRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryListHeadersResponse is response type for the Query/ListHeaders RPC method.
+// QueryListHeadersResponse is response type for the Query/ListHeaders RPC
+// method.
 type QueryListHeadersResponse struct {
 	// headers is the list of headers
 	Headers []*IndexedHeader `protobuf:"bytes,1,rep,name=headers,proto3" json:"headers,omitempty"`
@@ -622,7 +625,8 @@ func (m *QueryListHeadersResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryListEpochHeadersRequest is request type for the Query/ListEpochHeaders RPC method.
+// QueryListEpochHeadersRequest is request type for the Query/ListEpochHeaders
+// RPC method.
 type QueryListEpochHeadersRequest struct {
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 	ChainId  string `protobuf:"bytes,2,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
@@ -675,7 +679,8 @@ func (m *QueryListEpochHeadersRequest) GetChainId() string {
 	return ""
 }
 
-// QueryListEpochHeadersResponse is response type for the Query/ListEpochHeaders RPC method.
+// QueryListEpochHeadersResponse is response type for the Query/ListEpochHeaders
+// RPC method.
 type QueryListEpochHeadersResponse struct {
 	// headers is the list of headers
 	Headers []*IndexedHeader `protobuf:"bytes,1,rep,name=headers,proto3" json:"headers,omitempty"`
@@ -721,7 +726,8 @@ func (m *QueryListEpochHeadersResponse) GetHeaders() []*IndexedHeader {
 	return nil
 }
 
-// QueryFinalizedChainInfoRequest is request type for the Query/FinalizedChainInfo RPC method.
+// QueryFinalizedChainInfoRequest is request type for the
+// Query/FinalizedChainInfo RPC method.
 type QueryFinalizedChainInfoRequest struct {
 	// chain_id is the ID of the CZ
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
@@ -776,7 +782,8 @@ func (m *QueryFinalizedChainInfoRequest) GetProve() bool {
 	return false
 }
 
-// QueryFinalizedChainInfoResponse is response type for the Query/FinalizedChainInfo RPC method.
+// QueryFinalizedChainInfoResponse is response type for the
+// Query/FinalizedChainInfo RPC method.
 type QueryFinalizedChainInfoResponse struct {
 	// finalized_chain_info is the info of the CZ
 	FinalizedChainInfo *ChainInfo `protobuf:"bytes,1,opt,name=finalized_chain_info,json=finalizedChainInfo,proto3" json:"finalized_chain_info,omitempty"`
@@ -784,7 +791,8 @@ type QueryFinalizedChainInfoResponse struct {
 	EpochInfo *types.Epoch `protobuf:"bytes,2,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
 	// raw_checkpoint is the raw checkpoint of this epoch
 	RawCheckpoint *types1.RawCheckpoint `protobuf:"bytes,3,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
-	// btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
+	// btc_submission_key is position of two BTC txs that include the raw
+	// checkpoint of this epoch
 	BtcSubmissionKey *types2.SubmissionKey `protobuf:"bytes,4,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
 	// proof is the proof that the chain info is finalized
 	Proof *ProofFinalizedChainInfo `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
@@ -858,12 +866,14 @@ func (m *QueryFinalizedChainInfoResponse) GetProof() *ProofFinalizedChainInfo {
 	return nil
 }
 
-// QueryFinalizedChainInfoUntilHeightRequest is request type for the Query/FinalizedChainInfoUntilHeight RPC method.
+// QueryFinalizedChainInfoUntilHeightRequest is request type for the
+// Query/FinalizedChainInfoUntilHeight RPC method.
 type QueryFinalizedChainInfoUntilHeightRequest struct {
 	// chain_id is the ID of the CZ
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// height is the height of the CZ chain
-	// such that the returned finalised chain info will be no later than this height
+	// such that the returned finalised chain info will be no later than this
+	// height
 	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
 	// prove indicates whether the querier wants to get proofs of this timestamp
 	Prove bool `protobuf:"varint,3,opt,name=prove,proto3" json:"prove,omitempty"`
@@ -927,7 +937,8 @@ func (m *QueryFinalizedChainInfoUntilHeightRequest) GetProve() bool {
 	return false
 }
 
-// QueryFinalizedChainInfoUntilHeightResponse is response type for the Query/FinalizedChainInfoUntilHeight RPC method.
+// QueryFinalizedChainInfoUntilHeightResponse is response type for the
+// Query/FinalizedChainInfoUntilHeight RPC method.
 type QueryFinalizedChainInfoUntilHeightResponse struct {
 	// finalized_chain_info is the info of the CZ
 	FinalizedChainInfo *ChainInfo `protobuf:"bytes,1,opt,name=finalized_chain_info,json=finalizedChainInfo,proto3" json:"finalized_chain_info,omitempty"`
@@ -935,7 +946,8 @@ type QueryFinalizedChainInfoUntilHeightResponse struct {
 	EpochInfo *types.Epoch `protobuf:"bytes,2,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
 	// raw_checkpoint is the raw checkpoint of this epoch
 	RawCheckpoint *types1.RawCheckpoint `protobuf:"bytes,3,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
-	// btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
+	// btc_submission_key is position of two BTC txs that include the raw
+	// checkpoint of this epoch
 	BtcSubmissionKey *types2.SubmissionKey `protobuf:"bytes,4,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
 	// proof is the proof that the chain info is finalized
 	Proof *ProofFinalizedChainInfo `protobuf:"bytes,5,opt,name=proof,proto3" json:"proof,omitempty"`
@@ -1134,15 +1146,19 @@ type QueryClient interface {
 	ChainList(ctx context.Context, in *QueryChainListRequest, opts ...grpc.CallOption) (*QueryChainListResponse, error)
 	// ChainInfo queries the latest info of a chain in Babylon's view
 	ChainInfo(ctx context.Context, in *QueryChainInfoRequest, opts ...grpc.CallOption) (*QueryChainInfoResponse, error)
-	// EpochChainInfo queries the latest info of a chain in a given epoch of Babylon's view
+	// EpochChainInfo queries the latest info of a chain in a given epoch of
+	// Babylon's view
 	EpochChainInfo(ctx context.Context, in *QueryEpochChainInfoRequest, opts ...grpc.CallOption) (*QueryEpochChainInfoResponse, error)
-	// ListHeaders queries the headers of a chain in Babylon's view, with pagination support
+	// ListHeaders queries the headers of a chain in Babylon's view, with
+	// pagination support
 	ListHeaders(ctx context.Context, in *QueryListHeadersRequest, opts ...grpc.CallOption) (*QueryListHeadersResponse, error)
-	// ListEpochHeaders queries the headers of a chain timestamped in a given epoch of Babylon, with pagination support
+	// ListEpochHeaders queries the headers of a chain timestamped in a given
+	// epoch of Babylon, with pagination support
 	ListEpochHeaders(ctx context.Context, in *QueryListEpochHeadersRequest, opts ...grpc.CallOption) (*QueryListEpochHeadersResponse, error)
 	// FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
 	FinalizedChainInfo(ctx context.Context, in *QueryFinalizedChainInfoRequest, opts ...grpc.CallOption) (*QueryFinalizedChainInfoResponse, error)
-	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than the provided CZ height, with proofs
+	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
+	// the provided CZ height, with proofs
 	FinalizedChainInfoUntilHeight(ctx context.Context, in *QueryFinalizedChainInfoUntilHeightRequest, opts ...grpc.CallOption) (*QueryFinalizedChainInfoUntilHeightResponse, error)
 }
 
@@ -1245,15 +1261,19 @@ type QueryServer interface {
 	ChainList(context.Context, *QueryChainListRequest) (*QueryChainListResponse, error)
 	// ChainInfo queries the latest info of a chain in Babylon's view
 	ChainInfo(context.Context, *QueryChainInfoRequest) (*QueryChainInfoResponse, error)
-	// EpochChainInfo queries the latest info of a chain in a given epoch of Babylon's view
+	// EpochChainInfo queries the latest info of a chain in a given epoch of
+	// Babylon's view
 	EpochChainInfo(context.Context, *QueryEpochChainInfoRequest) (*QueryEpochChainInfoResponse, error)
-	// ListHeaders queries the headers of a chain in Babylon's view, with pagination support
+	// ListHeaders queries the headers of a chain in Babylon's view, with
+	// pagination support
 	ListHeaders(context.Context, *QueryListHeadersRequest) (*QueryListHeadersResponse, error)
-	// ListEpochHeaders queries the headers of a chain timestamped in a given epoch of Babylon, with pagination support
+	// ListEpochHeaders queries the headers of a chain timestamped in a given
+	// epoch of Babylon, with pagination support
 	ListEpochHeaders(context.Context, *QueryListEpochHeadersRequest) (*QueryListEpochHeadersResponse, error)
 	// FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
 	FinalizedChainInfo(context.Context, *QueryFinalizedChainInfoRequest) (*QueryFinalizedChainInfoResponse, error)
-	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than the provided CZ height, with proofs
+	// FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
+	// the provided CZ height, with proofs
 	FinalizedChainInfoUntilHeight(context.Context, *QueryFinalizedChainInfoUntilHeightRequest) (*QueryFinalizedChainInfoUntilHeightResponse, error)
 }
 

@@ -8,36 +8,41 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // WrappedDelegate defines a method for performing a delegation of coins from a delegator to a validator.
+  // WrappedDelegate defines a method for performing a delegation of coins from
+  // a delegator to a validator.
   rpc WrappedDelegate(MsgWrappedDelegate) returns (MsgWrappedDelegateResponse);
 
-  // WrappedUndelegate defines a method for performing an undelegation from a delegate and a validator.
-  rpc WrappedUndelegate(MsgWrappedUndelegate) returns (MsgWrappedUndelegateResponse);
+  // WrappedUndelegate defines a method for performing an undelegation from a
+  // delegate and a validator.
+  rpc WrappedUndelegate(MsgWrappedUndelegate)
+      returns (MsgWrappedUndelegateResponse);
 
-  // WrappedBeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.
-  rpc WrappedBeginRedelegate(MsgWrappedBeginRedelegate) returns (MsgWrappedBeginRedelegateResponse);
+  // WrappedBeginRedelegate defines a method for performing a redelegation of
+  // coins from a delegator and source validator to a destination validator.
+  rpc WrappedBeginRedelegate(MsgWrappedBeginRedelegate)
+      returns (MsgWrappedBeginRedelegateResponse);
 }
 
 message MsgWrappedDelegate {
-    option (gogoproto.equal)           = false;
-    option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
 
-    cosmos.staking.v1beta1.MsgDelegate msg = 1;
+  cosmos.staking.v1beta1.MsgDelegate msg = 1;
 }
 message MsgWrappedDelegateResponse {}
 
 message MsgWrappedUndelegate {
-    option (gogoproto.equal)           = false;
-    option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
 
-    cosmos.staking.v1beta1.MsgUndelegate msg = 1;
+  cosmos.staking.v1beta1.MsgUndelegate msg = 1;
 }
 message MsgWrappedUndelegateResponse {}
 
 message MsgWrappedBeginRedelegate {
-    option (gogoproto.equal)           = false;
-    option (gogoproto.goproto_getters) = false;
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
 
-    cosmos.staking.v1beta1.MsgBeginRedelegate msg = 1;
+  cosmos.staking.v1beta1.MsgBeginRedelegate msg = 1;
 }
 message MsgWrappedBeginRedelegateResponse {}

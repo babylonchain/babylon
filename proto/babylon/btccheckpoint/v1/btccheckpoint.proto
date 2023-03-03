@@ -43,37 +43,35 @@ message BTCSpvProof {
 // which transaction was included and transaction index in the block
 message TransactionKey {
   uint32 index = 1;
-  bytes hash = 2 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  bytes hash = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
 }
 
 // Checkpoint can be composed from multiple transactions, so to identify whole
 // submission we need list of transaction keys.
-// Each submission can generally be identified by this list of (txIdx, blockHash)
-// tuples.
-// Note: this could possibly be optimized as if transactions were in one block
-// they would have the same block hash and different indexes, but each blockhash
-// is only 33 (1  byte for prefix encoding and 32 byte hash), so there should
-// be other strong arguments for this optimization
-message SubmissionKey {
-  repeated TransactionKey key = 1;
-}
+// Each submission can generally be identified by this list of (txIdx,
+// blockHash) tuples. Note: this could possibly be optimized as if transactions
+// were in one block they would have the same block hash and different indexes,
+// but each blockhash is only 33 (1  byte for prefix encoding and 32 byte hash),
+// so there should be other strong arguments for this optimization
+message SubmissionKey { repeated TransactionKey key = 1; }
 
 enum BtcStatus {
   option (gogoproto.goproto_enum_prefix) = false;
   // SUBMITTED Epoch has Submitted btc status if there ever was at least one
   // known submission on btc main chain
-  EPOCH_STATUS_SUBMITTED = 0 [(gogoproto.enumvalue_customname) = "Submitted"];
+  EPOCH_STATUS_SUBMITTED = 0 [ (gogoproto.enumvalue_customname) = "Submitted" ];
   // CONFIRMED Epoch has Confirmed btc status if there ever was at least one
   // known submission on btc main chain which was k-deep
-  EPOCH_STATUS_CONFIRMED = 1 [(gogoproto.enumvalue_customname) = "Confirmed"];
+  EPOCH_STATUS_CONFIRMED = 1 [ (gogoproto.enumvalue_customname) = "Confirmed" ];
   // CONFIRMED Epoch has Finalized btc status if there is was at exactly one
   // knon submission on btc main chain which is w-deep
-  EPOCH_STATUS_FINALIZED = 2 [(gogoproto.enumvalue_customname) = "Finalized"];
+  EPOCH_STATUS_FINALIZED = 2 [ (gogoproto.enumvalue_customname) = "Finalized" ];
 }
 
-// TransactionInfo is the info of a tx that contains Babylon checkpoint, including
+// TransactionInfo is the info of a tx that contains Babylon checkpoint,
+// including
 // - the position of the tx on BTC blockchain
 // - the full tx content
 // - the Merkle proof that this tx is on the above position
@@ -94,22 +92,24 @@ message TransactionInfo {
 }
 
 // TODO: Determine if we should keep any block number or depth info.
-// On one hand it may be usefull to determine if block is stable or not, on other
-// depth/block number info, without context (i.e info about chain) is pretty useless
-// and blockshash in enough to retrieve is from lightclient
+// On one hand it may be usefull to determine if block is stable or not, on
+// other depth/block number info, without context (i.e info about chain) is
+// pretty useless and blockshash in enough to retrieve is from lightclient
 message SubmissionData {
   // address of the submitter and reporter
   CheckpointAddresses vigilante_addresses = 1;
   // txs_info is the two `TransactionInfo`s corresponding to the submission
   // It is used for
   // - recovering address of sender of btc transction to payup the reward.
-  // - allowing the ZoneConcierge module to prove the checkpoint is submitted to BTC
+  // - allowing the ZoneConcierge module to prove the checkpoint is submitted to
+  // BTC
   repeated TransactionInfo txs_info = 2;
   uint64 epoch = 3;
 }
 
 // Data stored in db and indexed by epoch number
-// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching callbacks
+// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
+// callbacks
 message EpochData {
   // List of all received checkpoints during this epoch, sorted by order of
   // submission.
@@ -134,9 +134,9 @@ message BTCCheckpointInfo {
   // height of earliest BTC block that includes this checkpoint
   uint64 earliest_btc_block_number = 2;
   // hash of earliest BTC block that includes this checkpoint
-  bytes earliest_btc_block_hash = 3 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  bytes earliest_btc_block_hash = 3
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
   // the BTC checkpoint transactions on the above block
   repeated TransactionInfo earliest_btc_block_txs = 4;
   // list of vigilantes' addresses

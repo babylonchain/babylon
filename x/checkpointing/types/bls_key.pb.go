@@ -72,11 +72,14 @@ func (m *BlsKey) GetPop() *ProofOfPossession {
 	return nil
 }
 
-// ProofOfPossession defines proof for the ownership of Ed25519 and BLS private keys
+// ProofOfPossession defines proof for the ownership of Ed25519 and BLS private
+// keys
 type ProofOfPossession struct {
-	// ed25519_sig is used for verification, ed25519_sig = sign(key = Ed25519_sk, data = BLS_pk)
+	// ed25519_sig is used for verification, ed25519_sig = sign(key = Ed25519_sk,
+	// data = BLS_pk)
 	Ed25519Sig []byte `protobuf:"bytes,2,opt,name=ed25519_sig,json=ed25519Sig,proto3" json:"ed25519_sig,omitempty"`
-	// bls_sig is the result of PoP, bls_sig = sign(key = BLS_sk, data = ed25519_sig)
+	// bls_sig is the result of PoP, bls_sig = sign(key = BLS_sk, data =
+	// ed25519_sig)
 	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,3,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 }
 
@@ -165,7 +168,8 @@ func (m *ValidatorWithBlsKeySet) GetValSet() []*ValidatorWithBlsKey {
 	return nil
 }
 
-// ValidatorWithBlsKey couples validator address, voting power, and its bls public key
+// ValidatorWithBlsKey couples validator address, voting power, and its bls
+// public key
 type ValidatorWithBlsKey struct {
 	ValidatorAddress string `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
 	BlsPubKey        []byte `protobuf:"bytes,2,opt,name=bls_pub_key,json=blsPubKey,proto3" json:"bls_pub_key,omitempty"`

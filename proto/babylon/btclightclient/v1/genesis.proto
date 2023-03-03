@@ -9,7 +9,7 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 // GenesisState defines the btclightclient module's genesis state.
 message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 
-  BTCHeaderInfo base_btc_header = 2 [(gogoproto.nullable) = false];
+  BTCHeaderInfo base_btc_header = 2 [ (gogoproto.nullable) = false ];
 }

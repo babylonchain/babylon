@@ -14,7 +14,8 @@ service Msg {
   rpc AddBlsSig(MsgAddBlsSig) returns (MsgAddBlsSigResponse);
 
   // WrappedCreateValidator defines a method for registering a new validator
-  rpc WrappedCreateValidator(MsgWrappedCreateValidator) returns (MsgWrappedCreateValidatorResponse);
+  rpc WrappedCreateValidator(MsgWrappedCreateValidator)
+      returns (MsgWrappedCreateValidatorResponse);
 }
 
 // MsgAddBlsSig defines a message to add a bls signature from a
@@ -38,5 +39,6 @@ message MsgWrappedCreateValidator {
   cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 2;
 }
 
-// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator response type
+// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator
+// response type
 message MsgWrappedCreateValidatorResponse {}

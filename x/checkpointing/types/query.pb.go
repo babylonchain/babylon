@@ -30,8 +30,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// QueryRawCheckpointListRequest is the request type for the Query/RawCheckpoints
-// RPC method.
+// QueryRawCheckpointListRequest is the request type for the
+// Query/RawCheckpoints RPC method.
 type QueryRawCheckpointListRequest struct {
 	// status defines the status of the raw checkpoints of the query
 	Status CheckpointStatus `protobuf:"varint,1,opt,name=status,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"status,omitempty"`
@@ -86,8 +86,8 @@ func (m *QueryRawCheckpointListRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryRawCheckpointListResponse is the response type for the Query/RawCheckpoints
-// RPC method.
+// QueryRawCheckpointListResponse is the response type for the
+// Query/RawCheckpoints RPC method.
 type QueryRawCheckpointListResponse struct {
 	// the order is going from the newest to oldest based on the epoch number
 	RawCheckpoints []*RawCheckpointWithMeta `protobuf:"bytes,1,rep,name=raw_checkpoints,json=rawCheckpoints,proto3" json:"raw_checkpoints,omitempty"`
@@ -291,8 +291,8 @@ func (m *QueryBlsPublicKeyListRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryBlsPublicKeyListResponse is the response type for the Query/BlsPublicKeys
-// RPC method.
+// QueryBlsPublicKeyListResponse is the response type for the
+// Query/BlsPublicKeys RPC method.
 type QueryBlsPublicKeyListResponse struct {
 	ValidatorWithBlsKeys []*ValidatorWithBlsKey `protobuf:"bytes,1,rep,name=validator_with_bls_keys,json=validatorWithBlsKeys,proto3" json:"validator_with_bls_keys,omitempty"`
 	// pagination defines the pagination in the response.
@@ -438,10 +438,11 @@ func (m *QueryEpochStatusResponse) GetStatus() CheckpointStatus {
 	return Accumulating
 }
 
-// QueryRecentEpochStatusCountRequest is the request type for the Query/EpochStatusCount
-// RPC method.
+// QueryRecentEpochStatusCountRequest is the request type for the
+// Query/EpochStatusCount RPC method.
 type QueryRecentEpochStatusCountRequest struct {
-	// epoch_count is the number of the most recent epochs to include in the aggregation
+	// epoch_count is the number of the most recent epochs to include in the
+	// aggregation
 	EpochCount uint64 `protobuf:"varint,1,opt,name=epoch_count,json=epochCount,proto3" json:"epoch_count,omitempty"`
 }
 
@@ -485,8 +486,8 @@ func (m *QueryRecentEpochStatusCountRequest) GetEpochCount() uint64 {
 	return 0
 }
 
-// QueryRecentEpochStatusCountResponse is the response type for the Query/EpochStatusCount
-// RPC method.
+// QueryRecentEpochStatusCountResponse is the response type for the
+// Query/EpochStatusCount RPC method.
 type QueryRecentEpochStatusCountResponse struct {
 	TipEpoch    uint64            `protobuf:"varint,1,opt,name=tip_epoch,json=tipEpoch,proto3" json:"tip_epoch,omitempty"`
 	EpochCount  uint64            `protobuf:"varint,2,opt,name=epoch_count,json=epochCount,proto3" json:"epoch_count,omitempty"`
@@ -821,13 +822,16 @@ type QueryClient interface {
 	RawCheckpointList(ctx context.Context, in *QueryRawCheckpointListRequest, opts ...grpc.CallOption) (*QueryRawCheckpointListResponse, error)
 	// RawCheckpoint queries a checkpoints at a given epoch number.
 	RawCheckpoint(ctx context.Context, in *QueryRawCheckpointRequest, opts ...grpc.CallOption) (*QueryRawCheckpointResponse, error)
-	// BlsPublicKeyList queries a list of bls public keys of the validators at a given epoch number.
+	// BlsPublicKeyList queries a list of bls public keys of the validators at a
+	// given epoch number.
 	BlsPublicKeyList(ctx context.Context, in *QueryBlsPublicKeyListRequest, opts ...grpc.CallOption) (*QueryBlsPublicKeyListResponse, error)
 	// EpochStatus queries the status of the checkpoint at a given epoch
 	EpochStatus(ctx context.Context, in *QueryEpochStatusRequest, opts ...grpc.CallOption) (*QueryEpochStatusResponse, error)
-	// RecentEpochStatusCount queries the number of epochs with each status in recent epochs
+	// RecentEpochStatusCount queries the number of epochs with each status in
+	// recent epochs
 	RecentEpochStatusCount(ctx context.Context, in *QueryRecentEpochStatusCountRequest, opts ...grpc.CallOption) (*QueryRecentEpochStatusCountResponse, error)
-	// LastCheckpointWithStatus queries the last checkpoint with a given status or a more matured status
+	// LastCheckpointWithStatus queries the last checkpoint with a given status or
+	// a more matured status
 	LastCheckpointWithStatus(ctx context.Context, in *QueryLastCheckpointWithStatusRequest, opts ...grpc.CallOption) (*QueryLastCheckpointWithStatusResponse, error)
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
@@ -910,13 +914,16 @@ type QueryServer interface {
 	RawCheckpointList(context.Context, *QueryRawCheckpointListRequest) (*QueryRawCheckpointListResponse, error)
 	// RawCheckpoint queries a checkpoints at a given epoch number.
 	RawCheckpoint(context.Context, *QueryRawCheckpointRequest) (*QueryRawCheckpointResponse, error)
-	// BlsPublicKeyList queries a list of bls public keys of the validators at a given epoch number.
+	// BlsPublicKeyList queries a list of bls public keys of the validators at a
+	// given epoch number.
 	BlsPublicKeyList(context.Context, *QueryBlsPublicKeyListRequest) (*QueryBlsPublicKeyListResponse, error)
 	// EpochStatus queries the status of the checkpoint at a given epoch
 	EpochStatus(context.Context, *QueryEpochStatusRequest) (*QueryEpochStatusResponse, error)
-	// RecentEpochStatusCount queries the number of epochs with each status in recent epochs
+	// RecentEpochStatusCount queries the number of epochs with each status in
+	// recent epochs
 	RecentEpochStatusCount(context.Context, *QueryRecentEpochStatusCountRequest) (*QueryRecentEpochStatusCountResponse, error)
-	// LastCheckpointWithStatus queries the last checkpoint with a given status or a more matured status
+	// LastCheckpointWithStatus queries the last checkpoint with a given status or
+	// a more matured status
 	LastCheckpointWithStatus(context.Context, *QueryLastCheckpointWithStatusRequest) (*QueryLastCheckpointWithStatusResponse, error)
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)

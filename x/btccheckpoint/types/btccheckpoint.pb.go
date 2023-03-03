@@ -195,12 +195,11 @@ func (m *TransactionKey) GetIndex() uint32 {
 
 // Checkpoint can be composed from multiple transactions, so to identify whole
 // submission we need list of transaction keys.
-// Each submission can generally be identified by this list of (txIdx, blockHash)
-// tuples.
-// Note: this could possibly be optimized as if transactions were in one block
-// they would have the same block hash and different indexes, but each blockhash
-// is only 33 (1  byte for prefix encoding and 32 byte hash), so there should
-// be other strong arguments for this optimization
+// Each submission can generally be identified by this list of (txIdx,
+// blockHash) tuples. Note: this could possibly be optimized as if transactions
+// were in one block they would have the same block hash and different indexes,
+// but each blockhash is only 33 (1  byte for prefix encoding and 32 byte hash),
+// so there should be other strong arguments for this optimization
 type SubmissionKey struct {
 	Key []*TransactionKey `protobuf:"bytes,1,rep,name=key,proto3" json:"key,omitempty"`
 }
@@ -245,7 +244,8 @@ func (m *SubmissionKey) GetKey() []*TransactionKey {
 	return nil
 }
 
-// TransactionInfo is the info of a tx that contains Babylon checkpoint, including
+// TransactionInfo is the info of a tx that contains Babylon checkpoint,
+// including
 // - the position of the tx on BTC blockchain
 // - the full tx content
 // - the Merkle proof that this tx is on the above position
@@ -320,16 +320,17 @@ func (m *TransactionInfo) GetProof() []byte {
 }
 
 // TODO: Determine if we should keep any block number or depth info.
-// On one hand it may be usefull to determine if block is stable or not, on other
-// depth/block number info, without context (i.e info about chain) is pretty useless
-// and blockshash in enough to retrieve is from lightclient
+// On one hand it may be usefull to determine if block is stable or not, on
+// other depth/block number info, without context (i.e info about chain) is
+// pretty useless and blockshash in enough to retrieve is from lightclient
 type SubmissionData struct {
 	// address of the submitter and reporter
 	VigilanteAddresses *CheckpointAddresses `protobuf:"bytes,1,opt,name=vigilante_addresses,json=vigilanteAddresses,proto3" json:"vigilante_addresses,omitempty"`
 	// txs_info is the two `TransactionInfo`s corresponding to the submission
 	// It is used for
 	// - recovering address of sender of btc transction to payup the reward.
-	// - allowing the ZoneConcierge module to prove the checkpoint is submitted to BTC
+	// - allowing the ZoneConcierge module to prove the checkpoint is submitted to
+	// BTC
 	TxsInfo []*TransactionInfo `protobuf:"bytes,2,rep,name=txs_info,json=txsInfo,proto3" json:"txs_info,omitempty"`
 	Epoch   uint64             `protobuf:"varint,3,opt,name=epoch,proto3" json:"epoch,omitempty"`
 }
@@ -389,7 +390,8 @@ func (m *SubmissionData) GetEpoch() uint64 {
 }
 
 // Data stored in db and indexed by epoch number
-// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching callbacks
+// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
+// callbacks
 type EpochData struct {
 	// List of all received checkpoints during this epoch, sorted by order of
 	// submission.

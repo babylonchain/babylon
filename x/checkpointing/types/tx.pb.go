@@ -144,7 +144,8 @@ func (m *MsgWrappedCreateValidator) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedCreateValidator proto.InternalMessageInfo
 
-// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator response type
+// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator
+// response type
 type MsgWrappedCreateValidatorResponse struct {
 }
 

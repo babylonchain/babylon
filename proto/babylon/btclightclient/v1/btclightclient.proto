@@ -6,15 +6,13 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 message BTCHeaderInfo {
-  bytes header = 1 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
-  ];
-  bytes hash = 2 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  bytes header = 1
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderBytes" ];
+  bytes hash = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
   uint64 height = 3;
-  bytes work = 4 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint"
-  ];
+  bytes work = 4
+      [ (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint" ];
 }
-

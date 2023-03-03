@@ -355,9 +355,11 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// EndedEpochBtcHeight returns the BTC light client height at provided epoch finish
+	// EndedEpochBtcHeight returns the BTC light client height at provided epoch
+	// finish
 	EndedEpochBtcHeight(ctx context.Context, in *QueryEndedEpochBtcHeightRequest, opts ...grpc.CallOption) (*QueryEndedEpochBtcHeightResponse, error)
-	// ReportedCheckpointBtcHeight returns the BTC light client height at which the checkpoint with the given hash is reported back to Babylon
+	// ReportedCheckpointBtcHeight returns the BTC light client height at which
+	// the checkpoint with the given hash is reported back to Babylon
 	ReportedCheckpointBtcHeight(ctx context.Context, in *QueryReportedCheckpointBtcHeightRequest, opts ...grpc.CallOption) (*QueryReportedCheckpointBtcHeightResponse, error)
 }
 
@@ -400,9 +402,11 @@ func (c *queryClient) ReportedCheckpointBtcHeight(ctx context.Context, in *Query
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// EndedEpochBtcHeight returns the BTC light client height at provided epoch finish
+	// EndedEpochBtcHeight returns the BTC light client height at provided epoch
+	// finish
 	EndedEpochBtcHeight(context.Context, *QueryEndedEpochBtcHeightRequest) (*QueryEndedEpochBtcHeightResponse, error)
-	// ReportedCheckpointBtcHeight returns the BTC light client height at which the checkpoint with the given hash is reported back to Babylon
+	// ReportedCheckpointBtcHeight returns the BTC light client height at which
+	// the checkpoint with the given hash is reported back to Babylon
 	ReportedCheckpointBtcHeight(context.Context, *QueryReportedCheckpointBtcHeightRequest) (*QueryReportedCheckpointBtcHeightResponse, error)
 }
 

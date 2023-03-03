@@ -299,11 +299,14 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// WrappedDelegate defines a method for performing a delegation of coins from a delegator to a validator.
+	// WrappedDelegate defines a method for performing a delegation of coins from
+	// a delegator to a validator.
 	WrappedDelegate(ctx context.Context, in *MsgWrappedDelegate, opts ...grpc.CallOption) (*MsgWrappedDelegateResponse, error)
-	// WrappedUndelegate defines a method for performing an undelegation from a delegate and a validator.
+	// WrappedUndelegate defines a method for performing an undelegation from a
+	// delegate and a validator.
 	WrappedUndelegate(ctx context.Context, in *MsgWrappedUndelegate, opts ...grpc.CallOption) (*MsgWrappedUndelegateResponse, error)
-	// WrappedBeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.
+	// WrappedBeginRedelegate defines a method for performing a redelegation of
+	// coins from a delegator and source validator to a destination validator.
 	WrappedBeginRedelegate(ctx context.Context, in *MsgWrappedBeginRedelegate, opts ...grpc.CallOption) (*MsgWrappedBeginRedelegateResponse, error)
 }
 
@@ -344,11 +347,14 @@ func (c *msgClient) WrappedBeginRedelegate(ctx context.Context, in *MsgWrappedBe
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// WrappedDelegate defines a method for performing a delegation of coins from a delegator to a validator.
+	// WrappedDelegate defines a method for performing a delegation of coins from
+	// a delegator to a validator.
 	WrappedDelegate(context.Context, *MsgWrappedDelegate) (*MsgWrappedDelegateResponse, error)
-	// WrappedUndelegate defines a method for performing an undelegation from a delegate and a validator.
+	// WrappedUndelegate defines a method for performing an undelegation from a
+	// delegate and a validator.
 	WrappedUndelegate(context.Context, *MsgWrappedUndelegate) (*MsgWrappedUndelegateResponse, error)
-	// WrappedBeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.
+	// WrappedBeginRedelegate defines a method for performing a redelegation of
+	// coins from a delegator and source validator to a destination validator.
 	WrappedBeginRedelegate(context.Context, *MsgWrappedBeginRedelegate) (*MsgWrappedBeginRedelegateResponse, error)
 }
 

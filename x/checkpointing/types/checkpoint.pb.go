@@ -73,11 +73,13 @@ func (CheckpointStatus) EnumDescriptor() ([]byte, []int) {
 type RawCheckpoint struct {
 	// epoch_num defines the epoch number the raw checkpoint is for
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
-	// last_commit_hash defines the 'LastCommitHash' that individual BLS sigs are signed on
+	// last_commit_hash defines the 'LastCommitHash' that individual BLS sigs are
+	// signed on
 	LastCommitHash *LastCommitHash `protobuf:"bytes,2,opt,name=last_commit_hash,json=lastCommitHash,proto3,customtype=LastCommitHash" json:"last_commit_hash,omitempty"`
 	// bitmap defines the bitmap that indicates the signers of the BLS multi sig
 	Bitmap []byte `protobuf:"bytes,3,opt,name=bitmap,proto3" json:"bitmap,omitempty"`
-	// bls_multi_sig defines the multi sig that is aggregated from individual BLS sigs
+	// bls_multi_sig defines the multi sig that is aggregated from individual BLS
+	// sigs
 	BlsMultiSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,4,opt,name=bls_multi_sig,json=blsMultiSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_multi_sig,omitempty"`
 }
 
@@ -137,8 +139,9 @@ type RawCheckpointWithMeta struct {
 	BlsAggrPk *github_com_babylonchain_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,3,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`
 	// power_sum defines the accumulated voting power for the checkpoint
 	PowerSum uint64 `protobuf:"varint,4,opt,name=power_sum,json=powerSum,proto3" json:"power_sum,omitempty"`
-	// lifecycle defines the lifecycle of this checkpoint, i.e., each state transition and
-	// the time (in both timestamp and block height) of this transition.
+	// lifecycle defines the lifecycle of this checkpoint, i.e., each state
+	// transition and the time (in both timestamp and block height) of this
+	// transition.
 	Lifecycle []*CheckpointStateUpdate `protobuf:"bytes,5,rep,name=lifecycle,proto3" json:"lifecycle,omitempty"`
 }
 
@@ -206,9 +209,11 @@ func (m *RawCheckpointWithMeta) GetLifecycle() []*CheckpointStateUpdate {
 type CheckpointStateUpdate struct {
 	// state defines the event of a state transition towards this state
 	State CheckpointStatus `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"state,omitempty"`
-	// block_height is the height of the Babylon block that triggers the state update
+	// block_height is the height of the Babylon block that triggers the state
+	// update
 	BlockHeight uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	// block_time is the timestamp in the Babylon block that triggers the state update
+	// block_time is the timestamp in the Babylon block that triggers the state
+	// update
 	BlockTime *time.Time `protobuf:"bytes,3,opt,name=block_time,json=blockTime,proto3,stdtime" json:"block_time,omitempty"`
 }
 
@@ -273,9 +278,10 @@ type BlsSig struct {
 	// last_commit_hash defines the 'LastCommitHash' that the BLS sig is signed on
 	LastCommitHash *LastCommitHash                                            `protobuf:"bytes,2,opt,name=last_commit_hash,json=lastCommitHash,proto3,customtype=LastCommitHash" json:"last_commit_hash,omitempty"`
 	BlsSig         *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,3,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
-	// can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does not support scalar
-	// string signer_address = 4 [(cosmos_proto.scalar) = "cosmos.AddressString"];
-	// the signer_address defines the address of the signer
+	// can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does
+	// not support scalar string signer_address = 4 [(cosmos_proto.scalar) =
+	// "cosmos.AddressString"]; the signer_address defines the address of the
+	// signer
 	SignerAddress string `protobuf:"bytes,4,opt,name=signer_address,json=signerAddress,proto3" json:"signer_address,omitempty"`
 }
 

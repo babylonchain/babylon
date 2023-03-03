@@ -290,8 +290,8 @@ func (m *QueryContainsResponse) GetContains() bool {
 	return false
 }
 
-// QueryContainsRequest is request type for the temporary Query/ContainsBytes RPC method.
-// It involves checking whether a hash is maintained by the module.
+// QueryContainsRequest is request type for the temporary Query/ContainsBytes
+// RPC method. It involves checking whether a hash is maintained by the module.
 type QueryContainsBytesRequest struct {
 	Hash []byte `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 }
@@ -336,7 +336,8 @@ func (m *QueryContainsBytesRequest) GetHash() []byte {
 	return nil
 }
 
-// QueryContainsResponse is response type for the temporary Query/ContainsBytes RPC method.
+// QueryContainsResponse is response type for the temporary Query/ContainsBytes
+// RPC method.
 type QueryContainsBytesResponse struct {
 	Contains bool `protobuf:"varint,1,opt,name=contains,proto3" json:"contains,omitempty"`
 }

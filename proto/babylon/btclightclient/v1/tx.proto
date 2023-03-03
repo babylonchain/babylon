@@ -13,8 +13,8 @@ service Msg {
 // MsgInsertHeader defines the message for incoming header bytes
 message MsgInsertHeader {
   string signer = 1;
-  bytes header = 2 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderBytes"
-  ];
+  bytes header = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderBytes" ];
 }
 message MsgInsertHeaderResponse {}

@@ -8,33 +8,34 @@ option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 // BlsKey wraps BLS public key with PoP
 message BlsKey {
   // pubkey is the BLS public key of a validator
-  bytes pubkey = 2 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.PublicKey"
-  ];
+  bytes pubkey = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/crypto/bls12381.PublicKey" ];
 
   // pop is the proof-of-possession of the BLS key
   ProofOfPossession pop = 3;
 }
 
-// ProofOfPossession defines proof for the ownership of Ed25519 and BLS private keys
+// ProofOfPossession defines proof for the ownership of Ed25519 and BLS private
+// keys
 message ProofOfPossession {
-  // ed25519_sig is used for verification, ed25519_sig = sign(key = Ed25519_sk, data = BLS_pk)
+  // ed25519_sig is used for verification, ed25519_sig = sign(key = Ed25519_sk,
+  // data = BLS_pk)
   bytes ed25519_sig = 2;
-  // bls_sig is the result of PoP, bls_sig = sign(key = BLS_sk, data = ed25519_sig)
-  bytes bls_sig = 3 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
-  ];
+  // bls_sig is the result of PoP, bls_sig = sign(key = BLS_sk, data =
+  // ed25519_sig)
+  bytes bls_sig = 3
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/crypto/bls12381.Signature" ];
 }
 
 // ValidatorWithBLSSet defines a set of validators with their BLS public keys
-message ValidatorWithBlsKeySet {
-  repeated ValidatorWithBlsKey val_set = 1;
-}
+message ValidatorWithBlsKeySet { repeated ValidatorWithBlsKey val_set = 1; }
 
-// ValidatorWithBlsKey couples validator address, voting power, and its bls public key
+// ValidatorWithBlsKey couples validator address, voting power, and its bls
+// public key
 message ValidatorWithBlsKey {
   string validator_address = 1;
   bytes bls_pub_key = 2;
   uint64 voting_power = 3;
 }
-

@@ -35,12 +35,14 @@ type IndexedHeader struct {
 	// height is the height of this header on CZ ledger
 	// (hash, height) jointly provides the position of the header on CZ ledger
 	Height uint64 `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
-	// babylon_header is the header of the babylon block that includes this CZ header
+	// babylon_header is the header of the babylon block that includes this CZ
+	// header
 	BabylonHeader *types.Header `protobuf:"bytes,4,opt,name=babylon_header,json=babylonHeader,proto3" json:"babylon_header,omitempty"`
 	// epoch is the epoch number of this header on Babylon ledger
 	BabylonEpoch uint64 `protobuf:"varint,5,opt,name=babylon_epoch,json=babylonEpoch,proto3" json:"babylon_epoch,omitempty"`
 	// babylon_tx_hash is the hash of the tx that includes this header
-	// (babylon_block_height, babylon_tx_hash) jointly provides the position of the header on Babylon ledger
+	// (babylon_block_height, babylon_tx_hash) jointly provides the position of
+	// the header on Babylon ledger
 	BabylonTxHash []byte `protobuf:"bytes,6,opt,name=babylon_tx_hash,json=babylonTxHash,proto3" json:"babylon_tx_hash,omitempty"`
 }
 
@@ -130,10 +132,11 @@ func (m *IndexedHeader) GetBabylonTxHash() []byte {
 // ```
 // Then the fork will be {[D1, D2]} where each item is in struct `IndexedBlock`.
 //
-// Note that each `IndexedHeader` in the fork should have a valid quorum certificate.
-// Such forks exist since Babylon considers CZs might have dishonest majority.
-// Also note that the IBC-Go implementation will only consider the first header in a fork valid, since
-// the subsequent headers cannot be verified without knowing the validator set in the previous header.
+// Note that each `IndexedHeader` in the fork should have a valid quorum
+// certificate. Such forks exist since Babylon considers CZs might have
+// dishonest majority. Also note that the IBC-Go implementation will only
+// consider the first header in a fork valid, since the subsequent headers
+// cannot be verified without knowing the validator set in the previous header.
 type Forks struct {
 	// blocks is the list of non-canonical indexed headers at the same height
 	Headers []*IndexedHeader `protobuf:"bytes,3,rep,name=headers,proto3" json:"headers,omitempty"`
@@ -185,9 +188,11 @@ type ChainInfo struct {
 	ChainId string `protobuf:"bytes,1,opt,name=chain_id,json=chainId,proto3" json:"chain_id,omitempty"`
 	// latest_header is the latest header in CZ's canonical chain
 	LatestHeader *IndexedHeader `protobuf:"bytes,2,opt,name=latest_header,json=latestHeader,proto3" json:"latest_header,omitempty"`
-	// latest_forks is the latest forks, formed as a series of IndexedHeader (from low to high)
+	// latest_forks is the latest forks, formed as a series of IndexedHeader (from
+	// low to high)
 	LatestForks *Forks `protobuf:"bytes,3,opt,name=latest_forks,json=latestForks,proto3" json:"latest_forks,omitempty"`
-	// timestamped_headers_count is the number of timestamped headers in CZ's canonical chain
+	// timestamped_headers_count is the number of timestamped headers in CZ's
+	// canonical chain
 	TimestampedHeadersCount uint64 `protobuf:"varint,4,opt,name=timestamped_headers_count,json=timestampedHeadersCount,proto3" json:"timestamped_headers_count,omitempty"`
 }
 
@@ -252,22 +257,26 @@ func (m *ChainInfo) GetTimestampedHeadersCount() uint64 {
 	return 0
 }
 
-// ProofEpochSealed is the proof that an epoch is sealed by the sealer header, i.e., the 2nd header of the next epoch
-// With the access of metadata
+// ProofEpochSealed is the proof that an epoch is sealed by the sealer header,
+// i.e., the 2nd header of the next epoch With the access of metadata
 // - Metadata of this epoch, which includes the sealer header
 // - Raw checkpoint of this epoch
 // The verifier can perform the following verification rules:
 // - The raw checkpoint's `last_commit_hash` is same as in the sealer header
-// - More than 1/3 (in voting power) validators in the validator set of this epoch have signed `last_commit_hash` of the sealer header
+// - More than 1/3 (in voting power) validators in the validator set of this
+// epoch have signed `last_commit_hash` of the sealer header
 // - The epoch medatata is committed to the `app_hash` of the sealer header
 // - The validator set is committed to the `app_hash` of the sealer header
 type ProofEpochSealed struct {
 	// validator_set is the validator set of the sealed epoch
-	// This validator set has generated a BLS multisig on `last_commit_hash` of the sealer header
+	// This validator set has generated a BLS multisig on `last_commit_hash` of
+	// the sealer header
 	ValidatorSet []*types1.ValidatorWithBlsKey `protobuf:"bytes,1,rep,name=validator_set,json=validatorSet,proto3" json:"validator_set,omitempty"`
-	// proof_epoch_info is the Merkle proof that the epoch's metadata is committed to `app_hash` of the sealer header
+	// proof_epoch_info is the Merkle proof that the epoch's metadata is committed
+	// to `app_hash` of the sealer header
 	ProofEpochInfo *crypto.ProofOps `protobuf:"bytes,2,opt,name=proof_epoch_info,json=proofEpochInfo,proto3" json:"proof_epoch_info,omitempty"`
-	// proof_epoch_info is the Merkle proof that the epoch's validator set is committed to `app_hash` of the sealer header
+	// proof_epoch_info is the Merkle proof that the epoch's validator set is
+	// committed to `app_hash` of the sealer header
 	ProofEpochValSet *crypto.ProofOps `protobuf:"bytes,3,opt,name=proof_epoch_val_set,json=proofEpochValSet,proto3" json:"proof_epoch_val_set,omitempty"`
 }
 
@@ -325,16 +334,20 @@ func (m *ProofEpochSealed) GetProofEpochValSet() *crypto.ProofOps {
 	return nil
 }
 
-// ProofFinalizedChainInfo is a set of proofs that attest a chain info is BTC-finalised
+// ProofFinalizedChainInfo is a set of proofs that attest a chain info is
+// BTC-finalised
 type ProofFinalizedChainInfo struct {
-	// proof_tx_in_block is the proof that tx that carries the header is included in a certain Babylon block
+	// proof_tx_in_block is the proof that tx that carries the header is included
+	// in a certain Babylon block
 	ProofTxInBlock *types.TxProof `protobuf:"bytes,4,opt,name=proof_tx_in_block,json=proofTxInBlock,proto3" json:"proof_tx_in_block,omitempty"`
-	// proof_header_in_epoch is the proof that the Babylon header is in a certain epoch
+	// proof_header_in_epoch is the proof that the Babylon header is in a certain
+	// epoch
 	ProofHeaderInEpoch *crypto.Proof `protobuf:"bytes,5,opt,name=proof_header_in_epoch,json=proofHeaderInEpoch,proto3" json:"proof_header_in_epoch,omitempty"`
 	// proof_epoch_sealed is the proof that the epoch is sealed
 	ProofEpochSealed *ProofEpochSealed `protobuf:"bytes,6,opt,name=proof_epoch_sealed,json=proofEpochSealed,proto3" json:"proof_epoch_sealed,omitempty"`
-	// proof_epoch_submitted is the proof that the epoch's checkpoint is included in BTC ledger
-	// It is the two TransactionInfo in the best (i.e., earliest) checkpoint submission
+	// proof_epoch_submitted is the proof that the epoch's checkpoint is included
+	// in BTC ledger It is the two TransactionInfo in the best (i.e., earliest)
+	// checkpoint submission
 	ProofEpochSubmitted []*types2.TransactionInfo `protobuf:"bytes,7,rep,name=proof_epoch_submitted,json=proofEpochSubmitted,proto3" json:"proof_epoch_submitted,omitempty"`
 }
 
