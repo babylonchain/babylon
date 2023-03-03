@@ -3,8 +3,7 @@ package babylon.monitor.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
-import "babylon/monitor/params.proto";
+import "babylon/monitor/v1/params.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/monitor/types";
 

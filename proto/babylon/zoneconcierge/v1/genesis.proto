@@ -2,7 +2,7 @@ syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
-import "babylon/zoneconcierge/params.proto";
+import "babylon/zoneconcierge/v1/params.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 

@@ -1,8 +1,7 @@
 syntax = "proto3";
 package babylon.btclightclient.v1;
 
-import "gogoproto/gogo.proto";
-import "babylon/btclightclient/btclightclient.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 

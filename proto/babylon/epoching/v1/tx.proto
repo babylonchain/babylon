@@ -1,7 +1,6 @@
 syntax = "proto3";
 package babylon.epoching.v1;
 
-import "google/protobuf/any.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 

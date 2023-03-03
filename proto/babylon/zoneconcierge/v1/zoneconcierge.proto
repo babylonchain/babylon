@@ -3,10 +3,8 @@ package babylon.zoneconcierge.v1;
 
 import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
-import "babylon/btccheckpoint/btccheckpoint.proto";
-import "babylon/checkpointing/bls_key.proto";
-import "babylon/checkpointing/query.proto";
-import "babylon/checkpointing/checkpoint.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -36,8 +34,8 @@ message IndexedHeader {
 //            \ -- D2
 // ```
 // Then the fork will be {[D1, D2]} where each item is in struct `IndexedBlock`.
-// 
-// Note that each `IndexedHeader` in the fork should have a valid quorum certificate. 
+//
+// Note that each `IndexedHeader` in the fork should have a valid quorum certificate.
 // Such forks exist since Babylon considers CZs might have dishonest majority.
 // Also note that the IBC-Go implementation will only consider the first header in a fork valid, since
 // the subsequent headers cannot be verified without knowing the validator set in the previous header.

@@ -21,3 +21,11 @@ lint:
     - SERVICE_SUFFIX
     - PACKAGE_VERSION_SUFFIX
     - RPC_REQUEST_STANDARD_NAME
+    - ENUM_VALUE_PREFIX
+    - ENUM_ZERO_VALUE_SUFFIX
+    # TODO Decide which comments we would like to enfore by linter
+    - COMMENT_MESSAGE
+    - COMMENT_ENUM_VALUE
+    - COMMENT_ENUM
+    - COMMENT_RPC
+    - COMMENT_ONEOF

@@ -4,8 +4,8 @@ package babylon.btccheckpoint.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "babylon/btccheckpoint/params.proto";
-import "babylon/btccheckpoint/btccheckpoint.proto";
+import "babylon/btccheckpoint/v1/params.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
 

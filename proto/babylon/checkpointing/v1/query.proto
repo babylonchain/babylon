@@ -1,12 +1,12 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
-import "babylon/checkpointing/bls_key.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "babylon/checkpointing/params.proto";
-import "babylon/checkpointing/checkpoint.proto";
+import "babylon/checkpointing/v1/params.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 

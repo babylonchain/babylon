@@ -4,13 +4,11 @@ package babylon.zoneconcierge.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "babylon/btccheckpoint/tx.proto";
-import "babylon/btccheckpoint/btccheckpoint.proto";
-import "babylon/checkpointing/query.proto";
-import "babylon/checkpointing/checkpoint.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
-import "babylon/zoneconcierge/params.proto";
-import "babylon/zoneconcierge/zoneconcierge.proto";
+import "babylon/zoneconcierge/v1/params.proto";
+import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -178,7 +176,7 @@ message QueryFinalizedChainInfoUntilHeightRequest {
 message QueryFinalizedChainInfoUntilHeightResponse {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
-  
+
   // epoch_info is the metadata of the last BTC-finalised epoch
   babylon.epoching.v1.Epoch epoch_info = 2;
   // raw_checkpoint is the raw checkpoint of this epoch

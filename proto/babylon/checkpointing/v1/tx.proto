@@ -2,8 +2,8 @@ syntax = "proto3";
 package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
-import "babylon/checkpointing/checkpoint.proto";
-import "babylon/checkpointing/bls_key.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";

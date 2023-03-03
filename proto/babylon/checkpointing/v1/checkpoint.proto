@@ -2,7 +2,6 @@ syntax = "proto3";
 package babylon.checkpointing.v1;
 
 import "google/protobuf/timestamp.proto";
-import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
