@@ -13,7 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/golang/mock/gomock"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/client"

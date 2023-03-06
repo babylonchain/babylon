@@ -7,9 +7,9 @@ import (
 	context "context"
 	fmt "fmt"
 	query "github.com/cosmos/cosmos-sdk/types/query"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
-	_ "github.com/gogo/protobuf/gogoproto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -299,7 +299,8 @@ func (m *QueryEpochsInfoResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryCurrentEpochRequest is the request type for the Query/CurrentEpoch RPC method
+// QueryCurrentEpochRequest is the request type for the Query/CurrentEpoch RPC
+// method
 type QueryCurrentEpochRequest struct {
 }
 
@@ -336,7 +337,8 @@ func (m *QueryCurrentEpochRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryCurrentEpochRequest proto.InternalMessageInfo
 
-// QueryCurrentEpochResponse is the response type for the Query/CurrentEpoch RPC method
+// QueryCurrentEpochResponse is the response type for the Query/CurrentEpoch RPC
+// method
 type QueryCurrentEpochResponse struct {
 	// current_epoch is the current epoch number
 	CurrentEpoch uint64 `protobuf:"varint,1,opt,name=current_epoch,json=currentEpoch,proto3" json:"current_epoch,omitempty"`
@@ -446,7 +448,8 @@ func (m *QueryEpochMsgsRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryEpochMsgsResponse is the response type for the Query/EpochMsgs RPC method
+// QueryEpochMsgsResponse is the response type for the Query/EpochMsgs RPC
+// method
 type QueryEpochMsgsResponse struct {
 	// msgs is the list of messages queued in the current epoch
 	Msgs []*QueuedMessage `protobuf:"bytes,1,rep,name=msgs,proto3" json:"msgs,omitempty"`
@@ -501,8 +504,9 @@ func (m *QueryEpochMsgsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryLatestEpochMsgsRequest is the request type for the Query/LatestEpochMsgs RPC method
-// it returns epoch msgs within epoch [max(1, end_epoch-epoch_count+1), end_epoch]
+// QueryLatestEpochMsgsRequest is the request type for the Query/LatestEpochMsgs
+// RPC method it returns epoch msgs within epoch [max(1,
+// end_epoch-epoch_count+1), end_epoch]
 type QueryLatestEpochMsgsRequest struct {
 	// end_epoch is the number of the last epoch to query
 	EndEpoch uint64 `protobuf:"varint,1,opt,name=end_epoch,json=endEpoch,proto3" json:"end_epoch,omitempty"`
@@ -565,7 +569,8 @@ func (m *QueryLatestEpochMsgsRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryLatestEpochMsgsResponse is the response type for the Query/LatestEpochMsgs RPC method
+// QueryLatestEpochMsgsResponse is the response type for the
+// Query/LatestEpochMsgs RPC method
 type QueryLatestEpochMsgsResponse struct {
 	// epoch_msg_map is a list of QueuedMessageList
 	// each QueuedMessageList has a field identifying the epoch number
@@ -1018,15 +1023,16 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// EpochInfo queries the information of a given epoch
 	EpochInfo(ctx context.Context, in *QueryEpochInfoRequest, opts ...grpc.CallOption) (*QueryEpochInfoResponse, error)
-	// EpochsInfo queries the metadata of epochs in a given range, depending on the
-	// parameters in the pagination request. Th main use case will be querying the
-	// latest epochs in time order.
+	// EpochsInfo queries the metadata of epochs in a given range, depending on
+	// the parameters in the pagination request. Th main use case will be querying
+	// the latest epochs in time order.
 	EpochsInfo(ctx context.Context, in *QueryEpochsInfoRequest, opts ...grpc.CallOption) (*QueryEpochsInfoResponse, error)
 	// CurrentEpoch queries the current epoch
 	CurrentEpoch(ctx context.Context, in *QueryCurrentEpochRequest, opts ...grpc.CallOption) (*QueryCurrentEpochResponse, error)
 	// EpochMsgs queries the messages of a given epoch
 	EpochMsgs(ctx context.Context, in *QueryEpochMsgsRequest, opts ...grpc.CallOption) (*QueryEpochMsgsResponse, error)
-	// LatestEpochMsgs queries the messages within a given number of most recent epochs
+	// LatestEpochMsgs queries the messages within a given number of most recent
+	// epochs
 	LatestEpochMsgs(ctx context.Context, in *QueryLatestEpochMsgsRequest, opts ...grpc.CallOption) (*QueryLatestEpochMsgsResponse, error)
 	// ValidatorLifecycle queries the lifecycle of a given validator
 	ValidatorLifecycle(ctx context.Context, in *QueryValidatorLifecycleRequest, opts ...grpc.CallOption) (*QueryValidatorLifecycleResponse, error)
@@ -1131,15 +1137,16 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// EpochInfo queries the information of a given epoch
 	EpochInfo(context.Context, *QueryEpochInfoRequest) (*QueryEpochInfoResponse, error)
-	// EpochsInfo queries the metadata of epochs in a given range, depending on the
-	// parameters in the pagination request. Th main use case will be querying the
-	// latest epochs in time order.
+	// EpochsInfo queries the metadata of epochs in a given range, depending on
+	// the parameters in the pagination request. Th main use case will be querying
+	// the latest epochs in time order.
 	EpochsInfo(context.Context, *QueryEpochsInfoRequest) (*QueryEpochsInfoResponse, error)
 	// CurrentEpoch queries the current epoch
 	CurrentEpoch(context.Context, *QueryCurrentEpochRequest) (*QueryCurrentEpochResponse, error)
 	// EpochMsgs queries the messages of a given epoch
 	EpochMsgs(context.Context, *QueryEpochMsgsRequest) (*QueryEpochMsgsResponse, error)
-	// LatestEpochMsgs queries the messages within a given number of most recent epochs
+	// LatestEpochMsgs queries the messages within a given number of most recent
+	// epochs
 	LatestEpochMsgs(context.Context, *QueryLatestEpochMsgsRequest) (*QueryLatestEpochMsgsResponse, error)
 	// ValidatorLifecycle queries the lifecycle of a given validator
 	ValidatorLifecycle(context.Context, *QueryValidatorLifecycleRequest) (*QueryValidatorLifecycleResponse, error)

@@ -8,7 +8,6 @@ BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/babylonchain/babylon.git
 DOCKER := $(shell which docker)
-DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 SIMAPP = ./simapp
 
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
@@ -365,7 +364,13 @@ proto-swagger-gen:
 	@echo "Generating Protobuf Swagger"
 	@$(protoImage) sh ./proto/scripts/protoc-swagger-gen.sh
 
-.PHONY: proto-gen proto-swagger-gen
+proto-format:
+	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
+
+proto-lint:
+	@$(protoImage) buf lint --error-format=json
+
+.PHONY: proto-gen proto-swagger-gen proto-format prot-lint
 
 ###############################################################################
 ###                                Localnet                                 ###

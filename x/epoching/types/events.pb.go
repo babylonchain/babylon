@@ -5,8 +5,8 @@ package types
 
 import (
 	fmt "fmt"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
-	_ "github.com/gogo/protobuf/gogoproto"
 	github_com_tendermint_tendermint_abci_types "github.com/tendermint/tendermint/abci/types"
 	io "io"
 	math "math"

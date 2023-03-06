@@ -6,6 +6,4 @@ import "gogoproto/gogo.proto";
 option go_package = "github.com/babylonchain/babylon/x/monitor/types";
 
 // Params defines the parameters for the module.
-message Params {
-    option (gogoproto.equal)            = true;
-}
+message Params { option (gogoproto.equal) = true; }

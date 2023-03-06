@@ -6,9 +6,9 @@ package types
 import (
 	fmt "fmt"
 	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
-	_ "github.com/gogo/protobuf/gogoproto"
 	types "github.com/tendermint/tendermint/proto/tendermint/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
@@ -68,14 +68,17 @@ type Epoch struct {
 	CurrentEpochInterval uint64 `protobuf:"varint,2,opt,name=current_epoch_interval,json=currentEpochInterval,proto3" json:"current_epoch_interval,omitempty"`
 	FirstBlockHeight     uint64 `protobuf:"varint,3,opt,name=first_block_height,json=firstBlockHeight,proto3" json:"first_block_height,omitempty"`
 	// last_block_header is the header of the last block in this epoch.
-	// Babylon needs to remember the last header of each epoch to complete unbonding validators/delegations when a previous epoch's checkpoint is finalised.
-	// The last_block_header field is nil in the epoch's beginning, and is set upon the end of this epoch.
+	// Babylon needs to remember the last header of each epoch to complete
+	// unbonding validators/delegations when a previous epoch's checkpoint is
+	// finalised. The last_block_header field is nil in the epoch's beginning, and
+	// is set upon the end of this epoch.
 	LastBlockHeader *types.Header `protobuf:"bytes,4,opt,name=last_block_header,json=lastBlockHeader,proto3" json:"last_block_header,omitempty"`
 	// app_hash_root is the Merkle root of all AppHashs in this epoch
 	// It will be used for proving a block is in an epoch
 	AppHashRoot []byte `protobuf:"bytes,5,opt,name=app_hash_root,json=appHashRoot,proto3" json:"app_hash_root,omitempty"`
 	// sealer_header is the 2nd header of the next epoch
-	// This validator set has generated a BLS multisig on `last_commit_hash` of the sealer header
+	// This validator set has generated a BLS multisig on `last_commit_hash` of
+	// the sealer header
 	SealerHeader *types.Header `protobuf:"bytes,6,opt,name=sealer_header,json=sealerHeader,proto3" json:"sealer_header,omitempty"`
 }
 
@@ -154,7 +157,8 @@ func (m *Epoch) GetSealerHeader() *types.Header {
 	return nil
 }
 
-// QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
+// QueuedMessage is a message that can change the validator set and is delayed
+// to the epoch boundary
 type QueuedMessage struct {
 	// tx_id is the ID of the tx that contains the message
 	TxId []byte `protobuf:"bytes,1,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
@@ -164,7 +168,8 @@ type QueuedMessage struct {
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// block_time is the timestamp when this msg is submitted to Babylon
 	BlockTime *time.Time `protobuf:"bytes,4,opt,name=block_time,json=blockTime,proto3,stdtime" json:"block_time,omitempty"`
-	// msg is the actual message that is sent by a user and is queued by the epoching module
+	// msg is the actual message that is sent by a user and is queued by the
+	// epoching module
 	//
 	// Types that are valid to be assigned to Msg:
 	//	*QueuedMessage_MsgCreateValidator

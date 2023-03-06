@@ -1,8 +1,7 @@
 syntax = "proto3";
 package babylon.btccheckpoint.v1;
 
-import "gogoproto/gogo.proto";
-import "babylon/btccheckpoint/btccheckpoint.proto";
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btccheckpoint/types";
 

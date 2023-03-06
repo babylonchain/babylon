@@ -2,8 +2,8 @@ syntax = "proto3";
 package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
-import "babylon/checkpointing/checkpoint.proto";
-import "babylon/checkpointing/bls_key.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
@@ -14,7 +14,8 @@ service Msg {
   rpc AddBlsSig(MsgAddBlsSig) returns (MsgAddBlsSigResponse);
 
   // WrappedCreateValidator defines a method for registering a new validator
-  rpc WrappedCreateValidator(MsgWrappedCreateValidator) returns (MsgWrappedCreateValidatorResponse);
+  rpc WrappedCreateValidator(MsgWrappedCreateValidator)
+      returns (MsgWrappedCreateValidatorResponse);
 }
 
 // MsgAddBlsSig defines a message to add a bls signature from a
@@ -38,5 +39,6 @@ message MsgWrappedCreateValidator {
   cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 2;
 }
 
-// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator response type
+// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator
+// response type
 message MsgWrappedCreateValidatorResponse {}

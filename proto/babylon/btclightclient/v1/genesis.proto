@@ -2,14 +2,14 @@ syntax = "proto3";
 package babylon.btclightclient.v1;
 
 import "gogoproto/gogo.proto";
-import "babylon/btclightclient/params.proto";
-import "babylon/btclightclient/btclightclient.proto";
+import "babylon/btclightclient/v1/params.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 // GenesisState defines the btclightclient module's genesis state.
 message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 
-  BTCHeaderInfo base_btc_header = 2 [(gogoproto.nullable) = false];
+  BTCHeaderInfo base_btc_header = 2 [ (gogoproto.nullable) = false ];
 }

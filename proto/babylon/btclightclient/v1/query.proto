@@ -4,8 +4,8 @@ package babylon.btclightclient.v1;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "babylon/btclightclient/params.proto";
-import "babylon/btclightclient/btclightclient.proto";
+import "babylon/btclightclient/v1/params.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
@@ -30,7 +30,8 @@ service Query {
   // checks whether a hash is maintained by the module.
   // See discussion at https://github.com/babylonchain/babylon/pull/132
   // for more details.
-  rpc ContainsBytes(QueryContainsBytesRequest) returns (QueryContainsBytesResponse) {
+  rpc ContainsBytes(QueryContainsBytesRequest)
+      returns (QueryContainsBytesResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/containsBytes";
   }
 
@@ -55,7 +56,7 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
 // QueryHashesRequest is request type for the Query/Hashes RPC method.
 // It involves retrieving all hashes that are maintained by the module.
@@ -65,35 +66,30 @@ message QueryHashesRequest {
 
 // QueryHashesResponse is response type for the Query/Hashes RPC method.
 message QueryHashesResponse {
-  repeated bytes hashes = 1 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  repeated bytes hashes = 1
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 // QueryContainsRequest is request type for the Query/Contains RPC method.
 // It involves checking whether a hash is maintained by the module.
 message QueryContainsRequest {
-  bytes hash = 1 [
-    (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes"
-  ];
+  bytes hash = 1
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
 }
 
 // QueryContainsResponse is response type for the Query/Contains RPC method.
-message QueryContainsResponse {
-  bool contains = 1;
-}
+message QueryContainsResponse { bool contains = 1; }
 
-// QueryContainsRequest is request type for the temporary Query/ContainsBytes RPC method.
-// It involves checking whether a hash is maintained by the module.
-message QueryContainsBytesRequest {
-  bytes hash = 1;
-}
+// QueryContainsRequest is request type for the temporary Query/ContainsBytes
+// RPC method. It involves checking whether a hash is maintained by the module.
+message QueryContainsBytesRequest { bytes hash = 1; }
 
-// QueryContainsResponse is response type for the temporary Query/ContainsBytes RPC method.
-message QueryContainsBytesResponse {
-  bool contains = 1;
-}
+// QueryContainsResponse is response type for the temporary Query/ContainsBytes
+// RPC method.
+message QueryContainsBytesResponse { bool contains = 1; }
 
 // QueryMainChainRequest is request type for the Query/MainChain RPC method.
 // It involves retrieving the canonical chain maintained by the module.
@@ -108,16 +104,10 @@ message QueryMainChainResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-message QueryTipRequest {
-}
+message QueryTipRequest {}
 
-message QueryTipResponse {
-  BTCHeaderInfo header = 1;
-}
+message QueryTipResponse { BTCHeaderInfo header = 1; }
 
-message QueryBaseHeaderRequest {
-}
+message QueryBaseHeaderRequest {}
 
-message QueryBaseHeaderResponse {
-  BTCHeaderInfo header = 1;
-}
+message QueryBaseHeaderResponse { BTCHeaderInfo header = 1; }

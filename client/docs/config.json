@@ -7,7 +7,7 @@
   },
   "apis": [
     {
-      "url": "./tmp-swagger-gen/babylon/btccheckpoint/query.swagger.json",
+      "url": "./tmp-swagger-gen/babylon/btccheckpoint/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "BtcCheckpointParams"
@@ -15,7 +15,7 @@
       }
     },
     {
-      "url":  "./tmp-swagger-gen/babylon/btclightclient/query.swagger.json",
+      "url":  "./tmp-swagger-gen/babylon/btclightclient/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "BtcLightClientParams"
@@ -31,7 +31,7 @@
       }
     },
     {
-      "url":  "./tmp-swagger-gen/babylon/checkpointing/query.swagger.json",
+      "url":  "./tmp-swagger-gen/babylon/checkpointing/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "CheckpointingParams"
@@ -39,7 +39,7 @@
       }
     },
     {
-      "url":  "./tmp-swagger-gen/babylon/zoneconcierge/query.swagger.json",
+      "url":  "./tmp-swagger-gen/babylon/zoneconcierge/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "ZoneConciergeParams"
