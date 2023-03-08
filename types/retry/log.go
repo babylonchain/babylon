@@ -1,7 +1,7 @@
 package retry
 
 import (
-	"github.com/tendermint/tendermint/libs/log"
+	"github.com/cometbft/cometbft/libs/log"
 	"os"
 )
 

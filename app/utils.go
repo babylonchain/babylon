@@ -9,12 +9,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmos "github.com/tendermint/tendermint/libs/os"
 
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/privval"

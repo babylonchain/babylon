@@ -6,23 +6,23 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/cmd/babylond/cmd"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func TestCheckCorrespondence(t *testing.T) {

@@ -8,14 +8,14 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
-	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // AccountKeeper defines the contract required for account APIs.

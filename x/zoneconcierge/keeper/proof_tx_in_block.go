@@ -4,9 +4,9 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func (k Keeper) ProveTxInBlock(ctx sdk.Context, txHash []byte) (*tmproto.TxProof, error) {

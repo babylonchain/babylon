@@ -5,13 +5,13 @@ import (
 	"errors"
 	"fmt"
 
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
-	tmos "github.com/tendermint/tendermint/libs/os"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )

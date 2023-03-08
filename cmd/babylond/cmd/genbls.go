@@ -7,10 +7,10 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/privval"
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmos "github.com/tendermint/tendermint/libs/os"
 )
 
 func GenBlsCmd() *cobra.Command {

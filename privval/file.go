@@ -8,21 +8,21 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 
+	tmcrypto "github.com/cometbft/cometbft/crypto"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmos "github.com/cometbft/cometbft/libs/os"
+	"github.com/cometbft/cometbft/libs/tempfile"
+	"github.com/cometbft/cometbft/privval"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmcrypto "github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/ed25519"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	"github.com/tendermint/tendermint/libs/tempfile"
-	"github.com/tendermint/tendermint/privval"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	"github.com/tendermint/tendermint/types"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-// copied from github.com/tendermint/tendermint/privval/file.go"
+// copied from github.com/cometbft/cometbft/privval/file.go"
 //
 //nolint:unused
 const (
@@ -32,7 +32,7 @@ const (
 	stepPrecommit int8 = 3
 )
 
-// copied from github.com/tendermint/tendermint/privval/file.go"
+// copied from github.com/cometbft/cometbft/privval/file.go"
 //
 //nolint:unused
 func voteToStep(vote *tmproto.Vote) int8 {

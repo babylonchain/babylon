@@ -18,8 +18,8 @@ import (
 	types6 "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	exported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	gomock "github.com/golang/mock/gomock"
-	crypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
+	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 // MockAccountKeeper is a mock of AccountKeeper interface.

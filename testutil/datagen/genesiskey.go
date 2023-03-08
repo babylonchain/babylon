@@ -4,10 +4,10 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
+	ed255192 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ed255192 "github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 func GenerateGenesisKey() *types.GenesisKey {

@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	simapp "github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"

@@ -8,9 +8,9 @@ import (
 
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // BeginBlocker is called at the beginning of every block.

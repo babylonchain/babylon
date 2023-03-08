@@ -9,7 +9,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	abci "github.com/tendermint/tendermint/abci/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/client/cli"
 	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"

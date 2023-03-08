@@ -10,10 +10,10 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
+	tmabcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
-	tmabcitypes "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
