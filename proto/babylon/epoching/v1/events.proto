@@ -17,7 +17,7 @@ message EventHandleQueuedMsg {
   bytes msg_id = 5;
   repeated bytes original_attributes = 6
       [ (gogoproto.customtype) =
-            "github.com/tendermint/tendermint/abci/types.EventAttribute" ];
+            "github.com/cometbft/cometbft/abci/types.EventAttribute" ];
   string error = 7;
 }
 

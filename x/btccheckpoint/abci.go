@@ -2,8 +2,8 @@ package btccheckpoint
 
 import (
 	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // EndBlocker checks if during block execution btc light client head had been

@@ -2,8 +2,8 @@ package types
 
 import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/cometbft/cometbft/crypto/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	"github.com/tendermint/tendermint/crypto/ed25519"
 )
 
 // IsValid verifies the validity of PoP

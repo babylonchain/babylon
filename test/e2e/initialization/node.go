@@ -11,6 +11,11 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	bbn "github.com/babylonchain/babylon/types"
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
+	tmos "github.com/cometbft/cometbft/libs/os"
+	"github.com/cometbft/cometbft/p2p"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -26,11 +31,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	"github.com/tendermint/tendermint/p2p"
-	tmtypes "github.com/tendermint/tendermint/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
 

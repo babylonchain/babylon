@@ -11,8 +11,8 @@ import (
 	sdkmath "cosmossdk.io/math"
 	simappparams "github.com/babylonchain/babylon/app/params"
 
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/babylonchain/babylon/app"
 

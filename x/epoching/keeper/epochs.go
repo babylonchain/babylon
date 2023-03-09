@@ -3,9 +3,9 @@ package keeper
 import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/crypto/merkle"
 )
 
 const (

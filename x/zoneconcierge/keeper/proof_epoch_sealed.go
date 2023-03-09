@@ -8,8 +8,8 @@ import (
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 func getEpochInfoKey(epochNumber uint64) []byte {

@@ -9,13 +9,13 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
-	tmrpctypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func FuzzChainList(f *testing.F) {

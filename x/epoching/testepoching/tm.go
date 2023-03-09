@@ -3,10 +3,10 @@ package testepoching
 import (
 	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	tmcrypto "github.com/cometbft/cometbft/crypto"
+	tmtypes "github.com/cometbft/cometbft/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	tmcrypto "github.com/tendermint/tendermint/crypto"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // GetTmConsPubKey gets the validator's public key as a tmcrypto.PubKey.

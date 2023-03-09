@@ -9,12 +9,12 @@ import (
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
 
 	"github.com/btcsuite/btcd/wire"
+	"github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	ctypes "github.com/cosmos/cosmos-sdk/types"
 	txservice "github.com/cosmos/cosmos-sdk/types/tx"
 	acctypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/tendermint/tendermint/types"
 	"google.golang.org/grpc"
 
 	"github.com/babylonchain/babylon/app"

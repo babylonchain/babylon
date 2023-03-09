@@ -6,10 +6,10 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cometbft/cometbft/crypto/merkle"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/tendermint/tendermint/crypto/merkle"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 func (k Keeper) setAppHash(ctx sdk.Context, height uint64, appHash []byte) {

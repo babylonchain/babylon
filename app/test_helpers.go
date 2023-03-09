@@ -11,9 +11,9 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	tmconfig "github.com/tendermint/tendermint/config"
+	tmconfig "github.com/cometbft/cometbft/config"
 
-	tmjson "github.com/tendermint/tendermint/libs/json"
+	tmjson "github.com/cometbft/cometbft/libs/json"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 
@@ -22,6 +22,11 @@ import (
 	appparams "github.com/babylonchain/babylon/app/params"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -40,11 +45,6 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.

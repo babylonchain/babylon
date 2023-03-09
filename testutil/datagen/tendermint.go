@@ -3,8 +3,8 @@ package datagen
 import (
 	"time"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func GenRandomTMHeader(chainID string, height uint64) *tmproto.Header {

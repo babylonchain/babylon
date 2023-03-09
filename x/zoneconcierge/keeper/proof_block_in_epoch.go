@@ -3,9 +3,9 @@ package keeper
 import (
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 )
 
 func (k Keeper) ProveHeaderInEpoch(ctx sdk.Context, header *tmproto.Header, epoch *epochingtypes.Epoch) (*tmcrypto.Proof, error) {

@@ -11,6 +11,7 @@ import (
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -22,7 +23,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
 )
