@@ -65,7 +65,7 @@ func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	if err != nil {
 		panic(err)
 	}
-	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{})
+	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{}, GetWasmEnabledProposals(), EmptyWasmOpts)
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -104,7 +104,7 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 		options.InvCheckPeriod,
 		options.EncConfig,
 		privSigner,
-		options.AppOpts)
+		options.AppOpts, GetWasmEnabledProposals(), EmptyWasmOpts)
 	genesisState := NewDefaultGenesisState(app.appCodec)
 	genesisState = genesisStateWithValSet(t, app, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 
