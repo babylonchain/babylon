@@ -1,0 +1,16 @@
+version: v1
+plugins:
+  - remote: buf.build/prost/plugins/prost
+    out: gen/src
+    opt:
+      - bytes=.
+      - compile_well_known_types
+      - extern_path=.google.protobuf=::pbjson_types
+      - file_descriptor_set
+  - remote: buf.build/prost/plugins/serde
+    out: gen/src
+  # - remote: buf.build/prost/plugins/crate
+  #   out: gen
+  #   strategy: all
+  #   opt:
+  #     - gen_crate=Cargo.toml
