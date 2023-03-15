@@ -16,6 +16,7 @@ import (
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	owasm "github.com/babylonchain/babylon/wasmbindings"
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
 	bbn "github.com/babylonchain/babylon/types"
@@ -628,7 +629,10 @@ func NewBabylonApp(
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
+	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,babylon"
+
+	wasmOpts = append(owasm.RegisterCustomPlugins(&app.EpochingKeeper), wasmOpts...)
+
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],

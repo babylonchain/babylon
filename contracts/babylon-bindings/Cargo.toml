@@ -1,0 +1,16 @@
+[package]
+name = "babylon-bindings"
+authors = ["BabylonChain Inc. <admin@babylonchain.io>"]
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cosmwasm-schema = "1.2.1"
+cosmwasm-std = { version = "1.2.1", features = ["iterator", "ibc3"] }
+schemars = "0.8.3"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
+
+[dev-dependencies]

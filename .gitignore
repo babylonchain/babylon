@@ -194,6 +194,10 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# contracts artifacts
+/contracts/babylon-bindings/target/
+/contracts/test-contract/target/
+
 # End of https://www.toptal.com/developers/gitignore/api/intellij,vscode,macos,windows
 # The following content is adapted from https://github.com/osmosis-labs/osmosis/blob/main/.gitignore
 

@@ -1,0 +1,1 @@
+069b0e6428388b22fba0186da0fc3054003d2d38b180904ac2b40dd7d4af06cc  ./target/wasm32-unknown-unknown/release/babylon_contract.wasm
