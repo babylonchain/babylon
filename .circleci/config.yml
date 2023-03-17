@@ -2,6 +2,9 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+orbs:
+  aws-ecr: circleci/aws-ecr@8.2.1
+
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -51,6 +54,48 @@ jobs:
       #     command: |
       #       make test-e2e
 
+  build_docker:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/build-image:
+          push-image: false
+          dockerfile: Dockerfile
+          path: ./contrib/images/babylond-env/
+          build-path: ./
+          tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
+          repo: "babylond"
+      - run:
+          name: Save Docker image to export it to workspace
+          command: |
+            docker save $(docker image ls --format '{{.Repository}}:{{.Tag}}') > /tmp/babylond.tar
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - babylond.tar
+
+  push_docker:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Load Docker image from workspace
+          command: |
+            docker load -i /tmp/babylond.tar
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - aws-ecr/push-image:
+          registry-id: AWS_ECR_REGISTRY_ID
+          region: "$AWS_REGION"
+          repo: "babylond"
+          tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
@@ -58,3 +103,16 @@ workflows:
   build-lint-test:
     jobs:
       - build
+      - build_docker:
+          filters:
+            tags:
+              only: /.*/
+      - push_docker:
+          requires:
+            - build_docker
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only:
+                - main
