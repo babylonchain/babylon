@@ -5,6 +5,12 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
+// BTCHeaderInfo is a structure that contains all relevant information about a BTC header
+//  - Full header bytes
+//  - Header hash for easy retrieval
+//  - Height of the header in the BTC chain
+//  - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+//    and the total work of the header.
 message BTCHeaderInfo {
   bytes header = 1
       [ (gogoproto.customtype) =
