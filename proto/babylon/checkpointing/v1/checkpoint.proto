@@ -43,7 +43,7 @@ message RawCheckpointWithMeta {
   repeated CheckpointStateUpdate lifecycle = 5;
 }
 
-// CkptStatus is the status of a checkpoint.
+// CheckpointStatus is the status of a checkpoint.
 enum CheckpointStatus {
   option (gogoproto.goproto_enum_prefix) = false;
 
@@ -60,6 +60,7 @@ enum CheckpointStatus {
   CKPT_STATUS_FINALIZED = 4 [ (gogoproto.enumvalue_customname) = "Finalized" ];
 }
 
+// CheckpointStateUpdate defines a state transition on the checkpoint.
 message CheckpointStateUpdate {
   option (gogoproto.equal) = true;
 

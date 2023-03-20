@@ -136,8 +136,12 @@ message QueryRecentEpochStatusCountResponse {
   map<string, uint64> status_count = 3;
 }
 
+// QueryLastCheckpointWithStatusRequest is the request type for the
+// Query/LastCheckpointWithStatus RPC method.
 message QueryLastCheckpointWithStatusRequest { CheckpointStatus status = 1; }
 
+// QueryLastCheckpointWithStatusResponse is the response type for the
+// Query/LastCheckpointWithStatus RPC method.
 message QueryLastCheckpointWithStatusResponse {
   RawCheckpoint raw_checkpoint = 1;
 }
