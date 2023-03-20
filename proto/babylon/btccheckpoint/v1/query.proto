@@ -28,6 +28,7 @@ service Query {
     option (google.api.http).get = "/babylon/btccheckpoint/v1";
   }
 
+  // EpochSubmissions returns all submissions for a given epoch
   rpc EpochSubmissions(QueryEpochSubmissionsRequest)
       returns (QueryEpochSubmissionsResponse) {
     option (google.api.http).get =
@@ -44,6 +45,7 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
+// QueryBtcCheckpointInfoRequest defines the query to get the best checkpoint for a given epoch
 message QueryBtcCheckpointInfoRequest {
   // Number of epoch for which the earliest checkpointing btc height is
   // requested
@@ -69,6 +71,7 @@ message QueryBtcCheckpointsInfoResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryEpochSubmissionsRequest defines a request to get all submissions in given epoch
 message QueryEpochSubmissionsRequest {
   // Number of epoch for which submissions are requested
   uint64 epoch_num = 1;
@@ -76,6 +79,7 @@ message QueryEpochSubmissionsRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
+// QueryEpochSubmissionsResponse defines a response to get all submissions in given epoch (QueryEpochSubmissionsRequest)
 message QueryEpochSubmissionsResponse {
   // All submissions saved during an epoch.
   repeated SubmissionKey keys = 1;

@@ -57,6 +57,7 @@ message TransactionKey {
 // so there should be other strong arguments for this optimization
 message SubmissionKey { repeated TransactionKey key = 1; }
 
+// BtcStatus is an enum describing the current btc status of the checkpoint
 enum BtcStatus {
   option (gogoproto.goproto_enum_prefix) = false;
   // SUBMITTED Epoch has Submitted btc status if there ever was at least one
@@ -119,6 +120,9 @@ message EpochData {
   BtcStatus status = 2;
 }
 
+// CheckpointAddresses contains the addresses of the submitter and reporter of a given checkpoint
+// submitter is the address of the submitter of the checkpoint to BTC
+// reporter is the address of the submitter of the MsgInsertBTCSpvProof message to Babylon
 message CheckpointAddresses {
   // TODO: this could probably be better typed
   // Address of the checkpoint submitter, extracted from the checkpoint itself.
@@ -128,6 +132,7 @@ message CheckpointAddresses {
   bytes reporter = 2;
 }
 
+// BTCCheckpointInfo contains all checkpoint related data expected in a query response.
 message BTCCheckpointInfo {
   // epoch number of this checkpoint
   uint64 epoch_number = 1;
