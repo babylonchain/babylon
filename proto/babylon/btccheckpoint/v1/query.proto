@@ -45,7 +45,7 @@ message QueryParamsResponse {
   Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
-// QueryBtcCheckpointInfoRequest defines to get best checkpoint for given epoch
+// QueryBtcCheckpointInfoRequest defines the query to get the best checkpoint for a given epoch
 message QueryBtcCheckpointInfoRequest {
   // Number of epoch for which the earliest checkpointing btc height is
   // requested

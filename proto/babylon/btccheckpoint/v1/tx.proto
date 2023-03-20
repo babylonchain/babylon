@@ -18,5 +18,5 @@ message MsgInsertBTCSpvProof {
   repeated babylon.btccheckpoint.v1.BTCSpvProof proofs = 2;
 }
 
-// MsgInsertBTCSpvProofResponse defines the response for the MsgInsertBTCSpvProof transaction
+// MsgInsertBTCSpvProofResponse defines the response for the MsgInsertBTCSpvProof message
 message MsgInsertBTCSpvProofResponse {}
