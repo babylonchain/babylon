@@ -118,7 +118,19 @@ paths:
                               submissions, calculated from
 
                               submission message MsgInsertBTCSpvProof itself
+                        title: >-
+                          CheckpointAddresses contains the addresses of the
+                          submitter and reporter of a given checkpoint
+
+                          submitter is the address of the submitter of the
+                          checkpoint to BTC
+
+                          reporter is the address of the submitter of the
+                          MsgInsertBTCSpvProof message to Babylon
                       title: list of vigilantes' addresses
+                  description: >-
+                    BTCCheckpointInfo contains all checkpoint related data
+                    expected in a query response.
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -410,7 +422,19 @@ paths:
                             submissions, calculated from
 
                             submission message MsgInsertBTCSpvProof itself
+                      title: >-
+                        CheckpointAddresses contains the addresses of the
+                        submitter and reporter of a given checkpoint
+
+                        submitter is the address of the submitter of the
+                        checkpoint to BTC
+
+                        reporter is the address of the submitter of the
+                        MsgInsertBTCSpvProof message to Babylon
                     title: list of vigilantes' addresses
+                description: >-
+                  BTCCheckpointInfo contains all checkpoint related data
+                  expected in a query response.
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
@@ -449,6 +473,7 @@ paths:
         - Query
   /babylon/btccheckpoint/v1/{epoch_num}/submissions:
     get:
+      summary: EpochSubmissions returns all submissions for a given epoch
       operationId: EpochSubmissions
       responses:
         '200':
@@ -527,6 +552,9 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
+            title: >-
+              QueryEpochSubmissionsResponse defines a response to get all
+              submissions in given epoch (QueryEpochSubmissionsRequest)
         default:
           description: An unexpected error response.
           schema:
@@ -616,6 +644,9 @@ paths:
         - Query
   /babylon/btclightclient/v1/baseheader:
     get:
+      summary: >-
+        BaseHeader returns the base BTC header of the chain. This header is
+        defined on genesis.
       operationId: BaseHeader
       responses:
         '200':
@@ -638,6 +669,17 @@ paths:
                   work:
                     type: string
                     format: byte
+                description: >-
+                  BTCHeaderInfo is a structure that contains all relevant
+                  information about a BTC header
+                   - Full header bytes
+                   - Header hash for easy retrieval
+                   - Height of the header in the BTC chain
+                   - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+                     and the total work of the header.
+            description: >-
+              QueryBaseHeaderResponse is the response type for the
+              Query/BaseHeader RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -912,6 +954,14 @@ paths:
                     work:
                       type: string
                       format: byte
+                  description: >-
+                    BTCHeaderInfo is a structure that contains all relevant
+                    information about a BTC header
+                     - Full header bytes
+                     - Header hash for easy retrieval
+                     - Height of the header in the BTC chain
+                     - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+                       and the total work of the header.
               pagination:
                 type: object
                 properties:
@@ -1089,6 +1139,17 @@ paths:
                   work:
                     type: string
                     format: byte
+                description: >-
+                  BTCHeaderInfo is a structure that contains all relevant
+                  information about a BTC header
+                   - Full header bytes
+                   - Header hash for easy retrieval
+                   - Height of the header in the BTC chain
+                   - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+                     and the total work of the header.
+            description: >-
+              QueryTipResponse is the response type for the Query/Tip RPC
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -1775,9 +1836,7 @@ paths:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -2260,7 +2319,7 @@ paths:
                       proposer_address:
                         type: string
                         format: byte
-                    description: Header defines the structure of a Tendermint block header.
+                    description: Header defines the structure of a block header.
         default:
           description: An unexpected error response.
           schema:
@@ -4759,7 +4818,7 @@ paths:
                   - CKPT_STATUS_FINALIZED
                 default: CKPT_STATUS_ACCUMULATING
                 description: |-
-                  CkptStatus is the status of a checkpoint.
+                  CheckpointStatus is the status of a checkpoint.
 
                    - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                    - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -4908,6 +4967,9 @@ paths:
 
                       sigs
                 title: RawCheckpoint wraps the BLS multi sig with meta data
+            description: |-
+              QueryLastCheckpointWithStatusResponse is the response type for the
+              Query/LastCheckpointWithStatus RPC method.
         default:
           description: An unexpected error response.
           schema:
@@ -5038,7 +5100,7 @@ paths:
                       - CKPT_STATUS_FINALIZED
                     default: CKPT_STATUS_ACCUMULATING
                     description: |-
-                      CkptStatus is the status of a checkpoint.
+                      CheckpointStatus is the status of a checkpoint.
 
                        - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                        - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -5071,7 +5133,7 @@ paths:
                             - CKPT_STATUS_FINALIZED
                           default: CKPT_STATUS_ACCUMULATING
                           description: |-
-                            CkptStatus is the status of a checkpoint.
+                            CheckpointStatus is the status of a checkpoint.
 
                              - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                              - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -5097,6 +5159,9 @@ paths:
                             that triggers the state
 
                             update
+                      description: >-
+                        CheckpointStateUpdate defines a state transition on the
+                        checkpoint.
                     description: >-
                       lifecycle defines the lifecycle of this checkpoint, i.e.,
                       each state
@@ -5199,7 +5264,7 @@ paths:
                         - CKPT_STATUS_FINALIZED
                       default: CKPT_STATUS_ACCUMULATING
                       description: |-
-                        CkptStatus is the status of a checkpoint.
+                        CheckpointStatus is the status of a checkpoint.
 
                          - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                          - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -5232,7 +5297,7 @@ paths:
                               - CKPT_STATUS_FINALIZED
                             default: CKPT_STATUS_ACCUMULATING
                             description: |-
-                              CkptStatus is the status of a checkpoint.
+                              CheckpointStatus is the status of a checkpoint.
 
                                - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                                - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -5258,6 +5323,9 @@ paths:
                               that triggers the state
 
                               update
+                        description: >-
+                          CheckpointStateUpdate defines a state transition on
+                          the checkpoint.
                       description: >-
                         lifecycle defines the lifecycle of this checkpoint,
                         i.e., each state
@@ -5503,9 +5571,7 @@ paths:
                           proposer_address:
                             type: string
                             format: byte
-                        description: >-
-                          Header defines the structure of a Tendermint block
-                          header.
+                        description: Header defines the structure of a block header.
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -5634,9 +5700,7 @@ paths:
                                 proposer_address:
                                   type: string
                                   format: byte
-                              description: >-
-                                Header defines the structure of a Tendermint
-                                block header.
+                              description: Header defines the structure of a block header.
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -6017,9 +6081,7 @@ paths:
                           proposer_address:
                             type: string
                             format: byte
-                        description: >-
-                          Header defines the structure of a Tendermint block
-                          header.
+                        description: Header defines the structure of a block header.
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -6148,9 +6210,7 @@ paths:
                                 proposer_address:
                                   type: string
                                   format: byte
-                              description: >-
-                                Header defines the structure of a Tendermint
-                                block header.
+                              description: Header defines the structure of a block header.
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -6528,7 +6588,7 @@ paths:
                       proposer_address:
                         type: string
                         format: byte
-                    description: Header defines the structure of a Tendermint block header.
+                    description: Header defines the structure of a block header.
                   babylon_epoch:
                     type: string
                     format: uint64
@@ -6649,9 +6709,7 @@ paths:
                             proposer_address:
                               type: string
                               format: byte
-                          description: >-
-                            Header defines the structure of a Tendermint block
-                            header.
+                          description: Header defines the structure of a block header.
                         babylon_epoch:
                           type: string
                           format: uint64
@@ -7328,9 +7386,7 @@ paths:
                           proposer_address:
                             type: string
                             format: byte
-                        description: >-
-                          Header defines the structure of a Tendermint block
-                          header.
+                        description: Header defines the structure of a block header.
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -7459,9 +7515,7 @@ paths:
                                 proposer_address:
                                   type: string
                                   format: byte
-                              description: >-
-                                Header defines the structure of a Tendermint
-                                block header.
+                              description: Header defines the structure of a block header.
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -7716,7 +7770,7 @@ paths:
                       proposer_address:
                         type: string
                         format: byte
-                    description: Header defines the structure of a Tendermint block header.
+                    description: Header defines the structure of a block header.
               raw_checkpoint:
                 title: raw_checkpoint is the raw checkpoint of this epoch
                 type: object
@@ -8321,9 +8375,7 @@ paths:
                           proposer_address:
                             type: string
                             format: byte
-                        description: >-
-                          Header defines the structure of a Tendermint block
-                          header.
+                        description: Header defines the structure of a block header.
                       babylon_epoch:
                         type: string
                         format: uint64
@@ -8452,9 +8504,7 @@ paths:
                                 proposer_address:
                                   type: string
                                   format: byte
-                              description: >-
-                                Header defines the structure of a Tendermint
-                                block header.
+                              description: Header defines the structure of a block header.
                             babylon_epoch:
                               type: string
                               format: uint64
@@ -8709,7 +8759,7 @@ paths:
                       proposer_address:
                         type: string
                         format: byte
-                    description: Header defines the structure of a Tendermint block header.
+                    description: Header defines the structure of a block header.
               raw_checkpoint:
                 title: raw_checkpoint is the raw checkpoint of this epoch
                 type: object
@@ -9320,9 +9370,7 @@ paths:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -9743,9 +9791,7 @@ paths:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -10282,7 +10328,18 @@ definitions:
                 calculated from
 
                 submission message MsgInsertBTCSpvProof itself
+          title: >-
+            CheckpointAddresses contains the addresses of the submitter and
+            reporter of a given checkpoint
+
+            submitter is the address of the submitter of the checkpoint to BTC
+
+            reporter is the address of the submitter of the MsgInsertBTCSpvProof
+            message to Babylon
         title: list of vigilantes' addresses
+    description: >-
+      BTCCheckpointInfo contains all checkpoint related data expected in a query
+      response.
   babylon.btccheckpoint.v1.CheckpointAddresses:
     type: object
     properties:
@@ -10302,6 +10359,14 @@ definitions:
           from
 
           submission message MsgInsertBTCSpvProof itself
+    title: >-
+      CheckpointAddresses contains the addresses of the submitter and reporter
+      of a given checkpoint
+
+      submitter is the address of the submitter of the checkpoint to BTC
+
+      reporter is the address of the submitter of the MsgInsertBTCSpvProof
+      message to Babylon
   babylon.btccheckpoint.v1.Params:
     type: object
     properties:
@@ -10436,7 +10501,19 @@ definitions:
                     calculated from
 
                     submission message MsgInsertBTCSpvProof itself
+              title: >-
+                CheckpointAddresses contains the addresses of the submitter and
+                reporter of a given checkpoint
+
+                submitter is the address of the submitter of the checkpoint to
+                BTC
+
+                reporter is the address of the submitter of the
+                MsgInsertBTCSpvProof message to Babylon
             title: list of vigilantes' addresses
+        description: >-
+          BTCCheckpointInfo contains all checkpoint related data expected in a
+          query response.
     title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -10544,7 +10621,19 @@ definitions:
                       calculated from
 
                       submission message MsgInsertBTCSpvProof itself
+                title: >-
+                  CheckpointAddresses contains the addresses of the submitter
+                  and reporter of a given checkpoint
+
+                  submitter is the address of the submitter of the checkpoint to
+                  BTC
+
+                  reporter is the address of the submitter of the
+                  MsgInsertBTCSpvProof message to Babylon
               title: list of vigilantes' addresses
+          description: >-
+            BTCCheckpointInfo contains all checkpoint related data expected in a
+            query response.
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -10645,6 +10734,9 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
+    title: >-
+      QueryEpochSubmissionsResponse defines a response to get all submissions in
+      given epoch (QueryEpochSubmissionsRequest)
   babylon.btccheckpoint.v1.QueryParamsResponse:
     type: object
     properties:
@@ -11200,6 +11292,14 @@ definitions:
       work:
         type: string
         format: byte
+    description: >-
+      BTCHeaderInfo is a structure that contains all relevant information about
+      a BTC header
+       - Full header bytes
+       - Header hash for easy retrieval
+       - Height of the header in the BTC chain
+       - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+         and the total work of the header.
   babylon.btclightclient.v1.Params:
     type: object
     description: Params defines the parameters for the module.
@@ -11221,6 +11321,17 @@ definitions:
           work:
             type: string
             format: byte
+        description: >-
+          BTCHeaderInfo is a structure that contains all relevant information
+          about a BTC header
+           - Full header bytes
+           - Header hash for easy retrieval
+           - Height of the header in the BTC chain
+           - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+             and the total work of the header.
+    description: >-
+      QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC
+      method.
   babylon.btclightclient.v1.QueryContainsBytesResponse:
     type: object
     properties:
@@ -11292,6 +11403,14 @@ definitions:
             work:
               type: string
               format: byte
+          description: >-
+            BTCHeaderInfo is a structure that contains all relevant information
+            about a BTC header
+             - Full header bytes
+             - Header hash for easy retrieval
+             - Height of the header in the BTC chain
+             - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+               and the total work of the header.
       pagination:
         type: object
         properties:
@@ -11346,6 +11465,15 @@ definitions:
           work:
             type: string
             format: byte
+        description: >-
+          BTCHeaderInfo is a structure that contains all relevant information
+          about a BTC header
+           - Full header bytes
+           - Header hash for easy retrieval
+           - Height of the header in the BTC chain
+           - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+             and the total work of the header.
+    description: QueryTipResponse is the response type for the Query/Tip RPC method.
   babylon.epoching.v1.BondState:
     type: string
     enum:
@@ -11590,7 +11718,7 @@ definitions:
           proposer_address:
             type: string
             format: byte
-        description: Header defines the structure of a Tendermint block header.
+        description: Header defines the structure of a block header.
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -11838,7 +11966,7 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
-            description: Header defines the structure of a Tendermint block header.
+            description: Header defines the structure of a block header.
   babylon.epoching.v1.QueryEpochMsgsResponse:
     type: object
     properties:
@@ -12477,7 +12605,7 @@ definitions:
                 proposer_address:
                   type: string
                   format: byte
-              description: Header defines the structure of a Tendermint block header.
+              description: Header defines the structure of a block header.
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -14171,7 +14299,7 @@ definitions:
       proposer_address:
         type: string
         format: byte
-    description: Header defines the structure of a Tendermint block header.
+    description: Header defines the structure of a block header.
   tendermint.types.PartSetHeader:
     type: object
     properties:
@@ -14212,7 +14340,7 @@ definitions:
           - CKPT_STATUS_FINALIZED
         default: CKPT_STATUS_ACCUMULATING
         description: |-
-          CkptStatus is the status of a checkpoint.
+          CheckpointStatus is the status of a checkpoint.
 
            - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
            - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14236,6 +14364,7 @@ definitions:
           state
 
           update
+    description: CheckpointStateUpdate defines a state transition on the checkpoint.
   babylon.checkpointing.v1.CheckpointStatus:
     type: string
     enum:
@@ -14246,7 +14375,7 @@ definitions:
       - CKPT_STATUS_FINALIZED
     default: CKPT_STATUS_ACCUMULATING
     description: |-
-      CkptStatus is the status of a checkpoint.
+      CheckpointStatus is the status of a checkpoint.
 
        - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
        - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14312,7 +14441,7 @@ definitions:
           - CKPT_STATUS_FINALIZED
         default: CKPT_STATUS_ACCUMULATING
         description: |-
-          CkptStatus is the status of a checkpoint.
+          CheckpointStatus is the status of a checkpoint.
 
            - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
            - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14355,6 +14484,9 @@ definitions:
 
               sigs
         title: RawCheckpoint wraps the BLS multi sig with meta data
+    description: |-
+      QueryLastCheckpointWithStatusResponse is the response type for the
+      Query/LastCheckpointWithStatus RPC method.
   babylon.checkpointing.v1.QueryParamsResponse:
     type: object
     properties:
@@ -14410,7 +14542,7 @@ definitions:
                 - CKPT_STATUS_FINALIZED
               default: CKPT_STATUS_ACCUMULATING
               description: |-
-                CkptStatus is the status of a checkpoint.
+                CheckpointStatus is the status of a checkpoint.
 
                  - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                  - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14443,7 +14575,7 @@ definitions:
                       - CKPT_STATUS_FINALIZED
                     default: CKPT_STATUS_ACCUMULATING
                     description: |-
-                      CkptStatus is the status of a checkpoint.
+                      CheckpointStatus is the status of a checkpoint.
 
                        - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                        - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14469,6 +14601,9 @@ definitions:
                       triggers the state
 
                       update
+                description: >-
+                  CheckpointStateUpdate defines a state transition on the
+                  checkpoint.
               description: >-
                 lifecycle defines the lifecycle of this checkpoint, i.e., each
                 state
@@ -14547,7 +14682,7 @@ definitions:
               - CKPT_STATUS_FINALIZED
             default: CKPT_STATUS_ACCUMULATING
             description: |-
-              CkptStatus is the status of a checkpoint.
+              CheckpointStatus is the status of a checkpoint.
 
                - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14578,7 +14713,7 @@ definitions:
                     - CKPT_STATUS_FINALIZED
                   default: CKPT_STATUS_ACCUMULATING
                   description: |-
-                    CkptStatus is the status of a checkpoint.
+                    CheckpointStatus is the status of a checkpoint.
 
                      - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                      - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14604,6 +14739,9 @@ definitions:
                     triggers the state
 
                     update
+              description: >-
+                CheckpointStateUpdate defines a state transition on the
+                checkpoint.
             description: >-
               lifecycle defines the lifecycle of this checkpoint, i.e., each
               state
@@ -14708,7 +14846,7 @@ definitions:
           - CKPT_STATUS_FINALIZED
         default: CKPT_STATUS_ACCUMULATING
         description: |-
-          CkptStatus is the status of a checkpoint.
+          CheckpointStatus is the status of a checkpoint.
 
            - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
            - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14739,7 +14877,7 @@ definitions:
                 - CKPT_STATUS_FINALIZED
               default: CKPT_STATUS_ACCUMULATING
               description: |-
-                CkptStatus is the status of a checkpoint.
+                CheckpointStatus is the status of a checkpoint.
 
                  - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
                  - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
@@ -14763,6 +14901,7 @@ definitions:
                 the state
 
                 update
+          description: CheckpointStateUpdate defines a state transition on the checkpoint.
         description: |-
           lifecycle defines the lifecycle of this checkpoint, i.e., each state
           transition and the time (in both timestamp and block height) of this
@@ -14888,7 +15027,7 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
-            description: Header defines the structure of a Tendermint block header.
+            description: Header defines the structure of a block header.
           babylon_epoch:
             type: string
             format: uint64
@@ -15012,7 +15151,7 @@ definitions:
                     proposer_address:
                       type: string
                       format: byte
-                  description: Header defines the structure of a Tendermint block header.
+                  description: Header defines the structure of a block header.
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -15170,7 +15309,7 @@ definitions:
                 proposer_address:
                   type: string
                   format: byte
-              description: Header defines the structure of a Tendermint block header.
+              description: Header defines the structure of a block header.
             babylon_epoch:
               type: string
               format: uint64
@@ -15312,7 +15451,7 @@ definitions:
           proposer_address:
             type: string
             format: byte
-        description: Header defines the structure of a Tendermint block header.
+        description: Header defines the structure of a block header.
       babylon_epoch:
         type: string
         format: uint64
@@ -15755,7 +15894,7 @@ definitions:
                   proposer_address:
                     type: string
                     format: byte
-                description: Header defines the structure of a Tendermint block header.
+                description: Header defines the structure of a block header.
               babylon_epoch:
                 type: string
                 format: uint64
@@ -15880,9 +16019,7 @@ definitions:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -16092,7 +16229,7 @@ definitions:
                   proposer_address:
                     type: string
                     format: byte
-                description: Header defines the structure of a Tendermint block header.
+                description: Header defines the structure of a block header.
               babylon_epoch:
                 type: string
                 format: uint64
@@ -16217,9 +16354,7 @@ definitions:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -16395,7 +16530,7 @@ definitions:
                   proposer_address:
                     type: string
                     format: byte
-                description: Header defines the structure of a Tendermint block header.
+                description: Header defines the structure of a block header.
               babylon_epoch:
                 type: string
                 format: uint64
@@ -16520,9 +16655,7 @@ definitions:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -16774,7 +16907,7 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
-            description: Header defines the structure of a Tendermint block header.
+            description: Header defines the structure of a block header.
       raw_checkpoint:
         title: raw_checkpoint is the raw checkpoint of this epoch
         type: object
@@ -17158,7 +17291,7 @@ definitions:
                   proposer_address:
                     type: string
                     format: byte
-                description: Header defines the structure of a Tendermint block header.
+                description: Header defines the structure of a block header.
               babylon_epoch:
                 type: string
                 format: uint64
@@ -17283,9 +17416,7 @@ definitions:
                         proposer_address:
                           type: string
                           format: byte
-                      description: >-
-                        Header defines the structure of a Tendermint block
-                        header.
+                      description: Header defines the structure of a block header.
                     babylon_epoch:
                       type: string
                       format: uint64
@@ -17537,7 +17668,7 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
-            description: Header defines the structure of a Tendermint block header.
+            description: Header defines the structure of a block header.
       raw_checkpoint:
         title: raw_checkpoint is the raw checkpoint of this epoch
         type: object
@@ -17913,7 +18044,7 @@ definitions:
               proposer_address:
                 type: string
                 format: byte
-            description: Header defines the structure of a Tendermint block header.
+            description: Header defines the structure of a block header.
           babylon_epoch:
             type: string
             format: uint64
@@ -18033,7 +18164,7 @@ definitions:
                     proposer_address:
                       type: string
                       format: byte
-                  description: Header defines the structure of a Tendermint block header.
+                  description: Header defines the structure of a block header.
                 babylon_epoch:
                   type: string
                   format: uint64
@@ -18185,7 +18316,7 @@ definitions:
                 proposer_address:
                   type: string
                   format: byte
-              description: Header defines the structure of a Tendermint block header.
+              description: Header defines the structure of a block header.
             babylon_epoch:
               type: string
               format: uint64
@@ -18311,7 +18442,7 @@ definitions:
                 proposer_address:
                   type: string
                   format: byte
-              description: Header defines the structure of a Tendermint block header.
+              description: Header defines the structure of a block header.
             babylon_epoch:
               type: string
               format: uint64

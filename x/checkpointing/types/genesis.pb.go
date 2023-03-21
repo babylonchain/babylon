@@ -27,7 +27,8 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // GenesisState defines the checkpointing module's genesis state.
 type GenesisState struct {
 	// params defines all the paramaters of related to checkpointing
-	Params      Params        `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+	// genesis_keys defines the public keys for the genesis validators
 	GenesisKeys []*GenesisKey `protobuf:"bytes,2,rep,name=genesis_keys,json=genesisKeys,proto3" json:"genesis_keys,omitempty"`
 }
 
@@ -78,6 +79,7 @@ func (m *GenesisState) GetGenesisKeys() []*GenesisKey {
 	return nil
 }
 
+// GenesisKey defines public key information about the genesis validators
 type GenesisKey struct {
 	// validator_address is the address corresponding to a validator
 	ValidatorAddress string `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`

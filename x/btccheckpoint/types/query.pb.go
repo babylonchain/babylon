@@ -113,6 +113,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
+// QueryBtcCheckpointInfoRequest defines the query to get the best checkpoint for a given epoch
 type QueryBtcCheckpointInfoRequest struct {
 	// Number of epoch for which the earliest checkpointing btc height is
 	// requested
@@ -307,6 +308,7 @@ func (m *QueryBtcCheckpointsInfoResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryEpochSubmissionsRequest defines a request to get all submissions in given epoch
 type QueryEpochSubmissionsRequest struct {
 	// Number of epoch for which submissions are requested
 	EpochNum   uint64             `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
@@ -360,6 +362,7 @@ func (m *QueryEpochSubmissionsRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
+// QueryEpochSubmissionsResponse defines a response to get all submissions in given epoch (QueryEpochSubmissionsRequest)
 type QueryEpochSubmissionsResponse struct {
 	// All submissions saved during an epoch.
 	Keys       []*SubmissionKey    `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
@@ -489,6 +492,7 @@ type QueryClient interface {
 	BtcCheckpointInfo(ctx context.Context, in *QueryBtcCheckpointInfoRequest, opts ...grpc.CallOption) (*QueryBtcCheckpointInfoResponse, error)
 	// BtcCheckpointsInfo returns checkpoint info for a range of epochs
 	BtcCheckpointsInfo(ctx context.Context, in *QueryBtcCheckpointsInfoRequest, opts ...grpc.CallOption) (*QueryBtcCheckpointsInfoResponse, error)
+	// EpochSubmissions returns all submissions for a given epoch
 	EpochSubmissions(ctx context.Context, in *QueryEpochSubmissionsRequest, opts ...grpc.CallOption) (*QueryEpochSubmissionsResponse, error)
 }
 
@@ -544,6 +548,7 @@ type QueryServer interface {
 	BtcCheckpointInfo(context.Context, *QueryBtcCheckpointInfoRequest) (*QueryBtcCheckpointInfoResponse, error)
 	// BtcCheckpointsInfo returns checkpoint info for a range of epochs
 	BtcCheckpointsInfo(context.Context, *QueryBtcCheckpointsInfoRequest) (*QueryBtcCheckpointsInfoResponse, error)
+	// EpochSubmissions returns all submissions for a given epoch
 	EpochSubmissions(context.Context, *QueryEpochSubmissionsRequest) (*QueryEpochSubmissionsResponse, error)
 }
 

@@ -25,6 +25,12 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// BTCHeaderInfo is a structure that contains all relevant information about a BTC header
+//   - Full header bytes
+//   - Header hash for easy retrieval
+//   - Height of the header in the BTC chain
+//   - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+//     and the total work of the header.
 type BTCHeaderInfo struct {
 	Header *github_com_babylonchain_babylon_types.BTCHeaderBytes     `protobuf:"bytes,1,opt,name=header,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderBytes" json:"header,omitempty"`
 	Hash   *github_com_babylonchain_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,2,opt,name=hash,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderHashBytes" json:"hash,omitempty"`
