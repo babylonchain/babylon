@@ -78,15 +78,19 @@ message QueryParamsResponse {
   babylon.epoching.v1.Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
+// QueryEpochInfoRequest is the request type for the Query/EpochInfo method
 message QueryEpochInfoRequest { uint64 epoch_num = 1; }
 
+// QueryEpochInfoRequest is the response type for the Query/EpochInfo method
 message QueryEpochInfoResponse { babylon.epoching.v1.Epoch epoch = 1; }
 
+// QueryEpochInfosRequest is the request type for the Query/EpochInfos method
 message QueryEpochsInfoRequest {
   // pagination defines whether to have the pagination in the request
   cosmos.base.query.v1beta1.PageRequest pagination = 1;
 }
 
+// QueryEpochsInfoResponse is the response type for the Query/EpochInfos method
 message QueryEpochsInfoResponse {
   repeated babylon.epoching.v1.Epoch epochs = 1;
 
@@ -147,19 +151,31 @@ message QueryLatestEpochMsgsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryValidatorLifecycleRequest is the request type for the
+// Query/ValidatorLifecycle RPC method
 message QueryValidatorLifecycleRequest { string val_addr = 1; }
 
+// QueryValidatorLifecycleResponse is the response type for the
+// Query/ValidatorLifecycle RPC method
 message QueryValidatorLifecycleResponse { ValidatorLifecycle val_life = 1; }
 
+// QueryDelegationLifecycleRequest is the request type for the
+// Query/DelegationLifecycle RPC method
 message QueryDelegationLifecycleRequest { string del_addr = 1; }
 
+// QueryDelegationLifecycleRequest is the response type for the
+// Query/DelegationLifecycle RPC method
 message QueryDelegationLifecycleResponse { DelegationLifecycle del_life = 1; }
 
+// QueryEpochValSetRequest is the request type for the Query/EpochValSet RPC
+// method
 message QueryEpochValSetRequest {
   uint64 epoch_num = 1;
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
+// QueryEpochValSetRequest is the response type for the Query/EpochValSet RPC
+// method
 message QueryEpochValSetResponse {
   repeated babylon.epoching.v1.Validator validators = 1;
   int64 total_voting_power = 2;
