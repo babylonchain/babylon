@@ -449,15 +449,14 @@ func (m *EpochData) GetStatus() BtcStatus {
 }
 
 // CheckpointAddresses contains the addresses of the submitter and reporter of a
-// given checkpoint submitter is the address of the submitter of the checkpoint
-// to BTC reporter is the address of the submitter of the MsgInsertBTCSpvProof
-// message to Babylon
+// given checkpoint
 type CheckpointAddresses struct {
 	// TODO: this could probably be better typed
-	// Address of the checkpoint submitter, extracted from the checkpoint itself.
+	// submitter is the address of the checkpoint submitter to BTC, extracted from
+	// the checkpoint itself.
 	Submitter []byte `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`
-	// Address of the reporter which reported the submissions, calculated from
-	// submission message MsgInsertBTCSpvProof itself
+	// reporter is the address of the reporter who reported the submissions,
+	// calculated from submission message MsgInsertBTCSpvProof itself
 	Reporter []byte `protobuf:"bytes,2,opt,name=reporter,proto3" json:"reporter,omitempty"`
 }
 

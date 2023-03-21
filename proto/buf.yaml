@@ -13,7 +13,6 @@ lint:
     - DEFAULT
     - COMMENTS
     - FILE_LOWER_SNAKE_CASE
-    # TODO Decide which comments we would like to enfore by linter
     - COMMENT_MESSAGE
     - COMMENT_ENUM_VALUE
     - COMMENT_ENUM

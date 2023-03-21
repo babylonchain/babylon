@@ -108,27 +108,24 @@ paths:
                             description: >-
                               TODO: this could probably be better typed
 
-                              Address of the checkpoint submitter, extracted
-                              from the checkpoint itself.
+                              submitter is the address of the checkpoint
+                              submitter to BTC, extracted from
+
+                              the checkpoint itself.
                           reporter:
                             type: string
                             format: byte
                             title: >-
-                              Address of the reporter which reported the
-                              submissions, calculated from
+                              reporter is the address of the reporter who
+                              reported the submissions,
 
-                              submission message MsgInsertBTCSpvProof itself
+                              calculated from submission message
+                              MsgInsertBTCSpvProof itself
                         title: >-
                           CheckpointAddresses contains the addresses of the
                           submitter and reporter of a
 
-                          given checkpoint submitter is the address of the
-                          submitter of the checkpoint
-
-                          to BTC reporter is the address of the submitter of the
-                          MsgInsertBTCSpvProof
-
-                          message to Babylon
+                          given checkpoint
                       title: list of vigilantes' addresses
                   description: >-
                     BTCCheckpointInfo contains all checkpoint related data
@@ -416,27 +413,24 @@ paths:
                           description: >-
                             TODO: this could probably be better typed
 
-                            Address of the checkpoint submitter, extracted from
+                            submitter is the address of the checkpoint submitter
+                            to BTC, extracted from
+
                             the checkpoint itself.
                         reporter:
                           type: string
                           format: byte
                           title: >-
-                            Address of the reporter which reported the
-                            submissions, calculated from
+                            reporter is the address of the reporter who reported
+                            the submissions,
 
-                            submission message MsgInsertBTCSpvProof itself
+                            calculated from submission message
+                            MsgInsertBTCSpvProof itself
                       title: >-
                         CheckpointAddresses contains the addresses of the
                         submitter and reporter of a
 
-                        given checkpoint submitter is the address of the
-                        submitter of the checkpoint
-
-                        to BTC reporter is the address of the submitter of the
-                        MsgInsertBTCSpvProof
-
-                        message to Babylon
+                        given checkpoint
                     title: list of vigilantes' addresses
                 description: >-
                   BTCCheckpointInfo contains all checkpoint related data
@@ -10404,27 +10398,23 @@ definitions:
               description: >-
                 TODO: this could probably be better typed
 
-                Address of the checkpoint submitter, extracted from the
-                checkpoint itself.
+                submitter is the address of the checkpoint submitter to BTC,
+                extracted from
+
+                the checkpoint itself.
             reporter:
               type: string
               format: byte
               title: >-
-                Address of the reporter which reported the submissions,
-                calculated from
+                reporter is the address of the reporter who reported the
+                submissions,
 
-                submission message MsgInsertBTCSpvProof itself
+                calculated from submission message MsgInsertBTCSpvProof itself
           title: >-
             CheckpointAddresses contains the addresses of the submitter and
             reporter of a
 
-            given checkpoint submitter is the address of the submitter of the
-            checkpoint
-
-            to BTC reporter is the address of the submitter of the
-            MsgInsertBTCSpvProof
-
-            message to Babylon
+            given checkpoint
         title: list of vigilantes' addresses
     description: |-
       BTCCheckpointInfo contains all checkpoint related data expected in a query
@@ -10438,27 +10428,21 @@ definitions:
         description: >-
           TODO: this could probably be better typed
 
-          Address of the checkpoint submitter, extracted from the checkpoint
-          itself.
+          submitter is the address of the checkpoint submitter to BTC, extracted
+          from
+
+          the checkpoint itself.
       reporter:
         type: string
         format: byte
-        title: >-
-          Address of the reporter which reported the submissions, calculated
-          from
-
-          submission message MsgInsertBTCSpvProof itself
+        title: |-
+          reporter is the address of the reporter who reported the submissions,
+          calculated from submission message MsgInsertBTCSpvProof itself
     title: >-
       CheckpointAddresses contains the addresses of the submitter and reporter
       of a
 
-      given checkpoint submitter is the address of the submitter of the
-      checkpoint
-
-      to BTC reporter is the address of the submitter of the
-      MsgInsertBTCSpvProof
-
-      message to Babylon
+      given checkpoint
   babylon.btccheckpoint.v1.Params:
     type: object
     properties:
@@ -10583,27 +10567,24 @@ definitions:
                   description: >-
                     TODO: this could probably be better typed
 
-                    Address of the checkpoint submitter, extracted from the
-                    checkpoint itself.
+                    submitter is the address of the checkpoint submitter to BTC,
+                    extracted from
+
+                    the checkpoint itself.
                 reporter:
                   type: string
                   format: byte
                   title: >-
-                    Address of the reporter which reported the submissions,
-                    calculated from
+                    reporter is the address of the reporter who reported the
+                    submissions,
 
-                    submission message MsgInsertBTCSpvProof itself
+                    calculated from submission message MsgInsertBTCSpvProof
+                    itself
               title: >-
                 CheckpointAddresses contains the addresses of the submitter and
                 reporter of a
 
-                given checkpoint submitter is the address of the submitter of
-                the checkpoint
-
-                to BTC reporter is the address of the submitter of the
-                MsgInsertBTCSpvProof
-
-                message to Babylon
+                given checkpoint
             title: list of vigilantes' addresses
         description: >-
           BTCCheckpointInfo contains all checkpoint related data expected in a
@@ -10707,27 +10688,24 @@ definitions:
                     description: >-
                       TODO: this could probably be better typed
 
-                      Address of the checkpoint submitter, extracted from the
-                      checkpoint itself.
+                      submitter is the address of the checkpoint submitter to
+                      BTC, extracted from
+
+                      the checkpoint itself.
                   reporter:
                     type: string
                     format: byte
                     title: >-
-                      Address of the reporter which reported the submissions,
-                      calculated from
+                      reporter is the address of the reporter who reported the
+                      submissions,
 
-                      submission message MsgInsertBTCSpvProof itself
+                      calculated from submission message MsgInsertBTCSpvProof
+                      itself
                 title: >-
                   CheckpointAddresses contains the addresses of the submitter
                   and reporter of a
 
-                  given checkpoint submitter is the address of the submitter of
-                  the checkpoint
-
-                  to BTC reporter is the address of the submitter of the
-                  MsgInsertBTCSpvProof
-
-                  message to Babylon
+                  given checkpoint
               title: list of vigilantes' addresses
           description: >-
             BTCCheckpointInfo contains all checkpoint related data expected in a

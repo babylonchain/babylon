@@ -121,15 +121,14 @@ message EpochData {
 }
 
 // CheckpointAddresses contains the addresses of the submitter and reporter of a
-// given checkpoint submitter is the address of the submitter of the checkpoint
-// to BTC reporter is the address of the submitter of the MsgInsertBTCSpvProof
-// message to Babylon
+// given checkpoint
 message CheckpointAddresses {
   // TODO: this could probably be better typed
-  // Address of the checkpoint submitter, extracted from the checkpoint itself.
+  // submitter is the address of the checkpoint submitter to BTC, extracted from
+  // the checkpoint itself.
   bytes submitter = 1;
-  // Address of the reporter which reported the submissions, calculated from
-  // submission message MsgInsertBTCSpvProof itself
+  // reporter is the address of the reporter who reported the submissions,
+  // calculated from submission message MsgInsertBTCSpvProof itself
   bytes reporter = 2;
 }
 

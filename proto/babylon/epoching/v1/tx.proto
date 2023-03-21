@@ -23,7 +23,7 @@ service Msg {
       returns (MsgWrappedBeginRedelegateResponse);
 }
 
-// MsgWrappedDelegate is the message for delegating some stakes
+// MsgWrappedDelegate is the message for delegating stakes
 message MsgWrappedDelegate {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -34,7 +34,7 @@ message MsgWrappedDelegate {
 // MsgWrappedDelegate is the response to the MsgWrappedDelegate message
 message MsgWrappedDelegateResponse {}
 
-// MsgWrappedUndelegate is the message for undelegating some stakes
+// MsgWrappedUndelegate is the message for undelegating stakes
 message MsgWrappedUndelegate {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
@@ -46,7 +46,7 @@ message MsgWrappedUndelegate {
 // message
 message MsgWrappedUndelegateResponse {}
 
-// MsgWrappedDelegate is the message for moving some bonded stakes from a
+// MsgWrappedDelegate is the message for moving bonded stakes from a
 // validator to another validator
 message MsgWrappedBeginRedelegate {
   option (gogoproto.equal) = false;
