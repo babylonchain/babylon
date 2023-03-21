@@ -27,7 +27,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the store
+// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the
+// store
 type MsgInsertBTCSpvProof struct {
 	Submitter string         `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`
 	Proofs    []*BTCSpvProof `protobuf:"bytes,2,rep,name=proofs,proto3" json:"proofs,omitempty"`
@@ -80,7 +81,8 @@ func (m *MsgInsertBTCSpvProof) GetProofs() []*BTCSpvProof {
 	return nil
 }
 
-// MsgInsertBTCSpvProofResponse defines the response for the MsgInsertBTCSpvProof message
+// MsgInsertBTCSpvProofResponse defines the response for the
+// MsgInsertBTCSpvProof message
 type MsgInsertBTCSpvProofResponse struct {
 }
 

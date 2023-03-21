@@ -113,7 +113,8 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryBtcCheckpointInfoRequest defines the query to get the best checkpoint for a given epoch
+// QueryBtcCheckpointInfoRequest defines the query to get the best checkpoint
+// for a given epoch
 type QueryBtcCheckpointInfoRequest struct {
 	// Number of epoch for which the earliest checkpointing btc height is
 	// requested
@@ -308,7 +309,8 @@ func (m *QueryBtcCheckpointsInfoResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryEpochSubmissionsRequest defines a request to get all submissions in given epoch
+// QueryEpochSubmissionsRequest defines a request to get all submissions in
+// given epoch
 type QueryEpochSubmissionsRequest struct {
 	// Number of epoch for which submissions are requested
 	EpochNum   uint64             `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
@@ -362,7 +364,8 @@ func (m *QueryEpochSubmissionsRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
-// QueryEpochSubmissionsResponse defines a response to get all submissions in given epoch (QueryEpochSubmissionsRequest)
+// QueryEpochSubmissionsResponse defines a response to get all submissions in
+// given epoch (QueryEpochSubmissionsRequest)
 type QueryEpochSubmissionsResponse struct {
 	// All submissions saved during an epoch.
 	Keys       []*SubmissionKey    `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`

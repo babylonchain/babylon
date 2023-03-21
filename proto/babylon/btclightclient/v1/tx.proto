@@ -7,7 +7,8 @@ option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // InsertHeader adds a header to the BTC light client chain maintained by Babylon.
+  // InsertHeader adds a header to the BTC light client chain maintained by
+  // Babylon.
   rpc InsertHeader(MsgInsertHeader) returns (MsgInsertHeaderResponse) {};
 }
 

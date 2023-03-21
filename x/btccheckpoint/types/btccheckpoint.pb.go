@@ -448,9 +448,10 @@ func (m *EpochData) GetStatus() BtcStatus {
 	return Submitted
 }
 
-// CheckpointAddresses contains the addresses of the submitter and reporter of a given checkpoint
-// submitter is the address of the submitter of the checkpoint to BTC
-// reporter is the address of the submitter of the MsgInsertBTCSpvProof message to Babylon
+// CheckpointAddresses contains the addresses of the submitter and reporter of a
+// given checkpoint submitter is the address of the submitter of the checkpoint
+// to BTC reporter is the address of the submitter of the MsgInsertBTCSpvProof
+// message to Babylon
 type CheckpointAddresses struct {
 	// TODO: this could probably be better typed
 	// Address of the checkpoint submitter, extracted from the checkpoint itself.
@@ -507,7 +508,8 @@ func (m *CheckpointAddresses) GetReporter() []byte {
 	return nil
 }
 
-// BTCCheckpointInfo contains all checkpoint related data expected in a query response.
+// BTCCheckpointInfo contains all checkpoint related data expected in a query
+// response.
 type BTCCheckpointInfo struct {
 	// epoch number of this checkpoint
 	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`

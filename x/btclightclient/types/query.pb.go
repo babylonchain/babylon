@@ -563,7 +563,8 @@ func (m *QueryTipResponse) GetHeader() *BTCHeaderInfo {
 	return nil
 }
 
-// QueryBaseHeaderRequest is the request type for the Query/BaseHeader RPC method.
+// QueryBaseHeaderRequest is the request type for the Query/BaseHeader RPC
+// method.
 type QueryBaseHeaderRequest struct {
 }
 
@@ -600,7 +601,8 @@ func (m *QueryBaseHeaderRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBaseHeaderRequest proto.InternalMessageInfo
 
-// QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC method.
+// QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC
+// method.
 type QueryBaseHeaderResponse struct {
 	Header *BTCHeaderInfo `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
 }
@@ -745,7 +747,8 @@ type QueryClient interface {
 	MainChain(ctx context.Context, in *QueryMainChainRequest, opts ...grpc.CallOption) (*QueryMainChainResponse, error)
 	// Tip return best header on canonical chain
 	Tip(ctx context.Context, in *QueryTipRequest, opts ...grpc.CallOption) (*QueryTipResponse, error)
-	// BaseHeader returns the base BTC header of the chain. This header is defined on genesis.
+	// BaseHeader returns the base BTC header of the chain. This header is defined
+	// on genesis.
 	BaseHeader(ctx context.Context, in *QueryBaseHeaderRequest, opts ...grpc.CallOption) (*QueryBaseHeaderResponse, error)
 }
 
@@ -837,7 +840,8 @@ type QueryServer interface {
 	MainChain(context.Context, *QueryMainChainRequest) (*QueryMainChainResponse, error)
 	// Tip return best header on canonical chain
 	Tip(context.Context, *QueryTipRequest) (*QueryTipResponse, error)
-	// BaseHeader returns the base BTC header of the chain. This header is defined on genesis.
+	// BaseHeader returns the base BTC header of the chain. This header is defined
+	// on genesis.
 	BaseHeader(context.Context, *QueryBaseHeaderRequest) (*QueryBaseHeaderResponse, error)
 }
 

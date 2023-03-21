@@ -22,7 +22,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// EventCheckpointAccumulating is emitted when a checkpoint reaches the `Accumulating` state.
+// EventCheckpointAccumulating is emitted when a checkpoint reaches the
+// `Accumulating` state.
 type EventCheckpointAccumulating struct {
 	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
 }
@@ -67,7 +68,8 @@ func (m *EventCheckpointAccumulating) GetCheckpoint() *RawCheckpointWithMeta {
 	return nil
 }
 
-// EventCheckpointSealed is emitted when a checkpoint reaches the `Sealed` state.
+// EventCheckpointSealed is emitted when a checkpoint reaches the `Sealed`
+// state.
 type EventCheckpointSealed struct {
 	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
 }
@@ -112,7 +114,8 @@ func (m *EventCheckpointSealed) GetCheckpoint() *RawCheckpointWithMeta {
 	return nil
 }
 
-// EventCheckpointSubmitted is emitted when a checkpoint reaches the `Submitted` state.
+// EventCheckpointSubmitted is emitted when a checkpoint reaches the `Submitted`
+// state.
 type EventCheckpointSubmitted struct {
 	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
 }
@@ -157,7 +160,8 @@ func (m *EventCheckpointSubmitted) GetCheckpoint() *RawCheckpointWithMeta {
 	return nil
 }
 
-// EventCheckpointConfirmed is emitted when a checkpoint reaches the `Confirmed` state.
+// EventCheckpointConfirmed is emitted when a checkpoint reaches the `Confirmed`
+// state.
 type EventCheckpointConfirmed struct {
 	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
 }
@@ -202,7 +206,8 @@ func (m *EventCheckpointConfirmed) GetCheckpoint() *RawCheckpointWithMeta {
 	return nil
 }
 
-// EventCheckpointFinalized is emitted when a checkpoint reaches the `Finalized` state.
+// EventCheckpointFinalized is emitted when a checkpoint reaches the `Finalized`
+// state.
 type EventCheckpointFinalized struct {
 	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
 }
@@ -247,7 +252,8 @@ func (m *EventCheckpointFinalized) GetCheckpoint() *RawCheckpointWithMeta {
 	return nil
 }
 
-// EventCheckpointForgotten is emitted when a checkpoint switches to a `Forgotten` state.
+// EventCheckpointForgotten is emitted when a checkpoint switches to a
+// `Forgotten` state.
 type EventCheckpointForgotten struct {
 	Checkpoint *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=checkpoint,proto3" json:"checkpoint,omitempty"`
 }
@@ -292,7 +298,8 @@ func (m *EventCheckpointForgotten) GetCheckpoint() *RawCheckpointWithMeta {
 	return nil
 }
 
-// EventConflictingCheckpoint is emitted when two conflicting checkpoints are found.
+// EventConflictingCheckpoint is emitted when two conflicting checkpoints are
+// found.
 type EventConflictingCheckpoint struct {
 	ConflictingCheckpoint *RawCheckpoint         `protobuf:"bytes,1,opt,name=conflicting_checkpoint,json=conflictingCheckpoint,proto3" json:"conflicting_checkpoint,omitempty"`
 	LocalCheckpoint       *RawCheckpointWithMeta `protobuf:"bytes,2,opt,name=local_checkpoint,json=localCheckpoint,proto3" json:"local_checkpoint,omitempty"`

@@ -158,8 +158,8 @@ func (m *QueryEndedEpochBtcHeightRequest) GetEpochNum() uint64 {
 	return 0
 }
 
-// QueryEndedEpochBtcHeightResponse defines a response type for EndedEpochBtcHeight
-// RPC method
+// QueryEndedEpochBtcHeightResponse defines a response type for
+// EndedEpochBtcHeight RPC method
 type QueryEndedEpochBtcHeightResponse struct {
 	// height of btc light client when epoch ended
 	BtcLightClientHeight uint64 `protobuf:"varint,1,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
@@ -205,8 +205,8 @@ func (m *QueryEndedEpochBtcHeightResponse) GetBtcLightClientHeight() uint64 {
 	return 0
 }
 
-// QueryReportedCheckpointBtcHeightRequest defines a query type for ReportedCheckpointBtcHeight
-// RPC method
+// QueryReportedCheckpointBtcHeightRequest defines a query type for
+// ReportedCheckpointBtcHeight RPC method
 type QueryReportedCheckpointBtcHeightRequest struct {
 	// ckpt_hash is hex encoded byte string of the hash of the checkpoint
 	CkptHash string `protobuf:"bytes,1,opt,name=ckpt_hash,json=ckptHash,proto3" json:"ckpt_hash,omitempty"`
@@ -254,8 +254,8 @@ func (m *QueryReportedCheckpointBtcHeightRequest) GetCkptHash() string {
 	return ""
 }
 
-// QueryReportedCheckpointBtcHeightResponse defines a response type for ReportedCheckpointBtcHeight
-// RPC method
+// QueryReportedCheckpointBtcHeightResponse defines a response type for
+// ReportedCheckpointBtcHeight RPC method
 type QueryReportedCheckpointBtcHeightResponse struct {
 	// height of btc light client when checkpoint is reported
 	BtcLightClientHeight uint64 `protobuf:"varint,1,opt,name=btc_light_client_height,json=btcLightClientHeight,proto3" json:"btc_light_client_height,omitempty"`
