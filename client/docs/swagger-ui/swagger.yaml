@@ -120,17 +120,21 @@ paths:
                               submission message MsgInsertBTCSpvProof itself
                         title: >-
                           CheckpointAddresses contains the addresses of the
-                          submitter and reporter of a given checkpoint
+                          submitter and reporter of a
 
-                          submitter is the address of the submitter of the
-                          checkpoint to BTC
+                          given checkpoint submitter is the address of the
+                          submitter of the checkpoint
 
-                          reporter is the address of the submitter of the
-                          MsgInsertBTCSpvProof message to Babylon
+                          to BTC reporter is the address of the submitter of the
+                          MsgInsertBTCSpvProof
+
+                          message to Babylon
                       title: list of vigilantes' addresses
                   description: >-
                     BTCCheckpointInfo contains all checkpoint related data
-                    expected in a query response.
+                    expected in a query
+
+                    response.
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -424,17 +428,21 @@ paths:
                             submission message MsgInsertBTCSpvProof itself
                       title: >-
                         CheckpointAddresses contains the addresses of the
-                        submitter and reporter of a given checkpoint
+                        submitter and reporter of a
 
-                        submitter is the address of the submitter of the
-                        checkpoint to BTC
+                        given checkpoint submitter is the address of the
+                        submitter of the checkpoint
 
-                        reporter is the address of the submitter of the
-                        MsgInsertBTCSpvProof message to Babylon
+                        to BTC reporter is the address of the submitter of the
+                        MsgInsertBTCSpvProof
+
+                        message to Babylon
                     title: list of vigilantes' addresses
                 description: >-
                   BTCCheckpointInfo contains all checkpoint related data
-                  expected in a query response.
+                  expected in a query
+
+                  response.
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
@@ -554,7 +562,9 @@ paths:
                    }
             title: >-
               QueryEpochSubmissionsResponse defines a response to get all
-              submissions in given epoch (QueryEpochSubmissionsRequest)
+              submissions in
+
+              given epoch (QueryEpochSubmissionsRequest)
         default:
           description: An unexpected error response.
           schema:
@@ -646,7 +656,9 @@ paths:
     get:
       summary: >-
         BaseHeader returns the base BTC header of the chain. This header is
-        defined on genesis.
+        defined
+
+        on genesis.
       operationId: BaseHeader
       responses:
         '200':
@@ -671,15 +683,20 @@ paths:
                     format: byte
                 description: >-
                   BTCHeaderInfo is a structure that contains all relevant
-                  information about a BTC header
+                  information about a
+
+                  BTC header
                    - Full header bytes
                    - Header hash for easy retrieval
                    - Height of the header in the BTC chain
-                   - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+                   - Total work spent on the header. This is the sum of the work corresponding
+                   to the header Bits field
                      and the total work of the header.
             description: >-
               QueryBaseHeaderResponse is the response type for the
-              Query/BaseHeader RPC method.
+              Query/BaseHeader RPC
+
+              method.
         default:
           description: An unexpected error response.
           schema:
@@ -956,11 +973,14 @@ paths:
                       format: byte
                   description: >-
                     BTCHeaderInfo is a structure that contains all relevant
-                    information about a BTC header
+                    information about a
+
+                    BTC header
                      - Full header bytes
                      - Header hash for easy retrieval
                      - Height of the header in the BTC chain
-                     - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+                     - Total work spent on the header. This is the sum of the work corresponding
+                     to the header Bits field
                        and the total work of the header.
               pagination:
                 type: object
@@ -1141,11 +1161,14 @@ paths:
                     format: byte
                 description: >-
                   BTCHeaderInfo is a structure that contains all relevant
-                  information about a BTC header
+                  information about a
+
+                  BTC header
                    - Full header bytes
                    - Header hash for easy retrieval
                    - Height of the header in the BTC chain
-                   - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+                   - Total work spent on the header. This is the sum of the work corresponding
+                   to the header Bits field
                      and the total work of the header.
             description: >-
               QueryTipResponse is the response type for the Query/Tip RPC
@@ -1419,6 +1442,16 @@ paths:
                             - UNBONDED
                             - REMOVED
                           default: CREATED
+                          description: >-
+                            - CREATED: CREATED is when the validator/delegation
+                            has been created
+                             - BONDED: CREATED is when the validator/delegation has become bonded
+                             - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                             - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                             - REMOVED: CREATED is when the validator/delegation has been removed
+                          title: >-
+                            BondState is the bond state of a validator or
+                            delegation
                         val_addr:
                           type: string
                         block_height:
@@ -1427,6 +1460,19 @@ paths:
                         block_time:
                           type: string
                           format: date-time
+                      title: >-
+                        DelegationStateUpdate is the message that records a
+                        state update of a
+
+                        delegation
+                title: >-
+                  ValidatorLifecycle is a message that records records the
+                  lifecycle of
+
+                  a delegation
+            title: |-
+              QueryDelegationLifecycleRequest is the response type for the
+              Query/DelegationLifecycle RPC method
         default:
           description: An unexpected error response.
           schema:
@@ -1837,6 +1883,7 @@ paths:
                           type: string
                           format: byte
                       description: Header defines the structure of a block header.
+                  title: Epoch is a structure that contains the metadata of an epoch
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -1866,6 +1913,9 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
+            title: >-
+              QueryEpochsInfoResponse is the response type for the
+              Query/EpochInfos method
         default:
           description: An unexpected error response.
           schema:
@@ -2320,6 +2370,10 @@ paths:
                         type: string
                         format: byte
                     description: Header defines the structure of a block header.
+                title: Epoch is a structure that contains the metadata of an epoch
+            title: >-
+              QueryEpochInfoRequest is the response type for the Query/EpochInfo
+              method
         default:
           description: An unexpected error response.
           schema:
@@ -3219,6 +3273,7 @@ paths:
                       type: string
                       format: int64
                       title: power is the validator's voting power
+                  title: Validator is a message that denotes a validator
               total_voting_power:
                 type: string
                 format: int64
@@ -3250,6 +3305,11 @@ paths:
                            repeated Bar results = 1;
                            PageResponse page = 2;
                    }
+            title: >-
+              QueryEpochValSetRequest is the response type for the
+              Query/EpochValSet RPC
+
+              method
         default:
           description: An unexpected error response.
           schema:
@@ -3910,6 +3970,11 @@ paths:
                           validator set and is delayed
 
                           to the epoch boundary
+                  title: >-
+                    QueuedMessageList is a message that contains a list of
+                    staking-related
+
+                    messages queued for an epoch
                 title: >-
                   epoch_msg_map is a list of QueuedMessageList
 
@@ -4453,12 +4518,33 @@ paths:
                             - UNBONDED
                             - REMOVED
                           default: CREATED
+                          description: >-
+                            - CREATED: CREATED is when the validator/delegation
+                            has been created
+                             - BONDED: CREATED is when the validator/delegation has become bonded
+                             - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                             - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                             - REMOVED: CREATED is when the validator/delegation has been removed
+                          title: >-
+                            BondState is the bond state of a validator or
+                            delegation
                         block_height:
                           type: string
                           format: uint64
                         block_time:
                           type: string
                           format: date-time
+                      title: >-
+                        ValStateUpdate is a messages that records a state update
+                        of a validator
+                title: >-
+                  ValidatorLifecycle is a message that records records the
+                  lifecycle of
+
+                  a validator
+            title: |-
+              QueryValidatorLifecycleResponse is the response type for the
+              Query/ValidatorLifecycle RPC method
         default:
           description: An unexpected error response.
           schema:
@@ -10330,14 +10416,17 @@ definitions:
                 submission message MsgInsertBTCSpvProof itself
           title: >-
             CheckpointAddresses contains the addresses of the submitter and
-            reporter of a given checkpoint
+            reporter of a
 
-            submitter is the address of the submitter of the checkpoint to BTC
+            given checkpoint submitter is the address of the submitter of the
+            checkpoint
 
-            reporter is the address of the submitter of the MsgInsertBTCSpvProof
+            to BTC reporter is the address of the submitter of the
+            MsgInsertBTCSpvProof
+
             message to Babylon
         title: list of vigilantes' addresses
-    description: >-
+    description: |-
       BTCCheckpointInfo contains all checkpoint related data expected in a query
       response.
   babylon.btccheckpoint.v1.CheckpointAddresses:
@@ -10361,11 +10450,14 @@ definitions:
           submission message MsgInsertBTCSpvProof itself
     title: >-
       CheckpointAddresses contains the addresses of the submitter and reporter
-      of a given checkpoint
+      of a
 
-      submitter is the address of the submitter of the checkpoint to BTC
+      given checkpoint submitter is the address of the submitter of the
+      checkpoint
 
-      reporter is the address of the submitter of the MsgInsertBTCSpvProof
+      to BTC reporter is the address of the submitter of the
+      MsgInsertBTCSpvProof
+
       message to Babylon
   babylon.btccheckpoint.v1.Params:
     type: object
@@ -10503,17 +10595,21 @@ definitions:
                     submission message MsgInsertBTCSpvProof itself
               title: >-
                 CheckpointAddresses contains the addresses of the submitter and
-                reporter of a given checkpoint
+                reporter of a
 
-                submitter is the address of the submitter of the checkpoint to
-                BTC
+                given checkpoint submitter is the address of the submitter of
+                the checkpoint
 
-                reporter is the address of the submitter of the
-                MsgInsertBTCSpvProof message to Babylon
+                to BTC reporter is the address of the submitter of the
+                MsgInsertBTCSpvProof
+
+                message to Babylon
             title: list of vigilantes' addresses
         description: >-
           BTCCheckpointInfo contains all checkpoint related data expected in a
-          query response.
+          query
+
+          response.
     title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -10623,17 +10719,21 @@ definitions:
                       submission message MsgInsertBTCSpvProof itself
                 title: >-
                   CheckpointAddresses contains the addresses of the submitter
-                  and reporter of a given checkpoint
+                  and reporter of a
 
-                  submitter is the address of the submitter of the checkpoint to
-                  BTC
+                  given checkpoint submitter is the address of the submitter of
+                  the checkpoint
 
-                  reporter is the address of the submitter of the
-                  MsgInsertBTCSpvProof message to Babylon
+                  to BTC reporter is the address of the submitter of the
+                  MsgInsertBTCSpvProof
+
+                  message to Babylon
               title: list of vigilantes' addresses
           description: >-
             BTCCheckpointInfo contains all checkpoint related data expected in a
-            query response.
+            query
+
+            response.
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -10734,7 +10834,7 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
-    title: >-
+    title: |-
       QueryEpochSubmissionsResponse defines a response to get all submissions in
       given epoch (QueryEpochSubmissionsRequest)
   babylon.btccheckpoint.v1.QueryParamsResponse:
@@ -11294,11 +11394,14 @@ definitions:
         format: byte
     description: >-
       BTCHeaderInfo is a structure that contains all relevant information about
-      a BTC header
+      a
+
+      BTC header
        - Full header bytes
        - Header hash for easy retrieval
        - Height of the header in the BTC chain
-       - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+       - Total work spent on the header. This is the sum of the work corresponding
+       to the header Bits field
          and the total work of the header.
   babylon.btclightclient.v1.Params:
     type: object
@@ -11323,13 +11426,16 @@ definitions:
             format: byte
         description: >-
           BTCHeaderInfo is a structure that contains all relevant information
-          about a BTC header
+          about a
+
+          BTC header
            - Full header bytes
            - Header hash for easy retrieval
            - Height of the header in the BTC chain
-           - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+           - Total work spent on the header. This is the sum of the work corresponding
+           to the header Bits field
              and the total work of the header.
-    description: >-
+    description: |-
       QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC
       method.
   babylon.btclightclient.v1.QueryContainsBytesResponse:
@@ -11405,11 +11511,14 @@ definitions:
               format: byte
           description: >-
             BTCHeaderInfo is a structure that contains all relevant information
-            about a BTC header
+            about a
+
+            BTC header
              - Full header bytes
              - Header hash for easy retrieval
              - Height of the header in the BTC chain
-             - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+             - Total work spent on the header. This is the sum of the work corresponding
+             to the header Bits field
                and the total work of the header.
       pagination:
         type: object
@@ -11467,11 +11576,14 @@ definitions:
             format: byte
         description: >-
           BTCHeaderInfo is a structure that contains all relevant information
-          about a BTC header
+          about a
+
+          BTC header
            - Full header bytes
            - Header hash for easy retrieval
            - Height of the header in the BTC chain
-           - Total work spent on the header. This is the sum of the work corresponding to the header Bits field
+           - Total work spent on the header. This is the sum of the work corresponding
+           to the header Bits field
              and the total work of the header.
     description: QueryTipResponse is the response type for the Query/Tip RPC method.
   babylon.epoching.v1.BondState:
@@ -11483,6 +11595,13 @@ definitions:
       - UNBONDED
       - REMOVED
     default: CREATED
+    description: |-
+      - CREATED: CREATED is when the validator/delegation has been created
+       - BONDED: CREATED is when the validator/delegation has become bonded
+       - UNBONDING: CREATED is when the validator/delegation has become unbonding
+       - UNBONDED: CREATED is when the validator/delegation has become unbonded
+       - REMOVED: CREATED is when the validator/delegation has been removed
+    title: BondState is the bond state of a validator or delegation
   babylon.epoching.v1.DelegationLifecycle:
     type: object
     properties:
@@ -11502,6 +11621,14 @@ definitions:
                 - UNBONDED
                 - REMOVED
               default: CREATED
+              description: >-
+                - CREATED: CREATED is when the validator/delegation has been
+                created
+                 - BONDED: CREATED is when the validator/delegation has become bonded
+                 - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                 - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                 - REMOVED: CREATED is when the validator/delegation has been removed
+              title: BondState is the bond state of a validator or delegation
             val_addr:
               type: string
             block_height:
@@ -11510,6 +11637,14 @@ definitions:
             block_time:
               type: string
               format: date-time
+          title: >-
+            DelegationStateUpdate is the message that records a state update of
+            a
+
+            delegation
+    title: |-
+      ValidatorLifecycle is a message that records records the lifecycle of
+      a delegation
   babylon.epoching.v1.DelegationStateUpdate:
     type: object
     properties:
@@ -11522,6 +11657,13 @@ definitions:
           - UNBONDED
           - REMOVED
         default: CREATED
+        description: |-
+          - CREATED: CREATED is when the validator/delegation has been created
+           - BONDED: CREATED is when the validator/delegation has become bonded
+           - UNBONDING: CREATED is when the validator/delegation has become unbonding
+           - UNBONDED: CREATED is when the validator/delegation has become unbonded
+           - REMOVED: CREATED is when the validator/delegation has been removed
+        title: BondState is the bond state of a validator or delegation
       val_addr:
         type: string
       block_height:
@@ -11530,6 +11672,9 @@ definitions:
       block_time:
         type: string
         format: date-time
+    title: |-
+      DelegationStateUpdate is the message that records a state update of a
+      delegation
   babylon.epoching.v1.Epoch:
     type: object
     properties:
@@ -11719,6 +11864,7 @@ definitions:
             type: string
             format: byte
         description: Header defines the structure of a block header.
+    title: Epoch is a structure that contains the metadata of an epoch
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -11765,6 +11911,14 @@ definitions:
                     - UNBONDED
                     - REMOVED
                   default: CREATED
+                  description: >-
+                    - CREATED: CREATED is when the validator/delegation has been
+                    created
+                     - BONDED: CREATED is when the validator/delegation has become bonded
+                     - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                     - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                     - REMOVED: CREATED is when the validator/delegation has been removed
+                  title: BondState is the bond state of a validator or delegation
                 val_addr:
                   type: string
                 block_height:
@@ -11773,6 +11927,17 @@ definitions:
                 block_time:
                   type: string
                   format: date-time
+              title: >-
+                DelegationStateUpdate is the message that records a state update
+                of a
+
+                delegation
+        title: |-
+          ValidatorLifecycle is a message that records records the lifecycle of
+          a delegation
+    title: |-
+      QueryDelegationLifecycleRequest is the response type for the
+      Query/DelegationLifecycle RPC method
   babylon.epoching.v1.QueryEpochInfoResponse:
     type: object
     properties:
@@ -11967,6 +12132,8 @@ definitions:
                 type: string
                 format: byte
             description: Header defines the structure of a block header.
+        title: Epoch is a structure that contains the metadata of an epoch
+    title: QueryEpochInfoRequest is the response type for the Query/EpochInfo method
   babylon.epoching.v1.QueryEpochMsgsResponse:
     type: object
     properties:
@@ -12381,6 +12548,7 @@ definitions:
               type: string
               format: int64
               title: power is the validator's voting power
+          title: Validator is a message that denotes a validator
       total_voting_power:
         type: string
         format: int64
@@ -12410,6 +12578,9 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
+    title: |-
+      QueryEpochValSetRequest is the response type for the Query/EpochValSet RPC
+      method
   babylon.epoching.v1.QueryEpochsInfoResponse:
     type: object
     properties:
@@ -12606,6 +12777,7 @@ definitions:
                   type: string
                   format: byte
               description: Header defines the structure of a block header.
+          title: Epoch is a structure that contains the metadata of an epoch
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -12633,6 +12805,9 @@ definitions:
                    repeated Bar results = 1;
                    PageResponse page = 2;
            }
+    title: >-
+      QueryEpochsInfoResponse is the response type for the Query/EpochInfos
+      method
   babylon.epoching.v1.QueryLatestEpochMsgsResponse:
     type: object
     properties:
@@ -13018,6 +13193,11 @@ definitions:
                   and is delayed
 
                   to the epoch boundary
+          title: >-
+            QueuedMessageList is a message that contains a list of
+            staking-related
+
+            messages queued for an epoch
         title: |-
           epoch_msg_map is a list of QueuedMessageList
           each QueuedMessageList has a field identifying the epoch number
@@ -13086,12 +13266,29 @@ definitions:
                     - UNBONDED
                     - REMOVED
                   default: CREATED
+                  description: >-
+                    - CREATED: CREATED is when the validator/delegation has been
+                    created
+                     - BONDED: CREATED is when the validator/delegation has become bonded
+                     - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                     - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                     - REMOVED: CREATED is when the validator/delegation has been removed
+                  title: BondState is the bond state of a validator or delegation
                 block_height:
                   type: string
                   format: uint64
                 block_time:
                   type: string
                   format: date-time
+              title: >-
+                ValStateUpdate is a messages that records a state update of a
+                validator
+        title: |-
+          ValidatorLifecycle is a message that records records the lifecycle of
+          a validator
+    title: |-
+      QueryValidatorLifecycleResponse is the response type for the
+      Query/ValidatorLifecycle RPC method
   babylon.epoching.v1.QueuedMessage:
     type: object
     properties:
@@ -13805,6 +14002,9 @@ definitions:
             delayed
 
             to the epoch boundary
+    title: |-
+      QueuedMessageList is a message that contains a list of staking-related
+      messages queued for an epoch
   babylon.epoching.v1.ValStateUpdate:
     type: object
     properties:
@@ -13817,12 +14017,20 @@ definitions:
           - UNBONDED
           - REMOVED
         default: CREATED
+        description: |-
+          - CREATED: CREATED is when the validator/delegation has been created
+           - BONDED: CREATED is when the validator/delegation has become bonded
+           - UNBONDING: CREATED is when the validator/delegation has become unbonding
+           - UNBONDED: CREATED is when the validator/delegation has become unbonded
+           - REMOVED: CREATED is when the validator/delegation has been removed
+        title: BondState is the bond state of a validator or delegation
       block_height:
         type: string
         format: uint64
       block_time:
         type: string
         format: date-time
+    title: ValStateUpdate is a messages that records a state update of a validator
   babylon.epoching.v1.Validator:
     type: object
     properties:
@@ -13834,6 +14042,7 @@ definitions:
         type: string
         format: int64
         title: power is the validator's voting power
+    title: Validator is a message that denotes a validator
   babylon.epoching.v1.ValidatorLifecycle:
     type: object
     properties:
@@ -13853,12 +14062,26 @@ definitions:
                 - UNBONDED
                 - REMOVED
               default: CREATED
+              description: >-
+                - CREATED: CREATED is when the validator/delegation has been
+                created
+                 - BONDED: CREATED is when the validator/delegation has become bonded
+                 - UNBONDING: CREATED is when the validator/delegation has become unbonding
+                 - UNBONDED: CREATED is when the validator/delegation has become unbonded
+                 - REMOVED: CREATED is when the validator/delegation has been removed
+              title: BondState is the bond state of a validator or delegation
             block_height:
               type: string
               format: uint64
             block_time:
               type: string
               format: date-time
+          title: >-
+            ValStateUpdate is a messages that records a state update of a
+            validator
+    title: |-
+      ValidatorLifecycle is a message that records records the lifecycle of
+      a validator
   cosmos.base.v1beta1.Coin:
     type: object
     properties:

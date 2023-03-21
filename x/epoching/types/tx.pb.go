@@ -29,6 +29,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgWrappedDelegate is the message for delegating some stakes
 type MsgWrappedDelegate struct {
 	Msg *types.MsgDelegate `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }
@@ -66,6 +67,7 @@ func (m *MsgWrappedDelegate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedDelegate proto.InternalMessageInfo
 
+// MsgWrappedDelegate is the response to the MsgWrappedDelegate message
 type MsgWrappedDelegateResponse struct {
 }
 
@@ -102,6 +104,7 @@ func (m *MsgWrappedDelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedDelegateResponse proto.InternalMessageInfo
 
+// MsgWrappedUndelegate is the message for undelegating some stakes
 type MsgWrappedUndelegate struct {
 	Msg *types.MsgUndelegate `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }
@@ -139,6 +142,8 @@ func (m *MsgWrappedUndelegate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedUndelegate proto.InternalMessageInfo
 
+// MsgWrappedUndelegateResponse is the response to the MsgWrappedUndelegate
+// message
 type MsgWrappedUndelegateResponse struct {
 }
 
@@ -175,6 +180,8 @@ func (m *MsgWrappedUndelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedUndelegateResponse proto.InternalMessageInfo
 
+// MsgWrappedDelegate is the message for moving some bonded stakes from a
+// validator to another validator
 type MsgWrappedBeginRedelegate struct {
 	Msg *types.MsgBeginRedelegate `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }
@@ -212,6 +219,8 @@ func (m *MsgWrappedBeginRedelegate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedBeginRedelegate proto.InternalMessageInfo
 
+// MsgWrappedBeginRedelegateResponse is the response to the
+// MsgWrappedBeginRedelegate message
 type MsgWrappedBeginRedelegateResponse struct {
 }
 
