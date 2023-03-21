@@ -9,7 +9,6 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibcclientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 )
 
 type Hooks struct {
@@ -24,12 +23,12 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterHeaderWithValidCommit is triggered upon each CZ header with a valid QC
-func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibctmtypes.Header, isOnFork bool) {
+func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibcclientkeeper.HeaderInfo, isOnFork bool) {
 	babylonHeader := ctx.BlockHeader()
 	indexedHeader := types.IndexedHeader{
-		ChainId:       header.Header.ChainID,
-		Hash:          header.Header.LastCommitHash,
-		Height:        uint64(header.Header.Height),
+		ChainId:       header.ChaindId,
+		Hash:          header.Hash,
+		Height:        uint64(header.Height),
 		BabylonHeader: &babylonHeader,
 		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash: txHash,
