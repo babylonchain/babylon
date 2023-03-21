@@ -12,11 +12,13 @@ service Msg {
       returns (MsgInsertBTCSpvProofResponse);
 }
 
-// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the store
+// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the
+// store
 message MsgInsertBTCSpvProof {
   string submitter = 1;
   repeated babylon.btccheckpoint.v1.BTCSpvProof proofs = 2;
 }
 
-// MsgInsertBTCSpvProofResponse defines the response for the MsgInsertBTCSpvProof message
+// MsgInsertBTCSpvProofResponse defines the response for the
+// MsgInsertBTCSpvProof message
 message MsgInsertBTCSpvProofResponse {}

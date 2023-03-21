@@ -24,6 +24,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// EventBeginEpoch is the event emitted when an epoch has started
 type EventBeginEpoch struct {
 	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 }
@@ -68,6 +69,7 @@ func (m *EventBeginEpoch) GetEpochNumber() uint64 {
 	return 0
 }
 
+// EventEndEpoch is the event emitted when an epoch has ended
 type EventEndEpoch struct {
 	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 }
@@ -112,6 +114,8 @@ func (m *EventEndEpoch) GetEpochNumber() uint64 {
 	return 0
 }
 
+// EventHandleQueuedMsg is the event emitted when a queued message has been
+// handled
 type EventHandleQueuedMsg struct {
 	OriginalEventType  string                                                   `protobuf:"bytes,1,opt,name=original_event_type,json=originalEventType,proto3" json:"original_event_type,omitempty"`
 	EpochNumber        uint64                                                   `protobuf:"varint,2,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
@@ -197,6 +201,8 @@ func (m *EventHandleQueuedMsg) GetError() string {
 	return ""
 }
 
+// EventSlashThreshold is the event emitted when a set of validators have been
+// slashed
 type EventSlashThreshold struct {
 	SlashedVotingPower int64    `protobuf:"varint,1,opt,name=slashed_voting_power,json=slashedVotingPower,proto3" json:"slashed_voting_power,omitempty"`
 	TotalVotingPower   int64    `protobuf:"varint,2,opt,name=total_voting_power,json=totalVotingPower,proto3" json:"total_voting_power,omitempty"`
@@ -257,6 +263,8 @@ func (m *EventSlashThreshold) GetSlashedValidators() [][]byte {
 	return nil
 }
 
+// EventWrappedDelegate is the event emitted when a MsgWrappedDelegate has been
+// queued
 type EventWrappedDelegate struct {
 	DelegatorAddress string `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
 	ValidatorAddress string `protobuf:"bytes,2,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
@@ -333,6 +341,8 @@ func (m *EventWrappedDelegate) GetEpochBoundary() uint64 {
 	return 0
 }
 
+// EventWrappedUndelegate is the event emitted when a MsgWrappedUndelegate has
+// been queued
 type EventWrappedUndelegate struct {
 	DelegatorAddress string `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
 	ValidatorAddress string `protobuf:"bytes,2,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
@@ -409,6 +419,8 @@ func (m *EventWrappedUndelegate) GetEpochBoundary() uint64 {
 	return 0
 }
 
+// EventWrappedBeginRedelegate is the event emitted when a
+// MsgWrappedBeginRedelegate has been queued
 type EventWrappedBeginRedelegate struct {
 	DelegatorAddress            string `protobuf:"bytes,1,opt,name=delegator_address,json=delegatorAddress,proto3" json:"delegator_address,omitempty"`
 	SourceValidatorAddress      string `protobuf:"bytes,2,opt,name=source_validator_address,json=sourceValidatorAddress,proto3" json:"source_validator_address,omitempty"`

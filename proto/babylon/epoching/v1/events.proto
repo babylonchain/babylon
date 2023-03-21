@@ -5,10 +5,14 @@ import "gogoproto/gogo.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
+// EventBeginEpoch is the event emitted when an epoch has started
 message EventBeginEpoch { uint64 epoch_number = 1; }
 
+// EventEndEpoch is the event emitted when an epoch has ended
 message EventEndEpoch { uint64 epoch_number = 1; }
 
+// EventHandleQueuedMsg is the event emitted when a queued message has been
+// handled
 message EventHandleQueuedMsg {
   string original_event_type = 1;
   uint64 epoch_number = 2;
@@ -21,12 +25,16 @@ message EventHandleQueuedMsg {
   string error = 7;
 }
 
+// EventSlashThreshold is the event emitted when a set of validators have been
+// slashed
 message EventSlashThreshold {
   int64 slashed_voting_power = 1;
   int64 total_voting_power = 2;
   repeated bytes slashed_validators = 3;
 }
 
+// EventWrappedDelegate is the event emitted when a MsgWrappedDelegate has been
+// queued
 message EventWrappedDelegate {
   string delegator_address = 1;
   string validator_address = 2;
@@ -35,6 +43,8 @@ message EventWrappedDelegate {
   uint64 epoch_boundary = 5;
 }
 
+// EventWrappedUndelegate is the event emitted when a MsgWrappedUndelegate has
+// been queued
 message EventWrappedUndelegate {
   string delegator_address = 1;
   string validator_address = 2;
@@ -43,6 +53,8 @@ message EventWrappedUndelegate {
   uint64 epoch_boundary = 5;
 }
 
+// EventWrappedBeginRedelegate is the event emitted when a
+// MsgWrappedBeginRedelegate has been queued
 message EventWrappedBeginRedelegate {
   string delegator_address = 1;
   string source_validator_address = 2;

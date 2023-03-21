@@ -29,14 +29,20 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// BondState is the bond state of a validator or delegation
 type BondState int32
 
 const (
-	BondState_CREATED   BondState = 0
-	BondState_BONDED    BondState = 1
+	// CREATED is when the validator/delegation has been created
+	BondState_CREATED BondState = 0
+	// CREATED is when the validator/delegation has become bonded
+	BondState_BONDED BondState = 1
+	// CREATED is when the validator/delegation has become unbonding
 	BondState_UNBONDING BondState = 2
-	BondState_UNBONDED  BondState = 3
-	BondState_REMOVED   BondState = 4
+	// CREATED is when the validator/delegation has become unbonded
+	BondState_UNBONDED BondState = 3
+	// CREATED is when the validator/delegation has been removed
+	BondState_REMOVED BondState = 4
 )
 
 var BondState_name = map[int32]string{
@@ -63,6 +69,7 @@ func (BondState) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2f2f209d5311f84c, []int{0}
 }
 
+// Epoch is a structure that contains the metadata of an epoch
 type Epoch struct {
 	EpochNumber          uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 	CurrentEpochInterval uint64 `protobuf:"varint,2,opt,name=current_epoch_interval,json=currentEpochInterval,proto3" json:"current_epoch_interval,omitempty"`
@@ -309,6 +316,8 @@ func (*QueuedMessage) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
 type QueuedMessageList struct {
 	EpochNumber uint64           `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 	Msgs        []*QueuedMessage `protobuf:"bytes,2,rep,name=msgs,proto3" json:"msgs,omitempty"`
@@ -361,6 +370,7 @@ func (m *QueuedMessageList) GetMsgs() []*QueuedMessage {
 	return nil
 }
 
+// ValStateUpdate is a messages that records a state update of a validator
 type ValStateUpdate struct {
 	State       BondState  `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.epoching.v1.BondState" json:"state,omitempty"`
 	BlockHeight uint64     `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
@@ -421,6 +431,8 @@ func (m *ValStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a validator
 type ValidatorLifecycle struct {
 	ValAddr string            `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
 	ValLife []*ValStateUpdate `protobuf:"bytes,2,rep,name=val_life,json=valLife,proto3" json:"val_life,omitempty"`
@@ -473,6 +485,8 @@ func (m *ValidatorLifecycle) GetValLife() []*ValStateUpdate {
 	return nil
 }
 
+// DelegationStateUpdate is the message that records a state update of a
+// delegation
 type DelegationStateUpdate struct {
 	State       BondState  `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.epoching.v1.BondState" json:"state,omitempty"`
 	ValAddr     string     `protobuf:"bytes,2,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
@@ -541,6 +555,8 @@ func (m *DelegationStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a delegation
 type DelegationLifecycle struct {
 	DelAddr string                   `protobuf:"bytes,1,opt,name=del_addr,json=delAddr,proto3" json:"del_addr,omitempty"`
 	DelLife []*DelegationStateUpdate `protobuf:"bytes,2,rep,name=del_life,json=delLife,proto3" json:"del_life,omitempty"`
@@ -593,6 +609,7 @@ func (m *DelegationLifecycle) GetDelLife() []*DelegationStateUpdate {
 	return nil
 }
 
+// Validator is a message that denotes a validator
 type Validator struct {
 	// addr is the validator's address (in sdk.ValAddress)
 	Addr []byte `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`

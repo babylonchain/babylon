@@ -22,7 +22,11 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// ZoneconciergePacketData is the message that defines the IBC packets of
+// ZoneConcierge
 type ZoneconciergePacketData struct {
+	// packet is the actual message carried in the IBC packet
+	//
 	// Types that are valid to be assigned to Packet:
 	//
 	//	*ZoneconciergePacketData_Heartbeart
@@ -95,6 +99,8 @@ func (*ZoneconciergePacketData) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// Heartbeat is a heartbeat message that can be carried in IBC packets of
+// ZoneConcierge
 type Heartbeat struct {
 	Msg string `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }

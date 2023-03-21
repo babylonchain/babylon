@@ -24,6 +24,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// BtcStatus is an enum describing the current btc status of the checkpoint
 type BtcStatus int32
 
 const (
@@ -447,12 +448,15 @@ func (m *EpochData) GetStatus() BtcStatus {
 	return Submitted
 }
 
+// CheckpointAddresses contains the addresses of the submitter and reporter of a
+// given checkpoint
 type CheckpointAddresses struct {
 	// TODO: this could probably be better typed
-	// Address of the checkpoint submitter, extracted from the checkpoint itself.
+	// submitter is the address of the checkpoint submitter to BTC, extracted from
+	// the checkpoint itself.
 	Submitter []byte `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`
-	// Address of the reporter which reported the submissions, calculated from
-	// submission message MsgInsertBTCSpvProof itself
+	// reporter is the address of the reporter who reported the submissions,
+	// calculated from submission message MsgInsertBTCSpvProof itself
 	Reporter []byte `protobuf:"bytes,2,opt,name=reporter,proto3" json:"reporter,omitempty"`
 }
 
@@ -503,6 +507,8 @@ func (m *CheckpointAddresses) GetReporter() []byte {
 	return nil
 }
 
+// BTCCheckpointInfo contains all checkpoint related data expected in a query
+// response.
 type BTCCheckpointInfo struct {
 	// epoch number of this checkpoint
 	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`

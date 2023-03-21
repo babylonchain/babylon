@@ -29,7 +29,7 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// CkptStatus is the status of a checkpoint.
+// CheckpointStatus is the status of a checkpoint.
 type CheckpointStatus int32
 
 const (
@@ -206,6 +206,7 @@ func (m *RawCheckpointWithMeta) GetLifecycle() []*CheckpointStateUpdate {
 	return nil
 }
 
+// CheckpointStateUpdate defines a state transition on the checkpoint.
 type CheckpointStateUpdate struct {
 	// state defines the event of a state transition towards this state
 	State CheckpointStatus `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"state,omitempty"`

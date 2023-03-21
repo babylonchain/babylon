@@ -3,8 +3,13 @@ package babylon.zoneconcierge.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
+// ZoneconciergePacketData is the message that defines the IBC packets of
+// ZoneConcierge
 message ZoneconciergePacketData {
+  // packet is the actual message carried in the IBC packet
   oneof packet { Heartbeat heartbeart = 1; }
 }
 
+// Heartbeat is a heartbeat message that can be carried in IBC packets of
+// ZoneConcierge
 message Heartbeat { string msg = 1; }

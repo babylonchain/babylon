@@ -23,26 +23,38 @@ service Msg {
       returns (MsgWrappedBeginRedelegateResponse);
 }
 
+// MsgWrappedDelegate is the message for delegating stakes
 message MsgWrappedDelegate {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   cosmos.staking.v1beta1.MsgDelegate msg = 1;
 }
+
+// MsgWrappedDelegate is the response to the MsgWrappedDelegate message
 message MsgWrappedDelegateResponse {}
 
+// MsgWrappedUndelegate is the message for undelegating stakes
 message MsgWrappedUndelegate {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   cosmos.staking.v1beta1.MsgUndelegate msg = 1;
 }
+
+// MsgWrappedUndelegateResponse is the response to the MsgWrappedUndelegate
+// message
 message MsgWrappedUndelegateResponse {}
 
+// MsgWrappedDelegate is the message for moving bonded stakes from a
+// validator to another validator
 message MsgWrappedBeginRedelegate {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
   cosmos.staking.v1beta1.MsgBeginRedelegate msg = 1;
 }
+
+// MsgWrappedBeginRedelegateResponse is the response to the
+// MsgWrappedBeginRedelegate message
 message MsgWrappedBeginRedelegateResponse {}

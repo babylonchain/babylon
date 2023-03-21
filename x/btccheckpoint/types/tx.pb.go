@@ -27,6 +27,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgInsertBTCSpvProof defines resquest to insert a new checkpoint into the
+// store
 type MsgInsertBTCSpvProof struct {
 	Submitter string         `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`
 	Proofs    []*BTCSpvProof `protobuf:"bytes,2,rep,name=proofs,proto3" json:"proofs,omitempty"`
@@ -79,6 +81,8 @@ func (m *MsgInsertBTCSpvProof) GetProofs() []*BTCSpvProof {
 	return nil
 }
 
+// MsgInsertBTCSpvProofResponse defines the response for the
+// MsgInsertBTCSpvProof message
 type MsgInsertBTCSpvProofResponse struct {
 }
 
@@ -154,6 +158,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// InsertBTCSpvProof tries to insert a new checkpoint into the store.
 	InsertBTCSpvProof(ctx context.Context, in *MsgInsertBTCSpvProof, opts ...grpc.CallOption) (*MsgInsertBTCSpvProofResponse, error)
 }
 
@@ -176,6 +181,7 @@ func (c *msgClient) InsertBTCSpvProof(ctx context.Context, in *MsgInsertBTCSpvPr
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// InsertBTCSpvProof tries to insert a new checkpoint into the store.
 	InsertBTCSpvProof(context.Context, *MsgInsertBTCSpvProof) (*MsgInsertBTCSpvProofResponse, error)
 }
 

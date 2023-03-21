@@ -8,6 +8,7 @@ import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
+// Epoch is a structure that contains the metadata of an epoch
 message Epoch {
   uint64 epoch_number = 1;
   uint64 current_epoch_interval = 2;
@@ -49,30 +50,43 @@ message QueuedMessage {
   }
 }
 
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
 message QueuedMessageList {
   uint64 epoch_number = 1;
   repeated QueuedMessage msgs = 2;
 }
 
+// BondState is the bond state of a validator or delegation
 enum BondState {
+  // CREATED is when the validator/delegation has been created
   CREATED = 0;
+  // CREATED is when the validator/delegation has become bonded
   BONDED = 1;
+  // CREATED is when the validator/delegation has become unbonding
   UNBONDING = 2;
+  // CREATED is when the validator/delegation has become unbonded
   UNBONDED = 3;
+  // CREATED is when the validator/delegation has been removed
   REMOVED = 4;
 }
 
+// ValStateUpdate is a messages that records a state update of a validator
 message ValStateUpdate {
   BondState state = 1;
   uint64 block_height = 2;
   google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a validator
 message ValidatorLifecycle {
   string val_addr = 1;
   repeated ValStateUpdate val_life = 2;
 }
 
+// DelegationStateUpdate is the message that records a state update of a
+// delegation
 message DelegationStateUpdate {
   BondState state = 1;
   string val_addr = 2;
@@ -80,11 +94,14 @@ message DelegationStateUpdate {
   google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a delegation
 message DelegationLifecycle {
   string del_addr = 1;
   repeated DelegationStateUpdate del_life = 2;
 }
 
+// Validator is a message that denotes a validator
 message Validator {
   // addr is the validator's address (in sdk.ValAddress)
   bytes addr = 1;

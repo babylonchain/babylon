@@ -113,6 +113,7 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
+// QueryEpochInfoRequest is the request type for the Query/EpochInfo method
 type QueryEpochInfoRequest struct {
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
@@ -157,6 +158,7 @@ func (m *QueryEpochInfoRequest) GetEpochNum() uint64 {
 	return 0
 }
 
+// QueryEpochInfoRequest is the response type for the Query/EpochInfo method
 type QueryEpochInfoResponse struct {
 	Epoch *Epoch `protobuf:"bytes,1,opt,name=epoch,proto3" json:"epoch,omitempty"`
 }
@@ -201,6 +203,7 @@ func (m *QueryEpochInfoResponse) GetEpoch() *Epoch {
 	return nil
 }
 
+// QueryEpochInfosRequest is the request type for the Query/EpochInfos method
 type QueryEpochsInfoRequest struct {
 	// pagination defines whether to have the pagination in the request
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -246,6 +249,7 @@ func (m *QueryEpochsInfoRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
+// QueryEpochsInfoResponse is the response type for the Query/EpochInfos method
 type QueryEpochsInfoResponse struct {
 	Epochs []*Epoch `protobuf:"bytes,1,rep,name=epochs,proto3" json:"epochs,omitempty"`
 	// pagination defines the pagination in the response
@@ -625,6 +629,8 @@ func (m *QueryLatestEpochMsgsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryValidatorLifecycleRequest is the request type for the
+// Query/ValidatorLifecycle RPC method
 type QueryValidatorLifecycleRequest struct {
 	ValAddr string `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
 }
@@ -669,6 +675,8 @@ func (m *QueryValidatorLifecycleRequest) GetValAddr() string {
 	return ""
 }
 
+// QueryValidatorLifecycleResponse is the response type for the
+// Query/ValidatorLifecycle RPC method
 type QueryValidatorLifecycleResponse struct {
 	ValLife *ValidatorLifecycle `protobuf:"bytes,1,opt,name=val_life,json=valLife,proto3" json:"val_life,omitempty"`
 }
@@ -713,6 +721,8 @@ func (m *QueryValidatorLifecycleResponse) GetValLife() *ValidatorLifecycle {
 	return nil
 }
 
+// QueryDelegationLifecycleRequest is the request type for the
+// Query/DelegationLifecycle RPC method
 type QueryDelegationLifecycleRequest struct {
 	DelAddr string `protobuf:"bytes,1,opt,name=del_addr,json=delAddr,proto3" json:"del_addr,omitempty"`
 }
@@ -757,6 +767,8 @@ func (m *QueryDelegationLifecycleRequest) GetDelAddr() string {
 	return ""
 }
 
+// QueryDelegationLifecycleRequest is the response type for the
+// Query/DelegationLifecycle RPC method
 type QueryDelegationLifecycleResponse struct {
 	DelLife *DelegationLifecycle `protobuf:"bytes,1,opt,name=del_life,json=delLife,proto3" json:"del_life,omitempty"`
 }
@@ -801,6 +813,8 @@ func (m *QueryDelegationLifecycleResponse) GetDelLife() *DelegationLifecycle {
 	return nil
 }
 
+// QueryEpochValSetRequest is the request type for the Query/EpochValSet RPC
+// method
 type QueryEpochValSetRequest struct {
 	EpochNum   uint64             `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -853,6 +867,8 @@ func (m *QueryEpochValSetRequest) GetPagination() *query.PageRequest {
 	return nil
 }
 
+// QueryEpochValSetRequest is the response type for the Query/EpochValSet RPC
+// method
 type QueryEpochValSetResponse struct {
 	Validators       []*Validator        `protobuf:"bytes,1,rep,name=validators,proto3" json:"validators,omitempty"`
 	TotalVotingPower int64               `protobuf:"varint,2,opt,name=total_voting_power,json=totalVotingPower,proto3" json:"total_voting_power,omitempty"`

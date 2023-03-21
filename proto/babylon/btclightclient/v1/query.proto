@@ -45,7 +45,8 @@ service Query {
     option (google.api.http).get = "/babylon/btclightclient/v1/tip";
   }
 
-  // BaseHeader returns the base BTC header of the chain. This header is defined on genesis.
+  // BaseHeader returns the base BTC header of the chain. This header is defined
+  // on genesis.
   rpc BaseHeader(QueryBaseHeaderRequest) returns (QueryBaseHeaderResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/baseheader";
   }
@@ -111,8 +112,10 @@ message QueryTipRequest {}
 // QueryTipResponse is the response type for the Query/Tip RPC method.
 message QueryTipResponse { BTCHeaderInfo header = 1; }
 
-// QueryBaseHeaderRequest is the request type for the Query/BaseHeader RPC method.
+// QueryBaseHeaderRequest is the request type for the Query/BaseHeader RPC
+// method.
 message QueryBaseHeaderRequest {}
 
-// QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC method.
+// QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC
+// method.
 message QueryBaseHeaderResponse { BTCHeaderInfo header = 1; }

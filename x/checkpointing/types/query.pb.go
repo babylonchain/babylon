@@ -548,6 +548,8 @@ func (m *QueryRecentEpochStatusCountResponse) GetStatusCount() map[string]uint64
 	return nil
 }
 
+// QueryLastCheckpointWithStatusRequest is the request type for the
+// Query/LastCheckpointWithStatus RPC method.
 type QueryLastCheckpointWithStatusRequest struct {
 	Status CheckpointStatus `protobuf:"varint,1,opt,name=status,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"status,omitempty"`
 }
@@ -592,6 +594,8 @@ func (m *QueryLastCheckpointWithStatusRequest) GetStatus() CheckpointStatus {
 	return Accumulating
 }
 
+// QueryLastCheckpointWithStatusResponse is the response type for the
+// Query/LastCheckpointWithStatus RPC method.
 type QueryLastCheckpointWithStatusResponse struct {
 	RawCheckpoint *RawCheckpoint `protobuf:"bytes,1,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
 }
