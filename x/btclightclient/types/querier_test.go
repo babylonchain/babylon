@@ -11,18 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
-func TestNewQueryParamsRequest(t *testing.T) {
-	newQueryParams := types.NewQueryParamsRequest()
-	if newQueryParams == nil {
-		t.Fatalf("A nil object was returned")
-	}
-
-	emptyQueryParams := types.QueryParamsRequest{}
-	if *newQueryParams != emptyQueryParams {
-		t.Errorf("expected an empty QueryParamsRequest")
-	}
-}
-
 func TestNewQueryHashesRequest(t *testing.T) {
 	headerBytes := bbn.GetBaseBTCHeaderBytes()
 	headerHashBytes := headerBytes.Hash()

@@ -27,9 +27,8 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		helper := testepoching.NewHelper(t)
 		ek := helper.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
-		querier := checkpointingkeeper.Querier{Keeper: ck}
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
-		types.RegisterQueryServer(queryHelper, querier)
+		types.RegisterQueryServer(queryHelper, ck)
 		queryClient := types.NewQueryClient(queryHelper)
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 		genesisVal := ek.GetValidatorSet(helper.Ctx, 0)[0]

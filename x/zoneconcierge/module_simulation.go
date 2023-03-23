@@ -29,7 +29,6 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 		accs[i] = acc.Address.String()
 	}
 	zoneconciergeGenesis := types.GenesisState{
-		Params: types.DefaultParams(),
 		PortId: types.PortID,
 	}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&zoneconciergeGenesis)

@@ -454,7 +454,6 @@ func NewBabylonApp(
 		appCodec,
 		keys[zctypes.StoreKey],
 		keys[zctypes.MemStoreKey],
-		app.GetSubspace(zctypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
@@ -500,7 +499,6 @@ func NewBabylonApp(
 		appCodec,
 		keys[btclightclienttypes.StoreKey],
 		keys[btclightclienttypes.MemStoreKey],
-		app.GetSubspace(btclightclienttypes.ModuleName),
 		btcConfig,
 	)
 
@@ -508,7 +506,6 @@ func NewBabylonApp(
 		appCodec,
 		keys[monitortypes.StoreKey],
 		keys[monitortypes.StoreKey],
-		app.GetSubspace(monitortypes.ModuleName),
 		&btclightclientKeeper,
 	)
 
@@ -527,7 +524,6 @@ func NewBabylonApp(
 			keys[checkpointingtypes.MemStoreKey],
 			privSigner.WrappedPV,
 			app.EpochingKeeper,
-			app.GetSubspace(checkpointingtypes.ModuleName),
 			privSigner.ClientCtx,
 		)
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(

@@ -7,17 +7,12 @@ import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
-import "babylon/zoneconcierge/v1/params.proto";
 import "babylon/zoneconcierge/v1/zoneconcierge.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylon/zoneconcierge/v1/params";
-  }
   // Header queries the CZ header and fork headers at a given height.
   rpc Header(QueryHeaderRequest) returns (QueryHeaderResponse) {
     option (google.api.http).get =
@@ -68,22 +63,13 @@ service Query {
   }
 }
 
-// QueryParamsRequest is request type for the Query/Params RPC method.
-message QueryParamsRequest {}
-
-// QueryParamsResponse is response type for the Query/Params RPC method.
-message QueryParamsResponse {
-  // params holds all the parameters of this module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
-}
-
 // QueryHeaderRequest is request type for the Query/Header RPC method.
 message QueryHeaderRequest {
   string chain_id = 1;
   uint64 height = 2;
 }
 
-// QueryParamsResponse is response type for the Query/Header RPC method.
+// QueryHeaderResponse is response type for the Query/Header RPC method.
 message QueryHeaderResponse {
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
   babylon.zoneconcierge.v1.Forks fork_headers = 2;

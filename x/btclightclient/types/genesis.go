@@ -18,7 +18,6 @@ func DefaultGenesis() *GenesisState {
 	baseHeaderInfo := NewBTCHeaderInfo(&headerBytes, headerHash, headerHeight, &headerWork)
 
 	return &GenesisState{
-		Params:        DefaultParams(),
 		BaseBtcHeader: *baseHeaderInfo,
 	}
 }
@@ -26,12 +25,7 @@ func DefaultGenesis() *GenesisState {
 // Validate performs basic genesis state validation returning an error upon any
 // failure.
 func (gs GenesisState) Validate() error {
-	err := gs.Params.Validate()
-	if err != nil {
-		return err
-	}
-
-	err = gs.BaseBtcHeader.Validate()
+	err := gs.BaseBtcHeader.Validate()
 	if err != nil {
 		return err
 	}

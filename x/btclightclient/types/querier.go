@@ -5,11 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
-// NewQueryParamsRequest creates a new instance of QueryParamsRequest.
-func NewQueryParamsRequest() *QueryParamsRequest {
-	return &QueryParamsRequest{}
-}
-
 // NewQueryHashesRequest creates a new instance of QueryHashesRequest.
 func NewQueryHashesRequest(req *query.PageRequest) *QueryHashesRequest {
 	return &QueryHashesRequest{Pagination: req}

@@ -10,17 +10,15 @@ import (
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		hooks      types.BTCLightClientHooks
-		paramstore paramtypes.Subspace
-		btcConfig  bbn.BtcConfig
+		cdc       codec.BinaryCodec
+		storeKey  storetypes.StoreKey
+		memKey    storetypes.StoreKey
+		hooks     types.BTCLightClientHooks
+		btcConfig bbn.BtcConfig
 	}
 )
 
@@ -28,21 +26,15 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey storetypes.StoreKey,
-	ps paramtypes.Subspace,
 	btcConfig bbn.BtcConfig,
 ) *Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
 
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		hooks:      nil,
-		paramstore: ps,
-		btcConfig:  btcConfig,
+		cdc:       cdc,
+		storeKey:  storeKey,
+		memKey:    memKey,
+		hooks:     nil,
+		btcConfig: btcConfig,
 	}
 }
 

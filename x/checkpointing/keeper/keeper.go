@@ -11,7 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -26,7 +25,6 @@ type (
 		blsSigner      BlsSigner
 		epochingKeeper types.EpochingKeeper
 		hooks          types.CheckpointingHooks
-		paramstore     paramtypes.Subspace
 		clientCtx      client.Context
 	}
 )
@@ -37,21 +35,14 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	signer BlsSigner,
 	ek types.EpochingKeeper,
-	ps paramtypes.Subspace,
 	clientCtx client.Context,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		cdc:            cdc,
 		storeKey:       storeKey,
 		memKey:         memKey,
 		blsSigner:      signer,
 		epochingKeeper: ek,
-		paramstore:     ps,
 		hooks:          nil,
 		clientCtx:      clientCtx,
 	}

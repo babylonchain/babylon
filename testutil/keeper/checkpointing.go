@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,28 +31,16 @@ func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.Bl
 	types.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
-	paramsSubspace := typesparams.NewSubspace(
-		cdc,
-		types.Amino,
-		storeKey,
-		memStoreKey,
-		"CheckpointingParams",
-	)
-
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		memStoreKey,
 		signer,
 		ek,
-		paramsSubspace,
 		cliCtx,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
-
-	// Initialize params
-	k.SetParams(ctx, types.DefaultParams())
 
 	return &k, ctx, cdc
 }

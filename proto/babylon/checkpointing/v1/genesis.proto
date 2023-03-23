@@ -3,18 +3,14 @@ package babylon.checkpointing.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos/crypto/ed25519/keys.proto";
-import "babylon/checkpointing/v1/params.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
 // GenesisState defines the checkpointing module's genesis state.
 message GenesisState {
-  // params defines all the paramaters of related to checkpointing
-  Params params = 1 [ (gogoproto.nullable) = false ];
-
   // genesis_keys defines the public keys for the genesis validators
-  repeated GenesisKey genesis_keys = 2;
+  repeated GenesisKey genesis_keys = 1;
 }
 
 // GenesisKey defines public key information about the genesis validators

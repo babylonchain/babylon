@@ -46,9 +46,8 @@ func NewHelper(t *testing.T, n int) *Helper {
 	checkpointingKeeper := app.CheckpointingKeeper
 	epochingKeeper := app.EpochingKeeper
 	stakingKeeper := app.StakingKeeper
-	querier := keeper.Querier{Keeper: checkpointingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, querier)
+	types.RegisterQueryServer(queryHelper, checkpointingKeeper)
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(checkpointingKeeper)
 
