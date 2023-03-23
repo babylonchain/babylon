@@ -947,10 +947,8 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	// Babylon modules
 	paramsKeeper.Subspace(epochingtypes.ModuleName)
-	paramsKeeper.Subspace(btclightclienttypes.ModuleName)
 	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
-	paramsKeeper.Subspace(checkpointingtypes.ModuleName)
-	paramsKeeper.Subspace(monitortypes.ModuleName)
+
 	// IBC-related modules
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
