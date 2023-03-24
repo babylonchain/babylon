@@ -3,8 +3,8 @@ package datagen
 import (
 	"time"
 
+	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	ibcclientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 )
 
@@ -29,8 +29,8 @@ func GenRandomIBCTMHeader(chainID string, height uint64) *ibctmtypes.Header {
 	}
 }
 
-func HeaderToHeaderInfo(header *ibctmtypes.Header) *ibcclientkeeper.HeaderInfo {
-	return &ibcclientkeeper.HeaderInfo{
+func HeaderToHeaderInfo(header *ibctmtypes.Header) *extendedkeeper.HeaderInfo {
+	return &extendedkeeper.HeaderInfo{
 		Hash:     header.Header.LastCommitHash,
 		ChaindId: header.Header.ChainID,
 		Height:   uint64(header.Header.Height),

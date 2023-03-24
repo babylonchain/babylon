@@ -121,11 +121,11 @@ import (
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
 
+	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v7/modules/core"
-	ibcclientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types" // ibc module puts types under `ibchost` rather than `ibctypes`
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
@@ -469,10 +469,10 @@ func NewBabylonApp(
 	)
 
 	// replace IBC keeper's client keeper with our ExtendedKeeper
-	extendedClientKeeper := ibcclientkeeper.NewExtendedKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), app.StakingKeeper, app.UpgradeKeeper)
+	extendedClientKeeper := extendedkeeper.NewExtendedKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), app.StakingKeeper, app.UpgradeKeeper)
 	// make zcKeeper to hooks onto extendedClientKeeper so that zcKeeper can receive notifications of new headers
 	extendedClientKeeper = *extendedClientKeeper.SetHooks(
-		ibcclientkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
+		extendedkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
 	)
 	app.IBCKeeper.ClientKeeper = extendedClientKeeper
 
