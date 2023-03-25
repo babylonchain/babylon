@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 
 	"cosmossdk.io/math"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonchain/babylon/app/params"
@@ -22,7 +23,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/x/epoching"
 	"github.com/babylonchain/babylon/x/epoching/keeper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
@@ -174,7 +174,9 @@ func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, a
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedDelegate(ctx, wmsg)
+	})
 }
 
 // WrappedDelegateWithPower calls handler to delegate stake for a validator
@@ -182,7 +184,9 @@ func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValA
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedDelegate(ctx, wmsg)
+	})
 }
 
 // WrappedUndelegate calls handler to unbound some stake from a validator.
@@ -190,7 +194,9 @@ func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress,
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgUndelegate(delegator, val, unbondAmt)
 	wmsg := types.NewMsgWrappedUndelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedUndelegate(ctx, wmsg)
+	})
 }
 
 // WrappedBeginRedelegate calls handler to redelegate some stake from a validator to another
@@ -198,21 +204,18 @@ func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.Val
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgBeginRedelegate(delegator, srcVal, dstVal, unbondAmt)
 	wmsg := types.NewMsgWrappedBeginRedelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedBeginRedelegate(ctx, wmsg)
+	})
 }
 
-// Handle calls epoching handler on a given message
-func (h *Helper) Handle(msg sdk.Msg, ok bool) *sdk.Result {
-	handler := epoching.NewHandler(*h.EpochingKeeper)
-	res, err := handler(h.Ctx, msg)
-	if ok {
-		require.NoError(h.t, err)
-		require.NotNil(h.t, res)
-	} else {
-		require.Error(h.t, err)
-		require.Nil(h.t, res)
-	}
-	return res
+// Handle executes an action function with the Helper's context, wraps the result into an SDK service result, and performs two assertions before returning it
+func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Result {
+	res, err := action(h.Ctx)
+	r, _ := sdk.WrapServiceResult(h.Ctx, res, err)
+	require.NotNil(h.t, r)
+	require.NoError(h.t, err)
+	return r
 }
 
 // CheckValidator asserts that a validor exists and has a given status (if status!="")
