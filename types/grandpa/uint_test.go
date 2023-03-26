@@ -13,6 +13,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 package grandpa_types_test
 
 import (
@@ -20,6 +21,7 @@ import (
 	"math/big"
 	"testing"
 
+	. "github.com/babylonchain/babylon/types/grandpa"
 	"github.com/stretchr/testify/assert"
 )
 

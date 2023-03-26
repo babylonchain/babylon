@@ -26,9 +26,8 @@ import (
 	"math/big"
 	"reflect"
 	"strings"
-	"golang.org/x/crypto/blake2b"
 
-	"github.com/centrifuge/go-substrate-rpc-client/v4/scale"
+	"golang.org/x/crypto/blake2b"
 )
 
 // Implementation for Parity codec in Go.
@@ -673,7 +672,7 @@ func DecodeFromHex(str string, target interface{}) error {
 // Encode encodes `value` with the scale codec with passed EncoderOptions, returning []byte
 func Encode(value interface{}) ([]byte, error) {
 	var buffer = bytes.Buffer{}
-	err := scale.NewEncoder(&buffer).Encode(value)
+	err := NewEncoder(&buffer).Encode(value)
 	if err != nil {
 		return buffer.Bytes(), err
 	}
@@ -682,7 +681,7 @@ func Encode(value interface{}) ([]byte, error) {
 
 // Decode decodes `bz` with the scale codec into `target`. `target` should be a pointer.
 func Decode(bz []byte, target interface{}) error {
-	return scale.NewDecoder(bytes.NewReader(bz)).Decode(target)
+	return NewDecoder(bytes.NewReader(bz)).Decode(target)
 }
 
 // HexDecodeString decodes bytes from a hex string. Contrary to hex.DecodeString, this function does not error if "0x"
@@ -702,17 +701,15 @@ func HexDecodeString(s string) ([]byte, error) {
 	return b, nil
 }
 
-
 // Hexer interface is implemented by any type that has a Hex() function returning a string
 type Hexer interface {
 	Hex() string
 }
 
-
 // EncodedLength returns the length of the value when encoded as a byte array
 func EncodedLength(value interface{}) (int, error) {
 	var buffer = bytes.Buffer{}
-	err := scale.NewEncoder(&buffer).Encode(value)
+	err := NewEncoder(&buffer).Encode(value)
 	if err != nil {
 		return 0, err
 	}
