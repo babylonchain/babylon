@@ -3,8 +3,6 @@ package grandpa_types
 import (
 	"bytes"
 	"fmt"
-
-	substrateCodec "github.com/centrifuge/go-substrate-rpc-client/v4/scale"
 )
 
 type BlockNumber U32
@@ -20,14 +18,14 @@ type Header struct {
 func (header *Header) Encode() ([]byte, error) {
 	var b = bytes.Buffer{}
 
-	if err := substrateCodec.NewEncoder(&b).Encode(header); err != nil {
+	if err := NewEncoder(&b).Encode(header); err != nil {
 		return b.Bytes(), err
 	}
 	return b.Bytes(), nil
 
 }
 
-func (header *Header) Decode(decoder substrateCodec.Decoder) error {
+func (header *Header) Decode(decoder Decoder) error {
 	var bn uint32
 	if err := decoder.Decode(&bn); err != nil {
 		return err
