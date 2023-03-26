@@ -26,6 +26,7 @@ import (
 	"math/big"
 	"reflect"
 	"strings"
+	"golang.org/x/crypto/blake2b"
 
 	"github.com/centrifuge/go-substrate-rpc-client/v4/scale"
 )
@@ -42,16 +43,16 @@ const maxInt = int(maxUint >> 1)
 // Encoder is a wrapper around a Writer that allows encoding data items to a stream.
 // Allows passing encoding options
 type Encoder struct {
-	writer io.Writer
+	Writer io.Writer
 }
 
 func NewEncoder(writer io.Writer) *Encoder {
-	return &Encoder{writer: writer}
+	return &Encoder{Writer: writer}
 }
 
 // Write several bytes to the encoder.
 func (pe Encoder) Write(bytes []byte) error {
-	c, err := pe.writer.Write(bytes)
+	c, err := pe.Writer.Write(bytes)
 	if err != nil {
 		return err
 	}
@@ -88,12 +89,12 @@ func (pe Encoder) EncodeUintCompact(v big.Int) error {
 					return err
 				}
 			} else if v.Uint64() < 1<<14 {
-				err := binary.Write(pe.writer, binary.LittleEndian, uint16(v.Uint64()<<2)+1)
+				err := binary.Write(pe.Writer, binary.LittleEndian, uint16(v.Uint64()<<2)+1)
 				if err != nil {
 					return err
 				}
 			} else {
-				err := binary.Write(pe.writer, binary.LittleEndian, uint32(v.Uint64()<<2)+2)
+				err := binary.Write(pe.Writer, binary.LittleEndian, uint32(v.Uint64()<<2)+2)
 				if err != nil {
 					return err
 				}
@@ -172,7 +173,7 @@ func (pe Encoder) Encode(value interface{}) error {
 	case reflect.Float32:
 		fallthrough
 	case reflect.Float64:
-		err := binary.Write(pe.writer, binary.LittleEndian, value)
+		err := binary.Write(pe.Writer, binary.LittleEndian, value)
 		if err != nil {
 			return err
 		}
@@ -286,16 +287,16 @@ func (pe Encoder) EncodeOption(hasValue bool, value interface{}) error {
 
 // Decoder is a wraper around a Reader that allows decoding data items from a stream.
 type Decoder struct {
-	reader io.Reader
+	Reader io.Reader
 }
 
 func NewDecoder(reader io.Reader) *Decoder {
-	return &Decoder{reader: reader}
+	return &Decoder{Reader: reader}
 }
 
 // Read reads bytes from a stream into a buffer
 func (pd Decoder) Read(bytes []byte) error {
-	c, err := pd.reader.Read(bytes)
+	c, err := pd.Reader.Read(bytes)
 	if err != nil {
 		return err
 	}
@@ -391,7 +392,7 @@ func (pd Decoder) DecodeIntoReflectValue(target reflect.Value) error {
 	case reflect.Float64:
 		intHolder := reflect.New(t)
 		intPointer := intHolder.Interface()
-		err := binary.Read(pd.reader, binary.LittleEndian, intPointer)
+		err := binary.Read(pd.Reader, binary.LittleEndian, intPointer)
 		if err == io.EOF {
 			return errors.New("expected more bytes, but could not decode any more")
 		}
@@ -699,4 +700,62 @@ func HexDecodeString(s string) ([]byte, error) {
 	}
 
 	return b, nil
+}
+
+
+// Hexer interface is implemented by any type that has a Hex() function returning a string
+type Hexer interface {
+	Hex() string
+}
+
+
+// EncodedLength returns the length of the value when encoded as a byte array
+func EncodedLength(value interface{}) (int, error) {
+	var buffer = bytes.Buffer{}
+	err := scale.NewEncoder(&buffer).Encode(value)
+	if err != nil {
+		return 0, err
+	}
+	return buffer.Len(), nil
+}
+
+// GetHash returns a hash of the value
+func GetHash(value interface{}) (Hash, error) {
+	enc, err := Encode(value)
+	if err != nil {
+		return Hash{}, err
+	}
+	return blake2b.Sum256(enc), err
+}
+
+// Eq compares the value of the input to see if there is a match
+func Eq(one, other interface{}) bool {
+	return reflect.DeepEqual(one, other)
+}
+
+// MustHexDecodeString panics if str cannot be decoded
+func MustHexDecodeString(str string) []byte {
+	bz, err := HexDecodeString(str)
+	if err != nil {
+		panic(err)
+	}
+	return bz
+}
+
+// HexEncodeToString encodes bytes to a hex string. Contrary to hex.EncodeToString,
+// this function prefixes the hex string with "0x"
+func HexEncodeToString(b []byte) string {
+	return "0x" + hex.EncodeToString(b)
+}
+
+// Hex returns a hex string representation of the value (not of the encoded value)
+func Hex(value interface{}) (string, error) {
+	switch v := value.(type) {
+	case Hexer:
+		return v.Hex(), nil
+	case []byte:
+		return fmt.Sprintf("%#x", v), nil
+	default:
+		return "", fmt.Errorf("does not support %T", v)
+	}
 }

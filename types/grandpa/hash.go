@@ -21,7 +21,17 @@ import (
 )
 
 // H256 is a hash containing 256 bits (32 bytes), typically used in blocks, extrinsics and as a sane default
-type H256 [32]byte
+type (
+	H256 [32]byte
+	Hash H256
+)
+
+// NewHash creates a new Hash type
+func NewHash(b []byte) Hash {
+	h := Hash{}
+	copy(h[:], b)
+	return h
+}
 
 // NewH256 creates a new H256 type
 func NewH256(b []byte) H256 {

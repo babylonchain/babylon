@@ -37,7 +37,7 @@ func hexify(bytes []byte) string {
 
 func encodeToBytes(t *testing.T, value interface{}) []byte {
 	var buffer = bytes.Buffer{}
-	err := Encoder{writer: &buffer}.Encode(value)
+	err := Encoder{Writer: &buffer}.Encode(value)
 	assert.NoError(t, err)
 	return buffer.Bytes()
 }
@@ -76,12 +76,12 @@ func TestTypeImplementsEncodeableDecodeableEncodedAsExpected(t *testing.T) {
 	assertRoundtrip(t, value)
 
 	var buffer = bytes.Buffer{}
-	err := Encoder{writer: &buffer}.Encode(value)
+	err := Encoder{Writer: &buffer}.Encode(value)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{0x05}, buffer.Bytes())
 
 	var decoded CustomBool
-	err = Decoder{reader: &buffer}.Decode(&decoded)
+	err = Decoder{Reader: &buffer}.Decode(&decoded)
 	assert.NoError(t, err)
 	assert.Equal(t, CustomBool(true), decoded)
 }
@@ -114,12 +114,12 @@ func TestTypeImplementsEncodeableDecodeableSliceEncodedAsExpected(t *testing.T) 
 	// assertRoundtrip(t, value)
 
 	var buffer = bytes.Buffer{}
-	err := Encoder{writer: &buffer}.Encode(value)
+	err := Encoder{Writer: &buffer}.Encode(value)
 	assert.NoError(t, err)
 	assert.Equal(t, []byte{0xfe, 0xdc, 0xd}, buffer.Bytes())
 
 	decoded := make(CustomBytes, len(value))
-	err = Decoder{reader: &buffer}.Decode(&decoded)
+	err = Decoder{Reader: &buffer}.Decode(&decoded)
 	assert.NoError(t, err)
 	assert.Equal(t, value, decoded)
 }
@@ -142,20 +142,20 @@ func TestArrayCannotBeDecodedIntoIncompatible(t *testing.T) {
 	value3 := [1]byte{42}
 
 	var buffer = bytes.Buffer{}
-	err := Encoder{writer: &buffer}.Encode(value)
+	err := Encoder{Writer: &buffer}.Encode(value)
 	assert.NoError(t, err)
-	err = Decoder{reader: &buffer}.Decode(&value2)
+	err = Decoder{Reader: &buffer}.Decode(&value2)
 	assert.EqualError(t, err, "expected more bytes, but could not decode any more")
 	buffer.Reset()
-	err = Encoder{writer: &buffer}.Encode(value)
+	err = Encoder{Writer: &buffer}.Encode(value)
 	assert.NoError(t, err)
-	err = Decoder{reader: &buffer}.Decode(&value3)
+	err = Decoder{Reader: &buffer}.Decode(&value3)
 	assert.NoError(t, err)
 	assert.Equal(t, [1]byte{255}, value3)
 	buffer.Reset()
-	err = Encoder{writer: &buffer}.Encode(value)
+	err = Encoder{Writer: &buffer}.Encode(value)
 	assert.NoError(t, err)
-	err = Decoder{reader: &buffer}.Decode(&value)
+	err = Decoder{Reader: &buffer}.Decode(&value)
 	assert.NoError(t, err)
 }
 
@@ -234,10 +234,10 @@ func TestCompactIntegersEncodedAsExpected(t *testing.T) {
 	for value, expectedHex := range tests {
 		var buffer = bytes.Buffer{}
 		valueBig := new(big.Int).SetUint64(value)
-		err := Encoder{writer: &buffer}.EncodeUintCompact(*valueBig)
+		err := Encoder{Writer: &buffer}.EncodeUintCompact(*valueBig)
 		assert.NoError(t, err)
 		assertEqual(t, hexify(buffer.Bytes()), expectedHex)
-		decoded, _ := Decoder{reader: &buffer}.DecodeUintCompact()
+		decoded, _ := Decoder{Reader: &buffer}.DecodeUintCompact()
 		assertEqual(t, decoded, big.NewInt(0).SetUint64(value))
 	}
 }

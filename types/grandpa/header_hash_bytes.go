@@ -5,12 +5,9 @@ import (
 	"fmt"
 
 	substrateCodec "github.com/centrifuge/go-substrate-rpc-client/v4/scale"
-	substraterpcclienttypes "github.com/centrifuge/go-substrate-rpc-client/v4/types"
 )
 
 type BlockNumber U32
-
-type Hash [32]byte
 
 type Header struct {
 	ParentHash     Hash        `json:"parentHash"`
@@ -20,22 +17,22 @@ type Header struct {
 	Digest         Digest      `json:"digest"`
 }
 
-func (header *GrandpaHeader) Encode() ([]byte, error) {
-	var b bytes.Buffer
+func (header *Header) Encode() ([]byte, error) {
+	var b = bytes.Buffer{}
 
-	if err := substrateCodec.NewEncoder(b).Encode(header); err != nil {
+	if err := substrateCodec.NewEncoder(&b).Encode(header); err != nil {
 		return b.Bytes(), err
 	}
 	return b.Bytes(), nil
 
 }
 
-func (header *GrandpaHeader) Decode(decoder substrateCodec.Decoder) error {
+func (header *Header) Decode(decoder substrateCodec.Decoder) error {
 	var bn uint32
 	if err := decoder.Decode(&bn); err != nil {
 		return err
 	}
-	header.Number = substraterpcclienttypes.BlockNumber(bn)
+	header.Number = BlockNumber(bn)
 	if err := decoder.Decode(&header.ParentHash); err != nil {
 		return err
 	}
