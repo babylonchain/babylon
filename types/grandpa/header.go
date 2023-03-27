@@ -32,36 +32,6 @@ func DecodeHeader(decoder *Decoder) (*Header, error) {
 		return h, err
 	}
 	return h, nil
-	/*
-		return nil, nil
-		var bn uint32
-		err = decoder.Decode(&bn)
-		if err != nil {
-			return err
-		}
-		header.Number = BlockNumber(bn)
-		err = decoder.Decode(&header.ParentHash)
-		if err != nil {
-			return err
-		}
-		err = decoder.Decode(&header.StateRoot)
-		if err != nil {
-			return err
-		}
-		err = decoder.Decode(&header.ExtrinsicsRoot)
-		if err != nil {
-			return err
-		}
-		err = decoder.Decode(&header.Digest)
-		if err != nil {
-			return err
-		}
-		_, err = decoder.ReadOneByte()
-		if err != nil {
-			return fmt.Errorf("unexpected data after decoding header") // why??
-		}
-		return nil
-	*/
 }
 
 type BlockNumber U32
