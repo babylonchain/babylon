@@ -115,9 +115,22 @@ func assertRoundtrip(t *testing.T, value interface{}) {
 	err := NewEncoder(&buffer).Encode(value)
 	assert.NoError(t, err)
 	target := reflect.New(reflect.TypeOf(value))
+	fmt.Println(target.Interface())
 	err = NewDecoder(&buffer).Decode(target.Interface())
 	assert.NoError(t, err)
 	assertEqual(t, target.Elem().Interface(), value)
+}
+
+func assertRoundtripHeader(t *testing.T, value Header) {
+	var buffer = bytes.Buffer{}
+	err := NewEncoder(&buffer).Encode(value)
+	assert.NoError(t, err)
+	target := reflect.New(reflect.TypeOf(value))
+	fmt.Println(target.Interface())
+	header, err := DecodeHeader(NewDecoder(&buffer))
+	// err = NewDecoder(&buffer).Decode(target.Interface())
+	assert.NoError(t, err)
+	assertEqual(t, *(header), value)
 }
 
 func assertEncodedLength(t *testing.T, encodedLengthAsserts []encodedLengthAssert) {
