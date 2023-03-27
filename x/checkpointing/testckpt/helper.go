@@ -10,7 +10,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -19,6 +18,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -90,22 +90,18 @@ func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, 
 }
 
 func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, coin sdk.Coin, ok bool) {
-	msg := h.CreateValidatorMsg(addr, pk, blsPK, pop, coin.Amount)
-	h.Handle(msg, ok)
+	h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.CreateValidatorMsg(addr, pk, blsPK, pop, coin.Amount), nil
+	})
 }
 
-// Handle calls epoching handler on a given message
-func (h *Helper) Handle(msg sdk.Msg, ok bool) *sdk.Result {
-	handler := epoching.NewHandler(*h.EpochingKeeper)
-	res, err := handler(h.Ctx, msg)
-	if ok {
-		require.NoError(h.t, err)
-		require.NotNil(h.t, res)
-	} else {
-		require.Error(h.t, err)
-		require.Nil(h.t, res)
-	}
-	return res
+// Handle executes an action function with the Helper's context, wraps the result into an SDK service result, and performs two assertions before returning it
+func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Result {
+	res, err := action(h.Ctx)
+	r, _ := sdk.WrapServiceResult(h.Ctx, res, err)
+	require.NotNil(h.t, r)
+	require.NoError(h.t, err)
+	return r
 }
 
 // ZeroCommission constructs a commission rates with all zeros.
