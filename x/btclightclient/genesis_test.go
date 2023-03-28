@@ -1,8 +1,9 @@
 package btclightclient_test
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
 	"testing"
+
+	bbn "github.com/babylonchain/babylon/types"
 
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/testutil/nullify"
@@ -19,7 +20,6 @@ func TestGenesis(t *testing.T) {
 	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, headerHeight, &headerWork)
 
 	genesisState := types.GenesisState{
-		Params:        types.DefaultParams(),
 		BaseBtcHeader: *baseHeaderInfo,
 	}
 

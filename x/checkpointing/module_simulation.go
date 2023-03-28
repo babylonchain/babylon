@@ -29,9 +29,7 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	headeroracleGenesis := types.GenesisState{
-		Params: types.DefaultParams(),
-	}
+	headeroracleGenesis := types.GenesisState{}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&headeroracleGenesis)
 }
 

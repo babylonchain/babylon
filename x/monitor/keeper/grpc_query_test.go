@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/testutil/mocks"
@@ -8,13 +11,10 @@ import (
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	types2 "github.com/babylonchain/babylon/x/epoching/types"
-	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	"github.com/babylonchain/babylon/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"testing"
 )
 
 func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
@@ -26,9 +26,8 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 		lck := helper.App.BTCLightClientKeeper
 		mk := helper.App.MonitorKeeper
 		ek := helper.EpochingKeeper
-		querier := monitorkeeper.Querier{Keeper: mk}
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
-		types.RegisterQueryServer(queryHelper, querier)
+		types.RegisterQueryServer(queryHelper, mk)
 		queryClient := types.NewQueryClient(queryHelper)
 
 		// BeginBlock of block 1, and thus entering epoch 1
@@ -88,9 +87,8 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		ck := helper.App.CheckpointingKeeper
 		mockEk := mocks.NewMockEpochingKeeper(ctl)
 		ck.SetEpochingKeeper(mockEk)
-		querier := monitorkeeper.Querier{Keeper: mk}
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
-		types.RegisterQueryServer(queryHelper, querier)
+		types.RegisterQueryServer(queryHelper, mk)
 		queryClient := types.NewQueryClient(queryHelper)
 
 		// BeginBlock of block 1, and thus entering epoch 1

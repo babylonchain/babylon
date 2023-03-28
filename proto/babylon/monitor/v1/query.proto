@@ -3,17 +3,11 @@ package babylon.monitor.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
-import "babylon/monitor/v1/params.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/monitor/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylon/monitor/v1/params";
-  }
-
   // EndedEpochBtcHeight returns the BTC light client height at provided epoch
   // finish
   rpc EndedEpochBtcHeight(QueryEndedEpochBtcHeightRequest)
@@ -29,16 +23,6 @@ service Query {
         "/babylon/monitor/v1/checkpoints/{ckpt_hash}";
   }
 }
-
-// QueryParamsRequest is request type for the Query/Params RPC method.
-message QueryParamsRequest {}
-
-// QueryParamsResponse is response type for the Query/Params RPC method.
-message QueryParamsResponse {
-  // params holds all the parameters of this module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
-}
-
 // QueryEndedEpochBtcHeightRequest defines a query type for EndedEpochBtcHeight
 // RPC method
 message QueryEndedEpochBtcHeightRequest { uint64 epoch_num = 1; }

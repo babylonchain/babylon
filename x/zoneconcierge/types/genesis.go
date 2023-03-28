@@ -11,7 +11,6 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		PortId: PortID,
-		Params: DefaultParams(),
 	}
 }
 
@@ -21,6 +20,5 @@ func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
 		return err
 	}
-
-	return gs.Params.Validate()
+	return nil
 }
