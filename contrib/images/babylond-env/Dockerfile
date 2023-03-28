@@ -3,9 +3,9 @@ FROM golang:1.19-alpine3.16 AS build-env
 # Customize to your build env
 
 # TARGETPLATFORM should be one of linux/amd64 or linux/arm64.
-ARG TARGETPLATFORM
+ARG TARGETPLATFORM="linux/amd64"
 # Version to build.
-ARG VERSION
+ARG VERSION="v0.5.0"
 
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
