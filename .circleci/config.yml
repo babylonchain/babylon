@@ -14,8 +14,6 @@ jobs:
     machine:
       image: ubuntu-2204:2022.10.1
       resource_class: large
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - run:
@@ -31,23 +29,54 @@ jobs:
           key: go-mod-v6-{{ checksum "go.sum" }}
           paths:
             - "/home/circleci/.go_workspace/pkg/mod"
+  lint:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - checkout
       - run:
           name: Lint
           command: |
             curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
             ./bin/golangci-lint run
+  unit-test:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - checkout
+      - restore_cache: # restores saved cache if no changes are detected since last run
+          keys:
+            - go-mod-v6-{{ checksum "go.sum" }}
       - run:
           name: Run tests
           command: |
             make test
+  integration-test:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - checkout
+      - restore_cache: # restores saved cache if no changes are detected since last run
+          keys:
+            - go-mod-v6-{{ checksum "go.sum" }}
       - run: # sudo is needed, so that integration test binary have proper access to nodes keyring
           name: Run integration tests
           command: |
             make localnet-start-test
             sudo -E env "PATH=$PATH" make test-babylon-integration
             make localnet-stop
-      # TODO: If CI tests will take to long consider having only this e2e test
-      # instead of separate integration tests and e2e tests.
+  e2e-test:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - checkout
+      - restore_cache: # restores saved cache if no changes are detected since last run
+          keys:
+            - go-mod-v6-{{ checksum "go.sum" }}
       - run:
           name: Run e2e tests
           command: |
@@ -99,9 +128,21 @@ jobs:
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  build-lint-test:
+  version: 2
+  build-test:
     jobs:
       - build
+      - unit-test:
+          requires:
+            - build
+      - integration-test:
+          requires:
+            - build
+  lint:
+    jobs:
+      - lint
+  docker:
+    jobs:
       - build_docker:
           filters:
             tags:
