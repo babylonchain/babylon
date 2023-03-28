@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"path/filepath"
 
@@ -13,6 +12,7 @@ import (
 
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
+	"github.com/babylonchain/babylon/client/docs"
 	bbn "github.com/babylonchain/babylon/types"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
@@ -25,8 +25,6 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
-	"github.com/gorilla/mux"
-	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cast"
 
 	errorsmod "cosmossdk.io/errors"
@@ -97,9 +95,6 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	appparams "github.com/babylonchain/babylon/app/params"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
@@ -864,7 +859,7 @@ func (app *BabylonApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.AP
 
 	// register swagger API from root so that other applications can override easily
 	if apiConfig.Swagger {
-		RegisterSwaggerAPI(clientCtx, apiSvr.Router)
+		docs.RegisterOpenAPIService(apiSvr.Router)
 	}
 }
 
@@ -898,17 +893,6 @@ func (a *BabylonApp) DefaultGenesis() map[string]json.RawMessage {
 
 func (app *BabylonApp) TxConfig() client.TxConfig {
 	return app.txConfig
-}
-
-// RegisterSwaggerAPI registers swagger route with API Server
-func RegisterSwaggerAPI(ctx client.Context, rtr *mux.Router) {
-	statikFS, err := fs.New()
-	if err != nil {
-		panic(err)
-	}
-
-	staticServer := http.FileServer(statikFS)
-	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 
 // GetMaccPerms returns a copy of the module account permissions
