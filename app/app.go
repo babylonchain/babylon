@@ -15,7 +15,6 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 
 	"github.com/babylonchain/babylon/client/docs"
 	bbn "github.com/babylonchain/babylon/types"
@@ -146,6 +145,12 @@ const (
 	// From cosmos version 0.46 is is possible to have custom prefix for application
 	// enviromental variables - https://github.com/cosmos/cosmos-sdk/pull/10950
 	BabylonAppEnvPrefix = ""
+
+	// TODO review possible capabilities
+	// The last arguments can contain custom message handlers, and custom query handlers,
+	// if we want to allow any custom callbacks
+	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
+	wasmCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
 )
 
 var (
@@ -213,7 +218,7 @@ var (
 
 // Wasm related variables
 var (
-	// WasmProposalsEnabled enables all x/wasm proposals when it's value is "true"
+	// WasmProposalsEnabled enables all x/wasm proposals when its value is "true"
 	// and EnableSpecificWasmProposals is empty. Otherwise, all x/wasm proposals
 	// are disabled.
 	WasmProposalsEnabled = "true"
@@ -619,10 +624,6 @@ func NewBabylonApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	// The last arguments can contain custom message handlers, and custom query handlers,
-	// if we want to allow any custom callbacks
-	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	availableCapabilities := "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2"
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,
 		keys[wasm.StoreKey],
@@ -638,7 +639,7 @@ func NewBabylonApp(
 		app.GRPCQueryRouter(),
 		wasmDir,
 		wasmConfig,
-		availableCapabilities,
+		wasmCapabilities,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
@@ -1069,9 +1070,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(zctypes.ModuleName)
-
-	// Wasm
-	paramsKeeper.Subspace(wasm.ModuleName)
 
 	return paramsKeeper
 }
