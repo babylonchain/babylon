@@ -63,7 +63,7 @@ jobs:
       - aws-ecr/build-image:
           push-image: false
           dockerfile: Dockerfile
-          path: ./contrib/images/babylond-env/
+          path: ./contrib/images/babylond/
           build-path: ./
           tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
           repo: "babylond"

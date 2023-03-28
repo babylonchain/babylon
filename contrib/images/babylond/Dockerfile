@@ -10,10 +10,15 @@ ARG VERSION="v0.5.0"
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
 ARG LEDGER_ENABLED="false"
+# Debug mode
+ARG DLV_ENABLED="false"
+# Cosmos build options
+ARG COSMOS_BUILD_OPTIONS=""
 
 # Install cli tools for building and final image
 RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq
 RUN apk add --no-cache musl-dev
+
 
 # Build
 WORKDIR /go/src/github.com/babylonchain
@@ -30,6 +35,12 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) &&
     # verify checksum
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
+
+RUN if [ "${DLV_ENABLED}" = "true" ] ; then \
+    go install github.com/go-delve/delve/cmd/dlv@latest ; \
+fi
+
+RUN LEDGER_ENABLED=$LEDGER_ENABLED BUILD_TAGS=$BUILD_TAGS COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS make install
 
 # Use busybox to create a user
 FROM busybox:stable-musl AS busybox
@@ -89,13 +100,19 @@ sleep \
 env \
 tar \
 tee \
+rm \
 du \
 sort \
 head \
 df \
 nc \
 netstat \
+mkdir \
 ; do ln sh $binary; done
+
+# HACK: Only copy dlv if it exists
+COPY --from=build-env /go/bin/ /tmpbin
+RUN cp /tmpbin/dlv /bin 2>/dev/null; rm -rf /tmpbin
 
 
 # Copy user from busybox to scratch
