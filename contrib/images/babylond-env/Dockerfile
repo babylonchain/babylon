@@ -15,6 +15,14 @@ ARG LEDGER_ENABLED="false"
 RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq
 RUN apk add --no-cache musl-dev
 
+# Build
+WORKDIR /go/src/github.com/babylonchain
+RUN git clone https://github.com/babylonchain/babylon.git
+WORKDIR /go/src/github.com/babylonchain/babylon
+RUN git fetch
+RUN git checkout ${VERSION}
+WORKDIR /go/src/github.com/babylonchain/babylon
+
 # Cosmwasm - Download correct libwasmvm version
 RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
@@ -22,14 +30,6 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) &&
     # verify checksum
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
     sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
-
-RUN if [ "${TARGETPLATFORM}" = "linux/amd64" ] ; then \
-      LEDGER_ENABLED=$LEDGER_ENABLED BUILD_TAGS=$BUILD_TAGS make install ; \
-    fi
-
-RUN if [ "${TARGETPLATFORM}" = "linux/arm64" ] ; then \
-      LEDGER_ENABLED=$LEDGER_ENABLED BUILD_TAGS=$BUILD_TAGS make install ; \
-    fi
 
 # Use busybox to create a user
 FROM busybox:stable-musl AS busybox
