@@ -28,7 +28,7 @@ func openAPIHandler() http.HandlerFunc {
 	tmpl, _ := template.ParseFS(templateFS, indexFile)
 
 	return func(w http.ResponseWriter, req *http.Request) {
-		tmpl.Execute(w, struct {
+		_ = tmpl.Execute(w, struct {
 			URL string
 		}{
 			apiFile,
