@@ -3,7 +3,7 @@ go 1.19
 module github.com/babylonchain/babylon
 
 require (
-	github.com/CosmWasm/wasmd v0.31.1-0.20230320093222-7e936c7fffb6
+	github.com/CosmWasm/wasmd v0.40.0-rc.0
 	github.com/btcsuite/btcd v0.23.4
 	github.com/cometbft/cometbft v0.37.0
 	github.com/cometbft/cometbft-db v0.7.0
@@ -12,7 +12,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/pkg/errors v0.9.1
-	github.com/rakyll/statik v0.1.7
+	github.com/rakyll/statik v0.1.7 // indirect
 	github.com/spf13/cast v1.5.0
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.15.0
@@ -20,7 +20,7 @@ require (
 	github.com/supranational/blst v0.3.8
 	google.golang.org/genproto v0.0.0-20230216225411-c8e22ba71e44
 	google.golang.org/grpc v1.53.0
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
 
 require (
