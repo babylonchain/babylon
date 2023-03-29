@@ -222,9 +222,12 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-babylon-integration:
+test-integration:
 	@echo "Running babylon integration test"
 	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration -p 1
+
+test-e2e:
+	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
@@ -377,16 +380,23 @@ proto-lint:
 .PHONY: proto-gen proto-swagger-gen proto-format prot-lint
 
 ###############################################################################
+###                                Docker                                   ###
+###############################################################################
+
+build-docker:
+	$(MAKE) -C contrib/images babylond-env
+
+build-docker-debug:
+	$(MAKE) -C contrib/images babylond-dlv
+
+.PHONY: build-docker build-docker-debug
+
+###############################################################################
 ###                                Localnet                                 ###
 ###############################################################################
 
-localnet-build-env:
-	$(MAKE) -C contrib/images babylond-env
-
-localnet-build-dlv:
-	$(MAKE) -C contrib/images babylond-dlv
-
-localnet-build-nodes-test:
+# init-testnet-dirs will create a ./.testnets directory containing configuration for 4 Babylon nodes
+init-testnet-dirs:
 	# need to create the dir before hand so that the docker container has write access to the `.testnets` dir
 	# regardless of the user it uses
 	mkdir -p $(CURDIR)/.testnets && chmod o+w $(CURDIR)/.testnets
@@ -395,37 +405,38 @@ localnet-build-nodes-test:
 			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
 			  --chain-id chain-test --btc-confirmation-depth 2 --additional-sender-account true \
 			  --epoch-interval 5
+
+# localnet-start-nodes will boot the nodes described in the docker-compose.yml file
+localnet-start-nodes: init-testnet-dirs
 	docker-compose up -d
 
-localnet-build-nodes:
-	# need to create the dir before hand so that the docker container has write access to the `.testnets` dir
-	# regardless of the user it uses
-	mkdir -p $(CURDIR)/.testnets && chmod o+w $(CURDIR)/.testnets
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/home/babylon/.testnets:Z babylonchain/babylond \
-			  babylond testnet init-files --v 4 -o /home/babylon/.testnets \
-			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
-			  --chain-id chain-test
-	docker-compose up -d
+# localnet-start-nodes-debug will boot the nodes described in the docker-compose.yml.debug file
+localnet-start-nodes-debug: init-testnet-dirs
+	docker-compose -f docker-compose.yml.debug up -d
 
 # localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
-localnet-start: localnet-stop localnet-build-env localnet-build-nodes
-
-# localnet-start-test will start with 4 nodes with test confiuration and low
-# epoch interval
-localnet-start-test: localnet-stop localnet-build-env localnet-build-nodes-test
+localnet-start: localnet-stop build-docker localnet-start-nodes
 
 # localnet-debug will run a 4-node testnet locally in debug mode
 # you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
+localnet-debug: localnet-stop build-docker-debug localnet-start-nodes
 
-test-e2e:
-	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
-
+# localnet-stop will stop all localnets running
 localnet-stop:
 	docker-compose down
+	docker-compose -f docker-compose.yml.debug down
 
-.PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
-localnet-build-dlv localnet-build-nodes
+# localnet-test-integration will spin up a localnet and run integration tests on it
+localnet-test-integration: localnet-start test-integration localnet-stop
+
+.PHONY: \
+init-testnet-dirs \
+localnet-start-nodes \
+localnet-start-nodes-debug \
+localnet-start \
+localnet-debug \
+localnet-test-integration \
+localnet-stop
 
 .PHONY: diagrams
 diagrams:
