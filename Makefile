@@ -92,6 +92,10 @@ ifeq (boltdb,$(findstring boltdb,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb
 endif
 
+ifeq ($(LINK_STATICALLY),true)
+	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
+endif
+
 ifeq (,$(findstring nostrip,$(BABYLON_BUILD_OPTIONS)))
   ldflags += -w -s
 endif

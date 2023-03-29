@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
@@ -43,6 +44,8 @@ type SignerConfig struct {
 type BabylonAppConfig struct {
 	serverconfig.Config `mapstructure:",squash"`
 
+	Wasm wasmtypes.WasmConfig `mapstructure:"wasm"`
+
 	BtcConfig BtcConfig `mapstructure:"btc-config"`
 
 	SignerConfig SignerConfig `mapstructure:"signer-config"`
@@ -51,13 +54,14 @@ type BabylonAppConfig struct {
 func DefaultBabylonConfig() *BabylonAppConfig {
 	return &BabylonAppConfig{
 		Config:       *serverconfig.DefaultConfig(),
+		Wasm:         wasmtypes.DefaultWasmConfig(),
 		BtcConfig:    defaultBabylonBtcConfig(),
 		SignerConfig: defaultSignerConfig(),
 	}
 }
 
 func DefaultBabylonTemplate() string {
-	return serverconfig.DefaultConfigTemplate + `
+	return serverconfig.DefaultConfigTemplate + wasmtypes.DefaultConfigTemplate() + `
 ###############################################################################
 ###                      Babylon Bitcoin configuration                      ###
 ###############################################################################
