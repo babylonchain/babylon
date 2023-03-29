@@ -4,8 +4,8 @@ FROM golang:1.19-alpine3.16 AS build-env
 
 # TARGETPLATFORM should be one of linux/amd64 or linux/arm64.
 ARG TARGETPLATFORM="linux/amd64"
-# Version to build.
-ARG VERSION="v0.5.0"
+# Version to build. Default is the Git HEAD.
+ARG VERSION="HEAD"
 
 # Use muslc for static libs
 ARG BUILD_TAGS="muslc"
@@ -26,7 +26,6 @@ RUN git clone https://github.com/babylonchain/babylon.git
 WORKDIR /go/src/github.com/babylonchain/babylon
 RUN git fetch
 RUN git checkout ${VERSION}
-WORKDIR /go/src/github.com/babylonchain/babylon
 
 # Cosmwasm - Download correct libwasmvm version
 RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
@@ -123,4 +122,3 @@ COPY --from=busybox --chown=1137:1137 /home/babylon /home/babylon
 WORKDIR /home/babylon
 RUN chown -R babylon /home/babylon
 USER babylon
->>>>>>> 8274cff (updated docker file)
