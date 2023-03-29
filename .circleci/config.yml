@@ -31,12 +31,11 @@ jobs:
           key: go-mod-v6-{{ checksum "go.sum" }}
           paths:
             - "/home/circleci/.go_workspace/pkg/mod"
-      # TODO: comment for now as dev branch has lint issue
-      # - run:
-      #     name: Lint
-      #     command: |
-      #       curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
-      #       ./bin/golangci-lint run
+      - run:
+          name: Lint
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
+            ./bin/golangci-lint run
       - run:
           name: Run tests
           command: |
