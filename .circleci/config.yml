@@ -8,14 +8,12 @@ orbs:
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
+  build-test:
     # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
     # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
     machine:
       image: ubuntu-2204:2022.10.1
       resource_class: large
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       - checkout
       - run:
@@ -32,11 +30,6 @@ jobs:
           paths:
             - "/home/circleci/.go_workspace/pkg/mod"
       - run:
-          name: Lint
-          command: |
-            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
-            ./bin/golangci-lint run
-      - run:
           name: Run tests
           command: |
             make test
@@ -51,7 +44,18 @@ jobs:
       - run:
           name: Run e2e tests
           command: |
-            make test-e2e
+             make test-e2e
+  lint:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: medium
+    steps:
+      - checkout
+      - run:
+          name: Lint
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
+            ./bin/golangci-lint run
 
   build_docker:
     machine:
@@ -99,9 +103,15 @@ jobs:
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  build-lint-test:
+  version: 2
+  build-test:
     jobs:
-      - build
+      - build-test
+  lint:
+    jobs:
+      - lint
+  docker:
+    jobs:
       - build_docker:
           filters:
             tags:
