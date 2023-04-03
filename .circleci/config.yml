@@ -48,7 +48,7 @@ jobs:
   lint:
     machine:
       image: ubuntu-2204:2022.10.1
-      resource_class: large
+      resource_class: medium
     steps:
       - checkout
       - run:
