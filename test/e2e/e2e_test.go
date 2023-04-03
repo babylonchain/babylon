@@ -24,18 +24,18 @@ func (s *IntegrationTestSuite) TestConnectIbc() {
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	chainA := s.configurer.GetChainConfig(0)
 
-	chainA.WaitUntilHeight(25)
+	chainA.WaitUntilHeight(35)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Finalize epoch 1 and 2, as first headers of opposing chain are in epoch 2
-	nonValidatorNode.FinalizeSealedEpochs(1, 2)
+	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
+	nonValidatorNode.FinalizeSealedEpochs(1, 3)
 
-	epoch2, err := nonValidatorNode.QueryCheckpointForEpoch(2)
+	epoch3, err := nonValidatorNode.QueryCheckpointForEpoch(3)
 	s.NoError(err)
 
-	if epoch2.Status != ct.Finalized {
+	if epoch3.Status != ct.Finalized {
 		s.FailNow("Epoch 2 should be finalized")
 	}
 
@@ -44,7 +44,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 	// TODO Add more assertion here. Maybe check proofs ?
 	s.Equal(fininfo.FinalizedChainInfo.ChainId, initialization.ChainBID)
-	s.Equal(fininfo.EpochInfo.EpochNumber, uint64(2))
+	s.Equal(fininfo.EpochInfo.EpochNumber, uint64(3))
 
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)
