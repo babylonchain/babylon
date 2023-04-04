@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type (
@@ -22,11 +21,11 @@ type (
 		storeKey              storetypes.StoreKey
 		tstoreKey             storetypes.StoreKey
 		memKey                storetypes.StoreKey
-		paramstore            paramtypes.Subspace
 		btcLightClientKeeper  types.BTCLightClientKeeper
 		checkpointingKeeper   types.CheckpointingKeeper
 		powLimit              *big.Int
 		expectedCheckpointTag txformat.BabylonTag
+		authority             string
 	}
 
 	submissionBtcError string
@@ -63,27 +62,23 @@ func NewKeeper(
 	storeKey,
 	tstoreKey,
 	memKey storetypes.StoreKey,
-	ps paramtypes.Subspace,
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
 	powLimit *big.Int,
 	expectedTag txformat.BabylonTag,
+	authority string,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
 
 	return Keeper{
 		cdc:                   cdc,
 		storeKey:              storeKey,
 		tstoreKey:             tstoreKey,
 		memKey:                memKey,
-		paramstore:            ps,
 		btcLightClientKeeper:  bk,
 		checkpointingKeeper:   ck,
 		powLimit:              powLimit,
 		expectedCheckpointTag: expectedTag,
+		authority:             authority,
 	}
 }
 

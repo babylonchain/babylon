@@ -33,6 +33,7 @@ var (
 	EpochDataPrefix          = []byte{4}
 	LastFinalizedEpochKey    = append([]byte{5}, []byte(LatestFinalizedEpochKey)...)
 	BtcLightClientUpdatedKey = append([]byte{6}, []byte(btcLightClientUpdated)...)
+	ParamsKey                = []byte{7}
 )
 
 func KeyPrefix(p string) []byte {

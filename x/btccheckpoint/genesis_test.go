@@ -26,12 +26,12 @@ func TestInitGenesis(t *testing.T) {
 
 	genesisState := types.GenesisState{
 		Params: types.Params{
-			BtcConfirmationDepth:          999,
-			CheckpointFinalizationTimeout: 888,
+			BtcConfirmationDepth:          888,
+			CheckpointFinalizationTimeout: 999,
 		},
 	}
 
 	btccheckpoint.InitGenesis(ctx, app.BtcCheckpointKeeper, genesisState)
-	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).BtcConfirmationDepth, uint64(999))
-	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout, uint64(888))
+	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).BtcConfirmationDepth, uint64(888))
+	require.Equal(t, app.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout, uint64(999))
 }

@@ -16,7 +16,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,24 +39,17 @@ func NewBTCCheckpointKeeper(
 	registry := codectypes.NewInterfaceRegistry()
 	cdc := codec.NewProtoCodec(registry)
 
-	paramsSubspace := typesparams.NewSubspace(cdc,
-		btcctypes.Amino,
-		storeKey,
-		memStoreKey,
-		"BTCCheckpointParams",
-	)
-
 	k := keeper.NewKeeper(
 		cdc,
 		storeKey,
 		tstoreKey,
 		memStoreKey,
-		paramsSubspace,
 		lk,
 		ek,
 		powLimit,
 		// use MainTag tests
 		txformat.MainTag(0),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
