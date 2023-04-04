@@ -131,6 +131,10 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
+	ibcwasm "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm"
+	ibcwasmkeeper "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm/keeper"
+	ibcwasmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm/types"
+
 	// IBC-related
 	"github.com/babylonchain/babylon/x/zoneconcierge"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
@@ -198,6 +202,7 @@ var (
 		// IBC-related
 		ibc.AppModuleBasic{},
 		ibctm.AppModuleBasic{},
+		ibcwasm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		zoneconcierge.AppModuleBasic{},
 	)
@@ -308,7 +313,9 @@ type BabylonApp struct {
 	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
 	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
 
-	WasmKeeper wasm.Keeper
+	WasmKeeper       wasm.Keeper
+	WasmClientKeeper ibcwasmkeeper.Keeper
+
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
@@ -372,6 +379,7 @@ func NewBabylonApp(
 		checkpointingtypes.StoreKey,
 		monitortypes.StoreKey,
 		// IBC-related modules
+		ibcwasmtypes.StoreKey,
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
 		zctypes.StoreKey,
@@ -497,6 +505,8 @@ func NewBabylonApp(
 		// register the governance hooks
 		),
 	)
+
+	app.WasmClientKeeper = ibcwasmkeeper.NewKeeper(appCodec, keys[ibcwasmtypes.StoreKey])
 
 	// create Tendermint client
 	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
@@ -690,6 +700,7 @@ func NewBabylonApp(
 		monitor.NewAppModule(appCodec, app.MonitorKeeper, app.AccountKeeper, app.BankKeeper),
 		// IBC-related modules
 		ibc.NewAppModule(app.IBCKeeper),
+		ibcwasm.NewAppModule(app.WasmClientKeeper),
 		transferModule,
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 	)
@@ -714,6 +725,7 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibcwasmtypes.ModuleName,
 		zctypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -738,6 +750,7 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibcwasmtypes.ModuleName,
 		zctypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -764,6 +777,7 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
+		ibcwasmtypes.ModuleName,
 		zctypes.ModuleName,
 		wasm.ModuleName,
 	)
@@ -879,6 +893,11 @@ func NewBabylonApp(
 // required by ibctesting
 func (app *BabylonApp) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
+}
+
+// GetWasmKeeper implements the TestingApp interface.
+func (app *BabylonApp) GetWasmKeeper() ibcwasmkeeper.Keeper {
+	return app.WasmClientKeeper
 }
 
 // Name returns the name of the App
