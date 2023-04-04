@@ -1,8 +1,6 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // GenesisState defines the zoneconcierge module's genesis state.
