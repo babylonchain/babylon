@@ -55,7 +55,9 @@ func NewBTCCheckpointKeeper(
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
 	// Initialize params
-	k.SetParams(ctx, btcctypes.DefaultParams())
+	if err := k.SetParams(ctx, btcctypes.DefaultParams()); err != nil {
+		panic(err)
+	}
 
 	return &k, ctx
 }

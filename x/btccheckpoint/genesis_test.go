@@ -15,7 +15,10 @@ func TestExportGenesis(t *testing.T) {
 	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
-	app.BtcCheckpointKeeper.SetParams(ctx, types.DefaultParams())
+	if err := app.BtcCheckpointKeeper.SetParams(ctx, types.DefaultParams()); err != nil {
+		panic(err)
+	}
+
 	genesisState := btccheckpoint.ExportGenesis(ctx, app.BtcCheckpointKeeper)
 	require.Equal(t, genesisState.Params, types.DefaultParams())
 }

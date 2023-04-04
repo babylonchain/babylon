@@ -43,13 +43,24 @@ func FuzzParamsQuery(f *testing.F) {
 			params.CheckpointFinalizationTimeout = uint64(rand.Int())
 		}
 
+		if btcConfirmationDepth >= checkpointFinalizationTimeout {
+			// validation should not pass with BtcConfirmationDepth >= CheckpointFinalizationTimeout
+			require.Error(t, params.Validate())
+
+			// swap the values so we can continue the test
+			params.CheckpointFinalizationTimeout = btcConfirmationDepth
+			params.BtcConfirmationDepth = checkpointFinalizationTimeout
+		}
+
 		keeper, ctx := testkeeper.NewBTCCheckpointKeeper(t, nil, nil, nil)
 		wctx := sdk.WrapSDKContext(ctx)
 
 		// if setParamsFlag == 0, set params
 		setParamsFlag := rand.Intn(2)
 		if setParamsFlag == 0 {
-			keeper.SetParams(ctx, params)
+			if err := keeper.SetParams(ctx, params); err != nil {
+				panic(err)
+			}
 		}
 		req := types.QueryParamsRequest{}
 		resp, err := keeper.Params(wctx, &req)

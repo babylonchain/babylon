@@ -22,7 +22,11 @@ func TestParams(t *testing.T) {
 
 	//modify a params, save, and retrieve
 	expParams.EpochInterval = 777
-	keeper.SetParams(ctx, expParams)
+
+	if err := keeper.SetParams(ctx, expParams); err != nil {
+		panic(err)
+	}
+
 	resParams = keeper.GetParams(ctx)
 	require.True(t, expParams.Equal(resParams))
 }
