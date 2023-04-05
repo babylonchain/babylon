@@ -30,9 +30,6 @@ jobs:
           paths:
             - "/home/circleci/.go_workspace/pkg/mod"
       - run:
-          name: Lint proto files
-          command: make proto-lint
-      - run:
           name: Run tests
           command: |
             make test
@@ -54,6 +51,9 @@ jobs:
       resource_class: medium
     steps:
       - checkout
+      - run:
+          name: Lint proto files
+          command: make proto-lint
       - run:
           name: Lint
           command: |
