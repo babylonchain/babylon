@@ -3,7 +3,6 @@ package babylon.checkpointing.v1;
 
 import "babylon/checkpointing/v1/bls_key.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 

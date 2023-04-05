@@ -1,7 +1,6 @@
 syntax = "proto3";
 package babylon.monitor.v1;
 
-import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/monitor/types";
