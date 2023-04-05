@@ -26,9 +26,14 @@ func FuzzAppHashChain(f *testing.F) {
 
 		// set a random epoch interval
 		epochInterval := rand.Uint64()%100 + 2 // the epoch interval should at at least 2
-		k.SetParams(ctx, types.Params{
+
+		params := types.Params{
 			EpochInterval: epochInterval,
-		})
+		}
+
+		if err := k.SetParams(ctx, params); err != nil {
+			panic(err)
+		}
 
 		// reach the end of the 1st epoch
 		expectedHeight := epochInterval

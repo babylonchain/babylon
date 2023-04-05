@@ -10,9 +10,12 @@ import (
 
 func TestGetParams(t *testing.T) {
 	k, ctx := testkeeper.NewBTCCheckpointKeeper(t, nil, nil, nil)
+
 	params := types.DefaultParams()
 
-	k.SetParams(ctx, params)
+	if err := k.SetParams(ctx, params); err != nil {
+		panic(err)
+	}
 
 	require.EqualValues(t, params, k.GetParams(ctx))
 }

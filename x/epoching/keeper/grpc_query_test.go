@@ -43,7 +43,9 @@ func FuzzParamsQuery(f *testing.F) {
 		// if setParamsFlag == 0, set params
 		setParamsFlag := rand.Intn(2)
 		if setParamsFlag == 0 {
-			keeper.SetParams(ctx, params)
+			if err := keeper.SetParams(ctx, params); err != nil {
+				panic(err)
+			}
 		}
 		req := types.QueryParamsRequest{}
 		resp, err := queryClient.Params(wctx, &req)

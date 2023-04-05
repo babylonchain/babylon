@@ -432,7 +432,7 @@ func NewBabylonApp(
 
 	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
 	epochingKeeper := epochingkeeper.NewKeeper(
-		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.GetSubspace(epochingtypes.ModuleName), app.BankKeeper, app.StakingKeeper,
+		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.BankKeeper, app.StakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	app.MintKeeper = mintkeeper.NewKeeper(appCodec, keys[minttypes.StoreKey], app.StakingKeeper, app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())
@@ -597,13 +597,11 @@ func NewBabylonApp(
 			keys[btccheckpointtypes.StoreKey],
 			tkeys[btccheckpointtypes.TStoreKey],
 			keys[btccheckpointtypes.MemStoreKey],
-			app.GetSubspace(btccheckpointtypes.ModuleName),
 			&btclightclientKeeper,
 			app.CheckpointingKeeper,
-			// TODO decide on proper values for those constants, also those should be taken
-			// from some global config
 			&powLimit,
 			btcConfig.CheckpointTag(),
+			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		)
 	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
 
@@ -1054,19 +1052,9 @@ func BlockedAddresses() map[string]bool {
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	paramsKeeper.Subspace(authtypes.ModuleName)
-	paramsKeeper.Subspace(banktypes.ModuleName)
-	paramsKeeper.Subspace(stakingtypes.ModuleName)
-	paramsKeeper.Subspace(minttypes.ModuleName)
-	paramsKeeper.Subspace(distrtypes.ModuleName)
-	paramsKeeper.Subspace(slashingtypes.ModuleName)
-	paramsKeeper.Subspace(govtypes.ModuleName)
-	paramsKeeper.Subspace(crisistypes.ModuleName)
-	// Babylon modules
-	paramsKeeper.Subspace(epochingtypes.ModuleName)
-	paramsKeeper.Subspace(btccheckpointtypes.ModuleName)
-
-	// IBC-related modules
+	// TODO: Only modules which did not migrate yet to new way of hanldling params
+	// are the IBC-related modules. Once they are migrated, we can remove this and
+	// whole usage of params module
 	paramsKeeper.Subspace(ibcexported.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(zctypes.ModuleName)

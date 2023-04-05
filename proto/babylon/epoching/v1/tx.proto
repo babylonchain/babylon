@@ -3,6 +3,10 @@ package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos/staking/v1beta1/tx.proto";
+import "babylon/epoching/v1/params.proto";
+
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
@@ -21,6 +25,9 @@ service Msg {
   // coins from a delegator and source validator to a destination validator.
   rpc WrappedBeginRedelegate(MsgWrappedBeginRedelegate)
       returns (MsgWrappedBeginRedelegateResponse);
+
+  // UpdateParams defines a method for updating epoching module parameters.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
 // MsgWrappedDelegate is the message for delegating stakes
@@ -58,3 +65,22 @@ message MsgWrappedBeginRedelegate {
 // MsgWrappedBeginRedelegateResponse is the response to the
 // MsgWrappedBeginRedelegate message
 message MsgWrappedBeginRedelegateResponse {}
+
+// MsgUpdateParams defines a message for updating epoching module parameters.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+
+  // authority is the address of the governance account.
+  // just FYI: cosmos.AddressString marks that this field should use type alias
+  // for AddressString instead of string, but the functionality is not yet implemented
+  // in cosmos-proto
+  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  // params defines the epoching paramaeters parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [(gogoproto.nullable) = false];
+}
+
+// MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
+message MsgUpdateParamsResponse {}

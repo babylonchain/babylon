@@ -15,7 +15,10 @@ func TestExportGenesis(t *testing.T) {
 	app := simapp.Setup(t, false)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
 
-	app.EpochingKeeper.SetParams(ctx, types.DefaultParams())
+	if err := app.EpochingKeeper.SetParams(ctx, types.DefaultParams()); err != nil {
+		panic(err)
+	}
+
 	genesisState := epoching.ExportGenesis(ctx, app.EpochingKeeper)
 	require.Equal(t, genesisState.Params, types.DefaultParams())
 }

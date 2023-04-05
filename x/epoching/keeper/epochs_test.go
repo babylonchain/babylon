@@ -25,9 +25,15 @@ func FuzzEpochs(f *testing.F) {
 
 		// set a random epoch interval
 		epochInterval := rand.Uint64()%100 + 2 // the epoch interval should at at least 2
-		keeper.SetParams(ctx, types.Params{
+
+		params := types.Params{
 			EpochInterval: epochInterval,
-		})
+		}
+
+		if err := keeper.SetParams(ctx, params); err != nil {
+			panic(err)
+		}
+
 		// increment a random number of new blocks
 		numIncBlocks := rand.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {

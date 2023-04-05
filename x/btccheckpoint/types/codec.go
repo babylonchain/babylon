@@ -9,14 +9,18 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
+	cdc.RegisterConcrete(&MsgInsertBTCSpvProof{}, "btccheckpoint/MsgInsertBTCSpvProof", nil)
+	cdc.RegisterConcrete(&MsgUpdateParams{}, "btccheckpoint/MsgUpdateParams", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
-
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgInsertBTCSpvProof{},
 	)
-
+	registry.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&MsgUpdateParams{},
+	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)
 }
 

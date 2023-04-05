@@ -2,8 +2,6 @@ package types
 
 import (
 	fmt "fmt"
-
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 const (
@@ -14,24 +12,10 @@ var (
 	KeyEpochInterval = []byte("EpochInterval")
 )
 
-var _ paramtypes.ParamSet = (*Params)(nil)
-
-// ParamKeyTable the param key table for launch module
-func ParamKeyTable() paramtypes.KeyTable {
-	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
-}
-
 // NewParams creates a new Params instance
 func NewParams(epochInterval uint64) Params {
 	return Params{
 		EpochInterval: epochInterval,
-	}
-}
-
-// ParamSetPairs get the params.ParamSet
-func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
-	return paramtypes.ParamSetPairs{
-		paramtypes.NewParamSetPair(KeyEpochInterval, &p.EpochInterval, validateEpochInterval),
 	}
 }
 
