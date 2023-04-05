@@ -186,6 +186,9 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 }
 
 // UpdateParams updates the params.
+// TODO investigate when it is the best time to update the params. We can update them
+// when the epoch changes, but we can also update them during the epoch and extend
+// the epoch duration.
 func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
