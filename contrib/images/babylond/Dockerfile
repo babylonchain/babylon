@@ -40,6 +40,8 @@ RUN if [ "${DLV_ENABLED}" = "true" ] ; then \
 fi
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED BUILD_TAGS=$BUILD_TAGS COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS make install
+RUN rm -rf /go/bin/chain
+RUN rm -rf /go/bin/node
 
 # Use busybox to create a user
 FROM busybox:stable-musl AS busybox
@@ -53,7 +55,7 @@ WORKDIR /bin
 LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
 
 # Installs all binaries built with go.
-COPY --from=build-env /go/bin/babylond /bin
+COPY --from=build-env /go/bin /bin
 
 # Other binaries we want to keep.
 COPY --from=build-env /usr/bin/ldd /bin/ldd
@@ -108,11 +110,6 @@ nc \
 netstat \
 mkdir \
 ; do ln sh $binary; done
-
-# HACK: Only copy dlv if it exists
-COPY --from=build-env /go/bin/ /tmpbin
-RUN cp /tmpbin/dlv /bin 2>/dev/null; rm -rf /tmpbin
-
 
 # Copy user from busybox to scratch
 COPY --from=busybox /etc/passwd /etc/passwd
