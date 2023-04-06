@@ -40,6 +40,9 @@ RUN if [ "${DLV_ENABLED}" = "true" ] ; then \
 fi
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED BUILD_TAGS=$BUILD_TAGS COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS make install
+
+# Remove extra binaries we don't want in the image.
+# We do this because later we have to copy all binaries from /go/bin
 RUN rm -rf /go/bin/chain
 RUN rm -rf /go/bin/node
 
