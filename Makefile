@@ -384,12 +384,9 @@ proto-lint:
 ###############################################################################
 
 build-docker:
-	$(MAKE) -C contrib/images babylond-env
+	$(MAKE) -C contrib/images babylond
 
-build-docker-debug:
-	$(MAKE) -C contrib/images babylond-dlv
-
-.PHONY: build-docker build-docker-debug
+.PHONY: build-docker
 
 ###############################################################################
 ###                                Localnet                                 ###
@@ -410,21 +407,12 @@ init-testnet-dirs:
 localnet-start-nodes: init-testnet-dirs
 	docker-compose up -d
 
-# localnet-start-nodes-debug will boot the nodes described in the docker-compose.yml.debug file
-localnet-start-nodes-debug: init-testnet-dirs
-	docker-compose -f docker-compose.yml.debug up -d
-
 # localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
 localnet-start: localnet-stop build-docker localnet-start-nodes
-
-# localnet-debug will run a 4-node testnet locally in debug mode
-# you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop build-docker-debug localnet-start-nodes
 
 # localnet-stop will stop all localnets running
 localnet-stop:
 	docker-compose down
-	docker-compose -f docker-compose.yml.debug down
 
 # localnet-test-integration will spin up a localnet and run integration tests on it
 localnet-test-integration: localnet-start test-integration localnet-stop
@@ -432,9 +420,7 @@ localnet-test-integration: localnet-start test-integration localnet-stop
 .PHONY: \
 init-testnet-dirs \
 localnet-start-nodes \
-localnet-start-nodes-debug \
 localnet-start \
-localnet-debug \
 localnet-test-integration \
 localnet-stop
 
