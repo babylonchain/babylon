@@ -202,11 +202,15 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
 func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
 	runOpts := &dockertest.RunOptions{
-		Name:         containerName,
-		Repository:   BabylonContainerName,
-		NetworkID:    m.network.Network.ID,
-		User:         "babylon:babylon",
-		Cmd:          []string{"babylond", "start", "--home", "/home/babylon/babylondata"},
+		Name:       containerName,
+		Repository: BabylonContainerName,
+		NetworkID:  m.network.Network.ID,
+		User:       "babylon:babylon",
+		Entrypoint: []string{
+			"sh",
+			"-c",
+			"babylond start --home /home/babylon/babylondata",
+		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
 		Platform:     "linux/x86_64",
 		Mounts: []string{
