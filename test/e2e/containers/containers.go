@@ -205,7 +205,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Name:       containerName,
 		Repository: BabylonContainerName,
 		NetworkID:  m.network.Network.ID,
-		User:       "babylon:babylon",
+		User:       "root:root",
 		Entrypoint: []string{
 			"sh",
 			"-c",
