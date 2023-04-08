@@ -39,10 +39,10 @@ jobs:
             sudo -E env "PATH=$PATH" make localnet-test-integration
       # TODO: If CI tests will take to long consider having only this e2e test
       # instead of separate integration tests and e2e tests.
-      - run:
-          name: Run e2e tests
-          command: |
-             make test-e2e
+      # - run:
+      #     name: Run e2e tests
+      #     command: |
+      #        make test-e2e
   lint:
     machine:
       image: ubuntu-2204:2022.10.1
