@@ -61,7 +61,7 @@ func (m *Manager) ExecTxCmd(t *testing.T, chainId string, containerName string, 
 // namely adding flags `--chain-id={chain-id} -b=block --yes --keyring-backend=test "--log_format=json"`,
 // and searching for `successStr`
 func (m *Manager) ExecTxCmdWithSuccessString(t *testing.T, chainId string, containerName string, command []string, successStr string) (bytes.Buffer, bytes.Buffer, error) {
-	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/babylondata"}
+	allTxArgs := []string{fmt.Sprintf("--chain-id=%s", chainId), "-b=sync", "--yes", "--keyring-backend=test", "--log_format=json", "--home=/home/babylon/babylondata"}
 	txCommand := append(command, allTxArgs...)
 	return m.ExecCmd(t, containerName, txCommand, successStr)
 }
@@ -174,6 +174,7 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 			PortBindings: map[docker.Port][]docker.PortBinding{
 				"3031/tcp": {{HostIP: "", HostPort: "3031"}},
 			},
+			Platform: "linux/x86_64",
 			Env: []string{
 				fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", chainAID),
 				fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", chainBID),
@@ -205,12 +206,15 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Repository: BabylonContainerName,
 		NetworkID:  m.network.Network.ID,
 		User:       "root:root",
-		Cmd:        []string{"start"},
-		Env: []string{
-			"HOME=/babylondata",
+		Entrypoint: []string{
+			"sh",
+			"-c",
+			"babylond start --home /home/babylon/babylondata",
 		},
+		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
+		Platform:     "linux/x86_64",
 		Mounts: []string{
-			fmt.Sprintf("%s/:/babylondata", valCondifDir),
+			fmt.Sprintf("%s/:/home/babylon/babylondata", valCondifDir),
 		},
 	}
 
