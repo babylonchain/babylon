@@ -1,0 +1,13 @@
+[package]
+name = "testdata"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# TODO for now we use main branch, we should change it to some release
+# branches or tags when api will be more stable
+[dependencies]
+babylon-example = { git = "https://github.com/babylonchain/bindings", branch = "main" }
