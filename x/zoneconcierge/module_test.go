@@ -14,7 +14,7 @@ import (
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clientexported "github.com/cosmos/ibc-go/v7/modules/core/02-client/exported"
+	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
@@ -43,7 +43,7 @@ type ZoneConciergeTestSuite struct {
 	// System states of the simulated Babylon chain
 	cdc            codec.Codec
 	ctx            sdk.Context
-	keeper         clientexported.ClientKeeper
+	keeper         clientkeeper.Keeper
 	zcKeeper       zckeeper.Keeper
 	consensusState *ibctmtypes.ConsensusState
 	header         *ibctmtypes.Header

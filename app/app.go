@@ -122,7 +122,6 @@ import (
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
 
-	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -513,6 +512,7 @@ func NewBabylonApp(
 		keys[zctypes.StoreKey],
 		keys[zctypes.MemStoreKey],
 		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ClientKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
@@ -524,15 +524,6 @@ func NewBabylonApp(
 		storeQuerier,
 		scopedZoneConciergeKeeper,
 	)
-
-	// replace IBC keeper's client keeper with our ExtendedKeeper
-	extendedClientKeeper := extendedkeeper.NewExtendedKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), app.StakingKeeper, app.UpgradeKeeper)
-	// make zcKeeper to hooks onto extendedClientKeeper so that zcKeeper can receive notifications of new headers
-	extendedClientKeeper = *extendedClientKeeper.SetHooks(
-		extendedkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
-	)
-	app.IBCKeeper.ClientKeeper = extendedClientKeeper
-
 	app.ZoneConciergeKeeper = *zcKeeper
 
 	// Create Transfer Keepers
@@ -836,6 +827,12 @@ func NewBabylonApp(
 		NewBtcValidationDecorator(btcConfig),
 	)
 	app.SetAnteHandler(anteHandler)
+
+	// set postHandler
+	postHandler := sdk.ChainPostDecorators(
+		zckeeper.NewIBCHeaderDecorator(app.ZoneConciergeKeeper),
+	)
+	app.SetPostHandler(postHandler)
 
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption
