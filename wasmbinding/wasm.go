@@ -26,7 +26,6 @@ func NewQueryPlugin(ek *epochingkeeper.Keeper) *QueryPlugin {
 // CustomQuerier dispatches custom CosmWasm bindings queries.
 func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
 	return func(ctx sdk.Context, request json.RawMessage) ([]byte, error) {
-
 		var contractQuery bindings.BabylonQuery
 		if err := json.Unmarshal(request, &contractQuery); err != nil {
 			return nil, errorsmod.Wrap(err, "failed to unarshall request ")
@@ -39,7 +38,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				Epoch: epoch.EpochNumber,
 			}
 
-			ctx.Logger().Info("Marshalled cutom response")
+			ctx.Logger().Debug("Marshalled custom response")
 
 			bz, err := json.Marshal(res)
 			if err != nil {

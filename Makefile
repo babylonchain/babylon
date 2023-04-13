@@ -424,7 +424,6 @@ localnet-stop:
 localnet-test-integration: localnet-start test-integration localnet-stop
 
 build-test-wasm:
-	cargo build --release --lib --target wasm32-unknown-unknown --manifest-path wasmbinding/testdata/Cargo.toml
 	docker run --rm -v "$(WASM_DIR)":/code \
 		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
 		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
