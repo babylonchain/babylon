@@ -1,0 +1,1 @@
+8daf4b44e2d0239ae957d816b75330235e1f646472db3469bdbd951165a68a2c  ./target/wasm32-unknown-unknown/release/testdata.wasm
