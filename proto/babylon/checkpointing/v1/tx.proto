@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
 import "cosmos/staking/v1beta1/tx.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
@@ -24,7 +25,9 @@ message MsgAddBlsSig {
   option (gogoproto.equal) = false;
   option (gogoproto.goproto_getters) = false;
 
-  BlsSig bls_sig = 1;
+  string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  BlsSig bls_sig = 2;
 }
 
 // MsgAddBlsSigResponse defines the MsgAddBlsSig response type.

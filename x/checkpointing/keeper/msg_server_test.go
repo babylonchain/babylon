@@ -242,7 +242,7 @@ func FuzzAddBlsSig_NoError(f *testing.F) {
 			blsSig := bls12381.Sign(blsPrivKey, signBytes)
 
 			// create MsgAddBlsSig message
-			msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
+			msg := types.NewMsgAddBlsSig(sdk.AccAddress(addr), endingEpoch, lch, blsSig, addr)
 			_, err = msgServer.AddBlsSig(ctx, msg)
 			require.NoError(t, err)
 			afterCkpt, err := ck.GetRawCheckpoint(ctx, endingEpoch)
@@ -285,7 +285,7 @@ func FuzzAddBlsSig_NotInValSet(f *testing.F) {
 		valAddr := datagen.GenRandomValidatorAddress()
 		signBytes := types.GetSignBytes(endingEpoch, lch)
 		blsSig := bls12381.Sign(blsPrivKey, signBytes)
-		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, valAddr)
+		msg := types.NewMsgAddBlsSig(sdk.AccAddress(valAddr), endingEpoch, lch, blsSig, valAddr)
 
 		_, err = msgServer.AddBlsSig(ctx, msg)
 		require.Error(t, err, types.ErrCkptDoesNotExist)
@@ -318,7 +318,7 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 		addr := helper.ValBlsPrivKeys[i].Address
 		signBytes := types.GetSignBytes(epoch.EpochNumber-1, lch)
 		blsSig := bls12381.Sign(blsPrivKey, signBytes)
-		msg := types.NewMsgAddBlsSig(epoch.EpochNumber-1, lch, blsSig, addr)
+		msg := types.NewMsgAddBlsSig(sdk.AccAddress(addr), epoch.EpochNumber-1, lch, blsSig, addr)
 
 		// add the BLS signature
 		_, err := msgServer.AddBlsSig(ctx, msg)
@@ -361,7 +361,7 @@ func FuzzAddBlsSig_WrongLastCommitHash(f *testing.F) {
 		addr := helper.ValBlsPrivKeys[i].Address
 		signBytes := types.GetSignBytes(endingEpoch, lch)
 		blsSig := bls12381.Sign(blsPrivKey, signBytes)
-		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
+		msg := types.NewMsgAddBlsSig(sdk.AccAddress(addr), endingEpoch, lch, blsSig, addr)
 
 		// add the BLS signature
 		_, err = msgServer.AddBlsSig(ctx, msg)
@@ -401,7 +401,7 @@ func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
 		lch := ctx.BlockHeader().LastCommitHash
 		addr := helper.ValBlsPrivKeys[i].Address
 		blsSig := datagen.GenRandomBlsMultiSig()
-		msg := types.NewMsgAddBlsSig(endingEpoch, lch, blsSig, addr)
+		msg := types.NewMsgAddBlsSig(sdk.AccAddress(addr), endingEpoch, lch, blsSig, addr)
 
 		// add the BLS signature message
 		_, err = msgServer.AddBlsSig(ctx, msg)
