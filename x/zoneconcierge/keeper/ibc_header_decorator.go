@@ -8,9 +8,10 @@ import (
 )
 
 type HeaderInfo struct {
-	ChainId string
-	Hash    []byte
-	Height  uint64
+	ClientId string
+	ChainId  string
+	Hash     []byte
+	Height   uint64
 }
 
 func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) (*HeaderInfo, *ibctmtypes.ClientState) {
@@ -32,9 +33,10 @@ func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) 
 
 	// all good, we get the headerInfo
 	headerInfo := &HeaderInfo{
-		ChainId: ibctmHeader.Header.ChainID,
-		Hash:    ibctmHeader.Header.LastCommitHash,
-		Height:  uint64(ibctmHeader.Header.Height),
+		ClientId: msgUpdateClient.ClientId,
+		ChainId:  ibctmHeader.Header.ChainID,
+		Hash:     ibctmHeader.Header.LastCommitHash,
+		Height:   uint64(ibctmHeader.Header.Height),
 	}
 
 	// ensure the corresponding clientState exists
@@ -63,6 +65,12 @@ func NewIBCHeaderDecorator(k Keeper) *IBCHeaderDecorator {
 }
 
 func (d IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (newCtx sdk.Context, err error) {
+	// ignore unsuccessful tx
+	// NOTE: tx with a misbehaving header will still succeed, but will make the client to be frozen
+	if !success {
+		next(ctx, tx, simulate, success)
+	}
+
 	for _, msg := range tx.GetMsgs() {
 		// try to extract the headerInfo and the client's status
 		headerInfo, clientState := d.getHeaderAndClientState(ctx, msg)
@@ -76,9 +84,11 @@ func (d IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, suc
 		isOnFork := !clientState.FrozenHeight.IsZero()
 		d.k.Hooks().AfterHeaderWithValidCommit(ctx, txHash, headerInfo, isOnFork)
 
-		// unfreeze client (by setting FrozenHeight to zero again)
+		// unfreeze client (by setting FrozenHeight to zero again) if the client is frozen
+		// due to a fork header
 		if isOnFork {
 			clientState.FrozenHeight = clienttypes.ZeroHeight()
+			d.k.clientKeeper.SetClientState(ctx, headerInfo.ClientId, clientState)
 		}
 	}
 
