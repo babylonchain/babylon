@@ -151,6 +151,12 @@ const (
 	// if we want to allow any custom callbacks
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
 	wasmCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,babylon"
+
+	// According to https://github.com/CosmWasm/wasmd#genesis-configuration chains
+	// using smart contracts should configure proper gas limits per block.
+	// https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc
+	// suggests 50M as reasonable limits. Me may want to adjust it later.
+	DefaultGasLimit int64 = 50000000
 )
 
 var (

@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"time"
+
+	babylonApp "github.com/babylonchain/babylon/app"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 const (
@@ -20,6 +22,7 @@ const (
 	flagGoalBonded             = "goal-bonded"
 	flagBlocksPerYear          = "blocks-per-year"
 	flagGenesisTime            = "genesis-time"
+	flagBlockGasLimit          = "block-gas-limit"
 )
 
 type GenesisCLIArgs struct {
@@ -36,6 +39,7 @@ type GenesisCLIArgs struct {
 	GoalBonded             float64
 	BlocksPerYear          uint64
 	GenesisTime            time.Time
+	BlockGasLimit          int64
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -57,6 +61,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64(flagGoalBonded, 0.67, "Bonded tokens goal")
 	cmd.Flags().Uint64(flagBlocksPerYear, 6311520, "Blocks per year")
 	cmd.Flags().Int64(flagGenesisTime, time.Now().Unix(), "Genesis time")
+	cmd.Flags().Int64(flagBlockGasLimit, babylonApp.DefaultGasLimit, "Block gas limit")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
@@ -73,6 +78,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	inflationMin, _ := cmd.Flags().GetFloat64(flagInflationMin)
 	goalBonded, _ := cmd.Flags().GetFloat64(flagGoalBonded)
 	blocksPerYear, _ := cmd.Flags().GetUint64(flagBlocksPerYear)
+	blockGasLimit, _ := cmd.Flags().GetInt64(flagBlockGasLimit)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
@@ -94,5 +100,6 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		InflationMin:           inflationMin,
 		GoalBonded:             goalBonded,
 		BlocksPerYear:          blocksPerYear,
+		BlockGasLimit:          blockGasLimit,
 	}
 }
