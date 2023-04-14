@@ -226,13 +226,13 @@ func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 
 // SetupPrivSigner sets up a PrivSigner for testing
 func SetupPrivSigner() (*PrivSigner, error) {
-	nodeCfg := tmconfig.DefaultConfig()
 	kr, err := client.NewKeyringFromBackend(client.Context{}, keyring.BackendMemory)
 	if err != nil {
 		return nil, err
 	}
+	nodeCfg := tmconfig.DefaultConfig()
 	encodingCfg := appparams.GetEncodingConfig()
-	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, encodingCfg)
+	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, "", encodingCfg)
 	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil
 }

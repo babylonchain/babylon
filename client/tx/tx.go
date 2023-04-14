@@ -28,7 +28,6 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 		WithAccountRetriever(clientCtx.AccountRetriever).
 		WithKeybase(clientCtx.Keyring).
 		WithChainID(clientCtx.ChainID).
-		WithFeeGranter(clientCtx.FeeGranter).
 		WithFeePayer(clientCtx.FeePayer).
 		WithGasPrices(gasPrice).
 		WithGasAdjustment(gasAdjustment)
@@ -113,7 +112,6 @@ func prepareFactory(clientCtx client.Context, txf sdktx.Factory) (sdktx.Factory,
 		if initNum == 0 {
 			txf = txf.WithAccountNumber(num)
 		}
-
 		if initSeq == 0 {
 			txf = txf.WithSequence(seq)
 		}

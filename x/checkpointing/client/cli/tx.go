@@ -72,7 +72,7 @@ func CmdTxAddBlsSig() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgAddBlsSig(epoch_num, lch, blsSig, addr)
+			msg := types.NewMsgAddBlsSig(clientCtx.GetFromAddress(), epoch_num, lch, blsSig, addr)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

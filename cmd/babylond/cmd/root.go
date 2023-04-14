@@ -279,16 +279,12 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	// parse the key name that will be used for signing BLS-sig txs from app.toml
-	keyName := bbntypes.ParseKeyNameFromConfig(appOpts)
-
 	clientCtx, err := config.ReadFromClientConfig(
 		client.Context{}.
 			WithHomeDir(homeDir).
 			WithViper("").
 			WithKeyringDir(homeDir).
 			WithInput(os.Stdin).
-			WithFromName(keyName).
 			// Warning: It is important that ReadFromClientConfig receives context
 			// with already initialized codec. It creates keyring inside, and from cosmos
 			// 0.46.0 keyring requires codec. Without codec, operations performed by
@@ -298,7 +294,10 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 	if err != nil {
 		panic(err)
 	}
-	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, clientCtx.Keyring, a.encCfg)
+	// parse the key name that will be used for signing BLS-sig txs from app.toml
+	keyName := bbntypes.ParseKeyNameFromConfig(appOpts)
+
+	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, clientCtx.Keyring, keyName, a.encCfg)
 	if err != nil {
 		panic(err)
 	}
@@ -376,7 +375,7 @@ func (a appCreator) appExport(
 		panic(err)
 	}
 
-	privSigner, err := app.InitPrivSigner(clientCtx, homePath, kr, a.encCfg)
+	privSigner, err := app.InitPrivSigner(clientCtx, homePath, kr, "", a.encCfg)
 	if err != nil {
 		panic(err)
 	}
