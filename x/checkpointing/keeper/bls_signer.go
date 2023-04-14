@@ -40,7 +40,7 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 	}
 
 	// create MsgAddBlsSig message
-	msg := types.NewMsgAddBlsSig(k.clientCtx.FromAddress, epochNum, lch, blsSig, addr)
+	msg := types.NewMsgAddBlsSig(k.clientCtx.GetFromAddress(), epochNum, lch, blsSig, addr)
 
 	// keep sending the message to Tendermint until success or timeout
 	// TODO should read the parameters from config file
