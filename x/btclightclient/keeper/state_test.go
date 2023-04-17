@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -478,7 +477,6 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 			t.Fatalf("No common ancestor found between the nodes %s and %s. Expected ancestor: %s", descendant1.Hash, descendant2.Hash, commonAncestor.Hash)
 		}
 		if !commonAncestor.Eq(retrievedHighestCommonAncestor) {
-			fmt.Println("Failed")
 			t.Errorf("Did not retrieve the correct highest common ancestor. Got %s, expected %s", retrievedHighestCommonAncestor.Hash, commonAncestor.Hash)
 		}
 	})

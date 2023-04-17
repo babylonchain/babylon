@@ -28,6 +28,7 @@ require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0-rc.0
 	cosmossdk.io/tools/rosetta v0.2.1
+	github.com/CosmWasm/wasmvm v1.2.1
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcutil v1.1.2
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
@@ -128,7 +129,6 @@ require (
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20210617225240-d185dfc1b5a1 // indirect
-	github.com/CosmWasm/wasmvm v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect

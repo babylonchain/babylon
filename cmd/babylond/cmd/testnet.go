@@ -100,7 +100,7 @@ Example:
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
 				genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
-				genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime)
+				genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
@@ -400,21 +400,16 @@ func initGenFiles(
 	// set the bls keys for the checkpointing module
 	genesisParams.CheckpointingGenKeys = genKeys
 
-	appGenState, _, err = PrepareGenesis(clientCtx, appGenState, &types.GenesisDoc{}, genesisParams, chainID)
+	genDoc := &types.GenesisDoc{}
+
+	err = PrepareGenesis(clientCtx, appGenState, genDoc, genesisParams, chainID)
+
 	if err != nil {
 		return err
 	}
-
-	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	genDoc := types.GenesisDoc{
-		ChainID:    chainID,
-		AppState:   appGenStateJSON,
-		Validators: nil,
-	}
+	// set initial validators to nil, they will be added by collectGenFiles based on
+	// genesis tranascations
+	genDoc.Validators = nil
 
 	// generate empty genesis files for each validator and save
 	for i := 0; i < numValidators; i++ {
@@ -467,10 +462,17 @@ func collectGenFiles(
 			appState = nodeAppState
 		}
 
+		// overwrite each validator's genesis file to have a canonical genesis time
 		genFile := nodeConfig.GenesisFile()
 
-		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, chainID, nil, appState, genTime); err != nil {
+		newGendoc := types.GenesisDoc{
+			GenesisTime:     genTime,
+			AppState:        appState,
+			ConsensusParams: genDoc.ConsensusParams,
+			ChainID:         genDoc.ChainID,
+		}
+
+		if err := genutil.ExportGenesisFile(&newGendoc, genFile); err != nil {
 			return err
 		}
 	}

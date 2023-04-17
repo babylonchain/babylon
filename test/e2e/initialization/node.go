@@ -308,6 +308,8 @@ func (n *internalNode) init() error {
 	genDoc.ChainID = n.chain.chainMeta.Id
 	genDoc.Validators = nil
 	genDoc.AppState = appState
+	genDoc.ConsensusParams = tmtypes.DefaultConsensusParams()
+	genDoc.ConsensusParams.Block.MaxGas = babylonApp.DefaultGasLimit
 
 	if err = genutil.ExportGenesisFile(genDoc, config.GenesisFile()); err != nil {
 		return fmt.Errorf("failed to export app genesis state: %w", err)

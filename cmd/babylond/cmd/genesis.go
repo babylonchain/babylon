@@ -11,7 +11,7 @@ import (
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cometbft/cometbft/types"
+	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -51,6 +51,7 @@ Example:
 			genesisCliArgs := parseGenesisFlags(cmd)
 
 			genFile := config.GenesisFile()
+
 			appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal genesis state: %s", err)
@@ -66,7 +67,7 @@ Example:
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
-					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime)
+					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 			} else if network == "mainnet" {
 				// TODO: mainnet genesis params
 				panic("Mainnet params not implemented.")
@@ -74,7 +75,7 @@ Example:
 				return fmt.Errorf("please choose testnet or mainnet")
 			}
 
-			appState, genDoc, err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID)
+			err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID)
 			if err != nil {
 				return fmt.Errorf("failed to prepare genesis: %w", err)
 			}
@@ -83,11 +84,6 @@ Example:
 				return fmt.Errorf("error validating genesis file: %s", err)
 			}
 
-			appStateJSON, err := json.Marshal(appState)
-			if err != nil {
-				return fmt.Errorf("failed to marshal application genesis state: %w", err)
-			}
-			genDoc.AppState = appStateJSON
 			return genutil.ExportGenesisFile(genDoc, genFile)
 		},
 	}
@@ -98,8 +94,16 @@ Example:
 	return cmd
 }
 
-func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessage,
-	genDoc *types.GenesisDoc, genesisParams GenesisParams, chainID string) (map[string]json.RawMessage, *types.GenesisDoc, error) {
+func PrepareGenesis(
+	clientCtx client.Context,
+	appState map[string]json.RawMessage,
+	genDoc *comettypes.GenesisDoc,
+	genesisParams GenesisParams,
+	chainID string,
+) error {
+	if genDoc == nil {
+		return fmt.Errorf("provided genesis must not be nil")
+	}
 
 	depCdc := clientCtx.Codec
 	cdc := depCdc
@@ -107,6 +111,13 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 	// Add ChainID
 	genDoc.ChainID = chainID
 	genDoc.GenesisTime = genesisParams.GenesisTime
+
+	if genDoc.ConsensusParams == nil {
+		genDoc.ConsensusParams = comettypes.DefaultConsensusParams()
+	}
+
+	// Set gas limit
+	genDoc.ConsensusParams.Block.MaxGas = genesisParams.BlockGasLimit
 
 	// Set the confirmation and finalization parameters
 	btccheckpointGenState := btccheckpointtypes.DefaultGenesis()
@@ -167,8 +178,15 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 	}
 	appState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenState)
 
-	// return appState
-	return appState, genDoc, nil
+	appGenStateJSON, err := json.MarshalIndent(appState, "", "  ")
+
+	if err != nil {
+		return err
+	}
+
+	genDoc.AppState = appGenStateJSON
+
+	return nil
 }
 
 type GenesisParams struct {
@@ -189,13 +207,14 @@ type GenesisParams struct {
 	BtccheckpointParams         btccheckpointtypes.Params
 	EpochingParams              epochingtypes.Params
 	BtclightclientBaseBtcHeader btclightclienttypes.BTCHeaderInfo
+	BlockGasLimit               int64
 }
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
-	blocksPerYear uint64, genesisTime time.Time) GenesisParams {
+	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
 
 	genParams := GenesisParams{}
 
@@ -266,6 +285,6 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	}
 	genParams.EpochingParams = epochingtypes.DefaultParams()
 	genParams.EpochingParams.EpochInterval = epochInterval
-
+	genParams.BlockGasLimit = blockGasLimit
 	return genParams
 }
