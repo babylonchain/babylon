@@ -9,19 +9,19 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
-	zoneconciergeKeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type QueryPlugin struct {
 	epochingKeeper *epochingkeeper.Keeper
-	zcKeeper       *zoneconciergeKeeper.Keeper
+	zcKeeper       *zckeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
 func NewQueryPlugin(
 	ek *epochingkeeper.Keeper,
-	zcKeeper *zoneconciergeKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) *QueryPlugin {
 	return &QueryPlugin{
 		epochingKeeper: ek,
@@ -77,7 +77,7 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 
 func RegisterCustomPlugins(
 	ek *epochingkeeper.Keeper,
-	zcKeeper *zoneconciergeKeeper.Keeper,
+	zcKeeper *zckeeper.Keeper,
 ) []wasmkeeper.Option {
 	wasmQueryPlugin := NewQueryPlugin(ek, zcKeeper)
 
