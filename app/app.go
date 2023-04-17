@@ -622,7 +622,7 @@ func NewBabylonApp(
 		panic(fmt.Sprintf("error while reading wasm config: %s", err))
 	}
 
-	wasmOpts = append(owasm.RegisterCustomPlugins(&app.EpochingKeeper), wasmOpts...)
+	wasmOpts = append(owasm.RegisterCustomPlugins(&app.EpochingKeeper, &app.ZoneConciergeKeeper), wasmOpts...)
 
 	app.WasmKeeper = wasm.NewKeeper(
 		appCodec,

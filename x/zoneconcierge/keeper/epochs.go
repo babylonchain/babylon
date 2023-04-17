@@ -19,7 +19,8 @@ func (k Keeper) GetFinalizedEpoch(ctx sdk.Context) (uint64, error) {
 
 // setFinalizedEpoch sets the last finalised epoch
 // called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setFinalizedEpoch(ctx sdk.Context, epochNumber uint64) {
+// NOTE: Public for test purposes
+func (k Keeper) SetFinalizedEpoch(ctx sdk.Context, epochNumber uint64) {
 	store := ctx.KVStore(k.storeKey)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	store.Set(types.FinalizedEpochKey, epochNumberBytes)

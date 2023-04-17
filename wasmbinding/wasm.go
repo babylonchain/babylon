@@ -9,17 +9,23 @@ import (
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
+	zoneconciergeKeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type QueryPlugin struct {
 	epochingKeeper *epochingkeeper.Keeper
+	zcKeeper       *zoneconciergeKeeper.Keeper
 }
 
 // NewQueryPlugin returns a reference to a new QueryPlugin.
-func NewQueryPlugin(ek *epochingkeeper.Keeper) *QueryPlugin {
+func NewQueryPlugin(
+	ek *epochingkeeper.Keeper,
+	zcKeeper *zoneconciergeKeeper.Keeper,
+) *QueryPlugin {
 	return &QueryPlugin{
 		epochingKeeper: ek,
+		zcKeeper:       zcKeeper,
 	}
 }
 
@@ -38,7 +44,23 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 				Epoch: epoch.EpochNumber,
 			}
 
-			ctx.Logger().Debug("Marshalled custom response")
+			bz, err := json.Marshal(res)
+			if err != nil {
+				return nil, errorsmod.Wrap(err, "failed marshaling")
+			}
+
+			return bz, nil
+
+		case contractQuery.LatestFinalizedEpoch != nil:
+			epoch, err := qp.zcKeeper.GetFinalizedEpoch(ctx)
+
+			if err != nil {
+				return nil, err
+			}
+
+			res := bindings.LatestFinalizedEpochResponse{
+				Epoch: epoch,
+			}
 
 			bz, err := json.Marshal(res)
 			if err != nil {
@@ -55,8 +77,9 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 
 func RegisterCustomPlugins(
 	ek *epochingkeeper.Keeper,
+	zcKeeper *zoneconciergeKeeper.Keeper,
 ) []wasmkeeper.Option {
-	wasmQueryPlugin := NewQueryPlugin(ek)
+	wasmQueryPlugin := NewQueryPlugin(ek, zcKeeper)
 
 	queryPluginOpt := wasmkeeper.WithQueryPlugins(&wasmkeeper.QueryPlugins{
 		Custom: CustomQuerier(wasmQueryPlugin),

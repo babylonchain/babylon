@@ -87,7 +87,7 @@ func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
 func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
 	// upon an epoch has been finalised, update the last finalised epoch
-	h.k.setFinalizedEpoch(ctx, epoch)
+	h.k.SetFinalizedEpoch(ctx, epoch)
 	return nil
 }
 

@@ -9,12 +9,11 @@ import (
 
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
@@ -54,6 +53,27 @@ func TestQueryEpoch(t *testing.T) {
 	resp = bindings.CurrentEpochResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
 	require.Equal(t, resp.Epoch, newEpoch.EpochNumber)
+}
+
+func TestFinalizedEpoch(t *testing.T) {
+	acc := randomAccountAddress()
+	babylonApp, ctx := setupAppWithContext(t)
+	fundAccount(t, ctx, babylonApp, acc)
+
+	// babylonApp.ZoneConciergeKeeper
+	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+
+	query := bindings.BabylonQuery{
+		LatestFinalizedEpoch: &struct{}{},
+	}
+
+	// There is no finalized epoch yet so we require an error
+	queryCustomErr(t, ctx, babylonApp, contractAddress, query)
+
+	babylonApp.ZoneConciergeKeeper.SetFinalizedEpoch(ctx, 5)
+	resp := bindings.CurrentEpochResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+	require.Equal(t, resp.Epoch, uint64(5))
 }
 
 func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
@@ -181,4 +201,26 @@ func queryCustom(
 	require.NoError(t, err)
 	err = json.Unmarshal(resp.Data, response)
 	require.NoError(t, err)
+}
+
+func queryCustomErr(
+	t *testing.T,
+	ctx sdk.Context,
+	bbn *app.BabylonApp,
+	contract sdk.AccAddress,
+	request bindings.BabylonQuery,
+) {
+	msgBz, err := json.Marshal(request)
+	require.NoError(t, err)
+
+	query := ExampleQuery{
+		Chain: &ChainRequest{
+			Request: wasmvmtypes.QueryRequest{Custom: msgBz},
+		},
+	}
+	queryBz, err := json.Marshal(query)
+	require.NoError(t, err)
+
+	_, err = bbn.WasmKeeper.QuerySmart(ctx, contract, queryBz)
+	require.Error(t, err)
 }
