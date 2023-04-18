@@ -140,7 +140,6 @@ import (
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	ibctm "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
-	wasmlc "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm"
 )
 
 const (
