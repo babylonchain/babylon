@@ -1,6 +1,12 @@
 FROM golang:1.19-alpine AS build
-RUN apk add build-base git linux-headers
+
+RUN apk add --no-cache \
+    ca-certificates \
+    build-base \
+    linux-headers
+
 WORKDIR /work
+
 COPY go.mod go.sum /work/
 
 RUN go mod download
