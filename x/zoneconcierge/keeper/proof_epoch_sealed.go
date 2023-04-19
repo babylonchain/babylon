@@ -36,7 +36,7 @@ func getValSetKey(epochNumber uint64) []byte {
 
 func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	valSetKey := getValSetKey(epoch.EpochNumber)
-	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
+	_, _, proof, err := k.QueryStore(checkpointingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
 	if err != nil {
 		return nil, err
 	}
