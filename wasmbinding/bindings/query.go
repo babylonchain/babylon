@@ -47,6 +47,6 @@ type BtcBaseHeaderResponse struct {
 	HeaderInfo *BtcBlockHeaderInfo `json:"header_info,omitempty"`
 }
 
-type BtcHeaderByQueryResponse struct {
+type BtcHeaderQueryResponse struct {
 	HeaderInfo *BtcBlockHeaderInfo `json:"header_info,omitempty"`
 }

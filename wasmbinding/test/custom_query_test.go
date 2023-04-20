@@ -133,7 +133,7 @@ func TestQueryBtcByHash(t *testing.T) {
 	}
 
 	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
-	resp := bindings.BtcHeaderByQueryResponse{}
+	resp := bindings.BtcHeaderQueryResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
 
 	require.Equal(t, resp.HeaderInfo, headerAsInfo)
@@ -154,7 +154,7 @@ func TestQueryBtcByNumber(t *testing.T) {
 	}
 
 	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
-	resp := bindings.BtcHeaderByQueryResponse{}
+	resp := bindings.BtcHeaderQueryResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
 
 	require.Equal(t, resp.HeaderInfo, headerAsInfo)
@@ -172,7 +172,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 			Height: 1,
 		},
 	}
-	resp := bindings.BtcHeaderByQueryResponse{}
+	resp := bindings.BtcHeaderQueryResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp)
 	require.Nil(t, resp.HeaderInfo)
 
@@ -181,7 +181,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 			Hash: datagen.GenRandomBtcdHash().String(),
 		},
 	}
-	resp1 := bindings.BtcHeaderByQueryResponse{}
+	resp1 := bindings.BtcHeaderQueryResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1)
 	require.Nil(t, resp1.HeaderInfo)
 }
