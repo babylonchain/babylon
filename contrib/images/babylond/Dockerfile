@@ -18,11 +18,13 @@ RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurse
 RUN apk add --no-cache musl-dev
 
 # Build
-WORKDIR /go/src/github.com/babylonchain
-RUN git clone https://github.com/babylonchain/babylon.git
 WORKDIR /go/src/github.com/babylonchain/babylon
-RUN git fetch
-RUN git checkout ${VERSION}
+# First cache dependencies
+COPY go.mod go.sum /go/src/github.com/babylonchain/babylon/
+RUN go mod download
+# Then copy everything else
+COPY ./ /go/src/github.com/babylonchain/babylon/
+RUN git checkout -f ${VERSION}
 
 # Cosmwasm - Download correct libwasmvm version
 RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
