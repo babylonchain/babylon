@@ -28,7 +28,7 @@ func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64)
 	resp := k.storeQuerier.Query(abci.RequestQuery{
 		Path:   path,
 		Data:   key,
-		Height: queryHeight,
+		Height: queryHeight - 1, // NOTE: the inclusion proof corresponds to the NEXT header
 		Prove:  true,
 	})
 	if resp.Code != 0 {

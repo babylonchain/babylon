@@ -25,10 +25,11 @@ func FuzzQueryStore(f *testing.F) {
 
 		ctx := babylonChain.GetContext()
 
-		// NOTE: the queryHeight has to be the previous block because
-		// NextBlock() only invokes BeginBlock(), but not EndBlock(), for the new block
 		epochQueryKey := append(epochingtypes.EpochInfoKey, sdk.Uint64ToBigEndian(1)...)
-		key, value, proof, err := zcKeeper.QueryStore(epochingtypes.StoreKey, epochQueryKey, ctx.BlockHeight()-1)
+		// NOTE: QueryStore will use ctx.BlockHeight() - 1 as the height for ABCI query
+		// This is because the ABCI query will return the inclusion proof corresponding
+		// to the NEXT block rather than the given block.
+		key, value, proof, err := zcKeeper.QueryStore(epochingtypes.StoreKey, epochQueryKey, ctx.BlockHeight())
 
 		require.NoError(t, err)
 		require.NotNil(t, proof)
