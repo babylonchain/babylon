@@ -232,3 +232,42 @@ func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbn.BTCHeaderHashBy
 func (k Keeper) GetTipInfo(ctx sdk.Context) *types.BTCHeaderInfo {
 	return k.headersState(ctx).GetTip()
 }
+
+// TODO: Following functions ,GetHeaderByHash and GetHeaderByHeight, are super inefficient
+// and should be replaced with a better implementation. This is requires changing the
+// underlying data model for the whole btclightclient module.
+// GetHeaderByHash returns header with given hash from main chain, returns nil such header is not found
+// or is not on main chain
+func (k Keeper) GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
+	depth, err := k.MainChainDepth(ctx, hash)
+
+	if depth < 0 || err != nil {
+		return nil
+	}
+
+	info, err := k.headersState(ctx).GetHeaderByHash(hash)
+
+	if err != nil {
+		return nil
+	}
+
+	return info
+}
+
+// GetHeaderByHeight returns header with given height from main chain, returns nil such header is not found
+func (k Keeper) GetHeaderByHeight(ctx sdk.Context, height uint64) *types.BTCHeaderInfo {
+	var info *types.BTCHeaderInfo
+
+	k.headersState(ctx).HeadersByHeight(height, func(hi *types.BTCHeaderInfo) bool {
+		depth, err := k.MainChainDepth(ctx, hi.Hash)
+
+		if depth < 0 || err != nil {
+			return false
+		}
+
+		info = hi
+		return true
+	})
+
+	return info
+}

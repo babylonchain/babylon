@@ -16,7 +16,7 @@ dependencies = [
 [[package]]
 name = "babylon-bindings"
 version = "0.1.0"
-source = "git+https://github.com/babylonchain/bindings?branch=main#9ab0e442ded6956b86ceb2dd249256590bf1d6e2"
+source = "git+https://github.com/babylonchain/bindings?branch=main#099116daf91fea3a8d500653309f21cf8924a95c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -27,7 +27,7 @@ dependencies = [
 [[package]]
 name = "babylon-example"
 version = "0.1.0"
-source = "git+https://github.com/babylonchain/bindings?branch=main#9ab0e442ded6956b86ceb2dd249256590bf1d6e2"
+source = "git+https://github.com/babylonchain/bindings?branch=main#099116daf91fea3a8d500653309f21cf8924a95c"
 dependencies = [
  "babylon-bindings",
  "cosmwasm-schema",
@@ -544,7 +544,7 @@ checksum = "291a097c63d8497e00160b166a967a4a79c64f3facdd01cbd7502231688d77df"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
@@ -560,9 +560,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.95"
+version = "1.0.96"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d721eca97ac802aa7777b701877c8004d950fc142651367300d21c1cc0194744"
+checksum = "057d394a50403bcac12672b2b18fb387ab6d289d957dab67dd201875391e52f1"
 dependencies = [
  "itoa",
  "ryu",
@@ -638,9 +638,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "2.0.14"
+version = "2.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fcf316d5356ed6847742d036f8a39c3b8435cac10bd528a4bd461928a6ab34d5"
+checksum = "a34fcf3e8b60f57e6a14301a2e916d323af98b0ea63c599441eec8558660c822"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -671,7 +671,7 @@ checksum = "f9456a42c5b0d803c8cd86e73dd7cc9edd429499f37a3550d286d5e86720569f"
 dependencies = [
  "proc-macro2",
  "quote",
- "syn 2.0.14",
+ "syn 2.0.15",
 ]
 
 [[package]]
