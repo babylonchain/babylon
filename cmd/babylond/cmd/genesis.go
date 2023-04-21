@@ -63,7 +63,7 @@ Example:
 			var genesisParams GenesisParams
 			if network == "testnet" {
 				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
-					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
+					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
@@ -211,7 +211,7 @@ type GenesisParams struct {
 }
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64, epochInterval uint64, baseBtcHeaderHex string,
+	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
@@ -270,6 +270,11 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.BtccheckpointParams = btccheckpointtypes.DefaultParams()
 	genParams.BtccheckpointParams.BtcConfirmationDepth = btcConfirmationDepth
 	genParams.BtccheckpointParams.CheckpointFinalizationTimeout = btcFinalizationTimeout
+	genParams.BtccheckpointParams.CheckpointTag = checkpointTag
+
+	if err := genParams.BtccheckpointParams.Validate(); err != nil {
+		panic(err)
+	}
 
 	// set the base BTC header in the genesis state
 	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(baseBtcHeaderHex)

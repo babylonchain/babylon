@@ -2,18 +2,24 @@ package app
 
 import (
 	bbn "github.com/babylonchain/babylon/types"
+	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BtcValidationDecorator struct {
-	BtcCfg bbn.BtcConfig
+	BtcCfg              bbn.BtcConfig
+	btccheckpointKeeper *btccheckpointkeeper.Keeper
 }
 
-func NewBtcValidationDecorator(cfg bbn.BtcConfig) BtcValidationDecorator {
+func NewBtcValidationDecorator(
+	cfg bbn.BtcConfig,
+	k *btccheckpointkeeper.Keeper,
+) BtcValidationDecorator {
 	return BtcValidationDecorator{
-		BtcCfg: cfg,
+		BtcCfg:              cfg,
+		btccheckpointKeeper: k,
 	}
 }
 
@@ -26,7 +32,7 @@ func (bvd BtcValidationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 			switch msg := m.(type) {
 			case *btccheckpointtypes.MsgInsertBTCSpvProof:
 				powLimit := bvd.BtcCfg.PowLimit()
-				_, err := btccheckpointtypes.ParseSubmission(msg, &powLimit, bvd.BtcCfg.CheckpointTag())
+				_, err := btccheckpointtypes.ParseSubmission(msg, &powLimit, bvd.btccheckpointKeeper.GetExpectedTag(ctx))
 
 				if err != nil {
 					return ctx, btccheckpointtypes.ErrInvalidCheckpointProof.Wrap(err.Error())

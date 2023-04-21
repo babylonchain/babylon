@@ -20,7 +20,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/app/params"
 	appparams "github.com/babylonchain/babylon/app/params"
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	dbm "github.com/cometbft/cometbft-db"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -604,10 +603,6 @@ func (ao EmptyAppOptions) Get(o string) interface{} {
 
 	if o == "btc-config.network" {
 		return string(bbn.BtcSimnet)
-	}
-
-	if o == "btc-config.checkpoint-tag" {
-		return txformat.DefaultMainTagStr
 	}
 
 	return nil

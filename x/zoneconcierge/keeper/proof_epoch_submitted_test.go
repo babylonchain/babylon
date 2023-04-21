@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -60,10 +61,11 @@ func FuzzProofEpochSubmitted(f *testing.F) {
 
 		// net param, babylonTag
 		powLimit := chaincfg.SimNetParams.PowLimit
-		babylonTag := txformat.MainTag(0)
+		babylonTag := btcctypes.DefaultCheckpointTag
+		tagAsBytes, _ := hex.DecodeString(babylonTag)
 
 		// verify
-		err = zckeeper.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, powLimit, babylonTag)
+		err = zckeeper.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, powLimit, txformat.BabylonTag(tagAsBytes))
 		require.NoError(t, err)
 	})
 }

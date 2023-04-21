@@ -14,6 +14,7 @@ const (
 	flagBtcConfirmationDepth   = "btc-confirmation-depth"
 	flagEpochInterval          = "epoch-interval"
 	flagBtcFinalizationTimeout = "btc-finalization-timeout"
+	flagCheckpointTag          = "checkpoint-tag"
 	flagBaseBtcHeaderHex       = "btc-base-header"
 	flagBaseBtcHeaderHeight    = "btc-base-header-height"
 	flagInflationRateChange    = "inflation-rate-change"
@@ -30,6 +31,7 @@ type GenesisCLIArgs struct {
 	MaxActiveValidators    uint32
 	BtcConfirmationDepth   uint64
 	BtcFinalizationTimeout uint64
+	CheckpointTag          string
 	EpochInterval          uint64
 	BaseBtcHeaderHex       string
 	BaseBtcHeaderHeight    uint64
@@ -49,6 +51,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// btccheckpoint flags
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
+	cmd.Flags().String(flagCheckpointTag, "01020304", "Hex encoded tag for babylon checkpoint on btc")
 	// epoch args
 	cmd.Flags().Uint64(flagEpochInterval, 400, "Number of blocks between epochs. Must be more than 0.")
 	// btclightclient args
@@ -69,6 +72,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	maxActiveValidators, _ := cmd.Flags().GetUint32(flagMaxActiveValidators)
 	btcConfirmationDepth, _ := cmd.Flags().GetUint64(flagBtcConfirmationDepth)
 	btcFinalizationTimeout, _ := cmd.Flags().GetUint64(flagBtcFinalizationTimeout)
+	checkpointTag, _ := cmd.Flags().GetString(flagCheckpointTag)
 	epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 	baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
 	baseBtcHeaderHeight, _ := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
@@ -91,6 +95,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		MaxActiveValidators:    maxActiveValidators,
 		BtcConfirmationDepth:   btcConfirmationDepth,
 		BtcFinalizationTimeout: btcFinalizationTimeout,
+		CheckpointTag:          checkpointTag,
 		EpochInterval:          epochInterval,
 		BaseBtcHeaderHeight:    baseBtcHeaderHeight,
 		BaseBtcHeaderHex:       baseBtcHeaderHex,

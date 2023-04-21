@@ -12,7 +12,6 @@ import (
 	"path/filepath"
 
 	appparams "github.com/babylonchain/babylon/app/params"
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
@@ -53,7 +52,6 @@ var (
 	flagNodeDaemonHome          = "node-daemon-home"
 	flagStartingIPAddress       = "starting-ip-address"
 	flagBtcNetwork              = "btc-network"
-	flagBtcCheckpointTag        = "btc-checkpoint-tag"
 	flagAdditionalSenderAccount = "additional-sender-account"
 )
 
@@ -89,14 +87,13 @@ Example:
 			numValidators, _ := cmd.Flags().GetInt(flagNumValidators)
 			algo, _ := cmd.Flags().GetString(flags.FlagKeyAlgorithm)
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
-			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
 			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
 			if err != nil {
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
 
 			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
-				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
+				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
 				genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
@@ -105,7 +102,7 @@ Example:
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				btcNetwork, btcCheckpointTag, additionalAccount, genesisParams,
+				btcNetwork, additionalAccount, genesisParams,
 			)
 		},
 	}
@@ -119,7 +116,6 @@ Example:
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
 	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, regtest, mainnet")
-	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefaultTestTagStr), "Tag to use for Bitcoin checkpoints.")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
 	addGenesisFlags(cmd)
 
@@ -145,7 +141,6 @@ func InitTestnet(
 	algoStr string,
 	numValidators int,
 	btcNetwork string,
-	btcCheckpointTag string,
 	additionalAccount bool,
 	genesisParams GenesisParams,
 ) error {
@@ -162,7 +157,6 @@ func InitTestnet(
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
 	// BTC related config. Default values "simnet" and "BBT1"
 	babylonConfig.BtcConfig.Network = btcNetwork
-	babylonConfig.BtcConfig.CheckpointTag = btcCheckpointTag
 	// Explorer related config. Allow CORS connections.
 	babylonConfig.API.EnableUnsafeCORS = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"

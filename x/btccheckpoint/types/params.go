@@ -1,19 +1,24 @@
 package types
 
 import (
+	"encoding/hex"
 	fmt "fmt"
+
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 )
 
 const (
 	DefaultBtcConfirmationDepth          uint64 = 10
 	DefaultCheckpointFinalizationTimeout uint64 = 100
+	DefaultCheckpointTag                        = "00010203"
 )
 
 // NewParams creates a new Params instance
-func NewParams(btcConfirmationDepth uint64, checkpointFinalizationTimeout uint64) Params {
+func NewParams(btcConfirmationDepth uint64, checkpointFinalizationTimeout uint64, checkpointTag string) Params {
 	return Params{
 		BtcConfirmationDepth:          btcConfirmationDepth,
 		CheckpointFinalizationTimeout: checkpointFinalizationTimeout,
+		CheckpointTag:                 checkpointTag,
 	}
 }
 
@@ -22,6 +27,7 @@ func DefaultParams() Params {
 	return NewParams(
 		DefaultBtcConfirmationDepth,
 		DefaultCheckpointFinalizationTimeout,
+		DefaultCheckpointTag,
 	)
 }
 
@@ -33,6 +39,11 @@ func (p Params) Validate() error {
 	if err := validateCheckpointFinalizationTimeout(p.CheckpointFinalizationTimeout); err != nil {
 		return err
 	}
+
+	if err := validateCheckpointTag(p.CheckpointTag); err != nil {
+		return err
+	}
+
 	if p.BtcConfirmationDepth >= p.CheckpointFinalizationTimeout {
 		return fmt.Errorf("BtcConfirmationDepth should be smaller than CheckpointFinalizationTimeout")
 	}
@@ -61,6 +72,26 @@ func validateCheckpointFinalizationTimeout(i interface{}) error {
 
 	if v <= 0 {
 		return fmt.Errorf("CheckpointFinalizationTimeout must be positive: %d", v)
+	}
+
+	return nil
+}
+
+func validateCheckpointTag(i interface{}) error {
+	t, ok := i.(string)
+
+	if !ok {
+		return fmt.Errorf("invalid parameter type: %T", i)
+	}
+
+	decoded, err := hex.DecodeString(t)
+
+	if err != nil {
+		return fmt.Errorf("checkpoint tag should be in valid hex format")
+	}
+
+	if len(decoded) != txformat.TagLength {
+		return fmt.Errorf("checkpoint tag should have exactly %d bytes", txformat.TagLength)
 	}
 
 	return nil

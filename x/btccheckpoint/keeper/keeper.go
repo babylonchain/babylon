@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"math/big"
@@ -65,20 +66,18 @@ func NewKeeper(
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
 	powLimit *big.Int,
-	expectedTag txformat.BabylonTag,
 	authority string,
 ) Keeper {
 
 	return Keeper{
-		cdc:                   cdc,
-		storeKey:              storeKey,
-		tstoreKey:             tstoreKey,
-		memKey:                memKey,
-		btcLightClientKeeper:  bk,
-		checkpointingKeeper:   ck,
-		powLimit:              powLimit,
-		expectedCheckpointTag: expectedTag,
-		authority:             authority,
+		cdc:                  cdc,
+		storeKey:             storeKey,
+		tstoreKey:            tstoreKey,
+		memKey:               memKey,
+		btcLightClientKeeper: bk,
+		checkpointingKeeper:  ck,
+		powLimit:             powLimit,
+		authority:            authority,
 	}
 }
 
@@ -86,8 +85,16 @@ func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
 }
 
-func (k Keeper) GetExpectedTag() txformat.BabylonTag {
-	return k.expectedCheckpointTag
+func (k Keeper) GetExpectedTag(ctx sdk.Context) txformat.BabylonTag {
+	tag := k.GetParams(ctx).CheckpointTag
+
+	tagAsBytes, err := hex.DecodeString(tag)
+
+	if err != nil {
+		panic("Tag should always be valid")
+	}
+
+	return txformat.BabylonTag(tagAsBytes)
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
