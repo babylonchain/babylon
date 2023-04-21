@@ -126,8 +126,9 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 
 		require.NoError(n.t, err)
 
+		babylonTagBytes, _ := hex.DecodeString(initialization.BabylonOpReturnTag)
 		p1, p2, err := txformat.EncodeCheckpointData(
-			txformat.BabylonTag(initialization.BabylonOpReturnTag),
+			txformat.BabylonTag(babylonTagBytes),
 			txformat.CurrentVersion,
 			btcCheckpoint,
 		)

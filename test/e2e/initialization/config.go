@@ -43,10 +43,11 @@ type NodeConfig struct {
 
 const (
 	// common
-	BabylonDenom                 = "ubbn"
-	MinGasPrice                  = "0.000"
-	ValidatorWalletName          = "val"
-	BabylonOpReturnTag           = "01020304"
+	BabylonDenom        = "ubbn"
+	MinGasPrice         = "0.000"
+	ValidatorWalletName = "val"
+	BabylonOpReturnTag  = "01020304"
+
 	BabylonBtcConfirmationPeriod = 2
 	BabylonBtcFinalizationPeriod = 4
 	// chainA

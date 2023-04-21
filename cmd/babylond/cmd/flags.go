@@ -4,6 +4,7 @@ import (
 	"time"
 
 	babylonApp "github.com/babylonchain/babylon/app"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -51,7 +52,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// btccheckpoint flags
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
-	cmd.Flags().String(flagCheckpointTag, "01020304", "Hex encoded tag for babylon checkpoint on btc")
+	cmd.Flags().String(flagCheckpointTag, btcctypes.DefaultCheckpointTag, "Hex encoded tag for babylon checkpoint on btc")
 	// epoch args
 	cmd.Flags().Uint64(flagEpochInterval, 400, "Number of blocks between epochs. Must be more than 0.")
 	// btclightclient args

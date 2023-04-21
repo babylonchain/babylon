@@ -10,7 +10,7 @@ import (
 const (
 	DefaultBtcConfirmationDepth          uint64 = 10
 	DefaultCheckpointFinalizationTimeout uint64 = 100
-	DefaultCheckpointTag                        = "00010203"
+	DefaultCheckpointTag                        = "01020304"
 )
 
 // NewParams creates a new Params instance
