@@ -18,7 +18,7 @@ func AsBtcBlockHeaderInfo(info *lcTypes.BTCHeaderInfo) *BtcBlockHeaderInfo {
 			Bits:    header.Bits,
 			Nonce:   header.Nonce,
 			// for compatibility with all btc infra we are returning the hex encoded bytes
-			// in reveresed order
+			// in reversed order
 			MerkleRoot:    header.MerkleRoot.String(),
 			PrevBlockhash: header.PrevBlock.String(),
 		},

@@ -233,10 +233,10 @@ func (k Keeper) GetTipInfo(ctx sdk.Context) *types.BTCHeaderInfo {
 	return k.headersState(ctx).GetTip()
 }
 
-// TODO: Following functions ,GetHeaderByHash and GetHeaderByHeight, are super inefficient
-// and should be replaced with a better implementation. This is requires changing the
+// TODO: The following functions, GetHeaderByHash and GetHeaderByHeight, are super inefficient
+// and should be replaced with a better implementation. This requires changing the
 // underlying data model for the whole btclightclient module.
-// GetHeaderByHash returns header with given hash from main chain, returns nil such header is not found
+// GetHeaderByHash returns header with given hash from main chain or returns nil if such header is not found
 // or is not on main chain
 func (k Keeper) GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
 	depth, err := k.MainChainDepth(ctx, hash)
@@ -254,7 +254,7 @@ func (k Keeper) GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *
 	return info
 }
 
-// GetHeaderByHeight returns header with given height from main chain, returns nil such header is not found
+// GetHeaderByHeight returns header with given height from main chain, returns nil if such header is not found
 func (k Keeper) GetHeaderByHeight(ctx sdk.Context, height uint64) *types.BTCHeaderInfo {
 	var info *types.BTCHeaderInfo
 
