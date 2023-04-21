@@ -18,15 +18,14 @@ import (
 
 type (
 	Keeper struct {
-		cdc                   codec.BinaryCodec
-		storeKey              storetypes.StoreKey
-		tstoreKey             storetypes.StoreKey
-		memKey                storetypes.StoreKey
-		btcLightClientKeeper  types.BTCLightClientKeeper
-		checkpointingKeeper   types.CheckpointingKeeper
-		powLimit              *big.Int
-		expectedCheckpointTag txformat.BabylonTag
-		authority             string
+		cdc                  codec.BinaryCodec
+		storeKey             storetypes.StoreKey
+		tstoreKey            storetypes.StoreKey
+		memKey               storetypes.StoreKey
+		btcLightClientKeeper types.BTCLightClientKeeper
+		checkpointingKeeper  types.CheckpointingKeeper
+		powLimit             *big.Int
+		authority            string
 	}
 
 	submissionBtcError string
