@@ -6,14 +6,14 @@ type BabylonQuery struct {
 	BtcTip               *struct{}          `json:"btc_tip,omitempty"`
 	BtcBaseHeader        *struct{}          `json:"btc_base_header,omitempty"`
 	BtcHeaderByHash      *BtcHeaderByHash   `json:"btc_header_by_hash,omitempty"`
-	BtcHeaderByNumber    *BtcHeaderByNumber `json:"btc_header_by_number,omitempty"`
+	BtcHeaderByHeight    *BtcHeaderByHeight `json:"btc_header_by_height,omitempty"`
 }
 
 type BtcHeaderByHash struct {
 	Hash string `json:"hash,omitempty"`
 }
 
-type BtcHeaderByNumber struct {
+type BtcHeaderByHeight struct {
 	Height uint64 `json:"height,omitempty"`
 }
 

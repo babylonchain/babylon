@@ -148,7 +148,7 @@ func TestQueryBtcByNumber(t *testing.T) {
 	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
 
 	query := bindings.BabylonQuery{
-		BtcHeaderByNumber: &bindings.BtcHeaderByNumber{
+		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
 			Height: tip.Height,
 		},
 	}
@@ -168,7 +168,7 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	queryNonExisitingHeight := bindings.BabylonQuery{
-		BtcHeaderByNumber: &bindings.BtcHeaderByNumber{
+		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
 			Height: 1,
 		},
 	}

@@ -1,1 +1,1 @@
-4bdf767c414ab306e9729c71048ca4626f4fd76a12b0c2ee8fd4e324ba648b4b  ./target/wasm32-unknown-unknown/release/testdata.wasm
+cba16345ebd363489d35b12a796b1db9a8131e90abfe0391bb3cd84cbee77e22  ./target/wasm32-unknown-unknown/release/testdata.wasm

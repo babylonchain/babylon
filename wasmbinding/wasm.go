@@ -127,8 +127,8 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 
 			return bz, nil
-		case contractQuery.BtcHeaderByNumber != nil:
-			headerInfo := qp.lcKeeper.GetHeaderByHeight(ctx, contractQuery.BtcHeaderByNumber.Height)
+		case contractQuery.BtcHeaderByHeight != nil:
+			headerInfo := qp.lcKeeper.GetHeaderByHeight(ctx, contractQuery.BtcHeaderByHeight.Height)
 
 			res := bindings.BtcHeaderQueryResponse{
 				HeaderInfo: bindings.AsBtcBlockHeaderInfo(headerInfo),
