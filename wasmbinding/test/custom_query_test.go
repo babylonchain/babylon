@@ -10,6 +10,7 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
@@ -74,6 +75,115 @@ func TestFinalizedEpoch(t *testing.T) {
 	resp := bindings.CurrentEpochResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
 	require.Equal(t, resp.Epoch, uint64(5))
+}
+
+func TestQueryBtcTip(t *testing.T) {
+	acc := randomAccountAddress()
+	babylonApp, ctx := setupAppWithContext(t)
+	fundAccount(t, ctx, babylonApp, acc)
+
+	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+
+	query := bindings.BabylonQuery{
+		BtcTip: &struct{}{},
+	}
+
+	resp := bindings.BtcTipResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+
+	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
+	tipAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
+
+	require.Equal(t, resp.HeaderInfo.Height, tip.Height)
+	require.Equal(t, tipAsInfo, resp.HeaderInfo)
+}
+
+func TestQueryBtcBase(t *testing.T) {
+	acc := randomAccountAddress()
+	babylonApp, ctx := setupAppWithContext(t)
+	fundAccount(t, ctx, babylonApp, acc)
+
+	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+
+	query := bindings.BabylonQuery{
+		BtcBaseHeader: &struct{}{},
+	}
+
+	resp := bindings.BtcBaseHeaderResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+
+	base := babylonApp.BTCLightClientKeeper.GetBaseBTCHeader(ctx)
+	baseAsInfo := bindings.AsBtcBlockHeaderInfo(base)
+
+	require.Equal(t, baseAsInfo, resp.HeaderInfo)
+}
+
+func TestQueryBtcByHash(t *testing.T) {
+	acc := randomAccountAddress()
+	babylonApp, ctx := setupAppWithContext(t)
+	fundAccount(t, ctx, babylonApp, acc)
+
+	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
+
+	query := bindings.BabylonQuery{
+		BtcHeaderByHash: &bindings.BtcHeaderByHash{
+			Hash: tip.Hash.String(),
+		},
+	}
+
+	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
+	resp := bindings.BtcHeaderQueryResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+
+	require.Equal(t, resp.HeaderInfo, headerAsInfo)
+}
+
+func TestQueryBtcByNumber(t *testing.T) {
+	acc := randomAccountAddress()
+	babylonApp, ctx := setupAppWithContext(t)
+	fundAccount(t, ctx, babylonApp, acc)
+
+	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+	tip := babylonApp.BTCLightClientKeeper.GetTipInfo(ctx)
+
+	query := bindings.BabylonQuery{
+		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
+			Height: tip.Height,
+		},
+	}
+
+	headerAsInfo := bindings.AsBtcBlockHeaderInfo(tip)
+	resp := bindings.BtcHeaderQueryResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
+
+	require.Equal(t, resp.HeaderInfo, headerAsInfo)
+}
+
+func TestQueryNonExistingHeader(t *testing.T) {
+	acc := randomAccountAddress()
+	babylonApp, ctx := setupAppWithContext(t)
+	fundAccount(t, ctx, babylonApp, acc)
+
+	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
+
+	queryNonExisitingHeight := bindings.BabylonQuery{
+		BtcHeaderByHeight: &bindings.BtcHeaderByHeight{
+			Height: 1,
+		},
+	}
+	resp := bindings.BtcHeaderQueryResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp)
+	require.Nil(t, resp.HeaderInfo)
+
+	queryNonExisitingHash := bindings.BabylonQuery{
+		BtcHeaderByHash: &bindings.BtcHeaderByHash{
+			Hash: datagen.GenRandomBtcdHash().String(),
+		},
+	}
+	resp1 := bindings.BtcHeaderQueryResponse{}
+	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHash, &resp1)
+	require.Nil(t, resp1.HeaderInfo)
 }
 
 func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
