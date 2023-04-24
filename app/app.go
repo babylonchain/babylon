@@ -13,7 +13,6 @@ import (
 
 	wasmapp "github.com/CosmWasm/wasmd/app"
 	"github.com/CosmWasm/wasmd/x/wasm"
-	wasmclient "github.com/CosmWasm/wasmd/x/wasm/client"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	"github.com/babylonchain/babylon/client/docs"
 	bbn "github.com/babylonchain/babylon/types"
@@ -103,9 +102,6 @@ import (
 
 	appparams "github.com/babylonchain/babylon/app/params"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-
 	"github.com/babylonchain/babylon/x/btccheckpoint"
 	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -121,6 +117,9 @@ import (
 	"github.com/babylonchain/babylon/x/monitor"
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
@@ -174,14 +173,13 @@ var (
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
-			append(
-				wasmclient.ProposalHandlers,
+			[]govclient.ProposalHandler{
 				paramsclient.ProposalHandler,
 				upgradeclient.LegacyProposalHandler,
 				upgradeclient.LegacyCancelProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
-			),
+			},
 		),
 		params.AppModuleBasic{},
 		consensus.AppModuleBasic{},
