@@ -4,11 +4,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -16,6 +11,12 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 func FuzzChainList(f *testing.F) {
@@ -61,6 +62,47 @@ func FuzzChainList(f *testing.F) {
 		allChainIDs = zcKeeper.GetAllChainIDs(ctx)
 		for i := uint64(0); i < limit; i++ {
 			require.Equal(t, allChainIDs[i], actualChainIDs[i])
+		}
+	})
+}
+
+func FuzzChainsInfo(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		_, babylonChain, _, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
+
+		ctx := babylonChain.GetContext()
+		hooks := zcKeeper.Hooks()
+
+		// invoke the hook a random number of times with random chain IDs
+		numHeaders := datagen.RandomInt(100) + 1
+		var allChainIDs []string
+		for i := uint64(0); i < numHeaders; i++ {
+			var chainID string
+			// simulate the scenario that some headers belong to the same chain
+			if i > 0 && datagen.OneInN(2) {
+				chainID = allChainIDs[rand.Intn(len(allChainIDs))]
+			} else {
+				chainID = datagen.GenRandomHexStr(30)
+				allChainIDs = append(allChainIDs, chainID)
+			}
+			header := datagen.GenRandomIBCTMHeader(chainID, 0)
+			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), datagen.HeaderToHeaderInfo(header), false)
+		}
+
+		// make query to get actual chain IDs
+		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
+			ChainIds: allChainIDs,
+		})
+		require.NoError(t, err)
+		chainsInfo := resp.ChainsInfo
+
+		for i, info := range chainsInfo {
+			require.Equal(t, allChainIDs[i], info.ChainId)
 		}
 	})
 }
