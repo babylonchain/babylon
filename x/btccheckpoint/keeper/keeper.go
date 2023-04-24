@@ -84,6 +84,10 @@ func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
 }
 
+// GetExpectedTag retrerieves checkpoint tag from params and decodes it from
+// hex string to bytes.
+// NOTE: keeper could probably cache decoded tag, but it is rather improbable this function
+// will ever be a bottleneck so it is not worth it.
 func (k Keeper) GetExpectedTag(ctx sdk.Context) txformat.BabylonTag {
 	tag := k.GetParams(ctx).CheckpointTag
 

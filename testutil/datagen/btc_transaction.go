@@ -375,9 +375,10 @@ func GenRandomBabylonTxPair() ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) 
 
 	// fake a raw checkpoint
 	rawBTCCkpt := GetRandomRawBtcCheckpoint()
+	tag := []byte{1, 2, 3, 4}
 	// encode raw checkpoint to two halves
 	firstHalf, secondHalf, err := btctxformatter.EncodeCheckpointData(
-		btctxformatter.TestTag(48), // TODO: randomise the tag ID
+		btctxformatter.BabylonTag(tag), // TODO: randomise the tag ID
 		btctxformatter.CurrentVersion,
 		rawBTCCkpt,
 	)
