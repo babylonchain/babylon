@@ -1,8 +1,11 @@
 package extended_client_keeper
 
 import (
+	"bytes"
+
 	sdkerrors "cosmossdk.io/errors"
 	metrics "github.com/armon/go-metrics"
+	grandpa "github.com/babylonchain/babylon/x/zoneconcierge/types/grandpa"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -13,6 +16,7 @@ import (
 	"github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibcwasm "github.com/cosmos/ibc-go/v7/modules/light-clients/08-wasm/types"
 )
 
 // ExtendedKeeper is same as the original clientkeeper.Keeper, except that
@@ -35,6 +39,25 @@ func GetHeaderInfo(ctx sdk.Context, m exported.ClientMessage) *HeaderInfo {
 			ChaindId: msg.Header.ChainID,
 			Height:   uint64(msg.Header.Height),
 		}
+	case *ibcwasm.Header:
+		// try to decode wasm.data as a picasso header
+		gh, err := grandpa.DecodeHeader(grandpa.NewDecoder(bytes.NewReader(msg.Data)))
+
+		if err == nil {
+			// this is header is unknown to babylon so we can't checkpoint it. Returning nil
+			// means that this light client will be frozen.
+			return nil
+		}
+
+		return &HeaderInfo{
+			// For now use state root as consensus binding hash.
+			Hash:   gh.StateRoot[:],
+			Height: uint64(gh.Number),
+			// TODO: it seems picasso headers doesn't have chain id. For now pass picasso string
+			// as we only checkpoint picasso chain.
+			ChaindId: "picasso",
+		}
+
 	default:
 		return nil
 	}
