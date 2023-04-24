@@ -156,6 +156,7 @@ func InitTestnet(
 	babylonConfig := DefaultBabylonConfig()
 	babylonConfig.MinGasPrices = minGasPrices
 	babylonConfig.API.Enable = true
+	babylonConfig.API.Address = "tcp://0.0.0.0:1317"
 	babylonConfig.Telemetry.Enabled = true
 	babylonConfig.Telemetry.PrometheusRetentionTime = 60
 	babylonConfig.Telemetry.EnableHostnameLabel = false
@@ -166,6 +167,7 @@ func InitTestnet(
 	// Explorer related config. Allow CORS connections.
 	babylonConfig.API.EnableUnsafeCORS = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
+	babylonConfig.GRPCWeb.Address = "0.0.0.0:9091"
 
 	var (
 		genAccounts []authtypes.GenesisAccount
