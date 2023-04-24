@@ -78,31 +78,37 @@ func FuzzChainsInfo(f *testing.F) {
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		// invoke the hook a random number of times with random chain IDs
-		numHeaders := datagen.RandomInt(100) + 1
+		numChains := datagen.RandomInt(100) + 1
+		var allChainsInfo []struct {
+			chainID        string
+			numHeaders     uint64
+			numForkHeaders uint64
+		}
 		var allChainIDs []string
-		for i := uint64(0); i < numHeaders; i++ {
-			var chainID string
-			// simulate the scenario that some headers belong to the same chain
-			if i > 0 && datagen.OneInN(2) {
-				chainID = allChainIDs[rand.Intn(len(allChainIDs))]
-			} else {
-				chainID = datagen.GenRandomHexStr(30)
-				allChainIDs = append(allChainIDs, chainID)
-			}
-			header := datagen.GenRandomIBCTMHeader(chainID, 0)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(32), datagen.HeaderToHeaderInfo(header), false)
+		for i := uint64(0); i < numChains; i++ {
+			chainID := datagen.GenRandomHexStr(30)
+			allChainIDs = append(allChainIDs, chainID)
+
+			numHeaders := datagen.RandomInt(100) + 1
+			numForkHeaders := datagen.RandomInt(10) + 1
+			SimulateHeadersAndForksViaHook(ctx, hooks, chainID, 0, numHeaders, numForkHeaders)
+			allChainsInfo = append(allChainsInfo, struct {
+				chainID        string
+				numHeaders     uint64
+				numForkHeaders uint64
+			}{chainID, numHeaders, numForkHeaders})
 		}
 
-		// make query to get actual chain IDs
 		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
 			ChainIds: allChainIDs,
 		})
 		require.NoError(t, err)
 		chainsInfo := resp.ChainsInfo
 
-		for i, info := range chainsInfo {
-			require.Equal(t, allChainIDs[i], info.ChainId)
+		for i, chainInfo := range chainsInfo {
+			require.Equal(t, allChainsInfo[i].chainID, chainInfo.ChainId)
+			require.Equal(t, allChainsInfo[i].numHeaders-1, chainInfo.LatestHeader.Height)
+			require.Equal(t, allChainsInfo[i].numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
 		}
 	})
 }
