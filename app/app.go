@@ -149,7 +149,7 @@ const (
 	// The last arguments can contain custom message handlers, and custom query handlers,
 	// if we want to allow any custom callbacks
 	// See https://github.com/CosmWasm/cosmwasm/blob/main/docs/CAPABILITIES-BUILT-IN.md
-	wasmCapabilities = "iterator,staking,stargate,cosmwasm_1_1,cosmwasm_1_2,babylon"
+	wasmCapabilities = "iterator,stargate,cosmwasm_1_1,cosmwasm_1_2,babylon"
 
 	// According to https://github.com/CosmWasm/wasmd#genesis-configuration chains
 	// using smart contracts should configure proper gas limits per block.
