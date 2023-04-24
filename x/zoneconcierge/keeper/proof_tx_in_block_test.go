@@ -54,10 +54,14 @@ func TestProveTxInBlock(t *testing.T) {
 	coins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10)))
 	msg := banktypes.NewMsgSend(val.Address, testNetwork.Validators[1].Address, coins)
 
+	txf, err := tx.NewFactoryCLI(val.ClientCtx, fs)
+
+	require.NoError(t, err)
 	// construct a tx that includes this msg
-	txf := tx.NewFactoryCLI(val.ClientCtx, fs).
+	txf = txf.
 		WithTxConfig(val.ClientCtx.TxConfig).
 		WithAccountRetriever(val.ClientCtx.AccountRetriever)
+
 	txf, err = txf.Prepare(val.ClientCtx)
 	require.NoError(t, err)
 	txb, err := txf.BuildUnsignedTx(msg)
