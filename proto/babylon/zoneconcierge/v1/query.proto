@@ -21,6 +21,13 @@ service Query {
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chains";
   }
+
+  // ChainsInfo queries the latest info of list of chains in Babylon's view
+  rpc ChainsInfo(QueryChainsInfoRequest) returns (QueryChainsInfoResponse) {
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/chains_info";
+  }
+
   // ChainInfo queries the latest info of a chain in Babylon's view
   rpc ChainInfo(QueryChainInfoRequest) returns (QueryChainInfoResponse) {
     option (google.api.http).get =
@@ -95,6 +102,15 @@ message QueryChainInfoRequest { string chain_id = 1; }
 message QueryChainInfoResponse {
   // chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
+}
+
+// QueryChainsInfoRequest is request type for the Query/ChainsInfo RPC method.
+message QueryChainsInfoRequest { repeated string chain_ids = 1; }
+
+// QueryChainsInfoResponse is response type for the Query/ChainsInfo RPC method.
+message QueryChainsInfoResponse {
+  // chains_info is the info of the CZ
+  repeated babylon.zoneconcierge.v1.ChainInfo chains_info = 1;
 }
 
 // QueryEpochChainInfoRequest is request type for the Query/EpochChainInfo RPC
