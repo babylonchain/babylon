@@ -70,13 +70,17 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
+	var chainsInfo []*types.ChainInfo
+	for _, chainID := range req.ChainIds {
+		chainInfo, err := k.GetChainInfo(ctx, chainID)
+		if err != nil {
+			return nil, err
+		}
 
-	// find the chain info of this epoch
-	chainInfo, err := k.GetChainInfo(ctx, req.ChainIds[0])
-	if err != nil {
-		return nil, err
+		chainsInfo = append(chainsInfo, chainInfo)
 	}
-	resp := &types.QueryChainsInfoResponse{ChainsInfo: []*types.ChainInfo{chainInfo}}
+
+	resp := &types.QueryChainsInfoResponse{ChainsInfo: chainsInfo}
 	return resp, nil
 }
 
