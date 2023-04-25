@@ -79,12 +79,14 @@ func FuzzChainsInfo(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		numChains := datagen.RandomInt(100) + 1
-		var chainsInfo []struct {
-			chainID        string
-			numHeaders     uint64
-			numForkHeaders uint64
-		}
-		var chainIDs []string
+		var (
+			chainsInfo []struct {
+				chainID        string
+				numHeaders     uint64
+				numForkHeaders uint64
+			}
+			chainIDs []string
+		)
 		for i := uint64(0); i < numChains; i++ {
 			chainID := datagen.GenRandomHexStr(30)
 			chainIDs = append(chainIDs, chainID)
