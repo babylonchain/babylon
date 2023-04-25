@@ -3,11 +3,12 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -55,6 +56,27 @@ func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (
 		return nil, err
 	}
 	resp := &types.QueryChainInfoResponse{ChainInfo: chainInfo}
+	return resp, nil
+}
+
+// ChainsInfo returns the latest info of chains with given IDs
+func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// find the chain info of this epoch
+	chainInfo, err := k.GetChainInfo(ctx, req.ChainId)
+	if err != nil {
+		return nil, err
+	}
+	resp := &types.QueryChainsInfoResponse{ChainInfo: chainInfo}
 	return resp, nil
 }
 
