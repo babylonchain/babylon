@@ -126,8 +126,8 @@ var xxx_messageInfo_MsgInsertBTCSpvProofResponse proto.InternalMessageInfo
 type MsgUpdateParams struct {
 	// authority is the address of the governance account.
 	// just FYI: cosmos.AddressString marks that this field should use type alias
-	// for AddressString instead of string, but the functionality is not yet implemented
-	// in cosmos-proto
+	// for AddressString instead of string, but the functionality is not yet
+	// implemented in cosmos-proto
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	// params defines the btccheckpoint parameters to update.
 	//

@@ -24,8 +24,7 @@ service Query {
 
   // ChainsInfo queries the latest info of list of chains in Babylon's view
   rpc ChainsInfo(QueryChainsInfoRequest) returns (QueryChainsInfoResponse) {
-    option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/chains_info";
+    option (google.api.http).get = "/babylon/zoneconcierge/v1/chains_info";
   }
 
   // ChainInfo queries the latest info of a chain in Babylon's view

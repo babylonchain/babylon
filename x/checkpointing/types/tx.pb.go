@@ -34,8 +34,9 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // validator
 type MsgAddBlsSig struct {
 	// signer corresponds to the submitter of the transaction
-	// This might be a different entity compared to the one that created the BLS signature
-	// (i.e. the validator owner of the BLS key which is specified by the `bls_sig.signer_address`)
+	// This might be a different entity compared to the one that created the BLS
+	// signature (i.e. the validator owner of the BLS key which is specified by
+	// the `bls_sig.signer_address`)
 	Signer string  `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	BlsSig *BlsSig `protobuf:"bytes,2,opt,name=bls_sig,json=blsSig,proto3" json:"bls_sig,omitempty"`
 }

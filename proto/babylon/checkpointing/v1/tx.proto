@@ -26,9 +26,10 @@ message MsgAddBlsSig {
   option (gogoproto.goproto_getters) = false;
 
   // signer corresponds to the submitter of the transaction
-  // This might be a different entity compared to the one that created the BLS signature
-  // (i.e. the validator owner of the BLS key which is specified by the `bls_sig.signer_address`)
-  string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // This might be a different entity compared to the one that created the BLS
+  // signature (i.e. the validator owner of the BLS key which is specified by
+  // the `bls_sig.signer_address`)
+  string signer = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   BlsSig bls_sig = 2;
 }

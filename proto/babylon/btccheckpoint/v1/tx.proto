@@ -36,14 +36,14 @@ message MsgUpdateParams {
 
   // authority is the address of the governance account.
   // just FYI: cosmos.AddressString marks that this field should use type alias
-  // for AddressString instead of string, but the functionality is not yet implemented
-  // in cosmos-proto
-  string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  // for AddressString instead of string, but the functionality is not yet
+  // implemented in cosmos-proto
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 
   // params defines the btccheckpoint parameters to update.
   //
   // NOTE: All parameters must be supplied.
-  Params params = 2 [(gogoproto.nullable) = false];
+  Params params = 2 [ (gogoproto.nullable) = false ];
 }
 
 // MsgUpdateParamsResponse defines the response to the MsgUpdateParams message.

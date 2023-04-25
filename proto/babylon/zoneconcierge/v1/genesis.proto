@@ -4,6 +4,4 @@ package babylon.zoneconcierge.v1;
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // GenesisState defines the zoneconcierge module's genesis state.
-message GenesisState {
-  string port_id = 1;
-}
+message GenesisState { string port_id = 1; }
