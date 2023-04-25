@@ -103,12 +103,11 @@ message QueryChainInfoResponse {
 }
 
 // QueryChainsInfoRequest is request type for the Query/ChainInfo RPC method.
-message QueryChainsInfoRequest { string chain_id = 1; }
+message QueryChainsInfoRequest { repeated string chain_ids = 1; }
 
 // QueryChainsInfoResponse is response type for the Query/ChainInfo RPC method.
 message QueryChainsInfoResponse {
-  // chain_info is the info of the CZ
-  babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
+  repeated babylon.zoneconcierge.v1.ChainInfo chains_info = 1;
 }
 
 // QueryEpochChainInfoRequest is request type for the Query/EpochChainInfo RPC

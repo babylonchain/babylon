@@ -65,18 +65,18 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	if len(req.ChainIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// find the chain info of this epoch
-	chainInfo, err := k.GetChainInfo(ctx, req.ChainId)
+	chainInfo, err := k.GetChainInfo(ctx, req.ChainIds[0])
 	if err != nil {
 		return nil, err
 	}
-	resp := &types.QueryChainsInfoResponse{ChainInfo: chainInfo}
+	resp := &types.QueryChainsInfoResponse{ChainsInfo: []*types.ChainInfo{chainInfo}}
 	return resp, nil
 }
 
