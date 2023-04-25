@@ -1,9 +1,12 @@
 package cli
 
 import (
+	"context"
 	"fmt"
+
 	// "strings"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,5 +27,30 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	cmd.AddCommand(CmdChainsInfo())
+	return cmd
+}
+
+func CmdChainsInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "chains-info <chain-ids>",
+		Short: "retrieve the chain info of given chain ids",
+		Args:  cobra.RangeArgs(1, 5),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			req := types.QueryChainsInfoRequest{ChainIds: args}
+			resp, err := queryClient.ChainsInfo(context.Background(), &req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
