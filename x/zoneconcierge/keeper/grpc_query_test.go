@@ -79,20 +79,20 @@ func FuzzChainsInfo(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		numChains := datagen.RandomInt(100) + 1
-		var allChainsInfo []struct {
+		var chainsInfo []struct {
 			chainID        string
 			numHeaders     uint64
 			numForkHeaders uint64
 		}
-		var allChainIDs []string
+		var chainIDs []string
 		for i := uint64(0); i < numChains; i++ {
 			chainID := datagen.GenRandomHexStr(30)
-			allChainIDs = append(allChainIDs, chainID)
+			chainIDs = append(chainIDs, chainID)
 
 			numHeaders := datagen.RandomInt(100) + 1
 			numForkHeaders := datagen.RandomInt(10) + 1
 			SimulateHeadersAndForksViaHook(ctx, hooks, chainID, 0, numHeaders, numForkHeaders)
-			allChainsInfo = append(allChainsInfo, struct {
+			chainsInfo = append(chainsInfo, struct {
 				chainID        string
 				numHeaders     uint64
 				numForkHeaders uint64
@@ -100,15 +100,14 @@ func FuzzChainsInfo(f *testing.F) {
 		}
 
 		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
-			ChainIds: allChainIDs,
+			ChainIds: chainIDs,
 		})
 		require.NoError(t, err)
-		chainsInfo := resp.ChainsInfo
 
-		for i, chainInfo := range chainsInfo {
-			require.Equal(t, allChainsInfo[i].chainID, chainInfo.ChainId)
-			require.Equal(t, allChainsInfo[i].numHeaders-1, chainInfo.LatestHeader.Height)
-			require.Equal(t, allChainsInfo[i].numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
+		for i, data := range resp.ChainsInfo {
+			require.Equal(t, chainsInfo[i].chainID, data.ChainId)
+			require.Equal(t, chainsInfo[i].numHeaders-1, data.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(data.LatestForks.Headers)))
 		}
 	})
 }
