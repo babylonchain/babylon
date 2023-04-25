@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"testing"
 	"time"
@@ -186,6 +187,7 @@ func TestNodeProgress(t *testing.T) {
 }
 
 func TestSendTx(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	// TODO fix hard coded paths
 	node0dataPath := "../.testnets/node0/babylond"
 	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
@@ -197,7 +199,7 @@ func TestSendTx(t *testing.T) {
 	}
 	tip1 := sender.GetBtcTip()
 
-	err = sender.insertNEmptyBTCHeaders(1)
+	err = sender.insertNEmptyBTCHeaders(r, 1)
 
 	if err != nil {
 		t.Fatalf("could not insert new btc header")
@@ -211,6 +213,7 @@ func TestSendTx(t *testing.T) {
 }
 
 func TestFailInvalidBTCTransactions(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	// TODO fix hard coded paths
 	node0dataPath := "../.testnets/node0/babylond"
 	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
@@ -221,30 +224,30 @@ func TestFailInvalidBTCTransactions(t *testing.T) {
 		panic("failed to init sender")
 	}
 
-	hInfo := datagen.GenRandomBTCHeaderInfoWithInvalidHeader(chaincfg.SimNetParams.PowLimit)
+	hInfo := datagen.GenRandomBTCHeaderInfoWithInvalidHeader(r, chaincfg.SimNetParams.PowLimit)
 
-	r, err := sender.SendBtcHeadersTransaction([]bbn.BTCHeaderBytes{*hInfo.Header})
+	resp, err := sender.SendBtcHeadersTransaction([]bbn.BTCHeaderBytes{*hInfo.Header})
 
 	if err != nil {
 		t.Fatalf("could not insert new btc header")
 	}
 
-	if r.TxResponse.Code != 1105 || r.TxResponse.Codespace != "btclightclient" {
+	if resp.TxResponse.Code != 1105 || resp.TxResponse.Codespace != "btclightclient" {
 		t.Fatalf("submitting invalid header should result with error")
 	}
 
 	currentTip := sender.GetBtcTip()
 
 	// bogus submissions
-	firstSubmission := datagen.CreateBlockWithTransaction(currentTip.Header.ToBlockHeader(), []byte{1})
+	firstSubmission := datagen.CreateBlockWithTransaction(r, currentTip.Header.ToBlockHeader(), []byte{1})
 
-	secondSubmission := datagen.CreateBlockWithTransaction(firstSubmission.HeaderBytes.ToBlockHeader(), []byte{1})
+	secondSubmission := datagen.CreateBlockWithTransaction(r, firstSubmission.HeaderBytes.ToBlockHeader(), []byte{1})
 
 	// At this point light client chain should be 3 long and inserting spv proofs
 	// should succeed
-	r, _ = sender.insertSpvProof(firstSubmission.SpvProof, secondSubmission.SpvProof)
+	resp, _ = sender.insertSpvProof(firstSubmission.SpvProof, secondSubmission.SpvProof)
 
-	if r.TxResponse.Codespace != "btccheckpoint" || r.TxResponse.Code != 1100 {
+	if resp.TxResponse.Codespace != "btccheckpoint" || resp.TxResponse.Code != 1100 {
 		t.Fatalf("submitting invalid proof should result with error")
 	}
 }
@@ -265,6 +268,7 @@ func getCheckpoint(t *testing.T, conn *grpc.ClientConn, epoch uint64) *checkpoin
 }
 
 func TestSubmitCheckpoint(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	node0dataPath := "../.testnets/node0/babylond"
 	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
 
@@ -303,9 +307,9 @@ func TestSubmitCheckpoint(t *testing.T) {
 
 	currentTip := sender.GetBtcTip()
 
-	firstSubmission := datagen.CreateBlockWithTransaction(currentTip.Header.ToBlockHeader(), p1)
+	firstSubmission := datagen.CreateBlockWithTransaction(r, currentTip.Header.ToBlockHeader(), p1)
 
-	secondSubmission := datagen.CreateBlockWithTransaction(firstSubmission.HeaderBytes.ToBlockHeader(), p2)
+	secondSubmission := datagen.CreateBlockWithTransaction(r, firstSubmission.HeaderBytes.ToBlockHeader(), p2)
 
 	// first insert all headers
 	err = sender.insertBTCHeaders(
@@ -340,6 +344,7 @@ func TestSubmitCheckpoint(t *testing.T) {
 }
 
 func TestConfirmCheckpoint(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	node0dataPath := "../.testnets/node0/babylond"
 	node0genesisPath := "../.testnets/node0/babylond/config/genesis.json"
 
@@ -353,7 +358,7 @@ func TestConfirmCheckpoint(t *testing.T) {
 		panic("failed to init sender")
 	}
 
-	err = sender.insertNEmptyBTCHeaders(2)
+	err = sender.insertNEmptyBTCHeaders(r, 2)
 
 	if err != nil {
 		t.Fatalf("Could not insert two headers. Err: %s", err)
