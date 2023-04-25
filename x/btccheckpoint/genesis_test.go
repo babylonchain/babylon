@@ -31,6 +31,7 @@ func TestInitGenesis(t *testing.T) {
 		Params: types.Params{
 			BtcConfirmationDepth:          888,
 			CheckpointFinalizationTimeout: 999,
+			CheckpointTag:                 types.DefaultCheckpointTag,
 		},
 	}
 

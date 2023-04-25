@@ -15,11 +15,11 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcd/btcutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -375,9 +375,10 @@ func GenRandomBabylonTxPair() ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) 
 
 	// fake a raw checkpoint
 	rawBTCCkpt := GetRandomRawBtcCheckpoint()
+	tag := GenRandomByteArray(4)
 	// encode raw checkpoint to two halves
 	firstHalf, secondHalf, err := btctxformatter.EncodeCheckpointData(
-		btctxformatter.TestTag(48), // TODO: randomise the tag ID
+		btctxformatter.BabylonTag(tag),
 		btctxformatter.CurrentVersion,
 		rawBTCCkpt,
 	)
@@ -514,13 +515,15 @@ func RandomRawCheckpointDataForEpoch(e uint64) (*TestRawCheckpointData, *txforma
 }
 
 func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawCheckpointData {
-	tag := txformat.MainTag(0)
+	tag := btcctypes.DefaultCheckpointTag
+	tagAsBytes, _ := hex.DecodeString(tag)
+	babylonTag := txformat.BabylonTag(tagAsBytes)
 	data1, data2 := txformat.MustEncodeCheckpointData(
-		tag,
+		babylonTag,
 		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)
-	opReturn := getExpectedOpReturn(tag, data1, data2)
+	opReturn := getExpectedOpReturn(babylonTag, data1, data2)
 
 	return &TestRawCheckpointData{
 		Epoch:            rawBTCCkpt.Epoch,

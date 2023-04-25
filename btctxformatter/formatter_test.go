@@ -97,7 +97,8 @@ func FuzzDecodingWontPanic(f *testing.F) {
 	f.Add(randNBytes(secondPartLength), uint8(rand.Intn(99)))
 
 	f.Fuzz(func(t *testing.T, bytes []byte, tagIdx uint8) {
-		decoded, err := IsBabylonCheckpointData(MainTag(tagIdx), CurrentVersion, bytes)
+		tag := []byte{0, 1, 2, 3}
+		decoded, err := IsBabylonCheckpointData(BabylonTag(tag), CurrentVersion, bytes)
 
 		if err == nil {
 			if decoded.Index != 0 && decoded.Index != 1 {

@@ -604,7 +604,6 @@ func NewBabylonApp(
 			&btclightclientKeeper,
 			app.CheckpointingKeeper,
 			&powLimit,
-			btcConfig.CheckpointTag(),
 			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		)
 	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
@@ -839,7 +838,7 @@ func NewBabylonApp(
 	anteHandler := sdk.ChainAnteDecorators(
 		NewWrappedAnteHandler(authAnteHandler),
 		epochingkeeper.NewDropValidatorMsgDecorator(app.EpochingKeeper),
-		NewBtcValidationDecorator(btcConfig),
+		NewBtcValidationDecorator(btcConfig, &app.BtcCheckpointKeeper),
 	)
 	app.SetAnteHandler(anteHandler)
 

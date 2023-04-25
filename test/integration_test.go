@@ -5,6 +5,7 @@ package babylon_integration
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"os"
@@ -15,6 +16,7 @@ import (
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	lightclient "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
@@ -291,8 +293,10 @@ func TestSubmitCheckpoint(t *testing.T) {
 		t.Fatalf("Could not create raw btc checkpoint from raw chekpoint")
 	}
 
+	tagAsBytes, _ := hex.DecodeString(btcctypes.DefaultCheckpointTag)
+
 	p1, p2 := txformat.MustEncodeCheckpointData(
-		txformat.BabylonTag(txformat.DefaultTestTagStr),
+		txformat.BabylonTag(tagAsBytes),
 		txformat.CurrentVersion,
 		rawBtcCheckpoint,
 	)

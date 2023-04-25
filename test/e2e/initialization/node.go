@@ -131,7 +131,6 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
 	appConfig.SignerConfig.KeyName = ValidatorWalletName
 	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
-	appConfig.BtcConfig.CheckpointTag = BabylonOpReturnTag
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = "0.0.0.0:9090"
 

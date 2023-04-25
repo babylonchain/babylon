@@ -5,7 +5,6 @@ import (
 
 	"math/big"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	tmdb "github.com/cometbft/cometbft-db"
@@ -47,8 +46,6 @@ func NewBTCCheckpointKeeper(
 		lk,
 		ek,
 		powLimit,
-		// use MainTag tests
-		txformat.MainTag(0),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
