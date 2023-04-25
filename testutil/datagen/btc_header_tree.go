@@ -3,6 +3,7 @@ package datagen
 import (
 	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"math/rand"
 )
 
 type BTCHeaderTree struct {
@@ -66,23 +67,26 @@ func (t *BTCHeaderTree) GetMainChain() []*blctypes.BTCHeaderInfo {
 
 // RandNumChildren randomly generates 0-2 children with the following probabilities:
 // If zeroChildrenAllowed is not set:
-// 		1 child:    75%
-// 		2 children: 25%
+//
+//	1 child:    75%
+//	2 children: 25%
+//
 // Otherwise,
-// 		0 children: 25%
-// 		1 child:    50%
-// 		2 children: 25%
-func (t *BTCHeaderTree) RandNumChildren(zeroChildrenAllowed bool) int {
+//
+//	0 children: 25%
+//	1 child:    50%
+//	2 children: 25%
+func (t *BTCHeaderTree) RandNumChildren(r *rand.Rand, zeroChildrenAllowed bool) int {
 	// Randomly identify the number of children
 	numChildren := 0
 	// If the flag is not set, then we need to generate a child for sure
 	if !zeroChildrenAllowed {
 		numChildren = 1 // 75% chance of 1 child now
 	}
-	if OneInN(2) {
+	if OneInN(r, 2) {
 		// 50% of the times, one child
 		numChildren = 1
-	} else if OneInN(2) {
+	} else if OneInN(r, 2) {
 		// 25% of the times, 2 children
 		// Implies that 25% of the times 0 children
 		numChildren = 2
@@ -97,7 +101,7 @@ func (t *BTCHeaderTree) RandNumChildren(zeroChildrenAllowed bool) int {
 // For each node that is generated, the callback function is invoked in order to identify
 // whether we should continue generating or not as well as help with maintenance
 // tasks (e.g. inserting headers into keeper storage).
-func (t *BTCHeaderTree) GenRandomBTCHeaderTree(minHeight uint64, maxHeight uint64,
+func (t *BTCHeaderTree) GenRandomBTCHeaderTree(r *rand.Rand, minHeight uint64, maxHeight uint64,
 	parent *blctypes.BTCHeaderInfo, callback func(info *blctypes.BTCHeaderInfo) bool) {
 
 	if maxHeight == 0 {
@@ -108,8 +112,8 @@ func (t *BTCHeaderTree) GenRandomBTCHeaderTree(minHeight uint64, maxHeight uint6
 	const maxRetries = 3
 	retries := 0
 	// Generate the children of the parent
-	for i := 0; i < t.RandNumChildren(minHeight <= 1); i++ {
-		childInfo := GenRandomBTCHeaderInfoWithParent(parent)
+	for i := 0; i < t.RandNumChildren(r, minHeight <= 1); i++ {
+		childInfo := GenRandomBTCHeaderInfoWithParent(r, parent)
 
 		// Rare occasion that we get the same hash, skip
 		if t.Contains(childInfo) {
@@ -128,14 +132,14 @@ func (t *BTCHeaderTree) GenRandomBTCHeaderTree(minHeight uint64, maxHeight uint6
 		}
 		if callback(childInfo) {
 			t.Add(childInfo, parent)
-			t.GenRandomBTCHeaderTree(childMinHeight, maxHeight-1, childInfo, callback)
+			t.GenRandomBTCHeaderTree(r, childMinHeight, maxHeight-1, childInfo, callback)
 		}
 	}
 }
 
 // RandomNode selects a random header from the list of nodes
-func (t *BTCHeaderTree) RandomNode() *blctypes.BTCHeaderInfo {
-	randIdx := RandomInt(len(t.headers))
+func (t *BTCHeaderTree) RandomNode(r *rand.Rand) *blctypes.BTCHeaderInfo {
+	randIdx := RandomInt(r, len(t.headers))
 	var idx uint64 = 0
 	for _, node := range t.headers {
 		if idx == randIdx {
@@ -178,9 +182,9 @@ func (t *BTCHeaderTree) GetNodeAncestry(node *blctypes.BTCHeaderInfo) []*blctype
 
 // RandomAncestor retrieves the ancestry list and returns an ancestor from it.
 // Can include the node itself.
-func (t *BTCHeaderTree) RandomAncestor(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
+func (t *BTCHeaderTree) RandomAncestor(r *rand.Rand, node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
 	ancestry := t.GetNodeAncestry(node)
-	idx := RandomInt(len(ancestry))
+	idx := RandomInt(r, len(ancestry))
 	return ancestry[idx]
 }
 
@@ -228,9 +232,9 @@ func (t *BTCHeaderTree) GetNodeDescendants(node *blctypes.BTCHeaderInfo) []*blct
 }
 
 // RandomDescendant returns a random descendant of the node
-func (t *BTCHeaderTree) RandomDescendant(node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
+func (t *BTCHeaderTree) RandomDescendant(r *rand.Rand, node *blctypes.BTCHeaderInfo) *blctypes.BTCHeaderInfo {
 	descendants := t.GetNodeDescendants(node)
-	idx := RandomInt(len(descendants))
+	idx := RandomInt(r, len(descendants))
 	return descendants[idx]
 }
 

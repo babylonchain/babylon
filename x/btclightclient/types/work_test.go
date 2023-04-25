@@ -11,9 +11,9 @@ import (
 func FuzzCumulativeWork(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		numa := rand.Uint64()
-		numb := rand.Uint64()
+		r := rand.New(rand.NewSource(seed))
+		numa := r.Uint64()
+		numb := r.Uint64()
 		biga := sdk.NewUint(numa)
 		bigb := sdk.NewUint(numb)
 

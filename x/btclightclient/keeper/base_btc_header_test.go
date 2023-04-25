@@ -19,13 +19,13 @@ func FuzzKeeperBaseBTCHeader(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
 		retrievedHeaderInfo := blcKeeper.GetBaseBTCHeader(ctx)
 		if retrievedHeaderInfo != nil {
 			t.Errorf("GetBaseBTCHeader returned a header without one being set")
 		}
-		headerInfo1 := datagen.GenRandomBTCHeaderInfo()
+		headerInfo1 := datagen.GenRandomBTCHeaderInfo(r)
 		blcKeeper.SetBaseBTCHeader(ctx, *headerInfo1)
 		retrievedHeaderInfo = blcKeeper.GetBaseBTCHeader(ctx)
 		if retrievedHeaderInfo == nil {

@@ -35,11 +35,11 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		// Generate a tree with a single root node
-		tree := genRandomTree(blcKeeper, ctx, 1, 1)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 1)
 		baseHeader := tree.GetRoot()
 
 		// Test whether the tip and storages are set
@@ -77,7 +77,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		mostDifficulty := sdk.NewUint(10)
 		lessDifficulty := mostDifficulty.Add(sdk.NewUint(1))
 		// Create an object that builds on top of base header
-		childMostWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
+		childMostWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(r, baseHeader, &mostDifficulty)
 		blcKeeper.HeadersState(ctx).CreateHeader(childMostWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
@@ -88,7 +88,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			t.Errorf("Tip did not get properly updated")
 		}
 
-		childEqualWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &mostDifficulty)
+		childEqualWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(r, baseHeader, &mostDifficulty)
 		blcKeeper.HeadersState(ctx).CreateHeader(childEqualWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
@@ -96,7 +96,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 			t.Errorf("Tip got updated when it shouldn't")
 		}
 
-		childLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(baseHeader, &lessDifficulty)
+		childLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(r, baseHeader, &lessDifficulty)
 		blcKeeper.HeadersState(ctx).CreateHeader(childLessWork)
 		// Check whether the tip was updated
 		tip = blcKeeper.HeadersState(ctx).GetTip()
@@ -130,11 +130,11 @@ func FuzzHeadersStateTipOps(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
-		headerInfo1 := datagen.GenRandomBTCHeaderInfo()
-		headerInfo2 := datagen.GenRandomBTCHeaderInfo()
+		headerInfo1 := datagen.GenRandomBTCHeaderInfo(r)
+		headerInfo2 := datagen.GenRandomBTCHeaderInfo(r)
 
 		retrievedHeaderInfo := blcKeeper.HeadersState(ctx).GetTip()
 		if retrievedHeaderInfo != nil {
@@ -198,11 +198,11 @@ func FuzzHeadersStateGetHeaderOps(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		headerInfo := datagen.GenRandomBTCHeaderInfo()
-		wrongHash := datagen.MutateHash(headerInfo.Hash)
-		wrongHeight := headerInfo.Height + datagen.RandomInt(10) + 1
+		headerInfo := datagen.GenRandomBTCHeaderInfo(r)
+		wrongHash := datagen.MutateHash(r, headerInfo.Hash)
+		wrongHeight := headerInfo.Height + datagen.RandomInt(r, 10) + 1
 
 		// ****** HeaderExists tests ******
 		if blcKeeper.HeadersState(ctx).HeaderExists(nil) {
@@ -292,7 +292,7 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		nilBaseHeader := blcKeeper.HeadersState(ctx).GetBaseBTCHeader()
@@ -300,7 +300,7 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 			t.Errorf("Non-existent base BTC header led to non-nil return")
 		}
 
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 		expectedBaseHeader := tree.GetRoot()
 
 		gotBaseHeader := blcKeeper.HeadersState(ctx).GetBaseBTCHeader()
@@ -325,23 +325,23 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		maxHeaders := 256 // maximum 255 headers with particular height
-		numHeaders := datagen.RandomInt(maxHeaders)
+		numHeaders := datagen.RandomInt(r, maxHeaders)
 
 		// This will contain a mapping between all the header hashes that were created
 		// and a boolean value.
 		hashCount := make(map[string]bool)
 		// Setup a tree with a single header
-		tree := genRandomTree(blcKeeper, ctx, 1, 1)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 1)
 		baseHeader := tree.GetRoot()
 		height := baseHeader.Height + 1
 
 		// Generate numHeaders with particular height
 		var i uint64
 		for i = 0; i < numHeaders; i++ {
-			headerInfo := datagen.GenRandomBTCHeaderInfoWithParent(baseHeader)
+			headerInfo := datagen.GenRandomBTCHeaderInfoWithParent(r, baseHeader)
 			hashCount[headerInfo.Hash.MarshalHex()] = true
 			blcKeeper.InsertHeader(ctx, headerInfo.Header) //nolint:errcheck
 		}
@@ -354,7 +354,7 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 				t.Errorf("HeadersByHeight returned header that was not created")
 			}
 			hashCount[header.Hash.MarshalHex()] = true
-			if datagen.OneInN(maxHeaders) {
+			if datagen.OneInN(r, maxHeaders) {
 				// Only set it once
 				if stopHeight != 0 {
 					stopHeight = headersAdded
@@ -395,10 +395,10 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 		expectedMainChain := tree.GetMainChain()
 		gotMainChain := blcKeeper.HeadersState(ctx).GetMainChain()
 
@@ -413,7 +413,7 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 		}
 
 		// depth is a random integer
-		upToDepth := datagen.RandomInt(len(expectedMainChain))
+		upToDepth := datagen.RandomInt(r, len(expectedMainChain))
 		expectedMainChainUpTo := expectedMainChain[:upToDepth+1]
 		gotMainChainUpTo := blcKeeper.HeadersState(ctx).GetMainChainUpTo(upToDepth)
 		if len(expectedMainChainUpTo) != len(gotMainChainUpTo) {
@@ -442,16 +442,16 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		// Generate a random tree with at least one node
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 		// Retrieve a random common ancestor
-		commonAncestor := tree.RandomNode()
+		commonAncestor := tree.RandomNode(r)
 
 		// Generate two child nodes for the common ancestor
-		childRoot1 := datagen.GenRandomBTCHeaderInfoWithParent(commonAncestor)
-		childRoot2 := datagen.GenRandomBTCHeaderInfoWithParent(commonAncestor)
+		childRoot1 := datagen.GenRandomBTCHeaderInfoWithParent(r, commonAncestor)
+		childRoot2 := datagen.GenRandomBTCHeaderInfoWithParent(r, commonAncestor)
 		if tree.Contains(childRoot1) || tree.Contains(childRoot2) {
 			// Unlucky case where we get the same hash. Should be extremely rare.
 			// Instead of adding extra complexity to this test case, just skip it
@@ -465,12 +465,12 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 		tree.Add(childRoot2, commonAncestor)
 
 		// Generate subtrees rooted at the descendant nodes
-		genRandomTreeWithParent(blcKeeper, ctx, 1, 10, childRoot1, tree)
-		genRandomTreeWithParent(blcKeeper, ctx, 1, 10, childRoot2, tree)
+		genRandomTreeWithParent(r, blcKeeper, ctx, 1, 10, childRoot1, tree)
+		genRandomTreeWithParent(r, blcKeeper, ctx, 1, 10, childRoot2, tree)
 
 		// Get a random descendant from each of the subtrees
-		descendant1 := tree.RandomDescendant(childRoot1)
-		descendant2 := tree.RandomDescendant(childRoot2)
+		descendant1 := tree.RandomDescendant(r, childRoot1)
+		descendant2 := tree.RandomDescendant(r, childRoot2)
 
 		retrievedHighestCommonAncestor := blcKeeper.HeadersState(ctx).GetHighestCommonAncestor(descendant1, descendant2)
 		if retrievedHighestCommonAncestor == nil {
@@ -496,17 +496,17 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		// Generate a tree of any size.
 		// We can work with even one header, since this should lead to an empty result.
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
 		// Get a random header from the tree
-		descendant := tree.RandomNode()
+		descendant := tree.RandomNode(r)
 		// Get a random ancestor from it
-		ancestor := tree.RandomAncestor(descendant)
+		ancestor := tree.RandomAncestor(r, descendant)
 		// Get the ancestry of the descendant.
 		// It is in reverse order from the one that GetInOrderAncestorsUntil returns, since it starts with the descendant.
 		expectedAncestorsReverse := tree.GetNodeAncestryUpTo(descendant, ancestor)
@@ -537,12 +537,12 @@ func FuzzHeadersStateGetHeaderAncestryUpTo(f *testing.F) {
 	*/
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
-		descendant := tree.RandomNode()
-		ancestor := tree.RandomAncestor(descendant)
+		descendant := tree.RandomNode(r)
+		ancestor := tree.RandomAncestor(r, descendant)
 
 		ancestors := blcKeeper.HeadersState(ctx).GetHeaderAncestryUpTo(descendant, descendant.Height-ancestor.Height)
 		// Use the parent of the ancestor since UpTo does not include the ancestor in the result

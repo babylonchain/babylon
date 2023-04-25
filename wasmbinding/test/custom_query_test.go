@@ -2,6 +2,7 @@ package wasmbinding
 
 import (
 	"encoding/json"
+	"math/rand"
 	"os"
 	"runtime"
 	"testing"
@@ -176,9 +177,11 @@ func TestQueryNonExistingHeader(t *testing.T) {
 	queryCustom(t, ctx, babylonApp, contractAddress, queryNonExisitingHeight, &resp)
 	require.Nil(t, resp.HeaderInfo)
 
+	// Random source for the generation of BTC hash
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	queryNonExisitingHash := bindings.BabylonQuery{
 		BtcHeaderByHash: &bindings.BtcHeaderByHash{
-			Hash: datagen.GenRandomBtcdHash().String(),
+			Hash: datagen.GenRandomBtcdHash(r).String(),
 		},
 	}
 	resp1 := bindings.BtcHeaderQueryResponse{}

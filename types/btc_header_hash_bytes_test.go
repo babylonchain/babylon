@@ -15,14 +15,14 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		invalidHash := false
-		bz := datagen.GenRandomByteArray(types.BTCHeaderHashLen)
+		bz := datagen.GenRandomByteArray(r, types.BTCHeaderHashLen)
 		// 1/10 times generate an invalid size
-		if datagen.OneInN(10) {
-			bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*10)
-			bz = datagen.GenRandomByteArray(bzSz)
+		if datagen.OneInN(r, 10) {
+			bzSz := datagen.RandomIntOtherThan(r, types.BTCHeaderHashLen, types.BTCHeaderHashLen*10)
+			bz = datagen.GenRandomByteArray(r, bzSz)
 			invalidHash = true
 		}
 
@@ -83,19 +83,19 @@ func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		invalidHash := false
-		hex := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
+		hex := datagen.GenRandomHexStr(r, types.BTCHeaderHashLen)
 		// 1/4 times generate an invalid hash
-		if datagen.OneInN(10) {
-			if datagen.OneInN(2) {
+		if datagen.OneInN(r, 10) {
+			if datagen.OneInN(r, 2) {
 				// 1/4 times generate an invalid hash size
-				bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
-				hex = datagen.GenRandomHexStr(bzSz)
+				bzSz := datagen.RandomIntOtherThan(r, types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
+				hex = datagen.GenRandomHexStr(r, bzSz)
 			} else {
 				// 1/4 times generate an invalid hex
-				hex = string(datagen.GenRandomByteArray(types.BTCHeaderHashLen * 2))
+				hex = string(datagen.GenRandomByteArray(r, types.BTCHeaderHashLen*2))
 			}
 			invalidHash = true
 		}
@@ -129,19 +129,19 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		invalidHash := false
-		hex := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
+		hex := datagen.GenRandomHexStr(r, types.BTCHeaderHashLen)
 		// 1/4 times generate an invalid hash
-		if datagen.OneInN(10) {
-			if datagen.OneInN(2) {
+		if datagen.OneInN(r, 10) {
+			if datagen.OneInN(r, 2) {
 				// 1/4 times generate an invalid hash size
-				bzSz := datagen.RandomIntOtherThan(types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
-				hex = datagen.GenRandomHexStr(bzSz)
+				bzSz := datagen.RandomIntOtherThan(r, types.BTCHeaderHashLen, types.BTCHeaderHashLen*20)
+				hex = datagen.GenRandomHexStr(r, bzSz)
 			} else {
 				// 1/4 times generate an invalid hex
-				hex = string(datagen.GenRandomByteArray(types.BTCHeaderHashLen * 2))
+				hex = string(datagen.GenRandomByteArray(r, types.BTCHeaderHashLen*2))
 			}
 			invalidHash = true
 		}
@@ -183,9 +183,9 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
-		hexHash := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
+		hexHash := datagen.GenRandomHexStr(r, types.BTCHeaderHashLen)
 		chHash, _ := chainhash.NewHashFromStr(hexHash)
 
 		var hbb types.BTCHeaderHashBytes
@@ -206,10 +206,10 @@ func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
 func FuzzHeaderHashBytesOperators(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
-		hexHash := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
-		hexHash2 := datagen.GenRandomHexStr(types.BTCHeaderHashLen)
+		hexHash := datagen.GenRandomHexStr(r, types.BTCHeaderHashLen)
+		hexHash2 := datagen.GenRandomHexStr(r, types.BTCHeaderHashLen)
 		chHash, _ := chainhash.NewHashFromStr(hexHash)
 
 		var hbb, hbb2 types.BTCHeaderHashBytes

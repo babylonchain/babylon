@@ -20,14 +20,14 @@ import (
 )
 
 func FuzzQueryEpoch(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
 		// test querying a raw checkpoint with epoch number
-		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta()
+		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta(r)
 		err := ckptKeeper.AddRawCheckpoint(
 			ctx,
 			mockCkptWithMeta,
@@ -48,12 +48,12 @@ func FuzzQueryEpoch(f *testing.F) {
 }
 
 func FuzzQueryStatusCount(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 1)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		// test querying recent epoch counts with each status in recent epochs
-		checkpoints := datagen.GenRandomSequenceRawCheckpointsWithMeta()
+		checkpoints := datagen.GenRandomSequenceRawCheckpointsWithMeta(r)
 		tipEpoch := checkpoints[len(checkpoints)-1].Ckpt.EpochNum
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -62,7 +62,7 @@ func FuzzQueryStatusCount(f *testing.F) {
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
 		sdkCtx := sdk.WrapSDKContext(ctx)
 		expectedCounts := make(map[string]uint64)
-		epochCount := uint64(rand.Int63n(int64(tipEpoch)))
+		epochCount := uint64(r.Int63n(int64(tipEpoch)))
 		for e, ckpt := range checkpoints {
 			err := ckptKeeper.AddRawCheckpoint(
 				ctx,
@@ -89,17 +89,17 @@ func FuzzQueryStatusCount(f *testing.F) {
 func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		// test querying recent epoch counts with each status in recent epochs
-		tipEpoch := datagen.RandomInt(100) + 10
+		tipEpoch := datagen.RandomInt(r, 100) + 10
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch}).AnyTimes()
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
-		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(tipEpoch)
-		finalizedEpoch := datagen.RandomInt(int(tipEpoch))
+		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(r, tipEpoch)
+		finalizedEpoch := datagen.RandomInt(r, int(tipEpoch))
 		for e := uint64(0); e < tipEpoch; e++ {
 			if e <= finalizedEpoch {
 				checkpoints[int(e)].Status = types.Finalized
@@ -129,20 +129,20 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 	})
 }
 
-//func TestQueryRawCheckpointList(t *testing.T) {
+// func TestQueryRawCheckpointList(t *testing.T) {
 func FuzzQueryRawCheckpointList(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
-		tipEpoch := datagen.RandomInt(10) + 10
+		tipEpoch := datagen.RandomInt(r, 10) + 10
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch}).AnyTimes()
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
-		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(tipEpoch)
-		finalizedEpoch := datagen.RandomInt(int(tipEpoch))
+		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(r, tipEpoch)
+		finalizedEpoch := datagen.RandomInt(r, int(tipEpoch))
 
 		// add Sealed and Finalized checkpoints
 		for e := uint64(0); e <= tipEpoch; e++ {
@@ -156,21 +156,22 @@ func FuzzQueryRawCheckpointList(f *testing.F) {
 		}
 
 		finalizedCheckpoints := checkpoints[:finalizedEpoch+1]
-		testRawCheckpointListWithType(t, ckptKeeper, ctx, finalizedCheckpoints, 0, types.Finalized)
+		testRawCheckpointListWithType(t, r, ckptKeeper, ctx, finalizedCheckpoints, 0, types.Finalized)
 		sealedCheckpoints := checkpoints[finalizedEpoch+1:]
-		testRawCheckpointListWithType(t, ckptKeeper, ctx, sealedCheckpoints, finalizedEpoch+1, types.Sealed)
+		testRawCheckpointListWithType(t, r, ckptKeeper, ctx, sealedCheckpoints, finalizedEpoch+1, types.Sealed)
 	})
 }
 
 func testRawCheckpointListWithType(
 	t *testing.T,
+	r *rand.Rand,
 	ckptKeeper *keeper.Keeper,
 	ctx context.Context,
 	checkpointList []*types.RawCheckpointWithMeta,
 	baseEpoch uint64,
 	status types.CheckpointStatus,
 ) {
-	limit := datagen.RandomInt(len(checkpointList)+1) + 1
+	limit := datagen.RandomInt(r, len(checkpointList)+1) + 1
 	pagination := &query.PageRequest{Limit: limit, CountTotal: true}
 	req := types.NewQueryRawCheckpointListRequest(pagination, status)
 

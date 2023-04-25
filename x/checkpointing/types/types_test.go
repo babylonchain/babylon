@@ -1,7 +1,9 @@
 package types_test
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/stretchr/testify/require"
@@ -13,11 +15,12 @@ import (
 
 // a single validator
 func TestRawCheckpointWithMeta_Accumulate1(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epochNum := uint64(2)
 	n := 1
 	totalPower := int64(10)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
-	lch := datagen.GenRandomLastCommitHash()
+	lch := datagen.GenRandomLastCommitHash(r)
 	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)
@@ -35,11 +38,12 @@ func TestRawCheckpointWithMeta_Accumulate1(t *testing.T) {
 
 // 4 validators
 func TestRawCheckpointWithMeta_Accumulate4(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	epochNum := uint64(2)
 	n := 4
 	totalPower := int64(10) * int64(n)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
-	lch := datagen.GenRandomLastCommitHash()
+	lch := datagen.GenRandomLastCommitHash(r)
 	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)

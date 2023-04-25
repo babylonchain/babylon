@@ -5,32 +5,32 @@ import (
 	"math/rand"
 )
 
-func GenRandomByteArray(length uint64) []byte {
+func GenRandomByteArray(r *rand.Rand, length uint64) []byte {
 	newHeaderBytes := make([]byte, length)
-	rand.Read(newHeaderBytes)
+	r.Read(newHeaderBytes)
 	return newHeaderBytes
 }
 
-func GenRandomHexStr(length uint64) string {
-	randBytes := GenRandomByteArray(length)
+func GenRandomHexStr(r *rand.Rand, length uint64) string {
+	randBytes := GenRandomByteArray(r, length)
 	return hex.EncodeToString(randBytes)
 }
 
-func OneInN(n int) bool {
-	return RandomInt(n) == 0
+func OneInN(r *rand.Rand, n int) bool {
+	return RandomInt(r, n) == 0
 }
 
-func RandomInt(rng int) uint64 {
-	return uint64(rand.Intn(rng))
+func RandomInt(r *rand.Rand, rng int) uint64 {
+	return uint64(r.Intn(rng))
 }
 
-func RandomIntOtherThan(x int, rng int) uint64 {
+func RandomIntOtherThan(r *rand.Rand, x int, rng int) uint64 {
 	if rng == 1 && x == 0 {
 		panic("There is no other int")
 	}
-	res := RandomInt(rng)
+	res := RandomInt(r, rng)
 	for res == uint64(x) {
-		res = RandomInt(rng)
+		res = RandomInt(r, rng)
 	}
 	return res
 }

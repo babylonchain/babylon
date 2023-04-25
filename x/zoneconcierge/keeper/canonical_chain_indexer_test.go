@@ -12,7 +12,7 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		_, babylonChain, czChain, babylonApp := SetupTest(t)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
@@ -21,8 +21,8 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100) + 1
-		headers := SimulateHeadersViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders)
+		numHeaders := datagen.RandomInt(r, 100) + 1
+		headers := SimulateHeadersViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders)
 
 		// check if the canonical chain index is correct or not
 		for i := uint64(0); i < numHeaders; i++ {
@@ -48,7 +48,7 @@ func FuzzFindClosestHeader(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		_, babylonChain, czChain, babylonApp := SetupTest(t)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
@@ -61,22 +61,22 @@ func FuzzFindClosestHeader(f *testing.F) {
 		require.Error(t, err)
 
 		// simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100) + 1
-		headers := SimulateHeadersViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders)
+		numHeaders := datagen.RandomInt(r, 100) + 1
+		headers := SimulateHeadersViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders)
 
 		header, err := zcKeeper.FindClosestHeader(ctx, czChain.ChainID, numHeaders)
 		require.NoError(t, err)
 		require.Equal(t, headers[len(headers)-1].Header.LastCommitHash, header.Hash)
 
 		// skip a non-zero number of headers in between, in order to create a gap of non-timestamped headers
-		gap := datagen.RandomInt(10) + 1
+		gap := datagen.RandomInt(r, 10) + 1
 
 		// simulate a random number of blocks
 		// where the new batch of headers has a gap with the previous batch
-		SimulateHeadersViaHook(ctx, hooks, czChain.ChainID, numHeaders+gap+1, numHeaders)
+		SimulateHeadersViaHook(ctx, r, hooks, czChain.ChainID, numHeaders+gap+1, numHeaders)
 
 		// get a random height that is in this gap
-		randomHeightInGap := datagen.RandomInt(int(gap+1)) + numHeaders
+		randomHeightInGap := datagen.RandomInt(r, int(gap+1)) + numHeaders
 		// find the closest header with the given randomHeightInGap
 		header, err = zcKeeper.FindClosestHeader(ctx, czChain.ChainID, randomHeightInGap)
 		require.NoError(t, err)

@@ -41,20 +41,20 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		// generate a random epoch
-		epoch := datagen.GenRandomEpoch()
+		epoch := datagen.GenRandomEpoch(r)
 
 		// generate a random validator set with 100 validators
 		numVals := 100
 		valSet, blsSKs := datagen.GenerateValidatorSetWithBLSPrivKeys(numVals)
 
 		// sample a validator subset, which may or may not reach a quorum
-		bm, numSubSet := datagen.GenRandomBitmap()
+		bm, numSubSet := datagen.GenRandomBitmap(r)
 		_, subsetPower, err := valSet.FindSubsetWithPowerSum(bm)
 		require.NoError(t, err)
 
@@ -107,8 +107,7 @@ func FuzzProofEpochSealed_Epoch(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-
+		// r := rand.New(rand.NewSource(seed))
 	})
 }
 
@@ -117,7 +116,6 @@ func FuzzProofEpochSealed_ValSet(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-
+		// r := rand.New(rand.NewSource(seed))
 	})
 }
