@@ -4,11 +4,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -16,6 +11,12 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 func FuzzChainList(f *testing.F) {
@@ -88,6 +89,54 @@ func FuzzChainInfo(f *testing.F) {
 		chainInfo := resp.ChainInfo
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
+	})
+}
+
+func FuzzChainsInfo(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		rand.Seed(seed)
+
+		_, babylonChain, _, babylonApp := SetupTest(t)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
+
+		ctx := babylonChain.GetContext()
+		hooks := zcKeeper.Hooks()
+
+		numChains := datagen.RandomInt(100) + 1
+		var (
+			chainsInfo []struct {
+				chainID        string
+				numHeaders     uint64
+				numForkHeaders uint64
+			}
+			chainIDs []string
+		)
+		for i := uint64(0); i < numChains; i++ {
+			chainID := datagen.GenRandomHexStr(30)
+			chainIDs = append(chainIDs, chainID)
+
+			numHeaders := datagen.RandomInt(100) + 1
+			numForkHeaders := datagen.RandomInt(10) + 1
+			SimulateHeadersAndForksViaHook(ctx, hooks, chainID, 0, numHeaders, numForkHeaders)
+			chainsInfo = append(chainsInfo, struct {
+				chainID        string
+				numHeaders     uint64
+				numForkHeaders uint64
+			}{chainID, numHeaders, numForkHeaders})
+		}
+
+		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
+			ChainIds: chainIDs,
+		})
+		require.NoError(t, err)
+
+		for i, data := range resp.ChainsInfo {
+			require.Equal(t, chainsInfo[i].chainID, data.ChainId)
+			require.Equal(t, chainsInfo[i].numHeaders-1, data.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(data.LatestForks.Headers)))
+		}
 	})
 }
 
