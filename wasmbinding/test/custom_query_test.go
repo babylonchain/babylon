@@ -65,16 +65,20 @@ func TestFinalizedEpoch(t *testing.T) {
 	contractAddress := deployTestContract(t, ctx, babylonApp, acc, pathToContract)
 
 	query := bindings.BabylonQuery{
-		LatestFinalizedEpoch: &struct{}{},
+		LatestFinalizedEpochInfo: &struct{}{},
 	}
 
 	// There is no finalized epoch yet so we require an error
 	queryCustomErr(t, ctx, babylonApp, contractAddress, query)
 
-	_ = babylonApp.ZoneConciergeKeeper.Hooks().AfterRawCheckpointFinalized(ctx, 5)
-	resp := bindings.CurrentEpochResponse{}
+	epoch := babylonApp.EpochingKeeper.IncEpoch(ctx)
+
+	_ = babylonApp.ZoneConciergeKeeper.Hooks().AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
+
+	resp := bindings.LatestFinalizedEpochInfoResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
-	require.Equal(t, resp.Epoch, uint64(5))
+	require.Equal(t, resp.EpochInfo.EpochNumber, epoch.EpochNumber)
+	require.Equal(t, resp.EpochInfo.LastBlockHeight, epoch.GetLastBlockHeight())
 }
 
 func TestQueryBtcTip(t *testing.T) {
@@ -187,8 +191,12 @@ func TestQueryNonExistingHeader(t *testing.T) {
 }
 
 func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
+	return setupAppWithContextAndCustomHeight(t, 1)
+}
+
+func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
 	babylonApp := app.Setup(t, false)
-	ctx := babylonApp.BaseApp.NewContext(false, tmproto.Header{Height: 1, Time: time.Now().UTC()})
+	ctx := babylonApp.BaseApp.NewContext(false, tmproto.Header{Height: height, Time: time.Now().UTC()})
 	return babylonApp, ctx
 }
 

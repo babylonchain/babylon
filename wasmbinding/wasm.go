@@ -56,15 +56,26 @@ func CustomQuerier(qp *QueryPlugin) func(ctx sdk.Context, request json.RawMessag
 			}
 
 			return bz, nil
-		case contractQuery.LatestFinalizedEpoch != nil:
+		case contractQuery.LatestFinalizedEpochInfo != nil:
 			epoch, err := qp.zcKeeper.GetFinalizedEpoch(ctx)
 
 			if err != nil {
 				return nil, err
 			}
 
-			res := bindings.LatestFinalizedEpochResponse{
-				Epoch: epoch,
+			epochInfo, err := qp.epochingKeeper.GetHistoricalEpoch(ctx, epoch)
+
+			if err != nil {
+				// Here something went really wrong with our data model. If epoch is finalized
+				// it should always be known by epoching module
+				panic(fmt.Sprintf("Finalized epoch %d not known by epoching module", epoch))
+			}
+
+			res := bindings.LatestFinalizedEpochInfoResponse{
+				EpochInfo: &bindings.FinalizedEpochInfo{
+					EpochNumber:     epoch,
+					LastBlockHeight: epochInfo.GetLastBlockHeight(),
+				},
 			}
 
 			bz, err := json.Marshal(res)
