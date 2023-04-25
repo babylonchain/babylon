@@ -17,6 +17,7 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/chain_info/{chain_id}/header/{height}";
   }
+
   // ChainList queries the list of chains that checkpoint to Babylon
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chains";
@@ -32,6 +33,7 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/chain_info/{chain_id}";
   }
+
   // EpochChainInfo queries the latest info of a chain in a given epoch of
   // Babylon's view
   rpc EpochChainInfo(QueryEpochChainInfoRequest)
@@ -39,12 +41,14 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/chain_info/{chain_id}/epochs/{epoch_num}";
   }
+
   // ListHeaders queries the headers of a chain in Babylon's view, with
   // pagination support
   rpc ListHeaders(QueryListHeadersRequest) returns (QueryListHeadersResponse) {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/headers/{chain_id}";
   }
+
   // ListEpochHeaders queries the headers of a chain timestamped in a given
   // epoch of Babylon, with pagination support
   rpc ListEpochHeaders(QueryListEpochHeadersRequest)
@@ -52,12 +56,14 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}";
   }
+
   // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
   rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest)
       returns (QueryFinalizedChainInfoResponse) {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}";
   }
+
   // FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
   // the provided CZ height, with proofs
   rpc FinalizedChainInfoUntilHeight(QueryFinalizedChainInfoUntilHeightRequest)
