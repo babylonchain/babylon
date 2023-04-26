@@ -83,7 +83,10 @@ func FuzzChainsInfo(f *testing.F) {
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		var chainsInfo []chainInfo
+		var (
+			chainsInfo []chainInfo
+			chainIDs   []string
+		)
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
 			chainID := datagen.GenRandomHexStr(r, 30)
@@ -91,6 +94,7 @@ func FuzzChainsInfo(f *testing.F) {
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
 			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, 0, numHeaders, numForkHeaders)
 
+			chainIDs = append(chainIDs, chainID)
 			chainsInfo = append(chainsInfo, chainInfo{
 				chainID:        chainID,
 				numHeaders:     numHeaders,
@@ -98,10 +102,6 @@ func FuzzChainsInfo(f *testing.F) {
 			})
 		}
 
-		var chainIDs []string
-		for _, data := range chainsInfo {
-			chainIDs = append(chainIDs, data.chainID)
-		}
 		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
 			ChainIds: chainIDs,
 		})
