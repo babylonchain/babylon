@@ -73,11 +73,9 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 	var chainsInfo []*types.ChainInfo
 	for _, chainID := range req.ChainIds {
 		chainInfo, err := k.GetChainInfo(ctx, chainID)
-		if err != nil {
-			return nil, err
+		if err == nil {
+			chainsInfo = append(chainsInfo, chainInfo)
 		}
-
-		chainsInfo = append(chainsInfo, chainInfo)
 	}
 
 	resp := &types.QueryChainsInfoResponse{ChainsInfo: chainsInfo}
