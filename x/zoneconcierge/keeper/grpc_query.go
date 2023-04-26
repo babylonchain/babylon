@@ -38,7 +38,7 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 	return resp, nil
 }
 
-// ChainsInfo returns the latest info of chains with given IDs
+// ChainsInfo returns the latest info for a list of chains with given IDs
 func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
