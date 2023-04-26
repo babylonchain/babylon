@@ -1,12 +1,12 @@
 package bindings
 
 type BabylonQuery struct {
-	Epoch                *struct{}          `json:"epoch,omitempty"`
-	LatestFinalizedEpoch *struct{}          `json:"latest_finalized_epoch,omitempty"`
-	BtcTip               *struct{}          `json:"btc_tip,omitempty"`
-	BtcBaseHeader        *struct{}          `json:"btc_base_header,omitempty"`
-	BtcHeaderByHash      *BtcHeaderByHash   `json:"btc_header_by_hash,omitempty"`
-	BtcHeaderByHeight    *BtcHeaderByHeight `json:"btc_header_by_height,omitempty"`
+	Epoch                    *struct{}          `json:"epoch,omitempty"`
+	LatestFinalizedEpochInfo *struct{}          `json:"latest_finalized_epoch_info,omitempty"`
+	BtcTip                   *struct{}          `json:"btc_tip,omitempty"`
+	BtcBaseHeader            *struct{}          `json:"btc_base_header,omitempty"`
+	BtcHeaderByHash          *BtcHeaderByHash   `json:"btc_header_by_hash,omitempty"`
+	BtcHeaderByHeight        *BtcHeaderByHeight `json:"btc_header_by_height,omitempty"`
 }
 
 type BtcHeaderByHash struct {
@@ -21,8 +21,13 @@ type CurrentEpochResponse struct {
 	Epoch uint64 `json:"epoch"`
 }
 
-type LatestFinalizedEpochResponse struct {
-	Epoch uint64 `json:"epoch"`
+type LatestFinalizedEpochInfoResponse struct {
+	EpochInfo *FinalizedEpochInfo `json:"epoch_info,omitempty"`
+}
+
+type FinalizedEpochInfo struct {
+	EpochNumber     uint64 `json:"epoch_number"`
+	LastBlockHeight uint64 `json:"last_block_height"`
 }
 
 type BtcBlockHeader struct {
