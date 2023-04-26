@@ -14,7 +14,7 @@ func FuzzEpochs(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelper(t)
 		ctx, keeper := helper.Ctx, helper.EpochingKeeper
@@ -24,7 +24,7 @@ func FuzzEpochs(f *testing.F) {
 		require.Equal(t, epoch.FirstBlockHeight, uint64(0))
 
 		// set a random epoch interval
-		epochInterval := rand.Uint64()%100 + 2 // the epoch interval should at at least 2
+		epochInterval := r.Uint64()%100 + 2 // the epoch interval should at at least 2
 
 		params := types.Params{
 			EpochInterval: epochInterval,
@@ -35,9 +35,9 @@ func FuzzEpochs(f *testing.F) {
 		}
 
 		// increment a random number of new blocks
-		numIncBlocks := rand.Uint64()%1000 + 1
+		numIncBlocks := r.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 
 		// ensure that the epoch info is still correct

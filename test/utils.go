@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	tm "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -146,7 +147,7 @@ func (b *TestTxSender) SendBtcHeadersTransaction(headers []bbn.BTCHeaderBytes) (
 	return sender.BroadcastTx(context.Background(), &req)
 }
 
-func GenerateNEmptyHeaders(tip *bbn.BTCHeaderBytes, n uint64) []bbn.BTCHeaderBytes {
+func GenerateNEmptyHeaders(r *rand.Rand, tip *bbn.BTCHeaderBytes, n uint64) []bbn.BTCHeaderBytes {
 	var headers []bbn.BTCHeaderBytes
 
 	if n == 0 {
@@ -156,9 +157,9 @@ func GenerateNEmptyHeaders(tip *bbn.BTCHeaderBytes, n uint64) []bbn.BTCHeaderByt
 	for i := uint64(0); i < n; i++ {
 		if i == 0 {
 			// first new header, need to use tip as base
-			headers = append(headers, generateEmptyChildHeaderBytes(tip))
+			headers = append(headers, generateEmptyChildHeaderBytes(r, tip))
 		} else {
-			headers = append(headers, generateEmptyChildHeaderBytes(&headers[i-1]))
+			headers = append(headers, generateEmptyChildHeaderBytes(r, &headers[i-1]))
 		}
 	}
 
@@ -246,9 +247,9 @@ func (b *TestTxSender) insertBTCHeaders(currentTip uint64, headers []bbn.BTCHead
 }
 
 //nolint:unused
-func (b *TestTxSender) insertNEmptyBTCHeaders(n uint64) error {
+func (b *TestTxSender) insertNEmptyBTCHeaders(r *rand.Rand, n uint64) error {
 	currentTip := b.GetBtcTip()
-	headers := GenerateNEmptyHeaders(currentTip.Header, n)
+	headers := GenerateNEmptyHeaders(r, currentTip.Header, n)
 
 	err := b.insertBTCHeaders(currentTip.Height, headers)
 
@@ -259,8 +260,8 @@ func (b *TestTxSender) insertNEmptyBTCHeaders(n uint64) error {
 	return nil
 }
 
-func generateEmptyChildHeader(bh *wire.BlockHeader) *wire.BlockHeader {
-	randHeader := datagen.GenRandomBtcdHeader()
+func generateEmptyChildHeader(r *rand.Rand, bh *wire.BlockHeader) *wire.BlockHeader {
+	randHeader := datagen.GenRandomBtcdHeader(r)
 
 	randHeader.Version = bh.Version
 	randHeader.PrevBlock = bh.BlockHash()
@@ -271,8 +272,8 @@ func generateEmptyChildHeader(bh *wire.BlockHeader) *wire.BlockHeader {
 	return randHeader
 }
 
-func generateEmptyChildHeaderBytes(bh *bbn.BTCHeaderBytes) bbn.BTCHeaderBytes {
-	childHeader := generateEmptyChildHeader(bh.ToBlockHeader())
+func generateEmptyChildHeaderBytes(r *rand.Rand, bh *bbn.BTCHeaderBytes) bbn.BTCHeaderBytes {
+	childHeader := generateEmptyChildHeader(r, bh.ToBlockHeader())
 	return bbn.NewBTCHeaderBytesFromBlockHeader(childHeader)
 }
 
@@ -286,7 +287,7 @@ func LatestHeight(c *grpc.ClientConn) (int64, error) {
 		return 0, err
 	}
 
-	return latestResponse.Block.Header.Height, nil //nolint:staticcheck // deprecated call, suggests to use sdk_block instead
+	return latestResponse.SdkBlock.Header.Height, nil //nolint:staticcheck // deprecated call, suggests to use sdk_block instead
 }
 
 func WaitForHeight(c *grpc.ClientConn, h int64) (int64, error) {

@@ -29,7 +29,7 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
 		helper := testepoching.NewHelper(t)
@@ -38,11 +38,11 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		n := rand.Intn(3) + 1
+		n := r.Intn(3) + 1
 		addrs := app.AddTestAddrs(helper.App, helper.Ctx, n, sdk.NewInt(100000000))
 
 		// add n new validators with zero voting power via MsgWrappedCreateValidator
@@ -64,7 +64,7 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = ek.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -104,7 +104,7 @@ func FuzzWrappedCreateValidator_InsufficientBalance(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
 		helper := testepoching.NewHelper(t)
@@ -113,19 +113,19 @@ func FuzzWrappedCreateValidator_InsufficientBalance(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		n := rand.Intn(3) + 1
-		balance := rand.Int63n(100)
+		n := r.Intn(3) + 1
+		balance := r.Int63n(100)
 		addrs := app.AddTestAddrs(helper.App, helper.Ctx, n, sdk.NewInt(balance))
 
 		// add n new validators with value more than the delegator balance via MsgWrappedCreateValidator
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
 		for i := 0; i < n; i++ {
 			// make sure the value is more than the balance
-			value := sdk.NewInt(balance).Add(sdk.NewInt(rand.Int63n(100)))
+			value := sdk.NewInt(balance).Add(sdk.NewInt(r.Int63n(100)))
 			msg, err := buildMsgWrappedCreateValidatorWithAmount(addrs[i], value)
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
@@ -144,7 +144,7 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
 		helper := testepoching.NewHelper(t)
@@ -153,12 +153,12 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
 		// add n new validators via MsgWrappedCreateValidator
-		n := rand.Intn(3)
+		n := r.Intn(3)
 		addrs := app.AddTestAddrs(helper.App, helper.Ctx, n, sdk.NewInt(100000000))
 
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
@@ -179,7 +179,7 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = ek.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -211,7 +211,7 @@ func FuzzAddBlsSig_NoError(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ek := helper.EpochingKeeper
@@ -219,13 +219,13 @@ func FuzzAddBlsSig_NoError(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
 		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
 		for i := uint64(0); i < 2; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
 		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
@@ -262,7 +262,7 @@ func FuzzAddBlsSig_NotInValSet(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ek := helper.EpochingKeeper
@@ -270,10 +270,10 @@ func FuzzAddBlsSig_NotInValSet(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
 		for i := uint64(0); i < 2; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
 		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
@@ -298,7 +298,7 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ek := helper.EpochingKeeper
@@ -306,13 +306,13 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
 		// build BLS signature from a random validator of the validator set
 		n := len(helper.ValBlsPrivKeys)
-		i := rand.Intn(n)
+		i := r.Intn(n)
 		lch := ctx.BlockHeader().LastCommitHash
 		blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
 		addr := helper.ValBlsPrivKeys[i].Address
@@ -333,7 +333,7 @@ func FuzzAddBlsSig_WrongLastCommitHash(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ek := helper.EpochingKeeper
@@ -341,12 +341,12 @@ func FuzzAddBlsSig_WrongLastCommitHash(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
 		for i := uint64(0); i < 2; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
 		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
@@ -354,9 +354,9 @@ func FuzzAddBlsSig_WrongLastCommitHash(f *testing.F) {
 
 		// build BLS sig from a random validator
 		n := len(helper.ValBlsPrivKeys)
-		i := rand.Intn(n)
+		i := r.Intn(n)
 		// inject random last commit hash
-		lch := datagen.GenRandomLastCommitHash()
+		lch := datagen.GenRandomLastCommitHash(r)
 		blsPrivKey := helper.ValBlsPrivKeys[i].BlsKey
 		addr := helper.ValBlsPrivKeys[i].Address
 		signBytes := types.GetSignBytes(endingEpoch, lch)
@@ -375,7 +375,7 @@ func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ek := helper.EpochingKeeper
@@ -383,12 +383,12 @@ func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 		// apply 2 blocks to ensure that a raw checkpoint for the previous epoch is built
 		for i := uint64(0); i < 2; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		endingEpoch := ek.GetEpoch(ctx).EpochNumber - 1
 		_, err := ck.GetRawCheckpoint(ctx, endingEpoch)
@@ -396,11 +396,11 @@ func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
 
 		// build BLS sig from a random validator
 		n := len(helper.ValBlsPrivKeys)
-		i := rand.Intn(n)
+		i := r.Intn(n)
 		// inject random last commit hash
 		lch := ctx.BlockHeader().LastCommitHash
 		addr := helper.ValBlsPrivKeys[i].Address
-		blsSig := datagen.GenRandomBlsMultiSig()
+		blsSig := datagen.GenRandomBlsMultiSig(r)
 		msg := types.NewMsgAddBlsSig(sdk.AccAddress(addr), endingEpoch, lch, blsSig, addr)
 
 		// add the BLS signature message

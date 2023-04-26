@@ -1,7 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -12,10 +14,11 @@ import (
 
 // TODO (fuzz tests): replace the following tests with fuzz ones
 func TestMsgWrappedDelegate(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	helper := testepoching.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx := helper.GenAndApplyEmptyBlock()
+	ctx := helper.GenAndApplyEmptyBlock(r)
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -41,10 +44,11 @@ func TestMsgWrappedDelegate(t *testing.T) {
 }
 
 func TestMsgWrappedUndelegate(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	helper := testepoching.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx := helper.GenAndApplyEmptyBlock()
+	ctx := helper.GenAndApplyEmptyBlock(r)
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {
@@ -70,10 +74,11 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 }
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	helper := testepoching.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx := helper.GenAndApplyEmptyBlock()
+	ctx := helper.GenAndApplyEmptyBlock(r)
 	wctx := sdk.WrapSDKContext(ctx)
 
 	testCases := []struct {

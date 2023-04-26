@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"math/rand"
+	"time"
 
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -60,11 +62,11 @@ func (n *NodeConfig) SendHeaderHex(headerHex string) {
 	n.LogActionF("successfully inserted header %s", headerHex)
 }
 
-func (n *NodeConfig) InsertNewEmptyBtcHeader() *blc.BTCHeaderInfo {
+func (n *NodeConfig) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
 	tip, err := n.QueryTip()
 	require.NoError(n.t, err)
 	n.t.Logf("Retrieved current tip of btc headerchain. Height: %d", tip.Height)
-	child := datagen.GenRandomValidBTCHeaderInfoWithParent(*tip)
+	child := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *tip)
 	n.SendHeaderHex(child.Header.MarshalHex())
 	n.WaitUntilBtcHeight(tip.Height + 1)
 	return child
@@ -97,6 +99,8 @@ func (n *NodeConfig) InsertProofs(p1 *btccheckpointtypes.BTCSpvProof, p2 *btcche
 
 func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64) {
 	n.LogActionF("start finalizing epoch starting from  %d", startingEpoch)
+	// Random source for the generation of BTC data
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	madeProgress := false
 	currEpoch := startingEpoch
@@ -135,9 +139,9 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 
 		require.NoError(n.t, err)
 
-		opReturn1 := datagen.CreateBlockWithTransaction(currentBtcTip.Header.ToBlockHeader(), p1)
+		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), p1)
 
-		opReturn2 := datagen.CreateBlockWithTransaction(opReturn1.HeaderBytes.ToBlockHeader(), p2)
+		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), p2)
 
 		n.InsertHeader(&opReturn1.HeaderBytes)
 		n.InsertHeader(&opReturn2.HeaderBytes)
@@ -159,7 +163,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 		// checkpoints
 
 		for i := 0; i < initialization.BabylonBtcFinalizationPeriod; i++ {
-			n.InsertNewEmptyBtcHeader()
+			n.InsertNewEmptyBtcHeader(r)
 		}
 	}
 }

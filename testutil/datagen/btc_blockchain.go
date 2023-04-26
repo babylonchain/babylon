@@ -17,20 +17,20 @@ import (
 // - when numBabylonTxs == 1, it generates a BTC block with 2 random txs and a Babylon tx.
 // - when numBabylonTxs == 2, it generates a BTC block with 1 random tx and 2 Babylon txs that constitute a raw BTC checkpoint.
 // When numBabylonTxs == 2, the function will return the BTC raw checkpoint as well.
-func GenRandomBtcdBlock(numBabylonTxs int, prevHash *chainhash.Hash) (*wire.MsgBlock, *btctxformatter.RawBtcCheckpoint) {
+func GenRandomBtcdBlock(r *rand.Rand, numBabylonTxs int, prevHash *chainhash.Hash) (*wire.MsgBlock, *btctxformatter.RawBtcCheckpoint) {
 	var (
-		randomTxs []*wire.MsgTx                    = []*wire.MsgTx{GenRandomTx(), GenRandomTx()}
+		randomTxs []*wire.MsgTx                    = []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
 		rawCkpt   *btctxformatter.RawBtcCheckpoint = nil
 	)
 
 	if numBabylonTxs == 2 {
-		randomTxs, rawCkpt = GenRandomBabylonTxPair()
+		randomTxs, rawCkpt = GenRandomBabylonTxPair(r)
 	} else if numBabylonTxs == 1 {
-		bbnTxs, _ := GenRandomBabylonTxPair()
-		idx := rand.Intn(2)
+		bbnTxs, _ := GenRandomBabylonTxPair(r)
+		idx := r.Intn(2)
 		randomTxs[idx] = bbnTxs[idx]
 	}
-	coinbaseTx := createCoinbaseTx(rand.Int31(), &chaincfg.SimNetParams)
+	coinbaseTx := createCoinbaseTx(r.Int31(), &chaincfg.SimNetParams)
 	msgTxs := []*wire.MsgTx{coinbaseTx}
 	msgTxs = append(msgTxs, randomTxs...)
 
@@ -40,7 +40,7 @@ func GenRandomBtcdBlock(numBabylonTxs int, prevHash *chainhash.Hash) (*wire.MsgB
 	difficulty, _ := new(big.Int).SetString("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 16)
 	workBits := blockchain.BigToCompact(difficulty)
 
-	header := GenRandomBtcdHeader()
+	header := GenRandomBtcdHeader(r)
 	header.MerkleRoot = merkleRoot
 	header.Bits = workBits
 	if prevHash != nil {
@@ -61,7 +61,7 @@ func GenRandomBtcdBlock(numBabylonTxs int, prevHash *chainhash.Hash) (*wire.MsgB
 // - has `oneTxThreshold` probability of including 1 Babylon tx that does not has any match
 // - has `twoTxThreshold - oneTxThreshold` probability of including 2 Babylon txs that constitute a checkpoint
 // - has `1 - twoTxThreshold` probability of including no Babylon tx
-func GenRandomBtcdBlockchainWithBabylonTx(n uint64, oneTxThreshold float32, twoTxThreshold float32) ([]*wire.MsgBlock, int, []*btctxformatter.RawBtcCheckpoint) {
+func GenRandomBtcdBlockchainWithBabylonTx(r *rand.Rand, n uint64, oneTxThreshold float32, twoTxThreshold float32) ([]*wire.MsgBlock, int, []*btctxformatter.RawBtcCheckpoint) {
 	blocks := []*wire.MsgBlock{}
 	numCkptSegs := 0
 	rawCkpts := []*btctxformatter.RawBtcCheckpoint{}
@@ -76,7 +76,7 @@ func GenRandomBtcdBlockchainWithBabylonTx(n uint64, oneTxThreshold float32, twoT
 	}
 
 	// genesis block
-	genesisBlock, rawCkpt := GenRandomBtcdBlock(0, nil)
+	genesisBlock, rawCkpt := GenRandomBtcdBlock(r, 0, nil)
 	blocks = append(blocks, genesisBlock)
 	rawCkpts = append(rawCkpts, rawCkpt)
 
@@ -84,14 +84,14 @@ func GenRandomBtcdBlockchainWithBabylonTx(n uint64, oneTxThreshold float32, twoT
 	for i := uint64(1); i < n; i++ {
 		var msgBlock *wire.MsgBlock
 		prevHash := blocks[len(blocks)-1].BlockHash()
-		if rand.Float32() < oneTxThreshold {
-			msgBlock, rawCkpt = GenRandomBtcdBlock(1, &prevHash)
+		if r.Float32() < oneTxThreshold {
+			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 1, &prevHash)
 			numCkptSegs += 1
-		} else if rand.Float32() < twoTxThreshold {
-			msgBlock, rawCkpt = GenRandomBtcdBlock(2, &prevHash)
+		} else if r.Float32() < twoTxThreshold {
+			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 2, &prevHash)
 			numCkptSegs += 2
 		} else {
-			msgBlock, rawCkpt = GenRandomBtcdBlock(0, &prevHash)
+			msgBlock, rawCkpt = GenRandomBtcdBlock(r, 0, &prevHash)
 		}
 
 		blocks = append(blocks, msgBlock)
@@ -101,8 +101,8 @@ func GenRandomBtcdBlockchainWithBabylonTx(n uint64, oneTxThreshold float32, twoT
 }
 
 // GenRandomBtcdHash generates a random hash in type `chainhash.Hash`, without any hash operations
-func GenRandomBtcdHash() chainhash.Hash {
-	hash, err := chainhash.NewHashFromStr(GenRandomHexStr(32))
+func GenRandomBtcdHash(r *rand.Rand) chainhash.Hash {
+	hash, err := chainhash.NewHashFromStr(GenRandomHexStr(r, 32))
 	if err != nil {
 		panic(err)
 	}
