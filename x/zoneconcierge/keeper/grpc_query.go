@@ -51,6 +51,10 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 	ctx := sdk.UnwrapSDKContext(c)
 	var chainsInfo []*types.ChainInfo
 	for _, chainID := range req.ChainIds {
+		if len(chainID) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+		}
+
 		chainInfo, err := k.GetChainInfo(ctx, chainID)
 		if err != nil {
 			return nil, err
