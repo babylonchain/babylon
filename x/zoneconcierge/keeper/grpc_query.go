@@ -236,6 +236,59 @@ func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedC
 	return resp, nil
 }
 
+func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	if len(req.ChainIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	resp := &types.QueryFinalizedChainsInfoResponse{ChainsInfo: []*types.QueryFinalizedChainInfoResponse{}}
+
+	for _, chainID := range req.ChainIds {
+		r := &types.QueryFinalizedChainInfoResponse{}
+		// find the last finalised chain info and the earliest epoch that snapshots this chain info
+		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID)
+		if err != nil {
+			continue
+		}
+		r.FinalizedChainInfo = chainInfo
+
+		// find the epoch metadata of the finalised epoch
+		r.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			continue
+		}
+
+		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+		if err != nil {
+			continue
+		}
+		r.RawCheckpoint = rawCheckpoint.Ckpt
+
+		// find the raw checkpoint and the best submission key for the finalised epoch
+		_, r.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
+		if err != nil {
+			continue
+		}
+
+		// if the query does not want the proofs, return here
+		if req.Prove {
+			// generate all proofs
+			r.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, r.EpochInfo, r.BtcSubmissionKey)
+			if err != nil {
+				continue
+			}
+		}
+		resp.ChainsInfo = append(resp.ChainsInfo, r)
+	}
+
+	return resp, nil
+}
+
 func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.QueryFinalizedChainInfoUntilHeightRequest) (*types.QueryFinalizedChainInfoUntilHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")

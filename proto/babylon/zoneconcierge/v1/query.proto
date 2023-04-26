@@ -57,6 +57,12 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}";
   }
+  // FinalizedChainsInfo queries the BTC-finalised info of given chain IDs, with proofs
+  rpc FinalizedChainsInfo(QueryFinalizedChainsInfoRequest)
+      returns (QueryFinalizedChainsInfoResponse) {
+    option (google.api.http).get =
+        "/babylon/zoneconcierge/v1/finalized_chain_info";
+  }
   // FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
   // the provided CZ height, with proofs
   rpc FinalizedChainInfoUntilHeight(QueryFinalizedChainInfoUntilHeightRequest)
@@ -179,6 +185,21 @@ message QueryFinalizedChainInfoResponse {
 
   // proof is the proof that the chain info is finalized
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
+}
+
+// QueryFinalizedChainsInfoRequest is request type for the
+// Query/FinalizedChainsInfo RPC method.
+message QueryFinalizedChainsInfoRequest {
+  // chain_ids are the IDs of the CZs
+  repeated string chain_ids = 1;
+  // prove indicates whether the querier wants to get proofs of this timestamp
+  bool prove = 2;
+}
+
+// QueryFinalizedChainsInfoResponse is response type for the
+// Query/FinalizedChainsInfo RPC method.
+message QueryFinalizedChainsInfoResponse {
+  repeated QueryFinalizedChainInfoResponse chains_info = 1;
 }
 
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the
