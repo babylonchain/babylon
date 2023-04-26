@@ -88,10 +88,10 @@ message QueryChainListResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryChainsInfoRequest is request type for the Query/ChainInfo RPC method.
+// QueryChainsInfoRequest is request type for the Query/ChainsInfo RPC method.
 message QueryChainsInfoRequest { repeated string chain_ids = 1; }
 
-// QueryChainsInfoResponse is response type for the Query/ChainInfo RPC method.
+// QueryChainsInfoResponse is response type for the Query/ChainsInfo RPC method.
 message QueryChainsInfoResponse {
   repeated babylon.zoneconcierge.v1.ChainInfo chains_info = 1;
 }

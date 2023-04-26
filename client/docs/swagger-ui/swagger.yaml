@@ -7081,7 +7081,7 @@ paths:
                         canonical chain
                   title: ChainInfo is the information of a CZ
             description: >-
-              QueryChainsInfoResponse is response type for the Query/ChainInfo
+              QueryChainsInfoResponse is response type for the Query/ChainsInfo
               RPC method.
         default:
           description: An unexpected error response.
@@ -16039,7 +16039,7 @@ definitions:
                 canonical chain
           title: ChainInfo is the information of a CZ
     description: >-
-      QueryChainsInfoResponse is response type for the Query/ChainInfo RPC
+      QueryChainsInfoResponse is response type for the Query/ChainsInfo RPC
       method.
   babylon.zoneconcierge.v1.QueryEpochChainInfoResponse:
     type: object

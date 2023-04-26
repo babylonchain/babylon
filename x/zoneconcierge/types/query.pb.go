@@ -239,7 +239,7 @@ func (m *QueryChainListResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryChainsInfoRequest is request type for the Query/ChainInfo RPC method.
+// QueryChainsInfoRequest is request type for the Query/ChainsInfo RPC method.
 type QueryChainsInfoRequest struct {
 	ChainIds []string `protobuf:"bytes,1,rep,name=chain_ids,json=chainIds,proto3" json:"chain_ids,omitempty"`
 }
@@ -284,7 +284,7 @@ func (m *QueryChainsInfoRequest) GetChainIds() []string {
 	return nil
 }
 
-// QueryChainsInfoResponse is response type for the Query/ChainInfo RPC method.
+// QueryChainsInfoResponse is response type for the Query/ChainsInfo RPC method.
 type QueryChainsInfoResponse struct {
 	ChainsInfo []*ChainInfo `protobuf:"bytes,1,rep,name=chains_info,json=chainsInfo,proto3" json:"chains_info,omitempty"`
 }
