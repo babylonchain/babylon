@@ -38,27 +38,6 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 	return resp, nil
 }
 
-// ChainInfo returns the latest info of a chain with given ID
-func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (*types.QueryChainInfoResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-
-	if len(req.ChainId) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-	}
-
-	ctx := sdk.UnwrapSDKContext(c)
-
-	// find the chain info of this epoch
-	chainInfo, err := k.GetChainInfo(ctx, req.ChainId)
-	if err != nil {
-		return nil, err
-	}
-	resp := &types.QueryChainInfoResponse{ChainInfo: chainInfo}
-	return resp, nil
-}
-
 // ChainsInfo returns the latest info of chains with given IDs
 func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
 	if req == nil {

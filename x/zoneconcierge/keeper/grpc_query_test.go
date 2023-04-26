@@ -66,37 +66,16 @@ func FuzzChainList(f *testing.F) {
 	})
 }
 
-func FuzzChainInfo(f *testing.F) {
+func FuzzChainsInfo(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
+	type chainInfo struct {
+		chainID        string
+		numHeaders     uint64
+		numForkHeaders uint64
+	}
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
-
-		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
-
-		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(r, 100) + 1
-		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
-
-		// check if the chain info of is recorded or not
-		resp, err := zcKeeper.ChainInfo(ctx, &zctypes.QueryChainInfoRequest{ChainId: czChain.ChainID})
-		require.NoError(t, err)
-		chainInfo := resp.ChainInfo
-		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
-		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
-	})
-}
-
-func FuzzChainsInfo(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-
-	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
 
 		_, babylonChain, _, babylonApp := SetupTest(t)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
@@ -104,29 +83,25 @@ func FuzzChainsInfo(f *testing.F) {
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		numChains := datagen.RandomInt(100) + 1
-		var (
-			chainsInfo []struct {
-				chainID        string
-				numHeaders     uint64
-				numForkHeaders uint64
-			}
-			chainIDs []string
-		)
+		var chainsInfo []chainInfo
+		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
-			chainID := datagen.GenRandomHexStr(30)
-			chainIDs = append(chainIDs, chainID)
+			chainID := datagen.GenRandomHexStr(r, 30)
+			numHeaders := datagen.RandomInt(r, 100) + 1
+			numForkHeaders := datagen.RandomInt(r, 10) + 1
+			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, 0, numHeaders, numForkHeaders)
 
-			numHeaders := datagen.RandomInt(100) + 1
-			numForkHeaders := datagen.RandomInt(10) + 1
-			SimulateHeadersAndForksViaHook(ctx, hooks, chainID, 0, numHeaders, numForkHeaders)
-			chainsInfo = append(chainsInfo, struct {
-				chainID        string
-				numHeaders     uint64
-				numForkHeaders uint64
-			}{chainID, numHeaders, numForkHeaders})
+			chainsInfo = append(chainsInfo, chainInfo{
+				chainID:        chainID,
+				numHeaders:     numHeaders,
+				numForkHeaders: numForkHeaders,
+			})
 		}
 
+		var chainIDs []string
+		for _, data := range chainsInfo {
+			chainIDs = append(chainIDs, data.chainID)
+		}
 		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
 			ChainIds: chainIDs,
 		})
