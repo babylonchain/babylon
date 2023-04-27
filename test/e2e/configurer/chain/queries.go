@@ -182,9 +182,10 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
 func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) (*zctypes.QueryFinalizedChainsInfoResponse, error) {
 	queryParams := url.Values{}
 	for _, chainId := range chainIDs {
-		queryParams.Set("chain_ids", chainId)
+		queryParams.Add("chain_ids", chainId)
 	}
-	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chain_info", queryParams)
+	
+	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chains_info", queryParams)
 	require.NoError(n.t, err)
 
 	var finalizedResponse zctypes.QueryFinalizedChainsInfoResponse
@@ -208,8 +209,9 @@ func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
 func (n *NodeConfig) QueryCheckpointChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, error) {
 	queryParams := url.Values{}
 	for _, chainId := range chainIDs {
-		queryParams.Set("chain_ids", chainId)
+		queryParams.Add("chain_ids", chainId)
 	}
+
 	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", queryParams)
 	require.NoError(n.t, err)
 	var infoResponse zctypes.QueryChainsInfoResponse
