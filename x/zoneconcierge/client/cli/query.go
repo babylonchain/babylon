@@ -36,7 +36,7 @@ func CmdChainsInfo() *cobra.Command {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryChainsInfoRequest{ChainIds: args}
-			resp, err := queryClient.ChainsInfo(context.Background(), &req)
+			resp, err := queryClient.ChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}
