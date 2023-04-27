@@ -46,11 +46,11 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}";
   }
-  // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
-  rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest)
-      returns (QueryFinalizedChainInfoResponse) {
+  // FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
+  rpc FinalizedChainsInfo(QueryFinalizedChainsInfoRequest)
+      returns (QueryFinalizedChainsInfoResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}";
+        "/babylon/zoneconcierge/v1/finalized_chains_info";
   }
   // FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
   // the provided CZ height, with proofs
@@ -140,18 +140,18 @@ message QueryListEpochHeadersResponse {
   repeated babylon.zoneconcierge.v1.IndexedHeader headers = 1;
 }
 
-// QueryFinalizedChainInfoRequest is request type for the
-// Query/FinalizedChainInfo RPC method.
-message QueryFinalizedChainInfoRequest {
+// QueryFinalizedChainsInfoRequest is request type for the
+// Query/FinalizedChainsInfo RPC method.
+message QueryFinalizedChainsInfoRequest {
   // chain_id is the ID of the CZ
-  string chain_id = 1;
+  repeated string chain_id = 1;
   // prove indicates whether the querier wants to get proofs of this timestamp
   bool prove = 2;
 }
 
 // QueryFinalizedChainInfoResponse is response type for the
 // Query/FinalizedChainInfo RPC method.
-message QueryFinalizedChainInfoResponse {
+message finalizedChainInfo {
   // finalized_chain_info is the info of the CZ
   babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
 
@@ -165,6 +165,12 @@ message QueryFinalizedChainInfoResponse {
 
   // proof is the proof that the chain info is finalized
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
+}
+
+// QueryFinalizedChainsInfoResponse is response type for the
+// Query/FinalizedChainsInfo RPC method.
+message QueryFinalizedChainsInfoResponse {
+  repeated finalizedChainInfo finalized_chains_info = 1;
 }
 
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the
