@@ -60,7 +60,7 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 		}
 
-		// check for duplicates
+		// check for duplicates and return error on first duplicate found
 		if encountered[chainID] {
 			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
 		} else {
