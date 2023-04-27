@@ -29,6 +29,11 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	// Query checkpoint chain info for opposing chain
+	chainInfo, err := nonValidatorNode.QueryCheckpointChainsInfo(initialization.ChainBID)
+	s.NoError(err)
+	s.Equal(chainInfo[0].ChainId, initialization.ChainBID)
+
 	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
 	nonValidatorNode.FinalizeSealedEpochs(1, 3)
 

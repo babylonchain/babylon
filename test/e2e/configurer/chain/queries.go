@@ -209,6 +209,16 @@ func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
 	return &chainsResponse.ChainIds, nil
 }
 
+func (n *NodeConfig) QueryCheckpointChainsInfo(chainID string) ([]*zctypes.ChainInfo, error) {
+	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", "chain_ids", chainID)
+	require.NoError(n.t, err)
+	var infoResponse zctypes.QueryChainsInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &infoResponse); err != nil {
+		return nil, err
+	}
+	return infoResponse.ChainsInfo, nil
+}
+
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/current_epoch")
 	require.NoError(n.t, err)
