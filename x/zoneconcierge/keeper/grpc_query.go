@@ -221,7 +221,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		// find the last finalised chain info and the earliest epoch that snapshots this chain info
 		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID)
 		if err != nil {
-			// return empty response if no finalised chain info is found
+			// return empty response if no finalised chain info is found for the chain
 			if errors.Is(err, types.ErrEpochChainInfoNotFound) {
 				resp.Data = append(resp.Data, chainResp)
 				continue
