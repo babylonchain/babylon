@@ -30,7 +30,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 
 	// Query checkpoint chain info for opposing chain
-	chainInfo, err := nonValidatorNode.QueryCheckpointChainsInfo(initialization.ChainBID)
+	chainInfo, err := nonValidatorNode.QueryCheckpointChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 	s.Equal(chainInfo[0].ChainId, initialization.ChainBID)
 
@@ -45,7 +45,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	}
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedResp, err := nonValidatorNode.QueryFinalizedChainsInfo(initialization.ChainBID)
+	finalizedResp, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 
 	finalizedInfo := finalizedResp.Data[0].FinalizedChainInfo
