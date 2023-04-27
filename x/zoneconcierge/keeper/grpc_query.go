@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -184,54 +185,82 @@ func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHea
 	return resp, nil
 }
 
-func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedChainInfoRequest) (*types.QueryFinalizedChainInfoResponse, error) {
+func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	if len(req.ChainIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
+	}
+
+	encountered := map[string]bool{}
+	for _, chainID := range req.ChainIds {
+		if len(chainID) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+		}
+
+		// check for duplicates and return error on first duplicate found
+		if encountered[chainID] {
+			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
+		} else {
+			encountered[chainID] = true
+		}
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
-	resp := &types.QueryFinalizedChainInfoResponse{}
+	resp := &types.QueryFinalizedChainsInfoResponse{Data: []*types.FinalizedChainInfoResponse{}}
 
-	// find the last finalised chain info and the earliest epoch that snapshots this chain info
-	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
-	if err != nil {
-		return nil, err
-	}
-	resp.FinalizedChainInfo = chainInfo
+	for _, chainID := range req.ChainIds {
+		chainResp := &types.FinalizedChainInfoResponse{ChainId: chainID}
 
-	// find the epoch metadata of the finalised epoch
-	resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
-	if err != nil {
-		return nil, err
-	}
+		// find the last finalised chain info and the earliest epoch that snapshots this chain info
+		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID)
+		if err != nil {
+			if errors.Is(err, types.ErrEpochChainInfoNotFound) {
+				resp.Data = append(resp.Data, chainResp)
+				continue
+			}
 
-	rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+			return nil, err
+		}
 
-	if err != nil {
-		return nil, err
-	}
+		var d types.FinalizedChainData
+		d.FinalizedChainInfo = chainInfo
 
-	resp.RawCheckpoint = rawCheckpoint.Ckpt
+		// find the epoch metadata of the finalised epoch
+		d.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
 
-	// find the raw checkpoint and the best submission key for the finalised epoch
-	_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
-	if err != nil {
-		return nil, err
-	}
+		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
 
-	// if the query does not want the proofs, return here
-	if !req.Prove {
-		return resp, nil
-	}
+		d.RawCheckpoint = rawCheckpoint.Ckpt
 
-	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.BtcSubmissionKey)
-	if err != nil {
-		return nil, err
+		// find the raw checkpoint and the best submission key for the finalised epoch
+		_, d.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		// generate all proofs
+		if req.Prove {
+			d.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, d.EpochInfo, d.BtcSubmissionKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		chainResp.FinalizedChainInfo = &d
+		resp.Data = append(resp.Data, chainResp)
 	}
 
 	return resp, nil
