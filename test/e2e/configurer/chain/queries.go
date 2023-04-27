@@ -186,12 +186,11 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
 	return blcResponse.Header, nil
 }
 
-func (n *NodeConfig) QueryFinalizedChainInfo(chainId string) (*zctypes.QueryFinalizedChainInfoResponse, error) {
-	finalizedPath := fmt.Sprintf("babylon/zoneconcierge/v1/finalized_chain_info/%s", chainId)
-	bz, err := n.QueryGRPCGateway(finalizedPath)
+func (n *NodeConfig) QueryFinalizedChainsInfo(chainId string) (*zctypes.QueryFinalizedChainsInfoResponse, error) {
+	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chain_info", "chain_ids", chainId)
 	require.NoError(n.t, err)
 
-	var finalizedResponse zctypes.QueryFinalizedChainInfoResponse
+	var finalizedResponse zctypes.QueryFinalizedChainsInfoResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &finalizedResponse); err != nil {
 		return nil, err
 	}
