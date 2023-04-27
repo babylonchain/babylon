@@ -29,8 +29,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chains-info <chain-ids>",
-		Short: "retrieve the chain info of given chain ids",
-		Args:  cobra.RangeArgs(1, 5),
+		Short: "retrieves the latest info for a list of chains with given IDs",
+		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
