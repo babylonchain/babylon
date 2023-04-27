@@ -190,10 +190,12 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	// return if no chain IDs are provided
 	if len(req.ChainIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
+	// return if requested chain IDs exceed the limit
 	if len(req.ChainIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
