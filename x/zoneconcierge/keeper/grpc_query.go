@@ -13,6 +13,8 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+const maxQueryChainsInfoLimit = 100
+
 func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (*types.QueryChainListResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -48,9 +50,21 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
 	}
 
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
+	}
+
+	encountered := map[string]bool{}
 	for _, chainID := range req.ChainIds {
 		if len(chainID) == 0 {
 			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+		}
+
+		// check for duplicates
+		if encountered[chainID] {
+			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
+		} else {
+			encountered[chainID] = true
 		}
 	}
 
