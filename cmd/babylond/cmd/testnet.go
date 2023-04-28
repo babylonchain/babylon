@@ -120,7 +120,7 @@ Example:
 	cmd.Flags().String(flags.FlagKeyType, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, regtest, mainnet")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
-	cmd.Flags().Uint64(flagTimeBetweenBlocks, 10, "Time between blocks in seconds")
+	cmd.Flags().Uint64(flagTimeBetweenBlocks, 5, "Time between blocks in seconds")
 	addGenesisFlags(cmd)
 
 	return cmd
@@ -167,8 +167,6 @@ func InitTestnet(
 	babylonConfig.API.EnableUnsafeCORS = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
 	babylonConfig.GRPCWeb.Address = "0.0.0.0:9091"
-	// Time between blocks
-	babylonConfig.Consensus.TimeoutCommit = time.Second * time.Duration(timeBetweenBlocks)
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -194,6 +192,8 @@ func InitTestnet(
 		nodeConfig.Instrumentation.Prometheus = true
 		// Set the number of simultaneous connections to unlimited
 		nodeConfig.Instrumentation.MaxOpenConnections = 0
+		// Time between blocks
+		nodeConfig.Consensus.TimeoutCommit = time.Second * time.Duration(timeBetweenBlocks)
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outputDir)
