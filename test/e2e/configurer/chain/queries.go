@@ -209,15 +209,14 @@ func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
 	return &chainsResponse.ChainIds, nil
 }
 
-func (n *NodeConfig) QueryCheckpointChainInfo(chainId string) (*zctypes.ChainInfo, error) {
-	infoPath := fmt.Sprintf("/babylon/zoneconcierge/v1/chain_info/%s", chainId)
-	bz, err := n.QueryGRPCGateway(infoPath)
+func (n *NodeConfig) QueryCheckpointChainsInfo(chainID string) ([]*zctypes.ChainInfo, error) {
+	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", "chain_ids", chainID)
 	require.NoError(n.t, err)
-	var infoResponse zctypes.QueryChainInfoResponse
+	var infoResponse zctypes.QueryChainsInfoResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &infoResponse); err != nil {
 		return nil, err
 	}
-	return infoResponse.ChainInfo, nil
+	return infoResponse.ChainsInfo, nil
 }
 
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {

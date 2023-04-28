@@ -3,14 +3,17 @@ package keeper
 import (
 	"context"
 
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 var _ types.QueryServer = Keeper{}
+
+const maxQueryChainsInfoLimit = 100
 
 func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (*types.QueryChainListResponse, error) {
 	if req == nil {
@@ -37,24 +40,46 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 	return resp, nil
 }
 
-// ChainInfo returns the latest info of a chain with given ID
-func (k Keeper) ChainInfo(c context.Context, req *types.QueryChainInfoRequest) (*types.QueryChainInfoResponse, error) {
+// ChainsInfo returns the latest info for a list of chains with given IDs
+func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+	if len(req.ChainIds) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
+	}
+
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
+	}
+
+	encountered := map[string]bool{}
+	for _, chainID := range req.ChainIds {
+		if len(chainID) == 0 {
+			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+		}
+
+		// check for duplicates and return error on first duplicate found
+		if encountered[chainID] {
+			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
+		} else {
+			encountered[chainID] = true
+		}
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
+	var chainsInfo []*types.ChainInfo
+	for _, chainID := range req.ChainIds {
+		chainInfo, err := k.GetChainInfo(ctx, chainID)
+		if err != nil {
+			return nil, err
+		}
 
-	// find the chain info of this epoch
-	chainInfo, err := k.GetChainInfo(ctx, req.ChainId)
-	if err != nil {
-		return nil, err
+		chainsInfo = append(chainsInfo, chainInfo)
 	}
-	resp := &types.QueryChainInfoResponse{ChainInfo: chainInfo}
+
+	resp := &types.QueryChainsInfoResponse{ChainsInfo: chainsInfo}
 	return resp, nil
 }
 
