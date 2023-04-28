@@ -85,6 +85,7 @@ func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKe
 		zoneconciergePortKeeper{},
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
+		nil, // TODO: mock this keeper
 		checkpointingKeeper,
 		btccKeeper,
 		epochingKeeper,

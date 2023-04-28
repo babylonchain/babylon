@@ -6,6 +6,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
@@ -75,6 +76,10 @@ type ScopedKeeper interface {
 	AuthenticateCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) bool
 	LookupModules(ctx sdk.Context, name string) ([]string, *capabilitytypes.Capability, error)
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
+}
+
+type BTCLightClientKeeper interface {
+	GetTipInfo(ctx sdk.Context) *btclctypes.BTCHeaderInfo
 }
 
 type BtcCheckpointKeeper interface {
