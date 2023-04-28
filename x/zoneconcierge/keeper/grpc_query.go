@@ -212,7 +212,6 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		if err != nil {
 			// skip if the finalised chain info is not found
 			if errors.Is(err, types.ErrEpochChainInfoNotFound) {
-				k.Logger(ctx).Error("finalised chain info not found", "chain ID", chainID)
 				resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 				continue
 			}
