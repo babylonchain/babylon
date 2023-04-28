@@ -48,7 +48,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	finalizedResp, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 
-	finalizedInfo := finalizedResp.Data[0].FinalizedChainInfo
+	finalizedInfo := finalizedResp.FinalizedChainsInfo[0]
 	// TODO Add more assertion here. Maybe check proofs ?
 	s.Equal(finalizedInfo.FinalizedChainInfo.ChainId, initialization.ChainBID)
 	s.Equal(finalizedInfo.EpochInfo.EpochNumber, uint64(3))
