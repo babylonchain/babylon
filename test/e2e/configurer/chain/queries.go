@@ -63,7 +63,7 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 	return bz, nil
 }
 
-// QueryBalances QueryBalancer returns balances at the address.
+// QueryBalances returns balances at the address.
 func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s", address)
 	bz, err := n.QueryGRPCGateway(path, nil)
