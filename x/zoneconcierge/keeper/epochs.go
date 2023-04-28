@@ -21,9 +21,8 @@ func (k Keeper) GetFinalizingBTCTip(ctx sdk.Context) (*btclctypes.BTCHeaderInfo,
 
 // setFinalizingBTCTip sets the last finalised BTC tip
 // called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setFinalizingBTCTip(ctx sdk.Context) {
+func (k Keeper) setFinalizingBTCTip(ctx sdk.Context, btcTip *btclctypes.BTCHeaderInfo) {
 	store := ctx.KVStore(k.storeKey)
-	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	btcTipBytes := k.cdc.MustMarshal(btcTip)
 	store.Set(types.FinalizingBTCTipKey, btcTipBytes)
 }
