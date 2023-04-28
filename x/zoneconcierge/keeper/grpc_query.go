@@ -9,6 +9,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	bbntypes "github.com/babylonchain/babylon/types"
+
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
@@ -47,26 +49,19 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	// return if no chain IDs are provided
 	if len(req.ChainIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
 	}
 
+	// return if chain IDs exceed the limit
 	if len(req.ChainIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
-	encountered := map[string]bool{}
-	for _, chainID := range req.ChainIds {
-		if len(chainID) == 0 {
-			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-		}
-
-		// check for duplicates and return error on first duplicate found
-		if encountered[chainID] {
-			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
-		} else {
-			encountered[chainID] = true
-		}
+	// return if chain IDs contain duplicates or empty strings
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -201,18 +196,9 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
-	encountered := map[string]bool{}
-	for _, chainID := range req.ChainIds {
-		if len(chainID) == 0 {
-			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-		}
-
-		// check for duplicates and return error on first duplicate found
-		if encountered[chainID] {
-			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
-		} else {
-			encountered[chainID] = true
-		}
+	// return if chain IDs contain duplicates or empty strings
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
