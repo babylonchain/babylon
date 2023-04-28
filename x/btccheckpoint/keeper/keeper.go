@@ -142,34 +142,57 @@ func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *types.SubmissionBtc
 
 func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
 
-	var lowest uint64 = math.MaxUint64
-	var highest uint64 = uint64(0)
-	var lowestIndestInMostFreshBlock uint32 = math.MaxUint32
+	var youngestBlockDepth uint64 = math.MaxUint64
+
+	var lowestIndexInMostFreshBlock uint32 = math.MaxUint32
+
+	var oldestBlockDepth uint64 = uint64(0)
 
 	for _, tk := range sk.Key {
-		d, err := k.headerDepth(ctx, tk.Hash)
+		currentBlockDepth, err := k.headerDepth(ctx, tk.Hash)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if d <= lowest {
-			lowest = d
-			if tk.Index < lowestIndestInMostFreshBlock {
-				lowestIndestInMostFreshBlock = tk.Index
-			}
+		if currentBlockDepth < youngestBlockDepth {
+			youngestBlockDepth = currentBlockDepth
+			lowestIndexInMostFreshBlock = tk.Index
 		}
 
-		if d > highest {
-			highest = d
+		// This case happens when we have two submissions in the same block.
+		if currentBlockDepth == youngestBlockDepth && tk.Index < lowestIndexInMostFreshBlock {
+			// This is something which needs a bit more careful thinking as it is used
+			// to determine which submission is better.
+			// Currently if two submissions of one checkpoint are in the same block,
+			// we pick tx with lower index as the point at which checkpoint happened.
+			// This is in line with the logic that if two submission are in the same block,
+			// they are esentially happening at the same time, so it does not really matter
+			// which index pick, and for possibble tie breaks it is better to pick lower one.
+			// This means in case when we have:
+			// Checkpoint submission `x` for epoch 5, both tx in same block at height 100, with indexes 1 and 10
+			// and
+			// Checkpoint submission `y` for epoch 5, both tx in same block at height 100, with indexes 3 and 9
+			// we will chose submission `x` as the better one.
+			// This good enough solution, but it is not perfect and leads to some edge cases like:
+			// Checkpoint submission `x` for epoch 5, one tx in block 99 with index 1, and second tx in block 100 with index 4
+			// and
+			// Checkpoint submission `y` for epoch 5, both tx in same block at height 100, with indexes 3 and 9
+			// In this case submission `y` will be better as it `earliest` tx in most fresh block is first. But at first glance
+			// submission `x` seems better.
+			lowestIndexInMostFreshBlock = tk.Index
+		}
+
+		if currentBlockDepth > oldestBlockDepth {
+			oldestBlockDepth = currentBlockDepth
 		}
 	}
 
 	return &types.SubmissionBtcInfo{
 		SubmissionKey:      sk,
-		OldestBlockDepth:   highest,
-		YoungestBlockDepth: lowest,
-		LatestTxIndex:      lowestIndestInMostFreshBlock,
+		OldestBlockDepth:   oldestBlockDepth,
+		YoungestBlockDepth: youngestBlockDepth,
+		LatestTxIndex:      lowestIndexInMostFreshBlock,
 	}, nil
 }
 
