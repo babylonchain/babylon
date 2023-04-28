@@ -1,7 +1,6 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
-import "google/api/annotations.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/btclightclient/v1/btclightclient.proto";

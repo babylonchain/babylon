@@ -15,6 +15,10 @@ import (
 	coretypes "github.com/cosmos/ibc-go/v7/modules/core/types"
 )
 
+func (k Keeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
+	return k.channelKeeper.GetAllChannels(ctx)
+}
+
 // GetAllOpenZCChannels returns all open channels that are connected to ZoneConcierge's port
 func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
 	zcPort := k.GetPort(ctx)
