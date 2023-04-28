@@ -49,7 +49,7 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context) (*epochingtypes.Epoch, *checkp
 	// Get BTC headers between
 	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
 	// - BTC tip at epoch `lastFinalizedEpoch`
-	oldBTCTip, err := k.GetFinalizingBTCTip(ctx)
+	oldBTCTip, err := k.GetFinalizingBTCTip(ctx) // NOTE: BTC tip in KVStore has not been updated yet
 	if err != nil {
 		return nil, nil, nil, nil, nil, nil, err
 	}
