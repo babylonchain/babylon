@@ -43,16 +43,19 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context) (*epochingtypes.Epoch, *checkp
 	// i.e., the two `TransactionInfo`s for the checkpoint
 	proofEpochSubmitted, err := k.ProveEpochSubmitted(ctx, btcSubmissionKey)
 	if err != nil {
-		// The only error in ProveEpochSubmitted is the nil bestSubmission.
-		// Since the epoch w.r.t. the bestSubmissionKey is finalised, this
-		// can only be a programming error, so we should panic here.
-		panic(err)
+		return nil, nil, nil, nil, nil, nil, err
 	}
 
-	// TODO: get BTC headers between
-	// - the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+	// Get BTC headers between
+	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
 	// - BTC tip at epoch `lastFinalizedEpoch`
-	btcHeaders := []*btclctypes.BTCHeaderInfo{}
+	oldBTCTip, err := k.GetFinalizingBTCTip(ctx)
+	if err != nil {
+		return nil, nil, nil, nil, nil, nil, err
+	}
+	curBTCTip := k.btclcKeeper.GetTipInfo(ctx)
+	commonAncestor := k.btclcKeeper.GetHighestCommonAncestor(ctx, oldBTCTip, curBTCTip)
+	btcHeaders := k.btclcKeeper.GetInOrderAncestorsUntil(ctx, curBTCTip, commonAncestor)
 
 	return finalizedEpochInfo, rawCheckpoint.Ckpt, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, btcHeaders, nil
 }

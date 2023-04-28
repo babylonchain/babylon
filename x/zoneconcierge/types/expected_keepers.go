@@ -80,6 +80,8 @@ type ScopedKeeper interface {
 
 type BTCLightClientKeeper interface {
 	GetTipInfo(ctx sdk.Context) *btclctypes.BTCHeaderInfo
+	GetHighestCommonAncestor(ctx sdk.Context, header1 *btclctypes.BTCHeaderInfo, header2 *btclctypes.BTCHeaderInfo) *btclctypes.BTCHeaderInfo
+	GetInOrderAncestorsUntil(ctx sdk.Context, descendant *btclctypes.BTCHeaderInfo, ancestor *btclctypes.BTCHeaderInfo) []*btclctypes.BTCHeaderInfo
 }
 
 type BtcCheckpointKeeper interface {
