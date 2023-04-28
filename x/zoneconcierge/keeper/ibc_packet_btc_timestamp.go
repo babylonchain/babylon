@@ -58,17 +58,19 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context) (*epochingtypes.Epoch, *checkp
 }
 
 // BroadcastBTCTimestamps sends an IBC packet of BTC timestamp to all open IBC channels to ZoneConcierge
-func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) error {
+func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 	// get all channels that are open and are connected to ZoneConcierge's port
 	openZCChannels := k.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
-		return nil
+		k.Logger(ctx).Info("no open IBC channel with ZoneConcierge, skip broadcasting BTC timestamps")
+		return
 	}
 
 	// get all metadata shared across BTC timestamps in the same epoch
 	finalizedEpochInfo, rawCheckpoint, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, btcHeaders, err := k.getFinalizedInfo(ctx)
 	if err != nil {
-		return err
+		k.Logger(ctx).Error("failed to generate metadata shared across BTC timestamps in the same epoch", "error", err)
+		return
 	}
 
 	// for each channel, construct and send BTC timestamp
@@ -125,6 +127,4 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) error {
 			continue
 		}
 	}
-
-	return nil
 }
