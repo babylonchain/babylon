@@ -1,10 +1,31 @@
 package keeper
 
 import (
+	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// GetFinalizingBTCTip gets the BTC tip when the last epoch is finalised
+func (k Keeper) GetFinalizingBTCTip(ctx sdk.Context) (*btclctypes.BTCHeaderInfo, error) {
+	store := ctx.KVStore(k.storeKey)
+	if !store.Has(types.FinalizingBTCTipKey) {
+		return nil, types.ErrFinalizingBTCTipNotFound
+	}
+	btcTipBytes := store.Get(types.FinalizingBTCTipKey)
+	var btcTip btclctypes.BTCHeaderInfo
+	k.cdc.MustUnmarshal(btcTipBytes, &btcTip)
+	return &btcTip, nil
+}
+
+// setFinalizingBTCTip sets the last finalised BTC tip
+// called upon each AfterRawCheckpointFinalized hook invocation
+func (k Keeper) setFinalizingBTCTip(ctx sdk.Context, btcTip *btclctypes.BTCHeaderInfo) {
+	store := ctx.KVStore(k.storeKey)
+	btcTipBytes := k.cdc.MustMarshal(btcTip)
+	store.Set(types.FinalizingBTCTipKey, btcTipBytes)
+}
 
 // GetFinalizedEpoch gets the last finalised epoch
 // used upon querying the last BTC-finalised chain info for CZs

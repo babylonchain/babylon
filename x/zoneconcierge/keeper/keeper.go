@@ -22,6 +22,7 @@ type (
 		portKeeper          types.PortKeeper
 		authKeeper          types.AccountKeeper
 		bankKeeper          types.BankKeeper
+		btclcKeeper         types.BTCLightClientKeeper
 		checkpointingKeeper types.CheckpointingKeeper
 		btccKeeper          types.BtcCheckpointKeeper
 		epochingKeeper      types.EpochingKeeper
@@ -40,6 +41,7 @@ func NewKeeper(
 	portKeeper types.PortKeeper,
 	authKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
+	btclcKeeper types.BTCLightClientKeeper,
 	checkpointingKeeper types.CheckpointingKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	epochingKeeper types.EpochingKeeper,
@@ -56,6 +58,7 @@ func NewKeeper(
 		portKeeper:          portKeeper,
 		authKeeper:          authKeeper,
 		bankKeeper:          bankKeeper,
+		btclcKeeper:         btclcKeeper,
 		checkpointingKeeper: checkpointingKeeper,
 		btccKeeper:          btccKeeper,
 		epochingKeeper:      epochingKeeper,
