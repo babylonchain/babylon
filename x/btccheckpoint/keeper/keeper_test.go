@@ -62,3 +62,59 @@ func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 		})
 	}
 }
+
+func FuzzGetSubmissionBtcInfo(f *testing.F) {
+	f.Add(int64(1), uint32(0), uint32(1), uint32(1), uint32(1))
+
+	f.Fuzz(func(t *testing.T, seed int64, depth1 uint32, txidx1 uint32, depth2 uint32, txidx2 uint32) {
+		r := rand.New(rand.NewSource(seed))
+
+		if txidx1 == txidx2 {
+			// transaction indexes must be different to cover the case where transactions are
+			// in the same block (then they cannot have same indexes)
+			t.Skip()
+		}
+
+		k := InitTestKeepers(t)
+
+		hash1 := datagen.GenRandomBTCHeaderPrevBlock(r)
+		hash2 := datagen.GenRandomBTCHeaderPrevBlock(r)
+
+		sk := types.SubmissionKey{Key: []*types.TransactionKey{
+			{Index: txidx1, Hash: hash1},
+			{Index: txidx2, Hash: hash2},
+		}}
+
+		k.BTCLightClient.SetDepth(hash1, int64(depth1))
+		k.BTCLightClient.SetDepth(hash2, int64(depth2))
+
+		info, err := k.BTCCheckpoint.GetSubmissionBtcInfo(k.SdkCtx, sk)
+		require.NoError(t, err)
+
+		var expectedOldestDepth uint64
+		var expectedYoungestDepth uint64
+		var expectedTxIdx uint32
+
+		if depth1 > depth2 {
+			expectedOldestDepth = uint64(depth1)
+			expectedYoungestDepth = uint64(depth2)
+			expectedTxIdx = txidx2
+		} else if depth1 < depth2 {
+			expectedOldestDepth = uint64(depth2)
+			expectedYoungestDepth = uint64(depth1)
+			expectedTxIdx = txidx1
+		} else {
+			if txidx1 > txidx2 {
+				expectedTxIdx = txidx2
+			} else {
+				expectedTxIdx = txidx1
+			}
+			expectedOldestDepth = uint64(depth1)
+			expectedYoungestDepth = uint64(depth1)
+		}
+
+		require.Equal(t, info.YoungestBlockDepth, expectedYoungestDepth)
+		require.Equal(t, info.LatestTxIndex, expectedTxIdx)
+		require.Equal(t, info.OldestBlockDepth, expectedOldestDepth)
+	})
+}
