@@ -25,7 +25,7 @@ import (
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
-	// add the URL for the given validator ID, and pre-pend to to path.
+	// add the URL for the given validator ID, and pre-pend to path.
 	hostPort, err := n.containerManager.GetHostPort(n.Name, "1317/tcp")
 	require.NoError(n.t, err)
 	endpoint := fmt.Sprintf("http://%s", hostPort)
@@ -38,7 +38,7 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 			return false
 		}
 
-		if queryParams != nil {
+		if len(queryParams) > 0 {
 			req.URL.RawQuery = queryParams.Encode()
 		}
 
@@ -66,7 +66,7 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 // QueryBalances returns balances at the address.
 func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s", address)
-	bz, err := n.QueryGRPCGateway(path, nil)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var balancesResp banktypes.QueryAllBalancesResponse
@@ -78,7 +78,7 @@ func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 
 func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/supply/%s", denom)
-	bz, err := n.QueryGRPCGateway(path, nil)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var supplyResp banktypes.QuerySupplyOfResponse
@@ -144,7 +144,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*tmabcitypes.Snapshot, error) {
 
 func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
-	bz, err := n.QueryGRPCGateway(path, nil)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var checkpointingResponse ct.QueryRawCheckpointResponse
@@ -156,7 +156,7 @@ func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWit
 }
 
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
-	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", nil)
+	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", url.Values{})
 	require.NoError(n.t, err)
 
 	var blcResponse blc.QueryBaseHeaderResponse
@@ -168,7 +168,7 @@ func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
 }
 
 func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
-	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/tip", nil)
+	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/tip", url.Values{})
 	require.NoError(n.t, err)
 
 	var blcResponse blc.QueryTipResponse
@@ -197,7 +197,7 @@ func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) (*zctypes.Query
 }
 
 func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
-	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains", nil)
+	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains", url.Values{})
 	require.NoError(n.t, err)
 	var chainsResponse zctypes.QueryChainListResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &chainsResponse); err != nil {
@@ -222,7 +222,7 @@ func (n *NodeConfig) QueryCheckpointChainsInfo(chainIDs []string) ([]*zctypes.Ch
 }
 
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
-	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/current_epoch", nil)
+	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/current_epoch", url.Values{})
 	require.NoError(n.t, err)
 	var epochResponse etypes.QueryCurrentEpochResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &epochResponse); err != nil {
@@ -233,7 +233,7 @@ func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 
 func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error) {
 	monitorPath := fmt.Sprintf("/babylon/monitor/v1/epochs/%d", epoch)
-	bz, err := n.QueryGRPCGateway(monitorPath, nil)
+	bz, err := n.QueryGRPCGateway(monitorPath, url.Values{})
 	require.NoError(n.t, err)
 	var mResponse mtypes.QueryEndedEpochBtcHeightResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &mResponse); err != nil {
@@ -244,7 +244,7 @@ func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error
 
 func (n *NodeConfig) QueryLightClientHeightCheckpointReported(ckptHash []byte) (uint64, error) {
 	monitorPath := fmt.Sprintf("/babylon/monitor/v1/checkpoints/%x", ckptHash)
-	bz, err := n.QueryGRPCGateway(monitorPath, nil)
+	bz, err := n.QueryGRPCGateway(monitorPath, url.Values{})
 	require.NoError(n.t, err)
 	var mResponse mtypes.QueryReportedCheckpointBtcHeightResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &mResponse); err != nil {
