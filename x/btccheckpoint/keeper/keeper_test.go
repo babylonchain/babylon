@@ -64,15 +64,20 @@ func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 }
 
 func FuzzGetSubmissionBtcInfo(f *testing.F) {
-	f.Add(int64(1), uint32(0), uint32(1), uint32(1), uint32(1))
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 
-	f.Fuzz(func(t *testing.T, seed int64, depth1 uint32, txidx1 uint32, depth2 uint32, txidx2 uint32) {
+	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+
+		depth1 := r.Uint32()
+		txidx1 := r.Uint32()
+		depth2 := r.Uint32()
+		txidx2 := r.Uint32()
 
 		if txidx1 == txidx2 {
 			// transaction indexes must be different to cover the case where transactions are
-			// in the same block (then they cannot have same indexes)
-			t.Skip()
+			// in the same block.
+			txidx1 = txidx1 + 1
 		}
 
 		k := InitTestKeepers(t)
