@@ -185,6 +185,7 @@ func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHea
 	return resp, nil
 }
 
+// FinalizedChainsInfo returns the finalized info of chains with given IDs
 func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -195,7 +196,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
-	// return if requested chain IDs exceed the limit
+	// return if chain IDs exceed the limit
 	if len(req.ChainIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
@@ -215,10 +216,10 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-	resp := &types.QueryFinalizedChainsInfoResponse{Data: []*types.FinalizedChainInfoResponse{}}
+	resp := &types.QueryFinalizedChainsInfoResponse{FinalizedChainsInfo: []*types.FinalizedChainInfo{}}
 
 	for _, chainID := range req.ChainIds {
-		chainResp := &types.FinalizedChainInfoResponse{ChainId: chainID}
+		data := &types.FinalizedChainInfo{ChainId: chainID}
 
 		// find the last finalised chain info and the earliest epoch that snapshots this chain info
 		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID)
@@ -226,19 +227,17 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 			// return empty response if no finalised chain info is found for the chain
 			if errors.Is(err, types.ErrEpochChainInfoNotFound) {
 				k.Logger(ctx).Error("finalised chain info not found", "chain ID", chainID)
-				resp.Data = append(resp.Data, chainResp)
+				resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 				continue
 			}
 
-			// return error for other errors
+			// return for other error types
 			return nil, err
 		}
-
-		var d types.FinalizedChainData
-		d.FinalizedChainInfo = chainInfo
+		data.FinalizedChainInfo = chainInfo
 
 		// find the epoch metadata of the finalised epoch
-		d.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		data.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -248,24 +247,23 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 			return nil, err
 		}
 
-		d.RawCheckpoint = rawCheckpoint.Ckpt
+		data.RawCheckpoint = rawCheckpoint.Ckpt
 
 		// find the raw checkpoint and the best submission key for the finalised epoch
-		_, d.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
+		_, data.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
 
 		// generate all proofs
 		if req.Prove {
-			d.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, d.EpochInfo, d.BtcSubmissionKey)
+			data.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, data.EpochInfo, data.BtcSubmissionKey)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		chainResp.FinalizedChainInfo = &d
-		resp.Data = append(resp.Data, chainResp)
+		resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 	}
 
 	return resp, nil

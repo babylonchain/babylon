@@ -184,16 +184,16 @@ func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) (*zctypes.Query
 	for _, chainId := range chainIDs {
 		queryParams.Add("chain_ids", chainId)
 	}
-	
+
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/finalized_chains_info", queryParams)
 	require.NoError(n.t, err)
 
-	var finalizedResponse zctypes.QueryFinalizedChainsInfoResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &finalizedResponse); err != nil {
+	var resp zctypes.QueryFinalizedChainsInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}
 
-	return &finalizedResponse, nil
+	return &resp, nil
 }
 
 func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
