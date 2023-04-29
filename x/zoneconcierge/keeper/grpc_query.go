@@ -42,7 +42,7 @@ func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (
 	return resp, nil
 }
 
-// ChainsInfo returns the latest info for a list of chains with given IDs
+// ChainsInfo returns the latest info for a given list of chains
 func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest) (*types.QueryChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -103,24 +103,24 @@ func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types
 	return resp, nil
 }
 
-// EpochChainInfo returns the info of a chain with given ID in a given epoch
-func (k Keeper) EpochChainInfo(c context.Context, req *types.QueryEpochChainInfoRequest) (*types.QueryEpochChainInfoResponse, error) {
+// EpochChainsInfo returns the info for list of chains in a given epoch
+func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsInfoRequest) (*types.QueryEpochChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	if len(req.ChainIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
 
 	// find the chain info of the given epoch
-	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, req.EpochNum)
+	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainIds[0], req.EpochNum)
 	if err != nil {
 		return nil, err
 	}
-	resp := &types.QueryEpochChainInfoResponse{ChainInfo: chainInfo}
+	resp := &types.QueryEpochChainsInfoResponse{ChainsInfo: []*types.ChainInfo{chainInfo}}
 	return resp, nil
 }
 

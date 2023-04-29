@@ -21,17 +21,17 @@ service Query {
   rpc ChainList(QueryChainListRequest) returns (QueryChainListResponse) {
     option (google.api.http).get = "/babylon/zoneconcierge/v1/chains";
   }
-  // ChainInfo queries the latest info of a chain in Babylon's view
+  // ChainsInfo queries the latest info for a given list of chains in Babylon's view
   rpc ChainsInfo(QueryChainsInfoRequest) returns (QueryChainsInfoResponse) {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/chains_info";
   }
-  // EpochChainInfo queries the latest info of a chain in a given epoch of
-  // Babylon's view
-  rpc EpochChainInfo(QueryEpochChainInfoRequest)
-      returns (QueryEpochChainInfoResponse) {
+  // EpochChainsInfo queries the latest info for a list of chains
+  // in a given epoch in Babylon's view
+  rpc EpochChainsInfo(QueryEpochChainsInfoRequest)
+      returns (QueryEpochChainsInfoResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/chain_info/{chain_id}/epochs/{epoch_num}";
+        "/babylon/zoneconcierge/v1/epoch_chains_info";
   }
   // ListHeaders queries the headers of a chain in Babylon's view, with
   // pagination support
@@ -96,18 +96,18 @@ message QueryChainsInfoResponse {
   repeated babylon.zoneconcierge.v1.ChainInfo chains_info = 1;
 }
 
-// QueryEpochChainInfoRequest is request type for the Query/EpochChainInfo RPC
+// QueryEpochChainsInfoRequest is request type for the Query/EpochChainsInfo RPC
 // method.
-message QueryEpochChainInfoRequest {
+message QueryEpochChainsInfoRequest {
   uint64 epoch_num = 1;
-  string chain_id = 2;
+  repeated string chain_ids = 2;
 }
 
-// QueryEpochChainInfoResponse is response type for the Query/EpochChainInfo RPC
+// QueryEpochChainsInfoResponse is response type for the Query/EpochChainsInfo RPC
 // method.
-message QueryEpochChainInfoResponse {
+message QueryEpochChainsInfoResponse {
   // chain_info is the info of the CZ
-  babylon.zoneconcierge.v1.ChainInfo chain_info = 1;
+  repeated babylon.zoneconcierge.v1.ChainInfo chains_info = 1;
 }
 
 // QueryListHeadersRequest is request type for the Query/ListHeaders RPC method.
