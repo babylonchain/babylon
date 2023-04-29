@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 // GetEpochChainInfo gets the latest chain info of a given epoch for a given chain ID
@@ -18,6 +19,23 @@ func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber u
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(epochChainInfoBytes, &chainInfo)
 	return &chainInfo, nil
+}
+
+// FinalizedChainInfoExists checks if chain info exists for a given chain ID in the last finalised epoch
+func (k Keeper) FinalizedChainInfoExists(ctx sdk.Context, chainID string) (bool, error) {
+	// find the last finalised epoch
+	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	// find the chain info of this epoch if any error occurs, it means that the chain info does not exist
+	_, err = k.GetEpochChainInfo(ctx, chainID, finalizedEpoch)
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
 }
 
 // GetLastFinalizedChainInfo gets the last finalised chain info recorded for a given chain ID

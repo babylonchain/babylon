@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -207,16 +206,17 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	for _, chainID := range req.ChainIds {
 		data := &types.FinalizedChainInfo{ChainId: chainID}
 
+		exists, err := k.FinalizedChainInfoExists(ctx, chainID)
+		if err != nil {
+			return nil, err
+		} else if !exists {
+			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
+			continue
+		}
+
 		// find the last finalised chain info and the earliest epoch that snapshots this chain info
 		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID)
 		if err != nil {
-			// skip if the finalised chain info is not found
-			if errors.Is(err, types.ErrEpochChainInfoNotFound) {
-				resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
-				continue
-			}
-
-			// return for other error types
 			return nil, err
 		}
 		data.FinalizedChainInfo = chainInfo
