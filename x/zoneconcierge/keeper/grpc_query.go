@@ -109,18 +109,34 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	// return if no chain IDs are provided
 	if len(req.ChainIds) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
+		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
+	}
+
+	// return if chain IDs exceed the limit
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
+	}
+
+	// return if chain IDs contain duplicates or empty strings
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
+	var chainsInfo []*types.ChainInfo
+	for _, chainID := range req.ChainIds {
+		// find the chain info of the given epoch
+		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, req.EpochNum)
+		if err != nil {
+			return nil, err
+		}
 
-	// find the chain info of the given epoch
-	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainIds[0], req.EpochNum)
-	if err != nil {
-		return nil, err
+		chainsInfo = append(chainsInfo, chainInfo)
 	}
-	resp := &types.QueryEpochChainsInfoResponse{ChainsInfo: []*types.ChainInfo{chainInfo}}
+
+	resp := &types.QueryEpochChainsInfoResponse{ChainsInfo: chainsInfo}
 	return resp, nil
 }
 
