@@ -20,10 +20,10 @@ import (
 )
 
 type chainInfo struct {
-	chainID        string
-	startHeight    uint64
-	numHeaders     uint64
-	numForkHeaders uint64
+	chainID          string
+	epochStartHeight uint64
+	numHeaders       uint64
+	numForkHeaders   uint64
 }
 
 func FuzzChainList(f *testing.F) {
@@ -86,26 +86,22 @@ func FuzzChainsInfo(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		var (
-			chainsInfo  []chainInfo
-			chainIDs    []string
-			startHeight uint64
+			chainsInfo []chainInfo
+			chainIDs   []string
 		)
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
 			chainID := datagen.GenRandomHexStr(r, 30)
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, startHeight, numHeaders, numForkHeaders)
+			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, 0, numHeaders, numForkHeaders)
 
 			chainIDs = append(chainIDs, chainID)
 			chainsInfo = append(chainsInfo, chainInfo{
 				chainID:        chainID,
-				startHeight:    startHeight,
 				numHeaders:     numHeaders,
 				numForkHeaders: numForkHeaders,
 			})
-
-			startHeight += numHeaders
 		}
 
 		resp, err := zcKeeper.ChainsInfo(ctx, &zctypes.QueryChainsInfoRequest{
@@ -115,7 +111,7 @@ func FuzzChainsInfo(f *testing.F) {
 
 		for i, respData := range resp.ChainsInfo {
 			require.Equal(t, chainsInfo[i].chainID, respData.ChainId)
-			require.Equal(t, chainsInfo[i].startHeight+(chainsInfo[i].numHeaders-1), respData.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numHeaders-1, respData.LatestHeader.Height)
 			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(respData.LatestForks.Headers)))
 		}
 	})
@@ -166,36 +162,36 @@ func FuzzEpochChainsInfo(f *testing.F) {
 
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
+
 		numReqs := datagen.RandomInt(r, 5) + 1
 		epochNum := datagen.RandomInt(r, 10) + 1
+		chainID := datagen.GenRandomHexStr(r, 30)
 		epochToChainInfo := make(map[uint64]chainInfo)
-
-		var startHeight uint64
+		var epochStartHeight uint64
 		for i := uint64(0); i < numReqs; i++ {
-			chainID := datagen.GenRandomHexStr(r, 30)
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, startHeight, numHeaders, numForkHeaders)
+			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, epochStartHeight, numHeaders, numForkHeaders)
 
 			epochToChainInfo[epochNum] = chainInfo{
-				chainID:        chainID,
-				startHeight:    startHeight,
-				numHeaders:     numHeaders,
-				numForkHeaders: numForkHeaders,
+				chainID:          chainID,
+				epochStartHeight: epochStartHeight,
+				numHeaders:       numHeaders,
+				numForkHeaders:   numForkHeaders,
 			}
 
 			// simulate the scenario that a random epoch has ended
 			hooks.AfterEpochEnds(ctx, epochNum)
 
 			epochNum += datagen.RandomInt(r, 10) + 1
-			startHeight += numHeaders
+			epochStartHeight += numHeaders
 		}
 
 		// attest the correctness of epoch info for each tested epoch
 		for epoch, info := range epochToChainInfo {
 			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epoch, ChainIds: []string{info.chainID}})
 			require.NoError(t, err)
-			require.Equal(t, info.startHeight+(info.numHeaders-1), resp.ChainsInfo[0].LatestHeader.Height)
+			require.Equal(t, info.epochStartHeight+(info.numHeaders-1), resp.ChainsInfo[0].LatestHeader.Height)
 			require.Equal(t, info.numForkHeaders, uint64(len(resp.ChainsInfo[0].LatestForks.Headers)))
 
 		}
@@ -389,11 +385,10 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// check if the chain info of this epoch is recorded or not
 		resp, err := zcKeeper.FinalizedChainsInfo(ctx, &zctypes.QueryFinalizedChainsInfoRequest{ChainIds: chainIDs, Prove: true})
 		require.NoError(t, err)
-		for i, data := range resp.FinalizedChainsInfo {
-			finalizedInfo := data.FinalizedChainInfo
-			require.Equal(t, chainsInfo[i].chainID, data.ChainId)
-			require.Equal(t, chainsInfo[i].numHeaders-1, finalizedInfo.LatestHeader.Height)
-			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(finalizedInfo.LatestForks.Headers)))
+		for i, respData := range resp.FinalizedChainsInfo {
+			require.Equal(t, chainsInfo[i].chainID, respData.FinalizedChainInfo.ChainId)
+			require.Equal(t, chainsInfo[i].numHeaders-1, respData.FinalizedChainInfo.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(respData.FinalizedChainInfo.LatestForks.Headers)))
 		}
 	})
 }
