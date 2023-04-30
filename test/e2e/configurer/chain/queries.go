@@ -196,6 +196,24 @@ func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) (*zctypes.Query
 	return &resp, nil
 }
 
+func (n *NodeConfig) QueryEpochChainsInfo(epochNum uint64, chainIDs []string) (*zctypes.QueryEpochChainsInfoResponse, error) {
+	queryParams := url.Values{}
+	for _, chainId := range chainIDs {
+		queryParams.Add("epoch_num", fmt.Sprintf("%d", epochNum))
+		queryParams.Add("chain_ids", chainId)
+	}
+
+	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/epoch_chains_info", queryParams)
+	require.NoError(n.t, err)
+
+	var resp zctypes.QueryEpochChainsInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains", url.Values{})
 	require.NoError(n.t, err)
