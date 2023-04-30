@@ -41,13 +41,14 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 
 	if epoch3.Status != ct.Finalized {
-		s.FailNow("Epoch 2 should be finalized")
+		s.FailNow("Epoch 3 should be finalized")
 	}
 
 	// Check we have epoch info for opposing chain and some basic assertions
-	epochResp, err := nonValidatorNode.QueryEpochChainsInfo(epoch3, []string{initialization.ChainBID})
+	epochResp, err := nonValidatorNode.QueryEpochChainsInfo(3, []string{initialization.ChainBID})
 	s.NoError(err)
 	s.Equal(epochResp.ChainsInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(epochResp.ChainsInfo[0].LatestHeader.BabylonEpoch, 3)
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
 	finalizedResp, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
