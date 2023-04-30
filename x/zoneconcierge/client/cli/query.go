@@ -24,13 +24,14 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdChainsInfo())
 	cmd.AddCommand(CmdFinalizedChainsInfo())
+	cmd.AddCommand(CmdEpochChainsInfoInfo())
 	return cmd
 }
 
 func CmdChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chains-info <chain-ids>",
-		Short: "retrieves the latest info for a list of chains with given IDs",
+		Short: "returns the latest info for a given list of chains",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -52,13 +53,41 @@ func CmdChainsInfo() *cobra.Command {
 func CmdFinalizedChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "finalized-chains-info <chain-ids>",
-		Short: "retrieves the finalized info for a list of chains with given IDs",
+		Short: "retrieves the finalized info for a given list of chains",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryFinalizedChainsInfoRequest{ChainIds: args}
 			resp, err := queryClient.FinalizedChainsInfo(cmd.Context(), &req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdEpochChainsInfoInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "epoch-chains-info <epoch-num> <chain-ids>",
+		Short: "returns the latest info for a list of chains in a given epoch",
+		Args:  cobra.ArbitraryArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+
+			var epoch uint64
+			_, err := fmt.Sscanf(args[0], "%d", &epoch)
+			if err != nil {
+				return err
+			}
+			req := types.QueryEpochChainsInfoRequest{EpochNum: epoch, ChainIds: args[1:]}
+			resp, err := queryClient.EpochChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}

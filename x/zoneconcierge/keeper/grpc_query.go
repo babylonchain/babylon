@@ -103,7 +103,7 @@ func (k Keeper) Header(c context.Context, req *types.QueryHeaderRequest) (*types
 	return resp, nil
 }
 
-// EpochChainsInfo returns the info for list of chains in a given epoch
+// EpochChainsInfo returns the latest info for list of chains in a given epoch
 func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsInfoRequest) (*types.QueryEpochChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -195,7 +195,7 @@ func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHea
 	return resp, nil
 }
 
-// FinalizedChainsInfo returns the finalized info of chains with given IDs
+// FinalizedChainsInfo returns the finalized info for a given list of chains
 func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
