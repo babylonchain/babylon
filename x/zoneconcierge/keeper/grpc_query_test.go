@@ -168,7 +168,11 @@ func FuzzEpochChainsInfo(f *testing.F) {
 		chainID := datagen.GenRandomHexStr(r, 30)
 		epochToChainInfo := make(map[uint64]chainInfo)
 		var epochStartHeight uint64
+
+		// we test the scenario of ending an epoch for multiple times, in order to ensure that
+		// consecutive epoch infos do not affect each other.
 		for i := uint64(0); i < numReqs; i++ {
+			// generate a random number of headers and fork headers
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
 			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, epochStartHeight, numHeaders, numForkHeaders)
@@ -183,6 +187,7 @@ func FuzzEpochChainsInfo(f *testing.F) {
 			// simulate the scenario that a random epoch has ended
 			hooks.AfterEpochEnds(ctx, epochNum)
 
+			// prepare next epoch num and height
 			epochNum += datagen.RandomInt(r, 10) + 1
 			epochStartHeight += numHeaders
 		}
