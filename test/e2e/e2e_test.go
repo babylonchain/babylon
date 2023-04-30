@@ -30,9 +30,9 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 
 	// Query checkpoint chain info for opposing chain
-	chainInfo, err := nonValidatorNode.QueryCheckpointChainsInfo([]string{initialization.ChainBID})
+	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
-	s.Equal(chainInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
 	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
 	nonValidatorNode.FinalizeSealedEpochs(1, 3)
@@ -45,19 +45,18 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	}
 
 	// Check we have epoch info for opposing chain and some basic assertions
-	epochResp, err := nonValidatorNode.QueryEpochChainsInfo(3, []string{initialization.ChainBID})
+	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(3, []string{initialization.ChainBID})
 	s.NoError(err)
-	s.Equal(epochResp.ChainsInfo[0].ChainId, initialization.ChainBID)
-	s.Equal(epochResp.ChainsInfo[0].LatestHeader.BabylonEpoch, 3)
+	s.Equal(epochChainsInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, 3)
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedResp, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
+	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 
-	finalizedInfo := finalizedResp.FinalizedChainsInfo[0]
 	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedInfo.FinalizedChainInfo.ChainId, initialization.ChainBID)
-	s.Equal(finalizedInfo.EpochInfo.EpochNumber, 3)
+	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, initialization.ChainBID)
+	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, 3)
 
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)
