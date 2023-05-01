@@ -24,6 +24,13 @@ service Query {
         "/babylon/checkpointing/v1/raw_checkpoint/{epoch_num}";
   }
 
+  // RawCheckpoints queries a checkpoints at a given epoch number.
+  rpc RawCheckpoints(QueryRawCheckpointsRequest)
+      returns (QueryRawCheckpointsResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/raw_checkpoints";
+  }
+
   // BlsPublicKeyList queries a list of bls public keys of the validators at a
   // given epoch number.
   rpc BlsPublicKeyList(QueryBlsPublicKeyListRequest)
@@ -85,6 +92,17 @@ message QueryRawCheckpointRequest {
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
 message QueryRawCheckpointResponse { RawCheckpointWithMeta raw_checkpoint = 1; }
+
+
+// QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsRequest {
+  repeated uint64 epoch_nums = 1;
+}
+
+// QueryRawCheckpointsResponse is the response type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsResponse { repeated RawCheckpointWithMeta raw_checkpoints = 1; }
 
 // QueryBlsPublicKeyListRequest is the request type for the Query/BlsPublicKeys
 // RPC method.
