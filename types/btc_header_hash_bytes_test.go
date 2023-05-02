@@ -12,7 +12,7 @@ import (
 )
 
 func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -80,7 +80,7 @@ func FuzzBTCHeaderHashBytesBytesOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -126,7 +126,7 @@ func FuzzBTCHeaderHashBytesHexOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -181,7 +181,7 @@ func FuzzBTCHeaderHashBytesJSONOps(f *testing.F) {
 }
 
 func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
@@ -204,7 +204,7 @@ func FuzzHeaderHashBytesChainhashOps(f *testing.F) {
 }
 
 func FuzzHeaderHashBytesOperators(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 

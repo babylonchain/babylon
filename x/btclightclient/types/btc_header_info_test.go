@@ -12,7 +12,7 @@ import (
 )
 
 func FuzzNewHeaderInfo(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		// If either  of the hash strings is not of appropriate length

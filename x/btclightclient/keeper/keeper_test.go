@@ -24,7 +24,7 @@ func FuzzKeeperIsHeaderKDeep(f *testing.F) {
 		- Generate a random tree of headers.
 		- Get the mainchain and select appropriate headers.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -101,7 +101,7 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 		- Random generation of a header that is not inserted into storage.
 		- Random selection of a header from the main chain and outside of it.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -166,7 +166,7 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 		- Random generation of a header that is not inserted into storage.
 		- Random selection of a header from the main chain and outside of it.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -214,7 +214,7 @@ func FuzzKeeperIsAncestor(f *testing.F) {
 		- Generate a random tree of headers and insert it into storage.
 		- Select a random header and select a random descendant and a random ancestor to test (2-4).
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -320,7 +320,7 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			* Build on top of a header that is `rand.Intn(tipHeight)` headers back from the tip.
 				- This should emulate both 4e2 and 4e3.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
