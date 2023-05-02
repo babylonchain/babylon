@@ -2,13 +2,14 @@ package btctxformatter
 
 import (
 	"bytes"
+	cprand "crypto/rand"
 	"math/rand"
 	"testing"
 )
 
 func randNBytes(n int) []byte {
 	bytes := make([]byte, n)
-	rand.Read(bytes)
+	cprand.Read(bytes) //nolint:errcheck // This is a test.
 	return bytes
 }
 
