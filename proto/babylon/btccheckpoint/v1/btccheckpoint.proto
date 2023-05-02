@@ -132,19 +132,20 @@ message CheckpointAddresses {
   bytes reporter = 2;
 }
 
-// BTCCheckpointInfo contains all checkpoint related data expected in a query
-// response.
+// BTCCheckpointInfo contains all data about best submission of checkpoint for
+// given epoch. Best submission is the submission which is deeper in btc ledger
 message BTCCheckpointInfo {
   // epoch number of this checkpoint
   uint64 epoch_number = 1;
-  // height of earliest BTC block that includes this checkpoint
-  uint64 earliest_btc_block_number = 2;
-  // hash of earliest BTC block that includes this checkpoint
-  bytes earliest_btc_block_hash = 3
+  // btc height of the best submission of the epoch
+  uint64 best_submission_btc_block_height = 2;
+  // hash of the btc block which determines checkpoint btc block height i.e.
+  // youngest block of best submission
+  bytes best_submission_btc_block_hash = 3
       [ (gogoproto.customtype) =
             "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
-  // the BTC checkpoint transactions on the above block
-  repeated TransactionInfo earliest_btc_block_txs = 4;
-  // list of vigilantes' addresses
-  repeated CheckpointAddresses vigilante_address_list = 5;
+  // the BTC checkpoint transactions of the best submission
+  repeated TransactionInfo best_submission_transactions = 4;
+  // list of vigilantes' addresses of the best submission
+  repeated CheckpointAddresses best_submission_vigilante_address_list = 5;
 }
