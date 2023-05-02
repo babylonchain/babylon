@@ -213,8 +213,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 		data := &types.FinalizedChainInfo{ChainId: chainID}
 
 		// if the chain info is not found in the last finalised epoch, return the chain info with empty fields
-		exists := k.EpochChainInfoExists(ctx, chainID, lastFinalizedEpoch)
-		if !exists {
+		if exists := k.EpochChainInfoExists(ctx, chainID, lastFinalizedEpoch); !exists {
 			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 			continue
 		}
