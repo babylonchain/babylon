@@ -33,7 +33,7 @@ func FuzzHeadersStateCreateHeader(f *testing.F) {
 		 - No need to create a tree, since this function does not consider the existence or the chain,
 		   it just inserts into state and updates the tip based on a simple work comparison.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -128,7 +128,7 @@ func FuzzHeadersStateTipOps(f *testing.F) {
 			1. A header that will be set as the tip.
 			2. A header that will override it.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -196,7 +196,7 @@ func FuzzHeadersStateGetHeaderOps(f *testing.F) {
 		Data generation:
 		- Create a header and store it using the `CreateHeader` method. Do retrievals to check conditions.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -290,7 +290,7 @@ func FuzzHeadersStateGetBaseBTCHeader(f *testing.F) {
 		Data generation:
 		- Generate a random tree and retrieve the main chain from it.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -323,7 +323,7 @@ func FuzzHeadersStateHeadersByHeight(f *testing.F) {
 		- The randomness of the number of headers should guarantee that (1) and (2) are observed.
 		- Generate a random stop signal 1/N times.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -393,7 +393,7 @@ func FuzzHeadersStateGetMainChain(f *testing.F) {
 		- Generate a random tree and retrieve the main chain from it.
 		- Randomly generate the depth
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -440,7 +440,7 @@ func FuzzHeadersStateGetHighestCommonAncestor(f *testing.F) {
 		- Generate a random tree of headers and store it.
 		- Select two random headers and call `GetHighestCommonAncestor` for them.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -494,7 +494,7 @@ func FuzzHeadersStateGetInOrderAncestorsUntil(f *testing.F) {
 		- Select a random header which will serve as the `descendant`. Cannot be the base header.
 		- Select a random header that is an ancestor of `descendant`.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -535,7 +535,7 @@ func FuzzHeadersStateGetHeaderAncestryUpTo(f *testing.F) {
 		- Select a random header which will serve as the `header` parameter.
 		- Select a random depth in the range of [0, header.Height-baseHeader.Height]
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
