@@ -57,7 +57,7 @@ func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 			require.NoError(t, err)
 
 			require.Equal(t, info.YoungestBlockDepth, tt.expectedYoungestBlockDepth, tt.name)
-			require.Equal(t, info.LatestTxIndex, tt.expectedTxIndex, tt.name)
+			require.Equal(t, info.YoungestBlockInitialTxIdx, tt.expectedTxIndex, tt.name)
 			require.Equal(t, info.OldestBlockDepth, tt.expectedOldestBlockDepth, tt.name)
 		})
 	}
@@ -119,7 +119,7 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 		}
 
 		require.Equal(t, info.YoungestBlockDepth, expectedYoungestDepth)
-		require.Equal(t, info.LatestTxIndex, expectedTxIdx)
+		require.Equal(t, info.YoungestBlockInitialTxIdx, expectedTxIdx)
 		require.Equal(t, info.OldestBlockDepth, expectedOldestDepth)
 	})
 }

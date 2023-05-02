@@ -108,11 +108,6 @@ func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbn.BTCHeaderHashBytes) (uint
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
-	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
-	return err == nil && depth >= 0
-}
-
 func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
 	blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, headerHash)
 
@@ -143,6 +138,7 @@ func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *types.SubmissionBtc
 func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
 
 	var youngestBlockDepth uint64 = math.MaxUint64
+	var youngestBlockHash *bbn.BTCHeaderHashBytes
 
 	var lowestIndexInMostFreshBlock uint32 = math.MaxUint32
 
@@ -158,6 +154,7 @@ func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*
 		if currentBlockDepth < youngestBlockDepth {
 			youngestBlockDepth = currentBlockDepth
 			lowestIndexInMostFreshBlock = tk.Index
+			youngestBlockHash = tk.Hash
 		}
 
 		// This case happens when we have two submissions in the same block.
@@ -189,10 +186,11 @@ func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*
 	}
 
 	return &types.SubmissionBtcInfo{
-		SubmissionKey:      sk,
-		OldestBlockDepth:   oldestBlockDepth,
-		YoungestBlockDepth: youngestBlockDepth,
-		LatestTxIndex:      lowestIndexInMostFreshBlock,
+		SubmissionKey:             sk,
+		OldestBlockDepth:          oldestBlockDepth,
+		YoungestBlockDepth:        youngestBlockDepth,
+		YoungestBlockHash:         *youngestBlockHash,
+		YoungestBlockInitialTxIdx: lowestIndexInMostFreshBlock,
 	}, nil
 }
 
@@ -232,6 +230,35 @@ func (k Keeper) GetBestSubmission(ctx sdk.Context, epochNumber uint64) (types.Bt
 	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
 
 	return ed.Status, bestSubmissionKey, nil
+}
+
+func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *types.EpochData) *types.SubmissionBtcInfo {
+	// there is no submissions for this epoch, so transitivly there is no best submission
+	if ed == nil || len(ed.Key) == 0 {
+		return nil
+	}
+
+	// There is only one submission for this epoch:
+	// - either epoch is already finalized and we already chosen the best submission
+	// - or we only received one submission for this epoch
+	// Either way, we do not need to decide which submission is the best one.
+	if len(ed.Key) == 1 {
+		sk := *ed.Key[0]
+		btcInfo, err := k.GetSubmissionBtcInfo(ctx, sk)
+
+		if err != nil {
+			k.Logger(ctx).Debug("Previously stored submission is not valid anymore. Submission key: %+v", sk)
+		}
+
+		// we only log error, as the only error which we can receive here is that submission
+		// is not longer on btc canoncial chain, which essentially means that there is no valid submission
+		return btcInfo
+	}
+
+	// We have more that one valid submission. We need to chose the best one.
+	epochSummary := k.getEpochChanges(ctx, nil, ed)
+
+	return epochSummary.EpochBestSubmission
 }
 
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions
@@ -620,8 +647,9 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 				if i != epochChanges.BestSubmissionIdx {
 					k.deleteSubmission(ctx, *sk)
 				}
-				currentEpoch.Key = []*types.SubmissionKey{&epochChanges.EpochBestSubmission.SubmissionKey}
 			}
+			// leave only best submission key
+			currentEpoch.Key = []*types.SubmissionKey{&epochChanges.EpochBestSubmission.SubmissionKey}
 		} else {
 			// applay changes to epoch according to changes
 			for _, sk := range epochChanges.SubmissionsToDelete {
