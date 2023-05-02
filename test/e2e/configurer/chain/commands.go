@@ -7,9 +7,13 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+
+	sdktypes "github.com/cosmos/cosmos-sdk/types"
+	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
+
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
@@ -104,43 +108,37 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 
 	madeProgress := false
 	currEpoch := startingEpoch
-	for {
-		if currEpoch > lastEpoch {
-			break
-		}
 
-		checkpoint, err := n.QueryCheckpointForEpoch(currEpoch)
+	pagination := &sdkquerytypes.PageRequest{
+		Key:   sdktypes.Uint64ToBigEndian(currEpoch),
+		Limit: lastEpoch - startingEpoch + 1,
+	}
+	resp, err := n.QueryCheckpointForEpochs(pagination)
+	require.NoError(n.t, err)
 
-		require.NoError(n.t, err)
-
-		// can only finalize sealed checkpoints
-		if checkpoint.Status != cttypes.Sealed {
-			return
-		}
+	for _, checkpoint := range resp.RawCheckpoints {
+		require.Equal(n.t, checkpoint.Status, cttypes.Sealed)
 
 		currentBtcTip, err := n.QueryTip()
-
 		require.NoError(n.t, err)
 
 		_, c, err := bech32.DecodeAndConvert(n.PublicAddress)
-
 		require.NoError(n.t, err)
 
 		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, c)
-
 		require.NoError(n.t, err)
 
-		babylonTagBytes, _ := hex.DecodeString(initialization.BabylonOpReturnTag)
+		babylonTagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
+		require.NoError(n.t, err)
+
 		p1, p2, err := txformat.EncodeCheckpointData(
-			txformat.BabylonTag(babylonTagBytes),
+			babylonTagBytes,
 			txformat.CurrentVersion,
 			btcCheckpoint,
 		)
-
 		require.NoError(n.t, err)
 
 		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), p1)
-
 		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), p2)
 
 		n.InsertHeader(&opReturn1.HeaderBytes)
@@ -154,7 +152,6 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 		}, "Checkpoint should be submitted ")
 
 		madeProgress = true
-		currEpoch++
 	}
 
 	if madeProgress {

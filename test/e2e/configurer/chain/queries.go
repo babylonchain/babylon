@@ -7,9 +7,11 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	tmabcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -153,6 +155,21 @@ func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWit
 	}
 
 	return checkpointingResponse.RawCheckpoint, nil
+}
+
+func (n *NodeConfig) QueryCheckpointForEpochs(pagination *query.PageRequest) (*ct.QueryRawCheckpointsResponse, error) {
+	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoints")
+	bz, err := n.QueryGRPCGateway(path, url.Values{
+		"pagination.limit": {strconv.Itoa(int(pagination.Limit))},
+	})
+	require.NoError(n.t, err)
+
+	var checkpointingResponse ct.QueryRawCheckpointsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &checkpointingResponse); err != nil {
+		return nil, err
+	}
+
+	return &checkpointingResponse, nil
 }
 
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {

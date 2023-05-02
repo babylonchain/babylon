@@ -23,7 +23,6 @@ func (s *IntegrationTestSuite) TestConnectIbc() {
 
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	chainA := s.configurer.GetChainConfig(0)
-
 	chainA.WaitUntilHeight(35)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
