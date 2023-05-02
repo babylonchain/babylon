@@ -4,26 +4,30 @@ version: 2.1
 
 orbs:
   aws-ecr: circleci/aws-ecr@8.2.1
+  go: circleci/go@1.7.3
+
 
 jobs:
   build-test:
-    docker:
-      - image: cimg/go:1.20.3
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
     steps:
+      - go/install:
+          version: 1.20
       - checkout
       - run:
           name: Print Go environment
           command: "go env"
-      - restore_cache: # restores saved cache if no changes are detected since last run
-          keys:
-            - go-mod-v6-{{ checksum "go.sum" }}
+      - go/load-cache:
+          key: go-mod-v6-{{ checksum "go.sum" }}
+      - go/mod-download
+      - go/save-cache:
+          key: go-mod-v6-{{ checksum "go.sum" }}
+          path: "/home/circleci/.go_workspace/pkg/mod"
       - run:
           name: Build babylond
           command: make build
-      - save_cache:
-          key: go-mod-v6-{{ checksum "go.sum" }}
-          paths:
-            - "/home/circleci/.go_workspace/pkg/mod"
       - run:
           name: Run tests
           command: |
@@ -39,9 +43,12 @@ jobs:
           command: |
              make test-e2e
   lint:
-    docker:
-      - image: cimg/go:1.20.3
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
     steps:
+      - go/install:
+          version: 1.20
       - checkout
       - run:
           name: Lint proto files
@@ -49,7 +56,7 @@ jobs:
       - run:
           name: Lint
           command: |
-            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.52.2
             ./bin/golangci-lint run
 
   build_docker:
