@@ -31,11 +31,11 @@ func (k Keeper) getCheckpointInfo(ctx sdk.Context, epochNum uint64, epochData *t
 	bestSubmissionData := k.GetSubmissionData(ctx, bestSubmission.SubmissionKey)
 
 	return &types.BTCCheckpointInfo{
-		EpochNumber:            epochNum,
-		EarliestBtcBlockNumber: bestSubmissionHeight,
-		EarliestBtcBlockHash:   &bestSubmission.YoungestBlockHash,
-		VigilanteAddressList:   []*types.CheckpointAddresses{bestSubmissionData.VigilanteAddresses},
-		EarliestBtcBlockTxs:    bestSubmissionData.TxsInfo,
+		EpochNumber:                        epochNum,
+		BestSubmissionBtcBlockHeight:       bestSubmissionHeight,
+		BestSubmissionBtcBlockHash:         &bestSubmission.YoungestBlockHash,
+		BestSubmissionTransactions:         bestSubmissionData.TxsInfo,
+		BestSubmissionVigilanteAddressList: []*types.CheckpointAddresses{bestSubmissionData.VigilanteAddresses},
 	}, nil
 }
 

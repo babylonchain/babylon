@@ -651,7 +651,7 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 			// leave only best submission key
 			currentEpoch.Key = []*types.SubmissionKey{&epochChanges.EpochBestSubmission.SubmissionKey}
 		} else {
-			// applay changes to epoch according to changes
+			// apply changes to epoch according to changes
 			for _, sk := range epochChanges.SubmissionsToDelete {
 				k.deleteSubmission(ctx, *sk)
 			}
