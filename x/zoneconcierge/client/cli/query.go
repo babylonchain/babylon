@@ -23,6 +23,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdChainsInfo())
+	cmd.AddCommand(CmdFinalizedChainsInfo())
 	return cmd
 }
 
@@ -36,6 +37,28 @@ func CmdChainsInfo() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 			req := types.QueryChainsInfoRequest{ChainIds: args}
 			resp, err := queryClient.ChainsInfo(cmd.Context(), &req)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(resp)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+func CmdFinalizedChainsInfo() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "finalized-chains-info <chain-ids>",
+		Short: "retrieves the finalized info for a list of chains with given IDs",
+		Args:  cobra.ArbitraryArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			req := types.QueryFinalizedChainsInfoRequest{ChainIds: args}
+			resp, err := queryClient.FinalizedChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
 			}

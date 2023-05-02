@@ -46,11 +46,11 @@ service Query {
     option (google.api.http).get =
         "/babylon/zoneconcierge/v1/headers/{chain_id}/epochs/{epoch_num}";
   }
-  // FinalizedChainInfo queries the BTC-finalised info of a chain, with proofs
-  rpc FinalizedChainInfo(QueryFinalizedChainInfoRequest)
-      returns (QueryFinalizedChainInfoResponse) {
+  // FinalizedChainsInfo queries the BTC-finalised info of chains with given IDs, with proofs
+  rpc FinalizedChainsInfo(QueryFinalizedChainsInfoRequest)
+      returns (QueryFinalizedChainsInfoResponse) {
     option (google.api.http).get =
-        "/babylon/zoneconcierge/v1/finalized_chain_info/{chain_id}";
+        "/babylon/zoneconcierge/v1/finalized_chains_info";
   }
   // FinalizedChainInfoUntilHeight queries the BTC-finalised info no later than
   // the provided CZ height, with proofs
@@ -140,31 +140,19 @@ message QueryListEpochHeadersResponse {
   repeated babylon.zoneconcierge.v1.IndexedHeader headers = 1;
 }
 
-// QueryFinalizedChainInfoRequest is request type for the
-// Query/FinalizedChainInfo RPC method.
-message QueryFinalizedChainInfoRequest {
-  // chain_id is the ID of the CZ
-  string chain_id = 1;
+// QueryFinalizedChainsInfoRequest is request type for the
+// Query/FinalizedChainsInfo RPC method.
+message QueryFinalizedChainsInfoRequest {
+  // chain_ids is the list of ids of CZs
+  repeated string chain_ids = 1;
   // prove indicates whether the querier wants to get proofs of this timestamp
   bool prove = 2;
 }
 
-// QueryFinalizedChainInfoResponse is response type for the
-// Query/FinalizedChainInfo RPC method.
-message QueryFinalizedChainInfoResponse {
-  // finalized_chain_info is the info of the CZ
-  babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 1;
-
-  // epoch_info is the metadata of the last BTC-finalised epoch
-  babylon.epoching.v1.Epoch epoch_info = 2;
-  // raw_checkpoint is the raw checkpoint of this epoch
-  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 3;
-  // btc_submission_key is position of two BTC txs that include the raw
-  // checkpoint of this epoch
-  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 4;
-
-  // proof is the proof that the chain info is finalized
-  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 5;
+// QueryFinalizedChainsInfoResponse is response type for the
+// Query/FinalizedChainsInfo RPC method.
+message QueryFinalizedChainsInfoResponse {
+  repeated babylon.zoneconcierge.v1.FinalizedChainInfo finalized_chains_info = 1;
 }
 
 // QueryFinalizedChainInfoUntilHeightRequest is request type for the

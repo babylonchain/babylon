@@ -8,6 +8,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	bbntypes "github.com/babylonchain/babylon/types"
+
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
@@ -46,26 +48,19 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	// return if no chain IDs are provided
 	if len(req.ChainIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain IDs cannot be empty")
 	}
 
+	// return if chain IDs exceed the limit
 	if len(req.ChainIds) > maxQueryChainsInfoLimit {
 		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
 	}
 
-	encountered := map[string]bool{}
-	for _, chainID := range req.ChainIds {
-		if len(chainID) == 0 {
-			return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
-		}
-
-		// check for duplicates and return error on first duplicate found
-		if encountered[chainID] {
-			return nil, status.Errorf(codes.InvalidArgument, "duplicate chain ID %s", chainID)
-		} else {
-			encountered[chainID] = true
-		}
+	// return if chain IDs contain duplicates or empty strings
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -184,54 +179,90 @@ func (k Keeper) ListEpochHeaders(c context.Context, req *types.QueryListEpochHea
 	return resp, nil
 }
 
-func (k Keeper) FinalizedChainInfo(c context.Context, req *types.QueryFinalizedChainInfoRequest) (*types.QueryFinalizedChainInfoResponse, error) {
+// FinalizedChainsInfo returns the finalized info of chains with given IDs
+func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalizedChainsInfoRequest) (*types.QueryFinalizedChainsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	if len(req.ChainId) == 0 {
+	// return if no chain IDs are provided
+	if len(req.ChainIds) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "chain ID cannot be empty")
 	}
 
+	// return if chain IDs exceed the limit
+	if len(req.ChainIds) > maxQueryChainsInfoLimit {
+		return nil, status.Errorf(codes.InvalidArgument, "cannot query more than %d chains", maxQueryChainsInfoLimit)
+	}
+
+	// return if chain IDs contain duplicates or empty strings
+	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
-	resp := &types.QueryFinalizedChainInfoResponse{}
+	resp := &types.QueryFinalizedChainsInfoResponse{FinalizedChainsInfo: []*types.FinalizedChainInfo{}}
 
-	// find the last finalised chain info and the earliest epoch that snapshots this chain info
-	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
-	if err != nil {
-		return nil, err
-	}
-	resp.FinalizedChainInfo = chainInfo
-
-	// find the epoch metadata of the finalised epoch
-	resp.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+	// find the last finalised epoch
+	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+	for _, chainID := range req.ChainIds {
+		data := &types.FinalizedChainInfo{ChainId: chainID}
 
-	if err != nil {
-		return nil, err
-	}
+		// if the chain info is not found in the last finalised epoch, return the chain info with empty fields
+		if !k.EpochChainInfoExists(ctx, chainID, lastFinalizedEpoch) {
+			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
+			continue
+		}
 
-	resp.RawCheckpoint = rawCheckpoint.Ckpt
+		// find the chain info in the last finalised epoch
+		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, lastFinalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
 
-	// find the raw checkpoint and the best submission key for the finalised epoch
-	_, resp.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
-	if err != nil {
-		return nil, err
-	}
+		// set finalizedEpoch as the earliest epoch that snapshots this chain info.
+		// it's possible that the chain info's epoch is way before the last finalised epoch
+		// e.g., when there is no relayer for many epochs
+		// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
+		finalizedEpoch := lastFinalizedEpoch
+		if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
+			finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
+		}
 
-	// if the query does not want the proofs, return here
-	if !req.Prove {
-		return resp, nil
-	}
+		data.FinalizedChainInfo = chainInfo
 
-	// generate all proofs
-	resp.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, resp.EpochInfo, resp.BtcSubmissionKey)
-	if err != nil {
-		return nil, err
+		// find the epoch metadata of the finalised epoch
+		data.EpochInfo, err = k.epochingKeeper.GetHistoricalEpoch(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		data.RawCheckpoint = rawCheckpoint.Ckpt
+
+		// find the raw checkpoint and the best submission key for the finalised epoch
+		_, data.BtcSubmissionKey, err = k.btccKeeper.GetBestSubmission(ctx, finalizedEpoch)
+		if err != nil {
+			return nil, err
+		}
+
+		// generate all proofs
+		if req.Prove {
+			data.Proof, err = k.proveFinalizedChainInfo(ctx, chainInfo, data.EpochInfo, data.BtcSubmissionKey)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 	}
 
 	return resp, nil
@@ -249,11 +280,27 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	ctx := sdk.UnwrapSDKContext(c)
 	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
 
-	// find and assign the last finalised chain info and the earliest epoch that snapshots this chain info
-	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
+	// find the last finalised epoch
+	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
 	if err != nil {
 		return nil, err
 	}
+
+	// find the chain info in the last finalised epoch
+	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
+	if err != nil {
+		return nil, err
+	}
+
+	// set finalizedEpoch as the earliest epoch that snapshots this chain info.
+	// it's possible that the chain info's epoch is way before the last finalised epoch
+	// e.g., when there is no relayer for many epochs
+	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
+	finalizedEpoch := lastFinalizedEpoch
+	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
+		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
+	}
+
 	resp.FinalizedChainInfo = chainInfo
 
 	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info

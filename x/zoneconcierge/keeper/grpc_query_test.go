@@ -19,6 +19,12 @@ import (
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
+type chainInfo struct {
+	chainID        string
+	numHeaders     uint64
+	numForkHeaders uint64
+}
+
 func FuzzChainList(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -68,11 +74,6 @@ func FuzzChainList(f *testing.F) {
 
 func FuzzChainsInfo(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
-	type chainInfo struct {
-		chainID        string
-		numHeaders     uint64
-		numForkHeaders uint64
-	}
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -312,9 +313,6 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		czChainIDLen := datagen.RandomInt(r, 50) + 1
-		czChainID := string(datagen.GenRandomByteArray(r, czChainIDLen))
-
 		// simulate the scenario that a random epoch has ended and finalised
 		epoch := datagen.GenRandomEpoch(r)
 
@@ -358,20 +356,40 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, btccKeeper, epochingKeeper, tmClient)
 		hooks := zcKeeper.Hooks()
 
-		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(r, 100) + 1
-		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		SimulateHeadersAndForksViaHook(ctx, r, hooks, czChainID, 0, numHeaders, numForkHeaders)
+		var (
+			chainsInfo []chainInfo
+			chainIDs   []string
+		)
+		numChains := datagen.RandomInt(r, 100) + 1
+		for i := uint64(0); i < numChains; i++ {
+			czChainIDLen := datagen.RandomInt(r, 50) + 1
+			czChainID := string(datagen.GenRandomByteArray(r, czChainIDLen))
+
+			// invoke the hook a random number of times to simulate a random number of blocks
+			numHeaders := datagen.RandomInt(r, 100) + 1
+			numForkHeaders := datagen.RandomInt(r, 10) + 1
+			SimulateHeadersAndForksViaHook(ctx, r, hooks, czChainID, 0, numHeaders, numForkHeaders)
+
+			chainIDs = append(chainIDs, czChainID)
+			chainsInfo = append(chainsInfo, chainInfo{
+				chainID:        czChainID,
+				numHeaders:     numHeaders,
+				numForkHeaders: numForkHeaders,
+			})
+		}
 
 		hooks.AfterEpochEnds(ctx, epoch.EpochNumber)
 		err := hooks.AfterRawCheckpointFinalized(ctx, epoch.EpochNumber)
 		require.NoError(t, err)
 
 		// check if the chain info of this epoch is recorded or not
-		resp, err := zcKeeper.FinalizedChainInfo(ctx, &zctypes.QueryFinalizedChainInfoRequest{ChainId: czChainID, Prove: true})
+		resp, err := zcKeeper.FinalizedChainsInfo(ctx, &zctypes.QueryFinalizedChainsInfoRequest{ChainIds: chainIDs, Prove: true})
 		require.NoError(t, err)
-		chainInfo := resp.FinalizedChainInfo
-		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
-		require.Equal(t, numForkHeaders, uint64(len(chainInfo.LatestForks.Headers)))
+		for i, data := range resp.FinalizedChainsInfo {
+			finalizedInfo := data.FinalizedChainInfo
+			require.Equal(t, chainsInfo[i].chainID, data.ChainId)
+			require.Equal(t, chainsInfo[i].numHeaders-1, finalizedInfo.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(finalizedInfo.LatestForks.Headers)))
+		}
 	})
 }
