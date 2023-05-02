@@ -11,10 +11,10 @@ jobs:
   build-test:
     machine:
       image: ubuntu-2204:2022.10.1
-      resource_class: large
+    resource_class: large
     steps:
       - go/install:
-          version: 1.20
+          version: "1.20"
       - checkout
       - run:
           name: Print Go environment
@@ -45,10 +45,10 @@ jobs:
   lint:
     machine:
       image: ubuntu-2204:2022.10.1
-      resource_class: large
+    resource_class: large
     steps:
       - go/install:
-          version: 1.20
+          version: "1.20"
       - checkout
       - run:
           name: Lint proto files
@@ -62,7 +62,7 @@ jobs:
   build_docker:
     machine:
       image: ubuntu-2204:2022.10.1
-      resource_class: large
+    resource_class: large
     steps:
       - checkout
       - aws-ecr/build-image:
