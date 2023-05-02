@@ -17,11 +17,11 @@ func CheckForDuplicatesAndEmptyStrings(input []string) error {
 	encountered := map[string]bool{}
 	for _, str := range input {
 		if len(str) == 0 {
-			return fmt.Errorf("string cannot be empty")
+			return fmt.Errorf("empty string is not allowed")
 		}
 
 		if encountered[str] {
-			return fmt.Errorf("duplicate string: %s", str)
+			return fmt.Errorf("duplicate entry found: %s", str)
 		}
 
 		encountered[str] = true
