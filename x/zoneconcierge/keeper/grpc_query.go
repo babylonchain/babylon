@@ -203,21 +203,24 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	ctx := sdk.UnwrapSDKContext(c)
 	resp := &types.QueryFinalizedChainsInfoResponse{FinalizedChainsInfo: []*types.FinalizedChainInfo{}}
 
+	// find the last finalised epoch
+	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, chainID := range req.ChainIds {
 		data := &types.FinalizedChainInfo{ChainId: chainID}
 
-		exists, err := k.HasFinalizedChainInfo(ctx, chainID)
-		if err != nil {
-			return nil, err
-		}
-
+		// if the chain info is not found in the last finalised epoch, return the chain info with empty fields
+		exists := k.EpochChainInfoExists(ctx, chainID, lastFinalizedEpoch)
 		if !exists {
 			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 			continue
 		}
 
 		// find the last finalised chain info and the earliest epoch that snapshots this chain info
-		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID)
+		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
@@ -268,8 +271,14 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 	ctx := sdk.UnwrapSDKContext(c)
 	resp := &types.QueryFinalizedChainInfoUntilHeightResponse{}
 
+	// find the last finalised epoch
+	lastFinalizedEpoch, err := k.GetFinalizedEpoch(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// find and assign the last finalised chain info and the earliest epoch that snapshots this chain info
-	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId)
+	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
 	if err != nil {
 		return nil, err
 	}

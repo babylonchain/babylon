@@ -21,43 +21,17 @@ func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber u
 	return &chainInfo, nil
 }
 
-// HasFinalizedChainInfo checks if chain info exists for a given chain ID in the last finalised epoch
-func (k Keeper) HasFinalizedChainInfo(ctx sdk.Context, chainID string) (bool, error) {
-	// find the last finalised epoch
-	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
-	if err != nil {
-		return false, err
-	}
+// EpochChainInfoExists checks if the latest chain info exists of a given epoch for a given chain ID
+func (k Keeper) EpochChainInfoExists(ctx sdk.Context, chainID string, epochNumber uint64) bool {
+	store := k.epochChainInfoStore(ctx, chainID)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+	return store.Has(epochNumberBytes)
 
-	// find the chain info of this finalised epoch
-	_, _, err = k.lastFinalizedChainInfoHelper(ctx, chainID, finalizedEpoch)
-	if err != nil {
-		return false, nil
-	}
-
-	return true, nil
 }
 
 // GetLastFinalizedChainInfo gets the last finalised chain info recorded for a given chain ID
 // and the earliest epoch that snapshots this chain info
-func (k Keeper) GetLastFinalizedChainInfo(ctx sdk.Context, chainID string) (uint64, *types.ChainInfo, error) {
-	// find the last finalised epoch
-	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	// find the chain info of this finalised epoch
-	finalizedEpoch, chainInfo, err := k.lastFinalizedChainInfoHelper(ctx, chainID, finalizedEpoch)
-	if err != nil {
-		return finalizedEpoch, nil, err
-	}
-
-	return finalizedEpoch, chainInfo, nil
-}
-
-// lastFinalizedChainInfoHelper is a helper function to find the last finalised chain info
-func (k Keeper) lastFinalizedChainInfoHelper(ctx sdk.Context, chainID string, finalizedEpoch uint64) (uint64, *types.ChainInfo, error) {
+func (k Keeper) GetLastFinalizedChainInfo(ctx sdk.Context, chainID string, finalizedEpoch uint64) (uint64, *types.ChainInfo, error) {
 	// find the chain info of this epoch
 	chainInfo, err := k.GetEpochChainInfo(ctx, chainID, finalizedEpoch)
 	if err != nil {
