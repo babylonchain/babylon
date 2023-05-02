@@ -26,7 +26,6 @@ func (k Keeper) EpochChainInfoExists(ctx sdk.Context, chainID string, epochNumbe
 	store := k.epochChainInfoStore(ctx, chainID)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	return store.Has(epochNumberBytes)
-
 }
 
 // GetLastFinalizedChainInfo gets the last finalised chain info recorded for a given chain ID
