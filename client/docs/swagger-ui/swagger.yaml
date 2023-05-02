@@ -23,17 +23,19 @@ paths:
                       type: string
                       format: uint64
                       title: epoch number of this checkpoint
-                    earliest_btc_block_number:
+                    best_submission_btc_block_height:
                       type: string
                       format: uint64
-                      title: >-
-                        height of earliest BTC block that includes this
-                        checkpoint
-                    earliest_btc_block_hash:
+                      title: btc height of the best submission of the epoch
+                    best_submission_btc_block_hash:
                       type: string
                       format: byte
-                      title: hash of earliest BTC block that includes this checkpoint
-                    earliest_btc_block_txs:
+                      title: >-
+                        hash of the btc block which determines checkpoint btc
+                        block height i.e.
+
+                        youngest block of best submission
+                    best_submission_transactions:
                       type: array
                       items:
                         type: object
@@ -96,8 +98,8 @@ paths:
 
                           - the Merkle proof that this tx is on the above
                           position
-                      title: the BTC checkpoint transactions on the above block
-                    vigilante_address_list:
+                      title: the BTC checkpoint transactions of the best submission
+                    best_submission_vigilante_address_list:
                       type: array
                       items:
                         type: object
@@ -126,12 +128,13 @@ paths:
                           submitter and reporter of a
 
                           given checkpoint
-                      title: list of vigilantes' addresses
-                  description: >-
-                    BTCCheckpointInfo contains all checkpoint related data
-                    expected in a query
+                      title: list of vigilantes' addresses of the best submission
+                  title: >-
+                    BTCCheckpointInfo contains all data about best submission of
+                    checkpoint for
 
-                    response.
+                    given epoch. Best submission is the submission which is
+                    deeper in btc ledger
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -338,15 +341,19 @@ paths:
                     type: string
                     format: uint64
                     title: epoch number of this checkpoint
-                  earliest_btc_block_number:
+                  best_submission_btc_block_height:
                     type: string
                     format: uint64
-                    title: height of earliest BTC block that includes this checkpoint
-                  earliest_btc_block_hash:
+                    title: btc height of the best submission of the epoch
+                  best_submission_btc_block_hash:
                     type: string
                     format: byte
-                    title: hash of earliest BTC block that includes this checkpoint
-                  earliest_btc_block_txs:
+                    title: >-
+                      hash of the btc block which determines checkpoint btc
+                      block height i.e.
+
+                      youngest block of best submission
+                  best_submission_transactions:
                     type: array
                     items:
                       type: object
@@ -408,8 +415,8 @@ paths:
                         - the full tx content
 
                         - the Merkle proof that this tx is on the above position
-                    title: the BTC checkpoint transactions on the above block
-                  vigilante_address_list:
+                    title: the BTC checkpoint transactions of the best submission
+                  best_submission_vigilante_address_list:
                     type: array
                     items:
                       type: object
@@ -438,12 +445,13 @@ paths:
                         submitter and reporter of a
 
                         given checkpoint
-                    title: list of vigilantes' addresses
-                description: >-
-                  BTCCheckpointInfo contains all checkpoint related data
-                  expected in a query
+                    title: list of vigilantes' addresses of the best submission
+                title: >-
+                  BTCCheckpointInfo contains all data about best submission of
+                  checkpoint for
 
-                  response.
+                  given epoch. Best submission is the submission which is deeper
+                  in btc ledger
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
@@ -10079,15 +10087,19 @@ definitions:
         type: string
         format: uint64
         title: epoch number of this checkpoint
-      earliest_btc_block_number:
+      best_submission_btc_block_height:
         type: string
         format: uint64
-        title: height of earliest BTC block that includes this checkpoint
-      earliest_btc_block_hash:
+        title: btc height of the best submission of the epoch
+      best_submission_btc_block_hash:
         type: string
         format: byte
-        title: hash of earliest BTC block that includes this checkpoint
-      earliest_btc_block_txs:
+        title: >-
+          hash of the btc block which determines checkpoint btc block height
+          i.e.
+
+          youngest block of best submission
+      best_submission_transactions:
         type: array
         items:
           type: object
@@ -10149,8 +10161,8 @@ definitions:
             - the full tx content
 
             - the Merkle proof that this tx is on the above position
-        title: the BTC checkpoint transactions on the above block
-      vigilante_address_list:
+        title: the BTC checkpoint transactions of the best submission
+      best_submission_vigilante_address_list:
         type: array
         items:
           type: object
@@ -10178,10 +10190,13 @@ definitions:
             reporter of a
 
             given checkpoint
-        title: list of vigilantes' addresses
-    description: |-
-      BTCCheckpointInfo contains all checkpoint related data expected in a query
-      response.
+        title: list of vigilantes' addresses of the best submission
+    title: >-
+      BTCCheckpointInfo contains all data about best submission of checkpoint
+      for
+
+      given epoch. Best submission is the submission which is deeper in btc
+      ledger
   babylon.btccheckpoint.v1.CheckpointAddresses:
     type: object
     properties:
@@ -10255,15 +10270,19 @@ definitions:
             type: string
             format: uint64
             title: epoch number of this checkpoint
-          earliest_btc_block_number:
+          best_submission_btc_block_height:
             type: string
             format: uint64
-            title: height of earliest BTC block that includes this checkpoint
-          earliest_btc_block_hash:
+            title: btc height of the best submission of the epoch
+          best_submission_btc_block_hash:
             type: string
             format: byte
-            title: hash of earliest BTC block that includes this checkpoint
-          earliest_btc_block_txs:
+            title: >-
+              hash of the btc block which determines checkpoint btc block height
+              i.e.
+
+              youngest block of best submission
+          best_submission_transactions:
             type: array
             items:
               type: object
@@ -10325,8 +10344,8 @@ definitions:
                 - the full tx content
 
                 - the Merkle proof that this tx is on the above position
-            title: the BTC checkpoint transactions on the above block
-          vigilante_address_list:
+            title: the BTC checkpoint transactions of the best submission
+          best_submission_vigilante_address_list:
             type: array
             items:
               type: object
@@ -10355,12 +10374,13 @@ definitions:
                 reporter of a
 
                 given checkpoint
-            title: list of vigilantes' addresses
-        description: >-
-          BTCCheckpointInfo contains all checkpoint related data expected in a
-          query
+            title: list of vigilantes' addresses of the best submission
+        title: >-
+          BTCCheckpointInfo contains all data about best submission of
+          checkpoint for
 
-          response.
+          given epoch. Best submission is the submission which is deeper in btc
+          ledger
     title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -10376,15 +10396,19 @@ definitions:
               type: string
               format: uint64
               title: epoch number of this checkpoint
-            earliest_btc_block_number:
+            best_submission_btc_block_height:
               type: string
               format: uint64
-              title: height of earliest BTC block that includes this checkpoint
-            earliest_btc_block_hash:
+              title: btc height of the best submission of the epoch
+            best_submission_btc_block_hash:
               type: string
               format: byte
-              title: hash of earliest BTC block that includes this checkpoint
-            earliest_btc_block_txs:
+              title: >-
+                hash of the btc block which determines checkpoint btc block
+                height i.e.
+
+                youngest block of best submission
+            best_submission_transactions:
               type: array
               items:
                 type: object
@@ -10446,8 +10470,8 @@ definitions:
                   - the full tx content
 
                   - the Merkle proof that this tx is on the above position
-              title: the BTC checkpoint transactions on the above block
-            vigilante_address_list:
+              title: the BTC checkpoint transactions of the best submission
+            best_submission_vigilante_address_list:
               type: array
               items:
                 type: object
@@ -10476,12 +10500,13 @@ definitions:
                   and reporter of a
 
                   given checkpoint
-              title: list of vigilantes' addresses
-          description: >-
-            BTCCheckpointInfo contains all checkpoint related data expected in a
-            query
+              title: list of vigilantes' addresses of the best submission
+          title: >-
+            BTCCheckpointInfo contains all data about best submission of
+            checkpoint for
 
-            response.
+            given epoch. Best submission is the submission which is deeper in
+            btc ledger
       pagination:
         title: pagination defines the pagination in the response
         type: object
