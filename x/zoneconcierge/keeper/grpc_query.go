@@ -218,11 +218,20 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 			continue
 		}
 
-		// find the last finalised chain info and the earliest epoch that snapshots this chain info
-		finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, chainID, lastFinalizedEpoch)
+		// find the last finalised chain info
+		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
 		}
+
+		// It's possible that the chain info's epoch is way before the last finalised epoch
+		// e.g., when there is no relayer for many epochs
+		// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
+		finalizedEpoch := lastFinalizedEpoch
+		if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
+			finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
+		}
+
 		data.FinalizedChainInfo = chainInfo
 
 		// find the epoch metadata of the finalised epoch
@@ -276,11 +285,20 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		return nil, err
 	}
 
-	// find and assign the last finalised chain info and the earliest epoch that snapshots this chain info
-	finalizedEpoch, chainInfo, err := k.GetLastFinalizedChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
+	// find the last finalised chain info
+	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
 	if err != nil {
 		return nil, err
 	}
+
+	// It's possible that the chain info's epoch is way before the last finalised epoch
+	// e.g., when there is no relayer for many epochs
+	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
+	finalizedEpoch := lastFinalizedEpoch
+	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
+		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
+	}
+
 	resp.FinalizedChainInfo = chainInfo
 
 	if chainInfo.LatestHeader.Height <= req.Height { // the requested height is after the last finalised chain info
