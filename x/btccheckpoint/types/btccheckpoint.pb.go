@@ -519,7 +519,7 @@ type BTCCheckpointInfo struct {
 	BestSubmissionBtcBlockHash *github_com_babylonchain_babylon_types.BTCHeaderHashBytes `protobuf:"bytes,3,opt,name=best_submission_btc_block_hash,json=bestSubmissionBtcBlockHash,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderHashBytes" json:"best_submission_btc_block_hash,omitempty"`
 	// the BTC checkpoint transactions of the best submission
 	BestSubmissionTransactions []*TransactionInfo `protobuf:"bytes,4,rep,name=best_submission_transactions,json=bestSubmissionTransactions,proto3" json:"best_submission_transactions,omitempty"`
-	// list of vigilantes' addresses
+	// list of vigilantes' addresses of the best submission
 	BestSubmissionVigilanteAddressList []*CheckpointAddresses `protobuf:"bytes,5,rep,name=best_submission_vigilante_address_list,json=bestSubmissionVigilanteAddressList,proto3" json:"best_submission_vigilante_address_list,omitempty"`
 }
 

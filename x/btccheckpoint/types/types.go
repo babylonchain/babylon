@@ -35,8 +35,8 @@ type SubmissionBtcInfo struct {
 	// Hash of the youngest btc header of the submission
 	YoungestBlockHash types.BTCHeaderHashBytes
 
-	// Index of the latest transaction in youngest submission block
-	YoungestBlockInitialTxIdx uint32
+	// Index of the lowest index transaction in youngest submission block
+	YoungestBlockLowestTxIdx uint32
 }
 
 func NewRawCheckpointSubmission(
@@ -150,7 +150,7 @@ func (newSubmission *SubmissionBtcInfo) IsBetterThan(currentBestSubmission *Subm
 	// at this point we know that both submissions youngest part happens to be in
 	// the same block. To resolve the tie we need to take into account index of
 	// latest transaction of the submissions
-	return newSubmission.YoungestBlockInitialTxIdx < currentBestSubmission.YoungestBlockInitialTxIdx
+	return newSubmission.YoungestBlockLowestTxIdx < currentBestSubmission.YoungestBlockLowestTxIdx
 }
 
 func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *TransactionInfo {

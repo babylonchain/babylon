@@ -186,11 +186,11 @@ func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*
 	}
 
 	return &types.SubmissionBtcInfo{
-		SubmissionKey:             sk,
-		OldestBlockDepth:          oldestBlockDepth,
-		YoungestBlockDepth:        youngestBlockDepth,
-		YoungestBlockHash:         *youngestBlockHash,
-		YoungestBlockInitialTxIdx: lowestIndexInMostFreshBlock,
+		SubmissionKey:            sk,
+		OldestBlockDepth:         oldestBlockDepth,
+		YoungestBlockDepth:       youngestBlockDepth,
+		YoungestBlockHash:        *youngestBlockHash,
+		YoungestBlockLowestTxIdx: lowestIndexInMostFreshBlock,
 	}, nil
 }
 

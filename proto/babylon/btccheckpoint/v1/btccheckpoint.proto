@@ -146,6 +146,6 @@ message BTCCheckpointInfo {
             "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
   // the BTC checkpoint transactions of the best submission
   repeated TransactionInfo best_submission_transactions = 4;
-  // list of vigilantes' addresses
+  // list of vigilantes' addresses of the best submission
   repeated CheckpointAddresses best_submission_vigilante_address_list = 5;
 }
