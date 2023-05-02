@@ -224,7 +224,8 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 			return nil, err
 		}
 
-		// It's possible that the chain info's epoch is way before the last finalised epoch
+		// set finalizedEpoch as the earliest epoch that snapshots this chain info.
+		// it's possible that the chain info's epoch is way before the last finalised epoch
 		// e.g., when there is no relayer for many epochs
 		// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
 		finalizedEpoch := lastFinalizedEpoch
@@ -291,7 +292,8 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		return nil, err
 	}
 
-	// It's possible that the chain info's epoch is way before the last finalised epoch
+	// set finalizedEpoch as the earliest epoch that snapshots this chain info.
+	// it's possible that the chain info's epoch is way before the last finalised epoch
 	// e.g., when there is no relayer for many epochs
 	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
 	finalizedEpoch := lastFinalizedEpoch
