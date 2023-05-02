@@ -206,10 +206,12 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	for _, chainID := range req.ChainIds {
 		data := &types.FinalizedChainInfo{ChainId: chainID}
 
-		exists, err := k.FinalizedChainInfoExists(ctx, chainID)
+		exists, err := k.HasFinalizedChainInfo(ctx, chainID)
 		if err != nil {
 			return nil, err
-		} else if !exists {
+		}
+
+		if !exists {
 			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 			continue
 		}

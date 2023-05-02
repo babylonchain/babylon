@@ -21,16 +21,16 @@ func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber u
 	return &chainInfo, nil
 }
 
-// FinalizedChainInfoExists checks if chain info exists for a given chain ID in the last finalised epoch
-func (k Keeper) FinalizedChainInfoExists(ctx sdk.Context, chainID string) (bool, error) {
+// HasFinalizedChainInfo checks if chain info exists for a given chain ID in the last finalised epoch
+func (k Keeper) HasFinalizedChainInfo(ctx sdk.Context, chainID string) (bool, error) {
 	// find the last finalised epoch
 	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
 	if err != nil {
 		return false, err
 	}
 
-	// find the chain info of this epoch if any error occurs, it means that the chain info does not exist
-	_, err = k.GetEpochChainInfo(ctx, chainID, finalizedEpoch)
+	// find the chain info of this finalised epoch
+	finalizedEpoch, _, err = k.getLastFinalizedChainInfo(ctx, chainID, finalizedEpoch)
 	if err != nil {
 		return false, nil
 	}
@@ -47,6 +47,17 @@ func (k Keeper) GetLastFinalizedChainInfo(ctx sdk.Context, chainID string) (uint
 		return 0, nil, err
 	}
 
+	// find the chain info of this finalised epoch
+	finalizedEpoch, chainInfo, err := k.getLastFinalizedChainInfo(ctx, chainID, finalizedEpoch)
+	if err != nil {
+		return finalizedEpoch, nil, err
+	}
+
+	return finalizedEpoch, chainInfo, nil
+}
+
+// getLastFinalizedChainInfo is a helper function to get the last finalised chain info
+func (k Keeper) getLastFinalizedChainInfo(ctx sdk.Context, chainID string, finalizedEpoch uint64) (uint64, *types.ChainInfo, error) {
 	// find the chain info of this epoch
 	chainInfo, err := k.GetEpochChainInfo(ctx, chainID, finalizedEpoch)
 	if err != nil {
