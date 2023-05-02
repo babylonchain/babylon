@@ -218,7 +218,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 			continue
 		}
 
-		// find the last finalised chain info
+		// find the chain info in the last finalised epoch
 		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, lastFinalizedEpoch)
 		if err != nil {
 			return nil, err
@@ -285,7 +285,7 @@ func (k Keeper) FinalizedChainInfoUntilHeight(c context.Context, req *types.Quer
 		return nil, err
 	}
 
-	// find the last finalised chain info
+	// find the chain info in the last finalised epoch
 	chainInfo, err := k.GetEpochChainInfo(ctx, req.ChainId, lastFinalizedEpoch)
 	if err != nil {
 		return nil, err
