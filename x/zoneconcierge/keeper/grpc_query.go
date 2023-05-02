@@ -121,7 +121,7 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 
 	// return if chain IDs contain duplicates or empty strings
 	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
