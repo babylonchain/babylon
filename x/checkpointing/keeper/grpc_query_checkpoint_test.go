@@ -2,21 +2,25 @@ package keeper_test
 
 import (
 	"context"
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"math/rand"
 	"testing"
+
+	"github.com/cosmos/cosmos-sdk/types/query"
+
+	"github.com/babylonchain/babylon/x/checkpointing/keeper"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 
 	"github.com/babylonchain/babylon/testutil/mocks"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzQueryEpoch(f *testing.F) {
@@ -44,6 +48,31 @@ func FuzzQueryEpoch(f *testing.F) {
 		statusResp, err := ckptKeeper.EpochStatus(sdkCtx, statusRequest)
 		require.NoError(t, err)
 		require.Equal(t, mockCkptWithMeta.Status, statusResp.Status)
+	})
+}
+
+func FuzzQueryRawCheckpoints(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
+		sdkCtx := sdk.WrapSDKContext(ctx)
+
+		checkpoints := datagen.GenRandomSequenceRawCheckpointsWithMeta(r)
+		for _, ckpt := range checkpoints {
+			err := ckptKeeper.AddRawCheckpoint(
+				ctx,
+				ckpt,
+			)
+			require.NoError(t, err)
+		}
+
+		pagination := &query.PageRequest{Limit: uint64(len(checkpoints)), CountTotal: true}
+		ckptResp, err := ckptKeeper.RawCheckpoints(sdkCtx, &types.QueryRawCheckpointsRequest{Pagination: pagination})
+		for i, ckpt := range ckptResp.RawCheckpoints {
+			require.Equal(t, checkpoints[i], ckpt)
+		}
+		require.NoError(t, err)
 	})
 }
 
