@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -61,7 +60,7 @@ func (k Keeper) ChainsInfo(c context.Context, req *types.QueryChainsInfoRequest)
 
 	// return if chain IDs contain duplicates or empty strings
 	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Errorf("chain IDs contain duplicates or empty strings: %w", err).Error())
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -198,7 +197,7 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 
 	// return if chain IDs contain duplicates or empty strings
 	if err := bbntypes.CheckForDuplicatesAndEmptyStrings(req.ChainIds); err != nil {
-		return nil, status.Error(codes.InvalidArgument, fmt.Errorf("chain IDs contain duplicates or empty strings: %w", err).Error())
+		return nil, status.Error(codes.InvalidArgument, types.ErrInvalidChainIDs.Wrap(err.Error()).Error())
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)

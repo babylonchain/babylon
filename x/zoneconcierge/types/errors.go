@@ -23,4 +23,5 @@ var (
 	ErrInvalidProofEpochSealed = errorsmod.Register(ModuleName, 1112, "invalid ProofEpochSealed")
 	ErrInvalidMerkleProof      = errorsmod.Register(ModuleName, 1113, "invalid Merkle inclusion proof")
 	ErrInvalidChainInfo        = errorsmod.Register(ModuleName, 1114, "invalid chain info")
+	ErrInvalidChainIDs         = errorsmod.Register(ModuleName, 1115, "chain ids contain duplicates or empty strings")
 )
