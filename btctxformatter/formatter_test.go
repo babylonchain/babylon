@@ -9,7 +9,7 @@ import (
 
 func randNBytes(n int) []byte {
 	bytes := make([]byte, n)
-	cprand.Read(bytes)
+	cprand.Read(bytes) //nolint:errcheck // This is a test.
 	return bytes
 }
 
