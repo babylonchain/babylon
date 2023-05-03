@@ -31,7 +31,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "chains-info <chain-ids>",
-		Short: "returns the latest info for a given list of chains",
+		Short: "retrieve the latest info for a given list of chains",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -53,7 +53,7 @@ func CmdChainsInfo() *cobra.Command {
 func CmdFinalizedChainsInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "finalized-chains-info <chain-ids>",
-		Short: "retrieves the finalized info for a given list of chains",
+		Short: "retrieve the finalized info for a given list of chains",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -75,7 +75,7 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 func CmdEpochChainsInfoInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "epoch-chains-info <epoch-num> <chain-ids>",
-		Short: "returns the latest info for a list of chains in a given epoch",
+		Short: "retrieve the latest info for a list of chains in a given epoch",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
