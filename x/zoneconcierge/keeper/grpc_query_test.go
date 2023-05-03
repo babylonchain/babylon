@@ -208,6 +208,30 @@ func FuzzEpochChainsInfo(f *testing.F) {
 			hooks.AfterEpochEnds(ctx, epochNum)
 		}
 
+		// if num of chain ids exceed the max limit, query should fail
+		largeNumChains := datagen.RandomInt(r, 10) + 101
+		var maxChainIDs []string
+		for i := uint64(0); i < largeNumChains; i++ {
+			maxChainIDs = append(maxChainIDs, datagen.GenRandomHexStr(r, 30))
+		}
+		randomEpochNum := datagen.RandomInt(r, 10) + 1
+		_, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: maxChainIDs})
+		require.Error(t, err)
+
+		// if no input is passed in, query should fail
+		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: nil})
+		require.Error(t, err)
+
+		// if len of chain ids is 0, query should fail
+		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: []string{}})
+		require.Error(t, err)
+
+		// if chain ids contain duplicates, query should fail
+		randomChainID := datagen.GenRandomHexStr(r, 30)
+		dupChainIds := []string{randomChainID, randomChainID}
+		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: dupChainIds})
+		require.Error(t, err)
+
 		// query epoch chains info for each epoch and assert correctness
 		for _, epochNum := range epochNums {
 			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epochNum, ChainIds: chainIDs})
