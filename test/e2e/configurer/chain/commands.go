@@ -101,17 +101,16 @@ func (n *NodeConfig) InsertProofs(p1 *btccheckpointtypes.BTCSpvProof, p2 *btcche
 	n.LogActionF("successfully inserted btc spv proofs")
 }
 
-func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64) {
-	n.LogActionF("start finalizing epoch starting from  %d", startingEpoch)
+func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
+	n.LogActionF("start finalizing epochs from  %d to %d", startEpoch, lastEpoch)
 	// Random source for the generation of BTC data
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	madeProgress := false
-	currEpoch := startingEpoch
 
 	pagination := &sdkquerytypes.PageRequest{
-		Key:   sdktypes.Uint64ToBigEndian(currEpoch),
-		Limit: lastEpoch - startingEpoch + 1,
+		Key:   sdktypes.Uint64ToBigEndian(startEpoch),
+		Limit: lastEpoch - startEpoch + 1,
 	}
 	resp, err := n.QueryCheckpointForEpochs(pagination)
 	require.NoError(n.t, err)
@@ -146,7 +145,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 		n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
 
 		n.WaitForCondition(func() bool {
-			ckpt, err := n.QueryCheckpointForEpoch(currEpoch)
+			ckpt, err := n.QueryCheckpointForEpoch(checkpoint.Ckpt.EpochNum)
 			require.NoError(n.t, err)
 			return ckpt.Status == cttypes.Submitted
 		}, "Checkpoint should be submitted ")
