@@ -30,28 +30,35 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 
 	// Query checkpoint chain info for opposing chain
-	chainInfo, err := nonValidatorNode.QueryCheckpointChainsInfo([]string{initialization.ChainBID})
+	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
-	s.Equal(chainInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
 	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
-	nonValidatorNode.FinalizeSealedEpochs(1, 3)
+	var (
+		startEpochNum uint64 = 1
+		endEpochNum   uint64 = 3
+	)
 
-	epoch3, err := nonValidatorNode.QueryCheckpointForEpoch(3)
+	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+
+	endEpoch, err := nonValidatorNode.QueryCheckpointForEpoch(endEpochNum)
 	s.NoError(err)
+	s.Equal(endEpoch.Status, ct.Finalized)
 
-	if epoch3.Status != ct.Finalized {
-		s.FailNow("Epoch 2 should be finalized")
-	}
+	// Check we have epoch info for opposing chain and some basic assertions
+	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
+	s.NoError(err)
+	s.Equal(epochChainsInfo[0].ChainId, initialization.ChainBID)
+	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
 
 	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedResp, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
+	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 
-	finalizedInfo := finalizedResp.FinalizedChainsInfo[0]
 	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedInfo.FinalizedChainInfo.ChainId, initialization.ChainBID)
-	s.Equal(finalizedInfo.EpochInfo.EpochNumber, uint64(3))
+	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, initialization.ChainBID)
+	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
 
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)

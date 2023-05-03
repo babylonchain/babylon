@@ -4,9 +4,10 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
@@ -48,11 +49,11 @@ func (k Keeper) HasChainInfo(ctx sdk.Context, chainID string) bool {
 // Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
 // we can only check its existence every time, and return an empty one if it's not initialised yet.
 func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo, error) {
-	store := k.chainInfoStore(ctx)
-
-	if !store.Has([]byte(chainID)) {
-		return nil, types.ErrEpochChainInfoNotFound
+	if !k.HasChainInfo(ctx, chainID) {
+		return nil, types.ErrChainInfoNotFound
 	}
+
+	store := k.chainInfoStore(ctx)
 	chainInfoBytes := store.Get([]byte(chainID))
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(chainInfoBytes, &chainInfo)

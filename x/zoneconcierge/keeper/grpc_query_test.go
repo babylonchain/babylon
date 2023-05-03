@@ -20,9 +20,10 @@ import (
 )
 
 type chainInfo struct {
-	chainID        string
-	numHeaders     uint64
-	numForkHeaders uint64
+	chainID           string
+	numHeaders        uint64
+	numForkHeaders    uint64
+	headerStartHeight uint64
 }
 
 func FuzzChainList(f *testing.F) {
@@ -108,10 +109,10 @@ func FuzzChainsInfo(f *testing.F) {
 		})
 		require.NoError(t, err)
 
-		for i, data := range resp.ChainsInfo {
-			require.Equal(t, chainsInfo[i].chainID, data.ChainId)
-			require.Equal(t, chainsInfo[i].numHeaders-1, data.LatestHeader.Height)
-			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(data.LatestForks.Headers)))
+		for i, respData := range resp.ChainsInfo {
+			require.Equal(t, chainsInfo[i].chainID, respData.ChainId)
+			require.Equal(t, chainsInfo[i].numHeaders-1, respData.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(respData.LatestForks.Headers)))
 		}
 	})
 }
@@ -151,50 +152,100 @@ func FuzzHeader(f *testing.F) {
 	})
 }
 
-func FuzzEpochChainInfo(f *testing.F) {
+func FuzzEpochChainsInfo(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		_, babylonChain, _, babylonApp := SetupTest(t)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		numReqs := datagen.RandomInt(r, 5) + 1
+		// generate a random number of chains
+		numChains := datagen.RandomInt(r, 10) + 1
+		var chainIDs []string
+		for j := uint64(0); j < numChains; j++ {
+			chainID := datagen.GenRandomHexStr(r, 30)
+			chainIDs = append(chainIDs, chainID)
+		}
 
-		epochNumList := []uint64{datagen.RandomInt(r, 10) + 1}
-		nextHeightList := []uint64{0}
-		numHeadersList := []uint64{}
-		numForkHeadersList := []uint64{}
+		// generate a random number of epochNums
+		totalNumEpochs := datagen.RandomInt(r, 5) + 1
+		epochNums := []uint64{datagen.RandomInt(r, 10) + 1}
+		for i := uint64(1); i < totalNumEpochs; i++ {
+			nextEpoch := epochNums[i-1] + datagen.RandomInt(r, 10) + 1
+			epochNums = append(epochNums, nextEpoch)
+		}
 
-		// we test the scenario of ending an epoch for multiple times, in order to ensure that
-		// consecutive epoch infos do not affect each other.
-		for i := uint64(0); i < numReqs; i++ {
-			// generate a random number of headers and fork headers
-			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
-			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
-			// trigger hooks to append these headers and fork headers
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
-			// prepare nextHeight for the next request
-			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
+		// we insert random number of headers and fork headers for each chain in each epoch,
+		// chainHeaderStartHeights keeps track of the next start height of header for each chain
+		chainHeaderStartHeights := make([]uint64, numChains)
+		epochToChainInfo := make(map[uint64]map[string]chainInfo)
+		for _, epochNum := range epochNums {
+			epochToChainInfo[epochNum] = make(map[string]chainInfo)
+			for j, chainID := range chainIDs {
+				// generate a random number of headers and fork headers for each chain
+				numHeaders := datagen.RandomInt(r, 100) + 1
+				numForkHeaders := datagen.RandomInt(r, 10) + 1
+
+				// trigger hooks to append these headers and fork headers
+				SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, chainHeaderStartHeights[j], numHeaders, numForkHeaders)
+
+				epochToChainInfo[epochNum][chainID] = chainInfo{
+					chainID:           chainID,
+					numHeaders:        numHeaders,
+					numForkHeaders:    numForkHeaders,
+					headerStartHeight: chainHeaderStartHeights[j],
+				}
+
+				// update next insertion height for this chain
+				chainHeaderStartHeights[j] += numHeaders
+			}
 
 			// simulate the scenario that a random epoch has ended
-			hooks.AfterEpochEnds(ctx, epochNumList[i])
-			// prepare epochNum for the next request
-			epochNumList = append(epochNumList, epochNumList[i]+datagen.RandomInt(r, 10)+1)
+			hooks.AfterEpochEnds(ctx, epochNum)
 		}
 
-		// attest the correctness of epoch info for each tested epoch
-		for i := uint64(0); i < numReqs; i++ {
-			resp, err := zcKeeper.EpochChainInfo(ctx, &zctypes.QueryEpochChainInfoRequest{EpochNum: epochNumList[i], ChainId: czChain.ChainID})
+		// assert correctness of best case scenario
+		for _, epochNum := range epochNums {
+			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epochNum, ChainIds: chainIDs})
 			require.NoError(t, err)
-			chainInfo := resp.ChainInfo
-			require.Equal(t, nextHeightList[i+1]-1, chainInfo.LatestHeader.Height)
-			require.Equal(t, numForkHeadersList[i], uint64(len(chainInfo.LatestForks.Headers)))
+			epochChainsInfo := resp.ChainsInfo
+			require.Len(t, epochChainsInfo, int(numChains))
+			for _, info := range epochChainsInfo {
+				require.Equal(t, epochToChainInfo[epochNum][info.ChainId].numForkHeaders, uint64(len(info.LatestForks.Headers)))
+
+				actualHeight := epochToChainInfo[epochNum][info.ChainId].headerStartHeight + (epochToChainInfo[epochNum][info.ChainId].numHeaders - 1)
+				require.Equal(t, actualHeight, info.LatestHeader.Height)
+
+			}
 		}
+
+		// if num of chain ids exceed the max limit, query should fail
+		largeNumChains := datagen.RandomInt(r, 10) + 101
+		var maxChainIDs []string
+		for i := uint64(0); i < largeNumChains; i++ {
+			maxChainIDs = append(maxChainIDs, datagen.GenRandomHexStr(r, 30))
+		}
+		randomEpochNum := datagen.RandomInt(r, 10) + 1
+		_, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: maxChainIDs})
+		require.Error(t, err)
+
+		// if no input is passed in, query should fail
+		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: nil})
+		require.Error(t, err)
+
+		// if len of chain ids is 0, query should fail
+		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: []string{}})
+		require.Error(t, err)
+
+		// if chain ids contain duplicates, query should fail
+		randomChainID := datagen.GenRandomHexStr(r, 30)
+		dupChainIds := []string{randomChainID, randomChainID}
+		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: dupChainIds})
+		require.Error(t, err)
 	})
 }
 
@@ -385,11 +436,10 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// check if the chain info of this epoch is recorded or not
 		resp, err := zcKeeper.FinalizedChainsInfo(ctx, &zctypes.QueryFinalizedChainsInfoRequest{ChainIds: chainIDs, Prove: true})
 		require.NoError(t, err)
-		for i, data := range resp.FinalizedChainsInfo {
-			finalizedInfo := data.FinalizedChainInfo
-			require.Equal(t, chainsInfo[i].chainID, data.ChainId)
-			require.Equal(t, chainsInfo[i].numHeaders-1, finalizedInfo.LatestHeader.Height)
-			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(finalizedInfo.LatestForks.Headers)))
+		for i, respData := range resp.FinalizedChainsInfo {
+			require.Equal(t, chainsInfo[i].chainID, respData.FinalizedChainInfo.ChainId)
+			require.Equal(t, chainsInfo[i].numHeaders-1, respData.FinalizedChainInfo.LatestHeader.Height)
+			require.Equal(t, chainsInfo[i].numForkHeaders, uint64(len(respData.FinalizedChainInfo.LatestForks.Headers)))
 		}
 	})
 }

@@ -179,7 +179,7 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
 	return blcResponse.Header, nil
 }
 
-func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) (*zctypes.QueryFinalizedChainsInfoResponse, error) {
+func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
 	queryParams := url.Values{}
 	for _, chainId := range chainIDs {
 		queryParams.Add("chain_ids", chainId)
@@ -193,10 +193,28 @@ func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) (*zctypes.Query
 		return nil, err
 	}
 
-	return &resp, nil
+	return resp.FinalizedChainsInfo, nil
 }
 
-func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
+func (n *NodeConfig) QueryEpochChainsInfo(epochNum uint64, chainIDs []string) ([]*zctypes.ChainInfo, error) {
+	queryParams := url.Values{}
+	for _, chainId := range chainIDs {
+		queryParams.Add("epoch_num", fmt.Sprintf("%d", epochNum))
+		queryParams.Add("chain_ids", chainId)
+	}
+
+	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/epoch_chains_info", queryParams)
+	require.NoError(n.t, err)
+
+	var resp zctypes.QueryEpochChainsInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return resp.ChainsInfo, nil
+}
+
+func (n *NodeConfig) QueryChains() (*[]string, error) {
 	bz, err := n.QueryGRPCGateway("babylon/zoneconcierge/v1/chains", url.Values{})
 	require.NoError(n.t, err)
 	var chainsResponse zctypes.QueryChainListResponse
@@ -206,7 +224,7 @@ func (n *NodeConfig) QueryCheckpointChains() (*[]string, error) {
 	return &chainsResponse.ChainIds, nil
 }
 
-func (n *NodeConfig) QueryCheckpointChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, error) {
+func (n *NodeConfig) QueryChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, error) {
 	queryParams := url.Values{}
 	for _, chainId := range chainIDs {
 		queryParams.Add("chain_ids", chainId)
@@ -214,11 +232,11 @@ func (n *NodeConfig) QueryCheckpointChainsInfo(chainIDs []string) ([]*zctypes.Ch
 
 	bz, err := n.QueryGRPCGateway("/babylon/zoneconcierge/v1/chains_info", queryParams)
 	require.NoError(n.t, err)
-	var infoResponse zctypes.QueryChainsInfoResponse
-	if err := util.Cdc.UnmarshalJSON(bz, &infoResponse); err != nil {
+	var resp zctypes.QueryChainsInfoResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}
-	return infoResponse.ChainsInfo, nil
+	return resp.ChainsInfo, nil
 }
 
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
