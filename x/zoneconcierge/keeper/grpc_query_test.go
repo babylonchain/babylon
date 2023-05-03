@@ -20,10 +20,10 @@ import (
 )
 
 type chainInfo struct {
-	chainID          string
-	epochStartHeight uint64
-	numHeaders       uint64
-	numForkHeaders   uint64
+	chainID                   string
+	numHeaders                uint64
+	numForkHeaders            uint64
+	nextHeaderInsertionHeight uint64
 }
 
 func FuzzChainList(f *testing.F) {
@@ -163,42 +163,64 @@ func FuzzEpochChainsInfo(f *testing.F) {
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		numReqs := datagen.RandomInt(r, 5) + 1
-		epochNum := datagen.RandomInt(r, 10) + 1
-		chainID := datagen.GenRandomHexStr(r, 30)
-		epochToChainInfo := make(map[uint64]chainInfo)
-		var epochStartHeight uint64
+		// generate a random number of chains
+		numChains := datagen.RandomInt(r, 10) + 1
+		var chainIDs []string
+		for j := uint64(0); j < numChains; j++ {
+			chainID := datagen.GenRandomHexStr(r, 30)
+			chainIDs = append(chainIDs, chainID)
+		}
 
-		// we test the scenario of ending an epoch for multiple times, in order to ensure that
-		// consecutive epoch infos do not affect each other.
-		for i := uint64(0); i < numReqs; i++ {
-			// generate a random number of headers and fork headers
-			numHeaders := datagen.RandomInt(r, 100) + 1
-			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, epochStartHeight, numHeaders, numForkHeaders)
+		// generate a random number of epochNums
+		totalNumEpochs := datagen.RandomInt(r, 5) + 1
+		epochNums := []uint64{datagen.RandomInt(r, 10) + 1}
+		for i := uint64(1); i < totalNumEpochs; i++ {
+			nextEpoch := epochNums[i-1] + datagen.RandomInt(r, 10) + 1
+			epochNums = append(epochNums, nextEpoch)
+		}
 
-			epochToChainInfo[epochNum] = chainInfo{
-				chainID:          chainID,
-				epochStartHeight: epochStartHeight,
-				numHeaders:       numHeaders,
-				numForkHeaders:   numForkHeaders,
+		// we insert random number of headers and fork headers for each chain in each epoch,
+		// nextHeaderInsertionHeightForChain keeps track of the next insertion height for each chain
+		nextHeaderInsertionHeightForChain := make([]uint64, numChains)
+		epochToChainInfo := make(map[uint64]map[string]chainInfo)
+		for _, epochNum := range epochNums {
+			epochToChainInfo[epochNum] = make(map[string]chainInfo)
+			for j, chainID := range chainIDs {
+				// generate a random number of headers and fork headers for each chain
+				numHeaders := datagen.RandomInt(r, 100) + 1
+				numForkHeaders := datagen.RandomInt(r, 10) + 1
+
+				// trigger hooks to append these headers and fork headers
+				SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, nextHeaderInsertionHeightForChain[j], numHeaders, numForkHeaders)
+
+				epochToChainInfo[epochNum][chainID] = chainInfo{
+					chainID:                   chainID,
+					numHeaders:                numHeaders,
+					numForkHeaders:            numForkHeaders,
+					nextHeaderInsertionHeight: nextHeaderInsertionHeightForChain[j],
+				}
+
+				// update next insertion height for this chain
+				nextHeaderInsertionHeightForChain[j] += numHeaders
 			}
 
 			// simulate the scenario that a random epoch has ended
 			hooks.AfterEpochEnds(ctx, epochNum)
-
-			// prepare next epoch num and height
-			epochNum += datagen.RandomInt(r, 10) + 1
-			epochStartHeight += numHeaders
 		}
 
-		// attest the correctness of epoch info for each tested epoch
-		for epoch, info := range epochToChainInfo {
-			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epoch, ChainIds: []string{info.chainID}})
+		// query epoch chains info for each epoch and assert correctness
+		for _, epochNum := range epochNums {
+			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epochNum, ChainIds: chainIDs})
 			require.NoError(t, err)
-			require.Equal(t, info.epochStartHeight+(info.numHeaders-1), resp.ChainsInfo[0].LatestHeader.Height)
-			require.Equal(t, info.numForkHeaders, uint64(len(resp.ChainsInfo[0].LatestForks.Headers)))
+			epochChainsInfo := resp.ChainsInfo
+			require.Len(t, epochChainsInfo, int(numChains))
+			for _, info := range epochChainsInfo {
+				require.Equal(t, epochToChainInfo[epochNum][info.ChainId].numForkHeaders, uint64(len(info.LatestForks.Headers)))
 
+				actualHeight := epochToChainInfo[epochNum][info.ChainId].nextHeaderInsertionHeight + (epochToChainInfo[epochNum][info.ChainId].numHeaders - 1)
+				require.Equal(t, actualHeight, info.LatestHeader.Height)
+
+			}
 		}
 	})
 }
