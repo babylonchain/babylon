@@ -208,6 +208,21 @@ func FuzzEpochChainsInfo(f *testing.F) {
 			hooks.AfterEpochEnds(ctx, epochNum)
 		}
 
+		// assert correctness of best case scenario
+		for _, epochNum := range epochNums {
+			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epochNum, ChainIds: chainIDs})
+			require.NoError(t, err)
+			epochChainsInfo := resp.ChainsInfo
+			require.Len(t, epochChainsInfo, int(numChains))
+			for _, info := range epochChainsInfo {
+				require.Equal(t, epochToChainInfo[epochNum][info.ChainId].numForkHeaders, uint64(len(info.LatestForks.Headers)))
+
+				actualHeight := epochToChainInfo[epochNum][info.ChainId].headerNextInsertionHeight + (epochToChainInfo[epochNum][info.ChainId].numHeaders - 1)
+				require.Equal(t, actualHeight, info.LatestHeader.Height)
+
+			}
+		}
+
 		// if num of chain ids exceed the max limit, query should fail
 		largeNumChains := datagen.RandomInt(r, 10) + 101
 		var maxChainIDs []string
@@ -231,21 +246,6 @@ func FuzzEpochChainsInfo(f *testing.F) {
 		dupChainIds := []string{randomChainID, randomChainID}
 		_, err = zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: randomEpochNum, ChainIds: dupChainIds})
 		require.Error(t, err)
-
-		// query epoch chains info for each epoch and assert correctness
-		for _, epochNum := range epochNums {
-			resp, err := zcKeeper.EpochChainsInfo(ctx, &zctypes.QueryEpochChainsInfoRequest{EpochNum: epochNum, ChainIds: chainIDs})
-			require.NoError(t, err)
-			epochChainsInfo := resp.ChainsInfo
-			require.Len(t, epochChainsInfo, int(numChains))
-			for _, info := range epochChainsInfo {
-				require.Equal(t, epochToChainInfo[epochNum][info.ChainId].numForkHeaders, uint64(len(info.LatestForks.Headers)))
-
-				actualHeight := epochToChainInfo[epochNum][info.ChainId].headerNextInsertionHeight + (epochToChainInfo[epochNum][info.ChainId].numHeaders - 1)
-				require.Equal(t, actualHeight, info.LatestHeader.Height)
-
-			}
-		}
 	})
 }
 
