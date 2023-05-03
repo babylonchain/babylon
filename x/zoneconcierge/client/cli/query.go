@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -76,13 +77,12 @@ func CmdEpochChainsInfoInfo() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "epoch-chains-info <epoch-num> <chain-ids>",
 		Short: "retrieve the latest info for a list of chains in a given epoch",
-		Args:  cobra.ArbitraryArgs,
+		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 
-			var epoch uint64
-			_, err := fmt.Sscanf(args[0], "%d", &epoch)
+			epoch, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err
 			}
