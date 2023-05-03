@@ -127,6 +127,17 @@ func (k Keeper) EpochChainsInfo(c context.Context, req *types.QueryEpochChainsIn
 	ctx := sdk.UnwrapSDKContext(c)
 	var chainsInfo []*types.ChainInfo
 	for _, chainID := range req.ChainIds {
+		// check if chain ID is valid
+		if !k.HasChainInfo(ctx, chainID) {
+			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", chainID).Error())
+		}
+
+		// if the chain info is not found in the given epoch, return with empty fields
+		if !k.EpochChainInfoExists(ctx, chainID, req.EpochNum) {
+			chainsInfo = append(chainsInfo, &types.ChainInfo{ChainId: chainID})
+			continue
+		}
+
 		// find the chain info of the given epoch
 		chainInfo, err := k.GetEpochChainInfo(ctx, chainID, req.EpochNum)
 		if err != nil {
@@ -226,9 +237,14 @@ func (k Keeper) FinalizedChainsInfo(c context.Context, req *types.QueryFinalized
 	}
 
 	for _, chainID := range req.ChainIds {
+		// check if chain ID is valid
+		if !k.HasChainInfo(ctx, chainID) {
+			return nil, status.Error(codes.InvalidArgument, types.ErrChainInfoNotFound.Wrapf("chain ID %s", chainID).Error())
+		}
+
 		data := &types.FinalizedChainInfo{ChainId: chainID}
 
-		// if the chain info is not found in the last finalised epoch, return the chain info with empty fields
+		// if the chain info is not found in the last finalised epoch, return with empty fields
 		if !k.EpochChainInfoExists(ctx, chainID, lastFinalizedEpoch) {
 			resp.FinalizedChainsInfo = append(resp.FinalizedChainsInfo, data)
 			continue
