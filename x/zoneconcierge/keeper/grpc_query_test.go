@@ -23,7 +23,7 @@ type chainInfo struct {
 	chainID                   string
 	numHeaders                uint64
 	numForkHeaders            uint64
-	nextHeaderInsertionHeight uint64
+	headerNextInsertionHeight uint64
 }
 
 func FuzzChainList(f *testing.F) {
@@ -197,7 +197,7 @@ func FuzzEpochChainsInfo(f *testing.F) {
 					chainID:                   chainID,
 					numHeaders:                numHeaders,
 					numForkHeaders:            numForkHeaders,
-					nextHeaderInsertionHeight: nextHeaderInsertionHeightForChain[j],
+					headerNextInsertionHeight: nextHeaderInsertionHeightForChain[j],
 				}
 
 				// update next insertion height for this chain
@@ -241,7 +241,7 @@ func FuzzEpochChainsInfo(f *testing.F) {
 			for _, info := range epochChainsInfo {
 				require.Equal(t, epochToChainInfo[epochNum][info.ChainId].numForkHeaders, uint64(len(info.LatestForks.Headers)))
 
-				actualHeight := epochToChainInfo[epochNum][info.ChainId].nextHeaderInsertionHeight + (epochToChainInfo[epochNum][info.ChainId].numHeaders - 1)
+				actualHeight := epochToChainInfo[epochNum][info.ChainId].headerNextInsertionHeight + (epochToChainInfo[epochNum][info.ChainId].numHeaders - 1)
 				require.Equal(t, actualHeight, info.LatestHeader.Height)
 
 			}
