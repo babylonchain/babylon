@@ -158,10 +158,10 @@ func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWit
 }
 
 func (n *NodeConfig) QueryCheckpointForEpochs(pagination *query.PageRequest) (*ct.QueryRawCheckpointsResponse, error) {
-	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoints")
-	bz, err := n.QueryGRPCGateway(path, url.Values{
+	queryParams := url.Values{
 		"pagination.limit": {strconv.Itoa(int(pagination.Limit))},
-	})
+	}
+	bz, err := n.QueryGRPCGateway("babylon/checkpointing/v1/raw_checkpoints", queryParams)
 	require.NoError(n.t, err)
 
 	var checkpointingResponse ct.QueryRawCheckpointsResponse
