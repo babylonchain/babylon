@@ -47,7 +47,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.Equal(endEpoch.Status, ct.Finalized)
 
 	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(3, []string{initialization.ChainBID})
+	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
 	s.NoError(err)
 	s.Equal(epochChainsInfo[0].ChainId, initialization.ChainBID)
 	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
