@@ -159,11 +159,12 @@ func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMeta
 }
 
 func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.QueryRawCheckpointsResponse, error) {
-	queryParams := url.Values{
-		"pagination.key":         {base64.URLEncoding.EncodeToString(pagination.Key)},
-		"pagination.limit":       {strconv.Itoa(int(pagination.Limit))},
-		"pagination.count_total": {strconv.FormatBool(pagination.CountTotal)},
+	queryParams := url.Values{}
+	if pagination != nil {
+		queryParams.Set("pagination.key", base64.URLEncoding.EncodeToString(pagination.Key))
+		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
 	}
+
 	bz, err := n.QueryGRPCGateway("babylon/checkpointing/v1/raw_checkpoints", queryParams)
 	require.NoError(n.t, err)
 

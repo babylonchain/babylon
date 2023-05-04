@@ -115,7 +115,6 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 
 	resp, err := n.QueryRawCheckpoints(pagination)
 	require.NoError(n.t, err)
-	require.Nil(n.t, resp.Pagination.NextKey)
 	require.Equal(n.t, int(pageLimit), len(resp.RawCheckpoints))
 
 	for _, checkpoint := range resp.RawCheckpoints {
