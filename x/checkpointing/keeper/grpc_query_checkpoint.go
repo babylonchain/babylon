@@ -61,7 +61,7 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
 }
 
-// RawCheckpoints returns checkpoints for given list of epoch numbers
+// RawCheckpoints returns checkpoints for given epoch range specified in pagination params
 func (k Keeper) RawCheckpoints(ctx context.Context, req *types.QueryRawCheckpointsRequest) (*types.QueryRawCheckpointsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
