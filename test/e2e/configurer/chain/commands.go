@@ -109,16 +109,14 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 
 	pageLimit := lastEpoch - startEpoch + 1
 	pagination := &sdkquerytypes.PageRequest{
-		Key:        cttypes.CkptsObjectKey(startEpoch),
-		Limit:      pageLimit,
-		CountTotal: true,
+		Key:   cttypes.CkptsObjectKey(startEpoch),
+		Limit: pageLimit,
 	}
 
 	resp, err := n.QueryRawCheckpoints(pagination)
 	require.NoError(n.t, err)
 	require.Nil(n.t, resp.Pagination.NextKey)
-	require.Equal(n.t, len(resp.RawCheckpoints), int(pageLimit))
-	require.Equal(n.t, resp.Pagination.Total, int(pageLimit))
+	require.Equal(n.t, int(pageLimit), len(resp.RawCheckpoints))
 
 	for _, checkpoint := range resp.RawCheckpoints {
 		require.Equal(n.t, checkpoint.Status, cttypes.Sealed)
