@@ -3,9 +3,12 @@ package keeper_test
 import (
 	"bytes"
 	"context"
+	"math"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
 
 	dg "github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
@@ -588,4 +591,108 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	if ed == nil || ed.Status != btcctypes.Finalized {
 		t.Errorf("Epoch Data missing of in unexpected state")
 	}
+}
+
+func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 20)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		tk := InitTestKeepers(t)
+		defaultParams := btcctypes.DefaultParams()
+		kDeep := defaultParams.BtcConfirmationDepth
+		wDeep := defaultParams.CheckpointFinalizationTimeout
+
+		numFinalizedEpochs := r.Intn(10) + 1
+		numConfirmedEpochs := r.Intn(5) + 1
+		numSubmittedEpochs := 1
+
+		finalizationDepth := math.MaxUint32
+		confirmationDepth := wDeep - 1
+		sumbissionDepth := kDeep - 1
+
+		numOfEpochs := numFinalizedEpochs + numConfirmedEpochs + numSubmittedEpochs
+
+		bestSumbissionInfos := make(map[uint64]uint64)
+
+		for i := 1; i <= numOfEpochs; i++ {
+			epoch := uint64(i)
+			raw, _ := dg.RandomRawCheckpointDataForEpoch(r, epoch)
+			numSubmissionsPerEpoch := r.Intn(3) + 1
+
+			for j := 1; j <= numSubmissionsPerEpoch; j++ {
+				numTx1 := uint32(r.Intn(30) + 10)
+				numTx2 := uint32(r.Intn(30) + 10)
+				blck1 := dg.CreateBlock(r, 0, numTx1, 1, raw.FirstPart)
+				blck2 := dg.CreateBlock(r, 0, numTx2, 2, raw.SecondPart)
+
+				msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
+
+				if epoch <= uint64(numFinalizedEpochs) {
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(finalizationDepth))
+					finalizationDepth = finalizationDepth - 1
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(finalizationDepth))
+
+					// first submission is always deepest one, and second block is the most recent one
+					if j == 1 {
+						bestSumbissionInfos[epoch] = uint64(finalizationDepth)
+					}
+					finalizationDepth = finalizationDepth - 1
+				} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(confirmationDepth))
+					confirmationDepth = confirmationDepth - 1
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(confirmationDepth))
+					// first submission is always deepest one, and second block is the most recent one
+					if j == 1 {
+						bestSumbissionInfos[epoch] = uint64(confirmationDepth)
+					}
+					confirmationDepth = confirmationDepth - 1
+				} else {
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(sumbissionDepth))
+					sumbissionDepth = sumbissionDepth - 1
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(sumbissionDepth))
+					// first submission is always deepest one, and second block is the most recent one
+					if j == 1 {
+						bestSumbissionInfos[epoch] = uint64(sumbissionDepth)
+					}
+					sumbissionDepth = sumbissionDepth - 1
+				}
+
+				_, err := tk.insertProofMsg(msg)
+				require.NoError(t, err, "failed to insert submission for epoch %d", epoch)
+			}
+		}
+
+		// Check that all epochs are in submitted state
+		for i := 1; i <= numOfEpochs; i++ {
+			epoch := uint64(i)
+			ed := tk.GetEpochData(epoch)
+			require.NotNil(t, ed)
+			require.Equal(t, ed.Status, btcctypes.Submitted)
+		}
+
+		// Fire up tip change callback. All epochs should reach their correct state
+		tk.onTipChange()
+
+		for i := 1; i <= numOfEpochs; i++ {
+			epoch := uint64(i)
+			ed := tk.GetEpochData(epoch)
+			require.NotNil(t, ed)
+
+			if epoch <= uint64(numFinalizedEpochs) {
+				require.Equal(t, ed.Status, btcctypes.Finalized)
+				// finalized epochs should have only best submission
+				require.Equal(t, len(ed.Key), 1)
+			} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
+				require.Equal(t, ed.Status, btcctypes.Confirmed)
+			} else {
+				require.Equal(t, ed.Status, btcctypes.Submitted)
+			}
+
+			bestSubInfo := tk.BTCCheckpoint.GetEpochBestSubmissionBtcInfo(tk.SdkCtx, ed)
+			require.NotNil(t, bestSubInfo)
+			expectedBestSubmissionDepth := bestSumbissionInfos[epoch]
+			require.Equal(t, bestSubInfo.SubmissionDepth(), expectedBestSubmissionDepth)
+		}
+	})
 }
