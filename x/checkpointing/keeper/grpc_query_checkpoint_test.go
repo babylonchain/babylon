@@ -67,12 +67,18 @@ func FuzzQueryRawCheckpoints(f *testing.F) {
 			require.NoError(t, err)
 		}
 
-		pagination := &query.PageRequest{Limit: uint64(len(checkpoints)), CountTotal: true}
+		startEpoch := checkpoints[0].Ckpt.EpochNum
+		endEpoch := checkpoints[len(checkpoints)-1].Ckpt.EpochNum
+		pageLimit := endEpoch - startEpoch + 1
+
+		pagination := &query.PageRequest{Key: types.CkptsObjectKey(startEpoch), Limit: pageLimit}
 		ckptResp, err := ckptKeeper.RawCheckpoints(sdkCtx, &types.QueryRawCheckpointsRequest{Pagination: pagination})
+		require.NoError(t, err)
+		require.Equal(t, int(pageLimit), len(ckptResp.RawCheckpoints))
+		require.Nil(t, ckptResp.Pagination.NextKey)
 		for i, ckpt := range ckptResp.RawCheckpoints {
 			require.Equal(t, checkpoints[i], ckpt)
 		}
-		require.NoError(t, err)
 	})
 }
 
