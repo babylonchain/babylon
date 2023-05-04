@@ -5222,6 +5222,246 @@ paths:
           format: uint64
       tags:
         - Query
+  /babylon/checkpointing/v1/raw_checkpoints:
+    get:
+      summary: >-
+        RawCheckpoints queries checkpoints for a epoch range specified in
+        pagination params.
+      operationId: RawCheckpoints
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              raw_checkpoints:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ckpt:
+                      type: object
+                      properties:
+                        epoch_num:
+                          type: string
+                          format: uint64
+                          title: >-
+                            epoch_num defines the epoch number the raw
+                            checkpoint is for
+                        last_commit_hash:
+                          type: string
+                          format: byte
+                          title: >-
+                            last_commit_hash defines the 'LastCommitHash' that
+                            individual BLS sigs are
+
+                            signed on
+                        bitmap:
+                          type: string
+                          format: byte
+                          title: >-
+                            bitmap defines the bitmap that indicates the signers
+                            of the BLS multi sig
+                        bls_multi_sig:
+                          type: string
+                          format: byte
+                          title: >-
+                            bls_multi_sig defines the multi sig that is
+                            aggregated from individual BLS
+
+                            sigs
+                      title: RawCheckpoint wraps the BLS multi sig with meta data
+                    status:
+                      type: string
+                      enum:
+                        - CKPT_STATUS_ACCUMULATING
+                        - CKPT_STATUS_SEALED
+                        - CKPT_STATUS_SUBMITTED
+                        - CKPT_STATUS_CONFIRMED
+                        - CKPT_STATUS_FINALIZED
+                      default: CKPT_STATUS_ACCUMULATING
+                      description: |-
+                        CheckpointStatus is the status of a checkpoint.
+
+                         - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
+                         - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
+                         - CKPT_STATUS_SUBMITTED: SUBMITTED defines a checkpoint that is included on BTC.
+                         - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
+                         - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
+                      title: status defines the status of the checkpoint
+                    bls_aggr_pk:
+                      type: string
+                      format: byte
+                      title: bls_aggr_pk defines the aggregated BLS public key
+                    power_sum:
+                      type: string
+                      format: uint64
+                      title: >-
+                        power_sum defines the accumulated voting power for the
+                        checkpoint
+                    lifecycle:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          state:
+                            type: string
+                            enum:
+                              - CKPT_STATUS_ACCUMULATING
+                              - CKPT_STATUS_SEALED
+                              - CKPT_STATUS_SUBMITTED
+                              - CKPT_STATUS_CONFIRMED
+                              - CKPT_STATUS_FINALIZED
+                            default: CKPT_STATUS_ACCUMULATING
+                            description: |-
+                              CheckpointStatus is the status of a checkpoint.
+
+                               - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
+                               - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
+                               - CKPT_STATUS_SUBMITTED: SUBMITTED defines a checkpoint that is included on BTC.
+                               - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
+                               - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
+                            title: >-
+                              state defines the event of a state transition
+                              towards this state
+                          block_height:
+                            type: string
+                            format: uint64
+                            title: >-
+                              block_height is the height of the Babylon block
+                              that triggers the state
+
+                              update
+                          block_time:
+                            type: string
+                            format: date-time
+                            title: >-
+                              block_time is the timestamp in the Babylon block
+                              that triggers the state
+
+                              update
+                        description: >-
+                          CheckpointStateUpdate defines a state transition on
+                          the checkpoint.
+                      description: >-
+                        lifecycle defines the lifecycle of this checkpoint,
+                        i.e., each state
+
+                        transition and the time (in both timestamp and block
+                        height) of this
+
+                        transition.
+                  description: >-
+                    RawCheckpointWithMeta wraps the raw checkpoint with meta
+                    data.
+                title: >-
+                  the order is going from the newest to oldest based on the
+                  epoch number
+              pagination:
+                description: pagination defines the pagination in the response.
+                type: object
+                properties:
+                  next_key:
+                    type: string
+                    format: byte
+                    description: |-
+                      next_key is the key to be passed to PageRequest.key to
+                      query the next page most efficiently. It will be empty if
+                      there are no more results.
+                  total:
+                    type: string
+                    format: uint64
+                    title: >-
+                      total is total number of results available if
+                      PageRequest.count_total
+
+                      was set, its value is undefined otherwise
+            description: >-
+              QueryRawCheckpointsResponse is the response type for the
+              Query/RawCheckpoints
+
+              RPC method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pagination.key
+          description: |-
+            key is a value returned in PageResponse.next_key to begin
+            querying the next page most efficiently. Only one of offset or key
+            should be set.
+          in: query
+          required: false
+          type: string
+          format: byte
+        - name: pagination.offset
+          description: >-
+            offset is a numeric offset that can be used when key is unavailable.
+
+            It is less efficient than using key. Only one of offset or key
+            should
+
+            be set.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          description: >-
+            limit is the total number of results to be returned in the result
+            page.
+
+            If left empty it will default to a value to be set by each app.
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.count_total
+          description: >-
+            count_total is set to true  to indicate that the result set should
+            include
+
+            a count of the total number of items available for pagination in
+            UIs.
+
+            count_total is only respected when offset is used. It is ignored
+            when key
+
+            is set.
+          in: query
+          required: false
+          type: boolean
+        - name: pagination.reverse
+          description: >-
+            reverse is set to true if results are to be returned in the
+            descending order.
+
+
+            Since: cosmos-sdk 0.43
+          in: query
+          required: false
+          type: boolean
+      tags:
+        - Query
   /babylon/checkpointing/v1/raw_checkpoints/{status}:
     get:
       summary: RawCheckpointList queries all checkpoints that match the given status.
@@ -14737,6 +14977,150 @@ definitions:
     description: >-
       QueryRawCheckpointResponse is the response type for the
       Query/RawCheckpoint
+
+      RPC method.
+  babylon.checkpointing.v1.QueryRawCheckpointsResponse:
+    type: object
+    properties:
+      raw_checkpoints:
+        type: array
+        items:
+          type: object
+          properties:
+            ckpt:
+              type: object
+              properties:
+                epoch_num:
+                  type: string
+                  format: uint64
+                  title: epoch_num defines the epoch number the raw checkpoint is for
+                last_commit_hash:
+                  type: string
+                  format: byte
+                  title: >-
+                    last_commit_hash defines the 'LastCommitHash' that
+                    individual BLS sigs are
+
+                    signed on
+                bitmap:
+                  type: string
+                  format: byte
+                  title: >-
+                    bitmap defines the bitmap that indicates the signers of the
+                    BLS multi sig
+                bls_multi_sig:
+                  type: string
+                  format: byte
+                  title: >-
+                    bls_multi_sig defines the multi sig that is aggregated from
+                    individual BLS
+
+                    sigs
+              title: RawCheckpoint wraps the BLS multi sig with meta data
+            status:
+              type: string
+              enum:
+                - CKPT_STATUS_ACCUMULATING
+                - CKPT_STATUS_SEALED
+                - CKPT_STATUS_SUBMITTED
+                - CKPT_STATUS_CONFIRMED
+                - CKPT_STATUS_FINALIZED
+              default: CKPT_STATUS_ACCUMULATING
+              description: |-
+                CheckpointStatus is the status of a checkpoint.
+
+                 - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
+                 - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
+                 - CKPT_STATUS_SUBMITTED: SUBMITTED defines a checkpoint that is included on BTC.
+                 - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
+                 - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
+              title: status defines the status of the checkpoint
+            bls_aggr_pk:
+              type: string
+              format: byte
+              title: bls_aggr_pk defines the aggregated BLS public key
+            power_sum:
+              type: string
+              format: uint64
+              title: >-
+                power_sum defines the accumulated voting power for the
+                checkpoint
+            lifecycle:
+              type: array
+              items:
+                type: object
+                properties:
+                  state:
+                    type: string
+                    enum:
+                      - CKPT_STATUS_ACCUMULATING
+                      - CKPT_STATUS_SEALED
+                      - CKPT_STATUS_SUBMITTED
+                      - CKPT_STATUS_CONFIRMED
+                      - CKPT_STATUS_FINALIZED
+                    default: CKPT_STATUS_ACCUMULATING
+                    description: |-
+                      CheckpointStatus is the status of a checkpoint.
+
+                       - CKPT_STATUS_ACCUMULATING: ACCUMULATING defines a checkpoint that is awaiting for BLS signatures.
+                       - CKPT_STATUS_SEALED: SEALED defines a checkpoint that has accumulated sufficient BLS signatures.
+                       - CKPT_STATUS_SUBMITTED: SUBMITTED defines a checkpoint that is included on BTC.
+                       - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
+                       - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
+                    title: >-
+                      state defines the event of a state transition towards this
+                      state
+                  block_height:
+                    type: string
+                    format: uint64
+                    title: >-
+                      block_height is the height of the Babylon block that
+                      triggers the state
+
+                      update
+                  block_time:
+                    type: string
+                    format: date-time
+                    title: >-
+                      block_time is the timestamp in the Babylon block that
+                      triggers the state
+
+                      update
+                description: >-
+                  CheckpointStateUpdate defines a state transition on the
+                  checkpoint.
+              description: >-
+                lifecycle defines the lifecycle of this checkpoint, i.e., each
+                state
+
+                transition and the time (in both timestamp and block height) of
+                this
+
+                transition.
+          description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+        title: the order is going from the newest to oldest based on the epoch number
+      pagination:
+        description: pagination defines the pagination in the response.
+        type: object
+        properties:
+          next_key:
+            type: string
+            format: byte
+            description: |-
+              next_key is the key to be passed to PageRequest.key to
+              query the next page most efficiently. It will be empty if
+              there are no more results.
+          total:
+            type: string
+            format: uint64
+            title: >-
+              total is total number of results available if
+              PageRequest.count_total
+
+              was set, its value is undefined otherwise
+    description: >-
+      QueryRawCheckpointsResponse is the response type for the
+      Query/RawCheckpoints
 
       RPC method.
   babylon.checkpointing.v1.QueryRecentEpochStatusCountResponse:

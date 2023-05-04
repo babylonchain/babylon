@@ -23,7 +23,6 @@ func (s *IntegrationTestSuite) TestConnectIbc() {
 
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	chainA := s.configurer.GetChainConfig(0)
-
 	chainA.WaitUntilHeight(35)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -42,7 +41,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 
-	endEpoch, err := nonValidatorNode.QueryCheckpointForEpoch(endEpochNum)
+	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
 	s.Equal(endEpoch.Status, ct.Finalized)
 

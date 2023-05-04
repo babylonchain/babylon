@@ -2,14 +2,17 @@ package chain
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/types/query"
 
 	tmabcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -142,7 +145,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*tmabcitypes.Snapshot, error) {
 // 	return contractsResponse.Contracts, nil
 // }
 
-func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
+func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
@@ -153,6 +156,24 @@ func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWit
 	}
 
 	return checkpointingResponse.RawCheckpoint, nil
+}
+
+func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.QueryRawCheckpointsResponse, error) {
+	queryParams := url.Values{}
+	if pagination != nil {
+		queryParams.Set("pagination.key", base64.URLEncoding.EncodeToString(pagination.Key))
+		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
+	}
+
+	bz, err := n.QueryGRPCGateway("babylon/checkpointing/v1/raw_checkpoints", queryParams)
+	require.NoError(n.t, err)
+
+	var checkpointingResponse ct.QueryRawCheckpointsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &checkpointingResponse); err != nil {
+		return nil, err
+	}
+
+	return &checkpointingResponse, nil
 }
 
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {

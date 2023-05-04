@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -58,6 +59,29 @@ func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpoint
 	}
 
 	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
+}
+
+// RawCheckpoints returns checkpoints for given epoch range specified in pagination params
+func (k Keeper) RawCheckpoints(ctx context.Context, req *types.QueryRawCheckpointsRequest) (*types.QueryRawCheckpointsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	store := k.CheckpointsState(sdkCtx).checkpoints
+
+	var checkpointList []*types.RawCheckpointWithMeta
+	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+		var ckptWithMeta types.RawCheckpointWithMeta
+		k.cdc.MustUnmarshal(value, &ckptWithMeta)
+		checkpointList = append(checkpointList, &ckptWithMeta)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryRawCheckpointsResponse{RawCheckpoints: checkpointList, Pagination: pageRes}, nil
 }
 
 // EpochStatus returns the status of the checkpoint at a given epoch

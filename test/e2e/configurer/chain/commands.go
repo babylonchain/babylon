@@ -7,9 +7,12 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+
+	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
+
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/types/bech32"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
@@ -97,50 +100,46 @@ func (n *NodeConfig) InsertProofs(p1 *btccheckpointtypes.BTCSpvProof, p2 *btcche
 	n.LogActionF("successfully inserted btc spv proofs")
 }
 
-func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64) {
-	n.LogActionF("start finalizing epoch starting from  %d", startingEpoch)
+func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
+	n.LogActionF("start finalizing epochs from  %d to %d", startEpoch, lastEpoch)
 	// Random source for the generation of BTC data
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	madeProgress := false
-	currEpoch := startingEpoch
-	for {
-		if currEpoch > lastEpoch {
-			break
-		}
 
-		checkpoint, err := n.QueryCheckpointForEpoch(currEpoch)
+	pageLimit := lastEpoch - startEpoch + 1
+	pagination := &sdkquerytypes.PageRequest{
+		Key:   cttypes.CkptsObjectKey(startEpoch),
+		Limit: pageLimit,
+	}
 
-		require.NoError(n.t, err)
+	resp, err := n.QueryRawCheckpoints(pagination)
+	require.NoError(n.t, err)
+	require.Equal(n.t, int(pageLimit), len(resp.RawCheckpoints))
 
-		// can only finalize sealed checkpoints
-		if checkpoint.Status != cttypes.Sealed {
-			return
-		}
+	for _, checkpoint := range resp.RawCheckpoints {
+		require.Equal(n.t, checkpoint.Status, cttypes.Sealed)
 
 		currentBtcTip, err := n.QueryTip()
-
 		require.NoError(n.t, err)
 
 		_, c, err := bech32.DecodeAndConvert(n.PublicAddress)
-
 		require.NoError(n.t, err)
 
 		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, c)
-
 		require.NoError(n.t, err)
 
-		babylonTagBytes, _ := hex.DecodeString(initialization.BabylonOpReturnTag)
+		babylonTagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
+		require.NoError(n.t, err)
+
 		p1, p2, err := txformat.EncodeCheckpointData(
-			txformat.BabylonTag(babylonTagBytes),
+			babylonTagBytes,
 			txformat.CurrentVersion,
 			btcCheckpoint,
 		)
-
 		require.NoError(n.t, err)
 
 		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), p1)
-
 		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), p2)
 
 		n.InsertHeader(&opReturn1.HeaderBytes)
@@ -148,13 +147,12 @@ func (n *NodeConfig) FinalizeSealedEpochs(startingEpoch uint64, lastEpoch uint64
 		n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
 
 		n.WaitForCondition(func() bool {
-			ckpt, err := n.QueryCheckpointForEpoch(currEpoch)
+			ckpt, err := n.QueryRawCheckpoint(checkpoint.Ckpt.EpochNum)
 			require.NoError(n.t, err)
 			return ckpt.Status == cttypes.Submitted
 		}, "Checkpoint should be submitted ")
 
 		madeProgress = true
-		currEpoch++
 	}
 
 	if madeProgress {
