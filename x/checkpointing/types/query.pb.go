@@ -843,7 +843,7 @@ type QueryClient interface {
 	RawCheckpointList(ctx context.Context, in *QueryRawCheckpointListRequest, opts ...grpc.CallOption) (*QueryRawCheckpointListResponse, error)
 	// RawCheckpoint queries a checkpoints at a given epoch number.
 	RawCheckpoint(ctx context.Context, in *QueryRawCheckpointRequest, opts ...grpc.CallOption) (*QueryRawCheckpointResponse, error)
-	// RawCheckpoints queries a checkpoints at a given epoch number.
+	// RawCheckpoints queries checkpoints for a epoch range specified in pagination params.
 	RawCheckpoints(ctx context.Context, in *QueryRawCheckpointsRequest, opts ...grpc.CallOption) (*QueryRawCheckpointsResponse, error)
 	// BlsPublicKeyList queries a list of bls public keys of the validators at a
 	// given epoch number.
@@ -935,7 +935,7 @@ type QueryServer interface {
 	RawCheckpointList(context.Context, *QueryRawCheckpointListRequest) (*QueryRawCheckpointListResponse, error)
 	// RawCheckpoint queries a checkpoints at a given epoch number.
 	RawCheckpoint(context.Context, *QueryRawCheckpointRequest) (*QueryRawCheckpointResponse, error)
-	// RawCheckpoints queries a checkpoints at a given epoch number.
+	// RawCheckpoints queries checkpoints for a epoch range specified in pagination params.
 	RawCheckpoints(context.Context, *QueryRawCheckpointsRequest) (*QueryRawCheckpointsResponse, error)
 	// BlsPublicKeyList queries a list of bls public keys of the validators at a
 	// given epoch number.

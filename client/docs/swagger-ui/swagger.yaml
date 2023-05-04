@@ -5224,7 +5224,9 @@ paths:
         - Query
   /babylon/checkpointing/v1/raw_checkpoints:
     get:
-      summary: RawCheckpoints queries a checkpoints at a given epoch number.
+      summary: >-
+        RawCheckpoints queries checkpoints for a epoch range specified in
+        pagination params.
       operationId: RawCheckpoints
       responses:
         '200':
