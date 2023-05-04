@@ -24,7 +24,7 @@ service Query {
         "/babylon/checkpointing/v1/raw_checkpoint/{epoch_num}";
   }
 
-  // RawCheckpoints queries a checkpoints at a given epoch number.
+  // RawCheckpoints queries checkpoints for a epoch range specified in pagination params.
   rpc RawCheckpoints(QueryRawCheckpointsRequest)
       returns (QueryRawCheckpointsResponse) {
     option (google.api.http).get =
