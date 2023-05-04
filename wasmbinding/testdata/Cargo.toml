@@ -7,7 +7,5 @@ edition = "2021"
 [lib]
 crate-type = ["cdylib", "rlib"]
 
-# TODO for now we use main branch, we should change it to some release
-# branches or tags when api will be more stable
 [dependencies]
-babylon-example = { git = "https://github.com/babylonchain/bindings", branch = "main" }
+babylon-example = { git = "https://github.com/babylonchain/bindings", tag = "v0.1.0" }
