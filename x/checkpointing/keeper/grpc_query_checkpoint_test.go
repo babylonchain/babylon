@@ -58,6 +58,7 @@ func FuzzQueryRawCheckpoints(f *testing.F) {
 		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
+		// add a random number of checkpoints
 		checkpoints := datagen.GenRandomSequenceRawCheckpointsWithMeta(r)
 		for _, ckpt := range checkpoints {
 			err := ckptKeeper.AddRawCheckpoint(
@@ -67,6 +68,7 @@ func FuzzQueryRawCheckpoints(f *testing.F) {
 			require.NoError(t, err)
 		}
 
+		// test querying raw checkpoints with epoch range in pagination params
 		startEpoch := checkpoints[0].Ckpt.EpochNum
 		endEpoch := checkpoints[len(checkpoints)-1].Ckpt.EpochNum
 		pageLimit := endEpoch - startEpoch + 1
