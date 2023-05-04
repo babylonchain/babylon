@@ -2,6 +2,7 @@ package chain
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -144,7 +145,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*tmabcitypes.Snapshot, error) {
 // 	return contractsResponse.Contracts, nil
 // }
 
-func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
+func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
@@ -157,9 +158,11 @@ func (n *NodeConfig) QueryCheckpointForEpoch(epoch uint64) (*ct.RawCheckpointWit
 	return checkpointingResponse.RawCheckpoint, nil
 }
 
-func (n *NodeConfig) QueryCheckpointForEpochs(pagination *query.PageRequest) (*ct.QueryRawCheckpointsResponse, error) {
+func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.QueryRawCheckpointsResponse, error) {
 	queryParams := url.Values{
-		"pagination.limit": {strconv.Itoa(int(pagination.Limit))},
+		"pagination.key":         {base64.URLEncoding.EncodeToString(pagination.Key)},
+		"pagination.limit":       {strconv.Itoa(int(pagination.Limit))},
+		"pagination.count_total": {strconv.FormatBool(pagination.CountTotal)},
 	}
 	bz, err := n.QueryGRPCGateway("babylon/checkpointing/v1/raw_checkpoints", queryParams)
 	require.NoError(n.t, err)

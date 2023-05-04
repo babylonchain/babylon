@@ -41,7 +41,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 
-	endEpoch, err := nonValidatorNode.QueryCheckpointForEpoch(endEpochNum)
+	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
 	s.Equal(endEpoch.Status, ct.Finalized)
 

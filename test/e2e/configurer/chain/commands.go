@@ -107,12 +107,18 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 
 	madeProgress := false
 
+	pageLimit := lastEpoch - startEpoch + 1
 	pagination := &sdkquerytypes.PageRequest{
-		Key:   cttypes.CkptsObjectKey(startEpoch),
-		Limit: lastEpoch - startEpoch + 1,
+		Key:        cttypes.CkptsObjectKey(startEpoch),
+		Limit:      pageLimit,
+		CountTotal: true,
 	}
-	resp, err := n.QueryCheckpointForEpochs(pagination)
+
+	resp, err := n.QueryRawCheckpoints(pagination)
 	require.NoError(n.t, err)
+	require.Nil(n.t, resp.Pagination.NextKey)
+	require.Equal(n.t, len(resp.RawCheckpoints), int(pageLimit))
+	require.Equal(n.t, resp.Pagination.Total, int(pageLimit))
 
 	for _, checkpoint := range resp.RawCheckpoints {
 		require.Equal(n.t, checkpoint.Status, cttypes.Sealed)
@@ -144,7 +150,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		n.InsertProofs(opReturn1.SpvProof, opReturn2.SpvProof)
 
 		n.WaitForCondition(func() bool {
-			ckpt, err := n.QueryCheckpointForEpoch(checkpoint.Ckpt.EpochNum)
+			ckpt, err := n.QueryRawCheckpoint(checkpoint.Ckpt.EpochNum)
 			require.NoError(n.t, err)
 			return ckpt.Status == cttypes.Submitted
 		}, "Checkpoint should be submitted ")
