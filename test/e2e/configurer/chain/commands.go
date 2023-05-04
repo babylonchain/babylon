@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 
-	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -109,7 +108,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 	madeProgress := false
 
 	pagination := &sdkquerytypes.PageRequest{
-		Key:   sdktypes.Uint64ToBigEndian(startEpoch),
+		Key:   cttypes.CkptsObjectKey(startEpoch),
 		Limit: lastEpoch - startEpoch + 1,
 	}
 	resp, err := n.QueryCheckpointForEpochs(pagination)
