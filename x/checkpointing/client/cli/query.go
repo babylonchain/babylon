@@ -103,7 +103,7 @@ func CmdRawCheckpoint() *cobra.Command {
 func CmdRawCheckpoints() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "raw-checkpoints",
-		Short: "retrieve the checkpoints",
+		Short: "retrieve the checkpoints for a epoch range",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
