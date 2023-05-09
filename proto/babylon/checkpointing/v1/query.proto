@@ -24,6 +24,13 @@ service Query {
         "/babylon/checkpointing/v1/raw_checkpoint/{epoch_num}";
   }
 
+  // RawCheckpoints queries checkpoints for a epoch range specified in pagination params.
+  rpc RawCheckpoints(QueryRawCheckpointsRequest)
+      returns (QueryRawCheckpointsResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/raw_checkpoints";
+  }
+
   // BlsPublicKeyList queries a list of bls public keys of the validators at a
   // given epoch number.
   rpc BlsPublicKeyList(QueryBlsPublicKeyListRequest)
@@ -85,6 +92,24 @@ message QueryRawCheckpointRequest {
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
 message QueryRawCheckpointResponse { RawCheckpointWithMeta raw_checkpoint = 1; }
+
+
+// QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsRequest {
+  // pagination defines whether to have the pagination in the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryRawCheckpointsResponse is the response type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsResponse {
+  // the order is going from the newest to oldest based on the epoch number
+  repeated RawCheckpointWithMeta raw_checkpoints = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
 
 // QueryBlsPublicKeyListRequest is the request type for the Query/BlsPublicKeys
 // RPC method.

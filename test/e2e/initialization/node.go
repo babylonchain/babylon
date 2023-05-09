@@ -131,7 +131,6 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
 	appConfig.SignerConfig.KeyName = ValidatorWalletName
 	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
-	appConfig.BtcConfig.CheckpointTag = BabylonOpReturnTag
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = "0.0.0.0:9090"
 
@@ -308,6 +307,8 @@ func (n *internalNode) init() error {
 	genDoc.ChainID = n.chain.chainMeta.Id
 	genDoc.Validators = nil
 	genDoc.AppState = appState
+	genDoc.ConsensusParams = tmtypes.DefaultConsensusParams()
+	genDoc.ConsensusParams.Block.MaxGas = babylonApp.DefaultGasLimit
 
 	if err = genutil.ExportGenesisFile(genDoc, config.GenesisFile()); err != nil {
 		return fmt.Errorf("failed to export app genesis state: %w", err)

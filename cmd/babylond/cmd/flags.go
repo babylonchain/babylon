@@ -1,10 +1,13 @@
 package cmd
 
 import (
+	"time"
+
+	babylonApp "github.com/babylonchain/babylon/app"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 const (
@@ -12,6 +15,7 @@ const (
 	flagBtcConfirmationDepth   = "btc-confirmation-depth"
 	flagEpochInterval          = "epoch-interval"
 	flagBtcFinalizationTimeout = "btc-finalization-timeout"
+	flagCheckpointTag          = "checkpoint-tag"
 	flagBaseBtcHeaderHex       = "btc-base-header"
 	flagBaseBtcHeaderHeight    = "btc-base-header-height"
 	flagInflationRateChange    = "inflation-rate-change"
@@ -20,6 +24,7 @@ const (
 	flagGoalBonded             = "goal-bonded"
 	flagBlocksPerYear          = "blocks-per-year"
 	flagGenesisTime            = "genesis-time"
+	flagBlockGasLimit          = "block-gas-limit"
 )
 
 type GenesisCLIArgs struct {
@@ -27,6 +32,7 @@ type GenesisCLIArgs struct {
 	MaxActiveValidators    uint32
 	BtcConfirmationDepth   uint64
 	BtcFinalizationTimeout uint64
+	CheckpointTag          string
 	EpochInterval          uint64
 	BaseBtcHeaderHex       string
 	BaseBtcHeaderHeight    uint64
@@ -36,6 +42,7 @@ type GenesisCLIArgs struct {
 	GoalBonded             float64
 	BlocksPerYear          uint64
 	GenesisTime            time.Time
+	BlockGasLimit          int64
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -45,6 +52,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// btccheckpoint flags
 	cmd.Flags().Uint64(flagBtcConfirmationDepth, 6, "Confirmation depth for Bitcoin headers.")
 	cmd.Flags().Uint64(flagBtcFinalizationTimeout, 20, "Finalization timeout for Bitcoin headers.")
+	cmd.Flags().String(flagCheckpointTag, btcctypes.DefaultCheckpointTag, "Hex encoded tag for babylon checkpoint on btc")
 	// epoch args
 	cmd.Flags().Uint64(flagEpochInterval, 400, "Number of blocks between epochs. Must be more than 0.")
 	// btclightclient args
@@ -57,6 +65,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Float64(flagGoalBonded, 0.67, "Bonded tokens goal")
 	cmd.Flags().Uint64(flagBlocksPerYear, 6311520, "Blocks per year")
 	cmd.Flags().Int64(flagGenesisTime, time.Now().Unix(), "Genesis time")
+	cmd.Flags().Int64(flagBlockGasLimit, babylonApp.DefaultGasLimit, "Block gas limit")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
@@ -64,6 +73,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	maxActiveValidators, _ := cmd.Flags().GetUint32(flagMaxActiveValidators)
 	btcConfirmationDepth, _ := cmd.Flags().GetUint64(flagBtcConfirmationDepth)
 	btcFinalizationTimeout, _ := cmd.Flags().GetUint64(flagBtcFinalizationTimeout)
+	checkpointTag, _ := cmd.Flags().GetString(flagCheckpointTag)
 	epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 	baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
 	baseBtcHeaderHeight, _ := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
@@ -73,6 +83,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	inflationMin, _ := cmd.Flags().GetFloat64(flagInflationMin)
 	goalBonded, _ := cmd.Flags().GetFloat64(flagGoalBonded)
 	blocksPerYear, _ := cmd.Flags().GetUint64(flagBlocksPerYear)
+	blockGasLimit, _ := cmd.Flags().GetInt64(flagBlockGasLimit)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
@@ -85,6 +96,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		MaxActiveValidators:    maxActiveValidators,
 		BtcConfirmationDepth:   btcConfirmationDepth,
 		BtcFinalizationTimeout: btcFinalizationTimeout,
+		CheckpointTag:          checkpointTag,
 		EpochInterval:          epochInterval,
 		BaseBtcHeaderHeight:    baseBtcHeaderHeight,
 		BaseBtcHeaderHex:       baseBtcHeaderHex,
@@ -94,5 +106,6 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		InflationMin:           inflationMin,
 		GoalBonded:             goalBonded,
 		BlocksPerYear:          blocksPerYear,
+		BlockGasLimit:          blockGasLimit,
 	}
 }

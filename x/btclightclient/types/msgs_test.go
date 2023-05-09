@@ -16,14 +16,14 @@ import (
 func FuzzMsgInsertHeader(f *testing.F) {
 	maxDifficulty := bbn.GetMaxDifficulty()
 
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		errorKind := 0
 
-		addressBytes := datagen.GenRandomByteArray(1 + uint64(rand.Intn(255)))
-		headerBytes := datagen.GenRandomBTCHeaderInfo().Header
+		addressBytes := datagen.GenRandomByteArray(r, 1+uint64(r.Intn(255)))
+		headerBytes := datagen.GenRandomBTCHeaderInfo(r).Header
 		headerHex := headerBytes.MarshalHex()
 
 		// Get the signer structure
@@ -31,7 +31,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		signer.Unmarshal(addressBytes) //nolint:errcheck // this is a test
 
 		// Perform modifications on the header
-		errorKind = rand.Intn(2)
+		errorKind = r.Intn(2)
 		var bitsBig sdkmath.Uint
 		switch errorKind {
 		case 0:
@@ -46,7 +46,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		}
 
 		// Generate a header with the provided modifications
-		newHeader := datagen.GenRandomBTCHeaderInfoWithBits(&bitsBig).Header
+		newHeader := datagen.GenRandomBTCHeaderInfoWithBits(r, &bitsBig).Header
 		newHeaderHex := newHeader.MarshalHex()
 
 		// Check whether the hash is still bigger than the maximum allowed

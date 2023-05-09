@@ -13,8 +13,8 @@ import (
 
 // GenRandomBitmap generates a random bitmap for the validator set
 // It returns a random bitmap and the number of validators in the subset
-func GenRandomBitmap() (bitmap.Bitmap, int) {
-	bmBytes := GenRandomByteArray(txformat.BitMapLength)
+func GenRandomBitmap(r *rand.Rand) (bitmap.Bitmap, int) {
+	bmBytes := GenRandomByteArray(r, txformat.BitMapLength)
 	bm := bitmap.Bitmap(bmBytes)
 	numSubset := 0
 	for i := 0; i < bm.Len(); i++ {
@@ -25,31 +25,31 @@ func GenRandomBitmap() (bitmap.Bitmap, int) {
 	return bm, numSubset
 }
 
-func GetRandomRawBtcCheckpoint() *btctxformatter.RawBtcCheckpoint {
-	rawCkpt := GenRandomRawCheckpoint()
+func GetRandomRawBtcCheckpoint(r *rand.Rand) *btctxformatter.RawBtcCheckpoint {
+	rawCkpt := GenRandomRawCheckpoint(r)
 	return &btctxformatter.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
 		LastCommitHash:   *rawCkpt.LastCommitHash,
 		BitMap:           rawCkpt.Bitmap,
-		SubmitterAddress: GenRandomByteArray(btctxformatter.AddressLength),
+		SubmitterAddress: GenRandomByteArray(r, btctxformatter.AddressLength),
 		BlsSig:           rawCkpt.BlsMultiSig.Bytes(),
 	}
 }
 
-func GenRandomRawCheckpointWithMeta() *types.RawCheckpointWithMeta {
+func GenRandomRawCheckpointWithMeta(r *rand.Rand) *types.RawCheckpointWithMeta {
 	ckptWithMeta := &types.RawCheckpointWithMeta{
-		Ckpt:     GenRandomRawCheckpoint(),
-		Status:   GenRandomStatus(),
+		Ckpt:     GenRandomRawCheckpoint(r),
+		Status:   GenRandomStatus(r),
 		PowerSum: 0,
 	}
 	return ckptWithMeta
 }
 
-func GenRandomRawCheckpoint() *types.RawCheckpoint {
-	randomHashBytes := GenRandomLastCommitHash()
-	randomBLSSig := GenRandomBlsMultiSig()
+func GenRandomRawCheckpoint(r *rand.Rand) *types.RawCheckpoint {
+	randomHashBytes := GenRandomLastCommitHash(r)
+	randomBLSSig := GenRandomBlsMultiSig(r)
 	return &types.RawCheckpoint{
-		EpochNum:       GenRandomEpochNum(),
+		EpochNum:       GenRandomEpochNum(r),
 		LastCommitHash: &randomHashBytes,
 		Bitmap:         bitmap.New(types.BitmapBits),
 		BlsMultiSig:    &randomBLSSig,
@@ -57,20 +57,23 @@ func GenRandomRawCheckpoint() *types.RawCheckpoint {
 }
 
 // GenRandomSequenceRawCheckpointsWithMeta generates random checkpoints from epoch 0 to a random epoch
-func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
+func GenRandomSequenceRawCheckpointsWithMeta(r *rand.Rand) []*types.RawCheckpointWithMeta {
 	var topEpoch, finalEpoch uint64
-	epoch1 := GenRandomEpochNum()
-	epoch2 := GenRandomEpochNum()
+	epoch1 := GenRandomEpochNum(r)
+	epoch2 := GenRandomEpochNum(r)
 	if epoch1 > epoch2 {
 		topEpoch = epoch1
 		finalEpoch = epoch2
-	} else {
+	} else if epoch1 < epoch2 {
 		topEpoch = epoch2
 		finalEpoch = epoch1
+	} else { // In the case they are equal, make the topEpoch one more
+		topEpoch = epoch1 + 1
+		finalEpoch = epoch2
 	}
 	var checkpoints []*types.RawCheckpointWithMeta
 	for e := uint64(0); e <= topEpoch; e++ {
-		ckpt := GenRandomRawCheckpointWithMeta()
+		ckpt := GenRandomRawCheckpointWithMeta(r)
 		ckpt.Ckpt.EpochNum = e
 		if e <= finalEpoch {
 			ckpt.Status = types.Finalized
@@ -81,10 +84,10 @@ func GenRandomSequenceRawCheckpointsWithMeta() []*types.RawCheckpointWithMeta {
 	return checkpoints
 }
 
-func GenSequenceRawCheckpointsWithMeta(tipEpoch uint64) []*types.RawCheckpointWithMeta {
+func GenSequenceRawCheckpointsWithMeta(r *rand.Rand, tipEpoch uint64) []*types.RawCheckpointWithMeta {
 	ckpts := make([]*types.RawCheckpointWithMeta, int(tipEpoch)+1)
 	for e := uint64(0); e <= tipEpoch; e++ {
-		ckpt := GenRandomRawCheckpointWithMeta()
+		ckpt := GenRandomRawCheckpointWithMeta(r)
 		ckpt.Ckpt.EpochNum = e
 		ckpts[int(e)] = ckpt
 	}
@@ -101,13 +104,13 @@ func GenerateBLSSigs(keys []bls12381.PrivateKey, msg []byte) []bls12381.Signatur
 	return sigs
 }
 
-func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawCheckpoint {
+func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKey) *types.RawCheckpoint {
 	// number of validators, at least 4
 	n := len(privKeys)
 	// ensure sufficient signers
 	signerNum := n/3 + 1
-	epochNum := GenRandomEpochNum()
-	lch := GenRandomLastCommitHash()
+	epochNum := GenRandomEpochNum(r)
+	lch := GenRandomLastCommitHash(r)
 	msgBytes := types.GetSignBytes(epochNum, lch)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
@@ -125,15 +128,15 @@ func GenerateLegitimateRawCheckpoint(privKeys []bls12381.PrivateKey) *types.RawC
 	return btcCheckpoint
 }
 
-func GenRandomLastCommitHash() types.LastCommitHash {
-	return GenRandomByteArray(types.HashSize)
+func GenRandomLastCommitHash(r *rand.Rand) types.LastCommitHash {
+	return GenRandomByteArray(r, types.HashSize)
 }
 
-func GenRandomBlsMultiSig() bls12381.Signature {
-	return GenRandomByteArray(bls12381.SignatureSize)
+func GenRandomBlsMultiSig(r *rand.Rand) bls12381.Signature {
+	return GenRandomByteArray(r, bls12381.SignatureSize)
 }
 
 // GenRandomStatus generates random status except for Finalized
-func GenRandomStatus() types.CheckpointStatus {
-	return types.CheckpointStatus(rand.Int31n(int32(len(types.CheckpointStatus_name) - 1)))
+func GenRandomStatus(r *rand.Rand) types.CheckpointStatus {
+	return types.CheckpointStatus(r.Int31n(int32(len(types.CheckpointStatus_name) - 1)))
 }

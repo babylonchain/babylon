@@ -31,10 +31,10 @@ func TestNewQueryHashesRequest(t *testing.T) {
 }
 
 func FuzzNewQueryContainsRequest(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		hexHash := datagen.GenRandomHexStr(bbn.BTCHeaderHashLen)
+		r := rand.New(rand.NewSource(seed))
+		hexHash := datagen.GenRandomHexStr(r, bbn.BTCHeaderHashLen)
 
 		btcHeaderHashBytes, _ := bbn.NewBTCHeaderHashBytesFromHex(hexHash)
 

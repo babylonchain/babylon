@@ -15,11 +15,11 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/btcsuite/btcd/btcutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -164,14 +164,9 @@ func createCoinbaseTx(blockHeight int32, params *chaincfg.Params) *wire.MsgTx {
 	return tx
 }
 
-func uniqueOpReturnScript() []byte {
-	rand, err := wire.RandomUint64()
-	if err != nil {
-		panic(err)
-	}
-
+func uniqueOpReturnScript(r *rand.Rand) []byte {
 	data := make([]byte, 8)
-	binary.LittleEndian.PutUint64(data[0:8], rand)
+	binary.LittleEndian.PutUint64(data[0:8], r.Uint64())
 	return opReturnScript(data)
 }
 
@@ -180,11 +175,11 @@ type spendableOut struct {
 	amount  btcutil.Amount
 }
 
-func randOutPoint() wire.OutPoint {
-	hash, _ := chainhash.NewHash(GenRandomByteArray(chainhash.HashSize))
+func randOutPoint(r *rand.Rand) wire.OutPoint {
+	hash, _ := chainhash.NewHash(GenRandomByteArray(r, chainhash.HashSize))
 	// TODO this will be deterministic without seed but for now it is not that
 	// important
-	idx := rand.Uint32()
+	idx := r.Uint32()
 
 	return wire.OutPoint{
 		Hash:  *hash,
@@ -192,8 +187,8 @@ func randOutPoint() wire.OutPoint {
 	}
 }
 
-func makeSpendableOutWithRandOutPoint(amount btcutil.Amount) spendableOut {
-	out := randOutPoint()
+func makeSpendableOutWithRandOutPoint(r *rand.Rand, amount btcutil.Amount) spendableOut {
+	out := randOutPoint(r)
 
 	return spendableOut{
 		prevOut: out,
@@ -201,7 +196,7 @@ func makeSpendableOutWithRandOutPoint(amount btcutil.Amount) spendableOut {
 	}
 }
 
-func createSpendTx(spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
+func createSpendTx(r *rand.Rand, spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
 	spendTx := wire.NewMsgTx(int32(tranasctionVersion))
 	spendTx.AddTxIn(&wire.TxIn{
 		PreviousOutPoint: spend.prevOut,
@@ -212,7 +207,7 @@ func createSpendTx(spend *spendableOut, fee btcutil.Amount) *wire.MsgTx {
 		opTrueScript))
 	// uniqueOpReturnScript is needed so that each transactions is different have
 	// different hash
-	spendTx.AddTxOut(wire.NewTxOut(0, uniqueOpReturnScript()))
+	spendTx.AddTxOut(wire.NewTxOut(0, uniqueOpReturnScript(r)))
 
 	return spendTx
 }
@@ -231,8 +226,8 @@ func createSpendOpReturnTx(spend *spendableOut, fee btcutil.Amount, data []byte)
 	return spendTx
 }
 
-func CreatOpReturnTransaction(babylonData []byte) *wire.MsgTx {
-	out := makeSpendableOutWithRandOutPoint(1000)
+func CreatOpReturnTransaction(r *rand.Rand, babylonData []byte) *wire.MsgTx {
+	out := makeSpendableOutWithRandOutPoint(r, 1000)
 	tx := createSpendOpReturnTx(&out, lowFee, babylonData)
 	return tx
 }
@@ -244,6 +239,7 @@ type BlockCreationResult struct {
 }
 
 func CreateBlock(
+	r *rand.Rand,
 	height uint32,
 	numTx uint32,
 	babylonOpReturnIdx uint32,
@@ -261,17 +257,17 @@ func CreateBlock(
 			tx := createCoinbaseTx(int32(height), &chaincfg.SimNetParams)
 			transactions = append(transactions, tx)
 		} else if i == babylonOpReturnIdx {
-			out := makeSpendableOutWithRandOutPoint(1000)
+			out := makeSpendableOutWithRandOutPoint(r, 1000)
 			tx := createSpendOpReturnTx(&out, lowFee, babylonData)
 			transactions = append(transactions, tx)
 		} else {
-			out := makeSpendableOutWithRandOutPoint(1000)
-			tx := createSpendTx(&out, lowFee)
+			out := makeSpendableOutWithRandOutPoint(r, 1000)
+			tx := createSpendTx(r, &out, lowFee)
 			transactions = append(transactions, tx)
 		}
 	}
 
-	btcHeader := GenRandomBtcdHeader()
+	btcHeader := GenRandomBtcdHeader(r)
 
 	// setting SimNetParams so that block can be easily solved
 	btcHeader.Bits = chaincfg.SimNetParams.GenesisBlock.Header.Bits
@@ -305,6 +301,7 @@ type BtcHeaderWithProof struct {
 }
 
 func CreateBlockWithTransaction(
+	r *rand.Rand,
 	ph *wire.BlockHeader,
 	babylonData []byte,
 ) *BtcHeaderWithProof {
@@ -312,9 +309,9 @@ func CreateBlockWithTransaction(
 	var transactions []*wire.MsgTx
 	// height does not matter here, as it is used only for calculation of reward
 	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))
-	transactions = append(transactions, CreatOpReturnTransaction(babylonData))
+	transactions = append(transactions, CreatOpReturnTransaction(r, babylonData))
 
-	randHeader := GenRandomBtcdHeader()
+	randHeader := GenRandomBtcdHeader(r)
 	randHeader.Version = ph.Version
 	randHeader.PrevBlock = ph.BlockHash()
 	randHeader.Bits = ph.Bits
@@ -343,24 +340,24 @@ func CreateBlockWithTransaction(
 	}
 }
 
-func GenRandomTx() *wire.MsgTx {
+func GenRandomTx(r *rand.Rand) *wire.MsgTx {
 	// structure of the below tx is from https://github.com/btcsuite/btcd/blob/master/wire/msgtx_test.go
 	tx := &wire.MsgTx{
 		Version: 1,
 		TxIn: []*wire.TxIn{
 			{
 				PreviousOutPoint: wire.OutPoint{
-					Hash:  GenRandomBtcdHash(),
-					Index: rand.Uint32(),
+					Hash:  GenRandomBtcdHash(r),
+					Index: r.Uint32(),
 				},
-				SignatureScript: GenRandomByteArray(10),
-				Sequence:        rand.Uint32(),
+				SignatureScript: GenRandomByteArray(r, 10),
+				Sequence:        r.Uint32(),
 			},
 		},
 		TxOut: []*wire.TxOut{
 			{
-				Value:    rand.Int63(),
-				PkScript: GenRandomByteArray(80),
+				Value:    r.Int63(),
+				PkScript: GenRandomByteArray(r, 80),
 			},
 		},
 		LockTime: 0,
@@ -369,15 +366,16 @@ func GenRandomTx() *wire.MsgTx {
 	return tx
 }
 
-func GenRandomBabylonTxPair() ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) {
-	txs := []*wire.MsgTx{GenRandomTx(), GenRandomTx()}
+func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) {
+	txs := []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
 	builder := txscript.NewScriptBuilder()
 
 	// fake a raw checkpoint
-	rawBTCCkpt := GetRandomRawBtcCheckpoint()
+	rawBTCCkpt := GetRandomRawBtcCheckpoint(r)
+	tag := GenRandomByteArray(r, 4)
 	// encode raw checkpoint to two halves
 	firstHalf, secondHalf, err := btctxformatter.EncodeCheckpointData(
-		btctxformatter.TestTag(48), // TODO: randomise the tag ID
+		btctxformatter.BabylonTag(tag),
 		btctxformatter.CurrentVersion,
 		rawBTCCkpt,
 	)
@@ -403,9 +401,9 @@ func GenRandomBabylonTxPair() ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) 
 	return txs, rawBTCCkpt
 }
 
-func GenRandomBabylonTx() *wire.MsgTx {
-	txs, _ := GenRandomBabylonTxPair()
-	idx := rand.Intn(2)
+func GenRandomBabylonTx(r *rand.Rand) *wire.MsgTx {
+	txs, _ := GenRandomBabylonTxPair(r)
+	idx := r.Intn(2)
 	return txs[idx]
 }
 
@@ -458,13 +456,13 @@ func GenerateMessageWithRandomSubmitter(blockResults []*BlockCreationResult) *bt
 	return &msg
 }
 
-func getRandomCheckpointDataForEpoch(e uint64) testCheckpointData {
+func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData {
 	return testCheckpointData{
 		epoch:            e,
-		lastCommitHash:   GenRandomByteArray(txformat.LastCommitHashLength),
-		bitmap:           GenRandomByteArray(txformat.BitMapLength),
-		blsSig:           GenRandomByteArray(txformat.BlsSigLength),
-		submitterAddress: GenRandomByteArray(txformat.AddressLength),
+		lastCommitHash:   GenRandomByteArray(r, txformat.LastCommitHashLength),
+		bitmap:           GenRandomByteArray(r, txformat.BitMapLength),
+		blsSig:           GenRandomByteArray(r, txformat.BlsSigLength),
+		submitterAddress: GenRandomByteArray(r, txformat.AddressLength),
 	}
 }
 
@@ -501,8 +499,8 @@ func getExpectedOpReturn(tag txformat.BabylonTag, f []byte, s []byte) []byte {
 	return connected
 }
 
-func RandomRawCheckpointDataForEpoch(e uint64) (*TestRawCheckpointData, *txformat.RawBtcCheckpoint) {
-	checkpointData := getRandomCheckpointDataForEpoch(e)
+func RandomRawCheckpointDataForEpoch(r *rand.Rand, e uint64) (*TestRawCheckpointData, *txformat.RawBtcCheckpoint) {
+	checkpointData := getRandomCheckpointDataForEpoch(r, e)
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
 		LastCommitHash:   checkpointData.lastCommitHash,
@@ -514,13 +512,15 @@ func RandomRawCheckpointDataForEpoch(e uint64) (*TestRawCheckpointData, *txforma
 }
 
 func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawCheckpointData {
-	tag := txformat.MainTag(0)
+	tag := btcctypes.DefaultCheckpointTag
+	tagAsBytes, _ := hex.DecodeString(tag)
+	babylonTag := txformat.BabylonTag(tagAsBytes)
 	data1, data2 := txformat.MustEncodeCheckpointData(
-		tag,
+		babylonTag,
 		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)
-	opReturn := getExpectedOpReturn(tag, data1, data2)
+	opReturn := getExpectedOpReturn(babylonTag, data1, data2)
 
 	return &TestRawCheckpointData{
 		Epoch:            rawBTCCkpt.Epoch,
@@ -531,25 +531,25 @@ func EncodeRawCkptToTestData(rawBTCCkpt *txformat.RawBtcCheckpoint) *TestRawChec
 }
 
 // test helper to generate random number int in range, min and max must be non-negative
-func numInRange(min int, max int) int {
+func numInRange(r *rand.Rand, min int, max int) int {
 	if min < 0 || max < 0 || min >= max {
 		panic("min and max maust be positve numbers. min must be smaller than max")
 	}
 
-	return rand.Intn(max-min) + min
+	return r.Intn(max-min) + min
 }
 
-func GenerateMessageWithRandomSubmitterForEpoch(epoch uint64) *btcctypes.MsgInsertBTCSpvProof {
+func GenerateMessageWithRandomSubmitterForEpoch(r *rand.Rand, epoch uint64) *btcctypes.MsgInsertBTCSpvProof {
 	numTransactions := 100
-	tx1 := numInRange(1, 99)
+	tx1 := numInRange(r, 1, 99)
 
-	tx2 := numInRange(1, 99)
+	tx2 := numInRange(r, 1, 99)
 	// in those tests epoch is not important
-	raw, _ := RandomRawCheckpointDataForEpoch(epoch)
+	raw, _ := RandomRawCheckpointDataForEpoch(r, epoch)
 
-	blck1 := CreateBlock(0, uint32(numTransactions), uint32(tx1), raw.FirstPart)
+	blck1 := CreateBlock(r, 0, uint32(numTransactions), uint32(tx1), raw.FirstPart)
 
-	blck2 := CreateBlock(0, uint32(numTransactions), uint32(tx2), raw.SecondPart)
+	blck2 := CreateBlock(r, 0, uint32(numTransactions), uint32(tx2), raw.SecondPart)
 
 	msg := GenerateMessageWithRandomSubmitter([]*BlockCreationResult{blck1, blck2})
 

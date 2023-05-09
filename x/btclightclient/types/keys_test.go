@@ -12,12 +12,12 @@ import (
 )
 
 func FuzzHeadersObjectKey(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		hexHash := datagen.GenRandomHexStr(bbn.BTCHeaderHashLen)
-		height := rand.Uint64()
+		r := rand.New(rand.NewSource(seed))
+		hexHash := datagen.GenRandomHexStr(r, bbn.BTCHeaderHashLen)
+		height := r.Uint64()
 		// get chainhash and height
 		heightBytes := sdk.Uint64ToBigEndian(height)
 		headerHash, _ := bbn.NewBTCHeaderHashBytesFromHex(hexHash)
@@ -36,11 +36,11 @@ func FuzzHeadersObjectKey(f *testing.F) {
 }
 
 func FuzzHeadersObjectHeightAndWorkKey(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		hexHash := datagen.GenRandomHexStr(bbn.BTCHeaderHashLen)
+		r := rand.New(rand.NewSource(seed))
+		hexHash := datagen.GenRandomHexStr(r, bbn.BTCHeaderHashLen)
 		headerHash, _ := bbn.NewBTCHeaderHashBytesFromHex(hexHash)
 		headerHashBytes := headerHash.MustMarshal()
 

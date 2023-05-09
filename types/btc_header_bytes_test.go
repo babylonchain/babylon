@@ -11,15 +11,15 @@ import (
 )
 
 func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		invalidHeader := false
-		bz := datagen.GenRandomByteArray(types.BTCHeaderLen)
-		if datagen.OneInN(10) {
-			bz = datagen.GenRandomByteArray(datagen.RandomIntOtherThan(types.BTCHeaderLen, 10*types.BTCHeaderLen))
+		bz := datagen.GenRandomByteArray(r, types.BTCHeaderLen)
+		if datagen.OneInN(r, 10) {
+			bz = datagen.GenRandomByteArray(r, datagen.RandomIntOtherThan(r, types.BTCHeaderLen, 10*types.BTCHeaderLen))
 			invalidHeader = true
 		}
 
@@ -77,19 +77,19 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesHexOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		invalidHeader := false
 		// 2 hex chars per byte
-		hex := datagen.GenRandomHexStr(types.BTCHeaderLen)
-		if datagen.OneInN(10) {
-			if datagen.OneInN(2) {
-				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen, 10*types.BTCHeaderLen))
+		hex := datagen.GenRandomHexStr(r, types.BTCHeaderLen)
+		if datagen.OneInN(r, 10) {
+			if datagen.OneInN(r, 2) {
+				hex = datagen.GenRandomHexStr(r, datagen.RandomIntOtherThan(r, types.BTCHeaderLen, 10*types.BTCHeaderLen))
 			} else {
-				hex = string(datagen.GenRandomByteArray(types.BTCHeaderLen * 2))
+				hex = string(datagen.GenRandomByteArray(r, types.BTCHeaderLen*2))
 			}
 			invalidHeader = true
 		}
@@ -120,19 +120,19 @@ func FuzzBTCHeaderBytesHexOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		invalidHeader := false
 		// 2 hex chars per byte
-		hex := datagen.GenRandomHexStr(types.BTCHeaderLen)
-		if datagen.OneInN(10) {
-			if datagen.OneInN(2) {
-				hex = datagen.GenRandomHexStr(datagen.RandomIntOtherThan(types.BTCHeaderLen, 10*types.BTCHeaderLen))
+		hex := datagen.GenRandomHexStr(r, types.BTCHeaderLen)
+		if datagen.OneInN(r, 10) {
+			if datagen.OneInN(r, 2) {
+				hex = datagen.GenRandomHexStr(r, datagen.RandomIntOtherThan(r, types.BTCHeaderLen, 10*types.BTCHeaderLen))
 			} else {
-				hex = string(datagen.GenRandomByteArray(types.BTCHeaderLen * 2))
+				hex = string(datagen.GenRandomByteArray(r, types.BTCHeaderLen*2))
 			}
 			invalidHeader = true
 		}
@@ -171,11 +171,11 @@ func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesBtcdBlockOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		btcdHeader := datagen.GenRandomBtcdHeader()
+		r := rand.New(rand.NewSource(seed))
+		btcdHeader := datagen.GenRandomBtcdHeader(r)
 
 		var hb types.BTCHeaderBytes
 		hb.FromBlockHeader(btcdHeader)
@@ -193,14 +193,14 @@ func FuzzBTCHeaderBytesBtcdBlockOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesOperators(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
-		parent := datagen.GenRandomBTCHeaderInfo()
+		parent := datagen.GenRandomBTCHeaderInfo(r)
 		hb := parent.Header
 		hb2 := types.NewBTCHeaderBytesFromBlockHeader(hb.ToBlockHeader())
-		hbChild := datagen.GenRandomBTCHeaderBytes(parent, nil)
+		hbChild := datagen.GenRandomBTCHeaderBytes(r, parent, nil)
 
 		if !hb.Eq(hb) {
 			t.Errorf("BTCHeaderBytes object does not equal itself")

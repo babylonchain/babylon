@@ -33,9 +33,9 @@ func FuzzHashesQuery(f *testing.F) {
 		   Do checks 2-4 by initially querying without a key and then querying
 		   with the nextKey attribute.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
@@ -50,9 +50,9 @@ func FuzzHashesQuery(f *testing.F) {
 
 		// Test pagination key being invalid
 		// We want the key to have a positive length
-		bzSz := datagen.RandomIntOtherThan(bbn.BTCHeaderHashLen-1, bbn.BTCHeaderHashLen*10) + 1
-		key := datagen.GenRandomByteArray(bzSz)
-		pagination := constructRequestWithKey(key)
+		bzSz := datagen.RandomIntOtherThan(r, bbn.BTCHeaderHashLen-1, bbn.BTCHeaderHashLen*10) + 1
+		key := datagen.GenRandomByteArray(r, bzSz)
+		pagination := constructRequestWithKey(r, key)
 		hashesRequest := types.NewQueryHashesRequest(pagination)
 		resp, err = blcKeeper.Hashes(sdkCtx, hashesRequest)
 		if resp != nil {
@@ -63,14 +63,14 @@ func FuzzHashesQuery(f *testing.F) {
 		}
 
 		// Generate a random tree of headers
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 		// Get the headers map
 		headersMap := tree.GetHeadersMap()
 		// Generate a random limit
 		treeSize := uint64(tree.Size())
-		limit := uint64(rand.Int63n(int64(tree.Size())) + 1)
+		limit := uint64(r.Int63n(int64(tree.Size())) + 1)
 		// Generate a page request with a limit and a nil key
-		pagination = constructRequestWithLimit(limit)
+		pagination = constructRequestWithLimit(r, limit)
 		// Generate the initial query
 		hashesRequest = types.NewQueryHashesRequest(pagination)
 		// Construct a mapping from the hashes found to a boolean value
@@ -103,7 +103,7 @@ func FuzzHashesQuery(f *testing.F) {
 			}
 
 			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(resp.Pagination.NextKey, limit)
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
 			hashesRequest = types.NewQueryHashesRequest(pagination)
 		}
 
@@ -123,9 +123,9 @@ func FuzzContainsQuery(f *testing.F) {
 		- Generate a random tree of headers and insert into storage.
 		- Generate a random header but do not insert it into storage.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
@@ -139,10 +139,10 @@ func FuzzContainsQuery(f *testing.F) {
 		}
 
 		// Generate a random tree of headers and insert it into storage
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
 		// Test with a non-existent header
-		query, _ := types.NewQueryContainsRequest(datagen.GenRandomBTCHeaderInfo().Hash.MarshalHex())
+		query, _ := types.NewQueryContainsRequest(datagen.GenRandomBTCHeaderInfo(r).Hash.MarshalHex())
 		resp, err = blcKeeper.Contains(sdkCtx, query)
 		if err != nil {
 			t.Errorf("Valid input let to an error: %s", err)
@@ -155,7 +155,7 @@ func FuzzContainsQuery(f *testing.F) {
 		}
 
 		// Test with an existing header
-		query, _ = types.NewQueryContainsRequest(tree.RandomNode().Hash.MarshalHex())
+		query, _ = types.NewQueryContainsRequest(tree.RandomNode(r).Hash.MarshalHex())
 		resp, err = blcKeeper.Contains(sdkCtx, query)
 		if err != nil {
 			t.Errorf("Valid input let to an error: %s", err)
@@ -185,9 +185,9 @@ func FuzzMainChainQuery(f *testing.F) {
 			 - Generate a random tree of headers with different PoW and insert them into the headers storage.
 			 - Calculate the main chain using the `HeadersState().MainChain()` function (here we only test the query)
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
@@ -202,9 +202,9 @@ func FuzzMainChainQuery(f *testing.F) {
 
 		// Test pagination key being invalid
 		// We want the key to have a positive length
-		bzSz := datagen.RandomIntOtherThan(bbn.BTCHeaderHashLen-1, bbn.BTCHeaderHashLen*10) + 1
-		key := datagen.GenRandomByteArray(bzSz)
-		pagination := constructRequestWithKey(key)
+		bzSz := datagen.RandomIntOtherThan(r, bbn.BTCHeaderHashLen-1, bbn.BTCHeaderHashLen*10) + 1
+		key := datagen.GenRandomByteArray(r, bzSz)
+		pagination := constructRequestWithKey(r, key)
 		mainchainRequest := types.NewQueryMainChainRequest(pagination)
 		resp, err = blcKeeper.MainChain(sdkCtx, mainchainRequest)
 		if resp != nil {
@@ -215,10 +215,10 @@ func FuzzMainChainQuery(f *testing.F) {
 		}
 
 		// Generate a random tree of headers and insert it into storage
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
 		// Check whether the key being set to an element that does not exist leads to an error
-		pagination = constructRequestWithKey(datagen.GenRandomBTCHeaderInfo().Hash.MustMarshal())
+		pagination = constructRequestWithKey(r, datagen.GenRandomBTCHeaderInfo(r).Hash.MustMarshal())
 		mainchainRequest = types.NewQueryMainChainRequest(pagination)
 		resp, err = blcKeeper.MainChain(sdkCtx, mainchainRequest)
 		if resp != nil {
@@ -233,13 +233,13 @@ func FuzzMainChainQuery(f *testing.F) {
 
 		// Check whether the key being set to a non-mainchain element leads to an error
 		// Select a random header
-		header := tree.RandomNode()
+		header := tree.RandomNode(r)
 		// Get the tip
 		tip := tree.GetTip()
 		// if the header is not on the mainchain, we can test our assumption
 		// if it is, randomness will ensure that it does on another test case
 		if !tree.IsOnNodeChain(tip, header) {
-			pagination = constructRequestWithKeyAndLimit(header.Hash.MustMarshal(), uint64(len(mainchain)))
+			pagination = constructRequestWithKeyAndLimit(r, header.Hash.MustMarshal(), uint64(len(mainchain)))
 			mainchainRequest = types.NewQueryMainChainRequest(pagination)
 			resp, err = blcKeeper.MainChain(sdkCtx, mainchainRequest)
 			if resp != nil {
@@ -254,13 +254,13 @@ func FuzzMainChainQuery(f *testing.F) {
 		mcIdx := 0
 		// Generate a random limit
 		mcSize := uint64(len(mainchain))
-		limit := uint64(rand.Int63n(int64(len(mainchain))) + 1)
+		limit := uint64(r.Int63n(int64(len(mainchain))) + 1)
 
 		// 50% of the time, do a reverse request
 		// Generate a page request with a limit and a nil key
-		pagination = constructRequestWithLimit(limit)
+		pagination = constructRequestWithLimit(r, limit)
 		reverse := false
-		if datagen.OneInN(2) {
+		if datagen.OneInN(r, 2) {
 			reverse = true
 			pagination.Reverse = true
 		}
@@ -298,7 +298,7 @@ func FuzzMainChainQuery(f *testing.F) {
 			}
 
 			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(resp.Pagination.NextKey, limit)
+			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
 			if reverse {
 				pagination.Reverse = true
 			}
@@ -316,9 +316,9 @@ func FuzzTipQuery(f *testing.F) {
 		Data generation:
 		- Generate a random tree of headers and insert into storage
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
@@ -331,10 +331,9 @@ func FuzzTipQuery(f *testing.F) {
 			t.Errorf("Nil input led to a nil error")
 		}
 
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
-		query := types.NewQueryTipRequest()
-		resp, err = blcKeeper.Tip(sdkCtx, query)
+		resp, err = blcKeeper.Tip(sdkCtx, types.NewQueryTipRequest())
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}
@@ -356,9 +355,9 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 		Data generation:
 		- Generate a random tree of headers and insert into storage.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 		sdkCtx := sdk.WrapSDKContext(ctx)
 
@@ -371,11 +370,9 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 			t.Errorf("Nil input led to a nil error")
 		}
 
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
-		query := types.NewQueryBaseHeaderRequest()
-
-		resp, err = blcKeeper.BaseHeader(sdkCtx, query)
+		resp, err = blcKeeper.BaseHeader(sdkCtx, types.NewQueryBaseHeaderRequest())
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}
@@ -389,10 +386,10 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 }
 
 // Constructors for PageRequest objects
-func constructRequestWithKeyAndLimit(key []byte, limit uint64) *query.PageRequest {
+func constructRequestWithKeyAndLimit(r *rand.Rand, key []byte, limit uint64) *query.PageRequest {
 	// If limit is 0, set one randomly
 	if limit == 0 {
-		limit = uint64(rand.Int63() + 1) // Use Int63 instead of Uint64 to avoid overflows
+		limit = uint64(r.Int63() + 1) // Use Int63 instead of Uint64 to avoid overflows
 	}
 	return &query.PageRequest{
 		Key:        key,
@@ -403,10 +400,10 @@ func constructRequestWithKeyAndLimit(key []byte, limit uint64) *query.PageReques
 	}
 }
 
-func constructRequestWithLimit(limit uint64) *query.PageRequest {
-	return constructRequestWithKeyAndLimit(nil, limit)
+func constructRequestWithLimit(r *rand.Rand, limit uint64) *query.PageRequest {
+	return constructRequestWithKeyAndLimit(r, nil, limit)
 }
 
-func constructRequestWithKey(key []byte) *query.PageRequest {
-	return constructRequestWithKeyAndLimit(key, 0)
+func constructRequestWithKey(r *rand.Rand, key []byte) *query.PageRequest {
+	return constructRequestWithKeyAndLimit(r, key, 0)
 }

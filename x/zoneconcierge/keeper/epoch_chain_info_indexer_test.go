@@ -13,7 +13,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		_, babylonChain, czChain, babylonApp := SetupTest(t)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
@@ -23,15 +23,15 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// enter a random epoch
-		epochNum := datagen.RandomInt(10)
+		epochNum := datagen.RandomInt(r, 10)
 		for j := uint64(0); j < epochNum; j++ {
 			epochingKeeper.IncEpoch(ctx)
 		}
 
 		// invoke the hook a random number of times to simulate a random number of blocks
-		numHeaders := datagen.RandomInt(100) + 1
-		numForkHeaders := datagen.RandomInt(10) + 1
-		SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		numHeaders := datagen.RandomInt(r, 100) + 1
+		numForkHeaders := datagen.RandomInt(r, 10) + 1
+		SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// end this epoch
 		hooks.AfterEpochEnds(ctx, epochNum)
@@ -49,7 +49,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		_, babylonChain, czChain, babylonApp := SetupTest(t)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
@@ -58,9 +58,9 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
-		numReqs := datagen.RandomInt(5) + 1
+		numReqs := datagen.RandomInt(r, 5) + 1
 
-		epochNumList := []uint64{datagen.RandomInt(10) + 1}
+		epochNumList := []uint64{datagen.RandomInt(r, 10) + 1}
 		nextHeightList := []uint64{0}
 		numHeadersList := []uint64{}
 		expectedHeadersMap := map[uint64][]*ibctmtypes.Header{}
@@ -82,10 +82,10 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			}
 
 			// generate a random number of headers and fork headers
-			numHeadersList = append(numHeadersList, datagen.RandomInt(100)+1)
-			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(10)+1)
+			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
+			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
 			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
@@ -93,7 +93,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			// simulate the scenario that a random epoch has ended
 			hooks.AfterEpochEnds(ctx, epochNum)
 			// prepare epochNum for the next request
-			epochNumList = append(epochNumList, epochNum+datagen.RandomInt(10)+1)
+			epochNumList = append(epochNumList, epochNum+datagen.RandomInt(r, 10)+1)
 		}
 
 		// attest the correctness of epoch info for each tested epoch

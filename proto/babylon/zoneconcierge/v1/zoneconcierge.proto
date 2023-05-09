@@ -5,6 +5,8 @@ import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+import "babylon/epoching/v1/epoching.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -59,6 +61,25 @@ message ChainInfo {
   // timestamped_headers_count is the number of timestamped headers in CZ's
   // canonical chain
   uint64 timestamped_headers_count = 4;
+}
+
+// FinalizedChainInfo is the information of a CZ that is BTC-finalised
+message FinalizedChainInfo {
+  // chain_id is the ID of the chain
+  string chain_id = 1;
+  // finalized_chain_info is the info of the CZ
+  babylon.zoneconcierge.v1.ChainInfo finalized_chain_info = 2;
+
+  // epoch_info is the metadata of the last BTC-finalised epoch
+  babylon.epoching.v1.Epoch epoch_info = 3;
+  // raw_checkpoint is the raw checkpoint of this epoch
+  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 4;
+  // btc_submission_key is position of two BTC txs that include the raw
+  // checkpoint of this epoch
+  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
+
+  // proof is the proof that the chain info is finalized
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 6;
 }
 
 // ProofEpochSealed is the proof that an epoch is sealed by the sealer header,

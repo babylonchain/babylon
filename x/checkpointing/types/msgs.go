@@ -16,13 +16,16 @@ var (
 	_ sdk.Msg = (*MsgAddBlsSig)(nil)
 )
 
-func NewMsgAddBlsSig(epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
-	return &MsgAddBlsSig{BlsSig: &BlsSig{
-		EpochNum:       epochNum,
-		LastCommitHash: &lch,
-		BlsSig:         &sig,
-		SignerAddress:  addr.String(),
-	}}
+func NewMsgAddBlsSig(signer sdk.AccAddress, epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
+	return &MsgAddBlsSig{
+		Signer: signer.String(),
+		BlsSig: &BlsSig{
+			EpochNum:       epochNum,
+			LastCommitHash: &lch,
+			BlsSig:         &sig,
+			SignerAddress:  addr.String(),
+		},
+	}
 }
 
 func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator, blsPK *bls12381.PublicKey, pop *ProofOfPossession) (*MsgWrappedCreateValidator, error) {
@@ -56,12 +59,14 @@ func (m *MsgAddBlsSig) ValidateBasic() error {
 }
 
 func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.ValAddressFromBech32(m.BlsSig.SignerAddress)
+	signer, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
+		// Panic, since the GetSigners method is called after ValidateBasic
+		// which performs the same check.
 		panic(err)
 	}
 
-	return []sdk.AccAddress{sdk.AccAddress(signer)}
+	return []sdk.AccAddress{signer}
 }
 
 func (m *MsgWrappedCreateValidator) VerifyPoP(valPubkey cryptotypes.PubKey) bool {

@@ -13,6 +13,12 @@ SIMAPP = ./simapp
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%H')
 
+CUR_DIR := $(shell pwd)
+
+WASM_DIR := $(CUR_DIR)/wasmbinding/testdata
+
+WASM_DIR_BASE_NAME := $(shell basename $(WASM_DIR))
+
 # don't override user values
 ifeq (,$(VERSION))
   # Find a name that exactly describes the current commit (e.g. a version tag)
@@ -357,7 +363,7 @@ devdoc-update:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.11.5
+protoVer=0.12.0
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
@@ -416,6 +422,16 @@ localnet-stop:
 
 # localnet-test-integration will spin up a localnet and run integration tests on it
 localnet-test-integration: localnet-start test-integration localnet-stop
+
+build-test-wasm:
+	docker run --rm -v "$(WASM_DIR)":/code \
+		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
+		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+		cosmwasm/rust-optimizer-arm64:0.12.13
+	docker run --rm -v "$(WASM_DIR)":/code \
+		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
+		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+		cosmwasm/rust-optimizer:0.12.13
 
 .PHONY: \
 init-testnet-dirs \

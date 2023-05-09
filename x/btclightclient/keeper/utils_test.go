@@ -6,6 +6,7 @@ import (
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"math/rand"
 )
 
 // Mock hooks interface
@@ -50,28 +51,28 @@ func (m *MockHooks) AfterBTCHeaderInserted(_ sdk.Context, headerInfo *types.BTCH
 // of the tree that is generated. For example, a `minTreeHeight` of 1,
 // means that the tree should have at least one node (the root), while
 // a `maxTreeHeight` of 4, denotes that the maximum height of the tree should be 4.
-func genRandomTree(k *keeper.Keeper, ctx sdk.Context, minHeight uint64, maxHeight uint64) *datagen.BTCHeaderTree {
+func genRandomTree(r *rand.Rand, k *keeper.Keeper, ctx sdk.Context, minHeight uint64, maxHeight uint64) *datagen.BTCHeaderTree {
 	tree := datagen.NewBTCHeaderTree()
 	// Generate the root for the tree
-	root := datagen.GenRandomBTCHeaderInfo()
+	root := datagen.GenRandomBTCHeaderInfo(r)
 	tree.Add(root, nil)
 	k.SetBaseBTCHeader(ctx, *root)
 
-	genRandomTreeWithParent(k, ctx, minHeight-1, maxHeight-1, root, tree)
+	genRandomTreeWithParent(r, k, ctx, minHeight-1, maxHeight-1, root, tree)
 
 	return tree
 }
 
 // genRandomTreeWithParent is a utility function for inserting the headers
 // While the tree is generated, the headers that are generated for it are inserted into storage.
-func genRandomTreeWithParent(k *keeper.Keeper, ctx sdk.Context, minHeight uint64,
+func genRandomTreeWithParent(r *rand.Rand, k *keeper.Keeper, ctx sdk.Context, minHeight uint64,
 	maxHeight uint64, root *types.BTCHeaderInfo, tree *datagen.BTCHeaderTree) {
 
 	if minHeight > maxHeight {
 		panic("Min height more than max height")
 	}
 
-	tree.GenRandomBTCHeaderTree(minHeight, maxHeight, root, func(header *types.BTCHeaderInfo) bool {
+	tree.GenRandomBTCHeaderTree(r, minHeight, maxHeight, root, func(header *types.BTCHeaderInfo) bool {
 		err := k.InsertHeader(ctx, header.Header)
 		if err != nil {
 			panic(fmt.Sprintf("header insertion failed: %s", err))

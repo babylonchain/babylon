@@ -2,13 +2,14 @@ package btctxformatter
 
 import (
 	"bytes"
+	cprand "crypto/rand"
 	"math/rand"
 	"testing"
 )
 
 func randNBytes(n int) []byte {
 	bytes := make([]byte, n)
-	rand.Read(bytes)
+	cprand.Read(bytes) //nolint:errcheck // This is a test.
 	return bytes
 }
 
@@ -97,7 +98,8 @@ func FuzzDecodingWontPanic(f *testing.F) {
 	f.Add(randNBytes(secondPartLength), uint8(rand.Intn(99)))
 
 	f.Fuzz(func(t *testing.T, bytes []byte, tagIdx uint8) {
-		decoded, err := IsBabylonCheckpointData(MainTag(tagIdx), CurrentVersion, bytes)
+		tag := []byte{0, 1, 2, 3}
+		decoded, err := IsBabylonCheckpointData(BabylonTag(tag), CurrentVersion, bytes)
 
 		if err == nil {
 			if decoded.Index != 0 && decoded.Index != 1 {

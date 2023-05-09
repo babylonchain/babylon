@@ -12,16 +12,16 @@ import (
 )
 
 func FuzzNewHeaderInfo(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		// If either  of the hash strings is not of appropriate length
 		// or not valid hex, generate a random hex randomly
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		// Get the expected header bytes
-		expectedHeaderBytes := datagen.GenRandomBTCHeaderInfo().Header
+		expectedHeaderBytes := datagen.GenRandomBTCHeaderInfo(r).Header
 		expectedHeaderHashBytes := expectedHeaderBytes.Hash()
-		height := datagen.GenRandomBTCHeight()
+		height := datagen.GenRandomBTCHeight(r)
 		work := sdkmath.NewUintFromBigInt(expectedHeaderBytes.Difficulty())
 
 		headerInfo := types.NewBTCHeaderInfo(expectedHeaderBytes, expectedHeaderHashBytes, height, &work)

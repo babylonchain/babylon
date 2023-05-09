@@ -15,7 +15,7 @@ func FuzzAppHashChain(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelper(t)
 		ctx, k := helper.Ctx, helper.EpochingKeeper
@@ -25,7 +25,7 @@ func FuzzAppHashChain(f *testing.F) {
 		require.Equal(t, epoch.FirstBlockHeight, uint64(0))
 
 		// set a random epoch interval
-		epochInterval := rand.Uint64()%100 + 2 // the epoch interval should at at least 2
+		epochInterval := r.Uint64()%100 + 2 // the epoch interval should at at least 2
 
 		params := types.Params{
 			EpochInterval: epochInterval,
@@ -39,7 +39,7 @@ func FuzzAppHashChain(f *testing.F) {
 		expectedHeight := epochInterval
 		expectedAppHashs := [][]byte{}
 		for i := uint64(0); i < expectedHeight; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 			expectedAppHashs = append(expectedAppHashs, ctx.BlockHeader().AppHash)
 		}
 		// ensure epoch number is 1
@@ -52,7 +52,7 @@ func FuzzAppHashChain(f *testing.F) {
 		require.Equal(t, expectedAppHashs, appHashs)
 
 		// ensure prover and verifier are correct
-		randomHeightInEpoch := uint64(rand.Intn(int(expectedHeight)) + 1)
+		randomHeightInEpoch := uint64(r.Intn(int(expectedHeight)) + 1)
 		randomAppHash, err := k.GetAppHash(ctx, randomHeightInEpoch)
 		require.NoError(t, err)
 		proof, err := k.ProveAppHashInEpoch(ctx, randomHeightInEpoch, epoch.EpochNumber)

@@ -13,7 +13,6 @@ import (
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	appparams "github.com/babylonchain/babylon/app/params"
@@ -44,7 +43,7 @@ type PrivSigner struct {
 	ClientCtx client.Context
 }
 
-func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring, encodingCfg appparams.EncodingConfig) (*PrivSigner, error) {
+func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring, feePayer string, encodingCfg appparams.EncodingConfig) (*PrivSigner, error) {
 	// setup private validator
 	nodeCfg := tmconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
@@ -65,11 +64,23 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 		WithLegacyAmino(encodingCfg.Amino).
 		WithTxConfig(encodingCfg.TxConfig).
 		WithAccountRetriever(types.AccountRetriever{}).
-		WithFromAddress(sdk.AccAddress(wrappedPV.GetAddress())).
-		WithFeeGranterAddress(sdk.AccAddress(wrappedPV.GetAddress())).
 		WithSkipConfirmation(true).
 		WithKeyring(kr).
 		WithNodeURI(nodeCfg.RPC.ListenAddress)
+
+	if feePayer != "" {
+		feePayerRecord, err := kr.Key(feePayer)
+		if err != nil {
+			return nil, err
+		}
+		feePayerAddress, err := feePayerRecord.GetAddress()
+		if err != nil {
+			return nil, err
+		}
+		clientCtx = clientCtx.
+			WithFromAddress(feePayerAddress).
+			WithFromName(feePayer)
+	}
 
 	return &PrivSigner{
 		WrappedPV: wrappedPV,

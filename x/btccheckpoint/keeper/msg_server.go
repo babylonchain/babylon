@@ -25,14 +25,15 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 // TODO emit some events for external consumers. Those should be probably emited
 // at EndBlockerCallback
 func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
-	rawSubmission, err := types.ParseSubmission(req, m.k.GetPowLimit(), m.k.GetExpectedTag())
+
+	// Get the SDK wrapped context
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	rawSubmission, err := types.ParseSubmission(req, m.k.GetPowLimit(), m.k.GetExpectedTag(sdkCtx))
 
 	if err != nil {
 		return nil, types.ErrInvalidCheckpointProof.Wrap(err.Error())
 	}
-
-	// Get the SDK wrapped context
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	submissionKey := rawSubmission.GetSubmissionKey()
 

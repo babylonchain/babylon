@@ -17,7 +17,7 @@ import (
 func FuzzGetValidatorBlsKeySet(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		// a genesis validator is generated for setup
 		helper := testepoching.NewHelper(t)
 		ek := helper.EpochingKeeper
@@ -30,7 +30,7 @@ func FuzzGetValidatorBlsKeySet(f *testing.F) {
 		require.NoError(t, err)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -41,7 +41,7 @@ func FuzzGetValidatorBlsKeySet(f *testing.F) {
 		require.Equal(t, uint64(genesisVal.Power), valBlsSet.ValSet[0].VotingPower)
 
 		// add n new validators via MsgWrappedCreateValidator
-		n := rand.Intn(10) + 1
+		n := r.Intn(10) + 1
 		addrs := app.AddTestAddrs(helper.App, helper.Ctx, n, sdk.NewInt(100000000))
 
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
@@ -58,7 +58,7 @@ func FuzzGetValidatorBlsKeySet(f *testing.F) {
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = ek.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)

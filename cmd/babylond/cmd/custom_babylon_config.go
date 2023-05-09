@@ -4,26 +4,22 @@ import (
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 )
 
 const (
-	defaultKeyName       = "default"
+	defaultKeyName       = ""
 	defaultGasPrice      = "0.01ubbn"
 	defaultGasAdjustment = 1.5
 )
 
 type BtcConfig struct {
 	Network string `mapstructure:"network"`
-
-	CheckpointTag string `mapstructure:"checkpoint-tag"`
 }
 
 func defaultBabylonBtcConfig() BtcConfig {
 	return BtcConfig{
-		Network:       string(bbn.BtcMainnet),
-		CheckpointTag: txformat.DefaultMainTagStr,
+		Network: string(bbn.BtcMainnet),
 	}
 }
 
@@ -71,11 +67,6 @@ func DefaultBabylonTemplate() string {
 # Configures which bitcoin network should be used for checkpointing
 # valid values are: [mainnet, testnet, simnet, regtest]
 network = "{{ .BtcConfig.Network }}"
-
-
-# Configures what tag should be prepended to op_return data in btc transaction
-# for it to be considered as valid babylon checkpoint. Must have exactly 4 bytes.
-checkpoint-tag = "{{ .BtcConfig.CheckpointTag }}"
 
 [signer-config]
 

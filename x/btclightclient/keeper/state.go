@@ -141,7 +141,6 @@ func (s headersState) GetTip() *types.BTCHeaderInfo {
 	if !s.TipExists() {
 		return nil
 	}
-
 	// Get the key to the tip storage
 	tipKey := types.TipKey()
 	return headerInfoFromStoredBytes(s.cdc, s.tip.Get(tipKey))

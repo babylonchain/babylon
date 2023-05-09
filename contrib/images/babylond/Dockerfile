@@ -1,4 +1,4 @@
-FROM golang:1.19-alpine AS build-env
+FROM golang:1.20-alpine AS build-env
 
 # Customize to your build env
 
@@ -18,11 +18,13 @@ RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurse
 RUN apk add --no-cache musl-dev
 
 # Build
-WORKDIR /go/src/github.com/babylonchain
-RUN git clone https://github.com/babylonchain/babylon.git
 WORKDIR /go/src/github.com/babylonchain/babylon
-RUN git fetch
-RUN git checkout ${VERSION}
+# First cache dependencies
+COPY go.mod go.sum /go/src/github.com/babylonchain/babylon/
+RUN go mod download
+# Then copy everything else
+COPY ./ /go/src/github.com/babylonchain/babylon/
+RUN git checkout -f ${VERSION}
 
 # Cosmwasm - Download correct libwasmvm version
 RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
@@ -30,7 +32,7 @@ RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) &&
         -O /lib/libwasmvm_muslc.a && \
     # verify checksum
     wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
-    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep $(uname -m) | cut -d ' ' -f 1)
+    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$(uname -m) | cut -d ' ' -f 1)
 
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BUILD_TAGS=$BUILD_TAGS \

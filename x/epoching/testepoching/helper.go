@@ -1,6 +1,7 @@
 package testepoching
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -127,7 +128,7 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
-func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
+func (h *Helper) GenAndApplyEmptyBlock(r *rand.Rand) sdk.Context {
 	newHeight := h.App.LastBlockHeight() + 1
 	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
 	valhash := CalculateValHash(valSet)
@@ -135,8 +136,8 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 		Height:             newHeight,
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
-		AppHash:            datagen.GenRandomByteArray(32),
-		LastCommitHash:     datagen.GenRandomLastCommitHash(),
+		AppHash:            datagen.GenRandomByteArray(r, 32),
+		LastCommitHash:     datagen.GenRandomLastCommitHash(r),
 	}
 
 	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
@@ -147,13 +148,13 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 	return h.Ctx
 }
 
-func (h *Helper) BeginBlock() sdk.Context {
+func (h *Helper) BeginBlock(r *rand.Rand) sdk.Context {
 	newHeight := h.App.LastBlockHeight() + 1
 	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            datagen.GenRandomByteArray(32),
+		AppHash:            datagen.GenRandomByteArray(r, 32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
 	}

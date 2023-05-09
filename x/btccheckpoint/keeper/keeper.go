@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"encoding/hex"
 	"fmt"
 	"math"
 	"math/big"
@@ -17,15 +18,14 @@ import (
 
 type (
 	Keeper struct {
-		cdc                   codec.BinaryCodec
-		storeKey              storetypes.StoreKey
-		tstoreKey             storetypes.StoreKey
-		memKey                storetypes.StoreKey
-		btcLightClientKeeper  types.BTCLightClientKeeper
-		checkpointingKeeper   types.CheckpointingKeeper
-		powLimit              *big.Int
-		expectedCheckpointTag txformat.BabylonTag
-		authority             string
+		cdc                  codec.BinaryCodec
+		storeKey             storetypes.StoreKey
+		tstoreKey            storetypes.StoreKey
+		memKey               storetypes.StoreKey
+		btcLightClientKeeper types.BTCLightClientKeeper
+		checkpointingKeeper  types.CheckpointingKeeper
+		powLimit             *big.Int
+		authority            string
 	}
 
 	submissionBtcError string
@@ -65,20 +65,18 @@ func NewKeeper(
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
 	powLimit *big.Int,
-	expectedTag txformat.BabylonTag,
 	authority string,
 ) Keeper {
 
 	return Keeper{
-		cdc:                   cdc,
-		storeKey:              storeKey,
-		tstoreKey:             tstoreKey,
-		memKey:                memKey,
-		btcLightClientKeeper:  bk,
-		checkpointingKeeper:   ck,
-		powLimit:              powLimit,
-		expectedCheckpointTag: expectedTag,
-		authority:             authority,
+		cdc:                  cdc,
+		storeKey:             storeKey,
+		tstoreKey:            tstoreKey,
+		memKey:               memKey,
+		btcLightClientKeeper: bk,
+		checkpointingKeeper:  ck,
+		powLimit:             powLimit,
+		authority:            authority,
 	}
 }
 
@@ -86,8 +84,20 @@ func (k Keeper) GetPowLimit() *big.Int {
 	return k.powLimit
 }
 
-func (k Keeper) GetExpectedTag() txformat.BabylonTag {
-	return k.expectedCheckpointTag
+// GetExpectedTag retrerieves checkpoint tag from params and decodes it from
+// hex string to bytes.
+// NOTE: keeper could probably cache decoded tag, but it is rather improbable this function
+// will ever be a bottleneck so it is not worth it.
+func (k Keeper) GetExpectedTag(ctx sdk.Context) txformat.BabylonTag {
+	tag := k.GetParams(ctx).CheckpointTag
+
+	tagAsBytes, err := hex.DecodeString(tag)
+
+	if err != nil {
+		panic("Tag should always be valid")
+	}
+
+	return txformat.BabylonTag(tagAsBytes)
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
@@ -96,11 +106,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 
 func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
-}
-
-func (k Keeper) CheckHeaderIsOnMainChain(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) bool {
-	depth, err := k.btcLightClientKeeper.MainChainDepth(ctx, hash)
-	return err == nil && depth >= 0
 }
 
 func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
@@ -132,34 +137,60 @@ func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *types.SubmissionBtc
 
 func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
 
-	var lowest uint64 = math.MaxUint64
-	var highest uint64 = uint64(0)
-	var lowestIndestInMostFreshBlock uint32 = math.MaxUint32
+	var youngestBlockDepth uint64 = math.MaxUint64
+	var youngestBlockHash *bbn.BTCHeaderHashBytes
+
+	var lowestIndexInMostFreshBlock uint32 = math.MaxUint32
+
+	var oldestBlockDepth uint64 = uint64(0)
 
 	for _, tk := range sk.Key {
-		d, err := k.headerDepth(ctx, tk.Hash)
+		currentBlockDepth, err := k.headerDepth(ctx, tk.Hash)
 
 		if err != nil {
 			return nil, err
 		}
 
-		if d <= lowest {
-			lowest = d
-			if tk.Index < lowestIndestInMostFreshBlock {
-				lowestIndestInMostFreshBlock = tk.Index
-			}
+		if currentBlockDepth < youngestBlockDepth {
+			youngestBlockDepth = currentBlockDepth
+			lowestIndexInMostFreshBlock = tk.Index
+			youngestBlockHash = tk.Hash
 		}
 
-		if d > highest {
-			highest = d
+		// This case happens when we have two submissions in the same block.
+		if currentBlockDepth == youngestBlockDepth && tk.Index < lowestIndexInMostFreshBlock {
+			// This is something which needs a bit more careful thinking as it is used
+			// to determine which submission is better.
+			// Currently if two submissions of one checkpoint are in the same block,
+			// we pick tx with lower index as the point at which checkpoint happened.
+			// This is in line with the logic that if two submission are in the same block,
+			// they are esentially happening at the same time, so it does not really matter
+			// which index pick, and for possibble tie breaks it is better to pick lower one.
+			// This means in case when we have:
+			// Checkpoint submission `x` for epoch 5, both tx in same block at height 100, with indexes 1 and 10
+			// and
+			// Checkpoint submission `y` for epoch 5, both tx in same block at height 100, with indexes 3 and 9
+			// we will chose submission `x` as the better one.
+			// This good enough solution, but it is not perfect and leads to some edge cases like:
+			// Checkpoint submission `x` for epoch 5, one tx in block 99 with index 1, and second tx in block 100 with index 4
+			// and
+			// Checkpoint submission `y` for epoch 5, both tx in same block at height 100, with indexes 3 and 9
+			// In this case submission `y` will be better as it `earliest` tx in most fresh block is first. But at first glance
+			// submission `x` seems better.
+			lowestIndexInMostFreshBlock = tk.Index
+		}
+
+		if currentBlockDepth > oldestBlockDepth {
+			oldestBlockDepth = currentBlockDepth
 		}
 	}
 
 	return &types.SubmissionBtcInfo{
-		SubmissionKey:      sk,
-		OldestBlockDepth:   highest,
-		YoungestBlockDepth: lowest,
-		LatestTxIndex:      lowestIndestInMostFreshBlock,
+		SubmissionKey:            sk,
+		OldestBlockDepth:         oldestBlockDepth,
+		YoungestBlockDepth:       youngestBlockDepth,
+		YoungestBlockHash:        *youngestBlockHash,
+		YoungestBlockLowestTxIdx: lowestIndexInMostFreshBlock,
 	}, nil
 }
 
@@ -199,6 +230,35 @@ func (k Keeper) GetBestSubmission(ctx sdk.Context, epochNumber uint64) (types.Bt
 	bestSubmissionKey := ed.Key[0] // index of checkpoint tx on BTC
 
 	return ed.Status, bestSubmissionKey, nil
+}
+
+func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *types.EpochData) *types.SubmissionBtcInfo {
+	// there is no submissions for this epoch, so transitivly there is no best submission
+	if ed == nil || len(ed.Key) == 0 {
+		return nil
+	}
+
+	// There is only one submission for this epoch:
+	// - either epoch is already finalized and we already chosen the best submission
+	// - or we only received one submission for this epoch
+	// Either way, we do not need to decide which submission is the best one.
+	if len(ed.Key) == 1 {
+		sk := *ed.Key[0]
+		btcInfo, err := k.GetSubmissionBtcInfo(ctx, sk)
+
+		if err != nil {
+			k.Logger(ctx).Debug("Previously stored submission is not valid anymore. Submission key: %+v", sk)
+		}
+
+		// we only log error, as the only error which we can receive here is that submission
+		// is not longer on btc canoncial chain, which essentially means that there is no valid submission
+		return btcInfo
+	}
+
+	// We have more that one valid submission. We need to chose the best one.
+	epochSummary := k.getEpochChanges(ctx, nil, ed)
+
+	return epochSummary.EpochBestSubmission
 }
 
 // checkAncestors checks if there is at least one ancestor in previous epoch submissions
@@ -587,10 +647,11 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 				if i != epochChanges.BestSubmissionIdx {
 					k.deleteSubmission(ctx, *sk)
 				}
-				currentEpoch.Key = []*types.SubmissionKey{&epochChanges.EpochBestSubmission.SubmissionKey}
 			}
+			// leave only best submission key
+			currentEpoch.Key = []*types.SubmissionKey{&epochChanges.EpochBestSubmission.SubmissionKey}
 		} else {
-			// applay changes to epoch according to changes
+			// apply changes to epoch according to changes
 			for _, sk := range epochChanges.SubmissionsToDelete {
 				k.deleteSubmission(ctx, *sk)
 			}

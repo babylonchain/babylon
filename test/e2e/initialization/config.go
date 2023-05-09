@@ -43,10 +43,11 @@ type NodeConfig struct {
 
 const (
 	// common
-	BabylonDenom                 = "ubbn"
-	MinGasPrice                  = "0.000"
-	ValidatorWalletName          = "val"
-	BabylonOpReturnTag           = "bbni"
+	BabylonDenom        = "ubbn"
+	MinGasPrice         = "0.000"
+	ValidatorWalletName = "val"
+	BabylonOpReturnTag  = "01020304"
+
 	BabylonBtcConfirmationPeriod = 2
 	BabylonBtcFinalizationPeriod = 4
 	// chainA
@@ -308,6 +309,7 @@ func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.Genesi
 	btccheckpointGenState.Params = btccheckpointtypes.DefaultParams()
 	btccheckpointGenState.Params.BtcConfirmationDepth = BabylonBtcConfirmationPeriod
 	btccheckpointGenState.Params.CheckpointFinalizationTimeout = BabylonBtcFinalizationPeriod
+	btccheckpointGenState.Params.CheckpointTag = BabylonOpReturnTag
 }
 
 func updateGenUtilGenesis(c *internalChain) func(*genutiltypes.GenesisState) {

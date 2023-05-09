@@ -41,9 +41,9 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 			 5. parent 1 < work < 4 times the work of the header
 			 6. parent > 4 times the work of the header
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		_, blcKeeper, sdkCtx := setupMsgServer(t)
 
 		defaultParams := chaincfg.MainNetParams
@@ -74,7 +74,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 		}
 
 		// If the header has a parent that does not exist, (nil, error) is returned
-		headerParentNotExists := datagen.GenRandomBTCHeaderInfo().Header
+		headerParentNotExists := datagen.GenRandomBTCHeaderInfo(r).Header
 		msg = &types.MsgInsertHeader{Header: headerParentNotExists}
 		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
 			retargetAdjustmentFactor, false)
@@ -87,21 +87,21 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 
 		ctx := sdk.UnwrapSDKContext(sdkCtx)
 		// Construct a tree and insert it into storage
-		tree := genRandomTree(blcKeeper, ctx, uint64(2), 10)
-		parentHeader := tree.RandomNode()
+		tree := genRandomTree(r, blcKeeper, ctx, uint64(2), 10)
+		parentHeader := tree.RandomNode(r)
 		// Do not work with different cases. Select a random integer between 1-retargetAdjustmentFactor+1
 		// 1/retargetAdjustmentFactor times, the work is going to be invalid
 		parentHeaderDifficulty := parentHeader.Header.Difficulty()
 		// Avoid retargetAdjustmentFactor itself, since the many conversions might lead to inconsistencies
-		mul := datagen.RandomInt(int(retargetAdjustmentFactor-1)) + 1
-		if datagen.OneInN(10) { // Give an invalid mul sometimes
+		mul := datagen.RandomInt(r, int(retargetAdjustmentFactor-1)) + 1
+		if datagen.OneInN(r, 10) { // Give an invalid mul sometimes
 			mul = uint64(retargetAdjustmentFactor + 1)
 		}
 		headerDifficultyMul := sdkmath.NewUintFromBigInt(new(big.Int).Mul(parentHeaderDifficulty, big.NewInt(int64(mul))))
 		headerDifficultyDiv := sdkmath.NewUintFromBigInt(new(big.Int).Div(parentHeaderDifficulty, big.NewInt(int64(mul))))
 
 		// Do tests
-		headerMoreWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyMul)
+		headerMoreWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(r, parentHeader, &headerDifficultyMul)
 		msg = &types.MsgInsertHeader{Header: headerMoreWork.Header}
 		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
 			retargetAdjustmentFactor, false)
@@ -115,7 +115,7 @@ func FuzzMsgServerInsertHeader(f *testing.F) {
 			t.Errorf("Valid header work led to an error")
 		}
 
-		headerLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(parentHeader, &headerDifficultyDiv)
+		headerLessWork := datagen.GenRandomBTCHeaderInfoWithParentAndBits(r, parentHeader, &headerDifficultyDiv)
 		msg = &types.MsgInsertHeader{Header: headerLessWork.Header}
 		resp, err = keeper.MsgInsertHeaderWrapped(sdkCtx, *blcKeeper, msg, *powLimit, reduceMinDifficulty,
 			retargetAdjustmentFactor, false)

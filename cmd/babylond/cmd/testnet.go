@@ -10,9 +10,9 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
@@ -53,8 +53,8 @@ var (
 	flagNodeDaemonHome          = "node-daemon-home"
 	flagStartingIPAddress       = "starting-ip-address"
 	flagBtcNetwork              = "btc-network"
-	flagBtcCheckpointTag        = "btc-checkpoint-tag"
 	flagAdditionalSenderAccount = "additional-sender-account"
+	flagTimeBetweenBlocks       = "time-between-blocks-seconds"
 )
 
 // TestnetCmd initializes all files for tendermint testnet and application
@@ -87,25 +87,25 @@ Example:
 			nodeDaemonHome, _ := cmd.Flags().GetString(flagNodeDaemonHome)
 			startingIPAddress, _ := cmd.Flags().GetString(flagStartingIPAddress)
 			numValidators, _ := cmd.Flags().GetInt(flagNumValidators)
-			algo, _ := cmd.Flags().GetString(flags.FlagKeyAlgorithm)
+			algo, _ := cmd.Flags().GetString(flags.FlagKeyType)
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
-			btcCheckpointTag, _ := cmd.Flags().GetString(flagBtcCheckpointTag)
 			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
+			timeBetweenBlocks, _ := cmd.Flags().GetUint64(flagTimeBetweenBlocks)
 			if err != nil {
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
 
 			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
-				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
+				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
 				genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
-				genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime)
+				genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				btcNetwork, btcCheckpointTag, additionalAccount, genesisParams,
+				btcNetwork, additionalAccount, timeBetweenBlocks, genesisParams,
 			)
 		},
 	}
@@ -117,10 +117,10 @@ Example:
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1", "Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
 	cmd.Flags().String(server.FlagMinGasPrices, fmt.Sprintf("0.000006%s", appparams.BaseCoinUnit), "Minimum gas prices to accept for transactions; All fees in a tx must meet this minimum (e.g. 0.001bbn)")
 	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
-	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
+	cmd.Flags().String(flags.FlagKeyType, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, regtest, mainnet")
-	cmd.Flags().String(flagBtcCheckpointTag, string(txformat.DefaultTestTagStr), "Tag to use for Bitcoin checkpoints.")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
+	cmd.Flags().Uint64(flagTimeBetweenBlocks, 5, "Time between blocks in seconds")
 	addGenesisFlags(cmd)
 
 	return cmd
@@ -145,8 +145,8 @@ func InitTestnet(
 	algoStr string,
 	numValidators int,
 	btcNetwork string,
-	btcCheckpointTag string,
 	additionalAccount bool,
+	timeBetweenBlocks uint64,
 	genesisParams GenesisParams,
 ) error {
 
@@ -156,16 +156,17 @@ func InitTestnet(
 	babylonConfig := DefaultBabylonConfig()
 	babylonConfig.MinGasPrices = minGasPrices
 	babylonConfig.API.Enable = true
+	babylonConfig.API.Address = "tcp://0.0.0.0:1317"
 	babylonConfig.Telemetry.Enabled = true
 	babylonConfig.Telemetry.PrometheusRetentionTime = 60
 	babylonConfig.Telemetry.EnableHostnameLabel = false
 	babylonConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
 	// BTC related config. Default values "simnet" and "BBT1"
 	babylonConfig.BtcConfig.Network = btcNetwork
-	babylonConfig.BtcConfig.CheckpointTag = btcCheckpointTag
 	// Explorer related config. Allow CORS connections.
 	babylonConfig.API.EnableUnsafeCORS = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
+	babylonConfig.GRPCWeb.Address = "0.0.0.0:9091"
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -191,6 +192,8 @@ func InitTestnet(
 		nodeConfig.Instrumentation.Prometheus = true
 		// Set the number of simultaneous connections to unlimited
 		nodeConfig.Instrumentation.MaxOpenConnections = 0
+		// Time between blocks
+		nodeConfig.Consensus.TimeoutCommit = time.Second * time.Duration(timeBetweenBlocks)
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outputDir)
@@ -400,21 +403,16 @@ func initGenFiles(
 	// set the bls keys for the checkpointing module
 	genesisParams.CheckpointingGenKeys = genKeys
 
-	appGenState, _, err = PrepareGenesis(clientCtx, appGenState, &types.GenesisDoc{}, genesisParams, chainID)
+	genDoc := &types.GenesisDoc{}
+
+	err = PrepareGenesis(clientCtx, appGenState, genDoc, genesisParams, chainID)
+
 	if err != nil {
 		return err
 	}
-
-	appGenStateJSON, err := json.MarshalIndent(appGenState, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	genDoc := types.GenesisDoc{
-		ChainID:    chainID,
-		AppState:   appGenStateJSON,
-		Validators: nil,
-	}
+	// set initial validators to nil, they will be added by collectGenFiles based on
+	// genesis tranascations
+	genDoc.Validators = nil
 
 	// generate empty genesis files for each validator and save
 	for i := 0; i < numValidators; i++ {
@@ -467,10 +465,17 @@ func collectGenFiles(
 			appState = nodeAppState
 		}
 
+		// overwrite each validator's genesis file to have a canonical genesis time
 		genFile := nodeConfig.GenesisFile()
 
-		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, chainID, nil, appState, genTime); err != nil {
+		newGendoc := types.GenesisDoc{
+			GenesisTime:     genTime,
+			AppState:        appState,
+			ConsensusParams: genDoc.ConsensusParams,
+			ChainID:         genDoc.ChainID,
+		}
+
+		if err := genutil.ExportGenesisFile(&newGendoc, genFile); err != nil {
 			return err
 		}
 	}
