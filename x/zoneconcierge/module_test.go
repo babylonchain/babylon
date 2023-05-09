@@ -297,7 +297,11 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 				clientState = path.EndpointA.GetClientState()
 			}
 
-			err := suite.babylonChain.App.GetIBCKeeper().ClientKeeper.UpdateClient(suite.babylonChain.GetContext(), path.EndpointA.ClientID, updateHeader)
+			// err := suite.babylonChain.App.GetIBCKeeper().ClientKeeper.UpdateClient(suite.babylonChain.GetContext(), path.EndpointA.ClientID, updateHeader)
+
+			msg, err := clienttypes.NewMsgUpdateClient(path.EndpointA.ClientID, updateHeader, path.EndpointA.Chain.SenderAccount.GetAddress().String())
+			suite.Require().NoError(err)
+			_, err = suite.babylonChain.SendMsgs(msg)
 
 			if tc.expPass {
 				suite.Require().NoError(err, err)
