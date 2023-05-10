@@ -1,8 +1,6 @@
 package keeper_test
 
 import (
-	"encoding/hex"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -124,11 +122,4 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 		require.Equal(t, info.YoungestBlockLowestTxIdx, expectedTxIdx)
 		require.Equal(t, info.OldestBlockDepth, expectedOldestDepth)
 	})
-}
-
-func TestFoo(t *testing.T) {
-	fmt.Println("0102030405")
-	data := []byte{1, 2, 3, 4, 5}
-	hex := hex.EncodeToString(data)
-	fmt.Println(hex)
 }
