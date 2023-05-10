@@ -521,7 +521,7 @@ func NewBabylonApp(
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.BTCLightClientKeeper,
+		nil, // BTCLightClientKeeper is set later (TODO: figure out a proper way for this)
 		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
 		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
 		epochingKeeper,
