@@ -61,7 +61,7 @@ func (zoneconciergeStoreQuerier) Query(req abci.RequestQuery) abci.ResponseQuery
 	}
 }
 
-func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -85,7 +85,7 @@ func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKe
 		zoneconciergePortKeeper{},
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
-		nil, // TODO: mock this keeper
+		btclcKeeper,
 		checkpointingKeeper,
 		btccKeeper,
 		epochingKeeper,
