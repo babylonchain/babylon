@@ -24,4 +24,5 @@ var (
 	ErrInvalidMerkleProof       = errorsmod.Register(ModuleName, 1113, "invalid Merkle inclusion proof")
 	ErrInvalidChainInfo         = errorsmod.Register(ModuleName, 1114, "invalid chain info")
 	ErrFinalizingBTCTipNotFound = errorsmod.Register(ModuleName, 1115, "cannot find a finalizing BTC tip")
+	ErrInvalidChainIDs          = errorsmod.Register(ModuleName, 1116, "chain ids contain duplicates or empty strings")
 )

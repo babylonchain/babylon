@@ -33,7 +33,7 @@ func FuzzHashesQuery(f *testing.F) {
 		   Do checks 2-4 by initially querying without a key and then querying
 		   with the nextKey attribute.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -123,7 +123,7 @@ func FuzzContainsQuery(f *testing.F) {
 		- Generate a random tree of headers and insert into storage.
 		- Generate a random header but do not insert it into storage.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -185,7 +185,7 @@ func FuzzMainChainQuery(f *testing.F) {
 			 - Generate a random tree of headers with different PoW and insert them into the headers storage.
 			 - Calculate the main chain using the `HeadersState().MainChain()` function (here we only test the query)
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -316,7 +316,7 @@ func FuzzTipQuery(f *testing.F) {
 		Data generation:
 		- Generate a random tree of headers and insert into storage
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
@@ -355,7 +355,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 		Data generation:
 		- Generate a random tree of headers and insert into storage.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)

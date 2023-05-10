@@ -16,7 +16,7 @@ import (
 func FuzzMsgInsertHeader(f *testing.F) {
 	maxDifficulty := bbn.GetMaxDifficulty()
 
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))

@@ -3,12 +3,12 @@ package keeper
 import (
 	"fmt"
 
-	errorsmod "cosmossdk.io/errors"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type Hooks struct {
@@ -28,22 +28,26 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 	indexedHeader := types.IndexedHeader{
 		ChainId:       header.ChaindId,
 		Hash:          header.Hash,
-		Height:        uint64(header.Height),
+		Height:        header.Height,
 		BabylonHeader: &babylonHeader,
 		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash: txHash,
 	}
 
-	// initialise chain info if not exist
-	chainInfo, err := h.k.GetChainInfo(ctx, indexedHeader.ChainId)
-	if err != nil {
-		if errorsmod.IsOf(err, types.ErrEpochChainInfoNotFound) {
-			// chain info does not exist yet, initialise chain info for this chain
-			chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
-			if err != nil {
-				panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
-			}
-		} else {
+	var (
+		chainInfo *types.ChainInfo
+		err       error
+	)
+	if !h.k.HasChainInfo(ctx, indexedHeader.ChainId) {
+		// chain info does not exist yet, initialise chain info for this chain
+		chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
+		if err != nil {
+			panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
+		}
+	} else {
+		// get chain info
+		chainInfo, err = h.k.GetChainInfo(ctx, indexedHeader.ChainId)
+		if err != nil {
 			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ChainId, err))
 		}
 	}

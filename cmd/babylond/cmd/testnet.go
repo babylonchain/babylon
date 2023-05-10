@@ -10,6 +10,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
 	bbn "github.com/babylonchain/babylon/types"
@@ -53,6 +54,7 @@ var (
 	flagStartingIPAddress       = "starting-ip-address"
 	flagBtcNetwork              = "btc-network"
 	flagAdditionalSenderAccount = "additional-sender-account"
+	flagTimeBetweenBlocks       = "time-between-blocks-seconds"
 )
 
 // TestnetCmd initializes all files for tendermint testnet and application
@@ -88,6 +90,7 @@ Example:
 			algo, _ := cmd.Flags().GetString(flags.FlagKeyType)
 			btcNetwork, _ := cmd.Flags().GetString(flagBtcNetwork)
 			additionalAccount, _ := cmd.Flags().GetBool(flagAdditionalSenderAccount)
+			timeBetweenBlocks, _ := cmd.Flags().GetUint64(flagTimeBetweenBlocks)
 			if err != nil {
 				return errors.New("base Bitcoin header height should be a uint64")
 			}
@@ -102,7 +105,7 @@ Example:
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				btcNetwork, additionalAccount, genesisParams,
+				btcNetwork, additionalAccount, timeBetweenBlocks, genesisParams,
 			)
 		},
 	}
@@ -117,6 +120,7 @@ Example:
 	cmd.Flags().String(flags.FlagKeyType, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
 	cmd.Flags().String(flagBtcNetwork, string(bbn.BtcSimnet), "Bitcoin network to use. Available networks: simnet, testnet, regtest, mainnet")
 	cmd.Flags().Bool(flagAdditionalSenderAccount, false, "If there should be additional pre funded account per validator")
+	cmd.Flags().Uint64(flagTimeBetweenBlocks, 5, "Time between blocks in seconds")
 	addGenesisFlags(cmd)
 
 	return cmd
@@ -142,6 +146,7 @@ func InitTestnet(
 	numValidators int,
 	btcNetwork string,
 	additionalAccount bool,
+	timeBetweenBlocks uint64,
 	genesisParams GenesisParams,
 ) error {
 
@@ -187,6 +192,8 @@ func InitTestnet(
 		nodeConfig.Instrumentation.Prometheus = true
 		// Set the number of simultaneous connections to unlimited
 		nodeConfig.Instrumentation.MaxOpenConnections = 0
+		// Time between blocks
+		nodeConfig.Consensus.TimeoutCommit = time.Second * time.Duration(timeBetweenBlocks)
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outputDir)

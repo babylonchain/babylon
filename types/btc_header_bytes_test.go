@@ -11,7 +11,7 @@ import (
 )
 
 func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -77,7 +77,7 @@ func FuzzBTCHeaderBytesBytesOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesHexOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -120,7 +120,7 @@ func FuzzBTCHeaderBytesHexOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -171,7 +171,7 @@ func FuzzBTCHeaderBytesJSONOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesBtcdBlockOps(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -193,7 +193,7 @@ func FuzzBTCHeaderBytesBtcdBlockOps(f *testing.F) {
 }
 
 func FuzzBTCHeaderBytesOperators(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 

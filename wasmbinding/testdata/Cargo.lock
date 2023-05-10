@@ -16,7 +16,7 @@ dependencies = [
 [[package]]
 name = "babylon-bindings"
 version = "0.1.0"
-source = "git+https://github.com/babylonchain/bindings?branch=main#7c209ab2cd289b9bad57958d5bc074cb8ded5a5c"
+source = "git+https://github.com/babylonchain/bindings?tag=v0.1.0#7c209ab2cd289b9bad57958d5bc074cb8ded5a5c"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -27,7 +27,7 @@ dependencies = [
 [[package]]
 name = "babylon-example"
 version = "0.1.0"
-source = "git+https://github.com/babylonchain/bindings?branch=main#7c209ab2cd289b9bad57958d5bc074cb8ded5a5c"
+source = "git+https://github.com/babylonchain/bindings?tag=v0.1.0#7c209ab2cd289b9bad57958d5bc074cb8ded5a5c"
 dependencies = [
  "babylon-bindings",
  "cosmwasm-schema",

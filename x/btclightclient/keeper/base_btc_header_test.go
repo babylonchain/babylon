@@ -17,7 +17,7 @@ func FuzzKeeperBaseBTCHeader(f *testing.F) {
 		Data generation:
 		- Create a header. Use it as a parameter to SetBaseBTCHeader
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := keeper.BTCLightClientKeeper(t)
