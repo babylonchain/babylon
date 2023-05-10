@@ -32,7 +32,7 @@ func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedC
 
 func (k Keeper) AddUninitedChannel(ctx sdk.Context, channelID string) {
 	store := k.ibcChannelsStore(ctx)
-	store.Set([]byte(channelID), nil)
+	store.Set([]byte(channelID), []byte{0x00})
 }
 
 func (k Keeper) afterChannelInited(ctx sdk.Context, channelID string) {
