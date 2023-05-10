@@ -28,6 +28,7 @@ var (
 	EpochChainInfoKey   = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each CZ in store
 	FinalizedEpochKey   = []byte{0x16} // FinalizedEpochKey defines the key to store the last finalised epoch
 	FinalizingBTCTipKey = []byte{0x17} // FinalizingBTCTipKey defines the key to store the BTC tip when the last epoch is finalised
+	IBCChannelsKey      = []byte{0x18} // IBCChannelsKey defines the key to store the initialisation status of IBC channels
 )
 
 func KeyPrefix(p string) []byte {

@@ -147,6 +147,15 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 			},
 		}
 
+		// if the Babylon contract in this channel has not been initialised, send initialise message first
+		if k.channelExists(ctx, channel.ChannelId) {
+			if err := k.SendInitBTCHeaders(ctx, channel); err != nil {
+				k.Logger(ctx).Error("failed to send InitBTCHeaders IBC packet", "channelID", channel.ChannelId, "error", err)
+				continue
+			}
+			k.afterChannelInited(ctx, channel.ChannelId)
+		}
+
 		// send IBC packet
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			k.Logger(ctx).Error("failed to send BTC timestamp IBC packet", "chainID", chainID, "channelID", channel.ChannelId, "error", err)

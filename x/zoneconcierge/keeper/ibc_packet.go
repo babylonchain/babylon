@@ -15,29 +15,6 @@ import (
 	coretypes "github.com/cosmos/ibc-go/v7/modules/core/types"
 )
 
-func (k Keeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
-	return k.channelKeeper.GetAllChannels(ctx)
-}
-
-// GetAllOpenZCChannels returns all open channels that are connected to ZoneConcierge's port
-func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
-	zcPort := k.GetPort(ctx)
-	channels := k.GetAllChannels(ctx)
-
-	openZCChannels := []channeltypes.IdentifiedChannel{}
-	for _, channel := range channels {
-		if channel.State != channeltypes.OPEN {
-			continue
-		}
-		if channel.PortId != zcPort {
-			continue
-		}
-		openZCChannels = append(openZCChannels, channel)
-	}
-
-	return openZCChannels
-}
-
 // SendIBCPacket sends an IBC packet to a channel
 // (adapted from https://github.com/cosmos/ibc-go/blob/v5.0.0/modules/apps/transfer/keeper/relay.go)
 func (k Keeper) SendIBCPacket(ctx sdk.Context, channel channeltypes.IdentifiedChannel, packetData *types.ZoneconciergePacketData) error {
