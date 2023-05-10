@@ -134,3 +134,7 @@ func (h Hooks) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *checkpointingt
 func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
 	return nil
 }
+
+func (h Hooks) AfterUnbondingInitiated(ctx sdk.Context, id uint64) error {
+	return nil
+}

@@ -1,6 +1,9 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/testutil/mocks"
@@ -8,31 +11,27 @@ import (
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	types2 "github.com/babylonchain/babylon/x/epoching/types"
-	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	"github.com/babylonchain/babylon/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-	"math/rand"
-	"testing"
 )
 
 func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		// a genesis validator is generated for setup
 		helper := testepoching.NewHelper(t)
 		lck := helper.App.BTCLightClientKeeper
 		mk := helper.App.MonitorKeeper
 		ek := helper.EpochingKeeper
-		querier := monitorkeeper.Querier{Keeper: mk}
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
-		types.RegisterQueryServer(queryHelper, querier)
+		types.RegisterQueryServer(queryHelper, mk)
 		queryClient := types.NewQueryClient(queryHelper)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -40,7 +39,7 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 		tree := datagen.NewBTCHeaderTree()
 		root := lck.GetBaseBTCHeader(ctx)
 		tree.Add(root, nil)
-		tree.GenRandomBTCHeaderTree(1, 10, root, func(header *btclightclienttypes.BTCHeaderInfo) bool {
+		tree.GenRandomBTCHeaderTree(r, 1, 10, root, func(header *btclightclienttypes.BTCHeaderInfo) bool {
 			err := lck.InsertHeader(ctx, header.Header)
 			require.NoError(t, err)
 			return true
@@ -51,7 +50,7 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = ek.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -77,7 +76,7 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		// a genesis validator is generated for setup
 		helper := testepoching.NewHelper(t)
 		ctl := gomock.NewController(t)
@@ -88,13 +87,12 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		ck := helper.App.CheckpointingKeeper
 		mockEk := mocks.NewMockEpochingKeeper(ctl)
 		ck.SetEpochingKeeper(mockEk)
-		querier := monitorkeeper.Querier{Keeper: mk}
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
-		types.RegisterQueryServer(queryHelper, querier)
+		types.RegisterQueryServer(queryHelper, mk)
 		queryClient := types.NewQueryClient(queryHelper)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -102,14 +100,14 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		tree := datagen.NewBTCHeaderTree()
 		root := lck.GetBaseBTCHeader(ctx)
 		tree.Add(root, nil)
-		tree.GenRandomBTCHeaderTree(1, 10, root, func(header *btclightclienttypes.BTCHeaderInfo) bool {
+		tree.GenRandomBTCHeaderTree(r, 1, 10, root, func(header *btclightclienttypes.BTCHeaderInfo) bool {
 			err := lck.InsertHeader(ctx, header.Header)
 			require.NoError(t, err)
 			return true
 		})
 
 		// Add checkpoint
-		valBlsSet, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(int(datagen.RandomIntOtherThan(0, 10)))
+		valBlsSet, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(int(datagen.RandomIntOtherThan(r, 0, 10)))
 		valSet := make([]types2.Validator, len(valBlsSet.ValSet))
 		for i, val := range valBlsSet.ValSet {
 			valSet[i] = types2.Validator{
@@ -119,7 +117,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 			err := ck.CreateRegistration(ctx, val.BlsPubKey, []byte(val.ValidatorAddress))
 			require.NoError(t, err)
 		}
-		mockCkptWithMeta := &ckpttypes.RawCheckpointWithMeta{Ckpt: datagen.GenerateLegitimateRawCheckpoint(privKeys)}
+		mockCkptWithMeta := &ckpttypes.RawCheckpointWithMeta{Ckpt: datagen.GenerateLegitimateRawCheckpoint(r, privKeys)}
 		mockEk.EXPECT().GetValidatorSet(gomock.Any(), gomock.Eq(mockCkptWithMeta.Ckpt.EpochNum)).Return(valSet).AnyTimes()
 		// make sure voting power is always sufficient
 		mockEk.EXPECT().GetTotalVotingPower(gomock.Any(), gomock.Eq(mockCkptWithMeta.Ckpt.EpochNum)).Return(int64(0)).AnyTimes()
@@ -134,7 +132,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 			Epoch:            mockCkptWithMeta.Ckpt.EpochNum,
 			LastCommitHash:   *mockCkptWithMeta.Ckpt.LastCommitHash,
 			BitMap:           mockCkptWithMeta.Ckpt.Bitmap,
-			SubmitterAddress: datagen.GenRandomByteArray(btctxformatter.AddressLength),
+			SubmitterAddress: datagen.GenRandomByteArray(r, btctxformatter.AddressLength),
 			BlsSig:           *mockCkptWithMeta.Ckpt.BlsMultiSig,
 		}
 		err = ck.VerifyCheckpoint(ctx, btcCkpt)
@@ -150,7 +148,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 
 		// query not reported checkpoint BTC light client height, should expect an ErrCheckpointNotReported
 		req = types.QueryReportedCheckpointBtcHeightRequest{
-			CkptHash: datagen.GenRandomHexStr(32),
+			CkptHash: datagen.GenRandomHexStr(r, 32),
 		}
 		_, err = queryClient.ReportedCheckpointBtcHeight(ctx, &req)
 		require.ErrorIs(t, err, types.ErrCheckpointNotReported)

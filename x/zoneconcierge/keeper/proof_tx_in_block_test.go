@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
@@ -13,12 +11,16 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 )
 
 func TestProveTxInBlock(t *testing.T) {
 	// setup virtual network
-	cfg := network.DefaultConfig()
-	encodingCfg := app.MakeTestEncodingConfig()
+	min := network.MinimumAppConfig()
+	cfg, _ := network.DefaultConfigWithAppConfig(min)
+	encodingCfg := app.GetEncodingConfig()
 	cfg.InterfaceRegistry = encodingCfg.InterfaceRegistry
 	cfg.TxConfig = encodingCfg.TxConfig
 	cfg.NumValidators = 2
@@ -52,10 +54,14 @@ func TestProveTxInBlock(t *testing.T) {
 	coins := sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10)))
 	msg := banktypes.NewMsgSend(val.Address, testNetwork.Validators[1].Address, coins)
 
+	txf, err := tx.NewFactoryCLI(val.ClientCtx, fs)
+
+	require.NoError(t, err)
 	// construct a tx that includes this msg
-	txf := tx.NewFactoryCLI(val.ClientCtx, fs).
+	txf = txf.
 		WithTxConfig(val.ClientCtx.TxConfig).
 		WithAccountRetriever(val.ClientCtx.AccountRetriever)
+
 	txf, err = txf.Prepare(val.ClientCtx)
 	require.NoError(t, err)
 	txb, err := txf.BuildUnsignedTx(msg)

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
 
@@ -10,13 +11,9 @@ import (
 )
 
 func FuzzEpochValSet(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ctx, keeper := helper.Ctx, helper.EpochingKeeper
@@ -30,9 +27,9 @@ func FuzzEpochValSet(f *testing.F) {
 		}
 
 		// generate a random number of new blocks
-		numIncBlocks := rand.Uint64()%1000 + 1
+		numIncBlocks := r.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 
 		// check whether the validator set remains the same or not

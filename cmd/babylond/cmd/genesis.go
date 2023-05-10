@@ -11,6 +11,7 @@ import (
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -28,7 +29,6 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/types"
 )
 
 func PrepareGenesisCmd(defaultNodeHome string, mbm module.BasicManager) *cobra.Command {
@@ -51,6 +51,7 @@ Example:
 			genesisCliArgs := parseGenesisFlags(cmd)
 
 			genFile := config.GenesisFile()
+
 			appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal genesis state: %s", err)
@@ -62,9 +63,11 @@ Example:
 			var genesisParams GenesisParams
 			if network == "testnet" {
 				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
-					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout,
+					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.GenesisTime)
+					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
+					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
+					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 			} else if network == "mainnet" {
 				// TODO: mainnet genesis params
 				panic("Mainnet params not implemented.")
@@ -72,7 +75,7 @@ Example:
 				return fmt.Errorf("please choose testnet or mainnet")
 			}
 
-			appState, genDoc, err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID)
+			err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID)
 			if err != nil {
 				return fmt.Errorf("failed to prepare genesis: %w", err)
 			}
@@ -81,11 +84,6 @@ Example:
 				return fmt.Errorf("error validating genesis file: %s", err)
 			}
 
-			appStateJSON, err := json.Marshal(appState)
-			if err != nil {
-				return fmt.Errorf("failed to marshal application genesis state: %w", err)
-			}
-			genDoc.AppState = appStateJSON
 			return genutil.ExportGenesisFile(genDoc, genFile)
 		},
 	}
@@ -96,8 +94,16 @@ Example:
 	return cmd
 }
 
-func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessage,
-	genDoc *types.GenesisDoc, genesisParams GenesisParams, chainID string) (map[string]json.RawMessage, *types.GenesisDoc, error) {
+func PrepareGenesis(
+	clientCtx client.Context,
+	appState map[string]json.RawMessage,
+	genDoc *comettypes.GenesisDoc,
+	genesisParams GenesisParams,
+	chainID string,
+) error {
+	if genDoc == nil {
+		return fmt.Errorf("provided genesis must not be nil")
+	}
 
 	depCdc := clientCtx.Codec
 	cdc := depCdc
@@ -105,6 +111,13 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 	// Add ChainID
 	genDoc.ChainID = chainID
 	genDoc.GenesisTime = genesisParams.GenesisTime
+
+	if genDoc.ConsensusParams == nil {
+		genDoc.ConsensusParams = comettypes.DefaultConsensusParams()
+	}
+
+	// Set gas limit
+	genDoc.ConsensusParams.Block.MaxGas = genesisParams.BlockGasLimit
 
 	// Set the confirmation and finalization parameters
 	btccheckpointGenState := btccheckpointtypes.DefaultGenesis()
@@ -144,7 +157,7 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 
 	// gov module genesis
 	govGenState := govv1.DefaultGenesisState()
-	govGenState.DepositParams = &genesisParams.GovParams.DepositParams
+	govGenState.Params = &genesisParams.GovParams
 	appState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
 	// crisis module genesis
@@ -165,8 +178,15 @@ func PrepareGenesis(clientCtx client.Context, appState map[string]json.RawMessag
 	}
 	appState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenState)
 
-	// return appState
-	return appState, genDoc, nil
+	appGenStateJSON, err := json.MarshalIndent(appState, "", "  ")
+
+	if err != nil {
+		return err
+	}
+
+	genDoc.AppState = appGenStateJSON
+
+	return nil
 }
 
 type GenesisParams struct {
@@ -187,11 +207,14 @@ type GenesisParams struct {
 	BtccheckpointParams         btccheckpointtypes.Params
 	EpochingParams              epochingtypes.Params
 	BtclightclientBaseBtcHeader btclightclienttypes.BTCHeaderInfo
+	BlockGasLimit               int64
 }
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
-	btcFinalizationTimeout uint64, epochInterval uint64, baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64, genesisTime time.Time) GenesisParams {
+	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
+	baseBtcHeaderHeight uint64, inflationRateChange float64,
+	inflationMin float64, inflationMax float64, goalBonded float64,
+	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
 
 	genParams := GenesisParams{}
 
@@ -226,9 +249,15 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 
 	genParams.MintParams = minttypes.DefaultParams()
 	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
+	genParams.MintParams.BlocksPerYear = blocksPerYear
+	// This should always work as inflation rate is already a float64
+	genParams.MintParams.InflationRateChange = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationRateChange))
+	genParams.MintParams.InflationMin = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationMin))
+	genParams.MintParams.InflationMax = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationMax))
+	genParams.MintParams.GoalBonded = sdk.MustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
-	genParams.GovParams.DepositParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
+	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
 		sdk.NewInt(2_500_000_000),
 	))
@@ -241,6 +270,11 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.BtccheckpointParams = btccheckpointtypes.DefaultParams()
 	genParams.BtccheckpointParams.BtcConfirmationDepth = btcConfirmationDepth
 	genParams.BtccheckpointParams.CheckpointFinalizationTimeout = btcFinalizationTimeout
+	genParams.BtccheckpointParams.CheckpointTag = checkpointTag
+
+	if err := genParams.BtccheckpointParams.Validate(); err != nil {
+		panic(err)
+	}
 
 	// set the base BTC header in the genesis state
 	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(baseBtcHeaderHex)
@@ -256,6 +290,6 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	}
 	genParams.EpochingParams = epochingtypes.DefaultParams()
 	genParams.EpochingParams.EpochInterval = epochInterval
-
+	genParams.BlockGasLimit = blockGasLimit
 	return genParams
 }

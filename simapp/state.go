@@ -9,15 +9,15 @@ import (
 	"time"
 
 	sdkmath "cosmossdk.io/math"
+	simappparams "github.com/babylonchain/babylon/app/params"
 
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	tmtypes "github.com/tendermint/tendermint/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	tmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/babylonchain/babylon/app"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -43,7 +43,6 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 		switch {
 		case config.ParamsFile != "" && config.GenesisFile != "":
 			panic("cannot provide both a genesis file and a params file")
-
 		case config.GenesisFile != "":
 			// override the default chain-id from simapp to set it later to the config
 			genesisDoc, accounts := AppStateFromGenesisFileFn(r, cdc, config.GenesisFile)
@@ -69,7 +68,6 @@ func AppStateFn(cdc codec.JSONCodec, simManager *module.SimulationManager) simty
 				panic(err)
 			}
 			appState, simAccs = AppStateRandomizedFn(simManager, r, cdc, accs, genesisTimestamp, appParams)
-
 		default:
 			appParams := make(simtypes.AppParams)
 			appState, simAccs = AppStateRandomizedFn(simManager, r, cdc, accs, genesisTimestamp, appParams)

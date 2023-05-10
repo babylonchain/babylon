@@ -3,13 +3,12 @@ package keeper
 import (
 	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	ibcclientkeeper "github.com/cosmos/ibc-go/v5/modules/core/02-client/keeper"
-	ibctmtypes "github.com/cosmos/ibc-go/v5/modules/light-clients/07-tendermint/types"
 )
 
 type Hooks struct {
@@ -17,34 +16,38 @@ type Hooks struct {
 }
 
 // ensures Hooks implements ClientHooks interfaces
-var _ ibcclientkeeper.ClientHooks = Hooks{}
+var _ extendedkeeper.ClientHooks = Hooks{}
 var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 var _ epochingtypes.EpochingHooks = Hooks{}
 
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterHeaderWithValidCommit is triggered upon each CZ header with a valid QC
-func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *ibctmtypes.Header, isOnFork bool) {
+func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *extendedkeeper.HeaderInfo, isOnFork bool) {
 	babylonHeader := ctx.BlockHeader()
 	indexedHeader := types.IndexedHeader{
-		ChainId:       header.Header.ChainID,
-		Hash:          header.Header.LastCommitHash,
-		Height:        uint64(header.Header.Height),
+		ChainId:       header.ChaindId,
+		Hash:          header.Hash,
+		Height:        header.Height,
 		BabylonHeader: &babylonHeader,
 		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash: txHash,
 	}
 
-	// initialise chain info if not exist
-	chainInfo, err := h.k.GetChainInfo(ctx, indexedHeader.ChainId)
-	if err != nil {
-		if sdkerrors.IsOf(err, types.ErrEpochChainInfoNotFound) {
-			// chain info does not exist yet, initialise chain info for this chain
-			chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
-			if err != nil {
-				panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
-			}
-		} else {
+	var (
+		chainInfo *types.ChainInfo
+		err       error
+	)
+	if !h.k.HasChainInfo(ctx, indexedHeader.ChainId) {
+		// chain info does not exist yet, initialise chain info for this chain
+		chainInfo, err = h.k.InitChainInfo(ctx, indexedHeader.ChainId)
+		if err != nil {
+			panic(fmt.Errorf("failed to initialize chain info of %s: %w", indexedHeader.ChainId, err))
+		}
+	} else {
+		// get chain info
+		chainInfo, err = h.k.GetChainInfo(ctx, indexedHeader.ChainId)
+		if err != nil {
 			panic(fmt.Errorf("failed to get chain info of %s: %w", indexedHeader.ChainId, err))
 		}
 	}

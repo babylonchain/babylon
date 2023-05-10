@@ -1,14 +1,14 @@
 package tx
 
 import (
+	"errors"
 	"fmt"
 
-	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdktx "github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/pflag"
+
+	"github.com/babylonchain/babylon/types"
 )
 
 func SendMsgToTendermint(clientCtx client.Context, msg sdk.Msg) (*sdk.TxResponse, error) {
@@ -22,16 +22,15 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 		}
 	}
 
-	// TODO make the fee dynamic
-	fs := pflag.NewFlagSet("", pflag.ContinueOnError)
-	fs.String(flags.FlagFees, "", "Fees to pay along with transaction; eg: 10ubbn")
-	fee := fmt.Sprintf("100%s", appparams.BaseCoinUnit)
-	err := fs.Set(flags.FlagFees, fee)
-	if err != nil {
-		return nil, err
-	}
-
-	txf := sdktx.NewFactoryCLI(clientCtx, fs)
+	gasPrice, gasAdjustment := types.MustGetGasSettings(clientCtx.HomeDir, clientCtx.Viper)
+	txf := sdktx.Factory{}.
+		WithTxConfig(clientCtx.TxConfig).
+		WithAccountRetriever(clientCtx.AccountRetriever).
+		WithKeybase(clientCtx.Keyring).
+		WithChainID(clientCtx.ChainID).
+		WithFeePayer(clientCtx.FeePayer).
+		WithGasPrices(gasPrice).
+		WithGasAdjustment(gasAdjustment)
 
 	return BroadcastTx(clientCtx, txf, msgs...)
 }
@@ -46,6 +45,17 @@ func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (
 	if err != nil {
 		return nil, err
 	}
+
+	_, adjusted, err := sdktx.CalculateGas(clientCtx, txf, msgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	if adjusted <= 0 {
+		return nil, errors.New("calculated gas should be positive")
+	}
+
+	txf = txf.WithGas(adjusted)
 
 	tx, err := txf.BuildUnsignedTx(msgs...)
 	if err != nil {
@@ -102,7 +112,6 @@ func prepareFactory(clientCtx client.Context, txf sdktx.Factory) (sdktx.Factory,
 		if initNum == 0 {
 			txf = txf.WithAccountNumber(num)
 		}
-
 		if initSeq == 0 {
 			txf = txf.WithSequence(seq)
 		}

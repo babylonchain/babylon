@@ -3,13 +3,13 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 func getEpochInfoKey(epochNumber uint64) []byte {
@@ -36,7 +36,7 @@ func getValSetKey(epochNumber uint64) []byte {
 
 func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	valSetKey := getValSetKey(epoch.EpochNumber)
-	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
+	_, _, proof, err := k.QueryStore(checkpointingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return err
 	}
 	if err := VerifyStore(root, epochingtypes.StoreKey, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %w", err)
+		return errorsmod.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %v", err)
 	}
 
 	// Ensure The validator set is committed to the app_hash of the sealer header
@@ -163,7 +163,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return err
 	}
 	if err := VerifyStore(root, checkpointingtypes.StoreKey, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
-		return sdkerrors.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %w", err)
+		return errorsmod.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %v", err)
 	}
 
 	return nil

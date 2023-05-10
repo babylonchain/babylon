@@ -24,6 +24,7 @@ func TestGenesisState_Validate(t *testing.T) {
 				Params: types.Params{
 					BtcConfirmationDepth:          124,
 					CheckpointFinalizationTimeout: 12222,
+					CheckpointTag:                 types.DefaultCheckpointTag,
 				},
 			},
 			valid: true,

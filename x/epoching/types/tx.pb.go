@@ -6,11 +6,12 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-sdk/codec/types"
+	_ "github.com/cosmos/cosmos-proto"
+	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	types "github.com/cosmos/cosmos-sdk/x/staking/types"
-	_ "github.com/gogo/protobuf/gogoproto"
-	grpc1 "github.com/gogo/protobuf/grpc"
-	proto "github.com/gogo/protobuf/proto"
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	grpc1 "github.com/cosmos/gogoproto/grpc"
+	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -30,6 +31,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgWrappedDelegate is the message for delegating stakes
 type MsgWrappedDelegate struct {
 	Msg *types.MsgDelegate `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }
@@ -67,6 +69,7 @@ func (m *MsgWrappedDelegate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedDelegate proto.InternalMessageInfo
 
+// MsgWrappedDelegate is the response to the MsgWrappedDelegate message
 type MsgWrappedDelegateResponse struct {
 }
 
@@ -103,6 +106,7 @@ func (m *MsgWrappedDelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedDelegateResponse proto.InternalMessageInfo
 
+// MsgWrappedUndelegate is the message for undelegating stakes
 type MsgWrappedUndelegate struct {
 	Msg *types.MsgUndelegate `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }
@@ -140,6 +144,8 @@ func (m *MsgWrappedUndelegate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedUndelegate proto.InternalMessageInfo
 
+// MsgWrappedUndelegateResponse is the response to the MsgWrappedUndelegate
+// message
 type MsgWrappedUndelegateResponse struct {
 }
 
@@ -176,6 +182,8 @@ func (m *MsgWrappedUndelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedUndelegateResponse proto.InternalMessageInfo
 
+// MsgWrappedDelegate is the message for moving bonded stakes from a
+// validator to another validator
 type MsgWrappedBeginRedelegate struct {
 	Msg *types.MsgBeginRedelegate `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
 }
@@ -213,6 +221,8 @@ func (m *MsgWrappedBeginRedelegate) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedBeginRedelegate proto.InternalMessageInfo
 
+// MsgWrappedBeginRedelegateResponse is the response to the
+// MsgWrappedBeginRedelegate message
 type MsgWrappedBeginRedelegateResponse struct {
 }
 
@@ -249,6 +259,103 @@ func (m *MsgWrappedBeginRedelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedBeginRedelegateResponse proto.InternalMessageInfo
 
+// MsgUpdateParams defines a message for updating epoching module parameters.
+type MsgUpdateParams struct {
+	// authority is the address of the governance account.
+	// just FYI: cosmos.AddressString marks that this field should use type alias
+	// for AddressString instead of string, but the functionality is not yet implemented
+	// in cosmos-proto
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// params defines the epoching paramaeters parameters to update.
+	//
+	// NOTE: All parameters must be supplied.
+	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
+}
+
+func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
+func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateParams) ProtoMessage()    {}
+func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{6}
+}
+func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateParams.Merge(m, src)
+}
+func (m *MsgUpdateParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateParams proto.InternalMessageInfo
+
+func (m *MsgUpdateParams) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
+}
+
+func (m *MsgUpdateParams) GetParams() Params {
+	if m != nil {
+		return m.Params
+	}
+	return Params{}
+}
+
+// MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
+type MsgUpdateParamsResponse struct {
+}
+
+func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse{} }
+func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateParamsResponse) ProtoMessage()    {}
+func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{7}
+}
+func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateParamsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateParamsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateParamsResponse.Merge(m, src)
+}
+func (m *MsgUpdateParamsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateParamsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgWrappedDelegate)(nil), "babylon.epoching.v1.MsgWrappedDelegate")
 	proto.RegisterType((*MsgWrappedDelegateResponse)(nil), "babylon.epoching.v1.MsgWrappedDelegateResponse")
@@ -256,36 +363,47 @@ func init() {
 	proto.RegisterType((*MsgWrappedUndelegateResponse)(nil), "babylon.epoching.v1.MsgWrappedUndelegateResponse")
 	proto.RegisterType((*MsgWrappedBeginRedelegate)(nil), "babylon.epoching.v1.MsgWrappedBeginRedelegate")
 	proto.RegisterType((*MsgWrappedBeginRedelegateResponse)(nil), "babylon.epoching.v1.MsgWrappedBeginRedelegateResponse")
+	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.epoching.v1.MsgUpdateParams")
+	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.epoching.v1.MsgUpdateParamsResponse")
 }
 
 func init() { proto.RegisterFile("babylon/epoching/v1/tx.proto", fileDescriptor_a5fc8fed8f4e58b6) }
 
 var fileDescriptor_a5fc8fed8f4e58b6 = []byte{
-	// 384 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x93, 0x4d, 0x4b, 0x02, 0x41,
-	0x18, 0xc7, 0x77, 0x13, 0x22, 0xa6, 0x43, 0xb4, 0x49, 0xe4, 0x22, 0x63, 0x29, 0xd1, 0xcb, 0x61,
-	0x26, 0x8d, 0x0a, 0xa2, 0x93, 0x74, 0x0a, 0xbc, 0x08, 0x12, 0x75, 0x9b, 0x5d, 0xa7, 0x71, 0x51,
-	0x67, 0x36, 0x67, 0x14, 0xbd, 0x75, 0xec, 0xd8, 0x47, 0xf0, 0xe3, 0x74, 0xf4, 0xd8, 0x31, 0xf4,
-	0xe2, 0xc7, 0x08, 0x75, 0xc7, 0x95, 0xf5, 0xb5, 0xdb, 0xec, 0x3e, 0xff, 0xe7, 0xf7, 0x7b, 0x78,
-	0x86, 0x01, 0x49, 0x87, 0x38, 0x9d, 0x9a, 0xe0, 0x98, 0xfa, 0xc2, 0xad, 0x78, 0x9c, 0xe1, 0x56,
-	0x16, 0xab, 0x36, 0xf2, 0x1b, 0x42, 0x09, 0xeb, 0x20, 0xa8, 0x22, 0x5d, 0x45, 0xad, 0xac, 0x9d,
-	0x60, 0x42, 0xb0, 0x1a, 0xc5, 0xe3, 0x88, 0xd3, 0x7c, 0xc3, 0x84, 0x77, 0x26, 0x79, 0x3b, 0xce,
-	0x04, 0x13, 0xe3, 0x23, 0x1e, 0x9d, 0x82, 0xbf, 0x29, 0x57, 0xc8, 0xba, 0x90, 0x58, 0x2a, 0x52,
-	0x9d, 0x18, 0x1c, 0xaa, 0x48, 0xa8, 0x49, 0x97, 0x80, 0x55, 0x90, 0xec, 0xb9, 0x41, 0x7c, 0x9f,
-	0x96, 0x1f, 0x69, 0x8d, 0x32, 0xa2, 0xa8, 0x75, 0x03, 0x62, 0x75, 0xc9, 0x8e, 0xcc, 0x63, 0xf3,
-	0x7c, 0x37, 0x97, 0x41, 0x13, 0x08, 0x0a, 0x20, 0x28, 0x80, 0xa0, 0x82, 0x64, 0xba, 0xa3, 0x38,
-	0xca, 0xdf, 0xef, 0x7c, 0x76, 0x53, 0xc6, 0xb0, 0x9b, 0x32, 0xd2, 0x49, 0x60, 0xcf, 0x63, 0x8b,
-	0x54, 0xfa, 0x82, 0x4b, 0x9a, 0x7e, 0x01, 0xf1, 0xb0, 0x5a, 0xe2, 0x65, 0xad, 0xbd, 0x9b, 0xd5,
-	0x9e, 0xae, 0xd0, 0x86, 0x3d, 0x51, 0x31, 0x04, 0xc9, 0x45, 0xe8, 0xa9, 0xda, 0x05, 0x89, 0xb0,
-	0x9e, 0xa7, 0xcc, 0xe3, 0x45, 0x3a, 0xf5, 0x3f, 0xcc, 0xfa, 0x2f, 0x57, 0xf8, 0x23, 0x8d, 0xd1,
-	0x21, 0x32, 0xe0, 0x64, 0xa9, 0x44, 0x4f, 0x92, 0x1b, 0x6e, 0x81, 0x58, 0x41, 0x32, 0xab, 0x0a,
-	0xf6, 0xa2, 0xeb, 0x3f, 0x43, 0x0b, 0x2e, 0x1f, 0xcd, 0x2f, 0xd4, 0xc6, 0x1b, 0x06, 0xb5, 0xd4,
-	0x7a, 0x07, 0xfb, 0xf3, 0x6b, 0xbf, 0x58, 0x43, 0x09, 0xa3, 0x76, 0x76, 0xe3, 0xe8, 0x54, 0xf9,
-	0x61, 0x82, 0xc3, 0x25, 0xfb, 0x46, 0x6b, 0x68, 0x91, 0xbc, 0x7d, 0xfb, 0xbf, 0xbc, 0x1e, 0x21,
-	0xff, 0xf4, 0xdd, 0x87, 0x66, 0xaf, 0x0f, 0xcd, 0xdf, 0x3e, 0x34, 0xbf, 0x06, 0xd0, 0xe8, 0x0d,
-	0xa0, 0xf1, 0x33, 0x80, 0xc6, 0xeb, 0x15, 0xf3, 0x54, 0xa5, 0xe9, 0x20, 0x57, 0xd4, 0x71, 0xc0,
-	0x76, 0x2b, 0xc4, 0xe3, 0xfa, 0x03, 0xb7, 0xc3, 0xd7, 0xa9, 0x3a, 0x3e, 0x95, 0xce, 0xf6, 0xf8,
-	0xdd, 0x5c, 0xff, 0x05, 0x00, 0x00, 0xff, 0xff, 0x73, 0xc6, 0x83, 0x42, 0xbe, 0x03, 0x00, 0x00,
+	// 514 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0x31, 0x6f, 0xd3, 0x40,
+	0x1c, 0xc5, 0x6d, 0x82, 0x2a, 0xfa, 0x07, 0x51, 0x61, 0x22, 0x9a, 0x98, 0xc8, 0x29, 0x29, 0x08,
+	0xa8, 0xe0, 0x4c, 0x8a, 0x28, 0xa2, 0x62, 0x21, 0x62, 0x42, 0x8a, 0x84, 0x8c, 0x2a, 0x04, 0x0b,
+	0x3a, 0xdb, 0xa7, 0x8b, 0xd5, 0xda, 0x67, 0x7c, 0xd7, 0xaa, 0xd9, 0x10, 0x13, 0x23, 0x03, 0x1f,
+	0xa0, 0x1f, 0x81, 0x81, 0x0f, 0xd1, 0x81, 0xa1, 0x62, 0x62, 0x42, 0x28, 0x19, 0xe0, 0x63, 0xa0,
+	0xd8, 0x67, 0x5f, 0x70, 0x92, 0x26, 0xdd, 0x62, 0xbd, 0xf7, 0x7f, 0xbf, 0x17, 0xf9, 0xc9, 0xd0,
+	0x70, 0xb1, 0xdb, 0xdf, 0x63, 0x91, 0x4d, 0x62, 0xe6, 0xf5, 0x82, 0x88, 0xda, 0x07, 0x6d, 0x5b,
+	0x1c, 0xa2, 0x38, 0x61, 0x82, 0x19, 0x57, 0xa5, 0x8a, 0x72, 0x15, 0x1d, 0xb4, 0xcd, 0x2a, 0x65,
+	0x94, 0xa5, 0xba, 0x3d, 0xfa, 0x95, 0x59, 0xcd, 0xa6, 0xc7, 0x78, 0xc8, 0xb8, 0xcd, 0x05, 0xde,
+	0xcd, 0x62, 0x5c, 0x22, 0xb0, 0xca, 0x32, 0xd7, 0xa6, 0x91, 0x62, 0x9c, 0xe0, 0x90, 0x4b, 0x47,
+	0x3d, 0x8b, 0x78, 0x97, 0x65, 0x67, 0x0f, 0x52, 0x5a, 0x95, 0xe9, 0x21, 0x4f, 0xcf, 0x42, 0x4e,
+	0x33, 0xa1, 0xb5, 0x03, 0x46, 0x97, 0xd3, 0xd7, 0x09, 0x8e, 0x63, 0xe2, 0x3f, 0x27, 0x7b, 0x84,
+	0x62, 0x41, 0x8c, 0x47, 0x50, 0x09, 0x39, 0xad, 0xe9, 0x6b, 0xfa, 0x9d, 0x8b, 0x9b, 0xeb, 0x48,
+	0x46, 0xc9, 0x6a, 0x48, 0x56, 0x43, 0x5d, 0x4e, 0xf3, 0x0b, 0x67, 0xe4, 0xdf, 0xbe, 0xf0, 0xe9,
+	0xa8, 0xa9, 0xfd, 0x3d, 0x6a, 0x6a, 0xad, 0x06, 0x98, 0x93, 0xb1, 0x0e, 0xe1, 0x31, 0x8b, 0x38,
+	0x69, 0xbd, 0x81, 0xaa, 0x52, 0x77, 0x22, 0x3f, 0xc7, 0x3e, 0x1e, 0xc7, 0xde, 0x3a, 0x05, 0xab,
+	0x6e, 0xca, 0x60, 0x0b, 0x1a, 0xd3, 0xa2, 0x0b, 0xb4, 0x07, 0x75, 0xa5, 0x77, 0x08, 0x0d, 0x22,
+	0x87, 0x14, 0xfc, 0xa7, 0xe3, 0xfc, 0x8d, 0x53, 0xf8, 0xa5, 0xc3, 0x72, 0x89, 0x75, 0xb8, 0x31,
+	0x13, 0x52, 0x34, 0xf9, 0xa2, 0xc3, 0xca, 0xe8, 0xaf, 0xc4, 0x3e, 0x16, 0xe4, 0x65, 0xfa, 0x1e,
+	0x8d, 0x2d, 0x58, 0xc6, 0xfb, 0xa2, 0xc7, 0x92, 0x40, 0xf4, 0xd3, 0x1a, 0xcb, 0x9d, 0xda, 0x8f,
+	0x6f, 0xf7, 0xab, 0xb2, 0xc9, 0x33, 0xdf, 0x4f, 0x08, 0xe7, 0xaf, 0x44, 0x12, 0x44, 0xd4, 0x51,
+	0x56, 0xe3, 0x09, 0x2c, 0x65, 0x4b, 0xa8, 0x9d, 0x4b, 0xbb, 0x5f, 0x47, 0x53, 0x86, 0x87, 0x32,
+	0x48, 0xe7, 0xfc, 0xf1, 0xaf, 0xa6, 0xe6, 0xc8, 0x83, 0xed, 0xcb, 0x1f, 0xff, 0x7c, 0xdd, 0x50,
+	0x51, 0xad, 0x3a, 0xac, 0x96, 0x5a, 0xe5, 0x8d, 0x37, 0xbf, 0x57, 0xa0, 0xd2, 0xe5, 0xd4, 0xd8,
+	0x85, 0x95, 0xf2, 0x60, 0x6e, 0x4f, 0x05, 0x4e, 0x4e, 0xc0, 0xb4, 0x17, 0x34, 0xe6, 0x50, 0xe3,
+	0x3d, 0x5c, 0x99, 0x1c, 0xca, 0xdd, 0x39, 0x29, 0xca, 0x6a, 0xb6, 0x17, 0xb6, 0x16, 0xc8, 0x0f,
+	0x3a, 0x5c, 0x9b, 0xb1, 0x10, 0x34, 0x27, 0xad, 0xe4, 0x37, 0xb7, 0xce, 0xe6, 0x2f, 0x2a, 0xb8,
+	0x70, 0xe9, 0xbf, 0x61, 0xdc, 0x9c, 0x95, 0x33, 0xee, 0x32, 0xef, 0x2d, 0xe2, 0xca, 0x19, 0x9d,
+	0x17, 0xc7, 0x03, 0x4b, 0x3f, 0x19, 0x58, 0xfa, 0xef, 0x81, 0xa5, 0x7f, 0x1e, 0x5a, 0xda, 0xc9,
+	0xd0, 0xd2, 0x7e, 0x0e, 0x2d, 0xed, 0xed, 0x03, 0x1a, 0x88, 0xde, 0xbe, 0x8b, 0x3c, 0x16, 0xda,
+	0x32, 0xd1, 0xeb, 0xe1, 0x20, 0xca, 0x1f, 0xec, 0x43, 0xf5, 0x11, 0x12, 0xfd, 0x98, 0x70, 0x77,
+	0x29, 0xfd, 0x9a, 0x3c, 0xfc, 0x17, 0x00, 0x00, 0xff, 0xff, 0xcd, 0x69, 0x5c, 0x18, 0x0f, 0x05,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -300,12 +418,17 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// WrappedDelegate defines a method for performing a delegation of coins from a delegator to a validator.
+	// WrappedDelegate defines a method for performing a delegation of coins from
+	// a delegator to a validator.
 	WrappedDelegate(ctx context.Context, in *MsgWrappedDelegate, opts ...grpc.CallOption) (*MsgWrappedDelegateResponse, error)
-	// WrappedUndelegate defines a method for performing an undelegation from a delegate and a validator.
+	// WrappedUndelegate defines a method for performing an undelegation from a
+	// delegate and a validator.
 	WrappedUndelegate(ctx context.Context, in *MsgWrappedUndelegate, opts ...grpc.CallOption) (*MsgWrappedUndelegateResponse, error)
-	// WrappedBeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.
+	// WrappedBeginRedelegate defines a method for performing a redelegation of
+	// coins from a delegator and source validator to a destination validator.
 	WrappedBeginRedelegate(ctx context.Context, in *MsgWrappedBeginRedelegate, opts ...grpc.CallOption) (*MsgWrappedBeginRedelegateResponse, error)
+	// UpdateParams defines a method for updating epoching module parameters.
+	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
 
 type msgClient struct {
@@ -343,14 +466,28 @@ func (c *msgClient) WrappedBeginRedelegate(ctx context.Context, in *MsgWrappedBe
 	return out, nil
 }
 
+func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error) {
+	out := new(MsgUpdateParamsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Msg/UpdateParams", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// WrappedDelegate defines a method for performing a delegation of coins from a delegator to a validator.
+	// WrappedDelegate defines a method for performing a delegation of coins from
+	// a delegator to a validator.
 	WrappedDelegate(context.Context, *MsgWrappedDelegate) (*MsgWrappedDelegateResponse, error)
-	// WrappedUndelegate defines a method for performing an undelegation from a delegate and a validator.
+	// WrappedUndelegate defines a method for performing an undelegation from a
+	// delegate and a validator.
 	WrappedUndelegate(context.Context, *MsgWrappedUndelegate) (*MsgWrappedUndelegateResponse, error)
-	// WrappedBeginRedelegate defines a method for performing a redelegation of coins from a delegator and source validator to a destination validator.
+	// WrappedBeginRedelegate defines a method for performing a redelegation of
+	// coins from a delegator and source validator to a destination validator.
 	WrappedBeginRedelegate(context.Context, *MsgWrappedBeginRedelegate) (*MsgWrappedBeginRedelegateResponse, error)
+	// UpdateParams defines a method for updating epoching module parameters.
+	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -365,6 +502,9 @@ func (*UnimplementedMsgServer) WrappedUndelegate(ctx context.Context, req *MsgWr
 }
 func (*UnimplementedMsgServer) WrappedBeginRedelegate(ctx context.Context, req *MsgWrappedBeginRedelegate) (*MsgWrappedBeginRedelegateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WrappedBeginRedelegate not implemented")
+}
+func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -425,6 +565,24 @@ func _Msg_WrappedBeginRedelegate_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateParams(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Msg/UpdateParams",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateParams(ctx, req.(*MsgUpdateParams))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.epoching.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -440,6 +598,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WrappedBeginRedelegate",
 			Handler:    _Msg_WrappedBeginRedelegate_Handler,
+		},
+		{
+			MethodName: "UpdateParams",
+			Handler:    _Msg_UpdateParams_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -620,6 +782,69 @@ func (m *MsgWrappedBeginRedelegateResponse) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgUpdateParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -689,6 +914,30 @@ func (m *MsgWrappedBeginRedelegate) Size() (n int) {
 }
 
 func (m *MsgWrappedBeginRedelegateResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Authority)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Params.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgUpdateParamsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1088,6 +1337,171 @@ func (m *MsgWrappedBeginRedelegateResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgWrappedBeginRedelegateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Authority = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

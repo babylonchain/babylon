@@ -8,9 +8,9 @@ import (
 
 func AddRandomSeedsToFuzzer(f *testing.F, num uint) {
 	// Seed based on the current time
-	rand.Seed(time.Now().Unix())
+	r := rand.New(rand.NewSource(time.Now().Unix()))
 	var idx uint
 	for idx = 0; idx < num; idx++ {
-		f.Add(rand.Int63())
+		f.Add(r.Int63())
 	}
 }

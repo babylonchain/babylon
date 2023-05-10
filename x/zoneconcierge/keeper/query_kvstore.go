@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/merkle"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/merkle"
-	tmcrypto "github.com/tendermint/tendermint/proto/tendermint/crypto"
 )
 
 // QueryStore queries a KV pair in the KVStore, where
@@ -28,7 +28,7 @@ func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64)
 	resp := k.storeQuerier.Query(abci.RequestQuery{
 		Path:   path,
 		Data:   key,
-		Height: queryHeight,
+		Height: queryHeight - 1, // NOTE: the inclusion proof corresponds to the NEXT header
 		Prove:  true,
 	})
 	if resp.Code != 0 {

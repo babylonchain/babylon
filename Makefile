@@ -8,11 +8,16 @@ BINDIR ?= $(GOPATH)/bin
 BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/babylonchain/babylon.git
 DOCKER := $(shell which docker)
-DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 SIMAPP = ./simapp
 
 BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT := $(shell git log -1 --format='%H')
+
+CUR_DIR := $(shell pwd)
+
+WASM_DIR := $(CUR_DIR)/wasmbinding/testdata
+
+WASM_DIR_BASE_NAME := $(shell basename $(WASM_DIR))
 
 # don't override user values
 ifeq (,$(VERSION))
@@ -61,7 +66,7 @@ ifeq (secp,$(findstring secp,$(BABYLON_BUILD_OPTIONS)))
 endif
 
 whitespace :=
-whitespace += $(whitespace)
+whitespace := $(whitespace) $(whitespace)
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
 
@@ -91,6 +96,10 @@ endif
 ifeq (boltdb,$(findstring boltdb,$(BABYLON_BUILD_OPTIONS)))
   BUILD_TAGS += boltdb
   ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb
+endif
+
+ifeq ($(LINK_STATICALLY),true)
+	ldflags += -linkmode=external -extldflags "-Wl,-z,muldefs -static"
 endif
 
 ifeq (,$(findstring nostrip,$(BABYLON_BUILD_OPTIONS)))
@@ -219,9 +228,12 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-babylon-integration:
+test-integration:
 	@echo "Running babylon integration test"
 	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration -p 1
+
+test-e2e:
+	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 test-sim-nondeterminism:
 	@echo "Running non-determinism test..."
@@ -351,70 +363,82 @@ devdoc-update:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-containerProtoVer=v0.7
-containerProtoImage=tendermintdev/sdk-proto-gen:$(containerProtoVer)
-containerProtoGen=babylon-sdk-proto-gen-$(containerProtoVer)
-containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
-containerProtoFmt=babylon-sdk-proto-fmt-$(containerProtoVer)
+protoVer=0.12.0
+protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
 proto-all: proto-gen proto-swagger-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) \
-		sh ./proto/scripts/protocgen.sh; fi
+	@$(protoImage) sh ./proto/scripts/protocgen.sh
 
 proto-swagger-gen:
 	@echo "Generating Protobuf Swagger"
-	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenSwagger}$$"; then docker start -a $(containerProtoGenSwagger); else docker run --name $(containerProtoGenSwagger) -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) \
-		sh ./proto/scripts/protoc-swagger-gen.sh; fi
+	@$(protoImage) sh ./proto/scripts/protoc-swagger-gen.sh
 
-.PHONY: proto-gen proto-swagger-gen
+proto-format:
+	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
+
+proto-lint:
+	@$(protoImage) buf lint --error-format=json
+
+.PHONY: proto-gen proto-swagger-gen proto-format prot-lint
+
+###############################################################################
+###                                Docker                                   ###
+###############################################################################
+
+build-docker:
+	$(MAKE) -C contrib/images babylond
+
+.PHONY: build-docker
 
 ###############################################################################
 ###                                Localnet                                 ###
 ###############################################################################
 
-localnet-build-env:
-	$(MAKE) -C contrib/images babylond-env
-
-localnet-build-dlv:
-	$(MAKE) -C contrib/images babylond-dlv
-
-localnet-build-nodes-test:
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
-			  testnet init-files --v 4 -o /data \
+# init-testnet-dirs will create a ./.testnets directory containing configuration for 4 Babylon nodes
+init-testnet-dirs:
+	# need to create the dir before hand so that the docker container has write access to the `.testnets` dir
+	# regardless of the user it uses
+	mkdir -p $(CURDIR)/.testnets && chmod o+w $(CURDIR)/.testnets
+	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/home/babylon/.testnets:Z babylonchain/babylond \
+			  babylond testnet init-files --v 4 -o /home/babylon/.testnets \
 			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
 			  --chain-id chain-test --btc-confirmation-depth 2 --additional-sender-account true \
 			  --epoch-interval 5
-	docker-compose up -d
 
-localnet-build-nodes:
-	$(DOCKER) run --rm -v $(CURDIR)/.testnets:/data babylonchain/babylond \
-			  testnet init-files --v 4 -o /data \
-			  --starting-ip-address 192.168.10.2 --keyring-backend=test \
-			  --chain-id chain-test
+# localnet-start-nodes will boot the nodes described in the docker-compose.yml file
+localnet-start-nodes: init-testnet-dirs
 	docker-compose up -d
 
 # localnet-start will run a with 4 nodes with 4 nodes, a bitcoin instance, and a vigilante instance
-localnet-start: localnet-stop localnet-build-env localnet-build-nodes
+localnet-start: localnet-stop build-docker localnet-start-nodes
 
-# localnet-start-test will start with 4 nodes with test confiuration and low
-# epoch interval
-localnet-start-test: localnet-stop localnet-build-env localnet-build-nodes-test
-
-# localnet-debug will run a 4-node testnet locally in debug mode
-# you can read more about the debug mode here: ./contrib/images/babylond-dlv/README.md
-localnet-debug: localnet-stop localnet-build-dlv localnet-build-nodes
-
-test-e2e:
-	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
-
+# localnet-stop will stop all localnets running
 localnet-stop:
 	docker-compose down
 
-.PHONY: localnet-start localnet-stop localnet-debug localnet-build-env \
-localnet-build-dlv localnet-build-nodes
+# localnet-test-integration will spin up a localnet and run integration tests on it
+localnet-test-integration: localnet-start test-integration localnet-stop
+
+build-test-wasm:
+	docker run --rm -v "$(WASM_DIR)":/code \
+		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
+		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+		cosmwasm/rust-optimizer-arm64:0.12.13
+	docker run --rm -v "$(WASM_DIR)":/code \
+		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
+		--mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+		cosmwasm/rust-optimizer:0.12.13
+
+.PHONY: \
+init-testnet-dirs \
+localnet-start-nodes \
+localnet-start \
+localnet-test-integration \
+localnet-stop
 
 .PHONY: diagrams
 diagrams:

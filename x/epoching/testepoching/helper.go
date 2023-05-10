@@ -1,19 +1,20 @@
 package testepoching
 
 import (
+	"math/rand"
 	"testing"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
 
 	"cosmossdk.io/math"
-	appparams "github.com/babylonchain/babylon/app/params"
+	proto "github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/x/epoching"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	appparams "github.com/babylonchain/babylon/app/params"
+
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -21,8 +22,10 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/x/epoching/keeper"
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type ValidatorInfo struct {
@@ -74,7 +77,7 @@ func NewHelper(t *testing.T) *Helper {
 		&epochingKeeper,
 		msgSrvr,
 		queryClient,
-		&app.StakingKeeper,
+		app.StakingKeeper,
 		nil,
 		[]ValidatorInfo{ValidatorInfo{
 			blsPrivKey,
@@ -121,19 +124,20 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, &app.StakingKeeper, GenAccs, valInfos}
+	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, app.StakingKeeper, GenAccs, valInfos}
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
-func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
+func (h *Helper) GenAndApplyEmptyBlock(r *rand.Rand) sdk.Context {
 	newHeight := h.App.LastBlockHeight() + 1
 	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            datagen.GenRandomByteArray(32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
+		AppHash:            datagen.GenRandomByteArray(r, 32),
+		LastCommitHash:     datagen.GenRandomLastCommitHash(r),
 	}
 
 	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
@@ -144,13 +148,13 @@ func (h *Helper) GenAndApplyEmptyBlock() sdk.Context {
 	return h.Ctx
 }
 
-func (h *Helper) BeginBlock() sdk.Context {
+func (h *Helper) BeginBlock(r *rand.Rand) sdk.Context {
 	newHeight := h.App.LastBlockHeight() + 1
 	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
-		AppHash:            datagen.GenRandomByteArray(32),
+		AppHash:            datagen.GenRandomByteArray(r, 32),
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
 	}
@@ -171,7 +175,9 @@ func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, a
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedDelegate(ctx, wmsg)
+	})
 }
 
 // WrappedDelegateWithPower calls handler to delegate stake for a validator
@@ -179,7 +185,9 @@ func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValA
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
 	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedDelegate(ctx, wmsg)
+	})
 }
 
 // WrappedUndelegate calls handler to unbound some stake from a validator.
@@ -187,7 +195,9 @@ func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress,
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgUndelegate(delegator, val, unbondAmt)
 	wmsg := types.NewMsgWrappedUndelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedUndelegate(ctx, wmsg)
+	})
 }
 
 // WrappedBeginRedelegate calls handler to redelegate some stake from a validator to another
@@ -195,21 +205,18 @@ func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.Val
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
 	msg := stakingtypes.NewMsgBeginRedelegate(delegator, srcVal, dstVal, unbondAmt)
 	wmsg := types.NewMsgWrappedBeginRedelegate(msg)
-	return h.Handle(wmsg, true)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedBeginRedelegate(ctx, wmsg)
+	})
 }
 
-// Handle calls epoching handler on a given message
-func (h *Helper) Handle(msg sdk.Msg, ok bool) *sdk.Result {
-	handler := epoching.NewHandler(*h.EpochingKeeper)
-	res, err := handler(h.Ctx, msg)
-	if ok {
-		require.NoError(h.t, err)
-		require.NotNil(h.t, res)
-	} else {
-		require.Error(h.t, err)
-		require.Nil(h.t, res)
-	}
-	return res
+// Handle executes an action function with the Helper's context, wraps the result into an SDK service result, and performs two assertions before returning it
+func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Result {
+	res, err := action(h.Ctx)
+	r, _ := sdk.WrapServiceResult(h.Ctx, res, err)
+	require.NotNil(h.t, r)
+	require.NoError(h.t, err)
+	return r
 }
 
 // CheckValidator asserts that a validor exists and has a given status (if status!="")

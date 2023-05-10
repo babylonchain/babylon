@@ -11,15 +11,21 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	tmconfig "github.com/tendermint/tendermint/config"
+	tmconfig "github.com/cometbft/cometbft/config"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/app/params"
 	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
@@ -29,7 +35,7 @@ import (
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
+	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -38,31 +44,7 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 )
-
-// DefaultConsensusParams defines the default Tendermint consensus params used in
-// Babylon testing.
-var DefaultConsensusParams = &abci.ConsensusParams{
-	Block: &abci.BlockParams{
-		MaxBytes: 200000,
-		MaxGas:   2000000,
-	},
-	Evidence: &tmproto.EvidenceParams{
-		MaxAgeNumBlocks: 302400,
-		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
-		MaxBytes:        10000,
-	},
-	Validator: &tmproto.ValidatorParams{
-		PubKeyTypes: []string{
-			tmtypes.ABCIPubKeyTypeEd25519,
-		},
-	},
-}
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.
 type SetupOptions struct {
@@ -77,12 +59,12 @@ type SetupOptions struct {
 
 func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
-	encCdc := MakeTestEncodingConfig()
+	encCdc := GetEncodingConfig()
 	privSigner, err := SetupPrivSigner()
 	if err != nil {
 		panic(err)
 	}
-	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{})
+	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{}, GetWasmEnabledProposals(), EmptyWasmOpts)
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -121,7 +103,7 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 		options.InvCheckPeriod,
 		options.EncConfig,
 		privSigner,
-		options.AppOpts)
+		options.AppOpts, GetWasmEnabledProposals(), EmptyWasmOpts)
 	genesisState := NewDefaultGenesisState(app.appCodec)
 	genesisState = genesisStateWithValSet(t, app, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 
@@ -134,7 +116,7 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 		app.InitChain(
 			abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: DefaultConsensusParams,
+				ConsensusParams: simsutils.DefaultConsensusParams,
 				AppStateBytes:   stateBytes,
 			},
 		)
@@ -201,7 +183,13 @@ func genesisStateWithValSet(t *testing.T,
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	return genesisState
@@ -237,12 +225,13 @@ func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 
 // SetupPrivSigner sets up a PrivSigner for testing
 func SetupPrivSigner() (*PrivSigner, error) {
-	nodeCfg := tmconfig.DefaultConfig()
 	kr, err := client.NewKeyringFromBackend(client.Context{}, keyring.BackendMemory)
 	if err != nil {
 		return nil, err
 	}
-	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr)
+	nodeCfg := tmconfig.DefaultConfig()
+	encodingCfg := appparams.GetEncodingConfig()
+	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, "", encodingCfg)
 	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
 	return privSigner, nil
 }
@@ -307,7 +296,13 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	})
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -317,7 +312,7 @@ func SetupWithGenesisValSet(t *testing.T, valSet *tmtypes.ValidatorSet, genAccs 
 	app.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: DefaultConsensusParams,
+			ConsensusParams: simsutils.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -337,7 +332,13 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 		totalSupply = totalSupply.Add(b.Coins...)
 	}
 
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+		[]banktypes.SendEnabled{},
+	)
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -348,7 +349,7 @@ func SetupWithGenesisAccounts(genAccs []authtypes.GenesisAccount, balances ...ba
 	app.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			ConsensusParams: DefaultConsensusParams,
+			ConsensusParams: simsutils.DefaultConsensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
@@ -486,12 +487,12 @@ func SignCheckDeliver(
 	chainID string, accNums, accSeqs []uint64, expSimPass, expPass bool, priv ...cryptotypes.PrivKey,
 ) (sdk.GasInfo, *sdk.Result, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	tx, err := helpers.GenSignedMockTx(
+	tx, err := simsutils.GenSignedMockTx(
 		r,
 		txCfg,
 		msgs,
 		sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
-		helpers.DefaultGenTxGas,
+		simsutils.DefaultGenTxGas,
 		chainID,
 		accNums,
 		accSeqs,
@@ -538,12 +539,12 @@ func GenSequenceOfTxs(txGen client.TxConfig, msgs []sdk.Msg, accNums []uint64, i
 	var err error
 	for i := 0; i < numToGenerate; i++ {
 		r := rand.New(rand.NewSource(time.Now().UnixNano()))
-		txs[i], err = helpers.GenSignedMockTx(
+		txs[i], err = simsutils.GenSignedMockTx(
 			r,
 			txGen,
 			msgs,
 			sdk.Coins{sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)},
-			helpers.DefaultGenTxGas,
+			simsutils.DefaultGenTxGas,
 			"",
 			accNums,
 			initSeqNums,
@@ -588,7 +589,7 @@ func NewPubKeyFromHex(pk string) (res cryptotypes.PubKey) {
 		panic(err)
 	}
 	if len(pkBytes) != ed25519.PubKeySize {
-		panic(errors.Wrap(errors.ErrInvalidPubKey, "invalid pubkey size"))
+		panic(errorsmod.Wrap(errors.ErrInvalidPubKey, "invalid pubkey size"))
 	}
 	return &ed25519.PubKey{Key: pkBytes}
 }
@@ -602,10 +603,6 @@ func (ao EmptyAppOptions) Get(o string) interface{} {
 
 	if o == "btc-config.network" {
 		return string(bbn.BtcSimnet)
-	}
-
-	if o == "btc-config.checkpoint-tag" {
-		return txformat.DefaultMainTagStr
 	}
 
 	return nil

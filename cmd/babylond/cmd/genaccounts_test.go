@@ -9,12 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
 
-	"github.com/babylonchain/babylon/app"
-	bbncmd "github.com/babylonchain/babylon/cmd/babylond/cmd"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -22,6 +20,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
+
+	"github.com/babylonchain/babylon/app"
+	bbncmd "github.com/babylonchain/babylon/cmd/babylond/cmd"
 )
 
 var testMbm = module.NewBasicManager(genutil.AppModuleBasic{})
@@ -73,7 +74,7 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 			require.NoError(t, err)
 
-			appCodec := app.MakeTestEncodingConfig().Marshaler
+			appCodec := app.GetEncodingConfig().Marshaler
 			err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 			require.NoError(t, err)
 

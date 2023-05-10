@@ -3,10 +3,10 @@ package keeper
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // InitMsgQueue initialises the msg queue length of the current epoch to 0
@@ -64,7 +64,7 @@ func (k Keeper) EnqueueMsg(ctx sdk.Context, msg types.QueuedMessage) {
 	// value: msgBytes
 	msgBytes, err := k.cdc.MarshalInterface(&msg)
 	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 	}
 	store.Set(queueLenBytes, msgBytes)
 
@@ -84,7 +84,7 @@ func (k Keeper) GetEpochMsgs(ctx sdk.Context, epochNumber uint64) []*types.Queue
 		queuedMsgBytes := iterator.Value()
 		var sdkMsg sdk.Msg
 		if err := k.cdc.UnmarshalInterface(queuedMsgBytes, &sdkMsg); err != nil {
-			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+			panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		queuedMsg, ok := sdkMsg.(*types.QueuedMessage)
 		if !ok {
@@ -195,7 +195,7 @@ func (k Keeper) HandleQueuedMsg(ctx sdk.Context, msg *types.QueuedMessage) (*sdk
 			return nil, err
 		}
 	default:
-		panic(sdkerrors.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
+		panic(errorsmod.Wrap(types.ErrInvalidQueuedMessageType, msg.String()))
 	}
 
 	return result, nil

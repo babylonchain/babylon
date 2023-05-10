@@ -3,10 +3,10 @@ package keeper
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"cosmossdk.io/math"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -58,19 +58,6 @@ func (k Keeper) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (
 // EpochsInfo handles the QueryEpochsInfoRequest query
 func (k Keeper) EpochsInfo(c context.Context, req *types.QueryEpochsInfoRequest) (*types.QueryEpochsInfoResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
-
-	// parse start_epoch and end_epoch and forward to the pagination request
-	if req.EndEpoch > 0 {
-		// this query uses start_epoch and end_epoch to specify range
-		if req.StartEpoch > req.EndEpoch {
-			return nil, fmt.Errorf("StartEpoch (%d) should not be larger than EndEpoch (%d)", req.StartEpoch, req.EndEpoch)
-		}
-		req.Pagination = &query.PageRequest{
-			Key:     sdk.Uint64ToBigEndian(req.StartEpoch),
-			Limit:   req.EndEpoch - req.StartEpoch + 1,
-			Reverse: false,
-		}
-	}
 
 	epochInfoStore := k.epochInfoStore(ctx)
 	epochs := []*types.Epoch{}
@@ -143,7 +130,7 @@ func (k Keeper) LatestEpochMsgs(c context.Context, req *types.QueryLatestEpochMs
 	ctx := sdk.UnwrapSDKContext(c)
 
 	if req.EpochCount == 0 {
-		return nil, sdkerrors.Wrapf(
+		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "epoch_count should be specified and be larger than zero",
 		)
 	}
@@ -236,7 +223,7 @@ func (k Keeper) EpochValSet(c context.Context, req *types.QueryEpochValSetReques
 		// Here key is the validator's ValAddress, and value is the voting power
 		var power math.Int
 		if err := power.Unmarshal(value); err != nil {
-			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error())) // this only happens upon a programming error
+			panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error())) // this only happens upon a programming error
 		}
 		val := types.Validator{
 			Addr:  key,

@@ -8,10 +8,11 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
+	simappparams "github.com/cosmos/cosmos-sdk/x/staking/simulation"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -114,10 +115,9 @@ func SimulateMsgWrappedDelegate(ak types.AccountKeeper, bk types.BankKeeper, stk
 
 		msg := stakingtypes.NewMsgDelegate(simAccount.Address, val.GetOperator(), bondAmt)
 		wmsg := types.NewMsgWrappedDelegate(msg)
-
 		txCtx := simulation.OperationInput{
 			App:           app,
-			TxGen:         simappparams.MakeTestEncodingConfig().TxConfig,
+			TxGen:         moduletestutil.MakeTestEncodingConfig().TxConfig,
 			Cdc:           nil,
 			Msg:           wmsg,
 			MsgType:       wmsg.Type(),
@@ -203,7 +203,7 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+			TxGen:           moduletestutil.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             wmsg,
 			MsgType:         wmsg.Type(),
@@ -312,7 +312,7 @@ func SimulateMsgWrappedBeginRedelegate(ak types.AccountKeeper, bk types.BankKeep
 		txCtx := simulation.OperationInput{
 			R:               r,
 			App:             app,
-			TxGen:           simappparams.MakeTestEncodingConfig().TxConfig,
+			TxGen:           moduletestutil.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             wmsg,
 			MsgType:         wmsg.Type(),

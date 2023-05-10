@@ -3,10 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	sdkerrors "cosmossdk.io/errors"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	errorsmod "cosmossdk.io/errors"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
@@ -20,7 +21,7 @@ func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo
 	}
 	// ensure chain info has not been initialised yet
 	if k.HasChainInfo(ctx, chainID) {
-		return nil, sdkerrors.Wrapf(types.ErrInvalidChainInfo, "chain info has already initialized")
+		return nil, errorsmod.Wrapf(types.ErrInvalidChainInfo, "chain info has already initialized")
 	}
 
 	chainInfo := &types.ChainInfo{
@@ -48,11 +49,11 @@ func (k Keeper) HasChainInfo(ctx sdk.Context, chainID string) bool {
 // Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
 // we can only check its existence every time, and return an empty one if it's not initialised yet.
 func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo, error) {
-	store := k.chainInfoStore(ctx)
-
-	if !store.Has([]byte(chainID)) {
-		return nil, types.ErrEpochChainInfoNotFound
+	if !k.HasChainInfo(ctx, chainID) {
+		return nil, types.ErrChainInfoNotFound
 	}
+
+	store := k.chainInfoStore(ctx)
 	chainInfoBytes := store.Get([]byte(chainID))
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(chainInfoBytes, &chainInfo)
@@ -67,7 +68,7 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo,
 // equal to the total number of headers in CZ.
 func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
-		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
+		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
@@ -88,12 +89,12 @@ func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *type
 // - If this fork header is older than the current latest fork, ignore
 func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
-		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
+		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
 
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
-		return sdkerrors.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
+		return errorsmod.Wrapf(types.ErrChainInfoNotFound, "cannot insert fork header when chain info is not initialized")
 	}
 
 	if len(chainInfo.LatestForks.Headers) == 0 {

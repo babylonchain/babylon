@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"sort"
 	"testing"
@@ -12,23 +13,19 @@ import (
 )
 
 func FuzzSlashedValSet(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ctx, keeper, stakingKeeper := helper.Ctx, helper.EpochingKeeper, helper.StakingKeeper
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 
 		// slash a random subset of validators
-		numSlashed := rand.Intn(len(getValSet))
+		numSlashed := r.Intn(len(getValSet))
 		excpectedSlashedVals := []sdk.ValAddress{}
 		for i := 0; i < numSlashed; i++ {
-			idx := rand.Intn(len(getValSet))
+			idx := r.Intn(len(getValSet))
 			slashedVal := getValSet[idx]
 			stakingKeeper.Slash(ctx, sdk.ConsAddress(slashedVal.Addr), 0, slashedVal.Power, sdk.OneDec())
 			// add the slashed validator to the slashed validator set
@@ -47,7 +44,7 @@ func FuzzSlashedValSet(f *testing.F) {
 		}
 
 		// go to the 1st block and thus epoch 1
-		ctx = helper.GenAndApplyEmptyBlock()
+		ctx = helper.GenAndApplyEmptyBlock(r)
 		epochNumber := keeper.GetEpoch(ctx).EpochNumber
 		require.Equal(t, uint64(1), epochNumber)
 		// no validator is slashed in epoch 1

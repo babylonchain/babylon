@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
@@ -13,20 +14,20 @@ import (
 	"github.com/babylonchain/babylon/cmd/babylond/cmd"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 func TestCheckCorrespondence(t *testing.T) {
 	homePath := t.TempDir()
-	encodingCft := app.MakeTestEncodingConfig()
+	encodingCft := app.GetEncodingConfig()
 	clientCtx := client.Context{}.WithCodec(encodingCft.Marshaler).WithTxConfig(encodingCft.TxConfig)
 
 	// generate valid genesis doc
@@ -68,6 +69,8 @@ func TestCheckCorrespondence(t *testing.T) {
 		},
 	}
 
+	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+
 	for _, tc := range testCases {
 		genDoc, err := tmtypes.GenesisDocFromJSON(tc.genesis)
 		require.NoError(t, err)
@@ -75,7 +78,7 @@ func TestCheckCorrespondence(t *testing.T) {
 		genesisState, err := genutiltypes.GenesisStateFromGenDoc(*genDoc)
 		require.NoError(t, err)
 		require.NotEmpty(t, genesisState)
-		err = cmd.CheckCorrespondence(clientCtx, genesisState)
+		err = cmd.CheckCorrespondence(clientCtx, genesisState, gentxModule.GenTxValidator)
 		if tc.expErr {
 			require.Error(t, err)
 		} else {
@@ -85,7 +88,7 @@ func TestCheckCorrespondence(t *testing.T) {
 }
 
 func generateTestGenesisState(home string, n int) (map[string]json.RawMessage, *tmtypes.GenesisDoc) {
-	encodingConfig := app.MakeTestEncodingConfig()
+	encodingConfig := app.GetEncodingConfig()
 	logger := log.NewNopLogger()
 	cfg, _ := genutiltest.CreateDefaultTendermintConfig(home)
 

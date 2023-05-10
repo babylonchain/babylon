@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
 
@@ -19,13 +20,9 @@ var (
 
 // FuzzEnqueueMsg tests EnqueueMsg. It enqueues some wrapped msgs, and check if the message queue includes the enqueued msgs or not
 func FuzzEnqueueMsg(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelper(t)
 		ctx, keeper := helper.Ctx, helper.EpochingKeeper
@@ -35,7 +32,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 
 		// enter the 1st block and thus epoch 1
 		// Note that the genesis block does not trigger BeginBlock or EndBlock
-		ctx = helper.GenAndApplyEmptyBlock()
+		ctx = helper.GenAndApplyEmptyBlock(r)
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 		// ensure that the epoch msg queue is correct at epoch 1
@@ -43,7 +40,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 		require.Equal(t, uint64(0), keeper.GetCurrentQueueLength(ctx))
 
 		// Enqueue a random number of msgs
-		numQueuedMsgs := rand.Uint64() % 100
+		numQueuedMsgs := datagen.RandomInt(r, 100)
 		for i := uint64(0); i < numQueuedMsgs; i++ {
 			msg := types.QueuedMessage{
 				TxId:  sdk.Uint64ToBigEndian(i),
@@ -66,13 +63,9 @@ func FuzzEnqueueMsg(f *testing.F) {
 // FuzzHandleQueuedMsg_MsgWrappedDelegate tests HandleQueueMsg over MsgWrappedDelegate.
 // It enqueues some MsgWrappedDelegate, enters a new epoch (which triggers HandleQueueMsg), and check if the newly delegated tokens take effect or not
 func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
@@ -84,7 +77,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx = helper.BeginBlock()
+		ctx = helper.BeginBlock(r)
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -102,7 +95,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		require.Equal(t, uint64(0), lc.ValLife[0].BlockHeight)
 
 		// delegate a random amount of tokens to the validator
-		numNewDels := rand.Int63n(1000) + 1
+		numNewDels := r.Int63n(1000) + 1
 		for i := int64(0); i < numNewDels; i++ {
 			helper.WrappedDelegate(genAddr, val, coinWithOnePower.Amount)
 		}
@@ -115,7 +108,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < params.EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -134,13 +127,9 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 // FuzzHandleQueuedMsg_MsgWrappedUndelegate tests HandleQueueMsg over MsgWrappedUndelegate.
 // It enqueues some MsgWrappedUndelegate, enters a new epoch (which triggers HandleQueueMsg), and check if the tokens become unbonding or not
 func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
@@ -151,7 +140,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -171,7 +160,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		// Note that for any pair of delegator and validator, there can be `<=DefaultMaxEntries=7` concurrent undelegations at any time slot
 		// Otherwise, only `DefaultMaxEntries` undelegations will be processed at this height and the rest will be rejected
 		// See https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/delegation.go#L814-L816
-		numNewUndels := rand.Int63n(7) + 1
+		numNewUndels := r.Int63n(7) + 1
 		for i := int64(0); i < numNewUndels; i++ {
 			helper.WrappedUndelegate(genAddr, val, coinWithOnePower.Amount)
 		}
@@ -184,7 +173,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -200,24 +189,21 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 
 		// ensure the genesis account has these unbonding tokens
 		unbondingDels := helper.StakingKeeper.GetAllUnbondingDelegations(ctx, genAddr)
-		require.Equal(t, 1, len(unbondingDels))                              // there is only 1 type of tokens
-		require.Equal(t, numNewUndels, int64(len(unbondingDels[0].Entries))) // there are numNewUndels entries
-		for _, entry := range unbondingDels[0].Entries {
-			require.Equal(t, coinWithOnePower.Amount, entry.Balance) // each unbonding delegation entry has tokens of 1 voting power
-		}
+		require.Equal(t, 1, len(unbondingDels)) // there is only 1 type of tokens
+
+		// from cosmos v47, all undelegations made at the same height are represented
+		// by one entry see: https://github.com/cosmos/cosmos-sdk/pull/12967
+		require.Equal(t, 1, len(unbondingDels[0].Entries))
+		require.Equal(t, unbondingDels[0].Entries[0].Balance, coinWithOnePower.Amount.MulRaw(numNewUndels))
 	})
 }
 
 // FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate tests HandleQueueMsg over MsgWrappedBeginRedelegate.
 // It enqueues some MsgWrappedBeginRedelegate, enters a new epoch (which triggers HandleQueueMsg), and check if the tokens become unbonding or not
 func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-	f.Add(int64(12312))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
 		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
@@ -228,7 +214,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		genAddr := genAccs[0].GetAddress()
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock()
+		ctx := helper.BeginBlock(r)
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -255,7 +241,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		// redelegate a random amount of tokens from val1 to val2
 		// same as undelegation, there can be `<=DefaultMaxEntries=7` concurrent redelegation requests for any tuple (delegatorAddr, srcValidatorAddr, dstValidatorAddr)
 		// See https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/delegation.go#L908-L910
-		numNewRedels := rand.Int63n(7) + 1
+		numNewRedels := r.Int63n(7) + 1
 		for i := int64(0); i < numNewRedels; i++ {
 			helper.WrappedBeginRedelegate(genAddr, val1, val2, coinWithOnePower.Amount)
 		}
@@ -268,7 +254,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock()
+			ctx = helper.GenAndApplyEmptyBlock(r)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)

@@ -10,10 +10,10 @@ import (
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/tests/mocks"
+	"github.com/cosmos/cosmos-sdk/testutil/mock"
 	"github.com/golang/mock/gomock"
 
-	"github.com/gogo/protobuf/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -22,19 +22,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmbytes "github.com/cometbft/cometbft/libs/bytes"
+	tmos "github.com/cometbft/cometbft/libs/os"
+	rpcclient "github.com/cometbft/cometbft/rpc/client"
+	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
+	coretypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/privval"
 	testutilcli "github.com/babylonchain/babylon/testutil/cli"
 	checkpointcli "github.com/babylonchain/babylon/x/checkpointing/client/cli"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmbytes "github.com/tendermint/tendermint/libs/bytes"
-	tmos "github.com/tendermint/tendermint/libs/os"
-	rpcclient "github.com/tendermint/tendermint/rpc/client"
-	rpcclientmock "github.com/tendermint/tendermint/rpc/client/mock"
-	coretypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 type mockTendermintRPC struct {
@@ -70,10 +71,10 @@ type CLITestSuite struct {
 }
 
 func (s *CLITestSuite) SetupSuite() {
-	s.encCfg = app.MakeTestEncodingConfig()
+	s.encCfg = app.GetEncodingConfig()
 	s.kr = keyring.NewInMemory(s.encCfg.Marshaler)
 	ctrl := gomock.NewController(s.T())
-	mockAccountRetriever := mocks.NewMockAccountRetriever(ctrl)
+	mockAccountRetriever := mock.NewMockAccountRetriever(ctrl)
 	mockAccountRetriever.EXPECT().EnsureExists(gomock.Any(), gomock.Any()).Return(nil)
 	mockAccountRetriever.EXPECT().GetAccountNumberSequence(gomock.Any(), gomock.Any()).Return(uint64(0), uint64(0), nil)
 	s.baseCtx = client.Context{}.

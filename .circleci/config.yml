@@ -2,37 +2,32 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
-# Define a job to be invoked later in a workflow.
-# See: https://circleci.com/docs/2.0/configuration-reference/#jobs
+orbs:
+  aws-ecr: circleci/aws-ecr@8.2.1
+  go: circleci/go@1.7.3
+
+
 jobs:
-  build:
-    # Specify the execution environment. You can specify an image from Dockerhub or use one of our Convenience Images from CircleCI's Developer Hub.
-    # See: https://circleci.com/docs/2.0/configuration-reference/#docker-machine-macos-windows-executor
+  build-test:
     machine:
       image: ubuntu-2204:2022.10.1
-      resource_class: large
-    # Add steps to the job
-    # See: https://circleci.com/docs/2.0/configuration-reference/#steps
+    resource_class: large
     steps:
+      - go/install:
+          version: "1.20"
       - checkout
       - run:
           name: Print Go environment
           command: "go env"
-      - restore_cache: # restores saved cache if no changes are detected since last run
-          keys:
-            - go-mod-v6-{{ checksum "go.sum" }}
+      - go/load-cache:
+          key: go-mod-v6-{{ checksum "go.sum" }}
+      - go/mod-download
+      - go/save-cache:
+          key: go-mod-v6-{{ checksum "go.sum" }}
+          path: "/home/circleci/.go_workspace/pkg/mod"
       - run:
           name: Build babylond
           command: make build
-      - save_cache:
-          key: go-mod-v6-{{ checksum "go.sum" }}
-          paths:
-            - "/home/circleci/.go_workspace/pkg/mod"
-      - run:
-          name: Lint
-          command: |
-            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.1
-            ./bin/golangci-lint run
       - run:
           name: Run tests
           command: |
@@ -40,20 +35,95 @@ jobs:
       - run: # sudo is needed, so that integration test binary have proper access to nodes keyring
           name: Run integration tests
           command: |
-            make localnet-start-test
-            sudo -E env "PATH=$PATH" make test-babylon-integration
-            make localnet-stop
+            sudo -E env "PATH=$PATH" make localnet-test-integration
       # TODO: If CI tests will take to long consider having only this e2e test
       # instead of separate integration tests and e2e tests.
       - run:
           name: Run e2e tests
           command: |
-            make test-e2e
+             make test-e2e
+  lint:
+    machine:
+      image: ubuntu-2204:2022.10.1
+    resource_class: large
+    steps:
+      - go/install:
+          version: "1.20"
+      - checkout
+      - run:
+          name: Lint proto files
+          command: make proto-lint
+      - run:
+          name: Lint
+          command: |
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.52.2
+            ./bin/golangci-lint run
 
+  build_docker:
+    machine:
+      image: ubuntu-2204:2022.10.1
+    resource_class: large
+    steps:
+      - checkout
+      - aws-ecr/build-image:
+          push-image: false
+          dockerfile: Dockerfile
+          path: ./contrib/images/babylond/
+          build-path: ./
+          tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
+          repo: "babylond"
+      - run:
+          name: Save Docker image to export it to workspace
+          command: |
+            docker save $(docker image ls --format '{{.Repository}}:{{.Tag}}') > /tmp/babylond.tar
+      - persist_to_workspace:
+          root: /tmp
+          paths:
+            - babylond.tar
+
+  push_docker:
+    machine:
+      image: ubuntu-2204:2022.10.1
+      resource_class: large
+    steps:
+      - attach_workspace:
+          at: /tmp
+      - run:
+          name: Load Docker image from workspace
+          command: |
+            docker load -i /tmp/babylond.tar
+      - aws-ecr/ecr-login:
+          aws-access-key-id: AWS_ACCESS_KEY_ID
+          aws-secret-access-key: AWS_SECRET_ACCESS_KEY
+          region: "$AWS_REGION"
+      - aws-ecr/push-image:
+          registry-id: AWS_ECR_REGISTRY_ID
+          region: "$AWS_REGION"
+          repo: "babylond"
+          tag: "$CIRCLE_SHA1,$CIRCLE_TAG"
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
-  build-lint-test:
+  version: 2
+  build-test:
     jobs:
-      - build
+      - build-test
+  lint:
+    jobs:
+      - lint
+  docker:
+    jobs:
+      - build_docker:
+          filters:
+            tags:
+              only: /.*/
+      - push_docker:
+          requires:
+            - build_docker
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only:
+                - main

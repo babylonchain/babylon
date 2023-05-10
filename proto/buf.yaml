@@ -1,9 +1,9 @@
 version: v1
 name: buf.build/babylon/babylond
 deps:
-  - buf.build/cosmos/cosmos-sdk:8cb30a2c4de74dc9bd8d260b1e75e176
+  - buf.build/cosmos/cosmos-sdk:v0.47.0
   - buf.build/cosmos/cosmos-proto:1935555c206d4afb9e94615dfd0fad31
-  - buf.build/cosmos/gogo-proto:bee5511075b7499da6178d9e4aaa628b
+  - buf.build/cosmos/gogo-proto:a14993478f40695898ed8a86931094b6656e8a5d
   - buf.build/googleapis/googleapis:8d7204855ec14631a499bd7393ce1970
 breaking:
   use:
@@ -13,9 +13,16 @@ lint:
     - DEFAULT
     - COMMENTS
     - FILE_LOWER_SNAKE_CASE
+    - COMMENT_MESSAGE
+    - COMMENT_ENUM_VALUE
+    - COMMENT_ENUM
+    - COMMENT_RPC
+    - COMMENT_ONEOF
   except:
     - UNARY_RPC
     - COMMENT_FIELD
     - SERVICE_SUFFIX
     - PACKAGE_VERSION_SUFFIX
     - RPC_REQUEST_STANDARD_NAME
+    - ENUM_VALUE_PREFIX
+    - ENUM_ZERO_VALUE_SUFFIX

@@ -5,9 +5,8 @@ import (
 	"os"
 	"testing"
 
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
@@ -39,7 +38,20 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		FlagPeriodValue,
+		app.GetEncodingConfig(),
+		privSigner,
+		sims.EmptyAppOptions{},
+		app.GetWasmEnabledProposals(),
+		app.EmptyWasmOpts,
+		interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -55,7 +67,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = sdksimapp.CheckExportSimulation(babylon, config, simParams); err != nil {
+	if err = sims.CheckExportSimulation(babylon, config, simParams); err != nil {
 		b.Fatal(err)
 	}
 
@@ -64,7 +76,7 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 	}
 
 	if config.Commit {
-		sdksimapp.PrintStats(db)
+		sims.PrintStats(db)
 	}
 }
 
@@ -93,7 +105,20 @@ func BenchmarkInvariants(b *testing.B) {
 	if err != nil {
 		b.Fatal(err)
 	}
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+	babylon := app.NewBabylonApp(
+		logger,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		app.DefaultNodeHome,
+		FlagPeriodValue,
+		app.GetEncodingConfig(),
+		privSigner,
+		sims.EmptyAppOptions{},
+		app.GetWasmEnabledProposals(),
+		app.EmptyWasmOpts,
+		interBlockCacheOpt())
 
 	// run randomized simulation
 	_, simParams, simErr := simulation.SimulateFromSeed(
@@ -109,7 +134,7 @@ func BenchmarkInvariants(b *testing.B) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	if err = sdksimapp.CheckExportSimulation(babylon, config, simParams); err != nil {
+	if err = sims.CheckExportSimulation(babylon, config, simParams); err != nil {
 		b.Fatal(err)
 	}
 
@@ -118,7 +143,7 @@ func BenchmarkInvariants(b *testing.B) {
 	}
 
 	if config.Commit {
-		sdksimapp.PrintStats(db)
+		sims.PrintStats(db)
 	}
 
 	ctx := babylon.NewContext(true, tmproto.Header{Height: babylon.LastBlockHeight() + 1})

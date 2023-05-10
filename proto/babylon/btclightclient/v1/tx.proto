@@ -1,0 +1,24 @@
+syntax = "proto3";
+package babylon.btclightclient.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
+
+// Msg defines the Msg service.
+service Msg {
+  // InsertHeader adds a header to the BTC light client chain maintained by
+  // Babylon.
+  rpc InsertHeader(MsgInsertHeader) returns (MsgInsertHeaderResponse) {};
+}
+
+// MsgInsertHeader defines the message for incoming header bytes
+message MsgInsertHeader {
+  string signer = 1;
+  bytes header = 2
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/types.BTCHeaderBytes" ];
+}
+
+// MsgInsertHeaderResponse defines the response for the InsertHeader transaction
+message MsgInsertHeaderResponse {}

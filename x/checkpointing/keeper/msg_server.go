@@ -2,8 +2,11 @@ package keeper
 
 import (
 	"context"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -24,6 +27,8 @@ var _ types.MsgServer = msgServer{}
 func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	ctx.Logger().Info(fmt.Sprintf("received BLS sig for epoch %d from %s", msg.BlsSig.EpochNum, msg.GetSigners()))
+
 	err := m.k.addBlsSig(ctx, msg.BlsSig)
 	if err != nil {
 		return nil, err
@@ -37,6 +42,11 @@ func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*t
 // the epoching module
 func (m msgServer) WrappedCreateValidator(goCtx context.Context, msg *types.MsgWrappedCreateValidator) (*types.MsgWrappedCreateValidatorResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// stateless checks on the inside `MsgCreateValidator` msg
+	if err := m.k.epochingKeeper.CheckMsgCreateValidator(ctx, msg.MsgCreateValidator); err != nil {
+		return nil, err
+	}
 
 	valAddr, err := sdk.ValAddressFromBech32(msg.MsgCreateValidator.ValidatorAddress)
 	if err != nil {

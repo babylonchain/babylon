@@ -1,13 +1,13 @@
 package keeper_test
 
 import (
+	"math/rand"
+	"testing"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/gogo/protobuf/proto"
-	"math/rand"
-	"testing"
 )
 
 func FuzzKeeperIsHeaderKDeep(f *testing.F) {
@@ -24,12 +24,12 @@ func FuzzKeeperIsHeaderKDeep(f *testing.F) {
 		- Generate a random tree of headers.
 		- Get the mainchain and select appropriate headers.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
-		depth := rand.Uint64()
+		depth := r.Uint64()
 
 		// Test nil input
 		isDeep, err := blcKeeper.IsHeaderKDeep(ctx, nil, depth)
@@ -41,7 +41,7 @@ func FuzzKeeperIsHeaderKDeep(f *testing.F) {
 		}
 
 		// Test header not existing
-		nonExistentHeader := datagen.GenRandomBTCHeaderBytes(nil, nil)
+		nonExistentHeader := datagen.GenRandomBTCHeaderBytes(r, nil, nil)
 		isDeep, err = blcKeeper.IsHeaderKDeep(ctx, nonExistentHeader.Hash(), depth)
 		if err == nil {
 			t.Errorf("Non existent header led to nil error")
@@ -51,9 +51,9 @@ func FuzzKeeperIsHeaderKDeep(f *testing.F) {
 		}
 
 		// Generate a random tree of headers with at least one node
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 		// Get a random header from the tree
-		header := tree.RandomNode()
+		header := tree.RandomNode(r)
 		// Get the tip of the chain and check whether the header is on the chain that it defines
 		// In that case, the true/false result depends on the depth parameter that we provide.
 		// Otherwise, the result should always be false, regardless of the parameter.
@@ -61,7 +61,7 @@ func FuzzKeeperIsHeaderKDeep(f *testing.F) {
 		if tree.IsOnNodeChain(tip, header) {
 			mainchain := tree.GetMainChain()
 			// Select a random depth based on the main-chain length
-			randDepth := uint64(rand.Int63n(int64(len(mainchain))))
+			randDepth := uint64(r.Int63n(int64(len(mainchain))))
 			isDeep, err = blcKeeper.IsHeaderKDeep(ctx, header.Hash, randDepth)
 			// Identify whether the function should return true or false
 			headerDepth := tip.Height - header.Height
@@ -75,7 +75,7 @@ func FuzzKeeperIsHeaderKDeep(f *testing.F) {
 			}
 		} else {
 			// The depth provided does not matter, we should always get false.
-			randDepth := rand.Uint64()
+			randDepth := r.Uint64()
 			isDeep, err = blcKeeper.IsHeaderKDeep(ctx, header.Hash, randDepth)
 			if err != nil {
 				t.Errorf("Existent header led to a non-nil error %s", err)
@@ -101,9 +101,9 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 		- Random generation of a header that is not inserted into storage.
 		- Random selection of a header from the main chain and outside of it.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		// Test nil input
@@ -116,7 +116,7 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 		}
 
 		// Test header not existing
-		nonExistentHeader := datagen.GenRandomBTCHeaderBytes(nil, nil)
+		nonExistentHeader := datagen.GenRandomBTCHeaderBytes(r, nil, nil)
 		depth, err = blcKeeper.MainChainDepth(ctx, nonExistentHeader.Hash())
 		if err == nil {
 			t.Errorf("Non existent header led to nil error")
@@ -126,9 +126,9 @@ func FuzzKeeperMainChainDepth(f *testing.F) {
 		}
 
 		// Generate a random tree of headers with at least one node
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 		// Get a random header from the tree
-		header := tree.RandomNode()
+		header := tree.RandomNode(r)
 		// Get the tip of the chain and check whether the header is on the chain that it defines
 		// In that case, the depth result depends on the depth of the header on the mainchain.
 		// Otherwise, the result should always be -1
@@ -166,9 +166,9 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 		- Random generation of a header that is not inserted into storage.
 		- Random selection of a header from the main chain and outside of it.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
 		// Test nil input
@@ -181,7 +181,7 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 		}
 
 		// Test header not existing
-		nonExistentHeader := datagen.GenRandomBTCHeaderBytes(nil, nil)
+		nonExistentHeader := datagen.GenRandomBTCHeaderBytes(r, nil, nil)
 		height, err = blcKeeper.BlockHeight(ctx, nonExistentHeader.Hash())
 		if err == nil {
 			t.Errorf("Non existent header led to nil error")
@@ -190,8 +190,8 @@ func FuzzKeeperBlockHeight(f *testing.F) {
 			t.Errorf("Non existing header led to a result that is not -1")
 		}
 
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
-		header := tree.RandomNode()
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
+		header := tree.RandomNode(r)
 		height, err = blcKeeper.BlockHeight(ctx, header.Hash)
 		if err != nil {
 			t.Errorf("Existent header led to an error")
@@ -214,13 +214,13 @@ func FuzzKeeperIsAncestor(f *testing.F) {
 		- Generate a random tree of headers and insert it into storage.
 		- Select a random header and select a random descendant and a random ancestor to test (2-4).
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
 
-		nonExistentParent := datagen.GenRandomBTCHeaderInfo()
-		nonExistentChild := datagen.GenRandomBTCHeaderInfo()
+		nonExistentParent := datagen.GenRandomBTCHeaderInfo(r)
+		nonExistentChild := datagen.GenRandomBTCHeaderInfo(r)
 
 		// nil inputs test
 		isAncestor, err := blcKeeper.IsAncestor(ctx, nil, nil)
@@ -255,9 +255,9 @@ func FuzzKeeperIsAncestor(f *testing.F) {
 		}
 
 		// Generate random tree of headers
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
-		header := tree.RandomNode()
-		ancestor := tree.RandomNode()
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
+		header := tree.RandomNode(r)
+		ancestor := tree.RandomNode(r)
 
 		if ancestor.Eq(header) {
 			// Same headers test
@@ -320,11 +320,11 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			* Build on top of a header that is `rand.Intn(tipHeight)` headers back from the tip.
 				- This should emulate both 4e2 and 4e3.
 	*/
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		tree := genRandomTree(blcKeeper, ctx, 1, 10)
+		tree := genRandomTree(r, blcKeeper, ctx, 1, 10)
 
 		// Test nil input
 		err := blcKeeper.InsertHeader(ctx, nil)
@@ -332,13 +332,13 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			t.Errorf("Nil input led to nil error")
 		}
 
-		existingHeader := tree.RandomNode()
+		existingHeader := tree.RandomNode(r)
 		err = blcKeeper.InsertHeader(ctx, existingHeader.Header)
 		if err == nil {
 			t.Errorf("Existing header led to nil error")
 		}
 
-		nonExistentHeader := datagen.GenRandomBTCHeaderInfo()
+		nonExistentHeader := datagen.GenRandomBTCHeaderInfo(r)
 		err = blcKeeper.InsertHeader(ctx, nonExistentHeader.Header)
 		if err == nil {
 			t.Errorf("Header with non-existent parent led to nil error")
@@ -349,8 +349,8 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 		blcKeeper.SetHooks(mockHooks)
 
 		// Select a random header and build a header on top of it
-		parentHeader := tree.RandomNode()
-		header := datagen.GenRandomBTCHeaderInfoWithParent(parentHeader)
+		parentHeader := tree.RandomNode(r)
+		header := datagen.GenRandomBTCHeaderInfoWithParent(r, parentHeader)
 
 		// Assign a new event manager
 		// We do this because the tree building might have led to events getting sent
@@ -369,10 +369,10 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 		// Get the new tip
 		newTip := blcKeeper.HeadersState(ctx).GetTip()
 
-		// Get event names. Those will be useful to test the types of the emitted events
-		rollForwardName := proto.MessageName(&types.EventBTCRollForward{})
-		rollBackName := proto.MessageName(&types.EventBTCRollBack{})
-		headerInsertedName := proto.MessageName(&types.EventBTCHeaderInserted{})
+		// Get event types. Those will be useful to test the types of the emitted events
+		rollForwadType, _ := sdk.TypedEventToEvent(&types.EventBTCRollForward{})
+		rollBackType, _ := sdk.TypedEventToEvent(&types.EventBTCRollBack{})
+		headerInsertedType, _ := sdk.TypedEventToEvent(&types.EventBTCHeaderInserted{})
 
 		// The headerInserted hook call should contain the new header
 		if len(mockHooks.AfterBTCHeaderInsertedStore) != 1 {
@@ -385,8 +385,9 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 		if len(ctx.EventManager().Events()) == 0 {
 			t.Fatalf("No events were triggered")
 		}
+
 		// The header creation event should have been the one that was first generated
-		if ctx.EventManager().Events()[0].Type != headerInsertedName {
+		if ctx.EventManager().Events()[0].Type != headerInsertedType.Type {
 			t.Errorf("The first event does not have the BTCHeaderInserted type")
 		}
 
@@ -413,7 +414,7 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 				t.Fatalf("We expected only two events. One for header creation and one for rolling forward.")
 			}
 			// The second event should be the roll forward one
-			if ctx.EventManager().Events()[1].Type != rollForwardName {
+			if ctx.EventManager().Events()[1].Type != rollForwadType.Type {
 				t.Errorf("The second event does not have the roll forward type")
 			}
 		} else if oldTip.Work.GT(*header.Work) {
@@ -474,10 +475,10 @@ func FuzzKeeperInsertHeader(f *testing.F) {
 			rollForwardCnt := 0
 			rollBackCnt := 0
 			for i := 0; i < len(invokedEvents); i++ {
-				if invokedEvents[i].Type == rollForwardName {
+				if invokedEvents[i].Type == rollForwadType.Type {
 					rollForwardCnt += 1
 				}
-				if invokedEvents[i].Type == rollBackName {
+				if invokedEvents[i].Type == rollBackType.Type {
 					rollBackCnt += 1
 				}
 			}

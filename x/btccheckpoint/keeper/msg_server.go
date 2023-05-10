@@ -3,8 +3,10 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 var _ types.MsgServer = msgServer{}
@@ -23,14 +25,15 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 // TODO emit some events for external consumers. Those should be probably emited
 // at EndBlockerCallback
 func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
-	rawSubmission, err := types.ParseSubmission(req, m.k.GetPowLimit(), m.k.GetExpectedTag())
+
+	// Get the SDK wrapped context
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	rawSubmission, err := types.ParseSubmission(req, m.k.GetPowLimit(), m.k.GetExpectedTag(sdkCtx))
 
 	if err != nil {
 		return nil, types.ErrInvalidCheckpointProof.Wrap(err.Error())
 	}
-
-	// Get the SDK wrapped context
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
 	submissionKey := rawSubmission.GetSubmissionKey()
 
@@ -90,4 +93,18 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	}
 
 	return &types.MsgInsertBTCSpvProofResponse{}, nil
+}
+
+// UpdateParams updates the params.
+func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	if ms.k.authority != req.Authority {
+		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.k.authority, req.Authority)
+	}
+
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := ms.k.SetParams(ctx, req.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParamsResponse{}, nil
 }

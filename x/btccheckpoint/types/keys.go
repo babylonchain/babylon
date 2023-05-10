@@ -18,16 +18,22 @@ const (
 	// QuerierRoute defines the module's query routing key
 	QuerierRoute = ModuleName
 
+	TStoreKey = "transient_btccheckpoint"
+
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_btccheckpoint"
 
 	LatestFinalizedEpochKey = "latestFinalizedEpoch"
+
+	btcLightClientUpdated = "btcLightClientUpdated"
 )
 
 var (
-	SubmisionKeyPrefix    = []byte{3}
-	EpochDataPrefix       = []byte{4}
-	LastFinalizedEpochKey = append([]byte{5}, []byte(LatestFinalizedEpochKey)...)
+	SubmisionKeyPrefix       = []byte{3}
+	EpochDataPrefix          = []byte{4}
+	LastFinalizedEpochKey    = append([]byte{5}, []byte(LatestFinalizedEpochKey)...)
+	BtcLightClientUpdatedKey = append([]byte{6}, []byte(btcLightClientUpdated)...)
+	ParamsKey                = []byte{7}
 )
 
 func KeyPrefix(p string) []byte {
@@ -44,4 +50,8 @@ func GetEpochIndexKey(e uint64) []byte {
 
 func GetLatestFinalizedEpochKey() []byte {
 	return LastFinalizedEpochKey
+}
+
+func GetBtcLightClientUpdatedKey() []byte {
+	return BtcLightClientUpdatedKey
 }

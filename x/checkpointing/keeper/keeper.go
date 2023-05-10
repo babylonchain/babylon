@@ -3,17 +3,18 @@ package keeper
 import (
 	"errors"
 	"fmt"
+
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type (
@@ -24,7 +25,6 @@ type (
 		blsSigner      BlsSigner
 		epochingKeeper types.EpochingKeeper
 		hooks          types.CheckpointingHooks
-		paramstore     paramtypes.Subspace
 		clientCtx      client.Context
 	}
 )
@@ -35,21 +35,14 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	signer BlsSigner,
 	ek types.EpochingKeeper,
-	ps paramtypes.Subspace,
 	clientCtx client.Context,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		cdc:            cdc,
 		storeKey:       storeKey,
 		memKey:         memKey,
 		blsSigner:      signer,
 		epochingKeeper: ek,
-		paramstore:     ps,
 		hooks:          nil,
 		clientCtx:      clientCtx,
 	}
@@ -105,13 +98,13 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 	}
 
 	// verify BLS sig
-	msgBytes := append(sdk.Uint64ToBigEndian(sig.GetEpochNum()), *sig.LastCommitHash...)
-	ok, err := bls12381.Verify(*sig.BlsSig, signerBlsKey, msgBytes)
+	signBytes := types.GetSignBytes(sig.GetEpochNum(), *sig.LastCommitHash)
+	ok, err := bls12381.Verify(*sig.BlsSig, signerBlsKey, signBytes)
 	if err != nil {
 		return err
 	}
 	if !ok {
-		return errors.New("BLS signature does not match the public key")
+		return types.ErrInvalidBlsSignature
 	}
 
 	// accumulate BLS signatures
@@ -136,7 +129,7 @@ func (k Keeper) addBlsSig(ctx sdk.Context, sig *types.BlsSig) error {
 
 	// if reaching this line, it means ckptWithMeta is updated,
 	// and we need to write the updated ckptWithMeta back to KVStore
-	if err := k.UpdateCheckpoint(ctx, ckptWithMeta); err != nil {
+	if err = k.UpdateCheckpoint(ctx, ckptWithMeta); err != nil {
 		return err
 	}
 
@@ -236,7 +229,7 @@ func (k Keeper) verifyCkptBytes(ctx sdk.Context, rawCheckpoint *txformat.RawBtcC
 	if sum <= totalPower*1/3 {
 		return nil, types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
 	}
-	msgBytes := append(sdk.Uint64ToBigEndian(ckpt.GetEpochNum()), *ckpt.LastCommitHash...)
+	msgBytes := types.GetSignBytes(ckpt.GetEpochNum(), *ckpt.LastCommitHash)
 	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
 	if err != nil {
 		return nil, err

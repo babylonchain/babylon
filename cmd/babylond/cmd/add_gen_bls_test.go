@@ -3,10 +3,16 @@ package cmd_test
 import (
 	"context"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/server/config"
 	"path/filepath"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/server/config"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+
+	tmconfig "github.com/cometbft/cometbft/config"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -15,10 +21,6 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
-	tmconfig "github.com/tendermint/tendermint/config"
-	tmjson "github.com/tendermint/tendermint/libs/json"
-	"github.com/tendermint/tendermint/libs/log"
-	"github.com/tendermint/tendermint/libs/tempfile"
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/cmd/babylond/cmd"
@@ -36,7 +38,9 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	tmcfg, err := genutiltest.CreateDefaultTendermintConfig(home)
 	require.NoError(t, err)
 
-	appCodec := app.MakeTestEncodingConfig().Marshaler
+	appCodec := app.GetEncodingConfig().Marshaler
+	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+
 	err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 	require.NoError(t, err)
 
@@ -55,7 +59,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	genKeyFileName := filepath.Join(home, fmt.Sprintf("gen-bls-%s.json", genKey.ValidatorAddress))
 	err = tempfile.WriteFileAtomic(genKeyFileName, jsonBytes, 0600)
 	require.NoError(t, err)
-	addGenBlsCmd := cmd.AddGenBlsCmd()
+	addGenBlsCmd := cmd.AddGenBlsCmd(gentxModule.GenTxValidator)
 	addGenBlsCmd.SetArgs(
 		[]string{genKeyFileName},
 	)
@@ -66,7 +70,8 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 // test adding genesis BLS keys with gentx
 // error is expected if adding duplicate
 func Test_AddGenBlsCmdWithGentx(t *testing.T) {
-	cfg := network.DefaultConfig()
+	min := network.MinimumAppConfig()
+	cfg, _ := network.DefaultConfigWithAppConfig(min)
 	config.SetConfigTemplate(config.DefaultConfigTemplate)
 	cfg.NumValidators = 1
 
@@ -76,6 +81,7 @@ func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 
 	_, err = testNetwork.WaitForHeight(1)
 	require.NoError(t, err)
+	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 
 	targetCfg := tmconfig.DefaultConfig()
 	targetCfg.SetRoot(filepath.Join(testNetwork.Validators[0].Dir, "simd"))
@@ -101,7 +107,7 @@ func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 		require.NotNil(t, genKey)
 
 		// add genesis BLS key to the target context
-		addBlsCmd := cmd.AddGenBlsCmd()
+		addBlsCmd := cmd.AddGenBlsCmd(gentxModule.GenTxValidator)
 		_, err = cli.ExecTestCLICmd(targetCtx, addBlsCmd, []string{genKeyFileName})
 		require.NoError(t, err)
 		appState, _, err := genutiltypes.GenesisStateFromGenFile(targetGenesisFile)

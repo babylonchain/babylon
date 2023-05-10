@@ -1,12 +1,12 @@
 package keeper
 
 import (
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
 // GetValidatorSet returns the set of validators of a given epoch, where the validators are ordered by their address in ascending order
@@ -21,7 +21,7 @@ func (k Keeper) GetValidatorSet(ctx sdk.Context, epochNumber uint64) types.Valid
 		powerBytes := iterator.Value()
 		var power math.Int
 		if err := power.Unmarshal(powerBytes); err != nil {
-			panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+			panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 		}
 		val := types.Validator{
 			Addr:  addr,
@@ -61,7 +61,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 		addrBytes := []byte(addr)
 		powerBytes, err := sdk.NewInt(power).Marshal()
 		if err != nil {
-			panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+			panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 		}
 		store.Set(addrBytes, powerBytes)
 		totalPower += power
@@ -73,7 +73,7 @@ func (k Keeper) InitValidatorSet(ctx sdk.Context) {
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	totalPowerBytes, err := sdk.NewInt(totalPower).Marshal()
 	if err != nil {
-		panic(sdkerrors.Wrap(types.ErrMarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrMarshal, err.Error()))
 	}
 	k.votingPowerStore(ctx).Set(epochNumberBytes, totalPowerBytes)
 }
@@ -105,7 +105,7 @@ func (k Keeper) GetValidatorVotingPower(ctx sdk.Context, epochNumber uint64, val
 	}
 	var power math.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
-		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 
 	return power.Int64(), nil
@@ -126,7 +126,7 @@ func (k Keeper) GetTotalVotingPower(ctx sdk.Context, epochNumber uint64) int64 {
 	}
 	var power math.Int
 	if err := power.Unmarshal(powerBytes); err != nil {
-		panic(sdkerrors.Wrap(types.ErrUnmarshal, err.Error()))
+		panic(errorsmod.Wrap(types.ErrUnmarshal, err.Error()))
 	}
 	return power.Int64()
 }

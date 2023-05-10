@@ -7,21 +7,19 @@ import (
 	"os"
 	"testing"
 
+	simappparams "github.com/babylonchain/babylon/app/params"
+	dbm "github.com/cometbft/cometbft-db"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
+
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	"github.com/babylonchain/babylon/app"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdksimapp "github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/helpers"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -37,7 +35,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	abci "github.com/tendermint/tendermint/abci/types"
+
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 // Get flags every time the simulator is run
@@ -77,7 +79,7 @@ func TestFullAppSimulation(t *testing.T) {
 
 	privSigner, err := app.SetupPrivSigner()
 	require.NoError(t, err)
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sims.EmptyAppOptions{}, app.GetWasmEnabledProposals(), app.EmptyWasmOpts, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// run randomized simulation
@@ -94,12 +96,12 @@ func TestFullAppSimulation(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = sdksimapp.CheckExportSimulation(babylon, config, simParams)
+	err = sims.CheckExportSimulation(babylon, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
 	if config.Commit {
-		sdksimapp.PrintStats(db)
+		sims.PrintStats(db)
 	}
 }
 
@@ -117,7 +119,7 @@ func TestAppImportExport(t *testing.T) {
 
 	privSigner, err := app.SetupPrivSigner()
 	require.NoError(t, err)
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sims.EmptyAppOptions{}, app.GetWasmEnabledProposals(), app.EmptyWasmOpts, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -134,17 +136,17 @@ func TestAppImportExport(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = sdksimapp.CheckExportSimulation(babylon, config, simParams)
+	err = sims.CheckExportSimulation(babylon, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
 	if config.Commit {
-		sdksimapp.PrintStats(db)
+		sims.PrintStats(db)
 	}
 
 	fmt.Printf("exporting genesis...\n")
 
-	exported, err := babylon.ExportAppStateAndValidators(false, []string{})
+	exported, err := babylon.ExportAppStateAndValidators(false, []string{}, []string{})
 	require.NoError(t, err)
 
 	fmt.Printf("importing genesis...\n")
@@ -157,7 +159,7 @@ func TestAppImportExport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sims.EmptyAppOptions{}, app.GetWasmEnabledProposals(), app.EmptyWasmOpts, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	var genesisState app.GenesisState
@@ -203,7 +205,7 @@ func TestAppImportExport(t *testing.T) {
 		require.Equal(t, len(failedKVAs), len(failedKVBs), "unequal sets of key-values to compare")
 
 		fmt.Printf("compared %d different key/value pairs between %s and %s\n", len(failedKVAs), skp.A, skp.B)
-		require.Equal(t, len(failedKVAs), 0, sdksimapp.GetSimulationLog(skp.A.Name(), babylon.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
+		require.Equal(t, len(failedKVAs), 0, sims.GetSimulationLog(skp.A.Name(), babylon.SimulationManager().StoreDecoders, failedKVAs, failedKVBs))
 	}
 }
 
@@ -221,7 +223,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	privSigner, err := app.SetupPrivSigner()
 	require.NoError(t, err)
-	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sims.EmptyAppOptions{}, app.GetWasmEnabledProposals(), app.EmptyWasmOpts, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", babylon.Name())
 
 	// Run randomized simulation
@@ -238,12 +240,12 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	)
 
 	// export state and simParams before the simulation error is checked
-	err = sdksimapp.CheckExportSimulation(babylon, config, simParams)
+	err = sims.CheckExportSimulation(babylon, config, simParams)
 	require.NoError(t, err)
 	require.NoError(t, simErr)
 
 	if config.Commit {
-		sdksimapp.PrintStats(db)
+		sims.PrintStats(db)
 	}
 
 	if stopEarly {
@@ -253,7 +255,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 
 	fmt.Printf("exporting genesis...\n")
 
-	exported, err := babylon.ExportAppStateAndValidators(true, []string{})
+	exported, err := babylon.ExportAppStateAndValidators(true, []string{}, []string{})
 	require.NoError(t, err)
 
 	fmt.Printf("importing genesis...\n")
@@ -266,7 +268,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 		require.NoError(t, os.RemoveAll(newDir))
 	}()
 
-	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, fauxMerkleModeOpt)
+	newBabylon := app.NewBabylonApp(log.NewNopLogger(), newDB, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sims.EmptyAppOptions{}, app.GetWasmEnabledProposals(), app.EmptyWasmOpts, fauxMerkleModeOpt)
 	require.Equal(t, "BabylonApp", newBabylon.Name())
 
 	newBabylon.InitChain(abci.RequestInitChain{
@@ -299,7 +301,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = simappparams.SimAppChainID
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
@@ -319,7 +321,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			db := dbm.NewMemDB()
 			privSigner, err := app.SetupPrivSigner()
 			require.NoError(t, err)
-			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.MakeTestEncodingConfig(), privSigner, sdksimapp.EmptyAppOptions{}, interBlockCacheOpt())
+			babylon := app.NewBabylonApp(logger, db, nil, true, map[int64]bool{}, app.DefaultNodeHome, FlagPeriodValue, app.GetEncodingConfig(), privSigner, sims.EmptyAppOptions{}, app.GetWasmEnabledProposals(), app.EmptyWasmOpts, interBlockCacheOpt())
 
 			fmt.Printf(
 				"running non-determinism simulation; seed %d: %d/%d, attempt: %d/%d\n",
@@ -340,7 +342,7 @@ func TestAppStateDeterminism(t *testing.T) {
 			require.NoError(t, err)
 
 			if config.Commit {
-				sdksimapp.PrintStats(db)
+				sims.PrintStats(db)
 			}
 
 			appHash := babylon.LastCommitID().Hash

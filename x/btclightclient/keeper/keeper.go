@@ -4,23 +4,21 @@ import (
 	"fmt"
 
 	bbn "github.com/babylonchain/babylon/types"
+	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		hooks      types.BTCLightClientHooks
-		paramstore paramtypes.Subspace
-		btcConfig  bbn.BtcConfig
+		cdc       codec.BinaryCodec
+		storeKey  storetypes.StoreKey
+		memKey    storetypes.StoreKey
+		hooks     types.BTCLightClientHooks
+		btcConfig bbn.BtcConfig
 	}
 )
 
@@ -28,21 +26,15 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey storetypes.StoreKey,
-	ps paramtypes.Subspace,
 	btcConfig bbn.BtcConfig,
 ) *Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
 
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		hooks:      nil,
-		paramstore: ps,
-		btcConfig:  btcConfig,
+		cdc:       cdc,
+		storeKey:  storeKey,
+		memKey:    memKey,
+		hooks:     nil,
+		btcConfig: btcConfig,
 	}
 }
 
@@ -239,4 +231,43 @@ func (k Keeper) IsAncestor(ctx sdk.Context, parentHashBytes *bbn.BTCHeaderHashBy
 
 func (k Keeper) GetTipInfo(ctx sdk.Context) *types.BTCHeaderInfo {
 	return k.headersState(ctx).GetTip()
+}
+
+// TODO: The following functions, GetHeaderByHash and GetHeaderByHeight, are super inefficient
+// and should be replaced with a better implementation. This requires changing the
+// underlying data model for the whole btclightclient module.
+// GetHeaderByHash returns header with given hash from main chain or returns nil if such header is not found
+// or is not on main chain
+func (k Keeper) GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
+	depth, err := k.MainChainDepth(ctx, hash)
+
+	if depth < 0 || err != nil {
+		return nil
+	}
+
+	info, err := k.headersState(ctx).GetHeaderByHash(hash)
+
+	if err != nil {
+		return nil
+	}
+
+	return info
+}
+
+// GetHeaderByHeight returns header with given height from main chain, returns nil if such header is not found
+func (k Keeper) GetHeaderByHeight(ctx sdk.Context, height uint64) *types.BTCHeaderInfo {
+	var info *types.BTCHeaderInfo
+
+	k.headersState(ctx).HeadersByHeight(height, func(hi *types.BTCHeaderInfo) bool {
+		depth, err := k.MainChainDepth(ctx, hi.Hash)
+
+		if depth < 0 || err != nil {
+			return false
+		}
+
+		info = hi
+		return true
+	})
+
+	return info
 }

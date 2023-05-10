@@ -1,54 +1,32 @@
 package keeper
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 // GetEpochChainInfo gets the latest chain info of a given epoch for a given chain ID
 func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) (*types.ChainInfo, error) {
-	store := k.epochChainInfoStore(ctx, chainID)
-	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
-	if !store.Has(epochNumberBytes) {
+	if !k.EpochChainInfoExists(ctx, chainID, epochNumber) {
 		return nil, types.ErrEpochChainInfoNotFound
 	}
+
+	store := k.epochChainInfoStore(ctx, chainID)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	epochChainInfoBytes := store.Get(epochNumberBytes)
 	var chainInfo types.ChainInfo
 	k.cdc.MustUnmarshal(epochChainInfoBytes, &chainInfo)
 	return &chainInfo, nil
 }
 
-// GetLastFinalizedChainInfo gets the last finalised chain info recorded for a given chain ID
-// and the earliest epoch that snapshots this chain info
-func (k Keeper) GetLastFinalizedChainInfo(ctx sdk.Context, chainID string) (uint64, *types.ChainInfo, error) {
-	// find the last finalised epoch
-	finalizedEpoch, err := k.GetFinalizedEpoch(ctx)
-	if err != nil {
-		return 0, nil, err
-	}
-
-	// find the chain info of this epoch
-	chainInfo, err := k.GetEpochChainInfo(ctx, chainID, finalizedEpoch)
-	if err != nil {
-		return finalizedEpoch, nil, err
-	}
-
-	// It's possible that the chain info's epoch is way before the last finalised epoch
-	// e.g., when there is no relayer for many epochs
-	// NOTE: if an epoch is finalised then all of its previous epochs are also finalised
-	if chainInfo.LatestHeader.BabylonEpoch < finalizedEpoch {
-		// remember the last finalised epoch
-		finalizedEpoch = chainInfo.LatestHeader.BabylonEpoch
-		// replace the chain info w.r.t. this last finalised epoch
-		chainInfo, err = k.GetEpochChainInfo(ctx, chainID, finalizedEpoch)
-		if err != nil {
-			return finalizedEpoch, nil, err
-		}
-	}
-
-	return finalizedEpoch, chainInfo, nil
+// EpochChainInfoExists checks if the latest chain info exists of a given epoch for a given chain ID
+func (k Keeper) EpochChainInfoExists(ctx sdk.Context, chainID string, epochNumber uint64) bool {
+	store := k.epochChainInfoStore(ctx, chainID)
+	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
+	return store.Has(epochNumberBytes)
 }
 
 // GetEpochHeaders gets the headers timestamped in a given epoch, in the ascending order

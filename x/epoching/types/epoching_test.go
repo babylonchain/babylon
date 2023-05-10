@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
 
@@ -9,24 +10,14 @@ import (
 )
 
 func FuzzEpoch(f *testing.F) {
-	f.Add(int64(11111))
-	f.Add(int64(22222))
-	f.Add(int64(55555))
-
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
+		r := rand.New(rand.NewSource(seed))
 
 		// generate a random epoch
-		epochNumber := rand.Uint64() + 1
-		curEpochInterval := rand.Uint64()%100 + 2
-		firstBlockHeight := rand.Uint64() + 1
-
-		// genesis block case with some probability
-		genesisFlag := rand.Uint64()%100 < 10
-		if genesisFlag {
-			epochNumber = 0
-			firstBlockHeight = 0
-		}
+		epochNumber := uint64(r.Int63()) + 1
+		curEpochInterval := r.Uint64()%100 + 2
+		firstBlockHeight := r.Uint64() + 1
 
 		e := types.Epoch{
 			EpochNumber:          epochNumber,
@@ -34,14 +25,9 @@ func FuzzEpoch(f *testing.F) {
 			FirstBlockHeight:     firstBlockHeight,
 		}
 
-		if genesisFlag {
-			require.Equal(t, uint64(0), e.GetLastBlockHeight())
-			require.Equal(t, uint64(0), e.GetSecondBlockHeight())
-		} else {
-			lastBlockHeight := firstBlockHeight + curEpochInterval - 1
-			require.Equal(t, lastBlockHeight, e.GetLastBlockHeight())
-			secondBlockheight := firstBlockHeight + 1
-			require.Equal(t, secondBlockheight, e.GetSecondBlockHeight())
-		}
+		lastBlockHeight := firstBlockHeight + curEpochInterval - 1
+		require.Equal(t, lastBlockHeight, e.GetLastBlockHeight())
+		secondBlockheight := firstBlockHeight + 1
+		require.Equal(t, secondBlockheight, e.GetSecondBlockHeight())
 	})
 }

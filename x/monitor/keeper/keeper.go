@@ -2,14 +2,14 @@ package keeper
 
 import (
 	"fmt"
+
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"github.com/babylonchain/babylon/x/monitor/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 type (
@@ -17,7 +17,6 @@ type (
 		cdc                  codec.BinaryCodec
 		storeKey             storetypes.StoreKey
 		memKey               storetypes.StoreKey
-		paramstore           paramtypes.Subspace
 		btcLightClientKeeper types.BTCLightClientKeeper
 	}
 )
@@ -26,19 +25,12 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey storetypes.StoreKey,
-	ps paramtypes.Subspace,
 	bk types.BTCLightClientKeeper,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
-
 	return Keeper{
 		cdc:                  cdc,
 		storeKey:             storeKey,
 		memKey:               memKey,
-		paramstore:           ps,
 		btcLightClientKeeper: bk,
 	}
 }

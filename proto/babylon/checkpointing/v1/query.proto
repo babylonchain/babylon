@@ -1,0 +1,165 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+import "babylon/checkpointing/v1/bls_key.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "google/api/annotations.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // RawCheckpointList queries all checkpoints that match the given status.
+  rpc RawCheckpointList(QueryRawCheckpointListRequest)
+      returns (QueryRawCheckpointListResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/raw_checkpoints/{status}";
+  }
+
+  // RawCheckpoint queries a checkpoints at a given epoch number.
+  rpc RawCheckpoint(QueryRawCheckpointRequest)
+      returns (QueryRawCheckpointResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/raw_checkpoint/{epoch_num}";
+  }
+
+  // RawCheckpoints queries checkpoints for a epoch range specified in pagination params.
+  rpc RawCheckpoints(QueryRawCheckpointsRequest)
+      returns (QueryRawCheckpointsResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/raw_checkpoints";
+  }
+
+  // BlsPublicKeyList queries a list of bls public keys of the validators at a
+  // given epoch number.
+  rpc BlsPublicKeyList(QueryBlsPublicKeyListRequest)
+      returns (QueryBlsPublicKeyListResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/bls_public_keys/{epoch_num}";
+  }
+
+  // EpochStatus queries the status of the checkpoint at a given epoch
+  rpc EpochStatus(QueryEpochStatusRequest) returns (QueryEpochStatusResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/epochs/{epoch_num}/status";
+  }
+
+  // RecentEpochStatusCount queries the number of epochs with each status in
+  // recent epochs
+  rpc RecentEpochStatusCount(QueryRecentEpochStatusCountRequest)
+      returns (QueryRecentEpochStatusCountResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/epochs:status_count";
+  }
+
+  // LastCheckpointWithStatus queries the last checkpoint with a given status or
+  // a more matured status
+  rpc LastCheckpointWithStatus(QueryLastCheckpointWithStatusRequest)
+      returns (QueryLastCheckpointWithStatusResponse) {
+    option (google.api.http).get =
+        "/babylon/checkpointing/v1/last_raw_checkpoint/{status}";
+  }
+}
+
+// QueryRawCheckpointListRequest is the request type for the
+// Query/RawCheckpoints RPC method.
+message QueryRawCheckpointListRequest {
+  // status defines the status of the raw checkpoints of the query
+  CheckpointStatus status = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryRawCheckpointListResponse is the response type for the
+// Query/RawCheckpoints RPC method.
+message QueryRawCheckpointListResponse {
+  // the order is going from the newest to oldest based on the epoch number
+  repeated RawCheckpointWithMeta raw_checkpoints = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryRawCheckpointRequest is the request type for the Query/RawCheckpoint
+// RPC method.
+message QueryRawCheckpointRequest {
+  // epoch_num defines the epoch for the queried checkpoint
+  uint64 epoch_num = 1;
+}
+
+// QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
+// RPC method.
+message QueryRawCheckpointResponse { RawCheckpointWithMeta raw_checkpoint = 1; }
+
+
+// QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsRequest {
+  // pagination defines whether to have the pagination in the request
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryRawCheckpointsResponse is the response type for the Query/RawCheckpoints
+// RPC method.
+message QueryRawCheckpointsResponse {
+  // the order is going from the newest to oldest based on the epoch number
+  repeated RawCheckpointWithMeta raw_checkpoints = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBlsPublicKeyListRequest is the request type for the Query/BlsPublicKeys
+// RPC method.
+message QueryBlsPublicKeyListRequest {
+  // epoch_num defines the epoch for the queried bls public keys
+  uint64 epoch_num = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryBlsPublicKeyListResponse is the response type for the
+// Query/BlsPublicKeys RPC method.
+message QueryBlsPublicKeyListResponse {
+  repeated ValidatorWithBlsKey validator_with_bls_keys = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryEpochStatusRequest is the request type for the Query/EpochStatus
+// RPC method.
+message QueryEpochStatusRequest { uint64 epoch_num = 1; }
+
+// QueryEpochStatusResponse is the response type for the Query/EpochStatus
+// RPC method.
+message QueryEpochStatusResponse { CheckpointStatus status = 1; }
+
+// QueryRecentEpochStatusCountRequest is the request type for the
+// Query/EpochStatusCount RPC method.
+message QueryRecentEpochStatusCountRequest {
+  // epoch_count is the number of the most recent epochs to include in the
+  // aggregation
+  uint64 epoch_count = 1;
+}
+
+// QueryRecentEpochStatusCountResponse is the response type for the
+// Query/EpochStatusCount RPC method.
+message QueryRecentEpochStatusCountResponse {
+  uint64 tip_epoch = 1;
+  uint64 epoch_count = 2;
+  map<string, uint64> status_count = 3;
+}
+
+// QueryLastCheckpointWithStatusRequest is the request type for the
+// Query/LastCheckpointWithStatus RPC method.
+message QueryLastCheckpointWithStatusRequest { CheckpointStatus status = 1; }
+
+// QueryLastCheckpointWithStatusResponse is the response type for the
+// Query/LastCheckpointWithStatus RPC method.
+message QueryLastCheckpointWithStatusResponse {
+  RawCheckpoint raw_checkpoint = 1;
+}

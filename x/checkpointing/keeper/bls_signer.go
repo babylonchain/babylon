@@ -6,11 +6,12 @@ import (
 
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/babylonchain/babylon/client/tx"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/types/retry"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BlsSigner interface {
@@ -32,19 +33,20 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 	}
 
 	// get BLS signature by signing
-	signBytes := append(sdk.Uint64ToBigEndian(epochNum), lch...)
+	signBytes := types.GetSignBytes(epochNum, lch)
 	blsSig, err := k.blsSigner.SignMsgWithBls(signBytes)
 	if err != nil {
 		return err
 	}
 
 	// create MsgAddBlsSig message
-	msg := types.NewMsgAddBlsSig(epochNum, lch, blsSig, addr)
+	msg := types.NewMsgAddBlsSig(k.clientCtx.GetFromAddress(), epochNum, lch, blsSig, addr)
 
 	// keep sending the message to Tendermint until success or timeout
 	// TODO should read the parameters from config file
+	var res *sdk.TxResponse
 	err = retry.Do(1*time.Second, 1*time.Minute, func() error {
-		_, err := tx.SendMsgToTendermint(k.clientCtx, msg)
+		res, err = tx.SendMsgToTendermint(k.clientCtx, msg)
 		if err != nil {
 			return err
 		}
@@ -55,7 +57,7 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 		return err
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %v", epochNum))
+	ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %d, tx hash: %s, gas used: %d, gas wanted: %d", epochNum, res.TxHash, res.GasUsed, res.GasWanted))
 
 	return nil
 }

@@ -3,24 +3,27 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/tendermint/tendermint/libs/log"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		hooks      types.EpochingHooks
-		paramstore paramtypes.Subspace
-		stk        types.StakingKeeper
-		router     *baseapp.MsgServiceRouter
+		cdc      codec.BinaryCodec
+		storeKey storetypes.StoreKey
+		memKey   storetypes.StoreKey
+		hooks    types.EpochingHooks
+		bk       types.BankKeeper
+		stk      types.StakingKeeper
+		router   *baseapp.MsgServiceRouter
+		// the address capable of executing a MsgUpdateParams message. Typically, this
+		// should be the x/gov module account.
+		authority string
 	}
 )
 
@@ -28,21 +31,19 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey storetypes.StoreKey,
-	ps paramtypes.Subspace,
+	bk types.BankKeeper,
 	stk types.StakingKeeper,
+	authority string,
 ) Keeper {
-	// set KeyTable if it has not already been set
-	if !ps.HasKeyTable() {
-		ps = ps.WithKeyTable(types.ParamKeyTable())
-	}
 
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		hooks:      nil,
-		stk:        stk,
+		cdc:       cdc,
+		storeKey:  storeKey,
+		memKey:    memKey,
+		hooks:     nil,
+		bk:        bk,
+		stk:       stk,
+		authority: authority,
 	}
 }
 

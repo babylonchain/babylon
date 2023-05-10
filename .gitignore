@@ -194,6 +194,9 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+# Build artifacts for wasm contracts used in tests
+wasmbinding/testdata/target
+
 # End of https://www.toptal.com/developers/gitignore/api/intellij,vscode,macos,windows
 # The following content is adapted from https://github.com/osmosis-labs/osmosis/blob/main/.gitignore
 

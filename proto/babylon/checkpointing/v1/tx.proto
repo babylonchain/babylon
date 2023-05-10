@@ -1,0 +1,50 @@
+syntax = "proto3";
+package babylon.checkpointing.v1;
+
+import "gogoproto/gogo.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
+import "cosmos/staking/v1beta1/tx.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
+
+// Msg defines the checkpointing Msg service.
+service Msg {
+  // AddBlsSig defines a method for accumulating BLS signatures
+  rpc AddBlsSig(MsgAddBlsSig) returns (MsgAddBlsSigResponse);
+
+  // WrappedCreateValidator defines a method for registering a new validator
+  rpc WrappedCreateValidator(MsgWrappedCreateValidator)
+      returns (MsgWrappedCreateValidatorResponse);
+}
+
+// MsgAddBlsSig defines a message to add a bls signature from a
+// validator
+message MsgAddBlsSig {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  // signer corresponds to the submitter of the transaction
+  // This might be a different entity compared to the one that created the BLS signature
+  // (i.e. the validator owner of the BLS key which is specified by the `bls_sig.signer_address`)
+  string signer = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+
+  BlsSig bls_sig = 2;
+}
+
+// MsgAddBlsSigResponse defines the MsgAddBlsSig response type.
+message MsgAddBlsSigResponse {}
+
+// MsgWrappedCreateValidator defines a wrapped message to create a validator
+message MsgWrappedCreateValidator {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  BlsKey key = 1;
+  cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 2;
+}
+
+// MsgWrappedCreateValidatorResponse defines the MsgWrappedCreateValidator
+// response type
+message MsgWrappedCreateValidatorResponse {}

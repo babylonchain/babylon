@@ -5,11 +5,11 @@ import (
 	"errors"
 	"os"
 
+	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 )
@@ -19,9 +19,7 @@ const DefaultIndex uint64 = 1
 
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
-	return &GenesisState{
-		Params: DefaultParams(),
-	}
+	return &GenesisState{}
 }
 
 // Validate performs basic genesis state validation returning an error upon any
@@ -39,7 +37,7 @@ func (gs GenesisState) Validate() error {
 		}
 	}
 
-	return gs.Params.Validate()
+	return nil
 }
 
 func NewGenesisKey(delAddr sdk.ValAddress, blsPubKey *bls12381.PublicKey, pop *ProofOfPossession, pubkey cryptotypes.PubKey) (*GenesisKey, error) {

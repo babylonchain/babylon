@@ -2,9 +2,9 @@ package bls12381
 
 import (
 	"crypto/rand"
+	tmcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/pkg/errors"
 	blst "github.com/supranational/blst/bindings/go"
-	tmcrypto "github.com/tendermint/tendermint/crypto"
 	"io"
 )
 

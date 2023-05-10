@@ -1,13 +1,11 @@
 package checkpointing
 
 import (
-	"math/rand"
-
+	simappparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/testutil/sample"
 	checkpointingsimulation "github.com/babylonchain/babylon/x/checkpointing/simulation"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
@@ -31,21 +29,13 @@ func (AppModule) GenerateGenesisState(simState *module.SimulationState) {
 	for i, acc := range simState.Accounts {
 		accs[i] = acc.Address.String()
 	}
-	headeroracleGenesis := types.GenesisState{
-		Params: types.DefaultParams(),
-	}
+	headeroracleGenesis := types.GenesisState{}
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(&headeroracleGenesis)
 }
 
 // ProposalContents doesn't return any content functions for governance proposals
-func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
+func (AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalMsg {
 	return nil
-}
-
-// RandomizedParams creates randomized  param changes for the simulator
-func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-
-	return []simtypes.ParamChange{}
 }
 
 // RegisterStoreDecoder registers a decoder

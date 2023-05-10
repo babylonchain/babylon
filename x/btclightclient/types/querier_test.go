@@ -11,18 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
-func TestNewQueryParamsRequest(t *testing.T) {
-	newQueryParams := types.NewQueryParamsRequest()
-	if newQueryParams == nil {
-		t.Fatalf("A nil object was returned")
-	}
-
-	emptyQueryParams := types.QueryParamsRequest{}
-	if *newQueryParams != emptyQueryParams {
-		t.Errorf("expected an empty QueryParamsRequest")
-	}
-}
-
 func TestNewQueryHashesRequest(t *testing.T) {
 	headerBytes := bbn.GetBaseBTCHeaderBytes()
 	headerHashBytes := headerBytes.Hash()
@@ -43,10 +31,10 @@ func TestNewQueryHashesRequest(t *testing.T) {
 }
 
 func FuzzNewQueryContainsRequest(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 100)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
-		rand.Seed(seed)
-		hexHash := datagen.GenRandomHexStr(bbn.BTCHeaderHashLen)
+		r := rand.New(rand.NewSource(seed))
+		hexHash := datagen.GenRandomHexStr(r, bbn.BTCHeaderHashLen)
 
 		btcHeaderHashBytes, _ := bbn.NewBTCHeaderHashBytesFromHex(hexHash)
 

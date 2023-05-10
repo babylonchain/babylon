@@ -5,11 +5,11 @@ package types
 
 import (
 	fmt "fmt"
+	types "github.com/cometbft/cometbft/proto/tendermint/types"
 	types1 "github.com/cosmos/cosmos-sdk/x/staking/types"
-	_ "github.com/gogo/protobuf/gogoproto"
-	proto "github.com/gogo/protobuf/proto"
-	github_com_gogo_protobuf_types "github.com/gogo/protobuf/types"
-	types "github.com/tendermint/tendermint/proto/tendermint/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
+	proto "github.com/cosmos/gogoproto/proto"
+	github_com_cosmos_gogoproto_types "github.com/cosmos/gogoproto/types"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
 	math "math"
@@ -29,14 +29,20 @@ var _ = time.Kitchen
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// BondState is the bond state of a validator or delegation
 type BondState int32
 
 const (
-	BondState_CREATED   BondState = 0
-	BondState_BONDED    BondState = 1
+	// CREATED is when the validator/delegation has been created
+	BondState_CREATED BondState = 0
+	// CREATED is when the validator/delegation has become bonded
+	BondState_BONDED BondState = 1
+	// CREATED is when the validator/delegation has become unbonding
 	BondState_UNBONDING BondState = 2
-	BondState_UNBONDED  BondState = 3
-	BondState_REMOVED   BondState = 4
+	// CREATED is when the validator/delegation has become unbonded
+	BondState_UNBONDED BondState = 3
+	// CREATED is when the validator/delegation has been removed
+	BondState_REMOVED BondState = 4
 )
 
 var BondState_name = map[int32]string{
@@ -63,19 +69,23 @@ func (BondState) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2f2f209d5311f84c, []int{0}
 }
 
+// Epoch is a structure that contains the metadata of an epoch
 type Epoch struct {
 	EpochNumber          uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 	CurrentEpochInterval uint64 `protobuf:"varint,2,opt,name=current_epoch_interval,json=currentEpochInterval,proto3" json:"current_epoch_interval,omitempty"`
 	FirstBlockHeight     uint64 `protobuf:"varint,3,opt,name=first_block_height,json=firstBlockHeight,proto3" json:"first_block_height,omitempty"`
 	// last_block_header is the header of the last block in this epoch.
-	// Babylon needs to remember the last header of each epoch to complete unbonding validators/delegations when a previous epoch's checkpoint is finalised.
-	// The last_block_header field is nil in the epoch's beginning, and is set upon the end of this epoch.
+	// Babylon needs to remember the last header of each epoch to complete
+	// unbonding validators/delegations when a previous epoch's checkpoint is
+	// finalised. The last_block_header field is nil in the epoch's beginning, and
+	// is set upon the end of this epoch.
 	LastBlockHeader *types.Header `protobuf:"bytes,4,opt,name=last_block_header,json=lastBlockHeader,proto3" json:"last_block_header,omitempty"`
 	// app_hash_root is the Merkle root of all AppHashs in this epoch
 	// It will be used for proving a block is in an epoch
 	AppHashRoot []byte `protobuf:"bytes,5,opt,name=app_hash_root,json=appHashRoot,proto3" json:"app_hash_root,omitempty"`
 	// sealer_header is the 2nd header of the next epoch
-	// This validator set has generated a BLS multisig on `last_commit_hash` of the sealer header
+	// This validator set has generated a BLS multisig on `last_commit_hash` of
+	// the sealer header
 	SealerHeader *types.Header `protobuf:"bytes,6,opt,name=sealer_header,json=sealerHeader,proto3" json:"sealer_header,omitempty"`
 }
 
@@ -154,7 +164,8 @@ func (m *Epoch) GetSealerHeader() *types.Header {
 	return nil
 }
 
-// QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
+// QueuedMessage is a message that can change the validator set and is delayed
+// to the epoch boundary
 type QueuedMessage struct {
 	// tx_id is the ID of the tx that contains the message
 	TxId []byte `protobuf:"bytes,1,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`
@@ -164,7 +175,8 @@ type QueuedMessage struct {
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
 	// block_time is the timestamp when this msg is submitted to Babylon
 	BlockTime *time.Time `protobuf:"bytes,4,opt,name=block_time,json=blockTime,proto3,stdtime" json:"block_time,omitempty"`
-	// msg is the actual message that is sent by a user and is queued by the epoching module
+	// msg is the actual message that is sent by a user and is queued by the
+	// epoching module
 	//
 	// Types that are valid to be assigned to Msg:
 	//	*QueuedMessage_MsgCreateValidator
@@ -304,6 +316,8 @@ func (*QueuedMessage) XXX_OneofWrappers() []interface{} {
 	}
 }
 
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
 type QueuedMessageList struct {
 	EpochNumber uint64           `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
 	Msgs        []*QueuedMessage `protobuf:"bytes,2,rep,name=msgs,proto3" json:"msgs,omitempty"`
@@ -356,6 +370,7 @@ func (m *QueuedMessageList) GetMsgs() []*QueuedMessage {
 	return nil
 }
 
+// ValStateUpdate is a messages that records a state update of a validator
 type ValStateUpdate struct {
 	State       BondState  `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.epoching.v1.BondState" json:"state,omitempty"`
 	BlockHeight uint64     `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
@@ -416,6 +431,8 @@ func (m *ValStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a validator
 type ValidatorLifecycle struct {
 	ValAddr string            `protobuf:"bytes,1,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
 	ValLife []*ValStateUpdate `protobuf:"bytes,2,rep,name=val_life,json=valLife,proto3" json:"val_life,omitempty"`
@@ -468,6 +485,8 @@ func (m *ValidatorLifecycle) GetValLife() []*ValStateUpdate {
 	return nil
 }
 
+// DelegationStateUpdate is the message that records a state update of a
+// delegation
 type DelegationStateUpdate struct {
 	State       BondState  `protobuf:"varint,1,opt,name=state,proto3,enum=babylon.epoching.v1.BondState" json:"state,omitempty"`
 	ValAddr     string     `protobuf:"bytes,2,opt,name=val_addr,json=valAddr,proto3" json:"val_addr,omitempty"`
@@ -536,6 +555,8 @@ func (m *DelegationStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a delegation
 type DelegationLifecycle struct {
 	DelAddr string                   `protobuf:"bytes,1,opt,name=del_addr,json=delAddr,proto3" json:"del_addr,omitempty"`
 	DelLife []*DelegationStateUpdate `protobuf:"bytes,2,rep,name=del_life,json=delLife,proto3" json:"del_life,omitempty"`
@@ -588,6 +609,7 @@ func (m *DelegationLifecycle) GetDelLife() []*DelegationStateUpdate {
 	return nil
 }
 
+// Validator is a message that denotes a validator
 type Validator struct {
 	// addr is the validator's address (in sdk.ValAddress)
 	Addr []byte `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
@@ -815,7 +837,7 @@ func (m *QueuedMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		}
 	}
 	if m.BlockTime != nil {
-		n3, err3 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n3, err3 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err3 != nil {
 			return 0, err3
 		}
@@ -993,7 +1015,7 @@ func (m *ValStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.BlockTime != nil {
-		n8, err8 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n8, err8 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err8 != nil {
 			return 0, err8
 		}
@@ -1080,7 +1102,7 @@ func (m *DelegationStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.BlockTime != nil {
-		n9, err9 := github_com_gogo_protobuf_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime):])
+		n9, err9 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
 		if err9 != nil {
 			return 0, err9
 		}
@@ -1247,7 +1269,7 @@ func (m *QueuedMessage) Size() (n int) {
 		n += 1 + sovEpoching(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovEpoching(uint64(l))
 	}
 	if m.Msg != nil {
@@ -1335,7 +1357,7 @@ func (m *ValStateUpdate) Size() (n int) {
 		n += 1 + sovEpoching(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovEpoching(uint64(l))
 	}
 	return n
@@ -1377,7 +1399,7 @@ func (m *DelegationStateUpdate) Size() (n int) {
 		n += 1 + sovEpoching(uint64(m.BlockHeight))
 	}
 	if m.BlockTime != nil {
-		l = github_com_gogo_protobuf_types.SizeOfStdTime(*m.BlockTime)
+		l = github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime)
 		n += 1 + l + sovEpoching(uint64(l))
 	}
 	return n
@@ -1785,7 +1807,7 @@ func (m *QueuedMessage) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2152,7 +2174,7 @@ func (m *ValStateUpdate) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2424,7 +2446,7 @@ func (m *DelegationStateUpdate) Unmarshal(dAtA []byte) error {
 			if m.BlockTime == nil {
 				m.BlockTime = new(time.Time)
 			}
-			if err := github_com_gogo_protobuf_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
+			if err := github_com_cosmos_gogoproto_types.StdTimeUnmarshal(m.BlockTime, dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

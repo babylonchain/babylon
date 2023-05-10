@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"strconv"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/spf13/cobra"
 
@@ -24,10 +25,9 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,
 	}
-
-	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdRawCheckpoint())
 	cmd.AddCommand(CmdRawCheckpointList())
+	cmd.AddCommand(CmdRawCheckpoints())
 
 	return cmd
 }
@@ -95,6 +95,39 @@ func CmdRawCheckpoint() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdRawCheckpoints defines the cobra command to query the raw checkpoints
+func CmdRawCheckpoints() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "raw-checkpoints",
+		Short: "retrieve the checkpoints for a epoch range",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.RawCheckpoints(context.Background(), &types.QueryRawCheckpointsRequest{
+				Pagination: pageReq,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "raw-checkpoints")
 
 	return cmd
 }

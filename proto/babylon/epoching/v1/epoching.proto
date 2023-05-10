@@ -8,23 +8,28 @@ import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
+// Epoch is a structure that contains the metadata of an epoch
 message Epoch {
   uint64 epoch_number = 1;
   uint64 current_epoch_interval = 2;
   uint64 first_block_height = 3;
   // last_block_header is the header of the last block in this epoch.
-  // Babylon needs to remember the last header of each epoch to complete unbonding validators/delegations when a previous epoch's checkpoint is finalised.
-  // The last_block_header field is nil in the epoch's beginning, and is set upon the end of this epoch.
+  // Babylon needs to remember the last header of each epoch to complete
+  // unbonding validators/delegations when a previous epoch's checkpoint is
+  // finalised. The last_block_header field is nil in the epoch's beginning, and
+  // is set upon the end of this epoch.
   tendermint.types.Header last_block_header = 4;
   // app_hash_root is the Merkle root of all AppHashs in this epoch
   // It will be used for proving a block is in an epoch
   bytes app_hash_root = 5;
   // sealer_header is the 2nd header of the next epoch
-  // This validator set has generated a BLS multisig on `last_commit_hash` of the sealer header
+  // This validator set has generated a BLS multisig on `last_commit_hash` of
+  // the sealer header
   tendermint.types.Header sealer_header = 6;
 }
 
-// QueuedMessage is a message that can change the validator set and is delayed to the epoch boundary
+// QueuedMessage is a message that can change the validator set and is delayed
+// to the epoch boundary
 message QueuedMessage {
   // tx_id is the ID of the tx that contains the message
   bytes tx_id = 1;
@@ -33,8 +38,9 @@ message QueuedMessage {
   // block_height is the height when this msg is submitted to Babylon
   uint64 block_height = 3;
   // block_time is the timestamp when this msg is submitted to Babylon
-  google.protobuf.Timestamp block_time = 4 [(gogoproto.stdtime) = true];
-  // msg is the actual message that is sent by a user and is queued by the epoching module
+  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+  // msg is the actual message that is sent by a user and is queued by the
+  // epoching module
   oneof msg {
     cosmos.staking.v1beta1.MsgCreateValidator msg_create_validator = 5;
     cosmos.staking.v1beta1.MsgDelegate msg_delegate = 6;
@@ -44,42 +50,58 @@ message QueuedMessage {
   }
 }
 
+// QueuedMessageList is a message that contains a list of staking-related
+// messages queued for an epoch
 message QueuedMessageList {
   uint64 epoch_number = 1;
   repeated QueuedMessage msgs = 2;
 }
 
+// BondState is the bond state of a validator or delegation
 enum BondState {
+  // CREATED is when the validator/delegation has been created
   CREATED = 0;
+  // CREATED is when the validator/delegation has become bonded
   BONDED = 1;
+  // CREATED is when the validator/delegation has become unbonding
   UNBONDING = 2;
+  // CREATED is when the validator/delegation has become unbonded
   UNBONDED = 3;
+  // CREATED is when the validator/delegation has been removed
   REMOVED = 4;
 }
 
+// ValStateUpdate is a messages that records a state update of a validator
 message ValStateUpdate {
   BondState state = 1;
   uint64 block_height = 2;
-  google.protobuf.Timestamp block_time = 3 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a validator
 message ValidatorLifecycle {
   string val_addr = 1;
   repeated ValStateUpdate val_life = 2;
 }
 
+// DelegationStateUpdate is the message that records a state update of a
+// delegation
 message DelegationStateUpdate {
   BondState state = 1;
   string val_addr = 2;
   uint64 block_height = 3;
-  google.protobuf.Timestamp block_time = 4 [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
 }
 
+// ValidatorLifecycle is a message that records records the lifecycle of
+// a delegation
 message DelegationLifecycle {
   string del_addr = 1;
   repeated DelegationStateUpdate del_life = 2;
 }
 
+// Validator is a message that denotes a validator
 message Validator {
   // addr is the validator's address (in sdk.ValAddress)
   bytes addr = 1;
