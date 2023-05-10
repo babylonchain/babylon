@@ -116,3 +116,7 @@ func (k *Keeper) SetBtcCheckpointKeeper(btccKeeper types.BtcCheckpointKeeper) {
 func (k *Keeper) SetCheckpointingKeeper(checkpointingKeeper types.CheckpointingKeeper) {
 	k.checkpointingKeeper = checkpointingKeeper
 }
+
+func (k *Keeper) SetBTCLightClientKeeper(btclcKeeper types.BTCLightClientKeeper) {
+	k.btclcKeeper = btclcKeeper
+}

@@ -612,6 +612,7 @@ func NewBabylonApp(
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
 	)
+	app.ZoneConciergeKeeper.SetBTCLightClientKeeper(app.BTCLightClientKeeper)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(
