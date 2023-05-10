@@ -1,13 +1,32 @@
 package keeper
 
 import (
+	"fmt"
+
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 )
+
+// getChainID gets the ID of the counterparty chain under the given channel
+func (k Keeper) getChainID(ctx sdk.Context, channel channeltypes.IdentifiedChannel) (string, error) {
+	// get clientState under this channel
+	_, clientState, err := k.channelKeeper.GetChannelClientState(ctx, channel.PortId, channel.ChannelId)
+	if err != nil {
+		return "", err
+	}
+	// cast clientState to tendermint clientState
+	tmClient, ok := clientState.(*ibctmtypes.ClientState)
+	if !ok {
+		return "", fmt.Errorf("client must be a Tendermint client, expected: %T, got: %T", &ibctmtypes.ClientState{}, tmClient)
+	}
+	return tmClient.ChainId, nil
+}
 
 // getFinalizedInfo returns metadata and proofs that are identical to all BTC timestamps in the same epoch
 func (k Keeper) getFinalizedInfo(ctx sdk.Context) (*epochingtypes.Epoch, *checkpointingtypes.RawCheckpoint, *btcctypes.SubmissionKey, *types.ProofEpochSealed, []*btcctypes.TransactionInfo, []*btclctypes.BTCHeaderInfo, error) {
@@ -78,8 +97,12 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 
 	// for each channel, construct and send BTC timestamp
 	for _, channel := range openZCChannels {
-		// TODO: find a way to get chain ID from channel ID
-		chainID := "fixme"
+		// get the ID of the chain under this channel
+		chainID, err := k.getChainID(ctx, channel)
+		if err != nil {
+			k.Logger(ctx).Error("failed to get chain ID", "channelID", channel.ChannelId, "error", err)
+			continue
+		}
 
 		// get finalised chainInfo
 		finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, finalizedEpochInfo.EpochNumber)
