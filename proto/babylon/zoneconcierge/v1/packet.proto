@@ -13,10 +13,20 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 // ZoneConcierge
 message ZoneconciergePacketData {
   // packet is the actual message carried in the IBC packet
-  oneof packet { BTCTimestamp btc_timestamp = 1; }
+  oneof packet { 
+    InitBTCHeaders init_btc_headers = 1;
+    BTCTimestamp btc_timestamp = 2; 
+  }
 }
 
-// MsgBTCTimestamp is a BTC timestamp
+// InitBTCHeaders is a list of BTC headers
+// sent upon establishing an IBC channel with a Babylon smart contract
+message InitBTCHeaders {
+  // btc_headers is the last w+1 BTC headers in Babylon's BTC light client
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 1;
+}
+
+// BTCTimestamp is a BTC timestamp
 message BTCTimestamp {
   // header is the last CZ header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;

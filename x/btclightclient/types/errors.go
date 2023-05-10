@@ -14,4 +14,5 @@ var (
 	ErrInvalidDifficulty        = errorsmod.Register(ModuleName, 1103, "invalid difficulty bits")
 	ErrEmptyMessage             = errorsmod.Register(ModuleName, 1104, "empty message provided")
 	ErrInvalidProofOfWOrk       = errorsmod.Register(ModuleName, 1105, "provided header has invalid proof of work")
+	ErrNotEnoughHeaders         = errorsmod.Register(ModuleName, 1106, "the main chain does not have enough headers")
 )

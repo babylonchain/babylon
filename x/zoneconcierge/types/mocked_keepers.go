@@ -272,6 +272,22 @@ func (mr *MockChannelKeeperMockRecorder) GetChannel(ctx, srcPort, srcChan interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannel", reflect.TypeOf((*MockChannelKeeper)(nil).GetChannel), ctx, srcPort, srcChan)
 }
 
+// GetChannelClientState mocks base method.
+func (m *MockChannelKeeper) GetChannelClientState(ctx types3.Context, portID, channelID string) (string, exported.ClientState, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetChannelClientState", ctx, portID, channelID)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(exported.ClientState)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetChannelClientState indicates an expected call of GetChannelClientState.
+func (mr *MockChannelKeeperMockRecorder) GetChannelClientState(ctx, portID, channelID interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetChannelClientState", reflect.TypeOf((*MockChannelKeeper)(nil).GetChannelClientState), ctx, portID, channelID)
+}
+
 // GetNextSequenceSend mocks base method.
 func (m *MockChannelKeeper) GetNextSequenceSend(ctx types3.Context, portID, channelID string) (uint64, bool) {
 	m.ctrl.T.Helper()
@@ -505,6 +521,21 @@ func (m *MockBTCLightClientKeeper) EXPECT() *MockBTCLightClientKeeperMockRecorde
 	return m.recorder
 }
 
+// GetAscendingTipHeaders mocks base method.
+func (m *MockBTCLightClientKeeper) GetAscendingTipHeaders(ctx types3.Context, n uint64) ([]*types0.BTCHeaderInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAscendingTipHeaders", ctx, n)
+	ret0, _ := ret[0].([]*types0.BTCHeaderInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAscendingTipHeaders indicates an expected call of GetAscendingTipHeaders.
+func (mr *MockBTCLightClientKeeperMockRecorder) GetAscendingTipHeaders(ctx, n interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAscendingTipHeaders", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetAscendingTipHeaders), ctx, n)
+}
+
 // GetHighestCommonAncestor mocks base method.
 func (m *MockBTCLightClientKeeper) GetHighestCommonAncestor(ctx types3.Context, header1, header2 *types0.BTCHeaderInfo) *types0.BTCHeaderInfo {
 	m.ctrl.T.Helper()
@@ -584,6 +615,20 @@ func (m *MockBtcCheckpointKeeper) GetBestSubmission(ctx types3.Context, e uint64
 func (mr *MockBtcCheckpointKeeperMockRecorder) GetBestSubmission(ctx, e interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBestSubmission", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetBestSubmission), ctx, e)
+}
+
+// GetParams mocks base method.
+func (m *MockBtcCheckpointKeeper) GetParams(ctx types3.Context) types.Params {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetParams", ctx)
+	ret0, _ := ret[0].(types.Params)
+	return ret0
+}
+
+// GetParams indicates an expected call of GetParams.
+func (mr *MockBtcCheckpointKeeperMockRecorder) GetParams(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetParams), ctx)
 }
 
 // GetSubmissionData mocks base method.

@@ -3,6 +3,7 @@ package zoneconcierge
 import (
 	"fmt"
 
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +13,6 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	errorsmod "cosmossdk.io/errors"
 )
 
 type IBCModule struct {
@@ -214,6 +214,8 @@ func (im IBCModule) OnTimeoutPacket(
 	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
 	// 	return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	// }
+
+	// TODO: close channel upon timeout
 
 	return nil
 }
