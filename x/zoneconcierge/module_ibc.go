@@ -95,7 +95,7 @@ func (im IBCModule) OnChanOpenAck(
 	// }
 
 	// this channel needs to be inited upon a newly finalised epoch
-	im.keeper.AddChannelToInit(ctx, channelID)
+	im.keeper.AddUninitedChannel(ctx, channelID)
 
 	return nil
 }
@@ -108,7 +108,7 @@ func (im IBCModule) OnChanOpenConfirm(
 ) error {
 
 	// this channel needs to be inited upon a newly finalised epoch
-	im.keeper.AddChannelToInit(ctx, channelID)
+	im.keeper.AddUninitedChannel(ctx, channelID)
 
 	return nil
 }

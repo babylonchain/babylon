@@ -97,6 +97,15 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 
 	// for each channel, construct and send BTC timestamp
 	for _, channel := range openZCChannels {
+		// if the Babylon contract in this channel has not been initialised, send initialise message first
+		if k.isChannelUninited(ctx, channel.ChannelId) {
+			if err := k.SendInitBTCHeaders(ctx, channel); err != nil {
+				k.Logger(ctx).Error("failed to send InitBTCHeaders IBC packet", "channelID", channel.ChannelId, "error", err)
+				continue
+			}
+			k.afterChannelInited(ctx, channel.ChannelId)
+		}
+
 		// get the ID of the chain under this channel
 		chainID, err := k.getChainID(ctx, channel)
 		if err != nil {
@@ -145,15 +154,6 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 			Packet: &types.ZoneconciergePacketData_BtcTimestamp{
 				BtcTimestamp: btcTimestamp,
 			},
-		}
-
-		// if the Babylon contract in this channel has not been initialised, send initialise message first
-		if k.channelExists(ctx, channel.ChannelId) {
-			if err := k.SendInitBTCHeaders(ctx, channel); err != nil {
-				k.Logger(ctx).Error("failed to send InitBTCHeaders IBC packet", "channelID", channel.ChannelId, "error", err)
-				continue
-			}
-			k.afterChannelInited(ctx, channel.ChannelId)
 		}
 
 		// send IBC packet

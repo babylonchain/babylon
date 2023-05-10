@@ -7,7 +7,6 @@ import (
 )
 
 // SendInitBTCHeaders sends w+1 BTC headers to Babylon contract
-// triggered when establishing IBC channel with Babylon contract
 func (k Keeper) SendInitBTCHeaders(ctx sdk.Context, channel channeltypes.IdentifiedChannel) error {
 	// get last w+1 headers
 	// GetAscendingTipHeaders will ensure there are enough headers
