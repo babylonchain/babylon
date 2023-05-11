@@ -89,7 +89,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 	}
 
 	// get all metadata shared across BTC timestamps in the same epoch
-	finalizedEpochInfo, rawCheckpoint, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, btcHeaders, err := k.getFinalizedInfo(ctx)
+	finalizedEpochInfo, rawCheckpoint, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, epochBtcHeaders, err := k.getFinalizedInfo(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("failed to generate metadata shared across BTC timestamps in the same epoch", "error", err)
 		return
@@ -97,13 +97,17 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 
 	// for each channel, construct and send BTC timestamp
 	for _, channel := range openZCChannels {
-		// if the Babylon contract in this channel has not been initialised, send initialise message first
+		var btcHeaders []*btclctypes.BTCHeaderInfo
+		// if the Babylon contract in this channel has not been initialised, prepend w+1 headers as w-deep proof
 		if k.isChannelUninited(ctx, channel.ChannelId) {
-			if err := k.SendInitBTCHeaders(ctx, channel); err != nil {
-				k.Logger(ctx).Error("failed to send InitBTCHeaders IBC packet", "channelID", channel.ChannelId, "error", err)
-				continue
+			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+			prependingHeaders, err := k.btclcKeeper.GetInOrderAncestorsUntilHeight(ctx, w, epochBtcHeaders[0].Height-1)
+			if err != nil {
+				k.Logger(ctx).Error("failed to get w+1 headers", "error", err)
 			}
-			k.afterChannelInited(ctx, channel.ChannelId)
+			btcHeaders = append(prependingHeaders, epochBtcHeaders...)
+		} else {
+			btcHeaders = epochBtcHeaders
 		}
 
 		// get the ID of the chain under this channel
@@ -160,6 +164,11 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			k.Logger(ctx).Error("failed to send BTC timestamp IBC packet", "chainID", chainID, "channelID", channel.ChannelId, "error", err)
 			continue
+		}
+
+		// this channel has been initialised after sending IBC packet
+		if k.isChannelUninited(ctx, channel.ChannelId) {
+			k.afterChannelInited(ctx, channel.ChannelId)
 		}
 	}
 }

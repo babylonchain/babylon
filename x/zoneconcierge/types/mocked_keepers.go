@@ -521,21 +521,6 @@ func (m *MockBTCLightClientKeeper) EXPECT() *MockBTCLightClientKeeperMockRecorde
 	return m.recorder
 }
 
-// GetAscendingTipHeaders mocks base method.
-func (m *MockBTCLightClientKeeper) GetAscendingTipHeaders(ctx types3.Context, n uint64) ([]*types0.BTCHeaderInfo, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAscendingTipHeaders", ctx, n)
-	ret0, _ := ret[0].([]*types0.BTCHeaderInfo)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetAscendingTipHeaders indicates an expected call of GetAscendingTipHeaders.
-func (mr *MockBTCLightClientKeeperMockRecorder) GetAscendingTipHeaders(ctx, n interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAscendingTipHeaders", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetAscendingTipHeaders), ctx, n)
-}
-
 // GetHighestCommonAncestor mocks base method.
 func (m *MockBTCLightClientKeeper) GetHighestCommonAncestor(ctx types3.Context, header1, header2 *types0.BTCHeaderInfo) *types0.BTCHeaderInfo {
 	m.ctrl.T.Helper()
@@ -562,6 +547,21 @@ func (m *MockBTCLightClientKeeper) GetInOrderAncestorsUntil(ctx types3.Context, 
 func (mr *MockBTCLightClientKeeperMockRecorder) GetInOrderAncestorsUntil(ctx, descendant, ancestor interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInOrderAncestorsUntil", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetInOrderAncestorsUntil), ctx, descendant, ancestor)
+}
+
+// GetInOrderAncestorsUntilHeight mocks base method.
+func (m *MockBTCLightClientKeeper) GetInOrderAncestorsUntilHeight(ctx types3.Context, n, stopHeight uint64) ([]*types0.BTCHeaderInfo, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetInOrderAncestorsUntilHeight", ctx, n, stopHeight)
+	ret0, _ := ret[0].([]*types0.BTCHeaderInfo)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetInOrderAncestorsUntilHeight indicates an expected call of GetInOrderAncestorsUntilHeight.
+func (mr *MockBTCLightClientKeeperMockRecorder) GetInOrderAncestorsUntilHeight(ctx, n, stopHeight interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInOrderAncestorsUntilHeight", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetInOrderAncestorsUntilHeight), ctx, n, stopHeight)
 }
 
 // GetTipInfo mocks base method.

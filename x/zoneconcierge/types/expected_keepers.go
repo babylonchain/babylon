@@ -83,7 +83,7 @@ type BTCLightClientKeeper interface {
 	GetTipInfo(ctx sdk.Context) *btclctypes.BTCHeaderInfo
 	GetHighestCommonAncestor(ctx sdk.Context, header1 *btclctypes.BTCHeaderInfo, header2 *btclctypes.BTCHeaderInfo) *btclctypes.BTCHeaderInfo
 	GetInOrderAncestorsUntil(ctx sdk.Context, descendant *btclctypes.BTCHeaderInfo, ancestor *btclctypes.BTCHeaderInfo) []*btclctypes.BTCHeaderInfo
-	GetAscendingTipHeaders(ctx sdk.Context, n uint64) ([]*btclctypes.BTCHeaderInfo, error)
+	GetInOrderAncestorsUntilHeight(ctx sdk.Context, n uint64, stopHeight uint64) ([]*btclctypes.BTCHeaderInfo, error)
 }
 
 type BtcCheckpointKeeper interface {
