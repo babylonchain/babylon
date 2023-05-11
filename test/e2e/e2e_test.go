@@ -4,10 +4,14 @@
 package e2e
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"strconv"
 
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/stretchr/testify/require"
 )
 
 // Most simple test, just checking that two chains are up and connected through
@@ -73,4 +77,45 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestWasm() {
+	contractPath := "/bytecode/storage_contract.wasm"
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	require.NoError(s.T(), err)
+	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+	nonValidatorNode.InstantiateWasmContract(
+		strconv.Itoa(latestWasmId),
+		`{}`,
+		initialization.ValidatorWalletName,
+	)
+	nonValidatorNode.WaitForNextBlock()
+	contracts, err := nonValidatorNode.QueryContractsFromId(1)
+	s.NoError(err)
+	s.Require().Len(contracts, 1, "Wrong number of contracts for the counter")
+	contractAddr := contracts[0]
+
+	data := []byte{1, 2, 3, 4, 5}
+	dataHex := hex.EncodeToString(data)
+	dataHash := sha256.Sum256(data)
+	dataHashHex := hex.EncodeToString(dataHash[:])
+
+	storeMsg := fmt.Sprintf(`{"save_data":{"data":"%s"}}`, dataHex)
+	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+	queryMsg := fmt.Sprintf(`{"check_data": {"data_hash":"%s"}}`, dataHashHex)
+	queryResult, err := nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
+	require.NoError(s.T(), err)
+	finalized := queryResult["finalized"].(bool)
+	latestFinalizedEpoch := int(queryResult["latest_finalized_epoch"].(float64))
+	saveEpoch := int(queryResult["save_epoch"].(float64))
+
+	require.False(s.T(), finalized)
+	// in previous test we already finalized epoch 3
+	require.Equal(s.T(), 3, latestFinalizedEpoch)
+	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
+	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
 }
