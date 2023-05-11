@@ -166,7 +166,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 			continue
 		}
 
-		// this channel has been initialised after sending IBC packet
+		// this channel has been initialised after sending the first IBC packet
 		if k.isChannelUninited(ctx, channel.ChannelId) {
 			k.afterChannelInited(ctx, channel.ChannelId)
 		}
