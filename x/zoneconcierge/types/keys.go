@@ -1,5 +1,9 @@
 package types
 
+import (
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+)
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "zoneconcierge"
@@ -15,6 +19,9 @@ const (
 
 	// Version defines the current version the IBC module supports
 	Version = "zoneconcierge-1"
+
+	// Ordering defines the ordering the IBC module supports
+	Ordering = channeltypes.ORDERED
 
 	// PortID is the default port id that module binds to
 	PortID = "zoneconcierge"

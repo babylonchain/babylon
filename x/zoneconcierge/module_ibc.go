@@ -36,10 +36,20 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
+	// the IBC channel has to be ordered
+	if order != channeltypes.ORDERED {
+		return "", errorsmod.Wrapf(channeltypes.ErrInvalidChannelOrdering, "expected %s channel, got %s ", channeltypes.ORDERED, order)
+	}
+
 	// Require portID to be the one that ZoneConcierge is bound to
 	boundPort := im.keeper.GetPort(ctx)
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	}
+
+	// ensure consistency of the protocol version
+	if version != types.Version {
+		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 
 	// Claim channel capability passed back by IBC module
@@ -61,10 +71,20 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
+	// the IBC channel has to be ordered
+	if order != channeltypes.ORDERED {
+		return "", errorsmod.Wrapf(channeltypes.ErrInvalidChannelOrdering, "expected %s channel, got %s ", channeltypes.ORDERED, order)
+	}
+
 	// Require portID to be the one that ZoneConcierge is bound to
 	boundPort := im.keeper.GetPort(ctx)
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	}
+
+	// ensure consistency of the protocol version
+	if counterpartyVersion != types.Version {
+		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
 	}
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
@@ -89,10 +109,10 @@ func (im IBCModule) OnChanOpenAck(
 	_,
 	counterpartyVersion string,
 ) error {
-	// // TODO (Babylon): check version consistency (this requires modifying CZ code)
-	// if counterpartyVersion != types.Version {
-	// 	return errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
-	// }
+	// check version consistency
+	if counterpartyVersion != types.Version {
+		return errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
+	}
 
 	// this channel needs to be inited upon a newly finalised epoch
 	im.keeper.AddUninitedChannel(ctx, channelID)
@@ -106,7 +126,6 @@ func (im IBCModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-
 	// this channel needs to be inited upon a newly finalised epoch
 	im.keeper.AddUninitedChannel(ctx, channelID)
 
@@ -138,22 +157,9 @@ func (im IBCModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	var ack channeltypes.Acknowledgement
-
-	var modulePacketData types.ZoneconciergePacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error()))
-	}
-
-	// // TODO (Babylon): Dispatch and process packet
-	// switch packet := modulePacketData.Packet.(type) {
-	// default:
-	// 	err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
-	// 	return channeltypes.NewErrorAcknowledgement(err)
-	// }
-
+	// Babylon is supposed to not take any IBC packet
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	return ack
+	return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "Babylon is supposed to not take any IBC packet"))
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
