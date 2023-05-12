@@ -91,19 +91,20 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 	// get all metadata shared across BTC timestamps in the same epoch
 	finalizedEpochInfo, rawCheckpoint, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, epochBtcHeaders, err := k.getFinalizedInfo(ctx)
 	if err != nil {
-		k.Logger(ctx).Error("failed to generate metadata shared across BTC timestamps in the same epoch", "error", err)
+		k.Logger(ctx).Error("failed to generate metadata shared across BTC timestamps in the same epoch, skip broadcasting BTC timestamps", "error", err)
 		return
 	}
 
 	// for each channel, construct and send BTC timestamp
 	for _, channel := range openZCChannels {
 		var btcHeaders []*btclctypes.BTCHeaderInfo
-		// if the Babylon contract in this channel has not been initialised, prepend w+1 headers as w-deep proof
+		// if the Babylon contract in this channel has not been initialised, prepend w headers as w-deep proof
 		if k.isChannelUninited(ctx, channel.ChannelId) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 			prependingHeaders, err := k.btclcKeeper.GetInOrderAncestorsUntilHeight(ctx, w, epochBtcHeaders[0].Height-1)
 			if err != nil {
-				k.Logger(ctx).Error("failed to get w+1 headers", "error", err)
+				k.Logger(ctx).Error("failed to get w+1 headers, skip sending BTC timestamp for this chain", "error", err)
+				continue
 			}
 			btcHeaders = append(prependingHeaders, epochBtcHeaders...)
 		} else {
@@ -113,28 +114,28 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 		// get the ID of the chain under this channel
 		chainID, err := k.getChainID(ctx, channel)
 		if err != nil {
-			k.Logger(ctx).Error("failed to get chain ID", "channelID", channel.ChannelId, "error", err)
+			k.Logger(ctx).Error("failed to get chain ID, skip sending BTC timestamp for this chain", "channelID", channel.ChannelId, "error", err)
 			continue
 		}
 
 		// get finalised chainInfo
 		finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, finalizedEpochInfo.EpochNumber)
 		if err != nil {
-			k.Logger(ctx).Error("failed to get finalizedChainInfo", "error", err)
+			k.Logger(ctx).Error("failed to get finalizedChainInfo, skip sending BTC timestamp for this chain", "error", err)
 			continue
 		}
 
 		// get proofTxInBlock
 		proofTxInBlock, err := k.ProveTxInBlock(ctx, finalizedChainInfo.LatestHeader.BabylonTxHash)
 		if err != nil {
-			k.Logger(ctx).Error("failed to generate proofTxInBlock", "error", err)
+			k.Logger(ctx).Error("failed to generate proofTxInBlock, skip sending BTC timestamp for this chain", "error", err)
 			continue
 		}
 
 		// get proofHeaderInEpoch
 		proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader.BabylonHeader, finalizedEpochInfo)
 		if err != nil {
-			k.Logger(ctx).Error("failed to generate proofHeaderInEpoch", "error", err)
+			k.Logger(ctx).Error("failed to generate proofHeaderInEpoch, skip sending BTC timestamp for this chain", "error", err)
 			continue
 		}
 
@@ -162,7 +163,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 
 		// send IBC packet
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
-			k.Logger(ctx).Error("failed to send BTC timestamp IBC packet", "chainID", chainID, "channelID", channel.ChannelId, "error", err)
+			k.Logger(ctx).Error("failed to send BTC timestamp IBC packet, skip sending BTC timestamp for this chain", "chainID", chainID, "channelID", channel.ChannelId, "error", err)
 			continue
 		}
 
