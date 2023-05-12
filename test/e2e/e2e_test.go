@@ -40,6 +40,9 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	)
 
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+	// Upon a newly finalised epoch, there will be a new IBC packet, thus a new transaction.
+	// We need to wait until it gets into ledger
+	nonValidatorNode.WaitForNextBlock()
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
