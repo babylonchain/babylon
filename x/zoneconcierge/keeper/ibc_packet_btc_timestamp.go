@@ -173,3 +173,5 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 		}
 	}
 }
+
+// TODO: test case with at BTC headers and checkpoints
