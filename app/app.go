@@ -502,6 +502,13 @@ func NewBabylonApp(
 		),
 	)
 
+	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
+		appCodec,
+		keys[btclightclienttypes.StoreKey],
+		keys[btclightclienttypes.MemStoreKey],
+		btcConfig,
+	)
+
 	// create Tendermint client
 	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
 	if err != nil {
@@ -521,7 +528,7 @@ func NewBabylonApp(
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		nil, // BTCLightClientKeeper is set later (TODO: figure out a proper way for this)
+		&btclightclientKeeper,
 		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
 		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
 		epochingKeeper,
@@ -557,13 +564,6 @@ func NewBabylonApp(
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added
 	app.IBCKeeper.SetRouter(ibcRouter)
-
-	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
-		appCodec,
-		keys[btclightclienttypes.StoreKey],
-		keys[btclightclienttypes.MemStoreKey],
-		btcConfig,
-	)
 
 	app.MonitorKeeper = monitorkeeper.NewKeeper(
 		appCodec,
@@ -612,7 +612,6 @@ func NewBabylonApp(
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
 	)
-	app.ZoneConciergeKeeper.SetBTCLightClientKeeper(app.BTCLightClientKeeper)
 
 	// create evidence keeper with router
 	evidenceKeeper := evidencekeeper.NewKeeper(

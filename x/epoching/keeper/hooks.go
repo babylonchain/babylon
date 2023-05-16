@@ -33,7 +33,7 @@ func (k Keeper) BeforeSlashThreshold(ctx sdk.Context, valSet types.ValidatorSet)
 
 // Wrapper struct
 type Hooks struct {
-	k *Keeper
+	k Keeper
 }
 
 // ensures Hooks implements StakingHooks and CheckpointingHooks interfaces
@@ -41,7 +41,7 @@ var _ stakingtypes.StakingHooks = Hooks{}
 var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 
 // Create new distribution hooks
-func (k Keeper) Hooks() Hooks { return Hooks{&k} }
+func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // BeforeValidatorSlashed records the slash event
 func (h Hooks) BeforeValidatorSlashed(ctx sdk.Context, valAddr sdk.ValAddress, fraction sdk.Dec) error {
