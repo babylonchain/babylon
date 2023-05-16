@@ -89,8 +89,9 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 		return
 	}
 
-	// get all metadata shared across BTC timestamps in the same epoch
 	k.Logger(ctx).Info("there exists open IBC channels with ZoneConcierge, generating BTC timestamps", "number of channels", len(openZCChannels))
+
+	// get all metadata shared across BTC timestamps in the same epoch
 	finalizedEpochInfo, rawCheckpoint, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, epochBtcHeaders, err := k.getFinalizedInfo(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("failed to generate metadata shared across BTC timestamps in the same epoch, skip broadcasting BTC timestamps", "error", err)
@@ -125,7 +126,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 		// get finalised chainInfo
 		finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, finalizedEpochInfo.EpochNumber)
 		if err != nil {
-			k.Logger(ctx).Error("failed to get finalizedChainInfo, skip sending BTC timestamp for this chain", "error", err)
+			k.Logger(ctx).Error("failed to get finalizedChainInfo, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
 			continue
 		}
 
