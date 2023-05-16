@@ -549,8 +549,8 @@ func NewBabylonApp(
 		app.AccountKeeper,
 		app.BankKeeper,
 		&btclightclientKeeper,
-		&checkpointingKeeper, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
-		nil,                  // BTCCheckpoint is set later (TODO: figure out a proper way for this)
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
 		epochingKeeper,
 		tmClient,
 		storeQuerier,
