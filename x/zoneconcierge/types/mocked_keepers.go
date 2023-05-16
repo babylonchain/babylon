@@ -521,6 +521,20 @@ func (m *MockBTCLightClientKeeper) EXPECT() *MockBTCLightClientKeeperMockRecorde
 	return m.recorder
 }
 
+// GetBaseBTCHeader mocks base method.
+func (m *MockBTCLightClientKeeper) GetBaseBTCHeader(ctx types3.Context) *types0.BTCHeaderInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBaseBTCHeader", ctx)
+	ret0, _ := ret[0].(*types0.BTCHeaderInfo)
+	return ret0
+}
+
+// GetBaseBTCHeader indicates an expected call of GetBaseBTCHeader.
+func (mr *MockBTCLightClientKeeperMockRecorder) GetBaseBTCHeader(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseBTCHeader", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetBaseBTCHeader), ctx)
+}
+
 // GetHighestCommonAncestor mocks base method.
 func (m *MockBTCLightClientKeeper) GetHighestCommonAncestor(ctx types3.Context, header1, header2 *types0.BTCHeaderInfo) *types0.BTCHeaderInfo {
 	m.ctrl.T.Helper()

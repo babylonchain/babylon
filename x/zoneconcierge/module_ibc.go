@@ -114,8 +114,8 @@ func (im IBCModule) OnChanOpenAck(
 		return errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
 	}
 
-	// this channel needs to be inited upon a newly finalised epoch
-	im.keeper.AddUninitedChannel(ctx, channelID)
+	// this channel needs to be initialized upon a newly finalised epoch
+	im.keeper.AddUninitializedChannel(ctx, channelID)
 
 	return nil
 }
@@ -126,8 +126,8 @@ func (im IBCModule) OnChanOpenConfirm(
 	portID,
 	channelID string,
 ) error {
-	// this channel needs to be inited upon a newly finalised epoch
-	im.keeper.AddUninitedChannel(ctx, channelID)
+	// this channel needs to be initialized upon a newly finalised epoch
+	im.keeper.AddUninitializedChannel(ctx, channelID)
 
 	return nil
 }

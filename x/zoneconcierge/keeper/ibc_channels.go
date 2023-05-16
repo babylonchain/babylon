@@ -30,17 +30,17 @@ func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedC
 	return openZCChannels
 }
 
-func (k Keeper) AddUninitedChannel(ctx sdk.Context, channelID string) {
+func (k Keeper) AddUninitializedChannel(ctx sdk.Context, channelID string) {
 	store := k.ibcChannelsStore(ctx)
 	store.Set([]byte(channelID), []byte{0x00})
 }
 
-func (k Keeper) afterChannelInited(ctx sdk.Context, channelID string) {
+func (k Keeper) afterChannelInitialized(ctx sdk.Context, channelID string) {
 	store := k.ibcChannelsStore(ctx)
 	store.Delete([]byte(channelID))
 }
 
-func (k Keeper) isChannelUninited(ctx sdk.Context, channelID string) bool {
+func (k Keeper) isChannelUninitialized(ctx sdk.Context, channelID string) bool {
 	store := k.ibcChannelsStore(ctx)
 	return store.Has([]byte(channelID))
 }

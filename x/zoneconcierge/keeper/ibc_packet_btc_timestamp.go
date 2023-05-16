@@ -68,9 +68,10 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context) (*epochingtypes.Epoch, *checkp
 	// Get BTC headers between
 	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
 	// - BTC tip at epoch `lastFinalizedEpoch`
-	oldBTCTip, err := k.GetFinalizingBTCTip(ctx) // NOTE: BTC tip in KVStore has not been updated yet
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+	oldBTCTip := k.GetFinalizingBTCTip(ctx) // NOTE: BTC tip in KVStore has not been updated yet
+	if oldBTCTip == nil {
+		// this happens upon the first finalised epoch. Use base header instead
+		oldBTCTip = k.btclcKeeper.GetBaseBTCHeader(ctx)
 	}
 	curBTCTip := k.btclcKeeper.GetTipInfo(ctx)
 	commonAncestor := k.btclcKeeper.GetHighestCommonAncestor(ctx, oldBTCTip, curBTCTip)
@@ -100,7 +101,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 	for _, channel := range openZCChannels {
 		var btcHeaders []*btclctypes.BTCHeaderInfo
 		// if the Babylon contract in this channel has not been initialised, prepend w headers as w-deep proof
-		if k.isChannelUninited(ctx, channel.ChannelId) {
+		if k.isChannelUninitialized(ctx, channel.ChannelId) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 			prependingHeaders, err := k.btclcKeeper.GetInOrderAncestorsUntilHeight(ctx, w, epochBtcHeaders[0].Height-1)
 			if err != nil {
@@ -171,8 +172,8 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
 		}
 
 		// this channel has been initialised after sending the first IBC packet
-		if k.isChannelUninited(ctx, channel.ChannelId) {
-			k.afterChannelInited(ctx, channel.ChannelId)
+		if k.isChannelUninitialized(ctx, channel.ChannelId) {
+			k.afterChannelInitialized(ctx, channel.ChannelId)
 		}
 	}
 }

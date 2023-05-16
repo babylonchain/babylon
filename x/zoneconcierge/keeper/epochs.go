@@ -8,15 +8,15 @@ import (
 )
 
 // GetFinalizingBTCTip gets the BTC tip when the last epoch is finalised
-func (k Keeper) GetFinalizingBTCTip(ctx sdk.Context) (*btclctypes.BTCHeaderInfo, error) {
+func (k Keeper) GetFinalizingBTCTip(ctx sdk.Context) *btclctypes.BTCHeaderInfo {
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has(types.FinalizingBTCTipKey) {
-		return nil, types.ErrFinalizingBTCTipNotFound
+		return nil
 	}
 	btcTipBytes := store.Get(types.FinalizingBTCTipKey)
 	var btcTip btclctypes.BTCHeaderInfo
 	k.cdc.MustUnmarshal(btcTipBytes, &btcTip)
-	return &btcTip, nil
+	return &btcTip
 }
 
 // setFinalizingBTCTip sets the last finalised BTC tip
