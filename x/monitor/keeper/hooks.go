@@ -13,11 +13,11 @@ type HandledHooks interface {
 }
 
 type Hooks struct {
-	k Keeper
+	k *Keeper
 }
 
 // Create new distribution hooks
-func (k Keeper) Hooks() Hooks { return Hooks{k} }
+func (k Keeper) Hooks() Hooks { return Hooks{&k} }
 
 func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64) {}
 

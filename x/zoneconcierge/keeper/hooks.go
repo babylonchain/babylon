@@ -12,7 +12,7 @@ import (
 )
 
 type Hooks struct {
-	k Keeper
+	k *Keeper
 }
 
 // ensures Hooks implements ClientHooks interfaces
@@ -20,7 +20,7 @@ var _ extendedkeeper.ClientHooks = Hooks{}
 var _ checkpointingtypes.CheckpointingHooks = Hooks{}
 var _ epochingtypes.EpochingHooks = Hooks{}
 
-func (k Keeper) Hooks() Hooks { return Hooks{k} }
+func (k Keeper) Hooks() Hooks { return Hooks{&k} }
 
 // AfterHeaderWithValidCommit is triggered upon each CZ header with a valid QC
 func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *extendedkeeper.HeaderInfo, isOnFork bool) {

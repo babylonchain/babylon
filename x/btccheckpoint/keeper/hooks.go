@@ -13,12 +13,12 @@ type HandledHooks interface {
 }
 
 type Hooks struct {
-	k Keeper
+	k *Keeper
 }
 
 var _ HandledHooks = Hooks{}
 
-func (k Keeper) Hooks() Hooks { return Hooks{k} }
+func (k Keeper) Hooks() Hooks { return Hooks{&k} }
 
 func (h Hooks) AfterBTCRollBack(ctx sdk.Context, headerInfo *ltypes.BTCHeaderInfo) {
 	h.k.setBtcLightClientUpdated(ctx)
