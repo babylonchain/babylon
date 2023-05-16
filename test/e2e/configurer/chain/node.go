@@ -139,6 +139,14 @@ func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
 	}, fmt.Sprintf("Timed out waiting for btc height %d", height))
 }
 
+func (n *NodeConfig) WaitForNextBlock() {
+	latest := n.LatestBlockNumber()
+	n.WaitForCondition(func() bool {
+		newLatest := n.LatestBlockNumber()
+		return newLatest > latest
+	}, fmt.Sprintf("Timed out waiting for next block. Current height is: %d", latest))
+}
+
 func (n *NodeConfig) extractOperatorAddressIfValidator() error {
 	if !n.IsValidator {
 		n.t.Logf("node (%s) is not a validator, skipping", n.Name)

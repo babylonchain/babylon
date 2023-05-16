@@ -19,6 +19,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -290,4 +291,64 @@ func (n *NodeConfig) QueryLightClientHeightCheckpointReported(ckptHash []byte) (
 		return 0, err
 	}
 	return mResponse.BtcLightClientHeight, nil
+}
+
+func (n *NodeConfig) QueryLatestWasmCodeID() uint64 {
+	path := "/cosmwasm/wasm/v1/code"
+
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var response wasmtypes.QueryCodesResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	require.NoError(n.t, err)
+	if len(response.CodeInfos) == 0 {
+		return 0
+	}
+	return response.CodeInfos[len(response.CodeInfos)-1].CodeID
+}
+
+func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {
+	path := fmt.Sprintf("/cosmwasm/wasm/v1/code/%d/contracts", codeId)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+
+	require.NoError(n.t, err)
+
+	var contractsResponse wasmtypes.QueryContractsByCodeResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &contractsResponse); err != nil {
+		return nil, err
+	}
+
+	return contractsResponse.Contracts, nil
+}
+
+func (n *NodeConfig) QueryWasmSmart(contract string, msg string, result any) error {
+	// base64-encode the msg
+	encodedMsg := base64.StdEncoding.EncodeToString([]byte(msg))
+	path := fmt.Sprintf("/cosmwasm/wasm/v1/contract/%s/smart/%s", contract, encodedMsg)
+
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return err
+	}
+
+	var response wasmtypes.QuerySmartContractStateResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(response.Data, &result)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (n *NodeConfig) QueryWasmSmartObject(contract string, msg string) (resultObject map[string]interface{}, err error) {
+	err = n.QueryWasmSmart(contract, msg, &resultObject)
+	if err != nil {
+		return nil, err
+	}
+	return resultObject, nil
 }
