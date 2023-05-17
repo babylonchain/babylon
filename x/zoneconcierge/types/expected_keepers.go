@@ -91,7 +91,6 @@ type BtcCheckpointKeeper interface {
 	GetParams(ctx sdk.Context) (p btcctypes.Params)
 	GetBestSubmission(ctx sdk.Context, e uint64) (btcctypes.BtcStatus, *btcctypes.SubmissionKey, error)
 	GetSubmissionData(ctx sdk.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
-	GetSubmissionBtcInfo(ctx sdk.Context, sk btcctypes.SubmissionKey) (*btcctypes.SubmissionBtcInfo, error)
 }
 
 type CheckpointingKeeper interface {

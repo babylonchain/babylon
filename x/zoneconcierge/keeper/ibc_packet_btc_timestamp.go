@@ -118,20 +118,6 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 			depth := w + 1 + uint64(len(epochBtcHeaders))
 
-			// it's also possible in tests that w is very small and the last
-			// w+1+len(epochBtcHeaders) headers do not include the checkpoint
-			// in this case we need to get all headers till the checkpoint's depth
-			btcSubmissionInfo, err := k.btccKeeper.GetSubmissionBtcInfo(ctx, *btcSubmissionKey)
-			if err != nil {
-				k.Logger(ctx).Error("failed to get btc submission info, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
-				continue
-			}
-			submissionDepth := btcSubmissionInfo.SubmissionDepth()
-			if submissionDepth > depth {
-				k.Logger(ctx).Info("submissionDepth > depth!!!")
-				depth = submissionDepth
-			}
-
 			btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth+1)
 			if btcHeaders == nil {
 				k.Logger(ctx).Error("failed to get main chain up to depth, skip sending BTC timestamp for this chain", "chainID", chainID, "depth", depth)

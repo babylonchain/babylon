@@ -644,21 +644,6 @@ func (mr *MockBtcCheckpointKeeperMockRecorder) GetParams(ctx interface{}) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetParams), ctx)
 }
 
-// GetSubmissionBtcInfo mocks base method.
-func (m *MockBtcCheckpointKeeper) GetSubmissionBtcInfo(ctx types3.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSubmissionBtcInfo", ctx, sk)
-	ret0, _ := ret[0].(*types.SubmissionBtcInfo)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSubmissionBtcInfo indicates an expected call of GetSubmissionBtcInfo.
-func (mr *MockBtcCheckpointKeeperMockRecorder) GetSubmissionBtcInfo(ctx, sk interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubmissionBtcInfo", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetSubmissionBtcInfo), ctx, sk)
-}
-
 // GetSubmissionData mocks base method.
 func (m *MockBtcCheckpointKeeper) GetSubmissionData(ctx types3.Context, sk types.SubmissionKey) *types.SubmissionData {
 	m.ctrl.T.Helper()
