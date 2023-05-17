@@ -112,7 +112,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		k.Logger(ctx).Info("sending BTC timestamp to channel", "channelID", channel.ChannelId, "chainID", chainID)
 
 		// if the Babylon contract in this channel has not been initialised, headers from the
-		// tip to max(w+1+len(epochBtcHeaders), depth of the submission)
+		// tip to w+1+len(epochBtcHeaders)
 		var btcHeaders []*btclctypes.BTCHeaderInfo
 		if k.isChannelUninitialized(ctx, channel.ChannelId) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
@@ -124,12 +124,6 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 				continue
 			}
 			bbn.Reverse(btcHeaders)
-
-			// TODO: debug
-			for i, btcHeader := range btcHeaders {
-				k.Logger(ctx).Info("BTC header", "i", i, "height", btcHeader.Height)
-			}
-
 		} else {
 			btcHeaders = epochBtcHeaders
 		}
