@@ -120,6 +120,11 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 				continue
 			}
 			btcHeaders = append(prependingHeaders, epochBtcHeaders...)
+
+			// DEBUG
+			for i, header := range btcHeaders {
+				k.Logger(ctx).Info("BTC headers for initialisation", "i", i, "header height", header.Height)
+			}
 		} else {
 			btcHeaders = epochBtcHeaders
 		}
