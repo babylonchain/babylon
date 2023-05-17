@@ -3,6 +3,7 @@ package keeper
 import (
 	"fmt"
 
+	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -120,6 +121,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 				k.Logger(ctx).Error("failed to get main chain up to depth, skip sending BTC timestamp for this chain", "chainID", chainID, "depth", depth)
 				continue
 			}
+			bbn.Reverse(btcHeaders)
 
 			// DEBUG
 			for i, header := range btcHeaders {
