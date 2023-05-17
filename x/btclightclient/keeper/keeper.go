@@ -289,9 +289,9 @@ func (k Keeper) GetInOrderAncestorsUntilHeight(ctx sdk.Context, n uint64, stopHe
 	if stopHeight+1 < n {
 		return nil, types.ErrNotEnoughHeaders
 	}
-	// get the last n headers till stopHeight
-	startHeight := stopHeight - n + 1
-	headers := k.headersState(ctx).getDescendingHeadersUpTo(startHeight, stopHeight)
+	// iteratively get headers from `stopHeight` to  in descending order
+	depth := stopHeight - n
+	headers := k.headersState(ctx).getDescendingHeadersUpTo(stopHeight, depth)
 	// reverse the list so that headers are ascending
 	bbn.Reverse(headers)
 	return headers, nil
