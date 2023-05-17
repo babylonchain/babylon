@@ -125,9 +125,11 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		}
 
 		// get finalised chainInfo
+		// NOTE: it's possible that this chain does not have chain info at the moment
+		// In this case, skip sending BTC timestamp for this chain at this epoch
 		finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
 		if err != nil {
-			k.Logger(ctx).Error("failed to get finalizedChainInfo, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
+			k.Logger(ctx).Info("no finalizedChainInfo for this chain at this epoch, skip sending BTC timestamp for this chain", "chainID", chainID, "epoch", epochNum, "error", err)
 			continue
 		}
 
