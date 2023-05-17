@@ -201,7 +201,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 			),
 		)
 	case *channeltypes.Acknowledgement_Error:
-		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", string(resp.Error))
+		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				eventType,
