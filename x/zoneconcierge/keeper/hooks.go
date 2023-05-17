@@ -94,7 +94,7 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error 
 	h.k.setFinalizedEpoch(ctx, epoch)
 
 	// send BTC timestamp to all open channels with ZoneConcierge
-	h.k.BroadcastBTCTimestamps(ctx)
+	h.k.BroadcastBTCTimestamps(ctx, epoch)
 
 	// retrieve and update the last finalising BTC tip
 	btcTip := h.k.btclcKeeper.GetTipInfo(ctx)

@@ -81,7 +81,13 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context) (*epochingtypes.Epoch, *checkp
 }
 
 // BroadcastBTCTimestamps sends an IBC packet of BTC timestamp to all open IBC channels to ZoneConcierge
-func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context) {
+func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
+	// Babylon does not broadcast BTC timestamps until finalizing epoch 1
+	if epochNum < 1 {
+		k.Logger(ctx).Info("Babylon does not finalize epoch 1 yet, skip broadcasting BTC timestamps")
+		return
+	}
+
 	// get all channels that are open and are connected to ZoneConcierge's port
 	openZCChannels := k.GetAllOpenZCChannels(ctx)
 	if len(openZCChannels) == 0 {
