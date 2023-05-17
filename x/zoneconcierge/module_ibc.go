@@ -193,6 +193,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
+		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				eventType,
@@ -200,6 +201,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 			),
 		)
 	case *channeltypes.Acknowledgement_Error:
+		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", string(resp.Error))
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				eventType,
