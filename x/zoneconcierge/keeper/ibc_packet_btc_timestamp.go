@@ -118,7 +118,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 			depth := w + 1 + uint64(len(epochBtcHeaders))
 
-			btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth+1)
+			btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
 			if btcHeaders == nil {
 				k.Logger(ctx).Error("failed to get main chain up to depth, skip sending BTC timestamp for this chain", "chainID", chainID, "depth", depth)
 				continue
