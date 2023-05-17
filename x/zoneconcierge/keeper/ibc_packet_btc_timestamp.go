@@ -126,7 +126,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 				k.Logger(ctx).Error("failed to get btc submission info, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
 				continue
 			}
-			submissionDepth := btcSubmissionInfo.OldestBlockDepth
+			submissionDepth := btcSubmissionInfo.SubmissionDepth()
 			if submissionDepth > depth {
 				depth = submissionDepth
 			}
