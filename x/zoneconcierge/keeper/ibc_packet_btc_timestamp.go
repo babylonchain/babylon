@@ -137,6 +137,12 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 				continue
 			}
 			bbn.Reverse(btcHeaders)
+
+			// TODO: debug
+			for i, btcHeader := range btcHeaders {
+				k.Logger(ctx).Info("BTC header", "i", i, "height", btcHeader.Height)
+			}
+
 		} else {
 			btcHeaders = epochBtcHeaders
 		}
