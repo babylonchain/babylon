@@ -110,16 +110,16 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 
 		k.Logger(ctx).Info("sending BTC timestamp to channel", "channelID", channel.ChannelId, "chainID", chainID)
 
-		// if the Babylon contract in this channel has not been initialised, prepend w+1 headers as w-deep proof
+		// if the Babylon contract in this channel has not been initialised, get w+1 more headers as w-deep proof
 		var btcHeaders []*btclctypes.BTCHeaderInfo
 		if k.isChannelUninitialized(ctx, channel.ChannelId) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-			prependingHeaders, err := k.btclcKeeper.GetInOrderAncestorsUntilHeight(ctx, w+1, epochBtcHeaders[0].Height-1)
-			if err != nil {
-				k.Logger(ctx).Error("failed to get w+1 headers, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
+			depth := w + 1 + uint64(len(epochBtcHeaders))
+			btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
+			if btcHeaders == nil {
+				k.Logger(ctx).Error("failed to get main chain up to depth, skip sending BTC timestamp for this chain", "chainID", chainID, "depth", depth)
 				continue
 			}
-			btcHeaders = append(prependingHeaders, epochBtcHeaders...)
 
 			// DEBUG
 			for i, header := range btcHeaders {

@@ -563,19 +563,18 @@ func (mr *MockBTCLightClientKeeperMockRecorder) GetInOrderAncestorsUntil(ctx, de
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInOrderAncestorsUntil", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetInOrderAncestorsUntil), ctx, descendant, ancestor)
 }
 
-// GetInOrderAncestorsUntilHeight mocks base method.
-func (m *MockBTCLightClientKeeper) GetInOrderAncestorsUntilHeight(ctx types3.Context, n, stopHeight uint64) ([]*types0.BTCHeaderInfo, error) {
+// GetMainChainUpTo mocks base method.
+func (m *MockBTCLightClientKeeper) GetMainChainUpTo(ctx types3.Context, depth uint64) []*types0.BTCHeaderInfo {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetInOrderAncestorsUntilHeight", ctx, n, stopHeight)
+	ret := m.ctrl.Call(m, "GetMainChainUpTo", ctx, depth)
 	ret0, _ := ret[0].([]*types0.BTCHeaderInfo)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	return ret0
 }
 
-// GetInOrderAncestorsUntilHeight indicates an expected call of GetInOrderAncestorsUntilHeight.
-func (mr *MockBTCLightClientKeeperMockRecorder) GetInOrderAncestorsUntilHeight(ctx, n, stopHeight interface{}) *gomock.Call {
+// GetMainChainUpTo indicates an expected call of GetMainChainUpTo.
+func (mr *MockBTCLightClientKeeperMockRecorder) GetMainChainUpTo(ctx, depth interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetInOrderAncestorsUntilHeight", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetInOrderAncestorsUntilHeight), ctx, n, stopHeight)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMainChainUpTo", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetMainChainUpTo), ctx, depth)
 }
 
 // GetTipInfo mocks base method.

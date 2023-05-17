@@ -283,16 +283,6 @@ func (k Keeper) GetInOrderAncestorsUntil(ctx sdk.Context, descendant *types.BTCH
 	return k.headersState(ctx).GetInOrderAncestorsUntil(descendant, ancestor)
 }
 
-// GetInOrderAncestorsUntilHeight returns the last n headers till the given height in the BTC main chain in ascending order
-func (k Keeper) GetInOrderAncestorsUntilHeight(ctx sdk.Context, n uint64, stopHeight uint64) ([]*types.BTCHeaderInfo, error) {
-	// ensure chains till stopHeight have no less than n headers
-	if stopHeight+1 < n {
-		return nil, types.ErrNotEnoughHeaders
-	}
-	// iteratively get headers from `stopHeight` to `stopHeight - n` in descending order
-	depth := stopHeight - n
-	headers := k.headersState(ctx).getDescendingHeadersUpTo(stopHeight, depth)
-	// reverse the list so that headers are ascending
-	bbn.Reverse(headers)
-	return headers, nil
+func (k Keeper) GetMainChainUpTo(ctx sdk.Context, depth uint64) []*types.BTCHeaderInfo {
+	return k.headersState(ctx).GetMainChainUpTo(depth)
 }
