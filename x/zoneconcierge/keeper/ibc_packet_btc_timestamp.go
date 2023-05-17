@@ -111,22 +111,32 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 
 		k.Logger(ctx).Info("sending BTC timestamp to channel", "channelID", channel.ChannelId, "chainID", chainID)
 
-		// if the Babylon contract in this channel has not been initialised, get w+1 more headers as w-deep proof
+		// if the Babylon contract in this channel has not been initialised, headers from the
+		// tip to max(w+1+len(epochBtcHeaders), depth of the submission)
 		var btcHeaders []*btclctypes.BTCHeaderInfo
 		if k.isChannelUninitialized(ctx, channel.ChannelId) {
 			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 			depth := w + 1 + uint64(len(epochBtcHeaders))
+
+			// it's also possible in tests that w is very small and the last
+			// w+1+len(epochBtcHeaders) headers do not include the checkpoint
+			// in this case we need to get all headers till the checkpoint's depth
+			btcSubmissionInfo, err := k.btccKeeper.GetSubmissionBtcInfo(ctx, *btcSubmissionKey)
+			if err != nil {
+				k.Logger(ctx).Error("failed to get btc submission info, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
+				continue
+			}
+			submissionDepth := btcSubmissionInfo.OldestBlockDepth
+			if submissionDepth > depth {
+				depth = submissionDepth
+			}
+
 			btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
 			if btcHeaders == nil {
 				k.Logger(ctx).Error("failed to get main chain up to depth, skip sending BTC timestamp for this chain", "chainID", chainID, "depth", depth)
 				continue
 			}
 			bbn.Reverse(btcHeaders)
-
-			// DEBUG
-			for i, header := range btcHeaders {
-				k.Logger(ctx).Info("BTC headers for initialisation", "i", i, "header height", header.Height)
-			}
 		} else {
 			btcHeaders = epochBtcHeaders
 		}
