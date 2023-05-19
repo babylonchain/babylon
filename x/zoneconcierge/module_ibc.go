@@ -1,8 +1,6 @@
 package zoneconcierge
 
 import (
-	"fmt"
-
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
@@ -170,11 +168,9 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	var ack channeltypes.Acknowledgement
-	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
+	if err := types.ModuleCdc.Unmarshal(acknowledgement, &ack); err != nil {
 		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
 	}
-
-	var eventType string
 
 	// // TODO (Babylon): Dispatch and process packet
 	// switch packet := modulePacketData.Packet.(type) {
@@ -183,20 +179,13 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// 	return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	// }
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			eventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-		),
-	)
-
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
 		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				eventType,
+				types.EventTypeAck,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 				sdk.NewAttribute(types.AttributeKeyAckSuccess, string(resp.Result)),
 			),
 		)
@@ -204,7 +193,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				eventType,
+				types.EventTypeAck,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 				sdk.NewAttribute(types.AttributeKeyAckError, resp.Error),
 			),
 		)
