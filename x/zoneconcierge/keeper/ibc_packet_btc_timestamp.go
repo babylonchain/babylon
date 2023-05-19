@@ -196,12 +196,14 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		chainID, err := k.getChainID(ctx, channel)
 		if err != nil {
 			k.Logger(ctx).Error("failed to get chain ID, skip sending BTC timestamp for this chain", "channelID", channel.ChannelId, "error", err)
+			continue
 		}
 
 		// generate timestamp for this channel
 		btcTimestamp, err := k.createBTCTimestamp(ctx, chainID, channel.ChannelId, finalizedInfo)
 		if err != nil {
 			k.Logger(ctx).Error("failed to generate BTC timestamp, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
+			continue
 		}
 
 		// wrap BTC timestamp to IBC packet
