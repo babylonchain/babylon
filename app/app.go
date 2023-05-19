@@ -509,7 +509,7 @@ func NewBabylonApp(
 		),
 	)
 
-	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
+	btclightclientKeeper := btclightclientkeeper.NewKeeper(
 		appCodec,
 		keys[btclightclienttypes.StoreKey],
 		keys[btclightclienttypes.MemStoreKey],
@@ -523,8 +523,6 @@ func NewBabylonApp(
 		&epochingKeeper,
 		privSigner.ClientCtx,
 	)
-	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
-	// change to correct implementations
 	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(
 		appCodec,
 		keys[btccheckpointtypes.StoreKey],

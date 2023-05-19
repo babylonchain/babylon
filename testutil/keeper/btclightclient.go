@@ -42,5 +42,5 @@ func BTCLightClientKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 
-	return k, ctx
+	return &k, ctx
 }

@@ -14,6 +14,17 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 )
 
+// finalizedInfo is a private struct that stores metadata and proofs
+// identical to all BTC timestamps in the same epoch
+type finalizedInfo struct {
+	EpochInfo           *epochingtypes.Epoch
+	RawCheckpoint       *checkpointingtypes.RawCheckpoint
+	BTCSubmissionKey    *btcctypes.SubmissionKey
+	ProofEpochSealed    *types.ProofEpochSealed
+	ProofEpochSubmitted []*btcctypes.TransactionInfo
+	BTCHeaders          []*btclctypes.BTCHeaderInfo
+}
+
 // getChainID gets the ID of the counterparty chain under the given channel
 func (k Keeper) getChainID(ctx sdk.Context, channel channeltypes.IdentifiedChannel) (string, error) {
 	// get clientState under this channel
@@ -30,35 +41,37 @@ func (k Keeper) getChainID(ctx sdk.Context, channel channeltypes.IdentifiedChann
 }
 
 // getFinalizedInfo returns metadata and proofs that are identical to all BTC timestamps in the same epoch
-func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*epochingtypes.Epoch, *checkpointingtypes.RawCheckpoint, *btcctypes.SubmissionKey, *types.ProofEpochSealed, []*btcctypes.TransactionInfo, []*btclctypes.BTCHeaderInfo, error) {
+func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*finalizedInfo, error) {
 	finalizedEpochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, epochNum)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	// assign raw checkpoint
 	rawCheckpoint, err := k.checkpointingKeeper.GetRawCheckpoint(ctx, epochNum)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	// assign BTC submission key
-	_, btcSubmissionKey, err := k.btccKeeper.GetBestSubmission(ctx, epochNum)
-	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+	ed := k.btccKeeper.GetEpochData(ctx, epochNum)
+	bestSubmissionBtcInfo := k.btccKeeper.GetEpochBestSubmissionBtcInfo(ctx, ed)
+	if bestSubmissionBtcInfo == nil {
+		return nil, fmt.Errorf("empty bestSubmissionBtcInfo")
 	}
+	btcSubmissionKey := &bestSubmissionBtcInfo.SubmissionKey
 
 	// proof that the epoch is sealed
 	proofEpochSealed, err := k.ProveEpochSealed(ctx, epochNum)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	// proof that the epoch's checkpoint is submitted to BTC
 	// i.e., the two `TransactionInfo`s for the checkpoint
 	proofEpochSubmitted, err := k.ProveEpochSubmitted(ctx, btcSubmissionKey)
 	if err != nil {
-		return nil, nil, nil, nil, nil, nil, err
+		return nil, err
 	}
 
 	// Get BTC headers between
@@ -73,7 +86,84 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*epochingtyp
 	commonAncestor := k.btclcKeeper.GetHighestCommonAncestor(ctx, oldBTCTip, curBTCTip)
 	btcHeaders := k.btclcKeeper.GetInOrderAncestorsUntil(ctx, curBTCTip, commonAncestor)
 
-	return finalizedEpochInfo, rawCheckpoint.Ckpt, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, btcHeaders, nil
+	// construct finalizedInfo
+	finalizedInfo := &finalizedInfo{
+		EpochInfo:           finalizedEpochInfo,
+		RawCheckpoint:       rawCheckpoint.Ckpt,
+		BTCSubmissionKey:    btcSubmissionKey,
+		ProofEpochSealed:    proofEpochSealed,
+		ProofEpochSubmitted: proofEpochSubmitted,
+		BTCHeaders:          btcHeaders,
+	}
+
+	return finalizedInfo, nil
+}
+
+// createBTCTimestamp creates a BTC timestamp from finalizedInfo for a given IBC channel
+// where the counterparty is a Cosmos zone
+func (k Keeper) createBTCTimestamp(ctx sdk.Context, chainID string, channelID string, finalizedInfo *finalizedInfo) (*types.BTCTimestamp, error) {
+	// if the Babylon contract in this channel has not been initialised, headers from the
+	// tip to w+1+len(finalizedInfo.BTCHeaders)
+	var btcHeaders []*btclctypes.BTCHeaderInfo
+	if k.isChannelUninitialized(ctx, channelID) {
+		w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+		depth := w + 1 + uint64(len(finalizedInfo.BTCHeaders))
+
+		btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
+		if btcHeaders == nil {
+			return nil, fmt.Errorf("failed to get Bitcoin main chain up to depth %d", depth)
+		}
+		bbn.Reverse(btcHeaders)
+	} else {
+		btcHeaders = finalizedInfo.BTCHeaders
+	}
+
+	// get finalised chainInfo
+	// NOTE: it's possible that this chain does not have chain info at the moment
+	// In this case, skip sending BTC timestamp for this chain at this epoch
+	epochNum := finalizedInfo.EpochInfo.EpochNumber
+	finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
+	if err != nil {
+		return nil, fmt.Errorf("no finalizedChainInfo for chain %s at epoch %d", chainID, epochNum)
+	}
+
+	// construct BTC timestamp from everything
+	// NOTE: it's possible that there is no header checkpointed in this epoch
+	btcTimestamp := &types.BTCTimestamp{
+		Header:           nil,
+		BtcHeaders:       btcHeaders,
+		EpochInfo:        finalizedInfo.EpochInfo,
+		RawCheckpoint:    finalizedInfo.RawCheckpoint,
+		BtcSubmissionKey: finalizedInfo.BTCSubmissionKey,
+		Proof: &types.ProofFinalizedChainInfo{
+			ProofTxInBlock:      nil,
+			ProofHeaderInEpoch:  nil,
+			ProofEpochSealed:    finalizedInfo.ProofEpochSealed,
+			ProofEpochSubmitted: finalizedInfo.ProofEpochSubmitted,
+		},
+	}
+
+	// if there is a CZ header checkpointed in this finalised epoch,
+	// add this CZ header and corresponding proofs to the BTC timestamp
+	if finalizedChainInfo.LatestHeader.BabylonEpoch == epochNum {
+		// get proofTxInBlock
+		proofTxInBlock, err := k.ProveTxInBlock(ctx, finalizedChainInfo.LatestHeader.BabylonTxHash)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate proofTxInBlock for chain %s: %w", chainID, err)
+		}
+
+		// get proofHeaderInEpoch
+		proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader.BabylonHeader, finalizedInfo.EpochInfo)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate proofHeaderInEpoch for chain %s: %w", chainID, err)
+		}
+
+		btcTimestamp.Header = finalizedChainInfo.LatestHeader
+		btcTimestamp.Proof.ProofTxInBlock = proofTxInBlock
+		btcTimestamp.Proof.ProofHeaderInEpoch = proofHeaderInEpoch
+	}
+
+	return btcTimestamp, nil
 }
 
 // BroadcastBTCTimestamps sends an IBC packet of BTC timestamp to all open IBC channels to ZoneConcierge
@@ -94,7 +184,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 	k.Logger(ctx).Info("there exists open IBC channels with ZoneConcierge, generating BTC timestamps", "number of channels", len(openZCChannels))
 
 	// get all metadata shared across BTC timestamps in the same epoch
-	finalizedEpochInfo, rawCheckpoint, btcSubmissionKey, proofEpochSealed, proofEpochSubmitted, epochBtcHeaders, err := k.getFinalizedInfo(ctx, epochNum)
+	finalizedInfo, err := k.getFinalizedInfo(ctx, epochNum)
 	if err != nil {
 		k.Logger(ctx).Error("failed to generate metadata shared across BTC timestamps in the same epoch, skip broadcasting BTC timestamps", "error", err)
 		return
@@ -106,73 +196,12 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		chainID, err := k.getChainID(ctx, channel)
 		if err != nil {
 			k.Logger(ctx).Error("failed to get chain ID, skip sending BTC timestamp for this chain", "channelID", channel.ChannelId, "error", err)
-			continue
 		}
 
-		k.Logger(ctx).Info("sending BTC timestamp to channel", "channelID", channel.ChannelId, "chainID", chainID)
-
-		// if the Babylon contract in this channel has not been initialised, headers from the
-		// tip to w+1+len(epochBtcHeaders)
-		var btcHeaders []*btclctypes.BTCHeaderInfo
-		if k.isChannelUninitialized(ctx, channel.ChannelId) {
-			w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-			depth := w + 1 + uint64(len(epochBtcHeaders))
-
-			btcHeaders = k.btclcKeeper.GetMainChainUpTo(ctx, depth)
-			if btcHeaders == nil {
-				k.Logger(ctx).Error("failed to get main chain up to depth, skip sending BTC timestamp for this chain", "chainID", chainID, "depth", depth)
-				continue
-			}
-			bbn.Reverse(btcHeaders)
-		} else {
-			btcHeaders = epochBtcHeaders
-		}
-
-		// get finalised chainInfo
-		// NOTE: it's possible that this chain does not have chain info at the moment
-		// In this case, skip sending BTC timestamp for this chain at this epoch
-		finalizedChainInfo, err := k.GetEpochChainInfo(ctx, chainID, epochNum)
+		// generate timestamp for this channel
+		btcTimestamp, err := k.createBTCTimestamp(ctx, chainID, channel.ChannelId, finalizedInfo)
 		if err != nil {
-			k.Logger(ctx).Info("no finalizedChainInfo for this chain at this epoch, skip sending BTC timestamp for this chain", "chainID", chainID, "epoch", epochNum, "error", err)
-			continue
-		}
-
-		// construct BTC timestamp from everything
-		// NOTE: it's possible that there is no header checkpointed in this epoch
-		btcTimestamp := &types.BTCTimestamp{
-			Header:           nil,
-			BtcHeaders:       btcHeaders,
-			EpochInfo:        finalizedEpochInfo,
-			RawCheckpoint:    rawCheckpoint,
-			BtcSubmissionKey: btcSubmissionKey,
-			Proof: &types.ProofFinalizedChainInfo{
-				ProofTxInBlock:      nil,
-				ProofHeaderInEpoch:  nil,
-				ProofEpochSealed:    proofEpochSealed,
-				ProofEpochSubmitted: proofEpochSubmitted,
-			},
-		}
-
-		// if there is a CZ header checkpointed in this finalised epoch,
-		// add this CZ header and corresponding proofs to the BTC timestamp
-		if finalizedChainInfo.LatestHeader.BabylonEpoch == epochNum {
-			// get proofTxInBlock
-			proofTxInBlock, err := k.ProveTxInBlock(ctx, finalizedChainInfo.LatestHeader.BabylonTxHash)
-			if err != nil {
-				k.Logger(ctx).Error("failed to generate proofTxInBlock, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
-				continue
-			}
-
-			// get proofHeaderInEpoch
-			proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader.BabylonHeader, finalizedEpochInfo)
-			if err != nil {
-				k.Logger(ctx).Error("failed to generate proofHeaderInEpoch, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
-				continue
-			}
-
-			btcTimestamp.Header = finalizedChainInfo.LatestHeader
-			btcTimestamp.Proof.ProofTxInBlock = proofTxInBlock
-			btcTimestamp.Proof.ProofHeaderInEpoch = proofHeaderInEpoch
+			k.Logger(ctx).Error("failed to generate BTC timestamp, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
 		}
 
 		// wrap BTC timestamp to IBC packet

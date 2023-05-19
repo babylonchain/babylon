@@ -89,8 +89,10 @@ type BTCLightClientKeeper interface {
 
 type BtcCheckpointKeeper interface {
 	GetParams(ctx sdk.Context) (p btcctypes.Params)
+	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
 	GetBestSubmission(ctx sdk.Context, e uint64) (btcctypes.BtcStatus, *btcctypes.SubmissionKey, error)
 	GetSubmissionData(ctx sdk.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
+	GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *btcctypes.EpochData) *btcctypes.SubmissionBtcInfo
 }
 
 type CheckpointingKeeper interface {

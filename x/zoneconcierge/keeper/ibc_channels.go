@@ -31,25 +31,25 @@ func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedC
 }
 
 func (k Keeper) AddUninitializedChannel(ctx sdk.Context, channelID string) {
-	store := k.ibcChannelsStore(ctx)
+	store := k.uninitializedChannelStore(ctx)
 	store.Set([]byte(channelID), []byte{0x00})
 }
 
 func (k Keeper) afterChannelInitialized(ctx sdk.Context, channelID string) {
-	store := k.ibcChannelsStore(ctx)
+	store := k.uninitializedChannelStore(ctx)
 	store.Delete([]byte(channelID))
 }
 
 func (k Keeper) isChannelUninitialized(ctx sdk.Context, channelID string) bool {
-	store := k.ibcChannelsStore(ctx)
+	store := k.uninitializedChannelStore(ctx)
 	return store.Has([]byte(channelID))
 }
 
-// ibcChannelsStore stores initialisation status of IBC channels
+// uninitializedChannelStore stores initialisation status of IBC channels
 // prefix: EpochChainInfoKey
 // key: channel ID
 // value: nil
-func (k Keeper) ibcChannelsStore(ctx sdk.Context) prefix.Store {
+func (k Keeper) uninitializedChannelStore(ctx sdk.Context) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	return prefix.NewStore(store, types.IBCChannelsKey)
 }

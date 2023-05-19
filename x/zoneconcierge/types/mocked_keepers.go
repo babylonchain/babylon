@@ -630,6 +630,34 @@ func (mr *MockBtcCheckpointKeeperMockRecorder) GetBestSubmission(ctx, e interfac
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBestSubmission", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetBestSubmission), ctx, e)
 }
 
+// GetEpochBestSubmissionBtcInfo mocks base method.
+func (m *MockBtcCheckpointKeeper) GetEpochBestSubmissionBtcInfo(ctx types3.Context, ed *types.EpochData) *types.SubmissionBtcInfo {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpochBestSubmissionBtcInfo", ctx, ed)
+	ret0, _ := ret[0].(*types.SubmissionBtcInfo)
+	return ret0
+}
+
+// GetEpochBestSubmissionBtcInfo indicates an expected call of GetEpochBestSubmissionBtcInfo.
+func (mr *MockBtcCheckpointKeeperMockRecorder) GetEpochBestSubmissionBtcInfo(ctx, ed interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochBestSubmissionBtcInfo", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetEpochBestSubmissionBtcInfo), ctx, ed)
+}
+
+// GetEpochData mocks base method.
+func (m *MockBtcCheckpointKeeper) GetEpochData(ctx types3.Context, e uint64) *types.EpochData {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEpochData", ctx, e)
+	ret0, _ := ret[0].(*types.EpochData)
+	return ret0
+}
+
+// GetEpochData indicates an expected call of GetEpochData.
+func (mr *MockBtcCheckpointKeeperMockRecorder) GetEpochData(ctx, e interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpochData", reflect.TypeOf((*MockBtcCheckpointKeeper)(nil).GetEpochData), ctx, e)
+}
+
 // GetParams mocks base method.
 func (m *MockBtcCheckpointKeeper) GetParams(ctx types3.Context) types.Params {
 	m.ctrl.T.Helper()

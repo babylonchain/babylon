@@ -214,12 +214,15 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	return ed
 }
 
-// GetBestSubmission gets the status and the best submission of a given epoch
+// GetBestSubmission gets the status and the best submission of a given finalized epoch
 func (k Keeper) GetBestSubmission(ctx sdk.Context, epochNumber uint64) (types.BtcStatus, *types.SubmissionKey, error) {
 	// find the btc checkpoint tx index of this epoch
 	ed := k.GetEpochData(ctx, epochNumber)
 	if ed == nil {
 		return 0, nil, types.ErrNoCheckpointsForPreviousEpoch
+	}
+	if ed.Status != types.Finalized {
+		return 0, nil, fmt.Errorf("epoch %d has not been finalized yet", epochNumber)
 	}
 	if len(ed.Key) == 0 {
 		return 0, nil, types.ErrNoCheckpointsForPreviousEpoch

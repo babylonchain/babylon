@@ -27,9 +27,9 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	btcConfig bbn.BtcConfig,
-) *Keeper {
+) Keeper {
 
-	return &Keeper{
+	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,
 		memKey:    memKey,
@@ -283,6 +283,9 @@ func (k Keeper) GetInOrderAncestorsUntil(ctx sdk.Context, descendant *types.BTCH
 	return k.headersState(ctx).GetInOrderAncestorsUntil(descendant, ancestor)
 }
 
+// GetMainChainUpTo returns the current canonical chain as a collection of block headers
+//
+//	starting from the tip and ending on the header that has a depth distance from it.
 func (k Keeper) GetMainChainUpTo(ctx sdk.Context, depth uint64) []*types.BTCHeaderInfo {
 	return k.headersState(ctx).GetMainChainUpTo(depth)
 }
