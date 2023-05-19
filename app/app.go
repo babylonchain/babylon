@@ -650,7 +650,7 @@ func NewBabylonApp(
 	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
 
 	var zoneConciergeStack porttypes.IBCModule
-	zoneConciergeStack = zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
+	zoneConciergeStack = zoneconcierge.NewIBCModule(appCodec, app.ZoneConciergeKeeper)
 	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, app.IBCFeeKeeper)
 
 	var wasmStack porttypes.IBCModule

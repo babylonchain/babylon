@@ -4,6 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
@@ -14,11 +15,13 @@ import (
 )
 
 type IBCModule struct {
+	cdc    codec.BinaryCodec
 	keeper keeper.Keeper
 }
 
-func NewIBCModule(k keeper.Keeper) IBCModule {
+func NewIBCModule(cdc codec.BinaryCodec, k keeper.Keeper) IBCModule {
 	return IBCModule{
+		cdc:    cdc,
 		keeper: k,
 	}
 }
@@ -167,8 +170,8 @@ func (im IBCModule) OnAcknowledgementPacket(
 	acknowledgement []byte,
 	relayer sdk.AccAddress,
 ) error {
-	var ack channeltypes.Acknowledgement
-	if err := ack.Unmarshal(acknowledgement); err != nil {
+	var ack types.Acknowledgement
+	if err := im.cdc.Unmarshal(acknowledgement, &ack); err != nil {
 		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement", "ack", acknowledgement, "error", err)
 		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
 	}
@@ -181,7 +184,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// }
 
 	switch resp := ack.Response.(type) {
-	case *channeltypes.Acknowledgement_Result:
+	case *types.Acknowledgement_Result:
 		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
@@ -190,7 +193,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 				sdk.NewAttribute(types.AttributeKeyAckSuccess, string(resp.Result)),
 			),
 		)
-	case *channeltypes.Acknowledgement_Error:
+	case *types.Acknowledgement_Error:
 		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
