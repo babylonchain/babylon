@@ -169,6 +169,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 ) error {
 	var ack channeltypes.Acknowledgement
 	if err := types.ModuleCdc.Unmarshal(acknowledgement, &ack); err != nil {
+		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement", "error", err)
 		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
 	}
 
