@@ -40,6 +40,23 @@ func (k Keeper) getChainID(ctx sdk.Context, channel channeltypes.IdentifiedChann
 	return tmClient.ChainId, nil
 }
 
+// getBTCHeadersDuringLastFinalizedEpoch gets BTC headers between
+// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+// - BTC tip at epoch `lastFinalizedEpoch`
+// where `lastFinalizedEpoch` is the last finalised epoch
+func (k Keeper) getBTCHeadersDuringLastFinalizedEpoch(ctx sdk.Context) []*btclctypes.BTCHeaderInfo {
+	oldBTCTip := k.GetFinalizingBTCTip(ctx) // NOTE: BTC tip in KVStore has not been updated yet
+	if oldBTCTip == nil {
+		// this happens upon the first finalised epoch. Use base header instead
+		oldBTCTip = k.btclcKeeper.GetBaseBTCHeader(ctx)
+	}
+	curBTCTip := k.btclcKeeper.GetTipInfo(ctx)
+	commonAncestor := k.btclcKeeper.GetHighestCommonAncestor(ctx, oldBTCTip, curBTCTip)
+	btcHeaders := k.btclcKeeper.GetInOrderAncestorsUntil(ctx, curBTCTip, commonAncestor)
+
+	return btcHeaders
+}
+
 // getFinalizedInfo returns metadata and proofs that are identical to all BTC timestamps in the same epoch
 func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*finalizedInfo, error) {
 	finalizedEpochInfo, err := k.epochingKeeper.GetHistoricalEpoch(ctx, epochNum)
@@ -74,17 +91,8 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*finalizedIn
 		return nil, err
 	}
 
-	// Get BTC headers between
-	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
-	// - BTC tip at epoch `lastFinalizedEpoch`
-	oldBTCTip := k.GetFinalizingBTCTip(ctx) // NOTE: BTC tip in KVStore has not been updated yet
-	if oldBTCTip == nil {
-		// this happens upon the first finalised epoch. Use base header instead
-		oldBTCTip = k.btclcKeeper.GetBaseBTCHeader(ctx)
-	}
-	curBTCTip := k.btclcKeeper.GetTipInfo(ctx)
-	commonAncestor := k.btclcKeeper.GetHighestCommonAncestor(ctx, oldBTCTip, curBTCTip)
-	btcHeaders := k.btclcKeeper.GetInOrderAncestorsUntil(ctx, curBTCTip, commonAncestor)
+	// get new BTC headers since the 2nd last finalised epoch and the last finalised epoch
+	btcHeaders := k.getBTCHeadersDuringLastFinalizedEpoch(ctx)
 
 	// construct finalizedInfo
 	finalizedInfo := &finalizedInfo{
@@ -102,8 +110,8 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*finalizedIn
 // createBTCTimestamp creates a BTC timestamp from finalizedInfo for a given IBC channel
 // where the counterparty is a Cosmos zone
 func (k Keeper) createBTCTimestamp(ctx sdk.Context, chainID string, channelID string, finalizedInfo *finalizedInfo) (*types.BTCTimestamp, error) {
-	// if the Babylon contract in this channel has not been initialised, headers from the
-	// tip to w+1+len(finalizedInfo.BTCHeaders)
+	// if the Babylon contract in this channel has not been initialised, get headers from
+	// the tip to (w+1+len(finalizedInfo.BTCHeaders))-deep header
 	var btcHeaders []*btclctypes.BTCHeaderInfo
 	if k.isChannelUninitialized(ctx, channelID) {
 		w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
@@ -207,12 +215,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		}
 
 		// wrap BTC timestamp to IBC packet
-		packet := &types.ZoneconciergePacketData{
-			Packet: &types.ZoneconciergePacketData_BtcTimestamp{
-				BtcTimestamp: btcTimestamp,
-			},
-		}
-
+		packet := types.NewBTCTimestampPacketData(btcTimestamp)
 		// send IBC packet
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			k.Logger(ctx).Error("failed to send BTC timestamp IBC packet, skip sending BTC timestamp for this chain", "chainID", chainID, "channelID", channel.ChannelId, "error", err)
