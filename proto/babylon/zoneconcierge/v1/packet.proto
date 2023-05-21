@@ -18,7 +18,11 @@ message ZoneconciergePacketData {
   }
 }
 
-// BTCTimestamp is a BTC timestamp
+// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch
+// It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and 
+// a CZ header if there exists CZ headers checkpointed to this epoch.
+// Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
+// Cosmos zone that has phase-2 integration with Babylon via IBC.
 message BTCTimestamp {
   // header is the last CZ header in the finalized Babylon epoch
   babylon.zoneconcierge.v1.IndexedHeader header = 1;
@@ -26,7 +30,10 @@ message BTCTimestamp {
   /*
     Data for BTC light client
   */
-  // btc_headers is BTC headers from the BTC header tip upon the last finalised epoch to the current tip
+  // btc_headers is BTC headers between
+  // - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+	// - BTC tip at epoch `lastFinalizedEpoch`
+  // where `lastFinalizedEpoch` is the last finalised epoch in Babylon
   repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 2;
 
   /*

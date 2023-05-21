@@ -210,8 +210,7 @@ func (s headersState) GetHeaderAncestryUpTo(currentHeader *types.BTCHeaderInfo, 
 }
 
 // GetMainChainUpTo returns the current canonical chain as a collection of block headers
-//
-//	starting from the tip and ending on the header that has a depth distance from it.
+// starting from the tip and ending on the header that has `depth` distance from it.
 func (s headersState) GetMainChainUpTo(depth uint64) []*types.BTCHeaderInfo {
 	// If there is no tip, there is no base header
 	if !s.TipExists() {

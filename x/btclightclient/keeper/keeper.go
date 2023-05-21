@@ -284,8 +284,7 @@ func (k Keeper) GetInOrderAncestorsUntil(ctx sdk.Context, descendant *types.BTCH
 }
 
 // GetMainChainUpTo returns the current canonical chain as a collection of block headers
-//
-//	starting from the tip and ending on the header that has a depth distance from it.
+// starting from the tip and ending on the header that has `depth` distance from it.
 func (k Keeper) GetMainChainUpTo(ctx sdk.Context, depth uint64) []*types.BTCHeaderInfo {
 	return k.headersState(ctx).GetMainChainUpTo(depth)
 }

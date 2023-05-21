@@ -168,9 +168,14 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	var ack channeltypes.Acknowledgement
-	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement", "error", err)
-		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
+	// Sometimes wasmd uses json to encode error messages, while we are using protobuf to
+	// encode successful acknowledgement message
+	if errProto := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errProto != nil {
+		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with protobuf", "error", errProto)
+		if errJson := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errJson != nil {
+			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json", "error", errJson)
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement with protobuf (error: %v) or json (error: %v)", errProto, errJson)
+		}
 	}
 
 	// // TODO (Babylon): Dispatch and process packet
