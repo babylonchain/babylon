@@ -33,6 +33,7 @@ func (k Keeper) getChainID(ctx sdk.Context, channel channeltypes.IdentifiedChann
 		return "", err
 	}
 	// cast clientState to tendermint clientState
+	// TODO: support for chains other than Cosmos zones
 	tmClient, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
 		return "", fmt.Errorf("client must be a Tendermint client, expected: %T, got: %T", &ibctmtypes.ClientState{}, tmClient)
