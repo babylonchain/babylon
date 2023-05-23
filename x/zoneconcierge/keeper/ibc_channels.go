@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
@@ -30,26 +28,12 @@ func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedC
 	return openZCChannels
 }
 
-func (k Keeper) AddUninitializedChannel(ctx sdk.Context, channelID string) {
-	store := k.uninitializedChannelStore(ctx)
-	store.Set([]byte(channelID), []byte{0x00})
-}
-
-func (k Keeper) afterChannelInitialized(ctx sdk.Context, channelID string) {
-	store := k.uninitializedChannelStore(ctx)
-	store.Delete([]byte(channelID))
-}
-
-func (k Keeper) isChannelUninitialized(ctx sdk.Context, channelID string) bool {
-	store := k.uninitializedChannelStore(ctx)
-	return store.Has([]byte(channelID))
-}
-
-// uninitializedChannelStore stores initialisation status of IBC channels
-// prefix: EpochChainInfoKey
-// key: channel ID
-// value: nil
-func (k Keeper) uninitializedChannelStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.IBCChannelsKey)
+// isChannelUninitialized checks whether the channel is not initilialised yet
+// it's done by checking whether the packet sequence number is 1 (the first sequence number) or not
+func (k Keeper) isChannelUninitialized(ctx sdk.Context, channel channeltypes.IdentifiedChannel) bool {
+	portID := channel.PortId
+	channelID := channel.ChannelId
+	// NOTE: channeltypes.IdentifiedChannel object is guaranteed to exist, so guaranteed to be found
+	nextSeqSend, _ := k.channelKeeper.GetNextSequenceSend(ctx, portID, channelID)
+	return nextSeqSend == 1
 }

@@ -110,11 +110,11 @@ func (k Keeper) getFinalizedInfo(ctx sdk.Context, epochNum uint64) (*finalizedIn
 
 // createBTCTimestamp creates a BTC timestamp from finalizedInfo for a given IBC channel
 // where the counterparty is a Cosmos zone
-func (k Keeper) createBTCTimestamp(ctx sdk.Context, chainID string, channelID string, finalizedInfo *finalizedInfo) (*types.BTCTimestamp, error) {
+func (k Keeper) createBTCTimestamp(ctx sdk.Context, chainID string, channel channeltypes.IdentifiedChannel, finalizedInfo *finalizedInfo) (*types.BTCTimestamp, error) {
 	// if the Babylon contract in this channel has not been initialised, get headers from
 	// the tip to (w+1+len(finalizedInfo.BTCHeaders))-deep header
 	var btcHeaders []*btclctypes.BTCHeaderInfo
-	if k.isChannelUninitialized(ctx, channelID) {
+	if k.isChannelUninitialized(ctx, channel) {
 		w := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 		depth := w + 1 + uint64(len(finalizedInfo.BTCHeaders))
 
@@ -209,7 +209,7 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		}
 
 		// generate timestamp for this channel
-		btcTimestamp, err := k.createBTCTimestamp(ctx, chainID, channel.ChannelId, finalizedInfo)
+		btcTimestamp, err := k.createBTCTimestamp(ctx, chainID, channel, finalizedInfo)
 		if err != nil {
 			k.Logger(ctx).Error("failed to generate BTC timestamp, skip sending BTC timestamp for this chain", "chainID", chainID, "error", err)
 			continue
@@ -221,11 +221,6 @@ func (k Keeper) BroadcastBTCTimestamps(ctx sdk.Context, epochNum uint64) {
 		if err := k.SendIBCPacket(ctx, channel, packet); err != nil {
 			k.Logger(ctx).Error("failed to send BTC timestamp IBC packet, skip sending BTC timestamp for this chain", "chainID", chainID, "channelID", channel.ChannelId, "error", err)
 			continue
-		}
-
-		// this channel has been initialised after sending the first IBC packet
-		if k.isChannelUninitialized(ctx, channel.ChannelId) {
-			k.afterChannelInitialized(ctx, channel.ChannelId)
 		}
 	}
 }
