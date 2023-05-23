@@ -27,9 +27,9 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	btcConfig bbn.BtcConfig,
-) *Keeper {
+) Keeper {
 
-	return &Keeper{
+	return Keeper{
 		cdc:       cdc,
 		storeKey:  storeKey,
 		memKey:    memKey,
@@ -270,4 +270,21 @@ func (k Keeper) GetHeaderByHeight(ctx sdk.Context, height uint64) *types.BTCHead
 	})
 
 	return info
+}
+
+// GetHighestCommonAncestor traverses the ancestors of both headers
+// to identify the common ancestor with the highest height
+func (k Keeper) GetHighestCommonAncestor(ctx sdk.Context, header1 *types.BTCHeaderInfo, header2 *types.BTCHeaderInfo) *types.BTCHeaderInfo {
+	return k.headersState(ctx).GetHighestCommonAncestor(header1, header2)
+}
+
+// GetInOrderAncestorsUntil returns the list of nodes starting from the block *after* the `ancestor` and ending with the `descendant`.
+func (k Keeper) GetInOrderAncestorsUntil(ctx sdk.Context, descendant *types.BTCHeaderInfo, ancestor *types.BTCHeaderInfo) []*types.BTCHeaderInfo {
+	return k.headersState(ctx).GetInOrderAncestorsUntil(descendant, ancestor)
+}
+
+// GetMainChainUpTo returns the current canonical chain as a collection of block headers
+// starting from the tip and ending on the header that has `depth` distance from it.
+func (k Keeper) GetMainChainUpTo(ctx sdk.Context, depth uint64) []*types.BTCHeaderInfo {
+	return k.headersState(ctx).GetMainChainUpTo(depth)
 }

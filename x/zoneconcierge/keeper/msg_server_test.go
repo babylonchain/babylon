@@ -12,6 +12,6 @@ import (
 
 //nolint:unused
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil)
+	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil)
 	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
 }

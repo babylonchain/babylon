@@ -509,6 +509,31 @@ func NewBabylonApp(
 		),
 	)
 
+	btclightclientKeeper := btclightclientkeeper.NewKeeper(
+		appCodec,
+		keys[btclightclienttypes.StoreKey],
+		keys[btclightclienttypes.MemStoreKey],
+		btcConfig,
+	)
+	checkpointingKeeper := checkpointingkeeper.NewKeeper(
+		appCodec,
+		keys[checkpointingtypes.StoreKey],
+		keys[checkpointingtypes.MemStoreKey],
+		privSigner.WrappedPV,
+		&epochingKeeper,
+		privSigner.ClientCtx,
+	)
+	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(
+		appCodec,
+		keys[btccheckpointtypes.StoreKey],
+		tkeys[btccheckpointtypes.TStoreKey],
+		keys[btccheckpointtypes.MemStoreKey],
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&powLimit,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// create Tendermint client
 	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
 	if err != nil {
@@ -536,8 +561,9 @@ func NewBabylonApp(
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
-		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
 		epochingKeeper,
 		tmClient,
 		storeQuerier,
@@ -561,13 +587,6 @@ func NewBabylonApp(
 		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
 	)
 
-	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
-		appCodec,
-		keys[btclightclienttypes.StoreKey],
-		keys[btclightclienttypes.MemStoreKey],
-		btcConfig,
-	)
-
 	app.MonitorKeeper = monitorkeeper.NewKeeper(
 		appCodec,
 		keys[monitortypes.StoreKey],
@@ -578,40 +597,13 @@ func NewBabylonApp(
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
 	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
 	// make ZoneConcierge to subscribe to the epoching's hooks
-	epochingKeeper.SetHooks(
+	app.EpochingKeeper = *epochingKeeper.SetHooks(
 		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)
-	app.EpochingKeeper = epochingKeeper
-
-	checkpointingKeeper :=
-		checkpointingkeeper.NewKeeper(
-			appCodec,
-			keys[checkpointingtypes.StoreKey],
-			keys[checkpointingtypes.MemStoreKey],
-			privSigner.WrappedPV,
-			app.EpochingKeeper,
-			privSigner.ClientCtx,
-		)
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
 		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)
-	app.ZoneConciergeKeeper.SetCheckpointingKeeper(app.CheckpointingKeeper)
-
-	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
-	// change to correct implementations
-	app.BtcCheckpointKeeper =
-		btccheckpointkeeper.NewKeeper(
-			appCodec,
-			keys[btccheckpointtypes.StoreKey],
-			tkeys[btccheckpointtypes.TStoreKey],
-			keys[btccheckpointtypes.MemStoreKey],
-			&btclightclientKeeper,
-			app.CheckpointingKeeper,
-			&powLimit,
-			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		)
-	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
-
+	app.BtcCheckpointKeeper = btcCheckpointKeeper
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
 	)

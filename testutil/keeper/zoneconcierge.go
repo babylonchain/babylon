@@ -41,6 +41,9 @@ func (zoneconciergeChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channel
 func (zoneconciergeChannelKeeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
 	return nil
 }
+func (zoneconciergeChannelKeeper) GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error) {
+	return "", nil, nil
+}
 
 // zoneconciergeportKeeper is a stub of PortKeeper
 type zoneconciergePortKeeper struct{}
@@ -61,7 +64,7 @@ func (zoneconciergeStoreQuerier) Query(req abci.RequestQuery) abci.ResponseQuery
 	}
 }
 
-func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -85,6 +88,7 @@ func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKe
 		zoneconciergePortKeeper{},
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
+		btclcKeeper,
 		checkpointingKeeper,
 		btccKeeper,
 		epochingKeeper,

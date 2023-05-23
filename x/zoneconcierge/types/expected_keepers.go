@@ -6,6 +6,7 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
@@ -52,6 +53,7 @@ type ChannelKeeper interface {
 	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 	GetNextSequenceSend(ctx sdk.Context, portID, channelID string) (uint64, bool)
 	GetAllChannels(ctx sdk.Context) (channels []channeltypes.IdentifiedChannel)
+	GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error)
 }
 
 // ClientKeeper defines the expected IBC client keeper
@@ -77,9 +79,20 @@ type ScopedKeeper interface {
 	ClaimCapability(ctx sdk.Context, cap *capabilitytypes.Capability, name string) error
 }
 
+type BTCLightClientKeeper interface {
+	GetTipInfo(ctx sdk.Context) *btclctypes.BTCHeaderInfo
+	GetBaseBTCHeader(ctx sdk.Context) *btclctypes.BTCHeaderInfo
+	GetHighestCommonAncestor(ctx sdk.Context, header1 *btclctypes.BTCHeaderInfo, header2 *btclctypes.BTCHeaderInfo) *btclctypes.BTCHeaderInfo
+	GetInOrderAncestorsUntil(ctx sdk.Context, descendant *btclctypes.BTCHeaderInfo, ancestor *btclctypes.BTCHeaderInfo) []*btclctypes.BTCHeaderInfo
+	GetMainChainUpTo(ctx sdk.Context, depth uint64) []*btclctypes.BTCHeaderInfo
+}
+
 type BtcCheckpointKeeper interface {
+	GetParams(ctx sdk.Context) (p btcctypes.Params)
+	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
 	GetBestSubmission(ctx sdk.Context, e uint64) (btcctypes.BtcStatus, *btcctypes.SubmissionKey, error)
 	GetSubmissionData(ctx sdk.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
+	GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *btcctypes.EpochData) *btcctypes.SubmissionBtcInfo
 }
 
 type CheckpointingKeeper interface {

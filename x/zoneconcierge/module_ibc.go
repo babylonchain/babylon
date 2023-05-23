@@ -1,8 +1,7 @@
 package zoneconcierge
 
 import (
-	"fmt"
-
+	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,7 +11,6 @@ import (
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
-	errorsmod "cosmossdk.io/errors"
 )
 
 type IBCModule struct {
@@ -36,10 +34,20 @@ func (im IBCModule) OnChanOpenInit(
 	counterparty channeltypes.Counterparty,
 	version string,
 ) (string, error) {
+	// the IBC channel has to be ordered
+	if order != channeltypes.ORDERED {
+		return "", errorsmod.Wrapf(channeltypes.ErrInvalidChannelOrdering, "expected %s channel, got %s ", channeltypes.ORDERED, order)
+	}
+
 	// Require portID to be the one that ZoneConcierge is bound to
 	boundPort := im.keeper.GetPort(ctx)
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	}
+
+	// ensure consistency of the protocol version
+	if version != types.Version {
+		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "got %s, expected %s", version, types.Version)
 	}
 
 	// Claim channel capability passed back by IBC module
@@ -61,10 +69,20 @@ func (im IBCModule) OnChanOpenTry(
 	counterparty channeltypes.Counterparty,
 	counterpartyVersion string,
 ) (string, error) {
+	// the IBC channel has to be ordered
+	if order != channeltypes.ORDERED {
+		return "", errorsmod.Wrapf(channeltypes.ErrInvalidChannelOrdering, "expected %s channel, got %s ", channeltypes.ORDERED, order)
+	}
+
 	// Require portID to be the one that ZoneConcierge is bound to
 	boundPort := im.keeper.GetPort(ctx)
 	if boundPort != portID {
 		return "", errorsmod.Wrapf(porttypes.ErrInvalidPort, "invalid port: %s, expected %s", portID, boundPort)
+	}
+
+	// ensure consistency of the protocol version
+	if counterpartyVersion != types.Version {
+		return "", errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: got: %s, expected %s", counterpartyVersion, types.Version)
 	}
 
 	// Module may have already claimed capability in OnChanOpenInit in the case of crossing hellos
@@ -89,10 +107,11 @@ func (im IBCModule) OnChanOpenAck(
 	_,
 	counterpartyVersion string,
 ) error {
-	// // TODO (Babylon): check version consistency (this requires modifying CZ code)
-	// if counterpartyVersion != types.Version {
-	// 	return errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
-	// }
+	// check version consistency
+	if counterpartyVersion != types.Version {
+		return errorsmod.Wrapf(types.ErrInvalidVersion, "invalid counterparty version: %s, expected %s", counterpartyVersion, types.Version)
+	}
+
 	return nil
 }
 
@@ -130,22 +149,9 @@ func (im IBCModule) OnRecvPacket(
 	modulePacket channeltypes.Packet,
 	relayer sdk.AccAddress,
 ) ibcexported.Acknowledgement {
-	var ack channeltypes.Acknowledgement
-
-	var modulePacketData types.ZoneconciergePacketData
-	if err := modulePacketData.Unmarshal(modulePacket.GetData()); err != nil {
-		return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet data: %s", err.Error()))
-	}
-
-	// // TODO (Babylon): Dispatch and process packet
-	// switch packet := modulePacketData.Packet.(type) {
-	// default:
-	// 	err := fmt.Errorf("unrecognized %s packet type: %T", types.ModuleName, packet)
-	// 	return channeltypes.NewErrorAcknowledgement(err)
-	// }
-
+	// Babylon is supposed to not take any IBC packet
 	// NOTE: acknowledgement will be written synchronously during IBC handler execution.
-	return ack
+	return channeltypes.NewErrorAcknowledgement(errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "Babylon is supposed to not take any IBC packet"))
 }
 
 // OnAcknowledgementPacket implements the IBCModule interface
@@ -156,11 +162,16 @@ func (im IBCModule) OnAcknowledgementPacket(
 	relayer sdk.AccAddress,
 ) error {
 	var ack channeltypes.Acknowledgement
-	if err := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); err != nil {
-		return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement: %v", err)
+	// `x/wasm` uses both protobuf and json to encoded acknowledgement, so we need to try both here
+	// - for acknowledgment message with errors defined in `x/wasm`, it uses json
+	// - for all other acknowledgement messages, it uses protobuf
+	if errProto := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errProto != nil {
+		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with protobuf", "error", errProto)
+		if errJson := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errJson != nil {
+			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json", "error", errJson)
+			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement with protobuf (error: %v) or json (error: %v)", errProto, errJson)
+		}
 	}
-
-	var eventType string
 
 	// // TODO (Babylon): Dispatch and process packet
 	// switch packet := modulePacketData.Packet.(type) {
@@ -169,26 +180,22 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// 	return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	// }
 
-	ctx.EventManager().EmitEvent(
-		sdk.NewEvent(
-			eventType,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
-			sdk.NewAttribute(types.AttributeKeyAck, fmt.Sprintf("%v", ack)),
-		),
-	)
-
 	switch resp := ack.Response.(type) {
 	case *channeltypes.Acknowledgement_Result:
+		im.keeper.Logger(ctx).Info("received an Acknowledgement message", "result", string(resp.Result))
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				eventType,
+				types.EventTypeAck,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 				sdk.NewAttribute(types.AttributeKeyAckSuccess, string(resp.Result)),
 			),
 		)
 	case *channeltypes.Acknowledgement_Error:
+		im.keeper.Logger(ctx).Error("received an Acknowledgement error message", "error", resp.Error)
 		ctx.EventManager().EmitEvent(
 			sdk.NewEvent(
-				eventType,
+				types.EventTypeAck,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.ModuleName),
 				sdk.NewAttribute(types.AttributeKeyAckError, resp.Error),
 			),
 		)
@@ -214,6 +221,8 @@ func (im IBCModule) OnTimeoutPacket(
 	// 	errMsg := fmt.Sprintf("unrecognized %s packet type: %T", types.ModuleName, packet)
 	// 	return errorsmod.Wrap(sdkerrors.ErrUnknownRequest, errMsg)
 	// }
+
+	// TODO: close channel upon timeout
 
 	return nil
 }
