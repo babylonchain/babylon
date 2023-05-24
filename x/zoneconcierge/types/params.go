@@ -5,7 +5,7 @@ import (
 )
 
 const (
-	DefaultIBCPacketTimeoutMinutes uint32 = 30
+	DefaultIBCPacketTimeoutMinutes uint32 = 60 * 24 // 24 hours
 )
 
 // NewParams creates a new Params instance
