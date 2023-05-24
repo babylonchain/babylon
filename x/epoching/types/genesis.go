@@ -10,7 +10,7 @@ func DefaultGenesis() *GenesisState {
 	}
 }
 
-// NewGenesis creates a new GenesisState instanc e
+// NewGenesis creates a new GenesisState instance
 func NewGenesis(params Params) *GenesisState {
 	return &GenesisState{
 		Params: params,
