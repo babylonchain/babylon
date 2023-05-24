@@ -3,19 +3,26 @@ package keeper
 import (
 	"context"
 
+	bbntypes "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	bbntypes "github.com/babylonchain/babylon/types"
-
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 var _ types.QueryServer = Keeper{}
 
 const maxQueryChainsInfoLimit = 100
+
+func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+}
 
 func (k Keeper) ChainList(c context.Context, req *types.QueryChainListRequest) (*types.QueryChainListResponse, error) {
 	if req == nil {
