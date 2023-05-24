@@ -10333,14 +10333,14 @@ paths:
                 description: params holds all the parameters of this module.
                 type: object
                 properties:
-                  ibc_packet_timeout_minutes:
+                  ibc_packet_timeout_seconds:
                     type: integer
                     format: int64
                     title: >-
-                      ibc_packet_timeout_minutes is the time period after which
+                      ibc_packet_timeout_seconds is the time period after which
                       an unrelayed 
 
-                      IBC packet becomes timeout, measured in minutes
+                      IBC packet becomes timeout, measured in seconds
             description: >-
               QueryParamsResponse is the response type for the Query/Params RPC
               method.
@@ -16817,14 +16817,14 @@ definitions:
   babylon.zoneconcierge.v1.Params:
     type: object
     properties:
-      ibc_packet_timeout_minutes:
+      ibc_packet_timeout_seconds:
         type: integer
         format: int64
         title: >-
-          ibc_packet_timeout_minutes is the time period after which an
+          ibc_packet_timeout_seconds is the time period after which an
           unrelayed 
 
-          IBC packet becomes timeout, measured in minutes
+          IBC packet becomes timeout, measured in seconds
     description: Params defines the parameters for the module.
   babylon.zoneconcierge.v1.ProofEpochSealed:
     type: object
@@ -19873,14 +19873,14 @@ definitions:
         description: params holds all the parameters of this module.
         type: object
         properties:
-          ibc_packet_timeout_minutes:
+          ibc_packet_timeout_seconds:
             type: integer
             format: int64
             title: >-
-              ibc_packet_timeout_minutes is the time period after which an
+              ibc_packet_timeout_seconds is the time period after which an
               unrelayed 
 
-              IBC packet becomes timeout, measured in minutes
+              IBC packet becomes timeout, measured in seconds
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
   tendermint.crypto.Proof:
     type: object

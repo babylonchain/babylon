@@ -13,7 +13,7 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		PortId: types.PortID,
-		Params: types.Params{IbcPacketTimeoutMinutes: 100},
+		Params: types.Params{IbcPacketTimeoutSeconds: 100},
 	}
 
 	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil)

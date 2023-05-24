@@ -32,7 +32,7 @@ func (k Keeper) SendIBCPacket(ctx sdk.Context, channel channeltypes.IdentifiedCh
 	}
 
 	// timeout
-	timeoutPeriod := time.Duration(k.GetParams(ctx).IbcPacketTimeoutMinutes) * time.Minute
+	timeoutPeriod := time.Duration(k.GetParams(ctx).IbcPacketTimeoutSeconds) * time.Second
 	timeoutTime := uint64(ctx.BlockHeader().Time.Add(timeoutPeriod).UnixNano())
 	zeroheight := clienttypes.ZeroHeight()
 
