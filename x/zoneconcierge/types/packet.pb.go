@@ -102,11 +102,18 @@ func (*ZoneconciergePacketData) XXX_OneofWrappers() []interface{} {
 	}
 }
 
-// BTCTimestamp is a BTC timestamp
+// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch
+// It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
+// a CZ header if there exists CZ headers checkpointed to this epoch.
+// Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
+// Cosmos zone that has phase-2 integration with Babylon via IBC.
 type BTCTimestamp struct {
 	// header is the last CZ header in the finalized Babylon epoch
 	Header *IndexedHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
-	// btc_headers is BTC headers from the BTC header tip upon the last finalised epoch to the current tip
+	// btc_headers is BTC headers between
+	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+	// - BTC tip at epoch `lastFinalizedEpoch`
+	// where `lastFinalizedEpoch` is the last finalised epoch in Babylon
 	BtcHeaders []*types.BTCHeaderInfo `protobuf:"bytes,2,rep,name=btc_headers,json=btcHeaders,proto3" json:"btc_headers,omitempty"`
 	// epoch_info is the metadata of the sealed epoch
 	EpochInfo *types1.Epoch `protobuf:"bytes,3,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
