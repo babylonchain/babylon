@@ -1,0 +1,16 @@
+syntax = "proto3";
+package babylon.zoneconcierge.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.equal) = true;
+  
+  // ibc_packet_timeout_seconds is the time period after which an unrelayed 
+  // IBC packet becomes timeout, measured in seconds
+  uint32 ibc_packet_timeout_seconds = 1
+      [ (gogoproto.moretags) = "yaml:\"ibc_packet_timeout_seconds\"" ];
+}
