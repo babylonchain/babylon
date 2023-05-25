@@ -568,6 +568,7 @@ func NewBabylonApp(
 		tmClient,
 		storeQuerier,
 		scopedZoneConciergeKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// replace IBC keeper's client keeper with our ExtendedKeeper

@@ -29,6 +29,9 @@ type (
 		tmClient            types.TMClient
 		storeQuerier        sdk.Queryable
 		scopedKeeper        types.ScopedKeeper
+		// the address capable of executing a MsgUpdateParams message. Typically, this
+		// should be the x/gov module account.
+		authority string
 	}
 )
 
@@ -48,6 +51,7 @@ func NewKeeper(
 	tmClient types.TMClient,
 	storeQuerier sdk.Queryable,
 	scopedKeeper types.ScopedKeeper,
+	authority string,
 ) *Keeper {
 	return &Keeper{
 		cdc:                 cdc,
@@ -65,6 +69,7 @@ func NewKeeper(
 		tmClient:            tmClient,
 		storeQuerier:        storeQuerier,
 		scopedKeeper:        scopedKeeper,
+		authority:           authority,
 	}
 }
 

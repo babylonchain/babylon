@@ -11,6 +11,15 @@ const DefaultIndex uint64 = 1
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		PortId: PortID,
+		Params: DefaultParams(),
+	}
+}
+
+// NewGenesis creates a new GenesisState instance
+func NewGenesis(params Params) *GenesisState {
+	return &GenesisState{
+		PortId: PortID,
+		Params: params,
 	}
 }
 
@@ -18,6 +27,9 @@ func DefaultGenesis() *GenesisState {
 // failure.
 func (gs GenesisState) Validate() error {
 	if err := host.PortIdentifierValidator(gs.PortId); err != nil {
+		return err
+	}
+	if err := gs.Params.Validate(); err != nil {
 		return err
 	}
 	return nil

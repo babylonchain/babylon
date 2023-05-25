@@ -13,6 +13,7 @@ import (
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
 		PortId: types.PortID,
+		Params: types.Params{IbcPacketTimeoutSeconds: 100},
 	}
 
 	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil)
@@ -24,4 +25,5 @@ func TestGenesis(t *testing.T) {
 	nullify.Fill(got)
 
 	require.Equal(t, genesisState.PortId, got.PortId)
+	require.Equal(t, genesisState.Params, got.Params)
 }
