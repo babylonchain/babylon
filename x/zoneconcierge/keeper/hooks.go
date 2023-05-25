@@ -29,6 +29,7 @@ func (h Hooks) AfterHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header
 		ChainId:       header.ChaindId,
 		Hash:          header.Hash,
 		Height:        header.Height,
+		Time:          &header.Time,
 		BabylonHeader: &babylonHeader,
 		BabylonEpoch:  h.k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash: txHash,

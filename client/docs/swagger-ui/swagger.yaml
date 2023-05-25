@@ -5737,6 +5737,16 @@ paths:
 
                       (hash, height) jointly provides the position of the header
                       on CZ ledger
+                  time:
+                    type: string
+                    format: date-time
+                    title: >-
+                      time is the timestamp of this header on CZ ledger
+
+                      it is needed for CZ to unbond all mature
+                      validators/delegations
+
+                      before this timestamp when this header is BTC-finalised
                   babylon_header:
                     title: >-
                       babylon_header is the header of the babylon block that
@@ -5858,6 +5868,17 @@ paths:
 
                             (hash, height) jointly provides the position of the
                             header on CZ ledger
+                        time:
+                          type: string
+                          format: date-time
+                          title: >-
+                            time is the timestamp of this header on CZ ledger
+
+                            it is needed for CZ to unbond all mature
+                            validators/delegations
+
+                            before this timestamp when this header is
+                            BTC-finalised
                         babylon_header:
                           title: >-
                             babylon_header is the header of the babylon block
@@ -6535,6 +6556,17 @@ paths:
 
                             (hash, height) jointly provides the position of the
                             header on CZ ledger
+                        time:
+                          type: string
+                          format: date-time
+                          title: >-
+                            time is the timestamp of this header on CZ ledger
+
+                            it is needed for CZ to unbond all mature
+                            validators/delegations
+
+                            before this timestamp when this header is
+                            BTC-finalised
                         babylon_header:
                           title: >-
                             babylon_header is the header of the babylon block
@@ -6659,6 +6691,18 @@ paths:
 
                                   (hash, height) jointly provides the position
                                   of the header on CZ ledger
+                              time:
+                                type: string
+                                format: date-time
+                                title: >-
+                                  time is the timestamp of this header on CZ
+                                  ledger
+
+                                  it is needed for CZ to unbond all mature
+                                  validators/delegations
+
+                                  before this timestamp when this header is
+                                  BTC-finalised
                               babylon_header:
                                 title: >-
                                   babylon_header is the header of the babylon
@@ -7053,6 +7097,17 @@ paths:
 
                             (hash, height) jointly provides the position of the
                             header on CZ ledger
+                        time:
+                          type: string
+                          format: date-time
+                          title: >-
+                            time is the timestamp of this header on CZ ledger
+
+                            it is needed for CZ to unbond all mature
+                            validators/delegations
+
+                            before this timestamp when this header is
+                            BTC-finalised
                         babylon_header:
                           title: >-
                             babylon_header is the header of the babylon block
@@ -7177,6 +7232,18 @@ paths:
 
                                   (hash, height) jointly provides the position
                                   of the header on CZ ledger
+                              time:
+                                type: string
+                                format: date-time
+                                title: >-
+                                  time is the timestamp of this header on CZ
+                                  ledger
+
+                                  it is needed for CZ to unbond all mature
+                                  validators/delegations
+
+                                  before this timestamp when this header is
+                                  BTC-finalised
                               babylon_header:
                                 title: >-
                                   babylon_header is the header of the babylon
@@ -7579,6 +7646,17 @@ paths:
 
                           (hash, height) jointly provides the position of the
                           header on CZ ledger
+                      time:
+                        type: string
+                        format: date-time
+                        title: >-
+                          time is the timestamp of this header on CZ ledger
+
+                          it is needed for CZ to unbond all mature
+                          validators/delegations
+
+                          before this timestamp when this header is
+                          BTC-finalised
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
@@ -7702,6 +7780,18 @@ paths:
 
                                 (hash, height) jointly provides the position of
                                 the header on CZ ledger
+                            time:
+                              type: string
+                              format: date-time
+                              title: >-
+                                time is the timestamp of this header on CZ
+                                ledger
+
+                                it is needed for CZ to unbond all mature
+                                validators/delegations
+
+                                before this timestamp when this header is
+                                BTC-finalised
                             babylon_header:
                               title: >-
                                 babylon_header is the header of the babylon
@@ -8588,6 +8678,18 @@ paths:
 
                                 (hash, height) jointly provides the position of
                                 the header on CZ ledger
+                            time:
+                              type: string
+                              format: date-time
+                              title: >-
+                                time is the timestamp of this header on CZ
+                                ledger
+
+                                it is needed for CZ to unbond all mature
+                                validators/delegations
+
+                                before this timestamp when this header is
+                                BTC-finalised
                             babylon_header:
                               title: >-
                                 babylon_header is the header of the babylon
@@ -8714,6 +8816,18 @@ paths:
 
                                       (hash, height) jointly provides the
                                       position of the header on CZ ledger
+                                  time:
+                                    type: string
+                                    format: date-time
+                                    title: >-
+                                      time is the timestamp of this header on CZ
+                                      ledger
+
+                                      it is needed for CZ to unbond all mature
+                                      validators/delegations
+
+                                      before this timestamp when this header is
+                                      BTC-finalised
                                   babylon_header:
                                     title: >-
                                       babylon_header is the header of the
@@ -9589,6 +9703,16 @@ paths:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
+                    time:
+                      type: string
+                      format: date-time
+                      title: >-
+                        time is the timestamp of this header on CZ ledger
+
+                        it is needed for CZ to unbond all mature
+                        validators/delegations
+
+                        before this timestamp when this header is BTC-finalised
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
@@ -10010,6 +10134,16 @@ paths:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
+                    time:
+                      type: string
+                      format: date-time
+                      title: >-
+                        time is the timestamp of this header on CZ ledger
+
+                        it is needed for CZ to unbond all mature
+                        validators/delegations
+
+                        before this timestamp when this header is BTC-finalised
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
@@ -15530,6 +15664,13 @@ definitions:
 
               (hash, height) jointly provides the position of the header on CZ
               ledger
+          time:
+            type: string
+            format: date-time
+            title: |-
+              time is the timestamp of this header on CZ ledger
+              it is needed for CZ to unbond all mature validators/delegations
+              before this timestamp when this header is BTC-finalised
           babylon_header:
             title: >-
               babylon_header is the header of the babylon block that includes
@@ -15650,6 +15791,16 @@ definitions:
 
                     (hash, height) jointly provides the position of the header
                     on CZ ledger
+                time:
+                  type: string
+                  format: date-time
+                  title: >-
+                    time is the timestamp of this header on CZ ledger
+
+                    it is needed for CZ to unbond all mature
+                    validators/delegations
+
+                    before this timestamp when this header is BTC-finalised
                 babylon_header:
                   title: >-
                     babylon_header is the header of the babylon block that
@@ -15820,6 +15971,16 @@ definitions:
 
                   (hash, height) jointly provides the position of the header on
                   CZ ledger
+              time:
+                type: string
+                format: date-time
+                title: >-
+                  time is the timestamp of this header on CZ ledger
+
+                  it is needed for CZ to unbond all mature
+                  validators/delegations
+
+                  before this timestamp when this header is BTC-finalised
               babylon_header:
                 title: >-
                   babylon_header is the header of the babylon block that
@@ -15941,6 +16102,16 @@ definitions:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
+                    time:
+                      type: string
+                      format: date-time
+                      title: >-
+                        time is the timestamp of this header on CZ ledger
+
+                        it is needed for CZ to unbond all mature
+                        validators/delegations
+
+                        before this timestamp when this header is BTC-finalised
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
@@ -16575,6 +16746,13 @@ definitions:
 
                 (hash, height) jointly provides the position of the header on CZ
                 ledger
+            time:
+              type: string
+              format: date-time
+              title: |-
+                time is the timestamp of this header on CZ ledger
+                it is needed for CZ to unbond all mature validators/delegations
+                before this timestamp when this header is BTC-finalised
             babylon_header:
               title: >-
                 babylon_header is the header of the babylon block that includes
@@ -16717,6 +16895,13 @@ definitions:
 
           (hash, height) jointly provides the position of the header on CZ
           ledger
+      time:
+        type: string
+        format: date-time
+        title: |-
+          time is the timestamp of this header on CZ ledger
+          it is needed for CZ to unbond all mature validators/delegations
+          before this timestamp when this header is BTC-finalised
       babylon_header:
         title: >-
           babylon_header is the header of the babylon block that includes this
@@ -17205,6 +17390,16 @@ definitions:
 
                     (hash, height) jointly provides the position of the header
                     on CZ ledger
+                time:
+                  type: string
+                  format: date-time
+                  title: >-
+                    time is the timestamp of this header on CZ ledger
+
+                    it is needed for CZ to unbond all mature
+                    validators/delegations
+
+                    before this timestamp when this header is BTC-finalised
                 babylon_header:
                   title: >-
                     babylon_header is the header of the babylon block that
@@ -17326,6 +17521,17 @@ definitions:
 
                           (hash, height) jointly provides the position of the
                           header on CZ ledger
+                      time:
+                        type: string
+                        format: date-time
+                        title: >-
+                          time is the timestamp of this header on CZ ledger
+
+                          it is needed for CZ to unbond all mature
+                          validators/delegations
+
+                          before this timestamp when this header is
+                          BTC-finalised
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
@@ -17506,6 +17712,16 @@ definitions:
 
                     (hash, height) jointly provides the position of the header
                     on CZ ledger
+                time:
+                  type: string
+                  format: date-time
+                  title: >-
+                    time is the timestamp of this header on CZ ledger
+
+                    it is needed for CZ to unbond all mature
+                    validators/delegations
+
+                    before this timestamp when this header is BTC-finalised
                 babylon_header:
                   title: >-
                     babylon_header is the header of the babylon block that
@@ -17627,6 +17843,17 @@ definitions:
 
                           (hash, height) jointly provides the position of the
                           header on CZ ledger
+                      time:
+                        type: string
+                        format: date-time
+                        title: >-
+                          time is the timestamp of this header on CZ ledger
+
+                          it is needed for CZ to unbond all mature
+                          validators/delegations
+
+                          before this timestamp when this header is
+                          BTC-finalised
                       babylon_header:
                         title: >-
                           babylon_header is the header of the babylon block that
@@ -17808,6 +18035,16 @@ definitions:
 
                   (hash, height) jointly provides the position of the header on
                   CZ ledger
+              time:
+                type: string
+                format: date-time
+                title: >-
+                  time is the timestamp of this header on CZ ledger
+
+                  it is needed for CZ to unbond all mature
+                  validators/delegations
+
+                  before this timestamp when this header is BTC-finalised
               babylon_header:
                 title: >-
                   babylon_header is the header of the babylon block that
@@ -17929,6 +18166,16 @@ definitions:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
+                    time:
+                      type: string
+                      format: date-time
+                      title: >-
+                        time is the timestamp of this header on CZ ledger
+
+                        it is needed for CZ to unbond all mature
+                        validators/delegations
+
+                        before this timestamp when this header is BTC-finalised
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
@@ -18577,6 +18824,16 @@ definitions:
 
                         (hash, height) jointly provides the position of the
                         header on CZ ledger
+                    time:
+                      type: string
+                      format: date-time
+                      title: >-
+                        time is the timestamp of this header on CZ ledger
+
+                        it is needed for CZ to unbond all mature
+                        validators/delegations
+
+                        before this timestamp when this header is BTC-finalised
                     babylon_header:
                       title: >-
                         babylon_header is the header of the babylon block that
@@ -18700,6 +18957,17 @@ definitions:
 
                               (hash, height) jointly provides the position of
                               the header on CZ ledger
+                          time:
+                            type: string
+                            format: date-time
+                            title: >-
+                              time is the timestamp of this header on CZ ledger
+
+                              it is needed for CZ to unbond all mature
+                              validators/delegations
+
+                              before this timestamp when this header is
+                              BTC-finalised
                           babylon_header:
                             title: >-
                               babylon_header is the header of the babylon block
@@ -19340,6 +19608,13 @@ definitions:
 
               (hash, height) jointly provides the position of the header on CZ
               ledger
+          time:
+            type: string
+            format: date-time
+            title: |-
+              time is the timestamp of this header on CZ ledger
+              it is needed for CZ to unbond all mature validators/delegations
+              before this timestamp when this header is BTC-finalised
           babylon_header:
             title: >-
               babylon_header is the header of the babylon block that includes
@@ -19460,6 +19735,16 @@ definitions:
 
                     (hash, height) jointly provides the position of the header
                     on CZ ledger
+                time:
+                  type: string
+                  format: date-time
+                  title: >-
+                    time is the timestamp of this header on CZ ledger
+
+                    it is needed for CZ to unbond all mature
+                    validators/delegations
+
+                    before this timestamp when this header is BTC-finalised
                 babylon_header:
                   title: >-
                     babylon_header is the header of the babylon block that
@@ -19612,6 +19897,13 @@ definitions:
 
                 (hash, height) jointly provides the position of the header on CZ
                 ledger
+            time:
+              type: string
+              format: date-time
+              title: |-
+                time is the timestamp of this header on CZ ledger
+                it is needed for CZ to unbond all mature validators/delegations
+                before this timestamp when this header is BTC-finalised
             babylon_header:
               title: >-
                 babylon_header is the header of the babylon block that includes
@@ -19738,6 +20030,13 @@ definitions:
 
                 (hash, height) jointly provides the position of the header on CZ
                 ledger
+            time:
+              type: string
+              format: date-time
+              title: |-
+                time is the timestamp of this header on CZ ledger
+                it is needed for CZ to unbond all mature validators/delegations
+                before this timestamp when this header is BTC-finalised
             babylon_header:
               title: >-
                 babylon_header is the header of the babylon block that includes
