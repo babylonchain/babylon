@@ -7,7 +7,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 	"strconv"
+	"time"
 
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
@@ -36,6 +38,23 @@ func (s *IntegrationTestSuite) TestBTCBaseHeader() {
 	baseHeader, err := nonValidatorNode.QueryBtcBaseHeader()
 	s.True(baseHeader.Hash.Eq(hardcodedHeader.Hash()))
 	s.Equal(hardcodedHeaderHeight, baseHeader.Height)
+}
+
+func (s *IntegrationTestSuite) TestSendTx() {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	tip1, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+
+	nonValidatorNode.InsertNewEmptyBtcHeader(r)
+
+	tip2, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+
+	s.Equal(tip1.Height+1, tip2.Height)
 }
 
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
