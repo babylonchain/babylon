@@ -5,6 +5,10 @@ package types
 
 import (
 	fmt "fmt"
+	types3 "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	types "github.com/babylonchain/babylon/x/btclightclient/types"
+	types2 "github.com/babylonchain/babylon/x/checkpointing/types"
+	types1 "github.com/babylonchain/babylon/x/epoching/types"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
@@ -28,8 +32,7 @@ type ZoneconciergePacketData struct {
 	// packet is the actual message carried in the IBC packet
 	//
 	// Types that are valid to be assigned to Packet:
-	//
-	//	*ZoneconciergePacketData_Heartbeart
+	//	*ZoneconciergePacketData_BtcTimestamp
 	Packet isZoneconciergePacketData_Packet `protobuf_oneof:"packet"`
 }
 
@@ -72,11 +75,11 @@ type isZoneconciergePacketData_Packet interface {
 	Size() int
 }
 
-type ZoneconciergePacketData_Heartbeart struct {
-	Heartbeart *Heartbeat `protobuf:"bytes,1,opt,name=heartbeart,proto3,oneof" json:"heartbeart,omitempty"`
+type ZoneconciergePacketData_BtcTimestamp struct {
+	BtcTimestamp *BTCTimestamp `protobuf:"bytes,1,opt,name=btc_timestamp,json=btcTimestamp,proto3,oneof" json:"btc_timestamp,omitempty"`
 }
 
-func (*ZoneconciergePacketData_Heartbeart) isZoneconciergePacketData_Packet() {}
+func (*ZoneconciergePacketData_BtcTimestamp) isZoneconciergePacketData_Packet() {}
 
 func (m *ZoneconciergePacketData) GetPacket() isZoneconciergePacketData_Packet {
 	if m != nil {
@@ -85,9 +88,9 @@ func (m *ZoneconciergePacketData) GetPacket() isZoneconciergePacketData_Packet {
 	return nil
 }
 
-func (m *ZoneconciergePacketData) GetHeartbeart() *Heartbeat {
-	if x, ok := m.GetPacket().(*ZoneconciergePacketData_Heartbeart); ok {
-		return x.Heartbeart
+func (m *ZoneconciergePacketData) GetBtcTimestamp() *BTCTimestamp {
+	if x, ok := m.GetPacket().(*ZoneconciergePacketData_BtcTimestamp); ok {
+		return x.BtcTimestamp
 	}
 	return nil
 }
@@ -95,28 +98,46 @@ func (m *ZoneconciergePacketData) GetHeartbeart() *Heartbeat {
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*ZoneconciergePacketData) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
-		(*ZoneconciergePacketData_Heartbeart)(nil),
+		(*ZoneconciergePacketData_BtcTimestamp)(nil),
 	}
 }
 
-// Heartbeat is a heartbeat message that can be carried in IBC packets of
-// ZoneConcierge
-type Heartbeat struct {
-	Msg string `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch
+// It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and
+// a CZ header if there exists CZ headers checkpointed to this epoch.
+// Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
+// Cosmos zone that has phase-2 integration with Babylon via IBC.
+type BTCTimestamp struct {
+	// header is the last CZ header in the finalized Babylon epoch
+	Header *IndexedHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	// btc_headers is BTC headers between
+	// - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+	// - BTC tip at epoch `lastFinalizedEpoch`
+	// where `lastFinalizedEpoch` is the last finalised epoch in Babylon
+	BtcHeaders []*types.BTCHeaderInfo `protobuf:"bytes,2,rep,name=btc_headers,json=btcHeaders,proto3" json:"btc_headers,omitempty"`
+	// epoch_info is the metadata of the sealed epoch
+	EpochInfo *types1.Epoch `protobuf:"bytes,3,opt,name=epoch_info,json=epochInfo,proto3" json:"epoch_info,omitempty"`
+	// raw_checkpoint is the raw checkpoint that seals this epoch
+	RawCheckpoint *types2.RawCheckpoint `protobuf:"bytes,4,opt,name=raw_checkpoint,json=rawCheckpoint,proto3" json:"raw_checkpoint,omitempty"`
+	// btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
+	BtcSubmissionKey *types3.SubmissionKey `protobuf:"bytes,5,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
+	//
+	// Proofs that the header is finalized
+	Proof *ProofFinalizedChainInfo `protobuf:"bytes,6,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 
-func (m *Heartbeat) Reset()         { *m = Heartbeat{} }
-func (m *Heartbeat) String() string { return proto.CompactTextString(m) }
-func (*Heartbeat) ProtoMessage()    {}
-func (*Heartbeat) Descriptor() ([]byte, []int) {
+func (m *BTCTimestamp) Reset()         { *m = BTCTimestamp{} }
+func (m *BTCTimestamp) String() string { return proto.CompactTextString(m) }
+func (*BTCTimestamp) ProtoMessage()    {}
+func (*BTCTimestamp) Descriptor() ([]byte, []int) {
 	return fileDescriptor_be12e124c5c4fdb9, []int{1}
 }
-func (m *Heartbeat) XXX_Unmarshal(b []byte) error {
+func (m *BTCTimestamp) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *Heartbeat) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *BTCTimestamp) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_Heartbeat.Marshal(b, m, deterministic)
+		return xxx_messageInfo_BTCTimestamp.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -126,28 +147,63 @@ func (m *Heartbeat) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *Heartbeat) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Heartbeat.Merge(m, src)
+func (m *BTCTimestamp) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCTimestamp.Merge(m, src)
 }
-func (m *Heartbeat) XXX_Size() int {
+func (m *BTCTimestamp) XXX_Size() int {
 	return m.Size()
 }
-func (m *Heartbeat) XXX_DiscardUnknown() {
-	xxx_messageInfo_Heartbeat.DiscardUnknown(m)
+func (m *BTCTimestamp) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCTimestamp.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Heartbeat proto.InternalMessageInfo
+var xxx_messageInfo_BTCTimestamp proto.InternalMessageInfo
 
-func (m *Heartbeat) GetMsg() string {
+func (m *BTCTimestamp) GetHeader() *IndexedHeader {
 	if m != nil {
-		return m.Msg
+		return m.Header
 	}
-	return ""
+	return nil
+}
+
+func (m *BTCTimestamp) GetBtcHeaders() []*types.BTCHeaderInfo {
+	if m != nil {
+		return m.BtcHeaders
+	}
+	return nil
+}
+
+func (m *BTCTimestamp) GetEpochInfo() *types1.Epoch {
+	if m != nil {
+		return m.EpochInfo
+	}
+	return nil
+}
+
+func (m *BTCTimestamp) GetRawCheckpoint() *types2.RawCheckpoint {
+	if m != nil {
+		return m.RawCheckpoint
+	}
+	return nil
+}
+
+func (m *BTCTimestamp) GetBtcSubmissionKey() *types3.SubmissionKey {
+	if m != nil {
+		return m.BtcSubmissionKey
+	}
+	return nil
+}
+
+func (m *BTCTimestamp) GetProof() *ProofFinalizedChainInfo {
+	if m != nil {
+		return m.Proof
+	}
+	return nil
 }
 
 func init() {
 	proto.RegisterType((*ZoneconciergePacketData)(nil), "babylon.zoneconcierge.v1.ZoneconciergePacketData")
-	proto.RegisterType((*Heartbeat)(nil), "babylon.zoneconcierge.v1.Heartbeat")
+	proto.RegisterType((*BTCTimestamp)(nil), "babylon.zoneconcierge.v1.BTCTimestamp")
 }
 
 func init() {
@@ -155,21 +211,37 @@ func init() {
 }
 
 var fileDescriptor_be12e124c5c4fdb9 = []byte{
-	// 209 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4d, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0xaf, 0xca, 0xcf, 0x4b, 0x4d, 0xce, 0xcf, 0x4b, 0xce, 0x4c, 0x2d, 0x4a,
-	0x4f, 0xd5, 0x2f, 0x33, 0xd4, 0x2f, 0x48, 0x4c, 0xce, 0x4e, 0x2d, 0xd1, 0x2b, 0x28, 0xca, 0x2f,
-	0xc9, 0x17, 0x92, 0x80, 0x2a, 0xd3, 0x43, 0x51, 0xa6, 0x57, 0x66, 0xa8, 0x94, 0xc5, 0x25, 0x1e,
-	0x85, 0x2c, 0x16, 0x00, 0xd6, 0xe6, 0x92, 0x58, 0x92, 0x28, 0xe4, 0xca, 0xc5, 0x95, 0x91, 0x9a,
-	0x58, 0x54, 0x92, 0x04, 0x22, 0x24, 0x18, 0x15, 0x18, 0x35, 0xb8, 0x8d, 0x94, 0xf5, 0x70, 0x99,
-	0xa4, 0xe7, 0x01, 0x55, 0x5b, 0xe2, 0xc1, 0x10, 0x84, 0xa4, 0xd1, 0x89, 0x83, 0x8b, 0x0d, 0xe2,
-	0x16, 0x25, 0x59, 0x2e, 0x4e, 0xb8, 0x22, 0x21, 0x01, 0x2e, 0xe6, 0xdc, 0xe2, 0x74, 0xb0, 0xb1,
-	0x9c, 0x41, 0x20, 0xa6, 0x93, 0xff, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78,
-	0x24, 0xc7, 0x38, 0xe1, 0xb1, 0x1c, 0xc3, 0x85, 0xc7, 0x72, 0x0c, 0x37, 0x1e, 0xcb, 0x31, 0x44,
-	0x99, 0xa6, 0x67, 0x96, 0x64, 0x94, 0x26, 0xe9, 0x25, 0xe7, 0xe7, 0xea, 0x43, 0xed, 0x4f, 0xce,
-	0x48, 0xcc, 0xcc, 0x83, 0x71, 0xf4, 0x2b, 0xd0, 0xfc, 0x5f, 0x52, 0x59, 0x90, 0x5a, 0x9c, 0xc4,
-	0x06, 0xf6, 0xbc, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xe0, 0xc6, 0x63, 0x3e, 0x25, 0x01, 0x00,
-	0x00,
+	// 471 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0x4f, 0x6f, 0xd3, 0x30,
+	0x18, 0xc6, 0x1b, 0xca, 0x2a, 0x70, 0x37, 0x84, 0x7c, 0x21, 0xda, 0x21, 0x9a, 0x2a, 0x01, 0x45,
+	0x9a, 0x1c, 0x65, 0x88, 0x03, 0x27, 0xa4, 0x96, 0x3f, 0xab, 0x10, 0x30, 0x85, 0x71, 0xd9, 0xa5,
+	0xb2, 0xdd, 0xb7, 0x8d, 0xd5, 0xd6, 0x8e, 0x12, 0xaf, 0x5b, 0xf7, 0x29, 0xf8, 0x52, 0x48, 0x1c,
+	0x77, 0xe4, 0x88, 0xda, 0x2f, 0x82, 0xec, 0xfc, 0x69, 0x52, 0x94, 0x4b, 0xe4, 0xf7, 0xc9, 0xcf,
+	0x8f, 0xfd, 0x3e, 0x7e, 0xd1, 0x73, 0x46, 0xd9, 0x7a, 0xa1, 0xa4, 0x7f, 0xa7, 0x24, 0x70, 0x25,
+	0xb9, 0x80, 0x64, 0x06, 0xfe, 0x2a, 0xf0, 0x63, 0xca, 0xe7, 0xa0, 0x49, 0x9c, 0x28, 0xad, 0xb0,
+	0x9b, 0x63, 0xa4, 0x86, 0x91, 0x55, 0x70, 0x7c, 0x5a, 0x18, 0x30, 0xcd, 0x79, 0x04, 0x7c, 0x1e,
+	0x2b, 0x21, 0xb5, 0x31, 0xa8, 0x09, 0x99, 0xcf, 0xf1, 0xab, 0x82, 0xde, 0xfd, 0x11, 0x72, 0x66,
+	0xe8, 0xff, 0x50, 0x52, 0x31, 0x5e, 0x88, 0x59, 0x64, 0xbe, 0x50, 0x3a, 0x57, 0x94, 0x9c, 0xef,
+	0x15, 0x3c, 0xc4, 0x8a, 0x47, 0xb9, 0x6b, 0xb1, 0xce, 0x99, 0xd3, 0xc6, 0x6e, 0xeb, 0x7d, 0x59,
+	0xba, 0x97, 0xa0, 0x67, 0x57, 0x55, 0xf9, 0xc2, 0x26, 0xf2, 0x9e, 0x6a, 0x8a, 0xbf, 0xa0, 0x23,
+	0xa6, 0xf9, 0x58, 0x8b, 0x25, 0xa4, 0x9a, 0x2e, 0x63, 0xd7, 0x39, 0x71, 0xfa, 0xdd, 0xb3, 0x17,
+	0xa4, 0x29, 0x27, 0x32, 0xb8, 0x1c, 0x5e, 0x16, 0xf4, 0x79, 0x2b, 0x3c, 0x64, 0x9a, 0x97, 0xf5,
+	0xe0, 0x11, 0xea, 0x64, 0x71, 0xf7, 0x7e, 0xb5, 0xd1, 0x61, 0x15, 0xc5, 0xef, 0x50, 0x27, 0x02,
+	0x3a, 0x81, 0x24, 0x3f, 0xe2, 0x65, 0xf3, 0x11, 0x23, 0x39, 0x81, 0x5b, 0x98, 0x9c, 0x5b, 0x3c,
+	0xcc, 0xb7, 0xe1, 0x11, 0xea, 0x9a, 0xab, 0x66, 0x55, 0xea, 0x3e, 0x38, 0x69, 0xf7, 0xbb, 0x67,
+	0xfd, 0xd2, 0x65, 0x2f, 0xcb, 0xec, 0xa6, 0x99, 0xc5, 0x48, 0x4e, 0x55, 0x88, 0x98, 0xe6, 0x59,
+	0x99, 0xe2, 0xb7, 0x08, 0xd9, 0x40, 0xc7, 0x42, 0x4e, 0x95, 0xdb, 0xb6, 0xf7, 0x29, 0xdf, 0x89,
+	0x94, 0x59, 0xaf, 0x02, 0xf2, 0xc1, 0xac, 0xc3, 0xc7, 0x56, 0x32, 0x36, 0xf8, 0x2b, 0x7a, 0x92,
+	0xd0, 0x9b, 0xf1, 0xee, 0x95, 0xdd, 0x87, 0x7b, 0xed, 0xd4, 0x26, 0xc2, 0x78, 0x84, 0xf4, 0x66,
+	0x58, 0x6a, 0xe1, 0x51, 0x52, 0x2d, 0xf1, 0x0f, 0x84, 0x4d, 0x57, 0xe9, 0x35, 0x5b, 0x8a, 0x34,
+	0x15, 0x4a, 0x8e, 0xe7, 0xb0, 0x76, 0x0f, 0xf6, 0x3c, 0xeb, 0x23, 0xb8, 0x0a, 0xc8, 0xf7, 0x92,
+	0xff, 0x0c, 0xeb, 0xf0, 0x29, 0xd3, 0xbc, 0xa6, 0xe0, 0x4f, 0xe8, 0x20, 0x4e, 0x94, 0x9a, 0xba,
+	0x1d, 0xeb, 0x14, 0x34, 0x87, 0x7d, 0x61, 0xb0, 0x8f, 0x42, 0xd2, 0x85, 0xb8, 0x83, 0xc9, 0x30,
+	0xa2, 0x42, 0xda, 0xbc, 0xb2, 0xfd, 0x83, 0x6f, 0xbf, 0x37, 0x9e, 0x73, 0xbf, 0xf1, 0x9c, 0xbf,
+	0x1b, 0xcf, 0xf9, 0xb9, 0xf5, 0x5a, 0xf7, 0x5b, 0xaf, 0xf5, 0x67, 0xeb, 0xb5, 0xae, 0xde, 0xcc,
+	0x84, 0x8e, 0xae, 0x19, 0xe1, 0x6a, 0xe9, 0xe7, 0xee, 0xdc, 0xec, 0x2e, 0x0a, 0xff, 0x76, 0x6f,
+	0x3a, 0xf5, 0x3a, 0x86, 0x94, 0x75, 0xec, 0x4c, 0xbe, 0xfe, 0x17, 0x00, 0x00, 0xff, 0xff, 0x31,
+	0xea, 0x29, 0xbc, 0xb1, 0x03, 0x00, 0x00,
 }
 
 func (m *ZoneconciergePacketData) Marshal() (dAtA []byte, err error) {
@@ -204,16 +276,16 @@ func (m *ZoneconciergePacketData) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
-func (m *ZoneconciergePacketData_Heartbeart) MarshalTo(dAtA []byte) (int, error) {
+func (m *ZoneconciergePacketData_BtcTimestamp) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *ZoneconciergePacketData_Heartbeart) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *ZoneconciergePacketData_BtcTimestamp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
-	if m.Heartbeart != nil {
+	if m.BtcTimestamp != nil {
 		{
-			size, err := m.Heartbeart.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.BtcTimestamp.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -225,7 +297,7 @@ func (m *ZoneconciergePacketData_Heartbeart) MarshalToSizedBuffer(dAtA []byte) (
 	}
 	return len(dAtA) - i, nil
 }
-func (m *Heartbeat) Marshal() (dAtA []byte, err error) {
+func (m *BTCTimestamp) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -235,20 +307,87 @@ func (m *Heartbeat) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *Heartbeat) MarshalTo(dAtA []byte) (int, error) {
+func (m *BTCTimestamp) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *Heartbeat) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *BTCTimestamp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Msg) > 0 {
-		i -= len(m.Msg)
-		copy(dAtA[i:], m.Msg)
-		i = encodeVarintPacket(dAtA, i, uint64(len(m.Msg)))
+	if m.Proof != nil {
+		{
+			size, err := m.Proof.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintPacket(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.BtcSubmissionKey != nil {
+		{
+			size, err := m.BtcSubmissionKey.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintPacket(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.RawCheckpoint != nil {
+		{
+			size, err := m.RawCheckpoint.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintPacket(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.EpochInfo != nil {
+		{
+			size, err := m.EpochInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintPacket(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.BtcHeaders) > 0 {
+		for iNdEx := len(m.BtcHeaders) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BtcHeaders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintPacket(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if m.Header != nil {
+		{
+			size, err := m.Header.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintPacket(dAtA, i, uint64(size))
+		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -278,26 +417,48 @@ func (m *ZoneconciergePacketData) Size() (n int) {
 	return n
 }
 
-func (m *ZoneconciergePacketData_Heartbeart) Size() (n int) {
+func (m *ZoneconciergePacketData_BtcTimestamp) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.Heartbeart != nil {
-		l = m.Heartbeart.Size()
+	if m.BtcTimestamp != nil {
+		l = m.BtcTimestamp.Size()
 		n += 1 + l + sovPacket(uint64(l))
 	}
 	return n
 }
-func (m *Heartbeat) Size() (n int) {
+func (m *BTCTimestamp) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Msg)
-	if l > 0 {
+	if m.Header != nil {
+		l = m.Header.Size()
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	if len(m.BtcHeaders) > 0 {
+		for _, e := range m.BtcHeaders {
+			l = e.Size()
+			n += 1 + l + sovPacket(uint64(l))
+		}
+	}
+	if m.EpochInfo != nil {
+		l = m.EpochInfo.Size()
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	if m.RawCheckpoint != nil {
+		l = m.RawCheckpoint.Size()
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	if m.BtcSubmissionKey != nil {
+		l = m.BtcSubmissionKey.Size()
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	if m.Proof != nil {
+		l = m.Proof.Size()
 		n += 1 + l + sovPacket(uint64(l))
 	}
 	return n
@@ -340,7 +501,7 @@ func (m *ZoneconciergePacketData) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Heartbeart", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcTimestamp", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -367,11 +528,11 @@ func (m *ZoneconciergePacketData) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := &Heartbeat{}
+			v := &BTCTimestamp{}
 			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			m.Packet = &ZoneconciergePacketData_Heartbeart{v}
+			m.Packet = &ZoneconciergePacketData_BtcTimestamp{v}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -394,7 +555,7 @@ func (m *ZoneconciergePacketData) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *Heartbeat) Unmarshal(dAtA []byte) error {
+func (m *BTCTimestamp) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -417,17 +578,17 @@ func (m *Heartbeat) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: Heartbeat: wiretype end group for non-group")
+			return fmt.Errorf("proto: BTCTimestamp: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Heartbeat: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: BTCTimestamp: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowPacket
@@ -437,23 +598,205 @@ func (m *Heartbeat) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthPacket
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex < 0 {
 				return ErrInvalidLengthPacket
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Msg = string(dAtA[iNdEx:postIndex])
+			if m.Header == nil {
+				m.Header = &IndexedHeader{}
+			}
+			if err := m.Header.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcHeaders", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BtcHeaders = append(m.BtcHeaders, &types.BTCHeaderInfo{})
+			if err := m.BtcHeaders[len(m.BtcHeaders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.EpochInfo == nil {
+				m.EpochInfo = &types1.Epoch{}
+			}
+			if err := m.EpochInfo.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RawCheckpoint", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.RawCheckpoint == nil {
+				m.RawCheckpoint = &types2.RawCheckpoint{}
+			}
+			if err := m.RawCheckpoint.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcSubmissionKey", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.BtcSubmissionKey == nil {
+				m.BtcSubmissionKey = &types3.SubmissionKey{}
+			}
+			if err := m.BtcSubmissionKey.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Proof == nil {
+				m.Proof = &ProofFinalizedChainInfo{}
+			}
+			if err := m.Proof.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

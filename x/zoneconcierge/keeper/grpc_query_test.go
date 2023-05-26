@@ -395,6 +395,10 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(epoch).AnyTimes()
 		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(epoch, nil).AnyTimes()
 		epochingKeeper.EXPECT().ProveAppHashInEpoch(gomock.Any(), gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(&tmcrypto.Proof{}, nil).AnyTimes()
+		// mock btclc keeper
+		btclcKeeper := zctypes.NewMockBTCLightClientKeeper(ctrl)
+		mockBTCHeaderInfo := datagen.GenRandomBTCHeaderInfo(r)
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockBTCHeaderInfo).AnyTimes()
 
 		// mock Tendermint client
 		// TODO: integration tests with Tendermint
@@ -404,7 +408,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		}
 		tmClient.EXPECT().Tx(gomock.Any(), gomock.Any(), true).Return(resTx, nil).AnyTimes()
 
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, checkpointingKeeper, btccKeeper, epochingKeeper, tmClient)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, tmClient)
 		hooks := zcKeeper.Hooks()
 
 		var (

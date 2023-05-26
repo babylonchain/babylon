@@ -1,6 +1,8 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
+import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
@@ -19,15 +21,19 @@ message IndexedHeader {
   // height is the height of this header on CZ ledger
   // (hash, height) jointly provides the position of the header on CZ ledger
   uint64 height = 3;
+  // time is the timestamp of this header on CZ ledger
+  // it is needed for CZ to unbond all mature validators/delegations
+  // before this timestamp when this header is BTC-finalised
+  google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
   // babylon_header is the header of the babylon block that includes this CZ
   // header
-  tendermint.types.Header babylon_header = 4;
+  tendermint.types.Header babylon_header = 5;
   // epoch is the epoch number of this header on Babylon ledger
-  uint64 babylon_epoch = 5;
+  uint64 babylon_epoch = 6;
   // babylon_tx_hash is the hash of the tx that includes this header
   // (babylon_block_height, babylon_tx_hash) jointly provides the position of
   // the header on Babylon ledger
-  bytes babylon_tx_hash = 6;
+  bytes babylon_tx_hash = 7;
 }
 
 // Forks is a list of non-canonical `IndexedHeader`s at the same height.

@@ -1,6 +1,8 @@
 package extended_client_keeper
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,6 +15,7 @@ type HeaderInfo struct {
 	Hash     []byte
 	ChaindId string
 	Height   uint64
+	Time     time.Time
 }
 
 // MultiClientHooks is a concrete implementation of ClientHooks

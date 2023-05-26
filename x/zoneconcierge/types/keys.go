@@ -1,5 +1,9 @@
 package types
 
+import (
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+)
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "zoneconcierge"
@@ -16,17 +20,22 @@ const (
 	// Version defines the current version the IBC module supports
 	Version = "zoneconcierge-1"
 
+	// Ordering defines the ordering the IBC module supports
+	Ordering = channeltypes.ORDERED
+
 	// PortID is the default port id that module binds to
 	PortID = "zoneconcierge"
 )
 
 var (
-	PortKey           = []byte{0x11} // PortKey defines the key to store the port ID in store
-	ChainInfoKey      = []byte{0x12} // ChainInfoKey defines the key to store the chain info for each CZ in store
-	CanonicalChainKey = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each CZ in store
-	ForkKey           = []byte{0x14} // ForkKey defines the key to store the forks for each CZ in store
-	EpochChainInfoKey = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each CZ in store
-	FinalizedEpochKey = []byte{0x16} // FinalizedEpochKey defines the key to store the last finalised epoch
+	PortKey             = []byte{0x11} // PortKey defines the key to store the port ID in store
+	ChainInfoKey        = []byte{0x12} // ChainInfoKey defines the key to store the chain info for each CZ in store
+	CanonicalChainKey   = []byte{0x13} // CanonicalChainKey defines the key to store the canonical chain for each CZ in store
+	ForkKey             = []byte{0x14} // ForkKey defines the key to store the forks for each CZ in store
+	EpochChainInfoKey   = []byte{0x15} // EpochChainInfoKey defines the key to store each epoch's latests chain info for each CZ in store
+	FinalizedEpochKey   = []byte{0x16} // FinalizedEpochKey defines the key to store the last finalised epoch
+	FinalizingBTCTipKey = []byte{0x17} // FinalizingBTCTipKey defines the key to store the BTC tip when the last epoch is finalised
+	ParamsKey           = []byte{0x18} // key prefix for the parameters
 )
 
 func KeyPrefix(p string) []byte {

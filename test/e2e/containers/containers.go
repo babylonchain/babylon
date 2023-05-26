@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
@@ -201,6 +202,11 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 // RunNodeResource runs a node container. Assings containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
 func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
+	pwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	runOpts := &dockertest.RunOptions{
 		Name:       containerName,
 		Repository: BabylonContainerName,
@@ -215,6 +221,7 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 		Platform:     "linux/x86_64",
 		Mounts: []string{
 			fmt.Sprintf("%s/:/home/babylon/babylondata", valCondifDir),
+			fmt.Sprintf("%s/bytecode:/bytecode", pwd),
 		},
 	}
 

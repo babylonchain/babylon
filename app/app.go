@@ -122,6 +122,9 @@ import (
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
+	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
+	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
+	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -204,6 +207,7 @@ var (
 		ibctm.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		zoneconcierge.AppModuleBasic{},
+		ibcfee.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -215,6 +219,7 @@ var (
 		stakingtypes.NotBondedPoolName: {authtypes.Burner, authtypes.Staking},
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		ibcfeetypes.ModuleName:         nil,
 		// TODO: decide ZonConcierge's permissions here
 		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 	}
@@ -309,6 +314,7 @@ type BabylonApp struct {
 
 	// IBC-related modules
 	IBCKeeper           *ibckeeper.Keeper        // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	IBCFeeKeeper        ibcfeekeeper.Keeper      // for relayer incentivization - https://github.com/cosmos/ibc/tree/main/spec/app/ics-029-fee-payment
 	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
 	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
 
@@ -378,6 +384,7 @@ func NewBabylonApp(
 		// IBC-related modules
 		ibcexported.StoreKey,
 		ibctransfertypes.StoreKey,
+		ibcfeetypes.StoreKey,
 		zctypes.StoreKey,
 		wasm.StoreKey,
 	)
@@ -502,6 +509,31 @@ func NewBabylonApp(
 		),
 	)
 
+	btclightclientKeeper := btclightclientkeeper.NewKeeper(
+		appCodec,
+		keys[btclightclienttypes.StoreKey],
+		keys[btclightclienttypes.MemStoreKey],
+		btcConfig,
+	)
+	checkpointingKeeper := checkpointingkeeper.NewKeeper(
+		appCodec,
+		keys[checkpointingtypes.StoreKey],
+		keys[checkpointingtypes.MemStoreKey],
+		privSigner.WrappedPV,
+		&epochingKeeper,
+		privSigner.ClientCtx,
+	)
+	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(
+		appCodec,
+		keys[btccheckpointtypes.StoreKey],
+		tkeys[btccheckpointtypes.TStoreKey],
+		keys[btccheckpointtypes.MemStoreKey],
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&powLimit,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// create Tendermint client
 	tmClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
 	if err != nil {
@@ -512,21 +544,31 @@ func NewBabylonApp(
 	if !ok {
 		panic(errorsmod.Wrap(sdkerrors.ErrUnknownRequest, "multistore doesn't support queries"))
 	}
+
+	app.IBCFeeKeeper = ibcfeekeeper.NewKeeper(
+		appCodec, keys[ibcfeetypes.StoreKey],
+		app.IBCKeeper.ChannelKeeper, // may be replaced with IBC middleware
+		app.IBCKeeper.ChannelKeeper,
+		&app.IBCKeeper.PortKeeper, app.AccountKeeper, app.BankKeeper,
+	)
+
 	zcKeeper := zckeeper.NewKeeper(
 		appCodec,
 		keys[zctypes.StoreKey],
 		keys[zctypes.MemStoreKey],
-		app.IBCKeeper.ChannelKeeper,
+		app.IBCFeeKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
 		app.BankKeeper,
-		nil, // CheckpointingKeeper is set later (TODO: figure out a proper way for this)
-		nil, // BTCCheckpoint is set later (TODO: figure out a proper way for this)
+		&btclightclientKeeper,
+		&checkpointingKeeper,
+		&btcCheckpointKeeper,
 		epochingKeeper,
 		tmClient,
 		storeQuerier,
 		scopedZoneConciergeKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// replace IBC keeper's client keeper with our ExtendedKeeper
@@ -542,26 +584,8 @@ func NewBabylonApp(
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
+		app.IBCFeeKeeper, app.IBCKeeper.ChannelKeeper, &app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
-	)
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
-
-	// Create static IBC router, add ibc-tranfer module route, then set and seal it
-	ibcRouter := porttypes.NewRouter()
-	transferIBCModule := transfer.NewIBCModule(app.TransferKeeper)
-	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferIBCModule)
-	zcIBCModule := zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
-	ibcRouter.AddRoute(zctypes.ModuleName, zcIBCModule)
-	// Setting Router will finalize all routes by sealing router
-	// No more routes can be added
-	app.IBCKeeper.SetRouter(ibcRouter)
-
-	btclightclientKeeper := *btclightclientkeeper.NewKeeper(
-		appCodec,
-		keys[btclightclienttypes.StoreKey],
-		keys[btclightclienttypes.MemStoreKey],
-		btcConfig,
 	)
 
 	app.MonitorKeeper = monitorkeeper.NewKeeper(
@@ -574,40 +598,13 @@ func NewBabylonApp(
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
 	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
 	// make ZoneConcierge to subscribe to the epoching's hooks
-	epochingKeeper.SetHooks(
+	app.EpochingKeeper = *epochingKeeper.SetHooks(
 		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)
-	app.EpochingKeeper = epochingKeeper
-
-	checkpointingKeeper :=
-		checkpointingkeeper.NewKeeper(
-			appCodec,
-			keys[checkpointingtypes.StoreKey],
-			keys[checkpointingtypes.MemStoreKey],
-			privSigner.WrappedPV,
-			app.EpochingKeeper,
-			privSigner.ClientCtx,
-		)
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
 		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)
-	app.ZoneConciergeKeeper.SetCheckpointingKeeper(app.CheckpointingKeeper)
-
-	// TODO for now use mocks, as soon as Checkpoining and lightClient will have correct interfaces
-	// change to correct implementations
-	app.BtcCheckpointKeeper =
-		btccheckpointkeeper.NewKeeper(
-			appCodec,
-			keys[btccheckpointtypes.StoreKey],
-			tkeys[btccheckpointtypes.TStoreKey],
-			keys[btccheckpointtypes.MemStoreKey],
-			&btclightclientKeeper,
-			app.CheckpointingKeeper,
-			&powLimit,
-			authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		)
-	app.ZoneConciergeKeeper.SetBtcCheckpointKeeper(app.BtcCheckpointKeeper)
-
+	app.BtcCheckpointKeeper = btcCheckpointKeeper
 	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
 		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
 	)
@@ -634,6 +631,7 @@ func NewBabylonApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 		distrkeeper.NewQuerier(app.DistrKeeper),
+		app.IBCFeeKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		scopedWasmKeeper,
@@ -646,6 +644,29 @@ func NewBabylonApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		wasmOpts...,
 	)
+
+	// Create all supported IBC routes
+	var transferStack porttypes.IBCModule
+	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = ibcfee.NewIBCMiddleware(transferStack, app.IBCFeeKeeper)
+
+	var zoneConciergeStack porttypes.IBCModule
+	zoneConciergeStack = zoneconcierge.NewIBCModule(app.ZoneConciergeKeeper)
+	zoneConciergeStack = ibcfee.NewIBCMiddleware(zoneConciergeStack, app.IBCFeeKeeper)
+
+	var wasmStack porttypes.IBCModule
+	wasmStack = wasm.NewIBCHandler(app.WasmKeeper, app.IBCKeeper.ChannelKeeper, app.IBCFeeKeeper)
+	wasmStack = ibcfee.NewIBCMiddleware(wasmStack, app.IBCFeeKeeper)
+
+	// Create static IBC router, add ibc-tranfer module route, then set and seal it
+	ibcRouter := porttypes.NewRouter().
+		AddRoute(ibctransfertypes.ModuleName, transferStack).
+		AddRoute(zctypes.ModuleName, zoneConciergeStack).
+		AddRoute(wasm.ModuleName, wasmStack)
+
+	// Setting Router will finalize all routes by sealing router
+	// No more routes can be added
+	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// The gov proposal types can be individually enabled
 	if len(wasmEnabledProposals) != 0 {
@@ -693,8 +714,9 @@ func NewBabylonApp(
 		monitor.NewAppModule(appCodec, app.MonitorKeeper, app.AccountKeeper, app.BankKeeper),
 		// IBC-related modules
 		ibc.NewAppModule(app.IBCKeeper),
-		transferModule,
+		transfer.NewAppModule(app.TransferKeeper),
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
+		ibcfee.NewAppModule(app.IBCFeeKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -718,6 +740,7 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
+		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
@@ -742,6 +765,7 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
+		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
@@ -768,6 +792,7 @@ func NewBabylonApp(
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
+		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
 	)
 

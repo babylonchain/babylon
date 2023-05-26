@@ -15,8 +15,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	"github.com/stretchr/testify/require"
@@ -41,6 +43,9 @@ func (zoneconciergeChannelKeeper) ChanCloseInit(ctx sdk.Context, portID, channel
 func (zoneconciergeChannelKeeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
 	return nil
 }
+func (zoneconciergeChannelKeeper) GetChannelClientState(ctx sdk.Context, portID, channelID string) (string, ibcexported.ClientState, error) {
+	return "", nil, nil
+}
 
 // zoneconciergeportKeeper is a stub of PortKeeper
 type zoneconciergePortKeeper struct{}
@@ -61,7 +66,7 @@ func (zoneconciergeStoreQuerier) Query(req abci.RequestQuery) abci.ResponseQuery
 	}
 }
 
-func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
+func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
 	logger := log.NewNopLogger()
 
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
@@ -85,12 +90,14 @@ func ZoneConciergeKeeper(t testing.TB, checkpointingKeeper types.CheckpointingKe
 		zoneconciergePortKeeper{},
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
+		btclcKeeper,
 		checkpointingKeeper,
 		btccKeeper,
 		epochingKeeper,
 		tmClient,
 		zoneconciergeStoreQuerier{},
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)

@@ -34,6 +34,7 @@ func GetHeaderInfo(ctx sdk.Context, m exported.ClientMessage) *HeaderInfo {
 			Hash:     msg.Header.LastCommitHash,
 			ChaindId: msg.Header.ChainID,
 			Height:   uint64(msg.Header.Height),
+			Time:     msg.Header.Time,
 		}
 	default:
 		return nil

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/types/bech32"
@@ -164,4 +165,31 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 			n.InsertNewEmptyBtcHeader(r)
 		}
 	}
+}
+
+func (n *NodeConfig) StoreWasmCode(wasmFile, from string) {
+	n.LogActionF("storing wasm code from file %s", wasmFile)
+	cmd := []string{"babylond", "tx", "wasm", "store", wasmFile, fmt.Sprintf("--from=%s", from), "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3"}
+	n.LogActionF(strings.Join(cmd, " "))
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully stored")
+}
+
+func (n *NodeConfig) InstantiateWasmContract(codeId, initMsg, from string) {
+	n.LogActionF("instantiating wasm contract %s with %s", codeId, initMsg)
+	cmd := []string{"babylond", "tx", "wasm", "instantiate", codeId, initMsg, fmt.Sprintf("--from=%s", from), "--no-admin", "--label=contract", "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3"}
+	n.LogActionF(strings.Join(cmd, " "))
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully initialized")
+}
+
+func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
+	n.LogActionF("executing %s on wasm contract %s from %s", execMsg, contract, from)
+	cmd := []string{"babylond", "tx", "wasm", "execute", contract, execMsg, fmt.Sprintf("--from=%s", from)}
+	n.LogActionF(strings.Join(cmd, " "))
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully executed")
 }

@@ -1,15 +1,53 @@
 syntax = "proto3";
 package babylon.zoneconcierge.v1;
 
+import "babylon/btccheckpoint/v1/btccheckpoint.proto";
+import "babylon/checkpointing/v1/checkpoint.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
+import "babylon/epoching/v1/epoching.proto";
+import "babylon/zoneconcierge/v1/zoneconcierge.proto";
+
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // ZoneconciergePacketData is the message that defines the IBC packets of
 // ZoneConcierge
 message ZoneconciergePacketData {
   // packet is the actual message carried in the IBC packet
-  oneof packet { Heartbeat heartbeart = 1; }
+  oneof packet { 
+    BTCTimestamp btc_timestamp = 1; 
+  }
 }
 
-// Heartbeat is a heartbeat message that can be carried in IBC packets of
-// ZoneConcierge
-message Heartbeat { string msg = 1; }
+// BTCTimestamp is a BTC timestamp that carries information of a BTC-finalised epoch
+// It includes a number of BTC headers, a raw checkpoint, an epoch metadata, and 
+// a CZ header if there exists CZ headers checkpointed to this epoch.
+// Upon a newly finalised epoch in Babylon, Babylon will send a BTC timestamp to each
+// Cosmos zone that has phase-2 integration with Babylon via IBC.
+message BTCTimestamp {
+  // header is the last CZ header in the finalized Babylon epoch
+  babylon.zoneconcierge.v1.IndexedHeader header = 1;
+
+  /*
+    Data for BTC light client
+  */
+  // btc_headers is BTC headers between
+  // - the block AFTER the common ancestor of BTC tip at epoch `lastFinalizedEpoch-1` and BTC tip at epoch `lastFinalizedEpoch`
+	// - BTC tip at epoch `lastFinalizedEpoch`
+  // where `lastFinalizedEpoch` is the last finalised epoch in Babylon
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 2;
+
+  /*
+    Data for Babylon epoch chain
+  */
+  // epoch_info is the metadata of the sealed epoch
+  babylon.epoching.v1.Epoch epoch_info = 3;
+  // raw_checkpoint is the raw checkpoint that seals this epoch
+  babylon.checkpointing.v1.RawCheckpoint raw_checkpoint = 4;
+  // btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
+  babylon.btccheckpoint.v1.SubmissionKey btc_submission_key = 5;
+
+  /* 
+    Proofs that the header is finalized
+  */
+  babylon.zoneconcierge.v1.ProofFinalizedChainInfo proof = 6;
+}

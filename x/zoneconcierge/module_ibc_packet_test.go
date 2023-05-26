@@ -38,10 +38,14 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 
 	path := ibctesting.NewPath(suite.babylonChain, suite.czChain)
 
-	// set the port ID to be consistent with ZoneConcierge
-	// in practice, such negotiation is done by the handshake protocol driven by the relayer
-	path.EndpointA.ChannelConfig.PortID = zctypes.PortID
-	path.EndpointB.ChannelConfig.PortID = zctypes.PortID
+	// overwrite the channel config
+	channelCfg := &ibctesting.ChannelConfig{
+		PortID:  zctypes.PortID,
+		Version: zctypes.Version,
+		Order:   zctypes.Ordering,
+	}
+	path.EndpointA.ChannelConfig = channelCfg
+	path.EndpointB.ChannelConfig = channelCfg
 
 	// create client and connections on both chains
 	suite.coordinator.SetupConnections(path)
@@ -74,7 +78,7 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 		nextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		suite.True(found)
 
-		// commit blocks to create some pending heartbeat packets
+		// commit some blocks
 		numBlocks := rand.Intn(10)
 		for i := 0; i < numBlocks; i++ {
 			suite.coordinator.CommitBlock(suite.babylonChain)
@@ -84,7 +88,9 @@ func (suite *ZoneConciergeTestSuite) TestSetChannel() {
 		newNextSeqSend, found := suite.babylonChain.App.GetIBCKeeper().ChannelKeeper.GetNextSequenceSend(suite.babylonChain.GetContext(), path.EndpointA.ChannelConfig.PortID, path.EndpointA.ChannelID)
 		suite.True(found)
 
-		// Assert the gap between two sequence numbers to be zero, since no packet is sent during these blocks
+		// Assert the gap between two sequence numbers to be zero
+		// No packet is supposed to be sent during these blocks.
+		// IBC packet (i.e., BTC timestamp) is sent only upon newly finalised epoch
 		suite.Equal(newNextSeqSend, nextSeqSend)
 
 		// update clients to ensure no panic happens
