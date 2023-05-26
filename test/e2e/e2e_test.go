@@ -10,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/babylonchain/babylon/test/e2e/initialization"
+	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/stretchr/testify/require"
 )
@@ -23,6 +24,18 @@ func (s *IntegrationTestSuite) TestConnectIbc() {
 	s.NoError(err)
 	_, err = chainB.GetDefaultNode()
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestBTCBaseHeader() {
+	hardcodedHeader, _ := bbn.NewBTCHeaderBytesFromHex("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000")
+	hardcodedHeaderHeight := uint64(0)
+
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	baseHeader, err := nonValidatorNode.QueryBtcBaseHeader()
+	s.True(baseHeader.Hash.Eq(hardcodedHeader.Hash()))
+	s.Equal(hardcodedHeaderHeight, baseHeader.Height)
 }
 
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
