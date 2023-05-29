@@ -57,9 +57,11 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 		Short: "retrieve the finalized info for a given list of chains",
 		Args:  cobra.ArbitraryArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			prove, _ := cmd.Flags().GetBool("prove")
+
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			req := types.QueryFinalizedChainsInfoRequest{ChainIds: args}
+			req := types.QueryFinalizedChainsInfoRequest{ChainIds: args, Prove: prove}
 			resp, err := queryClient.FinalizedChainsInfo(cmd.Context(), &req)
 			if err != nil {
 				return err
@@ -69,7 +71,9 @@ func CmdFinalizedChainsInfo() *cobra.Command {
 		},
 	}
 
+	cmd.Flags().Bool("prove", false, "whether to retrieve proofs for each FinalizedChainInfo")
 	flags.AddQueryFlagsToCmd(cmd)
+
 	return cmd
 }
 
