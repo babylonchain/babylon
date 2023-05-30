@@ -5,6 +5,12 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	codec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -14,11 +20,6 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power
@@ -420,7 +421,7 @@ func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens ma
 	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 
-	pk, err := cryptocodec.FromTmPubKeyInterface(tmValPrivkey.PubKey())
+	pk, err := codec.FromTmPubKeyInterface(tmValPrivkey.PubKey())
 	if err != nil {
 		return nil, err
 	}
