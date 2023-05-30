@@ -417,7 +417,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		)
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
-			czChainIDLen := datagen.RandomInt(r, 50) + 1
+			czChainIDLen := datagen.RandomInt(r, 50) + 100
 			czChainID := string(datagen.GenRandomByteArray(r, czChainIDLen))
 
 			// invoke the hook a random number of times to simulate a random number of blocks
