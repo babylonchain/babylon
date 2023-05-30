@@ -29,22 +29,27 @@ func TestMsgDecode(t *testing.T) {
 	stakingtypes.RegisterInterfaces(registry)
 	cdc := codec.NewProtoCodec(registry)
 
+	// build MsgWrappedCreateValidator
 	msg, err := buildMsgWrappedCreateValidatorWithAmount(
 		sdk.AccAddress(valAddr1),
 		sdk.TokensFromConsensusPower(10, sdk.DefaultPowerReduction),
 	)
 	require.NoError(t, err)
 
+	// marshal
 	msgBytes, err := cdc.MarshalInterface(msg)
 	require.NoError(t, err)
 
+	// unmarshal to sdk.Msg interface
 	var msg2 sdk.Msg
 	err = cdc.UnmarshalInterface(msgBytes, &msg2)
 	require.NoError(t, err)
 
+	// type assertion
 	msgWithType, ok := msg2.(*types.MsgWrappedCreateValidator)
 	require.True(t, ok)
 
+	// ensure msgWithType.MsgCreateValidator.Pubkey with type Any is unmarshaled successfully
 	require.NotNil(t, msgWithType.MsgCreateValidator.Pubkey.GetCachedValue())
 }
 

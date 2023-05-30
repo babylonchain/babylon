@@ -100,6 +100,7 @@ func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
+// Needed since msg.MsgCreateValidator.Pubkey is in type Any
 func (msg MsgWrappedCreateValidator) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	return msg.MsgCreateValidator.UnpackInterfaces(unpacker)
 }
