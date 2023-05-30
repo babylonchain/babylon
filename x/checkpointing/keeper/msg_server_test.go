@@ -5,12 +5,6 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/stretchr/testify/require"
-
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -20,6 +14,11 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/stretchr/testify/require"
 )
 
 // FuzzWrappedCreateValidator_InsufficientTokens tests adding new validators with zero voting power
@@ -146,8 +145,6 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		cdc := appparams.GetEncodingConfig().Marshaler
-
 		// a genesis validator is generate for setup
 		helper := testepoching.NewHelper(t)
 		ek := helper.EpochingKeeper
@@ -169,18 +166,11 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
 
-			// marshal and unmarshal
-			// this aims at testing whether msg.MsgCreateValidator.Pubkey (in type Any)
-			// is marshaled and unmarshaled correctly
-			msgBytes := cdc.MustMarshal(msg)
-			var msg2 types.MsgWrappedCreateValidator
-			cdc.MustUnmarshal(msgBytes, &msg2)
-
-			_, err = msgServer.WrappedCreateValidator(ctx, &msg2)
+			_, err = msgServer.WrappedCreateValidator(ctx, msg)
 			require.NoError(t, err)
 			blsPK, err := ck.GetBlsPubKey(ctx, sdk.ValAddress(addrs[i]))
 			require.NoError(t, err)
-			require.True(t, msg2.Key.Pubkey.Equal(blsPK))
+			require.True(t, msg.Key.Pubkey.Equal(blsPK))
 		}
 		require.Len(t, ek.GetCurrentEpochMsgs(ctx), n)
 
@@ -430,7 +420,7 @@ func buildMsgWrappedCreateValidatorWithAmount(addr sdk.AccAddress, bondTokens ma
 	description := stakingtypes.NewDescription("foo_moniker", "", "", "", "")
 	commission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 
-	pk, err := codec.FromTmPubKeyInterface(tmValPrivkey.PubKey())
+	pk, err := cryptocodec.FromTmPubKeyInterface(tmValPrivkey.PubKey())
 	if err != nil {
 		return nil, err
 	}
