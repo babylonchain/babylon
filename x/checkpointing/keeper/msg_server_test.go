@@ -146,6 +146,8 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
+		cdc := appparams.GetEncodingConfig().Marshaler
+
 		// a genesis validator is generate for setup
 		helper := testepoching.NewHelper(t)
 		ek := helper.EpochingKeeper
@@ -166,11 +168,19 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 			msg, err := buildMsgWrappedCreateValidator(addrs[i])
 			require.NoError(t, err)
 			wcvMsgs[i] = msg
-			_, err = msgServer.WrappedCreateValidator(ctx, msg)
+
+			// marshal and unmarshal
+			// this aims at testing whether msg.MsgCreateValidator.Pubkey (in type Any)
+			// is marshaled and unmarshaled correctly
+			msgBytes := cdc.MustMarshal(msg)
+			var msg2 types.MsgWrappedCreateValidator
+			cdc.MustUnmarshal(msgBytes, &msg2)
+
+			_, err = msgServer.WrappedCreateValidator(ctx, &msg2)
 			require.NoError(t, err)
 			blsPK, err := ck.GetBlsPubKey(ctx, sdk.ValAddress(addrs[i]))
 			require.NoError(t, err)
-			require.True(t, msg.Key.Pubkey.Equal(blsPK))
+			require.True(t, msg2.Key.Pubkey.Equal(blsPK))
 		}
 		require.Len(t, ek.GetCurrentEpochMsgs(ctx), n)
 
