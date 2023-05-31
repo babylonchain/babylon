@@ -11,6 +11,7 @@ import (
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -48,6 +49,7 @@ const (
 	ValidatorWalletName = "val"
 	BabylonOpReturnTag  = "01020304"
 
+	BabylonEpochInterval         = 5
 	BabylonBtcConfirmationPeriod = 2
 	BabylonBtcFinalizationPeriod = 4
 	// chainA
@@ -228,6 +230,11 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, epochingtypes.ModuleName, epochingtypes.DefaultGenesis(), updateEpochingGenesis)
+	if err != nil {
+		return err
+	}
+
 	err = updateModuleGenesis(appGenState, checkpointingtypes.ModuleName, checkpointingtypes.DefaultGenesis(), updateCheckpointingGenesis(chain))
 	if err != nil {
 		return err
@@ -303,6 +310,10 @@ func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
 	}
 	work := blctypes.CalcWork(&baseBtcHeader)
 	blcGenState.BaseBtcHeader = *blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)
+}
+
+func updateEpochingGenesis(epochingGenState *epochingtypes.GenesisState) {
+	epochingGenState.Params.EpochInterval = BabylonEpochInterval
 }
 
 func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {

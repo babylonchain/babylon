@@ -261,6 +261,16 @@ func (n *NodeConfig) QueryChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, e
 	return resp.ChainsInfo, nil
 }
 
+func (n *NodeConfig) QueryEpochInterval() (uint64, error) {
+	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/params", url.Values{})
+	require.NoError(n.t, err)
+	var epochResponse etypes.QueryParamsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &epochResponse); err != nil {
+		return 0, err
+	}
+	return epochResponse.Params.EpochInterval, nil
+}
+
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/current_epoch", url.Values{})
 	require.NoError(n.t, err)
