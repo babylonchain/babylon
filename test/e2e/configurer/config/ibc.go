@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 )
@@ -30,7 +32,7 @@ func NewIBCChannelConfigWithBabylonContract(chainAID string, chainBID string, co
 		ChainAID:   chainAID,
 		ChainBID:   chainBID,
 		ChainAPort: zctypes.PortID,
-		ChainBPort: "wasm." + contractAddr,
+		ChainBPort: fmt.Sprintf("wasm.%s", contractAddr),
 		Ordering:   zctypes.Ordering,
 		Version:    zctypes.Version,
 	}

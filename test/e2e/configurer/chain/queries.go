@@ -312,6 +312,7 @@ func (n *NodeConfig) QueryLatestWasmCodeID() uint64 {
 	var response wasmtypes.QueryCodesResponse
 	err = util.Cdc.UnmarshalJSON(bz, &response)
 	require.NoError(n.t, err)
+	n.t.Log("query result of code:", response)
 	if len(response.CodeInfos) == 0 {
 		return 0
 	}

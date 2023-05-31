@@ -129,7 +129,7 @@ func (s *IntegrationTestSuite) TestBabylonContract() {
 
 	// deploy Babylon contract at chain B
 	contractPath := "/bytecode/babylon_contract.wasm"
-	initMsg := fmt.Sprintf(`'{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}'`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
+	initMsg := fmt.Sprintf(`{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
 	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainB, initMsg)
 	s.NoError(err)
 
@@ -147,6 +147,8 @@ func (s *IntegrationTestSuite) TestBabylonContract() {
 
 	// Finalize epochs until endEpochNum
 	nonValidatorNode.FinalizeSealedEpochs(3, endEpochNum)
+
+	chainA.WaitForNumHeights(5)
 
 	// chain A must have sent endEpochNum-3 IBC packets to the IBC channel with Babylon contract
 	nextSeq, err := nonValidatorNode.QueryIBCNextSequence(channels[1].ChannelId, zctypes.PortID)
@@ -180,7 +182,7 @@ func (s *IntegrationTestSuite) TestWasm() {
 
 	require.False(s.T(), finalized)
 	// in previous test we already finalized epoch 3
-	require.Equal(s.T(), 6, latestFinalizedEpoch)
+	require.Equal(s.T(), 3, latestFinalizedEpoch)
 	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
 	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
 }
