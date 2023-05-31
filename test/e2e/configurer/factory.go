@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
+	"github.com/babylonchain/babylon/test/e2e/configurer/config"
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 )
@@ -20,6 +21,10 @@ type Configurer interface {
 	RunValidators() error
 
 	RunIBC() error
+
+	RunIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config, channelCfg *config.IBCChannelConfig) error
+
+	DeployWasmContract(contractCodePath string, chain *chain.Config, initMsg string) (string, error)
 }
 
 var (

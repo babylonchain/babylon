@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"strconv"
 	"time"
 
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -114,23 +113,12 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 }
 
 func (s *IntegrationTestSuite) TestWasm() {
+	// deploy the storage contract
 	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	initMsg := `{}`
+	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainA, initMsg)
 	require.NoError(s.T(), err)
-	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-	nonValidatorNode.InstantiateWasmContract(
-		strconv.Itoa(latestWasmId),
-		`{}`,
-		initialization.ValidatorWalletName,
-	)
-	nonValidatorNode.WaitForNextBlock()
-	contracts, err := nonValidatorNode.QueryContractsFromId(1)
-	s.NoError(err)
-	s.Require().Len(contracts, 1, "Wrong number of contracts for the counter")
-	contractAddr := contracts[0]
 
 	data := []byte{1, 2, 3, 4, 5}
 	dataHex := hex.EncodeToString(data)
@@ -138,6 +126,7 @@ func (s *IntegrationTestSuite) TestWasm() {
 	dataHashHex := hex.EncodeToString(dataHash[:])
 
 	storeMsg := fmt.Sprintf(`{"save_data":{"data":"%s"}}`, dataHex)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 	queryMsg := fmt.Sprintf(`{"check_data": {"data_hash":"%s"}}`, dataHashHex)
