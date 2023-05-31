@@ -11,13 +11,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
+	"github.com/babylonchain/babylon/test/e2e/configurer/config"
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/stretchr/testify/require"
 )
 
 // baseConfigurer is the base implementation for the
@@ -163,23 +162,18 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 	time.Sleep(10 * time.Second)
 
 	// create the client, connection and channel between the two babylon chains
-	return bc.connectIBCChains(chainConfigA, chainConfigB)
+	ibcChanCfg := config.NewIBCChannelConfigTwoBabylonChains(chainConfigA.ChainMeta.Id, chainConfigB.ChainMeta.Id)
+	return bc.connectIBCChains(ibcChanCfg)
 }
 
-func (bc *baseConfigurer) connectIBCChains(chainA *chain.Config, chainB *chain.Config) error {
-	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
-	cmd := []string{"hermes", "create", "channel",
-		"--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, // channel ID
-		"--a-port", zctypes.PortID, "--b-port", zctypes.PortID, // port
-		"--order", zctypes.Ordering.String(), // ordering
-		"--channel-version", zctypes.Version, // version
-		"--new-client-connection", "--yes",
-	}
+func (bc *baseConfigurer) connectIBCChains(cfg *config.IBCChannelConfig) error {
+	bc.t.Logf("connecting %s and %s chains via IBC", cfg.ChainAID, cfg.ChainBID)
+	cmd := cfg.ToCmd()
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {
 		return err
 	}
-	bc.t.Logf("connected %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	bc.t.Logf("connected %s and %s chains via IBC", cfg.ChainAID, cfg.ChainBID)
 	return nil
 }
 

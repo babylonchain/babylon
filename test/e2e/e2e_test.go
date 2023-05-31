@@ -59,6 +59,8 @@ func (s *IntegrationTestSuite) TestSendTx() {
 
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	chainA := s.configurer.GetChainConfig(0)
+	// the default epoch interval is 10, thus at height 35,
+	// Babylon is during epoch 3 and epoch 3 is sealed
 	chainA.WaitUntilHeight(35)
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
