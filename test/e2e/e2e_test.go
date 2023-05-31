@@ -142,18 +142,20 @@ func (s *IntegrationTestSuite) TestBabylonContract() {
 	channels := nonValidatorNode.QueryIBCChannels()
 	s.Len(channels, 2)
 
-	endEpochNum := uint64(6)
-	chainA.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
+	// wait for 1 sealed epochs
+	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+	endEpoch := currEpoch + 1
+	chainA.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpoch + 3))
 
-	// Finalize epochs until endEpochNum
-	nonValidatorNode.FinalizeSealedEpochs(3, endEpochNum)
+	// Finalize the 1 sealed epochs
+	nonValidatorNode.FinalizeSealedEpochs(currEpoch, endEpoch)
+	nonValidatorNode.WaitForNextBlock()
 
-	chainA.WaitForNumHeights(5)
-
-	// chain A must have sent endEpochNum-3 IBC packets to the IBC channel with Babylon contract
+	// chain A must have sent endEpoch-currEpoch IBC packets to the IBC channel with Babylon contract
 	nextSeq, err := nonValidatorNode.QueryIBCNextSequence(channels[1].ChannelId, zctypes.PortID)
 	s.NoError(err)
-	s.Equal(endEpochNum-3, nextSeq)
+	s.Equal(endEpoch-currEpoch, nextSeq)
 }
 
 func (s *IntegrationTestSuite) TestWasm() {
