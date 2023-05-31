@@ -177,6 +177,20 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 	return &checkpointingResponse, nil
 }
 
+func (n *NodeConfig) QueryLastRawCheckpointWithStatus(status ct.CheckpointStatus) (*ct.RawCheckpoint, error) {
+	path := fmt.Sprintf("/babylon/checkpointing/v1/last_raw_checkpoint/%s", status.String())
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ct.QueryLastCheckpointWithStatusResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.RawCheckpoint, nil
+}
+
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
 	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", url.Values{})
 	require.NoError(n.t, err)
