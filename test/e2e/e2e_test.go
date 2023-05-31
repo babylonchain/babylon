@@ -129,7 +129,7 @@ func (s *IntegrationTestSuite) TestBabylonContract() {
 
 	// deploy Babylon contract at chain B
 	contractPath := "/bytecode/babylon_contract.wasm"
-	initMsg := fmt.Sprintf(`{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
+	initMsg := fmt.Sprintf(`'{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}'`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
 	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainB, initMsg)
 	s.NoError(err)
 
