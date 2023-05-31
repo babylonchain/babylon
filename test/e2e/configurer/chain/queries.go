@@ -14,11 +14,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	tmabcitypes "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
@@ -26,6 +21,11 @@ import (
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	mtypes "github.com/babylonchain/babylon/x/monitor/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmabcitypes "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -316,6 +316,30 @@ func (n *NodeConfig) QueryLatestWasmCodeID() uint64 {
 		return 0
 	}
 	return response.CodeInfos[len(response.CodeInfos)-1].CodeID
+}
+
+func (n *NodeConfig) QueryIBCChannels() []*channeltypes.IdentifiedChannel {
+	path := "/ibc/core/channel/v1/channels"
+
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+	var response channeltypes.QueryConnectionChannelsResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	require.NoError(n.t, err)
+	return response.Channels
+}
+
+func (n *NodeConfig) QueryIBCNextSequence(channelID string, portID string) (uint64, error) {
+	path := fmt.Sprintf("/ibc/core/channel/v1/channels/%s/ports/%s/next_sequence", channelID, portID)
+
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return 0, err
+	}
+	var response channeltypes.QueryNextSequenceReceiveResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	require.NoError(n.t, err)
+	return response.NextSequenceReceive, nil
 }
 
 func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {

@@ -10,9 +10,11 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/babylonchain/babylon/test/e2e/configurer/config"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,10 +69,10 @@ func (s *IntegrationTestSuite) TestSendTx() {
 }
 
 func (s *IntegrationTestSuite) TestIbcCheckpointing() {
+	endEpochNum := uint64(3)
+
 	chainA := s.configurer.GetChainConfig(0)
-	// the epoch interval is set 5, thus at height 18,
-	// Babylon is during epoch 3 and epoch 3 is sealed
-	chainA.WaitUntilHeight(18)
+	chainA.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
 
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -80,13 +82,7 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
-	// Finalize epoch 1,2,3, as first headers of opposing chain are in epoch 3
-	var (
-		startEpochNum uint64 = 1
-		endEpochNum   uint64 = 3
-	)
-
-	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+	nonValidatorNode.FinalizeSealedEpochs(1, endEpochNum)
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
@@ -122,43 +118,41 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	s.NoError(err)
 }
 
-// func (s *IntegrationTestSuite) TestBabylonContract() {
-// 	// chain A
-// 	chainA := s.configurer.GetChainConfig(0)
-// 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-// 	s.NoError(err)
+func (s *IntegrationTestSuite) TestBabylonContract() {
+	// chain A
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
 
-// 	// chain B
-// 	chainB := s.configurer.GetChainConfig(1)
+	// chain B
+	chainB := s.configurer.GetChainConfig(1)
 
-// 	// deploy Babylon contract at chain B
-// 	contractPath := "/bytecode/babylon_contract.wasm"
-// 	initMsg := fmt.Sprintf(`{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
-// 	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainB, initMsg)
-// 	s.NoError(err)
+	// deploy Babylon contract at chain B
+	contractPath := "/bytecode/babylon_contract.wasm"
+	initMsg := fmt.Sprintf(`{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
+	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainB, initMsg)
+	s.NoError(err)
 
-// 	// establish IBC channel between chain A ZoneConcierge and chain B Babylon contract
-// 	channelCfg := config.NewIBCChannelConfigWithBabylonContract(chainA.Id, chainB.Id, contractAddr)
-// 	err = s.configurer.ConnectIBCChains(channelCfg)
-// 	s.NoError(err)
+	// establish IBC channel between chain A ZoneConcierge and chain B Babylon contract
+	channelCfg := config.NewIBCChannelConfigWithBabylonContract(chainA.Id, chainB.Id, contractAddr)
+	err = s.configurer.ConnectIBCChains(channelCfg)
+	s.NoError(err)
 
-// 	// the default epoch interval is 5, thus at height 23,
-// 	// Babylon is during epoch 4 and epoch 4 is sealed
-// 	// Note that TestIbcCheckpointing has finalised epoch 1-2
-// 	chainA.WaitUntilHeight(23)
+	// there should be 2 channels, one connecting to chain B ZoneConcierge, the other connection to chain B Babylon contract
+	channels := nonValidatorNode.QueryIBCChannels()
+	s.Len(channels, 2)
 
-// 	// Query checkpoint chain info for opposing chain
-// 	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
-// 	s.NoError(err)
-// 	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
+	endEpochNum := uint64(6)
+	chainA.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
 
-// 	// Finalize epoch 3,4
-// 	var (
-// 		startEpochNum uint64 = 3
-// 		endEpochNum   uint64 = 4
-// 	)
-// 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
-// }
+	// Finalize epochs until endEpochNum
+	nonValidatorNode.FinalizeSealedEpochs(3, endEpochNum)
+
+	// chain A must have sent endEpochNum-3 IBC packets to the IBC channel with Babylon contract
+	nextSeq, err := nonValidatorNode.QueryIBCNextSequence(channels[1].ChannelId, zctypes.PortID)
+	s.NoError(err)
+	s.Equal(endEpochNum-3, nextSeq)
+}
 
 func (s *IntegrationTestSuite) TestWasm() {
 	// deploy the storage contract
@@ -186,7 +180,7 @@ func (s *IntegrationTestSuite) TestWasm() {
 
 	require.False(s.T(), finalized)
 	// in previous test we already finalized epoch 3
-	require.Equal(s.T(), 3, latestFinalizedEpoch)
+	require.Equal(s.T(), 6, latestFinalizedEpoch)
 	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
 	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
 }

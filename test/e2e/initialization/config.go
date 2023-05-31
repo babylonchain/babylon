@@ -49,7 +49,7 @@ const (
 	ValidatorWalletName = "val"
 	BabylonOpReturnTag  = "01020304"
 
-	BabylonEpochInterval         = 5
+	BabylonEpochInterval         = 10
 	BabylonBtcConfirmationPeriod = 2
 	BabylonBtcFinalizationPeriod = 4
 	// chainA
