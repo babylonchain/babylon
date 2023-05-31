@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/babylonchain/babylon/test/e2e/configurer/config"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -110,6 +111,44 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
 	s.NoError(err)
+}
+
+func (s *IntegrationTestSuite) TestBabylonContract() {
+	// chain A
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// chain B
+	chainB := s.configurer.GetChainConfig(1)
+
+	// deploy Babylon contract at chain B
+	contractPath := "/bytecode/babylon_contract.wasm"
+	initMsg := fmt.Sprintf(`{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
+	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainB, initMsg)
+	s.NoError(err)
+
+	// establish IBC channel between chain A ZoneConcierge and chain B Babylon contract
+	channelCfg := config.NewIBCChannelConfigWithBabylonContract(chainA.Id, chainB.Id, contractAddr)
+	err = s.configurer.ConnectIBCChains(channelCfg)
+	s.NoError(err)
+
+	// the default epoch interval is 10, thus at height 55,
+	// Babylon is during epoch 5 and epoch 5 is sealed
+	// Note that TestIbcCheckpointing has finalised epoch 1-3
+	chainA.WaitUntilHeight(55)
+
+	// Query checkpoint chain info for opposing chain
+	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
+	s.NoError(err)
+	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
+
+	// Finalize epoch 4, 5
+	var (
+		startEpochNum uint64 = 4
+		endEpochNum   uint64 = 5
+	)
+	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 }
 
 func (s *IntegrationTestSuite) TestWasm() {

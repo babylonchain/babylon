@@ -78,7 +78,7 @@ func (bc *baseConfigurer) RunIBC() error {
 			chainConfigA := bc.chainConfigs[i]
 			chainConfigB := bc.chainConfigs[j]
 			channelCfg := config.NewIBCChannelConfigTwoBabylonChains(chainConfigA.Id, chainConfigB.Id)
-			if err := bc.RunIBCRelayer(chainConfigA, chainConfigB, channelCfg); err != nil {
+			if err := bc.runIBCRelayer(chainConfigA, chainConfigB, channelCfg); err != nil {
 				return err
 			}
 		}
@@ -86,9 +86,9 @@ func (bc *baseConfigurer) RunIBC() error {
 	return nil
 }
 
-// RunIBCRelayer runs a relayer between a given pair of chains with a given
+// runIBCRelayer runs a relayer between a given pair of chains with a given
 // config for the IBC channel
-func (bc *baseConfigurer) RunIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config, channelCfg *config.IBCChannelConfig) error {
+func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config, channelCfg *config.IBCChannelConfig) error {
 	bc.t.Log("starting Hermes relayer container...")
 
 	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-hermes-")
@@ -168,10 +168,10 @@ func (bc *baseConfigurer) RunIBCRelayer(chainConfigA *chain.Config, chainConfigB
 	time.Sleep(10 * time.Second)
 
 	// create the client, connection and channel between the two babylon chains
-	return bc.connectIBCChains(channelCfg)
+	return bc.ConnectIBCChains(channelCfg)
 }
 
-func (bc *baseConfigurer) connectIBCChains(cfg *config.IBCChannelConfig) error {
+func (bc *baseConfigurer) ConnectIBCChains(cfg *config.IBCChannelConfig) error {
 	bc.t.Logf("connecting %s and %s chains via IBC", cfg.ChainAID, cfg.ChainBID)
 	cmd := cfg.ToCmd()
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")

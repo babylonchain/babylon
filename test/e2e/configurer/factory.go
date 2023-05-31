@@ -22,7 +22,7 @@ type Configurer interface {
 
 	RunIBC() error
 
-	RunIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config, channelCfg *config.IBCChannelConfig) error
+	ConnectIBCChains(cfg *config.IBCChannelConfig) error
 
 	DeployWasmContract(contractCodePath string, chain *chain.Config, initMsg string) (string, error)
 }

@@ -296,8 +296,8 @@ func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
 }
 
 func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
-	btcSimnetGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
-	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcSimnetGenesisHex)
+	btcGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
+	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcGenesisHex)
 	if err != nil {
 		panic(err)
 	}
