@@ -68,7 +68,7 @@ func (s *IntegrationTestSuite) TestSendTx() {
 	s.Equal(tip1.Height+1, tip2.Height)
 }
 
-func (s *IntegrationTestSuite) TestIbcCheckpointing() {
+func (s *IntegrationTestSuite) TestPhase1_IbcCheckpointing() {
 	endEpochNum := uint64(3)
 
 	chainA := s.configurer.GetChainConfig(0)
@@ -107,18 +107,14 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 
 	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
 	s.NoError(err)
-
-	if heightAtEndedEpoch == 0 {
-		// we can only assert, that btc lc height is larger than 0.
-		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
-	}
+	s.Greater(heightAtEndedEpoch, uint64(0), fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
 
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
 	s.NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestBabylonContract() {
+func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
 	// chain A
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
