@@ -39,12 +39,17 @@ func (bc *baseConfigurer) ClearResources() error {
 	bc.t.Log("tearing down e2e integration test suite...")
 
 	if err := bc.containerManager.ClearResources(); err != nil {
+		bc.t.Errorf("failed to clean resources: %v", err)
 		return err
 	}
 
 	for _, chainConfig := range bc.chainConfigs {
-		os.RemoveAll(chainConfig.DataDir)
+		if err := os.RemoveAll(chainConfig.DataDir); err != nil {
+			bc.t.Errorf("failed to remove folder %s for chain %s: %v", chainConfig.DataDir, chainConfig.Id, err)
+			return err
+		}
 	}
+
 	return nil
 }
 

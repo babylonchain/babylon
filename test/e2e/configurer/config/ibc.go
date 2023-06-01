@@ -27,12 +27,15 @@ func NewIBCChannelConfigTwoBabylonChains(chainAID string, chainBID string) *IBCC
 	}
 }
 
-func NewIBCChannelConfigWithBabylonContract(chainAID string, chainBID string, contractAddr string) *IBCChannelConfig {
+// NewIBCChannelConfigWithBabylonContract creates an IBC channel between a Babylon chain and
+// a Babylon contract deployed on another Cosmos zone
+// Note that Babylon contract initiates the IBC channel, thus is the chainA in the config
+func NewIBCChannelConfigWithBabylonContract(BabylonChainID string, BabylonContractChainID string, contractAddr string) *IBCChannelConfig {
 	return &IBCChannelConfig{
-		ChainAID:   chainAID,
-		ChainBID:   chainBID,
-		ChainAPort: zctypes.PortID,
-		ChainBPort: fmt.Sprintf("wasm.%s", contractAddr),
+		ChainAID:   BabylonContractChainID,
+		ChainBID:   BabylonChainID,
+		ChainAPort: fmt.Sprintf("wasm.%s", contractAddr),
+		ChainBPort: zctypes.PortID,
 		Ordering:   zctypes.Ordering,
 		Version:    zctypes.Version,
 	}
