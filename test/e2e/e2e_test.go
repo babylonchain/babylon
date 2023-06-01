@@ -73,10 +73,9 @@ func (s *IntegrationTestSuite) TestPhase1_IbcCheckpointing() {
 	endEpochNum := uint64(3)
 
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
-
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
+	nonValidatorNode.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
 
 	// Query checkpoint chain info for opposing chain
 	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
@@ -149,7 +148,7 @@ func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
 	s.NoError(err)
 	endEpoch := currEpoch + 1
-	chainA.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpoch + 3))
+	nonValidatorNode.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpoch + 3))
 
 	// Finalize the 1 sealed epochs
 	nonValidatorNode.FinalizeSealedEpochs(currEpoch, endEpoch)
