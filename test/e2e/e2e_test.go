@@ -144,20 +144,17 @@ func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
 	}
 	s.Len(openedChannels, 2)
 
-	// wait for 1 sealed epochs
-	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-	endEpoch := currEpoch + 1
-	nonValidatorNode.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpoch + 3))
-
-	// Finalize the 1 sealed epochs
-	nonValidatorNode.FinalizeSealedEpochs(currEpoch, endEpoch)
+	// Finalize 3 new epochs
+	startEpochNum := uint64(4)
+	endEpochNum := uint64(6)
+	nonValidatorNode.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
+	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 	nonValidatorNode.WaitForNextBlock()
 
-	// chain A must have sent endEpoch-currEpoch IBC packets to the IBC channel with Babylon contract
+	// chain A must be sending 1 IBC packet to the IBC channel with Babylon contract
 	nextSeq, err := nonValidatorNode.QueryIBCNextSequence(channels[1].ChannelId, zctypes.PortID)
 	s.NoError(err)
-	s.Equal(endEpoch-currEpoch, nextSeq)
+	s.Equal(uint64(1), nextSeq)
 }
 
 func (s *IntegrationTestSuite) TestWasm() {
@@ -185,8 +182,8 @@ func (s *IntegrationTestSuite) TestWasm() {
 	saveEpoch := int(queryResult["save_epoch"].(float64))
 
 	require.False(s.T(), finalized)
-	// in previous test we already finalized epoch 3
-	require.Equal(s.T(), 3, latestFinalizedEpoch)
+	// in previous test we already finalized epoch 6
+	require.Equal(s.T(), 6, latestFinalizedEpoch)
 	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
 	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
 }
