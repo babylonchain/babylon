@@ -344,7 +344,7 @@ func (n *NodeConfig) QueryIBCChannels() []*channeltypes.IdentifiedChannel {
 	return response.Channels
 }
 
-func (n *NodeConfig) QueryIBCNextSequence(channelID string, portID string) (uint64, error) {
+func (n *NodeConfig) QueryIBCNextSequenceReceive(channelID string, portID string) (uint64, error) {
 	path := fmt.Sprintf("/ibc/core/channel/v1/channels/%s/ports/%s/next_sequence", channelID, portID)
 
 	bz, err := n.QueryGRPCGateway(path, url.Values{})

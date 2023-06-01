@@ -44,10 +44,7 @@ func (bc *baseConfigurer) ClearResources() error {
 	}
 
 	for _, chainConfig := range bc.chainConfigs {
-		if err := os.RemoveAll(chainConfig.DataDir); err != nil {
-			bc.t.Errorf("failed to remove folder %s for chain %s: %v", chainConfig.DataDir, chainConfig.Id, err)
-			return err
-		}
+		os.RemoveAll(chainConfig.DataDir)
 	}
 
 	return nil

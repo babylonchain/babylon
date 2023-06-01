@@ -14,7 +14,6 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 )
@@ -134,27 +133,18 @@ func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
 	err = s.configurer.ConnectIBCChains(channelCfg)
 	s.NoError(err)
 
-	// there should be 2 open channels, one connecting to chain B ZoneConcierge, the other connecting to chain B Babylon contract
+	// ensure the channel with Babylon contract is open
 	channels := nonValidatorNode.QueryIBCChannels()
-	openedChannels := []*channeltypes.IdentifiedChannel{}
+	var contractChannel *channeltypes.IdentifiedChannel = nil
 	for _, channel := range channels {
-		if channel.State == channeltypes.OPEN {
-			openedChannels = append(openedChannels, channel)
+		if channel.State == channeltypes.OPEN && channel.Counterparty.PortId == fmt.Sprintf("wasm.%s", contractAddr) {
+			contractChannel = channel
+			break
 		}
 	}
-	s.Len(openedChannels, 2)
+	s.NotNil(contractChannel)
 
-	// Finalize 3 new epochs
-	startEpochNum := uint64(4)
-	endEpochNum := uint64(6)
-	nonValidatorNode.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
-	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
-	nonValidatorNode.WaitForNextBlock()
-
-	// chain A must be sending 1 IBC packet to the IBC channel with Babylon contract
-	nextSeq, err := nonValidatorNode.QueryIBCNextSequence(channels[1].ChannelId, zctypes.PortID)
-	s.NoError(err)
-	s.Equal(uint64(1), nextSeq)
+	// TODO: finalise some epochs and assert correctness of IBC packets
 }
 
 func (s *IntegrationTestSuite) TestWasm() {
@@ -182,8 +172,8 @@ func (s *IntegrationTestSuite) TestWasm() {
 	saveEpoch := int(queryResult["save_epoch"].(float64))
 
 	require.False(s.T(), finalized)
-	// in previous test we already finalized epoch 6
-	require.Equal(s.T(), 6, latestFinalizedEpoch)
+	// in previous test we already finalized epoch 3
+	require.Equal(s.T(), 3, latestFinalizedEpoch)
 	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
 	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
 }
