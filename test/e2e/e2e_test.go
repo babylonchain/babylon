@@ -15,6 +15,7 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -134,9 +135,15 @@ func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
 	err = s.configurer.ConnectIBCChains(channelCfg)
 	s.NoError(err)
 
-	// there should be 2 channels, one connecting to chain B ZoneConcierge, the other connection to chain B Babylon contract
+	// there should be 2 open channels, one connecting to chain B ZoneConcierge, the other connecting to chain B Babylon contract
 	channels := nonValidatorNode.QueryIBCChannels()
-	s.Len(channels, 2)
+	openedChannels := []*channeltypes.IdentifiedChannel{}
+	for _, channel := range channels {
+		if channel.State == channeltypes.OPEN {
+			openedChannels = append(openedChannels, channel)
+		}
+	}
+	s.Len(openedChannels, 2)
 
 	// wait for 1 sealed epochs
 	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
