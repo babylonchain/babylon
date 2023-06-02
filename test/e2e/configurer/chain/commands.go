@@ -101,8 +101,8 @@ func (n *NodeConfig) InsertProofs(p1 *btccheckpointtypes.BTCSpvProof, p2 *btcche
 	n.LogActionF("successfully inserted btc spv proofs")
 }
 
-// FinalizeSealedEpochs finalises epochs between [startEpoch, lastEpoch]
-// NOTE: this function should be invoked only when startEpoch-1 is finalised,
+// FinalizeSealedEpochs finalizes epochs between [startEpoch, lastEpoch]
+// NOTE: this function should be invoked only when startEpoch-1 is finalized,
 // otherwise checkpoints will not pass verification of Babylon
 func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 	n.LogActionF("start finalizing epochs from  %d to %d", startEpoch, lastEpoch)

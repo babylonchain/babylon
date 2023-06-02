@@ -144,7 +144,7 @@ func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
 	}
 	s.NotNil(contractChannel)
 
-	// TODO: finalise some epochs and assert correctness of IBC packets
+	// TODO: finalize some epochs and assert correctness of IBC packets
 }
 
 func (s *IntegrationTestSuite) TestWasm() {

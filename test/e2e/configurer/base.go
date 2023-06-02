@@ -193,13 +193,16 @@ func (bc *baseConfigurer) DeployWasmContract(contractCodePath string, chain *cha
 		return "", err
 	}
 
+	prevWasmCodeID := int(nonValidatorNode.QueryLatestWasmCodeID())
+
 	// store wasm code
 	nonValidatorNode.StoreWasmCode(contractCodePath, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlocks(3)
+	nonValidatorNode.WaitForNextBlocks(1)
 
 	// instantiate contract with the wasm code ID
 	latestWasmCodeID := int(nonValidatorNode.QueryLatestWasmCodeID())
-	if latestWasmCodeID == 0 {
+	// ensure latestWasmCodeID is positive and is incremented
+	if latestWasmCodeID == 0 || prevWasmCodeID+1 != latestWasmCodeID {
 		return "", fmt.Errorf("StoreWasmCode failed")
 	}
 
@@ -208,7 +211,7 @@ func (bc *baseConfigurer) DeployWasmContract(contractCodePath string, chain *cha
 		initMsg,
 		initialization.ValidatorWalletName,
 	)
-	nonValidatorNode.WaitForNextBlocks(3)
+	nonValidatorNode.WaitForNextBlocks(1)
 
 	// get the address of the instantiated contract
 	contracts, err := nonValidatorNode.QueryContractsFromId(latestWasmCodeID)
