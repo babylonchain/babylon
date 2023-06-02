@@ -8,12 +8,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"strconv"
 	"time"
 
+	"github.com/babylonchain/babylon/test/e2e/configurer/config"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -40,6 +41,16 @@ func (s *IntegrationTestSuite) TestBTCBaseHeader() {
 	s.Equal(hardcodedHeaderHeight, baseHeader.Height)
 }
 
+func (s *IntegrationTestSuite) TestEpochInterval() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	epochInterval, err := nonValidatorNode.QueryEpochInterval()
+	s.NoError(err)
+	s.Equal(epochInterval, uint64(initialization.BabylonEpochInterval))
+}
+
 func (s *IntegrationTestSuite) TestSendTx() {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	chainA := s.configurer.GetChainConfig(0)
@@ -57,25 +68,20 @@ func (s *IntegrationTestSuite) TestSendTx() {
 	s.Equal(tip1.Height+1, tip2.Height)
 }
 
-func (s *IntegrationTestSuite) TestIbcCheckpointing() {
-	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(35)
+func (s *IntegrationTestSuite) TestPhase1_IbcCheckpointing() {
+	endEpochNum := uint64(3)
 
+	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
+	nonValidatorNode.WaitUntilHeight(int64(initialization.BabylonEpochInterval*endEpochNum + 3))
 
 	// Query checkpoint chain info for opposing chain
 	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
 	s.NoError(err)
 	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
-	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
-	var (
-		startEpochNum uint64 = 1
-		endEpochNum   uint64 = 3
-	)
-
-	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+	nonValidatorNode.FinalizeSealedEpochs(1, endEpochNum)
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
@@ -100,35 +106,54 @@ func (s *IntegrationTestSuite) TestIbcCheckpointing() {
 
 	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
 	s.NoError(err)
-
-	if heightAtEndedEpoch == 0 {
-		// we can only assert, that btc lc height is larger than 0.
-		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
-	}
+	s.Greater(heightAtEndedEpoch, uint64(0), fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
 
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
 	s.NoError(err)
 }
 
-func (s *IntegrationTestSuite) TestWasm() {
-	contractPath := "/bytecode/storage_contract.wasm"
+func (s *IntegrationTestSuite) TestPhase2_BabylonContract() {
+	// chain A
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	require.NoError(s.T(), err)
-	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-	nonValidatorNode.InstantiateWasmContract(
-		strconv.Itoa(latestWasmId),
-		`{}`,
-		initialization.ValidatorWalletName,
-	)
-	nonValidatorNode.WaitForNextBlock()
-	contracts, err := nonValidatorNode.QueryContractsFromId(1)
 	s.NoError(err)
-	s.Require().Len(contracts, 1, "Wrong number of contracts for the counter")
-	contractAddr := contracts[0]
+
+	// chain B
+	chainB := s.configurer.GetChainConfig(1)
+
+	// deploy Babylon contract at chain B
+	contractPath := "/bytecode/babylon_contract.wasm"
+	initMsg := fmt.Sprintf(`{"btc_confirmation_depth":%d,"checkpoint_finalization_timeout":%d,"network":"Regtest","babylon_tag":[1,2,3,4],"notify_cosmos_zone":false}`, initialization.BabylonBtcConfirmationPeriod, initialization.BabylonBtcFinalizationPeriod)
+	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainB, initMsg)
+	s.NoError(err)
+
+	// establish IBC channel between chain A ZoneConcierge and chain B Babylon contract
+	channelCfg := config.NewIBCChannelConfigWithBabylonContract(chainA.Id, chainB.Id, contractAddr)
+	err = s.configurer.ConnectIBCChains(channelCfg)
+	s.NoError(err)
+
+	// ensure the channel with Babylon contract is open
+	channels := nonValidatorNode.QueryIBCChannels()
+	var contractChannel *channeltypes.IdentifiedChannel = nil
+	for _, channel := range channels {
+		if channel.State == channeltypes.OPEN && channel.Counterparty.PortId == fmt.Sprintf("wasm.%s", contractAddr) {
+			contractChannel = channel
+			break
+		}
+	}
+	s.NotNil(contractChannel)
+
+	// TODO: finalize some epochs and assert correctness of IBC packets
+}
+
+func (s *IntegrationTestSuite) TestWasm() {
+	// deploy the storage contract
+	contractPath := "/bytecode/storage_contract.wasm"
+	chainA := s.configurer.GetChainConfig(0)
+	initMsg := `{}`
+	contractAddr, err := s.configurer.DeployWasmContract(contractPath, chainA, initMsg)
+	require.NoError(s.T(), err)
 
 	data := []byte{1, 2, 3, 4, 5}
 	dataHex := hex.EncodeToString(data)
@@ -136,6 +161,7 @@ func (s *IntegrationTestSuite) TestWasm() {
 	dataHashHex := hex.EncodeToString(dataHash[:])
 
 	storeMsg := fmt.Sprintf(`{"save_data":{"data":"%s"}}`, dataHex)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 	queryMsg := fmt.Sprintf(`{"check_data": {"data_hash":"%s"}}`, dataHashHex)

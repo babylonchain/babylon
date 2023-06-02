@@ -14,11 +14,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	tmabcitypes "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
@@ -26,6 +21,11 @@ import (
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	mtypes "github.com/babylonchain/babylon/x/monitor/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmabcitypes "github.com/cometbft/cometbft/abci/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -177,6 +177,20 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 	return &checkpointingResponse, nil
 }
 
+func (n *NodeConfig) QueryLastRawCheckpointWithStatus(status ct.CheckpointStatus) (*ct.RawCheckpoint, error) {
+	path := fmt.Sprintf("/babylon/checkpointing/v1/last_raw_checkpoint/%s", status.String())
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return nil, err
+	}
+
+	var resp ct.QueryLastCheckpointWithStatusResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.RawCheckpoint, nil
+}
+
 func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
 	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", url.Values{})
 	require.NoError(n.t, err)
@@ -261,6 +275,16 @@ func (n *NodeConfig) QueryChainsInfo(chainIDs []string) ([]*zctypes.ChainInfo, e
 	return resp.ChainsInfo, nil
 }
 
+func (n *NodeConfig) QueryEpochInterval() (uint64, error) {
+	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/params", url.Values{})
+	require.NoError(n.t, err)
+	var epochResponse etypes.QueryParamsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &epochResponse); err != nil {
+		return 0, err
+	}
+	return epochResponse.Params.EpochInterval, nil
+}
+
 func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 	bz, err := n.QueryGRPCGateway("/babylon/epoching/v1/current_epoch", url.Values{})
 	require.NoError(n.t, err)
@@ -302,10 +326,35 @@ func (n *NodeConfig) QueryLatestWasmCodeID() uint64 {
 	var response wasmtypes.QueryCodesResponse
 	err = util.Cdc.UnmarshalJSON(bz, &response)
 	require.NoError(n.t, err)
+	n.t.Log("query result of code:", response)
 	if len(response.CodeInfos) == 0 {
 		return 0
 	}
 	return response.CodeInfos[len(response.CodeInfos)-1].CodeID
+}
+
+func (n *NodeConfig) QueryIBCChannels() []*channeltypes.IdentifiedChannel {
+	path := "/ibc/core/channel/v1/channels"
+
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+	var response channeltypes.QueryConnectionChannelsResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	require.NoError(n.t, err)
+	return response.Channels
+}
+
+func (n *NodeConfig) QueryIBCNextSequenceReceive(channelID string, portID string) (uint64, error) {
+	path := fmt.Sprintf("/ibc/core/channel/v1/channels/%s/ports/%s/next_sequence", channelID, portID)
+
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	if err != nil {
+		return 0, err
+	}
+	var response channeltypes.QueryNextSequenceReceiveResponse
+	err = util.Cdc.UnmarshalJSON(bz, &response)
+	require.NoError(n.t, err)
+	return response.NextSequenceReceive, nil
 }
 
 func (n *NodeConfig) QueryContractsFromId(codeId int) ([]string, error) {

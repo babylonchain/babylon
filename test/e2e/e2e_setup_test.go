@@ -34,16 +34,16 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	// 4. Execute various e2e tests, including IBC
 	s.configurer, err = configurer.New(s.T(), true)
 
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	err = s.configurer.ConfigureChains()
-	s.Require().NoError(err)
+	s.NoError(err)
 
 	err = s.configurer.RunSetup()
-	s.Require().NoError(err)
+	s.NoError(err)
 }
 
 func (s *IntegrationTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
-	s.Require().NoError(err)
+	s.NoError(err)
 }

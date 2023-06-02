@@ -130,7 +130,7 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.StateSync.SnapshotInterval = nodeConfig.SnapshotInterval
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
 	appConfig.SignerConfig.KeyName = ValidatorWalletName
-	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
+	appConfig.BtcConfig.Network = string(bbn.BtcRegtest)
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = "0.0.0.0:9090"
 

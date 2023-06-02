@@ -11,6 +11,7 @@ import (
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -48,6 +49,7 @@ const (
 	ValidatorWalletName = "val"
 	BabylonOpReturnTag  = "01020304"
 
+	BabylonEpochInterval         = 10
 	BabylonBtcConfirmationPeriod = 2
 	BabylonBtcFinalizationPeriod = 4
 	// chainA
@@ -228,6 +230,11 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, epochingtypes.ModuleName, epochingtypes.DefaultGenesis(), updateEpochingGenesis)
+	if err != nil {
+		return err
+	}
+
 	err = updateModuleGenesis(appGenState, checkpointingtypes.ModuleName, checkpointingtypes.DefaultGenesis(), updateCheckpointingGenesis(chain))
 	if err != nil {
 		return err
@@ -296,13 +303,17 @@ func updateCrisisGenesis(crisisGenState *crisistypes.GenesisState) {
 }
 
 func updateBtcLightClientGenesis(blcGenState *blctypes.GenesisState) {
-	btcSimnetGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
-	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcSimnetGenesisHex)
+	btcGenesisHex := "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000"
+	baseBtcHeader, err := bbn.NewBTCHeaderBytesFromHex(btcGenesisHex)
 	if err != nil {
 		panic(err)
 	}
 	work := blctypes.CalcWork(&baseBtcHeader)
 	blcGenState.BaseBtcHeader = *blctypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), 0, &work)
+}
+
+func updateEpochingGenesis(epochingGenState *epochingtypes.GenesisState) {
+	epochingGenState.Params.EpochInterval = BabylonEpochInterval
 }
 
 func updateBtccheckpointGenesis(btccheckpointGenState *btccheckpointtypes.GenesisState) {

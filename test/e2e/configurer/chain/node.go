@@ -111,6 +111,14 @@ func (n *NodeConfig) WaitUntil(doneCondition func(syncInfo coretypes.SyncInfo) b
 	n.t.Errorf("node %s timed out waiting for condition, latest block height was %d", n.Name, latestBlockHeight)
 }
 
+func (n *NodeConfig) WaitUntilHeight(height int64) {
+	n.WaitForCondition(func() bool {
+		status, err := n.rpcClient.Status(context.Background())
+		require.NoError(n.t, err)
+		return status.SyncInfo.LatestBlockHeight >= height
+	}, fmt.Sprintf("Timed out waiting for height %d", height))
+}
+
 func (n *NodeConfig) LatestBlockNumber() uint64 {
 	status, err := n.rpcClient.Status(context.Background())
 	require.NoError(n.t, err)
@@ -144,6 +152,14 @@ func (n *NodeConfig) WaitForNextBlock() {
 	n.WaitForCondition(func() bool {
 		newLatest := n.LatestBlockNumber()
 		return newLatest > latest
+	}, fmt.Sprintf("Timed out waiting for next block. Current height is: %d", latest))
+}
+
+func (n *NodeConfig) WaitForNextBlocks(x uint64) {
+	latest := n.LatestBlockNumber()
+	n.WaitForCondition(func() bool {
+		newLatest := n.LatestBlockNumber()
+		return newLatest > latest+x-1
 	}, fmt.Sprintf("Timed out waiting for next block. Current height is: %d", latest))
 }
 

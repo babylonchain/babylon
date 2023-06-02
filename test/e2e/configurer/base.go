@@ -8,16 +8,16 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
+	"github.com/babylonchain/babylon/test/e2e/configurer/config"
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/stretchr/testify/require"
 )
 
 // baseConfigurer is the base implementation for the
@@ -39,12 +39,14 @@ func (bc *baseConfigurer) ClearResources() error {
 	bc.t.Log("tearing down e2e integration test suite...")
 
 	if err := bc.containerManager.ClearResources(); err != nil {
+		bc.t.Errorf("failed to clean resources: %v", err)
 		return err
 	}
 
 	for _, chainConfig := range bc.chainConfigs {
 		os.RemoveAll(chainConfig.DataDir)
 	}
+
 	return nil
 }
 
@@ -71,11 +73,14 @@ func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 	return nil
 }
 
+// RunIBC runs a relayer between every possible pair of chains.
 func (bc *baseConfigurer) RunIBC() error {
-	// Run a relayer between every possible pair of chains.
 	for i := 0; i < len(bc.chainConfigs); i++ {
 		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.runIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+			chainConfigA := bc.chainConfigs[i]
+			chainConfigB := bc.chainConfigs[j]
+			channelCfg := config.NewIBCChannelConfigTwoBabylonChains(chainConfigA.Id, chainConfigB.Id)
+			if err := bc.runIBCRelayer(chainConfigA, chainConfigB, channelCfg); err != nil {
 				return err
 			}
 		}
@@ -83,7 +88,9 @@ func (bc *baseConfigurer) RunIBC() error {
 	return nil
 }
 
-func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
+// runIBCRelayer runs a relayer between a given pair of chains with a given
+// config for the IBC channel
+func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config, channelCfg *config.IBCChannelConfig) error {
 	bc.t.Log("starting Hermes relayer container...")
 
 	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-hermes-")
@@ -163,24 +170,60 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 	time.Sleep(10 * time.Second)
 
 	// create the client, connection and channel between the two babylon chains
-	return bc.connectIBCChains(chainConfigA, chainConfigB)
+	return bc.ConnectIBCChains(channelCfg)
 }
 
-func (bc *baseConfigurer) connectIBCChains(chainA *chain.Config, chainB *chain.Config) error {
-	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
-	cmd := []string{"hermes", "create", "channel",
-		"--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, // channel ID
-		"--a-port", zctypes.PortID, "--b-port", zctypes.PortID, // port
-		"--order", zctypes.Ordering.String(), // ordering
-		"--channel-version", zctypes.Version, // version
-		"--new-client-connection", "--yes",
-	}
+func (bc *baseConfigurer) ConnectIBCChains(cfg *config.IBCChannelConfig) error {
+	bc.t.Logf("connecting %s and %s chains via IBC", cfg.ChainAID, cfg.ChainBID)
+	cmd := cfg.ToCmd()
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {
 		return err
 	}
-	bc.t.Logf("connected %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	bc.t.Logf("connected %s and %s chains via IBC", cfg.ChainAID, cfg.ChainBID)
 	return nil
+}
+
+// DeployWasmContract instantiates a wasm smart contract from a given
+// contract code and a given instantiation message on a given chain
+// It returns the contract address
+func (bc *baseConfigurer) DeployWasmContract(contractCodePath string, chain *chain.Config, initMsg string) (string, error) {
+	nonValidatorNode, err := chain.GetNodeAtIndex(2) // TODO: find a generic way to get non validator node
+	if err != nil {
+		return "", err
+	}
+
+	prevWasmCodeID := int(nonValidatorNode.QueryLatestWasmCodeID())
+
+	// store wasm code
+	nonValidatorNode.StoreWasmCode(contractCodePath, initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlocks(1)
+
+	// instantiate contract with the wasm code ID
+	latestWasmCodeID := int(nonValidatorNode.QueryLatestWasmCodeID())
+	// ensure latestWasmCodeID is positive and is incremented
+	if latestWasmCodeID == 0 || prevWasmCodeID+1 != latestWasmCodeID {
+		return "", fmt.Errorf("StoreWasmCode failed")
+	}
+
+	nonValidatorNode.InstantiateWasmContract(
+		strconv.Itoa(latestWasmCodeID),
+		initMsg,
+		initialization.ValidatorWalletName,
+	)
+	nonValidatorNode.WaitForNextBlocks(1)
+
+	// get the address of the instantiated contract
+	contracts, err := nonValidatorNode.QueryContractsFromId(latestWasmCodeID)
+	if err != nil {
+		return "", err
+	}
+	if len(contracts) == 0 {
+		return "", fmt.Errorf("InstantiateWasmContract failed")
+	}
+	contractAddr := contracts[0]
+
+	return contractAddr, nil
 }
 
 func (bc *baseConfigurer) initializeChainConfigFromInitChain(initializedChain *initialization.Chain, chainConfig *chain.Config) {
