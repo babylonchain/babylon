@@ -228,11 +228,7 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-integration:
-	@echo "Running babylon integration test"
-	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration -p 1
-
-test-e2e:
+test-e2e: build-docker
 	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 test-sim-nondeterminism:
@@ -420,9 +416,6 @@ localnet-start: localnet-stop build-docker localnet-start-nodes
 localnet-stop:
 	docker-compose down
 
-# localnet-test-integration will spin up a localnet and run integration tests on it
-localnet-test-integration: localnet-start test-integration localnet-stop
-
 build-test-wasm:
 	docker run --rm -v "$(WASM_DIR)":/code \
 		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
@@ -437,7 +430,6 @@ build-test-wasm:
 init-testnet-dirs \
 localnet-start-nodes \
 localnet-start \
-localnet-test-integration \
 localnet-stop
 
 .PHONY: diagrams
