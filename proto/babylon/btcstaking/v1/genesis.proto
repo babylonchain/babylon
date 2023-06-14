@@ -1,0 +1,12 @@
+syntax = "proto3";
+package babylon.btcstaking.v1;
+
+import "gogoproto/gogo.proto";
+import "babylon/btcstaking/v1/params.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+
+// GenesisState defines the btcstaking module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}

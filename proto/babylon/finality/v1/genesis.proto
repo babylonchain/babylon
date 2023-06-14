@@ -1,0 +1,12 @@
+syntax = "proto3";
+package babylon.finality.v1;
+
+import "gogoproto/gogo.proto";
+import "babylon/finality/v1/params.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/finality/types";
+
+// GenesisState defines the finality module's genesis state.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}

@@ -1,0 +1,7 @@
+syntax = "proto3";
+package babylon.finality.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/finality/types";
+
+// Msg defines the Msg service.
+service Msg {}

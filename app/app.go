@@ -108,12 +108,18 @@ import (
 	"github.com/babylonchain/babylon/x/btclightclient"
 	btclightclientkeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/babylonchain/babylon/x/btcstaking"
+	btcstakingkeeper "github.com/babylonchain/babylon/x/btcstaking/keeper"
+	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/checkpointing"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/babylonchain/babylon/x/finality"
+	finalitykeeper "github.com/babylonchain/babylon/x/finality/keeper"
+	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
 	"github.com/babylonchain/babylon/x/monitor"
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
@@ -318,6 +324,10 @@ type BabylonApp struct {
 	TransferKeeper      ibctransferkeeper.Keeper // for cross-chain fungible token transfers
 	ZoneConciergeKeeper zckeeper.Keeper          // for cross-chain fungible token transfers
 
+	// BTC staking related modules
+	BTCStakingKeeper btcstakingkeeper.Keeper
+	FinalityKeeper   finalitykeeper.Keeper
+
 	WasmKeeper wasm.Keeper
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
@@ -386,6 +396,10 @@ func NewBabylonApp(
 		ibctransfertypes.StoreKey,
 		ibcfeetypes.StoreKey,
 		zctypes.StoreKey,
+		// BTC staking related modules
+		btcstakingtypes.StoreKey,
+		finalitytypes.StoreKey,
+		// WASM
 		wasm.StoreKey,
 	)
 
@@ -595,6 +609,15 @@ func NewBabylonApp(
 		&btclightclientKeeper,
 	)
 
+	// set up BTC staking keeper
+	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
+		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey], app.GetSubspace(btcstakingtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+	)
+	app.FinalityKeeper = finalitykeeper.NewKeeper(
+		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.GetSubspace(finalitytypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		app.BTCStakingKeeper,
+	)
+
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
 	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
 	// make ZoneConcierge to subscribe to the epoching's hooks
@@ -717,6 +740,9 @@ func NewBabylonApp(
 		transfer.NewAppModule(app.TransferKeeper),
 		zoneconcierge.NewAppModule(appCodec, app.ZoneConciergeKeeper, app.AccountKeeper, app.BankKeeper),
 		ibcfee.NewAppModule(app.IBCFeeKeeper),
+		// BTC staking related modules
+		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper, app.AccountKeeper, app.BankKeeper),
+		finality.NewAppModule(appCodec, app.FinalityKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -742,6 +768,9 @@ func NewBabylonApp(
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
+		// BTC staking related modules
+		btcstakingtypes.ModuleName,
+		finalitytypes.ModuleName,
 	)
 	// TODO: there will be an architecture design on whether to modify slashing/evidence, specifically
 	// - how many validators can we slash in a single epoch and
@@ -767,6 +796,9 @@ func NewBabylonApp(
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
+		// BTC staking related modules
+		btcstakingtypes.ModuleName,
+		finalitytypes.ModuleName,
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers[:2], app.mm.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
@@ -794,6 +826,9 @@ func NewBabylonApp(
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
 		wasm.ModuleName,
+		// BTC staking related modules
+		btcstakingtypes.ModuleName,
+		finalitytypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.
