@@ -30,6 +30,7 @@ require (
 	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/CosmWasm/wasmvm v1.2.3
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
+	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.2
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
@@ -134,7 +135,6 @@ require (
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
-	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect

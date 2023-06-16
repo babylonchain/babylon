@@ -14,6 +14,11 @@ const (
 	MemStoreKey = "mem_btcstaking"
 )
 
+var (
+	BTCValidatorKey  = []byte{0x01} // key prefix for the BTC validators
+	BTCDelegationKey = []byte{0x02} // key prefix for the BTC delegations
+)
+
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }

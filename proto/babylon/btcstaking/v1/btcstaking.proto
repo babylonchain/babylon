@@ -1,0 +1,84 @@
+syntax = "proto3";
+package babylon.btcstaking.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/crypto/secp256k1/keys.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+
+// BTCValidator defines a BTC validator
+message BTCValidator {
+    // babylon_pk is the Babylon secp256k1 PK of this BTC validator
+    cosmos.crypto.secp256k1.PubKey babylon_pk = 1;
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC validator
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // pop is the proof of possession of babylon_pk and btc_pk
+    ProofOfPossession pop = 3;
+}
+
+// BTCDelegation defines a BTC delegation
+message BTCDelegation {
+    // babylon_pk is the Babylon secp256k1 PK of this BTC delegation
+    cosmos.crypto.secp256k1.PubKey babylon_pk = 1;
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // pop is the proof of possession of babylon_pk and btc_pk
+    ProofOfPossession pop = 3;
+    // val_btc_pk is the Bitcoin secp256k1 PK of the BTC validator that
+    // this BTC delegation delegates to
+    // the PK follows encoding in BIP-340 spec
+    bytes val_btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // start_height is the start BTC height of the BTC delegation
+    // it is the start BTC height of the timelock
+    uint64 start_height = 5;
+    // end_height is the end height of the BTC delegation
+    // it is the end BTC height of the timelock - w
+    uint64 end_height = 6;
+    // total_sat is the total amount of BTC stakes in this delegation
+    // quantified in satoshi
+    uint64 total_sat = 7;
+    // staking_tx is the staking tx 
+    // It is signed by SK corresponding to btc_pk and is already on Bitcoin chain
+    StakingTx staking_tx = 8;
+    // staking_tx_sig is the signature of the staking tx
+    // signed by SK corresponding to btc_pk
+    bytes staking_tx_sig = 9 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // slashing_tx is the slashing tx
+    // It is partially signed by SK corresponding to btc_pk, but not signed by 
+    // validator or jury yet.
+    SlashingTx slashing_tx = 10;
+    // slashing_tx_sig is the signature of the slashing tx
+    // signed by SK corresponding to btc_pk
+    bytes slashing_tx_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
+// ProofOfPossession is the proof of possession that a Babylon secp256k1
+// secret key and a Bitcoin secp256k1 secret key are held by the same
+// person
+message ProofOfPossession {
+    // babylon_sig is the signature generated via sign(sk_babylon, pk_btc)
+    bytes babylon_sig = 1;
+    // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
+    // the signature follows encoding in BIP-340 spec
+    bytes btc_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
+// StakingTx defines a staking tx
+message StakingTx {
+    // tx is the staking tx in bytes
+    bytes tx = 1;
+    // change_out_script is the output script of the change
+    bytes change_out_script = 2;
+    // slashing_out_script is the output script of the slashing path
+    bytes slashing_out_script = 3;
+}
+
+// SlashingTx defines a slashing tx
+message SlashingTx {
+    // tx is the slashing tx in bytes
+    bytes tx = 1;
+    // out_script is the output script of the slashing path
+    bytes out_script = 2;
+}

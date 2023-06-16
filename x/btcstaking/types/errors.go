@@ -6,5 +6,6 @@ import (
 
 // x/btcstaking module sentinel errors
 var (
-	ErrSample = errorsmod.Register(ModuleName, 1100, "sample error")
+	ErrBTCValNotFound = errorsmod.Register(ModuleName, 1100, "the BTC validator is not found")
+	ErrBTCDelNotFound = errorsmod.Register(ModuleName, 1101, "the BTC delegation is not found")
 )
