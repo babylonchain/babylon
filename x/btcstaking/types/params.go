@@ -12,14 +12,10 @@ func ParamKeyTable() paramtypes.KeyTable {
 	return paramtypes.NewKeyTable().RegisterParamSet(&Params{})
 }
 
-// NewParams creates a new Params instance
-func NewParams() Params {
-	return Params{}
-}
-
 // DefaultParams returns a default set of parameters
+// TODO: decide default parameters?
 func DefaultParams() Params {
-	return NewParams()
+	return Params{}
 }
 
 // ParamSetPairs get the params.ParamSet

@@ -41,14 +41,14 @@ message BTCDelegation {
     uint64 total_sat = 7;
     // staking_tx is the staking tx 
     // It is signed by SK corresponding to btc_pk and is already on Bitcoin chain
-    StakingTx staking_tx = 8;
+    bytes staking_tx = 8 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCStakingTx" ];
     // staking_tx_sig is the signature of the staking tx
     // signed by SK corresponding to btc_pk
     bytes staking_tx_sig = 9 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by 
     // validator or jury yet.
-    SlashingTx slashing_tx = 10;
+    bytes slashing_tx = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
     // slashing_tx_sig is the signature of the slashing tx
     // signed by SK corresponding to btc_pk
     bytes slashing_tx_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
@@ -63,22 +63,4 @@ message ProofOfPossession {
     // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
     // the signature follows encoding in BIP-340 spec
     bytes btc_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-}
-
-// StakingTx defines a staking tx
-message StakingTx {
-    // tx is the staking tx in bytes
-    bytes tx = 1;
-    // change_out_script is the output script of the change
-    bytes change_out_script = 2;
-    // slashing_out_script is the output script of the slashing path
-    bytes slashing_out_script = 3;
-}
-
-// SlashingTx defines a slashing tx
-message SlashingTx {
-    // tx is the slashing tx in bytes
-    bytes tx = 1;
-    // out_script is the output script of the slashing path
-    bytes out_script = 2;
 }

@@ -87,8 +87,7 @@ paths:
 
                               valideated the proof?
                         title: >-
-                          TransactionInfo is the info of a tx that contains
-                          Babylon checkpoint,
+                          TransactionInfo is the info of a tx on Bitcoin,
 
                           including
 
@@ -404,16 +403,11 @@ paths:
                             already processed and
 
                             valideated the proof?
-                      title: >-
-                        TransactionInfo is the info of a tx that contains
-                        Babylon checkpoint,
-
+                      title: |-
+                        TransactionInfo is the info of a tx on Bitcoin,
                         including
-
                         - the position of the tx on BTC blockchain
-
                         - the full tx content
-
                         - the Merkle proof that this tx is on the above position
                     title: the BTC checkpoint transactions of the best submission
                   best_submission_vigilante_address_list:
@@ -8392,16 +8386,11 @@ paths:
                             already processed and
 
                             valideated the proof?
-                      title: >-
-                        TransactionInfo is the info of a tx that contains
-                        Babylon checkpoint,
-
+                      title: |-
+                        TransactionInfo is the info of a tx on Bitcoin,
                         including
-
                         - the position of the tx on BTC blockchain
-
                         - the full tx content
-
                         - the Merkle proof that this tx is on the above position
                     title: >-
                       proof_epoch_submitted is the proof that the epoch's
@@ -9437,8 +9426,7 @@ paths:
 
                                   valideated the proof?
                             title: >-
-                              TransactionInfo is the info of a tx that contains
-                              Babylon checkpoint,
+                              TransactionInfo is the info of a tx on Bitcoin,
 
                               including
 
@@ -10742,16 +10730,11 @@ definitions:
                 processed and
 
                 valideated the proof?
-          title: >-
-            TransactionInfo is the info of a tx that contains Babylon
-            checkpoint,
-
+          title: |-
+            TransactionInfo is the info of a tx on Bitcoin,
             including
-
             - the position of the tx on BTC blockchain
-
             - the full tx content
-
             - the Merkle proof that this tx is on the above position
         title: the BTC checkpoint transactions of the best submission
       best_submission_vigilante_address_list:
@@ -10925,16 +10908,11 @@ definitions:
                     processed and
 
                     valideated the proof?
-              title: >-
-                TransactionInfo is the info of a tx that contains Babylon
-                checkpoint,
-
+              title: |-
+                TransactionInfo is the info of a tx on Bitcoin,
                 including
-
                 - the position of the tx on BTC blockchain
-
                 - the full tx content
-
                 - the Merkle proof that this tx is on the above position
             title: the BTC checkpoint transactions of the best submission
           best_submission_vigilante_address_list:
@@ -11051,16 +11029,11 @@ definitions:
                       processed and
 
                       valideated the proof?
-                title: >-
-                  TransactionInfo is the info of a tx that contains Babylon
-                  checkpoint,
-
+                title: |-
+                  TransactionInfo is the info of a tx on Bitcoin,
                   including
-
                   - the position of the tx on BTC blockchain
-
                   - the full tx content
-
                   - the Merkle proof that this tx is on the above position
               title: the BTC checkpoint transactions of the best submission
             best_submission_vigilante_address_list:
@@ -11322,7 +11295,7 @@ definitions:
 
           valideated the proof?
     title: |-
-      TransactionInfo is the info of a tx that contains Babylon checkpoint,
+      TransactionInfo is the info of a tx on Bitcoin,
       including
       - the position of the tx on BTC blockchain
       - the full tx content
@@ -16703,16 +16676,11 @@ definitions:
                     processed and
 
                     valideated the proof?
-              title: >-
-                TransactionInfo is the info of a tx that contains Babylon
-                checkpoint,
-
+              title: |-
+                TransactionInfo is the info of a tx on Bitcoin,
                 including
-
                 - the position of the tx on BTC blockchain
-
                 - the full tx content
-
                 - the Merkle proof that this tx is on the above position
             title: >-
               proof_epoch_submitted is the proof that the epoch's checkpoint is
@@ -17303,16 +17271,11 @@ definitions:
                 processed and
 
                 valideated the proof?
-          title: >-
-            TransactionInfo is the info of a tx that contains Babylon
-            checkpoint,
-
+          title: |-
+            TransactionInfo is the info of a tx on Bitcoin,
             including
-
             - the position of the tx on BTC blockchain
-
             - the full tx content
-
             - the Merkle proof that this tx is on the above position
         title: >-
           proof_epoch_submitted is the proof that the epoch's checkpoint is
@@ -18767,16 +18730,11 @@ definitions:
                     processed and
 
                     valideated the proof?
-              title: >-
-                TransactionInfo is the info of a tx that contains Babylon
-                checkpoint,
-
+              title: |-
+                TransactionInfo is the info of a tx on Bitcoin,
                 including
-
                 - the position of the tx on BTC blockchain
-
                 - the full tx content
-
                 - the Merkle proof that this tx is on the above position
             title: >-
               proof_epoch_submitted is the proof that the epoch's checkpoint is
@@ -19564,16 +19522,11 @@ definitions:
                           already processed and
 
                           valideated the proof?
-                    title: >-
-                      TransactionInfo is the info of a tx that contains Babylon
-                      checkpoint,
-
+                    title: |-
+                      TransactionInfo is the info of a tx on Bitcoin,
                       including
-
                       - the position of the tx on BTC blockchain
-
                       - the full tx content
-
                       - the Merkle proof that this tx is on the above position
                   title: >-
                     proof_epoch_submitted is the proof that the epoch's

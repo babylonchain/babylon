@@ -6,10 +6,20 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	types "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	_ "github.com/cosmos/cosmos-proto"
+	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
+	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,19 +33,387 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgCreateBTCValidator is the message for creating a BTC validator
+type MsgCreateBTCValidator struct {
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// babylon_pk is the Babylon secp256k1 PK of this BTC validator
+	BabylonPk *secp256k1.PubKey `protobuf:"bytes,2,opt,name=babylon_pk,json=babylonPk,proto3" json:"babylon_pk,omitempty"`
+	// btc_pk is the Bitcoin secp256k1 PK of this BTC validator
+	// the PK follows encoding in BIP-340 spec
+	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,3,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
+	// pop is the proof of possession of babylon_pk and btc_pk
+	Pop *ProofOfPossession `protobuf:"bytes,4,opt,name=pop,proto3" json:"pop,omitempty"`
+}
+
+func (m *MsgCreateBTCValidator) Reset()         { *m = MsgCreateBTCValidator{} }
+func (m *MsgCreateBTCValidator) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateBTCValidator) ProtoMessage()    {}
+func (*MsgCreateBTCValidator) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{0}
+}
+func (m *MsgCreateBTCValidator) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateBTCValidator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateBTCValidator.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateBTCValidator) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateBTCValidator.Merge(m, src)
+}
+func (m *MsgCreateBTCValidator) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateBTCValidator) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateBTCValidator.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateBTCValidator proto.InternalMessageInfo
+
+func (m *MsgCreateBTCValidator) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgCreateBTCValidator) GetBabylonPk() *secp256k1.PubKey {
+	if m != nil {
+		return m.BabylonPk
+	}
+	return nil
+}
+
+func (m *MsgCreateBTCValidator) GetPop() *ProofOfPossession {
+	if m != nil {
+		return m.Pop
+	}
+	return nil
+}
+
+// MsgCreateBTCValidatorResponse is the response for MsgCreateBTCValidator
+type MsgCreateBTCValidatorResponse struct {
+}
+
+func (m *MsgCreateBTCValidatorResponse) Reset()         { *m = MsgCreateBTCValidatorResponse{} }
+func (m *MsgCreateBTCValidatorResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateBTCValidatorResponse) ProtoMessage()    {}
+func (*MsgCreateBTCValidatorResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{1}
+}
+func (m *MsgCreateBTCValidatorResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateBTCValidatorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateBTCValidatorResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateBTCValidatorResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateBTCValidatorResponse.Merge(m, src)
+}
+func (m *MsgCreateBTCValidatorResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateBTCValidatorResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateBTCValidatorResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateBTCValidatorResponse proto.InternalMessageInfo
+
+// MsgCreateBTCDelegation is the message for creating a BTC delegation
+type MsgCreateBTCDelegation struct {
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// babylon_pk is the Babylon secp256k1 PK of this BTC delegation
+	BabylonPk *secp256k1.PubKey `protobuf:"bytes,2,opt,name=babylon_pk,json=babylonPk,proto3" json:"babylon_pk,omitempty"`
+	// pop is the proof of possession of babylon_pk and btc_pk
+	Pop *ProofOfPossession `protobuf:"bytes,3,opt,name=pop,proto3" json:"pop,omitempty"`
+	// staking_tx is the staking tx
+	// It is signed by SK corresponding to btc_pk and is already on Bitcoin chain
+	StakingTx *github_com_babylonchain_babylon_types.BTCStakingTx `protobuf:"bytes,4,opt,name=staking_tx,json=stakingTx,proto3,customtype=github.com/babylonchain/babylon/types.BTCStakingTx" json:"staking_tx,omitempty"`
+	// staking_tx_sig is the signature of the staking tx
+	// signed by SK corresponding to btc_pk
+	StakingTxSig *github_com_babylonchain_babylon_types.BIP340Signature `protobuf:"bytes,5,opt,name=staking_tx_sig,json=stakingTxSig,proto3,customtype=github.com/babylonchain/babylon/types.BIP340Signature" json:"staking_tx_sig,omitempty"`
+	// staking_tx_info is the tx info of the staking tx, including the Merkle proof
+	StakingTxInfo *types.TransactionInfo `protobuf:"bytes,6,opt,name=staking_tx_info,json=stakingTxInfo,proto3" json:"staking_tx_info,omitempty"`
+	// slashing_tx is the slashing tx
+	// It is partially signed by SK corresponding to btc_pk, but not signed by
+	// validator or jury yet.
+	SlashingTx *github_com_babylonchain_babylon_types.BTCSlashingTx `protobuf:"bytes,7,opt,name=slashing_tx,json=slashingTx,proto3,customtype=github.com/babylonchain/babylon/types.BTCSlashingTx" json:"slashing_tx,omitempty"`
+	// slashing_tx_sig is the signature of the slashing tx
+	// signed by SK corresponding to btc_pk
+	SlashingTxSig *github_com_babylonchain_babylon_types.BIP340Signature `protobuf:"bytes,8,opt,name=slashing_tx_sig,json=slashingTxSig,proto3,customtype=github.com/babylonchain/babylon/types.BIP340Signature" json:"slashing_tx_sig,omitempty"`
+}
+
+func (m *MsgCreateBTCDelegation) Reset()         { *m = MsgCreateBTCDelegation{} }
+func (m *MsgCreateBTCDelegation) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateBTCDelegation) ProtoMessage()    {}
+func (*MsgCreateBTCDelegation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{2}
+}
+func (m *MsgCreateBTCDelegation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateBTCDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateBTCDelegation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateBTCDelegation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateBTCDelegation.Merge(m, src)
+}
+func (m *MsgCreateBTCDelegation) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateBTCDelegation) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateBTCDelegation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateBTCDelegation proto.InternalMessageInfo
+
+func (m *MsgCreateBTCDelegation) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgCreateBTCDelegation) GetBabylonPk() *secp256k1.PubKey {
+	if m != nil {
+		return m.BabylonPk
+	}
+	return nil
+}
+
+func (m *MsgCreateBTCDelegation) GetPop() *ProofOfPossession {
+	if m != nil {
+		return m.Pop
+	}
+	return nil
+}
+
+func (m *MsgCreateBTCDelegation) GetStakingTxInfo() *types.TransactionInfo {
+	if m != nil {
+		return m.StakingTxInfo
+	}
+	return nil
+}
+
+// MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
+type MsgCreateBTCDelegationResponse struct {
+}
+
+func (m *MsgCreateBTCDelegationResponse) Reset()         { *m = MsgCreateBTCDelegationResponse{} }
+func (m *MsgCreateBTCDelegationResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCreateBTCDelegationResponse) ProtoMessage()    {}
+func (*MsgCreateBTCDelegationResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{3}
+}
+func (m *MsgCreateBTCDelegationResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCreateBTCDelegationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCreateBTCDelegationResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCreateBTCDelegationResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCreateBTCDelegationResponse.Merge(m, src)
+}
+func (m *MsgCreateBTCDelegationResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCreateBTCDelegationResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCreateBTCDelegationResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCreateBTCDelegationResponse proto.InternalMessageInfo
+
+// MsgUpdateParams defines a message for updating btcstaking module parameters.
+type MsgUpdateParams struct {
+	// authority is the address of the governance account.
+	// just FYI: cosmos.AddressString marks that this field should use type alias
+	// for AddressString instead of string, but the functionality is not yet implemented
+	// in cosmos-proto
+	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
+	// params defines the epoching paramaeters parameters to update.
+	//
+	// NOTE: All parameters must be supplied.
+	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
+}
+
+func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
+func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateParams) ProtoMessage()    {}
+func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{4}
+}
+func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateParams) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateParams.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateParams) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateParams.Merge(m, src)
+}
+func (m *MsgUpdateParams) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateParams) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateParams.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateParams proto.InternalMessageInfo
+
+func (m *MsgUpdateParams) GetAuthority() string {
+	if m != nil {
+		return m.Authority
+	}
+	return ""
+}
+
+func (m *MsgUpdateParams) GetParams() Params {
+	if m != nil {
+		return m.Params
+	}
+	return Params{}
+}
+
+// MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
+type MsgUpdateParamsResponse struct {
+}
+
+func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse{} }
+func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgUpdateParamsResponse) ProtoMessage()    {}
+func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4baddb53e97f38f2, []int{5}
+}
+func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgUpdateParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgUpdateParamsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgUpdateParamsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgUpdateParamsResponse.Merge(m, src)
+}
+func (m *MsgUpdateParamsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgUpdateParamsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
+
+func init() {
+	proto.RegisterType((*MsgCreateBTCValidator)(nil), "babylon.btcstaking.v1.MsgCreateBTCValidator")
+	proto.RegisterType((*MsgCreateBTCValidatorResponse)(nil), "babylon.btcstaking.v1.MsgCreateBTCValidatorResponse")
+	proto.RegisterType((*MsgCreateBTCDelegation)(nil), "babylon.btcstaking.v1.MsgCreateBTCDelegation")
+	proto.RegisterType((*MsgCreateBTCDelegationResponse)(nil), "babylon.btcstaking.v1.MsgCreateBTCDelegationResponse")
+	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.btcstaking.v1.MsgUpdateParams")
+	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.btcstaking.v1.MsgUpdateParamsResponse")
+}
+
 func init() { proto.RegisterFile("babylon/btcstaking/v1/tx.proto", fileDescriptor_4baddb53e97f38f2) }
 
 var fileDescriptor_4baddb53e97f38f2 = []byte{
-	// 137 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x4b, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0x2e, 0x2e, 0x49, 0xcc, 0xce, 0xcc, 0x4b, 0xd7, 0x2f,
-	0x33, 0xd4, 0x2f, 0xa9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x85, 0xca, 0xeb, 0x21,
-	0xe4, 0xf5, 0xca, 0x0c, 0x8d, 0x58, 0xb9, 0x98, 0x7d, 0x8b, 0xd3, 0x9d, 0x7c, 0x4e, 0x3c, 0x92,
-	0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18, 0x2e, 0x3c,
-	0x96, 0x63, 0xb8, 0xf1, 0x58, 0x8e, 0x21, 0xca, 0x28, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f,
-	0x39, 0x3f, 0x57, 0x1f, 0x6a, 0x44, 0x72, 0x46, 0x62, 0x66, 0x1e, 0x8c, 0xa3, 0x5f, 0x81, 0x6c,
-	0x63, 0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0xd8, 0x4a, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x8c, 0xcc, 0x21, 0x9b, 0x94, 0x00, 0x00, 0x00,
+	// 723 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x95, 0xcb, 0x6e, 0xd3, 0x4c,
+	0x14, 0xc7, 0xe3, 0xa6, 0xcd, 0xf7, 0x65, 0x7a, 0x93, 0x86, 0x5e, 0xd2, 0x48, 0x75, 0xa2, 0x2c,
+	0xaa, 0x80, 0x5a, 0x9b, 0xa4, 0x17, 0x44, 0x91, 0x90, 0x48, 0xd9, 0x54, 0x10, 0x11, 0x9c, 0x14,
+	0x21, 0x36, 0xd1, 0xd8, 0x99, 0x4c, 0x46, 0x49, 0x3c, 0x96, 0x67, 0x52, 0x25, 0x62, 0xc7, 0x13,
+	0xb0, 0xe2, 0x39, 0x58, 0xf0, 0x10, 0x5d, 0x56, 0xac, 0x50, 0x17, 0x11, 0x6a, 0x91, 0x78, 0x01,
+	0x56, 0xac, 0x50, 0xec, 0x49, 0x6c, 0x90, 0x2b, 0x1a, 0x10, 0xbb, 0x39, 0x39, 0xbf, 0xf3, 0x3f,
+	0x97, 0x39, 0x19, 0x03, 0xd5, 0x44, 0xe6, 0xa0, 0xc3, 0x6c, 0xdd, 0x14, 0x16, 0x17, 0xa8, 0x4d,
+	0x6d, 0xa2, 0x9f, 0x16, 0x74, 0xd1, 0xd7, 0x1c, 0x97, 0x09, 0x06, 0x57, 0xa5, 0x5f, 0x0b, 0xfc,
+	0xda, 0x69, 0x21, 0xbd, 0x42, 0x18, 0x61, 0x1e, 0xa1, 0x8f, 0x4e, 0x3e, 0x9c, 0xde, 0xb0, 0x18,
+	0xef, 0x32, 0x5e, 0xf7, 0x1d, 0xbe, 0x21, 0x5d, 0xeb, 0xbe, 0xa5, 0x77, 0xb9, 0xa7, 0xdf, 0xe5,
+	0x44, 0x3a, 0x72, 0xd2, 0x61, 0xb9, 0x03, 0x47, 0x30, 0x9d, 0x63, 0xcb, 0x29, 0xee, 0x1f, 0xb4,
+	0x0b, 0x7a, 0x1b, 0x0f, 0xc6, 0xc1, 0xb9, 0xe8, 0x22, 0x1d, 0xe4, 0xa2, 0xee, 0x98, 0xd9, 0x8a,
+	0x66, 0x42, 0x65, 0xfb, 0xdc, 0x76, 0x88, 0xb3, 0x5a, 0xd8, 0x6a, 0x3b, 0x8c, 0xda, 0x42, 0xa2,
+	0xc1, 0x0f, 0x3e, 0x9d, 0xfb, 0xae, 0x80, 0xd5, 0x32, 0x27, 0x47, 0x2e, 0x46, 0x02, 0x97, 0x6a,
+	0x47, 0x2f, 0x50, 0x87, 0x36, 0x90, 0x60, 0x2e, 0x5c, 0x03, 0x09, 0x4e, 0x89, 0x8d, 0xdd, 0x94,
+	0x92, 0x55, 0xf2, 0x49, 0x43, 0x5a, 0xf0, 0x21, 0x00, 0x32, 0x43, 0xdd, 0x69, 0xa7, 0x66, 0xb2,
+	0x4a, 0x7e, 0xbe, 0x98, 0xd1, 0xe4, 0x2c, 0xfc, 0x26, 0xb5, 0x49, 0x93, 0x5a, 0xa5, 0x67, 0x3e,
+	0xc1, 0x03, 0x23, 0x29, 0x43, 0x2a, 0x6d, 0x58, 0x06, 0x09, 0x53, 0x58, 0xa3, 0xd8, 0x78, 0x56,
+	0xc9, 0x2f, 0x94, 0x0e, 0x2e, 0x86, 0x99, 0x22, 0xa1, 0xa2, 0xd5, 0x33, 0x35, 0x8b, 0x75, 0x75,
+	0x49, 0x5a, 0x2d, 0x44, 0xed, 0xb1, 0xa1, 0x8b, 0x81, 0x83, 0xb9, 0x56, 0x3a, 0xae, 0xec, 0xee,
+	0xdd, 0x95, 0x92, 0x73, 0xa6, 0xb0, 0x2a, 0x6d, 0x78, 0x08, 0xe2, 0x0e, 0x73, 0x52, 0xb3, 0x5e,
+	0x1d, 0x79, 0x2d, 0xf2, 0x36, 0xb5, 0x8a, 0xcb, 0x58, 0xf3, 0x59, 0xb3, 0xc2, 0x38, 0xc7, 0x9c,
+	0x53, 0x66, 0x1b, 0xa3, 0xa0, 0x5c, 0x06, 0x6c, 0x46, 0xf6, 0x6e, 0x60, 0xee, 0x30, 0x9b, 0xe3,
+	0xdc, 0xb7, 0x59, 0xb0, 0x16, 0x26, 0x1e, 0xe3, 0x0e, 0x26, 0x48, 0x50, 0x66, 0xff, 0xb3, 0xf1,
+	0xc8, 0x7e, 0xe2, 0x7f, 0xd0, 0x0f, 0x3c, 0x01, 0x40, 0x42, 0x75, 0xd1, 0xf7, 0x46, 0x32, 0xdd,
+	0x78, 0x6b, 0x47, 0x55, 0x3f, 0xbc, 0xd6, 0x37, 0x92, 0x7c, 0x7c, 0x84, 0x75, 0xb0, 0x14, 0xc8,
+	0xd6, 0x39, 0x25, 0xa9, 0x39, 0x4f, 0xfa, 0xfe, 0xc5, 0x30, 0xb3, 0x3f, 0xcd, 0xcd, 0x55, 0x29,
+	0xb1, 0x91, 0xe8, 0xb9, 0xd8, 0x58, 0x98, 0xa8, 0x57, 0x29, 0x81, 0xcf, 0xc1, 0x72, 0x28, 0x01,
+	0xb5, 0x9b, 0x2c, 0x95, 0xf0, 0xfa, 0xbf, 0x1d, 0xee, 0x3f, 0xb4, 0xbb, 0xa7, 0x05, 0xad, 0xe6,
+	0x22, 0x9b, 0x23, 0x6b, 0x74, 0x17, 0xc7, 0x76, 0x93, 0x19, 0x8b, 0x13, 0xc5, 0x91, 0x09, 0x5f,
+	0x82, 0x79, 0xde, 0x41, 0xbc, 0x25, 0x67, 0xf1, 0x9f, 0x57, 0xf0, 0xbd, 0x8b, 0x61, 0x66, 0xf7,
+	0xe6, 0xb3, 0x90, 0xf1, 0xb5, 0xbe, 0x01, 0xf8, 0xe4, 0x0c, 0x11, 0x58, 0x0e, 0x29, 0x7b, 0xe3,
+	0xf8, 0xff, 0x6f, 0xc7, 0xb1, 0x18, 0xe8, 0x57, 0x29, 0xc9, 0x65, 0x81, 0x1a, 0xbd, 0x75, 0x93,
+	0xc5, 0x7c, 0xa7, 0x80, 0xe5, 0x32, 0x27, 0x27, 0x4e, 0x03, 0x09, 0x5c, 0xf1, 0x9e, 0x09, 0x78,
+	0x00, 0x92, 0xa8, 0x27, 0x5a, 0xcc, 0xa5, 0x62, 0xe0, 0x2f, 0x65, 0x29, 0xf5, 0xf1, 0xc3, 0xce,
+	0x8a, 0xdc, 0xbd, 0x47, 0x8d, 0x86, 0x8b, 0x39, 0xaf, 0x0a, 0x97, 0xda, 0xc4, 0x08, 0x50, 0xf8,
+	0x00, 0x24, 0xfc, 0x87, 0x46, 0x6e, 0xeb, 0xe6, 0x75, 0x4b, 0xe7, 0x41, 0xa5, 0xd9, 0xb3, 0x61,
+	0x26, 0x66, 0xc8, 0x90, 0xc3, 0xa5, 0x37, 0x5f, 0xdf, 0xdf, 0x09, 0xc4, 0x72, 0x1b, 0x60, 0xfd,
+	0x97, 0xba, 0xc6, 0x35, 0x17, 0xbf, 0xcc, 0x80, 0x78, 0x99, 0x13, 0xd8, 0x07, 0x30, 0xe2, 0xb9,
+	0xd9, 0xbe, 0x26, 0x6b, 0xe4, 0x1f, 0x34, 0xbd, 0x37, 0x0d, 0x3d, 0xae, 0x00, 0xbe, 0x06, 0xb7,
+	0xa2, 0xfe, 0xca, 0x3b, 0x37, 0x10, 0x0b, 0xf0, 0xf4, 0xfe, 0x54, 0xf8, 0x24, 0x79, 0x13, 0x2c,
+	0xfc, 0x74, 0x5d, 0x5b, 0xd7, 0xcb, 0x84, 0xb9, 0xb4, 0x76, 0x33, 0x6e, 0x9c, 0xa7, 0xf4, 0xf4,
+	0xec, 0x52, 0x55, 0xce, 0x2f, 0x55, 0xe5, 0xf3, 0xa5, 0xaa, 0xbc, 0xbd, 0x52, 0x63, 0xe7, 0x57,
+	0x6a, 0xec, 0xd3, 0x95, 0x1a, 0x7b, 0xf5, 0xdb, 0x67, 0xa0, 0x1f, 0xfe, 0xb6, 0x78, 0x9b, 0x6a,
+	0x26, 0xbc, 0xcf, 0xc4, 0xee, 0x8f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x51, 0x30, 0x8b, 0xd0, 0x47,
+	0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -50,6 +428,12 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// CreateBTCValidator creates a new BTC validator
+	CreateBTCValidator(ctx context.Context, in *MsgCreateBTCValidator, opts ...grpc.CallOption) (*MsgCreateBTCValidatorResponse, error)
+	// CreateBTCDelegation creates a new BTC delegation
+	CreateBTCDelegation(ctx context.Context, in *MsgCreateBTCDelegation, opts ...grpc.CallOption) (*MsgCreateBTCDelegationResponse, error)
+	// UpdateParams updates the btcstaking module parameters.
+	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
 
 type msgClient struct {
@@ -60,22 +444,1415 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
+func (c *msgClient) CreateBTCValidator(ctx context.Context, in *MsgCreateBTCValidator, opts ...grpc.CallOption) (*MsgCreateBTCValidatorResponse, error) {
+	out := new(MsgCreateBTCValidatorResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Msg/CreateBTCValidator", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CreateBTCDelegation(ctx context.Context, in *MsgCreateBTCDelegation, opts ...grpc.CallOption) (*MsgCreateBTCDelegationResponse, error) {
+	out := new(MsgCreateBTCDelegationResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Msg/CreateBTCDelegation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error) {
+	out := new(MsgUpdateParamsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Msg/UpdateParams", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// CreateBTCValidator creates a new BTC validator
+	CreateBTCValidator(context.Context, *MsgCreateBTCValidator) (*MsgCreateBTCValidatorResponse, error)
+	// CreateBTCDelegation creates a new BTC delegation
+	CreateBTCDelegation(context.Context, *MsgCreateBTCDelegation) (*MsgCreateBTCDelegationResponse, error)
+	// UpdateParams updates the btcstaking module parameters.
+	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
+func (*UnimplementedMsgServer) CreateBTCValidator(ctx context.Context, req *MsgCreateBTCValidator) (*MsgCreateBTCValidatorResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBTCValidator not implemented")
+}
+func (*UnimplementedMsgServer) CreateBTCDelegation(ctx context.Context, req *MsgCreateBTCDelegation) (*MsgCreateBTCDelegationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CreateBTCDelegation not implemented")
+}
+func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
+}
+
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
+}
+
+func _Msg_CreateBTCValidator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateBTCValidator)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateBTCValidator(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstaking.v1.Msg/CreateBTCValidator",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateBTCValidator(ctx, req.(*MsgCreateBTCValidator))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CreateBTCDelegation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCreateBTCDelegation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CreateBTCDelegation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstaking.v1.Msg/CreateBTCDelegation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CreateBTCDelegation(ctx, req.(*MsgCreateBTCDelegation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgUpdateParams)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).UpdateParams(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstaking.v1.Msg/UpdateParams",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).UpdateParams(ctx, req.(*MsgUpdateParams))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.btcstaking.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
-	Methods:     []grpc.MethodDesc{},
-	Streams:     []grpc.StreamDesc{},
-	Metadata:    "babylon/btcstaking/v1/tx.proto",
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "CreateBTCValidator",
+			Handler:    _Msg_CreateBTCValidator_Handler,
+		},
+		{
+			MethodName: "CreateBTCDelegation",
+			Handler:    _Msg_CreateBTCDelegation_Handler,
+		},
+		{
+			MethodName: "UpdateParams",
+			Handler:    _Msg_UpdateParams_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "babylon/btcstaking/v1/tx.proto",
 }
+
+func (m *MsgCreateBTCValidator) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateBTCValidator) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateBTCValidator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pop != nil {
+		{
+			size, err := m.Pop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.BtcPk != nil {
+		{
+			size := m.BtcPk.Size()
+			i -= size
+			if _, err := m.BtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.BabylonPk != nil {
+		{
+			size, err := m.BabylonPk.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateBTCValidatorResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateBTCValidatorResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateBTCValidatorResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateBTCDelegation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateBTCDelegation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.SlashingTxSig != nil {
+		{
+			size := m.SlashingTxSig.Size()
+			i -= size
+			if _, err := m.SlashingTxSig.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.SlashingTx != nil {
+		{
+			size := m.SlashingTx.Size()
+			i -= size
+			if _, err := m.SlashingTx.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x3a
+	}
+	if m.StakingTxInfo != nil {
+		{
+			size, err := m.StakingTxInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x32
+	}
+	if m.StakingTxSig != nil {
+		{
+			size := m.StakingTxSig.Size()
+			i -= size
+			if _, err := m.StakingTxSig.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.StakingTx != nil {
+		{
+			size := m.StakingTx.Size()
+			i -= size
+			if _, err := m.StakingTx.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.Pop != nil {
+		{
+			size, err := m.Pop.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.BabylonPk != nil {
+		{
+			size, err := m.BabylonPk.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCreateBTCDelegationResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCreateBTCDelegationResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCreateBTCDelegationResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateParams) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateParams) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateParams) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTx(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x12
+	if len(m.Authority) > 0 {
+		i -= len(m.Authority)
+		copy(dAtA[i:], m.Authority)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Authority)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgUpdateParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgUpdateParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgUpdateParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
+	offset -= sovTx(v)
+	base := offset
+	for v >= 1<<7 {
+		dAtA[offset] = uint8(v&0x7f | 0x80)
+		v >>= 7
+		offset++
+	}
+	dAtA[offset] = uint8(v)
+	return base
+}
+func (m *MsgCreateBTCValidator) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.BabylonPk != nil {
+		l = m.BabylonPk.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.BtcPk != nil {
+		l = m.BtcPk.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Pop != nil {
+		l = m.Pop.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCreateBTCValidatorResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCreateBTCDelegation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.BabylonPk != nil {
+		l = m.BabylonPk.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Pop != nil {
+		l = m.Pop.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StakingTx != nil {
+		l = m.StakingTx.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StakingTxSig != nil {
+		l = m.StakingTxSig.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StakingTxInfo != nil {
+		l = m.StakingTxInfo.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.SlashingTx != nil {
+		l = m.SlashingTx.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.SlashingTxSig != nil {
+		l = m.SlashingTxSig.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCreateBTCDelegationResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgUpdateParams) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Authority)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = m.Params.Size()
+	n += 1 + l + sovTx(uint64(l))
+	return n
+}
+
+func (m *MsgUpdateParamsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func sovTx(x uint64) (n int) {
+	return (math_bits.Len64(x|1) + 6) / 7
+}
+func sozTx(x uint64) (n int) {
+	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *MsgCreateBTCValidator) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateBTCValidator: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateBTCValidator: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BabylonPk", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.BabylonPk == nil {
+				m.BabylonPk = &secp256k1.PubKey{}
+			}
+			if err := m.BabylonPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340PubKey
+			m.BtcPk = &v
+			if err := m.BtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pop", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pop == nil {
+				m.Pop = &ProofOfPossession{}
+			}
+			if err := m.Pop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateBTCValidatorResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateBTCValidatorResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateBTCValidatorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateBTCDelegation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateBTCDelegation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateBTCDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BabylonPk", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.BabylonPk == nil {
+				m.BabylonPk = &secp256k1.PubKey{}
+			}
+			if err := m.BabylonPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pop", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Pop == nil {
+				m.Pop = &ProofOfPossession{}
+			}
+			if err := m.Pop.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTx", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BTCStakingTx
+			m.StakingTx = &v
+			if err := m.StakingTx.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxSig", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340Signature
+			m.StakingTxSig = &v
+			if err := m.StakingTxSig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.StakingTxInfo == nil {
+				m.StakingTxInfo = &types.TransactionInfo{}
+			}
+			if err := m.StakingTxInfo.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashingTx", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BTCSlashingTx
+			m.SlashingTx = &v
+			if err := m.SlashingTx.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashingTxSig", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340Signature
+			m.SlashingTxSig = &v
+			if err := m.SlashingTxSig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCreateBTCDelegationResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCreateBTCDelegationResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCreateBTCDelegationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateParams: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateParams: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Authority", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Authority = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgUpdateParamsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgUpdateParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgUpdateParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func skipTx(dAtA []byte) (n int, err error) {
+	l := len(dAtA)
+	iNdEx := 0
+	depth := 0
+	for iNdEx < l {
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return 0, ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return 0, io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= (uint64(b) & 0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		wireType := int(wire & 0x7)
+		switch wireType {
+		case 0:
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				iNdEx++
+				if dAtA[iNdEx-1] < 0x80 {
+					break
+				}
+			}
+		case 1:
+			iNdEx += 8
+		case 2:
+			var length int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return 0, ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return 0, io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				length |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if length < 0 {
+				return 0, ErrInvalidLengthTx
+			}
+			iNdEx += length
+		case 3:
+			depth++
+		case 4:
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupTx
+			}
+			depth--
+		case 5:
+			iNdEx += 4
+		default:
+			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
+		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthTx
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
+	}
+	return 0, io.ErrUnexpectedEOF
+}
+
+var (
+	ErrInvalidLengthTx        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowTx          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupTx = fmt.Errorf("proto: unexpected end of group")
+)

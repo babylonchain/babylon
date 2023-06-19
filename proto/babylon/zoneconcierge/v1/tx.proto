@@ -11,7 +11,7 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // UpdateParams updates the btccheckpoint module parameters.
+  // UpdateParams updates the zoneconcierge module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 

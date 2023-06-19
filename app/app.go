@@ -214,6 +214,10 @@ var (
 		transfer.AppModuleBasic{},
 		zoneconcierge.AppModuleBasic{},
 		ibcfee.AppModuleBasic{},
+
+		// BTC staking related
+		btcstaking.AppModuleBasic{},
+		finality.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -228,6 +232,7 @@ var (
 		ibcfeetypes.ModuleName:         nil,
 		// TODO: decide ZonConcierge's permissions here
 		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
+		// TODO: decide BTCStaking and Finality's permissiones here
 	}
 )
 
@@ -611,7 +616,7 @@ func NewBabylonApp(
 
 	// set up BTC staking keeper
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
-		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey], app.GetSubspace(btcstakingtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
+		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey], app.GetSubspace(btcstakingtypes.ModuleName), app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.GetSubspace(finalitytypes.ModuleName), app.AccountKeeper, app.BankKeeper,

@@ -8,4 +8,11 @@ option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 // Params defines the parameters for the module.
 message Params {
   option (gogoproto.goproto_stringer) = false;
+
+  // jury_pk is the public key of jury
+  // the PK follows encoding in BIP-340 spec on Bitcoin
+  bytes jury_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // slashing address is the address that the slashed BTC goes to
+  // the address is on Bitcoin
+  bytes slashing_address = 2;
 }

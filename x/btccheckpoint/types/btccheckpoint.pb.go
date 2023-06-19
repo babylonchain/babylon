@@ -245,7 +245,7 @@ func (m *SubmissionKey) GetKey() []*TransactionKey {
 	return nil
 }
 
-// TransactionInfo is the info of a tx that contains Babylon checkpoint,
+// TransactionInfo is the info of a tx on Bitcoin,
 // including
 // - the position of the tx on BTC blockchain
 // - the full tx content
