@@ -7,6 +7,12 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
+func GenRandomAccount() *authtypes.BaseAccount {
+	senderPrivKey := sec256k1.GenPrivKey()
+	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	return acc
+}
+
 func GenRandomAccWithBalance(n int) ([]authtypes.GenesisAccount, []banktypes.Balance) {
 	accs := make([]authtypes.GenesisAccount, n)
 	balances := make([]banktypes.Balance, n)

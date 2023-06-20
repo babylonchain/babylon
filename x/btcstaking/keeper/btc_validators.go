@@ -8,13 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// AddBTCValidator verifies and adds the given BTC validator to KVStore
-func (k Keeper) AddBTCValidator(ctx sdk.Context, btcVal *types.BTCValidator) error {
-	// TODO: verify btcVal
-	k.setBTCValidator(ctx, btcVal)
-	return nil
-}
-
 // setBTCValidator adds the given BTC validator to KVStore
 func (k Keeper) setBTCValidator(ctx sdk.Context, btcVal *types.BTCValidator) {
 	store := k.btcValidatorStore(ctx)

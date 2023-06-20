@@ -37,7 +37,25 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // CreateBTCValidator creates a BTC validator
 func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCreateBTCValidator) (*types.MsgCreateBTCValidatorResponse, error) {
-	panic("TODO: implement me!")
+	// stateless checks, including PoP
+	if err := req.ValidateBasic(); err != nil {
+		return nil, err
+	}
+	// ensure the validator address does not exist before
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if ms.HasBTCValidator(ctx, *req.BtcPk) {
+		return nil, types.ErrDuplicatedBTCVal
+	}
+
+	// all good, add this validator
+	btcVal := types.BTCValidator{
+		BabylonPk: req.BabylonPk,
+		BtcPk:     req.BtcPk,
+		Pop:       req.Pop,
+	}
+	ms.setBTCValidator(ctx, &btcVal)
+
+	return &types.MsgCreateBTCValidatorResponse{}, nil
 }
 
 // CreateBTCDelegation creates a BTC delegation

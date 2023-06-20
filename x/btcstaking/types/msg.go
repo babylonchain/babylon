@@ -54,7 +54,10 @@ func (m *MsgCreateBTCValidator) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
 	}
-	return m.Pop.ValidateBasic()
+	if err := m.Pop.ValidateBasic(); err != nil {
+		return err
+	}
+	return m.Pop.Verify(m.BabylonPk, m.BtcPk)
 }
 
 func (m *MsgCreateBTCDelegation) GetSigners() []sdk.AccAddress {
@@ -87,9 +90,15 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if m.SlashingTxSig == nil {
 		return fmt.Errorf("empty SlashingTxSig")
 	}
-
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
 	}
-	return m.Pop.ValidateBasic()
+
+	// TODO: verification rules
+
+	if err := m.Pop.ValidateBasic(); err != nil {
+		return err
+	}
+	// TODO: extract BTC PK and verify PoP
+	return nil
 }
