@@ -14,6 +14,13 @@ const (
 	MemStoreKey = "mem_finality"
 )
 
+var (
+	BlockKey   = []byte{0x01} // key prefix for blocks
+	VoteKey    = []byte{0x02} // key prefix for votes
+	PubRandKey = []byte{0x03} // key prefix for public randomness
+	ParamsKey  = []byte{0x04} // key prefix for the parameters
+)
+
 func KeyPrefix(p string) []byte {
 	return []byte(p)
 }

@@ -266,7 +266,7 @@ type MsgUpdateParams struct {
 	// for AddressString instead of string, but the functionality is not yet implemented
 	// in cosmos-proto
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	// params defines the epoching paramaeters parameters to update.
+	// params defines the epoching parameters to update.
 	//
 	// NOTE: All parameters must be supplied.
 	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`

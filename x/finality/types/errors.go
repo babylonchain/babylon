@@ -4,7 +4,11 @@ import (
 	errorsmod "cosmossdk.io/errors"
 )
 
-// x/btcstaking module sentinel errors
+// x/finality module sentinel errors
 var (
-	ErrSample = errorsmod.Register(ModuleName, 1100, "sample error")
+	ErrBlockNotFound   = errorsmod.Register(ModuleName, 1100, "Block is not found")
+	ErrDuplicatedBlock = errorsmod.Register(ModuleName, 1101, "Block is already in KVStore")
+	ErrVoteNotFound    = errorsmod.Register(ModuleName, 1102, "vote is not found")
+	ErrHeightTooHigh   = errorsmod.Register(ModuleName, 1103, "the chain has not reached the given height yet")
+	ErrPubRandNotFound = errorsmod.Register(ModuleName, 1104, "public randomness is not found")
 )

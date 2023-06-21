@@ -3,5 +3,31 @@ package babylon.finality.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
+import "babylon/finality/v1/params.proto";
+
 // Msg defines the Msg service.
-service Msg {}
+service Msg {
+    // UpdateParams updates the finality module parameters.
+    rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+// MsgUpdateParams defines a message for updating finality module parameters.
+message MsgUpdateParams {
+    option (cosmos.msg.v1.signer) = "authority";
+  
+    // authority is the address of the governance account.
+    // just FYI: cosmos.AddressString marks that this field should use type alias
+    // for AddressString instead of string, but the functionality is not yet implemented
+    // in cosmos-proto
+    string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+  
+    // params defines the finality parameters to update.
+    //
+    // NOTE: All parameters must be supplied.
+    Params params = 2 [(gogoproto.nullable) = false];
+}
+// MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
+message MsgUpdateParamsResponse {}

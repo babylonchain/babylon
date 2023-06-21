@@ -616,11 +616,11 @@ func NewBabylonApp(
 
 	// set up BTC staking keeper
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
-		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey], app.GetSubspace(btcstakingtypes.ModuleName), app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.FinalityKeeper = finalitykeeper.NewKeeper(
-		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.GetSubspace(finalitytypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		app.BTCStakingKeeper,
+		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.AccountKeeper, app.BankKeeper,
+		app.BTCStakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
