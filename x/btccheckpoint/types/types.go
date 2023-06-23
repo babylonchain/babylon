@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/types"
@@ -171,6 +172,34 @@ func (ti *TransactionInfo) ValidateBasic() error {
 	if ti.Proof == nil {
 		return fmt.Errorf("proof in TransactionInfo is nil")
 	}
+	return nil
+}
+
+// VerifyInclusion verifies the tx is included in a given BTC header that satisfies the given PoW limit
+// TODO: given that TransactionInfo is now used in btcstaking module as well,
+// probably we need to move it out from btccheckpoint
+func (ti *TransactionInfo) VerifyInclusion(btcHeader *types.BTCHeaderBytes, powLimit *big.Int) error {
+	if err := ti.ValidateBasic(); err != nil {
+		return err
+	}
+	if !ti.Key.Hash.Eq(btcHeader.Hash()) {
+		return fmt.Errorf("the given btcHeader is different from that in TransactionInfo")
+	}
+
+	tx, err := ParseTransaction(ti.Transaction)
+	if err != nil {
+		return err
+	}
+
+	header := btcHeader.ToBlockHeader()
+	if err := types.ValidateBTCHeader(header, powLimit); err != nil {
+		return err
+	}
+
+	if !verify(tx, &header.MerkleRoot, ti.Proof, ti.Key.Index) {
+		return fmt.Errorf("header failed validation due to failed proof")
+	}
+
 	return nil
 }
 

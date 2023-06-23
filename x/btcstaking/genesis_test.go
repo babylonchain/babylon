@@ -15,7 +15,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := keepertest.BTCStakingKeeper(t)
+	k, ctx := keepertest.BTCStakingKeeper(t, nil, nil)
 	btcstaking.InitGenesis(ctx, *k, genesisState)
 	got := btcstaking.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)

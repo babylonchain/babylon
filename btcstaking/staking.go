@@ -308,13 +308,13 @@ func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 	return scriptData, nil
 }
 
-func UnspendableKeyPathInternalPubKey() btcec.PublicKey {
+func UnspendableKeyPathInternalPubKey() *btcec.PublicKey {
 	// TODO: We could cache it in some cached private package variable if performance
 	// is necessary, as this returns always the same value.
 	keyBytes, _ := hex.DecodeString(unspendableKeyPath)
 	// We are using btcec here, as key is 33 byte compressed format.
 	pubKey, _ := btcec.ParsePubKey(keyBytes)
-	return *pubKey
+	return pubKey
 }
 
 // TaprootAddressForScript returns a Taproot address commiting to the given script, built taproot tree
@@ -349,7 +349,7 @@ func TaprootAddressForScript(
 func BuildUnspendableTaprootPkScript(rawScript []byte, net *chaincfg.Params) ([]byte, error) {
 	internalPubKey := UnspendableKeyPathInternalPubKey()
 
-	address, err := TaprootAddressForScript(rawScript, &internalPubKey, net)
+	address, err := TaprootAddressForScript(rawScript, internalPubKey, net)
 
 	if err != nil {
 		return nil, err
@@ -411,7 +411,7 @@ func BuildWitnessToSpendStakingOutput(
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
 
 	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(
-		&internalPubKey,
+		internalPubKey,
 	)
 
 	ctrlBlockBytes, err := ctrlBlock.ToBytes()

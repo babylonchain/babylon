@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -78,27 +79,38 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if m.StakingTx == nil {
 		return fmt.Errorf("empty StakingTx")
 	}
-	if m.StakingTxSig == nil {
-		return fmt.Errorf("empty StakingTxSig")
-	}
 	if m.StakingTxInfo == nil {
 		return fmt.Errorf("empty StakingTxInfo")
 	}
 	if m.SlashingTx == nil {
 		return fmt.Errorf("empty SlashingTx")
 	}
-	if m.SlashingTxSig == nil {
-		return fmt.Errorf("empty SlashingTxSig")
+	if m.DelegatorSig == nil {
+		return fmt.Errorf("empty DelegatorSig")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
 	}
 
-	// TODO: verification rules
+	// staking tx should be correctly formatted
+	if err := m.StakingTx.ValidateBasic(); err != nil {
+		return err
+	}
 
+	// TODO: verify delegator_sig
+
+	// verify PoP
 	if err := m.Pop.ValidateBasic(); err != nil {
 		return err
 	}
-	// TODO: extract BTC PK and verify PoP
+	stakingScriptData, err := m.StakingTx.GetStakingScriptData()
+	if err != nil {
+		return err
+	}
+	btcPK := bbn.NewBIP340PubKeyFromBTCPK(stakingScriptData.StakerKey)
+	if err := m.Pop.Verify(m.BabylonPk, btcPK); err != nil {
+		return err
+	}
+
 	return nil
 }

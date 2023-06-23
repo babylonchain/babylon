@@ -10,7 +10,7 @@ import (
 )
 
 func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.BTCStakingKeeper(t)
+	keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 	wctx := sdk.WrapSDKContext(ctx)
 	params := types.DefaultParams()
 

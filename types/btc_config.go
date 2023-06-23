@@ -11,9 +11,7 @@ import (
 type SupportedBtcNetwork string
 
 type BtcConfig struct {
-	powLimit                 *big.Int
-	retargetAdjustmentFactor int64
-	reduceMinDifficulty      bool
+	btcNetParams *chaincfg.Params
 }
 
 const (
@@ -23,7 +21,7 @@ const (
 	BtcRegtest SupportedBtcNetwork = "regtest"
 )
 
-func getParams(opts servertypes.AppOptions) chaincfg.Params {
+func getParams(opts servertypes.AppOptions) *chaincfg.Params {
 	valueInterface := opts.Get("btc-config.network")
 
 	if valueInterface == nil {
@@ -37,49 +35,36 @@ func getParams(opts servertypes.AppOptions) chaincfg.Params {
 	}
 
 	if network == string(BtcMainnet) {
-		return chaincfg.MainNetParams
+		return &chaincfg.MainNetParams
 	} else if network == string(BtcTestnet) {
-		return chaincfg.TestNet3Params
+		return &chaincfg.TestNet3Params
 	} else if network == string(BtcSimnet) {
-		return chaincfg.SimNetParams
+		return &chaincfg.SimNetParams
 	} else if network == string(BtcRegtest) {
-		return chaincfg.RegressionNetParams
+		return &chaincfg.RegressionNetParams
 	} else {
 		panic("Bitcoin network should be one of [mainet, testnet, simnet, regtest]")
 	}
 }
 
-func parsePowLimit(opts servertypes.AppOptions) *big.Int {
-	return getParams(opts).PowLimit
-}
-
-func parseRetargetAdjustmentFactor(opts servertypes.AppOptions) int64 {
-	return getParams(opts).RetargetAdjustmentFactor
-}
-
-func parseReduceMinDifficulty(opts servertypes.AppOptions) bool {
-	return getParams(opts).ReduceMinDifficulty
-}
-
 func ParseBtcOptionsFromConfig(opts servertypes.AppOptions) BtcConfig {
-	powLimit := parsePowLimit(opts)
-	retargetAdjustmentFactor := parseRetargetAdjustmentFactor(opts)
-	reduceMinDifficulty := parseReduceMinDifficulty(opts)
 	return BtcConfig{
-		powLimit:                 powLimit,
-		retargetAdjustmentFactor: retargetAdjustmentFactor,
-		reduceMinDifficulty:      reduceMinDifficulty,
+		btcNetParams: getParams(opts),
 	}
 }
 
+func (c *BtcConfig) NetParams() *chaincfg.Params {
+	return c.btcNetParams
+}
+
 func (c *BtcConfig) PowLimit() big.Int {
-	return *c.powLimit
+	return *c.btcNetParams.PowLimit
 }
 
 func (c *BtcConfig) RetargetAdjustmentFactor() int64 {
-	return c.retargetAdjustmentFactor
+	return c.btcNetParams.RetargetAdjustmentFactor
 }
 
 func (c *BtcConfig) ReduceMinDifficulty() bool {
-	return c.reduceMinDifficulty
+	return c.btcNetParams.ReduceMinDifficulty
 }

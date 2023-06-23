@@ -13,6 +13,6 @@ message Params {
   // the PK follows encoding in BIP-340 spec on Bitcoin
   bytes jury_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // slashing address is the address that the slashed BTC goes to
-  // the address is on Bitcoin
-  bytes slashing_address = 2;
+  // the address is in string on Bitcoin
+  string slashing_address = 2;
 }

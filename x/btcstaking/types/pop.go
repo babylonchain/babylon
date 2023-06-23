@@ -20,7 +20,7 @@ func NewPoP(babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) (*ProofOfPos
 	// generate pop.BabylonSig = sign(sk_Babylon, pk_BTC)
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	babylonSig, err := babylonSK.Sign(bip340PK)
+	babylonSig, err := babylonSK.Sign(*bip340PK)
 	if err != nil {
 		return nil, err
 	}

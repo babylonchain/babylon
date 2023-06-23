@@ -8,13 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// AddBTCDelegation verifies then adds the given BTC delegation to KVStore
-func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
-	// TODO: verify btcDel
-	k.setBTCDelegation(ctx, btcDel)
-	return nil
-}
-
 // setBTCDelegation adds the given BTC delegation to KVStore
 func (k Keeper) setBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) {
 	store := k.btcDelegationStore(ctx, btcDel.ValBtcPk.MustMarshal())

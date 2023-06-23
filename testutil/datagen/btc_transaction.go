@@ -303,13 +303,13 @@ type BtcHeaderWithProof struct {
 func CreateBlockWithTransaction(
 	r *rand.Rand,
 	ph *wire.BlockHeader,
-	babylonData []byte,
+	tx *wire.MsgTx,
 ) *BtcHeaderWithProof {
 
 	var transactions []*wire.MsgTx
 	// height does not matter here, as it is used only for calculation of reward
 	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))
-	transactions = append(transactions, CreatOpReturnTransaction(r, babylonData))
+	transactions = append(transactions, tx)
 
 	randHeader := GenRandomBtcdHeader(r)
 	randHeader.Version = ph.Version

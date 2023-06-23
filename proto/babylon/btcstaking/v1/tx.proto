@@ -43,20 +43,17 @@ message MsgCreateBTCDelegation {
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 3;
   // staking_tx is the staking tx 
-  // It is signed by SK corresponding to btc_pk and is already on Bitcoin chain
-  bytes staking_tx = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCStakingTx" ];
-  // staking_tx_sig is the signature of the staking tx
-  // signed by SK corresponding to btc_pk
-  bytes staking_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  StakingTx staking_tx = 4;
   // staking_tx_info is the tx info of the staking tx, including the Merkle proof
-  babylon.btccheckpoint.v1.TransactionInfo staking_tx_info = 6;
+  babylon.btccheckpoint.v1.TransactionInfo staking_tx_info = 5;
   // slashing_tx is the slashing tx
-  // It is partially signed by SK corresponding to btc_pk, but not signed by 
-  // validator or jury yet.
-  bytes slashing_tx = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
-  // slashing_tx_sig is the signature of the slashing tx
-  // signed by SK corresponding to btc_pk
-  bytes slashing_tx_sig = 8 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  // Note that the tx itself does not contain signatures, which are off-chain.
+  bytes slashing_tx = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
+  // delegator_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk). 
+  // It will be a part of the witness for the staking tx output.
+  // The staking tx output further needs signatures from jury and validator in
+  // order to be spendable.
+  bytes delegator_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}

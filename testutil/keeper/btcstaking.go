@@ -5,6 +5,7 @@ import (
 
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	tmdb "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -18,7 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func BTCStakingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+func BTCStakingKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, btccKeeper types.BtcCheckpointKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -35,8 +36,9 @@ func BTCStakingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		cdc,
 		storeKey,
 		memStoreKey,
-		nil,
-		nil,
+		btclcKeeper,
+		btccKeeper,
+		&chaincfg.SimNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

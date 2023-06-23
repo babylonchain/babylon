@@ -21,7 +21,7 @@ func newInvalidPoP(r *rand.Rand, babylonSK cryptotypes.PrivKey, btcSK *btcec.Pri
 
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	babylonSig, err := babylonSK.Sign(bip340PK)
+	babylonSig, err := babylonSK.Sign(*bip340PK)
 	if err != nil {
 		panic(err)
 	}
@@ -63,12 +63,12 @@ func FuzzPoP(f *testing.F) {
 		// generate and verify PoP, correct case
 		pop, err := types.NewPoP(babylonSK, btcSK)
 		require.NoError(t, err)
-		err = pop.Verify(babylonPK, &bip340PK)
+		err = pop.Verify(babylonPK, bip340PK)
 		require.NoError(t, err)
 
 		// generate and verify PoP, invalid case
 		invalidPoP := newInvalidPoP(r, babylonSK, btcSK)
-		err = invalidPoP.Verify(babylonPK, &bip340PK)
+		err = invalidPoP.Verify(babylonPK, bip340PK)
 		require.Error(t, err)
 	})
 }

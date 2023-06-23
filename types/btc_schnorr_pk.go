@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"errors"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -11,15 +12,16 @@ type BIP340PubKey []byte
 
 const BIP340PubKeyLen = schnorr.PubKeyBytesLen
 
-func NewBIP340PubKey(data []byte) (BIP340PubKey, error) {
+func NewBIP340PubKey(data []byte) (*BIP340PubKey, error) {
 	var pk BIP340PubKey
 	err := pk.Unmarshal(data)
-	return pk, err
+	return &pk, err
 }
 
-func NewBIP340PubKeyFromBTCPK(btcPK *btcec.PublicKey) BIP340PubKey {
+func NewBIP340PubKeyFromBTCPK(btcPK *btcec.PublicKey) *BIP340PubKey {
 	pkBytes := schnorr.SerializePubKey(btcPK)
-	return BIP340PubKey(pkBytes)
+	pk := BIP340PubKey(pkBytes)
+	return &pk
 }
 
 func (pk BIP340PubKey) ToBTCPK() (*btcec.PublicKey, error) {
@@ -63,4 +65,8 @@ func (pk *BIP340PubKey) Unmarshal(data []byte) error {
 
 	*pk = data
 	return nil
+}
+
+func (pk *BIP340PubKey) Equals(pk2 *BIP340PubKey) bool {
+	return bytes.Equal(*pk, *pk2)
 }

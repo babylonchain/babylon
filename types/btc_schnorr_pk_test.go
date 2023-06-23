@@ -35,6 +35,6 @@ func FuzzBIP340PubKey(f *testing.F) {
 		require.NoError(t, err)
 		err = pk2.Unmarshal(pkBytes)
 		require.NoError(t, err)
-		require.Equal(t, pk, pk2)
+		require.Equal(t, *pk, pk2)
 	})
 }

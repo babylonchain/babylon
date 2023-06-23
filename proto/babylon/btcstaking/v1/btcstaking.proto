@@ -40,18 +40,19 @@ message BTCDelegation {
     // quantified in satoshi
     uint64 total_sat = 7;
     // staking_tx is the staking tx 
-    // It is signed by SK corresponding to btc_pk and is already on Bitcoin chain
-    bytes staking_tx = 8 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCStakingTx" ];
-    // staking_tx_sig is the signature of the staking tx
-    // signed by SK corresponding to btc_pk
-    bytes staking_tx_sig = 9 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    StakingTx staking_tx = 8;
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by 
     // validator or jury yet.
-    bytes slashing_tx = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
-    // slashing_tx_sig is the signature of the slashing tx
-    // signed by SK corresponding to btc_pk
-    bytes slashing_tx_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes slashing_tx = 9 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
+    // delegator_sig is the signature on the slashing tx
+    // by the delegator (i.e., SK corresponding to btc_pk). 
+    // It will be a part of the witness for the staking tx output.
+    bytes delegator_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // jury_sig is the signature signature on the slashing tx
+    // by the jury (i.e., SK corresponding to jury_pk in params)
+    // It will be a part of the witness for the staking tx output.
+    bytes jury_sig = 12 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
 // ProofOfPossession is the proof of possession that a Babylon secp256k1
@@ -63,4 +64,12 @@ message ProofOfPossession {
     // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
     // the signature follows encoding in BIP-340 spec
     bytes btc_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
+// StakingTx is the tx for delegating BTC
+message StakingTx {
+    // tx is the staking tx in bytes
+    bytes tx = 1;
+    // staking_script is the script for the staking tx's output
+    bytes staking_script = 2;
 }

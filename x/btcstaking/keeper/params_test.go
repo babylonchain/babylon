@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetParams(t *testing.T) {
-	k, ctx := testkeeper.BTCStakingKeeper(t)
+	k, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 	params := types.DefaultParams()
 
 	err := k.SetParams(ctx, params)

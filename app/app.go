@@ -373,6 +373,7 @@ func NewBabylonApp(
 	// but this way it makes babylon app more testable
 	btcConfig := bbn.ParseBtcOptionsFromConfig(appOpts)
 	powLimit := btcConfig.PowLimit()
+	btcNetParams := btcConfig.NetParams()
 
 	appCodec := encodingConfig.Marshaler
 	legacyAmino := encodingConfig.Amino
@@ -616,7 +617,10 @@ func NewBabylonApp(
 
 	// set up BTC staking keeper
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
-		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey],
+		app.BTCLightClientKeeper, app.BtcCheckpointKeeper,
+		btcNetParams,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.AccountKeeper, app.BankKeeper,
