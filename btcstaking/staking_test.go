@@ -20,30 +20,103 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func genValidStakingScriptData(t *testing.T, r *rand.Rand) *btcstaking.StakingScriptData {
+	stakerPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
+	validatorPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
+	juryPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
+	stakingTime := uint16(r.Intn(math.MaxUint16))
+
+	_, stakerPublicKey := btcec.PrivKeyFromBytes(stakerPrivKeyBytes)
+	_, validatorPublicKey := btcec.PrivKeyFromBytes(validatorPrivKeyBytes)
+	_, juryPublicKey := btcec.PrivKeyFromBytes(juryPrivKeyBytes)
+
+	sd, _ := btcstaking.NewStakingScriptData(stakerPublicKey, validatorPublicKey, juryPublicKey, stakingTime)
+
+	return sd
+}
+
 func FuzzGeneratingParsingValidStakingScript(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		stakerPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
-		validatorPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
-		juryPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
-		stakingTime := uint16(r.Intn(math.MaxUint16))
 
-		_, stakerPublicKey := btcec.PrivKeyFromBytes(stakerPrivKeyBytes)
-		_, validatorPublicKey := btcec.PrivKeyFromBytes(validatorPrivKeyBytes)
-		_, juryPublicKey := btcec.PrivKeyFromBytes(juryPrivKeyBytes)
-
-		sd, _ := btcstaking.NewStakingScriptData(stakerPublicKey, validatorPublicKey, juryPublicKey, stakingTime)
+		sd := genValidStakingScriptData(t, r)
 
 		script, err := sd.BuildStakingScript()
 		require.NoError(t, err)
-		parsedScript, err := btcstaking.ParseStakingTransactionScript(0, script)
+		parsedScript, err := btcstaking.ParseStakingTransactionScript(script)
 		require.NoError(t, err)
 
-		require.Equal(t, parsedScript.StakingTime, stakingTime)
-		require.Equal(t, schnorr.SerializePubKey(stakerPublicKey), schnorr.SerializePubKey(parsedScript.StakerKey))
-		require.Equal(t, schnorr.SerializePubKey(validatorPublicKey), schnorr.SerializePubKey(parsedScript.ValidatorKey))
-		require.Equal(t, schnorr.SerializePubKey(juryPublicKey), schnorr.SerializePubKey(parsedScript.JuryKey))
+		require.Equal(t, parsedScript.StakingTime, sd.StakingTime)
+		require.Equal(t, schnorr.SerializePubKey(sd.StakerKey), schnorr.SerializePubKey(parsedScript.StakerKey))
+		require.Equal(t, schnorr.SerializePubKey(sd.ValidatorKey), schnorr.SerializePubKey(parsedScript.ValidatorKey))
+		require.Equal(t, schnorr.SerializePubKey(sd.JuryKey), schnorr.SerializePubKey(parsedScript.JuryKey))
+	})
+}
+
+func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// we do not care for inputs in staking tx
+		stakingTx := wire.NewMsgTx(2)
+		stakingOutputIdx := r.Intn(5)
+		// always more outputs than stakingOutputIdx
+		stakingTxNumOutputs := r.Intn(5) + 10
+		sd := genValidStakingScriptData(t, r)
+		script, err := sd.BuildStakingScript()
+		require.NoError(t, err)
+		minStakingValue := 5000
+		minFee := 2000
+
+		slashingAddress, err := btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
+		require.NoError(t, err)
+
+		for i := 0; i < stakingTxNumOutputs; i++ {
+			if i == stakingOutputIdx {
+				stakingOutput, _, err := btcstaking.BuildStakingOutput(
+					sd.StakerKey,
+					sd.ValidatorKey,
+					sd.JuryKey,
+					sd.StakingTime,
+					btcutil.Amount(r.Intn(5000)+minStakingValue),
+					&chaincfg.MainNetParams,
+				)
+				require.NoError(t, err)
+				stakingTx.AddTxOut(stakingOutput)
+			} else {
+				stakingTx.AddTxOut(
+					&wire.TxOut{
+						PkScript: datagen.GenRandomByteArray(r, 32),
+						Value:    int64(r.Intn(5000) + 1),
+					},
+				)
+			}
+		}
+
+		fee := int64(r.Intn(1000) + minFee)
+
+		slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+			stakingTx,
+			uint32(stakingOutputIdx),
+			slashingAddress,
+			fee,
+			script,
+			&chaincfg.MainNetParams,
+		)
+
+		require.NoError(t, err)
+
+		_, err = btcstaking.CheckTransactions(
+			slashingTx,
+			stakingTx,
+			int64(minFee),
+			slashingAddress,
+			script,
+			&chaincfg.MainNetParams,
+		)
+
+		require.NoError(t, err)
 	})
 }
 

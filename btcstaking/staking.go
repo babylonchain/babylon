@@ -115,6 +115,11 @@ type StakingScriptData struct {
 	StakingTime  uint16
 }
 
+type StakingOutputInfo struct {
+	StakingScriptData *StakingScriptData
+	StakingAmount     btcutil.Amount
+}
+
 func NewStakingScriptData(
 	stakerKey,
 	validatorKey,
@@ -169,7 +174,7 @@ func (sd *StakingScriptData) BuildStakingScript() ([]byte, error) {
 // error is returned. If script is valid, StakingScriptData is returned, which contains all
 // relevant data parsed from the script.
 // Only stateless checks are performed.
-func ParseStakingTransactionScript(version uint16, script []byte) (*StakingScriptData, error) {
+func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 	// <StakerKey> OP_CHECKSIG
 	// OP_NOTIF
 	//
@@ -206,7 +211,7 @@ func ParseStakingTransactionScript(version uint16, script []byte) (*StakingScrip
 	}
 
 	var templateOffset int
-	tokenizer := txscript.MakeScriptTokenizer(version, script)
+	tokenizer := txscript.MakeScriptTokenizer(0, script)
 	for tokenizer.Next() {
 		// Not an staking script if it has more opcodes than expected in the
 		// template.
@@ -294,7 +299,11 @@ func ParseStakingTransactionScript(version uint16, script []byte) (*StakingScrip
 	}
 
 	// we do not need to check error here, as we already validated that all public keys are not nil
-	scriptData, _ := NewStakingScriptData(stakerPk1, validatorPk, juryPk, uint16(template[12].extractedInt))
+	scriptData, err := NewStakingScriptData(stakerPk1, validatorPk, juryPk, uint16(template[12].extractedInt))
+
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: %v", err))
+	}
 
 	return scriptData, nil
 }
@@ -308,13 +317,14 @@ func UnspendableKeyPathInternalPubKey() btcec.PublicKey {
 	return *pubKey
 }
 
-// TaprootAddressForScript returns a Taproot address commiting to the given pkScript
+// TaprootAddressForScript returns a Taproot address commiting to the given script, built taproot tree
+// has only one leaf node.
 func TaprootAddressForScript(
-	pkScript []byte,
+	script []byte,
 	internalPubKey *btcec.PublicKey,
 	net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
 
-	tapLeaf := txscript.NewBaseTapLeaf(pkScript)
+	tapLeaf := txscript.NewBaseTapLeaf(script)
 
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
 
@@ -332,6 +342,26 @@ func TaprootAddressForScript(
 	}
 
 	return address, nil
+}
+
+// BuildUnspendableTaprootPkScript builds taproot pkScript which commits to the provided script with
+// unspendable spending key path.
+func BuildUnspendableTaprootPkScript(rawScript []byte, net *chaincfg.Params) ([]byte, error) {
+	internalPubKey := UnspendableKeyPathInternalPubKey()
+
+	address, err := TaprootAddressForScript(rawScript, &internalPubKey, net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	pkScript, err := txscript.PayToAddrScript(address)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return pkScript, nil
 }
 
 // BuildStakingOutput builds out which is necessary for staking transaction to stake funds.
@@ -355,15 +385,7 @@ func BuildStakingOutput(
 		return nil, nil, err
 	}
 
-	internalPubKey := UnspendableKeyPathInternalPubKey()
-
-	address, err := TaprootAddressForScript(script, &internalPubKey, net)
-
-	if err != nil {
-		return nil, nil, err
-	}
-
-	pkScript, err := txscript.PayToAddrScript(address)
+	pkScript, err := BuildUnspendableTaprootPkScript(script, net)
 
 	if err != nil {
 		return nil, nil, err
@@ -420,4 +442,292 @@ func BuildWitnessToSpendStakingOutput(
 	witnessStack[1] = stakingScript
 	witnessStack[2] = ctrlBlockBytes
 	return witnessStack, nil
+}
+
+// ValidateStakingOutputPkScript validates that:
+// - provided output commits to the given script with unspendable spending key path
+// - provided script is valid staking script
+func ValidateStakingOutputPkScript(
+	output *wire.TxOut,
+	script []byte,
+	net *chaincfg.Params) (*StakingScriptData, error) {
+	if output == nil {
+		return nil, fmt.Errorf("provided output cannot be nil")
+	}
+
+	pkScript, err := BuildUnspendableTaprootPkScript(script, net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if !bytes.Equal(output.PkScript, pkScript) {
+		return nil, fmt.Errorf("output does not commit to the given script")
+	}
+
+	return ParseStakingTransactionScript(script)
+}
+
+// BuildSlashingTxFromOutpoint builds valid slashing transaction, using provided:
+// - stakingOutput - staking output
+// - slashingAddress - address to which slashed funds will go
+// - fee - fee for the transaction
+// It does not attach script sig to the transaction nor the witness.
+// It only validates that provided address is standard btc address and slashing value is larger than 0
+func BuildSlashingTxFromOutpoint(
+	stakingOutput wire.OutPoint,
+	slashingAddress btcutil.Address,
+	slashingValue int64) (*wire.MsgTx, error) {
+
+	addrScript, err := txscript.PayToAddrScript(slashingAddress)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if slashingValue <= 0 {
+		return nil, fmt.Errorf("slashing value cannot be smaller or equal 0")
+	}
+
+	tx := wire.NewMsgTx(wire.TxVersion)
+	// TODO: this builds input with sequence number equal to MaxTxInSequenceNum, which
+	// means this tx is not replacable.
+	input := wire.NewTxIn(&stakingOutput, nil, nil)
+	tx.AddTxIn(input)
+	tx.AddTxOut(wire.NewTxOut(slashingValue, addrScript))
+	return tx, nil
+}
+
+func getPossibleStakingOutput(
+	stakingTx *wire.MsgTx,
+	stakingOutputIdx uint32,
+) (*wire.TxOut, error) {
+	if stakingTx == nil {
+		return nil, fmt.Errorf("provided staking transaction must not be nil")
+	}
+
+	if stakingOutputIdx >= uint32(len(stakingTx.TxOut)) {
+		return nil, fmt.Errorf("invalid staking output index %d, tx has %d outputs", stakingOutputIdx, len(stakingTx.TxOut))
+	}
+
+	stakingOutput := stakingTx.TxOut[stakingOutputIdx]
+
+	if !txscript.IsPayToTaproot(stakingOutput.PkScript) {
+		return nil, fmt.Errorf("must be pay to taproot output")
+	}
+
+	return stakingOutput, nil
+}
+
+// BuildSlashingTxFromOutpoint builds valid slashing transaction, using provided:
+// - stakingTx - staking trasaction
+// - stakingOutputIdx - index of the output committing to staking script
+// - slashingAddress - address to which slashed funds will go
+// - fee - fee for the transaction
+// It does not attach script sig to the transaction nor the witness.
+// It validates:
+// - stakingTx is not nil
+// - staking tx has output at stakingOutputIdx
+// - staking output at stakingOutputIdx is valid staking output i.e p2tr output
+func BuildSlashingTxFromStakingTx(
+	stakingTx *wire.MsgTx,
+	stakingOutputIdx uint32,
+	slashingAddress btcutil.Address,
+	fee int64,
+) (*wire.MsgTx, error) {
+	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	stakingTxHash := stakingTx.TxHash()
+
+	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
+
+	return BuildSlashingTxFromOutpoint(*stakingOutpoint, slashingAddress, stakingOutput.Value-fee)
+}
+
+// BuildSlashingTxFromStakingTxStrict builds valid slashing transaction, using provided:
+// - stakingTx - staking trasaction
+// - stakingOutputIdx - index of the output committing to staking script
+// - slashingAddress - address to which slashed funds will go
+// - fee - fee for the transaction
+// - script - staking script to which staking output should commit
+// - scriptVersion - version of the script
+// - net - network on wchich transactions should take place
+// It validates:
+// - the same stuff as BuildSlashingTxFromStakingTx
+// - wheter staking output commits to the provided script
+// - whether provided script is valid staking script
+func BuildSlashingTxFromStakingTxStrict(
+	stakingTx *wire.MsgTx,
+	stakingOutputIdx uint32,
+	slashingAddress btcutil.Address,
+	fee int64,
+	script []byte,
+	net *chaincfg.Params,
+) (*wire.MsgTx, error) {
+	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := ValidateStakingOutputPkScript(stakingOutput, script, net); err != nil {
+		return nil, err
+	}
+
+	stakingTxHash := stakingTx.TxHash()
+
+	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
+
+	return BuildSlashingTxFromOutpoint(*stakingOutpoint, slashingAddress, stakingOutput.Value-fee)
+}
+
+// CheckSlashingTx perform basic checks on slashing transaction:
+// - slashing transaction is not nil
+// - slashing transaction has exactly one input
+// - slashing transaction is not replacable
+// - slashing transaction has exactly one output
+// - slashing transaction locktime is 0
+// - slashing transaction output is simple pay to address script paying to provided slashing address
+func CheckSlashingTx(slashingTx *wire.MsgTx, slashingAddress btcutil.Address) error {
+
+	if slashingTx == nil {
+		return fmt.Errorf("provided slashing transaction must not be nil")
+	}
+
+	if len(slashingTx.TxIn) != 1 {
+		return fmt.Errorf("slashing transaction must have exactly one input")
+	}
+
+	if slashingTx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
+		return fmt.Errorf("slashing transaction must be not replacable")
+	}
+
+	if len(slashingTx.TxOut) != 1 {
+		return fmt.Errorf("slashing transaction must have exactly one output")
+	}
+
+	if slashingTx.LockTime != 0 {
+		return fmt.Errorf("slashing transaction locktime must be 0")
+	}
+
+	pkScript, err := txscript.PayToAddrScript(slashingAddress)
+
+	if err != nil {
+		return err
+	}
+
+	if !bytes.Equal(slashingTx.TxOut[0].PkScript, pkScript) {
+		return fmt.Errorf("slashing transaction must pay to provided slashing address")
+	}
+
+	return nil
+}
+
+// GetIdxOutputCommitingToScript retrieves index of the output committing to the provided script.
+// It returns error if:
+// - tx is nil
+// - tx does not have output committing to the provided script
+// - tx has more than one output committing to the provided script
+func GetIdxOutputCommitingToScript(
+	tx *wire.MsgTx,
+	script []byte,
+	net *chaincfg.Params) (int, error) {
+
+	if tx == nil {
+		return -1, fmt.Errorf("provided staking transaction must not be nil")
+	}
+
+	script, err := BuildUnspendableTaprootPkScript(script, net)
+
+	if err != nil {
+		return -1, err
+	}
+
+	var comittingOutputIdx int = -1
+	for i, out := range tx.TxOut {
+		if bytes.Equal(out.PkScript, script) && comittingOutputIdx < 0 {
+			comittingOutputIdx = i
+		} else if bytes.Equal(out.PkScript, script) && comittingOutputIdx >= 0 {
+			return -1, fmt.Errorf("transaction has more than one output committing to the provided script")
+		}
+	}
+
+	if comittingOutputIdx < 0 {
+		return -1, fmt.Errorf("transaction does not have output committing to the provided script")
+	}
+	return comittingOutputIdx, nil
+}
+
+// CheckTransactions validates all relevant data of slashing and staking transaction:
+// - slashing transaction is valid
+// - staking transaction script is valid
+// - staking transaction has output committing to the provided script
+// - slashing transaction input is pointing to staking transaction staking output
+// - that min fee for slashing tx is preserved
+// In case of success, it returns data extracted from valid staking script and staking amount.
+func CheckTransactions(
+	slashingTx *wire.MsgTx,
+	stakingTx *wire.MsgTx,
+	slashingTxMinFee int64,
+	slashingAddress btcutil.Address,
+	script []byte,
+	net *chaincfg.Params,
+) (*StakingOutputInfo, error) {
+	if slashingTxMinFee <= 0 {
+		return nil, fmt.Errorf("slashing transaction min fee must be larger than 0")
+	}
+
+	//1. Check slashing tx
+	if err := CheckSlashingTx(slashingTx, slashingAddress); err != nil {
+		return nil, err
+	}
+
+	//2. Check staking script.
+	scriptData, err := ParseStakingTransactionScript(script)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//3. Check that staking transaction has output committing to the provided script
+	stakingOutputIdx, err := GetIdxOutputCommitingToScript(stakingTx, script, net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	//4. Check that slashing transaction input is pointing to staking transaction
+	stakingTxHash := stakingTx.TxHash()
+	if !slashingTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
+		return nil, fmt.Errorf("slashing transaction must spend staking output")
+	}
+
+	//5. Check that index of the found output matches index of the input in slashing transaction
+	if slashingTx.TxIn[0].PreviousOutPoint.Index != uint32(stakingOutputIdx) {
+		return nil, fmt.Errorf("slashing transaction input must spend staking output")
+	}
+
+	stakingOutput := stakingTx.TxOut[stakingOutputIdx]
+
+	//6. Check fees
+	if slashingTx.TxOut[0].Value <= 0 || stakingOutput.Value <= 0 {
+		return nil, fmt.Errorf("values of slashing and staking transaction must be larger than 0")
+	}
+
+	if stakingOutput.Value <= slashingTx.TxOut[0].Value {
+		return nil, fmt.Errorf("slashing transaction must not spend more than staking transaction")
+	}
+
+	if stakingOutput.Value-slashingTx.TxOut[0].Value <= slashingTxMinFee {
+		return nil, fmt.Errorf("slashing transaction fee must be larger than %d", slashingTxMinFee)
+	}
+
+	return &StakingOutputInfo{
+		StakingScriptData: scriptData,
+		StakingAmount:     btcutil.Amount(stakingOutput.Value),
+	}, nil
 }
