@@ -120,6 +120,46 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 	})
 }
 
+func FuzzGeneratingSignatureValidation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		pk, err := btcec.NewPrivateKey()
+		require.NoError(t, err)
+		inputHash, err := chainhash.NewHash(datagen.GenRandomByteArray(r, 32))
+		require.NoError(t, err)
+
+		tx := wire.NewMsgTx(2)
+		foundingOutput := wire.NewTxOut(int64(r.Intn(1000)), datagen.GenRandomByteArray(r, 32))
+		tx.AddTxIn(
+			wire.NewTxIn(wire.NewOutPoint(inputHash, uint32(r.Intn(20))), nil, nil),
+		)
+		tx.AddTxOut(
+			wire.NewTxOut(int64(r.Intn(1000)), datagen.GenRandomByteArray(r, 32)),
+		)
+		script := datagen.GenRandomByteArray(r, 150)
+
+		sig, err := btcstaking.SignTxWithOneScriptSpendInputFromScript(
+			tx,
+			foundingOutput,
+			pk,
+			script,
+		)
+
+		require.NoError(t, err)
+
+		err = btcstaking.VerifyTransactionSigWithOutput(
+			tx,
+			foundingOutput,
+			script,
+			pk.PubKey(),
+			sig.Serialize(),
+		)
+
+		require.NoError(t, err)
+	})
+}
+
 // Help function to assert the execution of a script engine. Copied from:
 // https://github.com/lightningnetwork/lnd/blob/master/input/script_utils_test.go#L24
 func assertEngineExecution(t *testing.T, testNum int, valid bool,
