@@ -49,7 +49,7 @@ func GenRandomBTCValidatorWithBTCPK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bst
 	}, nil
 }
 
-func GenBTCStakingSlashingTx(r *rand.Rand, stakerSK *btcec.PrivateKey, validatorPK, juryPK *btcec.PublicKey, stakingTimeBlocks uint16, stakingValue int64, slashingAddress string) (*bstypes.StakingTx, *bbn.BTCSlashingTx, error) {
+func GenBTCStakingSlashingTx(r *rand.Rand, stakerSK *btcec.PrivateKey, validatorPK, juryPK *btcec.PublicKey, stakingTimeBlocks uint16, stakingValue int64, slashingAddress string) (*bstypes.StakingTx, *bstypes.BTCSlashingTx, error) {
 	btcNet := &chaincfg.SimNetParams
 
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
@@ -99,7 +99,7 @@ func GenBTCStakingSlashingTx(r *rand.Rand, stakerSK *btcec.PrivateKey, validator
 	if err != nil {
 		return nil, nil, err
 	}
-	slashingTx, err := bbn.NewBTCSlashingTxFromMsgTx(slashingMsgTx)
+	slashingTx, err := bstypes.NewBTCSlashingTxFromMsgTx(slashingMsgTx)
 	if err != nil {
 		return nil, nil, err
 	}

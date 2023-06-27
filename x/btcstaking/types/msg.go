@@ -13,6 +13,7 @@ var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgCreateBTCValidator{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
+	_ sdk.Msg = &MsgAddJurySig{}
 )
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -44,13 +45,13 @@ func (m *MsgCreateBTCValidator) GetSigners() []sdk.AccAddress {
 
 func (m *MsgCreateBTCValidator) ValidateBasic() error {
 	if m.BabylonPk == nil {
-		return fmt.Errorf("empty BabylonPk")
+		return fmt.Errorf("empty Babylon public key")
 	}
 	if m.BtcPk == nil {
-		return fmt.Errorf("empty BtcPk")
+		return fmt.Errorf("empty BTC public key")
 	}
 	if m.Pop == nil {
-		return fmt.Errorf("empty Pop")
+		return fmt.Errorf("empty proof of possession")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
@@ -71,22 +72,22 @@ func (m *MsgCreateBTCDelegation) GetSigners() []sdk.AccAddress {
 
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if m.BabylonPk == nil {
-		return fmt.Errorf("empty BabylonPk")
+		return fmt.Errorf("empty Babylon public key")
 	}
 	if m.Pop == nil {
-		return fmt.Errorf("empty Pop")
+		return fmt.Errorf("empty proof of possession")
 	}
 	if m.StakingTx == nil {
-		return fmt.Errorf("empty StakingTx")
+		return fmt.Errorf("empty staking tx")
 	}
 	if m.StakingTxInfo == nil {
-		return fmt.Errorf("empty StakingTxInfo")
+		return fmt.Errorf("empty staking tx info")
 	}
 	if m.SlashingTx == nil {
-		return fmt.Errorf("empty SlashingTx")
+		return fmt.Errorf("empty slashing tx")
 	}
 	if m.DelegatorSig == nil {
-		return fmt.Errorf("empty DelegatorSig")
+		return fmt.Errorf("empty delegator signature")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
@@ -96,8 +97,6 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if err := m.StakingTx.ValidateBasic(); err != nil {
 		return err
 	}
-
-	// TODO: verify delegator_sig
 
 	// verify PoP
 	if err := m.Pop.ValidateBasic(); err != nil {
@@ -110,6 +109,28 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	btcPK := bbn.NewBIP340PubKeyFromBTCPK(stakingScriptData.StakerKey)
 	if err := m.Pop.Verify(m.BabylonPk, btcPK); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *MsgAddJurySig) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+func (m *MsgAddJurySig) ValidateBasic() error {
+	if m.ValPk == nil {
+		return fmt.Errorf("empty BTC validator public key")
+	}
+	if m.DelPk == nil {
+		return fmt.Errorf("empty BTC delegation public key")
+	}
+	if m.Sig == nil {
+		return fmt.Errorf("empty jury signature")
 	}
 
 	return nil

@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"bytes"
 	"context"
 	"math/rand"
 	"testing"
@@ -13,9 +12,7 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -77,7 +74,7 @@ func FuzzMsgCreateBTCValidator(f *testing.F) {
 	})
 }
 
-func FuzzMsgCreateBTCDelegation(f *testing.F) {
+func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -93,7 +90,7 @@ func FuzzMsgCreateBTCDelegation(f *testing.F) {
 		goCtx := sdk.WrapSDKContext(ctx)
 
 		// set jury PK to params
-		_, juryPK, err := datagen.GenRandomBTCKeyPair(r)
+		jurySK, juryPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -103,7 +100,9 @@ func FuzzMsgCreateBTCDelegation(f *testing.F) {
 		})
 		require.NoError(t, err)
 
-		// generate and insert new BTC validator
+		/*
+			generate and insert new BTC validator
+		*/
 		validatorSK, validatorPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		btcVal, err := datagen.GenRandomBTCValidatorWithBTCPK(r, validatorSK)
@@ -117,6 +116,9 @@ func FuzzMsgCreateBTCDelegation(f *testing.F) {
 		_, err = ms.CreateBTCValidator(goCtx, &msgNewVal)
 		require.NoError(t, err)
 
+		/*
+			generate and insert new BTC delegation
+		*/
 		// key pairs, staking tx and slashing tx
 		delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
@@ -125,8 +127,7 @@ func FuzzMsgCreateBTCDelegation(f *testing.F) {
 		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr)
 		require.NoError(t, err)
 		// get msgTx
-		var stakingMsgTx wire.MsgTx
-		err = stakingMsgTx.Deserialize(bytes.NewReader(stakingTx.Tx))
+		stakingMsgTx, err := stakingTx.ToMsgTx()
 		require.NoError(t, err)
 
 		// random signer
@@ -139,7 +140,7 @@ func FuzzMsgCreateBTCDelegation(f *testing.F) {
 		require.NoError(t, err)
 		// generate staking tx info
 		prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
-		btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, &stakingMsgTx)
+		btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, stakingMsgTx)
 		btcHeader := btcHeaderWithProof.HeaderBytes
 		txInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, stakingTx.Tx, btcHeaderWithProof.SpvProof.MerkleNodes)
 		// mock for testing k-deep stuff
@@ -148,33 +149,69 @@ func FuzzMsgCreateBTCDelegation(f *testing.F) {
 		btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), gomock.Eq(btcHeader.Hash())).Return(&btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}).AnyTimes()
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30})
 
-		// TODO: generate proper delegator sig
-		randHash := datagen.GenRandomBtcdHash(r)
-		delegatorSchnorrSig, err := schnorr.Sign(delSK, randHash[:])
+		// generate proper delegator sig
+		delegatorSig, err := slashingTx.Sign(
+			stakingMsgTx,
+			stakingTx.StakingScript,
+			delSK,
+			&chaincfg.SimNetParams,
+		)
 		require.NoError(t, err)
-		delegatorSig := bbn.NewBIP340SignatureFromBTCSig(delegatorSchnorrSig)
 
-		msg := &types.MsgCreateBTCDelegation{
+		// all good, construct and send MsgCreateBTCDelegation message
+		msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 			Signer:        signer,
 			BabylonPk:     delBabylonPK.(*secp256k1.PubKey),
 			Pop:           pop,
 			StakingTx:     stakingTx,
 			StakingTxInfo: txInfo,
 			SlashingTx:    slashingTx,
-			DelegatorSig:  &delegatorSig,
+			DelegatorSig:  delegatorSig,
 		}
-		_, err = ms.CreateBTCDelegation(goCtx, msg)
+		_, err = ms.CreateBTCDelegation(goCtx, msgCreateBTCDel)
 		require.NoError(t, err)
 
+		/*
+			verify the new BTC delegation
+		*/
 		// check existence
 		actualDel, err := bsKeeper.GetBTCDelegation(ctx, *bbn.NewBIP340PubKeyFromBTCPK(validatorPK), *bbn.NewBIP340PubKeyFromBTCPK(delPK))
 		require.NoError(t, err)
-		require.Equal(t, msg.BabylonPk, actualDel.BabylonPk)
-		require.Equal(t, msg.Pop, actualDel.Pop)
-		require.Equal(t, msg.StakingTx, actualDel.StakingTx)
-		require.Equal(t, msg.SlashingTx, actualDel.SlashingTx)
+		require.Equal(t, msgCreateBTCDel.BabylonPk, actualDel.BabylonPk)
+		require.Equal(t, msgCreateBTCDel.Pop, actualDel.Pop)
+		require.Equal(t, msgCreateBTCDel.StakingTx, actualDel.StakingTx)
+		require.Equal(t, msgCreateBTCDel.SlashingTx, actualDel.SlashingTx)
 		// ensure the BTC delegation in DB is correctly formatted
 		err = actualDel.ValidateBasic()
 		require.NoError(t, err)
+		// delegation is not activated by jury yet
+		require.False(t, actualDel.IsActivated())
+
+		/*
+			generate and insert new jury signature
+		*/
+		jurySig, err := slashingTx.Sign(
+			stakingMsgTx,
+			stakingTx.StakingScript,
+			jurySK,
+			&chaincfg.SimNetParams,
+		)
+		require.NoError(t, err)
+		msgAddJurySig := &types.MsgAddJurySig{
+			Signer: signer,
+			ValPk:  btcVal.BtcPk,
+			DelPk:  actualDel.BtcPk,
+			Sig:    jurySig,
+		}
+		_, err = ms.AddJurySig(ctx, msgAddJurySig)
+		require.NoError(t, err)
+
+		/*
+			ensure jury sig is added successfully
+		*/
+		actualDelWithJurySig, err := bsKeeper.GetBTCDelegation(ctx, *bbn.NewBIP340PubKeyFromBTCPK(validatorPK), *bbn.NewBIP340PubKeyFromBTCPK(delPK))
+		require.NoError(t, err)
+		require.Equal(t, actualDelWithJurySig.JurySig.MustMarshal(), jurySig.MustMarshal())
+		require.True(t, actualDelWithJurySig.IsActivated())
 	})
 }

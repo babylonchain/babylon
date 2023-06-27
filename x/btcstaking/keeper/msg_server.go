@@ -42,10 +42,6 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // CreateBTCValidator creates a BTC validator
 func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCreateBTCValidator) (*types.MsgCreateBTCValidatorResponse, error) {
-	// stateless checks, including PoP
-	if err := req.ValidateBasic(); err != nil {
-		return nil, err
-	}
 	// ensure the validator address does not exist before
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if ms.HasBTCValidator(ctx, *req.BtcPk) {
@@ -65,11 +61,6 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 
 // CreateBTCDelegation creates a BTC delegation
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
-	// stateless checks
-	if err := req.ValidateBasic(); err != nil {
-		return nil, err
-	}
-
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// extract staking script from staking tx
@@ -85,6 +76,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// NOTE: it's okay that the same staker has multiple delegations
 	// the situation that we need to prevent here is that every staking tx
 	// can only correspond to a single BTC delegation
+	// TODO: the current impl does not support multiple delegations with the same (valPK, delPK) pair
+	// since a delegation is keyed by (valPK, delPK). Need to decide whether to support this
 	btcDel, err := ms.GetBTCDelegation(ctx, *valBTCPK, *delBTCPK)
 	if err == nil && btcDel.StakingTx.Equals(req.StakingTx) {
 		return nil, fmt.Errorf("the BTC staking tx is already used")
@@ -128,6 +121,18 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, err
 	}
 
+	// verify delegator_sig
+	err = req.SlashingTx.VerifySignature(
+		stakingOutputInfo.StakingPkScript,
+		int64(stakingOutputInfo.StakingAmount),
+		req.StakingTx.StakingScript,
+		stakingOutputInfo.StakingScriptData.StakerKey,
+		req.DelegatorSig,
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// all good, construct BTCDelegation and insert BTC delegation
 	newBTCDel := &types.BTCDelegation{
 		BabylonPk:    req.BabylonPk,
@@ -145,4 +150,48 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	ms.setBTCDelegation(ctx, newBTCDel)
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
+}
+
+// AddJurySig adds a signature from jury to a BTC delegation
+func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) (*types.MsgAddJurySigResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// ensure BTC delegation exists
+	btcDel, err := ms.GetBTCDelegation(ctx, *req.ValPk, *req.DelPk)
+	if err != nil {
+		return nil, err
+	}
+	if btcDel.IsActivated() {
+		return nil, fmt.Errorf("the BTC delegation has already been signed by the jury")
+	}
+
+	stakingOutputInfo, err := btcDel.StakingTx.GetStakingOutputInfo(ms.btcNet)
+	if err != nil {
+		// failing to get staking output info from a verified staking tx is a programming error
+		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
+	}
+
+	juryPK, err := ms.GetParams(ctx).JuryPk.ToBTCPK()
+	if err != nil {
+		// failing to cast a verified jury PK a programming error
+		panic(fmt.Errorf("failed to cast a verified jury public key"))
+	}
+
+	// verify signature w.r.t. jury PK and signature
+	err = btcDel.SlashingTx.VerifySignature(
+		stakingOutputInfo.StakingPkScript,
+		int64(stakingOutputInfo.StakingAmount),
+		btcDel.StakingTx.StakingScript,
+		juryPK,
+		req.Sig,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// all good, add signature to BTC delegation and set it back to KVStore
+	btcDel.JurySig = req.Sig
+	ms.setBTCDelegation(ctx, btcDel)
+
+	return &types.MsgAddJurySigResponse{}, nil
 }

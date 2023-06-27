@@ -13,16 +13,16 @@ import (
 func (v *BTCValidator) ValidateBasic() error {
 	// ensure fields are non-empty and well-formatted
 	if v.BabylonPk == nil {
-		return fmt.Errorf("empty BabylonPk")
+		return fmt.Errorf("empty Babylon public key")
 	}
 	if v.BtcPk == nil {
-		return fmt.Errorf("empty BtcPk")
+		return fmt.Errorf("empty BTC public key")
 	}
 	if _, err := v.BtcPk.ToBTCPK(); err != nil {
 		return fmt.Errorf("BtcPk is not correctly formatted: %w", err)
 	}
 	if v.Pop == nil {
-		return fmt.Errorf("empty Pop")
+		return fmt.Errorf("empty proof of possession")
 	}
 
 	// verify PoP
@@ -38,28 +38,26 @@ func (v *BTCValidator) ValidateBasic() error {
 
 func (d *BTCDelegation) ValidateBasic() error {
 	if d.BabylonPk == nil {
-		return fmt.Errorf("empty BabylonPk")
+		return fmt.Errorf("empty Babylon public key")
 	}
 	if d.BtcPk == nil {
-		return fmt.Errorf("empty BabylonPk")
+		return fmt.Errorf("empty BTC public key")
 	}
 	if d.Pop == nil {
-		return fmt.Errorf("empty Pop")
+		return fmt.Errorf("empty proof of possession")
 	}
 	if d.ValBtcPk == nil {
-		return fmt.Errorf("empty ValBtcPk")
+		return fmt.Errorf("empty Validator BTC public key")
 	}
 	if d.StakingTx == nil {
-		return fmt.Errorf("empty StakingTx")
+		return fmt.Errorf("empty staking tx")
 	}
 	if d.SlashingTx == nil {
-		return fmt.Errorf("empty SlashingTx")
+		return fmt.Errorf("empty slashing tx")
 	}
 	if d.DelegatorSig == nil {
-		return fmt.Errorf("empty DelegatorSig")
+		return fmt.Errorf("empty delegator signature")
 	}
-
-	// TODO: validation rules
 
 	// ensure staking tx is correctly formatted
 	if err := d.StakingTx.ValidateBasic(); err != nil {
@@ -77,12 +75,18 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
+// IsActivated returns whether a BTC delegation is activated or not
+// a BTC delegation is activated when it receives a signature from jury
+func (d *BTCDelegation) IsActivated() bool {
+	return d.JurySig != nil
+}
+
 func (p *ProofOfPossession) ValidateBasic() error {
 	if len(p.BabylonSig) == 0 {
-		return fmt.Errorf("empty BabylonSig")
+		return fmt.Errorf("empty Babylon signature")
 	}
 	if p.BtcSig == nil {
-		return fmt.Errorf("empty BtcSig")
+		return fmt.Errorf("empty BTC signature")
 	}
 	if _, err := p.BtcSig.ToBTCSig(); err != nil {
 		return fmt.Errorf("BtcSig is incorrectly formatted: %w", err)
@@ -161,6 +165,7 @@ func (tx *StakingTx) GetStakingOutputInfo(net *chaincfg.Params) (*btcstaking.Sta
 
 	return &btcstaking.StakingOutputInfo{
 		StakingScriptData: scriptData,
+		StakingPkScript:   expectedPkScript,
 		StakingAmount:     btcutil.Amount(outValue),
 	}, nil
 }

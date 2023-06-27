@@ -44,7 +44,7 @@ message BTCDelegation {
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by 
     // validator or jury yet.
-    bytes slashing_tx = 9 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
+    bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk). 
     // It will be a part of the witness for the staking tx output.
@@ -52,7 +52,7 @@ message BTCDelegation {
     // jury_sig is the signature signature on the slashing tx
     // by the jury (i.e., SK corresponding to jury_pk in params)
     // It will be a part of the witness for the staking tx output.
-    bytes jury_sig = 12 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes jury_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
 // ProofOfPossession is the proof of possession that a Babylon secp256k1

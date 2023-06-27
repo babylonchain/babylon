@@ -17,6 +17,9 @@ service Msg {
   rpc CreateBTCValidator(MsgCreateBTCValidator) returns (MsgCreateBTCValidatorResponse);
   // CreateBTCDelegation creates a new BTC delegation
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
+  // AddJurySig handles a signature from jury
+  rpc AddJurySig(MsgAddJurySig) returns (MsgAddJurySigResponse);
+  // TODO: handle validator sig (slashed case)
   // UpdateParams updates the btcstaking module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -48,7 +51,7 @@ message MsgCreateBTCDelegation {
   babylon.btccheckpoint.v1.TransactionInfo staking_tx_info = 5;
   // slashing_tx is the slashing tx
   // Note that the tx itself does not contain signatures, which are off-chain.
-  bytes slashing_tx = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCSlashingTx" ];
+  bytes slashing_tx = 6 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk). 
   // It will be a part of the witness for the staking tx output.
   // The staking tx output further needs signatures from jury and validator in
@@ -57,6 +60,22 @@ message MsgCreateBTCDelegation {
 }
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}
+
+// MsgAddJurySig is the message for handling a signature from jury
+message MsgAddJurySig {
+  string signer = 1;
+  // val_pk is the Bitcoin secp256k1 PK of the BTC validator
+  // the PK follows encoding in BIP-340 spec
+  bytes val_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
+  // the PK follows encoding in BIP-340 spec
+  bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // sig is the signature of the jury
+  // the signature follows encoding in BIP-340 spec
+  bytes sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+// MsgAddJurySigResponse is the response for MsgAddJurySig
+message MsgAddJurySigResponse {}
 
 // MsgUpdateParams defines a message for updating btcstaking module parameters.
 message MsgUpdateParams {

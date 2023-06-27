@@ -4,6 +4,8 @@ import (
 	"bytes"
 
 	"github.com/babylonchain/babylon/btcstaking"
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -75,4 +77,40 @@ func (tx *BTCSlashingTx) Validate(net *chaincfg.Params, slashingAddress string) 
 		return err
 	}
 	return btcstaking.CheckSlashingTx(msgTx, decodedAddr)
+}
+
+// Sign generates a signature on the slashing tx signed by staker, validator or jury
+func (tx *BTCSlashingTx) Sign(stakingMsgTx *wire.MsgTx, stakingScript []byte, sk *btcec.PrivateKey, net *chaincfg.Params) (*bbn.BIP340Signature, error) {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return nil, err
+	}
+	schnorrSig, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
+		msgTx,
+		stakingMsgTx,
+		sk,
+		stakingScript,
+		net,
+	)
+	if err != nil {
+		return nil, err
+	}
+	delegatorSig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
+	return &delegatorSig, nil
+}
+
+// VerifySignature verifies a signature on the slashing tx signed by staker, validator or jury
+func (tx *BTCSlashingTx) VerifySignature(stakingPkScript []byte, stakingAmount int64, stakingScript []byte, pk *btcec.PublicKey, sig *bbn.BIP340Signature) error {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return err
+	}
+	return btcstaking.VerifyTransactionSigWithOutputData(
+		msgTx,
+		stakingPkScript,
+		stakingAmount,
+		stakingScript,
+		pk,
+		*sig,
+	)
 }
