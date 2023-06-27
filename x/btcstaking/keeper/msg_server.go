@@ -56,6 +56,11 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 	}
 	ms.setBTCValidator(ctx, &btcVal)
 
+	// notify subscriber
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCValidator{BtcVal: &btcVal}); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgCreateBTCValidatorResponse{}, nil
 }
 
@@ -134,6 +139,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// all good, construct BTCDelegation and insert BTC delegation
+	// NOTE: the BTC delegation does not have voting power yet. It will
+	// have voting power only when 1) its corresponding staking tx is k-deep,
+	// and 2) it receives a jury signature
 	newBTCDel := &types.BTCDelegation{
 		BabylonPk:    req.BabylonPk,
 		BtcPk:        delBTCPK,
@@ -148,6 +156,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		JurySig:      nil, // NOTE: jury signature will be submitted in a separate msg by jury
 	}
 	ms.setBTCDelegation(ctx, newBTCDel)
+
+	// notify subscriber
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCDelegation{BtcDel: newBTCDel}); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
 }
@@ -192,6 +205,11 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 	// all good, add signature to BTC delegation and set it back to KVStore
 	btcDel.JurySig = req.Sig
 	ms.setBTCDelegation(ctx, btcDel)
+
+	// notify subscriber
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventActivateBTCDelegation{BtcDel: btcDel}); err != nil {
+		return nil, err
+	}
 
 	return &types.MsgAddJurySigResponse{}, nil
 }
