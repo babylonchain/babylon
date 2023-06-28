@@ -8,8 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// setBTCValidator adds the given BTC validator to KVStore
-func (k Keeper) setBTCValidator(ctx sdk.Context, btcVal *types.BTCValidator) {
+// SetBTCValidator adds the given BTC validator to KVStore
+func (k Keeper) SetBTCValidator(ctx sdk.Context, btcVal *types.BTCValidator) {
 	store := k.btcValidatorStore(ctx)
 	btcValBytes := k.cdc.MustMarshal(btcVal)
 	store.Set(btcVal.BtcPk.MustMarshal(), btcValBytes)

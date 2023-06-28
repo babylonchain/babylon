@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 )
@@ -41,5 +43,41 @@ func FuzzStakingTx(f *testing.F) {
 		require.Equal(t, stakingOutputInfo.StakingScriptData.JuryKey.SerializeCompressed()[1:], juryPK.SerializeCompressed()[1:])
 		require.Equal(t, stakingOutputInfo.StakingScriptData.StakingTime, stakingTimeBlocks)
 		require.Equal(t, int64(stakingOutputInfo.StakingAmount), stakingValue)
+	})
+}
+
+func FuzzBTCDelegation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 100)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		btcDel := &types.BTCDelegation{}
+		// randomise voting power
+		btcDel.TotalSat = datagen.RandomInt(r, 100000)
+
+		// randomise jury sig
+		hasJurySig := datagen.RandomInt(r, 2) == 0
+		if hasJurySig {
+			jurySig := bbn.BIP340Signature([]byte{1, 2, 3})
+			btcDel.JurySig = &jurySig
+		}
+
+		// randomise start height and end height
+		btcDel.StartHeight = datagen.RandomInt(r, 100)
+		btcDel.EndHeight = btcDel.StartHeight + datagen.RandomInt(r, 100)
+
+		// randomise BTC tip and w
+		btcHeight := btcDel.StartHeight + datagen.RandomInt(r, 50)
+		w := datagen.RandomInt(r, 50)
+
+		// test expected voting power
+		hasVotingPower := hasJurySig && btcDel.StartHeight <= btcHeight && btcHeight+w <= btcDel.EndHeight
+		actualVotingPower := btcDel.VotingPower(btcHeight, w)
+		if hasVotingPower {
+			require.Equal(t, btcDel.TotalSat, actualVotingPower)
+		} else {
+			require.Equal(t, uint64(0), actualVotingPower)
+		}
 	})
 }

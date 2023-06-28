@@ -9,6 +9,7 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -46,6 +47,44 @@ func GenRandomBTCValidatorWithBTCPK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bst
 		BabylonPk: secp256k1PK,
 		BtcPk:     bip340PK,
 		Pop:       pop,
+	}, nil
+}
+
+func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, startHeight uint64, endHeight uint64, totalSat uint64) (*bstypes.BTCDelegation, error) {
+	// key pairs
+	btcSK, btcPK, err := GenRandomBTCKeyPair(r)
+	if err != nil {
+		return nil, err
+	}
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
+	if err != nil {
+		return nil, err
+	}
+	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
+	if !ok {
+		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
+	}
+	// pop
+	pop, err := bstypes.NewPoP(bbnSK, btcSK)
+	if err != nil {
+		return nil, err
+	}
+	// TODO: generate legitimate jury signature and staking/slashing tx
+	jurySchnorrSig, err := schnorr.Sign(btcSK, GenRandomByteArray(r, 32))
+	if err != nil {
+		return nil, err
+	}
+	jurySig := bbn.NewBIP340SignatureFromBTCSig(jurySchnorrSig)
+	return &bstypes.BTCDelegation{
+		BabylonPk:   secp256k1PK,
+		BtcPk:       bip340PK,
+		Pop:         pop,
+		ValBtcPk:    valBTCPK,
+		StartHeight: startHeight,
+		EndHeight:   endHeight,
+		TotalSat:    totalSat,
+		JurySig:     &jurySig,
 	}, nil
 }
 

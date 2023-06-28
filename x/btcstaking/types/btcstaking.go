@@ -81,6 +81,20 @@ func (d *BTCDelegation) IsActivated() bool {
 	return d.JurySig != nil
 }
 
+// VotingPower returns the voting power of the BTC delegation at a given BTC height
+// and a given w value
+// The BTC delegation d has voting power iff the following holds
+// - d has a jury signature
+// - d's timelock start height <= the given BTC height
+// - the given BTC height <= d's timelock end height - w
+func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64) uint64 {
+	if d.IsActivated() && d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
+		return d.TotalSat
+	} else {
+		return 0
+	}
+}
+
 func (p *ProofOfPossession) ValidateBasic() error {
 	if len(p.BabylonSig) == 0 {
 		return fmt.Errorf("empty Babylon signature")

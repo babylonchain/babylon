@@ -618,7 +618,7 @@ func NewBabylonApp(
 	// set up BTC staking keeper
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey],
-		app.BTCLightClientKeeper, app.BtcCheckpointKeeper,
+		&btclightclientKeeper, &btcCheckpointKeeper,
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
