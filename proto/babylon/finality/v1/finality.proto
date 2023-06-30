@@ -1,22 +1,7 @@
 syntax = "proto3";
 package babylon.finality.v1;
 
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
-
-// Vote is a vote to a block
-message Vote {
-    // val_btc_pk is the BTC Pk of the validator that casts this vote
-    bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // block_height is the height of the voted block
-    uint64 block_height = 2;
-    // finality_sig is the finality signature to this block
-    // where finality signature is an EOTS signature, i.e.,
-    // the `s` in a Schnorr signature `(r, s)`
-    // `r` is the public randomness that is already committed by the validator
-    bytes finality_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
-}
 
 // IndexedBlock is the block with some indexed info
 message IndexedBlock {
@@ -24,8 +9,7 @@ message IndexedBlock {
     uint64 height = 1;
     // hash is the hash of the block
     bytes hash = 2;
-    // btc_height is the height of the BTC tip upon EndBlock of this block
-    uint64 btc_height = 3;
-    // btc_hash is the hash of the BTC tip upon EndBlock of this block
-    bytes btc_hash = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
+    // finalized indicates whether the IndexedBlock is finalised by 2/3
+    // BTC validators or not
+    bool finalized = 3;
 }

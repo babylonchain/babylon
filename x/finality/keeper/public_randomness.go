@@ -34,5 +34,5 @@ func (k Keeper) GetPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, height u
 func (k Keeper) pubRandStore(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	prefixedStore := prefix.NewStore(store, types.PubRandKey)
-	return prefix.NewStore(prefixedStore, *valBtcPK)
+	return prefix.NewStore(prefixedStore, valBtcPK.MustMarshal())
 }

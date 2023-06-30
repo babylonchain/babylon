@@ -24,7 +24,7 @@ func NewSchnorrPubRandFromFieldVal(r *btcec.FieldVal) *SchnorrPubRand {
 
 func (pr SchnorrPubRand) ToFieldVal() *btcec.FieldVal {
 	var r btcec.FieldVal
-	r.PutBytesUnchecked(pr)
+	r.SetByteSlice(pr)
 	return &r
 }
 

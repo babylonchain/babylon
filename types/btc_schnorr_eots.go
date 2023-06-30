@@ -16,15 +16,15 @@ func NewSchnorrEOTSSig(data []byte) (*SchnorrEOTSSig, error) {
 	return &sig, err
 }
 
-func NewSchnorrEOTSSigFromModNScalar(r *btcec.ModNScalar) *SchnorrEOTSSig {
-	prBytes := r.Bytes()
+func NewSchnorrEOTSSigFromModNScalar(s *btcec.ModNScalar) *SchnorrEOTSSig {
+	prBytes := s.Bytes()
 	sig := SchnorrEOTSSig(prBytes[:])
 	return &sig
 }
 
 func (sig SchnorrEOTSSig) ToModNScalar() *btcec.ModNScalar {
 	var s btcec.ModNScalar
-	s.PutBytesUnchecked(sig)
+	s.SetByteSlice(sig)
 	return &s
 }
 

@@ -18,7 +18,8 @@ func FuzzSchnorrEOTSSig(f *testing.F) {
 
 		randBytes := datagen.GenRandomByteArray(r, 32)
 		var modNScalar btcec.ModNScalar
-		modNScalar.PutBytesUnchecked(randBytes)
+		overflowed := modNScalar.SetByteSlice(randBytes)
+		require.False(t, overflowed)
 
 		// ModNScalar -> SchnorrEOTSSig -> ModNScalar
 		sig := types.NewSchnorrEOTSSigFromModNScalar(&modNScalar)

@@ -9,11 +9,6 @@ func (ib *IndexedBlock) Equal(ib2 *IndexedBlock) bool {
 	if ib.Height != ib2.Height {
 		return false
 	}
-	if !ib.BtcHash.Eq(ib2.BtcHash) {
-		return false
-	}
-	if ib.BtcHeight != ib2.BtcHeight {
-		return false
-	}
+	// NOTE: we don't compare finalisation status here
 	return true
 }

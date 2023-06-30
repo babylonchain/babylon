@@ -83,7 +83,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// can only correspond to a single BTC delegation
 	// TODO: the current impl does not support multiple delegations with the same (valPK, delPK) pair
 	// since a delegation is keyed by (valPK, delPK). Need to decide whether to support this
-	btcDel, err := ms.GetBTCDelegation(ctx, *valBTCPK, *delBTCPK)
+	btcDel, err := ms.GetBTCDelegation(ctx, valBTCPK.MustMarshal(), delBTCPK.MustMarshal())
 	if err == nil && btcDel.StakingTx.Equals(req.StakingTx) {
 		return nil, fmt.Errorf("the BTC staking tx is already used")
 	}

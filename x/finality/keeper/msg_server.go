@@ -34,3 +34,13 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 	return &types.MsgUpdateParamsResponse{}, nil
 }
+
+// AddVote adds a new vote to a given block
+func (ms msgServer) AddVote(goCtx context.Context, req *types.MsgAddVote) (*types.MsgAddVoteResponse, error) {
+	panic("TODO: implement me")
+}
+
+// CommitPubRand commits a list of EOTS public randomness
+func (ms msgServer) CommitPubRand(goCtx context.Context, req *types.MsgCommitPubRand) (*types.MsgCommitPubRandResponse, error) {
+	panic("TODO: implement me")
+}

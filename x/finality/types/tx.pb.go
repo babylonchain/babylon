@@ -6,6 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
 	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -30,6 +31,214 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgAddVote defines a message for adding a vote
+type MsgAddVote struct {
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// val_btc_pk is the BTC Pk of the validator that casts this vote
+	ValBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=val_btc_pk,json=valBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"val_btc_pk,omitempty"`
+	// block_height is the height of the voted block
+	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
+	// block_hash is the hash of the voted block
+	BlockHash []byte `protobuf:"bytes,4,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
+	// finality_sig is the finality signature to this block
+	// where finality signature is an EOTS signature, i.e.,
+	// the `s` in a Schnorr signature `(r, s)`
+	// `r` is the public randomness that is already committed by the validator
+	FinalitySig *github_com_babylonchain_babylon_types.SchnorrEOTSSig `protobuf:"bytes,5,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
+}
+
+func (m *MsgAddVote) Reset()         { *m = MsgAddVote{} }
+func (m *MsgAddVote) String() string { return proto.CompactTextString(m) }
+func (*MsgAddVote) ProtoMessage()    {}
+func (*MsgAddVote) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2dd6da066b6baf1d, []int{0}
+}
+func (m *MsgAddVote) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddVote.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddVote) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddVote.Merge(m, src)
+}
+func (m *MsgAddVote) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddVote) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddVote.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddVote proto.InternalMessageInfo
+
+func (m *MsgAddVote) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgAddVote) GetBlockHeight() uint64 {
+	if m != nil {
+		return m.BlockHeight
+	}
+	return 0
+}
+
+func (m *MsgAddVote) GetBlockHash() []byte {
+	if m != nil {
+		return m.BlockHash
+	}
+	return nil
+}
+
+// MsgAddVoteResponse is the response to the MsgAddVote message
+type MsgAddVoteResponse struct {
+}
+
+func (m *MsgAddVoteResponse) Reset()         { *m = MsgAddVoteResponse{} }
+func (m *MsgAddVoteResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddVoteResponse) ProtoMessage()    {}
+func (*MsgAddVoteResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2dd6da066b6baf1d, []int{1}
+}
+func (m *MsgAddVoteResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgAddVoteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgAddVoteResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgAddVoteResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddVoteResponse.Merge(m, src)
+}
+func (m *MsgAddVoteResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgAddVoteResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddVoteResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgAddVoteResponse proto.InternalMessageInfo
+
+// MsgCommitPubRand defines a message for committing a list of public randomness for EOTS
+type MsgCommitPubRand struct {
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// val_btc_pk is the BTC Pk of the validator that commits the public randomness
+	ValBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=val_btc_pk,json=valBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"val_btc_pk,omitempty"`
+	// start_height is the start block height of the list of public randomness
+	StartHeight uint64 `protobuf:"varint,3,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
+	// pub_rand_list is the list of public randomness
+	PubRandList []github_com_babylonchain_babylon_types.SchnorrPubRand `protobuf:"bytes,4,rep,name=pub_rand_list,json=pubRandList,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrPubRand" json:"pub_rand_list,omitempty"`
+	// sig is the signature on (start_height || pub_rand_list) signed by
+	// SK corresponding to val_btc_pk. This prevents others to commit public
+	// randomness on behalf of val_btc_pk
+	// TODO: another option is to restrict signer to correspond to val_btc_pk. This restricts
+	// the tx submitter to be the holder of val_btc_pk. Decide this later
+	Sig *github_com_babylonchain_babylon_types.BIP340Signature `protobuf:"bytes,5,opt,name=sig,proto3,customtype=github.com/babylonchain/babylon/types.BIP340Signature" json:"sig,omitempty"`
+}
+
+func (m *MsgCommitPubRand) Reset()         { *m = MsgCommitPubRand{} }
+func (m *MsgCommitPubRand) String() string { return proto.CompactTextString(m) }
+func (*MsgCommitPubRand) ProtoMessage()    {}
+func (*MsgCommitPubRand) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2dd6da066b6baf1d, []int{2}
+}
+func (m *MsgCommitPubRand) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCommitPubRand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCommitPubRand.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCommitPubRand) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCommitPubRand.Merge(m, src)
+}
+func (m *MsgCommitPubRand) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCommitPubRand) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCommitPubRand.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCommitPubRand proto.InternalMessageInfo
+
+func (m *MsgCommitPubRand) GetSigner() string {
+	if m != nil {
+		return m.Signer
+	}
+	return ""
+}
+
+func (m *MsgCommitPubRand) GetStartHeight() uint64 {
+	if m != nil {
+		return m.StartHeight
+	}
+	return 0
+}
+
+// MsgCommitPubRandResponse is the response to the MsgCommitPubRand message
+type MsgCommitPubRandResponse struct {
+}
+
+func (m *MsgCommitPubRandResponse) Reset()         { *m = MsgCommitPubRandResponse{} }
+func (m *MsgCommitPubRandResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCommitPubRandResponse) ProtoMessage()    {}
+func (*MsgCommitPubRandResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2dd6da066b6baf1d, []int{3}
+}
+func (m *MsgCommitPubRandResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgCommitPubRandResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgCommitPubRandResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgCommitPubRandResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCommitPubRandResponse.Merge(m, src)
+}
+func (m *MsgCommitPubRandResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgCommitPubRandResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCommitPubRandResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgCommitPubRandResponse proto.InternalMessageInfo
+
 // MsgUpdateParams defines a message for updating finality module parameters.
 type MsgUpdateParams struct {
 	// authority is the address of the governance account.
@@ -47,7 +256,7 @@ func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2dd6da066b6baf1d, []int{0}
+	return fileDescriptor_2dd6da066b6baf1d, []int{4}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -98,7 +307,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2dd6da066b6baf1d, []int{1}
+	return fileDescriptor_2dd6da066b6baf1d, []int{5}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -128,6 +337,10 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
 func init() {
+	proto.RegisterType((*MsgAddVote)(nil), "babylon.finality.v1.MsgAddVote")
+	proto.RegisterType((*MsgAddVoteResponse)(nil), "babylon.finality.v1.MsgAddVoteResponse")
+	proto.RegisterType((*MsgCommitPubRand)(nil), "babylon.finality.v1.MsgCommitPubRand")
+	proto.RegisterType((*MsgCommitPubRandResponse)(nil), "babylon.finality.v1.MsgCommitPubRandResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.finality.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.finality.v1.MsgUpdateParamsResponse")
 }
@@ -135,27 +348,46 @@ func init() {
 func init() { proto.RegisterFile("babylon/finality/v1/tx.proto", fileDescriptor_2dd6da066b6baf1d) }
 
 var fileDescriptor_2dd6da066b6baf1d = []byte{
-	// 318 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x49, 0x4a, 0x4c, 0xaa,
-	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0xcb, 0xcc, 0x4b, 0xcc, 0xc9, 0x2c, 0xa9, 0xd4, 0x2f, 0x33, 0xd4,
-	0x2f, 0xa9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x86, 0xca, 0xea, 0xc1, 0x64, 0xf5,
-	0xca, 0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0xf2, 0xfa, 0x20, 0x16, 0x44, 0xa9, 0x94,
-	0x64, 0x72, 0x7e, 0x71, 0x6e, 0x7e, 0x71, 0x3c, 0x44, 0x02, 0xc2, 0x81, 0x4a, 0x89, 0x43, 0x78,
-	0xfa, 0xb9, 0xc5, 0xe9, 0x20, 0xd3, 0x73, 0x8b, 0xd3, 0xa1, 0x12, 0x0a, 0xd8, 0x2c, 0x2f, 0x48,
-	0x2c, 0x4a, 0xcc, 0x85, 0x6a, 0x55, 0x9a, 0xc2, 0xc8, 0xc5, 0xef, 0x5b, 0x9c, 0x1e, 0x5a, 0x90,
-	0x92, 0x58, 0x92, 0x1a, 0x00, 0x96, 0x11, 0x32, 0xe3, 0xe2, 0x4c, 0x2c, 0x2d, 0xc9, 0xc8, 0x2f,
-	0xca, 0x2c, 0xa9, 0x94, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x74, 0x92, 0xb8, 0xb4, 0x45, 0x57, 0x04,
-	0x6a, 0xa7, 0x63, 0x4a, 0x4a, 0x51, 0x6a, 0x71, 0x71, 0x70, 0x49, 0x51, 0x66, 0x5e, 0x7a, 0x10,
-	0x42, 0xa9, 0x90, 0x25, 0x17, 0x1b, 0xc4, 0x6c, 0x09, 0x26, 0x05, 0x46, 0x0d, 0x6e, 0x23, 0x69,
-	0x3d, 0x2c, 0xbe, 0xd3, 0x83, 0x58, 0xe2, 0xc4, 0x72, 0xe2, 0x9e, 0x3c, 0x43, 0x10, 0x54, 0x83,
-	0x15, 0x5f, 0xd3, 0xf3, 0x0d, 0x5a, 0x08, 0xa3, 0x94, 0x24, 0xb9, 0xc4, 0xd1, 0x5c, 0x15, 0x94,
-	0x5a, 0x5c, 0x90, 0x9f, 0x57, 0x9c, 0x6a, 0x94, 0xc9, 0xc5, 0xec, 0x5b, 0x9c, 0x2e, 0x94, 0xc4,
-	0xc5, 0x83, 0xe2, 0x68, 0x15, 0xac, 0x96, 0xa1, 0x19, 0x22, 0xa5, 0x43, 0x8c, 0x2a, 0x98, 0x55,
-	0x4e, 0x5e, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c, 0xe3, 0x84,
-	0xc7, 0x72, 0x0c, 0x17, 0x1e, 0xcb, 0x31, 0xdc, 0x78, 0x2c, 0xc7, 0x10, 0x65, 0x90, 0x9e, 0x59,
-	0x92, 0x51, 0x9a, 0xa4, 0x97, 0x9c, 0x9f, 0xab, 0x0f, 0x35, 0x31, 0x39, 0x23, 0x31, 0x33, 0x0f,
-	0xc6, 0xd1, 0xaf, 0x40, 0x04, 0x79, 0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0x38, 0xbc, 0x8d,
-	0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x43, 0xfa, 0x08, 0x60, 0x10, 0x02, 0x00, 0x00,
+	// 620 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x54, 0xcb, 0x6e, 0xd3, 0x40,
+	0x14, 0x8d, 0x93, 0x50, 0xe8, 0x24, 0x05, 0x34, 0x54, 0xd4, 0x35, 0xe0, 0x84, 0x08, 0x44, 0x85,
+	0xa8, 0xdd, 0x17, 0x15, 0x65, 0x57, 0x23, 0x24, 0xa0, 0x44, 0x44, 0x76, 0x61, 0x01, 0x48, 0xd6,
+	0xf8, 0xc1, 0x78, 0x54, 0xdb, 0x63, 0x79, 0xc6, 0x51, 0xb3, 0xe5, 0x0b, 0x58, 0xb0, 0xe1, 0x03,
+	0xd8, 0xb3, 0xe0, 0x23, 0xba, 0x42, 0x15, 0x2b, 0xd4, 0x45, 0x84, 0xda, 0x05, 0xbf, 0x81, 0xe2,
+	0x47, 0x4d, 0xab, 0x56, 0x0d, 0x2c, 0xd8, 0xf9, 0xce, 0x3d, 0xf7, 0x9e, 0x3b, 0xc7, 0xe7, 0x0e,
+	0xb8, 0x6e, 0x21, 0x6b, 0xe0, 0xd3, 0x50, 0x7d, 0x47, 0x42, 0xe4, 0x13, 0x3e, 0x50, 0xfb, 0x8b,
+	0x2a, 0xdf, 0x56, 0xa2, 0x98, 0x72, 0x0a, 0xaf, 0xe4, 0x59, 0xa5, 0xc8, 0x2a, 0xfd, 0x45, 0x69,
+	0x1a, 0x53, 0x4c, 0xd3, 0xbc, 0x3a, 0xfa, 0xca, 0xa0, 0xd2, 0xac, 0x4d, 0x59, 0x40, 0x99, 0x99,
+	0x25, 0xb2, 0x20, 0x4f, 0xcd, 0x64, 0x91, 0x1a, 0x30, 0x3c, 0xea, 0x1e, 0x30, 0x9c, 0x27, 0xda,
+	0x27, 0x91, 0x47, 0x28, 0x46, 0x41, 0x5e, 0xda, 0xf9, 0x54, 0x05, 0xa0, 0xcb, 0xf0, 0xba, 0xe3,
+	0xbc, 0xa2, 0xdc, 0x85, 0x57, 0xc1, 0x04, 0x23, 0x38, 0x74, 0x63, 0x51, 0x68, 0x0b, 0x73, 0x93,
+	0x7a, 0x1e, 0xc1, 0x4d, 0x00, 0xfa, 0xc8, 0x37, 0x2d, 0x6e, 0x9b, 0xd1, 0x96, 0x58, 0x6d, 0x0b,
+	0x73, 0x4d, 0x6d, 0x75, 0x6f, 0xd8, 0x5a, 0xc2, 0x84, 0x7b, 0x89, 0xa5, 0xd8, 0x34, 0x50, 0x73,
+	0x2e, 0xdb, 0x43, 0x24, 0x2c, 0x02, 0x95, 0x0f, 0x22, 0x97, 0x29, 0xda, 0xd3, 0xde, 0xf2, 0xca,
+	0x42, 0x2f, 0xb1, 0x36, 0xdc, 0x81, 0x7e, 0xa1, 0x8f, 0x7c, 0x8d, 0xdb, 0xbd, 0x2d, 0x78, 0x13,
+	0x34, 0x2d, 0x9f, 0xda, 0x5b, 0xa6, 0xe7, 0x12, 0xec, 0x71, 0xb1, 0xd6, 0x16, 0xe6, 0xea, 0x7a,
+	0x23, 0x3d, 0x7b, 0x92, 0x1e, 0xc1, 0x1b, 0x00, 0xe4, 0x10, 0xc4, 0x3c, 0xb1, 0x3e, 0x22, 0xd6,
+	0x27, 0x33, 0x00, 0x62, 0x1e, 0x7c, 0x03, 0x9a, 0xc5, 0xd5, 0x4c, 0x46, 0xb0, 0x78, 0x2e, 0x9d,
+	0xec, 0xc1, 0xde, 0xb0, 0xb5, 0x32, 0xde, 0x64, 0x86, 0xed, 0x85, 0x34, 0x8e, 0x1f, 0xbf, 0xd8,
+	0x34, 0x0c, 0x82, 0xf5, 0x46, 0xd1, 0xcd, 0x20, 0xb8, 0x33, 0x0d, 0x60, 0x29, 0x8d, 0xee, 0xb2,
+	0x88, 0x86, 0xcc, 0xed, 0x7c, 0xab, 0x82, 0xcb, 0x5d, 0x86, 0x1f, 0xd1, 0x20, 0x20, 0xbc, 0x97,
+	0x58, 0x3a, 0x0a, 0x9d, 0xff, 0xaf, 0x1b, 0xe3, 0x28, 0xe6, 0xc7, 0x74, 0x4b, 0xcf, 0x72, 0xdd,
+	0xde, 0x82, 0xa9, 0x28, 0xb1, 0xcc, 0x18, 0x85, 0x8e, 0xe9, 0x13, 0xc6, 0xc5, 0x7a, 0xbb, 0xf6,
+	0x4f, 0xca, 0xe4, 0x37, 0xd4, 0x1b, 0x51, 0xf6, 0xf1, 0x9c, 0x30, 0x0e, 0x37, 0x40, 0xad, 0x54,
+	0x7b, 0x6d, 0x6f, 0xd8, 0xba, 0xff, 0x37, 0xf7, 0x31, 0x08, 0x0e, 0x11, 0x4f, 0x62, 0x57, 0x1f,
+	0x75, 0xe9, 0x48, 0x40, 0x3c, 0xae, 0xe7, 0xa1, 0xd8, 0x1f, 0x05, 0x70, 0xa9, 0xcb, 0xf0, 0xcb,
+	0xc8, 0x41, 0xdc, 0xed, 0xa5, 0xc6, 0x85, 0xab, 0x60, 0x12, 0x25, 0xdc, 0xa3, 0x31, 0xe1, 0x83,
+	0x4c, 0x6e, 0x4d, 0xfc, 0xfe, 0x75, 0x7e, 0x3a, 0x5f, 0x89, 0x75, 0xc7, 0x89, 0x5d, 0xc6, 0x0c,
+	0x1e, 0x93, 0x10, 0xeb, 0x25, 0x14, 0xae, 0x81, 0x89, 0xcc, 0xfa, 0xe9, 0x7f, 0x68, 0x2c, 0x5d,
+	0x53, 0x4e, 0x58, 0x3e, 0x25, 0x23, 0xd1, 0xea, 0x3b, 0xc3, 0x56, 0x45, 0xcf, 0x0b, 0x1e, 0x5e,
+	0x7c, 0xff, 0xeb, 0xcb, 0xdd, 0xb2, 0x55, 0x67, 0x16, 0xcc, 0x1c, 0x9b, 0xaa, 0x98, 0x78, 0xe9,
+	0x73, 0x15, 0xd4, 0xba, 0x0c, 0x43, 0x03, 0x9c, 0x2f, 0x96, 0xaa, 0x75, 0x22, 0x51, 0x69, 0x2d,
+	0xe9, 0xce, 0x19, 0x80, 0xa2, 0x39, 0x74, 0xc1, 0xd4, 0x51, 0xdf, 0xdd, 0x3e, 0xad, 0xf2, 0x08,
+	0x4c, 0x9a, 0x1f, 0x0b, 0x76, 0x48, 0x63, 0x81, 0xe6, 0x11, 0xc5, 0x6f, 0x9d, 0x56, 0xfe, 0x27,
+	0x4a, 0xba, 0x37, 0x0e, 0xaa, 0xe0, 0xd0, 0x9e, 0xed, 0xec, 0xcb, 0xc2, 0xee, 0xbe, 0x2c, 0xfc,
+	0xdc, 0x97, 0x85, 0x0f, 0x07, 0x72, 0x65, 0xf7, 0x40, 0xae, 0xfc, 0x38, 0x90, 0x2b, 0xaf, 0x17,
+	0xce, 0xf2, 0xd2, 0x76, 0xf9, 0x9c, 0xa5, 0xb6, 0xb2, 0x26, 0xd2, 0xb7, 0x6c, 0xf9, 0x77, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0xc1, 0xb9, 0xb9, 0xd7, 0x6c, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -170,6 +402,11 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
+	// AddVote adds a vote to a given block
+	AddVote(ctx context.Context, in *MsgAddVote, opts ...grpc.CallOption) (*MsgAddVoteResponse, error)
+	// CommitPubRand commits a list of public randomness for EOTS
+	CommitPubRand(ctx context.Context, in *MsgCommitPubRand, opts ...grpc.CallOption) (*MsgCommitPubRandResponse, error)
+	// TODO: msg for evidence of equivocation. this is not specified yet
 	// UpdateParams updates the finality module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -180,6 +417,24 @@ type msgClient struct {
 
 func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
+}
+
+func (c *msgClient) AddVote(ctx context.Context, in *MsgAddVote, opts ...grpc.CallOption) (*MsgAddVoteResponse, error) {
+	out := new(MsgAddVoteResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Msg/AddVote", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) CommitPubRand(ctx context.Context, in *MsgCommitPubRand, opts ...grpc.CallOption) (*MsgCommitPubRandResponse, error) {
+	out := new(MsgCommitPubRandResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Msg/CommitPubRand", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error) {
@@ -193,6 +448,11 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
+	// AddVote adds a vote to a given block
+	AddVote(context.Context, *MsgAddVote) (*MsgAddVoteResponse, error)
+	// CommitPubRand commits a list of public randomness for EOTS
+	CommitPubRand(context.Context, *MsgCommitPubRand) (*MsgCommitPubRandResponse, error)
+	// TODO: msg for evidence of equivocation. this is not specified yet
 	// UpdateParams updates the finality module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
@@ -201,12 +461,54 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
+func (*UnimplementedMsgServer) AddVote(ctx context.Context, req *MsgAddVote) (*MsgAddVoteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddVote not implemented")
+}
+func (*UnimplementedMsgServer) CommitPubRand(ctx context.Context, req *MsgCommitPubRand) (*MsgCommitPubRandResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommitPubRand not implemented")
+}
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
+}
+
+func _Msg_AddVote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddVote)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).AddVote(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.finality.v1.Msg/AddVote",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).AddVote(ctx, req.(*MsgAddVote))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_CommitPubRand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCommitPubRand)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).CommitPubRand(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.finality.v1.Msg/CommitPubRand",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).CommitPubRand(ctx, req.(*MsgCommitPubRand))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -232,12 +534,205 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
+			MethodName: "AddVote",
+			Handler:    _Msg_AddVote_Handler,
+		},
+		{
+			MethodName: "CommitPubRand",
+			Handler:    _Msg_CommitPubRand_Handler,
+		},
+		{
 			MethodName: "UpdateParams",
 			Handler:    _Msg_UpdateParams_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "babylon/finality/v1/tx.proto",
+}
+
+func (m *MsgAddVote) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddVote) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddVote) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.FinalitySig != nil {
+		{
+			size := m.FinalitySig.Size()
+			i -= size
+			if _, err := m.FinalitySig.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.BlockHash) > 0 {
+		i -= len(m.BlockHash)
+		copy(dAtA[i:], m.BlockHash)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.BlockHash)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if m.BlockHeight != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.BlockHeight))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.ValBtcPk != nil {
+		{
+			size := m.ValBtcPk.Size()
+			i -= size
+			if _, err := m.ValBtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgAddVoteResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgAddVoteResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgAddVoteResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCommitPubRand) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCommitPubRand) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCommitPubRand) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Sig != nil {
+		{
+			size := m.Sig.Size()
+			i -= size
+			if _, err := m.Sig.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.PubRandList) > 0 {
+		for iNdEx := len(m.PubRandList) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.PubRandList[iNdEx].Size()
+				i -= size
+				if _, err := m.PubRandList[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if m.StartHeight != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.StartHeight))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.ValBtcPk != nil {
+		{
+			size := m.ValBtcPk.Size()
+			i -= size
+			if _, err := m.ValBtcPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Signer) > 0 {
+		i -= len(m.Signer)
+		copy(dAtA[i:], m.Signer)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgCommitPubRandResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgCommitPubRandResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgCommitPubRandResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
 }
 
 func (m *MsgUpdateParams) Marshal() (dAtA []byte, err error) {
@@ -314,6 +809,82 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *MsgAddVote) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ValBtcPk != nil {
+		l = m.ValBtcPk.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.BlockHeight != 0 {
+		n += 1 + sovTx(uint64(m.BlockHeight))
+	}
+	l = len(m.BlockHash)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.FinalitySig != nil {
+		l = m.FinalitySig.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgAddVoteResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgCommitPubRand) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Signer)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.ValBtcPk != nil {
+		l = m.ValBtcPk.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.StartHeight != 0 {
+		n += 1 + sovTx(uint64(m.StartHeight))
+	}
+	if len(m.PubRandList) > 0 {
+		for _, e := range m.PubRandList {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if m.Sig != nil {
+		l = m.Sig.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgCommitPubRandResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *MsgUpdateParams) Size() (n int) {
 	if m == nil {
 		return 0
@@ -343,6 +914,517 @@ func sovTx(x uint64) (n int) {
 }
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *MsgAddVote) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddVote: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddVote: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340PubKey
+			m.ValBtcPk = &v
+			if err := m.ValBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHeight", wireType)
+			}
+			m.BlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BlockHash = append(m.BlockHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.BlockHash == nil {
+				m.BlockHash = []byte{}
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalitySig", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.SchnorrEOTSSig
+			m.FinalitySig = &v
+			if err := m.FinalitySig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgAddVoteResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgAddVoteResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgAddVoteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCommitPubRand) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCommitPubRand: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCommitPubRand: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Signer = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340PubKey
+			m.ValBtcPk = &v
+			if err := m.ValBtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field StartHeight", wireType)
+			}
+			m.StartHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.StartHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PubRandList", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.SchnorrPubRand
+			m.PubRandList = append(m.PubRandList, v)
+			if err := m.PubRandList[len(m.PubRandList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sig", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340Signature
+			m.Sig = &v
+			if err := m.Sig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgCommitPubRandResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgCommitPubRandResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgCommitPubRandResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *MsgUpdateParams) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

@@ -18,7 +18,7 @@ func FuzzSchnorrPubRand(f *testing.F) {
 
 		randBytes := datagen.GenRandomByteArray(r, 32)
 		var fieldVal btcec.FieldVal
-		fieldVal.PutBytesUnchecked(randBytes)
+		fieldVal.SetByteSlice(randBytes)
 
 		// FieldVal -> SchnorrPubRand -> FieldVal
 		pubRand := types.NewSchnorrPubRandFromFieldVal(&fieldVal)

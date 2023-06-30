@@ -1,26 +1,21 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/babylonchain/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) AddBlock(ctx sdk.Context, block *types.IndexedBlock) error {
-	if k.HasBlock(ctx, block.Height) {
-		block2, err := k.GetBlock(ctx, block.Height)
-		if err != nil {
-			panic(err)
-		}
-		if !block.Equal(block2) {
-			panic(fmt.Errorf("conflicting blocks detected at height %d", block.Height))
-		}
-		return types.ErrDuplicatedBlock
+// IndexBlock indexes the current block, saves the corresponding indexed block
+// to KVStore
+func (k Keeper) IndexBlock(ctx sdk.Context) {
+	header := ctx.BlockHeader()
+	ib := &types.IndexedBlock{
+		Height:    uint64(header.Height),
+		Hash:      header.LastCommitHash,
+		Finalized: false,
 	}
-	k.setBlock(ctx, block)
-	return nil
+	k.setBlock(ctx, ib)
 }
 
 func (k Keeper) setBlock(ctx sdk.Context, block *types.IndexedBlock) {
