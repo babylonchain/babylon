@@ -33,12 +33,10 @@ jobs:
           name: Run tests
           command: |
             make test
-      # TODO: re-enable after EOTS library becomes public. Currently building Babylon-private
-      # requires retrieving the private EOTS library, which is challenging in Circle CI
-      # - run:
-      #     name: Run e2e tests
-      #     command: |
-      #        make test-e2e
+      - run:
+          name: Run e2e tests
+          command: |
+             make test-e2e
   lint:
     machine:
       image: ubuntu-2204:2022.10.1
@@ -111,21 +109,19 @@ workflows:
   lint:
     jobs:
       - lint
-  # TODO: re-enable after EOTS library becomes public. Currently building Babylon-private
-  # requires retrieving the private EOTS library, which is challenging in Circle CI
-  # docker:
-  #   jobs:
-  #     - build_docker:
-  #         filters:
-  #           tags:
-  #             only: /.*/
-  #     - push_docker:
-  #         requires:
-  #           - build_docker
-  #         filters:
-  #           tags:
-  #             only: /.*/
-  #           branches:
-  #             only:
-  #               - main
-  #               - dev
+  docker:
+    jobs:
+      - build_docker:
+          filters:
+            tags:
+              only: /.*/
+      - push_docker:
+          requires:
+            - build_docker
+          filters:
+            tags:
+              only: /.*/
+            branches:
+              only:
+                - main
+                - dev

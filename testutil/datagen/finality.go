@@ -3,19 +3,19 @@ package datagen
 import (
 	"math/rand"
 
+	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
-	"github.com/babylonchain/eots"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
-func GenRandomMsgAddVote(r *rand.Rand, sk *btcec.PrivateKey)  (*ftypes.MsgAddVote, *bbn.SchnorrPubRand, error) {
+func GenRandomMsgAddVote(r *rand.Rand, sk *btcec.PrivateKey) (*ftypes.MsgAddVote, *bbn.SchnorrPubRand, error) {
 	msg := &ftypes.MsgAddVote{
 		Signer:      GenRandomAccount().Address,
 		ValBtcPk:    bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
 		BlockHeight: RandomInt(r, 100),
-		BlockHash: GenRandomByteArray(r, 32),
+		BlockHash:   GenRandomByteArray(r, 32),
 	}
 	msgToSign := msg.MsgToSign()
 	sr, pr, err := eots.RandGen(r)

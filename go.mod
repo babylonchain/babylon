@@ -36,9 +36,11 @@ require (
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/gogoproto v1.4.8
 	github.com/cosmos/ibc-go/v7 v7.0.1
+	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0
 	github.com/golang/mock v1.6.0
 	github.com/jinzhu/copier v0.3.5
 	github.com/ory/dockertest/v3 v3.9.1
+	github.com/vulpine-io/io-test v1.0.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc
 	google.golang.org/protobuf v1.30.0
 )
@@ -134,7 +136,6 @@ require (
 	github.com/Microsoft/go-winio v0.6.0 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/aws/aws-sdk-go v1.44.203 // indirect
-	github.com/babylonchain/eots v0.0.0-20230524134443-91d51839f8f1 // indirect
 	github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d // indirect
 	github.com/cenkalti/backoff/v4 v4.2.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
@@ -147,7 +148,6 @@ require (
 	github.com/creachadair/taskgroup v0.4.2 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
 	github.com/decred/dcrd/crypto/blake256 v1.0.1 // indirect
-	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/docker/cli v20.10.21+incompatible // indirect
 	github.com/docker/distribution v2.8.2+incompatible // indirect
 	github.com/docker/docker v20.10.24+incompatible // indirect

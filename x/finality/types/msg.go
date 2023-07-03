@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/eots"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
