@@ -31,15 +31,15 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgAddVote defines a message for adding a vote
-type MsgAddVote struct {
+// MsgAddFinalitySig defines a message for adding a vote
+type MsgAddFinalitySig struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// val_btc_pk is the BTC Pk of the validator that casts this vote
 	ValBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=val_btc_pk,json=valBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"val_btc_pk,omitempty"`
 	// block_height is the height of the voted block
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`
-	// block_hash is the hash of the voted block
-	BlockHash []byte `protobuf:"bytes,4,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
+	// block_last_commit_hash is the last_commit_hash of the voted block
+	BlockLastCommitHash []byte `protobuf:"bytes,4,opt,name=block_last_commit_hash,json=blockLastCommitHash,proto3" json:"block_last_commit_hash,omitempty"`
 	// finality_sig is the finality signature to this block
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
@@ -47,18 +47,18 @@ type MsgAddVote struct {
 	FinalitySig *github_com_babylonchain_babylon_types.SchnorrEOTSSig `protobuf:"bytes,5,opt,name=finality_sig,json=finalitySig,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrEOTSSig" json:"finality_sig,omitempty"`
 }
 
-func (m *MsgAddVote) Reset()         { *m = MsgAddVote{} }
-func (m *MsgAddVote) String() string { return proto.CompactTextString(m) }
-func (*MsgAddVote) ProtoMessage()    {}
-func (*MsgAddVote) Descriptor() ([]byte, []int) {
+func (m *MsgAddFinalitySig) Reset()         { *m = MsgAddFinalitySig{} }
+func (m *MsgAddFinalitySig) String() string { return proto.CompactTextString(m) }
+func (*MsgAddFinalitySig) ProtoMessage()    {}
+func (*MsgAddFinalitySig) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2dd6da066b6baf1d, []int{0}
 }
-func (m *MsgAddVote) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddFinalitySig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddFinalitySig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddVote.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddFinalitySig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -68,55 +68,55 @@ func (m *MsgAddVote) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (m *MsgAddVote) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddVote.Merge(m, src)
+func (m *MsgAddFinalitySig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddFinalitySig.Merge(m, src)
 }
-func (m *MsgAddVote) XXX_Size() int {
+func (m *MsgAddFinalitySig) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddVote) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddVote.DiscardUnknown(m)
+func (m *MsgAddFinalitySig) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddFinalitySig.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddVote proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddFinalitySig proto.InternalMessageInfo
 
-func (m *MsgAddVote) GetSigner() string {
+func (m *MsgAddFinalitySig) GetSigner() string {
 	if m != nil {
 		return m.Signer
 	}
 	return ""
 }
 
-func (m *MsgAddVote) GetBlockHeight() uint64 {
+func (m *MsgAddFinalitySig) GetBlockHeight() uint64 {
 	if m != nil {
 		return m.BlockHeight
 	}
 	return 0
 }
 
-func (m *MsgAddVote) GetBlockHash() []byte {
+func (m *MsgAddFinalitySig) GetBlockLastCommitHash() []byte {
 	if m != nil {
-		return m.BlockHash
+		return m.BlockLastCommitHash
 	}
 	return nil
 }
 
-// MsgAddVoteResponse is the response to the MsgAddVote message
-type MsgAddVoteResponse struct {
+// MsgAddFinalitySigResponse is the response to the MsgAddFinalitySig message
+type MsgAddFinalitySigResponse struct {
 }
 
-func (m *MsgAddVoteResponse) Reset()         { *m = MsgAddVoteResponse{} }
-func (m *MsgAddVoteResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgAddVoteResponse) ProtoMessage()    {}
-func (*MsgAddVoteResponse) Descriptor() ([]byte, []int) {
+func (m *MsgAddFinalitySigResponse) Reset()         { *m = MsgAddFinalitySigResponse{} }
+func (m *MsgAddFinalitySigResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgAddFinalitySigResponse) ProtoMessage()    {}
+func (*MsgAddFinalitySigResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2dd6da066b6baf1d, []int{1}
 }
-func (m *MsgAddVoteResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgAddFinalitySigResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgAddVoteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgAddFinalitySigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgAddVoteResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgAddFinalitySigResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -126,20 +126,20 @@ func (m *MsgAddVoteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return b[:n], nil
 	}
 }
-func (m *MsgAddVoteResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddVoteResponse.Merge(m, src)
+func (m *MsgAddFinalitySigResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgAddFinalitySigResponse.Merge(m, src)
 }
-func (m *MsgAddVoteResponse) XXX_Size() int {
+func (m *MsgAddFinalitySigResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgAddVoteResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddVoteResponse.DiscardUnknown(m)
+func (m *MsgAddFinalitySigResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgAddFinalitySigResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgAddVoteResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgAddFinalitySigResponse proto.InternalMessageInfo
 
-// MsgCommitPubRand defines a message for committing a list of public randomness for EOTS
-type MsgCommitPubRand struct {
+// MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
+type MsgCommitPubRandList struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
 	// val_btc_pk is the BTC Pk of the validator that commits the public randomness
 	ValBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=val_btc_pk,json=valBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"val_btc_pk,omitempty"`
@@ -155,18 +155,18 @@ type MsgCommitPubRand struct {
 	Sig *github_com_babylonchain_babylon_types.BIP340Signature `protobuf:"bytes,5,opt,name=sig,proto3,customtype=github.com/babylonchain/babylon/types.BIP340Signature" json:"sig,omitempty"`
 }
 
-func (m *MsgCommitPubRand) Reset()         { *m = MsgCommitPubRand{} }
-func (m *MsgCommitPubRand) String() string { return proto.CompactTextString(m) }
-func (*MsgCommitPubRand) ProtoMessage()    {}
-func (*MsgCommitPubRand) Descriptor() ([]byte, []int) {
+func (m *MsgCommitPubRandList) Reset()         { *m = MsgCommitPubRandList{} }
+func (m *MsgCommitPubRandList) String() string { return proto.CompactTextString(m) }
+func (*MsgCommitPubRandList) ProtoMessage()    {}
+func (*MsgCommitPubRandList) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2dd6da066b6baf1d, []int{2}
 }
-func (m *MsgCommitPubRand) XXX_Unmarshal(b []byte) error {
+func (m *MsgCommitPubRandList) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCommitPubRand) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgCommitPubRandList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCommitPubRand.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgCommitPubRandList.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -176,48 +176,48 @@ func (m *MsgCommitPubRand) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *MsgCommitPubRand) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCommitPubRand.Merge(m, src)
+func (m *MsgCommitPubRandList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCommitPubRandList.Merge(m, src)
 }
-func (m *MsgCommitPubRand) XXX_Size() int {
+func (m *MsgCommitPubRandList) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCommitPubRand) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCommitPubRand.DiscardUnknown(m)
+func (m *MsgCommitPubRandList) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCommitPubRandList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCommitPubRand proto.InternalMessageInfo
+var xxx_messageInfo_MsgCommitPubRandList proto.InternalMessageInfo
 
-func (m *MsgCommitPubRand) GetSigner() string {
+func (m *MsgCommitPubRandList) GetSigner() string {
 	if m != nil {
 		return m.Signer
 	}
 	return ""
 }
 
-func (m *MsgCommitPubRand) GetStartHeight() uint64 {
+func (m *MsgCommitPubRandList) GetStartHeight() uint64 {
 	if m != nil {
 		return m.StartHeight
 	}
 	return 0
 }
 
-// MsgCommitPubRandResponse is the response to the MsgCommitPubRand message
-type MsgCommitPubRandResponse struct {
+// MsgCommitPubRandListResponse is the response to the MsgCommitPubRandList message
+type MsgCommitPubRandListResponse struct {
 }
 
-func (m *MsgCommitPubRandResponse) Reset()         { *m = MsgCommitPubRandResponse{} }
-func (m *MsgCommitPubRandResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgCommitPubRandResponse) ProtoMessage()    {}
-func (*MsgCommitPubRandResponse) Descriptor() ([]byte, []int) {
+func (m *MsgCommitPubRandListResponse) Reset()         { *m = MsgCommitPubRandListResponse{} }
+func (m *MsgCommitPubRandListResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgCommitPubRandListResponse) ProtoMessage()    {}
+func (*MsgCommitPubRandListResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2dd6da066b6baf1d, []int{3}
 }
-func (m *MsgCommitPubRandResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgCommitPubRandListResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgCommitPubRandResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgCommitPubRandListResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgCommitPubRandResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgCommitPubRandListResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -227,17 +227,17 @@ func (m *MsgCommitPubRandResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *MsgCommitPubRandResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgCommitPubRandResponse.Merge(m, src)
+func (m *MsgCommitPubRandListResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgCommitPubRandListResponse.Merge(m, src)
 }
-func (m *MsgCommitPubRandResponse) XXX_Size() int {
+func (m *MsgCommitPubRandListResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgCommitPubRandResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgCommitPubRandResponse.DiscardUnknown(m)
+func (m *MsgCommitPubRandListResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgCommitPubRandListResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgCommitPubRandResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgCommitPubRandListResponse proto.InternalMessageInfo
 
 // MsgUpdateParams defines a message for updating finality module parameters.
 type MsgUpdateParams struct {
@@ -337,10 +337,10 @@ func (m *MsgUpdateParamsResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUpdateParamsResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgAddVote)(nil), "babylon.finality.v1.MsgAddVote")
-	proto.RegisterType((*MsgAddVoteResponse)(nil), "babylon.finality.v1.MsgAddVoteResponse")
-	proto.RegisterType((*MsgCommitPubRand)(nil), "babylon.finality.v1.MsgCommitPubRand")
-	proto.RegisterType((*MsgCommitPubRandResponse)(nil), "babylon.finality.v1.MsgCommitPubRandResponse")
+	proto.RegisterType((*MsgAddFinalitySig)(nil), "babylon.finality.v1.MsgAddFinalitySig")
+	proto.RegisterType((*MsgAddFinalitySigResponse)(nil), "babylon.finality.v1.MsgAddFinalitySigResponse")
+	proto.RegisterType((*MsgCommitPubRandList)(nil), "babylon.finality.v1.MsgCommitPubRandList")
+	proto.RegisterType((*MsgCommitPubRandListResponse)(nil), "babylon.finality.v1.MsgCommitPubRandListResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.finality.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.finality.v1.MsgUpdateParamsResponse")
 }
@@ -348,46 +348,47 @@ func init() {
 func init() { proto.RegisterFile("babylon/finality/v1/tx.proto", fileDescriptor_2dd6da066b6baf1d) }
 
 var fileDescriptor_2dd6da066b6baf1d = []byte{
-	// 620 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x54, 0xcb, 0x6e, 0xd3, 0x40,
-	0x14, 0x8d, 0x93, 0x50, 0xe8, 0x24, 0x05, 0x34, 0x54, 0xd4, 0x35, 0xe0, 0x84, 0x08, 0x44, 0x85,
-	0xa8, 0xdd, 0x17, 0x15, 0x65, 0x57, 0x23, 0x24, 0xa0, 0x44, 0x44, 0x76, 0x61, 0x01, 0x48, 0xd6,
-	0xf8, 0xc1, 0x78, 0x54, 0xdb, 0x63, 0x79, 0xc6, 0x51, 0xb3, 0xe5, 0x0b, 0x58, 0xb0, 0xe1, 0x03,
-	0xd8, 0xb3, 0xe0, 0x23, 0xba, 0x42, 0x15, 0x2b, 0xd4, 0x45, 0x84, 0xda, 0x05, 0xbf, 0x81, 0xe2,
-	0x47, 0x4d, 0xab, 0x56, 0x0d, 0x2c, 0xd8, 0xf9, 0xce, 0x3d, 0xf7, 0x9e, 0x3b, 0xc7, 0xe7, 0x0e,
-	0xb8, 0x6e, 0x21, 0x6b, 0xe0, 0xd3, 0x50, 0x7d, 0x47, 0x42, 0xe4, 0x13, 0x3e, 0x50, 0xfb, 0x8b,
-	0x2a, 0xdf, 0x56, 0xa2, 0x98, 0x72, 0x0a, 0xaf, 0xe4, 0x59, 0xa5, 0xc8, 0x2a, 0xfd, 0x45, 0x69,
-	0x1a, 0x53, 0x4c, 0xd3, 0xbc, 0x3a, 0xfa, 0xca, 0xa0, 0xd2, 0xac, 0x4d, 0x59, 0x40, 0x99, 0x99,
-	0x25, 0xb2, 0x20, 0x4f, 0xcd, 0x64, 0x91, 0x1a, 0x30, 0x3c, 0xea, 0x1e, 0x30, 0x9c, 0x27, 0xda,
-	0x27, 0x91, 0x47, 0x28, 0x46, 0x41, 0x5e, 0xda, 0xf9, 0x54, 0x05, 0xa0, 0xcb, 0xf0, 0xba, 0xe3,
-	0xbc, 0xa2, 0xdc, 0x85, 0x57, 0xc1, 0x04, 0x23, 0x38, 0x74, 0x63, 0x51, 0x68, 0x0b, 0x73, 0x93,
-	0x7a, 0x1e, 0xc1, 0x4d, 0x00, 0xfa, 0xc8, 0x37, 0x2d, 0x6e, 0x9b, 0xd1, 0x96, 0x58, 0x6d, 0x0b,
-	0x73, 0x4d, 0x6d, 0x75, 0x6f, 0xd8, 0x5a, 0xc2, 0x84, 0x7b, 0x89, 0xa5, 0xd8, 0x34, 0x50, 0x73,
-	0x2e, 0xdb, 0x43, 0x24, 0x2c, 0x02, 0x95, 0x0f, 0x22, 0x97, 0x29, 0xda, 0xd3, 0xde, 0xf2, 0xca,
-	0x42, 0x2f, 0xb1, 0x36, 0xdc, 0x81, 0x7e, 0xa1, 0x8f, 0x7c, 0x8d, 0xdb, 0xbd, 0x2d, 0x78, 0x13,
-	0x34, 0x2d, 0x9f, 0xda, 0x5b, 0xa6, 0xe7, 0x12, 0xec, 0x71, 0xb1, 0xd6, 0x16, 0xe6, 0xea, 0x7a,
-	0x23, 0x3d, 0x7b, 0x92, 0x1e, 0xc1, 0x1b, 0x00, 0xe4, 0x10, 0xc4, 0x3c, 0xb1, 0x3e, 0x22, 0xd6,
-	0x27, 0x33, 0x00, 0x62, 0x1e, 0x7c, 0x03, 0x9a, 0xc5, 0xd5, 0x4c, 0x46, 0xb0, 0x78, 0x2e, 0x9d,
-	0xec, 0xc1, 0xde, 0xb0, 0xb5, 0x32, 0xde, 0x64, 0x86, 0xed, 0x85, 0x34, 0x8e, 0x1f, 0xbf, 0xd8,
-	0x34, 0x0c, 0x82, 0xf5, 0x46, 0xd1, 0xcd, 0x20, 0xb8, 0x33, 0x0d, 0x60, 0x29, 0x8d, 0xee, 0xb2,
-	0x88, 0x86, 0xcc, 0xed, 0x7c, 0xab, 0x82, 0xcb, 0x5d, 0x86, 0x1f, 0xd1, 0x20, 0x20, 0xbc, 0x97,
-	0x58, 0x3a, 0x0a, 0x9d, 0xff, 0xaf, 0x1b, 0xe3, 0x28, 0xe6, 0xc7, 0x74, 0x4b, 0xcf, 0x72, 0xdd,
-	0xde, 0x82, 0xa9, 0x28, 0xb1, 0xcc, 0x18, 0x85, 0x8e, 0xe9, 0x13, 0xc6, 0xc5, 0x7a, 0xbb, 0xf6,
-	0x4f, 0xca, 0xe4, 0x37, 0xd4, 0x1b, 0x51, 0xf6, 0xf1, 0x9c, 0x30, 0x0e, 0x37, 0x40, 0xad, 0x54,
-	0x7b, 0x6d, 0x6f, 0xd8, 0xba, 0xff, 0x37, 0xf7, 0x31, 0x08, 0x0e, 0x11, 0x4f, 0x62, 0x57, 0x1f,
-	0x75, 0xe9, 0x48, 0x40, 0x3c, 0xae, 0xe7, 0xa1, 0xd8, 0x1f, 0x05, 0x70, 0xa9, 0xcb, 0xf0, 0xcb,
-	0xc8, 0x41, 0xdc, 0xed, 0xa5, 0xc6, 0x85, 0xab, 0x60, 0x12, 0x25, 0xdc, 0xa3, 0x31, 0xe1, 0x83,
-	0x4c, 0x6e, 0x4d, 0xfc, 0xfe, 0x75, 0x7e, 0x3a, 0x5f, 0x89, 0x75, 0xc7, 0x89, 0x5d, 0xc6, 0x0c,
-	0x1e, 0x93, 0x10, 0xeb, 0x25, 0x14, 0xae, 0x81, 0x89, 0xcc, 0xfa, 0xe9, 0x7f, 0x68, 0x2c, 0x5d,
-	0x53, 0x4e, 0x58, 0x3e, 0x25, 0x23, 0xd1, 0xea, 0x3b, 0xc3, 0x56, 0x45, 0xcf, 0x0b, 0x1e, 0x5e,
-	0x7c, 0xff, 0xeb, 0xcb, 0xdd, 0xb2, 0x55, 0x67, 0x16, 0xcc, 0x1c, 0x9b, 0xaa, 0x98, 0x78, 0xe9,
-	0x73, 0x15, 0xd4, 0xba, 0x0c, 0x43, 0x03, 0x9c, 0x2f, 0x96, 0xaa, 0x75, 0x22, 0x51, 0x69, 0x2d,
-	0xe9, 0xce, 0x19, 0x80, 0xa2, 0x39, 0x74, 0xc1, 0xd4, 0x51, 0xdf, 0xdd, 0x3e, 0xad, 0xf2, 0x08,
-	0x4c, 0x9a, 0x1f, 0x0b, 0x76, 0x48, 0x63, 0x81, 0xe6, 0x11, 0xc5, 0x6f, 0x9d, 0x56, 0xfe, 0x27,
-	0x4a, 0xba, 0x37, 0x0e, 0xaa, 0xe0, 0xd0, 0x9e, 0xed, 0xec, 0xcb, 0xc2, 0xee, 0xbe, 0x2c, 0xfc,
-	0xdc, 0x97, 0x85, 0x0f, 0x07, 0x72, 0x65, 0xf7, 0x40, 0xae, 0xfc, 0x38, 0x90, 0x2b, 0xaf, 0x17,
-	0xce, 0xf2, 0xd2, 0x76, 0xf9, 0x9c, 0xa5, 0xb6, 0xb2, 0x26, 0xd2, 0xb7, 0x6c, 0xf9, 0x77, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0xc1, 0xb9, 0xb9, 0xd7, 0x6c, 0x05, 0x00, 0x00,
+	// 636 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xbc, 0x54, 0xcd, 0x6e, 0xd3, 0x4c,
+	0x14, 0x8d, 0x93, 0x7c, 0xd5, 0xd7, 0x49, 0x28, 0xaa, 0x5b, 0xb5, 0x6e, 0x5a, 0x39, 0x21, 0x42,
+	0xa8, 0x20, 0xb0, 0xfb, 0x47, 0x45, 0xd9, 0xd5, 0x08, 0x54, 0x68, 0x23, 0x22, 0xbb, 0x6c, 0x00,
+	0xc9, 0x1a, 0xff, 0x74, 0x3c, 0xaa, 0xed, 0x31, 0x9e, 0x71, 0xd4, 0x6c, 0x79, 0x02, 0x16, 0x3c,
+	0x08, 0x0b, 0xc4, 0x23, 0xa0, 0x2e, 0xab, 0xae, 0x50, 0x17, 0x11, 0x4a, 0x16, 0xbc, 0x06, 0x8a,
+	0x7f, 0x9a, 0x92, 0xa4, 0x22, 0xb0, 0x60, 0xe7, 0x3b, 0xe7, 0xf8, 0x9e, 0x7b, 0xcf, 0xdc, 0x3b,
+	0x60, 0xc5, 0x80, 0x46, 0xdb, 0x25, 0xbe, 0x7c, 0x84, 0x7d, 0xe8, 0x62, 0xd6, 0x96, 0x5b, 0xeb,
+	0x32, 0x3b, 0x91, 0x82, 0x90, 0x30, 0xc2, 0xcf, 0xa5, 0xa8, 0x94, 0xa1, 0x52, 0x6b, 0xbd, 0x32,
+	0x8f, 0x08, 0x22, 0x31, 0x2e, 0xf7, 0xbf, 0x12, 0x6a, 0x65, 0xc9, 0x24, 0xd4, 0x23, 0x54, 0x4f,
+	0x80, 0x24, 0x48, 0xa1, 0xc5, 0x24, 0x92, 0x3d, 0x8a, 0xfa, 0xd9, 0x3d, 0x8a, 0x52, 0xa0, 0x36,
+	0x4e, 0x3c, 0x80, 0x21, 0xf4, 0xd2, 0x5f, 0xeb, 0x5f, 0xf2, 0x60, 0xb6, 0x41, 0xd1, 0xae, 0x65,
+	0x3d, 0x4b, 0x29, 0x1a, 0x46, 0xfc, 0x02, 0x98, 0xa2, 0x18, 0xf9, 0x76, 0x28, 0x70, 0x35, 0x6e,
+	0x75, 0x5a, 0x4d, 0x23, 0xfe, 0x10, 0x80, 0x16, 0x74, 0x75, 0x83, 0x99, 0x7a, 0x70, 0x2c, 0xe4,
+	0x6b, 0xdc, 0x6a, 0x59, 0xd9, 0xbe, 0xe8, 0x54, 0x37, 0x10, 0x66, 0x4e, 0x64, 0x48, 0x26, 0xf1,
+	0xe4, 0x54, 0xd2, 0x74, 0x20, 0xf6, 0xb3, 0x40, 0x66, 0xed, 0xc0, 0xa6, 0x92, 0xf2, 0xbc, 0xb9,
+	0xb9, 0xb5, 0xd6, 0x8c, 0x8c, 0x7d, 0xbb, 0xad, 0xfe, 0xdf, 0x82, 0xae, 0xc2, 0xcc, 0xe6, 0x31,
+	0x7f, 0x0b, 0x94, 0x0d, 0x97, 0x98, 0xc7, 0xba, 0x63, 0x63, 0xe4, 0x30, 0xa1, 0x50, 0xe3, 0x56,
+	0x8b, 0x6a, 0x29, 0x3e, 0xdb, 0x8b, 0x8f, 0xf8, 0x4d, 0xb0, 0x90, 0x50, 0x5c, 0x48, 0x99, 0x6e,
+	0x12, 0xcf, 0xc3, 0x4c, 0x77, 0x20, 0x75, 0x84, 0x62, 0xbf, 0x08, 0x75, 0x2e, 0x46, 0x0f, 0x20,
+	0x65, 0x4f, 0x62, 0x6c, 0x0f, 0x52, 0x87, 0x7f, 0x03, 0xca, 0x59, 0xdf, 0x3a, 0xc5, 0x48, 0xf8,
+	0x2f, 0xae, 0xf7, 0xd1, 0x45, 0xa7, 0xba, 0x35, 0x59, 0xbd, 0x9a, 0xe9, 0xf8, 0x24, 0x0c, 0x9f,
+	0xbe, 0x3c, 0xd4, 0x34, 0x8c, 0xd4, 0xd2, 0xd1, 0xc0, 0xa2, 0xfa, 0x32, 0x58, 0x1a, 0xf1, 0x4d,
+	0xb5, 0x69, 0x40, 0x7c, 0x6a, 0xd7, 0xcf, 0xf3, 0x60, 0xbe, 0x41, 0x51, 0x52, 0x4b, 0x33, 0x32,
+	0x54, 0xe8, 0x5b, 0x07, 0x98, 0xb2, 0x7f, 0x6f, 0x2c, 0x65, 0x30, 0x64, 0x43, 0xc6, 0xc6, 0x67,
+	0xa9, 0xb1, 0x6f, 0xc1, 0x8d, 0x20, 0x32, 0xf4, 0x10, 0xfa, 0x96, 0xee, 0x62, 0xca, 0x84, 0x62,
+	0xad, 0xf0, 0x57, 0x26, 0xa5, 0x5d, 0xaa, 0xa5, 0xe0, 0x4a, 0xbb, 0xfb, 0xa0, 0x30, 0x30, 0x7e,
+	0xe7, 0xa2, 0x53, 0x7d, 0xf8, 0x27, 0xfd, 0x68, 0x18, 0xf9, 0x90, 0x45, 0xa1, 0xad, 0xf6, 0xb3,
+	0xd4, 0x45, 0xb0, 0x32, 0xce, 0xd3, 0x4b, 0xd3, 0x3f, 0x72, 0xe0, 0x66, 0x83, 0xa2, 0x57, 0x81,
+	0x05, 0x99, 0xdd, 0x8c, 0x87, 0x9c, 0xdf, 0x06, 0xd3, 0x30, 0x62, 0x0e, 0x09, 0x31, 0x6b, 0x27,
+	0x96, 0x2b, 0xc2, 0xf9, 0xe7, 0x07, 0xf3, 0xe9, 0xfa, 0xec, 0x5a, 0x56, 0x68, 0x53, 0xaa, 0xb1,
+	0x10, 0xfb, 0x48, 0x1d, 0x50, 0xf9, 0x1d, 0x30, 0x95, 0xac, 0x49, 0x7c, 0x17, 0xa5, 0x8d, 0x65,
+	0x69, 0xcc, 0xa2, 0x4a, 0x89, 0x88, 0x52, 0x3c, 0xed, 0x54, 0x73, 0x6a, 0xfa, 0xc3, 0xe3, 0x99,
+	0xf7, 0x3f, 0x3e, 0xdd, 0x1b, 0xa4, 0xaa, 0x2f, 0x81, 0xc5, 0xa1, 0xaa, 0xb2, 0x8a, 0x37, 0xbe,
+	0xe6, 0x41, 0xa1, 0x41, 0x11, 0xef, 0x80, 0x99, 0xa1, 0x05, 0xbc, 0x33, 0x56, 0x6f, 0x64, 0xe0,
+	0x2a, 0xd2, 0x64, 0xbc, 0x4c, 0x91, 0x7f, 0x07, 0x66, 0x47, 0x87, 0xf2, 0xee, 0x75, 0x49, 0x46,
+	0xa8, 0x95, 0xf5, 0x89, 0xa9, 0x97, 0x92, 0x06, 0x28, 0xff, 0x72, 0x25, 0xb7, 0xaf, 0x4b, 0x71,
+	0x95, 0x55, 0xb9, 0x3f, 0x09, 0x2b, 0xd3, 0x50, 0x5e, 0x9c, 0x76, 0x45, 0xee, 0xac, 0x2b, 0x72,
+	0xdf, 0xbb, 0x22, 0xf7, 0xa1, 0x27, 0xe6, 0xce, 0x7a, 0x62, 0xee, 0x5b, 0x4f, 0xcc, 0xbd, 0x5e,
+	0xfb, 0xdd, 0xc0, 0x9d, 0x0c, 0xde, 0xc6, 0x78, 0xf6, 0x8c, 0xa9, 0xf8, 0x61, 0xdc, 0xfc, 0x19,
+	0x00, 0x00, 0xff, 0xff, 0x75, 0xe4, 0x6f, 0x66, 0xb9, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -402,10 +403,10 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// AddVote adds a vote to a given block
-	AddVote(ctx context.Context, in *MsgAddVote, opts ...grpc.CallOption) (*MsgAddVoteResponse, error)
-	// CommitPubRand commits a list of public randomness for EOTS
-	CommitPubRand(ctx context.Context, in *MsgCommitPubRand, opts ...grpc.CallOption) (*MsgCommitPubRandResponse, error)
+	// AddFinalitySig adds a finality signature to a given block
+	AddFinalitySig(ctx context.Context, in *MsgAddFinalitySig, opts ...grpc.CallOption) (*MsgAddFinalitySigResponse, error)
+	// CommitPubRandList commits a list of public randomness for EOTS
+	CommitPubRandList(ctx context.Context, in *MsgCommitPubRandList, opts ...grpc.CallOption) (*MsgCommitPubRandListResponse, error)
 	// TODO: msg for evidence of equivocation. this is not specified yet
 	// UpdateParams updates the finality module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
@@ -419,18 +420,18 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) AddVote(ctx context.Context, in *MsgAddVote, opts ...grpc.CallOption) (*MsgAddVoteResponse, error) {
-	out := new(MsgAddVoteResponse)
-	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Msg/AddVote", in, out, opts...)
+func (c *msgClient) AddFinalitySig(ctx context.Context, in *MsgAddFinalitySig, opts ...grpc.CallOption) (*MsgAddFinalitySigResponse, error) {
+	out := new(MsgAddFinalitySigResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Msg/AddFinalitySig", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *msgClient) CommitPubRand(ctx context.Context, in *MsgCommitPubRand, opts ...grpc.CallOption) (*MsgCommitPubRandResponse, error) {
-	out := new(MsgCommitPubRandResponse)
-	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Msg/CommitPubRand", in, out, opts...)
+func (c *msgClient) CommitPubRandList(ctx context.Context, in *MsgCommitPubRandList, opts ...grpc.CallOption) (*MsgCommitPubRandListResponse, error) {
+	out := new(MsgCommitPubRandListResponse)
+	err := c.cc.Invoke(ctx, "/babylon.finality.v1.Msg/CommitPubRandList", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -448,10 +449,10 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// AddVote adds a vote to a given block
-	AddVote(context.Context, *MsgAddVote) (*MsgAddVoteResponse, error)
-	// CommitPubRand commits a list of public randomness for EOTS
-	CommitPubRand(context.Context, *MsgCommitPubRand) (*MsgCommitPubRandResponse, error)
+	// AddFinalitySig adds a finality signature to a given block
+	AddFinalitySig(context.Context, *MsgAddFinalitySig) (*MsgAddFinalitySigResponse, error)
+	// CommitPubRandList commits a list of public randomness for EOTS
+	CommitPubRandList(context.Context, *MsgCommitPubRandList) (*MsgCommitPubRandListResponse, error)
 	// TODO: msg for evidence of equivocation. this is not specified yet
 	// UpdateParams updates the finality module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
@@ -461,11 +462,11 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) AddVote(ctx context.Context, req *MsgAddVote) (*MsgAddVoteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddVote not implemented")
+func (*UnimplementedMsgServer) AddFinalitySig(ctx context.Context, req *MsgAddFinalitySig) (*MsgAddFinalitySigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddFinalitySig not implemented")
 }
-func (*UnimplementedMsgServer) CommitPubRand(ctx context.Context, req *MsgCommitPubRand) (*MsgCommitPubRandResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method CommitPubRand not implemented")
+func (*UnimplementedMsgServer) CommitPubRandList(ctx context.Context, req *MsgCommitPubRandList) (*MsgCommitPubRandListResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CommitPubRandList not implemented")
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
@@ -475,38 +476,38 @@ func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_AddVote_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgAddVote)
+func _Msg_AddFinalitySig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgAddFinalitySig)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).AddVote(ctx, in)
+		return srv.(MsgServer).AddFinalitySig(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.finality.v1.Msg/AddVote",
+		FullMethod: "/babylon.finality.v1.Msg/AddFinalitySig",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).AddVote(ctx, req.(*MsgAddVote))
+		return srv.(MsgServer).AddFinalitySig(ctx, req.(*MsgAddFinalitySig))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_CommitPubRand_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgCommitPubRand)
+func _Msg_CommitPubRandList_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgCommitPubRandList)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).CommitPubRand(ctx, in)
+		return srv.(MsgServer).CommitPubRandList(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.finality.v1.Msg/CommitPubRand",
+		FullMethod: "/babylon.finality.v1.Msg/CommitPubRandList",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).CommitPubRand(ctx, req.(*MsgCommitPubRand))
+		return srv.(MsgServer).CommitPubRandList(ctx, req.(*MsgCommitPubRandList))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -534,12 +535,12 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddVote",
-			Handler:    _Msg_AddVote_Handler,
+			MethodName: "AddFinalitySig",
+			Handler:    _Msg_AddFinalitySig_Handler,
 		},
 		{
-			MethodName: "CommitPubRand",
-			Handler:    _Msg_CommitPubRand_Handler,
+			MethodName: "CommitPubRandList",
+			Handler:    _Msg_CommitPubRandList_Handler,
 		},
 		{
 			MethodName: "UpdateParams",
@@ -550,7 +551,7 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	Metadata: "babylon/finality/v1/tx.proto",
 }
 
-func (m *MsgAddVote) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddFinalitySig) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -560,12 +561,12 @@ func (m *MsgAddVote) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddVote) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddFinalitySig) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddVote) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddFinalitySig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -582,10 +583,10 @@ func (m *MsgAddVote) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x2a
 	}
-	if len(m.BlockHash) > 0 {
-		i -= len(m.BlockHash)
-		copy(dAtA[i:], m.BlockHash)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.BlockHash)))
+	if len(m.BlockLastCommitHash) > 0 {
+		i -= len(m.BlockLastCommitHash)
+		copy(dAtA[i:], m.BlockLastCommitHash)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.BlockLastCommitHash)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -616,7 +617,7 @@ func (m *MsgAddVote) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgAddVoteResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgAddFinalitySigResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -626,12 +627,12 @@ func (m *MsgAddVoteResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgAddVoteResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgAddFinalitySigResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgAddVoteResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgAddFinalitySigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -639,7 +640,7 @@ func (m *MsgAddVoteResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCommitPubRand) Marshal() (dAtA []byte, err error) {
+func (m *MsgCommitPubRandList) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -649,12 +650,12 @@ func (m *MsgCommitPubRand) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCommitPubRand) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgCommitPubRandList) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCommitPubRand) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgCommitPubRandList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -712,7 +713,7 @@ func (m *MsgCommitPubRand) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgCommitPubRandResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgCommitPubRandListResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -722,12 +723,12 @@ func (m *MsgCommitPubRandResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgCommitPubRandResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgCommitPubRandListResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgCommitPubRandResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgCommitPubRandListResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -809,7 +810,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgAddVote) Size() (n int) {
+func (m *MsgAddFinalitySig) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -826,7 +827,7 @@ func (m *MsgAddVote) Size() (n int) {
 	if m.BlockHeight != 0 {
 		n += 1 + sovTx(uint64(m.BlockHeight))
 	}
-	l = len(m.BlockHash)
+	l = len(m.BlockLastCommitHash)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -837,7 +838,7 @@ func (m *MsgAddVote) Size() (n int) {
 	return n
 }
 
-func (m *MsgAddVoteResponse) Size() (n int) {
+func (m *MsgAddFinalitySigResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -846,7 +847,7 @@ func (m *MsgAddVoteResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgCommitPubRand) Size() (n int) {
+func (m *MsgCommitPubRandList) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -876,7 +877,7 @@ func (m *MsgCommitPubRand) Size() (n int) {
 	return n
 }
 
-func (m *MsgCommitPubRandResponse) Size() (n int) {
+func (m *MsgCommitPubRandListResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -915,7 +916,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgAddVote) Unmarshal(dAtA []byte) error {
+func (m *MsgAddFinalitySig) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -938,10 +939,10 @@ func (m *MsgAddVote) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddVote: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddFinalitySig: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddVote: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddFinalitySig: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1032,7 +1033,7 @@ func (m *MsgAddVote) Unmarshal(dAtA []byte) error {
 			}
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BlockHash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockLastCommitHash", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -1059,9 +1060,9 @@ func (m *MsgAddVote) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BlockHash = append(m.BlockHash[:0], dAtA[iNdEx:postIndex]...)
-			if m.BlockHash == nil {
-				m.BlockHash = []byte{}
+			m.BlockLastCommitHash = append(m.BlockLastCommitHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.BlockLastCommitHash == nil {
+				m.BlockLastCommitHash = []byte{}
 			}
 			iNdEx = postIndex
 		case 5:
@@ -1120,7 +1121,7 @@ func (m *MsgAddVote) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgAddVoteResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgAddFinalitySigResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1143,10 +1144,10 @@ func (m *MsgAddVoteResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddVoteResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgAddFinalitySigResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddVoteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgAddFinalitySigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:
@@ -1170,7 +1171,7 @@ func (m *MsgAddVoteResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCommitPubRand) Unmarshal(dAtA []byte) error {
+func (m *MsgCommitPubRandList) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1193,10 +1194,10 @@ func (m *MsgCommitPubRand) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCommitPubRand: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgCommitPubRandList: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCommitPubRand: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgCommitPubRandList: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -1376,7 +1377,7 @@ func (m *MsgCommitPubRand) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgCommitPubRandResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgCommitPubRandListResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1399,10 +1400,10 @@ func (m *MsgCommitPubRandResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgCommitPubRandResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgCommitPubRandListResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgCommitPubRandResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgCommitPubRandListResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

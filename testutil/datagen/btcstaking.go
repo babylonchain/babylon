@@ -23,10 +23,10 @@ func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomBTCValidatorWithBTCPK(r, btcSK)
+	return GenRandomBTCValidatorWithBTCSK(r, btcSK)
 }
 
-func GenRandomBTCValidatorWithBTCPK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
+func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
 	// key pairs
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)

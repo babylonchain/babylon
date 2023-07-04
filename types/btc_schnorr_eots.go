@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -59,4 +60,8 @@ func (sig *SchnorrEOTSSig) Unmarshal(data []byte) error {
 	}
 	*sig = data
 	return nil
+}
+
+func (sig *SchnorrEOTSSig) Equals(sig2 *SchnorrEOTSSig) bool {
+	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
 }

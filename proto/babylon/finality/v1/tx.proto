@@ -10,35 +10,35 @@ import "babylon/finality/v1/params.proto";
 
 // Msg defines the Msg service.
 service Msg {
-    // AddVote adds a vote to a given block
-    rpc AddVote(MsgAddVote) returns (MsgAddVoteResponse);
-    // CommitPubRand commits a list of public randomness for EOTS
-    rpc CommitPubRand(MsgCommitPubRand) returns (MsgCommitPubRandResponse);
+    // AddFinalitySig adds a finality signature to a given block
+    rpc AddFinalitySig(MsgAddFinalitySig) returns (MsgAddFinalitySigResponse);
+    // CommitPubRandList commits a list of public randomness for EOTS
+    rpc CommitPubRandList(MsgCommitPubRandList) returns (MsgCommitPubRandListResponse);
     // TODO: msg for evidence of equivocation. this is not specified yet
     // UpdateParams updates the finality module parameters.
     rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
-// MsgAddVote defines a message for adding a vote
-message MsgAddVote {
+// MsgAddFinalitySig defines a message for adding a vote
+message MsgAddFinalitySig {
     string signer = 1;
     // val_btc_pk is the BTC Pk of the validator that casts this vote
     bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // block_height is the height of the voted block
     uint64 block_height = 3;
-    // block_hash is the hash of the voted block
-    bytes block_hash = 4;
+    // block_last_commit_hash is the last_commit_hash of the voted block
+    bytes block_last_commit_hash = 4;
     // finality_sig is the finality signature to this block
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the validator
     bytes finality_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
 }
-// MsgAddVoteResponse is the response to the MsgAddVote message
-message MsgAddVoteResponse{}
+// MsgAddFinalitySigResponse is the response to the MsgAddFinalitySig message
+message MsgAddFinalitySigResponse{}
 
-// MsgCommitPubRand defines a message for committing a list of public randomness for EOTS
-message MsgCommitPubRand {
+// MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
+message MsgCommitPubRandList {
     string signer = 1;
     // val_btc_pk is the BTC Pk of the validator that commits the public randomness
     bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
@@ -53,8 +53,8 @@ message MsgCommitPubRand {
     // the tx submitter to be the holder of val_btc_pk. Decide this later
     bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
-// MsgCommitPubRandResponse is the response to the MsgCommitPubRand message
-message MsgCommitPubRandResponse{}
+// MsgCommitPubRandListResponse is the response to the MsgCommitPubRandList message
+message MsgCommitPubRandListResponse{}
 
 // MsgUpdateParams defines a message for updating finality module parameters.
 message MsgUpdateParams {

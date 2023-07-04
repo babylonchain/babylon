@@ -2,22 +2,180 @@ package keeper_test
 
 import (
 	"context"
+	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/crypto/eots"
+	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/keeper"
 	"github.com/babylonchain/babylon/x/finality/types"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
-func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := keepertest.FinalityKeeper(t)
-	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
+func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil)
+	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), sdk.WrapSDKContext(ctx)
 }
 
 func TestMsgServer(t *testing.T) {
-	ms, ctx := setupMsgServer(t)
+	_, ms, ctx := setupMsgServer(t)
 	require.NotNil(t, ms)
 	require.NotNil(t, ctx)
+}
+
+func FuzzCommitPubRandList(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// create a random BTC validator
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+		valBTCPKBytes := valBTCPK.MustMarshal()
+
+		// Case 1: fail if the BTC validator is not registered
+		bsKeeper.EXPECT().HasBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(false).Times(1)
+		startHeight := datagen.RandomInt(r, 10)
+		numPubRand := uint64(200)
+		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.Error(t, err)
+		// register the BTC validator
+		bsKeeper.EXPECT().HasBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(true).AnyTimes()
+
+		// Case 2: commit a list of <minPubRand pubrand and it should fail
+		startHeight = datagen.RandomInt(r, 10)
+		numPubRand = datagen.RandomInt(r, int(fKeeper.GetParams(ctx).MinPubRand))
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.Error(t, err)
+
+		// Case 3: when validator commits pubrand list and it should succeed
+		startHeight = datagen.RandomInt(r, 10)
+		numPubRand = 100 + datagen.RandomInt(r, int(fKeeper.GetParams(ctx).MinPubRand))
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.NoError(t, err)
+		// query last public randomness and assert
+		actualHeight, actualPubRand, err := fKeeper.GetLastPubRand(ctx, valBTCPK)
+		require.NoError(t, err)
+		require.Equal(t, startHeight+numPubRand-1, actualHeight)
+		require.Equal(t, msg.PubRandList[len(msg.PubRandList)-1].MustMarshal(), actualPubRand.MustMarshal())
+
+		// Case 4: commit a pubrand list with overlap of the existing pubrand in KVStore and it should fail
+		overlappedStartHeight := startHeight + numPubRand - 1 - datagen.RandomInt(r, 5)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, overlappedStartHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.Error(t, err)
+
+		// Case 5: commit a pubrand list that has no overlap with existing pubrand and it should succeed
+		nonOverlappedStartHeight := startHeight + numPubRand + datagen.RandomInt(r, 5)
+		_, msg, err = datagen.GenRandomMsgCommitPubRandList(r, btcSK, nonOverlappedStartHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msg)
+		require.NoError(t, err)
+		// query last public randomness and assert
+		actualHeight, actualPubRand, err = fKeeper.GetLastPubRand(ctx, valBTCPK)
+		require.NoError(t, err)
+		require.Equal(t, nonOverlappedStartHeight+numPubRand-1, actualHeight)
+		require.Equal(t, msg.PubRandList[len(msg.PubRandList)-1].MustMarshal(), actualPubRand.MustMarshal())
+	})
+}
+
+func FuzzAddFinalitySig(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper)
+		ms := keeper.NewMsgServerImpl(*fKeeper)
+
+		// create and register a random BTC validator
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+		valBTCPKBytes := valBTCPK.MustMarshal()
+		require.NoError(t, err)
+		bsKeeper.EXPECT().HasBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(true).AnyTimes()
+		// commit some public randomness
+		startHeight := uint64(0)
+		numPubRand := uint64(200)
+		srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
+		require.NoError(t, err)
+		_, err = ms.CommitPubRandList(ctx, msgCommitPubRandList)
+		require.NoError(t, err)
+
+		// generate a vote
+		blockHeight := uint64(1)
+		sr, pr := srList[startHeight+blockHeight], msgCommitPubRandList.PubRandList[startHeight+blockHeight]
+		blockHash := datagen.GenRandomByteArray(r, 32)
+		signer := datagen.GenRandomAccount().Address
+		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash)
+		require.NoError(t, err)
+
+		// Case 1: fail if the BTC validator does not have voting power
+		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(valBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.Error(t, err)
+
+		// mock voting power
+		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(valBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(1)).AnyTimes()
+
+		// Case 2: fail if the BTC validator has not committed public randomness at that height
+		blockHeight2 := startHeight + numPubRand + 1
+		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(valBTCPKBytes), gomock.Eq(blockHeight2)).Return(uint64(1)).Times(1)
+		msg.BlockHeight = blockHeight2
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.Error(t, err)
+		// reset block height
+		msg.BlockHeight = blockHeight
+
+		// Case 3: successful if the BTC validator has voting power and has not casted this vote yet
+		// index this block first
+		ctx = ctx.WithBlockHeader(tmproto.Header{Height: int64(blockHeight), LastCommitHash: blockHash})
+		fKeeper.IndexBlock(ctx)
+		// add vote and it should work
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.NoError(t, err)
+		// query this vote and assert
+		sig, err := fKeeper.GetSig(ctx, blockHeight, valBTCPK)
+		require.NoError(t, err)
+		require.Equal(t, msg.FinalitySig.MustMarshal(), sig.MustMarshal())
+
+		// Case 4: fail if duplicate vote
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.Error(t, err)
+
+		// Case 5: fail if the BTC validator has voted for a fork
+		blockHash2 := datagen.GenRandomByteArray(r, 32)
+		msg2, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash2)
+		require.NoError(t, err)
+		_, err = ms.AddFinalitySig(ctx, msg2)
+		require.Error(t, err)
+		// Also, this BTC validator can be slashed
+		// extract the SK and assert the extracted SK is correct
+		btcSK2, err := eots.Extract(btcPK, pr.ToFieldVal(), msg.MsgToSign(), sig.ToModNScalar(), msg2.MsgToSign(), msg2.FinalitySig.ToModNScalar())
+		require.NoError(t, err)
+		require.Equal(t, btcSK.Serialize(), btcSK2.Serialize())
+	})
 }

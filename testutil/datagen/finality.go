@@ -10,53 +10,34 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
-func GenRandomMsgAddVote(r *rand.Rand, sk *btcec.PrivateKey) (*ftypes.MsgAddVote, *bbn.SchnorrPubRand, error) {
-	msg := &ftypes.MsgAddVote{
-		Signer:      GenRandomAccount().Address,
-		ValBtcPk:    bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
-		BlockHeight: RandomInt(r, 100),
-		BlockHash:   GenRandomByteArray(r, 32),
-	}
-	msgToSign := msg.MsgToSign()
-	sr, pr, err := eots.RandGen(r)
-	if err != nil {
-		return nil, nil, err
-	}
-	sig, err := eots.Sign(sk, sr, msgToSign)
-	if err != nil {
-		return nil, nil, err
-	}
-	msg.FinalitySig = bbn.NewSchnorrEOTSSigFromModNScalar(sig)
-
-	return msg, bbn.NewSchnorrPubRandFromFieldVal(pr), nil
-}
-
-func GenRandomMsgCommitPubRand(r *rand.Rand, sk *btcec.PrivateKey) (*ftypes.MsgCommitPubRand, error) {
+func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeight uint64, numPubRand uint64) ([]*eots.PrivateRand, *ftypes.MsgCommitPubRandList, error) {
+	srList := []*eots.PrivateRand{}
 	prList := []bbn.SchnorrPubRand{}
-	for i := 0; i < 1000; i++ {
-		prBytes := GenRandomByteArray(r, bbn.SchnorrPubRandLen)
-		pr, err := bbn.NewSchnorrPubRand(prBytes)
+	for i := uint64(0); i < numPubRand; i++ {
+		eotsSR, eotsPR, err := eots.RandGen(r)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
+		pr := bbn.NewSchnorrPubRandFromFieldVal(eotsPR)
+		srList = append(srList, eotsSR)
 		prList = append(prList, *pr)
 	}
 
-	msg := &ftypes.MsgCommitPubRand{
+	msg := &ftypes.MsgCommitPubRandList{
 		Signer:      GenRandomAccount().Address,
 		ValBtcPk:    bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
-		StartHeight: RandomInt(r, 100),
+		StartHeight: startHeight,
 		PubRandList: prList,
 	}
 	hash, err := msg.HashToSign()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	schnorrSig, err := schnorr.Sign(sk, hash)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
 	msg.Sig = &sig
-	return msg, nil
+	return srList, msg, nil
 }

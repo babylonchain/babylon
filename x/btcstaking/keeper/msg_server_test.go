@@ -105,7 +105,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		*/
 		validatorSK, validatorPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		btcVal, err := datagen.GenRandomBTCValidatorWithBTCPK(r, validatorSK)
+		btcVal, err := datagen.GenRandomBTCValidatorWithBTCSK(r, validatorSK)
 		require.NoError(t, err)
 		msgNewVal := types.MsgCreateBTCValidator{
 			Signer:    datagen.GenRandomAccount().Address,

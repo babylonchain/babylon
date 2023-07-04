@@ -7,8 +7,8 @@ option go_package = "github.com/babylonchain/babylon/x/finality/types";
 message IndexedBlock {
     // height is the height of the block
     uint64 height = 1;
-    // hash is the hash of the block
-    bytes hash = 2;
+    // last_commit_hash is the last_commit_hash of the block
+    bytes last_commit_hash = 2;
     // finalized indicates whether the IndexedBlock is finalised by 2/3
     // BTC validators or not
     bool finalized = 3;

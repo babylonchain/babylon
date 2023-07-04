@@ -1,8 +1,6 @@
 package keeper
 
 import (
-	"fmt"
-
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,9 +27,7 @@ func (k Keeper) GetBTCValidator(ctx sdk.Context, valBTCPK []byte) (*types.BTCVal
 	}
 	btcValBytes := store.Get(valBTCPK)
 	var btcVal types.BTCValidator
-	if err := k.cdc.Unmarshal(btcValBytes, &btcVal); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal BTC validator: %w", err)
-	}
+	k.cdc.MustUnmarshal(btcValBytes, &btcVal)
 	return &btcVal, nil
 }
 

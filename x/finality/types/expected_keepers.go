@@ -6,7 +6,8 @@ import (
 )
 
 type BTCStakingKeeper interface {
-	// Methods imported from btcstaking should be defined here
+	HasBTCValidator(ctx sdk.Context, valBTCPK []byte) bool
+	GetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64) uint64
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

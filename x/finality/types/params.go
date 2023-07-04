@@ -14,7 +14,9 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
-	return Params{} // TODO: default params
+	return Params{
+		MinPubRand: 100,
+	}
 }
 
 // ParamSetPairs get the params.ParamSet

@@ -11,9 +11,9 @@ import (
 func (k Keeper) IndexBlock(ctx sdk.Context) {
 	header := ctx.BlockHeader()
 	ib := &types.IndexedBlock{
-		Height:    uint64(header.Height),
-		Hash:      header.LastCommitHash,
-		Finalized: false,
+		Height:         uint64(header.Height),
+		LastCommitHash: header.LastCommitHash,
+		Finalized:      false,
 	}
 	k.setBlock(ctx, ib)
 }

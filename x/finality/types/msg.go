@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -13,8 +14,8 @@ import (
 // ensure that these message types implement the sdk.Msg interface
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
-	_ sdk.Msg = &MsgAddVote{}
-	_ sdk.Msg = &MsgCommitPubRand{}
+	_ sdk.Msg = &MsgAddFinalitySig{}
+	_ sdk.Msg = &MsgCommitPubRandList{}
 )
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -36,8 +37,25 @@ func (m *MsgUpdateParams) ValidateBasic() error {
 	return nil
 }
 
-// GetSigners returns the expected signers for a MsgAddVote message.
-func (m *MsgAddVote) GetSigners() []sdk.AccAddress {
+func NewMsgAddFinalitySig(signer string, sk *btcec.PrivateKey, sr *eots.PrivateRand, blockHeight uint64, blockHash []byte) (*MsgAddFinalitySig, error) {
+	msg := &MsgAddFinalitySig{
+		Signer:              signer,
+		ValBtcPk:            bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+		BlockHeight:         blockHeight,
+		BlockLastCommitHash: blockHash,
+	}
+	msgToSign := msg.MsgToSign()
+	sig, err := eots.Sign(sk, sr, msgToSign)
+	if err != nil {
+		return nil, err
+	}
+	msg.FinalitySig = bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+
+	return msg, nil
+}
+
+// GetSigners returns the expected signers for a MsgAddFinalitySig message.
+func (m *MsgAddFinalitySig) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
 		panic(err)
@@ -46,11 +64,11 @@ func (m *MsgAddVote) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic does a sanity check on the provided data.
-func (m *MsgAddVote) ValidateBasic() error {
+func (m *MsgAddFinalitySig) ValidateBasic() error {
 	if m.ValBtcPk == nil {
 		return fmt.Errorf("empty validator BTC PK")
 	}
-	if len(m.BlockHash) != tmhash.Size {
+	if len(m.BlockLastCommitHash) != tmhash.Size {
 		return fmt.Errorf("malformed block hash")
 	}
 	if m.FinalitySig == nil {
@@ -60,16 +78,11 @@ func (m *MsgAddVote) ValidateBasic() error {
 	return nil
 }
 
-// MsgToSign returns (block_height || block_hash)
-// The EOTS signature in MsgAddVote will be on this msg
-func (m *MsgAddVote) MsgToSign() []byte {
-	msgToSign := []byte{}
-	msgToSign = append(msgToSign, sdk.Uint64ToBigEndian(m.BlockHeight)...)
-	msgToSign = append(msgToSign, m.BlockHash...)
-	return msgToSign
+func (m *MsgAddFinalitySig) MsgToSign() []byte {
+	return MsgToSignForVote(m.BlockHeight, m.BlockLastCommitHash)
 }
 
-func (m *MsgAddVote) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {
+func (m *MsgAddFinalitySig) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {
 	msgToSign := m.MsgToSign()
 	pk, err := m.ValBtcPk.ToBTCPK()
 	if err != nil {
@@ -79,8 +92,8 @@ func (m *MsgAddVote) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {
 	return eots.Verify(pk, pubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
 }
 
-// GetSigners returns the expected signers for a MsgCommitPubRand message.
-func (m *MsgCommitPubRand) GetSigners() []sdk.AccAddress {
+// GetSigners returns the expected signers for a MsgCommitPubRandList message.
+func (m *MsgCommitPubRandList) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
 		panic(err)
@@ -89,7 +102,7 @@ func (m *MsgCommitPubRand) GetSigners() []sdk.AccAddress {
 }
 
 // ValidateBasic does a sanity check on the provided data.
-func (m *MsgCommitPubRand) ValidateBasic() error {
+func (m *MsgCommitPubRandList) ValidateBasic() error {
 	if m.ValBtcPk == nil {
 		return fmt.Errorf("empty validator BTC PK")
 	}
@@ -103,8 +116,8 @@ func (m *MsgCommitPubRand) ValidateBasic() error {
 }
 
 // HashToSign returns a 32-byte hash of (start_height || pub_rand_list)
-// The signature in MsgCommitPubRand will be on this hash
-func (m *MsgCommitPubRand) HashToSign() ([]byte, error) {
+// The signature in MsgCommitPubRandList will be on this hash
+func (m *MsgCommitPubRandList) HashToSign() ([]byte, error) {
 	hasher := tmhash.New()
 	if _, err := hasher.Write(sdk.Uint64ToBigEndian(m.StartHeight)); err != nil {
 		return nil, err
@@ -117,7 +130,7 @@ func (m *MsgCommitPubRand) HashToSign() ([]byte, error) {
 	return hasher.Sum(nil), nil
 }
 
-func (m *MsgCommitPubRand) verifySig() error {
+func (m *MsgCommitPubRandList) verifySig() error {
 	msgHash, err := m.HashToSign()
 	if err != nil {
 		return err
