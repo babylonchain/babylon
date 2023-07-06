@@ -17,10 +17,14 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	// index the current block
-	k.IndexBlock(ctx)
-
-	// TODO: tally all non-finalised blocks
+	// if the BTC staking protocol is activated, i.e., there exists a height where a BTC validator
+	// has voting power, start indexing and tallying blocks
+	if _, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx); err == nil {
+		// index the current block
+		k.IndexBlock(ctx)
+		// tally all non-finalised blocks
+		k.TallyBlocks(ctx)
+	}
 
 	return []abci.ValidatorUpdate{}
 }

@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -18,6 +19,16 @@ func NewBIP340PubKey(data []byte) (*BIP340PubKey, error) {
 	return &pk, err
 }
 
+func NewBIP340PubKeyFromHex(hexStr string) (*BIP340PubKey, error) {
+	pkBytes, err := hex.DecodeString(hexStr)
+	if err != nil {
+		return nil, err
+	}
+	var pk BIP340PubKey
+	err = pk.Unmarshal(pkBytes)
+	return &pk, err
+}
+
 func NewBIP340PubKeyFromBTCPK(btcPK *btcec.PublicKey) *BIP340PubKey {
 	pkBytes := schnorr.SerializePubKey(btcPK)
 	pk := BIP340PubKey(pkBytes)
@@ -26,6 +37,10 @@ func NewBIP340PubKeyFromBTCPK(btcPK *btcec.PublicKey) *BIP340PubKey {
 
 func (pk BIP340PubKey) ToBTCPK() (*btcec.PublicKey, error) {
 	return schnorr.ParsePubKey(pk)
+}
+
+func (pk *BIP340PubKey) ToHex() string {
+	return hex.EncodeToString(pk.MustMarshal())
 }
 
 func (pk BIP340PubKey) Size() int {

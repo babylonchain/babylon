@@ -15,10 +15,10 @@ func (k Keeper) IndexBlock(ctx sdk.Context) {
 		LastCommitHash: header.LastCommitHash,
 		Finalized:      false,
 	}
-	k.setBlock(ctx, ib)
+	k.SetBlock(ctx, ib)
 }
 
-func (k Keeper) setBlock(ctx sdk.Context, block *types.IndexedBlock) {
+func (k Keeper) SetBlock(ctx sdk.Context, block *types.IndexedBlock) {
 	store := k.blockStore(ctx)
 	blockBytes := k.cdc.MustMarshal(block)
 	store.Set(sdk.Uint64ToBigEndian(block.Height), blockBytes)

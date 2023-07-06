@@ -8,6 +8,8 @@ import (
 type BTCStakingKeeper interface {
 	HasBTCValidator(ctx sdk.Context, valBTCPK []byte) bool
 	GetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64) uint64
+	GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]uint64
+	GetBTCStakingActivatedHeight(ctx sdk.Context) (uint64, error)
 }
 
 // AccountKeeper defines the expected account keeper used for simulations (noalias)

@@ -93,7 +93,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	// block. We need to save the signatures on the fork, and add a detection here
 
 	// all good, add vote to DB
-	ms.setSig(ctx, req.BlockHeight, valPK, req.FinalitySig)
+	ms.SetSig(ctx, req.BlockHeight, valPK, req.FinalitySig)
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 

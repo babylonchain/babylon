@@ -9,8 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-//nolint:unused
-func (k Keeper) setSig(ctx sdk.Context, height uint64, valBtcPK *bbn.BIP340PubKey, sig *bbn.SchnorrEOTSSig) {
+func (k Keeper) SetSig(ctx sdk.Context, height uint64, valBtcPK *bbn.BIP340PubKey, sig *bbn.SchnorrEOTSSig) {
 	store := k.voteStore(ctx, height)
 	store.Set(valBtcPK.MustMarshal(), sig.MustMarshal())
 }
@@ -34,6 +33,34 @@ func (k Keeper) GetSig(ctx sdk.Context, height uint64, valBtcPK *bbn.BIP340PubKe
 		panic(fmt.Errorf("failed to unmarshal EOTS signature: %w", err))
 	}
 	return sig, nil
+}
+
+// GetSigSet gets all EOTS signatures at a given height
+func (k Keeper) GetSigSet(ctx sdk.Context, height uint64) map[string]*bbn.SchnorrEOTSSig {
+	store := k.voteStore(ctx, height)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	// if there is no vote on this height, return nil
+	if !iter.Valid() {
+		return nil
+	}
+
+	sigs := map[string]*bbn.SchnorrEOTSSig{}
+	for ; iter.Valid(); iter.Next() {
+		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
+		if err != nil {
+			// failing to unmarshal validator BTC PK in KVStore is a programming error
+			panic(fmt.Errorf("failed to unmarshal validator BTC PK: %w", err))
+		}
+		sig, err := bbn.NewSchnorrEOTSSig(iter.Value())
+		if err != nil {
+			// failing to unmarshal EOTS sig in KVStore is a programming error
+			panic(fmt.Errorf("failed to unmarshal EOTS signature: %w", err))
+		}
+		sigs[valBTCPK.ToHex()] = sig
+	}
+	return sigs
 }
 
 // voteStore returns the KVStore of the votes

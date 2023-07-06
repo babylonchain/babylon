@@ -35,6 +35,21 @@ func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 	return m.recorder
 }
 
+// GetBTCStakingActivatedHeight mocks base method.
+func (m *MockBTCStakingKeeper) GetBTCStakingActivatedHeight(ctx types.Context) (uint64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBTCStakingActivatedHeight", ctx)
+	ret0, _ := ret[0].(uint64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBTCStakingActivatedHeight indicates an expected call of GetBTCStakingActivatedHeight.
+func (mr *MockBTCStakingKeeperMockRecorder) GetBTCStakingActivatedHeight(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCStakingActivatedHeight", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCStakingActivatedHeight), ctx)
+}
+
 // GetVotingPower mocks base method.
 func (m *MockBTCStakingKeeper) GetVotingPower(ctx types.Context, valBTCPK []byte, height uint64) uint64 {
 	m.ctrl.T.Helper()
@@ -47,6 +62,20 @@ func (m *MockBTCStakingKeeper) GetVotingPower(ctx types.Context, valBTCPK []byte
 func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, valBTCPK, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPower", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPower), ctx, valBTCPK, height)
+}
+
+// GetVotingPowerTable mocks base method.
+func (m *MockBTCStakingKeeper) GetVotingPowerTable(ctx types.Context, height uint64) map[string]uint64 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVotingPowerTable", ctx, height)
+	ret0, _ := ret[0].(map[string]uint64)
+	return ret0
+}
+
+// GetVotingPowerTable indicates an expected call of GetVotingPowerTable.
+func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPowerTable(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPowerTable", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPowerTable), ctx, height)
 }
 
 // HasBTCValidator mocks base method.
