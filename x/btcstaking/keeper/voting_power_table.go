@@ -15,11 +15,11 @@ import (
 func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 	// tip of Babylon and Bitcoin
 	babylonTipHeight := uint64(ctx.BlockHeight())
-	btcTip := k.btclcKeeper.GetTipInfo(ctx)
-	if btcTip == nil {
+	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
+	if err != nil {
 		return
 	}
-	btcTipHeight := btcTip.Height
+	// get value of w
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	// iterate all BTC validators
