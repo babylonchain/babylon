@@ -33,6 +33,18 @@ jobs:
           name: Run tests
           command: |
             make test
+  e2e-test:
+    machine:
+      image: ubuntu-2204:2022.10.1
+    resource_class: large
+    steps:
+      - go/install:
+          version: "1.20"
+      - checkout
+      - run:
+          name: Print Go environment
+          command: "go env"
+      - add_ssh_keys
       - run:
           name: Run e2e tests
           command: |
@@ -106,6 +118,9 @@ workflows:
   build-test:
     jobs:
       - build-test
+  e2e-test:
+    jobs:
+      - e2e-test
   lint:
     jobs:
       - lint
