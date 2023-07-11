@@ -8,21 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-
-	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
-
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
-
 	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
-
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
-
+	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 )
 

@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -15,6 +16,14 @@ func NewSchnorrEOTSSig(data []byte) (*SchnorrEOTSSig, error) {
 	var sig SchnorrEOTSSig
 	err := sig.Unmarshal(data)
 	return &sig, err
+}
+
+func NewSchnorrEOTSSigFromHex(sigHex string) (*SchnorrEOTSSig, error) {
+	sigBytes, err := hex.DecodeString(sigHex)
+	if err != nil {
+		return nil, err
+	}
+	return NewSchnorrEOTSSig(sigBytes)
 }
 
 func NewSchnorrEOTSSigFromModNScalar(s *btcec.ModNScalar) *SchnorrEOTSSig {
@@ -64,4 +73,9 @@ func (sig *SchnorrEOTSSig) Unmarshal(data []byte) error {
 
 func (sig *SchnorrEOTSSig) Equals(sig2 *SchnorrEOTSSig) bool {
 	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
+}
+
+func (sig *SchnorrEOTSSig) ToHexStr() string {
+	sigBytes := sig.MustMarshal()
+	return hex.EncodeToString(sigBytes)
 }

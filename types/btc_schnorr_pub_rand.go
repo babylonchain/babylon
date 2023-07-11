@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -14,6 +15,14 @@ func NewSchnorrPubRand(data []byte) (*SchnorrPubRand, error) {
 	var pr SchnorrPubRand
 	err := pr.Unmarshal(data)
 	return &pr, err
+}
+
+func NewSchnorrPubRandFromHex(prHex string) (*SchnorrPubRand, error) {
+	prBytes, err := hex.DecodeString(prHex)
+	if err != nil {
+		return nil, err
+	}
+	return NewSchnorrPubRand(prBytes)
 }
 
 func NewSchnorrPubRandFromFieldVal(r *btcec.FieldVal) *SchnorrPubRand {
@@ -59,4 +68,9 @@ func (pr *SchnorrPubRand) Unmarshal(data []byte) error {
 	}
 	*pr = data
 	return nil
+}
+
+func (pr *SchnorrPubRand) ToHexStr() string {
+	prBytes := pr.MustMarshal()
+	return hex.EncodeToString(prBytes)
 }

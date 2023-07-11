@@ -130,7 +130,7 @@ func giveQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakin
 		}
 		fKeeper.SetSig(ctx, height, votedValPK, votedSig)
 		// add val
-		valSet[votedValPK.ToHex()] = 1
+		valSet[votedValPK.ToHexStr()] = 1
 	}
 	// the rest val that does not vote
 	valSet[hex.EncodeToString(datagen.GenRandomByteArray(r, 32))] = 1
@@ -152,7 +152,7 @@ func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStak
 	fKeeper.SetSig(ctx, height, votedValPK, votedSig)
 	// 4 BTC vals
 	valSet := map[string]uint64{
-		votedValPK.ToHex(): 1,
+		votedValPK.ToHexStr(): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,

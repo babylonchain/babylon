@@ -58,7 +58,7 @@ func (k Keeper) GetSigSet(ctx sdk.Context, height uint64) map[string]*bbn.Schnor
 			// failing to unmarshal EOTS sig in KVStore is a programming error
 			panic(fmt.Errorf("failed to unmarshal EOTS signature: %w", err))
 		}
-		sigs[valBTCPK.ToHex()] = sig
+		sigs[valBTCPK.ToHexStr()] = sig
 	}
 	return sigs
 }

@@ -83,7 +83,7 @@ func (k Keeper) GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]u
 			// failing to unmarshal validator BTC PK in KVStore is a programming error
 			panic(fmt.Errorf("failed to unmarshal validator BTC PK: %w", err))
 		}
-		valSet[valBTCPK.ToHex()] = sdk.BigEndianToUint64(iter.Value())
+		valSet[valBTCPK.ToHexStr()] = sdk.BigEndianToUint64(iter.Value())
 	}
 
 	return valSet

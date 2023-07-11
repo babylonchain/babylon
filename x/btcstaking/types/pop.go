@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	bbn "github.com/babylonchain/babylon/types"
@@ -38,6 +39,26 @@ func NewPoP(babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) (*ProofOfPos
 	pop.BtcSig = &bip340Sig
 
 	return &pop, nil
+}
+
+func NewPoPFromHex(popHex string) (*ProofOfPossession, error) {
+	popBytes, err := hex.DecodeString(popHex)
+	if err != nil {
+		return nil, err
+	}
+	var pop ProofOfPossession
+	if err := pop.Unmarshal(popBytes); err != nil {
+		return nil, err
+	}
+	return &pop, nil
+}
+
+func (pop *ProofOfPossession) ToHexStr() (string, error) {
+	popBytes, err := pop.Marshal()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(popBytes), nil
 }
 
 // Verify verifies the validity of PoP

@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/babylonchain/babylon/btcstaking"
@@ -107,6 +108,26 @@ func (p *ProofOfPossession) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+func NewStakingTxFromHex(txHex string) (*StakingTx, error) {
+	txBytes, err := hex.DecodeString(txHex)
+	if err != nil {
+		return nil, err
+	}
+	var tx StakingTx
+	if err := tx.Unmarshal(txBytes); err != nil {
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (tx *StakingTx) ToHexStr() (string, error) {
+	txBytes, err := tx.Marshal()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txBytes), nil
 }
 
 func (tx *StakingTx) Equals(tx2 *StakingTx) bool {

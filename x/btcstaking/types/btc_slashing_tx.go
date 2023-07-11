@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
@@ -23,6 +24,18 @@ func NewBTCSlashingTxFromMsgTx(msgTx *wire.MsgTx) (*BTCSlashingTx, error) {
 	}
 
 	tx := BTCSlashingTx(buf.Bytes())
+	return &tx, nil
+}
+
+func NewBTCSlashingTxFromHex(txHex string) (*BTCSlashingTx, error) {
+	txBytes, err := hex.DecodeString(txHex)
+	if err != nil {
+		return nil, err
+	}
+	var tx BTCSlashingTx
+	if err := tx.Unmarshal(txBytes); err != nil {
+		return nil, err
+	}
 	return &tx, nil
 }
 
@@ -48,14 +61,23 @@ func (tx BTCSlashingTx) MarshalTo(data []byte) (int, error) {
 }
 
 func (tx *BTCSlashingTx) Unmarshal(data []byte) error {
-	// TODO: verifications
-
 	*tx = data
+
+	// ensure data can be decoded to a tx
+	if _, err := tx.ToMsgTx(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (tx *BTCSlashingTx) Size() int {
 	return len(tx.MustMarshal())
+}
+
+func (tx *BTCSlashingTx) ToHexStr() string {
+	txBytes := tx.MustMarshal()
+	return hex.EncodeToString(txBytes)
 }
 
 func (tx *BTCSlashingTx) ToMsgTx() (*wire.MsgTx, error) {

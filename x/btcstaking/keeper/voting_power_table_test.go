@@ -82,7 +82,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		require.NotNil(t, powerTable)
 		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
 			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
-			require.Equal(t, powerTable[btcVals[i].BtcPk.ToHex()], power)
+			require.Equal(t, powerTable[btcVals[i].BtcPk.ToHexStr()], power)
 		}
 		// the activation height should be the current Babylon height as well
 		activatedHeight, err := keeper.GetBTCStakingActivatedHeight(ctx)

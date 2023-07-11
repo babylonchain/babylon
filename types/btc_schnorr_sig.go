@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"errors"
 
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -10,10 +11,18 @@ type BIP340Signature []byte
 
 const BIP340SignatureLen = schnorr.SignatureSize
 
-func NewBIP340Signature(data []byte) (BIP340Signature, error) {
+func NewBIP340Signature(data []byte) (*BIP340Signature, error) {
 	var sig BIP340Signature
 	err := sig.Unmarshal(data)
-	return sig, err
+	return &sig, err
+}
+
+func NewBIP340SignatureFromHex(sigHex string) (*BIP340Signature, error) {
+	sigBytes, err := hex.DecodeString(sigHex)
+	if err != nil {
+		return nil, err
+	}
+	return NewBIP340Signature(sigBytes)
 }
 
 func NewBIP340SignatureFromBTCSig(btcSig *schnorr.Signature) BIP340Signature {
@@ -62,4 +71,9 @@ func (sig *BIP340Signature) Unmarshal(data []byte) error {
 
 	*sig = data
 	return nil
+}
+
+func (sig *BIP340Signature) ToHexStr() string {
+	sigBytes := sig.MustMarshal()
+	return hex.EncodeToString(sigBytes)
 }

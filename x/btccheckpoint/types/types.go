@@ -162,6 +162,26 @@ func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *Tr
 	}
 }
 
+func NewTransactionInfoFromHex(txInfoHex string) (*TransactionInfo, error) {
+	txInfoBytes, err := hex.DecodeString(txInfoHex)
+	if err != nil {
+		return nil, err
+	}
+	var txInfo TransactionInfo
+	if err := txInfo.Unmarshal(txInfoBytes); err != nil {
+		return nil, err
+	}
+	return &txInfo, nil
+}
+
+func (ti *TransactionInfo) ToHexStr() (string, error) {
+	txInfoBytes, err := ti.Marshal()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txInfoBytes), nil
+}
+
 func (ti *TransactionInfo) ValidateBasic() error {
 	if ti.Key == nil {
 		return fmt.Errorf("key in TransactionInfo is nil")

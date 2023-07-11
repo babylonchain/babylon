@@ -39,7 +39,7 @@ func (pk BIP340PubKey) ToBTCPK() (*btcec.PublicKey, error) {
 	return schnorr.ParsePubKey(pk)
 }
 
-func (pk *BIP340PubKey) ToHex() string {
+func (pk *BIP340PubKey) ToHexStr() string {
 	return hex.EncodeToString(pk.MustMarshal())
 }
 
