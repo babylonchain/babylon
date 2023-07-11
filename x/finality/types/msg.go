@@ -79,7 +79,7 @@ func (m *MsgAddFinalitySig) ValidateBasic() error {
 }
 
 func (m *MsgAddFinalitySig) MsgToSign() []byte {
-	return MsgToSignForVote(m.BlockHeight, m.BlockLastCommitHash)
+	return msgToSignForVote(m.BlockHeight, m.BlockLastCommitHash)
 }
 
 func (m *MsgAddFinalitySig) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {

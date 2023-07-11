@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -166,16 +165,30 @@ func FuzzAddFinalitySig(f *testing.F) {
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
 
-		// Case 5: fail if the BTC validator has voted for a fork
+		// Case 5: the BTC validator is slashed if the BTC validator votes for a fork
 		blockHash2 := datagen.GenRandomByteArray(r, 32)
 		msg2, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash2)
 		require.NoError(t, err)
+		// NOTE: even though this BTC validator is slashed, the msg should be successful
+		// Otherwise the saved evidence will be rolled back
 		_, err = ms.AddFinalitySig(ctx, msg2)
-		require.Error(t, err)
-		// Also, this BTC validator can be slashed
-		// extract the SK and assert the extracted SK is correct
-		btcSK2, err := eots.Extract(btcPK, pr.ToFieldVal(), msg.MsgToSign(), sig.ToModNScalar(), msg2.MsgToSign(), msg2.FinalitySig.ToModNScalar())
 		require.NoError(t, err)
-		require.Equal(t, btcSK.Serialize(), btcSK2.Serialize())
+		// ensure the evidence has been stored
+		evidence, err := fKeeper.GetEvidence(ctx, blockHeight, valBTCPK)
+		require.NoError(t, err)
+		require.Equal(t, msg2.BlockHeight, evidence.BlockHeight)
+		require.Equal(t, msg2.ValBtcPk.MustMarshal(), evidence.ValBtcPk.MustMarshal())
+		require.Equal(t, msg2.BlockLastCommitHash, evidence.BlockLastCommitHash)
+		require.Equal(t, msg2.FinalitySig.MustMarshal(), evidence.FinalitySig.MustMarshal())
+		// extract the SK and assert the extracted SK is correct
+		indexedBlock := &types.IndexedBlock{Height: blockHeight, LastCommitHash: blockHash}
+		btcSK2, err := evidence.ExtractBTCSK(indexedBlock, &pr, msg.FinalitySig)
+		require.NoError(t, err)
+		// ensure btcSK and btcSK2 correspond to the same PK
+		// NOTE: it's possible that different SKs derive to the same PK
+		// In this scenario, signature of any of these SKs can be verified with this PK
+		// exclude the first byte here since it denotes the y axis of PubKey, which does
+		// not affect verification
+		require.Equal(t, btcSK.PubKey().SerializeCompressed()[1:], btcSK2.PubKey().SerializeCompressed()[1:])
 	})
 }

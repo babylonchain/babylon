@@ -3,6 +3,8 @@ package babylon.finality.v1;
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
+import "gogoproto/gogo.proto";
+
 // IndexedBlock is the block with some indexed info
 message IndexedBlock {
     // height is the height of the block
@@ -12,4 +14,23 @@ message IndexedBlock {
     // finalized indicates whether the IndexedBlock is finalised by 2/3
     // BTC validators or not
     bool finalized = 3;
+}
+
+// Evidence is the evidence that a BTC validator has signed a finality
+// signature with correct public randomness on a fork header
+// It includes all fields of MsgAddFinalitySig, such that anyone seeing 
+// the evidence and a signature on the canonical fork can extract the
+// BTC validator's BTC secret key.
+message Evidence {
+    // val_btc_pk is the BTC Pk of the validator that casts this vote
+    bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // block_height is the height of the voted block
+    uint64 block_height = 2;
+    // block_last_commit_hash is the last_commit_hash of the voted block
+    bytes block_last_commit_hash = 3;
+    // finality_sig is the finality signature to this block
+    // where finality signature is an EOTS signature, i.e.,
+    // the `s` in a Schnorr signature `(r, s)`
+    // `r` is the public randomness that is already committed by the validator
+    bytes finality_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
 }

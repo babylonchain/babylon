@@ -76,24 +76,61 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 	if !bytes.Equal(indexedBlock.LastCommitHash, req.BlockLastCommitHash) {
 		// the BTC validator votes for a fork!
-		sig2, err := ms.GetSig(ctx, req.BlockHeight, valPK)
-		if err != nil {
-			return nil, fmt.Errorf("the BTC validator %v votes for a fork, but does not vote for the canonical block", valPK.MustMarshal())
+
+		// construct and save evidence
+		evidence := &types.Evidence{
+			ValBtcPk:            req.ValBtcPk,
+			BlockHeight:         req.BlockHeight,
+			BlockLastCommitHash: req.BlockLastCommitHash,
+			FinalitySig:         req.FinalitySig,
 		}
-		// the BTC validator votes for a fork AND the canonical block
-		// slash it via extracting its secret key
-		btcSK, err := eots.Extract(valBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar(), indexedBlock.MsgToSign(), sig2.ToModNScalar())
+		ms.SetEvidence(ctx, evidence)
+
+		// if this BTC validator has also signed canonical block, extract its secret key and emit an event
+		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
+		if err == nil {
+			btcSK, err := evidence.ExtractBTCSK(indexedBlock, pubRand, canonicalSig)
+			if err != nil {
+				panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
+			}
+
+			eventSlashing := types.NewEventSlashedBTCValidator(req.ValBtcPk, indexedBlock, evidence, btcSK)
+			if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
+				return nil, fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err)
+			}
+		}
+
+		// NOTE: we should NOT return error here, otherwise the state change triggered in this tx
+		// (including the evidence) will be rolled back
+		return &types.MsgAddFinalitySigResponse{}, nil
+	}
+
+	// this signature is good, add vote to DB
+	ms.SetSig(ctx, req.BlockHeight, valPK, req.FinalitySig)
+
+	// if this BTC validator has signed the canonical block before,
+	// slash it via extracting its secret key, and emit an event
+	if ms.HasEvidence(ctx, req.BlockHeight, req.ValBtcPk) {
+		// the BTC validator has voted for a fork before!
+
+		// get evidence
+		evidence, err := ms.GetEvidence(ctx, req.BlockHeight, req.ValBtcPk)
+		if err != nil {
+			panic(fmt.Errorf("failed to get evidence despite HasEvidence returns true"))
+		}
+
+		// extract its SK
+		btcSK, err := evidence.ExtractBTCSK(indexedBlock, pubRand, req.FinalitySig)
 		if err != nil {
 			panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
 		}
-		return nil, fmt.Errorf("the BTC validator %v votes two conflicting blocks! extracted secret key: %v", valPK.MustMarshal(), btcSK.Serialize())
-		// TODO: what to do with the extracted secret key? e.g., have a KVStore that stores extracted SKs/forked blocks
-	}
-	// TODO: it's also possible that the validator votes for a fork first, then vote for canonical
-	// block. We need to save the signatures on the fork, and add a detection here
 
-	// all good, add vote to DB
-	ms.SetSig(ctx, req.BlockHeight, valPK, req.FinalitySig)
+		eventSlashing := types.NewEventSlashedBTCValidator(req.ValBtcPk, indexedBlock, evidence, btcSK)
+		if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
+			return nil, fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err)
+		}
+	}
+
 	return &types.MsgAddFinalitySigResponse{}, nil
 }
 
