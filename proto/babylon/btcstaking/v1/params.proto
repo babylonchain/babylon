@@ -15,4 +15,8 @@ message Params {
   // slashing address is the address that the slashed BTC goes to
   // the address is in string on Bitcoin
   string slashing_address = 2;
+  // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified 
+  // in Satoshi) needed for the pre-signed slashing tx
+  // TODO: change to satoshi per byte?
+  int64 min_slashing_tx_fee_sat = 3;
 }

@@ -19,7 +19,6 @@ service Msg {
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
   // AddJurySig handles a signature from jury
   rpc AddJurySig(MsgAddJurySig) returns (MsgAddJurySigResponse);
-  // TODO: handle validator sig (slashed case)
   // UpdateParams updates the btcstaking module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }

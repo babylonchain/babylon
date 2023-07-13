@@ -95,8 +95,9 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		err = bsKeeper.SetParams(ctx, types.Params{
-			JuryPk:          bbn.NewBIP340PubKeyFromBTCPK(juryPK),
-			SlashingAddress: slashingAddr,
+			JuryPk:              bbn.NewBIP340PubKeyFromBTCPK(juryPK),
+			SlashingAddress:     slashingAddr,
+			MinSlashingTxFeeSat: 10,
 		})
 		require.NoError(t, err)
 

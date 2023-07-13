@@ -7,6 +7,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/crypto/eots"
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -45,19 +46,19 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	// ensure the BTC validator has voting power at this height
 	valPK := req.ValBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, valPK.MustMarshal(), req.BlockHeight) == 0 {
-		return nil, fmt.Errorf("the BTC validator %v does not have voting power at height %d", valPK.MustMarshal(), req.BlockHeight)
+		return nil, types.ErrInvalidFinalitySig.Wrapf("the BTC validator %v does not have voting power at height %d", valPK.MustMarshal(), req.BlockHeight)
 	}
 
 	// ensure the BTC validator has not casted the same vote yet
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
-		return nil, fmt.Errorf("the BTC validator %v has casted the same vote before", valPK.MustMarshal())
+		return nil, types.ErrDuplicatedFinalitySig
 	}
 
 	// ensure the BTC validator has committed public randomness
 	pubRand, err := ms.GetPubRand(ctx, valPK, req.BlockHeight)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrPubRandNotFound
 	}
 
 	// verify EOTS signature w.r.t. public randomness
@@ -66,7 +67,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 	if err := eots.Verify(valBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
-		return nil, err
+		return nil, types.ErrInvalidFinalitySig.Wrapf("the EOTS signature is invalid: %v", err)
 	}
 
 	// verify whether the voted block is a fork or not
@@ -96,7 +97,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 			eventSlashing := types.NewEventSlashedBTCValidator(req.ValBtcPk, indexedBlock, evidence, btcSK)
 			if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
-				return nil, fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err)
+				panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
 			}
 		}
 
@@ -127,7 +128,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 		eventSlashing := types.NewEventSlashedBTCValidator(req.ValBtcPk, indexedBlock, evidence, btcSK)
 		if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
-			return nil, fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err)
+			panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
 		}
 	}
 
@@ -142,13 +143,13 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	minPubRand := ms.GetParams(ctx).MinPubRand
 	givenPubRand := len(req.PubRandList)
 	if uint64(givenPubRand) < minPubRand {
-		return nil, fmt.Errorf("the request contains too few public randomness (required minimum: %d, actual: %d)", minPubRand, givenPubRand)
+		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenPubRand)
 	}
 
 	// ensure the BTC validator is registered
 	valBTCPKBytes := req.ValBtcPk.MustMarshal()
 	if !ms.BTCStakingKeeper.HasBTCValidator(ctx, valBTCPKBytes) {
-		return nil, fmt.Errorf("the validator with BTC PK %v is not registered", valBTCPKBytes)
+		return nil, bstypes.ErrBTCValNotFound.Wrapf("the validator with BTC PK %v is not registered", valBTCPKBytes)
 	}
 
 	// this BTC validator has not commit any public randomness,
@@ -164,7 +165,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, err
 	}
 	if height >= req.StartHeight {
-		return nil, fmt.Errorf("the start height (%d) has overlap with the height of the highest public randomness (%d)", req.StartHeight, height)
+		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness (%d)", req.StartHeight, height)
 	}
 
 	// all good, commit the given public randomness list

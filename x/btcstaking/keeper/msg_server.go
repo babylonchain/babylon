@@ -68,6 +68,8 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	params := ms.GetParams(ctx)
+
 	// extract staking script from staking tx
 	stakingOutputInfo, err := req.StakingTx.GetStakingOutputInfo(ms.btcNet)
 	if err != nil {
@@ -85,13 +87,13 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// since a delegation is keyed by (valPK, delPK). Need to decide whether to support this
 	btcDel, err := ms.GetBTCDelegation(ctx, valBTCPK.MustMarshal(), delBTCPK.MustMarshal())
 	if err == nil && btcDel.StakingTx.Equals(req.StakingTx) {
-		return nil, fmt.Errorf("the BTC staking tx is already used")
+		return nil, types.ErrReusedStakingTx
 	}
 
 	// ensure staking tx is using correct jury PK
-	paramJuryPK := ms.GetParams(ctx).JuryPk
+	paramJuryPK := params.JuryPk
 	if !juryPK.Equals(paramJuryPK) {
-		return nil, fmt.Errorf("staking tx specifies a wrong jury PK %s (expected: %s)", hex.EncodeToString(*juryPK), hex.EncodeToString(*paramJuryPK))
+		return nil, types.ErrInvalidJuryPK.Wrapf("expected: %s; actual: %s", hex.EncodeToString(*paramJuryPK), hex.EncodeToString(*juryPK))
 	}
 
 	// ensure staking tx is k-deep
@@ -101,29 +103,35 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 	kValue := ms.btccKeeper.GetParams(ctx).BtcConfirmationDepth
 	if stakingTxDepth < kValue {
-		return nil, fmt.Errorf("staking tx is not k-deep yet. k=%d, depth=%d", kValue, stakingTxDepth)
+		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", kValue, stakingTxDepth)
 	}
 	// verify staking tx info, i.e., inclusion proof
 	if err := req.StakingTxInfo.VerifyInclusion(stakingTxHeader.Header, ms.btccKeeper.GetPowLimit()); err != nil {
-		return nil, err
+		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain: %v", err)
 	}
 
 	// check slashing tx and its consistency with staking tx
 	slashingMsgTx, err := req.SlashingTx.ToMsgTx()
 	if err != nil {
-		return nil, err
+		return nil, types.ErrInvalidSlashingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
 	}
-	slashingAddr, err := btcutil.DecodeAddress(ms.GetParams(ctx).SlashingAddress, ms.btcNet)
+	slashingAddr, err := btcutil.DecodeAddress(params.SlashingAddress, ms.btcNet)
 	if err != nil {
-		return nil, err
+		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
 	}
 	stakingMsgTx, err := req.StakingTx.ToMsgTx()
 	if err != nil {
-		return nil, err
+		return nil, types.ErrInvalidStakingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
 	}
-	// TODO: parameterise slash min fee
-	if _, err := btcstaking.CheckTransactions(slashingMsgTx, stakingMsgTx, 1, slashingAddr, req.StakingTx.StakingScript, ms.btcNet); err != nil {
-		return nil, err
+	if _, err := btcstaking.CheckTransactions(
+		slashingMsgTx,
+		stakingMsgTx,
+		params.MinSlashingTxFeeSat,
+		slashingAddr,
+		req.StakingTx.StakingScript,
+		ms.btcNet,
+	); err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrap(err.Error())
 	}
 
 	// verify delegator_sig
@@ -135,7 +143,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		req.DelegatorSig,
 	)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrInvalidSlashingTx.Wrapf("invalid delegator signature: %v", err)
 	}
 
 	// all good, construct BTCDelegation and insert BTC delegation
@@ -159,7 +167,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCDelegation{BtcDel: newBTCDel}); err != nil {
-		return nil, err
+		panic(fmt.Errorf("failed to emit EventNewBTCDelegation: %w", err))
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
@@ -175,7 +183,7 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 		return nil, err
 	}
 	if btcDel.IsActivated() {
-		return nil, fmt.Errorf("the BTC delegation has already been signed by the jury")
+		return nil, types.ErrDuplicatedJurySig
 	}
 
 	stakingOutputInfo, err := btcDel.StakingTx.GetStakingOutputInfo(ms.btcNet)
@@ -199,7 +207,7 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 		req.Sig,
 	)
 	if err != nil {
-		return nil, err
+		return nil, types.ErrInvalidJurySig.Wrap(err.Error())
 	}
 
 	// all good, add signature to BTC delegation and set it back to KVStore
@@ -208,7 +216,7 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventActivateBTCDelegation{BtcDel: btcDel}); err != nil {
-		return nil, err
+		panic(fmt.Errorf("failed to emit EventActivateBTCDelegation: %w", err))
 	}
 
 	return &types.MsgAddJurySigResponse{}, nil

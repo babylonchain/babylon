@@ -1,11 +1,32 @@
 package types
 
 import (
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
+
+func defaultJuryPk() *bbn.BIP340PubKey {
+	// 32 bytes
+	skBytes := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	_, defaultPK := btcec.PrivKeyFromBytes(skBytes)
+	return bbn.NewBIP340PubKeyFromBTCPK(defaultPK)
+}
+
+func defaultSlashingAddress() string {
+	// 20 bytes
+	pkHash := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+	addr, err := btcutil.NewAddressPubKeyHash(pkHash, &chaincfg.SimNetParams)
+	if err != nil {
+		panic(err)
+	}
+	return addr.EncodeAddress()
+}
 
 // ParamKeyTable the param key table for launch module
 func ParamKeyTable() paramtypes.KeyTable {
@@ -13,9 +34,12 @@ func ParamKeyTable() paramtypes.KeyTable {
 }
 
 // DefaultParams returns a default set of parameters
-// TODO: decide default parameters?
 func DefaultParams() Params {
-	return Params{}
+	return Params{
+		JuryPk:              defaultJuryPk(),
+		SlashingAddress:     defaultSlashingAddress(),
+		MinSlashingTxFeeSat: 1000,
+	}
 }
 
 // ParamSetPairs get the params.ParamSet

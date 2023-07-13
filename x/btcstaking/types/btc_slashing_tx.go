@@ -14,8 +14,6 @@ import (
 
 type BTCSlashingTx []byte
 
-// TODO: constructors, verification rules, and util functions
-
 func NewBTCSlashingTxFromMsgTx(msgTx *wire.MsgTx) (*BTCSlashingTx, error) {
 	var buf bytes.Buffer
 	err := msgTx.Serialize(&buf)

@@ -162,6 +162,17 @@ func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *Tr
 	}
 }
 
+func NewTransactionInfoFromSpvProof(proof *BTCSpvProof) *TransactionInfo {
+	return &TransactionInfo{
+		Key: &TransactionKey{
+			Index: proof.BtcTransactionIndex,
+			Hash:  proof.ConfirmingBtcHeader.Hash(),
+		},
+		Transaction: proof.BtcTransaction,
+		Proof:       proof.MerkleNodes,
+	}
+}
+
 func NewTransactionInfoFromHex(txInfoHex string) (*TransactionInfo, error) {
 	txInfoBytes, err := hex.DecodeString(txInfoHex)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
@@ -104,16 +103,13 @@ func GenBTCStakingSlashingTx(r *rand.Rand, stakerSK *btcec.PrivateKey, validator
 	}
 
 	tx := wire.NewMsgTx(2)
-	// an arbitrary input, doesn't matter
-	txid, err := chainhash.NewHash(GenRandomByteArray(r, 32))
-	if err != nil {
-		return nil, nil, err
-	}
-	lastOut := &wire.OutPoint{
-		Hash:  *txid,
-		Index: 0,
-	}
-	tx.AddTxIn(wire.NewTxIn(lastOut, []byte{1, 2, 3}, [][]byte{[]byte{1, 2, 3}}))
+	// an arbitrary input
+	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
+	tx.AddTxIn(&wire.TxIn{
+		PreviousOutPoint: spend.prevOut,
+		Sequence:         wire.MaxTxInSequenceNum,
+		SignatureScript:  nil,
+	})
 	// 2 outputs for changes and staking output
 	tx.AddTxOut(wire.NewTxOut(100, []byte{1, 2, 3})) // output for change, doesn't matter
 	tx.AddTxOut(stakingOutput)
@@ -134,7 +130,7 @@ func GenBTCStakingSlashingTx(r *rand.Rand, stakerSK *btcec.PrivateKey, validator
 	if err != nil {
 		return nil, nil, err
 	}
-	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(tx, 1, slashingAddrBtc, 100, stakingScript, btcNet)
+	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(tx, 1, slashingAddrBtc, 10000, stakingScript, btcNet)
 	if err != nil {
 		return nil, nil, err
 	}

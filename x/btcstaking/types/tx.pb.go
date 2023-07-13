@@ -535,7 +535,6 @@ type MsgClient interface {
 	CreateBTCDelegation(ctx context.Context, in *MsgCreateBTCDelegation, opts ...grpc.CallOption) (*MsgCreateBTCDelegationResponse, error)
 	// AddJurySig handles a signature from jury
 	AddJurySig(ctx context.Context, in *MsgAddJurySig, opts ...grpc.CallOption) (*MsgAddJurySigResponse, error)
-	// TODO: handle validator sig (slashed case)
 	// UpdateParams updates the btcstaking module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -592,7 +591,6 @@ type MsgServer interface {
 	CreateBTCDelegation(context.Context, *MsgCreateBTCDelegation) (*MsgCreateBTCDelegationResponse, error)
 	// AddJurySig handles a signature from jury
 	AddJurySig(context.Context, *MsgAddJurySig) (*MsgAddJurySigResponse, error)
-	// TODO: handle validator sig (slashed case)
 	// UpdateParams updates the btcstaking module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
