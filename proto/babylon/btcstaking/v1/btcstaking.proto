@@ -17,6 +17,17 @@ message BTCValidator {
     ProofOfPossession pop = 3;
 }
 
+// BTCValidatorWithMeta wraps the BTCValidator with meta data.
+message BTCValidatorWithMeta {
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC validator
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // height is the queried Babylon height
+    uint64 height = 2;
+    // voting_power is the voting power of this BTC validator at the given height
+    uint64 voting_power = 3;
+}
+
 // BTCDelegation defines a BTC delegation
 message BTCDelegation {
     // babylon_pk is the Babylon secp256k1 PK of this BTC delegation
@@ -39,20 +50,35 @@ message BTCDelegation {
     // total_sat is the total amount of BTC stakes in this delegation
     // quantified in satoshi
     uint64 total_sat = 7;
-    // staking_tx is the staking tx 
+    // staking_tx is the staking tx
     StakingTx staking_tx = 8;
     // slashing_tx is the slashing tx
-    // It is partially signed by SK corresponding to btc_pk, but not signed by 
+    // It is partially signed by SK corresponding to btc_pk, but not signed by
     // validator or jury yet.
     bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_sig is the signature on the slashing tx
-    // by the delegator (i.e., SK corresponding to btc_pk). 
+    // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the staking tx output.
     bytes delegator_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // jury_sig is the signature signature on the slashing tx
     // by the jury (i.e., SK corresponding to jury_pk in params)
     // It will be a part of the witness for the staking tx output.
     bytes jury_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
+// BTCDelegationWithMeta wraps the BTCDelegation with meta data.
+message BTCDelegationWithMeta {
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // start_height is the start BTC height of the BTC delegation
+    // it is the start BTC height of the timelock
+    uint64 start_height = 2;
+    // end_height is the end height of the BTC delegation
+    // it is the end BTC height of the timelock - w
+    uint64 end_height = 3;
+    // voting_power is the voting power of this BTC delegation at the given height
+    uint64 voting_power = 4;
 }
 
 // ProofOfPossession is the proof of possession that a Babylon secp256k1

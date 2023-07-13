@@ -13,6 +13,11 @@ service Query {
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/finality/v1/params";
   }
+
+  // VotesAtHeight queries btc validators who have signed the block at given height.
+  rpc VotesAtHeight(QueryVotesAtHeightRequest) returns (QueryVotesAtHeightResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/finality/v1/votes/{height}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -22,4 +27,19 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryVotesAtHeightRequest is the request type for the
+// Query/VotesAtHeight RPC method.
+message QueryVotesAtHeightRequest {
+  // height defines at which height to query the btc validators.
+  uint64 height = 1;
+}
+
+// QueryVotesAtHeightResponse is the response type for the
+// Query/VotesAtHeight RPC method.
+message QueryVotesAtHeightResponse {
+  // btc_pk is the Bitcoin secp256k1 PK of BTC validators who have signed the block at given height.
+  // the PK follows encoding in BIP-340 spec
+  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey"];
 }

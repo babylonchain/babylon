@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"fmt"
-
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -81,7 +80,7 @@ func (k Keeper) GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]u
 		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
 		if err != nil {
 			// failing to unmarshal validator BTC PK in KVStore is a programming error
-			panic(fmt.Errorf("failed to unmarshal validator BTC PK: %w", err))
+			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
 		}
 		valSet[valBTCPK.ToHexStr()] = sdk.BigEndianToUint64(iter.Value())
 	}

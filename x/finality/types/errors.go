@@ -12,5 +12,5 @@ var (
 	ErrHeightTooHigh    = errorsmod.Register(ModuleName, 1103, "the chain has not reached the given height yet")
 	ErrPubRandNotFound  = errorsmod.Register(ModuleName, 1104, "public randomness is not found")
 	ErrNoPubRandYet     = errorsmod.Register(ModuleName, 1105, "the BTC validator has not committed any public randomness yet")
-	ErrEvidenceNotFound = errorsmod.Register(ModuleName, 1107, "evidence is not found")
+	ErrEvidenceNotFound = errorsmod.Register(ModuleName, 1106, "evidence is not found")
 )

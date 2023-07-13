@@ -3,7 +3,9 @@ package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btcstaking/v1/params.proto";
+import "babylon/btcstaking/v1/btcstaking.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
@@ -12,6 +14,22 @@ service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/params";
+  }
+
+  // BTCValidators queries all btc validators
+  rpc BTCValidators(QueryBTCValidatorsRequest) returns (QueryBTCValidatorsResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators";
+  }
+
+  // BTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
+  rpc BTCValidatorsAtHeight(QueryBTCValidatorsAtHeightRequest) returns (QueryBTCValidatorsAtHeightResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{height}";
+  }
+
+  // BTCValidatorDelegationsAtHeight queries btc delegations with non zero voting power of given validator at given height.
+  // NOTE: a BTC delegation has non-zero voting power only when it receives a jury signature AND its timelock is not expired yet.
+  rpc BTCValidatorDelegationsAtHeight(QueryBTCValidatorDelegationsAtHeightRequest) returns (QueryBTCValidatorDelegationsAtHeightResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/delegations/{height}";
   }
 }
 
@@ -22,4 +40,65 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryBTCValidatorsRequest is the request type for the
+// Query/BTCValidators RPC method.
+message QueryBTCValidatorsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryBTCValidatorsResponse is the response type for the
+// Query/BTCValidators RPC method.
+message QueryBTCValidatorsResponse {
+  // btc_validators contains all the btc validators
+  repeated BTCValidator btc_validators = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBTCValidatorsAtHeightRequest is the request type for the
+// Query/BTCValidatorsAtHeight RPC method.
+message QueryBTCValidatorsAtHeightRequest {
+  // height defines at which Babylon height to query the btc validators info.
+  uint64 height = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryBTCValidatorsAtHeightResponse is the response type for the
+// Query/BTCValidatorsAtHeight RPC method.
+message QueryBTCValidatorsAtHeightResponse {
+  // btc_validators contains all the queried btc validators.
+  repeated BTCValidatorWithMeta btc_validators = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBTCValidatorDelegationsAtHeightRequest is the request type for the
+// Query/BTCValidatorDelegationsAtHeight RPC method.
+message QueryBTCValidatorDelegationsAtHeightRequest {
+  // btc_pk is the Bitcoin secp256k1 PK of this BTC Validator
+  // the PK follows encoding in BIP-340 spec
+  bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+
+  // height defines at which Babylon height to query the btc delegations info.
+  uint64 height = 2;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+}
+
+// QueryBTCValidatorDelegationsAtHeightResponse is the response type for the
+// Query/BTCValidatorDelegationsAtHeight RPC method.
+message QueryBTCValidatorDelegationsAtHeightResponse {
+  // btc_validators contains all the queried btc delegations.
+  repeated BTCDelegationWithMeta btc_delegations = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

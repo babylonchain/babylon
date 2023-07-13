@@ -51,7 +51,7 @@ func (k Keeper) GetSigSet(ctx sdk.Context, height uint64) map[string]*bbn.Schnor
 		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
 		if err != nil {
 			// failing to unmarshal validator BTC PK in KVStore is a programming error
-			panic(fmt.Errorf("failed to unmarshal validator BTC PK: %w", err))
+			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
 		}
 		sig, err := bbn.NewSchnorrEOTSSig(iter.Value())
 		if err != nil {
