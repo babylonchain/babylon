@@ -39,13 +39,13 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 		btcDelIter.Close()
 
 		if valPower > 0 {
-			k.setVotingPower(ctx, valBTCPK, babylonTipHeight, valPower)
+			k.SetVotingPower(ctx, valBTCPK, babylonTipHeight, valPower)
 		}
 	}
 }
 
-// setVotingPower sets the voting power of a given BTC validator at a given Babylon height
-func (k Keeper) setVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64, power uint64) {
+// SetVotingPower sets the voting power of a given BTC validator at a given Babylon height
+func (k Keeper) SetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerStore(ctx, height)
 	store.Set(valBTCPK, sdk.Uint64ToBigEndian(power))
 }

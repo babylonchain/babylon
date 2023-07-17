@@ -26,10 +26,9 @@ service Query {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{height}";
   }
 
-  // BTCValidatorDelegationsAtHeight queries btc delegations with non zero voting power of given validator at given height.
-  // NOTE: a BTC delegation has non-zero voting power only when it receives a jury signature AND its timelock is not expired yet.
-  rpc BTCValidatorDelegationsAtHeight(QueryBTCValidatorDelegationsAtHeightRequest) returns (QueryBTCValidatorDelegationsAtHeightResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/delegations/{height}";
+  // BTCValidatorDelegations queries all btc delegations of the given btc validator
+  rpc BTCValidatorDelegations(QueryBTCValidatorDelegationsRequest) returns (QueryBTCValidatorDelegationsResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/delegations";
   }
 }
 
@@ -79,25 +78,23 @@ message QueryBTCValidatorsAtHeightResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-// QueryBTCValidatorDelegationsAtHeightRequest is the request type for the
-// Query/BTCValidatorDelegationsAtHeight RPC method.
-message QueryBTCValidatorDelegationsAtHeightRequest {
-  // btc_pk is the Bitcoin secp256k1 PK of this BTC Validator
+// QueryBTCValidatorDelegationsRequest is the request type for the
+// Query/BTCValidatorDelegations RPC method.
+message QueryBTCValidatorDelegationsRequest {
+  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+  // this BTC delegation delegates to
   // the PK follows encoding in BIP-340 spec
-  bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-
-  // height defines at which Babylon height to query the btc delegations info.
-  uint64 height = 2;
+  string val_btc_pk_hex = 1;
 
   // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryBTCValidatorDelegationsAtHeightResponse is the response type for the
-// Query/BTCValidatorDelegationsAtHeight RPC method.
-message QueryBTCValidatorDelegationsAtHeightResponse {
+// QueryBTCValidatorDelegationsResponse is the response type for the
+// Query/BTCValidatorDelegations RPC method.
+message QueryBTCValidatorDelegationsResponse {
   // btc_validators contains all the queried btc delegations.
-  repeated BTCDelegationWithMeta btc_delegations = 1;
+  repeated BTCDelegation btc_delegations = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;

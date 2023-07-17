@@ -2,8 +2,10 @@ package keeper
 
 import (
 	"context"
-
+	errorsmod "cosmossdk.io/errors"
+	bbn "github.com/babylonchain/babylon/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -69,50 +71,34 @@ func (k Keeper) BTCValidatorsAtHeight(ctx context.Context, req *types.QueryBTCVa
 	return &types.QueryBTCValidatorsAtHeightResponse{BtcValidators: btcValidatorsWithMeta, Pagination: pageRes}, nil
 }
 
-func (k Keeper) BTCValidatorDelegationsAtHeight(ctx context.Context, req *types.QueryBTCValidatorDelegationsAtHeightRequest) (*types.QueryBTCValidatorDelegationsAtHeightResponse, error) {
+func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTCValidatorDelegationsRequest) (*types.QueryBTCValidatorDelegationsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	// convert pk to bytes
-	valPkBytes, err := req.ValBtcPk.Marshal()
+	if len(req.ValBtcPkHex) == 0 {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest, "validator BTC public key cannot be empty")
+	}
+
+	valPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
 	if err != nil {
 		return nil, err
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	btcHeight, err := k.GetBTCHeightAtBabylonHeight(sdkCtx, req.Height)
-	if err != nil {
-		return nil, err
-	}
+	btcDelStore := k.btcDelegationStore(sdkCtx, valPK.MustMarshal())
 
-	// get value of w
-	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
-	store := k.btcDelegationStore(sdkCtx, valPkBytes)
-
-	var btcDelsWithMeta []*types.BTCDelegationWithMeta
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		btcDel, err := k.GetBTCDelegation(sdkCtx, valPkBytes, key)
-		if err != nil {
-			return err
-		}
-
-		delPower := btcDel.VotingPower(btcHeight, wValue)
-		if delPower > 0 {
-			btcDelMeta := types.BTCDelegationWithMeta{
-				BtcPk:       btcDel.BtcPk,
-				StartHeight: btcDel.StartHeight,
-				EndHeight:   btcDel.EndHeight,
-				VotingPower: delPower,
-			}
-			btcDelsWithMeta = append(btcDelsWithMeta, &btcDelMeta)
-		}
-
+	var btcDels []*types.BTCDelegation
+	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
+		var btcDelegation types.BTCDelegation
+		k.cdc.MustUnmarshal(value, &btcDelegation)
+		btcDels = append(btcDels, &btcDelegation)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryBTCValidatorDelegationsAtHeightResponse{BtcDelegations: btcDelsWithMeta, Pagination: pageRes}, nil
+	return &types.QueryBTCValidatorDelegationsResponse{BtcDelegations: btcDels, Pagination: pageRes}, nil
 }

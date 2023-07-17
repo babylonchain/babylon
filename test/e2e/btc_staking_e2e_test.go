@@ -142,12 +142,7 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// query the existence of BTC delegation and assert equivalence
-	curHeight, err := nonValidatorNode.QueryCurrentHeight()
-	s.NoError(err)
-	actualDels := nonValidatorNode.QueryBTCValidatorDelegationsAtHeight(btcVal.BtcPk, uint64(curHeight))
+	actualDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.ToHexStr())
 	s.Len(actualDels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], actualDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	stakingInfo, err := stakingTx.GetStakingOutputInfo(&chaincfg.SimNetParams)
-	s.NoError(err)
-	s.Equal(uint64(stakingInfo.StakingAmount), actualDels[0].VotingPower)
 }

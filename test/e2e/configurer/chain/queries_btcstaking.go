@@ -1,14 +1,11 @@
 package chain
 
 import (
-	"encoding/base64"
 	"fmt"
-	"net/url"
-
 	"github.com/babylonchain/babylon/test/e2e/util"
-	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
+	"net/url"
 )
 
 func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
@@ -45,15 +42,12 @@ func (n *NodeConfig) QueryBTCValidatorsAtHeight(height uint64) []*bstypes.BTCVal
 	return resp.BtcValidators
 }
 
-func (n *NodeConfig) QueryBTCValidatorDelegationsAtHeight(valBTCPK *bbn.BIP340PubKey, height uint64) []*bstypes.BTCDelegationWithMeta {
-	path := fmt.Sprintf("/babylonchain/babylon/btcstaking/v1/delegations/%d", height)
-	valBTCPKStr := base64.URLEncoding.EncodeToString(valBTCPK.MustMarshal())
-	bz, err := n.QueryGRPCGateway(path, url.Values{
-		"val_btc_pk": []string{valBTCPKStr},
-	})
+func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string) []*bstypes.BTCDelegation {
+	path := fmt.Sprintf("/babylonchain/babylon/btcstaking/v1/btc_validators/%s/delegations", valBTCPK)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bstypes.QueryBTCValidatorDelegationsAtHeightResponse
+	var resp bstypes.QueryBTCValidatorDelegationsResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
