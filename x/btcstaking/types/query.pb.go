@@ -216,6 +216,113 @@ func (m *QueryBTCValidatorsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
+// QueryBTCValidatorPowerAtHeightRequest is the request type for the
+// Query/BTCValidatorPowerAtHeight RPC method.
+type QueryBTCValidatorPowerAtHeightRequest struct {
+	// val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+	// this BTC delegation delegates to
+	// the PK follows encoding in BIP-340 spec
+	ValBtcPkHex string `protobuf:"bytes,1,opt,name=val_btc_pk_hex,json=valBtcPkHex,proto3" json:"val_btc_pk_hex,omitempty"`
+	// height is used for querying the given validator's voting power at this height
+	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *QueryBTCValidatorPowerAtHeightRequest) Reset()         { *m = QueryBTCValidatorPowerAtHeightRequest{} }
+func (m *QueryBTCValidatorPowerAtHeightRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryBTCValidatorPowerAtHeightRequest) ProtoMessage()    {}
+func (*QueryBTCValidatorPowerAtHeightRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74d49d26f7429697, []int{4}
+}
+func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest.Merge(m, src)
+}
+func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest proto.InternalMessageInfo
+
+func (m *QueryBTCValidatorPowerAtHeightRequest) GetValBtcPkHex() string {
+	if m != nil {
+		return m.ValBtcPkHex
+	}
+	return ""
+}
+
+func (m *QueryBTCValidatorPowerAtHeightRequest) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+// QueryBTCValidatorPowerAtHeightResponse is the response type for the
+// Query/BTCValidatorPowerAtHeight RPC method.
+type QueryBTCValidatorPowerAtHeightResponse struct {
+	// voting_power is the voting power of the BTC validator
+	VotingPower uint64 `protobuf:"varint,1,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+}
+
+func (m *QueryBTCValidatorPowerAtHeightResponse) Reset() {
+	*m = QueryBTCValidatorPowerAtHeightResponse{}
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryBTCValidatorPowerAtHeightResponse) ProtoMessage()    {}
+func (*QueryBTCValidatorPowerAtHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74d49d26f7429697, []int{5}
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse.Merge(m, src)
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse proto.InternalMessageInfo
+
+func (m *QueryBTCValidatorPowerAtHeightResponse) GetVotingPower() uint64 {
+	if m != nil {
+		return m.VotingPower
+	}
+	return 0
+}
+
 // QueryBTCValidatorsAtHeightRequest is the request type for the
 // Query/BTCValidatorsAtHeight RPC method.
 type QueryBTCValidatorsAtHeightRequest struct {
@@ -229,7 +336,7 @@ func (m *QueryBTCValidatorsAtHeightRequest) Reset()         { *m = QueryBTCValid
 func (m *QueryBTCValidatorsAtHeightRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCValidatorsAtHeightRequest) ProtoMessage()    {}
 func (*QueryBTCValidatorsAtHeightRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74d49d26f7429697, []int{4}
+	return fileDescriptor_74d49d26f7429697, []int{6}
 }
 func (m *QueryBTCValidatorsAtHeightRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -285,7 +392,7 @@ func (m *QueryBTCValidatorsAtHeightResponse) Reset()         { *m = QueryBTCVali
 func (m *QueryBTCValidatorsAtHeightResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCValidatorsAtHeightResponse) ProtoMessage()    {}
 func (*QueryBTCValidatorsAtHeightResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74d49d26f7429697, []int{5}
+	return fileDescriptor_74d49d26f7429697, []int{7}
 }
 func (m *QueryBTCValidatorsAtHeightResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -328,6 +435,88 @@ func (m *QueryBTCValidatorsAtHeightResponse) GetPagination() *query.PageResponse
 	return nil
 }
 
+// QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
+type QueryActivatedHeightRequest struct {
+}
+
+func (m *QueryActivatedHeightRequest) Reset()         { *m = QueryActivatedHeightRequest{} }
+func (m *QueryActivatedHeightRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryActivatedHeightRequest) ProtoMessage()    {}
+func (*QueryActivatedHeightRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74d49d26f7429697, []int{8}
+}
+func (m *QueryActivatedHeightRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActivatedHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActivatedHeightRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActivatedHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActivatedHeightRequest.Merge(m, src)
+}
+func (m *QueryActivatedHeightRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActivatedHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActivatedHeightRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActivatedHeightRequest proto.InternalMessageInfo
+
+// QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
+type QueryActivatedHeightResponse struct {
+	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (m *QueryActivatedHeightResponse) Reset()         { *m = QueryActivatedHeightResponse{} }
+func (m *QueryActivatedHeightResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryActivatedHeightResponse) ProtoMessage()    {}
+func (*QueryActivatedHeightResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74d49d26f7429697, []int{9}
+}
+func (m *QueryActivatedHeightResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryActivatedHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryActivatedHeightResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryActivatedHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActivatedHeightResponse.Merge(m, src)
+}
+func (m *QueryActivatedHeightResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryActivatedHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActivatedHeightResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryActivatedHeightResponse proto.InternalMessageInfo
+
+func (m *QueryActivatedHeightResponse) GetHeight() uint64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
 // QueryBTCValidatorDelegationsRequest is the request type for the
 // Query/BTCValidatorDelegations RPC method.
 type QueryBTCValidatorDelegationsRequest struct {
@@ -335,15 +524,18 @@ type QueryBTCValidatorDelegationsRequest struct {
 	// this BTC delegation delegates to
 	// the PK follows encoding in BIP-340 spec
 	ValBtcPkHex string `protobuf:"bytes,1,opt,name=val_btc_pk_hex,json=valBtcPkHex,proto3" json:"val_btc_pk_hex,omitempty"`
+	// no_jury_sig_only indicates this query will only return BTC delegations that haven't
+	// received a jury signature yet
+	NoJurySigOnly bool `protobuf:"varint,2,opt,name=no_jury_sig_only,json=noJurySigOnly,proto3" json:"no_jury_sig_only,omitempty"`
 	// pagination defines an optional pagination for the request.
-	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	Pagination *query.PageRequest `protobuf:"bytes,3,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
 func (m *QueryBTCValidatorDelegationsRequest) Reset()         { *m = QueryBTCValidatorDelegationsRequest{} }
 func (m *QueryBTCValidatorDelegationsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCValidatorDelegationsRequest) ProtoMessage()    {}
 func (*QueryBTCValidatorDelegationsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74d49d26f7429697, []int{6}
+	return fileDescriptor_74d49d26f7429697, []int{10}
 }
 func (m *QueryBTCValidatorDelegationsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -379,6 +571,13 @@ func (m *QueryBTCValidatorDelegationsRequest) GetValBtcPkHex() string {
 	return ""
 }
 
+func (m *QueryBTCValidatorDelegationsRequest) GetNoJurySigOnly() bool {
+	if m != nil {
+		return m.NoJurySigOnly
+	}
+	return false
+}
+
 func (m *QueryBTCValidatorDelegationsRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
@@ -399,7 +598,7 @@ func (m *QueryBTCValidatorDelegationsResponse) Reset()         { *m = QueryBTCVa
 func (m *QueryBTCValidatorDelegationsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBTCValidatorDelegationsResponse) ProtoMessage()    {}
 func (*QueryBTCValidatorDelegationsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74d49d26f7429697, []int{7}
+	return fileDescriptor_74d49d26f7429697, []int{11}
 }
 func (m *QueryBTCValidatorDelegationsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -447,8 +646,12 @@ func init() {
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.btcstaking.v1.QueryParamsResponse")
 	proto.RegisterType((*QueryBTCValidatorsRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorsRequest")
 	proto.RegisterType((*QueryBTCValidatorsResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorsResponse")
+	proto.RegisterType((*QueryBTCValidatorPowerAtHeightRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorPowerAtHeightRequest")
+	proto.RegisterType((*QueryBTCValidatorPowerAtHeightResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorPowerAtHeightResponse")
 	proto.RegisterType((*QueryBTCValidatorsAtHeightRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorsAtHeightRequest")
 	proto.RegisterType((*QueryBTCValidatorsAtHeightResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorsAtHeightResponse")
+	proto.RegisterType((*QueryActivatedHeightRequest)(nil), "babylon.btcstaking.v1.QueryActivatedHeightRequest")
+	proto.RegisterType((*QueryActivatedHeightResponse)(nil), "babylon.btcstaking.v1.QueryActivatedHeightResponse")
 	proto.RegisterType((*QueryBTCValidatorDelegationsRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorDelegationsRequest")
 	proto.RegisterType((*QueryBTCValidatorDelegationsResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorDelegationsResponse")
 }
@@ -456,49 +659,60 @@ func init() {
 func init() { proto.RegisterFile("babylon/btcstaking/v1/query.proto", fileDescriptor_74d49d26f7429697) }
 
 var fileDescriptor_74d49d26f7429697 = []byte{
-	// 662 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x95, 0x4f, 0x4f, 0xd4, 0x40,
-	0x18, 0xc6, 0x77, 0x10, 0x37, 0x71, 0x08, 0x98, 0x8c, 0xa0, 0xd8, 0x68, 0x85, 0x42, 0x10, 0xd1,
-	0x74, 0xdc, 0xea, 0x41, 0x21, 0x1e, 0x5c, 0x8c, 0x12, 0x23, 0x11, 0x1a, 0x23, 0x89, 0x17, 0x32,
-	0x2d, 0x93, 0xb6, 0xa1, 0x74, 0xca, 0x76, 0x68, 0x20, 0x86, 0x8b, 0x7e, 0x01, 0x03, 0x5f, 0x44,
-	0xbf, 0x80, 0x89, 0x37, 0x8e, 0x18, 0x2f, 0x9e, 0x8c, 0xd9, 0xf5, 0xe6, 0x97, 0x30, 0x9d, 0xce,
-	0xba, 0x2d, 0xdb, 0x5d, 0x97, 0x0d, 0xde, 0x76, 0x67, 0xde, 0x3f, 0xcf, 0xf3, 0xdb, 0x79, 0xdf,
-	0x85, 0x93, 0x16, 0xb1, 0xf6, 0x7c, 0x16, 0x60, 0x8b, 0xdb, 0x11, 0x27, 0x9b, 0x5e, 0xe0, 0xe0,
-	0xb8, 0x82, 0xb7, 0x77, 0x68, 0x6d, 0x4f, 0x0f, 0x6b, 0x8c, 0x33, 0x34, 0x26, 0x43, 0xf4, 0x56,
-	0x88, 0x1e, 0x57, 0x94, 0x51, 0x87, 0x39, 0x4c, 0x44, 0xe0, 0xe4, 0x53, 0x1a, 0xac, 0x5c, 0x73,
-	0x18, 0x73, 0x7c, 0x8a, 0x49, 0xe8, 0x61, 0x12, 0x04, 0x8c, 0x13, 0xee, 0xb1, 0x20, 0x92, 0xb7,
-	0x73, 0x36, 0x8b, 0xb6, 0x58, 0x84, 0x2d, 0x12, 0xd1, 0xb4, 0x07, 0x8e, 0x2b, 0x16, 0xe5, 0xa4,
-	0x82, 0x43, 0xe2, 0x78, 0x81, 0x08, 0x96, 0xb1, 0x5a, 0xb1, 0xb2, 0x90, 0xd4, 0xc8, 0x56, 0xb3,
-	0xde, 0x4c, 0x71, 0x4c, 0x46, 0xa8, 0x88, 0xd3, 0x46, 0x21, 0x5a, 0x4d, 0xba, 0xad, 0x88, 0x64,
-	0x93, 0x6e, 0xef, 0xd0, 0x88, 0x6b, 0x26, 0xbc, 0x94, 0x3b, 0x8d, 0x42, 0x16, 0x44, 0x14, 0x2d,
-	0xc0, 0x72, 0xda, 0x64, 0x1c, 0x4c, 0x80, 0xd9, 0x21, 0xe3, 0xba, 0x5e, 0x08, 0x40, 0x4f, 0xd3,
-	0xaa, 0x83, 0x47, 0x3f, 0x6e, 0x94, 0x4c, 0x99, 0xa2, 0xd9, 0xf0, 0xaa, 0xa8, 0x59, 0x7d, 0xb5,
-	0xf8, 0x9a, 0xf8, 0xde, 0x06, 0xe1, 0xac, 0xd6, 0x6c, 0x88, 0x9e, 0x42, 0xd8, 0xb2, 0x29, 0xab,
-	0xcf, 0xe8, 0x29, 0x13, 0x3d, 0x61, 0xa2, 0xa7, 0xdc, 0x25, 0x13, 0x7d, 0x85, 0x38, 0x54, 0xe6,
-	0x9a, 0x99, 0x4c, 0xed, 0x13, 0x80, 0x4a, 0x51, 0x17, 0x69, 0xe0, 0x39, 0x1c, 0xb1, 0xb8, 0xbd,
-	0x1e, 0xff, 0xbd, 0x19, 0x07, 0x13, 0xe7, 0x66, 0x87, 0x8c, 0xa9, 0x0e, 0x46, 0xb2, 0x55, 0xcc,
-	0x61, 0x8b, 0xdb, 0xad, 0x9a, 0xe8, 0x59, 0x4e, 0xf2, 0x80, 0x90, 0x7c, 0xf3, 0x9f, 0x92, 0x53,
-	0x21, 0x39, 0xcd, 0xef, 0x01, 0x9c, 0x6c, 0xd7, 0xfc, 0x98, 0x2f, 0x51, 0xcf, 0x71, 0x79, 0x93,
-	0xd0, 0x65, 0x58, 0x76, 0xc5, 0x81, 0xa0, 0x33, 0x68, 0xca, 0x6f, 0x27, 0xc8, 0x0d, 0xf4, 0x4d,
-	0xee, 0x0b, 0x80, 0x5a, 0x37, 0x15, 0x92, 0xa0, 0xd9, 0x81, 0xe0, 0xed, 0x1e, 0x08, 0xae, 0x79,
-	0xdc, 0x5d, 0xa6, 0x9c, 0xfc, 0x37, 0x92, 0x07, 0x00, 0x4e, 0xb5, 0x79, 0x78, 0x42, 0x7d, 0xea,
-	0xa4, 0xb3, 0xd6, 0x64, 0x39, 0x05, 0x47, 0x62, 0xe2, 0xaf, 0x27, 0x46, 0xc2, 0xcd, 0x75, 0x97,
-	0xee, 0x0a, 0xa6, 0x17, 0xcc, 0xa1, 0x98, 0xf8, 0x55, 0x6e, 0xaf, 0x6c, 0x2e, 0xd1, 0xdd, 0x33,
-	0x03, 0xfb, 0x19, 0xc0, 0xe9, 0xee, 0xa2, 0x24, 0xda, 0x65, 0x78, 0x31, 0x51, 0xb4, 0xd1, 0xba,
-	0x92, 0x6c, 0xa7, 0x3b, 0xb3, 0x6d, 0xd5, 0x31, 0x93, 0xdf, 0x25, 0x53, 0xf6, 0xcc, 0xa8, 0x1a,
-	0x07, 0x65, 0x78, 0x5e, 0x18, 0x40, 0x87, 0x00, 0x96, 0xd3, 0xd9, 0x46, 0xb7, 0x3a, 0x68, 0x6a,
-	0x5f, 0x26, 0xca, 0x5c, 0x2f, 0xa1, 0x69, 0x5f, 0xcd, 0x78, 0xf7, 0xed, 0xd7, 0xe1, 0xc0, 0x1d,
-	0x34, 0x87, 0x65, 0x8e, 0xed, 0x12, 0x2f, 0xc0, 0xdd, 0x16, 0x1e, 0xfa, 0x08, 0xe0, 0x70, 0xee,
-	0xd1, 0xa2, 0xbb, 0xdd, 0x3a, 0x16, 0xed, 0x1f, 0xa5, 0x72, 0x8a, 0x0c, 0x29, 0x75, 0x5e, 0x48,
-	0xbd, 0x8f, 0x8c, 0x5e, 0xa4, 0xe6, 0x67, 0x06, 0x7d, 0x05, 0x70, 0xac, 0x70, 0xce, 0xd0, 0x83,
-	0x9e, 0x85, 0x9c, 0x58, 0x10, 0xca, 0xc3, 0x3e, 0x32, 0xa5, 0x95, 0x45, 0x61, 0xe5, 0x11, 0x5a,
-	0x38, 0xbd, 0x15, 0xfc, 0x36, 0xdd, 0x43, 0xfb, 0xe8, 0x37, 0x80, 0x57, 0x3a, 0x3c, 0x71, 0x34,
-	0xdf, 0xab, 0xb6, 0xf6, 0x61, 0x55, 0x16, 0xfa, 0xca, 0x95, 0xce, 0xd6, 0x84, 0xb3, 0x55, 0xf4,
-	0xb2, 0x1f, 0x67, 0xf9, 0x1d, 0xb1, 0x8f, 0x33, 0x93, 0x59, 0x7d, 0x71, 0x54, 0x57, 0xc1, 0x71,
-	0x5d, 0x05, 0x3f, 0xeb, 0x2a, 0xf8, 0xd0, 0x50, 0x4b, 0xc7, 0x0d, 0xb5, 0xf4, 0xbd, 0xa1, 0x96,
-	0xde, 0x18, 0x8e, 0xc7, 0xdd, 0x1d, 0x4b, 0xb7, 0xd9, 0x56, 0x71, 0xd3, 0xdd, 0x6c, 0x5b, 0xbe,
-	0x17, 0xd2, 0xc8, 0x2a, 0x8b, 0x3f, 0xe3, 0x7b, 0x7f, 0x02, 0x00, 0x00, 0xff, 0xff, 0xfc, 0x91,
-	0x8e, 0xc4, 0x74, 0x08, 0x00, 0x00,
+	// 844 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0xcf, 0x4f, 0x1b, 0x47,
+	0x18, 0xf5, 0x00, 0xb5, 0xca, 0xb8, 0x40, 0x35, 0x85, 0x16, 0xb6, 0xe0, 0xc2, 0x42, 0x81, 0xd2,
+	0x6a, 0xb7, 0x36, 0x08, 0xb5, 0xfc, 0x38, 0x60, 0xaa, 0x16, 0xd1, 0x22, 0xcc, 0x16, 0x15, 0x89,
+	0xcb, 0x6a, 0x76, 0x3d, 0x5a, 0x6f, 0x59, 0x76, 0x16, 0xef, 0x78, 0x8b, 0x55, 0x71, 0x69, 0xff,
+	0x81, 0x4a, 0xfc, 0x23, 0xcd, 0x2d, 0x52, 0xa4, 0x48, 0x91, 0x72, 0xe0, 0x48, 0x94, 0x4b, 0x4e,
+	0x51, 0x04, 0xb9, 0xe5, 0x9a, 0x3f, 0x20, 0xf2, 0xec, 0x38, 0xfe, 0xb5, 0x36, 0xb6, 0x45, 0x6e,
+	0xe0, 0xf9, 0xde, 0xf7, 0xbd, 0xf7, 0x3e, 0xcf, 0x1b, 0xc3, 0x19, 0x03, 0x1b, 0x25, 0x87, 0xba,
+	0xaa, 0xc1, 0x4c, 0x9f, 0xe1, 0x13, 0xdb, 0xb5, 0xd4, 0x20, 0xa5, 0x9e, 0x15, 0x49, 0xa1, 0xa4,
+	0x78, 0x05, 0xca, 0x28, 0x1a, 0x13, 0x25, 0x4a, 0xb5, 0x44, 0x09, 0x52, 0xd2, 0xa8, 0x45, 0x2d,
+	0xca, 0x2b, 0xd4, 0xf2, 0x5f, 0x61, 0xb1, 0x34, 0x69, 0x51, 0x6a, 0x39, 0x44, 0xc5, 0x9e, 0xad,
+	0x62, 0xd7, 0xa5, 0x0c, 0x33, 0x9b, 0xba, 0xbe, 0x38, 0x5d, 0x32, 0xa9, 0x7f, 0x4a, 0x7d, 0xd5,
+	0xc0, 0x3e, 0x09, 0x67, 0xa8, 0x41, 0xca, 0x20, 0x0c, 0xa7, 0x54, 0x0f, 0x5b, 0xb6, 0xcb, 0x8b,
+	0x45, 0xad, 0x1c, 0xcd, 0xcc, 0xc3, 0x05, 0x7c, 0x5a, 0xe9, 0x37, 0x1f, 0x5d, 0x53, 0x43, 0x94,
+	0xd7, 0xc9, 0xa3, 0x10, 0x1d, 0x94, 0xa7, 0x65, 0x39, 0x58, 0x23, 0x67, 0x45, 0xe2, 0x33, 0x59,
+	0x83, 0x9f, 0xd5, 0x7d, 0xea, 0x7b, 0xd4, 0xf5, 0x09, 0x5a, 0x87, 0xf1, 0x70, 0xc8, 0x38, 0x98,
+	0x06, 0x8b, 0x89, 0xf4, 0x94, 0x12, 0x69, 0x80, 0x12, 0xc2, 0x32, 0x03, 0x57, 0x2f, 0xbf, 0x8a,
+	0x69, 0x02, 0x22, 0x9b, 0x70, 0x82, 0xf7, 0xcc, 0x1c, 0x6e, 0xff, 0x81, 0x1d, 0x3b, 0x87, 0x19,
+	0x2d, 0x54, 0x06, 0xa2, 0x9f, 0x21, 0xac, 0xca, 0x14, 0xdd, 0xe7, 0x95, 0xd0, 0x13, 0xa5, 0xec,
+	0x89, 0x12, 0xfa, 0x2e, 0x3c, 0x51, 0xb2, 0xd8, 0x22, 0x02, 0xab, 0xd5, 0x20, 0xe5, 0x07, 0x00,
+	0x4a, 0x51, 0x53, 0x84, 0x80, 0x5d, 0x38, 0x6c, 0x30, 0x53, 0x0f, 0xde, 0x9f, 0x8c, 0x83, 0xe9,
+	0xfe, 0xc5, 0x44, 0x7a, 0xb6, 0x85, 0x90, 0xda, 0x2e, 0xda, 0x90, 0xc1, 0xcc, 0x6a, 0x4f, 0xf4,
+	0x4b, 0x1d, 0xe5, 0x3e, 0x4e, 0x79, 0xe1, 0x4e, 0xca, 0x21, 0x91, 0x3a, 0xce, 0x39, 0xf8, 0x75,
+	0x13, 0xe5, 0x2c, 0xfd, 0x8b, 0x14, 0xb6, 0xd8, 0x0e, 0xb1, 0xad, 0x3c, 0xab, 0x98, 0x34, 0x0b,
+	0x87, 0x03, 0xec, 0xe8, 0x65, 0x05, 0xde, 0x89, 0x9e, 0x27, 0xe7, 0xdc, 0xa8, 0x41, 0x2d, 0x11,
+	0x60, 0x27, 0xc3, 0xcc, 0xec, 0xc9, 0x0e, 0x39, 0x47, 0x9f, 0xc3, 0x78, 0x9e, 0xa3, 0x38, 0xa5,
+	0x01, 0x4d, 0xfc, 0x27, 0xff, 0x0a, 0xe7, 0xef, 0x9a, 0x22, 0x4c, 0x9a, 0x81, 0x9f, 0x04, 0x94,
+	0xd9, 0xae, 0xa5, 0x7b, 0xe5, 0x73, 0x3e, 0x64, 0x40, 0x4b, 0x84, 0x9f, 0x71, 0x88, 0xfc, 0x2f,
+	0x80, 0x33, 0xcd, 0x36, 0x37, 0xf2, 0xad, 0x52, 0x01, 0xb5, 0x54, 0x1a, 0x96, 0xdd, 0xd7, 0xf3,
+	0xb2, 0x9f, 0x00, 0x28, 0xb7, 0x63, 0x21, 0xf4, 0x68, 0x2d, 0x96, 0xfe, 0x6d, 0x07, 0x4b, 0x3f,
+	0xb2, 0x59, 0x7e, 0x8f, 0x30, 0xfc, 0xc1, 0x96, 0x3f, 0x05, 0xbf, 0xe4, 0x12, 0xb6, 0x4c, 0x66,
+	0x07, 0x98, 0x91, 0x5c, 0x9d, 0x85, 0xf2, 0x2a, 0x9c, 0x8c, 0x3e, 0x16, 0xda, 0x5a, 0x58, 0x2c,
+	0x3f, 0x02, 0x70, 0xb6, 0xc9, 0x9a, 0x9f, 0x88, 0x43, 0xac, 0x30, 0x75, 0xba, 0xfa, 0x4a, 0x2d,
+	0xc0, 0x4f, 0x5d, 0xaa, 0xff, 0x59, 0x2c, 0x94, 0x74, 0xdf, 0xb6, 0x74, 0xea, 0x3a, 0x25, 0x2e,
+	0xf9, 0x63, 0x6d, 0xc8, 0xa5, 0xbb, 0xc5, 0x42, 0xe9, 0x77, 0xdb, 0xda, 0x77, 0x9d, 0x52, 0xc3,
+	0x62, 0xfb, 0x7b, 0x5e, 0xec, 0x63, 0x00, 0xe7, 0xda, 0xb3, 0x17, 0xf2, 0xf7, 0xe0, 0x48, 0x99,
+	0x7a, 0xae, 0x7a, 0x24, 0x76, 0x3b, 0xd7, 0x7a, 0xb7, 0xd5, 0x3e, 0x5a, 0xf9, 0x7b, 0x51, 0xd3,
+	0xf6, 0xde, 0xb6, 0x9a, 0x7e, 0x3a, 0x08, 0x3f, 0xe2, 0x02, 0xd0, 0x25, 0x80, 0xf1, 0x30, 0x0e,
+	0xd1, 0x37, 0x2d, 0x38, 0x35, 0xe7, 0xaf, 0xb4, 0xd4, 0x49, 0x69, 0x38, 0x57, 0x4e, 0xff, 0xf3,
+	0xfc, 0xf5, 0x65, 0xdf, 0x77, 0x68, 0x49, 0x15, 0x18, 0x33, 0x8f, 0x6d, 0x57, 0x6d, 0xf7, 0x46,
+	0xa0, 0xff, 0x01, 0x1c, 0xaa, 0xbb, 0x34, 0xe8, 0xfb, 0x76, 0x13, 0xa3, 0x22, 0x5b, 0x4a, 0x75,
+	0x81, 0x10, 0x54, 0xd7, 0x38, 0xd5, 0x15, 0x94, 0xee, 0x84, 0x6a, 0xfd, 0x9d, 0x45, 0xcf, 0x00,
+	0x1c, 0x8b, 0xbc, 0xe7, 0xe8, 0x87, 0x8e, 0x89, 0x34, 0x04, 0x94, 0xf4, 0x63, 0x0f, 0x48, 0x21,
+	0x65, 0x9b, 0x4b, 0xd9, 0x44, 0xeb, 0xdd, 0x4b, 0x51, 0xff, 0x0e, 0x2f, 0xe9, 0x05, 0x7a, 0x0b,
+	0xe0, 0x44, 0xcb, 0x3c, 0x46, 0x1b, 0x9d, 0xb2, 0x8b, 0x7a, 0x2c, 0xa4, 0xcd, 0x1e, 0xd1, 0x42,
+	0xdf, 0x31, 0xd7, 0x77, 0x88, 0xb4, 0x5e, 0xf4, 0xd5, 0x47, 0xca, 0x85, 0xca, 0xdf, 0x91, 0xaa,
+	0xec, 0x87, 0x00, 0x8e, 0x34, 0x04, 0x1a, 0x4a, 0xb7, 0xa3, 0x1b, 0x1d, 0x8e, 0xd2, 0x72, 0x57,
+	0x18, 0x21, 0x6c, 0x83, 0x0b, 0x5b, 0x45, 0x2b, 0x9d, 0x08, 0xc3, 0x95, 0x26, 0xba, 0x78, 0xba,
+	0xde, 0x00, 0xf8, 0x45, 0x8b, 0x50, 0x42, 0x6b, 0x9d, 0x3a, 0xde, 0x9c, 0xc3, 0xd2, 0x7a, 0x4f,
+	0x58, 0x21, 0xe9, 0x88, 0x4b, 0x3a, 0x40, 0xfb, 0xf7, 0xb1, 0xab, 0x9a, 0x2c, 0xcd, 0xfc, 0x76,
+	0x75, 0x93, 0x04, 0xd7, 0x37, 0x49, 0xf0, 0xea, 0x26, 0x09, 0xfe, 0xbb, 0x4d, 0xc6, 0xae, 0x6f,
+	0x93, 0xb1, 0x17, 0xb7, 0xc9, 0xd8, 0x71, 0xda, 0xb2, 0x59, 0xbe, 0x68, 0x28, 0x26, 0x3d, 0x8d,
+	0x1e, 0x7a, 0x5e, 0x3b, 0x96, 0x95, 0x3c, 0xe2, 0x1b, 0x71, 0xfe, 0x8b, 0x73, 0xf9, 0x5d, 0x00,
+	0x00, 0x00, 0xff, 0xff, 0xe8, 0xdf, 0x2c, 0xfa, 0x59, 0x0b, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -519,6 +733,11 @@ type QueryClient interface {
 	BTCValidators(ctx context.Context, in *QueryBTCValidatorsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorsResponse, error)
 	// BTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
 	BTCValidatorsAtHeight(ctx context.Context, in *QueryBTCValidatorsAtHeightRequest, opts ...grpc.CallOption) (*QueryBTCValidatorsAtHeightResponse, error)
+	// BTCValidatorPowerAtHeight queries a btc validator at a given height
+	BTCValidatorPowerAtHeight(ctx context.Context, in *QueryBTCValidatorPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryBTCValidatorPowerAtHeightResponse, error)
+	// ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+	// there exists 1 BTC validator with voting power
+	ActivatedHeight(ctx context.Context, in *QueryActivatedHeightRequest, opts ...grpc.CallOption) (*QueryActivatedHeightResponse, error)
 	// BTCValidatorDelegations queries all btc delegations of the given btc validator
 	BTCValidatorDelegations(ctx context.Context, in *QueryBTCValidatorDelegationsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorDelegationsResponse, error)
 }
@@ -558,6 +777,24 @@ func (c *queryClient) BTCValidatorsAtHeight(ctx context.Context, in *QueryBTCVal
 	return out, nil
 }
 
+func (c *queryClient) BTCValidatorPowerAtHeight(ctx context.Context, in *QueryBTCValidatorPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryBTCValidatorPowerAtHeightResponse, error) {
+	out := new(QueryBTCValidatorPowerAtHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidatorPowerAtHeight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) ActivatedHeight(ctx context.Context, in *QueryActivatedHeightRequest, opts ...grpc.CallOption) (*QueryActivatedHeightResponse, error) {
+	out := new(QueryActivatedHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/ActivatedHeight", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *queryClient) BTCValidatorDelegations(ctx context.Context, in *QueryBTCValidatorDelegationsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorDelegationsResponse, error) {
 	out := new(QueryBTCValidatorDelegationsResponse)
 	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidatorDelegations", in, out, opts...)
@@ -575,6 +812,11 @@ type QueryServer interface {
 	BTCValidators(context.Context, *QueryBTCValidatorsRequest) (*QueryBTCValidatorsResponse, error)
 	// BTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
 	BTCValidatorsAtHeight(context.Context, *QueryBTCValidatorsAtHeightRequest) (*QueryBTCValidatorsAtHeightResponse, error)
+	// BTCValidatorPowerAtHeight queries a btc validator at a given height
+	BTCValidatorPowerAtHeight(context.Context, *QueryBTCValidatorPowerAtHeightRequest) (*QueryBTCValidatorPowerAtHeightResponse, error)
+	// ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+	// there exists 1 BTC validator with voting power
+	ActivatedHeight(context.Context, *QueryActivatedHeightRequest) (*QueryActivatedHeightResponse, error)
 	// BTCValidatorDelegations queries all btc delegations of the given btc validator
 	BTCValidatorDelegations(context.Context, *QueryBTCValidatorDelegationsRequest) (*QueryBTCValidatorDelegationsResponse, error)
 }
@@ -591,6 +833,12 @@ func (*UnimplementedQueryServer) BTCValidators(ctx context.Context, req *QueryBT
 }
 func (*UnimplementedQueryServer) BTCValidatorsAtHeight(ctx context.Context, req *QueryBTCValidatorsAtHeightRequest) (*QueryBTCValidatorsAtHeightResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BTCValidatorsAtHeight not implemented")
+}
+func (*UnimplementedQueryServer) BTCValidatorPowerAtHeight(ctx context.Context, req *QueryBTCValidatorPowerAtHeightRequest) (*QueryBTCValidatorPowerAtHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method BTCValidatorPowerAtHeight not implemented")
+}
+func (*UnimplementedQueryServer) ActivatedHeight(ctx context.Context, req *QueryActivatedHeightRequest) (*QueryActivatedHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActivatedHeight not implemented")
 }
 func (*UnimplementedQueryServer) BTCValidatorDelegations(ctx context.Context, req *QueryBTCValidatorDelegationsRequest) (*QueryBTCValidatorDelegationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BTCValidatorDelegations not implemented")
@@ -654,6 +902,42 @@ func _Query_BTCValidatorsAtHeight_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_BTCValidatorPowerAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryBTCValidatorPowerAtHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).BTCValidatorPowerAtHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstaking.v1.Query/BTCValidatorPowerAtHeight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).BTCValidatorPowerAtHeight(ctx, req.(*QueryBTCValidatorPowerAtHeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_ActivatedHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryActivatedHeightRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ActivatedHeight(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btcstaking.v1.Query/ActivatedHeight",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ActivatedHeight(ctx, req.(*QueryActivatedHeightRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Query_BTCValidatorDelegations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(QueryBTCValidatorDelegationsRequest)
 	if err := dec(in); err != nil {
@@ -687,6 +971,14 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BTCValidatorsAtHeight",
 			Handler:    _Query_BTCValidatorsAtHeight_Handler,
+		},
+		{
+			MethodName: "BTCValidatorPowerAtHeight",
+			Handler:    _Query_BTCValidatorPowerAtHeight_Handler,
+		},
+		{
+			MethodName: "ActivatedHeight",
+			Handler:    _Query_ActivatedHeight_Handler,
 		},
 		{
 			MethodName: "BTCValidatorDelegations",
@@ -837,6 +1129,69 @@ func (m *QueryBTCValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryBTCValidatorPowerAtHeightRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBTCValidatorPowerAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBTCValidatorPowerAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.ValBtcPkHex) > 0 {
+		i -= len(m.ValBtcPkHex)
+		copy(dAtA[i:], m.ValBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.ValBtcPkHex)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryBTCValidatorPowerAtHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryBTCValidatorPowerAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryBTCValidatorPowerAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.VotingPower != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.VotingPower))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryBTCValidatorsAtHeightRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -926,6 +1281,57 @@ func (m *QueryBTCValidatorsAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryActivatedHeightRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActivatedHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActivatedHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryActivatedHeightResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryActivatedHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryActivatedHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Height != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Height))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *QueryBTCValidatorDelegationsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -956,7 +1362,17 @@ func (m *QueryBTCValidatorDelegationsRequest) MarshalToSizedBuffer(dAtA []byte) 
 			i = encodeVarintQuery(dAtA, i, uint64(size))
 		}
 		i--
-		dAtA[i] = 0x12
+		dAtA[i] = 0x1a
+	}
+	if m.NoJurySigOnly {
+		i--
+		if m.NoJurySigOnly {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x10
 	}
 	if len(m.ValBtcPkHex) > 0 {
 		i -= len(m.ValBtcPkHex)
@@ -1080,6 +1496,34 @@ func (m *QueryBTCValidatorsResponse) Size() (n int) {
 	return n
 }
 
+func (m *QueryBTCValidatorPowerAtHeightRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.ValBtcPkHex)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	return n
+}
+
+func (m *QueryBTCValidatorPowerAtHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.VotingPower != 0 {
+		n += 1 + sovQuery(uint64(m.VotingPower))
+	}
+	return n
+}
+
 func (m *QueryBTCValidatorsAtHeightRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1115,6 +1559,27 @@ func (m *QueryBTCValidatorsAtHeightResponse) Size() (n int) {
 	return n
 }
 
+func (m *QueryActivatedHeightRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryActivatedHeightResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Height != 0 {
+		n += 1 + sovQuery(uint64(m.Height))
+	}
+	return n
+}
+
 func (m *QueryBTCValidatorDelegationsRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1124,6 +1589,9 @@ func (m *QueryBTCValidatorDelegationsRequest) Size() (n int) {
 	l = len(m.ValBtcPkHex)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.NoJurySigOnly {
+		n += 2
 	}
 	if m.Pagination != nil {
 		l = m.Pagination.Size()
@@ -1496,6 +1964,176 @@ func (m *QueryBTCValidatorsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *QueryBTCValidatorPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPkHex", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ValBtcPkHex = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryBTCValidatorPowerAtHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VotingPower", wireType)
+			}
+			m.VotingPower = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.VotingPower |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryBTCValidatorsAtHeightRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1721,6 +2359,125 @@ func (m *QueryBTCValidatorsAtHeightResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *QueryActivatedHeightRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActivatedHeightRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActivatedHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryActivatedHeightResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryActivatedHeightResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryActivatedHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Height", wireType)
+			}
+			m.Height = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Height |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *QueryBTCValidatorDelegationsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1783,6 +2540,26 @@ func (m *QueryBTCValidatorDelegationsRequest) Unmarshal(dAtA []byte) error {
 			m.ValBtcPkHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NoJurySigOnly", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.NoJurySigOnly = bool(v != 0)
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
 			}

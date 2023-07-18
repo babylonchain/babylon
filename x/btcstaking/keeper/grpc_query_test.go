@@ -2,17 +2,41 @@ package keeper_test
 
 import (
 	"fmt"
-	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/stretchr/testify/require"
 	"math/rand"
-
-	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
 )
+
+func FuzzActivatedHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// not activated yet
+		_, err := keeper.GetBTCStakingActivatedHeight(ctx)
+		require.Error(t, err)
+
+		randomActivatedHeight := datagen.RandomInt(r, 100) + 1
+		btcVal, err := datagen.GenRandomBTCValidator(r)
+		require.NoError(t, err)
+		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomActivatedHeight, uint64(10))
+
+		// now it's activated
+		resp, err := keeper.ActivatedHeight(ctx, &types.QueryActivatedHeightRequest{})
+		require.NoError(t, err)
+		require.Equal(t, randomActivatedHeight, resp.Height)
+	})
+}
 
 func FuzzBTCValidators(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
@@ -77,6 +101,34 @@ func FuzzBTCValidators(f *testing.F) {
 		if len(btcValsFound) != len(btcValsMap) {
 			t.Errorf("Some vals were missed. Got %d while %d were expected", len(btcValsFound), len(btcValsMap))
 		}
+	})
+}
+
+func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+
+		// random BTC validator
+		btcVal, err := datagen.GenRandomBTCValidator(r)
+		require.NoError(t, err)
+		// add this BTC validator
+		keeper.SetBTCValidator(ctx, btcVal)
+		// set random voting power at random height
+		randomHeight := datagen.RandomInt(r, 100) + 1
+		randomPower := datagen.RandomInt(r, 100) + 1
+		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomHeight, randomPower)
+
+		req := &types.QueryBTCValidatorPowerAtHeightRequest{
+			ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+			Height:      randomHeight,
+		}
+		resp, err := keeper.BTCValidatorPowerAtHeight(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomPower, resp.VotingPower)
 	})
 }
 

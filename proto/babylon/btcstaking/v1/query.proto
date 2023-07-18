@@ -26,6 +26,17 @@ service Query {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{height}";
   }
 
+  // BTCValidatorPowerAtHeight queries a btc validator at a given height
+  rpc BTCValidatorPowerAtHeight(QueryBTCValidatorPowerAtHeightRequest) returns (QueryBTCValidatorPowerAtHeightResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power/{height}";
+  }
+
+  // ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+  // there exists 1 BTC validator with voting power
+  rpc ActivatedHeight(QueryActivatedHeightRequest) returns (QueryActivatedHeightResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/activated_height";
+  }
+
   // BTCValidatorDelegations queries all btc delegations of the given btc validator
   rpc BTCValidatorDelegations(QueryBTCValidatorDelegationsRequest) returns (QueryBTCValidatorDelegationsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/delegations";
@@ -58,6 +69,25 @@ message QueryBTCValidatorsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+// QueryBTCValidatorPowerAtHeightRequest is the request type for the
+// Query/BTCValidatorPowerAtHeight RPC method.
+message QueryBTCValidatorPowerAtHeightRequest {
+  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string val_btc_pk_hex = 1;
+
+  // height is used for querying the given validator's voting power at this height
+  uint64 height = 2;
+}
+
+// QueryBTCValidatorPowerAtHeightResponse is the response type for the
+// Query/BTCValidatorPowerAtHeight RPC method.
+message QueryBTCValidatorPowerAtHeightResponse {
+  // voting_power is the voting power of the BTC validator
+  uint64 voting_power = 1;
+}
+
 // QueryBTCValidatorsAtHeightRequest is the request type for the
 // Query/BTCValidatorsAtHeight RPC method.
 message QueryBTCValidatorsAtHeightRequest {
@@ -78,6 +108,15 @@ message QueryBTCValidatorsAtHeightResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+
+// QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
+message QueryActivatedHeightRequest {}
+
+// QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
+message QueryActivatedHeightResponse {
+  uint64 height = 1;
+}
+
 // QueryBTCValidatorDelegationsRequest is the request type for the
 // Query/BTCValidatorDelegations RPC method.
 message QueryBTCValidatorDelegationsRequest {
@@ -86,8 +125,12 @@ message QueryBTCValidatorDelegationsRequest {
   // the PK follows encoding in BIP-340 spec
   string val_btc_pk_hex = 1;
 
+  // no_jury_sig_only indicates this query will only return BTC delegations that haven't
+  // received a jury signature yet
+  bool no_jury_sig_only = 2;
+
   // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+  cosmos.base.query.v1beta1.PageRequest pagination = 3;
 }
 
 // QueryBTCValidatorDelegationsResponse is the response type for the

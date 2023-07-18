@@ -9,15 +9,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-//nolint:unused
 func (k Keeper) setPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, height uint64, pr *bbn.SchnorrPubRand) {
 	store := k.pubRandStore(ctx, valBtcPK)
 	store.Set(sdk.Uint64ToBigEndian(height), *pr)
 }
 
-// setPubRandList sets a list of public randomness starting from a given startHeight
+// SetPubRandList sets a list of public randomness starting from a given startHeight
 // for a given BTC validator
-func (k Keeper) setPubRandList(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand) {
+func (k Keeper) SetPubRandList(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand) {
 	for i, pr := range pubRandList {
 		k.setPubRand(ctx, valBtcPK, startHeight+uint64(i), &pr)
 	}

@@ -3,7 +3,9 @@ package babylon.finality.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/finality/v1/params.proto";
+import "babylon/finality/v1/finality.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
@@ -12,6 +14,16 @@ service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (google.api.http).get = "/babylonchain/babylon/finality/v1/params";
+  }
+
+  // ListPublicRandomness is a range query for public randomness of a given BTC validator
+  rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/public_randomness_list";
+  }
+  
+  // ListBlocks is a range query for blocks at a given status
+  rpc ListBlocks(QueryListBlocksRequest) returns (QueryListBlocksResponse) {
+    option (google.api.http).get = "/babylonchain/babylon/finality/v1/blocks";
   }
 
   // VotesAtHeight queries btc validators who have signed the block at given height.
@@ -27,6 +39,48 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // params holds all the parameters of this module.
   Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryListPublicRandomnessRequest is the request type for the
+// Query/ListPublicRandomness RPC method.
+message QueryListPublicRandomnessRequest {
+  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator
+  string val_btc_pk_hex = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListPublicRandomnessResponse is the response type for the
+// Query/ListPublicRandomness RPC method.
+message QueryListPublicRandomnessResponse {
+  // pub_rand_map is the map where the key is the height and the value
+  // is the public randomness at this height for the given BTC validator
+  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryListBlocksRequest is the request type for the
+// Query/ListBlocks RPC method.
+message QueryListBlocksRequest {
+  // finalized indicates whether to only return finalized or non-finalized
+  // blocks
+  bool finalized = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListBlocksResponse is the response type for the
+// Query/ListBlocks RPC method.
+message QueryListBlocksResponse {
+  // blocks is the list of blocks at the given status
+  repeated IndexedBlock blocks = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryVotesAtHeightRequest is the request type for the

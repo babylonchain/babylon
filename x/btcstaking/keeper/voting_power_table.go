@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"fmt"
+
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
@@ -90,7 +91,6 @@ func (k Keeper) GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]u
 
 // GetBTCStakingActivatedHeight returns the height when the BTC staking protocol is activated
 // i.e., the first height where a BTC validator has voting power
-// otherwise, we return -1 here
 // Before the BTC staking protocol is activated, we don't index or tally any block
 func (k Keeper) GetBTCStakingActivatedHeight(ctx sdk.Context) (uint64, error) {
 	store := ctx.KVStore(k.storeKey)

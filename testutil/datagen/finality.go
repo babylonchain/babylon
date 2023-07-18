@@ -10,7 +10,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 )
 
-func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeight uint64, numPubRand uint64) ([]*eots.PrivateRand, *ftypes.MsgCommitPubRandList, error) {
+func GenRandomPubRandList(r *rand.Rand, numPubRand uint64) ([]*eots.PrivateRand, []bbn.SchnorrPubRand, error) {
 	srList := []*eots.PrivateRand{}
 	prList := []bbn.SchnorrPubRand{}
 	for i := uint64(0); i < numPubRand; i++ {
@@ -21,6 +21,14 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 		pr := bbn.NewSchnorrPubRandFromFieldVal(eotsPR)
 		srList = append(srList, eotsSR)
 		prList = append(prList, *pr)
+	}
+	return srList, prList, nil
+}
+
+func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeight uint64, numPubRand uint64) ([]*eots.PrivateRand, *ftypes.MsgCommitPubRandList, error) {
+	srList, prList, err := GenRandomPubRandList(r, numPubRand)
+	if err != nil {
+		return nil, nil, err
 	}
 
 	msg := &ftypes.MsgCommitPubRandList{

@@ -155,7 +155,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	// this BTC validator has not commit any public randomness,
 	// commit the given public randomness list and return
 	if ms.IsFirstPubRand(ctx, req.ValBtcPk) {
-		ms.setPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
+		ms.SetPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
 		return &types.MsgCommitPubRandListResponse{}, nil
 	}
 
@@ -169,6 +169,6 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// all good, commit the given public randomness list
-	ms.setPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
+	ms.SetPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
 	return &types.MsgCommitPubRandListResponse{}, nil
 }

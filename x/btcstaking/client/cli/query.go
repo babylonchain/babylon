@@ -2,8 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"strconv"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -24,6 +25,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdBTCValidators())
 	cmd.AddCommand(CmdBTCValidatorsAtHeight())
+	cmd.AddCommand(CmdBTCValidatorPowerAtHeight())
+	cmd.AddCommand(CmdActivatedHeight())
 	cmd.AddCommand(CmdBTCValidatorDelegations())
 
 	return cmd
@@ -47,6 +50,61 @@ func CmdBTCValidators() *cobra.Command {
 			res, err := queryClient.BTCValidators(cmd.Context(), &types.QueryBTCValidatorsRequest{
 				Pagination: pageReq,
 			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdBTCValidatorPowerAtHeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "btc-validator-power-at-height [val_btc_pk_hex] [height]",
+		Short: "get the voting power of a given BTC validator at a given height",
+		Args:  cobra.ExactArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			height, err := strconv.ParseUint(args[1], 10, 64)
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.BTCValidatorPowerAtHeight(cmd.Context(), &types.QueryBTCValidatorPowerAtHeightRequest{
+				ValBtcPkHex: args[0],
+				Height:      height,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdActivatedHeight() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "activated-height",
+		Short: "get activated height, i.e., the first height where there exists 1 BTC validator with voting power",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.ActivatedHeight(cmd.Context(), &types.QueryActivatedHeightRequest{})
 			if err != nil {
 				return err
 			}
@@ -111,10 +169,15 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			noJurySigOnly, err := cmd.Flags().GetBool("no_jury_sig_only")
+			if err != nil {
+				return err
+			}
 
 			res, err := queryClient.BTCValidatorDelegations(cmd.Context(), &types.QueryBTCValidatorDelegationsRequest{
-				ValBtcPkHex: args[0],
-				Pagination:  pageReq,
+				ValBtcPkHex:   args[0],
+				NoJurySigOnly: noJurySigOnly,
+				Pagination:    pageReq,
 			})
 			if err != nil {
 				return err
@@ -125,6 +188,7 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	cmd.Flags().Bool("no_jury_sig_only", false, "whether to only return BTC delegations that haven't received a jury signature yet")
 
 	return cmd
 }
