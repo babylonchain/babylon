@@ -81,9 +81,9 @@ func (k Keeper) VotesAtHeight(ctx context.Context, req *types.QueryVotesAtHeight
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	var btcPks []bbn.BIP340PubKey
 
-	// get the validator set of block at given height
-	valSet := k.BTCStakingKeeper.GetVotingPowerTable(sdkCtx, req.Height)
-	for pkHex := range valSet {
+	// get the sig set of babylon block at given height
+	sigSet := k.GetSigSet(sdkCtx, req.Height)
+	for pkHex := range sigSet {
 		pk, err := bbn.NewBIP340PubKeyFromHex(pkHex)
 		if err != nil {
 			// failing to unmarshal validator BTC PK in KVStore is a programming error
