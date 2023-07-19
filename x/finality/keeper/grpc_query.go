@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/finality/types"
 )
 
 var _ types.QueryServer = Keeper{}
@@ -54,13 +55,19 @@ func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksReques
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	store := k.blockStore(sdkCtx)
 	ibs := []*types.IndexedBlock{}
-	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
+	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		var ib types.IndexedBlock
 		k.cdc.MustUnmarshal(value, &ib)
-		if ib.Finalized == req.Finalized {
-			ibs = append(ibs, &ib)
+
+		// return finalized blocks if the request is for finalized blocks
+		// otherwise only return non-finalized blocks
+		if (req.Finalized && ib.Finalized) || (!req.Finalized && !ib.Finalized) {
+			if accumulate {
+				ibs = append(ibs, &ib)
+			}
+			return true, nil
 		}
-		return nil
+		return false, nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())

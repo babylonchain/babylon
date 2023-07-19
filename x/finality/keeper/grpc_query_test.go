@@ -1,16 +1,20 @@
 package keeper_test
 
 import (
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
+	"fmt"
 	"math/rand"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/finality/types"
+
+	"github.com/cosmos/cosmos-sdk/types/query"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
-	"github.com/cosmos/cosmos-sdk/types/query"
 )
 
 func FuzzListPublicRandomness(f *testing.F) {
@@ -64,36 +68,59 @@ func FuzzListBlocks(f *testing.F) {
 		// index a random list of finalised blocks
 		startHeight := datagen.RandomInt(r, 100)
 		numIndexedBlocks := datagen.RandomInt(r, 100) + 1
-		finalizedIndexedBlocks := map[uint64]*types.IndexedBlock{}
+		finalizedIndexedBlocks := make(map[uint64]*types.IndexedBlock)
+		nonFinalizedIndexedBlocks := make(map[uint64]*types.IndexedBlock)
 		for i := startHeight; i < startHeight+numIndexedBlocks; i++ {
 			ib := &types.IndexedBlock{
-				Height:         startHeight + numIndexedBlocks,
+				Height:         i,
 				LastCommitHash: datagen.GenRandomByteArray(r, 32),
 			}
 			// randomly finalise some of them
 			if datagen.RandomInt(r, 2) == 1 {
 				ib.Finalized = true
 				finalizedIndexedBlocks[ib.Height] = ib
+			} else {
+				nonFinalizedIndexedBlocks[ib.Height] = ib
 			}
 			// insert to KVStore
 			keeper.SetBlock(ctx, ib)
 		}
 
-		// perform a query to pubrand list and assert consistency
+		// perform a query to fetch finalized blocks and assert consistency
 		// NOTE: pagination is already tested in Cosmos SDK so we don't test it here again,
 		// instead only ensure it takes effect
-		limit := datagen.RandomInt(r, int(numIndexedBlocks)-1) + 1
+		limit := datagen.RandomInt(r, len(finalizedIndexedBlocks)) + 1
 		req := &types.QueryListBlocksRequest{
 			Finalized: true,
 			Pagination: &query.PageRequest{
-				Limit: limit,
+				CountTotal: true,
+				Limit:      limit,
 			},
 		}
-		resp, err := keeper.ListBlocks(ctx, req)
+		resp1, err := keeper.ListBlocks(ctx, req)
 		require.NoError(t, err)
-		require.LessOrEqual(t, len(resp.Blocks), int(limit)) // check if pagination takes effect
-		for _, actualIB := range resp.Blocks {
+		require.LessOrEqual(t, len(resp1.Blocks), int(limit)) // check if pagination takes effect
+		fmt.Println(resp1.Pagination.Total, len(nonFinalizedIndexedBlocks))
+		require.EqualValues(t, resp1.Pagination.Total, len(finalizedIndexedBlocks))
+		for _, actualIB := range resp1.Blocks {
 			require.Equal(t, finalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+		}
+
+		// perform a query to fetch non-finalized blocks and assert consistency
+		limit = datagen.RandomInt(r, len(nonFinalizedIndexedBlocks)) + 1
+		req = &types.QueryListBlocksRequest{
+			Finalized: false,
+			Pagination: &query.PageRequest{
+				CountTotal: true,
+				Limit:      limit,
+			},
+		}
+		resp2, err := keeper.ListBlocks(ctx, req)
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(resp2.Blocks), int(limit)) // check if pagination takes effect
+		require.EqualValues(t, resp2.Pagination.Total, len(nonFinalizedIndexedBlocks))
+		for _, actualIB := range resp2.Blocks {
+			require.Equal(t, nonFinalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
 		}
 	})
 }
