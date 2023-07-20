@@ -13,22 +13,22 @@ option go_package = "github.com/babylonchain/babylon/x/finality/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/finality/v1/params";
+    option (google.api.http).get = "/babylon/finality/v1/params";
   }
 
   // ListPublicRandomness is a range query for public randomness of a given BTC validator
   rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/public_randomness_list";
+    option (google.api.http).get = "/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/public_randomness_list";
   }
   
   // ListBlocks is a range query for blocks at a given status
   rpc ListBlocks(QueryListBlocksRequest) returns (QueryListBlocksResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/finality/v1/blocks";
+    option (google.api.http).get = "/babylon/finality/v1/blocks";
   }
 
   // VotesAtHeight queries btc validators who have signed the block at given height.
   rpc VotesAtHeight(QueryVotesAtHeightRequest) returns (QueryVotesAtHeightResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/finality/v1/votes/{height}";
+    option (google.api.http).get = "/babylon/finality/v1/votes/{height}";
   }
 }
 

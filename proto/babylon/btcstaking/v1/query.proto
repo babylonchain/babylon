@@ -13,33 +13,33 @@ option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 service Query {
   // Parameters queries the parameters of the module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/params";
+    option (google.api.http).get = "/babylon/btcstaking/v1/params";
   }
 
   // BTCValidators queries all btc validators
   rpc BTCValidators(QueryBTCValidatorsRequest) returns (QueryBTCValidatorsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators";
   }
 
   // ActiveBTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
   rpc ActiveBTCValidatorsAtHeight(QueryActiveBTCValidatorsAtHeightRequest) returns (QueryActiveBTCValidatorsAtHeightResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{height}";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{height}";
   }
 
   // BTCValidatorPowerAtHeight queries the voting power of a btc validator at a given height
   rpc BTCValidatorPowerAtHeight(QueryBTCValidatorPowerAtHeightRequest) returns (QueryBTCValidatorPowerAtHeightResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power/{height}";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power/{height}";
   }
 
   // ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
   // there exists 1 BTC validator with voting power
   rpc ActivatedHeight(QueryActivatedHeightRequest) returns (QueryActivatedHeightResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/activated_height";
+    option (google.api.http).get = "/babylon/btcstaking/v1/activated_height";
   }
 
   // BTCValidatorDelegations queries all btc delegations of the given btc validator
   rpc BTCValidatorDelegations(QueryBTCValidatorDelegationsRequest) returns (QueryBTCValidatorDelegationsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/delegations";
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/delegations";
   }
 }
 
