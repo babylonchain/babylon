@@ -182,7 +182,7 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 	if err != nil {
 		return nil, err
 	}
-	if btcDel.IsActivated() {
+	if btcDel.HasJurySig() {
 		return nil, types.ErrDuplicatedJurySig
 	}
 

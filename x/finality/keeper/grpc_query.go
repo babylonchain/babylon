@@ -54,7 +54,7 @@ func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksReques
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	store := k.blockStore(sdkCtx)
-	ibs := []*types.IndexedBlock{}
+	var ibs []*types.IndexedBlock
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		var ib types.IndexedBlock
 		k.cdc.MustUnmarshal(value, &ib)

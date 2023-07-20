@@ -15,6 +15,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// BTCValidators returns a paginated list of all Babylon maintained validators
 func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidatorsRequest) (*types.QueryBTCValidatorsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -37,6 +38,8 @@ func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidators
 	return &types.QueryBTCValidatorsResponse{BtcValidators: btcValidators, Pagination: pageRes}, nil
 }
 
+// BTCValidatorPowerAtHeight returns the voting power of the specified validator
+// at the provided Babylon height
 func (k Keeper) BTCValidatorPowerAtHeight(ctx context.Context, req *types.QueryBTCValidatorPowerAtHeightRequest) (*types.QueryBTCValidatorPowerAtHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -53,7 +56,8 @@ func (k Keeper) BTCValidatorPowerAtHeight(ctx context.Context, req *types.QueryB
 	return &types.QueryBTCValidatorPowerAtHeightResponse{VotingPower: power}, nil
 }
 
-func (k Keeper) BTCValidatorsAtHeight(ctx context.Context, req *types.QueryBTCValidatorsAtHeightRequest) (*types.QueryBTCValidatorsAtHeightResponse, error) {
+// ActiveBTCValidatorsAtHeight returns the active BTC validators at the provided height
+func (k Keeper) ActiveBTCValidatorsAtHeight(ctx context.Context, req *types.QueryActiveBTCValidatorsAtHeightRequest) (*types.QueryActiveBTCValidatorsAtHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -84,9 +88,11 @@ func (k Keeper) BTCValidatorsAtHeight(ctx context.Context, req *types.QueryBTCVa
 		return nil, err
 	}
 
-	return &types.QueryBTCValidatorsAtHeightResponse{BtcValidators: btcValidatorsWithMeta, Pagination: pageRes}, nil
+	return &types.QueryActiveBTCValidatorsAtHeightResponse{BtcValidators: btcValidatorsWithMeta, Pagination: pageRes}, nil
 }
 
+// ActivatedHeight returns the Babylon height in which the BTC Staking protocol was enabled
+// TODO: Requires investigation on whether we can enable the BTC staking protocol at genesis
 func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHeightRequest) (*types.QueryActivatedHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -100,6 +106,7 @@ func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHe
 	return &types.QueryActivatedHeightResponse{Height: activatedHeight}, nil
 }
 
+// BTCValidatorDelegations returns all the delegations of the provided validator filtered by the provided status.
 func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTCValidatorDelegationsRequest) (*types.QueryBTCValidatorDelegationsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -118,20 +125,25 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	btcDelStore := k.btcDelegationStore(sdkCtx, valPK.MustMarshal())
 
+	// get current BTC height
+	btcTipHeight, err := k.GetCurrentBTCHeight(sdkCtx)
+	if err != nil {
+		return nil, err
+	}
+	// get value of w
+	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
+
 	var btcDels []*types.BTCDelegation
-	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
+	pageRes, err := query.FilteredPaginate(btcDelStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
 		var btcDelegation types.BTCDelegation
 		k.cdc.MustUnmarshal(value, &btcDelegation)
-		if req.NoJurySigOnly {
-			// only append BTC delegations that do not have jury signature
-			if btcDelegation.JurySig == nil {
+		if req.DelStatus == btcDelegation.GetStatus(btcTipHeight, wValue) {
+			if accumulate {
 				btcDels = append(btcDels, &btcDelegation)
 			}
-		} else {
-			// append all BTC delegations, regardless whether it has jury signature or not
-			btcDels = append(btcDels, &btcDelegation)
+			return true, nil
 		}
-		return nil
+		return false, nil
 	})
 	if err != nil {
 		return nil, err

@@ -30,21 +30,23 @@ func (n *NodeConfig) QueryBTCValidators() []*bstypes.BTCValidator {
 	return resp.BtcValidators
 }
 
-func (n *NodeConfig) QueryBTCValidatorsAtHeight(height uint64) []*bstypes.BTCValidatorWithMeta {
+func (n *NodeConfig) QueryActiveBTCValidatorsAtHeight(height uint64) []*bstypes.BTCValidatorWithMeta {
 	path := fmt.Sprintf("/babylonchain/babylon/btcstaking/v1/btc_validators/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bstypes.QueryBTCValidatorsAtHeightResponse
+	var resp bstypes.QueryActiveBTCValidatorsAtHeightResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
 	return resp.BtcValidators
 }
 
-func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string) []*bstypes.BTCDelegation {
+func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string, status bstypes.BTCDelegationStatus) []*bstypes.BTCDelegation {
 	path := fmt.Sprintf("/babylonchain/babylon/btcstaking/v1/btc_validators/%s/delegations", valBTCPK)
-	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	values := url.Values{}
+	values.Set("del_status", fmt.Sprintf("%d", status))
+	bz, err := n.QueryGRPCGateway(path, values)
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryBTCValidatorDelegationsResponse

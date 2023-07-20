@@ -99,3 +99,13 @@ message StakingTx {
     // staking_script is the script for the staking tx's output
     bytes staking_script = 2;
 }
+
+// BTCDelegationStatus is the status of a delegation.
+enum BTCDelegationStatus {
+    // PENDING defines a delegation that is waiting for a jury signature to become active.
+    PENDING = 0;
+    // ACTIVE defines a delegation that has voting power
+    ACTIVE = 1;
+    // EXPIRED defines a delegation that has expired
+    EXPIRED = 2;
+}

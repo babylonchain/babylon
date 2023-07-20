@@ -1,15 +1,17 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -132,7 +134,7 @@ func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
 	})
 }
 
-func FuzzBTCValidatorsAtHeight(f *testing.F) {
+func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -171,7 +173,7 @@ func FuzzBTCValidatorsAtHeight(f *testing.F) {
 		}
 
 		// Test nil request
-		resp, err := keeper.BTCValidatorsAtHeight(ctx, nil)
+		resp, err := keeper.ActiveBTCValidatorsAtHeight(ctx, nil)
 		if resp != nil {
 			t.Errorf("Nil input led to a non-nil response")
 		}
@@ -183,16 +185,13 @@ func FuzzBTCValidatorsAtHeight(f *testing.F) {
 		limit := datagen.RandomInt(r, int(numBTCValsWithVotingPower)) + 1
 		pagination := constructRequestWithLimit(r, limit)
 		// Generate the initial query
-		req := types.QueryBTCValidatorsAtHeightRequest{Height: babylonHeight, Pagination: pagination}
+		req := types.QueryActiveBTCValidatorsAtHeightRequest{Height: babylonHeight, Pagination: pagination}
 		// Construct a mapping from the btc vals found to a boolean value
 		// Will be used later to evaluate whether all the btc vals were returned
 		btcValsFound := make(map[string]bool, 0)
 
-		votingTable := keeper.GetVotingPowerTable(ctx, babylonHeight)
-		fmt.Println(votingTable)
-
 		for i := uint64(0); i < numBTCValsWithVotingPower; i += limit {
-			resp, err = keeper.BTCValidatorsAtHeight(ctx, &req)
+			resp, err = keeper.ActiveBTCValidatorsAtHeight(ctx, &req)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
 			}
@@ -210,7 +209,7 @@ func FuzzBTCValidatorsAtHeight(f *testing.F) {
 
 			// Construct the next page request
 			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
-			req = types.QueryBTCValidatorsAtHeightRequest{Height: babylonHeight, Pagination: pagination}
+			req = types.QueryActiveBTCValidatorsAtHeightRequest{Height: babylonHeight, Pagination: pagination}
 		}
 
 		if len(btcValsFound) != len(btcValsWithVotingPowerMap) {
@@ -223,69 +222,117 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// Generate a btc validator
 		btcVal, err := datagen.GenRandomBTCValidator(r)
 		require.NoError(t, err)
 		keeper.SetBTCValidator(ctx, btcVal)
 
+		startHeight := datagen.RandomInt(r, 100) + 1
+		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
 		// Generate a random number of BTC delegations under this validator
 		numBTCDels := datagen.RandomInt(r, 10) + 1
-		btcDelsMap := make(map[string]*types.BTCDelegation)
+		activeBtcDelsMap := make(map[string]*types.BTCDelegation)
+		pendingBtcDelsMap := make(map[string]*types.BTCDelegation)
 		for j := uint64(0); j < numBTCDels; j++ {
-			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, 1, 1000, 1) // timelock period: 1-1000
+			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, startHeight, endHeight, 1)
 			require.NoError(t, err)
+			if datagen.RandomInt(r, 2) == 1 {
+				// remove jury sig in random BTC delegations to make them inactive
+				btcDel.JurySig = nil
+				pendingBtcDelsMap[btcDel.BtcPk.ToHexStr()] = btcDel
+			} else {
+				activeBtcDelsMap[btcDel.BtcPk.ToHexStr()] = btcDel
+			}
 			keeper.SetBTCDelegation(ctx, btcDel)
-			btcDelsMap[btcDel.BtcPk.ToHexStr()] = btcDel
 		}
 
 		// Test nil request
 		resp, err := keeper.BTCValidatorDelegations(ctx, nil)
-		if resp != nil {
-			t.Errorf("Nil input led to a non-nil response")
-		}
-		if err == nil {
-			t.Errorf("Nil input led to a nil error")
-		}
+		require.Nil(t, resp)
+		require.Error(t, err)
+
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
+		keeper.IndexBTCHeight(ctx)
 
 		// Generate a page request with a limit and a nil key
-		limit := datagen.RandomInt(r, int(numBTCDels)) + 1
-		pagination := constructRequestWithLimit(r, limit)
-		// Generate the initial query
-		req := types.QueryBTCValidatorDelegationsRequest{ValBtcPkHex: btcVal.BtcPk.ToHexStr(), Pagination: pagination}
-		// Construct a mapping from the btc vals found to a boolean value
-		// Will be used later to evaluate whether all the btc vals were returned
-		btcDelsFound := make(map[string]bool, 0)
-
-		for i := uint64(0); i < numBTCDels; i += limit {
-			resp, err = keeper.BTCValidatorDelegations(ctx, &req)
-			if err != nil {
-				t.Errorf("Valid request led to an error %s", err)
+		// query a page of active BTC delegations and assert consistency
+		if len(activeBtcDelsMap) > 0 {
+			limit := datagen.RandomInt(r, len(activeBtcDelsMap)) + 1
+			pagination := constructRequestWithLimit(r, limit)
+			// Generate the initial query
+			req := types.QueryBTCValidatorDelegationsRequest{
+				ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+				DelStatus:   types.BTCDelegationStatus_ACTIVE,
+				Pagination:  pagination,
 			}
-			if resp == nil {
-				t.Fatalf("Valid request led to a nil response")
-			}
+			// Construct a mapping from the btc vals found to a boolean value
+			// Will be used later to evaluate whether all the btc vals were returned
+			btcDelsFound := make(map[string]bool, 0)
 
-			for _, btcDel := range resp.BtcDelegations {
-				require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)
-
-				// Check if the pk exists in the map
-				if _, ok := btcDelsMap[btcDel.BtcPk.ToHexStr()]; !ok {
-					t.Fatalf("rpc returned a val that was not created")
+			for i := uint64(0); i < numBTCDels; i += limit {
+				resp, err = keeper.BTCValidatorDelegations(ctx, &req)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				for _, btcDel := range resp.BtcDelegations {
+					require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)
+					// Check if the pk exists in the map
+					_, ok := activeBtcDelsMap[btcDel.BtcPk.ToHexStr()]
+					require.True(t, ok)
+					btcDelsFound[btcDel.BtcPk.ToHexStr()] = true
 				}
-				btcDelsFound[btcDel.BtcPk.ToHexStr()] = true
+				// Construct the next page request
+				pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+				req = types.QueryBTCValidatorDelegationsRequest{
+					ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+					DelStatus:   types.BTCDelegationStatus_ACTIVE,
+					Pagination:  pagination,
+				}
 			}
-
-			// Construct the next page request
-			pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
-			req = types.QueryBTCValidatorDelegationsRequest{ValBtcPkHex: btcVal.BtcPk.ToHexStr(), Pagination: pagination}
+			require.Equal(t, len(btcDelsFound), len(activeBtcDelsMap))
 		}
 
-		if len(btcDelsFound) != len(btcDelsMap) {
-			t.Errorf("Some vals were missed. Got %d while %d were expected", len(btcDelsFound), len(btcDelsMap))
+		// query a page of pending BTC delegations and assert consistency
+		if len(pendingBtcDelsMap) > 0 {
+			limit := datagen.RandomInt(r, len(pendingBtcDelsMap)) + 1
+			pagination := constructRequestWithLimit(r, limit)
+			req := types.QueryBTCValidatorDelegationsRequest{
+				ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+				DelStatus:   types.BTCDelegationStatus_PENDING, // only request BTC delegations without jury sig
+				Pagination:  pagination,
+			}
+			pendingBtcDelsFound := make(map[string]bool, 0)
+
+			for i := uint64(0); i < uint64(len(pendingBtcDelsMap)); i += limit {
+				resp, err := keeper.BTCValidatorDelegations(ctx, &req)
+				require.NoError(t, err)
+				require.NotNil(t, resp)
+				for _, btcDel := range resp.BtcDelegations {
+					require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)
+					// Check if the pk exists in the map
+					_, ok := pendingBtcDelsMap[btcDel.BtcPk.ToHexStr()]
+					require.True(t, ok)
+					pendingBtcDelsFound[btcDel.BtcPk.ToHexStr()] = true
+				}
+				// Construct the next page request
+				pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
+				req = types.QueryBTCValidatorDelegationsRequest{
+					ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+					DelStatus:   types.BTCDelegationStatus_PENDING, // only request BTC delegations without jury sig
+					Pagination:  pagination,
+				}
+			}
+			require.Equal(t, len(pendingBtcDelsFound), len(pendingBtcDelsMap))
 		}
 	})
 }

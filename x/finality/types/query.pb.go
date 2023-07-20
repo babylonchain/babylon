@@ -223,6 +223,8 @@ func (m *QueryListPublicRandomnessResponse) GetPagination() *query.PageResponse 
 // QueryListBlocksRequest is the request type for the
 // Query/ListBlocks RPC method.
 type QueryListBlocksRequest struct {
+	// finalized indicates whether to only return finalized or non-finalized
+	// blocks
 	Finalized bool `protobuf:"varint,1,opt,name=finalized,proto3" json:"finalized,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`

@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const flagDelegationStatus = "delegation-status"
+
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string) *cobra.Command {
 	// Group btcstaking queries under a subcommand
@@ -138,7 +140,7 @@ func CmdBTCValidatorsAtHeight() *cobra.Command {
 				return err
 			}
 
-			res, err := queryClient.BTCValidatorsAtHeight(cmd.Context(), &types.QueryBTCValidatorsAtHeightRequest{
+			res, err := queryClient.ActiveBTCValidatorsAtHeight(cmd.Context(), &types.QueryActiveBTCValidatorsAtHeightRequest{
 				Height:     height,
 				Pagination: pageReq,
 			})
@@ -169,15 +171,20 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			noJurySigOnly, err := cmd.Flags().GetBool("no_jury_sig_only")
+			delegationStatusString, err := cmd.Flags().GetString(flagDelegationStatus)
+			if err != nil {
+				return err
+			}
+
+			delegationStatus, err := types.NewBTCDelegationStatus(delegationStatusString)
 			if err != nil {
 				return err
 			}
 
 			res, err := queryClient.BTCValidatorDelegations(cmd.Context(), &types.QueryBTCValidatorDelegationsRequest{
-				ValBtcPkHex:   args[0],
-				NoJurySigOnly: noJurySigOnly,
-				Pagination:    pageReq,
+				ValBtcPkHex: args[0],
+				DelStatus:   delegationStatus,
+				Pagination:  pageReq,
 			})
 			if err != nil {
 				return err
@@ -188,7 +195,7 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	cmd.Flags().Bool("no_jury_sig_only", false, "whether to only return BTC delegations that haven't received a jury signature yet")
+	cmd.Flags().String(flagDelegationStatus, "Active", "Status of the queried delegations (Pending|Active|Expired)")
 
 	return cmd
 }

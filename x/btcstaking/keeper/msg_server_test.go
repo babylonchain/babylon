@@ -186,7 +186,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		err = actualDel.ValidateBasic()
 		require.NoError(t, err)
 		// delegation is not activated by jury yet
-		require.False(t, actualDel.IsActivated())
+		require.False(t, actualDel.HasJurySig())
 
 		/*
 			generate and insert new jury signature
@@ -213,6 +213,6 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		actualDelWithJurySig, err := bsKeeper.GetBTCDelegation(ctx, *bbn.NewBIP340PubKeyFromBTCPK(validatorPK), *bbn.NewBIP340PubKeyFromBTCPK(delPK))
 		require.NoError(t, err)
 		require.Equal(t, actualDelWithJurySig.JurySig.MustMarshal(), jurySig.MustMarshal())
-		require.True(t, actualDelWithJurySig.IsActivated())
+		require.True(t, actualDelWithJurySig.HasJurySig())
 	})
 }

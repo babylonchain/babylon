@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/rand"
 	"testing"
 
@@ -89,38 +88,41 @@ func FuzzListBlocks(f *testing.F) {
 		// perform a query to fetch finalized blocks and assert consistency
 		// NOTE: pagination is already tested in Cosmos SDK so we don't test it here again,
 		// instead only ensure it takes effect
-		limit := datagen.RandomInt(r, len(finalizedIndexedBlocks)) + 1
-		req := &types.QueryListBlocksRequest{
-			Finalized: true,
-			Pagination: &query.PageRequest{
-				CountTotal: true,
-				Limit:      limit,
-			},
-		}
-		resp1, err := keeper.ListBlocks(ctx, req)
-		require.NoError(t, err)
-		require.LessOrEqual(t, len(resp1.Blocks), int(limit)) // check if pagination takes effect
-		fmt.Println(resp1.Pagination.Total, len(nonFinalizedIndexedBlocks))
-		require.EqualValues(t, resp1.Pagination.Total, len(finalizedIndexedBlocks))
-		for _, actualIB := range resp1.Blocks {
-			require.Equal(t, finalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+		if len(finalizedIndexedBlocks) != 0 {
+			limit := datagen.RandomInt(r, len(finalizedIndexedBlocks)) + 1
+			req := &types.QueryListBlocksRequest{
+				Finalized: true,
+				Pagination: &query.PageRequest{
+					CountTotal: true,
+					Limit:      limit,
+				},
+			}
+			resp1, err := keeper.ListBlocks(ctx, req)
+			require.NoError(t, err)
+			require.LessOrEqual(t, len(resp1.Blocks), int(limit)) // check if pagination takes effect
+			require.EqualValues(t, resp1.Pagination.Total, len(finalizedIndexedBlocks))
+			for _, actualIB := range resp1.Blocks {
+				require.Equal(t, finalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+			}
 		}
 
-		// perform a query to fetch non-finalized blocks and assert consistency
-		limit = datagen.RandomInt(r, len(nonFinalizedIndexedBlocks)) + 1
-		req = &types.QueryListBlocksRequest{
-			Finalized: false,
-			Pagination: &query.PageRequest{
-				CountTotal: true,
-				Limit:      limit,
-			},
-		}
-		resp2, err := keeper.ListBlocks(ctx, req)
-		require.NoError(t, err)
-		require.LessOrEqual(t, len(resp2.Blocks), int(limit)) // check if pagination takes effect
-		require.EqualValues(t, resp2.Pagination.Total, len(nonFinalizedIndexedBlocks))
-		for _, actualIB := range resp2.Blocks {
-			require.Equal(t, nonFinalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+		if len(nonFinalizedIndexedBlocks) != 0 {
+			// perform a query to fetch non-finalized blocks and assert consistency
+			limit := datagen.RandomInt(r, len(nonFinalizedIndexedBlocks)) + 1
+			req := &types.QueryListBlocksRequest{
+				Finalized: false,
+				Pagination: &query.PageRequest{
+					CountTotal: true,
+					Limit:      limit,
+				},
+			}
+			resp2, err := keeper.ListBlocks(ctx, req)
+			require.NoError(t, err)
+			require.LessOrEqual(t, len(resp2.Blocks), int(limit)) // check if pagination takes effect
+			require.EqualValues(t, resp2.Pagination.Total, len(nonFinalizedIndexedBlocks))
+			for _, actualIB := range resp2.Blocks {
+				require.Equal(t, nonFinalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+			}
 		}
 	})
 }

@@ -76,24 +76,38 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-// IsActivated returns whether a BTC delegation is activated or not
-// a BTC delegation is activated when it receives a signature from jury
-func (d *BTCDelegation) IsActivated() bool {
+// HasJurySig returns whether a BTC delegation has a jury signature
+func (d *BTCDelegation) HasJurySig() bool {
 	return d.JurySig != nil
 }
 
+// GetStatus returns the status of the BTC Delegation based on a BTC height and a w value
+// TODO: Given that we only accept delegations that can be activated immediately,
+// we can only have expired delegations. If we accept optimistic submissions,
+// we could also have delegations that are in the waiting, so we need an extra status.
+// This is covered by expired for now as it is the default value.
+// Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has a jury sig
+// Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a jury sig
+// Expired: Delegation timelock
+func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatus {
+	if d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
+		if d.HasJurySig() {
+			return BTCDelegationStatus_ACTIVE
+		} else {
+			return BTCDelegationStatus_PENDING
+		}
+	}
+	return BTCDelegationStatus_EXPIRED
+}
+
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
-// and a given w value
-// The BTC delegation d has voting power iff the following holds
-// - d has a jury signature
-// - d's timelock start height <= the given BTC height
-// - the given BTC height <= d's timelock end height - w
+// and a given w value.
+// The BTC delegation d has voting power iff it is active.
 func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64) uint64 {
-	if d.IsActivated() && d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
-		return d.TotalSat
-	} else {
+	if d.GetStatus(btcHeight, w) != BTCDelegationStatus_ACTIVE {
 		return 0
 	}
+	return d.GetTotalSat()
 }
 
 func (p *ProofOfPossession) ValidateBasic() error {

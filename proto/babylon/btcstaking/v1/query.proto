@@ -21,12 +21,12 @@ service Query {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators";
   }
 
-  // BTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
-  rpc BTCValidatorsAtHeight(QueryBTCValidatorsAtHeightRequest) returns (QueryBTCValidatorsAtHeightResponse) {
+  // ActiveBTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
+  rpc ActiveBTCValidatorsAtHeight(QueryActiveBTCValidatorsAtHeightRequest) returns (QueryActiveBTCValidatorsAtHeightResponse) {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{height}";
   }
 
-  // BTCValidatorPowerAtHeight queries a btc validator at a given height
+  // BTCValidatorPowerAtHeight queries the voting power of a btc validator at a given height
   rpc BTCValidatorPowerAtHeight(QueryBTCValidatorPowerAtHeightRequest) returns (QueryBTCValidatorPowerAtHeightResponse) {
     option (google.api.http).get = "/babylonchain/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power/{height}";
   }
@@ -88,9 +88,9 @@ message QueryBTCValidatorPowerAtHeightResponse {
   uint64 voting_power = 1;
 }
 
-// QueryBTCValidatorsAtHeightRequest is the request type for the
-// Query/BTCValidatorsAtHeight RPC method.
-message QueryBTCValidatorsAtHeightRequest {
+// QueryActiveBTCValidatorsAtHeightRequest is the request type for the
+// Query/ActiveBTCValidatorsAtHeight RPC method.
+message QueryActiveBTCValidatorsAtHeightRequest {
   // height defines at which Babylon height to query the btc validators info.
   uint64 height = 1;
 
@@ -98,9 +98,9 @@ message QueryBTCValidatorsAtHeightRequest {
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryBTCValidatorsAtHeightResponse is the response type for the
-// Query/BTCValidatorsAtHeight RPC method.
-message QueryBTCValidatorsAtHeightResponse {
+// QueryActiveBTCValidatorsAtHeightResponse is the response type for the
+// Query/ActiveBTCValidatorsAtHeight RPC method.
+message QueryActiveBTCValidatorsAtHeightResponse {
   // btc_validators contains all the queried btc validators.
   repeated BTCValidatorWithMeta btc_validators = 1;
 
@@ -125,9 +125,8 @@ message QueryBTCValidatorDelegationsRequest {
   // the PK follows encoding in BIP-340 spec
   string val_btc_pk_hex = 1;
 
-  // no_jury_sig_only indicates this query will only return BTC delegations that haven't
-  // received a jury signature yet
-  bool no_jury_sig_only = 2;
+  // delegation_status is the status of the delegations we are filtering for
+  BTCDelegationStatus del_status = 2;
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 3;
