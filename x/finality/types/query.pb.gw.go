@@ -436,13 +436,13 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 }
 
 var (
-	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"babylonchain", "babylon", "finality", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "finality", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ListPublicRandomness_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5, 2, 6}, []string{"babylonchain", "babylon", "finality", "v1", "btc_validators", "val_btc_pk_hex", "public_randomness_list"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ListPublicRandomness_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "finality", "v1", "btc_validators", "val_btc_pk_hex", "public_randomness_list"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ListBlocks_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"babylonchain", "babylon", "finality", "v1", "blocks"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ListBlocks_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "finality", "v1", "blocks"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_VotesAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 1, 0, 4, 1, 5, 5}, []string{"babylonchain", "babylon", "finality", "v1", "votes", "height"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_VotesAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "finality", "v1", "votes", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
