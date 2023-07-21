@@ -3,6 +3,8 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
+	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
 	"time"
 
 	appparams "github.com/babylonchain/babylon/app/params"
@@ -65,7 +67,9 @@ Example:
 				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
+					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.JuryPK,
+					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
+					genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
 					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 			} else if network == "mainnet" {
@@ -139,6 +143,16 @@ func PrepareGenesis(
 	checkpointingGenState.GenesisKeys = genesisParams.CheckpointingGenKeys
 	appState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(checkpointingGenState)
 
+	// btcstaking module genesis
+	btcstakingGenState := btcstakingtypes.DefaultGenesis()
+	btcstakingGenState.Params = genesisParams.BtcstakingParams
+	appState[btcstakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btcstakingGenState)
+
+	// finality module genesis
+	finalityGenState := finalitytypes.DefaultGenesis()
+	finalityGenState.Params = genesisParams.FinalityParams
+	appState[finalitytypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(finalityGenState)
+
 	// staking module genesis
 	stakingGenState := stakingtypes.GetGenesisStateFromAppState(depCdc, appState)
 	clientCtx.Codec.MustUnmarshalJSON(appState[stakingtypes.ModuleName], stakingGenState)
@@ -206,13 +220,16 @@ type GenesisParams struct {
 
 	BtccheckpointParams         btccheckpointtypes.Params
 	EpochingParams              epochingtypes.Params
+	BtcstakingParams            btcstakingtypes.Params
+	FinalityParams              finalitytypes.Params
 	BtclightclientBaseBtcHeader btclightclienttypes.BTCHeaderInfo
 	BlockGasLimit               int64
 }
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64, inflationRateChange float64,
+	baseBtcHeaderHeight uint64, juryPk string, slashingAddress string, minSlashingFee int64,
+	minPubRand uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
 
@@ -285,11 +302,26 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	baseBtcHeaderInfo := btclightclienttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), baseBtcHeaderHeight, &work)
 	genParams.BtclightclientBaseBtcHeader = *baseBtcHeaderInfo
 
+	genParams.BtcstakingParams = btcstakingtypes.DefaultParams()
+	genParams.BtcstakingParams.JuryPk, err = bbn.NewBIP340PubKeyFromHex(juryPk)
+	if err != nil {
+		panic(err)
+	}
+	genParams.BtcstakingParams.SlashingAddress = slashingAddress
+	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
+	if err := genParams.BtcstakingParams.Validate(); err != nil {
+		panic(err)
+	}
+
 	if epochInterval == 0 {
 		panic(fmt.Sprintf("Invalid epoch interval %d", epochInterval))
 	}
 	genParams.EpochingParams = epochingtypes.DefaultParams()
 	genParams.EpochingParams.EpochInterval = epochInterval
+	if err := genParams.EpochingParams.Validate(); err != nil {
+		panic(err)
+	}
+
 	genParams.BlockGasLimit = blockGasLimit
 	return genParams
 }

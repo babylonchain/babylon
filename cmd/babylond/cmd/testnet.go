@@ -97,10 +97,11 @@ Example:
 
 			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
-				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
-				genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
-				genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
+				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex, genesisCliArgs.BaseBtcHeaderHeight,
+				genesisCliArgs.JuryPK, genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
+				genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
+				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
+				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
