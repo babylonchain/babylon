@@ -39,7 +39,7 @@ func FuzzListPublicRandomness(f *testing.F) {
 		// instead only ensure it takes effect
 		limit := datagen.RandomInt(r, int(numPubRand)-1) + 1
 		req := &types.QueryListPublicRandomnessRequest{
-			ValBtcPkHex: valBTCPK.ToHexStr(),
+			ValBtcPkHex: valBTCPK.MarshalHex(),
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
@@ -147,7 +147,7 @@ func FuzzVotesAtHeight(f *testing.F) {
 			require.NoError(t, err)
 			keeper.SetSig(ctx, babylonHeight, votedValPK, votedSig)
 
-			votedValMap[votedValPK.ToHexStr()] = true
+			votedValMap[votedValPK.MarshalHex()] = true
 		}
 
 		resp, err := keeper.VotesAtHeight(ctx, &types.QueryVotesAtHeightRequest{
@@ -158,10 +158,10 @@ func FuzzVotesAtHeight(f *testing.F) {
 		// Check if all voted validators are returned
 		valFoundMap := make(map[string]bool)
 		for _, pk := range resp.BtcPks {
-			if _, ok := votedValMap[pk.ToHexStr()]; !ok {
+			if _, ok := votedValMap[pk.MarshalHex()]; !ok {
 				t.Fatalf("rpc returned a val that was not created")
 			}
-			valFoundMap[pk.ToHexStr()] = true
+			valFoundMap[pk.MarshalHex()] = true
 		}
 		if len(valFoundMap) != len(votedValMap) {
 			t.Errorf("Some vals were missed. Got %d while %d were expected", len(valFoundMap), len(votedValMap))

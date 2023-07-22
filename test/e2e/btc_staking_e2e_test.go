@@ -124,7 +124,7 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	pendingDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.ToHexStr(), bstypes.BTCDelegationStatus_PENDING)
+	pendingDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_PENDING)
 	s.Len(pendingDels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
 
@@ -146,7 +146,7 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// query the existence of BTC delegation and assert equivalence
-	actualDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.ToHexStr(), bstypes.BTCDelegationStatus_ACTIVE)
+	actualDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_ACTIVE)
 	s.Len(actualDels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], actualDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
 }

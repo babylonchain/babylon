@@ -19,7 +19,7 @@ func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.
 	require.NoError(n.t, err)
 	babylonPKHex := hex.EncodeToString(babylonPKBytes)
 	// get BTC PK hex
-	btcPKHex := btcPK.ToHexStr()
+	btcPKHex := btcPK.MarshalHex()
 	// get pop hex
 	popHex, err := pop.ToHexStr()
 	require.NoError(n.t, err)
@@ -60,8 +60,8 @@ func (n *NodeConfig) CreateBTCDelegation(babylonPK *secp256k1.PubKey, pop *bstyp
 func (n *NodeConfig) AddJurySig(valPK *bbn.BIP340PubKey, delPK *bbn.BIP340PubKey, sig *bbn.BIP340Signature) {
 	n.LogActionF("adding jury signature")
 
-	valPKHex := valPK.ToHexStr()
-	delPKHex := delPK.ToHexStr()
+	valPKHex := valPK.MarshalHex()
+	delPKHex := delPK.MarshalHex()
 	sigHex := sig.ToHexStr()
 
 	cmd := []string{"babylond", "tx", "btcstaking", "add-jury-sig", valPKHex, delPKHex, sigHex, "--from=val"}
@@ -76,7 +76,7 @@ func (n *NodeConfig) CommitPubRandList(valBTCPK *bbn.BIP340PubKey, startHeight u
 	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
 
 	// add val BTC PK to cmd
-	valBTCPKHex := valBTCPK.ToHexStr()
+	valBTCPKHex := valBTCPK.MarshalHex()
 	cmd = append(cmd, valBTCPKHex)
 
 	// add start height to cmd
@@ -104,7 +104,7 @@ func (n *NodeConfig) CommitPubRandList(valBTCPK *bbn.BIP340PubKey, startHeight u
 func (n *NodeConfig) AddFinalitySig(valBTCPK *bbn.BIP340PubKey, blockHeight uint64, blockLch []byte, finalitySig *bbn.SchnorrEOTSSig) {
 	n.LogActionF("add finality signature")
 
-	valBTCPKHex := valBTCPK.ToHexStr()
+	valBTCPKHex := valBTCPK.MarshalHex()
 	blockHeightStr := strconv.FormatUint(blockHeight, 10)
 	blockLchHex := hex.EncodeToString(blockLch)
 	finalitySigHex := finalitySig.ToHexStr()

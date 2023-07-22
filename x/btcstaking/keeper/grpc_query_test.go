@@ -56,7 +56,7 @@ func FuzzBTCValidators(f *testing.F) {
 			require.NoError(t, err)
 
 			keeper.SetBTCValidator(ctx, btcVal)
-			btcValsMap[btcVal.BtcPk.ToHexStr()] = btcVal
+			btcValsMap[btcVal.BtcPk.MarshalHex()] = btcVal
 		}
 		numOfBTCValsInStore := len(btcValsMap)
 
@@ -89,10 +89,10 @@ func FuzzBTCValidators(f *testing.F) {
 
 			for _, val := range resp.BtcValidators {
 				// Check if the pk exists in the map
-				if _, ok := btcValsMap[val.BtcPk.ToHexStr()]; !ok {
+				if _, ok := btcValsMap[val.BtcPk.MarshalHex()]; !ok {
 					t.Fatalf("rpc returned a val that was not created")
 				}
-				btcValsFound[val.BtcPk.ToHexStr()] = true
+				btcValsFound[val.BtcPk.MarshalHex()] = true
 			}
 
 			// Construct the next page request
@@ -125,7 +125,7 @@ func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
 		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomHeight, randomPower)
 
 		req := &types.QueryBTCValidatorPowerAtHeightRequest{
-			ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+			ValBtcPkHex: btcVal.BtcPk.MarshalHex(),
 			Height:      randomHeight,
 		}
 		resp, err := keeper.BTCValidatorPowerAtHeight(ctx, req)
@@ -159,7 +159,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 		btcValsWithVotingPowerMap := make(map[string]*types.BTCValidator)
 		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
 			valBTCPK := btcVals[i].BtcPk
-			btcValsWithVotingPowerMap[valBTCPK.ToHexStr()] = btcVals[i]
+			btcValsWithVotingPowerMap[valBTCPK.MarshalHex()] = btcVals[i]
 
 			var totalVotingPower uint64
 			for j := uint64(0); j < numBTCDels; j++ {
@@ -201,10 +201,10 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 
 			for _, val := range resp.BtcValidators {
 				// Check if the pk exists in the map
-				if _, ok := btcValsWithVotingPowerMap[val.BtcPk.ToHexStr()]; !ok {
+				if _, ok := btcValsWithVotingPowerMap[val.BtcPk.MarshalHex()]; !ok {
 					t.Fatalf("rpc returned a val that was not created")
 				}
-				btcValsFound[val.BtcPk.ToHexStr()] = true
+				btcValsFound[val.BtcPk.MarshalHex()] = true
 			}
 
 			// Construct the next page request
@@ -248,9 +248,9 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			if datagen.RandomInt(r, 2) == 1 {
 				// remove jury sig in random BTC delegations to make them inactive
 				btcDel.JurySig = nil
-				pendingBtcDelsMap[btcDel.BtcPk.ToHexStr()] = btcDel
+				pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 			} else {
-				activeBtcDelsMap[btcDel.BtcPk.ToHexStr()] = btcDel
+				activeBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 			}
 			keeper.SetBTCDelegation(ctx, btcDel)
 		}
@@ -272,7 +272,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			pagination := constructRequestWithLimit(r, limit)
 			// Generate the initial query
 			req := types.QueryBTCValidatorDelegationsRequest{
-				ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+				ValBtcPkHex: btcVal.BtcPk.MarshalHex(),
 				DelStatus:   types.BTCDelegationStatus_ACTIVE,
 				Pagination:  pagination,
 			}
@@ -287,14 +287,14 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 				for _, btcDel := range resp.BtcDelegations {
 					require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)
 					// Check if the pk exists in the map
-					_, ok := activeBtcDelsMap[btcDel.BtcPk.ToHexStr()]
+					_, ok := activeBtcDelsMap[btcDel.BtcPk.MarshalHex()]
 					require.True(t, ok)
-					btcDelsFound[btcDel.BtcPk.ToHexStr()] = true
+					btcDelsFound[btcDel.BtcPk.MarshalHex()] = true
 				}
 				// Construct the next page request
 				pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
 				req = types.QueryBTCValidatorDelegationsRequest{
-					ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+					ValBtcPkHex: btcVal.BtcPk.MarshalHex(),
 					DelStatus:   types.BTCDelegationStatus_ACTIVE,
 					Pagination:  pagination,
 				}
@@ -307,7 +307,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			limit := datagen.RandomInt(r, len(pendingBtcDelsMap)) + 1
 			pagination := constructRequestWithLimit(r, limit)
 			req := types.QueryBTCValidatorDelegationsRequest{
-				ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+				ValBtcPkHex: btcVal.BtcPk.MarshalHex(),
 				DelStatus:   types.BTCDelegationStatus_PENDING, // only request BTC delegations without jury sig
 				Pagination:  pagination,
 			}
@@ -320,14 +320,14 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 				for _, btcDel := range resp.BtcDelegations {
 					require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)
 					// Check if the pk exists in the map
-					_, ok := pendingBtcDelsMap[btcDel.BtcPk.ToHexStr()]
+					_, ok := pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
 					require.True(t, ok)
-					pendingBtcDelsFound[btcDel.BtcPk.ToHexStr()] = true
+					pendingBtcDelsFound[btcDel.BtcPk.MarshalHex()] = true
 				}
 				// Construct the next page request
 				pagination = constructRequestWithKeyAndLimit(r, resp.Pagination.NextKey, limit)
 				req = types.QueryBTCValidatorDelegationsRequest{
-					ValBtcPkHex: btcVal.BtcPk.ToHexStr(),
+					ValBtcPkHex: btcVal.BtcPk.MarshalHex(),
 					DelStatus:   types.BTCDelegationStatus_PENDING, // only request BTC delegations without jury sig
 					Pagination:  pagination,
 				}

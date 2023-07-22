@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -20,12 +21,8 @@ func NewBIP340PubKey(data []byte) (*BIP340PubKey, error) {
 }
 
 func NewBIP340PubKeyFromHex(hexStr string) (*BIP340PubKey, error) {
-	pkBytes, err := hex.DecodeString(hexStr)
-	if err != nil {
-		return nil, err
-	}
 	var pk BIP340PubKey
-	err = pk.Unmarshal(pkBytes)
+	err := pk.UnmarshalHex(hexStr)
 	return &pk, err
 }
 
@@ -47,8 +44,18 @@ func (pk BIP340PubKey) MustToBTCPK() *btcec.PublicKey {
 	return btcPK
 }
 
-func (pk *BIP340PubKey) ToHexStr() string {
+func (pk *BIP340PubKey) MarshalHex() string {
 	return hex.EncodeToString(pk.MustMarshal())
+}
+
+func (pk *BIP340PubKey) UnmarshalHex(header string) error {
+	// Decode the hash string from hex
+	decoded, err := hex.DecodeString(header)
+	if err != nil {
+		return err
+	}
+
+	return pk.Unmarshal(decoded)
 }
 
 func (pk BIP340PubKey) Size() int {
@@ -88,6 +95,21 @@ func (pk *BIP340PubKey) Unmarshal(data []byte) error {
 
 	*pk = data
 	return nil
+}
+
+func (pk BIP340PubKey) MarshalJSON() ([]byte, error) {
+	return json.Marshal(pk.MarshalHex())
+}
+
+func (pk *BIP340PubKey) UnmarshalJSON(bz []byte) error {
+	var pkHexString string
+	err := json.Unmarshal(bz, &pkHexString)
+
+	if err != nil {
+		return err
+	}
+
+	return pk.UnmarshalHex(pkHexString)
 }
 
 func (pk *BIP340PubKey) Equals(pk2 *BIP340PubKey) bool {
