@@ -91,6 +91,16 @@ func (s *BTCTimestampingTestSuite) TestSendTx() {
 	s.NoError(err)
 
 	s.Equal(tip1.Height+1, tip2.Height)
+
+	// check that light client properly updates its state
+	tip1Depth, err := nonValidatorNode.QueryHeaderDepth(tip1.Hash.MarshalHex())
+	s.NoError(err)
+	s.Equal(tip1Depth, uint64(1))
+
+	tip2Depth, err := nonValidatorNode.QueryHeaderDepth(tip2.Hash.MarshalHex())
+	s.NoError(err)
+	// tip should have 0 depth
+	s.Equal(tip2Depth, uint64(0))
 }
 
 func (s *BTCTimestampingTestSuite) TestIbcCheckpointing() {

@@ -201,6 +201,19 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
 	return blcResponse.Header, nil
 }
 
+func (n *NodeConfig) QueryHeaderDepth(hash string) (uint64, error) {
+	path := fmt.Sprintf("babylon/btclightclient/v1/depth/%s", hash)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var blcResponse blc.QueryHeaderDepthResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &blcResponse); err != nil {
+		return 0, err
+	}
+
+	return blcResponse.Depth, nil
+}
+
 func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
 	queryParams := url.Values{}
 	for _, chainId := range chainIDs {

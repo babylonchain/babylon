@@ -179,3 +179,30 @@ func (k Keeper) BaseHeader(ctx context.Context, req *types.QueryBaseHeaderReques
 
 	return &types.QueryBaseHeaderResponse{Header: baseHeader}, nil
 }
+
+func (k Keeper) HeaderDepth(ctx context.Context, req *types.QueryHeaderDepthRequest) (*types.QueryHeaderDepthResponse, error) {
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	haderHash, err := bbn.NewBTCHeaderHashBytesFromHex(req.Hash)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "provided hash is not a valid hex string")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	depth, err := k.MainChainDepth(sdkCtx, &haderHash)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if depth < 0 {
+		return nil, types.ErrHeaderOnFork
+	}
+
+	return &types.QueryHeaderDepthResponse{Depth: uint64(depth)}, nil
+}

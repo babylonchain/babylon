@@ -44,6 +44,12 @@ service Query {
   rpc BaseHeader(QueryBaseHeaderRequest) returns (QueryBaseHeaderResponse) {
     option (google.api.http).get = "/babylon/btclightclient/v1/baseheader";
   }
+
+  // HeaderDepth returns the depth of the header in main chain or error if the
+  // block is not found or it exists on fork
+  rpc HeaderDepth(QueryHeaderDepthRequest) returns(QueryHeaderDepthResponse) {
+    option (google.api.http).get = "/babylon/btclightclient/v1/depth/{hash}";
+  }
 }
 
 // QueryHashesRequest is request type for the Query/Hashes RPC method.
@@ -105,3 +111,11 @@ message QueryBaseHeaderRequest {}
 // QueryBaseHeaderResponse is the response type for the Query/BaseHeader RPC
 // method.
 message QueryBaseHeaderResponse { BTCHeaderInfo header = 1; }
+
+// QueryMainChainDepthRequest is the request type for the Query/MainChainDepth RPC
+// it contains hex encoded hash of btc block header as parameter
+message QueryHeaderDepthRequest { string hash = 1; }
+
+// QueryMainChainDepthResponse is the response type for the Query/MainChainDepth RPC
+// it contains depth of the block in main chain
+message QueryHeaderDepthResponse { uint64 depth = 1; }

@@ -26,6 +26,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdMainChain())
 	cmd.AddCommand(CmdTip())
 	cmd.AddCommand(CmdBaseHeader())
+	cmd.AddCommand(CmdHeaderDepth())
 
 	return cmd
 }
@@ -155,6 +156,34 @@ func CmdBaseHeader() *cobra.Command {
 
 			params := types.NewQueryBaseHeaderRequest()
 			res, err := queryClient.BaseHeader(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdHeaderDepth() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "header-depth [hex-hash]",
+		Short: "check main chain depth of the header with the given hash",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			depthRequest, err := types.NewQueryHeaderDepthRequest(args[0])
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.HeaderDepth(context.Background(), depthRequest)
 			if err != nil {
 				return err
 			}
