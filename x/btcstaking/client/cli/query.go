@@ -26,6 +26,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdBTCValidators())
+	cmd.AddCommand(CmdPendingBTCDelegations())
 	cmd.AddCommand(CmdBTCValidatorsAtHeight())
 	cmd.AddCommand(CmdBTCValidatorPowerAtHeight())
 	cmd.AddCommand(CmdActivatedHeight())
@@ -37,7 +38,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdBTCValidators() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc-validators",
-		Short: "retrieve all btc validators",
+		Short: "retrieve all BTC validators",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -52,6 +53,28 @@ func CmdBTCValidators() *cobra.Command {
 			res, err := queryClient.BTCValidators(cmd.Context(), &types.QueryBTCValidatorsRequest{
 				Pagination: pageReq,
 			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdPendingBTCDelegations() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "pending-btc-delegations",
+		Short: "retrieve all pending BTC delegations",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.PendingBTCDelegations(cmd.Context(), &types.QueryPendingBTCDelegationsRequest{})
 			if err != nil {
 				return err
 			}

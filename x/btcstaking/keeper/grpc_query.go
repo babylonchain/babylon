@@ -38,6 +38,50 @@ func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidators
 	return &types.QueryBTCValidatorsResponse{BtcValidators: btcValidators, Pagination: pageRes}, nil
 }
 
+// PendingBTCDelegations returns all pending BTC delegations
+// TODO: find a good way to support pagination of this query
+func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendingBTCDelegationsRequest) (*types.QueryPendingBTCDelegationsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	btcDels := []*types.BTCDelegation{}
+
+	// get current BTC height
+	btcTipHeight, err := k.GetCurrentBTCHeight(sdkCtx)
+	if err != nil {
+		return nil, err
+	}
+	// get value of w
+	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
+
+	// iterate over each BTC validator
+	valStore := k.btcValidatorStore(sdkCtx)
+	valIter := valStore.Iterator(nil, nil)
+	defer valIter.Close()
+
+	for ; valIter.Valid(); valIter.Next() {
+		valBTCPKBytes := valIter.Key()
+		delStore := k.btcDelegationStore(sdkCtx, valBTCPKBytes)
+		delIter := delStore.Iterator(nil, nil)
+
+		// iterate over each BTC delegation under this BTC validator
+		for ; delIter.Valid(); delIter.Next() {
+			btcDelBytes := delIter.Value()
+			var btcDel types.BTCDelegation
+			k.cdc.MustUnmarshal(btcDelBytes, &btcDel)
+			if btcDel.GetStatus(btcTipHeight, wValue) == types.BTCDelegationStatus_PENDING {
+				btcDels = append(btcDels, &btcDel)
+			}
+		}
+
+		delIter.Close()
+	}
+
+	return &types.QueryPendingBTCDelegationsResponse{BtcDelegations: btcDels}, nil
+}
+
 // BTCValidatorPowerAtHeight returns the voting power of the specified validator
 // at the provided Babylon height
 func (k Keeper) BTCValidatorPowerAtHeight(ctx context.Context, req *types.QueryBTCValidatorPowerAtHeightRequest) (*types.QueryBTCValidatorPowerAtHeightResponse, error) {

@@ -16,17 +16,22 @@ service Query {
     option (google.api.http).get = "/babylon/btcstaking/v1/params";
   }
 
-  // BTCValidators queries all btc validators
+  // BTCValidators queries all BTC validators
   rpc BTCValidators(QueryBTCValidatorsRequest) returns (QueryBTCValidatorsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators";
   }
 
-  // ActiveBTCValidatorsAtHeight queries btc validators with non zero voting power at given height.
+  // PendingBTCDelegations queries all pending BTC delegations
+  rpc PendingBTCDelegations(QueryPendingBTCDelegationsRequest) returns (QueryPendingBTCDelegationsResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/pending_btc_delegations";
+  }
+
+  // ActiveBTCValidatorsAtHeight queries BTC validators with non zero voting power at given height.
   rpc ActiveBTCValidatorsAtHeight(QueryActiveBTCValidatorsAtHeightRequest) returns (QueryActiveBTCValidatorsAtHeightResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{height}";
   }
 
-  // BTCValidatorPowerAtHeight queries the voting power of a btc validator at a given height
+  // BTCValidatorPowerAtHeight queries the voting power of a BTC validator at a given height
   rpc BTCValidatorPowerAtHeight(QueryBTCValidatorPowerAtHeightRequest) returns (QueryBTCValidatorPowerAtHeightResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power/{height}";
   }
@@ -37,7 +42,7 @@ service Query {
     option (google.api.http).get = "/babylon/btcstaking/v1/activated_height";
   }
 
-  // BTCValidatorDelegations queries all btc delegations of the given btc validator
+  // BTCValidatorDelegations queries all BTC delegations of the given BTC validator
   rpc BTCValidatorDelegations(QueryBTCValidatorDelegationsRequest) returns (QueryBTCValidatorDelegationsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/delegations";
   }
@@ -67,6 +72,18 @@ message QueryBTCValidatorsResponse {
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+
+// QueryPendingBTCDelegationsRequest is the request type for the
+// Query/PendingBTCDelegations RPC method.
+message QueryPendingBTCDelegationsRequest {}
+
+// QueryPendingBTCDelegationsResponse is the response type for the
+// Query/PendingBTCDelegations RPC method.
+message QueryPendingBTCDelegationsResponse {
+  // btc_delegations contains all the queried btc delegations.
+  repeated BTCDelegation btc_delegations = 1;
 }
 
 // QueryBTCValidatorPowerAtHeightRequest is the request type for the
@@ -135,7 +152,7 @@ message QueryBTCValidatorDelegationsRequest {
 // QueryBTCValidatorDelegationsResponse is the response type for the
 // Query/BTCValidatorDelegations RPC method.
 message QueryBTCValidatorDelegationsResponse {
-  // btc_validators contains all the queried btc delegations.
+  // btc_delegations contains all the queried btc delegations.
   repeated BTCDelegation btc_delegations = 1;
 
   // pagination defines the pagination in the response.
