@@ -163,7 +163,7 @@ func (m *QueryBTCValidatorsRequest) GetPagination() *query.PageRequest {
 // QueryBTCValidatorsResponse is the response type for the
 // Query/BTCValidators RPC method.
 type QueryBTCValidatorsResponse struct {
-	// btc_validators contains all the btc validators
+	// btc_validators contains all the BTC validators
 	BtcValidators []*BTCValidator `protobuf:"bytes,1,rep,name=btc_validators,json=btcValidators,proto3" json:"btc_validators,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -257,7 +257,7 @@ var xxx_messageInfo_QueryPendingBTCDelegationsRequest proto.InternalMessageInfo
 // QueryPendingBTCDelegationsResponse is the response type for the
 // Query/PendingBTCDelegations RPC method.
 type QueryPendingBTCDelegationsResponse struct {
-	// btc_delegations contains all the queried btc delegations.
+	// btc_delegations contains all the queried BTC delegations.
 	BtcDelegations []*BTCDelegation `protobuf:"bytes,1,rep,name=btc_delegations,json=btcDelegations,proto3" json:"btc_delegations,omitempty"`
 }
 
@@ -411,7 +411,7 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) GetVotingPower() uint64 {
 // QueryActiveBTCValidatorsAtHeightRequest is the request type for the
 // Query/ActiveBTCValidatorsAtHeight RPC method.
 type QueryActiveBTCValidatorsAtHeightRequest struct {
-	// height defines at which Babylon height to query the btc validators info.
+	// height defines at which Babylon height to query the BTC validators info.
 	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -469,7 +469,7 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) GetPagination() *query.PageReq
 // QueryActiveBTCValidatorsAtHeightResponse is the response type for the
 // Query/ActiveBTCValidatorsAtHeight RPC method.
 type QueryActiveBTCValidatorsAtHeightResponse struct {
-	// btc_validators contains all the queried btc validators.
+	// btc_validators contains all the queried BTC validators.
 	BtcValidators []*BTCValidatorWithMeta `protobuf:"bytes,1,rep,name=btc_validators,json=btcValidators,proto3" json:"btc_validators,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
@@ -676,7 +676,7 @@ func (m *QueryBTCValidatorDelegationsRequest) GetPagination() *query.PageRequest
 // QueryBTCValidatorDelegationsResponse is the response type for the
 // Query/BTCValidatorDelegations RPC method.
 type QueryBTCValidatorDelegationsResponse struct {
-	// btc_delegations contains all the queried btc delegations.
+	// btc_delegations contains all the queried BTC delegations.
 	BtcDelegations []*BTCDelegation `protobuf:"bytes,1,rep,name=btc_delegations,json=btcDelegations,proto3" json:"btc_delegations,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`

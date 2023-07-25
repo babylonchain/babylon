@@ -48,6 +48,7 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	return resp, nil
 }
 
+// TODO: allow returning all blocks in this API
 func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksRequest) (*types.QueryListBlocksResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -59,14 +60,16 @@ func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksReques
 		var ib types.IndexedBlock
 		k.cdc.MustUnmarshal(value, &ib)
 
-		// return finalized blocks if the request is for finalized blocks
-		// otherwise only return non-finalized blocks
-		if (req.Finalized && ib.Finalized) || (!req.Finalized && !ib.Finalized) {
+		// hit if the queried status matches the block status, or the querier wants blocks in any state
+		if (req.Status == types.QueriedBlockStatus_FINALIZED && ib.Finalized) ||
+			(req.Status == types.QueriedBlockStatus_NON_FINALIZED && !ib.Finalized) ||
+			(req.Status == types.QueriedBlockStatus_ANY) {
 			if accumulate {
 				ibs = append(ibs, &ib)
 			}
 			return true, nil
 		}
+
 		return false, nil
 	})
 	if err != nil {

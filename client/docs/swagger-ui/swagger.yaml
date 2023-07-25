@@ -820,6 +820,57 @@ paths:
           format: byte
       tags:
         - Query
+  /babylon/btclightclient/v1/depth/{hash}:
+    get:
+      summary: >-
+        HeaderDepth returns the depth of the header in main chain or error if
+        the
+
+        block is not found or it exists on fork
+      operationId: HeaderDepth
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              depth:
+                type: string
+                format: uint64
+            title: >-
+              QueryMainChainDepthResponse is the response type for the
+              Query/MainChainDepth RPC
+
+              it contains depth of the block in main chain
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
   /babylon/btclightclient/v1/hashes:
     get:
       summary: Hashes retrieves the hashes maintained by the module.
@@ -11831,6 +11882,17 @@ definitions:
                    PageResponse page = 2;
            }
     description: QueryHashesResponse is response type for the Query/Hashes RPC method.
+  babylon.btclightclient.v1.QueryHeaderDepthResponse:
+    type: object
+    properties:
+      depth:
+        type: string
+        format: uint64
+    title: >-
+      QueryMainChainDepthResponse is the response type for the
+      Query/MainChainDepth RPC
+
+      it contains depth of the block in main chain
   babylon.btclightclient.v1.QueryMainChainResponse:
     type: object
     properties:

@@ -11,6 +11,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+const flagQueriedBlockStatus = "queried-block-status"
+
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string) *cobra.Command {
 	// Group finality queries under a subcommand
@@ -106,13 +108,17 @@ func CmdListBlocks() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			finalized, err := cmd.Flags().GetBool("finalized")
+			queriedBlockStatusString, err := cmd.Flags().GetString(flagQueriedBlockStatus)
+			if err != nil {
+				return err
+			}
+			queriedBlockStatus, err := types.NewQueriedBlockStatus(queriedBlockStatusString)
 			if err != nil {
 				return err
 			}
 
 			res, err := queryClient.ListBlocks(cmd.Context(), &types.QueryListBlocksRequest{
-				Finalized:  finalized,
+				Status:     queriedBlockStatus,
 				Pagination: pageReq,
 			})
 			if err != nil {
@@ -125,7 +131,7 @@ func CmdListBlocks() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "list-blocks")
-	cmd.Flags().Bool("finalized", false, "return finalized or non-finalized blocks")
+	cmd.Flags().String(flagQueriedBlockStatus, "Any", "Status of the queried blocks (NonFinalized|Finalized|Any)")
 
 	return cmd
 }

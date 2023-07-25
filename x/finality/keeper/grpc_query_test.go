@@ -69,6 +69,7 @@ func FuzzListBlocks(f *testing.F) {
 		numIndexedBlocks := datagen.RandomInt(r, 100) + 1
 		finalizedIndexedBlocks := make(map[uint64]*types.IndexedBlock)
 		nonFinalizedIndexedBlocks := make(map[uint64]*types.IndexedBlock)
+		indexedBlocks := make(map[uint64]*types.IndexedBlock)
 		for i := startHeight; i < startHeight+numIndexedBlocks; i++ {
 			ib := &types.IndexedBlock{
 				Height:         i,
@@ -81,6 +82,7 @@ func FuzzListBlocks(f *testing.F) {
 			} else {
 				nonFinalizedIndexedBlocks[ib.Height] = ib
 			}
+			indexedBlocks[ib.Height] = ib
 			// insert to KVStore
 			keeper.SetBlock(ctx, ib)
 		}
@@ -91,7 +93,7 @@ func FuzzListBlocks(f *testing.F) {
 		if len(finalizedIndexedBlocks) != 0 {
 			limit := datagen.RandomInt(r, len(finalizedIndexedBlocks)) + 1
 			req := &types.QueryListBlocksRequest{
-				Finalized: true,
+				Status: types.QueriedBlockStatus_FINALIZED,
 				Pagination: &query.PageRequest{
 					CountTotal: true,
 					Limit:      limit,
@@ -110,7 +112,7 @@ func FuzzListBlocks(f *testing.F) {
 			// perform a query to fetch non-finalized blocks and assert consistency
 			limit := datagen.RandomInt(r, len(nonFinalizedIndexedBlocks)) + 1
 			req := &types.QueryListBlocksRequest{
-				Finalized: false,
+				Status: types.QueriedBlockStatus_NON_FINALIZED,
 				Pagination: &query.PageRequest{
 					CountTotal: true,
 					Limit:      limit,
@@ -123,6 +125,23 @@ func FuzzListBlocks(f *testing.F) {
 			for _, actualIB := range resp2.Blocks {
 				require.Equal(t, nonFinalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
 			}
+		}
+
+		// perform a query to fetch all blocks and assert consistency
+		limit := datagen.RandomInt(r, len(indexedBlocks)) + 1
+		req := &types.QueryListBlocksRequest{
+			Status: types.QueriedBlockStatus_ANY,
+			Pagination: &query.PageRequest{
+				CountTotal: true,
+				Limit:      limit,
+			},
+		}
+		resp3, err := keeper.ListBlocks(ctx, req)
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(resp3.Blocks), int(limit)) // check if pagination takes effect
+		require.EqualValues(t, resp3.Pagination.Total, len(indexedBlocks))
+		for _, actualIB := range resp3.Blocks {
+			require.Equal(t, indexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
 		}
 	})
 }

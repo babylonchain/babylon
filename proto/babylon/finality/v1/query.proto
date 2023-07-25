@@ -62,12 +62,22 @@ message QueryListPublicRandomnessResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+
+// QueriedBlockStatus is the status of blocks that the querier wants to query.
+enum QueriedBlockStatus {
+  // NON_FINALIZED means the block is not finalised
+  NON_FINALIZED = 0;
+  // FINALIZED means the block is finalized
+  FINALIZED = 1;
+  // ANY means the block can be in any status
+  ANY = 2;
+}
+
 // QueryListBlocksRequest is the request type for the
 // Query/ListBlocks RPC method.
 message QueryListBlocksRequest {
-  // finalized indicates whether to only return finalized or non-finalized
-  // blocks
-  bool finalized = 1;
+  // status indicates the status of blocks that the querier wants to query
+  QueriedBlockStatus status = 1;
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
