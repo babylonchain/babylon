@@ -68,7 +68,7 @@ func (k Keeper) getHeaderAndDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHash
 	}
 	// get the tip
 	tip := k.btclcKeeper.GetTipInfo(ctx)
-	// If the height of the requested header is larger than the tip, return -1
+	// If the height of the requested header is larger than the tip, return error
 	if tip.Height < header.Height {
 		return nil, 0, fmt.Errorf("header is higher than the tip in BTC light client")
 	}

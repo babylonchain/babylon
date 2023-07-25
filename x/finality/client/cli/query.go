@@ -2,8 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"strconv"
+
+	"github.com/cosmos/cosmos-sdk/client/flags"
 
 	"github.com/babylonchain/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -32,7 +33,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdVotesAtHeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "votes-at-height [height]",
-		Short: "retrieve all btc val pks who voted at requested babylon height",
+		Short: "retrieve all BTC val pks who voted at requested babylon height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -86,6 +87,7 @@ func CmdListPublicRandomness() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list-public-randomness")
 
 	return cmd
 }
@@ -122,6 +124,7 @@ func CmdListBlocks() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list-blocks")
 	cmd.Flags().Bool("finalized", false, "return finalized or non-finalized blocks")
 
 	return cmd

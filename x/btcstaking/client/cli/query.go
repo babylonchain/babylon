@@ -62,6 +62,7 @@ func CmdBTCValidators() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "btc-validators")
 
 	return cmd
 }
@@ -146,7 +147,7 @@ func CmdActivatedHeight() *cobra.Command {
 func CmdBTCValidatorsAtHeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc-validators-at-height [height]",
-		Short: "retrieve all btc validators at a given babylon height",
+		Short: "retrieve all BTC validators at a given babylon height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -176,6 +177,7 @@ func CmdBTCValidatorsAtHeight() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "btc-validators-at-height")
 
 	return cmd
 }
@@ -183,7 +185,7 @@ func CmdBTCValidatorsAtHeight() *cobra.Command {
 func CmdBTCValidatorDelegations() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc-validator-delegations [btc_val_pk_hex]",
-		Short: "retrieve all delegations under a given btc validator",
+		Short: "retrieve all delegations under a given BTC validator",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -218,6 +220,7 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "btc-validator-delegations")
 	cmd.Flags().String(flagDelegationStatus, "Active", "Status of the queried delegations (Pending|Active|Expired)")
 
 	return cmd

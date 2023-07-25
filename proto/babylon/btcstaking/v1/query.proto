@@ -67,7 +67,7 @@ message QueryBTCValidatorsRequest {
 // QueryBTCValidatorsResponse is the response type for the
 // Query/BTCValidators RPC method.
 message QueryBTCValidatorsResponse {
-  // btc_validators contains all the btc validators
+  // btc_validators contains all the BTC validators
   repeated BTCValidator btc_validators = 1;
 
   // pagination defines the pagination in the response.
@@ -82,7 +82,7 @@ message QueryPendingBTCDelegationsRequest {}
 // QueryPendingBTCDelegationsResponse is the response type for the
 // Query/PendingBTCDelegations RPC method.
 message QueryPendingBTCDelegationsResponse {
-  // btc_delegations contains all the queried btc delegations.
+  // btc_delegations contains all the queried BTC delegations.
   repeated BTCDelegation btc_delegations = 1;
 }
 
@@ -108,7 +108,7 @@ message QueryBTCValidatorPowerAtHeightResponse {
 // QueryActiveBTCValidatorsAtHeightRequest is the request type for the
 // Query/ActiveBTCValidatorsAtHeight RPC method.
 message QueryActiveBTCValidatorsAtHeightRequest {
-  // height defines at which Babylon height to query the btc validators info.
+  // height defines at which Babylon height to query the BTC validators info.
   uint64 height = 1;
 
   // pagination defines an optional pagination for the request.
@@ -118,7 +118,7 @@ message QueryActiveBTCValidatorsAtHeightRequest {
 // QueryActiveBTCValidatorsAtHeightResponse is the response type for the
 // Query/ActiveBTCValidatorsAtHeight RPC method.
 message QueryActiveBTCValidatorsAtHeightResponse {
-  // btc_validators contains all the queried btc validators.
+  // btc_validators contains all the queried BTC validators.
   repeated BTCValidatorWithMeta btc_validators = 1;
 
   // pagination defines the pagination in the response.
@@ -152,7 +152,7 @@ message QueryBTCValidatorDelegationsRequest {
 // QueryBTCValidatorDelegationsResponse is the response type for the
 // Query/BTCValidatorDelegations RPC method.
 message QueryBTCValidatorDelegationsResponse {
-  // btc_delegations contains all the queried btc delegations.
+  // btc_delegations contains all the queried BTC delegations.
   repeated BTCDelegation btc_delegations = 1;
 
   // pagination defines the pagination in the response.

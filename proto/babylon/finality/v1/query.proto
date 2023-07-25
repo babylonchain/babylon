@@ -26,7 +26,7 @@ service Query {
     option (google.api.http).get = "/babylon/finality/v1/blocks";
   }
 
-  // VotesAtHeight queries btc validators who have signed the block at given height.
+  // VotesAtHeight queries BTC validators who have signed the block at given height.
   rpc VotesAtHeight(QueryVotesAtHeightRequest) returns (QueryVotesAtHeightResponse) {
     option (google.api.http).get = "/babylon/finality/v1/votes/{height}";
   }
@@ -86,7 +86,7 @@ message QueryListBlocksResponse {
 // QueryVotesAtHeightRequest is the request type for the
 // Query/VotesAtHeight RPC method.
 message QueryVotesAtHeightRequest {
-  // height defines at which height to query the btc validators.
+  // height defines at which height to query the BTC validators.
   uint64 height = 1;
 }
 

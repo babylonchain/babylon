@@ -17,8 +17,8 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	k.RecordVotingPowerTable(ctx)
 	k.IndexBTCHeight(ctx)
+	k.RecordVotingPowerTable(ctx)
 
 	return []abci.ValidatorUpdate{}
 }

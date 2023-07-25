@@ -62,8 +62,8 @@ func (k Keeper) updateBtcLightClientHeightForCheckpoint(ctx sdk.Context, ckpt *c
 		return err
 	}
 
-	// if the checkpoint exists, meaning an earlier checkpoint with a lower btc height is already recorded
-	// we should keep the lower btc height in the store
+	// if the checkpoint exists, meaning an earlier checkpoint with a lower BTC height is already recorded
+	// we should keep the lower BTC height in the store
 	if store.Has(storeKey) {
 		k.Logger(ctx).With("module", fmt.Sprintf("checkpoint %s is already recorded", ckptHashStr))
 		return nil

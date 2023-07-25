@@ -57,6 +57,7 @@ func CmdHashes() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "hashes")
 
 	return cmd
 }
@@ -115,6 +116,7 @@ func CmdMainChain() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "main-chain")
 
 	return cmd
 }

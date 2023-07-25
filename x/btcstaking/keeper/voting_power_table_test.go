@@ -102,5 +102,9 @@ func FuzzVotingPowerTable(f *testing.F) {
 			require.Zero(t, power)
 		}
 
+		// the activation height should be same as befofre
+		activatedHeight2, err := keeper.GetBTCStakingActivatedHeight(ctx)
+		require.NoError(t, err)
+		require.Equal(t, activatedHeight, activatedHeight2)
 	})
 }
