@@ -89,9 +89,9 @@ func (k Keeper) VotesAtHeight(ctx context.Context, req *types.QueryVotesAtHeight
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	var btcPks []bbn.BIP340PubKey
 
 	// get the sig set of babylon block at given height
+	btcPks := []bbn.BIP340PubKey{}
 	sigSet := k.GetSigSet(sdkCtx, req.Height)
 	for pkHex := range sigSet {
 		pk, err := bbn.NewBIP340PubKeyFromHex(pkHex)

@@ -96,6 +96,9 @@ func (n *NodeConfig) CommitPubRandList(valBTCPK *bbn.BIP340PubKey, startHeight u
 	// specify used key
 	cmd = append(cmd, "--from=val")
 
+	// gas
+	cmd = append(cmd, "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3")
+
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully committed public randomness list")
@@ -109,7 +112,7 @@ func (n *NodeConfig) AddFinalitySig(valBTCPK *bbn.BIP340PubKey, blockHeight uint
 	blockLchHex := hex.EncodeToString(blockLch)
 	finalitySigHex := finalitySig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", valBTCPKHex, blockHeightStr, blockLchHex, finalitySigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "finality", "add-finality-sig", valBTCPKHex, blockHeightStr, blockLchHex, finalitySigHex, "--from=val", "--gas=500000"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added finality signature")

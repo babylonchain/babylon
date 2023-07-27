@@ -14,11 +14,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	tmabcitypes "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
@@ -26,6 +21,11 @@ import (
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	mtypes "github.com/babylonchain/babylon/x/monitor/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmabcitypes "github.com/cometbft/cometbft/abci/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -90,6 +90,15 @@ func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
 		return sdk.NewInt(0), err
 	}
 	return supplyResp.Amount.Amount, nil
+}
+
+// QueryBlock gets block at a specific height
+func (n *NodeConfig) QueryBlock(height int64) (*tmtypes.Block, error) {
+	block, err := n.rpcClient.Block(context.Background(), &height)
+	if err != nil {
+		return nil, err
+	}
+	return block.Block, nil
 }
 
 // QueryHashFromBlock gets block hash at a specific height. Otherwise, error.

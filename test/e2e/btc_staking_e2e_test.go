@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
@@ -12,10 +13,26 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	ftypes "github.com/babylonchain/babylon/x/finality/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
+)
+
+var (
+	r = rand.New(rand.NewSource(time.Now().Unix()))
+	// BTC validator
+	valSK, _, _ = datagen.GenRandomBTCKeyPair(r)
+	btcVal, _   = datagen.GenRandomBTCValidatorWithBTCSK(r, valSK)
+	// BTC delegation
+	delBabylonSK, delBabylonPK, _ = datagen.GenRandomSecp256k1KeyPair(r)
+	delBTCSK, delBTCPK, _         = datagen.GenRandomBTCKeyPair(r)
+	// jury
+	jurySK, _ = btcec.PrivKeyFromBytes(
+		[]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+	)
 )
 
 type BTCStakingTestSuite struct {
@@ -46,9 +63,8 @@ func (s *BTCStakingTestSuite) TearDownSuite() {
 }
 
 // TestCreateBTCValidatorAndDelegation is an end-to-end test for
-// user story 1/2: user creates BTC validator and BTC delegation, then
-// jury approves the BTC delegation
-func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
+// user story 1: user creates BTC validator and BTC delegation
+func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -57,11 +73,6 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	/*
 		create a random BTC validator on Babylon
 	*/
-	// generate a random BTC validator
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	btcVal, err := datagen.GenRandomBTCValidator(r)
-	s.NoError(err)
-	// create this BTC validator
 	nonValidatorNode.CreateBTCValidator(btcVal.BabylonPk, btcVal.BtcPk, btcVal.Pop)
 
 	// wait for a block so that above txs take effect
@@ -73,14 +84,10 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	s.Equal(util.Cdc.MustMarshal(btcVal), util.Cdc.MustMarshal(actualBtcVals[0]))
 
 	/*
-		create a random BTC delegation under this bTC validator
+		create a random BTC delegation under this BTC validator
 	*/
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
-	delBabylonSK, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-	s.NoError(err)
-	delBTCSK, delBTCPK, err := datagen.GenRandomBTCKeyPair(r)
-	s.NoError(err)
 	pop, err := bstypes.NewPoP(delBabylonSK, delBTCSK)
 	s.NoError(err)
 	// generate staking tx and slashing tx
@@ -127,12 +134,28 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	pendingDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_PENDING)
 	s.Len(pendingDels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+}
+
+// Test2SubmitJurySignature is an end-to-end test for user
+// story 2: jury approves the BTC delegation
+func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// get last BTC delegation
+	pendingDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_PENDING)
+	s.Len(pendingDels, 1)
+	btcDel := pendingDels[0]
+	slashingTx := btcDel.SlashingTx
+	stakingTx := btcDel.StakingTx
+	stakingMsgTx, err := stakingTx.ToMsgTx()
+	s.NoError(err)
 
 	/*
 		generate and insert new jury signature, in order to activate the BTC delegation
 	*/
-	jurySKBytes := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-	jurySK, _ := btcec.PrivKeyFromBytes(jurySKBytes)
 	jurySig, err := slashingTx.Sign(
 		stakingMsgTx,
 		stakingTx.StakingScript,
@@ -146,7 +169,80 @@ func (s *BTCStakingTestSuite) TestCreateBTCValidatorAndDelegation() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// query the existence of BTC delegation and assert equivalence
-	actualDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_ACTIVE)
-	s.Len(actualDels, 1)
-	s.Equal(delBTCPK.SerializeCompressed()[1:], actualDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	activeDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_ACTIVE)
+	s.Len(activeDels, 1)
+	s.Equal(delBTCPK.SerializeCompressed()[1:], activeDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+
+	// ensure BTC staking is activated
+	activatedHeight := nonValidatorNode.QueryActivatedHeight()
+	s.Positive(activatedHeight)
+	// ensure BTC validator has voting power at activated height
+	currentBtcTip, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+	activeBTCVals := nonValidatorNode.QueryActiveBTCValidatorsAtHeight(activatedHeight)
+	s.Len(activeBTCVals, 1)
+	s.Equal(activeBTCVals[0].VotingPower, activeDels[0].VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod))
+}
+
+// Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
+// test for user story 3: BTC validator commits public randomness and submits
+// finality signature, such that blocks can be finalised.
+func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignature() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// get activated height
+	activatedHeight := nonValidatorNode.QueryActivatedHeight()
+	s.Positive(activatedHeight)
+
+	/*
+		commit a number of public randomness since activatedHeight
+	*/
+	// commit public randomness list
+	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, valSK, activatedHeight, 100)
+	s.NoError(err)
+	nonValidatorNode.CommitPubRandList(
+		msgCommitPubRandList.ValBtcPk,
+		msgCommitPubRandList.StartHeight,
+		msgCommitPubRandList.PubRandList,
+		msgCommitPubRandList.Sig,
+	)
+
+	// ensure public randomness list is eventually committed
+	nonValidatorNode.WaitForNextBlock()
+	var pubRandMap map[uint64]*bbn.SchnorrPubRand
+	s.Eventually(func() bool {
+		pubRandMap = nonValidatorNode.QueryListPublicRandomness(btcVal.BtcPk)
+		return len(pubRandMap) > 0
+	}, time.Minute, time.Second*5)
+	s.Equal(pubRandMap[activatedHeight].MustMarshal(), msgCommitPubRandList.PubRandList[0].MustMarshal())
+
+	/*
+		submit finality signature
+	*/
+	// get block to vote
+	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
+	s.NoError(err)
+	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), blockToVote.LastCommitHash...)
+	// generate EOTS signature
+	sig, err := eots.Sign(valSK, srList[0], msgToSign)
+	s.NoError(err)
+	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
+	// submit finality signature
+	nonValidatorNode.AddFinalitySig(btcVal.BtcPk, activatedHeight, blockToVote.LastCommitHash, eotsSig)
+
+	// ensure vote is eventually casted
+	nonValidatorNode.WaitForNextBlock()
+	var votes []bbn.BIP340PubKey
+	s.Eventually(func() bool {
+		votes = nonValidatorNode.QueryVotesAtHeight(activatedHeight)
+		return len(votes) > 0
+	}, time.Minute, time.Second*5)
+	s.Equal(votes[0].MarshalHex(), btcVal.BtcPk.MarshalHex())
+	// once the vote is castedm, ensure block is finalised
+	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
+	s.NotEmpty(finalizedBlocks)
+	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlocks[0].LastCommitHash)
 }
