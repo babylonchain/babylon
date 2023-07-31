@@ -27,6 +27,16 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 	defer btcValIter.Close()
 	for ; btcValIter.Valid(); btcValIter.Next() {
 		valBTCPK := btcValIter.Key()
+		btcVal, err := k.GetBTCValidator(ctx, valBTCPK)
+		if err != nil {
+			// failed to get a BTC validator with voting power is a programming error
+			panic(err)
+		}
+		if btcVal.Slashed {
+			// slashed BTC validator is removed from BTC validator set
+			continue
+		}
+
 		valPower := uint64(0)
 
 		// iterate all BTC delegations under this validator

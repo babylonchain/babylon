@@ -29,7 +29,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 
 		// generate a random batch of validators
 		btcVals := []*types.BTCValidator{}
-		numBTCValsWithVotingPower := datagen.RandomInt(r, 10) + 1
+		numBTCValsWithVotingPower := datagen.RandomInt(r, 10) + 2
 		numBTCVals := numBTCValsWithVotingPower + datagen.RandomInt(r, 10)
 		for i := uint64(0); i < numBTCVals; i++ {
 			btcVal, err := datagen.GenRandomBTCValidator(r)
@@ -91,7 +91,44 @@ func FuzzVotingPowerTable(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, babylonHeight, activatedHeight)
 
-		// Case 3: move to 999th BTC block, then assert none of validators has voting power (since end height - w < BTC height)
+		// Case 3: move to 2nd BTC block and slash a random BTC validator,
+		// then assert the slashed BTC validator does not have voting power
+		babylonHeight += datagen.RandomInt(r, 10) + 1
+		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 2}).Times(1)
+		// slash a random BTC validator
+		slashedIdx := datagen.RandomInt(r, int(numBTCValsWithVotingPower))
+		slashedVal := btcVals[slashedIdx]
+		err = keeper.SlashBTCValidator(ctx, slashedVal.BtcPk.MustMarshal())
+		require.NoError(t, err)
+		// index height and record power table
+		keeper.IndexBTCHeight(ctx)
+		keeper.RecordVotingPowerTable(ctx)
+		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
+			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
+			if i == slashedIdx {
+				require.Zero(t, power)
+			} else {
+				require.Equal(t, uint64(numBTCDels), power)
+			}
+		}
+		for i := numBTCValsWithVotingPower; i < numBTCVals; i++ {
+			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
+			require.Zero(t, power)
+		}
+
+		// also, get voting power table and assert consistency
+		powerTable = keeper.GetVotingPowerTable(ctx, babylonHeight)
+		require.NotNil(t, powerTable)
+		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
+			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
+			if i == slashedIdx {
+				require.Zero(t, power)
+			}
+			require.Equal(t, powerTable[btcVals[i].BtcPk.MarshalHex()], power)
+		}
+
+		// Case 4: move to 999th BTC block, then assert none of validators has voting power (since end height - w < BTC height)
 		babylonHeight += datagen.RandomInt(r, 10) + 1
 		ctx = ctx.WithBlockHeight(int64(babylonHeight))
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 999}).Times(1)
@@ -102,7 +139,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			require.Zero(t, power)
 		}
 
-		// the activation height should be same as befofre
+		// the activation height should be same as before
 		activatedHeight2, err := keeper.GetBTCStakingActivatedHeight(ctx)
 		require.NoError(t, err)
 		require.Equal(t, activatedHeight, activatedHeight2)

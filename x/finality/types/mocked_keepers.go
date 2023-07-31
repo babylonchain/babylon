@@ -92,6 +92,20 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasBTCValidator(ctx, valBTCPK interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasBTCValidator), ctx, valBTCPK)
 }
 
+// SlashBTCValidator mocks base method.
+func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx types.Context, valBTCPK []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SlashBTCValidator", ctx, valBTCPK)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SlashBTCValidator indicates an expected call of SlashBTCValidator.
+func (mr *MockBTCStakingKeeperMockRecorder) SlashBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlashBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SlashBTCValidator), ctx, valBTCPK)
+}
+
 // MockAccountKeeper is a mock of AccountKeeper interface.
 type MockAccountKeeper struct {
 	ctrl     *gomock.Controller

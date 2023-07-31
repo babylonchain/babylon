@@ -90,6 +90,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		// if this BTC validator has also signed canonical block, extract its secret key and emit an event
 		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
 		if err == nil {
+			// slash this BTC validator, i.e., set its voting power to zero
+			if err := ms.BTCStakingKeeper.SlashBTCValidator(ctx, req.ValBtcPk.MustMarshal()); err != nil {
+				panic(fmt.Errorf("failed to slash BTC validator: %v", err))
+			}
+
 			btcSK, err := evidence.ExtractBTCSK(indexedBlock, pubRand, canonicalSig)
 			if err != nil {
 				panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
@@ -112,7 +117,12 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	// if this BTC validator has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
 	if ms.HasEvidence(ctx, req.BlockHeight, req.ValBtcPk) {
-		// the BTC validator has voted for a fork before!
+		// the BTC validator has voted for a fork before! slash it
+
+		// slash this BTC validator, i.e., set its voting power to zero
+		if err := ms.BTCStakingKeeper.SlashBTCValidator(ctx, req.ValBtcPk.MustMarshal()); err != nil {
+			panic(fmt.Errorf("failed to slash BTC validator: %v", err))
+		}
 
 		// get evidence
 		evidence, err := ms.GetEvidence(ctx, req.BlockHeight, req.ValBtcPk)

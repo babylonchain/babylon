@@ -169,6 +169,8 @@ func FuzzAddFinalitySig(f *testing.F) {
 		blockHash2 := datagen.GenRandomByteArray(r, 32)
 		msg2, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash2)
 		require.NoError(t, err)
+		// mock slashing interface
+		bsKeeper.EXPECT().SlashBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(nil).Times(1)
 		// NOTE: even though this BTC validator is slashed, the msg should be successful
 		// Otherwise the saved evidence will be rolled back
 		_, err = ms.AddFinalitySig(ctx, msg2)
