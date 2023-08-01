@@ -16,21 +16,25 @@ message IndexedBlock {
     bool finalized = 3;
 }
 
-// Evidence is the evidence that a BTC validator has signed a finality
-// signature with correct public randomness on a fork header
-// It includes all fields of MsgAddFinalitySig, such that anyone seeing 
-// the evidence and a signature on the canonical fork can extract the
-// BTC validator's BTC secret key.
+// Evidence is the evidence that a BTC validator has signed finality
+// signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {
     // val_btc_pk is the BTC Pk of the validator that casts this vote
     bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // block_height is the height of the voted block
+    // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
-    // block_last_commit_hash is the last_commit_hash of the voted block
-    bytes block_last_commit_hash = 3;
-    // finality_sig is the finality signature to this block
+    // pub_rand is the public randomness the BTC validator has committed to
+    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+    // canonical_last_commit_hash is the last_commit_hash of the canonical block
+    bytes canonical_last_commit_hash = 4;
+    // fork_last_commit_hash is the last_commit_hash of the fork block
+    bytes fork_last_commit_hash = 5;
+    // canonical_finality_sig is the finality signature to the canonical block
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`
     // `r` is the public randomness that is already committed by the validator
-    bytes finality_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    // fork_finality_sig is the finality signature to the fork block
+    // where finality signature is an EOTS signature
+    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
 }

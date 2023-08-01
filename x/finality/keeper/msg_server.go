@@ -7,6 +7,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/crypto/eots"
+	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -44,6 +45,8 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the BTC validator has voting power at this height
+	// NOTE: if a BTC validator has signed two different blocks at the same height,
+	// then it will be slashed and its voting power will be reduced to zero
 	valPK := req.ValBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, valPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the BTC validator %v does not have voting power at height %d", valPK.MustMarshal(), req.BlockHeight)
@@ -78,33 +81,29 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	if !bytes.Equal(indexedBlock.LastCommitHash, req.BlockLastCommitHash) {
 		// the BTC validator votes for a fork!
 
-		// construct and save evidence
+		// construct evidence
 		evidence := &types.Evidence{
-			ValBtcPk:            req.ValBtcPk,
-			BlockHeight:         req.BlockHeight,
-			BlockLastCommitHash: req.BlockLastCommitHash,
-			FinalitySig:         req.FinalitySig,
+			ValBtcPk:                req.ValBtcPk,
+			BlockHeight:             req.BlockHeight,
+			PubRand:                 pubRand,
+			CanonicalLastCommitHash: indexedBlock.LastCommitHash,
+			CanonicalFinalitySig:    nil,
+			ForkLastCommitHash:      req.BlockLastCommitHash,
+			ForkFinalitySig:         req.FinalitySig,
 		}
-		ms.SetEvidence(ctx, evidence)
 
-		// if this BTC validator has also signed canonical block, extract its secret key and emit an event
+		// if this BTC validator has also signed canonical block, slash it
 		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
 		if err == nil {
-			// slash this BTC validator, i.e., set its voting power to zero
-			if err := ms.BTCStakingKeeper.SlashBTCValidator(ctx, req.ValBtcPk.MustMarshal()); err != nil {
-				panic(fmt.Errorf("failed to slash BTC validator: %v", err))
-			}
-
-			btcSK, err := evidence.ExtractBTCSK(indexedBlock, pubRand, canonicalSig)
-			if err != nil {
-				panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
-			}
-
-			eventSlashing := types.NewEventSlashedBTCValidator(req.ValBtcPk, indexedBlock, evidence, btcSK)
-			if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
-				panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
-			}
+			//set canonial sig
+			evidence.CanonicalFinalitySig = canonicalSig
+			// slash this BTC validator, including setting its voting power to
+			// zero, extracting its BTC SK, and emit an event
+			ms.slashBTCValidator(ctx, req.ValBtcPk, evidence)
 		}
+
+		// save evidence
+		ms.SetEvidence(ctx, evidence)
 
 		// NOTE: we should NOT return error here, otherwise the state change triggered in this tx
 		// (including the evidence) will be rolled back
@@ -116,30 +115,23 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 	// if this BTC validator has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
-	if ms.HasEvidence(ctx, req.BlockHeight, req.ValBtcPk) {
-		// the BTC validator has voted for a fork before! slash it
-
-		// slash this BTC validator, i.e., set its voting power to zero
-		if err := ms.BTCStakingKeeper.SlashBTCValidator(ctx, req.ValBtcPk.MustMarshal()); err != nil {
-			panic(fmt.Errorf("failed to slash BTC validator: %v", err))
-		}
+	if ms.HasEvidence(ctx, req.ValBtcPk, req.BlockHeight) {
+		// the BTC validator has voted for a fork before!
+		// If this evidence is at the same height as this signature, slash this BTC validator
 
 		// get evidence
-		evidence, err := ms.GetEvidence(ctx, req.BlockHeight, req.ValBtcPk)
+		evidence, err := ms.GetEvidence(ctx, req.ValBtcPk, req.BlockHeight)
 		if err != nil {
 			panic(fmt.Errorf("failed to get evidence despite HasEvidence returns true"))
 		}
 
-		// extract its SK
-		btcSK, err := evidence.ExtractBTCSK(indexedBlock, pubRand, req.FinalitySig)
-		if err != nil {
-			panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
-		}
+		// set canonical sig to this evidence
+		evidence.CanonicalFinalitySig = req.FinalitySig
+		ms.SetEvidence(ctx, evidence)
 
-		eventSlashing := types.NewEventSlashedBTCValidator(req.ValBtcPk, indexedBlock, evidence, btcSK)
-		if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
-			panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
-		}
+		// slash this BTC validator, including setting its voting power to
+		// zero, extracting its BTC SK, and emit an event
+		ms.slashBTCValidator(ctx, req.ValBtcPk, evidence)
 	}
 
 	return &types.MsgAddFinalitySigResponse{}, nil
@@ -181,4 +173,24 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	// all good, commit the given public randomness list
 	ms.SetPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
 	return &types.MsgCommitPubRandListResponse{}, nil
+}
+
+// slashBTCValidator slashes a BTC validator with the given evidence
+// including setting its voting power to zero, extracting its BTC SK,
+// and emit an event
+func (k Keeper) slashBTCValidator(ctx sdk.Context, valBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) {
+	// slash this BTC validator, i.e., set its voting power to zero
+	if err := k.BTCStakingKeeper.SlashBTCValidator(ctx, valBtcPk.MustMarshal()); err != nil {
+		panic(fmt.Errorf("failed to slash BTC validator: %v", err))
+	}
+
+	// extract SK and emit slashing event
+	btcSK, err := evidence.ExtractBTCSK()
+	if err != nil {
+		panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
+	}
+	eventSlashing := types.NewEventSlashedBTCValidator(valBtcPk, evidence, btcSK)
+	if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
+		panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
+	}
 }

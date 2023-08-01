@@ -126,7 +126,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// generate a vote
 		blockHeight := uint64(1)
-		sr, pr := srList[startHeight+blockHeight], msgCommitPubRandList.PubRandList[startHeight+blockHeight]
+		sr, _ := srList[startHeight+blockHeight], msgCommitPubRandList.PubRandList[startHeight+blockHeight]
 		blockHash := datagen.GenRandomByteArray(r, 32)
 		signer := datagen.GenRandomAccount().Address
 		msg, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash)
@@ -176,21 +176,21 @@ func FuzzAddFinalitySig(f *testing.F) {
 		_, err = ms.AddFinalitySig(ctx, msg2)
 		require.NoError(t, err)
 		// ensure the evidence has been stored
-		evidence, err := fKeeper.GetEvidence(ctx, blockHeight, valBTCPK)
+		evidence, err := fKeeper.GetEvidence(ctx, valBTCPK, blockHeight)
 		require.NoError(t, err)
 		require.Equal(t, msg2.BlockHeight, evidence.BlockHeight)
 		require.Equal(t, msg2.ValBtcPk.MustMarshal(), evidence.ValBtcPk.MustMarshal())
-		require.Equal(t, msg2.BlockLastCommitHash, evidence.BlockLastCommitHash)
-		require.Equal(t, msg2.FinalitySig.MustMarshal(), evidence.FinalitySig.MustMarshal())
+		require.Equal(t, msg2.BlockLastCommitHash, evidence.ForkLastCommitHash)
+		require.Equal(t, msg2.FinalitySig.MustMarshal(), evidence.ForkFinalitySig.MustMarshal())
 		// extract the SK and assert the extracted SK is correct
-		indexedBlock := &types.IndexedBlock{Height: blockHeight, LastCommitHash: blockHash}
-		btcSK2, err := evidence.ExtractBTCSK(indexedBlock, &pr, msg.FinalitySig)
+		btcSK2, err := evidence.ExtractBTCSK()
 		require.NoError(t, err)
-		// ensure btcSK and btcSK2 correspond to the same PK
+		// ensure btcSK and btcSK2 are same or inverse, AND correspond to the same PK
 		// NOTE: it's possible that different SKs derive to the same PK
 		// In this scenario, signature of any of these SKs can be verified with this PK
 		// exclude the first byte here since it denotes the y axis of PubKey, which does
 		// not affect verification
+		require.True(t, btcSK.Key.Equals(&btcSK2.Key) || btcSK.Key.Negate().Equals(&btcSK2.Key))
 		require.Equal(t, btcSK.PubKey().SerializeCompressed()[1:], btcSK2.PubKey().SerializeCompressed()[1:])
 	})
 }

@@ -11,10 +11,8 @@ option go_package = "github.com/babylonchain/babylon/x/finality/types";
 message EventSlashedBTCValidator { 
     // val_btc_pk is the BTC validator's BTC PK
     bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // indexed_block is the canonical block at this height
-    IndexedBlock indexed_block = 2;
     // evidence is the evidence that the BTC validator double signs
-    Evidence evidence = 3;
+    Evidence evidence = 2;
     // extracted_btc_sk is the extracted BTC SK of this BTC validator
     bytes extracted_btc_sk = 4;
 }

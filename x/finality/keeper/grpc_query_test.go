@@ -4,16 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
-
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/finality/types"
-
-	"github.com/cosmos/cosmos-sdk/types/query"
-
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/finality/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzListPublicRandomness(f *testing.F) {
@@ -184,6 +181,53 @@ func FuzzVotesAtHeight(f *testing.F) {
 		}
 		if len(valFoundMap) != len(votedValMap) {
 			t.Errorf("Some vals were missed. Got %d while %d were expected", len(valFoundMap), len(votedValMap))
+		}
+	})
+}
+
+func FuzzQueryEvidence(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// set random BTC SK PK
+		sk, _, err := datagen.GenRandomBTCKeyPair(r)
+		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey())
+		require.NoError(t, err)
+
+		var randomFirstSlashableEvidence *types.Evidence = nil
+		numEvidences := datagen.RandomInt(r, 10) + 1
+		height := uint64(5)
+
+		// set a list of evidences, in which some of them are slashable while the others are not
+		for i := uint64(0); i < numEvidences; i++ {
+			evidence, err := datagen.GenRandomEvidence(r, sk, height)
+			require.NoError(t, err)
+			if datagen.RandomInt(r, 2) == 1 {
+				evidence.CanonicalFinalitySig = nil // not slashable
+			} else {
+				if randomFirstSlashableEvidence == nil {
+					randomFirstSlashableEvidence = evidence // first slashable
+				}
+			}
+			keeper.SetEvidence(ctx, evidence)
+
+			height += datagen.RandomInt(r, 5) + 1
+		}
+
+		// get first slashable evidence
+		evidenceResp, err := keeper.Evidence(ctx, &types.QueryEvidenceRequest{ValBtcPkHex: bip340PK.MarshalHex()})
+		if randomFirstSlashableEvidence == nil {
+			require.Error(t, err)
+			require.Nil(t, evidenceResp)
+		} else {
+			require.NoError(t, err)
+			require.Equal(t, randomFirstSlashableEvidence, evidenceResp.Evidence)
+			require.True(t, evidenceResp.Evidence.IsSlashable())
 		}
 	})
 }

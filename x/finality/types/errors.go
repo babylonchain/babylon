@@ -17,4 +17,5 @@ var (
 	ErrEvidenceNotFound      = errorsmod.Register(ModuleName, 1108, "evidence is not found")
 	ErrInvalidFinalitySig    = errorsmod.Register(ModuleName, 1109, "finality signature is not valid")
 	ErrDuplicatedFinalitySig = errorsmod.Register(ModuleName, 1110, "the finality signature has been casted before")
+	ErrNoSlashableEvidence   = errorsmod.Register(ModuleName, 1111, "there is no slashable evidence")
 )

@@ -15,6 +15,8 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+// ListPublicRandomness returns a list of public randomness committed by a given
+// BTC validator
 func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPublicRandomnessRequest) (*types.QueryListPublicRandomnessResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -48,7 +50,7 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	return resp, nil
 }
 
-// TODO: allow returning all blocks in this API
+// ListBlocks returns a list of blocks at the given finalisation status
 func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksRequest) (*types.QueryListBlocksResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -83,6 +85,7 @@ func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksReques
 	return resp, nil
 }
 
+// VotesAtHeight returns the set of votes at a given Babylon height
 func (k Keeper) VotesAtHeight(ctx context.Context, req *types.QueryVotesAtHeightRequest) (*types.QueryVotesAtHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
@@ -104,4 +107,28 @@ func (k Keeper) VotesAtHeight(ctx context.Context, req *types.QueryVotesAtHeight
 	}
 
 	return &types.QueryVotesAtHeightResponse{BtcPks: btcPks}, nil
+}
+
+// Evidence returns the first evidence that allows to extract the BTC validator's SK
+// associated with the given BTC validator's PK.
+func (k Keeper) Evidence(ctx context.Context, req *types.QueryEvidenceRequest) (*types.QueryEvidenceResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	valBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal validator BTC PK hex: %v", err)
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	evidence := k.GetFirstSlashableEvidence(sdkCtx, valBTCPK)
+	if evidence == nil {
+		return nil, types.ErrNoSlashableEvidence
+	}
+
+	resp := &types.QueryEvidenceResponse{
+		Evidence: evidence,
+	}
+	return resp, nil
 }

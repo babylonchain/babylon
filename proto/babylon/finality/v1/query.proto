@@ -30,6 +30,11 @@ service Query {
   rpc VotesAtHeight(QueryVotesAtHeightRequest) returns (QueryVotesAtHeightResponse) {
     option (google.api.http).get = "/babylon/finality/v1/votes/{height}";
   }
+
+  // Evidence queries the first evidence which can be used for extracting the BTC SK
+  rpc Evidence(QueryEvidenceRequest) returns (QueryEvidenceResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/evidence";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -106,4 +111,18 @@ message QueryVotesAtHeightResponse {
   // btc_pk is the Bitcoin secp256k1 PK of BTC validators who have signed the block at given height.
   // the PK follows encoding in BIP-340 spec
   repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey"];
+}
+
+// QueryEvidenceRequest is the request type for the
+// Query/Evidence RPC method.
+message QueryEvidenceRequest {
+  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK
+  // (in BIP340 format) of the BTC validator
+  string val_btc_pk_hex = 1;
+}
+
+// QueryEvidenceResponse is the response type for the
+// Query/Evidence RPC method.
+message QueryEvidenceResponse {
+  Evidence evidence = 1;
 }

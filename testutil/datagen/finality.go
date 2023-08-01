@@ -8,6 +8,7 @@ import (
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func GenRandomPubRandList(r *rand.Rand, numPubRand uint64) ([]*eots.PrivateRand, []bbn.SchnorrPubRand, error) {
@@ -48,4 +49,34 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
 	msg.Sig = &sig
 	return srList, msg, nil
+}
+
+func GenRandomEvidence(r *rand.Rand, sk *btcec.PrivateKey, height uint64) (*ftypes.Evidence, error) {
+	pk := sk.PubKey()
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(pk)
+	sr, pr, err := eots.RandGen(r)
+	if err != nil {
+		return nil, err
+	}
+	cLch := GenRandomByteArray(r, 32)
+	cSig, err := eots.Sign(sk, sr, append(sdk.Uint64ToBigEndian(height), cLch...))
+	if err != nil {
+		return nil, err
+	}
+	fLch := GenRandomByteArray(r, 32)
+	fSig, err := eots.Sign(sk, sr, append(sdk.Uint64ToBigEndian(height), fLch...))
+	if err != nil {
+		return nil, err
+	}
+
+	evidence := &ftypes.Evidence{
+		ValBtcPk: bip340PK,
+		BlockHeight: height,
+		PubRand: bbn.NewSchnorrPubRandFromFieldVal(pr),
+		CanonicalLastCommitHash: cLch,
+		ForkLastCommitHash: fLch,
+		CanonicalFinalitySig: bbn.NewSchnorrEOTSSigFromModNScalar(cSig),
+		ForkFinalitySig: bbn.NewSchnorrEOTSSigFromModNScalar(fSig),
+	}
+	return evidence, nil
 }
