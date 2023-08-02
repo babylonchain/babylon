@@ -87,7 +87,15 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, startHeigh
 	}, nil
 }
 
-func GenBTCStakingSlashingTx(r *rand.Rand, stakerSK *btcec.PrivateKey, validatorPK, juryPK *btcec.PublicKey, stakingTimeBlocks uint16, stakingValue int64, slashingAddress string) (*bstypes.StakingTx, *bstypes.BTCSlashingTx, error) {
+func GenBTCStakingSlashingTx(
+	r *rand.Rand,
+	stakerSK *btcec.PrivateKey,
+	validatorPK *btcec.PublicKey,
+	juryPK *btcec.PublicKey,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingAddress string,
+) (*bstypes.StakingTx, *bstypes.BTCSlashingTx, error) {
 	btcNet := &chaincfg.SimNetParams
 
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(

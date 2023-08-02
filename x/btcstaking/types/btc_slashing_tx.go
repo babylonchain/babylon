@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
@@ -133,4 +134,60 @@ func (tx *BTCSlashingTx) VerifySignature(stakingPkScript []byte, stakingAmount i
 		pk,
 		*sig,
 	)
+}
+
+// ToMsgTxWithWitness generates a BTC slashing tx with witness from
+// - the staking tx
+// - validator signature
+// - delegator signature
+// - jury signature
+func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *StakingTx, valSig, delSig, jurySig *bbn.BIP340Signature) (*wire.MsgTx, error) {
+	// get staking script
+	stakingScript := stakingTx.StakingScript
+
+	// get Schnorr signatures
+	valSchnorrSig, err := valSig.ToBTCSig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert BTC validator signature to Schnorr signature format: %w", err)
+	}
+	delSchnorrSig, err := delSig.ToBTCSig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert BTC delegator signature to Schnorr signature format: %w", err)
+	}
+	jurySchnorrSig, err := jurySig.ToBTCSig()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert jury signature to Schnorr signature format: %w", err)
+	}
+
+	// build witness from each signature
+	valWitness, err := btcstaking.NewWitnessFromStakingScriptAndSignature(stakingScript, valSchnorrSig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build witness for BTC validator: %w", err)
+	}
+	delWitness, err := btcstaking.NewWitnessFromStakingScriptAndSignature(stakingScript, delSchnorrSig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build witness for BTC delegator: %w", err)
+	}
+	juryWitness, err := btcstaking.NewWitnessFromStakingScriptAndSignature(stakingScript, jurySchnorrSig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build witness for jury: %w", err)
+	}
+
+	// To Construct valid witness, for multisig case we need:
+	// - jury signature - witnessJury[0]
+	// - validator signature - witnessValidator[0]
+	// - staker signature - witnessStaker[0]
+	// - empty signature - which is just an empty byte array which signals we are going to use multisig.
+	// 	 This must be signature on top of the stack.
+	// - whole script - witnessStaker[1] (any other witness[1] will work as well)
+	// - control block - witnessStaker[2] (any other witness[2] will work as well)
+	slashingMsgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert slashing tx to Bitcoin format: %w", err)
+	}
+	slashingMsgTx.TxIn[0].Witness = [][]byte{
+		juryWitness[0], valWitness[0], delWitness[0], []byte{}, delWitness[1], delWitness[2],
+	}
+
+	return slashingMsgTx, nil
 }

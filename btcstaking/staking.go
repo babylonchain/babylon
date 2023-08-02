@@ -404,43 +404,48 @@ func BuildStakingOutput(
 	return wire.NewTxOut(int64(stAmount), pkScript), script, nil
 }
 
-// BuildWitnessToSpendStakingOutput builds witness for spending staking as single staker
-// Current assumptions:
-// - staking output is the only input to the transaction
-// - staking output is valid staking output
-func BuildWitnessToSpendStakingOutput(
-	tx *wire.MsgTx,
-	stakingOutput *wire.TxOut,
+// NewWitnessFromStakingScriptAndSignature creates witness for spending
+// staking from the given staking script and the given signature of
+// a single party in the multisig
+func NewWitnessFromStakingScriptAndSignature(
 	stakingScript []byte,
-	privKey *btcec.PrivateKey) (wire.TxWitness, error) {
-
+	sig *schnorr.Signature,
+) (wire.TxWitness, error) {
+	// get ctrlBlockBytes
 	internalPubKey := UnspendableKeyPathInternalPubKey()
-
 	tapLeaf := txscript.NewBaseTapLeaf(stakingScript)
-
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
-
-	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(
-		internalPubKey,
-	)
-
+	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(internalPubKey)
 	ctrlBlockBytes, err := ctrlBlock.ToBytes()
-
 	if err != nil {
 		return nil, err
 	}
 
-	sig, err := SignTxWithOneScriptSpendInputFromTapLeaf(tx, stakingOutput, privKey, tapLeaf)
-
-	if err != nil {
-		return nil, err
-	}
-
+	// compose witness stack
 	witnessStack := wire.TxWitness(make([][]byte, 3))
 	witnessStack[0] = sig.Serialize()
 	witnessStack[1] = stakingScript
 	witnessStack[2] = ctrlBlockBytes
 	return witnessStack, nil
+}
+
+// BuildWitnessToSpendStakingOutput builds witness for spending staking as single staker
+// Current assumptions:
+// - staking output is the only input to the transaction
+// - staking output is valid staking output
+func BuildWitnessToSpendStakingOutput(
+	slashingMsgTx *wire.MsgTx, // slashing tx
+	stakingOutput *wire.TxOut,
+	stakingScript []byte,
+	privKey *btcec.PrivateKey,
+) (wire.TxWitness, error) {
+	tapLeaf := txscript.NewBaseTapLeaf(stakingScript)
+	sig, err := SignTxWithOneScriptSpendInputFromTapLeaf(slashingMsgTx, stakingOutput, privKey, tapLeaf)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewWitnessFromStakingScriptAndSignature(stakingScript, sig)
 }
 
 // ValidateStakingOutputPkScript validates that:
