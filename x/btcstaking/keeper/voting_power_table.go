@@ -26,8 +26,13 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 	btcValIter := k.btcValidatorStore(ctx).Iterator(nil, nil)
 	defer btcValIter.Close()
 	for ; btcValIter.Valid(); btcValIter.Next() {
-		valBTCPK := btcValIter.Key()
-		btcVal, err := k.GetBTCValidator(ctx, valBTCPK)
+		valBTCPKBytes := btcValIter.Key()
+		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
+		if err != nil {
+			// failed to unmarshal BTC validator PK in KVStore is a programming error
+			panic(err)
+		}
+		btcVal, err := k.GetBTCValidator(ctx, valBTCPKBytes)
 		if err != nil {
 			// failed to get a BTC validator with voting power is a programming error
 			panic(err)
@@ -43,14 +48,14 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 		// to calculate this validator's total voting power
 		btcDelIter := k.btcDelegationStore(ctx, valBTCPK).Iterator(nil, nil)
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			var btcDel types.BTCDelegation
-			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDel)
-			valPower += btcDel.VotingPower(btcTipHeight, wValue)
+			var btcDels types.BTCDelegations
+			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDels)
+			valPower += btcDels.VotingPower(btcTipHeight, wValue)
 		}
 		btcDelIter.Close()
 
 		if valPower > 0 {
-			k.SetVotingPower(ctx, valBTCPK, babylonTipHeight, valPower)
+			k.SetVotingPower(ctx, valBTCPKBytes, babylonTipHeight, valPower)
 		}
 	}
 }

@@ -79,14 +79,15 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.ValidatorKey)
 	juryPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.JuryKey)
 
+	// extract staking tx and its hash
+	stakingMsgTx, err := req.StakingTx.ToMsgTx()
+	if err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
+	}
+	stakingTxHash := stakingMsgTx.TxHash().String()
+
 	// ensure the staking tx is not duplicated
-	// NOTE: it's okay that the same staker has multiple delegations
-	// the situation that we need to prevent here is that every staking tx
-	// can only correspond to a single BTC delegation
-	// TODO: the current impl does not support multiple delegations with the same (valPK, delPK) pair
-	// since a delegation is keyed by (valPK, delPK). Need to decide whether to support this
-	btcDel, err := ms.GetBTCDelegation(ctx, valBTCPK.MustMarshal(), delBTCPK.MustMarshal())
-	if err == nil && btcDel.StakingTx.Equals(req.StakingTx) {
+	if ms.HasBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash) {
 		return nil, types.ErrReusedStakingTx
 	}
 
@@ -118,10 +119,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	slashingAddr, err := btcutil.DecodeAddress(params.SlashingAddress, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
-	}
-	stakingMsgTx, err := req.StakingTx.ToMsgTx()
-	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
 	}
 	if _, err := btcstaking.CheckTransactions(
 		slashingMsgTx,
@@ -163,7 +160,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		DelegatorSig: req.DelegatorSig,
 		JurySig:      nil, // NOTE: jury signature will be submitted in a separate msg by jury
 	}
-	ms.SetBTCDelegation(ctx, newBTCDel)
+	if err := ms.SetBTCDelegation(ctx, newBTCDel); err != nil {
+		panic("failed to set BTC delegation that has passed verification")
+	}
 
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCDelegation{BtcDel: newBTCDel}); err != nil {
@@ -178,7 +177,7 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, *req.ValPk, *req.DelPk)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
@@ -211,8 +210,9 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 	}
 
 	// all good, add signature to BTC delegation and set it back to KVStore
-	btcDel.JurySig = req.Sig
-	ms.SetBTCDelegation(ctx, btcDel)
+	if err := ms.AddJurySigToBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash, req.Sig); err != nil {
+		panic("failed to set BTC delegation that has passed verification")
+	}
 
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventActivateBTCDelegation{BtcDel: btcDel}); err != nil {

@@ -3,54 +3,117 @@ package keeper
 import (
 	"fmt"
 
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// SetBTCDelegation adds the given BTC delegation to KVStore
-func (k Keeper) SetBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) {
-	store := k.btcDelegationStore(ctx, btcDel.ValBtcPk.MustMarshal())
-	btcDelBytes := k.cdc.MustMarshal(btcDel)
-	store.Set(btcDel.BtcPk.MustMarshal(), btcDelBytes)
+func (k Keeper) SetBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
+	var (
+		btcDels = types.NewBTCDelegations()
+		err     error
+	)
+	if k.hasBTCDelegations(ctx, btcDel.ValBtcPk, btcDel.BtcPk) {
+		btcDels, err = k.getBTCDelegations(ctx, btcDel.ValBtcPk, btcDel.BtcPk)
+		if err != nil {
+			// this can only be a programming error
+			panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegations returns true"))
+		}
+	}
+	if err := btcDels.Add(btcDel); err != nil {
+		return types.ErrInvalidStakingTx.Wrapf(err.Error())
+	}
+
+	k.setBTCDelegations(ctx, btcDel.ValBtcPk, btcDel.BtcPk, btcDels)
+	return nil
 }
 
-// HasBTCDelegation checks if the given BTC delegation exists under a given BTC validator
-func (k Keeper) HasBTCDelegation(ctx sdk.Context, valBTCPK []byte, delBTCPK []byte) bool {
-	if !k.HasBTCValidator(ctx, valBTCPK) {
+// AddJurySigToBTCDelegation adds a given jury sig to a BTC delegation
+// with the given (val PK, del PK, staking tx hash) tuple
+func (k Keeper) AddJurySigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string, jurySig *bbn.BIP340Signature) error {
+	btcDels, err := k.getBTCDelegations(ctx, valBTCPK, delBTCPK)
+	if err != nil {
+		return err
+	}
+	if err := btcDels.AddJurySig(stakingTxHash, jurySig); err != nil {
+		return types.ErrInvalidJurySig.Wrapf(err.Error())
+	}
+	k.setBTCDelegations(ctx, valBTCPK, delBTCPK, btcDels)
+	return nil
+}
+
+// setBTCDelegations sets the given BTC delegation to KVStore
+func (k Keeper) setBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDels *types.BTCDelegations) {
+	delBTCPKBytes := delBTCPK.MustMarshal()
+
+	store := k.btcDelegationStore(ctx, valBTCPK)
+	btcDelBytes := k.cdc.MustMarshal(btcDels)
+	store.Set(delBTCPKBytes, btcDelBytes)
+}
+
+// hasBTCDelegations checks if the given BTC delegator has any BTC delegations under a given BTC validator
+func (k Keeper) hasBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
+	valBTCPKBytes := valBTCPK.MustMarshal()
+	delBTCPKBytes := delBTCPK.MustMarshal()
+
+	if !k.HasBTCValidator(ctx, valBTCPKBytes) {
 		return false
 	}
 	store := k.btcDelegationStore(ctx, valBTCPK)
-	return store.Has(delBTCPK)
+	return store.Has(delBTCPKBytes)
 }
 
-// GetBTCDelegation gets the BTC delegation with a given BTC PK under a given BTC validator
-func (k Keeper) GetBTCDelegation(ctx sdk.Context, valBTCPK []byte, delBTCPK []byte) (*types.BTCDelegation, error) {
+// HasBTCDelegation checks if the given BTC delegator has a BTC delegation with the given staking tx hash under a given BTC validator
+func (k Keeper) HasBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string) bool {
+	btcDels, err := k.getBTCDelegations(ctx, valBTCPK, delBTCPK)
+	if err != nil {
+		return false
+	}
+	return btcDels.Has(stakingTxHash)
+}
+
+// getBTCDelegations gets the BTC delegations with a given BTC PK under a given BTC validator
+func (k Keeper) getBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegations, error) {
+	valBTCPKBytes := valBTCPK.MustMarshal()
+	delBTCPKBytes := delBTCPK.MustMarshal()
+
 	// ensure the BTC validator exists
-	if !k.HasBTCValidator(ctx, valBTCPK) {
+	if !k.HasBTCValidator(ctx, valBTCPKBytes) {
 		return nil, types.ErrBTCValNotFound
 	}
 
 	store := k.btcDelegationStore(ctx, valBTCPK)
 	// ensure BTC delegation exists
-	if !store.Has(delBTCPK) {
+	if !store.Has(delBTCPKBytes) {
 		return nil, types.ErrBTCDelNotFound
 	}
 	// get and unmarshal
-	btcDelBytes := store.Get(delBTCPK)
-	var btcDel types.BTCDelegation
-	if err := k.cdc.Unmarshal(btcDelBytes, &btcDel); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal BTC delegation: %w", err)
+	var btcDels types.BTCDelegations
+	btcDelsBytes := store.Get(delBTCPKBytes)
+	k.cdc.MustUnmarshal(btcDelsBytes, &btcDels)
+	return &btcDels, nil
+}
+
+// GetBTCDelegation gets the BTC delegation with a given BTC PK and staking tx hash under a given BTC validator
+func (k Keeper) GetBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string) (*types.BTCDelegation, error) {
+	btcDels, err := k.getBTCDelegations(ctx, valBTCPK, delBTCPK)
+	if err != nil {
+		return nil, err
 	}
-	return &btcDel, nil
+	btcDel, err := btcDels.Get(stakingTxHash)
+	if err != nil {
+		return nil, types.ErrBTCDelNotFound.Wrapf(err.Error())
+	}
+	return btcDel, nil
 }
 
 // btcDelegationStore returns the KVStore of the BTC delegations
 // prefix: BTCDelegationKey || validator's Bitcoin secp256k1 PK
 // key: delegation's Bitcoin secp256k1 PK
-// value: BTCDelegation object
-func (k Keeper) btcDelegationStore(ctx sdk.Context, valBTCPK []byte) prefix.Store {
+// value: BTCDelegations (a list of BTCDelegation)
+func (k Keeper) btcDelegationStore(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey) prefix.Store {
 	store := ctx.KVStore(k.storeKey)
 	delegationStore := prefix.NewStore(store, types.BTCDelegationKey)
-	return prefix.NewStore(delegationStore, valBTCPK)
+	return prefix.NewStore(delegationStore, valBTCPK.MustMarshal())
 }

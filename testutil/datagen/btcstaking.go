@@ -9,7 +9,6 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -49,13 +48,17 @@ func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bst
 	}, nil
 }
 
-func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, startHeight uint64, endHeight uint64, totalSat uint64) (*bstypes.BTCDelegation, error) {
-	// key pairs
-	btcSK, btcPK, err := GenRandomBTCKeyPair(r)
+func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btcec.PrivateKey, jurySK *btcec.PrivateKey, slashingAddr string, startHeight uint64, endHeight uint64, totalSat uint64) (*bstypes.BTCDelegation, error) {
+	net := &chaincfg.SimNetParams
+	delPK := delSK.PubKey()
+	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
+	juryBTCPK := jurySK.PubKey()
+	valPK, err := valBTCPK.ToBTCPK()
 	if err != nil {
 		return nil, err
 	}
-	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+	// BTC delegation Babylon key pairs
 	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
 	if err != nil {
 		return nil, err
@@ -65,25 +68,42 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, startHeigh
 		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")
 	}
 	// pop
-	pop, err := bstypes.NewPoP(bbnSK, btcSK)
+	pop, err := bstypes.NewPoP(bbnSK, delSK)
 	if err != nil {
 		return nil, err
 	}
-	// TODO: generate legitimate jury signature and staking/slashing tx
-	jurySchnorrSig, err := schnorr.Sign(btcSK, GenRandomByteArray(r, 32))
+	// staking/slashing tx
+	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(r, delSK, valPK, juryBTCPK, uint16(endHeight-startHeight), int64(totalSat), slashingAddr)
 	if err != nil {
 		return nil, err
 	}
-	jurySig := bbn.NewBIP340SignatureFromBTCSig(jurySchnorrSig)
+
+	// jury sig and delegator sig
+	stakingMsgTx, err := stakingTx.ToMsgTx()
+	if err != nil {
+		return nil, err
+	}
+	jurySig, err := slashingTx.Sign(stakingMsgTx, stakingTx.StakingScript, jurySK, net)
+	if err != nil {
+		return nil, err
+	}
+	delegatorSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.StakingScript, delSK, net)
+	if err != nil {
+		return nil, err
+	}
+
 	return &bstypes.BTCDelegation{
-		BabylonPk:   secp256k1PK,
-		BtcPk:       bip340PK,
-		Pop:         pop,
-		ValBtcPk:    valBTCPK,
-		StartHeight: startHeight,
-		EndHeight:   endHeight,
-		TotalSat:    totalSat,
-		JurySig:     &jurySig,
+		BabylonPk:    secp256k1PK,
+		BtcPk:        delBTCPK,
+		Pop:          pop,
+		ValBtcPk:     valBTCPK,
+		StartHeight:  startHeight,
+		EndHeight:    endHeight,
+		TotalSat:     totalSat,
+		DelegatorSig: delegatorSig,
+		JurySig:      jurySig,
+		StakingTx:    stakingTx,
+		SlashingTx:   slashingTx,
 	}, nil
 }
 
@@ -138,7 +158,7 @@ func GenBTCStakingSlashingTx(
 	if err != nil {
 		return nil, nil, err
 	}
-	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(tx, 1, slashingAddrBtc, 10000, stakingScript, btcNet)
+	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(tx, 1, slashingAddrBtc, 2000, stakingScript, btcNet)
 	if err != nil {
 		return nil, nil, err
 	}

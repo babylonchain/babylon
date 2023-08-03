@@ -161,8 +161,8 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 
 func NewAddJurySigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-jury-sig [val_pk] [del_pk] [sig]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "add-jury-sig [val_pk] [del_pk] [staking_tx_hash] [sig]",
+		Args:  cobra.ExactArgs(4),
 		Short: "Add a jury signature",
 		Long: strings.TrimSpace(
 			`Add a jury signature.`, // TODO: example
@@ -185,17 +185,21 @@ func NewAddJurySigCmd() *cobra.Command {
 				return err
 			}
 
+			// get staking tx hash
+			stakingTxHash := args[2]
+
 			// get jury sigature
-			sig, err := bbn.NewBIP340SignatureFromHex(args[2])
+			sig, err := bbn.NewBIP340SignatureFromHex(args[3])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgAddJurySig{
-				Signer: clientCtx.FromAddress.String(),
-				ValPk:  valPK,
-				DelPk:  delPK,
-				Sig:    sig,
+				Signer:        clientCtx.FromAddress.String(),
+				ValPk:         valPK,
+				DelPk:         delPK,
+				StakingTxHash: stakingTxHash,
+				Sig:           sig,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

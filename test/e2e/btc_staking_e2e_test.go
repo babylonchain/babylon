@@ -132,9 +132,12 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	pendingDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_PENDING)
-	s.Len(pendingDels, 1)
-	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	pendingDelSet := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(pendingDelSet, 1)
+	pendingDels := pendingDelSet[0]
+	s.Len(pendingDels.Dels, 1)
+	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	s.Nil(pendingDels.Dels[0].JurySig)
 }
 
 // Test2SubmitJurySignature is an end-to-end test for user
@@ -146,13 +149,18 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	s.NoError(err)
 
 	// get last BTC delegation
-	pendingDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_PENDING)
-	s.Len(pendingDels, 1)
-	btcDel := pendingDels[0]
-	slashingTx := btcDel.SlashingTx
-	stakingTx := btcDel.StakingTx
+	pendingDelsSet := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(pendingDelsSet, 1)
+	pendingDels := pendingDelsSet[0]
+	s.Len(pendingDels.Dels, 1)
+	pendingDel := pendingDels.Dels[0]
+	s.Nil(pendingDel.JurySig)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
 	s.NoError(err)
+	stakingTxHash := stakingTx.MustGetTxHash()
 
 	/*
 		generate and insert new jury signature, in order to activate the BTC delegation
@@ -164,15 +172,18 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 		&chaincfg.SimNetParams,
 	)
 	s.NoError(err)
-	nonValidatorNode.AddJurySig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), jurySig)
+	nonValidatorNode.AddJurySig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, jurySig)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	// query the existence of BTC delegation and assert equivalence
-	activeDels := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex(), bstypes.BTCDelegationStatus_ACTIVE)
-	s.Len(activeDels, 1)
-	s.Equal(delBTCPK.SerializeCompressed()[1:], activeDels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
+	// ensure the BTC delegation has jury sig now
+	activeDelsSet := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(activeDelsSet, 1)
+	activeDels := activeDelsSet[0]
+	s.Len(activeDels.Dels, 1)
+	activeDel := activeDels.Dels[0]
+	s.NotNil(activeDel.JurySig)
 
 	// ensure BTC staking is activated
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
@@ -182,7 +193,8 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	s.NoError(err)
 	activeBTCVals := nonValidatorNode.QueryActiveBTCValidatorsAtHeight(activatedHeight)
 	s.Len(activeBTCVals, 1)
-	s.Equal(activeBTCVals[0].VotingPower, activeDels[0].VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod))
+	s.Equal(activeBTCVals[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod))
+	s.Equal(activeBTCVals[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod))
 }
 
 // Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end

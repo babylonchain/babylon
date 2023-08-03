@@ -11,8 +11,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-const flagDelegationStatus = "delegation-status"
-
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string) *cobra.Command {
 	// Group btcstaking queries under a subcommand
@@ -196,19 +194,9 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			delegationStatusString, err := cmd.Flags().GetString(flagDelegationStatus)
-			if err != nil {
-				return err
-			}
-
-			delegationStatus, err := types.NewBTCDelegationStatus(delegationStatusString)
-			if err != nil {
-				return err
-			}
 
 			res, err := queryClient.BTCValidatorDelegations(cmd.Context(), &types.QueryBTCValidatorDelegationsRequest{
 				ValBtcPkHex: args[0],
-				DelStatus:   delegationStatus,
 				Pagination:  pageReq,
 			})
 			if err != nil {
@@ -221,7 +209,6 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "btc-validator-delegations")
-	cmd.Flags().String(flagDelegationStatus, "Active", "Status of the queried delegations (Pending|Active|Expired)")
 
 	return cmd
 }

@@ -116,8 +116,8 @@ func (tx *BTCSlashingTx) Sign(stakingMsgTx *wire.MsgTx, stakingScript []byte, sk
 	if err != nil {
 		return nil, err
 	}
-	delegatorSig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
-	return &delegatorSig, nil
+	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
+	return &sig, nil
 }
 
 // VerifySignature verifies a signature on the slashing tx signed by staker, validator or jury

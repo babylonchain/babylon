@@ -8,8 +8,7 @@ import (
 )
 
 func GenRandomBTCAddress(r *rand.Rand, net *chaincfg.Params) (string, error) {
-	pkHash := GenRandomByteArray(r, 20)
-	addr, err := btcutil.NewAddressPubKeyHash(pkHash, net)
+	addr, err := btcutil.NewAddressWitnessPubKeyHash(GenRandomByteArray(r, 20), net)
 	if err != nil {
 		return "", err
 	}

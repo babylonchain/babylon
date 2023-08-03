@@ -5,6 +5,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	bbn "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -131,6 +132,9 @@ func (m *MsgAddJurySig) ValidateBasic() error {
 	}
 	if m.Sig == nil {
 		return fmt.Errorf("empty jury signature")
+	}
+	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
+		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
 	}
 
 	return nil

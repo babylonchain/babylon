@@ -9,6 +9,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -27,6 +28,12 @@ func FuzzVotingPowerTable(f *testing.F) {
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
+		// jury and slashing addr
+		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SigNetParams)
+		require.NoError(t, err)
+
 		// generate a random batch of validators
 		btcVals := []*types.BTCValidator{}
 		numBTCValsWithVotingPower := datagen.RandomInt(r, 10) + 2
@@ -40,12 +47,16 @@ func FuzzVotingPowerTable(f *testing.F) {
 
 		// for the first numBTCValsWithVotingPower validators, generate a random number of BTC delegations
 		numBTCDels := datagen.RandomInt(r, 10) + 1
+		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
 			valBTCPK := btcVals[i].BtcPk
 			for j := uint64(0); j < numBTCDels; j++ {
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, 1, 1000, 1) // timelock period: 1-1000
+				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				keeper.SetBTCDelegation(ctx, btcDel)
+				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr, 1, 1000, stakingValue) // timelock period: 1-1000
+				require.NoError(t, err)
+				err = keeper.SetBTCDelegation(ctx, btcDel)
+				require.NoError(t, err)
 			}
 		}
 
@@ -61,7 +72,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		}
 
 		// since there is no BTC validator with BTC delegation, the BTC staking protocol is not activated yet
-		_, err := keeper.GetBTCStakingActivatedHeight(ctx)
+		_, err = keeper.GetBTCStakingActivatedHeight(ctx)
 		require.Error(t, err)
 
 		// Case 2: move to 1st BTC block, then assert the first numBTCValsWithVotingPower validators have voting power
@@ -72,7 +83,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		keeper.RecordVotingPowerTable(ctx)
 		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
 			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
-			require.Equal(t, uint64(numBTCDels), power)
+			require.Equal(t, uint64(numBTCDels)*stakingValue, power)
 		}
 		for i := numBTCValsWithVotingPower; i < numBTCVals; i++ {
 			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
@@ -109,7 +120,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			if i == slashedIdx {
 				require.Zero(t, power)
 			} else {
-				require.Equal(t, uint64(numBTCDels), power)
+				require.Equal(t, uint64(numBTCDels)*stakingValue, power)
 			}
 		}
 		for i := numBTCValsWithVotingPower; i < numBTCVals; i++ {

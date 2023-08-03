@@ -68,19 +68,9 @@ message BTCDelegation {
     bytes jury_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
-// BTCDelegationWithMeta wraps the BTCDelegation with meta data.
-message BTCDelegationWithMeta {
-    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
-    // the PK follows encoding in BIP-340 spec
-    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // start_height is the start BTC height of the BTC delegation
-    // it is the start BTC height of the timelock
-    uint64 start_height = 2;
-    // end_height is the end height of the BTC delegation
-    // it is the end BTC height of the timelock - w
-    uint64 end_height = 3;
-    // voting_power is the voting power of this BTC delegation at the given height
-    uint64 voting_power = 4;
+// BTCDelegations is a collection of BTC delegations, typically from the same delegator.
+message BTCDelegations {
+    repeated BTCDelegation dels = 1;
 }
 
 // ProofOfPossession is the proof of possession that a Babylon secp256k1

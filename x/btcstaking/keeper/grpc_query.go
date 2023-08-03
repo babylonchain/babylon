@@ -63,16 +63,24 @@ func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendi
 
 	for ; valIter.Valid(); valIter.Next() {
 		valBTCPKBytes := valIter.Key()
-		delStore := k.btcDelegationStore(sdkCtx, valBTCPKBytes)
+		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
+		if err != nil {
+			// this can only be programming error
+			panic("failed to unmarshal validator BTC PK in KVstore")
+		}
+		delStore := k.btcDelegationStore(sdkCtx, valBTCPK)
 		delIter := delStore.Iterator(nil, nil)
 
 		// iterate over each BTC delegation under this BTC validator
 		for ; delIter.Valid(); delIter.Next() {
-			btcDelBytes := delIter.Value()
-			var btcDel types.BTCDelegation
-			k.cdc.MustUnmarshal(btcDelBytes, &btcDel)
-			if btcDel.GetStatus(btcTipHeight, wValue) == types.BTCDelegationStatus_PENDING {
-				btcDels = append(btcDels, &btcDel)
+			var curBTCDels types.BTCDelegations
+			btcDelsBytes := delIter.Value()
+			k.cdc.MustUnmarshal(btcDelsBytes, &curBTCDels)
+			for i, btcDel := range curBTCDels.Dels {
+				if btcDel.GetStatus(btcTipHeight, wValue) == types.BTCDelegationStatus_PENDING {
+					// avoid using btcDel which changes over the iterations
+					btcDels = append(btcDels, curBTCDels.Dels[i])
+				}
 			}
 		}
 
@@ -167,27 +175,14 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	btcDelStore := k.btcDelegationStore(sdkCtx, valPK.MustMarshal())
+	btcDelStore := k.btcDelegationStore(sdkCtx, valPK)
 
-	// get current BTC height
-	btcTipHeight, err := k.GetCurrentBTCHeight(sdkCtx)
-	if err != nil {
-		return nil, err
-	}
-	// get value of w
-	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
-
-	var btcDels []*types.BTCDelegation
-	pageRes, err := query.FilteredPaginate(btcDelStore, req.Pagination, func(key, value []byte, accumulate bool) (bool, error) {
-		var btcDelegation types.BTCDelegation
-		k.cdc.MustUnmarshal(value, &btcDelegation)
-		if req.DelStatus == btcDelegation.GetStatus(btcTipHeight, wValue) {
-			if accumulate {
-				btcDels = append(btcDels, &btcDelegation)
-			}
-			return true, nil
-		}
-		return false, nil
+	btcDels := []*types.BTCDelegations{}
+	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
+		var curBTCDels types.BTCDelegations
+		k.cdc.MustUnmarshal(value, &curBTCDels)
+		btcDels = append(btcDels, &curBTCDels)
+		return nil
 	})
 	if err != nil {
 		return nil, err

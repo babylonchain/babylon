@@ -46,11 +46,9 @@ func (n *NodeConfig) QueryActiveBTCValidatorsAtHeight(height uint64) []*bstypes.
 	return resp.BtcValidators
 }
 
-func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string, status bstypes.BTCDelegationStatus) []*bstypes.BTCDelegation {
+func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string) []*bstypes.BTCDelegations {
 	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_validators/%s/delegations", valBTCPK)
-	values := url.Values{}
-	values.Set("del_status", fmt.Sprintf("%d", status))
-	bz, err := n.QueryGRPCGateway(path, values)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
 	var resp bstypes.QueryBTCValidatorDelegationsResponse

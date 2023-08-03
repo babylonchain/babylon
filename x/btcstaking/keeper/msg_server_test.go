@@ -130,6 +130,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		// get msgTx
 		stakingMsgTx, err := stakingTx.ToMsgTx()
 		require.NoError(t, err)
+		stakingTxHash := stakingTx.MustGetTxHash()
 
 		// random signer
 		signer := datagen.GenRandomAccount().Address
@@ -176,7 +177,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 			verify the new BTC delegation
 		*/
 		// check existence
-		actualDel, err := bsKeeper.GetBTCDelegation(ctx, *bbn.NewBIP340PubKeyFromBTCPK(validatorPK), *bbn.NewBIP340PubKeyFromBTCPK(delPK))
+		actualDel, err := bsKeeper.GetBTCDelegation(ctx, bbn.NewBIP340PubKeyFromBTCPK(validatorPK), bbn.NewBIP340PubKeyFromBTCPK(delPK), stakingTxHash)
 		require.NoError(t, err)
 		require.Equal(t, msgCreateBTCDel.BabylonPk, actualDel.BabylonPk)
 		require.Equal(t, msgCreateBTCDel.Pop, actualDel.Pop)
@@ -199,10 +200,11 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		)
 		require.NoError(t, err)
 		msgAddJurySig := &types.MsgAddJurySig{
-			Signer: signer,
-			ValPk:  btcVal.BtcPk,
-			DelPk:  actualDel.BtcPk,
-			Sig:    jurySig,
+			Signer:        signer,
+			ValPk:         btcVal.BtcPk,
+			DelPk:         actualDel.BtcPk,
+			StakingTxHash: stakingTxHash,
+			Sig:           jurySig,
 		}
 		_, err = ms.AddJurySig(ctx, msgAddJurySig)
 		require.NoError(t, err)
@@ -210,7 +212,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		/*
 			ensure jury sig is added successfully
 		*/
-		actualDelWithJurySig, err := bsKeeper.GetBTCDelegation(ctx, *bbn.NewBIP340PubKeyFromBTCPK(validatorPK), *bbn.NewBIP340PubKeyFromBTCPK(delPK))
+		actualDelWithJurySig, err := bsKeeper.GetBTCDelegation(ctx, bbn.NewBIP340PubKeyFromBTCPK(validatorPK), bbn.NewBIP340PubKeyFromBTCPK(delPK), stakingTxHash)
 		require.NoError(t, err)
 		require.Equal(t, actualDelWithJurySig.JurySig.MustMarshal(), jurySig.MustMarshal())
 		require.True(t, actualDelWithJurySig.HasJurySig())

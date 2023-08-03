@@ -69,9 +69,12 @@ message MsgAddJurySig {
   // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
   // the PK follows encoding in BIP-340 spec
   bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // staking_tx_hash is the hash of the staking tx. 
+  // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+  string staking_tx_hash = 4;
   // sig is the signature of the jury
   // the signature follows encoding in BIP-340 spec
-  bytes sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 // MsgAddJurySigResponse is the response for MsgAddJurySig
 message MsgAddJurySigResponse {}

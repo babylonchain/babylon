@@ -125,7 +125,6 @@ message QueryActiveBTCValidatorsAtHeightResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
-
 // QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
 message QueryActivatedHeightRequest {}
 
@@ -142,18 +141,15 @@ message QueryBTCValidatorDelegationsRequest {
   // the PK follows encoding in BIP-340 spec
   string val_btc_pk_hex = 1;
 
-  // delegation_status is the status of the delegations we are filtering for
-  BTCDelegationStatus del_status = 2;
-
   // pagination defines an optional pagination for the request.
-  cosmos.base.query.v1beta1.PageRequest pagination = 3;
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
 // QueryBTCValidatorDelegationsResponse is the response type for the
 // Query/BTCValidatorDelegations RPC method.
 message QueryBTCValidatorDelegationsResponse {
   // btc_delegations contains all the queried BTC delegations.
-  repeated BTCDelegation btc_delegations = 1;
+  repeated BTCDelegations btc_delegations = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
