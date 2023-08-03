@@ -20,6 +20,11 @@ service Query {
   rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
     option (google.api.http).get = "/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/public_randomness_list";
   }
+
+  // Block queries a block at a given height
+  rpc Block(QueryBlockRequest) returns (QueryBlockResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/blocks/{height}";
+  }
   
   // ListBlocks is a range query for blocks at a given status
   rpc ListBlocks(QueryListBlocksRequest) returns (QueryListBlocksResponse) {
@@ -76,6 +81,20 @@ enum QueriedBlockStatus {
   FINALIZED = 1;
   // ANY means the block can be in any status
   ANY = 2;
+}
+
+// QueryBlockRequest is the request type for the
+// Query/Block RPC method.
+message QueryBlockRequest {
+  // height is the height of the Babylon block
+  uint64 height = 1;
+}
+
+// QueryBlockResponse is the response type for the
+// Query/Block RPC method.
+message QueryBlockResponse {
+  // block is the Babylon at the given height
+  IndexedBlock block = 1;
 }
 
 // QueryListBlocksRequest is the request type for the

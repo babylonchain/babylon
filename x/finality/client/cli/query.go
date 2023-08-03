@@ -6,12 +6,15 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/babylonchain/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
+
+	"github.com/babylonchain/babylon/x/finality/types"
 )
 
-const flagQueriedBlockStatus = "queried-block-status"
+const (
+	flagQueriedBlockStatus = "queried-block-status"
+)
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(queryRoute string) *cobra.Command {
@@ -26,6 +29,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdListPublicRandomness())
+	cmd.AddCommand(CmdBlock())
 	cmd.AddCommand(CmdListBlocks())
 	cmd.AddCommand(CmdVotesAtHeight())
 
@@ -132,6 +136,37 @@ func CmdListBlocks() *cobra.Command {
 	flags.AddQueryFlagsToCmd(cmd)
 	flags.AddPaginationFlagsToCmd(cmd, "list-blocks")
 	cmd.Flags().String(flagQueriedBlockStatus, "Any", "Status of the queried blocks (NonFinalized|Finalized|Any)")
+
+	return cmd
+}
+
+func CmdBlock() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "block [height]",
+		Short: "show the information of the block at a given height",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			queriedBlockHeight, err := strconv.ParseUint(args[0], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.Block(cmd.Context(), &types.QueryBlockRequest{
+				Height: queriedBlockHeight,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }

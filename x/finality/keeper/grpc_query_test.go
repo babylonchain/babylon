@@ -4,13 +4,14 @@ import (
 	"math/rand"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzListPublicRandomness(f *testing.F) {
@@ -49,6 +50,37 @@ func FuzzListPublicRandomness(f *testing.F) {
 			actualPR := resp.PubRandMap[i]
 			require.Equal(t, expectedPR.MustMarshal(), actualPR.MustMarshal())
 		}
+	})
+}
+
+func FuzzBlock(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		height := datagen.RandomInt(r, 100)
+		lch := datagen.GenRandomByteArray(r, 32)
+		ib := &types.IndexedBlock{
+			Height:         height,
+			LastCommitHash: lch,
+		}
+
+		if datagen.RandomInt(r, 2) == 1 {
+			ib.Finalized = true
+		}
+
+		keeper.SetBlock(ctx, ib)
+		req := &types.QueryBlockRequest{
+			Height: height,
+		}
+		resp, err := keeper.Block(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, height, resp.Block.Height)
+		require.Equal(t, lch, resp.Block.LastCommitHash)
 	})
 }
 

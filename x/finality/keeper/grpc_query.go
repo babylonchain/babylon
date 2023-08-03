@@ -50,6 +50,19 @@ func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPu
 	return resp, nil
 }
 
+func (k Keeper) Block(ctx context.Context, req *types.QueryBlockRequest) (*types.QueryBlockResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	b, err := k.GetBlock(sdkCtx, req.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryBlockResponse{Block: b}, nil
+}
+
 // ListBlocks returns a list of blocks at the given finalisation status
 func (k Keeper) ListBlocks(ctx context.Context, req *types.QueryListBlocksRequest) (*types.QueryListBlocksResponse, error) {
 	if req == nil {

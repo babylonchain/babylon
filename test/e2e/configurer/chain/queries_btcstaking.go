@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/test/e2e/util"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
-	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
@@ -107,4 +108,16 @@ func (n *NodeConfig) QueryListBlocks(status ftypes.QueriedBlockStatus) []*ftypes
 	require.NoError(n.t, err)
 
 	return resp.Blocks
+}
+
+func (n *NodeConfig) QueryIndexedBlock(height uint64) *ftypes.IndexedBlock {
+	path := fmt.Sprintf("/babylon/finality/v1/blocks/%d", height)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp ftypes.QueryBlockResponse
+	err = util.Cdc.UnmarshalJSON(bz, &resp)
+	require.NoError(n.t, err)
+
+	return resp.Block
 }

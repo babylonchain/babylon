@@ -5,6 +5,12 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -14,11 +20,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -233,7 +234,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// submit finality signature
 	nonValidatorNode.AddFinalitySig(btcVal.BtcPk, activatedHeight, blockToVote.LastCommitHash, eotsSig)
 
-	// ensure vote is eventually casted
+	// ensure vote is eventually cast
 	nonValidatorNode.WaitForNextBlock()
 	var votes []bbn.BIP340PubKey
 	s.Eventually(func() bool {
@@ -241,7 +242,10 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		return len(votes) > 0
 	}, time.Minute, time.Second*5)
 	s.Equal(votes[0].MarshalHex(), btcVal.BtcPk.MarshalHex())
-	// once the vote is castedm, ensure block is finalised
+	// once the vote is cast, ensure block is finalised
+	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
+	s.NotEmpty(finalizedBlock)
+	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlock.LastCommitHash)
 	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 	s.NotEmpty(finalizedBlocks)
 	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlocks[0].LastCommitHash)
