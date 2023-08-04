@@ -38,6 +38,33 @@ func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidators
 	return &types.QueryBTCValidatorsResponse{BtcValidators: btcValidators, Pagination: pageRes}, nil
 }
 
+// BTCValidator returns the validator with the specified validator BTC PK
+func (k Keeper) BTCValidator(ctx context.Context, req *types.QueryBTCValidatorRequest) (*types.QueryBTCValidatorResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	if len(req.ValBtcPkHex) == 0 {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest, "validator BTC public key cannot be empty")
+	}
+
+	valPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	if err != nil {
+		return nil, err
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	val, err := k.GetBTCValidator(sdkCtx, valPK.MustMarshal())
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryBTCValidatorResponse{BtcValidator: val}, nil
+}
+
 // PendingBTCDelegations returns all pending BTC delegations
 // TODO: find a good way to support pagination of this query
 func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendingBTCDelegationsRequest) (*types.QueryPendingBTCDelegationsResponse, error) {

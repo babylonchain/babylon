@@ -21,6 +21,11 @@ service Query {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators";
   }
 
+  // BTCValidator info about one validator
+  rpc BTCValidator(QueryBTCValidatorRequest) returns (QueryBTCValidatorResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/validator";
+  }
+
   // PendingBTCDelegations queries all pending BTC delegations
   rpc PendingBTCDelegations(QueryPendingBTCDelegationsRequest) returns (QueryPendingBTCDelegationsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/pending_btc_delegations";
@@ -74,6 +79,18 @@ message QueryBTCValidatorsResponse {
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
+
+// QueryBTCValidatorsRequest requests information about a BTC validator
+message QueryBTCValidatorRequest {
+  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+  string val_btc_pk_hex = 1;
+}
+
+// QueryBTCValidatorsResponse resoponse contains information about a BTC validator
+message QueryBTCValidatorResponse {
+  // btc_validator contains the BTC validator
+  BTCValidator btc_validator = 1;
+}
 
 // QueryPendingBTCDelegationsRequest is the request type for the
 // Query/PendingBTCDelegations RPC method.

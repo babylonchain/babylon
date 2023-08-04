@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"errors"
 	"math/rand"
 	"testing"
 
@@ -104,6 +105,56 @@ func FuzzBTCValidators(f *testing.F) {
 		if len(btcValsFound) != len(btcValsMap) {
 			t.Errorf("Some vals were missed. Got %d while %d were expected", len(btcValsFound), len(btcValsMap))
 		}
+	})
+}
+
+func FuzzBTCValidator(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// Setup keeper and context
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// Generate random btc validators and add them to kv store
+		btcValsMap := make(map[string]*types.BTCValidator)
+		for i := 0; i < int(datagen.RandomInt(r, 10)+1); i++ {
+			btcVal, err := datagen.GenRandomBTCValidator(r)
+			require.NoError(t, err)
+
+			keeper.SetBTCValidator(ctx, btcVal)
+			btcValsMap[btcVal.BtcPk.MarshalHex()] = btcVal
+		}
+
+		// Test nil request
+		resp, err := keeper.BTCValidators(ctx, nil)
+		require.Error(t, err)
+		require.Nil(t, resp)
+
+		for k, v := range btcValsMap {
+			// Generate a request with a valid key
+			req := types.QueryBTCValidatorRequest{ValBtcPkHex: k}
+			resp, err := keeper.BTCValidator(ctx, &req)
+			if err != nil {
+				t.Errorf("Valid request led to an error %s", err)
+			}
+			if resp == nil {
+				t.Fatalf("Valid request led to a nil response")
+			}
+
+			// check keys from map matches those in returned response
+			require.Equal(t, v.BtcPk.MarshalHex(), resp.BtcValidator.BtcPk.MarshalHex())
+			require.Equal(t, v.BabylonPk, resp.BtcValidator.BabylonPk)
+		}
+
+		// check some random non exsisting guy
+		btcVal, err := datagen.GenRandomBTCValidator(r)
+		require.NoError(t, err)
+		req := types.QueryBTCValidatorRequest{ValBtcPkHex: btcVal.BtcPk.MarshalHex()}
+		respNonExists, err := keeper.BTCValidator(ctx, &req)
+		require.Error(t, err)
+		require.Nil(t, respNonExists)
+		require.True(t, errors.Is(err, types.ErrBTCValNotFound))
 	})
 }
 
