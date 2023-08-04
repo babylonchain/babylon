@@ -113,6 +113,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// slash a random BTC validator
 		slashedIdx := datagen.RandomInt(r, int(numBTCValsWithVotingPower))
 		slashedVal := btcVals[slashedIdx]
+		// This will be called to get the slashed height
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		err = keeper.SlashBTCValidator(ctx, slashedVal.BtcPk.MustMarshal())
 		require.NoError(t, err)
 		// move to later Babylon height and 2nd BTC height

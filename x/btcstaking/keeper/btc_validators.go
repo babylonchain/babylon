@@ -44,10 +44,11 @@ func (k Keeper) SlashBTCValidator(ctx sdk.Context, valBTCPK []byte) error {
 		return types.ErrBTCValAlreadySlashed
 	}
 	btcVal.SlashedBabylonHeight = uint64(ctx.BlockHeight())
-	btcVal.SlashedBtcHeight, err = k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		panic(fmt.Errorf("failed to get current BTC height: %w", err))
+	btcTip := k.btclcKeeper.GetTipInfo(ctx)
+	if btcTip == nil {
+		panic(fmt.Errorf("failed to get current BTC tip"))
 	}
+	btcVal.SlashedBtcHeight = btcTip.Height
 	k.SetBTCValidator(ctx, btcVal)
 	return nil
 }
