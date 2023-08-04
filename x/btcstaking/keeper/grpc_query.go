@@ -73,7 +73,7 @@ func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendi
 
 		// iterate over each BTC delegation under this BTC validator
 		for ; delIter.Valid(); delIter.Next() {
-			var curBTCDels types.BTCDelegations
+			var curBTCDels types.BTCDelegatorDelegations
 			btcDelsBytes := delIter.Value()
 			k.cdc.MustUnmarshal(btcDelsBytes, &curBTCDels)
 			for i, btcDel := range curBTCDels.Dels {
@@ -179,9 +179,9 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	btcDelStore := k.btcDelegationStore(sdkCtx, valPK)
 
-	btcDels := []*types.BTCDelegations{}
+	btcDels := []*types.BTCDelegatorDelegations{}
 	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
-		var curBTCDels types.BTCDelegations
+		var curBTCDels types.BTCDelegatorDelegations
 		k.cdc.MustUnmarshal(value, &curBTCDels)
 		btcDels = append(btcDels, &curBTCDels)
 		return nil

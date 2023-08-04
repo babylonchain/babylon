@@ -82,8 +82,8 @@ message BTCDelegation {
     bytes jury_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
-// BTCDelegations is a collection of BTC delegations, typically from the same delegator.
-message BTCDelegations {
+// BTCDelegatorDelegations is a collection of BTC delegations, typically from the same delegator.
+message BTCDelegatorDelegations {
     repeated BTCDelegation dels = 1;
 }
 

@@ -125,8 +125,8 @@ func (d *BTCDelegation) MustGetStakingTxHash() string {
 	return d.StakingTx.MustGetTxHash()
 }
 
-func NewBTCDelegations() *BTCDelegations {
-	return &BTCDelegations{
+func NewBTCDelegatorDelegations() *BTCDelegatorDelegations {
+	return &BTCDelegatorDelegations{
 		Dels: []*BTCDelegation{},
 	}
 }
@@ -134,7 +134,7 @@ func NewBTCDelegations() *BTCDelegations {
 // Add appends a given BTC delegation to the BTC delegations
 // It requires the given BTC delegation is not in the list yet
 // TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegations) Add(del *BTCDelegation) error {
+func (dels *BTCDelegatorDelegations) Add(del *BTCDelegation) error {
 	stakingTxHash, err := del.GetStakingTxHash()
 	if err != nil {
 		return fmt.Errorf("failed to add BTC delegation to BTC delegations: %w", err)
@@ -150,7 +150,7 @@ func (dels *BTCDelegations) Add(del *BTCDelegation) error {
 
 // AddJurySig adds a jury signature to an existing BTC delegation in the BTC delegations
 // TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegations) AddJurySig(stakingTxHash string, sig *bbn.BIP340Signature) error {
+func (dels *BTCDelegatorDelegations) AddJurySig(stakingTxHash string, sig *bbn.BIP340Signature) error {
 	del, err := dels.Get(stakingTxHash)
 	if err != nil {
 		return fmt.Errorf("cannot find the BTC delegation with staking tx hash %s: %w", stakingTxHash, err)
@@ -163,7 +163,7 @@ func (dels *BTCDelegations) AddJurySig(stakingTxHash string, sig *bbn.BIP340Sign
 }
 
 // TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegations) Has(stakingTxHash string) bool {
+func (dels *BTCDelegatorDelegations) Has(stakingTxHash string) bool {
 	for _, d := range dels.Dels {
 		dStakingTxHash := d.MustGetStakingTxHash()
 		if dStakingTxHash == stakingTxHash {
@@ -174,7 +174,7 @@ func (dels *BTCDelegations) Has(stakingTxHash string) bool {
 }
 
 // TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegations) Get(stakingTxHash string) (*BTCDelegation, error) {
+func (dels *BTCDelegatorDelegations) Get(stakingTxHash string) (*BTCDelegation, error) {
 	for _, d := range dels.Dels {
 		dStakingTxHash := d.MustGetStakingTxHash()
 		if dStakingTxHash == stakingTxHash {
@@ -185,7 +185,7 @@ func (dels *BTCDelegations) Get(stakingTxHash string) (*BTCDelegation, error) {
 }
 
 // VotingPower calculates the total voting power of all BTC delegations
-func (dels *BTCDelegations) VotingPower(btcHeight uint64, w uint64) uint64 {
+func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint64, w uint64) uint64 {
 	power := uint64(0)
 	for _, del := range dels.Dels {
 		power += del.VotingPower(btcHeight, w)

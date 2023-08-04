@@ -149,7 +149,7 @@ message QueryBTCValidatorDelegationsRequest {
 // Query/BTCValidatorDelegations RPC method.
 message QueryBTCValidatorDelegationsResponse {
   // btc_delegations contains all the queried BTC delegations.
-  repeated BTCDelegations btc_delegations = 1;
+  repeated BTCDelegatorDelegations btc_delegations = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;

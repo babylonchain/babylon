@@ -11,7 +11,7 @@ import (
 
 func (k Keeper) SetBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
 	var (
-		btcDels = types.NewBTCDelegations()
+		btcDels = types.NewBTCDelegatorDelegations()
 		err     error
 	)
 	if k.hasBTCDelegations(ctx, btcDel.ValBtcPk, btcDel.BtcPk) {
@@ -44,7 +44,7 @@ func (k Keeper) AddJurySigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340P
 }
 
 // setBTCDelegations sets the given BTC delegation to KVStore
-func (k Keeper) setBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDels *types.BTCDelegations) {
+func (k Keeper) setBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDels *types.BTCDelegatorDelegations) {
 	delBTCPKBytes := delBTCPK.MustMarshal()
 
 	store := k.btcDelegationStore(ctx, valBTCPK)
@@ -74,7 +74,7 @@ func (k Keeper) HasBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, de
 }
 
 // getBTCDelegations gets the BTC delegations with a given BTC PK under a given BTC validator
-func (k Keeper) getBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegations, error) {
+func (k Keeper) getBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
 	valBTCPKBytes := valBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
 
@@ -89,7 +89,7 @@ func (k Keeper) getBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, d
 		return nil, types.ErrBTCDelNotFound
 	}
 	// get and unmarshal
-	var btcDels types.BTCDelegations
+	var btcDels types.BTCDelegatorDelegations
 	btcDelsBytes := store.Get(delBTCPKBytes)
 	k.cdc.MustUnmarshal(btcDelsBytes, &btcDels)
 	return &btcDels, nil
