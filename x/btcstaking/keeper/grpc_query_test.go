@@ -361,7 +361,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			resp, err = keeper.BTCValidatorDelegations(ctx, &req)
 			require.NoError(t, err)
 			require.NotNil(t, resp)
-			for _, btcDels := range resp.BtcDelegations {
+			for _, btcDels := range resp.BtcDelegatorDelegations {
 				require.Len(t, btcDels.Dels, 1)
 				btcDel := btcDels.Dels[0]
 				require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)

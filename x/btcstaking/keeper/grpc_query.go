@@ -190,5 +190,5 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 		return nil, err
 	}
 
-	return &types.QueryBTCValidatorDelegationsResponse{BtcDelegations: btcDels, Pagination: pageRes}, nil
+	return &types.QueryBTCValidatorDelegationsResponse{BtcDelegatorDelegations: btcDels, Pagination: pageRes}, nil
 }

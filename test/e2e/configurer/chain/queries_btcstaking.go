@@ -55,7 +55,7 @@ func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string) []*bstypes.BT
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return resp.BtcDelegations
+	return resp.BtcDelegatorDelegations
 }
 
 func (n *NodeConfig) QueryActivatedHeight() uint64 {

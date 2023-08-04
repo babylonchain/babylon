@@ -330,7 +330,7 @@ func (m *BTCDelegation) GetStakingTx() *StakingTx {
 	return nil
 }
 
-// BTCDelegations is a collection of BTC delegations, typically from the same delegator.
+// BTCDelegatorDelegations is a collection of BTC delegations, typically from the same delegator.
 type BTCDelegatorDelegations struct {
 	Dels []*BTCDelegation `protobuf:"bytes,1,rep,name=dels,proto3" json:"dels,omitempty"`
 }
