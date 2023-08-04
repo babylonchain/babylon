@@ -27,7 +27,7 @@ func FuzzListPublicRandomness(f *testing.F) {
 		valBTCPK, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
 		startHeight := datagen.RandomInt(r, 100)
-		numPubRand := datagen.RandomInt(r, 1000) + 1
+		numPubRand := datagen.RandomInt(r, 1000) + 2
 		_, prList, err := datagen.GenRandomPubRandList(r, numPubRand)
 		require.NoError(t, err)
 		keeper.SetPubRandList(ctx, valBTCPK, startHeight, prList)
