@@ -44,9 +44,33 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	// ensure the BTC validator exists
+	btcVal, err := ms.BTCStakingKeeper.GetBTCValidator(ctx, req.ValBtcPk.MustMarshal())
+	if err != nil {
+		return nil, err
+	}
+	// ensure the BTC validator is not slashed at this time point
+	// NOTE: it's possible that the BTC validator equivocates for height h, and the signature is processed at
+	// height h' > h. In this case:
+	// - Babylon should reject any new signature from this BTC validator, since it's known to be adversarial
+	// - Babylon should set its voting power since height h'+1 to be zero, due to the same reason
+	// - Babylon should NOT set its voting power between [h, h'] to be zero, since
+	//   - Babylon BTC staking ensures safety upon 2f+1 votes, *even if* f of them are adversarial. This is
+	//     because as long as a block gets 2f+1 votes, any other block with 2f+1 votes has a f+1 quorum
+	//     intersection with this block, contradicting to the assumption and leading to the safety proof.
+	//     This ensures slashable safety together with EOTS, thus does not undermine Babylon's security guarantee.
+	//   - Due to this reason, when tallying a block, Babylon finalises this block upon 2f+1 votes. If we
+	//     modify voting power table in the history, some finality decisions might be contradicting to the
+	//     signature set and voting power table.
+	//   - To fix the above issue, Babylon has to allow finalise and unfinalise blocks. However, this means
+	//     Babylon will lose safety under an adaptive adversary corrupting even 1 validator. It can simply
+	//     corrupt a new validator and equivocate a historical block over and over again, making a previous block
+	//     unfinalisable forever
+	if btcVal.IsSlashed() {
+		return nil, bstypes.ErrBTCValAlreadySlashed
+	}
+
 	// ensure the BTC validator has voting power at this height
-	// NOTE: if a BTC validator has signed two different blocks at the same height,
-	// then it will be slashed and its voting power will be reduced to zero
 	valPK := req.ValBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, valPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the BTC validator %v does not have voting power at height %d", valPK.MustMarshal(), req.BlockHeight)

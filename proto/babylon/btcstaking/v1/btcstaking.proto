@@ -15,8 +15,14 @@ message BTCValidator {
     bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // pop is the proof of possession of babylon_pk and btc_pk
     ProofOfPossession pop = 3;
-    // slashed indicates whether the BTC validator is slashed or not
-    bool slashed = 4;
+    // slashed_babylon_height indicates the Babylon height when
+    // the BTC validator is slashed.
+    // if it's 0 then the BTC validator is not slashed
+    uint64 slashed_babylon_height = 4;
+    // slashed_btc_height indicates the BTC height when
+    // the BTC validator is slashed.
+    // if it's 0 then the BTC validator is not slashed
+    uint64 slashed_btc_height = 5;
 }
 
 // BTCValidatorWithMeta wraps the BTCValidator with meta data.
@@ -28,6 +34,14 @@ message BTCValidatorWithMeta {
     uint64 height = 2;
     // voting_power is the voting power of this BTC validator at the given height
     uint64 voting_power = 3;
+    // slashed_babylon_height indicates the Babylon height when
+    // the BTC validator is slashed.
+    // if it's 0 then the BTC validator is not slashed
+    uint64 slashed_babylon_height = 4;
+    // slashed_btc_height indicates the BTC height when
+    // the BTC validator is slashed.
+    // if it's 0 then the BTC validator is not slashed
+    uint64 slashed_btc_height = 5;
 }
 
 // BTCDelegation defines a BTC delegation

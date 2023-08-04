@@ -37,7 +37,7 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 			// failed to get a BTC validator with voting power is a programming error
 			panic(err)
 		}
-		if btcVal.Slashed {
+		if btcVal.IsSlashed() {
 			// slashed BTC validator is removed from BTC validator set
 			continue
 		}

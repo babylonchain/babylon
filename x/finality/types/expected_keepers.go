@@ -1,11 +1,13 @@
 package types
 
 import (
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 type BTCStakingKeeper interface {
+	GetBTCValidator(ctx sdk.Context, valBTCPK []byte) (*bstypes.BTCValidator, error)
 	HasBTCValidator(ctx sdk.Context, valBTCPK []byte) bool
 	SlashBTCValidator(ctx sdk.Context, valBTCPK []byte) error
 	GetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64) uint64

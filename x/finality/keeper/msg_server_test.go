@@ -8,6 +8,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/finality/keeper"
 	"github.com/babylonchain/babylon/x/finality/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -112,6 +113,9 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// create and register a random BTC validator
 		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		btcVal, err := datagen.GenRandomBTCValidatorWithBTCSK(r, btcSK)
+		require.NoError(t, err)
 		valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
 		valBTCPKBytes := valBTCPK.MustMarshal()
 		require.NoError(t, err)
@@ -134,6 +138,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 1: fail if the BTC validator does not have voting power
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(valBTCPKBytes), gomock.Eq(blockHeight)).Return(uint64(0)).Times(1)
+		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
 
@@ -143,6 +148,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// Case 2: fail if the BTC validator has not committed public randomness at that height
 		blockHeight2 := startHeight + numPubRand + 1
 		bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(valBTCPKBytes), gomock.Eq(blockHeight2)).Return(uint64(1)).Times(1)
+		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		msg.BlockHeight = blockHeight2
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
@@ -153,6 +159,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// index this block first
 		ctx = ctx.WithBlockHeader(tmproto.Header{Height: int64(blockHeight), LastCommitHash: blockHash})
 		fKeeper.IndexBlock(ctx)
+		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		// add vote and it should work
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.NoError(t, err)
@@ -162,6 +169,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.Equal(t, msg.FinalitySig.MustMarshal(), sig.MustMarshal())
 
 		// Case 4: fail if duplicate vote
+		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		_, err = ms.AddFinalitySig(ctx, msg)
 		require.Error(t, err)
 
@@ -169,6 +177,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		blockHash2 := datagen.GenRandomByteArray(r, 32)
 		msg2, err := types.NewMsgAddFinalitySig(signer, btcSK, sr, blockHeight, blockHash2)
 		require.NoError(t, err)
+		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		// mock slashing interface
 		bsKeeper.EXPECT().SlashBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(nil).Times(1)
 		// NOTE: even though this BTC validator is slashed, the msg should be successful
@@ -192,5 +201,11 @@ func FuzzAddFinalitySig(f *testing.F) {
 		// not affect verification
 		require.True(t, btcSK.Key.Equals(&btcSK2.Key) || btcSK.Key.Negate().Equals(&btcSK2.Key))
 		require.Equal(t, btcSK.PubKey().SerializeCompressed()[1:], btcSK2.PubKey().SerializeCompressed()[1:])
+
+		// Case 6: slashed BTC validator cannot vote
+		btcVal.SlashedBabylonHeight = blockHeight
+		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
+		_, err = ms.AddFinalitySig(ctx, msg)
+		require.Equal(t, bstypes.ErrBTCValAlreadySlashed, err)
 	})
 }

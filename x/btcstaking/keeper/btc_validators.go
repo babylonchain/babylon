@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,10 +40,14 @@ func (k Keeper) SlashBTCValidator(ctx sdk.Context, valBTCPK []byte) error {
 	if err != nil {
 		return err
 	}
-	if btcVal.Slashed {
+	if btcVal.IsSlashed() {
 		return types.ErrBTCValAlreadySlashed
 	}
-	btcVal.Slashed = true
+	btcVal.SlashedBabylonHeight = uint64(ctx.BlockHeight())
+	btcVal.SlashedBtcHeight, err = k.GetCurrentBTCHeight(ctx)
+	if err != nil {
+		panic(fmt.Errorf("failed to get current BTC height: %w", err))
+	}
 	k.SetBTCValidator(ctx, btcVal)
 	return nil
 }

@@ -127,9 +127,11 @@ func (k Keeper) ActiveBTCValidatorsAtHeight(ctx context.Context, req *types.Quer
 		votingPower := k.GetVotingPower(sdkCtx, key, req.Height)
 		if votingPower > 0 {
 			btcValidatorWithMeta := types.BTCValidatorWithMeta{
-				BtcPk:       btcValidator.BtcPk,
-				Height:      req.Height,
-				VotingPower: votingPower,
+				BtcPk:                btcValidator.BtcPk,
+				Height:               req.Height,
+				VotingPower:          votingPower,
+				SlashedBabylonHeight: btcValidator.SlashedBabylonHeight,
+				SlashedBtcHeight:     btcValidator.SlashedBtcHeight,
 			}
 			btcValidatorsWithMeta = append(btcValidatorsWithMeta, &btcValidatorWithMeta)
 		}

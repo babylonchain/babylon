@@ -7,8 +7,9 @@ package types
 import (
 	reflect "reflect"
 
-	types "github.com/cosmos/cosmos-sdk/types"
-	types0 "github.com/cosmos/cosmos-sdk/x/auth/types"
+	types "github.com/babylonchain/babylon/x/btcstaking/types"
+	types0 "github.com/cosmos/cosmos-sdk/types"
+	types1 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -36,7 +37,7 @@ func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 }
 
 // GetBTCStakingActivatedHeight mocks base method.
-func (m *MockBTCStakingKeeper) GetBTCStakingActivatedHeight(ctx types.Context) (uint64, error) {
+func (m *MockBTCStakingKeeper) GetBTCStakingActivatedHeight(ctx types0.Context) (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBTCStakingActivatedHeight", ctx)
 	ret0, _ := ret[0].(uint64)
@@ -50,8 +51,23 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCStakingActivatedHeight(ctx int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCStakingActivatedHeight", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCStakingActivatedHeight), ctx)
 }
 
+// GetBTCValidator mocks base method.
+func (m *MockBTCStakingKeeper) GetBTCValidator(ctx types0.Context, valBTCPK []byte) (*types.BTCValidator, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBTCValidator", ctx, valBTCPK)
+	ret0, _ := ret[0].(*types.BTCValidator)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetBTCValidator indicates an expected call of GetBTCValidator.
+func (mr *MockBTCStakingKeeperMockRecorder) GetBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCValidator), ctx, valBTCPK)
+}
+
 // GetVotingPower mocks base method.
-func (m *MockBTCStakingKeeper) GetVotingPower(ctx types.Context, valBTCPK []byte, height uint64) uint64 {
+func (m *MockBTCStakingKeeper) GetVotingPower(ctx types0.Context, valBTCPK []byte, height uint64) uint64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVotingPower", ctx, valBTCPK, height)
 	ret0, _ := ret[0].(uint64)
@@ -65,7 +81,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, valBTCPK, height
 }
 
 // GetVotingPowerTable mocks base method.
-func (m *MockBTCStakingKeeper) GetVotingPowerTable(ctx types.Context, height uint64) map[string]uint64 {
+func (m *MockBTCStakingKeeper) GetVotingPowerTable(ctx types0.Context, height uint64) map[string]uint64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVotingPowerTable", ctx, height)
 	ret0, _ := ret[0].(map[string]uint64)
@@ -79,7 +95,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPowerTable(ctx, height inte
 }
 
 // HasBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) HasBTCValidator(ctx types.Context, valBTCPK []byte) bool {
+func (m *MockBTCStakingKeeper) HasBTCValidator(ctx types0.Context, valBTCPK []byte) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HasBTCValidator", ctx, valBTCPK)
 	ret0, _ := ret[0].(bool)
@@ -93,7 +109,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasBTCValidator(ctx, valBTCPK interf
 }
 
 // SlashBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx types.Context, valBTCPK []byte) error {
+func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx types0.Context, valBTCPK []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SlashBTCValidator", ctx, valBTCPK)
 	ret0, _ := ret[0].(error)
@@ -130,10 +146,10 @@ func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
 }
 
 // GetAccount mocks base method.
-func (m *MockAccountKeeper) GetAccount(ctx types.Context, addr types.AccAddress) types0.AccountI {
+func (m *MockAccountKeeper) GetAccount(ctx types0.Context, addr types0.AccAddress) types1.AccountI {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAccount", ctx, addr)
-	ret0, _ := ret[0].(types0.AccountI)
+	ret0, _ := ret[0].(types1.AccountI)
 	return ret0
 }
 
@@ -167,10 +183,10 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 }
 
 // SpendableCoins mocks base method.
-func (m *MockBankKeeper) SpendableCoins(ctx types.Context, addr types.AccAddress) types.Coins {
+func (m *MockBankKeeper) SpendableCoins(ctx types0.Context, addr types0.AccAddress) types0.Coins {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SpendableCoins", ctx, addr)
-	ret0, _ := ret[0].(types.Coins)
+	ret0, _ := ret[0].(types0.Coins)
 	return ret0
 }
 

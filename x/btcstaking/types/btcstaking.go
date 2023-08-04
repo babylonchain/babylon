@@ -12,6 +12,10 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+func (v *BTCValidator) IsSlashed() bool {
+	return v.SlashedBabylonHeight > 0
+}
+
 func (v *BTCValidator) ValidateBasic() error {
 	// ensure fields are non-empty and well-formatted
 	if v.BabylonPk == nil {
