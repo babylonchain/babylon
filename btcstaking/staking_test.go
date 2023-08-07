@@ -93,9 +93,32 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 			}
 		}
 
-		fee := int64(r.Intn(1000) + minFee)
-
+		// Always check case with min fee
 		slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+			stakingTx,
+			uint32(stakingOutputIdx),
+			slashingAddress,
+			int64(minFee),
+			script,
+			&chaincfg.MainNetParams,
+		)
+
+		require.NoError(t, err)
+
+		_, err = btcstaking.CheckTransactions(
+			slashingTx,
+			stakingTx,
+			int64(minFee),
+			slashingAddress,
+			script,
+			&chaincfg.MainNetParams,
+		)
+
+		require.NoError(t, err)
+
+		// Check case with some random fee
+		fee := int64(r.Intn(1000) + minFee)
+		slashingTx, err = btcstaking.BuildSlashingTxFromStakingTxStrict(
 			stakingTx,
 			uint32(stakingOutputIdx),
 			slashingAddress,

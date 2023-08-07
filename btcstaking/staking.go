@@ -726,7 +726,7 @@ func CheckTransactions(
 		return nil, fmt.Errorf("slashing transaction must not spend more than staking transaction")
 	}
 
-	if stakingOutput.Value-slashingTx.TxOut[0].Value <= slashingTxMinFee {
+	if stakingOutput.Value-slashingTx.TxOut[0].Value < slashingTxMinFee {
 		return nil, fmt.Errorf("slashing transaction fee must be larger than %d", slashingTxMinFee)
 	}
 
