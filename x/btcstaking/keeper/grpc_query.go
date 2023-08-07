@@ -135,6 +135,36 @@ func (k Keeper) BTCValidatorPowerAtHeight(ctx context.Context, req *types.QueryB
 	return &types.QueryBTCValidatorPowerAtHeightResponse{VotingPower: power}, nil
 }
 
+// BTCValidatorCurrentPower returns the voting power of the specified validator
+// at the current height
+func (k Keeper) BTCValidatorCurrentPower(ctx context.Context, req *types.QueryBTCValidatorCurrentPowerRequest) (*types.QueryBTCValidatorCurrentPowerResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	valBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal validator BTC PK hex: %v", err)
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	power := uint64(0)
+	curHeight := uint64(sdkCtx.BlockHeight())
+
+	// if voting power table is recorded at the current height, use this voting power
+	if k.HasVotingPowerTable(sdkCtx, curHeight) {
+		power = k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), curHeight)
+	} else {
+		// NOTE: it's possible that the voting power is not recorded at the current height,
+		// e.g., `EndBlock` is not reached yet
+		// in this case, we use the last height
+		curHeight -= 1
+		power = k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), curHeight)
+	}
+
+	return &types.QueryBTCValidatorCurrentPowerResponse{Height: curHeight, VotingPower: power}, nil
+}
+
 // ActiveBTCValidatorsAtHeight returns the active BTC validators at the provided height
 func (k Keeper) ActiveBTCValidatorsAtHeight(ctx context.Context, req *types.QueryActiveBTCValidatorsAtHeightRequest) (*types.QueryActiveBTCValidatorsAtHeightResponse, error) {
 	if req == nil {

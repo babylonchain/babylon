@@ -41,6 +41,11 @@ service Query {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power/{height}";
   }
 
+  // BTCValidatorCurrentPower queries the voting power of a BTC validator at the current height
+  rpc BTCValidatorCurrentPower(QueryBTCValidatorCurrentPowerRequest) returns (QueryBTCValidatorCurrentPowerResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/power";
+  }
+
   // ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
   // there exists 1 BTC validator with voting power
   rpc ActivatedHeight(QueryActivatedHeightRequest) returns (QueryActivatedHeightResponse) {
@@ -120,6 +125,24 @@ message QueryBTCValidatorPowerAtHeightRequest {
 message QueryBTCValidatorPowerAtHeightResponse {
   // voting_power is the voting power of the BTC validator
   uint64 voting_power = 1;
+}
+
+// QueryBTCValidatorCurrentPowerRequest is the request type for the
+// Query/BTCValidatorCurrentPower RPC method.
+message QueryBTCValidatorCurrentPowerRequest {
+  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string val_btc_pk_hex = 1;
+}
+
+// QueryBTCValidatorCurrentPowerResponse is the response type for the
+// Query/BTCValidatorCurrentPower RPC method.
+message QueryBTCValidatorCurrentPowerResponse {
+  // height is the current height
+  uint64 height = 1;
+  // voting_power is the voting power of the BTC validator
+  uint64 voting_power = 2;
 }
 
 // QueryActiveBTCValidatorsAtHeightRequest is the request type for the

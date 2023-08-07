@@ -253,6 +253,51 @@ func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
 	})
 }
 
+func FuzzBTCValidatorCurrentVotingPower(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
+
+		// random BTC validator
+		btcVal, err := datagen.GenRandomBTCValidator(r)
+		require.NoError(t, err)
+		// add this BTC validator
+		keeper.SetBTCValidator(ctx, btcVal)
+		// set random voting power at random height
+		randomHeight := datagen.RandomInt(r, 100) + 1
+		ctx = ctx.WithBlockHeight(int64(randomHeight))
+		randomPower := datagen.RandomInt(r, 100) + 1
+		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomHeight, randomPower)
+
+		// assert voting power at current height
+		req := &types.QueryBTCValidatorCurrentPowerRequest{
+			ValBtcPkHex: btcVal.BtcPk.MarshalHex(),
+		}
+		resp, err := keeper.BTCValidatorCurrentPower(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomHeight, resp.Height)
+		require.Equal(t, randomPower, resp.VotingPower)
+
+		// if height increments but voting power hasn't recorded yet, then
+		// we need to return the height and voting power at the last height
+		ctx = ctx.WithBlockHeight(int64(randomHeight + 1))
+		resp, err = keeper.BTCValidatorCurrentPower(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomHeight, resp.Height)
+		require.Equal(t, randomPower, resp.VotingPower)
+
+		// but no more
+		ctx = ctx.WithBlockHeight(int64(randomHeight + 2))
+		resp, err = keeper.BTCValidatorCurrentPower(ctx, req)
+		require.NoError(t, err)
+		require.Equal(t, randomHeight+1, resp.Height)
+		require.Equal(t, uint64(0), resp.VotingPower)
+	})
+}
+
 func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {

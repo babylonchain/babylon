@@ -79,6 +79,14 @@ func (k Keeper) GetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64) 
 	return sdk.BigEndianToUint64(powerBytes)
 }
 
+// HasVotingPowerTable checks if the voting power table exists at a given height
+func (k Keeper) HasVotingPowerTable(ctx sdk.Context, height uint64) bool {
+	store := k.votingPowerStore(ctx, height)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+	return iter.Valid()
+}
+
 // GetVotingPowerTable gets the voting power table, i.e., validator set at a given height
 func (k Keeper) GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]uint64 {
 	store := k.votingPowerStore(ctx, height)
