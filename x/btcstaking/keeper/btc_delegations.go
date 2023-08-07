@@ -64,13 +64,19 @@ func (k Keeper) hasBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, d
 	return store.Has(delBTCPKBytes)
 }
 
-// HasBTCDelegation checks if the given BTC delegator has a BTC delegation with the given staking tx hash under a given BTC validator
-func (k Keeper) HasBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string) bool {
-	btcDels, err := k.getBTCDelegations(ctx, valBTCPK, delBTCPK)
-	if err != nil {
-		return false
+// validatorDelegations gets the BTC delegations with a given BTC PK under a given BTC validator
+// NOTE: Internal function which assumes that the validator exists
+func (k Keeper) validatorDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPKBytes []byte) (*types.BTCDelegatorDelegations, error) {
+	store := k.btcDelegationStore(ctx, valBTCPK)
+	// ensure BTC delegation exists
+	if !store.Has(delBTCPKBytes) {
+		return nil, types.ErrBTCDelNotFound
 	}
-	return btcDels.Has(stakingTxHash)
+	// get and unmarshal
+	var btcDels types.BTCDelegatorDelegations
+	btcDelsBytes := store.Get(delBTCPKBytes)
+	k.cdc.MustUnmarshal(btcDelsBytes, &btcDels)
+	return &btcDels, nil
 }
 
 // getBTCDelegations gets the BTC delegations with a given BTC PK under a given BTC validator
@@ -83,16 +89,7 @@ func (k Keeper) getBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, d
 		return nil, types.ErrBTCValNotFound
 	}
 
-	store := k.btcDelegationStore(ctx, valBTCPK)
-	// ensure BTC delegation exists
-	if !store.Has(delBTCPKBytes) {
-		return nil, types.ErrBTCDelNotFound
-	}
-	// get and unmarshal
-	var btcDels types.BTCDelegatorDelegations
-	btcDelsBytes := store.Get(delBTCPKBytes)
-	k.cdc.MustUnmarshal(btcDelsBytes, &btcDels)
-	return &btcDels, nil
+	return k.validatorDelegations(ctx, valBTCPK, delBTCPKBytes)
 }
 
 // GetBTCDelegation gets the BTC delegation with a given BTC PK and staking tx hash under a given BTC validator

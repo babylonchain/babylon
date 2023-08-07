@@ -86,9 +86,19 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 	stakingTxHash := stakingMsgTx.TxHash().String()
 
-	// ensure the staking tx is not duplicated
-	if ms.HasBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash) {
-		return nil, types.ErrReusedStakingTx
+	// ensure the validator exists
+	if !ms.HasBTCValidator(ctx, *valBTCPK) {
+		return nil, types.ErrBTCValNotFound
+	}
+
+	delegations, err := ms.validatorDelegations(ctx, valBTCPK, delBTCPK.MustMarshal())
+
+	if err == nil {
+		// err is nil, meaning there exists a BTC delegation for this validator and delegator
+		// ensure the staking tx is not duplicated
+		if delegations.Has(stakingTxHash) {
+			return nil, types.ErrReusedStakingTx
+		}
 	}
 
 	// ensure staking tx is using correct jury PK

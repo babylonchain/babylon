@@ -2,8 +2,10 @@ package keeper_test
 
 import (
 	"context"
+	"errors"
 	"math/rand"
 	"testing"
+	"time"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
@@ -217,4 +219,84 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		require.Equal(t, actualDelWithJurySig.JurySig.MustMarshal(), jurySig.MustMarshal())
 		require.True(t, actualDelWithJurySig.HasJurySig())
 	})
+}
+
+func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// mock BTC light client and BTC checkpoint modules
+	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	bsKeeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+	ms := keeper.NewMsgServerImpl(*bsKeeper)
+	goCtx := sdk.WrapSDKContext(ctx)
+
+	// set jury PK to params
+	_, juryPK, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+	require.NoError(t, err)
+	err = bsKeeper.SetParams(ctx, types.Params{
+		JuryPk:              bbn.NewBIP340PubKeyFromBTCPK(juryPK),
+		SlashingAddress:     slashingAddr,
+		MinSlashingTxFeeSat: 10,
+	})
+	require.NoError(t, err)
+
+	// We only generate a validator, but not insert it into KVStore. So later
+	// insertion of delegation should fail.
+	_, validatorPK, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+
+	/*
+		generate and insert valid new BTC delegation
+	*/
+	delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	stakingTimeBlocks := uint16(5)
+	stakingValue := int64(2 * 10e8)
+	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr)
+	require.NoError(t, err)
+	// get msgTx
+	stakingMsgTx, err := stakingTx.ToMsgTx()
+	require.NoError(t, err)
+
+	// random signer
+	signer := datagen.GenRandomAccount().Address
+	// random Babylon SK
+	delBabylonSK, delBabylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
+	require.NoError(t, err)
+	// PoP
+	pop, err := types.NewPoP(delBabylonSK, delSK)
+	require.NoError(t, err)
+	// generate staking tx info
+	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
+	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, stakingMsgTx)
+	btcHeader := btcHeaderWithProof.HeaderBytes
+	txInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, stakingTx.Tx, btcHeaderWithProof.SpvProof.MerkleNodes)
+
+	// generate proper delegator sig
+	delegatorSig, err := slashingTx.Sign(
+		stakingMsgTx,
+		stakingTx.StakingScript,
+		delSK,
+		&chaincfg.SimNetParams,
+	)
+	require.NoError(t, err)
+
+	// all good, construct and send MsgCreateBTCDelegation message
+	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
+		Signer:        signer,
+		BabylonPk:     delBabylonPK.(*secp256k1.PubKey),
+		Pop:           pop,
+		StakingTx:     stakingTx,
+		StakingTxInfo: txInfo,
+		SlashingTx:    slashingTx,
+		DelegatorSig:  delegatorSig,
+	}
+	_, err = ms.CreateBTCDelegation(goCtx, msgCreateBTCDel)
+	require.Error(t, err)
+	require.True(t, errors.Is(err, types.ErrBTCValNotFound))
 }
