@@ -1,18 +1,13 @@
 syntax = "proto3";
 package babylon.finality.v1;
 
-import "gogoproto/gogo.proto";
 import "babylon/finality/v1/finality.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
 // EventSlashedBTCValidator is the event emitted when a BTC validator is slashed
 // due to signing two conflicting blocks
-message EventSlashedBTCValidator { 
-    // val_btc_pk is the BTC validator's BTC PK
-    bytes val_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+message EventSlashedBTCValidator {
     // evidence is the evidence that the BTC validator double signs
-    Evidence evidence = 2;
-    // extracted_btc_sk is the extracted BTC SK of this BTC validator
-    bytes extracted_btc_sk = 4;
+    Evidence evidence = 1;
 }

@@ -208,12 +208,8 @@ func (k Keeper) slashBTCValidator(ctx sdk.Context, valBtcPk *bbn.BIP340PubKey, e
 		panic(fmt.Errorf("failed to slash BTC validator: %v", err))
 	}
 
-	// extract SK and emit slashing event
-	btcSK, err := evidence.ExtractBTCSK()
-	if err != nil {
-		panic(fmt.Errorf("failed to extract secret key from two EOTS signatures with the same public randomness: %v", err))
-	}
-	eventSlashing := types.NewEventSlashedBTCValidator(valBtcPk, evidence, btcSK)
+	// emit slashing event
+	eventSlashing := types.NewEventSlashedBTCValidator(evidence)
 	if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
 	}
