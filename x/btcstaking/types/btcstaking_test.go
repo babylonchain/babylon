@@ -16,6 +16,7 @@ func FuzzStakingTx(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		net := &chaincfg.SimNetParams
 
 		stakerSK, stakerPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
@@ -28,7 +29,7 @@ func FuzzStakingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		stakingTx, _, err := datagen.GenBTCStakingSlashingTx(r, stakerSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr)
+		stakingTx, _, err := datagen.GenBTCStakingSlashingTx(r, net, stakerSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 		require.NoError(t, err)
 
 		err = stakingTx.ValidateBasic()

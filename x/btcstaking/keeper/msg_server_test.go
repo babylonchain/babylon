@@ -81,6 +81,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		net := &chaincfg.SimNetParams
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -94,11 +95,11 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		// set jury PK to params
 		jurySK, juryPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddr, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
 		err = bsKeeper.SetParams(ctx, types.Params{
 			JuryPk:              bbn.NewBIP340PubKeyFromBTCPK(juryPK),
-			SlashingAddress:     slashingAddr,
+			SlashingAddress:     slashingAddr.String(),
 			MinSlashingTxFeeSat: 10,
 		})
 		require.NoError(t, err)
@@ -127,7 +128,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		require.NoError(t, err)
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
-		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr)
+		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 		require.NoError(t, err)
 		// get msgTx
 		stakingMsgTx, err := stakingTx.ToMsgTx()
@@ -148,7 +149,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		btcHeader := btcHeaderWithProof.HeaderBytes
 		txInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, stakingTx.Tx, btcHeaderWithProof.SpvProof.MerkleNodes)
 		// mock for testing k-deep stuff
-		btccKeeper.EXPECT().GetPowLimit().Return(chaincfg.SimNetParams.PowLimit).AnyTimes()
+		btccKeeper.EXPECT().GetPowLimit().Return(net.PowLimit).AnyTimes()
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		btclcKeeper.EXPECT().GetHeaderByHash(gomock.Any(), gomock.Eq(btcHeader.Hash())).Return(&btclctypes.BTCHeaderInfo{Header: &btcHeader, Height: 10}).AnyTimes()
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30})
@@ -158,7 +159,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 			stakingMsgTx,
 			stakingTx.StakingScript,
 			delSK,
-			&chaincfg.SimNetParams,
+			net,
 		)
 		require.NoError(t, err)
 
@@ -198,7 +199,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 			stakingMsgTx,
 			stakingTx.StakingScript,
 			jurySK,
-			&chaincfg.SimNetParams,
+			net,
 		)
 		require.NoError(t, err)
 		msgAddJurySig := &types.MsgAddJurySig{
@@ -223,6 +224,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 
 func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	net := &chaincfg.SimNetParams
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -236,11 +238,11 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	// set jury PK to params
 	_, juryPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+	slashingAddr, err := datagen.GenRandomBTCAddress(r, net)
 	require.NoError(t, err)
 	err = bsKeeper.SetParams(ctx, types.Params{
 		JuryPk:              bbn.NewBIP340PubKeyFromBTCPK(juryPK),
-		SlashingAddress:     slashingAddr,
+		SlashingAddress:     slashingAddr.String(),
 		MinSlashingTxFeeSat: 10,
 	})
 	require.NoError(t, err)
@@ -257,7 +259,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	require.NoError(t, err)
 	stakingTimeBlocks := uint16(5)
 	stakingValue := int64(2 * 10e8)
-	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr)
+	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 	require.NoError(t, err)
 	// get msgTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
@@ -282,7 +284,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		stakingMsgTx,
 		stakingTx.StakingScript,
 		delSK,
-		&chaincfg.SimNetParams,
+		net,
 	)
 	require.NoError(t, err)
 

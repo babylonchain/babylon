@@ -196,7 +196,7 @@ func FuzzBTCDelegations(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr, startHeight, endHeight, 10000)
+				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
 				require.NoError(t, err)
 				if datagen.RandomInt(r, 2) == 1 {
 					// remove jury sig in random BTC delegations to make them inactive
@@ -335,7 +335,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr, 1, 1000, 10000) // timelock period: 1-1000
+				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr.String(), 1, 1000, 10000) // timelock period: 1-1000
 				require.NoError(t, err)
 				err = keeper.SetBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
@@ -423,7 +423,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		for j := uint64(0); j < numBTCDels; j++ {
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr, startHeight, endHeight, 10000)
+			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
 			require.NoError(t, err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 			err = keeper.SetBTCDelegation(ctx, btcDel)

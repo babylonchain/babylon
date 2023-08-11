@@ -33,7 +33,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate staking/slashing tx
-		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, delSK, valPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr)
+		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, valPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 		require.NoError(t, err)
 		stakingOutInfo, err := stakingTx.GetStakingOutputInfo(net)
 		require.NoError(t, err)

@@ -31,7 +31,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// jury and slashing addr
 		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SigNetParams)
+		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 
 		// generate a random batch of validators
@@ -53,7 +53,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr, 1, 1000, stakingValue) // timelock period: 1-1000
+				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
 				require.NoError(t, err)
 				err = keeper.SetBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)

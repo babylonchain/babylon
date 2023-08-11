@@ -5,12 +5,26 @@ import (
 
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 )
 
-func GenRandomBTCAddress(r *rand.Rand, net *chaincfg.Params) (string, error) {
-	addr, err := btcutil.NewAddressWitnessPubKeyHash(GenRandomByteArray(r, 20), net)
+func GenRandomPkScript(r *rand.Rand) []byte {
+	// NOTE: this generates non-standard pkscript
+	return GenRandomByteArray(r, 20)
+}
+
+func GenRandomBTCAddress(r *rand.Rand, net *chaincfg.Params) (btcutil.Address, error) {
+	addr, err := btcutil.NewAddressPubKeyHash(GenRandomByteArray(r, 20), net)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return addr.EncodeAddress(), nil
+	return addr, nil
+}
+
+func GenRandomPubKeyHashScript(r *rand.Rand, net *chaincfg.Params) ([]byte, error) {
+	addr, err := btcutil.NewAddressPubKeyHash(GenRandomByteArray(r, 20), net)
+	if err != nil {
+		return nil, err
+	}
+	return txscript.PayToAddrScript(addr)
 }

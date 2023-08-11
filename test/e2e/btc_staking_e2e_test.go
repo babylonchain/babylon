@@ -23,7 +23,8 @@ import (
 )
 
 var (
-	r = rand.New(rand.NewSource(time.Now().Unix()))
+	r   = rand.New(rand.NewSource(time.Now().Unix()))
+	net = &chaincfg.SimNetParams
 	// BTC validator
 	valSK, _, _ = datagen.GenRandomBTCKeyPair(r)
 	btcVal, _   = datagen.GenRandomBTCValidatorWithBTCSK(r, valSK)
@@ -96,6 +97,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	stakingValue := int64(2 * 10e8)
 	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(
 		r,
+		net,
 		delBTCSK,
 		btcVal.BtcPk.MustToBTCPK(),
 		params.JuryPk.MustToBTCPK(),
@@ -111,7 +113,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		stakingMsgTx,
 		stakingTx.StakingScript,
 		delBTCSK,
-		&chaincfg.SimNetParams,
+		net,
 	)
 	s.NoError(err)
 
@@ -169,7 +171,7 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 		stakingMsgTx,
 		stakingTx.StakingScript,
 		jurySK,
-		&chaincfg.SimNetParams,
+		net,
 	)
 	s.NoError(err)
 	nonValidatorNode.AddJurySig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, jurySig)

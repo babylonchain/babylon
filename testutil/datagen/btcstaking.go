@@ -11,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 )
@@ -73,7 +74,7 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btc
 		return nil, err
 	}
 	// staking/slashing tx
-	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(r, delSK, valPK, juryBTCPK, uint16(endHeight-startHeight), int64(totalSat), slashingAddr)
+	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(r, net, delSK, valPK, juryBTCPK, uint16(endHeight-startHeight), int64(totalSat), slashingAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +108,10 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btc
 	}, nil
 }
 
-func GenBTCStakingSlashingTx(
+func GenBTCStakingSlashingTxWithOutPoint(
 	r *rand.Rand,
+	btcNet *chaincfg.Params,
+	outPoint *wire.OutPoint,
 	stakerSK *btcec.PrivateKey,
 	validatorPK *btcec.PublicKey,
 	juryPK *btcec.PublicKey,
@@ -116,8 +119,6 @@ func GenBTCStakingSlashingTx(
 	stakingValue int64,
 	slashingAddress string,
 ) (*bstypes.StakingTx, *bstypes.BTCSlashingTx, error) {
-	btcNet := &chaincfg.SimNetParams
-
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
 		stakerSK.PubKey(),
 		validatorPK,
@@ -131,15 +132,18 @@ func GenBTCStakingSlashingTx(
 	}
 
 	tx := wire.NewMsgTx(2)
-	// an arbitrary input
-	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
-	tx.AddTxIn(&wire.TxIn{
-		PreviousOutPoint: spend.prevOut,
-		Sequence:         wire.MaxTxInSequenceNum,
-		SignatureScript:  nil,
-	})
+	// add the given tx input
+	txIn := wire.NewTxIn(outPoint, nil, nil)
+	tx.AddTxIn(txIn)
 	// 2 outputs for changes and staking output
-	tx.AddTxOut(wire.NewTxOut(100, []byte{1, 2, 3})) // output for change, doesn't matter
+	changeAddrScript, err := GenRandomPubKeyHashScript(r, btcNet)
+	if err != nil {
+		return nil, nil, err
+	}
+	if txscript.GetScriptClass(changeAddrScript) == txscript.NonStandardTy {
+		return nil, nil, fmt.Errorf("change address script is non-standard")
+	}
+	tx.AddTxOut(wire.NewTxOut(10000, changeAddrScript)) // output for change
 	tx.AddTxOut(stakingOutput)
 
 	// construct staking tx
@@ -168,4 +172,20 @@ func GenBTCStakingSlashingTx(
 	}
 
 	return stakingTx, slashingTx, nil
+}
+
+func GenBTCStakingSlashingTx(
+	r *rand.Rand,
+	btcNet *chaincfg.Params,
+	stakerSK *btcec.PrivateKey,
+	validatorPK *btcec.PublicKey,
+	juryPK *btcec.PublicKey,
+	stakingTimeBlocks uint16,
+	stakingValue int64,
+	slashingAddress string,
+) (*bstypes.StakingTx, *bstypes.BTCSlashingTx, error) {
+	// an arbitrary input
+	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
+	outPoint := &spend.prevOut
+	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, outPoint, stakerSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddress)
 }
