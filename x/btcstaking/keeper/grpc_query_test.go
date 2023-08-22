@@ -205,6 +205,14 @@ func FuzzBTCDelegations(f *testing.F) {
 				}
 				err = keeper.SetBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
+
+				txHash := btcDel.StakingTx.MustGetTxHash()
+
+				delView, err := keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
+					StakingTxHashHex: txHash,
+				})
+				require.NoError(t, err)
+				require.NotNil(t, delView)
 			}
 		}
 

@@ -115,3 +115,4 @@ enum BTCDelegationStatus {
     // EXPIRED defines a delegation that has expired
     EXPIRED = 2;
 }
+

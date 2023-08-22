@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/hex"
 	"math"
 	"math/rand"
 	"time"
@@ -140,6 +141,12 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	s.Len(pendingDels.Dels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
 	s.Nil(pendingDels.Dels[0].JurySig)
+
+	// check delegation
+	delegation := nonValidatorNode.QueryBtcDelegation(stakingTx.MustGetTxHash())
+	s.NotNil(delegation)
+	expectedScript := hex.EncodeToString(stakingTx.StakingScript)
+	s.Equal(expectedScript, delegation.StakingScript)
 }
 
 // Test2SubmitJurySignature is an end-to-end test for user

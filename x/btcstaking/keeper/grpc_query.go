@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"context"
+	"encoding/hex"
 
 	errorsmod "cosmossdk.io/errors"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -248,4 +250,68 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 	}
 
 	return &types.QueryBTCValidatorDelegationsResponse{BtcDelegatorDelegations: btcDels, Pagination: pageRes}, nil
+}
+
+func (k Keeper) delegationView(
+	ctx sdk.Context,
+	validatorBtcPubKey *bbn.BIP340PubKey,
+	stakingTxHash *chainhash.Hash) *types.QueryBTCDelegationResponse {
+
+	btcDelIter := k.btcDelegationStore(ctx, validatorBtcPubKey).Iterator(nil, nil)
+	defer btcDelIter.Close()
+	for ; btcDelIter.Valid(); btcDelIter.Next() {
+		var btcDels types.BTCDelegatorDelegations
+		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDels)
+		delegation, err := btcDels.Get(stakingTxHash.String())
+		if err != nil {
+			continue
+		}
+
+		return &types.QueryBTCDelegationResponse{
+			BtcPk:         delegation.BtcPk,
+			ValBtcPk:      delegation.ValBtcPk,
+			StartHeight:   delegation.StartHeight,
+			EndHeight:     delegation.EndHeight,
+			TotalSat:      delegation.TotalSat,
+			StakingTx:     hex.EncodeToString(delegation.StakingTx.Tx),
+			StakingScript: hex.EncodeToString(delegation.StakingTx.StakingScript),
+		}
+	}
+	return nil
+}
+
+// BTCDelegation returns existing btc delegation by staking tx hash
+func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegationRequest) (*types.QueryBTCDelegationResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHashHex)
+
+	if err != nil {
+		return nil, err
+	}
+
+	btcValIter := k.btcValidatorStore(sdkCtx).Iterator(nil, nil)
+	defer btcValIter.Close()
+	for ; btcValIter.Valid(); btcValIter.Next() {
+		valBTCPKBytes := btcValIter.Key()
+		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
+
+		if err != nil {
+			// failed to unmarshal BTC validator PK in KVStore is a programming error
+			panic(err)
+		}
+
+		response := k.delegationView(sdkCtx, valBTCPK, stakingTxHash)
+
+		if response == nil {
+			continue
+		}
+
+		return response, nil
+	}
+
+	return nil, types.ErrBTCDelNotFound
 }

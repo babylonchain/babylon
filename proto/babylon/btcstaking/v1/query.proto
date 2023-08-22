@@ -56,6 +56,11 @@ service Query {
   rpc BTCValidatorDelegations(QueryBTCValidatorDelegationsRequest) returns (QueryBTCValidatorDelegationsResponse) {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/delegations";
   }
+
+  // BTCDelegation retrieves delegation by corresponding staking tx hash
+  rpc BTCDelegation(QueryBTCDelegationRequest) returns (QueryBTCDelegationResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -193,4 +198,36 @@ message QueryBTCValidatorDelegationsResponse {
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBTCDelegationRequest is the request type to retrieve a BTC delegation by
+// staking tx hash
+message QueryBTCDelegationRequest {
+  // Hash of staking transaction in btc format
+  string staking_tx_hash_hex = 1;
+}
+
+// QueryBTCDelegationResponse is response type matching QueryBTCDelegationRequest
+// and containing BTC delegation information
+message QueryBTCDelegationResponse {
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // val_btc_pk is the Bitcoin secp256k1 PK of the BTC validator that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // start_height is the start BTC height of the BTC delegation
+  // it is the start BTC height of the timelock
+  uint64 start_height = 3;
+  // end_height is the end height of the BTC delegation
+  // it is the end BTC height of the timelock - w
+  uint64 end_height = 4;
+  // total_sat is the total amount of BTC stakes in this delegation
+  // quantified in satoshi
+  uint64 total_sat = 5;
+  // staking_tx is the staking tx
+  string staking_tx = 6;
+  // staking_script is the script commited to in staking output
+  string staking_script = 7;
 }
