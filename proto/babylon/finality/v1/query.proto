@@ -40,6 +40,11 @@ service Query {
   rpc Evidence(QueryEvidenceRequest) returns (QueryEvidenceResponse) {
     option (google.api.http).get = "/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/evidence";
   }
+
+  // ListEvidences queries is a range query for evidences
+  rpc ListEvidences(QueryListEvidencesRequest) returns (QueryListEvidencesResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/vidences";
+  }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -144,4 +149,25 @@ message QueryEvidenceRequest {
 // Query/Evidence RPC method.
 message QueryEvidenceResponse {
   Evidence evidence = 1;
+}
+
+// QueryListEvidencesRequest is the request type for the
+// Query/ListEvidences RPC method.
+message QueryListEvidencesRequest {
+  // start_height is the starting height that the querier specifies
+  // such that the RPC will only return evidences since this height
+  uint64 start_height = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListEvidencesResponse is the response type for the
+// Query/ListEvidences RPC method.
+message QueryListEvidencesResponse {
+  // blocks is the list of evidences
+  repeated Evidence evidences = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }

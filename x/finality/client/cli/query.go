@@ -14,6 +14,7 @@ import (
 
 const (
 	flagQueriedBlockStatus = "queried-block-status"
+	flagStartHeight        = "start-height"
 )
 
 // GetQueryCmd returns the cli query commands for this module
@@ -32,6 +33,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdBlock())
 	cmd.AddCommand(CmdListBlocks())
 	cmd.AddCommand(CmdVotesAtHeight())
+	cmd.AddCommand(CmdListEvidences())
 
 	return cmd
 }
@@ -167,6 +169,44 @@ func CmdBlock() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdListEvidences() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "list-evidences",
+		Short: "list equivocation evidences since a given height",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+			startHeight, err := cmd.Flags().GetUint64(flagStartHeight)
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.ListEvidences(cmd.Context(), &types.QueryListEvidencesRequest{
+				StartHeight: startHeight,
+				Pagination:  pageReq,
+			})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "list-evidences")
+	cmd.Flags().Uint64(flagStartHeight, 0, "Starting height for scanning evidences")
 
 	return cmd
 }

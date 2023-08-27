@@ -263,3 +263,67 @@ func FuzzQueryEvidence(f *testing.F) {
 		}
 	})
 }
+
+func FuzzListEvidences(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// Setup keeper and context
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		ctx = sdk.UnwrapSDKContext(ctx)
+
+		// generate a random list of evidences since startHeight
+		startHeight := datagen.RandomInt(r, 1000) + 100
+		numEvidences := datagen.RandomInt(r, 100) + 10
+		evidences := map[string]*types.Evidence{}
+		for i := uint64(0); i < numEvidences; i++ {
+			// random key pair
+			sk, pk, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			btcPK := bbn.NewBIP340PubKeyFromBTCPK(pk)
+			// random height
+			height := datagen.RandomInt(r, 100) + startHeight + 1
+			// generate evidence
+			evidence, err := datagen.GenRandomEvidence(r, sk, height)
+			require.NoError(t, err)
+			// add evidence to map and finlaity keeper
+			evidences[btcPK.MarshalHex()] = evidence
+			keeper.SetEvidence(ctx, evidence)
+		}
+
+		// generate another list of evidences before startHeight
+		// these evidences will not be included in the response if
+		// the request specifies the above startHeight
+		for i := uint64(0); i < numEvidences; i++ {
+			// random key pair
+			sk, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			// random height before startHeight
+			height := datagen.RandomInt(r, int(startHeight))
+			// generate evidence
+			evidence, err := datagen.GenRandomEvidence(r, sk, height)
+			require.NoError(t, err)
+			// add evidence to finlaity keeper
+			keeper.SetEvidence(ctx, evidence)
+		}
+
+		// perform a query to fetch all evidences and assert consistency
+		limit := datagen.RandomInt(r, int(numEvidences)) + 1
+		req := &types.QueryListEvidencesRequest{
+			StartHeight: startHeight,
+			Pagination: &query.PageRequest{
+				CountTotal: true,
+				Limit:      limit,
+			},
+		}
+		resp, err := keeper.ListEvidences(ctx, req)
+		require.NoError(t, err)
+		require.LessOrEqual(t, len(resp.Evidences), int(limit))     // check if pagination takes effect
+		require.EqualValues(t, resp.Pagination.Total, numEvidences) // ensure evidences before startHeight are not included
+		for _, actualEvidence := range resp.Evidences {
+			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].CanonicalLastCommitHash, actualEvidence.CanonicalLastCommitHash)
+			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].ForkLastCommitHash, actualEvidence.ForkLastCommitHash)
+		}
+	})
+}

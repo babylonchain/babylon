@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -142,6 +143,49 @@ func (k Keeper) Evidence(ctx context.Context, req *types.QueryEvidenceRequest) (
 
 	resp := &types.QueryEvidenceResponse{
 		Evidence: evidence,
+	}
+	return resp, nil
+}
+
+// ListEvidences returns a list of evidences
+func (k Keeper) ListEvidences(ctx context.Context, req *types.QueryListEvidencesRequest) (*types.QueryListEvidencesResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	var evidences []*types.Evidence
+
+	store := sdkCtx.KVStore(k.storeKey)
+	eStore := prefix.NewStore(store, types.EvidenceKey)
+
+	pageRes, err := query.FilteredPaginate(eStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+		// NOTE: we have to strip the rest bytes after the first 32 bytes
+		// since there is another layer of KVStore (height -> evidence) under eStore
+		// in which height is uint64 thus takes 8 bytes
+		strippedKey := key[:bbn.BIP340PubKeyLen]
+		valBTCPK, err := bbn.NewBIP340PubKey(strippedKey)
+		if err != nil {
+			panic(err) // failing to unmarshal valBTCPK in KVStore can only be a programming error
+		}
+		evidence := k.GetFirstSlashableEvidence(sdkCtx, valBTCPK)
+
+		// hit if the BTC validator has a full evidence of equivocation
+		if evidence != nil && evidence.BlockHeight >= req.StartHeight {
+			if accumulate {
+				evidences = append(evidences, evidence)
+			}
+			return true, nil
+		}
+
+		return false, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &types.QueryListEvidencesResponse{
+		Evidences:  evidences,
+		Pagination: pageRes,
 	}
 	return resp, nil
 }

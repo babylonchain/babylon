@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -88,9 +88,8 @@ func (pk *BIP340PubKey) Unmarshal(data []byte) error {
 
 	// ensure that the bytes can be transformed to a *btcec.PublicKey object
 	// this includes all format checks
-	_, err := newPK.ToBTCPK()
-	if err != nil {
-		return errors.New("bytes cannot be converted to a *btcec.PublicKey object")
+	if _, err := newPK.ToBTCPK(); err != nil {
+		return fmt.Errorf("bytes cannot be converted to a *btcec.PublicKey object: %w", err)
 	}
 
 	*pk = data
