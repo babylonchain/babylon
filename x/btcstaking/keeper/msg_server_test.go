@@ -126,7 +126,7 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		// key pairs, staking tx and slashing tx
 		delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		stakingTimeBlocks := uint16(5)
+		stakingTimeBlocks := uint16(1000)
 		stakingValue := int64(2 * 10e8)
 		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 		require.NoError(t, err)
@@ -231,6 +231,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	// mock BTC light client and BTC checkpoint modules
 	btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 	btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+	btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 	bsKeeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 	ms := keeper.NewMsgServerImpl(*bsKeeper)
 	goCtx := sdk.WrapSDKContext(ctx)

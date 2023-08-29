@@ -69,6 +69,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	params := ms.GetParams(ctx)
+	btccParams := ms.btccKeeper.GetParams(ctx)
+	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
 
 	// extract staking script from staking tx
 	stakingOutputInfo, err := req.StakingTx.GetStakingOutputInfo(ms.btcNet)
@@ -107,15 +109,25 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidJuryPK.Wrapf("expected: %s; actual: %s", hex.EncodeToString(*paramJuryPK), hex.EncodeToString(*juryPK))
 	}
 
-	// ensure staking tx is k-deep
-	stakingTxHeader, stakingTxDepth, err := ms.getHeaderAndDepth(ctx, req.StakingTxInfo.Key.Hash)
-	if err != nil {
-		return nil, err
+	// get startheight and endheight of the timelock
+	stakingTxHeader := ms.btclcKeeper.GetHeaderByHash(ctx, req.StakingTxInfo.Key.Hash)
+	if stakingTxHeader == nil {
+		return nil, fmt.Errorf("header that includes the staking tx is not found")
 	}
-	kValue := ms.btccKeeper.GetParams(ctx).BtcConfirmationDepth
+	startHeight := stakingTxHeader.Height
+	endHeight := stakingTxHeader.Height + uint64(stakingOutputInfo.StakingScriptData.StakingTime)
+
+	// ensure staking tx is k-deep
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+	stakingTxDepth := btcTip.Height - stakingTxHeader.Height
 	if stakingTxDepth < kValue {
 		return nil, types.ErrInvalidStakingTx.Wrapf("not k-deep: k=%d; depth=%d", kValue, stakingTxDepth)
 	}
+	// ensure staking tx's timelock has more than w BTC blocks left
+	if btcTip.Height+wValue >= endHeight {
+		return nil, types.ErrInvalidStakingTx.Wrapf("staking tx's timelock has no more than w(=%d) blocks left", wValue)
+	}
+
 	// verify staking tx info, i.e., inclusion proof
 	if err := req.StakingTxInfo.VerifyInclusion(stakingTxHeader.Header, ms.btccKeeper.GetPowLimit()); err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrapf("not included in the Bitcoin chain: %v", err)
@@ -162,8 +174,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		BtcPk:        delBTCPK,
 		Pop:          req.Pop,
 		ValBtcPk:     valBTCPK,
-		StartHeight:  stakingTxHeader.Height,
-		EndHeight:    stakingTxHeader.Height + uint64(stakingOutputInfo.StakingScriptData.StakingTime),
+		StartHeight:  startHeight,
+		EndHeight:    endHeight,
 		TotalSat:     uint64(stakingOutputInfo.StakingAmount),
 		StakingTx:    req.StakingTx,
 		SlashingTx:   req.SlashingTx,
