@@ -120,6 +120,9 @@ import (
 	"github.com/babylonchain/babylon/x/finality"
 	finalitykeeper "github.com/babylonchain/babylon/x/finality/keeper"
 	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
+	"github.com/babylonchain/babylon/x/incentive"
+	incentivekeeper "github.com/babylonchain/babylon/x/incentive/keeper"
+	incentivetypes "github.com/babylonchain/babylon/x/incentive/types"
 	"github.com/babylonchain/babylon/x/monitor"
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
@@ -218,6 +221,9 @@ var (
 		// BTC staking related
 		btcstaking.AppModuleBasic{},
 		finality.AppModuleBasic{},
+
+		// tokenomics-related
+		incentive.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -233,6 +239,7 @@ var (
 		// TODO: decide ZonConcierge's permissions here
 		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
 		// TODO: decide BTCStaking and Finality's permissiones here
+		// TODO: decide incentive module's permission here
 	}
 )
 
@@ -333,7 +340,12 @@ type BabylonApp struct {
 	BTCStakingKeeper btcstakingkeeper.Keeper
 	FinalityKeeper   finalitykeeper.Keeper
 
+	// wasm smart contract module
 	WasmKeeper wasm.Keeper
+
+	// tokenomics-related modules
+	IncentiveKeeper incentivekeeper.Keeper
+
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
@@ -407,6 +419,8 @@ func NewBabylonApp(
 		finalitytypes.StoreKey,
 		// WASM
 		wasm.StoreKey,
+		// tokenomics-related modules
+		incentivetypes.StoreKey,
 	)
 
 	tkeys := sdk.NewTransientStoreKeys(
@@ -443,8 +457,6 @@ func NewBabylonApp(
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
 	app.CapabilityKeeper.Seal()
-
-	// TODO: Grant capabilities for the ibc and ibc-transfer modules
 
 	// add keepers
 	app.AccountKeeper = authkeeper.NewAccountKeeper(appCodec, keys[authtypes.StoreKey], authtypes.ProtoBaseAccount, maccPerms, appparams.Bech32PrefixAccAddr, authtypes.NewModuleAddress(govtypes.ModuleName).String())
@@ -499,7 +511,6 @@ func NewBabylonApp(
 	)
 
 	// ... other modules keepers
-	// TODO: Create IBC keeper
 
 	// register the proposal types
 	// Deprecated: Avoid adding new handlers, instead use the new proposal flow
@@ -622,9 +633,15 @@ func NewBabylonApp(
 		btcNetParams,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	// set up finality keeper
 	app.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.AccountKeeper, app.BankKeeper,
 		app.BTCStakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	// set up incentive keeper
+	app.IncentiveKeeper = incentivekeeper.NewKeeper(
+		appCodec, keys[incentivetypes.StoreKey], keys[incentivetypes.StoreKey], app.BankKeeper, app.AccountKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authtypes.FeeCollectorName,
 	)
 
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
@@ -752,6 +769,8 @@ func NewBabylonApp(
 		// BTC staking related modules
 		btcstaking.NewAppModule(appCodec, app.BTCStakingKeeper, app.AccountKeeper, app.BankKeeper),
 		finality.NewAppModule(appCodec, app.FinalityKeeper, app.AccountKeeper, app.BankKeeper),
+		// tokenomics related modules
+		incentive.NewAppModule(appCodec, app.IncentiveKeeper, app.AccountKeeper, app.BankKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -760,7 +779,11 @@ func NewBabylonApp(
 	// NOTE: staking module is required if HistoricalEntries param > 0
 	// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
 	app.mm.SetOrderBeginBlockers(
-		upgradetypes.ModuleName, capabilitytypes.ModuleName, minttypes.ModuleName, distrtypes.ModuleName, slashingtypes.ModuleName,
+		upgradetypes.ModuleName, capabilitytypes.ModuleName,
+		// NOTE: incentive module's BeginBlock has to be after mint but before distribution
+		// so that it can intercept a part of new inflation to reward BTC staking/timestamping stakeholders
+		minttypes.ModuleName, incentivetypes.ModuleName, distrtypes.ModuleName,
+		slashingtypes.ModuleName,
 		evidencetypes.ModuleName, stakingtypes.ModuleName,
 		authtypes.ModuleName, banktypes.ModuleName, govtypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName,
 		authz.ModuleName, feegrant.ModuleName,
@@ -808,6 +831,8 @@ func NewBabylonApp(
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
+		// tokenomics related modules
+		incentivetypes.ModuleName, // EndBlock of incentive module does not matter
 	)
 	// Babylon does not want EndBlock processing in staking
 	app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers[:2], app.mm.OrderEndBlockers[2+1:]...) // remove stakingtypes.ModuleName
@@ -838,6 +863,8 @@ func NewBabylonApp(
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
+		// tokenomics-related modules
+		incentivetypes.ModuleName,
 	)
 
 	// Uncomment if you want to set a custom migration order here.

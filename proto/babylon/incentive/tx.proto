@@ -1,0 +1,7 @@
+syntax = "proto3";
+package babylon.incentive;
+
+option go_package = "github.com/babylonchain/babylon/x/incentive/types";
+
+// Msg defines the Msg service.
+service Msg {}
