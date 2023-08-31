@@ -1,6 +1,7 @@
 package types
 
 import (
+	"cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -39,6 +40,7 @@ func DefaultParams() Params {
 		JuryPk:              defaultJuryPk(),
 		SlashingAddress:     defaultSlashingAddress(),
 		MinSlashingTxFeeSat: 1000,
+		MinCommissionRate:   math.LegacyZeroDec(),
 	}
 }
 

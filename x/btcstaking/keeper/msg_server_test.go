@@ -46,10 +46,12 @@ func FuzzMsgCreateBTCValidator(f *testing.F) {
 			btcVal, err := datagen.GenRandomBTCValidator(r)
 			require.NoError(t, err)
 			msg := &types.MsgCreateBTCValidator{
-				Signer:    datagen.GenRandomAccount().Address,
-				BabylonPk: btcVal.BabylonPk,
-				BtcPk:     btcVal.BtcPk,
-				Pop:       btcVal.Pop,
+				Signer:      datagen.GenRandomAccount().Address,
+				Description: btcVal.Description,
+				Commission:  btcVal.Commission,
+				BabylonPk:   btcVal.BabylonPk,
+				BtcPk:       btcVal.BtcPk,
+				Pop:         btcVal.Pop,
 			}
 			_, err = ms.CreateBTCValidator(goCtx, msg)
 			require.NoError(t, err)
@@ -65,10 +67,12 @@ func FuzzMsgCreateBTCValidator(f *testing.F) {
 		// duplicated BTC validators should not pass
 		for _, btcVal2 := range btcVals {
 			msg := &types.MsgCreateBTCValidator{
-				Signer:    datagen.GenRandomAccount().Address,
-				BabylonPk: btcVal2.BabylonPk,
-				BtcPk:     btcVal2.BtcPk,
-				Pop:       btcVal2.Pop,
+				Signer:      datagen.GenRandomAccount().Address,
+				Description: btcVal2.Description,
+				Commission:  btcVal2.Commission,
+				BabylonPk:   btcVal2.BabylonPk,
+				BtcPk:       btcVal2.BtcPk,
+				Pop:         btcVal2.Pop,
 			}
 			_, err := ms.CreateBTCValidator(goCtx, msg)
 			require.Error(t, err)
@@ -112,10 +116,12 @@ func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
 		btcVal, err := datagen.GenRandomBTCValidatorWithBTCSK(r, validatorSK)
 		require.NoError(t, err)
 		msgNewVal := types.MsgCreateBTCValidator{
-			Signer:    datagen.GenRandomAccount().Address,
-			BabylonPk: btcVal.BabylonPk,
-			BtcPk:     btcVal.BtcPk,
-			Pop:       btcVal.Pop,
+			Signer:      datagen.GenRandomAccount().Address,
+			Description: btcVal.Description,
+			Commission:  btcVal.Commission,
+			BabylonPk:   btcVal.BabylonPk,
+			BtcPk:       btcVal.BtcPk,
+			Pop:         btcVal.Pop,
 		}
 		_, err = ms.CreateBTCValidator(goCtx, &msgNewVal)
 		require.NoError(t, err)

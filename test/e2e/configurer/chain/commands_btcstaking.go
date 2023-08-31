@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"strconv"
 
+	"cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
@@ -11,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession) {
+func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *math.LegacyDec) {
 	n.LogActionF("creating BTC validator")
 
 	// get babylon PK hex
@@ -24,7 +25,9 @@ func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.
 	popHex, err := pop.ToHexStr()
 	require.NoError(n.t, err)
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-validator", babylonPKHex, btcPKHex, popHex, "--from=val"}
+	cmd := []string{
+		"babylond", "tx", "btcstaking", "create-btc-validator", babylonPKHex, btcPKHex, popHex, "--from=val", "--moniker", moniker, "--identity", identity, "--website", website, "--security-contact", securityContract, "--details", details, "--commission-rate", commission.String(),
+	}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC validator")

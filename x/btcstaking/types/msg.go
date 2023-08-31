@@ -45,6 +45,15 @@ func (m *MsgCreateBTCValidator) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgCreateBTCValidator) ValidateBasic() error {
+	if m.Commission == nil {
+		return fmt.Errorf("empty commission")
+	}
+	if m.Description == nil {
+		return fmt.Errorf("empty description")
+	}
+	if _, err := m.Description.EnsureLength(); err != nil {
+		return err
+	}
 	if m.BabylonPk == nil {
 		return fmt.Errorf("empty Babylon public key")
 	}

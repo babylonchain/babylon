@@ -76,7 +76,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	/*
 		create a random BTC validator on Babylon
 	*/
-	nonValidatorNode.CreateBTCValidator(btcVal.BabylonPk, btcVal.BtcPk, btcVal.Pop)
+	nonValidatorNode.CreateBTCValidator(btcVal.BabylonPk, btcVal.BtcPk, btcVal.Pop, btcVal.Description.Moniker, btcVal.Description.Identity, btcVal.Description.Website, btcVal.Description.SecurityContact, btcVal.Description.Details, btcVal.Commission)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()

@@ -18,4 +18,5 @@ var (
 	ErrInvalidSlashingTx      = errorsmod.Register(ModuleName, 1109, "the BTC slashing tx is not valid")
 	ErrDuplicatedJurySig      = errorsmod.Register(ModuleName, 1110, "the BTC delegation has already received jury signature")
 	ErrInvalidJurySig         = errorsmod.Register(ModuleName, 1111, "the jury signature is not valid")
+	ErrCommissionLTMinRate    = errorsmod.Register(ModuleName, 1112, "commission cannot be less than min rate")
 )

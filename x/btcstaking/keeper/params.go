@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -25,4 +26,9 @@ func (k Keeper) GetParams(ctx sdk.Context) (p types.Params) {
 	}
 	k.cdc.MustUnmarshal(bz, &p)
 	return p
+}
+
+// MinCommissionRate returns the minimal commission rate of BTC validators
+func (k Keeper) MinCommissionRate(ctx sdk.Context) math.LegacyDec {
+	return k.GetParams(ctx).MinCommissionRate
 }

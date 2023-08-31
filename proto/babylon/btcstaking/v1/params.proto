@@ -19,4 +19,9 @@ message Params {
   // in Satoshi) needed for the pre-signed slashing tx
   // TODO: change to satoshi per byte?
   int64 min_slashing_tx_fee_sat = 3;
+  // min_commission_rate is the chain-wide minimum commission rate that a validator can charge their delegators
+  string min_commission_rate = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable)   = false
+  ];
 }

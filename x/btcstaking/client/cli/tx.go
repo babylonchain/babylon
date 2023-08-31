@@ -12,7 +12,18 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
+)
+
+const (
+	FlagMoniker         = "moniker"
+	FlagIdentity        = "identity"
+	FlagWebsite         = "website"
+	FlagSecurityContact = "security-contact"
+	FlagDetails         = "details"
+	FlagCommissionRate  = "commission-rate"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -48,6 +59,28 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 				return err
 			}
 
+			fs := cmd.Flags()
+
+			// get description
+			moniker, _ := fs.GetString(FlagMoniker)
+			identity, _ := fs.GetString(FlagIdentity)
+			website, _ := fs.GetString(FlagWebsite)
+			security, _ := fs.GetString(FlagSecurityContact)
+			details, _ := fs.GetString(FlagDetails)
+			description := stakingtypes.NewDescription(
+				moniker,
+				identity,
+				website,
+				security,
+				details,
+			)
+			// get commission
+			rateStr, _ := fs.GetString(FlagCommissionRate)
+			rate, err := sdk.NewDecFromStr(rateStr)
+			if err != nil {
+				return err
+			}
+
 			// get Babylon PK
 			babylonPKBytes, err := hex.DecodeString(args[0])
 			if err != nil {
@@ -71,15 +104,25 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 			}
 
 			msg := types.MsgCreateBTCValidator{
-				Signer:    clientCtx.FromAddress.String(),
-				BabylonPk: &babylonPK,
-				BtcPk:     btcPK,
-				Pop:       pop,
+				Signer:      clientCtx.FromAddress.String(),
+				Description: &description,
+				Commission:  &rate,
+				BabylonPk:   &babylonPK,
+				BtcPk:       btcPK,
+				Pop:         pop,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
+
+	fs := cmd.Flags()
+	fs.String(FlagMoniker, "", "The validator's (optional) moniker")
+	fs.String(FlagWebsite, "", "The validator's (optional) website")
+	fs.String(FlagSecurityContact, "", "The validator's (optional) security contact email")
+	fs.String(FlagDetails, "", "The validator's (optional) details")
+	fs.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
+	fs.String(FlagCommissionRate, "0", "The initial commission rate percentage")
 
 	flags.AddTxFlagsToCmd(cmd)
 

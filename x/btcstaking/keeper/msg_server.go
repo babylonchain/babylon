@@ -44,15 +44,24 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCreateBTCValidator) (*types.MsgCreateBTCValidatorResponse, error) {
 	// ensure the validator address does not exist before
 	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// ensure commission rate is at least the minimum commission rate in parameters
+	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
+		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set validator commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
+	}
+
+	// ensure BTC validator does not exist before
 	if ms.HasBTCValidator(ctx, *req.BtcPk) {
 		return nil, types.ErrDuplicatedBTCVal
 	}
 
 	// all good, add this validator
 	btcVal := types.BTCValidator{
-		BabylonPk: req.BabylonPk,
-		BtcPk:     req.BtcPk,
-		Pop:       req.Pop,
+		Description: req.Description,
+		Commission:  req.Commission,
+		BabylonPk:   req.BabylonPk,
+		BtcPk:       req.BtcPk,
+		Pop:         req.Pop,
 	}
 	ms.SetBTCValidator(ctx, &btcVal)
 
