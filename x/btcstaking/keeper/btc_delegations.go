@@ -43,6 +43,25 @@ func (k Keeper) AddJurySigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340P
 	return nil
 }
 
+func (k Keeper) AddUndelegationToBTCDelegation(
+	ctx sdk.Context,
+	valBTCPK *bbn.BIP340PubKey,
+	delBTCPK *bbn.BIP340PubKey,
+	stakingTxHash string,
+	ud *types.BTCUndelegation,
+) error {
+	btcDels, err := k.getBTCDelegations(ctx, valBTCPK, delBTCPK)
+	if err != nil {
+		return err
+	}
+
+	if err := btcDels.AddUndelegation(stakingTxHash, ud); err != nil {
+		return types.ErrInvalidDelegationState.Wrapf(err.Error())
+	}
+	k.setBTCDelegations(ctx, valBTCPK, delBTCPK, btcDels)
+	return nil
+}
+
 // setBTCDelegations sets the given BTC delegation to KVStore
 func (k Keeper) setBTCDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDels *types.BTCDelegatorDelegations) {
 	delBTCPKBytes := delBTCPK.MustMarshal()

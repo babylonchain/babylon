@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +16,7 @@ var (
 	_ sdk.Msg = &MsgCreateBTCValidator{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
 	_ sdk.Msg = &MsgAddJurySig{}
+	_ sdk.Msg = &MsgBTCUndelegate{}
 )
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -112,7 +114,7 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if err := m.Pop.ValidateBasic(); err != nil {
 		return err
 	}
-	stakingScriptData, err := m.StakingTx.GetStakingScriptData()
+	stakingScriptData, err := m.StakingTx.GetScriptData()
 	if err != nil {
 		return err
 	}
@@ -147,4 +149,44 @@ func (m *MsgAddJurySig) ValidateBasic() error {
 	}
 
 	return nil
+}
+
+func (m *MsgBTCUndelegate) ValidateBasic() error {
+	if m.UnbondingTx == nil {
+		return fmt.Errorf("empty unbodning tx")
+	}
+	if m.SlashingTx == nil {
+		return fmt.Errorf("empty slashing tx")
+	}
+	if m.DelegatorSlashingSig == nil {
+		return fmt.Errorf("empty delegator signature")
+	}
+	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
+		return err
+	}
+
+	unbondingTxMsg, err := m.UnbondingTx.ToMsgTx()
+
+	if err != nil {
+		return err
+	}
+
+	if err := btcstaking.IsSimpleTransfer(unbondingTxMsg); err != nil {
+		return err
+	}
+
+	// unbodning tx should be correctly formatted - valid transaction and valid script
+	if err := m.UnbondingTx.ValidateBasic(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *MsgBTCUndelegate) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
 }

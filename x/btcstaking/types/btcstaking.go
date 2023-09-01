@@ -95,6 +95,17 @@ func (d *BTCDelegation) HasJurySig() bool {
 // Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a jury sig
 // Expired: Delegation timelock
 func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatus {
+	if d.BtcUndelegation != nil {
+		// If we received an undelegation, delegation becomes expired which means that staker
+		// voting power from this delegation is removed from the total voting power
+		// For now we do not have any unbonding time on Babylon chain, only time lock on BTC chain
+		// we may consider adding unbonding time on Babylon chain later to avoid situation where
+		// we can lose to much voting power in to short time.
+		// TODO: maybe it is worth having separte status for this case help jury/validators to
+		// filter for unbodning delegations
+		return BTCDelegationStatus_EXPIRED
+	}
+
 	if d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
 		if d.HasJurySig() {
 			return BTCDelegationStatus_ACTIVE
@@ -162,6 +173,20 @@ func (dels *BTCDelegatorDelegations) AddJurySig(stakingTxHash string, sig *bbn.B
 	return nil
 }
 
+func (dels *BTCDelegatorDelegations) AddUndelegation(stakingTxHash string, ud *BTCUndelegation) error {
+	del, err := dels.Get(stakingTxHash)
+	if err != nil {
+		return fmt.Errorf("cannot find the BTC delegation with staking tx hash %s: %w", stakingTxHash, err)
+	}
+
+	if del.BtcUndelegation != nil {
+		return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
+	}
+
+	del.BtcUndelegation = ud
+	return nil
+}
+
 // TODO: this is an O(n) operation. Consider optimisation later
 func (dels *BTCDelegatorDelegations) Has(stakingTxHash string) bool {
 	for _, d := range dels.Dels {
@@ -207,19 +232,19 @@ func (p *ProofOfPossession) ValidateBasic() error {
 	return nil
 }
 
-func NewStakingTxFromHex(txHex string) (*StakingTx, error) {
+func NewBabylonTaprootTxFromHex(txHex string) (*BabylonBTCTaprootTx, error) {
 	txBytes, err := hex.DecodeString(txHex)
 	if err != nil {
 		return nil, err
 	}
-	var tx StakingTx
+	var tx BabylonBTCTaprootTx
 	if err := tx.Unmarshal(txBytes); err != nil {
 		return nil, err
 	}
 	return &tx, nil
 }
 
-func (tx *StakingTx) ToHexStr() (string, error) {
+func (tx *BabylonBTCTaprootTx) ToHexStr() (string, error) {
 	txBytes, err := tx.Marshal()
 	if err != nil {
 		return "", err
@@ -227,11 +252,11 @@ func (tx *StakingTx) ToHexStr() (string, error) {
 	return hex.EncodeToString(txBytes), nil
 }
 
-func (tx *StakingTx) Equals(tx2 *StakingTx) bool {
-	return bytes.Equal(tx.Tx, tx2.Tx) && bytes.Equal(tx.StakingScript, tx2.StakingScript)
+func (tx *BabylonBTCTaprootTx) Equals(tx2 *BabylonBTCTaprootTx) bool {
+	return bytes.Equal(tx.Tx, tx2.Tx) && bytes.Equal(tx.Script, tx2.Script)
 }
 
-func (tx *StakingTx) ValidateBasic() error {
+func (tx *BabylonBTCTaprootTx) ValidateBasic() error {
 	// unmarshal tx bytes to MsgTx
 	var msgTx wire.MsgTx
 	rbuf := bytes.NewReader(tx.Tx)
@@ -240,14 +265,14 @@ func (tx *StakingTx) ValidateBasic() error {
 	}
 
 	// parse staking script
-	if _, err := btcstaking.ParseStakingTransactionScript(tx.StakingScript); err != nil {
+	if _, err := btcstaking.ParseStakingTransactionScript(tx.Script); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (tx *StakingTx) ToMsgTx() (*wire.MsgTx, error) {
+func (tx *BabylonBTCTaprootTx) ToMsgTx() (*wire.MsgTx, error) {
 	var msgTx wire.MsgTx
 	rbuf := bytes.NewReader(tx.Tx)
 	if err := msgTx.Deserialize(rbuf); err != nil {
@@ -256,7 +281,7 @@ func (tx *StakingTx) ToMsgTx() (*wire.MsgTx, error) {
 	return &msgTx, nil
 }
 
-func (tx *StakingTx) GetTxHash() (string, error) {
+func (tx *BabylonBTCTaprootTx) GetTxHash() (string, error) {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return "", err
@@ -264,7 +289,7 @@ func (tx *StakingTx) GetTxHash() (string, error) {
 	return msgTx.TxHash().String(), nil
 }
 
-func (tx *StakingTx) MustGetTxHash() string {
+func (tx *BabylonBTCTaprootTx) MustGetTxHash() string {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		panic(err)
@@ -272,11 +297,11 @@ func (tx *StakingTx) MustGetTxHash() string {
 	return msgTx.TxHash().String()
 }
 
-func (tx *StakingTx) GetStakingScriptData() (*btcstaking.StakingScriptData, error) {
-	return btcstaking.ParseStakingTransactionScript(tx.StakingScript)
+func (tx *BabylonBTCTaprootTx) GetScriptData() (*btcstaking.StakingScriptData, error) {
+	return btcstaking.ParseStakingTransactionScript(tx.Script)
 }
 
-func (tx *StakingTx) GetStakingOutputInfo(net *chaincfg.Params) (*btcstaking.StakingOutputInfo, error) {
+func (tx *BabylonBTCTaprootTx) GetBabylonOutputInfo(net *chaincfg.Params) (*btcstaking.StakingOutputInfo, error) {
 	var (
 		scriptData *btcstaking.StakingScriptData
 		outValue   int64
@@ -291,11 +316,11 @@ func (tx *StakingTx) GetStakingOutputInfo(net *chaincfg.Params) (*btcstaking.Sta
 	}
 
 	// parse staking script
-	scriptData, err = btcstaking.ParseStakingTransactionScript(tx.StakingScript)
+	scriptData, err = btcstaking.ParseStakingTransactionScript(tx.Script)
 	if err != nil {
 		return nil, err
 	}
-	expectedPkScript, err := btcstaking.BuildUnspendableTaprootPkScript(tx.StakingScript, net)
+	expectedPkScript, err := btcstaking.BuildUnspendableTaprootPkScript(tx.Script, net)
 	if err != nil {
 		return nil, err
 	}

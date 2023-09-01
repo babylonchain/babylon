@@ -35,26 +35,26 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// generate staking/slashing tx
 		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, valPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 		require.NoError(t, err)
-		stakingOutInfo, err := stakingTx.GetStakingOutputInfo(net)
+		stakingOutInfo, err := stakingTx.GetBabylonOutputInfo(net)
 		require.NoError(t, err)
 		stakingPkScript := stakingOutInfo.StakingPkScript
 		stakingMsgTx, err := stakingTx.ToMsgTx()
 		require.NoError(t, err)
 
 		// sign slashing tx
-		valSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.StakingScript, valSK, net)
+		valSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, valSK, net)
 		require.NoError(t, err)
-		delSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.StakingScript, delSK, net)
+		delSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, delSK, net)
 		require.NoError(t, err)
-		jurySig, err := slashingTx.Sign(stakingMsgTx, stakingTx.StakingScript, jurySK, net)
+		jurySig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, jurySK, net)
 		require.NoError(t, err)
 
 		// verify signatures first
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.StakingScript, valPK, valSig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, valPK, valSig)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.StakingScript, delPK, delSig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, delPK, delSig)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.StakingScript, juryPK, jurySig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, juryPK, jurySig)
 		require.NoError(t, err)
 
 		// build slashing tx with witness

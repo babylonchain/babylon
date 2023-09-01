@@ -36,7 +36,7 @@ func FuzzStakingTx(f *testing.F) {
 		require.NoError(t, err)
 
 		// extract staking script and staked value
-		stakingOutputInfo, err := stakingTx.GetStakingOutputInfo(&chaincfg.SimNetParams)
+		stakingOutputInfo, err := stakingTx.GetBabylonOutputInfo(&chaincfg.SimNetParams)
 		require.NoError(t, err)
 		// NOTE: given that PK derived from SK has 2 possibilities on a curve, we can only compare x value but not y value
 		require.Equal(t, stakingOutputInfo.StakingScriptData.StakerKey.SerializeCompressed()[1:], stakerPK.SerializeCompressed()[1:])

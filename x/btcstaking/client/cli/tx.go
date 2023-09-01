@@ -40,6 +40,7 @@ func GetTxCmd() *cobra.Command {
 		NewCreateBTCValidatorCmd(),
 		NewCreateBTCDelegationCmd(),
 		NewAddJurySigCmd(),
+		NewCreateBTCUndelegationCmd(),
 	)
 
 	return cmd
@@ -160,7 +161,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 			}
 
 			// get staking tx
-			stakingTx, err := types.NewStakingTxFromHex(args[2])
+			stakingTx, err := types.NewBabylonTaprootTxFromHex(args[2])
 			if err != nil {
 				return err
 			}
@@ -243,6 +244,54 @@ func NewAddJurySigCmd() *cobra.Command {
 				DelPk:         delPK,
 				StakingTxHash: stakingTxHash,
 				Sig:           sig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewCreateBTCUndelegationCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create-btc-undelegation [unbonding_tx] [slashing_tx] [delegator_sig]",
+		Args:  cobra.ExactArgs(3),
+		Short: "Create a BTC undelegation",
+		Long: strings.TrimSpace(
+			`Create a BTC undelegation.`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get staking tx
+			unbondingTx, err := types.NewBabylonTaprootTxFromHex(args[0])
+			if err != nil {
+				return err
+			}
+
+			// get slashing tx
+			slashingTx, err := types.NewBTCSlashingTxFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			// get delegator sig
+			delegatorSig, err := bbn.NewBIP340SignatureFromHex(args[2])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgBTCUndelegate{
+				Signer:               clientCtx.FromAddress.String(),
+				UnbondingTx:          unbondingTx,
+				SlashingTx:           slashingTx,
+				DelegatorSlashingSig: delegatorSig,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

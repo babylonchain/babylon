@@ -8,10 +8,13 @@ import (
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -36,6 +39,8 @@ var (
 	jurySK, _ = btcec.PrivKeyFromBytes(
 		[]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	)
+
+	stakingValue = int64(2 * 10e8)
 )
 
 type BTCStakingTestSuite struct {
@@ -95,7 +100,6 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	stakingValue := int64(2 * 10e8)
 	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(
 		r,
 		net,
@@ -112,7 +116,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	// generate proper delegator sig
 	delegatorSig, err := slashingTx.Sign(
 		stakingMsgTx,
-		stakingTx.StakingScript,
+		stakingTx.Script,
 		delBTCSK,
 		net,
 	)
@@ -145,7 +149,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTx.MustGetTxHash())
 	s.NotNil(delegation)
-	expectedScript := hex.EncodeToString(stakingTx.StakingScript)
+	expectedScript := hex.EncodeToString(stakingTx.Script)
 	s.Equal(expectedScript, delegation.StakingScript)
 }
 
@@ -176,7 +180,7 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	*/
 	jurySig, err := slashingTx.Sign(
 		stakingMsgTx,
-		stakingTx.StakingScript,
+		stakingTx.Script,
 		jurySK,
 		net,
 	)
@@ -270,4 +274,72 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 	s.NotEmpty(finalizedBlocks)
 	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlocks[0].LastCommitHash)
+}
+
+// Test4SubmitStakerUnbonding is an end-to-end test for user unbodning
+func (s *BTCStakingTestSuite) Test4SubmitStakerUnbonding() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	activeDelsSet := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(activeDelsSet, 1)
+	activeDels := activeDelsSet[0]
+	s.Len(activeDels.Dels, 1)
+	activeDel := activeDels.Dels[0]
+	s.NotNil(activeDel.JurySig)
+
+	// params for juryPk and slashing address
+	params := nonValidatorNode.QueryBTCStakingParams()
+
+	stakingTx := activeDel.StakingTx
+	stakingMsgTx, err := stakingTx.ToMsgTx()
+	s.NoError(err)
+	stakingTxHash := stakingTx.MustGetTxHash()
+	stakingTxChainHash, err := chainhash.NewHashFromStr(stakingTxHash)
+	s.NoError(err)
+
+	stakingOutputIdx, err := btcstaking.GetIdxOutputCommitingToScript(
+		stakingMsgTx, activeDel.StakingTx.Script, net,
+	)
+	s.NoError(err)
+
+	fee := int64(1000)
+	unbondingTx, slashUnbondingTx, err := datagen.GenBTCUnbondingSlashingTx(
+		r,
+		net,
+		delBTCSK,
+		btcVal.BtcPk.MustToBTCPK(),
+		params.JuryPk.MustToBTCPK(),
+		wire.NewOutPoint(stakingTxChainHash, uint32(stakingOutputIdx)),
+		initialization.BabylonBtcFinalizationPeriod+1,
+		stakingValue-fee,
+		params.SlashingAddress,
+	)
+	s.NoError(err)
+
+	unbondingTxMsg, err := unbondingTx.ToMsgTx()
+	s.NoError(err)
+
+	slashingTxSig, err := slashUnbondingTx.Sign(
+		unbondingTxMsg,
+		unbondingTx.Script,
+		delBTCSK,
+		net,
+	)
+	s.NoError(err)
+
+	// submit the message for creating BTC undelegation
+	nonValidatorNode.CreateBTCUndelegation(unbondingTx, slashUnbondingTx, slashingTxSig)
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	valDelegations := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(valDelegations, 1)
+	s.Len(valDelegations[0].Dels, 1)
+	delegation := valDelegations[0].Dels[0]
+	s.NotNil(delegation.BtcUndelegation)
 }

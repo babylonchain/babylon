@@ -274,7 +274,7 @@ func (k Keeper) delegationView(
 			EndHeight:     delegation.EndHeight,
 			TotalSat:      delegation.TotalSat,
 			StakingTx:     hex.EncodeToString(delegation.StakingTx.Tx),
-			StakingScript: hex.EncodeToString(delegation.StakingTx.StakingScript),
+			StakingScript: hex.EncodeToString(delegation.StakingTx.Script),
 		}
 	}
 	return nil

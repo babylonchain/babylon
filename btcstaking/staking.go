@@ -105,8 +105,6 @@ func makeScriptNum(v []byte, requireMinimal bool, scriptNumLen int) (int64, erro
 	return result, nil
 }
 
-//End of copied methods
-
 // StakingScriptData is a struct that holds data parsed from staking script
 type StakingScriptData struct {
 	StakerKey    *btcec.PublicKey
@@ -589,33 +587,55 @@ func BuildSlashingTxFromStakingTxStrict(
 	return BuildSlashingTxFromOutpoint(*stakingOutpoint, slashingAddress, stakingOutput.Value-fee)
 }
 
-// CheckSlashingTx perform basic checks on slashing transaction:
+// Transfer transaction is a transaction which:
+// - has exactly one input
+// - has exactly one output
+func IsTransferTx(tx *wire.MsgTx) error {
+	if tx == nil {
+		return fmt.Errorf("transfer transaction must have cannot be nil")
+	}
+
+	if len(tx.TxIn) != 1 {
+		return fmt.Errorf("transfer transaction must have exactly one input")
+	}
+
+	if len(tx.TxOut) != 1 {
+		return fmt.Errorf("transfer transaction must have exactly one output")
+	}
+
+	return nil
+}
+
+// Simple transfer transaction is a transaction which:
+// - has exactly one input
+// - has exactly one output
+// - is not replacable
+// - does not have any locktime
+func IsSimpleTransfer(tx *wire.MsgTx) error {
+	if err := IsTransferTx(tx); err != nil {
+		return fmt.Errorf("invalid simple tansfer tx: %w", err)
+	}
+
+	if tx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
+		return fmt.Errorf("simple transfer tx must not be replacable")
+	}
+
+	if tx.LockTime != 0 {
+		return fmt.Errorf("simple transfer tx must not have locktime")
+	}
+	return nil
+}
+
+// IsSlashingTx perform basic checks on slashing transaction:
 // - slashing transaction is not nil
 // - slashing transaction has exactly one input
 // - slashing transaction is not replacable
 // - slashing transaction has exactly one output
 // - slashing transaction locktime is 0
 // - slashing transaction output is simple pay to address script paying to provided slashing address
-func CheckSlashingTx(slashingTx *wire.MsgTx, slashingAddress btcutil.Address) error {
-
-	if slashingTx == nil {
-		return fmt.Errorf("provided slashing transaction must not be nil")
-	}
-
-	if len(slashingTx.TxIn) != 1 {
-		return fmt.Errorf("slashing transaction must have exactly one input")
-	}
-
-	if slashingTx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
-		return fmt.Errorf("slashing transaction must be not replacable")
-	}
-
-	if len(slashingTx.TxOut) != 1 {
-		return fmt.Errorf("slashing transaction must have exactly one output")
-	}
-
-	if slashingTx.LockTime != 0 {
-		return fmt.Errorf("slashing transaction locktime must be 0")
+func IsSlashingTx(slashingTx *wire.MsgTx, slashingAddress btcutil.Address) error {
+	if err := IsSimpleTransfer(slashingTx); err != nil {
+		return fmt.Errorf("invalid slashing tx: %w", err)
 	}
 
 	pkScript, err := txscript.PayToAddrScript(slashingAddress)
@@ -666,16 +686,16 @@ func GetIdxOutputCommitingToScript(
 	return comittingOutputIdx, nil
 }
 
-// CheckTransactions validates all relevant data of slashing and staking transaction:
+// CheckTransactions validates all relevant data of slashing and funding transaction.
 // - slashing transaction is valid
-// - staking transaction script is valid
-// - staking transaction has output committing to the provided script
-// - slashing transaction input is pointing to staking transaction staking output
+// - funding transaction script is valid
+// - funding transaction has output committing to the provided script
+// - slashing transaction input is pointing to funding transaction output commiting to the script
 // - that min fee for slashing tx is preserved
 // In case of success, it returns data extracted from valid staking script and staking amount.
 func CheckTransactions(
 	slashingTx *wire.MsgTx,
-	stakingTx *wire.MsgTx,
+	fundingTransaction *wire.MsgTx,
 	slashingTxMinFee int64,
 	slashingAddress btcutil.Address,
 	script []byte,
@@ -686,7 +706,7 @@ func CheckTransactions(
 	}
 
 	//1. Check slashing tx
-	if err := CheckSlashingTx(slashingTx, slashingAddress); err != nil {
+	if err := IsSlashingTx(slashingTx, slashingAddress); err != nil {
 		return nil, err
 	}
 
@@ -698,14 +718,14 @@ func CheckTransactions(
 	}
 
 	//3. Check that staking transaction has output committing to the provided script
-	stakingOutputIdx, err := GetIdxOutputCommitingToScript(stakingTx, script, net)
+	stakingOutputIdx, err := GetIdxOutputCommitingToScript(fundingTransaction, script, net)
 
 	if err != nil {
 		return nil, err
 	}
 
 	//4. Check that slashing transaction input is pointing to staking transaction
-	stakingTxHash := stakingTx.TxHash()
+	stakingTxHash := fundingTransaction.TxHash()
 	if !slashingTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
 		return nil, fmt.Errorf("slashing transaction must spend staking output")
 	}
@@ -715,7 +735,7 @@ func CheckTransactions(
 		return nil, fmt.Errorf("slashing transaction input must spend staking output")
 	}
 
-	stakingOutput := stakingTx.TxOut[stakingOutputIdx]
+	stakingOutput := fundingTransaction.TxOut[stakingOutputIdx]
 
 	//6. Check fees
 	if slashingTx.TxOut[0].Value <= 0 || stakingOutput.Value <= 0 {

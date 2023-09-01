@@ -18,6 +18,8 @@ service Msg {
   rpc CreateBTCValidator(MsgCreateBTCValidator) returns (MsgCreateBTCValidatorResponse);
   // CreateBTCDelegation creates a new BTC delegation
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
+  // BtcUndelegate undelegates funds from exsitng btc delegation
+  rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
   // AddJurySig handles a signature from jury
   rpc AddJurySig(MsgAddJurySig) returns (MsgAddJurySigResponse);
   // UpdateParams updates the btcstaking module parameters.
@@ -53,14 +55,14 @@ message MsgCreateBTCDelegation {
   cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 3;
-  // staking_tx is the staking tx 
-  StakingTx staking_tx = 4;
+  // staking_tx is the staking tx
+  BabylonBTCTaprootTx staking_tx = 4;
   // staking_tx_info is the tx info of the staking tx, including the Merkle proof
   babylon.btccheckpoint.v1.TransactionInfo staking_tx_info = 5;
   // slashing_tx is the slashing tx
   // Note that the tx itself does not contain signatures, which are off-chain.
   bytes slashing_tx = 6 [ (gogoproto.customtype) = "BTCSlashingTx" ];
-  // delegator_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk). 
+  // delegator_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the staking tx output.
   // The staking tx output further needs signatures from jury and validator in
   // order to be spendable.
@@ -68,6 +70,23 @@ message MsgCreateBTCDelegation {
 }
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}
+
+
+// MsgBTCUndelegate is the message undelegating existing and active delegation
+message MsgBTCUndelegate {
+  string signer = 1;
+  // unbonding_tx is bitcoin unbonding transaction i.e transaction that spends
+  // staking output and sends it to the unbonding output
+  BabylonBTCTaprootTx unbonding_tx = 2;
+  // slashing_tx is the slashing tx which slash unbonding contract
+  // Note that the tx itself does not contain signatures, which are off-chain.
+  bytes slashing_tx = 3 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  // delegator_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
+  bytes delegator_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
+// MsgBtcUndelegateResponse is the response for MsgBtcUndelegate
+message MsgBTCUndelegateResponse {}
 
 // MsgAddJurySig is the message for handling a signature from jury
 message MsgAddJurySig {
@@ -78,7 +97,7 @@ message MsgAddJurySig {
   // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
   // the PK follows encoding in BIP-340 spec
   bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // staking_tx_hash is the hash of the staking tx. 
+  // staking_tx_hash is the hash of the staking tx.
   // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
   string staking_tx_hash = 4;
   // sig is the signature of the jury
@@ -107,4 +126,3 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
 
-    

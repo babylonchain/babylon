@@ -33,7 +33,7 @@ func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.
 	n.LogActionF("successfully created BTC validator")
 }
 
-func (n *NodeConfig) CreateBTCDelegation(babylonPK *secp256k1.PubKey, pop *bstypes.ProofOfPossession, stakingTx *bstypes.StakingTx, stakingTxInfo *btcctypes.TransactionInfo, slashingTx *bstypes.BTCSlashingTx, delegatorSig *bbn.BIP340Signature) {
+func (n *NodeConfig) CreateBTCDelegation(babylonPK *secp256k1.PubKey, pop *bstypes.ProofOfPossession, stakingTx *bstypes.BabylonBTCTaprootTx, stakingTxInfo *btcctypes.TransactionInfo, slashingTx *bstypes.BTCSlashingTx, delegatorSig *bbn.BIP340Signature) {
 	n.LogActionF("creating BTC delegation")
 
 	// get babylon PK hex
@@ -119,4 +119,20 @@ func (n *NodeConfig) AddFinalitySig(valBTCPK *bbn.BIP340PubKey, blockHeight uint
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added finality signature")
+}
+
+func (n *NodeConfig) CreateBTCUndelegation(unbondingTx *bstypes.BabylonBTCTaprootTx, slashingTx *bstypes.BTCSlashingTx, delegatorSig *bbn.BIP340Signature) {
+	n.LogActionF("creating BTC undelegation")
+	// get staking tx hex
+	unbondingTxHex, err := unbondingTx.ToHexStr()
+	require.NoError(n.t, err)
+	// get slashing tx hex
+	slashingTxHex := slashingTx.ToHexStr()
+	// get delegator sig hex
+	delegatorSigHex := delegatorSig.ToHexStr()
+
+	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-undelegation", unbondingTxHex, slashingTxHex, delegatorSigHex, "--from=val"}
+	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully created BTC delegation")
 }

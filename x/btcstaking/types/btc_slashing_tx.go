@@ -97,7 +97,7 @@ func (tx *BTCSlashingTx) Validate(net *chaincfg.Params, slashingAddress string) 
 	if err != nil {
 		return err
 	}
-	return btcstaking.CheckSlashingTx(msgTx, decodedAddr)
+	return btcstaking.IsSlashingTx(msgTx, decodedAddr)
 }
 
 // Sign generates a signature on the slashing tx signed by staker, validator or jury
@@ -141,9 +141,9 @@ func (tx *BTCSlashingTx) VerifySignature(stakingPkScript []byte, stakingAmount i
 // - validator signature
 // - delegator signature
 // - jury signature
-func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *StakingTx, valSig, delSig, jurySig *bbn.BIP340Signature) (*wire.MsgTx, error) {
+func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *BabylonBTCTaprootTx, valSig, delSig, jurySig *bbn.BIP340Signature) (*wire.MsgTx, error) {
 	// get staking script
-	stakingScript := stakingTx.StakingScript
+	stakingScript := stakingTx.Script
 
 	// get Schnorr signatures
 	valSchnorrSig, err := valSig.ToBTCSig()

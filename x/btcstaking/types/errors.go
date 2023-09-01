@@ -19,4 +19,6 @@ var (
 	ErrDuplicatedJurySig      = errorsmod.Register(ModuleName, 1110, "the BTC delegation has already received jury signature")
 	ErrInvalidJurySig         = errorsmod.Register(ModuleName, 1111, "the jury signature is not valid")
 	ErrCommissionLTMinRate    = errorsmod.Register(ModuleName, 1112, "commission cannot be less than min rate")
+	ErrInvalidDelegationState = errorsmod.Register(ModuleName, 1113, "Unexpected delegation state")
+	ErrInvalidUnbodningTx     = errorsmod.Register(ModuleName, 1114, "the BTC unbonding tx is not valid")
 )
