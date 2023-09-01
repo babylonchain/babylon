@@ -8,5 +8,7 @@ import (
 
 // x/incentive module sentinel errors
 var (
-	ErrSample = errorsmod.Register(ModuleName, 1100, "sample error")
+	ErrBTCStakingGaugeNotFound      = errorsmod.Register(ModuleName, 1100, "BTC staking gauge not found")
+	ErrBTCTimestampingGaugeNotFound = errorsmod.Register(ModuleName, 1101, "BTC timestamping gauge not found")
+	ErrRewardGaugeNotFound          = errorsmod.Register(ModuleName, 1102, "reward gauge not found")
 )

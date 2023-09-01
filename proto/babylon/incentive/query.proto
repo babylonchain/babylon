@@ -4,15 +4,20 @@ package babylon.incentive;
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "babylon/incentive/params.proto";
+import "babylon/incentive/incentive.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/incentive/types";
 
 // Query defines the gRPC querier service.
 service Query {
-  // Parameters queries the parameters of the module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/babylonchain/babylon/incentive/params";
-  }
+    // Parameters queries the parameters of the module.
+    rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/params";
+    }
+    // RewardGauge queries the reward gauge of a given stakeholder in a given type
+    rpc RewardGauge(QueryRewardGaugeRequest) returns (QueryRewardGaugeResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/{type}/address/{address}/reward_gauge";
+    }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -20,6 +25,21 @@ message QueryParamsRequest {}
 
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
-  // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+    // params holds all the parameters of this module.
+    Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryRewardGaugeRequest is request type for the Query/RewardGauge RPC method.
+message QueryRewardGaugeRequest {
+    // type is the type of the stakeholder, can be one of 
+    // {submitter, reporter, btc_validator, btc_delegation}
+    string type = 1;
+    // address is the address of the stakeholder in bech32 string
+    string address = 2;
+}
+
+// QueryParamsResponse is response type for the Query/RewardGauge RPC method.
+message QueryRewardGaugeResponse {
+    // reward_gauge is the reward gauge holding all rewards for the stakeholder
+    RewardGauge reward_gauge = 1;
 }
