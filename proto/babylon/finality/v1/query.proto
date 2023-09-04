@@ -25,7 +25,7 @@ service Query {
   rpc Block(QueryBlockRequest) returns (QueryBlockResponse) {
     option (google.api.http).get = "/babylon/finality/v1/blocks/{height}";
   }
-  
+
   // ListBlocks is a range query for blocks at a given status
   rpc ListBlocks(QueryListBlocksRequest) returns (QueryListBlocksResponse) {
     option (google.api.http).get = "/babylon/finality/v1/blocks";
@@ -43,7 +43,7 @@ service Query {
 
   // ListEvidences queries is a range query for evidences
   rpc ListEvidences(QueryListEvidencesRequest) returns (QueryListEvidencesResponse) {
-    option (google.api.http).get = "/babylon/finality/v1/vidences";
+    option (google.api.http).get = "/babylon/finality/v1/evidences";
   }
 }
 

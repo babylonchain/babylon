@@ -721,7 +721,7 @@ var (
 
 	pattern_Query_Evidence_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "finality", "v1", "btc_validators", "val_btc_pk_hex", "evidence"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ListEvidences_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "finality", "v1", "vidences"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ListEvidences_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "finality", "v1", "evidences"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (
