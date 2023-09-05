@@ -4,12 +4,11 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/babylonchain/babylon/test/e2e/util"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
+	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {

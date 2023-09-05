@@ -18,6 +18,14 @@ service Query {
     rpc RewardGauge(QueryRewardGaugeRequest) returns (QueryRewardGaugeResponse) {
         option (google.api.http).get = "/babylonchain/babylon/incentive/{type}/address/{address}/reward_gauge";
     }
+    // BTCStakingGauge queries the BTC staking gauge of a given height
+    rpc BTCStakingGauge(QueryBTCStakingGaugeRequest) returns (QueryBTCStakingGaugeResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/btc_staking_gauge/{height}";
+    }
+    // BTCTimestampingGauge queries the BTC timestamping gauge of a given epoch
+    rpc BTCTimestampingGauge(QueryBTCTimestampingGaugeRequest) returns (QueryBTCTimestampingGaugeResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/btc_timestamping_gauge/{epoch_num}";
+    }
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -38,8 +46,32 @@ message QueryRewardGaugeRequest {
     string address = 2;
 }
 
-// QueryParamsResponse is response type for the Query/RewardGauge RPC method.
+// QueryRewardGaugeResponse is response type for the Query/RewardGauge RPC method.
 message QueryRewardGaugeResponse {
     // reward_gauge is the reward gauge holding all rewards for the stakeholder
     RewardGauge reward_gauge = 1;
+}
+
+// QueryBTCStakingGaugeRequest is request type for the Query/BTCStakingGauge RPC method.
+message QueryBTCStakingGaugeRequest {
+    // height is the queried Babylon height
+    uint64 height = 1;
+}
+
+// QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
+message QueryBTCStakingGaugeResponse {
+    // gauge is the BTC staking gauge at the queried height 
+    Gauge gauge = 1;
+}
+
+// QueryBTCTimestampingGaugeRequest is request type for the Query/BTCTimestampingGauge RPC method.
+message QueryBTCTimestampingGaugeRequest {
+    // epoch_num is the queried epoch number
+    uint64 epoch_num = 1;
+}
+
+// QueryBTCTimestampingGaugeResponse is response type for the Query/BTCTimestampingGauge RPC method.
+message QueryBTCTimestampingGaugeResponse {
+    // gauge is the BTC timestamping gauge at the queried epoch 
+    Gauge gauge = 1;
 }

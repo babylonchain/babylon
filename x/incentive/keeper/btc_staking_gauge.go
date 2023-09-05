@@ -6,6 +6,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+func (k Keeper) accumulateBTCStakingReward(ctx sdk.Context, btcStakingReward sdk.Coins) {
+	// update BTC staking gauge
+	height := uint64(ctx.BlockHeight())
+	gauge := types.NewGauge(btcStakingReward)
+	k.SetBTCStakingGauge(ctx, height, gauge)
+
+	// transfer the BTC staking reward from fee collector account to incentive module account
+	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, btcStakingReward)
+	if err != nil {
+		// this can only be programming error and is unrecoverable
+		panic(err)
+	}
+}
+
 func (k Keeper) SetBTCStakingGauge(ctx sdk.Context, height uint64, gauge *types.Gauge) {
 	store := k.btcStakingGaugeStore(ctx)
 	gaugeBytes := k.cdc.MustMarshal(gauge)

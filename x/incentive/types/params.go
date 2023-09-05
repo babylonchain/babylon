@@ -29,6 +29,26 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{}
 }
 
+// TotalPortion calculates the sum of portions of all stakeholders
+func (p *Params) TotalPortion() math.LegacyDec {
+	sum := p.SubmitterPortion
+	sum = sum.Add(p.ReporterPortion)
+	sum = sum.Add(p.BtcStakingPortion)
+	return sum
+}
+
+// BTCTimestampingPortion calculates the sum of portions of all BTC timestamping stakeholders
+func (p *Params) BTCTimestampingPortion() math.LegacyDec {
+	sum := p.SubmitterPortion
+	sum = sum.Add(p.ReporterPortion)
+	return sum
+}
+
+// BTCStakingPortion calculates the sum of portions of all BTC staking stakeholders
+func (p *Params) BTCStakingPortion() math.LegacyDec {
+	return p.BtcStakingPortion
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.SubmitterPortion.IsNil() {
@@ -42,10 +62,7 @@ func (p Params) Validate() error {
 	}
 
 	// sum of all portions should be less than 1
-	sum := p.SubmitterPortion
-	sum = sum.Add(p.ReporterPortion)
-	sum = sum.Add(p.BtcStakingPortion)
-	if sum.GTE(math.LegacyOneDec()) {
+	if p.TotalPortion().GTE(math.LegacyOneDec()) {
 		return fmt.Errorf("sum of all portions should be less than 1")
 	}
 

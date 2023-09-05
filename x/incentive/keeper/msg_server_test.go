@@ -12,7 +12,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
-	k, ctx := keepertest.IncentiveKeeper(t)
+	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
 	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
 }
 

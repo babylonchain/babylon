@@ -226,9 +226,9 @@ var (
 		incentive.AppModuleBasic{},
 	)
 
-	// module account permissions
+	// fee collector account, module accounts and their permissions
 	maccPerms = map[string][]string{
-		authtypes.FeeCollectorName:     nil,
+		authtypes.FeeCollectorName:     nil, // fee collector account
 		distrtypes.ModuleName:          nil,
 		minttypes.ModuleName:           {authtypes.Minter},
 		stakingtypes.BondedPoolName:    {authtypes.Burner, authtypes.Staking},
@@ -236,10 +236,7 @@ var (
 		govtypes.ModuleName:            {authtypes.Burner},
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		ibcfeetypes.ModuleName:         nil,
-		// TODO: decide ZonConcierge's permissions here
-		zctypes.ModuleName: {authtypes.Minter, authtypes.Burner},
-		// TODO: decide BTCStaking and Finality's permissiones here
-		// TODO: decide incentive module's permission here
+		incentivetypes.ModuleName:      nil, // this line is needed to create an account for incentive module
 	}
 )
 
@@ -639,17 +636,19 @@ func NewBabylonApp(
 		app.BTCStakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// set up incentive keeper
-	app.IncentiveKeeper = incentivekeeper.NewKeeper(
-		appCodec, keys[incentivetypes.StoreKey], keys[incentivetypes.StoreKey], app.BankKeeper, app.AccountKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authtypes.FeeCollectorName,
-	)
-
 	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
 	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	// make ZoneConcierge to subscribe to the epoching's hooks
+	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
 	app.EpochingKeeper = *epochingKeeper.SetHooks(
 		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)
+
+	// set up incentive keeper
+	app.IncentiveKeeper = incentivekeeper.NewKeeper(
+		appCodec, keys[incentivetypes.StoreKey], keys[incentivetypes.StoreKey], app.BankKeeper, app.AccountKeeper, app.EpochingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authtypes.FeeCollectorName,
+	)
+
+	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
 	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
 		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
 	)

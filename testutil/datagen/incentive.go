@@ -33,14 +33,24 @@ func GenRandomStakeholderType(r *rand.Rand) itypes.StakeholderType {
 	return st
 }
 
-func GenRandomRewardGauge(r *rand.Rand) *itypes.RewardGauge {
+func GenRandomCoins(r *rand.Rand) sdk.Coins {
 	numCoins := r.Int31n(10) + 10
 	coins := sdk.NewCoins()
 	for i := int32(0); i < numCoins; i++ {
 		demon := GenRandomDenom(r)
-		amount := r.Int63n(10000)
+		amount := r.Int63n(10000) + 1
 		coin := sdk.NewInt64Coin(demon, amount)
 		coins = coins.Add(coin)
 	}
-	return itypes.NewRewardGauge(coins...)
+	return coins
+}
+
+func GenRandomRewardGauge(r *rand.Rand) *itypes.RewardGauge {
+	coins := GenRandomCoins(r)
+	return itypes.NewRewardGauge(coins)
+}
+
+func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
+	coins := GenRandomCoins(r)
+	return itypes.NewGauge(coins)
 }

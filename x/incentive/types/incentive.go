@@ -3,14 +3,33 @@ package types
 import (
 	fmt "fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewRewardGauge(coins ...sdk.Coin) *RewardGauge {
-	return &RewardGauge{
-		Coins:          sdk.NewCoins(coins...),
-		WithdrawnCoins: sdk.NewCoins(coins...),
+func NewGauge(coins sdk.Coins) *Gauge {
+	return &Gauge{
+		Coins:            coins,
+		DistributedCoins: sdk.NewCoins(),
 	}
+}
+
+func NewRewardGauge(coins sdk.Coins) *RewardGauge {
+	return &RewardGauge{
+		Coins:          coins,
+		WithdrawnCoins: sdk.NewCoins(),
+	}
+}
+
+func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
+	// coins with decimal value
+	coins := sdk.NewDecCoinsFromCoins(coinsInt...)
+	// portion of coins with decimal values
+	portionCoins := coins.MulDecTruncate(portion)
+	// truncate back
+	// TODO: how to deal with changes?
+	portionCoinsInt, _ := portionCoins.TruncateDecimal()
+	return portionCoinsInt
 }
 
 // enum for stakeholder type, used as key prefix in KVStore

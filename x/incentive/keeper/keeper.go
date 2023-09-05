@@ -3,12 +3,11 @@ package keeper
 import (
 	"fmt"
 
+	"github.com/babylonchain/babylon/x/incentive/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/babylonchain/babylon/x/incentive/types"
 )
 
 type (
@@ -17,8 +16,9 @@ type (
 		storeKey storetypes.StoreKey
 		memKey   storetypes.StoreKey
 
-		bankKeeper    types.BankKeeper
-		accountKeeper types.AccountKeeper
+		bankKeeper     types.BankKeeper
+		accountKeeper  types.AccountKeeper
+		epochingKeeper types.EpochingKeeper
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
@@ -33,6 +33,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	bankKeeper types.BankKeeper,
 	accountKeeper types.AccountKeeper,
+	epochingKeeper types.EpochingKeeper,
 	authority string,
 	feeCollectorName string,
 ) Keeper {
@@ -42,6 +43,7 @@ func NewKeeper(
 		memKey:           memKey,
 		bankKeeper:       bankKeeper,
 		accountKeeper:    accountKeeper,
+		epochingKeeper:   epochingKeeper,
 		authority:        authority,
 		feeCollectorName: feeCollectorName,
 	}

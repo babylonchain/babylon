@@ -12,6 +12,7 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	incentivetypes "github.com/babylonchain/babylon/x/incentive/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -196,4 +197,49 @@ func (s *BTCTimestampingTestSuite) TestWasm() {
 	require.Equal(s.T(), 3, latestFinalizedEpoch)
 	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
 	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
+}
+
+func (s *BTCTimestampingTestSuite) TestInterceptFeeCollector() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// ensure incentive module account has positive balance
+	incentiveModuleAddr, err := nonValidatorNode.QueryModuleAddress(incentivetypes.ModuleName)
+	s.NoError(err)
+	incentiveBalance, err := nonValidatorNode.QueryBalances(incentiveModuleAddr.String())
+	s.NoError(err)
+	s.NotEmpty(incentiveBalance)
+	s.True(incentiveBalance.IsAllPositive())
+
+	// ensure BTC staking gauge at the current height is non-empty
+	curHeight, err := nonValidatorNode.QueryCurrentHeight()
+	s.NoError(err)
+	btcStakingGauge, err := nonValidatorNode.QueryBTCStakingGauge(uint64(curHeight))
+	s.NoError(err)
+	s.True(len(btcStakingGauge.Coins) >= 1)
+	s.True(btcStakingGauge.Coins[0].Amount.IsPositive())
+
+	// ensure BTC timestamping gauge at the current epoch is non-empty
+	curEpoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+	// at the 1st block of an epoch, the gauge does not exist since incentive's BeginBlock
+	// at this block accumulates rewards for BTC timestamping gauge for the previous block
+	// need to wait for a block to ensure the gauge is created
+	nonValidatorNode.WaitForNextBlock()
+	btcTimestampingGauge, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
+	s.NoError(err)
+	s.NotEmpty(btcTimestampingGauge.Coins)
+
+	// wait for 1 block to see if BTC timestamp gauge has accumulated
+	nonValidatorNode.WaitForNextBlock()
+	btcTimestampingGauge2, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
+	s.NoError(err)
+	s.NotEmpty(btcTimestampingGauge2.Coins)
+	s.True(btcTimestampingGauge2.Coins.IsAllGTE(btcTimestampingGauge.Coins))
+
+	// after 1 block, incentive's balance has to be accumulated
+	incentiveBalance2, err := nonValidatorNode.QueryBalances(incentiveModuleAddr.String())
+	s.NoError(err)
+	s.True(incentiveBalance2.IsAllGTE(incentiveBalance))
 }

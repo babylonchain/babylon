@@ -35,3 +35,33 @@ func (k Keeper) RewardGauge(goCtx context.Context, req *types.QueryRewardGaugeRe
 
 	return &types.QueryRewardGaugeResponse{RewardGauge: rg}, nil
 }
+
+func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakingGaugeRequest) (*types.QueryBTCStakingGaugeResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// find gauge
+	gauge, err := k.GetBTCStakingGauge(ctx, req.Height)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryBTCStakingGaugeResponse{Gauge: gauge}, nil
+}
+
+func (k Keeper) BTCTimestampingGauge(goCtx context.Context, req *types.QueryBTCTimestampingGaugeRequest) (*types.QueryBTCTimestampingGaugeResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// find gauge
+	gauge, err := k.GetBTCTimestampingGauge(ctx, req.EpochNum)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryBTCTimestampingGaugeResponse{Gauge: gauge}, nil
+}

@@ -15,7 +15,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.DefaultParams(),
 	}
 
-	k, ctx := keepertest.IncentiveKeeper(t)
+	k, ctx := keepertest.IncentiveKeeper(t, nil, nil, nil)
 	incentive.InitGenesis(ctx, *k, genesisState)
 	got := incentive.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)

@@ -24,6 +24,7 @@ import (
 	tmabcitypes "github.com/cometbft/cometbft/abci/types"
 	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/stretchr/testify/require"
 )
@@ -65,6 +66,25 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 		return nil, fmt.Errorf("unexpected status code: %d, body: %s", resp.StatusCode, string(bz))
 	}
 	return bz, nil
+}
+
+// QueryModuleAccoint returns the address of a given module
+func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
+	path := fmt.Sprintf("/cosmos/auth/v1beta1/module_accounts/%s", name)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp authtypes.QueryModuleAccountByNameResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return sdk.AccAddress{}, err
+	}
+	// cast to account
+	var account authtypes.AccountI
+	if err := util.EncodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account); err != nil {
+		return sdk.AccAddress{}, err
+	}
+
+	return account.GetAddress(), nil
 }
 
 // QueryBalances returns balances at the address.
