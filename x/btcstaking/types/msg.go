@@ -17,6 +17,8 @@ var (
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
 	_ sdk.Msg = &MsgAddJurySig{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
+	_ sdk.Msg = &MsgAddJuryUnbondingSigs{}
+	_ sdk.Msg = &MsgAddValidatorUnbondingSig{}
 )
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -189,4 +191,56 @@ func (m *MsgBTCUndelegate) GetSigners() []sdk.AccAddress {
 		panic(err)
 	}
 	return []sdk.AccAddress{signer}
+}
+
+func (m *MsgAddJuryUnbondingSigs) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+func (m *MsgAddJuryUnbondingSigs) ValidateBasic() error {
+	if m.ValPk == nil {
+		return fmt.Errorf("empty BTC validator public key")
+	}
+	if m.DelPk == nil {
+		return fmt.Errorf("empty BTC delegation public key")
+	}
+	if m.UnbondingTxSig == nil {
+		return fmt.Errorf("empty jury signature")
+	}
+	if m.SlashingUnbondingTxSig == nil {
+		return fmt.Errorf("empty jury signature")
+	}
+	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
+		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
+	}
+	return nil
+}
+
+func (m *MsgAddValidatorUnbondingSig) GetSigners() []sdk.AccAddress {
+	signer, err := sdk.AccAddressFromBech32(m.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return []sdk.AccAddress{signer}
+}
+
+func (m *MsgAddValidatorUnbondingSig) ValidateBasic() error {
+	if m.ValPk == nil {
+		return fmt.Errorf("empty BTC validator public key")
+	}
+	if m.DelPk == nil {
+		return fmt.Errorf("empty BTC delegation public key")
+	}
+	if m.UnbondingTxSig == nil {
+		return fmt.Errorf("empty jury signature")
+	}
+	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
+		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
+	}
+
+	return nil
 }

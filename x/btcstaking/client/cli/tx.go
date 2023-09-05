@@ -41,6 +41,8 @@ func GetTxCmd() *cobra.Command {
 		NewCreateBTCDelegationCmd(),
 		NewAddJurySigCmd(),
 		NewCreateBTCUndelegationCmd(),
+		NewAddJuryUnbondingSigsCmd(),
+		NewAddValidatorUnbondingSigCmd(),
 	)
 
 	return cmd
@@ -292,6 +294,111 @@ func NewCreateBTCUndelegationCmd() *cobra.Command {
 				UnbondingTx:          unbondingTx,
 				SlashingTx:           slashingTx,
 				DelegatorSlashingSig: delegatorSig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewAddJuryUnbondingSigsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-jury-unbonding-sigs [val_pk] [del_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig]",
+		Args:  cobra.ExactArgs(5),
+		Short: "Add jury signatures for unbonding tx and slash unbonding tx",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get validator PK
+			valPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			if err != nil {
+				return err
+			}
+
+			// get delegator PK
+			delPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			// get staking tx hash
+			stakingTxHash := args[2]
+
+			// get jury sigature for unbonding tx
+			unbondingSig, err := bbn.NewBIP340SignatureFromHex(args[3])
+			if err != nil {
+				return err
+			}
+
+			// get jury sigature for slash unbonding tx
+			slashUnbondingSig, err := bbn.NewBIP340SignatureFromHex(args[4])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgAddJuryUnbondingSigs{
+				Signer:                 clientCtx.FromAddress.String(),
+				ValPk:                  valPK,
+				DelPk:                  delPK,
+				StakingTxHash:          stakingTxHash,
+				UnbondingTxSig:         unbondingSig,
+				SlashingUnbondingTxSig: slashUnbondingSig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewAddValidatorUnbondingSigCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "add-validator-unbonding-sig [val_pk] [del_pk] [staking_tx_hash] [sig]",
+		Args:  cobra.ExactArgs(4),
+		Short: "Add a validator signature for unbonding tx",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get validator PK
+			valPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			if err != nil {
+				return err
+			}
+
+			// get delegator PK
+			delPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			if err != nil {
+				return err
+			}
+
+			// get staking tx hash
+			stakingTxHash := args[2]
+
+			// get validator sigature
+			sig, err := bbn.NewBIP340SignatureFromHex(args[3])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgAddValidatorUnbondingSig{
+				Signer:         clientCtx.FromAddress.String(),
+				ValPk:          valPK,
+				DelPk:          delPK,
+				StakingTxHash:  stakingTxHash,
+				UnbondingTxSig: sig,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

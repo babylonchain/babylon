@@ -157,7 +157,11 @@ enum BTCDelegationStatus {
     PENDING = 0;
     // ACTIVE defines a delegation that has voting power
     ACTIVE = 1;
+    // UNBONDING defines a delegation that is being unbonded i.e it received an unbonding tx
+    // from staker, but not yet received signatures from validator and jury.
+    // Delegation in this state already lost its voting power.
+    UNBONDING = 2;
     // EXPIRED defines a delegation that has expired
-    EXPIRED = 2;
+    EXPIRED = 3;
 }
 

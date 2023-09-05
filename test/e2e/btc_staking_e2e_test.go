@@ -343,3 +343,90 @@ func (s *BTCStakingTestSuite) Test4SubmitStakerUnbonding() {
 	delegation := valDelegations[0].Dels[0]
 	s.NotNil(delegation.BtcUndelegation)
 }
+
+// Test5SubmitStakerUnbonding is an end-to-end test for jury and validator submitting signatures
+// for unbonding transaction
+func (s *BTCStakingTestSuite) Test5SubmitUnbondingSignatures() {
+	chainA := s.configurer.GetChainConfig(0)
+	chainA.WaitUntilHeight(1)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	// wait for a block so that above txs take effect
+	nonValidatorNode.WaitForNextBlock()
+
+	allDelegations := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(allDelegations, 1)
+	delegatorDelegations := allDelegations[0]
+	s.Len(delegatorDelegations.Dels, 1)
+	delegation := delegatorDelegations.Dels[0]
+
+	s.NotNil(delegation.BtcUndelegation)
+	s.Nil(delegation.BtcUndelegation.ValidatorUnbondingSig)
+	s.Nil(delegation.BtcUndelegation.JuryUnbondingSig)
+	s.Nil(delegation.BtcUndelegation.JurySlashingSig)
+
+	// First sent validator signature
+	stakingTxMsg, err := delegation.StakingTx.ToMsgTx()
+	s.NoError(err)
+	stakingTxHash := delegation.StakingTx.MustGetTxHash()
+
+	validatorUnbondingSig, err := delegation.BtcUndelegation.UnbondingTx.Sign(
+		stakingTxMsg,
+		delegation.StakingTx.Script,
+		valSK,
+		net,
+	)
+	s.NoError(err)
+
+	nonValidatorNode.AddValidatorUnbondingSig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, validatorUnbondingSig)
+	nonValidatorNode.WaitForNextBlock()
+
+	allDelegationsValSig := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(allDelegationsValSig, 1)
+	delegationWithValSig := allDelegationsValSig[0].Dels[0]
+	s.NotNil(delegationWithValSig.BtcUndelegation)
+	s.NotNil(delegationWithValSig.BtcUndelegation.ValidatorUnbondingSig)
+
+	btcTip, err := nonValidatorNode.QueryTip()
+	s.NoError(err)
+	s.Equal(
+		bstypes.BTCDelegationStatus_UNBONDING,
+		delegationWithValSig.GetStatus(btcTip.Height, initialization.BabylonBtcFinalizationPeriod),
+	)
+
+	// Next send jury signatures
+	juryUnbondingSig, err := delegation.BtcUndelegation.UnbondingTx.Sign(
+		stakingTxMsg,
+		delegation.StakingTx.Script,
+		jurySK,
+		net,
+	)
+	s.NoError(err)
+
+	unbondingTxMsg, err := delegation.BtcUndelegation.UnbondingTx.ToMsgTx()
+	s.NoError(err)
+	jurySlashingSig, err := delegation.BtcUndelegation.SlashingTx.Sign(
+		unbondingTxMsg,
+		delegation.BtcUndelegation.UnbondingTx.Script,
+		jurySK,
+		net,
+	)
+	s.NoError(err)
+	nonValidatorNode.AddJuryUnbondingSigs(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, juryUnbondingSig, jurySlashingSig)
+	nonValidatorNode.WaitForNextBlock()
+
+	// Check all signatures are properly registered
+	allDelegationsWithSigs := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
+	s.Len(allDelegationsWithSigs, 1)
+	delegationWithSigs := allDelegationsWithSigs[0].Dels[0]
+	s.NotNil(delegationWithSigs.BtcUndelegation)
+	s.NotNil(delegationWithSigs.BtcUndelegation.ValidatorUnbondingSig)
+	s.NotNil(delegationWithSigs.BtcUndelegation.JuryUnbondingSig)
+	s.NotNil(delegationWithSigs.BtcUndelegation.JurySlashingSig)
+	btcTip, err = nonValidatorNode.QueryTip()
+	s.NoError(err)
+	s.Equal(
+		bstypes.BTCDelegationStatus_EXPIRED,
+		delegationWithSigs.GetStatus(btcTip.Height, initialization.BabylonBtcFinalizationPeriod),
+	)
+}

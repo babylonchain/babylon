@@ -7,6 +7,7 @@ import (
 
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
@@ -86,6 +87,18 @@ func (d *BTCDelegation) HasJurySig() bool {
 	return d.JurySig != nil
 }
 
+func (ud *BTCUndelegation) HasJurySigs() bool {
+	return ud.JurySlashingSig != nil && ud.JuryUnbondingSig != nil
+}
+
+func (ud *BTCUndelegation) HasValidatorSig() bool {
+	return ud.ValidatorUnbondingSig != nil
+}
+
+func (ud *BTCUndelegation) HasAllSignatures() bool {
+	return ud.HasJurySigs() && ud.HasValidatorSig()
+}
+
 // GetStatus returns the status of the BTC Delegation based on a BTC height and a w value
 // TODO: Given that we only accept delegations that can be activated immediately,
 // we can only have expired delegations. If we accept optimistic submissions,
@@ -96,14 +109,17 @@ func (d *BTCDelegation) HasJurySig() bool {
 // Expired: Delegation timelock
 func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatus {
 	if d.BtcUndelegation != nil {
-		// If we received an undelegation, delegation becomes expired which means that staker
-		// voting power from this delegation is removed from the total voting power
+		if d.BtcUndelegation.HasAllSignatures() {
+			return BTCDelegationStatus_EXPIRED
+		}
+		// If we received an undelegation but is still does not have all required signature,
+		// delegation receives UNBONING status.
+		// Voting power from this delegation is removed from the total voting power and now we
+		// are waiting for signatures from validator and jury for delegation to become expired.
 		// For now we do not have any unbonding time on Babylon chain, only time lock on BTC chain
 		// we may consider adding unbonding time on Babylon chain later to avoid situation where
 		// we can lose to much voting power in to short time.
-		// TODO: maybe it is worth having separte status for this case help jury/validators to
-		// filter for unbodning delegations
-		return BTCDelegationStatus_EXPIRED
+		return BTCDelegationStatus_UNBONDING
 	}
 
 	if d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
@@ -159,32 +175,81 @@ func (dels *BTCDelegatorDelegations) Add(del *BTCDelegation) error {
 	return nil
 }
 
-// AddJurySig adds a jury signature to an existing BTC delegation in the BTC delegations
-// TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegatorDelegations) AddJurySig(stakingTxHash string, sig *bbn.BIP340Signature) error {
+func (dels *BTCDelegatorDelegations) getAndModifyDelegation(stakingTxHash string, modifyFn func(del *BTCDelegation) error) error {
 	del, err := dels.Get(stakingTxHash)
 	if err != nil {
 		return fmt.Errorf("cannot find the BTC delegation with staking tx hash %s: %w", stakingTxHash, err)
 	}
-	if del.JurySig != nil {
-		return fmt.Errorf("the BTC delegation with staking tx hash %s already has a jury signature", stakingTxHash)
+
+	if err := modifyFn(del); err != nil {
+		return err
 	}
-	del.JurySig = sig
 	return nil
 }
 
+// AddJurySig adds a jury signature to an existing BTC delegation in the BTC delegations
+// TODO: this is an O(n) operation. Consider optimisation later
+func (dels *BTCDelegatorDelegations) AddJurySig(stakingTxHash string, sig *bbn.BIP340Signature) error {
+	addJurySig := func(del *BTCDelegation) error {
+		if del.JurySig != nil {
+			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a jury signature", stakingTxHash)
+		}
+		del.JurySig = sig
+		return nil
+	}
+
+	return dels.getAndModifyDelegation(stakingTxHash, addJurySig)
+}
+
 func (dels *BTCDelegatorDelegations) AddUndelegation(stakingTxHash string, ud *BTCUndelegation) error {
-	del, err := dels.Get(stakingTxHash)
-	if err != nil {
-		return fmt.Errorf("cannot find the BTC delegation with staking tx hash %s: %w", stakingTxHash, err)
+	addUndelegation := func(del *BTCDelegation) error {
+		if del.BtcUndelegation != nil {
+			return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
+		}
+		del.BtcUndelegation = ud
+		return nil
 	}
 
-	if del.BtcUndelegation != nil {
-		return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
+	return dels.getAndModifyDelegation(stakingTxHash, addUndelegation)
+}
+
+func (dels *BTCDelegatorDelegations) AddValidatorSigToUndelegation(stakingTxHash string, sig *bbn.BIP340Signature) error {
+	addValidatorSig := func(del *BTCDelegation) error {
+		if del.BtcUndelegation == nil {
+			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
+		}
+
+		if del.BtcUndelegation.ValidatorUnbondingSig != nil {
+			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid validator signature", stakingTxHash)
+		}
+
+		del.BtcUndelegation.ValidatorUnbondingSig = sig
+		return nil
 	}
 
-	del.BtcUndelegation = ud
-	return nil
+	return dels.getAndModifyDelegation(stakingTxHash, addValidatorSig)
+}
+
+func (dels *BTCDelegatorDelegations) AddJurySigsToUndelegation(
+	stakingTxHash string,
+	unbondingTxSig *bbn.BIP340Signature,
+	slashUnbondingTxSig *bbn.BIP340Signature,
+) error {
+	addJurySigs := func(del *BTCDelegation) error {
+		if del.BtcUndelegation == nil {
+			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
+		}
+
+		if del.BtcUndelegation.JuryUnbondingSig != nil || del.BtcUndelegation.JurySlashingSig != nil {
+			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid jury signatures", stakingTxHash)
+		}
+
+		del.BtcUndelegation.JuryUnbondingSig = unbondingTxSig
+		del.BtcUndelegation.JurySlashingSig = slashUnbondingTxSig
+		return nil
+	}
+
+	return dels.getAndModifyDelegation(stakingTxHash, addJurySigs)
 }
 
 // TODO: this is an O(n) operation. Consider optimisation later
@@ -341,4 +406,42 @@ func (tx *BabylonBTCTaprootTx) GetBabylonOutputInfo(net *chaincfg.Params) (*btcs
 		StakingPkScript:   expectedPkScript,
 		StakingAmount:     btcutil.Amount(outValue),
 	}, nil
+}
+
+func (tx *BabylonBTCTaprootTx) Sign(
+	fundingTx *wire.MsgTx,
+	fundingTxScript []byte,
+	sk *btcec.PrivateKey,
+	net *chaincfg.Params) (*bbn.BIP340Signature, error) {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return nil, err
+	}
+	schnorrSig, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
+		msgTx,
+		fundingTx,
+		sk,
+		fundingTxScript,
+		net,
+	)
+	if err != nil {
+		return nil, err
+	}
+	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
+	return &sig, nil
+}
+
+func (tx *BabylonBTCTaprootTx) VerifySignature(stakingPkScript []byte, stakingAmount int64, stakingScript []byte, pk *btcec.PublicKey, sig *bbn.BIP340Signature) error {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return err
+	}
+	return btcstaking.VerifyTransactionSigWithOutputData(
+		msgTx,
+		stakingPkScript,
+		stakingAmount,
+		stakingScript,
+		pk,
+		*sig,
+	)
 }

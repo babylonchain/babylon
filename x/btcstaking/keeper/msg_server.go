@@ -414,3 +414,156 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 
 	return &types.MsgAddJurySigResponse{}, nil
 }
+
+func (ms msgServer) AddJuryUnbondingSigs(
+	goCtx context.Context,
+	req *types.MsgAddJuryUnbondingSigs) (*types.MsgAddJuryUnbondingSigsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+
+	// 1. Check that delegation even exists for provided params
+	btcDel, err := ms.GetBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash)
+	if err != nil {
+		return nil, err
+	}
+
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+	status := btcDel.GetStatus(btcTip.Height, wValue)
+
+	// 2. Check that we are in proper status
+	if status != types.BTCDelegationStatus_UNBONDING {
+		return nil, types.ErrInvalidDelegationState.Wrapf("Expected status: %s, actual: %s", types.BTCDelegationStatus_UNBONDING.String(), status.String())
+	}
+
+	// 3. Check that we did not recevie jury signature yet
+	if btcDel.BtcUndelegation.HasJurySigs() {
+		return nil, types.ErrDuplicatedJurySig.Wrap("Jury signature for undelegation already received")
+	}
+
+	// 4. Check that we already received validator signature
+	if !btcDel.BtcUndelegation.HasValidatorSig() {
+		// Jury should provide signature only after validator to avoid validator and staker
+		// collusion i.e sending unbonding tx to btc without leaving validator signature on babylon chain.
+		// TODO: Maybe it is worth accepting signatures and just emmiting some kind of warning event ? as if this msg
+		// processing fails, it will still be included on babylon chain, so anybody could still retrieve
+		// all jury signatures included in msg. And with warning we will at least have some kind of
+		// indication that something is wrong.
+		return nil, types.ErrUnbondingUnexpectedValidatorSig
+	}
+
+	// 4. Verify signature of unbodning tx against staking tx output
+	stakingOutputInfo, err := btcDel.StakingTx.GetBabylonOutputInfo(ms.btcNet)
+	if err != nil {
+		// failing to get staking output info from a verified staking tx is a programming error
+		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
+	}
+
+	juryPK, err := ms.GetParams(ctx).JuryPk.ToBTCPK()
+	if err != nil {
+		// failing to cast a verified jury PK is a programming error
+		panic(fmt.Errorf("failed to cast a verified jury public key"))
+	}
+
+	// UnbondingTx has exactly one input and one output so we may re-use the same
+	// machinery as for slashing tx to verify signature
+	err = btcDel.BtcUndelegation.UnbondingTx.VerifySignature(
+		stakingOutputInfo.StakingPkScript,
+		int64(stakingOutputInfo.StakingAmount),
+		btcDel.StakingTx.Script,
+		juryPK,
+		req.UnbondingTxSig,
+	)
+	if err != nil {
+		return nil, types.ErrInvalidJurySig.Wrap(err.Error())
+	}
+
+	// 5. Verify signature of slashing tx against unbonding tx output
+	unbondingOutputInfo, err := btcDel.BtcUndelegation.UnbondingTx.GetBabylonOutputInfo(ms.btcNet)
+	if err != nil {
+		// failing to get staking output info from a verified staking tx is a programming error
+		panic(fmt.Errorf("failed to get unbonding output info from a verified staking tx"))
+	}
+
+	err = btcDel.BtcUndelegation.SlashingTx.VerifySignature(
+		unbondingOutputInfo.StakingPkScript,
+		int64(unbondingOutputInfo.StakingAmount),
+		btcDel.BtcUndelegation.UnbondingTx.Script,
+		juryPK,
+		req.SlashingUnbondingTxSig,
+	)
+	if err != nil {
+		return nil, types.ErrUnbodningInvalidValidatorSig.Wrap(err.Error())
+	}
+
+	// all good, add signature to BTC delegation and set it back to KVStore
+	if err := ms.AddJurySigsToUndelegation(
+		ctx,
+		req.ValPk,
+		req.DelPk,
+		req.StakingTxHash,
+		req.UnbondingTxSig,
+		req.SlashingUnbondingTxSig); err != nil {
+		panic("failed to set BTC delegation that has passed verification")
+	}
+
+	return nil, nil
+}
+
+func (ms msgServer) AddValidatorUnbondingSig(
+	goCtx context.Context,
+	req *types.MsgAddValidatorUnbondingSig) (*types.MsgAddValidatorUnbondingSigResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+
+	// 1. Check that delegation even exists for provided params
+	btcDel, err := ms.GetBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash)
+	if err != nil {
+		return nil, err
+	}
+
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+	status := btcDel.GetStatus(btcTip.Height, wValue)
+
+	// 2. Check that we are in proper status
+	if status != types.BTCDelegationStatus_UNBONDING {
+		return nil, types.ErrInvalidDelegationState.Wrapf("Expected status: %s, actual: %s", types.BTCDelegationStatus_UNBONDING.String(), status.String())
+	}
+
+	// 3. Check that we did not recevie validator signature yet
+	if btcDel.BtcUndelegation.HasValidatorSig() {
+		return nil, types.ErrUnbondingDuplicatedValidatorSig
+	}
+
+	// 4. Verify signature of unbonding tx against staking tx output
+	stakingOutputInfo, err := btcDel.StakingTx.GetBabylonOutputInfo(ms.btcNet)
+	if err != nil {
+		// failing to get staking output info from a verified staking tx is a programming error
+		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
+	}
+
+	validatorPK, err := req.ValPk.ToBTCPK()
+
+	if err != nil {
+		panic(fmt.Errorf("failed to cast a verified validator public key"))
+	}
+
+	// UnbondingTx has exactly one input and one output so we may re-use the same
+	// machinery as for slashing tx to verify signature
+	err = btcDel.BtcUndelegation.UnbondingTx.VerifySignature(
+		stakingOutputInfo.StakingPkScript,
+		int64(stakingOutputInfo.StakingAmount),
+		btcDel.StakingTx.Script,
+		validatorPK,
+		req.UnbondingTxSig,
+	)
+	if err != nil {
+		return nil, types.ErrUnbodningInvalidValidatorSig.Wrap(err.Error())
+	}
+
+	// all good, add signature to BTC delegation and set it back to KVStore
+	if err := ms.AddValidatorSigToUndelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash, req.UnbondingTxSig); err != nil {
+		panic("failed to set BTC delegation that has passed verification")
+	}
+
+	return nil, nil
+}

@@ -136,3 +136,35 @@ func (n *NodeConfig) CreateBTCUndelegation(unbondingTx *bstypes.BabylonBTCTaproo
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
 }
+
+func (n *NodeConfig) AddValidatorUnbondingSig(valPK *bbn.BIP340PubKey, delPK *bbn.BIP340PubKey, stakingTxHash string, sig *bbn.BIP340Signature) {
+	n.LogActionF("adding validator signature")
+
+	valPKHex := valPK.MarshalHex()
+	delPKHex := delPK.MarshalHex()
+	sigHex := sig.ToHexStr()
+
+	cmd := []string{"babylond", "tx", "btcstaking", "add-validator-unbonding-sig", valPKHex, delPKHex, stakingTxHash, sigHex, "--from=val"}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully added validator unbonding sig")
+}
+
+func (n *NodeConfig) AddJuryUnbondingSigs(
+	valPK *bbn.BIP340PubKey,
+	delPK *bbn.BIP340PubKey,
+	stakingTxHash string,
+	unbondingTxSig *bbn.BIP340Signature,
+	slashUnbondingTxSig *bbn.BIP340Signature) {
+	n.LogActionF("adding validator signature")
+
+	valPKHex := valPK.MarshalHex()
+	delPKHex := delPK.MarshalHex()
+	unbondingTxSigHex := unbondingTxSig.ToHexStr()
+	slashUnbondingTxSigHex := slashUnbondingTxSig.ToHexStr()
+
+	cmd := []string{"babylond", "tx", "btcstaking", "add-jury-unbonding-sigs", valPKHex, delPKHex, stakingTxHash, unbondingTxSigHex, slashUnbondingTxSigHex, "--from=val"}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully added jury unbonding sigs")
+}

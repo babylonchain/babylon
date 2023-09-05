@@ -116,12 +116,12 @@ func createValidator(
 	btcVal, err := datagen.GenRandomBTCValidatorWithBTCSK(r, validatorSK)
 	require.NoError(t, err)
 	msgNewVal := types.MsgCreateBTCValidator{
-		Signer:    datagen.GenRandomAccount().Address,
+		Signer:      datagen.GenRandomAccount().Address,
 		Description: btcVal.Description,
 		Commission:  btcVal.Commission,
-		BabylonPk: btcVal.BabylonPk,
-		BtcPk:     btcVal.BtcPk,
-		Pop:       btcVal.Pop,
+		BabylonPk:   btcVal.BabylonPk,
+		BtcPk:       btcVal.BtcPk,
+		Pop:         btcVal.Pop,
 	}
 	_, err = ms.CreateBTCValidator(goCtx, &msgNewVal)
 	require.NoError(t, err)
@@ -269,6 +269,62 @@ func getDelegationAndCheckValues(
 	// delegation is not activated by jury yet
 	require.False(t, actualDel.HasJurySig())
 	return actualDel
+}
+
+func createUndelegation(
+	t *testing.T,
+	r *rand.Rand,
+	goCtx context.Context,
+	ms types.MsgServer,
+	net *chaincfg.Params,
+	btclcKeeper *types.MockBTCLightClientKeeper,
+	actualDel *types.BTCDelegation,
+	stakingTxHash string,
+	delSK *btcec.PrivateKey,
+	validatorPK *btcec.PublicKey,
+	juryPK *btcec.PublicKey,
+	slashingAddr string,
+) *types.MsgBTCUndelegate {
+	stkTxHash, err := chainhash.NewHashFromStr(stakingTxHash)
+	require.NoError(t, err)
+	stkOutputIdx := uint32(0)
+	defaultParams := btcctypes.DefaultParams()
+
+	unbondingTx, slashUnbondingTx, err := datagen.GenBTCUnbondingSlashingTx(
+		r,
+		net,
+		delSK,
+		validatorPK,
+		juryPK,
+		wire.NewOutPoint(stkTxHash, stkOutputIdx),
+		uint16(defaultParams.CheckpointFinalizationTimeout)+1,
+		int64(actualDel.TotalSat)-1000,
+		slashingAddr,
+	)
+	require.NoError(t, err)
+	// random signer
+	signer := datagen.GenRandomAccount().Address
+	unbondingTxMsg, err := unbondingTx.ToMsgTx()
+	require.NoError(t, err)
+
+	sig, err := slashUnbondingTx.Sign(
+		unbondingTxMsg,
+		unbondingTx.Script,
+		delSK,
+		net,
+	)
+	require.NoError(t, err)
+
+	msg := &types.MsgBTCUndelegate{
+		Signer:               signer,
+		UnbondingTx:          unbondingTx,
+		SlashingTx:           slashUnbondingTx,
+		DelegatorSlashingSig: sig,
+	}
+	btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: actualDel.StartHeight + 1})
+	_, err = ms.BTCUndelegate(goCtx, msg)
+	require.NoError(t, err)
+	return msg
 }
 
 func FuzzCreateBTCDelegationAndAddJurySig(f *testing.F) {
@@ -441,56 +497,154 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 		actualDel := getDelegationAndCheckValues(t, r, ms, bsKeeper, ctx, msgCreateBTCDel, validatorPK, delPK, stakingTxHash)
 		createJurySig(t, r, goCtx, ms, bsKeeper, ctx, net, jurySK, msgCreateBTCDel, actualDel)
 
-		stkTxHash, err := chainhash.NewHashFromStr(stakingTxHash)
-		require.NoError(t, err)
-		stkOutputIdx := uint32(0)
-		defaultParams := btcctypes.DefaultParams()
-
-		unbondingTx, slashUnbondingTx, err := datagen.GenBTCUnbondingSlashingTx(
+		undelegateMsg := createUndelegation(
+			t,
 			r,
+			goCtx,
+			ms,
 			net,
+			btclcKeeper,
+			actualDel,
+			stakingTxHash,
 			delSK,
 			validatorPK,
 			juryPK,
-			wire.NewOutPoint(stkTxHash, stkOutputIdx),
-			uint16(defaultParams.CheckpointFinalizationTimeout)+1,
-			int64(actualDel.TotalSat)-1000,
 			slashingAddr.String(),
 		)
-		require.NoError(t, err)
-		// random signer
-		signer := datagen.GenRandomAccount().Address
-		unbondingTxMsg, err := unbondingTx.ToMsgTx()
-		require.NoError(t, err)
-
-		sig, err := slashUnbondingTx.Sign(
-			unbondingTxMsg,
-			unbondingTx.Script,
-			delSK,
-			net,
-		)
-		require.NoError(t, err)
-
-		msg := &types.MsgBTCUndelegate{
-			Signer:               signer,
-			UnbondingTx:          unbondingTx,
-			SlashingTx:           slashUnbondingTx,
-			DelegatorSlashingSig: sig,
-		}
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: actualDel.StartHeight + 1})
-		_, err = ms.BTCUndelegate(goCtx, msg)
-		require.NoError(t, err)
 
 		actualDelegationWithUnbonding, err := bsKeeper.GetBTCDelegation(ctx, actualDel.ValBtcPk, actualDel.BtcPk, stakingTxHash)
 		require.NoError(t, err)
 
 		require.NotNil(t, actualDelegationWithUnbonding.BtcUndelegation)
-		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.UnbondingTx, unbondingTx)
-		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.SlashingTx, slashUnbondingTx)
-		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.DelegatorSlashingSig, sig)
+		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.UnbondingTx, undelegateMsg.UnbondingTx)
+		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.SlashingTx, undelegateMsg.SlashingTx)
+		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.DelegatorSlashingSig, undelegateMsg.DelegatorSlashingSig)
 		require.Nil(t, actualDelegationWithUnbonding.BtcUndelegation.JurySlashingSig)
 		require.Nil(t, actualDelegationWithUnbonding.BtcUndelegation.JuryUnbondingSig)
 		require.Nil(t, actualDelegationWithUnbonding.BtcUndelegation.ValidatorUnbondingSig)
+	})
+}
+
+func FuzzAddJuryAndValidatorSignaturesToUnbondind(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		net := &chaincfg.SimNetParams
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		bsKeeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		ms := keeper.NewMsgServerImpl(*bsKeeper)
+		goCtx := sdk.WrapSDKContext(ctx)
+
+		jurySK, juryPK, slashingAddr := getJuryInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+		valSk, validatorPK, _ := createValidator(t, r, goCtx, ms)
+		stakingTxHash, delSK, delPK, msgCreateBTCDel := createDelegation(
+			t,
+			r,
+			goCtx,
+			ms,
+			btccKeeper,
+			btclcKeeper,
+			net,
+			validatorPK,
+			juryPK,
+			slashingAddr.String(),
+			1000,
+		)
+		actualDel := getDelegationAndCheckValues(t, r, ms, bsKeeper, ctx, msgCreateBTCDel, validatorPK, delPK, stakingTxHash)
+		createJurySig(t, r, goCtx, ms, bsKeeper, ctx, net, jurySK, msgCreateBTCDel, actualDel)
+
+		undelegateMsg := createUndelegation(
+			t,
+			r,
+			goCtx,
+			ms,
+			net,
+			btclcKeeper,
+			actualDel,
+			stakingTxHash,
+			delSK,
+			validatorPK,
+			juryPK,
+			slashingAddr.String(),
+		)
+
+		del, err := bsKeeper.GetBTCDelegation(ctx, actualDel.ValBtcPk, actualDel.BtcPk, stakingTxHash)
+		require.NoError(t, err)
+		require.NotNil(t, del.BtcUndelegation)
+
+		// Check sending validator signature
+		stakingTxMsg, err := del.StakingTx.ToMsgTx()
+		require.NoError(t, err)
+		ubondingTxSignatureValidator, err := undelegateMsg.UnbondingTx.Sign(
+			stakingTxMsg,
+			del.StakingTx.Script,
+			valSk,
+			net,
+		)
+		require.NoError(t, err)
+		msg := types.MsgAddValidatorUnbondingSig{
+			Signer:         datagen.GenRandomAccount().Address,
+			ValPk:          del.ValBtcPk,
+			DelPk:          del.BtcPk,
+			StakingTxHash:  stakingTxHash,
+			UnbondingTxSig: ubondingTxSignatureValidator,
+		}
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: actualDel.StartHeight + 1})
+		_, err = ms.AddValidatorUnbondingSig(goCtx, &msg)
+		require.NoError(t, err)
+
+		delWithValSig, err := bsKeeper.GetBTCDelegation(ctx, actualDel.ValBtcPk, actualDel.BtcPk, stakingTxHash)
+		require.NoError(t, err)
+		require.NotNil(t, delWithValSig.BtcUndelegation)
+		require.NotNil(t, delWithValSig.BtcUndelegation.ValidatorUnbondingSig)
+
+		// Check sending jury signatures
+		// unbonding tx spends staking tx
+		unbondingTxSignatureJury, err := undelegateMsg.UnbondingTx.Sign(
+			stakingTxMsg,
+			del.StakingTx.Script,
+			jurySK,
+			net,
+		)
+		require.NoError(t, err)
+
+		unbondingTxMsg, err := undelegateMsg.UnbondingTx.ToMsgTx()
+		require.NoError(t, err)
+
+		// slash unbodning tx spends unbonding tx
+		slashUnbondingTxSignatureJury, err := undelegateMsg.SlashingTx.Sign(
+			unbondingTxMsg,
+			undelegateMsg.UnbondingTx.Script,
+			jurySK,
+			net,
+		)
+		require.NoError(t, err)
+
+		jurySigsMsg := types.MsgAddJuryUnbondingSigs{
+			Signer:                 datagen.GenRandomAccount().Address,
+			ValPk:                  del.ValBtcPk,
+			DelPk:                  del.BtcPk,
+			StakingTxHash:          stakingTxHash,
+			UnbondingTxSig:         unbondingTxSignatureJury,
+			SlashingUnbondingTxSig: slashUnbondingTxSignatureJury,
+		}
+
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: actualDel.StartHeight + 1})
+		_, err = ms.AddJuryUnbondingSigs(goCtx, &jurySigsMsg)
+		require.NoError(t, err)
+
+		delWithUnbondingSigs, err := bsKeeper.GetBTCDelegation(ctx, actualDel.ValBtcPk, actualDel.BtcPk, stakingTxHash)
+		require.NoError(t, err)
+		require.NotNil(t, delWithUnbondingSigs.BtcUndelegation)
+		require.NotNil(t, delWithUnbondingSigs.BtcUndelegation.ValidatorUnbondingSig)
+		require.NotNil(t, delWithUnbondingSigs.BtcUndelegation.JurySlashingSig)
+		require.NotNil(t, delWithUnbondingSigs.BtcUndelegation.JuryUnbondingSig)
 
 	})
 }

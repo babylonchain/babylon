@@ -20,8 +20,14 @@ service Msg {
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
   // BtcUndelegate undelegates funds from exsitng btc delegation
   rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
-  // AddJurySig handles a signature from jury
+  // AddJurySig handles a signature from jury for slashing tx of staking tx for delegation
   rpc AddJurySig(MsgAddJurySig) returns (MsgAddJurySigResponse);
+  // AddJuryUnbondingSigs handles two signatures from jury for:
+  // - unbonding tx submitted to babylon by staker
+  // - slashing tx corresponding to unbodning tx submitted to babylon by staker
+  rpc AddJuryUnbondingSigs(MsgAddJuryUnbondingSigs) returns (MsgAddJuryUnbondingSigsResponse);
+  // AddValidatorUnbondingSig handles a signature from validator for unbonding tx submitted to babylon by staker
+  rpc AddValidatorUnbondingSig(MsgAddValidatorUnbondingSig) returns (MsgAddValidatorUnbondingSigResponse);
   // UpdateParams updates the btcstaking module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -126,3 +132,44 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
 
+// MsgAddJuryUnbondingSigs is the message for handling a signature from jury
+message MsgAddJuryUnbondingSigs {
+  string signer = 1;
+  // val_pk is the Bitcoin secp256k1 PK of the BTC validator
+  // the PK follows encoding in BIP-340 spec
+  bytes val_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
+  // the PK follows encoding in BIP-340 spec
+  bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // staking_tx_hash is the hash of the staking tx.
+  // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+  string staking_tx_hash = 4;
+  // unbonding_tx_sig is the signature of the jury on the unbonding tx submitted to babylon
+  // the signature follows encoding in BIP-340 spec
+  bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  // slashing_unbonding_tx_sig is the signature of the jury on slashing tx corresponding to unbodning tx submitted to babylon
+  // the signature follows encoding in BIP-340 spec
+  bytes slashing_unbonding_tx_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+
+}
+// MsgAddJurySigResponse is the response for MsgAddJurySig
+message MsgAddJuryUnbondingSigsResponse {}
+
+// MsgAddValidatorUnbondingSig is the message for unbodning tx submitted to babylon by staker
+message MsgAddValidatorUnbondingSig {
+  string signer = 1;
+  // val_pk is the Bitcoin secp256k1 PK of the BTC validator
+  // the PK follows encoding in BIP-340 spec
+  bytes val_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
+  // the PK follows encoding in BIP-340 spec
+  bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // staking_tx_hash is the hash of the staking tx.
+  // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+  string staking_tx_hash = 4;
+  // unbonding_tx_sig is the signature of validator for unbodning tx submitted to babylon by staker
+  // the signature follows encoding in BIP-340 spec
+  bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+// MsgAddJurySigResponse is the response for MsgAddJurySig
+message MsgAddValidatorUnbondingSigResponse {}
