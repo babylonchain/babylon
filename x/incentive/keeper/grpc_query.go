@@ -11,29 +11,34 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) RewardGauge(goCtx context.Context, req *types.QueryRewardGaugeRequest) (*types.QueryRewardGaugeResponse, error) {
+func (k Keeper) RewardGauges(goCtx context.Context, req *types.QueryRewardGaugesRequest) (*types.QueryRewardGaugesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// try to cast types for fields in the request
-	sType, err := types.NewStakeHolderTypeFromString(req.Type)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
+	// try to cast address
 	address, err := sdk.AccAddressFromBech32(req.Address)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
+	rgMap := map[string]*types.RewardGauge{}
+
 	// find reward gauge
-	rg, err := k.GetRewardGauge(ctx, sType, address)
-	if err != nil {
-		return nil, err
+	for _, sType := range types.GetAllStakeholderTypes() {
+		if !k.HasRewardGauge(ctx, sType, address) {
+			continue
+		}
+		rg, err := k.GetRewardGauge(ctx, sType, address)
+		if err != nil {
+			// only programming error is possible
+			panic("failed to get an existing reward gauge")
+		}
+		rgMap[sType.String()] = rg
 	}
 
-	return &types.QueryRewardGaugeResponse{RewardGauge: rg}, nil
+	return &types.QueryRewardGaugesResponse{RewardGauges: rgMap}, nil
 }
 
 func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakingGaugeRequest) (*types.QueryBTCStakingGaugeResponse, error) {

@@ -23,7 +23,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(
 		CmdQueryParams(),
-		CmdQueryRewardGauge(),
+		CmdQueryRewardGauges(),
 		CmdQueryBTCStakingGauge(),
 		CmdQueryBTCTimestampingGauge(),
 	)
@@ -31,11 +31,11 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	return cmd
 }
 
-func CmdQueryRewardGauge() *cobra.Command {
+func CmdQueryRewardGauges() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "reward-gauge [type] [address]",
-		Short: "shows reward gauge of a given stakeholder in a given type (one of {submitter, reporter, btc_validator, btc_delegation})",
-		Args:  cobra.ExactArgs(2),
+		Use:   "reward-gauges [address]",
+		Short: "shows reward gauges of a given stakeholder address",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
@@ -44,11 +44,10 @@ func CmdQueryRewardGauge() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			req := &types.QueryRewardGaugeRequest{
-				Type:    args[0],
-				Address: args[1],
+			req := &types.QueryRewardGaugesRequest{
+				Address: args[0],
 			}
-			res, err := queryClient.RewardGauge(cmd.Context(), req)
+			res, err := queryClient.RewardGauges(cmd.Context(), req)
 			if err != nil {
 				return err
 			}

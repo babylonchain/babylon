@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FuzzRewardGaugeQuery(f *testing.F) {
+func FuzzRewardGaugesQuery(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -19,31 +19,35 @@ func FuzzRewardGaugeQuery(f *testing.F) {
 		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
 		wctx := sdk.WrapSDKContext(ctx)
 
-		// generate a list of random RewardGauges and insert them to KVStore
-		rgList := []*types.RewardGauge{}
-		sTypeList := []types.StakeholderType{}
+		// generate a list of random RewardGauge map and insert them to KVStore
+		// where in each map, key is stakeholder type and address is the reward gauge
+		rgMaps := []map[string]*types.RewardGauge{}
 		sAddrList := []sdk.AccAddress{}
-		numRgs := datagen.RandomInt(r, 100)
-		for i := uint64(0); i < numRgs; i++ {
-			sType := datagen.GenRandomStakeholderType(r)
-			sTypeList = append(sTypeList, sType)
+		numRgMaps := datagen.RandomInt(r, 100)
+		for i := uint64(0); i < numRgMaps; i++ {
+			rgMap := map[string]*types.RewardGauge{}
 			sAddr := datagen.GenRandomAccount().GetAddress()
 			sAddrList = append(sAddrList, sAddr)
-			rg := datagen.GenRandomRewardGauge(r)
-			rgList = append(rgList, rg)
+			for i := uint64(0); i < datagen.RandomInt(r, 4); i++ {
+				sType := datagen.GenRandomStakeholderType(r)
+				rg := datagen.GenRandomRewardGauge(r)
+				rgMap[sType.String()] = rg
 
-			keeper.SetRewardGauge(ctx, sType, sAddr, rg)
+				keeper.SetRewardGauge(ctx, sType, sAddr, rg)
+			}
+			rgMaps = append(rgMaps, rgMap)
 		}
 
 		// query existence and assert consistency
-		for i := range rgList {
-			req := &types.QueryRewardGaugeRequest{
-				Type:    sTypeList[i].String(),
+		for i := range rgMaps {
+			req := &types.QueryRewardGaugesRequest{
 				Address: sAddrList[i].String(),
 			}
-			resp, err := keeper.RewardGauge(wctx, req)
+			resp, err := keeper.RewardGauges(wctx, req)
 			require.NoError(t, err)
-			require.True(t, resp.RewardGauge.Coins.IsEqual(rgList[i].Coins))
+			for sTypeStr, rg := range rgMaps[i] {
+				require.Equal(t, rg.Coins, resp.RewardGauges[sTypeStr].Coins)
+			}
 		}
 	})
 }

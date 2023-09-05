@@ -36,17 +36,17 @@ func (n *NodeConfig) QueryIncentiveParams() (*incentivetypes.Params, error) {
 	return &resp.Params, nil
 }
 
-func (n *NodeConfig) QueryRewardGauge(sType *incentivetypes.StakeholderType, sAddr sdk.AccAddress) (*incentivetypes.RewardGauge, error) {
-	path := fmt.Sprintf("/babylonchain/babylon/incentive/%s/address/%s/reward_gauge", sType.String(), sAddr.String())
+func (n *NodeConfig) QueryRewardGauge(sAddr sdk.AccAddress) (map[string]*incentivetypes.RewardGauge, error) {
+	path := fmt.Sprintf("/babylonchain/babylon/incentive/address/%s/reward_gauge", sAddr.String())
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp incentivetypes.QueryRewardGaugeResponse
+	var resp incentivetypes.QueryRewardGaugesResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
 		return nil, err
 	}
 
-	return resp.RewardGauge, nil
+	return resp.RewardGauges, nil
 }
 
 func (n *NodeConfig) QueryBTCTimestampingGauge(epoch uint64) (*incentivetypes.Gauge, error) {

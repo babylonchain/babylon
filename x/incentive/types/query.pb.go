@@ -112,27 +112,24 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryRewardGaugeRequest is request type for the Query/RewardGauge RPC method.
-type QueryRewardGaugeRequest struct {
-	// type is the type of the stakeholder, can be one of
-	// {submitter, reporter, btc_validator, btc_delegation}
-	Type string `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
+// QueryRewardGaugesRequest is request type for the Query/RewardGauges RPC method.
+type QueryRewardGaugesRequest struct {
 	// address is the address of the stakeholder in bech32 string
-	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
 }
 
-func (m *QueryRewardGaugeRequest) Reset()         { *m = QueryRewardGaugeRequest{} }
-func (m *QueryRewardGaugeRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryRewardGaugeRequest) ProtoMessage()    {}
-func (*QueryRewardGaugeRequest) Descriptor() ([]byte, []int) {
+func (m *QueryRewardGaugesRequest) Reset()         { *m = QueryRewardGaugesRequest{} }
+func (m *QueryRewardGaugesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryRewardGaugesRequest) ProtoMessage()    {}
+func (*QueryRewardGaugesRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e1a59cc0c7c44135, []int{2}
 }
-func (m *QueryRewardGaugeRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryRewardGaugesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryRewardGaugeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryRewardGaugesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryRewardGaugeRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryRewardGaugesRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -142,50 +139,44 @@ func (m *QueryRewardGaugeRequest) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *QueryRewardGaugeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryRewardGaugeRequest.Merge(m, src)
+func (m *QueryRewardGaugesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRewardGaugesRequest.Merge(m, src)
 }
-func (m *QueryRewardGaugeRequest) XXX_Size() int {
+func (m *QueryRewardGaugesRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryRewardGaugeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryRewardGaugeRequest.DiscardUnknown(m)
+func (m *QueryRewardGaugesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRewardGaugesRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryRewardGaugeRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryRewardGaugesRequest proto.InternalMessageInfo
 
-func (m *QueryRewardGaugeRequest) GetType() string {
-	if m != nil {
-		return m.Type
-	}
-	return ""
-}
-
-func (m *QueryRewardGaugeRequest) GetAddress() string {
+func (m *QueryRewardGaugesRequest) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-// QueryRewardGaugeResponse is response type for the Query/RewardGauge RPC method.
-type QueryRewardGaugeResponse struct {
-	// reward_gauge is the reward gauge holding all rewards for the stakeholder
-	RewardGauge *RewardGauge `protobuf:"bytes,1,opt,name=reward_gauge,json=rewardGauge,proto3" json:"reward_gauge,omitempty"`
+// QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC method.
+type QueryRewardGaugesResponse struct {
+	// reward_gauges is the map of reward gauges, where key is the stakeholder type
+	// and value is the reward gauge holding all rewards for the stakeholder in that type
+	RewardGauges map[string]*RewardGauge `protobuf:"bytes,1,rep,name=reward_gauges,json=rewardGauges,proto3" json:"reward_gauges,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 }
 
-func (m *QueryRewardGaugeResponse) Reset()         { *m = QueryRewardGaugeResponse{} }
-func (m *QueryRewardGaugeResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryRewardGaugeResponse) ProtoMessage()    {}
-func (*QueryRewardGaugeResponse) Descriptor() ([]byte, []int) {
+func (m *QueryRewardGaugesResponse) Reset()         { *m = QueryRewardGaugesResponse{} }
+func (m *QueryRewardGaugesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryRewardGaugesResponse) ProtoMessage()    {}
+func (*QueryRewardGaugesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_e1a59cc0c7c44135, []int{3}
 }
-func (m *QueryRewardGaugeResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryRewardGaugesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryRewardGaugeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryRewardGaugesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryRewardGaugeResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryRewardGaugesResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -195,21 +186,21 @@ func (m *QueryRewardGaugeResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *QueryRewardGaugeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryRewardGaugeResponse.Merge(m, src)
+func (m *QueryRewardGaugesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryRewardGaugesResponse.Merge(m, src)
 }
-func (m *QueryRewardGaugeResponse) XXX_Size() int {
+func (m *QueryRewardGaugesResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryRewardGaugeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryRewardGaugeResponse.DiscardUnknown(m)
+func (m *QueryRewardGaugesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryRewardGaugesResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryRewardGaugeResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryRewardGaugesResponse proto.InternalMessageInfo
 
-func (m *QueryRewardGaugeResponse) GetRewardGauge() *RewardGauge {
+func (m *QueryRewardGaugesResponse) GetRewardGauges() map[string]*RewardGauge {
 	if m != nil {
-		return m.RewardGauge
+		return m.RewardGauges
 	}
 	return nil
 }
@@ -401,8 +392,9 @@ func (m *QueryBTCTimestampingGaugeResponse) GetGauge() *Gauge {
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.incentive.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.incentive.QueryParamsResponse")
-	proto.RegisterType((*QueryRewardGaugeRequest)(nil), "babylon.incentive.QueryRewardGaugeRequest")
-	proto.RegisterType((*QueryRewardGaugeResponse)(nil), "babylon.incentive.QueryRewardGaugeResponse")
+	proto.RegisterType((*QueryRewardGaugesRequest)(nil), "babylon.incentive.QueryRewardGaugesRequest")
+	proto.RegisterType((*QueryRewardGaugesResponse)(nil), "babylon.incentive.QueryRewardGaugesResponse")
+	proto.RegisterMapType((map[string]*RewardGauge)(nil), "babylon.incentive.QueryRewardGaugesResponse.RewardGaugesEntry")
 	proto.RegisterType((*QueryBTCStakingGaugeRequest)(nil), "babylon.incentive.QueryBTCStakingGaugeRequest")
 	proto.RegisterType((*QueryBTCStakingGaugeResponse)(nil), "babylon.incentive.QueryBTCStakingGaugeResponse")
 	proto.RegisterType((*QueryBTCTimestampingGaugeRequest)(nil), "babylon.incentive.QueryBTCTimestampingGaugeRequest")
@@ -412,43 +404,46 @@ func init() {
 func init() { proto.RegisterFile("babylon/incentive/query.proto", fileDescriptor_e1a59cc0c7c44135) }
 
 var fileDescriptor_e1a59cc0c7c44135 = []byte{
-	// 573 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x4f, 0x6b, 0x13, 0x41,
-	0x18, 0xc6, 0xb3, 0x25, 0x89, 0xf6, 0x8d, 0x20, 0x8e, 0x41, 0xe3, 0xb6, 0xae, 0xed, 0x82, 0xa5,
-	0x28, 0xec, 0x60, 0xab, 0x08, 0x22, 0x88, 0x51, 0x09, 0x28, 0x06, 0x4d, 0x7b, 0x12, 0x24, 0x4c,
-	0x92, 0x61, 0xb3, 0xd8, 0x9d, 0xd9, 0xee, 0xce, 0xaa, 0x21, 0xe4, 0xe2, 0xc5, 0xab, 0xe0, 0x67,
-	0xd1, 0xcf, 0xd0, 0x8b, 0x50, 0xf4, 0xe2, 0x49, 0x24, 0xf1, 0x83, 0x48, 0x66, 0x26, 0x71, 0xdb,
-	0xdd, 0x34, 0xb1, 0xb7, 0x99, 0xf7, 0xcf, 0xf3, 0xfe, 0x5e, 0xe6, 0xd9, 0x85, 0xab, 0x2d, 0xd2,
-	0xea, 0xed, 0x71, 0x86, 0x3d, 0xd6, 0xa6, 0x4c, 0x78, 0x6f, 0x29, 0xde, 0x8f, 0x69, 0xd8, 0x73,
-	0x82, 0x90, 0x0b, 0x8e, 0x2e, 0xe8, 0xb4, 0x33, 0x4d, 0x9b, 0x65, 0x97, 0xbb, 0x5c, 0x66, 0xf1,
-	0xf8, 0xa4, 0x0a, 0xcd, 0x55, 0x97, 0x73, 0x77, 0x8f, 0x62, 0x12, 0x78, 0x98, 0x30, 0xc6, 0x05,
-	0x11, 0x1e, 0x67, 0x91, 0xce, 0x5a, 0xe9, 0x29, 0x01, 0x09, 0x89, 0x3f, 0xc9, 0xaf, 0xa7, 0xf3,
-	0xd3, 0x93, 0x2a, 0xb1, 0xcb, 0x80, 0x5e, 0x8e, 0xc1, 0x5e, 0xc8, 0xbe, 0x06, 0xdd, 0x8f, 0x69,
-	0x24, 0xec, 0x3a, 0x5c, 0x3c, 0x12, 0x8d, 0x02, 0xce, 0x22, 0x8a, 0xee, 0x42, 0x51, 0xe9, 0x57,
-	0x8c, 0x35, 0x63, 0xb3, 0xb4, 0x75, 0xc5, 0x49, 0xed, 0xe1, 0xa8, 0x96, 0x6a, 0xfe, 0xe0, 0xd7,
-	0xb5, 0x5c, 0x43, 0x97, 0xdb, 0x35, 0xb8, 0x2c, 0xf5, 0x1a, 0xf4, 0x1d, 0x09, 0x3b, 0x35, 0x12,
-	0xbb, 0x54, 0x8f, 0x42, 0x08, 0xf2, 0xa2, 0x17, 0x50, 0xa9, 0xb8, 0xdc, 0x90, 0x67, 0x54, 0x81,
-	0x33, 0xa4, 0xd3, 0x09, 0x69, 0x14, 0x55, 0x96, 0x64, 0x78, 0x72, 0xb5, 0x5f, 0x43, 0x25, 0x2d,
-	0xa4, 0xe9, 0x1e, 0xc2, 0xb9, 0x50, 0x86, 0x9b, 0xee, 0x38, 0xae, 0x19, 0xad, 0x0c, 0xc6, 0x64,
-	0x77, 0x29, 0xfc, 0x77, 0xb1, 0xef, 0xc0, 0x8a, 0x94, 0xaf, 0xee, 0x3e, 0xda, 0x11, 0xe4, 0x8d,
-	0xc7, 0xdc, 0x23, 0xac, 0x97, 0xa0, 0xd8, 0xa5, 0x9e, 0xdb, 0x15, 0x52, 0x3b, 0xdf, 0xd0, 0x37,
-	0xbb, 0x0e, 0xab, 0xd9, 0x6d, 0x9a, 0xcc, 0x81, 0x42, 0x12, 0xa9, 0x92, 0x81, 0xa4, 0x1a, 0x54,
-	0x99, 0xfd, 0x00, 0xd6, 0x26, 0x7a, 0xbb, 0x9e, 0x4f, 0x23, 0x41, 0xfc, 0xe0, 0x38, 0xcb, 0x0a,
-	0x2c, 0xd3, 0x80, 0xb7, 0xbb, 0x4d, 0x16, 0xfb, 0x1a, 0xe7, 0xac, 0x0c, 0xd4, 0x63, 0xdf, 0xde,
-	0x81, 0xf5, 0x13, 0x04, 0x4e, 0x47, 0xb5, 0xf5, 0xbd, 0x00, 0x05, 0xa9, 0x8a, 0x3e, 0x1a, 0x50,
-	0x54, 0xef, 0x8c, 0xae, 0x67, 0x74, 0xa5, 0x0d, 0x65, 0x6e, 0xcc, 0x2b, 0x53, 0x4c, 0xb6, 0xf3,
-	0xe1, 0xc7, 0x9f, 0xcf, 0x4b, 0x9b, 0x68, 0x03, 0xeb, 0xfa, 0x76, 0x97, 0x78, 0x0c, 0xcf, 0xf2,
-	0x39, 0xfa, 0x62, 0x40, 0x29, 0xf1, 0x9a, 0xe8, 0xc6, 0xac, 0x39, 0x69, 0xe7, 0x99, 0x37, 0x17,
-	0xaa, 0xd5, 0x60, 0xcf, 0x25, 0x58, 0x0d, 0x3d, 0x99, 0x07, 0xd6, 0x1f, 0x3b, 0x78, 0x80, 0xb5,
-	0x61, 0x71, 0x5f, 0x1f, 0x06, 0x38, 0xe9, 0x4d, 0xf4, 0xd5, 0x80, 0xf3, 0xc7, 0xdc, 0x82, 0x9c,
-	0x59, 0x3c, 0xd9, 0x6e, 0x34, 0xf1, 0xc2, 0xf5, 0x7a, 0x87, 0xaa, 0xdc, 0xe1, 0x3e, 0xba, 0x37,
-	0x6f, 0x87, 0x96, 0x68, 0x37, 0x23, 0xa5, 0xa0, 0x78, 0x71, 0x5f, 0x39, 0x7d, 0x80, 0xbe, 0x19,
-	0x50, 0xce, 0x72, 0x15, 0xda, 0x3e, 0x81, 0x66, 0x96, 0x89, 0xcd, 0xdb, 0xff, 0xd7, 0xa4, 0xf7,
-	0x78, 0x2a, 0xf7, 0x78, 0x8c, 0xaa, 0x8b, 0xec, 0x21, 0x12, 0x32, 0x93, 0x65, 0xa6, 0x1f, 0xce,
-	0xa0, 0xfa, 0xec, 0x60, 0x68, 0x19, 0x87, 0x43, 0xcb, 0xf8, 0x3d, 0xb4, 0x8c, 0x4f, 0x23, 0x2b,
-	0x77, 0x38, 0xb2, 0x72, 0x3f, 0x47, 0x56, 0xee, 0xd5, 0x2d, 0xd7, 0x13, 0xdd, 0xb8, 0xe5, 0xb4,
-	0xb9, 0x9f, 0x3d, 0xe7, 0x7d, 0x62, 0xd2, 0xf8, 0xd1, 0xa3, 0x56, 0x51, 0xfe, 0x53, 0xb7, 0xff,
-	0x06, 0x00, 0x00, 0xff, 0xff, 0x52, 0xb0, 0xcc, 0xeb, 0xfe, 0x05, 0x00, 0x00,
+	// 615 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x4f, 0x6f, 0xd3, 0x30,
+	0x18, 0xc6, 0xeb, 0x6e, 0x2d, 0xcc, 0x1b, 0x82, 0x99, 0x0a, 0x65, 0xd9, 0x08, 0x5d, 0x24, 0xa6,
+	0x4a, 0xa0, 0x44, 0x74, 0x45, 0xa0, 0x09, 0x0d, 0x54, 0xfe, 0x49, 0x20, 0x55, 0x90, 0xed, 0xc4,
+	0xa5, 0x72, 0x53, 0x2b, 0x8d, 0xd6, 0xc4, 0x59, 0xe2, 0x0c, 0xaa, 0xa9, 0x17, 0x2e, 0x5c, 0x91,
+	0xf8, 0x24, 0x5c, 0xf8, 0x0c, 0xbb, 0x80, 0x26, 0x71, 0xe1, 0x84, 0xa0, 0xe5, 0x83, 0xa0, 0xda,
+	0x6e, 0x95, 0xad, 0xe9, 0xda, 0xed, 0xe6, 0xfa, 0x7d, 0xfc, 0xbc, 0xbf, 0xd7, 0x79, 0x5c, 0x78,
+	0xb3, 0x81, 0x1b, 0x9d, 0x36, 0xf5, 0x4d, 0xd7, 0xb7, 0x89, 0xcf, 0xdc, 0x03, 0x62, 0xee, 0xc7,
+	0x24, 0xec, 0x18, 0x41, 0x48, 0x19, 0x45, 0xcb, 0xb2, 0x6c, 0x8c, 0xca, 0x6a, 0xc1, 0xa1, 0x0e,
+	0xe5, 0x55, 0x73, 0xb0, 0x12, 0x42, 0x75, 0xcd, 0xa1, 0xd4, 0x69, 0x13, 0x13, 0x07, 0xae, 0x89,
+	0x7d, 0x9f, 0x32, 0xcc, 0x5c, 0xea, 0x47, 0xb2, 0xaa, 0x8d, 0x77, 0x09, 0x70, 0x88, 0xbd, 0x61,
+	0x7d, 0x7d, 0xbc, 0x3e, 0x5a, 0x09, 0x89, 0x5e, 0x80, 0xe8, 0xed, 0x00, 0xec, 0x0d, 0x3f, 0x67,
+	0x91, 0xfd, 0x98, 0x44, 0x4c, 0xaf, 0xc1, 0xeb, 0x27, 0x76, 0xa3, 0x80, 0xfa, 0x11, 0x41, 0x0f,
+	0x60, 0x5e, 0xf8, 0x2b, 0xa0, 0x08, 0x4a, 0x8b, 0xe5, 0x15, 0x63, 0x6c, 0x0e, 0x43, 0x1c, 0xa9,
+	0xce, 0x1f, 0xfd, 0xbe, 0x95, 0xb1, 0xa4, 0x5c, 0xaf, 0x40, 0x85, 0xfb, 0x59, 0xe4, 0x3d, 0x0e,
+	0x9b, 0x2f, 0x71, 0xec, 0x90, 0x61, 0x2f, 0xa4, 0xc0, 0x4b, 0xb8, 0xd9, 0x0c, 0x49, 0x24, 0x5c,
+	0x17, 0xac, 0xe1, 0x4f, 0xfd, 0x2f, 0x80, 0x2b, 0x29, 0xc7, 0x24, 0x8c, 0x0d, 0xaf, 0x84, 0x7c,
+	0xbf, 0xee, 0xf0, 0x82, 0x02, 0x8a, 0x73, 0xa5, 0xc5, 0xf2, 0x76, 0x0a, 0xd3, 0x44, 0x13, 0x23,
+	0xb9, 0xf9, 0xdc, 0x67, 0x61, 0xc7, 0x5a, 0x0a, 0x13, 0x5b, 0x6a, 0x1d, 0x2e, 0x8f, 0x49, 0xd0,
+	0x35, 0x38, 0xb7, 0x47, 0x3a, 0x92, 0x76, 0xb0, 0x44, 0x15, 0x98, 0x3b, 0xc0, 0xed, 0x98, 0x28,
+	0x59, 0x7e, 0x2f, 0x5a, 0x0a, 0x43, 0xc2, 0xc6, 0x12, 0xe2, 0xad, 0xec, 0x43, 0xa0, 0xdf, 0x87,
+	0xab, 0x9c, 0xae, 0xba, 0xfb, 0x74, 0x87, 0xe1, 0x3d, 0xd7, 0x77, 0x84, 0x44, 0x5e, 0xce, 0x0d,
+	0x98, 0x6f, 0x11, 0xd7, 0x69, 0x31, 0xde, 0x6d, 0xde, 0x92, 0xbf, 0xf4, 0x1a, 0x5c, 0x4b, 0x3f,
+	0x26, 0x2f, 0xc7, 0x80, 0x39, 0x7e, 0x2b, 0xf2, 0x43, 0x29, 0x29, 0x40, 0x12, 0x85, 0xcb, 0xf4,
+	0xc7, 0xb0, 0x38, 0xf4, 0xdb, 0x75, 0x3d, 0x12, 0x31, 0xec, 0x05, 0xa7, 0x59, 0x56, 0xe1, 0x02,
+	0x09, 0xa8, 0xdd, 0xaa, 0xfb, 0xb1, 0x27, 0x71, 0x2e, 0xf3, 0x8d, 0x5a, 0xec, 0xe9, 0x3b, 0x70,
+	0xfd, 0x0c, 0x83, 0x8b, 0x51, 0x95, 0x7f, 0xe4, 0x60, 0x8e, 0xbb, 0xa2, 0x4f, 0x00, 0xe6, 0x45,
+	0xb2, 0xd0, 0xed, 0x49, 0x1f, 0xf8, 0x44, 0x84, 0xd5, 0x8d, 0x69, 0x32, 0xc1, 0xa4, 0x1b, 0x1f,
+	0x7f, 0xfe, 0xfb, 0x92, 0x2d, 0xa1, 0x0d, 0x53, 0xea, 0xed, 0x16, 0x76, 0x7d, 0x73, 0xd2, 0xcb,
+	0x42, 0x5f, 0x01, 0x5c, 0x4a, 0x46, 0x02, 0xdd, 0x99, 0x2d, 0x70, 0x82, 0xea, 0xee, 0x79, 0xd2,
+	0xa9, 0xbf, 0xe0, 0x6c, 0x4f, 0xd0, 0xf6, 0x34, 0x36, 0xf9, 0x62, 0xcc, 0x43, 0xb9, 0xe8, 0x9a,
+	0xc9, 0xa7, 0x81, 0xbe, 0x01, 0x78, 0xf5, 0x54, 0x52, 0x90, 0x31, 0x89, 0x24, 0x3d, 0x89, 0xaa,
+	0x39, 0xb3, 0x5e, 0xc2, 0x57, 0x39, 0xfc, 0x23, 0xb4, 0x35, 0x0d, 0xbe, 0xc1, 0xec, 0x7a, 0x24,
+	0x1c, 0x04, 0xaf, 0x79, 0x28, 0x52, 0xde, 0x45, 0xdf, 0x01, 0x2c, 0xa4, 0x25, 0x0a, 0x6d, 0x9e,
+	0x41, 0x33, 0x29, 0xc0, 0x6a, 0xe5, 0x7c, 0x87, 0xe4, 0x1c, 0xaf, 0xf8, 0x1c, 0xcf, 0x50, 0x75,
+	0x96, 0x39, 0x58, 0xc2, 0x66, 0x38, 0xcc, 0xe8, 0xd1, 0x74, 0xab, 0xaf, 0x8f, 0x7a, 0x1a, 0x38,
+	0xee, 0x69, 0xe0, 0x4f, 0x4f, 0x03, 0x9f, 0xfb, 0x5a, 0xe6, 0xb8, 0xaf, 0x65, 0x7e, 0xf5, 0xb5,
+	0xcc, 0xbb, 0x7b, 0x8e, 0xcb, 0x5a, 0x71, 0xc3, 0xb0, 0xa9, 0x97, 0xde, 0xe7, 0x43, 0xa2, 0x13,
+	0xeb, 0x04, 0x24, 0x6a, 0xe4, 0xf9, 0x3f, 0xf8, 0xe6, 0xff, 0x00, 0x00, 0x00, 0xff, 0xff, 0x0b,
+	0x2f, 0x3f, 0xc6, 0x6c, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -465,8 +460,8 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// RewardGauge queries the reward gauge of a given stakeholder in a given type
-	RewardGauge(ctx context.Context, in *QueryRewardGaugeRequest, opts ...grpc.CallOption) (*QueryRewardGaugeResponse, error)
+	// RewardGauge queries the reward gauge of a given stakeholder address
+	RewardGauges(ctx context.Context, in *QueryRewardGaugesRequest, opts ...grpc.CallOption) (*QueryRewardGaugesResponse, error)
 	// BTCStakingGauge queries the BTC staking gauge of a given height
 	BTCStakingGauge(ctx context.Context, in *QueryBTCStakingGaugeRequest, opts ...grpc.CallOption) (*QueryBTCStakingGaugeResponse, error)
 	// BTCTimestampingGauge queries the BTC timestamping gauge of a given epoch
@@ -490,9 +485,9 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) RewardGauge(ctx context.Context, in *QueryRewardGaugeRequest, opts ...grpc.CallOption) (*QueryRewardGaugeResponse, error) {
-	out := new(QueryRewardGaugeResponse)
-	err := c.cc.Invoke(ctx, "/babylon.incentive.Query/RewardGauge", in, out, opts...)
+func (c *queryClient) RewardGauges(ctx context.Context, in *QueryRewardGaugesRequest, opts ...grpc.CallOption) (*QueryRewardGaugesResponse, error) {
+	out := new(QueryRewardGaugesResponse)
+	err := c.cc.Invoke(ctx, "/babylon.incentive.Query/RewardGauges", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -521,8 +516,8 @@ func (c *queryClient) BTCTimestampingGauge(ctx context.Context, in *QueryBTCTime
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// RewardGauge queries the reward gauge of a given stakeholder in a given type
-	RewardGauge(context.Context, *QueryRewardGaugeRequest) (*QueryRewardGaugeResponse, error)
+	// RewardGauge queries the reward gauge of a given stakeholder address
+	RewardGauges(context.Context, *QueryRewardGaugesRequest) (*QueryRewardGaugesResponse, error)
 	// BTCStakingGauge queries the BTC staking gauge of a given height
 	BTCStakingGauge(context.Context, *QueryBTCStakingGaugeRequest) (*QueryBTCStakingGaugeResponse, error)
 	// BTCTimestampingGauge queries the BTC timestamping gauge of a given epoch
@@ -536,8 +531,8 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) RewardGauge(ctx context.Context, req *QueryRewardGaugeRequest) (*QueryRewardGaugeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method RewardGauge not implemented")
+func (*UnimplementedQueryServer) RewardGauges(ctx context.Context, req *QueryRewardGaugesRequest) (*QueryRewardGaugesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RewardGauges not implemented")
 }
 func (*UnimplementedQueryServer) BTCStakingGauge(ctx context.Context, req *QueryBTCStakingGaugeRequest) (*QueryBTCStakingGaugeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BTCStakingGauge not implemented")
@@ -568,20 +563,20 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_RewardGauge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryRewardGaugeRequest)
+func _Query_RewardGauges_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRewardGaugesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).RewardGauge(ctx, in)
+		return srv.(QueryServer).RewardGauges(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.incentive.Query/RewardGauge",
+		FullMethod: "/babylon.incentive.Query/RewardGauges",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).RewardGauge(ctx, req.(*QueryRewardGaugeRequest))
+		return srv.(QueryServer).RewardGauges(ctx, req.(*QueryRewardGaugesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -631,8 +626,8 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "RewardGauge",
-			Handler:    _Query_RewardGauge_Handler,
+			MethodName: "RewardGauges",
+			Handler:    _Query_RewardGauges_Handler,
 		},
 		{
 			MethodName: "BTCStakingGauge",
@@ -703,7 +698,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryRewardGaugeRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryRewardGaugesRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -713,12 +708,12 @@ func (m *QueryRewardGaugeRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryRewardGaugeRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryRewardGaugesRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryRewardGaugeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryRewardGaugesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -728,19 +723,12 @@ func (m *QueryRewardGaugeRequest) MarshalToSizedBuffer(dAtA []byte) (int, error)
 		copy(dAtA[i:], m.Address)
 		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
 		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Type) > 0 {
-		i -= len(m.Type)
-		copy(dAtA[i:], m.Type)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Type)))
-		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryRewardGaugeResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryRewardGaugesResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -750,27 +738,41 @@ func (m *QueryRewardGaugeResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryRewardGaugeResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryRewardGaugesResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryRewardGaugeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryRewardGaugesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.RewardGauge != nil {
-		{
-			size, err := m.RewardGauge.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
+	if len(m.RewardGauges) > 0 {
+		for k := range m.RewardGauges {
+			v := m.RewardGauges[k]
+			baseI := i
+			if v != nil {
+				{
+					size, err := v.MarshalToSizedBuffer(dAtA[:i])
+					if err != nil {
+						return 0, err
+					}
+					i -= size
+					i = encodeVarintQuery(dAtA, i, uint64(size))
+				}
+				i--
+				dAtA[i] = 0x12
 			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintQuery(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintQuery(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0xa
 		}
-		i--
-		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -932,16 +934,12 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryRewardGaugeRequest) Size() (n int) {
+func (m *QueryRewardGaugesRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.Type)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
 	l = len(m.Address)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
@@ -949,15 +947,24 @@ func (m *QueryRewardGaugeRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryRewardGaugeResponse) Size() (n int) {
+func (m *QueryRewardGaugesResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.RewardGauge != nil {
-		l = m.RewardGauge.Size()
-		n += 1 + l + sovQuery(uint64(l))
+	if len(m.RewardGauges) > 0 {
+		for k, v := range m.RewardGauges {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				l = v.Size()
+				l += 1 + sovQuery(uint64(l))
+			}
+			mapEntrySize := 1 + len(k) + sovQuery(uint64(len(k))) + l
+			n += mapEntrySize + 1 + sovQuery(uint64(mapEntrySize))
+		}
 	}
 	return n
 }
@@ -1151,7 +1158,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryRewardGaugeRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryRewardGaugesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1174,45 +1181,13 @@ func (m *QueryRewardGaugeRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryRewardGaugeRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryRewardGaugesRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryRewardGaugeRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryRewardGaugesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Type", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Type = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
 			}
@@ -1265,7 +1240,7 @@ func (m *QueryRewardGaugeRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryRewardGaugeResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryRewardGaugesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1288,15 +1263,15 @@ func (m *QueryRewardGaugeResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryRewardGaugeResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryRewardGaugesResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryRewardGaugeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryRewardGaugesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RewardGauge", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field RewardGauges", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1323,12 +1298,105 @@ func (m *QueryRewardGaugeResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.RewardGauge == nil {
-				m.RewardGauge = &RewardGauge{}
+			if m.RewardGauges == nil {
+				m.RewardGauges = make(map[string]*RewardGauge)
 			}
-			if err := m.RewardGauge.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			var mapkey string
+			var mapvalue *RewardGauge
+			for iNdEx < postIndex {
+				entryPreIndex := iNdEx
+				var wire uint64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowQuery
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					wire |= uint64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				fieldNum := int32(wire >> 3)
+				if fieldNum == 1 {
+					var stringLenmapkey uint64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						stringLenmapkey |= uint64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					intStringLenmapkey := int(stringLenmapkey)
+					if intStringLenmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postStringIndexmapkey := iNdEx + intStringLenmapkey
+					if postStringIndexmapkey < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postStringIndexmapkey > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
+					iNdEx = postStringIndexmapkey
+				} else if fieldNum == 2 {
+					var mapmsglen int
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowQuery
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						mapmsglen |= int(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					if mapmsglen < 0 {
+						return ErrInvalidLengthQuery
+					}
+					postmsgIndex := iNdEx + mapmsglen
+					if postmsgIndex < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if postmsgIndex > l {
+						return io.ErrUnexpectedEOF
+					}
+					mapvalue = &RewardGauge{}
+					if err := mapvalue.Unmarshal(dAtA[iNdEx:postmsgIndex]); err != nil {
+						return err
+					}
+					iNdEx = postmsgIndex
+				} else {
+					iNdEx = entryPreIndex
+					skippy, err := skipQuery(dAtA[iNdEx:])
+					if err != nil {
+						return err
+					}
+					if (skippy < 0) || (iNdEx+skippy) < 0 {
+						return ErrInvalidLengthQuery
+					}
+					if (iNdEx + skippy) > postIndex {
+						return io.ErrUnexpectedEOF
+					}
+					iNdEx += skippy
+				}
 			}
+			m.RewardGauges[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

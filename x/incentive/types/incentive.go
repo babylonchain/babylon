@@ -21,6 +21,37 @@ func NewRewardGauge(coins sdk.Coins) *RewardGauge {
 	}
 }
 
+// GetWithdrawableCoins returns withdrawable coins in this reward gauge
+func (rg *RewardGauge) GetWithdrawableCoins() sdk.Coins {
+	withdrawableCoins := sdk.NewCoins()
+	for _, coin := range rg.Coins {
+		found, withdrawnCoin := rg.WithdrawnCoins.Find(coin.Denom)
+		// if the coin is not found in withdrawn coins, all of this coin is withdrawable
+		if !found {
+			withdrawableCoins = withdrawableCoins.Add(coin)
+			continue
+		}
+		// if the withdrawable amount is positive, then the coin with this amount is withdrawable
+		withdrawableCoinAmount := coin.Amount.Sub(withdrawnCoin.Amount)
+		if withdrawableCoinAmount.IsPositive() {
+			withdrawableCoin := sdk.NewCoin(coin.Denom, withdrawableCoinAmount)
+			withdrawableCoins = withdrawableCoins.Add(withdrawableCoin)
+		}
+	}
+	return withdrawableCoins
+}
+
+// Clear makes the reward gauge to have no withdrawable coins
+// typically called after the stakeholder withdraws its reward
+func (rg *RewardGauge) Clear() {
+	rg.WithdrawnCoins = sdk.NewCoins(rg.Coins...)
+}
+
+// IsEmpty returns whether the reward gauge has nothing to withdraw
+func (rg *RewardGauge) IsEmpty() bool {
+	return rg.Coins.IsEqual(rg.WithdrawnCoins)
+}
+
 func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
 	// coins with decimal value
 	coins := sdk.NewDecCoinsFromCoins(coinsInt...)
@@ -41,6 +72,10 @@ const (
 	BTCValidatorType
 	BTCDelegationType
 )
+
+func GetAllStakeholderTypes() []StakeholderType {
+	return []StakeholderType{SubmitterType, ReporterType, BTCValidatorType, BTCDelegationType}
+}
 
 func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 	if len(stBytes) != 1 {

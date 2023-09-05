@@ -50,6 +50,22 @@ func GenRandomRewardGauge(r *rand.Rand) *itypes.RewardGauge {
 	return itypes.NewRewardGauge(coins)
 }
 
+func GenRandomWithdrawnCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
+	withdrawnCoins := sdk.NewCoins()
+	for _, coin := range coins {
+		// skip this coin with some probability
+		if OneInN(r, 3) {
+			continue
+		}
+		// a subset of the coin has been withdrawn
+		amount := coin.Amount.Uint64()
+		withdrawnAmount := RandomInt(r, int(amount)-1) + 1
+		withdrawnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromUint64(withdrawnAmount))
+		withdrawnCoins = withdrawnCoins.Add(withdrawnCoin)
+	}
+	return withdrawnCoins
+}
+
 func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	coins := GenRandomCoins(r)
 	return itypes.NewGauge(coins)

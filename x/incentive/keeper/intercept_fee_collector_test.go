@@ -25,6 +25,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
 		// mock bank keeper
 		bankKeeper := types.NewMockBankKeeper(ctrl)
