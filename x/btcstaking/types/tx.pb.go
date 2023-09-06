@@ -582,7 +582,7 @@ type MsgAddJuryUnbondingSigs struct {
 	// staking_tx_hash is the hash of the staking tx.
 	// (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
 	StakingTxHash string `protobuf:"bytes,4,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
-	// unbonding_tx_sig is the signature of the jury on the unbodning tx submitted to babylon
+	// unbonding_tx_sig is the signature of the jury on the unbonding tx submitted to babylon
 	// the signature follows encoding in BIP-340 spec
 	UnbondingTxSig *github_com_babylonchain_babylon_types.BIP340Signature `protobuf:"bytes,5,opt,name=unbonding_tx_sig,json=unbondingTxSig,proto3,customtype=github.com/babylonchain/babylon/types.BIP340Signature" json:"unbonding_tx_sig,omitempty"`
 	// slashing_unbonding_tx_sig is the signature of the jury on slashing tx corresponding to unbodning tx submitted to babylon
@@ -885,9 +885,9 @@ type MsgClient interface {
 	CreateBTCDelegation(ctx context.Context, in *MsgCreateBTCDelegation, opts ...grpc.CallOption) (*MsgCreateBTCDelegationResponse, error)
 	// BtcUndelegate undelegates funds from exsitng btc delegation
 	BTCUndelegate(ctx context.Context, in *MsgBTCUndelegate, opts ...grpc.CallOption) (*MsgBTCUndelegateResponse, error)
-	// AddJurySig handles a signature from jury for slashing tx of staking tx
+	// AddJurySig handles a signature from jury for slashing tx of staking tx for delegation
 	AddJurySig(ctx context.Context, in *MsgAddJurySig, opts ...grpc.CallOption) (*MsgAddJurySigResponse, error)
-	// AddJuryUnbondingSigs handles a signature from jury for:
+	// AddJuryUnbondingSigs handles two signatures from jury for:
 	// - unbonding tx submitted to babylon by staker
 	// - slashing tx corresponding to unbodning tx submitted to babylon by staker
 	AddJuryUnbondingSigs(ctx context.Context, in *MsgAddJuryUnbondingSigs, opts ...grpc.CallOption) (*MsgAddJuryUnbondingSigsResponse, error)
@@ -976,9 +976,9 @@ type MsgServer interface {
 	CreateBTCDelegation(context.Context, *MsgCreateBTCDelegation) (*MsgCreateBTCDelegationResponse, error)
 	// BtcUndelegate undelegates funds from exsitng btc delegation
 	BTCUndelegate(context.Context, *MsgBTCUndelegate) (*MsgBTCUndelegateResponse, error)
-	// AddJurySig handles a signature from jury for slashing tx of staking tx
+	// AddJurySig handles a signature from jury for slashing tx of staking tx for delegation
 	AddJurySig(context.Context, *MsgAddJurySig) (*MsgAddJurySigResponse, error)
-	// AddJuryUnbondingSigs handles a signature from jury for:
+	// AddJuryUnbondingSigs handles two signatures from jury for:
 	// - unbonding tx submitted to babylon by staker
 	// - slashing tx corresponding to unbodning tx submitted to babylon by staker
 	AddJuryUnbondingSigs(context.Context, *MsgAddJuryUnbondingSigs) (*MsgAddJuryUnbondingSigsResponse, error)

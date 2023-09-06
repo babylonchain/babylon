@@ -426,7 +426,7 @@ func (s *BTCStakingTestSuite) Test5SubmitUnbondingSignatures() {
 	btcTip, err = nonValidatorNode.QueryTip()
 	s.NoError(err)
 	s.Equal(
-		bstypes.BTCDelegationStatus_EXPIRED,
+		bstypes.BTCDelegationStatus_UNBONDED,
 		delegationWithSigs.GetStatus(btcTip.Height, initialization.BabylonBtcFinalizationPeriod),
 	)
 }

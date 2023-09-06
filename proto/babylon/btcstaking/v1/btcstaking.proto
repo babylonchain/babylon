@@ -151,7 +151,12 @@ message BabylonBTCTaprootTx {
     bytes script = 2;
 }
 
-// BTCDelegationStatus is the status of a delegation.
+// BTCDelegationStatus is the status of a delegation. There are two possible state
+// transition paths:
+// 1. PENDING -> ACTIVE -> UNBONDED - this is the typical path when timelock of staking
+// transaction expires.
+// 2. PENDING _> ACTIVE -> UNBONDING -> UNBONDED - this is the path when staker requests undelegation through
+// MsgBTCUndelegate message.
 enum BTCDelegationStatus {
     // PENDING defines a delegation that is waiting for a jury signature to become active.
     PENDING = 0;
@@ -161,7 +166,10 @@ enum BTCDelegationStatus {
     // from staker, but not yet received signatures from validator and jury.
     // Delegation in this state already lost its voting power.
     UNBONDING = 2;
-    // EXPIRED defines a delegation that has expired
-    EXPIRED = 3;
+    // UNBONDED defines a delegation no longer has voting power:
+    // - either reaching the end of staking transaction timelock
+    // - or receiving unbonding tx and then receiving signatures from validator and jury for this
+    // unbonding tx.
+    UNBONDED = 3;
 }
 

@@ -110,7 +110,7 @@ func (ud *BTCUndelegation) HasAllSignatures() bool {
 func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatus {
 	if d.BtcUndelegation != nil {
 		if d.BtcUndelegation.HasAllSignatures() {
-			return BTCDelegationStatus_EXPIRED
+			return BTCDelegationStatus_UNBONDED
 		}
 		// If we received an undelegation but is still does not have all required signature,
 		// delegation receives UNBONING status.
@@ -129,7 +129,7 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatu
 			return BTCDelegationStatus_PENDING
 		}
 	}
-	return BTCDelegationStatus_EXPIRED
+	return BTCDelegationStatus_UNBONDED
 }
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
