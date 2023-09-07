@@ -52,7 +52,7 @@ func FuzzParamsQuery(f *testing.F) {
 			params.BtcConfirmationDepth = checkpointFinalizationTimeout
 		}
 
-		keeper, ctx := testkeeper.NewBTCCheckpointKeeper(t, nil, nil, nil)
+		keeper, ctx := testkeeper.NewBTCCheckpointKeeper(t, nil, nil, nil, nil)
 		wctx := sdk.WrapSDKContext(ctx)
 
 		// if setParamsFlag == 0, set params

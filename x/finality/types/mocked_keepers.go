@@ -66,6 +66,21 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCValidator(ctx, valBTCPK interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCValidator), ctx, valBTCPK)
 }
 
+// GetRewardDistCache mocks base method.
+func (m *MockBTCStakingKeeper) GetRewardDistCache(ctx types0.Context, height uint64) (*types.RewardDistCache, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRewardDistCache", ctx, height)
+	ret0, _ := ret[0].(*types.RewardDistCache)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRewardDistCache indicates an expected call of GetRewardDistCache.
+func (mr *MockBTCStakingKeeperMockRecorder) GetRewardDistCache(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetRewardDistCache), ctx, height)
+}
+
 // GetVotingPower mocks base method.
 func (m *MockBTCStakingKeeper) GetVotingPower(ctx types0.Context, valBTCPK []byte, height uint64) uint64 {
 	m.ctrl.T.Helper()
@@ -106,6 +121,30 @@ func (m *MockBTCStakingKeeper) HasBTCValidator(ctx types0.Context, valBTCPK []by
 func (mr *MockBTCStakingKeeperMockRecorder) HasBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasBTCValidator), ctx, valBTCPK)
+}
+
+// RecordRewardDistCache mocks base method.
+func (m *MockBTCStakingKeeper) RecordRewardDistCache(ctx types0.Context) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RecordRewardDistCache", ctx)
+}
+
+// RecordRewardDistCache indicates an expected call of RecordRewardDistCache.
+func (mr *MockBTCStakingKeeperMockRecorder) RecordRewardDistCache(ctx interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RecordRewardDistCache), ctx)
+}
+
+// RemoveRewardDistCache mocks base method.
+func (m *MockBTCStakingKeeper) RemoveRewardDistCache(ctx types0.Context, height uint64) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RemoveRewardDistCache", ctx, height)
+}
+
+// RemoveRewardDistCache indicates an expected call of RemoveRewardDistCache.
+func (mr *MockBTCStakingKeeperMockRecorder) RemoveRewardDistCache(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RemoveRewardDistCache), ctx, height)
 }
 
 // SlashBTCValidator mocks base method.
@@ -194,4 +233,39 @@ func (m *MockBankKeeper) SpendableCoins(ctx types0.Context, addr types0.AccAddre
 func (mr *MockBankKeeperMockRecorder) SpendableCoins(ctx, addr interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendableCoins", reflect.TypeOf((*MockBankKeeper)(nil).SpendableCoins), ctx, addr)
+}
+
+// MockIncentiveKeeper is a mock of IncentiveKeeper interface.
+type MockIncentiveKeeper struct {
+	ctrl     *gomock.Controller
+	recorder *MockIncentiveKeeperMockRecorder
+}
+
+// MockIncentiveKeeperMockRecorder is the mock recorder for MockIncentiveKeeper.
+type MockIncentiveKeeperMockRecorder struct {
+	mock *MockIncentiveKeeper
+}
+
+// NewMockIncentiveKeeper creates a new mock instance.
+func NewMockIncentiveKeeper(ctrl *gomock.Controller) *MockIncentiveKeeper {
+	mock := &MockIncentiveKeeper{ctrl: ctrl}
+	mock.recorder = &MockIncentiveKeeperMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
+	return m.recorder
+}
+
+// RewardBTCStaking mocks base method.
+func (m *MockIncentiveKeeper) RewardBTCStaking(ctx types0.Context, height uint64, rdc *types.RewardDistCache) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, rdc)
+}
+
+// RewardBTCStaking indicates an expected call of RewardBTCStaking.
+func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, rdc interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, rdc)
 }

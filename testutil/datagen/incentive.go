@@ -3,7 +3,9 @@ package datagen
 import (
 	"math/rand"
 
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -69,4 +71,43 @@ func GenRandomWithdrawnCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	coins := GenRandomCoins(r)
 	return itypes.NewGauge(coins)
+}
+
+func GenRandomBTCDelDistInfo(r *rand.Rand) *bstypes.BTCDelDistInfo {
+	return &bstypes.BTCDelDistInfo{
+		BabylonPk:   GenRandomAccount().GetPubKey().(*secp256k1.PubKey),
+		VotingPower: RandomInt(r, 1000) + 1,
+	}
+}
+
+func GenRandomBTCValDistInfo(r *rand.Rand) (*bstypes.BTCValDistInfo, error) {
+	// create BTC validator with random commission
+	btcVal, err := GenRandomBTCValidator(r)
+	if err != nil {
+		return nil, err
+	}
+	// create BTC validator distribution info
+	btcValDistInfo := bstypes.NewBTCValDistInfo(btcVal)
+	// add a random number of BTC delegation distribution info
+	numBTCDels := RandomInt(r, 100) + 1
+	for i := uint64(0); i < numBTCDels; i++ {
+		btcDelDistInfo := GenRandomBTCDelDistInfo(r)
+		btcValDistInfo.BtcDels = append(btcValDistInfo.BtcDels, btcDelDistInfo)
+		btcValDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
+	}
+	return btcValDistInfo, nil
+}
+
+func GenRandomRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
+	rdc := bstypes.NewRewardDistCache()
+	// a random number of BTC validators
+	numBTCVals := RandomInt(r, 10) + 1
+	for i := uint64(0); i < numBTCVals; i++ {
+		v, err := GenRandomBTCValDistInfo(r)
+		if err != nil {
+			return nil, err
+		}
+		rdc.AddBTCValDistInfo(v)
+	}
+	return rdc, nil
 }

@@ -18,7 +18,7 @@ import (
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
-	fKeeper, ctx := keepertest.FinalityKeeper(t, nil)
+	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil)
 	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), sdk.WrapSDKContext(ctx)
 }
 
@@ -37,7 +37,7 @@ func FuzzCommitPubRandList(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create a random BTC validator
@@ -108,7 +108,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, nil)
 		ms := keeper.NewMsgServerImpl(*fKeeper)
 
 		// create and register a random BTC validator

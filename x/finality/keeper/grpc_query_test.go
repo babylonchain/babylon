@@ -20,7 +20,7 @@ func FuzzListPublicRandomness(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// add a random list of EOTS public randomness
@@ -59,7 +59,7 @@ func FuzzBlock(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		height := datagen.RandomInt(r, 100)
@@ -90,7 +90,7 @@ func FuzzListBlocks(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// index a random list of finalised blocks
@@ -181,7 +181,7 @@ func FuzzVotesAtHeight(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// Add random number of voted validators to the store
@@ -223,7 +223,7 @@ func FuzzQueryEvidence(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// set random BTC SK PK
@@ -270,7 +270,7 @@ func FuzzListEvidences(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// Setup keeper and context
-		keeper, ctx := testkeeper.FinalityKeeper(t, nil)
+		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// generate a random list of evidences since startHeight

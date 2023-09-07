@@ -52,3 +52,6 @@ type CheckpointingKeeper interface {
 	// all submissions on btc chain
 	SetCheckpointForgotten(ctx sdk.Context, epoch uint64)
 }
+
+type IncentiveKeeper interface {
+}

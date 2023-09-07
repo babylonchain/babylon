@@ -9,9 +9,12 @@ import (
 
 func NewGauge(coins sdk.Coins) *Gauge {
 	return &Gauge{
-		Coins:            coins,
-		DistributedCoins: sdk.NewCoins(),
+		Coins: coins,
 	}
+}
+
+func (g *Gauge) GetCoinsPortion(portion math.LegacyDec) sdk.Coins {
+	return GetCoinsPortion(g.Coins, portion)
 }
 
 func NewRewardGauge(coins sdk.Coins) *RewardGauge {

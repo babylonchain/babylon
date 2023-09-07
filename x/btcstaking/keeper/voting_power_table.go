@@ -128,6 +128,15 @@ func (k Keeper) GetBTCStakingActivatedHeight(ctx sdk.Context) (uint64, error) {
 	}
 }
 
+func (k Keeper) IsBTCStakingActivated(ctx sdk.Context) bool {
+	store := ctx.KVStore(k.storeKey)
+	votingPowerStore := prefix.NewStore(store, types.VotingPowerKey)
+	iter := votingPowerStore.Iterator(nil, nil)
+	defer iter.Close()
+	// if the iterator is valid, then BTC staking is already activated
+	return iter.Valid()
+}
+
 // votingPowerStore returns the KVStore of the BTC validators' voting power
 // prefix: (VotingPowerKey || Babylon block height)
 // key: Bitcoin secp256k1 PK

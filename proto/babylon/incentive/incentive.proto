@@ -15,11 +15,6 @@ message Gauge {
         (gogoproto.nullable) = false,
         (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
     ];
-    // distributed_coins are coins that have been distributed already
-    repeated cosmos.base.v1beta1.Coin distributed_coins = 2 [
-        (gogoproto.nullable) = false,
-        (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-    ];
 }
 
 // RewardGauge is an object that stores rewards distributed to a BTC staking/timestamping stakeholder

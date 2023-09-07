@@ -17,8 +17,16 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
+	// record voting power table at the current height
 	k.RecordVotingPowerTable(ctx)
+	// if BTC staking is activated, record reward distribution cache at the current height
+	// TODO: consider merging RecordVotingPowerTable and RecordRewardDistCache so that we
+	// only need to perform one full scan over BTC validators/delegations
+	if k.IsBTCStakingActivated(ctx) {
+		k.RecordRewardDistCache(ctx)
+	}
 
 	return []abci.ValidatorUpdate{}
 }

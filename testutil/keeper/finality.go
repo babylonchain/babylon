@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper) (*keeper.Keeper, sdk.Context) {
+func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper, iKeeper types.IncentiveKeeper) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
@@ -38,6 +38,7 @@ func FinalityKeeper(t testing.TB, bsKeeper types.BTCStakingKeeper) (*keeper.Keep
 		nil,
 		nil,
 		bsKeeper,
+		iKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 

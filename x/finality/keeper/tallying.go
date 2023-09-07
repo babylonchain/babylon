@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -66,12 +65,11 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 	// for each of these blocks from earliest to latest, tally the block w.r.t. existing votes
 	for i := len(blocksToFinalize) - 1; i >= 0; i-- {
 		blockToFinalize := blocksToFinalize[i]
-		sigSet := k.GetSigSet(ctx, blockToFinalize.Height)
+		voterBTCPKs := k.GetVoters(ctx, blockToFinalize.Height)
 		valSet := valSets[blockToFinalize.Height]
-		if tally(valSet, sigSet) {
+		if tally(valSet, voterBTCPKs) {
 			// if this block gets >2/3 votes, finalise it
-			blockToFinalize.Finalized = true
-			k.SetBlock(ctx, blockToFinalize)
+			k.finalizeBlock(ctx, blockToFinalize, voterBTCPKs)
 		} else {
 			// if not, then this block and all subsequent blocks should not be finalised
 			// thus, we need to break here
@@ -80,13 +78,33 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 	}
 }
 
+// finalizeBlock sets a block to be finalised in KVStore and distributes rewards to
+// BTC validators and delegations
+func (k Keeper) finalizeBlock(ctx sdk.Context, block *types.IndexedBlock, voterBTCPKs map[string]struct{}) {
+	// set block to be finalised in KVStore
+	block.Finalized = true
+	k.SetBlock(ctx, block)
+	// distribute rewards to BTC staking stakeholders w.r.t. the reward distribution cache
+	rdc, err := k.BTCStakingKeeper.GetRewardDistCache(ctx, block.Height)
+	if err != nil {
+		// failing to get a reward distribution cache before distributing reward is a programming error
+		panic(err)
+	}
+	// filter out voted BTC validators
+	rdc.FilterVotedBTCVals(voterBTCPKs)
+	// reward voted BTC validators
+	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, rdc)
+	// remove reward distribution cache afterwards
+	k.BTCStakingKeeper.RemoveRewardDistCache(ctx, block.Height)
+}
+
 // tally checks whether a block with the given validator set and votes reaches a quorum or not
-func tally(valSet map[string]uint64, sigSet map[string]*bbn.SchnorrEOTSSig) bool {
+func tally(valSet map[string]uint64, voterBTCPKs map[string]struct{}) bool {
 	totalPower := uint64(0)
 	votedPower := uint64(0)
 	for pkStr, power := range valSet {
 		totalPower += power
-		if _, ok := sigSet[pkStr]; ok {
+		if _, ok := voterBTCPKs[pkStr]; ok {
 			votedPower += power
 		}
 	}

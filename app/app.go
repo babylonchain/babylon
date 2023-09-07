@@ -470,14 +470,20 @@ func NewBabylonApp(
 		appCodec, keys[stakingtypes.StoreKey], app.AccountKeeper, app.BankKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	app.MintKeeper = mintkeeper.NewKeeper(appCodec, keys[minttypes.StoreKey], app.StakingKeeper, app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+
+	app.DistrKeeper = distrkeeper.NewKeeper(appCodec, keys[distrtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.StakingKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+
+	// set up epoching keeper
 	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
 	epochingKeeper := epochingkeeper.NewKeeper(
 		appCodec, keys[epochingtypes.StoreKey], keys[epochingtypes.StoreKey], app.BankKeeper, app.StakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	app.MintKeeper = mintkeeper.NewKeeper(appCodec, keys[minttypes.StoreKey], app.StakingKeeper, app.AccountKeeper, app.BankKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())
-
-	app.DistrKeeper = distrkeeper.NewKeeper(appCodec, keys[distrtypes.StoreKey], app.AccountKeeper, app.BankKeeper, app.StakingKeeper, authtypes.FeeCollectorName, authtypes.NewModuleAddress(govtypes.ModuleName).String())
+	// set up incentive keeper
+	app.IncentiveKeeper = incentivekeeper.NewKeeper(
+		appCodec, keys[incentivetypes.StoreKey], keys[incentivetypes.StoreKey], app.BankKeeper, app.AccountKeeper, &epochingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authtypes.FeeCollectorName,
+	)
 
 	app.SlashingKeeper = slashingkeeper.NewKeeper(
 		appCodec, legacyAmino, keys[slashingtypes.StoreKey], app.StakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -558,6 +564,7 @@ func NewBabylonApp(
 		keys[btccheckpointtypes.MemStoreKey],
 		&btclightclientKeeper,
 		&checkpointingKeeper,
+		&app.IncentiveKeeper,
 		&powLimit,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
@@ -623,6 +630,22 @@ func NewBabylonApp(
 		&btclightclientKeeper,
 	)
 
+	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
+	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
+	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
+	app.EpochingKeeper = *epochingKeeper.SetHooks(
+		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
+	)
+
+	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
+	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
+		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
+	)
+	app.BtcCheckpointKeeper = btcCheckpointKeeper
+	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
+		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
+	)
+
 	// set up BTC staking keeper
 	app.BTCStakingKeeper = btcstakingkeeper.NewKeeper(
 		appCodec, keys[btcstakingtypes.StoreKey], keys[btcstakingtypes.StoreKey],
@@ -633,28 +656,7 @@ func NewBabylonApp(
 	// set up finality keeper
 	app.FinalityKeeper = finalitykeeper.NewKeeper(
 		appCodec, keys[finalitytypes.StoreKey], keys[finalitytypes.StoreKey], app.AccountKeeper, app.BankKeeper,
-		app.BTCStakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// add msgServiceRouter so that the epoching module can forward unwrapped messages to the staking module
-	epochingKeeper.SetMsgServiceRouter(app.BaseApp.MsgServiceRouter())
-	// make ZoneConcierge and Monitor to subscribe to the epoching's hooks
-	app.EpochingKeeper = *epochingKeeper.SetHooks(
-		epochingtypes.NewMultiEpochingHooks(app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
-	)
-
-	// set up incentive keeper
-	app.IncentiveKeeper = incentivekeeper.NewKeeper(
-		appCodec, keys[incentivetypes.StoreKey], keys[incentivetypes.StoreKey], app.BankKeeper, app.AccountKeeper, app.EpochingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(), authtypes.FeeCollectorName,
-	)
-
-	// set up Checkpointing, BTCCheckpoint, and BTCLightclient keepers
-	app.CheckpointingKeeper = *checkpointingKeeper.SetHooks(
-		checkpointingtypes.NewMultiCheckpointingHooks(app.EpochingKeeper.Hooks(), app.ZoneConciergeKeeper.Hooks(), app.MonitorKeeper.Hooks()),
-	)
-	app.BtcCheckpointKeeper = btcCheckpointKeeper
-	app.BTCLightClientKeeper = *btclightclientKeeper.SetHooks(
-		btclightclienttypes.NewMultiBTCLightClientHooks(app.BtcCheckpointKeeper.Hooks()),
+		app.BTCStakingKeeper, app.IncentiveKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// create evidence keeper with router

@@ -20,6 +20,7 @@ type (
 		accountKeeper    types.AccountKeeper
 		bankKeeper       types.BankKeeper
 		BTCStakingKeeper types.BTCStakingKeeper
+		IncentiveKeeper  types.IncentiveKeeper
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
 		authority string
@@ -33,7 +34,8 @@ func NewKeeper(
 
 	accountKeeper types.AccountKeeper,
 	bankKeeper types.BankKeeper,
-	BTCStakingKeeper types.BTCStakingKeeper,
+	btctakingKeeper types.BTCStakingKeeper,
+	incentiveKeeper types.IncentiveKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
@@ -43,7 +45,8 @@ func NewKeeper(
 
 		accountKeeper:    accountKeeper,
 		bankKeeper:       bankKeeper,
-		BTCStakingKeeper: BTCStakingKeeper,
+		BTCStakingKeeper: btctakingKeeper,
+		IncentiveKeeper:  incentiveKeeper,
 		authority:        authority,
 	}
 }

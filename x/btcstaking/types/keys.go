@@ -15,11 +15,12 @@ const (
 )
 
 var (
-	ParamsKey        = []byte{0x01} // key prefix for the parameters
-	BTCValidatorKey  = []byte{0x02} // key prefix for the BTC validators
-	BTCDelegationKey = []byte{0x03} // key prefix for the BTC delegations
-	VotingPowerKey   = []byte{0x04} // key prefix for the voting power
-	BTCHeightKey     = []byte{0x05} // key prefix for the BTC heights
+	ParamsKey          = []byte{0x01} // key prefix for the parameters
+	BTCValidatorKey    = []byte{0x02} // key prefix for the BTC validators
+	BTCDelegationKey   = []byte{0x03} // key prefix for the BTC delegations
+	VotingPowerKey     = []byte{0x04} // key prefix for the voting power
+	BTCHeightKey       = []byte{0x05} // key prefix for the BTC heights
+	RewardDistCacheKey = []byte{0x06} // key prefix for reward distribution cache
 )
 
 func KeyPrefix(p string) []byte {

@@ -30,10 +30,12 @@ var (
 	r   = rand.New(rand.NewSource(time.Now().Unix()))
 	net = &chaincfg.SimNetParams
 	// BTC validator
-	valSK, _, _ = datagen.GenRandomBTCKeyPair(r)
-	btcVal, _   = datagen.GenRandomBTCValidatorWithBTCSK(r, valSK)
+	valSK, _, _       = datagen.GenRandomBTCKeyPair(r)
+	btcVal, _         = datagen.GenRandomBTCValidatorWithBTCSK(r, valSK)
+	btcValBabylonAddr = sdk.AccAddress(btcVal.BabylonPk.Address()).String()
 	// BTC delegation
 	delBabylonSK, delBabylonPK, _ = datagen.GenRandomSecp256k1KeyPair(r)
+	delBabylonAddr                = sdk.AccAddress(delBabylonPK.Address()).String()
 	delBTCSK, delBTCPK, _         = datagen.GenRandomBTCKeyPair(r)
 	// jury
 	jurySK, _ = btcec.PrivKeyFromBytes(
@@ -245,6 +247,13 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	}, time.Minute, time.Second*5)
 	s.Equal(pubRandMap[activatedHeight].MustMarshal(), msgCommitPubRandList.PubRandList[0].MustMarshal())
 
+	// get the balance of BTC validator and delegation before submitting finality signature
+	// later we will check if rewards are distributed after they finalise a block
+	btcValBalance, err := nonValidatorNode.QueryBalances(btcValBabylonAddr)
+	s.NoError(err)
+	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr)
+	s.NoError(err)
+
 	/*
 		submit finality signature
 	*/
@@ -274,6 +283,14 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 	s.NotEmpty(finalizedBlocks)
 	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlocks[0].LastCommitHash)
+
+	// ensure voters have received rewards after the block is finalised
+	btcValBalance2, err := nonValidatorNode.QueryBalances(btcValBabylonAddr)
+	s.NoError(err)
+	s.True(btcValBalance2.IsAllGT(btcValBalance))
+	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr)
+	s.NoError(err)
+	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
 }
 
 // Test4SubmitStakerUnbonding is an end-to-end test for user unbodning

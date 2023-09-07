@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math/rand"
 
-	"cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
@@ -15,6 +14,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -29,7 +29,7 @@ func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
 
 func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
 	// commission
-	zeroCommission := math.LegacyZeroDec()
+	commission := sdk.NewDecWithPrec(int64(RandomInt(r, 99)+1), 2) // [1/100, 100/100]
 	// description
 	description := stakingtypes.Description{}
 	// key pairs
@@ -50,7 +50,7 @@ func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bst
 	}
 	return &bstypes.BTCValidator{
 		Description: &description,
-		Commission:  &zeroCommission,
+		Commission:  &commission,
 		BabylonPk:   secp256k1PK,
 		BtcPk:       bip340PK,
 		Pop:         pop,

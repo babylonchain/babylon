@@ -24,4 +24,5 @@ var (
 	ErrUnbondingDuplicatedValidatorSig = errorsmod.Register(ModuleName, 1115, "the BTC undelegation has already received validator signature")
 	ErrUnbodningInvalidValidatorSig    = errorsmod.Register(ModuleName, 1116, "the validator signature is not valid")
 	ErrUnbondingUnexpectedValidatorSig = errorsmod.Register(ModuleName, 1117, "the BTC undelegation did not receive validator signature yet")
+	ErrRewardDistCacheNotFound         = errorsmod.Register(ModuleName, 1118, "the reward distribution cache is not found")
 )

@@ -24,6 +24,7 @@ func NewBTCCheckpointKeeper(
 	t testing.TB,
 	lk btcctypes.BTCLightClientKeeper,
 	ek btcctypes.CheckpointingKeeper,
+	ik btcctypes.IncentiveKeeper,
 	powLimit *big.Int) (*keeper.Keeper, sdk.Context) {
 	storeKey := sdk.NewKVStoreKey(btcctypes.StoreKey)
 	tstoreKey := sdk.NewTransientStoreKey(btcctypes.TStoreKey)
@@ -45,6 +46,7 @@ func NewBTCCheckpointKeeper(
 		memStoreKey,
 		lk,
 		ek,
+		ik,
 		powLimit,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)

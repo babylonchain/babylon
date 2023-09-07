@@ -24,6 +24,7 @@ type (
 		memKey               storetypes.StoreKey
 		btcLightClientKeeper types.BTCLightClientKeeper
 		checkpointingKeeper  types.CheckpointingKeeper
+		incentiveKeeper      types.IncentiveKeeper
 		powLimit             *big.Int
 		authority            string
 	}
@@ -64,6 +65,7 @@ func NewKeeper(
 	memKey storetypes.StoreKey,
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
+	ik types.IncentiveKeeper,
 	powLimit *big.Int,
 	authority string,
 ) Keeper {
@@ -75,6 +77,7 @@ func NewKeeper(
 		memKey:               memKey,
 		btcLightClientKeeper: bk,
 		checkpointingKeeper:  ck,
+		incentiveKeeper:      ik,
 		powLimit:             powLimit,
 		authority:            authority,
 	}
@@ -631,7 +634,6 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 			// epoch just got confirmed by best submission
 			currentEpoch.Status = types.Confirmed
 			k.checkpointingKeeper.SetCheckpointConfirmed(ctx, epoch)
-			// TODO This is the place to check other submissions and pay up rewards.
 		}
 
 		if bestSubmissionStatus > currentEpoch.Status && currentEpoch.Status == types.Confirmed {
@@ -642,6 +644,8 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 		}
 
 		if currentEpoch.Status == types.Finalized {
+			// TODO(incentive): trigger incentive module to distribute rewards to submitters/reporters
+
 			for i, sk := range currentEpoch.Key {
 				// delete all submissions except best one
 				if i != epochChanges.BestSubmissionIdx {

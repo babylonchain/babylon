@@ -25,7 +25,8 @@ func FuzzTallying(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
-		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
 
 		// Case 1: expect to panic if tallying upon BTC staking protocol is not activated
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(0), bstypes.ErrBTCStakingNotActivated).Times(1)
@@ -99,6 +100,10 @@ func FuzzTallying(f *testing.F) {
 				require.NoError(t, err)
 			}
 		}
+		// we don't test incentive in this function
+		bsKeeper.EXPECT().GetRewardDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewRewardDistCache(), nil).Times(int(numWithQCs))
+		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
+		bsKeeper.EXPECT().RemoveRewardDistCache(gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// add mock queries to GetBTCStakingActivatedHeight
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
 		// tally blocks and none of them should be finalised

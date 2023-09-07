@@ -53,7 +53,7 @@ func InitTestKeepers(
 
 	cc := btcctypes.NewMockCheckpointingKeeper()
 
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
+	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, nil, chaincfg.SimNetParams.PowLimit)
 
 	srv := bkeeper.NewMsgServerImpl(*k)
 

@@ -1,10 +1,50 @@
 package keeper
 
 import (
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/incentive/types"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
+
+// RewardBTCStaking distributes rewards to BTC validators/delegations at a given height according
+// to the reward distribution cache
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
+func (k Keeper) RewardBTCStaking(ctx sdk.Context, height uint64, rdc *bstypes.RewardDistCache) {
+	gauge, err := k.GetBTCStakingGauge(ctx, height)
+	if err != nil {
+		// failing to get a reward gauge at previous height is a programming error
+		panic(err)
+	}
+	// reward each of the BTC validator and its BTC delegations in proportion
+	for _, btcVal := range rdc.BtcVals {
+		// get coins that will be allocated to the BTC validator and its BTC delegations
+		btcValPortion := rdc.GetBTCValPortion(btcVal)
+		coinsForBTCValAndDels := gauge.GetCoinsPortion(btcValPortion)
+		// reward the BTC validator with commission
+		coinsForCommission := types.GetCoinsPortion(coinsForBTCValAndDels, *btcVal.Commission)
+		if coinsForCommission.IsAllPositive() {
+			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, btcVal.GetAddress(), coinsForCommission); err != nil {
+				// incentive module account is supposed to have enough balance
+				panic(err)
+			}
+		}
+		// reward the rest of coins to each BTC delegation proportional to its voting power portion
+		coinsForBTCDels := coinsForBTCValAndDels.Sub(coinsForCommission...)
+		for _, btcDel := range btcVal.BtcDels {
+			btcDelPortion := btcVal.GetBTCDelPortion(btcDel)
+			coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
+			if coinsForDel.IsAllPositive() {
+				if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, btcDel.GetAddress(), coinsForDel); err != nil {
+					// incentive module account is supposed to have enough balance
+					panic(err)
+				}
+			}
+		}
+	}
+
+	// TODO: handle the change in the gauge due to the truncating operations
+}
 
 func (k Keeper) accumulateBTCStakingReward(ctx sdk.Context, btcStakingReward sdk.Coins) {
 	// update BTC staking gauge

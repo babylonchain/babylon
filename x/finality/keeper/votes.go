@@ -63,6 +63,30 @@ func (k Keeper) GetSigSet(ctx sdk.Context, height uint64) map[string]*bbn.Schnor
 	return sigs
 }
 
+// GetVoters gets returns a map of voters' BTC PKs to the given height
+func (k Keeper) GetVoters(ctx sdk.Context, height uint64) map[string]struct{} {
+	store := k.voteStore(ctx, height)
+	iter := store.Iterator(nil, nil)
+	defer iter.Close()
+
+	// if there is no vote on this height, return nil
+	if !iter.Valid() {
+		return nil
+	}
+
+	voterBTCPKs := map[string]struct{}{}
+	for ; iter.Valid(); iter.Next() {
+		// accumulate voterBTCPKs
+		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
+		if err != nil {
+			// failing to unmarshal validator BTC PK in KVStore is a programming error
+			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
+		}
+		voterBTCPKs[valBTCPK.MarshalHex()] = struct{}{}
+	}
+	return voterBTCPKs
+}
+
 // voteStore returns the KVStore of the votes
 // prefix: VoteKey
 // key: (block height || BTC validator PK)
