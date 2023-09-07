@@ -30,7 +30,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // BTCDelegationStatus is the status of a delegation. There are two possible state
 // transition paths:
-// 1. PENDING -> ACTIVE -> UNBONDED - this is the typical path whent timelock of staking
+// 1. PENDING -> ACTIVE -> UNBONDED - this is the typical path when timelock of staking
 // transaction expires.
 // 2. PENDING _> ACTIVE -> UNBONDING -> UNBONDED - this is the path when staker requests undelegation through
 // MsgBTCUndelegate message.

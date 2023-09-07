@@ -17,6 +17,46 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+func (k Keeper) getDelegationsMatchingCriteria(
+	sdkCtx sdk.Context,
+	match func(*types.BTCDelegation) bool,
+) []*types.BTCDelegation {
+	btcDels := []*types.BTCDelegation{}
+
+	// iterate over each BTC validator
+	valStore := k.btcValidatorStore(sdkCtx)
+	valIter := valStore.Iterator(nil, nil)
+	defer valIter.Close()
+
+	for ; valIter.Valid(); valIter.Next() {
+		valBTCPKBytes := valIter.Key()
+		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
+		if err != nil {
+			// this can only be programming error
+			panic("failed to unmarshal validator BTC PK in KVstore")
+		}
+		delStore := k.btcDelegationStore(sdkCtx, valBTCPK)
+		delIter := delStore.Iterator(nil, nil)
+
+		// iterate over each BTC delegation under this BTC validator
+		for ; delIter.Valid(); delIter.Next() {
+			var curBTCDels types.BTCDelegatorDelegations
+			btcDelsBytes := delIter.Value()
+			k.cdc.MustUnmarshal(btcDelsBytes, &curBTCDels)
+			for i, btcDel := range curBTCDels.Dels {
+				del := btcDel
+				if match(del) {
+					btcDels = append(btcDels, curBTCDels.Dels[i])
+				}
+			}
+		}
+
+		delIter.Close()
+	}
+
+	return btcDels
+}
+
 // BTCValidators returns a paginated list of all Babylon maintained validators
 func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidatorsRequest) (*types.QueryBTCValidatorsResponse, error) {
 	if req == nil {
@@ -75,7 +115,6 @@ func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendi
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	btcDels := []*types.BTCDelegation{}
 
 	// get current BTC height
 	btcTipHeight, err := k.GetCurrentBTCHeight(sdkCtx)
@@ -85,38 +124,42 @@ func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendi
 	// get value of w
 	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
 
-	// iterate over each BTC validator
-	valStore := k.btcValidatorStore(sdkCtx)
-	valIter := valStore.Iterator(nil, nil)
-	defer valIter.Close()
-
-	for ; valIter.Valid(); valIter.Next() {
-		valBTCPKBytes := valIter.Key()
-		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
-		if err != nil {
-			// this can only be programming error
-			panic("failed to unmarshal validator BTC PK in KVstore")
-		}
-		delStore := k.btcDelegationStore(sdkCtx, valBTCPK)
-		delIter := delStore.Iterator(nil, nil)
-
-		// iterate over each BTC delegation under this BTC validator
-		for ; delIter.Valid(); delIter.Next() {
-			var curBTCDels types.BTCDelegatorDelegations
-			btcDelsBytes := delIter.Value()
-			k.cdc.MustUnmarshal(btcDelsBytes, &curBTCDels)
-			for i, btcDel := range curBTCDels.Dels {
-				if btcDel.GetStatus(btcTipHeight, wValue) == types.BTCDelegationStatus_PENDING {
-					// avoid using btcDel which changes over the iterations
-					btcDels = append(btcDels, curBTCDels.Dels[i])
-				}
-			}
-		}
-
-		delIter.Close()
-	}
+	btcDels := k.getDelegationsMatchingCriteria(
+		sdkCtx,
+		func(del *types.BTCDelegation) bool {
+			return del.GetStatus(btcTipHeight, wValue) == types.BTCDelegationStatus_PENDING
+		},
+	)
 
 	return &types.QueryPendingBTCDelegationsResponse{BtcDelegations: btcDels}, nil
+}
+
+// UnbondingBTCDelegations returns all unbonding BTC delegations which require jury signature
+// TODO: find a good way to support pagination of this query
+func (k Keeper) UnbondingBTCDelegations(ctx context.Context, req *types.QueryUnbondingBTCDelegationsRequest) (*types.QueryUnbondingBTCDelegationsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	btcDels := k.getDelegationsMatchingCriteria(
+		sdkCtx,
+		func(del *types.BTCDelegation) bool {
+			// grab all delegations which are unbonding and already have validator signature
+			if del.BtcUndelegation == nil {
+				return false
+			}
+
+			if del.BtcUndelegation.ValidatorUnbondingSig == nil {
+				return false
+			}
+
+			return true
+		},
+	)
+
+	return &types.QueryUnbondingBTCDelegationsResponse{BtcDelegations: btcDels}, nil
 }
 
 // BTCValidatorPowerAtHeight returns the voting power of the specified validator

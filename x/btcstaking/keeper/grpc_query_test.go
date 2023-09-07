@@ -233,6 +233,73 @@ func FuzzBTCDelegations(f *testing.F) {
 	})
 }
 
+func FuzzUnbondingBTCDelegations(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Setup keeper and context
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+
+		// jury and slashing addr
+		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+
+		// Generate a random number of BTC validators
+		numBTCVals := datagen.RandomInt(r, 5) + 1
+		btcVals := []*types.BTCValidator{}
+		for i := uint64(0); i < numBTCVals; i++ {
+			btcVal, err := datagen.GenRandomBTCValidator(r)
+			require.NoError(t, err)
+			keeper.SetBTCValidator(ctx, btcVal)
+			btcVals = append(btcVals, btcVal)
+		}
+
+		// Generate a random number of BTC delegations under each validator
+		startHeight := datagen.RandomInt(r, 100) + 1
+		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
+		numBTCDels := datagen.RandomInt(r, 10) + 1
+		unbondingBtcDelsMap := make(map[string]*types.BTCDelegation)
+		for _, btcVal := range btcVals {
+			for j := uint64(0); j < numBTCDels; j++ {
+				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+				require.NoError(t, err)
+				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
+				require.NoError(t, err)
+
+				if datagen.RandomInt(r, 2) == 1 {
+					// add unbonding object in random BTC delegations to make them ready to receive jury sig
+					btcDel.BtcUndelegation = &types.BTCUndelegation{
+						// doesn't matter what we put here
+						ValidatorUnbondingSig: btcDel.JurySig,
+					}
+
+					unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
+				}
+
+				err = keeper.SetBTCDelegation(ctx, btcDel)
+				require.NoError(t, err)
+			}
+		}
+
+		// assert all pending BTC delegations
+		resp, err := keeper.UnbondingBTCDelegations(ctx, &types.QueryUnbondingBTCDelegationsRequest{})
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		require.Equal(t, len(unbondingBtcDelsMap), len(resp.BtcDelegations))
+		for _, btcDel := range resp.BtcDelegations {
+			_, ok := unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
+			require.True(t, ok)
+		}
+	})
+}
+
 func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {

@@ -387,6 +387,9 @@ func (s *BTCStakingTestSuite) Test5SubmitUnbondingSignatures() {
 	s.NotNil(delegationWithValSig.BtcUndelegation)
 	s.NotNil(delegationWithValSig.BtcUndelegation.ValidatorUnbondingSig)
 
+	unbodnindDelegations := nonValidatorNode.QueryUnbondingDelegations()
+	s.Len(unbodnindDelegations, 1)
+
 	btcTip, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
 	s.Equal(

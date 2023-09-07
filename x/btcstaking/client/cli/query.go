@@ -87,6 +87,28 @@ func CmdPendingBTCDelegations() *cobra.Command {
 	return cmd
 }
 
+func CmdUnbondingBTCDelegations() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "unbonding-btc-delegations",
+		Short: "retrieve all unbonding BTC delegations which require jury signature",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.UnbondingBTCDelegations(cmd.Context(), &types.QueryUnbondingBTCDelegationsRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
 func CmdBTCValidatorPowerAtHeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "btc-validator-power-at-height [val_btc_pk_hex] [height]",
