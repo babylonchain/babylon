@@ -139,7 +139,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 
 	epochData := k.GetEpochData(ctx, checkpointEpoch)
 
-	if epochData == nil || len(epochData.Key) == 0 {
+	if epochData == nil || len(epochData.Keys) == 0 {
 
 		return &types.QueryEpochSubmissionsResponse{
 			Keys:       []*types.SubmissionKey{},
@@ -147,7 +147,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 		}, nil
 	}
 
-	numberOfKeys := uint64(len((epochData.Key)))
+	numberOfKeys := uint64(len((epochData.Keys)))
 
 	if offset >= numberOfKeys {
 		// offset larger than number of keys return empty response
@@ -164,7 +164,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 			break
 		}
 
-		responseKeys = append(responseKeys, epochData.Key[i])
+		responseKeys = append(responseKeys, epochData.Keys[i])
 	}
 
 	return &types.QueryEpochSubmissionsResponse{

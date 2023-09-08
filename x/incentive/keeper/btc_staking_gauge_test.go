@@ -33,7 +33,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		keeper.SetBTCStakingGauge(ctx, height, gauge)
 
 		// generate a random reward distribution cache
-		rdc, err := datagen.GenRandomRewardDistCache(r)
+		rdc, err := datagen.GenRandomBTCStakingRewardDistCache(r)
 		require.NoError(t, err)
 
 		// mock transfer to ensure reward is distributed correctly

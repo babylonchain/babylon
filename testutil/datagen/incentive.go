@@ -3,6 +3,7 @@ package datagen
 import (
 	"math/rand"
 
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -98,7 +99,7 @@ func GenRandomBTCValDistInfo(r *rand.Rand) (*bstypes.BTCValDistInfo, error) {
 	return btcValDistInfo, nil
 }
 
-func GenRandomRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
+func GenRandomBTCStakingRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
 	rdc := bstypes.NewRewardDistCache()
 	// a random number of BTC validators
 	numBTCVals := RandomInt(r, 10) + 1
@@ -110,4 +111,21 @@ func GenRandomRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
 		rdc.AddBTCValDistInfo(v)
 	}
 	return rdc, nil
+}
+
+func GenRandomCheckpointAddressPair(r *rand.Rand) *btcctypes.CheckpointAddressPair {
+	return &btcctypes.CheckpointAddressPair{
+		Submitter: GenRandomAccount().GetAddress(),
+		Reporter:  GenRandomAccount().GetAddress(),
+	}
+}
+
+func GenRandomBTCTimestampingRewardDistInfo(r *rand.Rand) *btcctypes.RewardDistInfo {
+	best := GenRandomCheckpointAddressPair(r)
+	numOthers := RandomInt(r, 10)
+	others := []*btcctypes.CheckpointAddressPair{}
+	for i := uint64(0); i < numOthers; i++ {
+		others = append(others, GenRandomCheckpointAddressPair(r))
+	}
+	return btcctypes.NewRewardDistInfo(best, others...)
 }

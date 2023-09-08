@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-
 	dg "github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -25,6 +23,7 @@ type TestKeepers struct {
 	Ctx            context.Context
 	BTCLightClient *btcctypes.MockBTCLightClientKeeper
 	Checkpointing  *btcctypes.MockCheckpointingKeeper
+	Incentive      *btcctypes.MockIncentiveKeeper
 	BTCCheckpoint  *bkeeper.Keeper
 	MsgSrv         btcctypes.MsgServer
 }
@@ -50,10 +49,10 @@ func InitTestKeepers(
 	t *testing.T,
 ) *TestKeepers {
 	lc := btcctypes.NewMockBTCLightClientKeeper()
-
 	cc := btcctypes.NewMockCheckpointingKeeper()
+	ic := btcctypes.NewMockIncentiveKeeper()
 
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, nil, chaincfg.SimNetParams.PowLimit)
+	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, ic, chaincfg.SimNetParams.PowLimit)
 
 	srv := bkeeper.NewMsgServerImpl(*k)
 
@@ -62,6 +61,7 @@ func InitTestKeepers(
 		Ctx:            sdk.WrapSDKContext(ctx),
 		BTCLightClient: lc,
 		Checkpointing:  cc,
+		Incentive:      ic,
 		BTCCheckpoint:  k,
 		MsgSrv:         srv,
 	}
@@ -201,7 +201,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	ed := tk.GetEpochData(epoch)
 
-	if len(ed.Key) == 0 {
+	if len(ed.Keys) == 0 {
 		t.Errorf("There should be at least one key in epoch %d", epoch)
 	}
 
@@ -209,7 +209,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Epoch should be in submitted state after processing message")
 	}
 
-	submissionKey := ed.Key[0]
+	submissionKey := ed.Keys[0]
 
 	submissionData := tk.getSubmissionData(*submissionKey)
 
@@ -240,7 +240,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	// TODO Add custom equal fo submission key and transaction key to check
 	// it is expected key
-	if len(ed1.Key) == 0 {
+	if len(ed1.Keys) == 0 {
 		t.Errorf("Unexpected missing unconfirmed submissions")
 	}
 }
@@ -389,7 +389,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 		// all 3 epoch must have two  submissions
 		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
-		require.Len(t, ed.Key, 2)
+		require.Len(t, ed.Keys, 2)
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
 	}
 
@@ -406,10 +406,10 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 
 		if i == 1 {
 			// forked submission got pruned
-			require.Len(t, ed.Key, 1)
+			require.Len(t, ed.Keys, 1)
 		} else {
 			// other submissions still have parent so they are left intact
-			require.Len(t, ed.Key, 2)
+			require.Len(t, ed.Keys, 2)
 		}
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
 	}
@@ -424,7 +424,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 		// all 3 epoch must have two  submissions
 		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
-		require.Len(t, ed.Key, 0)
+		require.Len(t, ed.Keys, 0)
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
 	}
 }
@@ -455,7 +455,7 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 
 	ed := tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 3)
+	require.Len(t, ed.Keys, 3)
 
 	// deepest submission is submission in msg3
 	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(wDeep))
@@ -469,10 +469,10 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 
 	ed = tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 1)
+	require.Len(t, ed.Keys, 1)
 	require.Equal(t, ed.Status, btcctypes.Finalized)
 
-	finalSubKey := ed.Key[0]
+	finalSubKey := ed.Keys[0]
 
 	require.Equal(t, finalSubKey.Key[0].Hash, b1Hash(msg3))
 	require.Equal(t, finalSubKey.Key[1].Hash, b2Hash(msg3))
@@ -498,7 +498,7 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 
 	ed := tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 2)
+	require.Len(t, ed.Keys, 2)
 
 	// Both submissions have the same depth the most fresh block i.e
 	// it is the same block
@@ -512,9 +512,9 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 
 	ed = tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 1)
+	require.Len(t, ed.Keys, 1)
 	require.Equal(t, ed.Status, btcctypes.Finalized)
-	finalSubKey := ed.Key[0]
+	finalSubKey := ed.Keys[0]
 
 	// There is small chance that we can draw the same transactions indexes, which
 	// cannot happend in real life i.e in real life if block has the same depth
@@ -555,7 +555,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	// TODO customs Equality for submission keys
 	ed := tk.GetEpochData(epoch)
 
-	if len(ed.Key) != 1 {
+	if len(ed.Keys) != 1 {
 		t.Errorf("Unexpected missing submissions")
 	}
 
@@ -573,7 +573,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	// we are looking for
 	ed = tk.GetEpochData(epoch)
 
-	if len(ed.Key) != 1 {
+	if len(ed.Keys) != 1 {
 		t.Errorf("Unexpected missing submission")
 	}
 
@@ -594,7 +594,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 }
 
 func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 20)
+	dg.AddRandomSeedsToFuzzer(f, 20)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -682,7 +682,7 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 			if epoch <= uint64(numFinalizedEpochs) {
 				require.Equal(t, ed.Status, btcctypes.Finalized)
 				// finalized epochs should have only best submission
-				require.Equal(t, len(ed.Key), 1)
+				require.Equal(t, len(ed.Keys), 1)
 			} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
 				require.Equal(t, ed.Status, btcctypes.Confirmed)
 			} else {

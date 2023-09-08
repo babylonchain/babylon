@@ -112,11 +112,11 @@ message SubmissionData {
 // TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
 // callbacks
 message EpochData {
-  // List of all received checkpoints during this epoch, sorted by order of
-  // submission.
-  repeated SubmissionKey key = 1;
+  // keys is the list of all received checkpoints during this epoch, sorted by
+  // order of submission.
+  repeated SubmissionKey keys = 1;
 
-  // Current btc status of the epoch
+  // status is the current btc status of the epoch
   BtcStatus status = 2;
 }
 

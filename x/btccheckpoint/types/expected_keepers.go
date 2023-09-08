@@ -54,4 +54,5 @@ type CheckpointingKeeper interface {
 }
 
 type IncentiveKeeper interface {
+	RewardBTCTimestamping(ctx sdk.Context, epoch uint64, rewardDistInfo *RewardDistInfo)
 }

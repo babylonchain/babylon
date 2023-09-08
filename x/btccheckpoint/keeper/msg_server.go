@@ -37,7 +37,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	submissionKey := rawSubmission.GetSubmissionKey()
 
-	if m.k.SubmissionExists(sdkCtx, submissionKey) {
+	if m.k.HasSubmission(sdkCtx, submissionKey) {
 		return nil, types.ErrDuplicatedSubmission
 	}
 

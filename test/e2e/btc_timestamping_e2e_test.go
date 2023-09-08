@@ -122,7 +122,17 @@ func (s *BTCTimestampingTestSuite) TestIbcCheckpointing() {
 		endEpochNum   uint64 = 3
 	)
 
+	// get balance of submitter/reporter address
+	// will compare with the balance after finalising some epochs
+	submitterReporterBalance, err := nonValidatorNode.QueryBalances(nonValidatorNode.PublicAddress)
+	s.NoError(err)
+
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+
+	// ensure balance has incresed after finalising some epochs
+	submitterReporterBalance2, err := nonValidatorNode.QueryBalances(nonValidatorNode.PublicAddress)
+	s.NoError(err)
+	s.True(submitterReporterBalance2.IsAllGT(submitterReporterBalance))
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)

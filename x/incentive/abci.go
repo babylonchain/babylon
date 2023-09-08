@@ -17,7 +17,9 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 	// - send a portion of coins in the fee collector account to the incentive module account
 	// - accumulate BTC staking gauge at the current height
 	// - accumulate BTC timestamping gauge at the current epoch
-	k.HandleCoinsInFeeCollector(ctx)
+	if ctx.BlockHeight() > 0 {
+		k.HandleCoinsInFeeCollector(ctx)
+	}
 }
 
 func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {

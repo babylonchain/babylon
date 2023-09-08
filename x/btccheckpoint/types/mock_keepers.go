@@ -16,6 +16,9 @@ type MockCheckpointingKeeper struct {
 	returnError bool
 }
 
+type MockIncentiveKeeper struct {
+}
+
 func NewMockBTCLightClientKeeper() *MockBTCLightClientKeeper {
 	lc := MockBTCLightClientKeeper{
 		headers: make(map[string]int64),
@@ -28,6 +31,10 @@ func NewMockCheckpointingKeeper() *MockCheckpointingKeeper {
 		returnError: false,
 	}
 	return &mc
+}
+
+func NewMockIncentiveKeeper() *MockIncentiveKeeper {
+	return &MockIncentiveKeeper{}
 }
 
 func (mc *MockCheckpointingKeeper) ReturnError() {
@@ -82,4 +89,7 @@ func (ck MockCheckpointingKeeper) SetCheckpointFinalized(ctx sdk.Context, epoch 
 // SetCheckpointForgotten Informs checkpointing module that was in submitted state
 // lost all its checkpoints and is checkpoint empty
 func (ck MockCheckpointingKeeper) SetCheckpointForgotten(ctx sdk.Context, epoch uint64) {
+}
+
+func (ik *MockIncentiveKeeper) RewardBTCTimestamping(ctx sdk.Context, epoch uint64, rewardDistInfo *RewardDistInfo) {
 }

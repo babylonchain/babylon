@@ -117,14 +117,14 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 
 func NewEmptyEpochData() EpochData {
 	return EpochData{
-		Key:    []*SubmissionKey{},
+		Keys:   []*SubmissionKey{},
 		Status: Submitted,
 	}
 }
 
 func (s *EpochData) AppendKey(k SubmissionKey) {
 	key := &k
-	s.Key = append(s.Key, key)
+	s.Keys = append(s.Keys, key)
 }
 
 // HappenedAfter returns true if `this` submission happened after `that` submission
