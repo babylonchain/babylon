@@ -60,8 +60,8 @@ func FuzzWithdrawReward(f *testing.F) {
 		require.Equal(t, withdrawableCoins, resp.Coins)
 
 		// ensure reward gauge is now empty
-		newRg, err := ik.GetRewardGauge(ctx, sType, sAddr)
-		require.NoError(t, err)
-		require.True(t, newRg.IsEmpty())
+		newRg := ik.GetRewardGauge(ctx, sType, sAddr)
+		require.NotNil(t, newRg)
+		require.True(t, newRg.IsFullyWithdrawn())
 	})
 }

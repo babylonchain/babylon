@@ -8,13 +8,13 @@ import (
 
 func (k Keeper) withdrawReward(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress) (sdk.Coins, error) {
 	// retrieve reward gauge of the given stakeholder
-	rg, err := k.GetRewardGauge(ctx, sType, addr)
-	if err != nil {
-		return nil, err
+	rg := k.GetRewardGauge(ctx, sType, addr)
+	if rg == nil {
+		return nil, types.ErrRewardGaugeNotFound
 	}
 	// get withdrawable coins
 	withdrawableCoins := rg.GetWithdrawableCoins()
-	if len(withdrawableCoins) == 0 {
+	if !withdrawableCoins.IsAllPositive() {
 		return nil, types.ErrNoWithdrawableCoins
 	}
 	// transfer withdrawable coins from incentive module account to the stakeholder's address
@@ -22,33 +22,45 @@ func (k Keeper) withdrawReward(ctx sdk.Context, sType types.StakeholderType, add
 		return nil, err
 	}
 	// empty reward gauge
-	rg.Clear()
+	rg.SetFullyWithdrawn()
 	k.SetRewardGauge(ctx, sType, addr, rg)
 	// all good, return
 	return withdrawableCoins, nil
 }
 
+// accumulateRewardGauge accumulates the given reward of of a given stakeholder in a given type
+func (k Keeper) accumulateRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress, reward sdk.Coins) {
+	// if reward contains nothing, do nothing
+	if !reward.IsAllPositive() {
+		return
+	}
+	// get reward gauge, or create a new one if it does not exist
+	rg := k.GetRewardGauge(ctx, sType, addr)
+	if rg == nil {
+		rg = types.NewRewardGauge()
+	}
+	// add the given reward to reward gauge
+	rg.Add(reward)
+	// set back
+	k.SetRewardGauge(ctx, sType, addr, rg)
+}
+
 func (k Keeper) SetRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress, rg *types.RewardGauge) {
 	store := k.rewardGaugeStore(ctx, sType)
 	rgBytes := k.cdc.MustMarshal(rg)
-	store.Set(addr, rgBytes)
+	store.Set(addr.Bytes(), rgBytes)
 }
 
-func (k Keeper) HasRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress) bool {
+func (k Keeper) GetRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress) *types.RewardGauge {
 	store := k.rewardGaugeStore(ctx, sType)
-	return store.Has(addr)
-}
-
-func (k Keeper) GetRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress) (*types.RewardGauge, error) {
-	store := k.rewardGaugeStore(ctx, sType)
-	rgBytes := store.Get(addr)
-	if len(rgBytes) == 0 {
-		return nil, types.ErrRewardGaugeNotFound
+	rgBytes := store.Get(addr.Bytes())
+	if rgBytes == nil {
+		return nil
 	}
 
 	var rg types.RewardGauge
 	k.cdc.MustUnmarshal(rgBytes, &rg)
-	return &rg, nil
+	return &rg
 }
 
 // rewardGaugeStore returns the KVStore of the reward gauge of a stakeholder

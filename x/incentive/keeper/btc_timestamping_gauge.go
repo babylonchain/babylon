@@ -11,10 +11,10 @@ import (
 // RewardBTCTimestamping distributes rewards to submitters/reporters of a checkpoint at a given epoch
 // according to the reward distribution cache
 func (k Keeper) RewardBTCTimestamping(ctx sdk.Context, epoch uint64, rdi *btcctypes.RewardDistInfo) {
-	gauge, err := k.GetBTCTimestampingGauge(ctx, epoch)
-	if err != nil {
+	gauge := k.GetBTCTimestampingGauge(ctx, epoch)
+	if gauge == nil {
 		// failing to get a reward gauge at a finalised epoch is a programming error
-		panic(err)
+		panic("failed to get a reward gauge at a finalized epoch")
 	}
 
 	params := k.GetParams(ctx)
@@ -26,97 +26,64 @@ func (k Keeper) RewardBTCTimestamping(ctx sdk.Context, epoch uint64, rdi *btccty
 	submitterPortion := params.SubmitterPortion.QuoTruncate(btcTimestampingPortion)
 	coinsToSubmitters := gauge.GetCoinsPortion(submitterPortion)
 	coinsToBestSubmitter := types.GetCoinsPortion(coinsToSubmitters, bestPortion)
-	if coinsToBestSubmitter.IsAllPositive() {
-		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, rdi.Best.Submitter, coinsToBestSubmitter); err != nil {
-			// incentive module account is supposed to have enough balance
-			panic(err)
-		}
-	}
+	k.accumulateRewardGauge(ctx, types.SubmitterType, rdi.Best.Submitter, coinsToBestSubmitter)
+	restCoinsToSubmitters := coinsToSubmitters.Sub(coinsToBestSubmitter...)
+
 	// distribute coins to best reporter
 	reporterPortion := params.ReporterPortion.QuoTruncate(btcTimestampingPortion)
 	coinsToReporters := gauge.GetCoinsPortion(reporterPortion)
 	coinsToBestReporter := types.GetCoinsPortion(coinsToReporters, bestPortion)
-	if coinsToBestReporter.IsAllPositive() {
-		if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, rdi.Best.Reporter, coinsToBestReporter); err != nil {
-			// incentive module account is supposed to have enough balance
-			panic(err)
-		}
-	}
+	k.accumulateRewardGauge(ctx, types.ReporterType, rdi.Best.Reporter, coinsToBestReporter)
+	restCoinsToReporters := coinsToReporters.Sub(coinsToBestReporter...)
 
 	// if there is only 1 submission, distribute the rest to submitter and reporter, then skip the rest logic
 	if len(rdi.Others) == 0 {
 		// give rest coins to the best submitter
-		restCoinsToSubmitter := coinsToSubmitters.Sub(coinsToBestSubmitter...)
-		if restCoinsToSubmitter.IsAllPositive() {
-			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, rdi.Best.Submitter, restCoinsToSubmitter); err != nil {
-				// incentive module account is supposed to have enough balance
-				panic(err)
-			}
-		}
+		k.accumulateRewardGauge(ctx, types.SubmitterType, rdi.Best.Submitter, restCoinsToSubmitters)
 		// give rest coins to the best reporter
-		restCoinsToReporter := coinsToReporters.Sub(coinsToBestReporter...)
-		if restCoinsToReporter.IsAllPositive() {
-			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, rdi.Best.Reporter, restCoinsToReporter); err != nil {
-				// incentive module account is supposed to have enough balance
-				panic(err)
-			}
-		}
+		k.accumulateRewardGauge(ctx, types.ReporterType, rdi.Best.Reporter, restCoinsToReporters)
 		// skip the rest logic
 		return
 	}
 
 	// distribute the rest to each of the other submitters
 	// TODO: our tokenomics might specify weights for the rest submitters in the future
-	coinsToOtherSubmitters := coinsToSubmitters.Sub(coinsToBestSubmitter...)
 	eachOtherSubmitterPortion := math.LegacyOneDec().QuoTruncate(math.LegacyOneDec().MulInt64(int64(len(rdi.Others))))
-	coinsToEachOtherSubmitter := types.GetCoinsPortion(coinsToOtherSubmitters, eachOtherSubmitterPortion)
+	coinsToEachOtherSubmitter := types.GetCoinsPortion(restCoinsToSubmitters, eachOtherSubmitterPortion)
 	if coinsToEachOtherSubmitter.IsAllPositive() {
 		for _, submission := range rdi.Others {
-			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, submission.Submitter, coinsToEachOtherSubmitter); err != nil {
-				// incentive module account is supposed to have enough balance
-				panic(err)
-			}
+			k.accumulateRewardGauge(ctx, types.SubmitterType, submission.Submitter, coinsToEachOtherSubmitter)
 		}
 	}
 
 	// distribute the rest to each of the other reporters
 	// TODO: our tokenomics might specify weights for the rest reporters in the future
-	coinsToOtherReporters := coinsToReporters.Sub(coinsToBestReporter...)
 	eachOtherReporterPortion := math.LegacyOneDec().QuoTruncate(math.LegacyOneDec().MulInt64(int64(len(rdi.Others))))
-	coinsToEachOtherReporter := types.GetCoinsPortion(coinsToOtherReporters, eachOtherReporterPortion)
+	coinsToEachOtherReporter := types.GetCoinsPortion(restCoinsToReporters, eachOtherReporterPortion)
 	if coinsToEachOtherReporter.IsAllPositive() {
 		for _, submission := range rdi.Others {
-			if err := k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, submission.Reporter, coinsToEachOtherReporter); err != nil {
-				// incentive module account is supposed to have enough balance
-				panic(err)
-			}
+			k.accumulateRewardGauge(ctx, types.ReporterType, submission.Reporter, coinsToEachOtherReporter)
 		}
 	}
 }
 
 func (k Keeper) accumulateBTCTimestampingReward(ctx sdk.Context, btcTimestampingReward sdk.Coins) {
-	var (
-		epoch = k.epochingKeeper.GetEpoch(ctx)
-		gauge *types.Gauge
-		err   error
-	)
+	epoch := k.epochingKeeper.GetEpoch(ctx)
 
 	// update BTC timestamping reward gauge
-	if k.HasBTCTimestampingGauge(ctx, epoch.EpochNumber) {
-		// if this epoch already has an non-empty gauge, accumulate
-		gauge, err = k.GetBTCTimestampingGauge(ctx, epoch.EpochNumber)
-		if err != nil {
-			panic(err) // only programming error is possible
-		}
-		gauge.Coins = gauge.Coins.Add(btcTimestampingReward...) // accumulate coins in the gauge
-	} else {
+	gauge := k.GetBTCTimestampingGauge(ctx, epoch.EpochNumber)
+	if gauge == nil {
 		// if this epoch does not have a gauge yet, create a new one
-		gauge = types.NewGauge(btcTimestampingReward)
+		gauge = types.NewGauge(btcTimestampingReward...)
+	} else {
+		// if this epoch already has a gauge, accumulate coins in the gauge
+		gauge.Coins = gauge.Coins.Add(btcTimestampingReward...)
 	}
+
 	k.SetBTCTimestampingGauge(ctx, epoch.EpochNumber, gauge)
 
 	// transfer the BTC timestamping reward from fee collector account to incentive module account
-	err = k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, btcTimestampingReward)
+	err := k.bankKeeper.SendCoinsFromModuleToModule(ctx, k.feeCollectorName, types.ModuleName, btcTimestampingReward)
 	if err != nil {
 		// this can only be programming error and is unrecoverable
 		panic(err)
@@ -129,21 +96,16 @@ func (k Keeper) SetBTCTimestampingGauge(ctx sdk.Context, epoch uint64, gauge *ty
 	store.Set(sdk.Uint64ToBigEndian(epoch), gaugeBytes)
 }
 
-func (k Keeper) HasBTCTimestampingGauge(ctx sdk.Context, epoch uint64) bool {
-	store := k.btcTimestampingGaugeStore(ctx)
-	return store.Has(sdk.Uint64ToBigEndian(epoch))
-}
-
-func (k Keeper) GetBTCTimestampingGauge(ctx sdk.Context, epoch uint64) (*types.Gauge, error) {
+func (k Keeper) GetBTCTimestampingGauge(ctx sdk.Context, epoch uint64) *types.Gauge {
 	store := k.btcTimestampingGaugeStore(ctx)
 	gaugeBytes := store.Get(sdk.Uint64ToBigEndian(epoch))
-	if len(gaugeBytes) == 0 {
-		return nil, types.ErrBTCTimestampingGaugeNotFound
+	if gaugeBytes == nil {
+		return nil
 	}
 
 	var gauge types.Gauge
 	k.cdc.MustUnmarshal(gaugeBytes, &gauge)
-	return &gauge, nil
+	return &gauge
 }
 
 // btcTimestampingGaugeStore returns the KVStore of the gauge of total reward for

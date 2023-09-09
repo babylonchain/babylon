@@ -36,29 +36,48 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		rdc, err := datagen.GenRandomBTCStakingRewardDistCache(r)
 		require.NoError(t, err)
 
-		// mock transfer to ensure reward is distributed correctly
+		// expected values
 		distributedCoins := sdk.NewCoins()
+		btcValRewardMap := map[string]sdk.Coins{} // key: address, value: reward
+		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
+
 		for _, btcVal := range rdc.BtcVals {
 			btcValPortion := rdc.GetBTCValPortion(btcVal)
 			coinsForBTCValAndDels := gauge.GetCoinsPortion(btcValPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForBTCValAndDels, *btcVal.Commission)
 			if coinsForCommission.IsAllPositive() {
-				bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(btcVal.GetAddress()), gomock.Eq(coinsForCommission)).Return(nil).Times(1)
-				distributedCoins = distributedCoins.Add(coinsForCommission...)
+				btcValRewardMap[btcVal.GetAddress().String()] = coinsForCommission
+				distributedCoins.Add(coinsForCommission...)
 			}
 			coinsForBTCDels := coinsForBTCValAndDels.Sub(coinsForCommission...)
 			for _, btcDel := range btcVal.BtcDels {
 				btcDelPortion := btcVal.GetBTCDelPortion(btcDel)
 				coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
 				if coinsForDel.IsAllPositive() {
-					bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(btcDel.GetAddress()), gomock.Eq(coinsForDel)).Return(nil).Times(1)
-					distributedCoins = distributedCoins.Add(coinsForDel...)
+					btcDelRewardMap[btcDel.GetAddress().String()] = coinsForDel
+					distributedCoins.Add(coinsForDel...)
 				}
 			}
 		}
 
 		// distribute rewards in the gauge to BTC validators/delegations
 		keeper.RewardBTCStaking(ctx, height, rdc)
+
+		// assert consistency between reward map and reward gauge
+		for addrStr, reward := range btcValRewardMap {
+			addr, err := sdk.AccAddressFromBech32(addrStr)
+			require.NoError(t, err)
+			rg := keeper.GetRewardGauge(ctx, types.BTCValidatorType, addr)
+			require.NotNil(t, rg)
+			require.Equal(t, reward, rg.Coins)
+		}
+		for addrStr, reward := range btcDelRewardMap {
+			addr, err := sdk.AccAddressFromBech32(addrStr)
+			require.NoError(t, err)
+			rg := keeper.GetRewardGauge(ctx, types.BTCDelegationType, addr)
+			require.NotNil(t, rg)
+			require.Equal(t, reward, rg.Coins)
+		}
 
 		// assert distributedCoins is a subset of coins in gauge
 		require.True(t, gauge.Coins.IsAllGTE(distributedCoins))

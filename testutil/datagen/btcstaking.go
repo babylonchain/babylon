@@ -29,7 +29,7 @@ func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
 
 func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
 	// commission
-	commission := sdk.NewDecWithPrec(int64(RandomInt(r, 99)+1), 2) // [1/100, 100/100]
+	commission := sdk.NewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
 	// description
 	description := stakingtypes.Description{}
 	// key pairs

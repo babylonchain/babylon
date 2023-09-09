@@ -12,7 +12,8 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	bbn "github.com/babylonchain/babylon/types"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	incentivetypes "github.com/babylonchain/babylon/x/incentive/types"
+	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -55,7 +56,7 @@ func (s *BTCTimestampingTestSuite) TearDownSuite() {
 
 // Most simple test, just checking that two chains are up and connected through
 // ibc
-func (s *BTCTimestampingTestSuite) TestConnectIbc() {
+func (s *BTCTimestampingTestSuite) Test1ConnectIbc() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainB := s.configurer.GetChainConfig(1)
 	_, err := chainA.GetDefaultNode()
@@ -64,7 +65,7 @@ func (s *BTCTimestampingTestSuite) TestConnectIbc() {
 	s.NoError(err)
 }
 
-func (s *BTCTimestampingTestSuite) TestBTCBaseHeader() {
+func (s *BTCTimestampingTestSuite) Test2BTCBaseHeader() {
 	hardcodedHeader, _ := bbn.NewBTCHeaderBytesFromHex("0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000")
 	hardcodedHeaderHeight := uint64(0)
 
@@ -77,7 +78,7 @@ func (s *BTCTimestampingTestSuite) TestBTCBaseHeader() {
 	s.Equal(hardcodedHeaderHeight, baseHeader.Height)
 }
 
-func (s *BTCTimestampingTestSuite) TestSendTx() {
+func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -104,7 +105,7 @@ func (s *BTCTimestampingTestSuite) TestSendTx() {
 	s.Equal(tip2Depth, uint64(0))
 }
 
-func (s *BTCTimestampingTestSuite) TestIbcCheckpointing() {
+func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(35)
 
@@ -122,17 +123,12 @@ func (s *BTCTimestampingTestSuite) TestIbcCheckpointing() {
 		endEpochNum   uint64 = 3
 	)
 
-	// get balance of submitter/reporter address
-	// will compare with the balance after finalising some epochs
-	submitterReporterBalance, err := nonValidatorNode.QueryBalances(nonValidatorNode.PublicAddress)
-	s.NoError(err)
+	// submitter/reporter address should not have any reward yet
+	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.Error(err)
 
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
-
-	// ensure balance has incresed after finalising some epochs
-	submitterReporterBalance2, err := nonValidatorNode.QueryBalances(nonValidatorNode.PublicAddress)
-	s.NoError(err)
-	s.True(submitterReporterBalance2.IsAllGT(submitterReporterBalance))
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
@@ -163,12 +159,75 @@ func (s *BTCTimestampingTestSuite) TestIbcCheckpointing() {
 		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
 	}
 
+	// ensure balance has increased after finalising some epochs
+	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.NoError(err)
+	submitterRewardGauge, ok := rewardGauges[itypes.SubmitterType.String()]
+	s.True(ok)
+	s.True(submitterRewardGauge.Coins.IsAllPositive())
+	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
+	s.True(ok)
+	s.True(reporterRewardGauge.Coins.IsAllPositive())
+
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
 	s.NoError(err)
 }
 
-func (s *BTCTimestampingTestSuite) TestWasm() {
+func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+
+	// balance before withdraw
+	balance, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
+	s.NoError(err)
+	// submitter/reporter reward gauges before withdraw should not be fully withdrawn
+	rgs, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.NoError(err)
+	submitterRg, reporterRg := rgs[itypes.SubmitterType.String()], rgs[itypes.ReporterType.String()]
+	s.T().Logf("submitter witdhrawable reward: %s, reporter witdhrawable reward: %s before withdrawing", submitterRg.GetWithdrawableCoins().String(), reporterRg.GetWithdrawableCoins().String())
+	s.False(submitterRg.IsFullyWithdrawn())
+	s.False(reporterRg.IsFullyWithdrawn())
+
+	// withdraw submitter reward
+	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), submitterReporterAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+
+	// balance after withdrawing submitter reward
+	balance2, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
+	s.NoError(err)
+	s.T().Logf("balance2: %s; balance: %s", balance2.String(), balance.String())
+	s.True(balance2.IsAllGT(balance))
+
+	// submitter reward gauge should be fully withdrawn
+	rgs2, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.NoError(err)
+	submitterRg2 := rgs2[itypes.SubmitterType.String()]
+	s.T().Logf("submitter withdrawable reward: %s after withdrawing", submitterRg2.GetWithdrawableCoins().String())
+	s.True(rgs2[itypes.SubmitterType.String()].IsFullyWithdrawn())
+
+	// withdraw reporter reward
+	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), submitterReporterAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+
+	// balance after withdrawing reporter reward
+	balance3, err := nonValidatorNode.QueryBalances(submitterReporterAddr.String())
+	s.NoError(err)
+	s.T().Logf("balance3: %s; balance2: %s", balance3.String(), balance2.String())
+	s.True(balance3.IsAllGT(balance2))
+
+	// reporter reward gauge should be fully withdrawn
+	rgs3, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
+	s.NoError(err)
+	reporterRg3 := rgs3[itypes.SubmitterType.String()]
+	s.T().Logf("reporter withdrawable reward: %s after withdrawing", reporterRg3.GetWithdrawableCoins().String())
+	s.True(rgs3[itypes.ReporterType.String()].IsFullyWithdrawn())
+}
+
+func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -209,17 +268,18 @@ func (s *BTCTimestampingTestSuite) TestWasm() {
 	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
 }
 
-func (s *BTCTimestampingTestSuite) TestInterceptFeeCollector() {
+func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	// ensure incentive module account has positive balance
-	incentiveModuleAddr, err := nonValidatorNode.QueryModuleAddress(incentivetypes.ModuleName)
+	incentiveModuleAddr, err := nonValidatorNode.QueryModuleAddress(itypes.ModuleName)
 	s.NoError(err)
 	incentiveBalance, err := nonValidatorNode.QueryBalances(incentiveModuleAddr.String())
 	s.NoError(err)
 	s.NotEmpty(incentiveBalance)
+	s.T().Logf("incentive module account's balance: %s", incentiveBalance.String())
 	s.True(incentiveBalance.IsAllPositive())
 
 	// ensure BTC staking gauge at the current height is non-empty
@@ -227,6 +287,7 @@ func (s *BTCTimestampingTestSuite) TestInterceptFeeCollector() {
 	s.NoError(err)
 	btcStakingGauge, err := nonValidatorNode.QueryBTCStakingGauge(uint64(curHeight))
 	s.NoError(err)
+	s.T().Logf("BTC staking gauge at current height %d: %s", curHeight, btcStakingGauge.String())
 	s.True(len(btcStakingGauge.Coins) >= 1)
 	s.True(btcStakingGauge.Coins[0].Amount.IsPositive())
 
@@ -239,17 +300,20 @@ func (s *BTCTimestampingTestSuite) TestInterceptFeeCollector() {
 	nonValidatorNode.WaitForNextBlock()
 	btcTimestampingGauge, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
 	s.NoError(err)
+	s.T().Logf("BTC timestamping gauge at current epoch %d: %s", curEpoch, btcTimestampingGauge.String())
 	s.NotEmpty(btcTimestampingGauge.Coins)
 
 	// wait for 1 block to see if BTC timestamp gauge has accumulated
 	nonValidatorNode.WaitForNextBlock()
 	btcTimestampingGauge2, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
 	s.NoError(err)
+	s.T().Logf("BTC timestamping gauge after a block at current epoch %d: %s", curEpoch, btcTimestampingGauge2.String())
 	s.NotEmpty(btcTimestampingGauge2.Coins)
 	s.True(btcTimestampingGauge2.Coins.IsAllGTE(btcTimestampingGauge.Coins))
 
 	// after 1 block, incentive's balance has to be accumulated
 	incentiveBalance2, err := nonValidatorNode.QueryBalances(incentiveModuleAddr.String())
 	s.NoError(err)
+	s.T().Logf("incentive module account's balance after a block: %s", incentiveBalance2.String())
 	s.True(incentiveBalance2.IsAllGTE(incentiveBalance))
 }

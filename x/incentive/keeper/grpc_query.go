@@ -27,15 +27,16 @@ func (k Keeper) RewardGauges(goCtx context.Context, req *types.QueryRewardGauges
 
 	// find reward gauge
 	for _, sType := range types.GetAllStakeholderTypes() {
-		if !k.HasRewardGauge(ctx, sType, address) {
+		rg := k.GetRewardGauge(ctx, sType, address)
+		if rg == nil {
 			continue
 		}
-		rg, err := k.GetRewardGauge(ctx, sType, address)
-		if err != nil {
-			// only programming error is possible
-			panic("failed to get an existing reward gauge")
-		}
 		rgMap[sType.String()] = rg
+	}
+
+	// return error if no reward gauge is found
+	if len(rgMap) == 0 {
+		return nil, types.ErrRewardGaugeNotFound
 	}
 
 	return &types.QueryRewardGaugesResponse{RewardGauges: rgMap}, nil
@@ -48,9 +49,9 @@ func (k Keeper) BTCStakingGauge(goCtx context.Context, req *types.QueryBTCStakin
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// find gauge
-	gauge, err := k.GetBTCStakingGauge(ctx, req.Height)
-	if err != nil {
-		return nil, err
+	gauge := k.GetBTCStakingGauge(ctx, req.Height)
+	if gauge == nil {
+		return nil, types.ErrBTCStakingGaugeNotFound
 	}
 
 	return &types.QueryBTCStakingGaugeResponse{Gauge: gauge}, nil
@@ -63,9 +64,9 @@ func (k Keeper) BTCTimestampingGauge(goCtx context.Context, req *types.QueryBTCT
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// find gauge
-	gauge, err := k.GetBTCTimestampingGauge(ctx, req.EpochNum)
-	if err != nil {
-		return nil, err
+	gauge := k.GetBTCTimestampingGauge(ctx, req.EpochNum)
+	if gauge == nil {
+		return nil, types.ErrBTCTimestampingGaugeNotFound
 	}
 
 	return &types.QueryBTCTimestampingGaugeResponse{Gauge: gauge}, nil

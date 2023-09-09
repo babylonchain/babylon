@@ -6,14 +6,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
@@ -24,6 +16,14 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
+	itypes "github.com/babylonchain/babylon/x/incentive/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -32,10 +32,10 @@ var (
 	// BTC validator
 	valSK, _, _       = datagen.GenRandomBTCKeyPair(r)
 	btcVal, _         = datagen.GenRandomBTCValidatorWithBTCSK(r, valSK)
-	btcValBabylonAddr = sdk.AccAddress(btcVal.BabylonPk.Address()).String()
+	btcValBabylonAddr = sdk.AccAddress(btcVal.BabylonPk.Address())
 	// BTC delegation
 	delBabylonSK, delBabylonPK, _ = datagen.GenRandomSecp256k1KeyPair(r)
-	delBabylonAddr                = sdk.AccAddress(delBabylonPK.Address()).String()
+	delBabylonAddr                = sdk.AccAddress(delBabylonPK.Address())
 	delBTCSK, delBTCPK, _         = datagen.GenRandomBTCKeyPair(r)
 	// jury
 	jurySK, _ = btcec.PrivKeyFromBytes(
@@ -247,12 +247,11 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	}, time.Minute, time.Second*5)
 	s.Equal(pubRandMap[activatedHeight].MustMarshal(), msgCommitPubRandList.PubRandList[0].MustMarshal())
 
-	// get the balance of BTC validator and delegation before submitting finality signature
-	// later we will check if rewards are distributed after they finalise a block
-	btcValBalance, err := nonValidatorNode.QueryBalances(btcValBabylonAddr)
-	s.NoError(err)
-	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr)
-	s.NoError(err)
+	// no reward gauge for BTC validator and delegation yet
+	_, err = nonValidatorNode.QueryRewardGauge(btcValBabylonAddr)
+	s.Error(err)
+	_, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+	s.Error(err)
 
 	/*
 		submit finality signature
@@ -284,17 +283,80 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NotEmpty(finalizedBlocks)
 	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlocks[0].LastCommitHash)
 
-	// ensure voters have received rewards after the block is finalised
-	btcValBalance2, err := nonValidatorNode.QueryBalances(btcValBabylonAddr)
+	// ensure BTC validator has received rewards after the block is finalised
+	btcValRewardGauges, err := nonValidatorNode.QueryRewardGauge(btcValBabylonAddr)
 	s.NoError(err)
-	s.True(btcValBalance2.IsAllGT(btcValBalance))
-	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr)
+	btcValRewardGauge, ok := btcValRewardGauges[itypes.BTCValidatorType.String()]
+	s.True(ok)
+	s.True(btcValRewardGauge.Coins.IsAllPositive())
+	// ensure BTC delegation has received rewards after the block is finalised
+	btcDelRewardGauges, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.NoError(err)
-	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
+	btcDelRewardGauge, ok := btcDelRewardGauges[itypes.BTCDelegationType.String()]
+	s.True(ok)
+	s.True(btcDelRewardGauge.Coins.IsAllPositive())
 }
 
-// Test4SubmitStakerUnbonding is an end-to-end test for user unbodning
-func (s *BTCStakingTestSuite) Test4SubmitStakerUnbonding() {
+func (s *BTCStakingTestSuite) Test4WithdrawReward() {
+	chainA := s.configurer.GetChainConfig(0)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	// BTC validator balance before withdraw
+	btcValBalance, err := nonValidatorNode.QueryBalances(btcValBabylonAddr.String())
+	s.NoError(err)
+	// BTC validator reward gauge should not be fully withdrawn
+	btcValRgs, err := nonValidatorNode.QueryRewardGauge(btcValBabylonAddr)
+	s.NoError(err)
+	btcValRg := btcValRgs[itypes.BTCValidatorType.String()]
+	s.T().Logf("BTC validator's withdrawable reward before withdrawing: %s", btcValRg.GetWithdrawableCoins().String())
+	s.False(btcValRg.IsFullyWithdrawn())
+
+	// withdraw BTC validator reward
+	nonValidatorNode.WithdrawReward(itypes.BTCValidatorType.String(), btcValBabylonAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+
+	// balance after withdrawing BTC validator reward
+	btcValBalance2, err := nonValidatorNode.QueryBalances(btcValBabylonAddr.String())
+	s.NoError(err)
+	s.T().Logf("btcValBalance2: %s; btcValBalance: %s", btcValBalance2.String(), btcValBalance.String())
+	s.True(btcValBalance2.IsAllGT(btcValBalance))
+	// BTC validator reward gauge should be fully withdrawn now
+	btcValRgs2, err := nonValidatorNode.QueryRewardGauge(btcValBabylonAddr)
+	s.NoError(err)
+	btcValRg2 := btcValRgs2[itypes.BTCValidatorType.String()]
+	s.T().Logf("BTC validator's withdrawable reward after withdrawing: %s", btcValRg2.GetWithdrawableCoins().String())
+	s.True(btcValRg2.IsFullyWithdrawn())
+
+	// BTC delegation balance before withdraw
+	btcDelBalance, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
+	s.NoError(err)
+	// BTC delegation reward gauge should not be fully withdrawn
+	btcDelRgs, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+	s.NoError(err)
+	btcDelRg := btcDelRgs[itypes.BTCDelegationType.String()]
+	s.T().Logf("BTC delegation's withdrawable reward before withdrawing: %s", btcDelRg.GetWithdrawableCoins().String())
+	s.False(btcDelRg.IsFullyWithdrawn())
+
+	// withdraw BTC delegation reward
+	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), delBabylonAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+
+	// balance after withdrawing BTC delegation reward
+	btcDelBalance2, err := nonValidatorNode.QueryBalances(delBabylonAddr.String())
+	s.NoError(err)
+	s.T().Logf("btcDelBalance2: %s; btcDelBalance: %s", btcDelBalance2.String(), btcDelBalance.String())
+	s.True(btcDelBalance2.IsAllGT(btcDelBalance))
+	// BTC delegation reward gauge should be fully withdrawn now
+	btcDelRgs2, err := nonValidatorNode.QueryRewardGauge(delBabylonAddr)
+	s.NoError(err)
+	btcDelRg2 := btcDelRgs2[itypes.BTCDelegationType.String()]
+	s.T().Logf("BTC delegation's withdrawable reward after withdrawing: %s", btcDelRg2.GetWithdrawableCoins().String())
+	s.True(btcDelRg2.IsFullyWithdrawn())
+}
+
+// Test5SubmitStakerUnbonding is an end-to-end test for user unbonding
+func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -361,9 +423,9 @@ func (s *BTCStakingTestSuite) Test4SubmitStakerUnbonding() {
 	s.NotNil(delegation.BtcUndelegation)
 }
 
-// Test5SubmitStakerUnbonding is an end-to-end test for jury and validator submitting signatures
+// Test6SubmitStakerUnbonding is an end-to-end test for jury and validator submitting signatures
 // for unbonding transaction
-func (s *BTCStakingTestSuite) Test5SubmitUnbondingSignatures() {
+func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)

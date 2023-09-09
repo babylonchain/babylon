@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewGauge(coins sdk.Coins) *Gauge {
+func NewGauge(coins ...sdk.Coin) *Gauge {
 	return &Gauge{
 		Coins: coins,
 	}
@@ -17,7 +17,7 @@ func (g *Gauge) GetCoinsPortion(portion math.LegacyDec) sdk.Coins {
 	return GetCoinsPortion(g.Coins, portion)
 }
 
-func NewRewardGauge(coins sdk.Coins) *RewardGauge {
+func NewRewardGauge(coins ...sdk.Coin) *RewardGauge {
 	return &RewardGauge{
 		Coins:          coins,
 		WithdrawnCoins: sdk.NewCoins(),
@@ -26,33 +26,22 @@ func NewRewardGauge(coins sdk.Coins) *RewardGauge {
 
 // GetWithdrawableCoins returns withdrawable coins in this reward gauge
 func (rg *RewardGauge) GetWithdrawableCoins() sdk.Coins {
-	withdrawableCoins := sdk.NewCoins()
-	for _, coin := range rg.Coins {
-		found, withdrawnCoin := rg.WithdrawnCoins.Find(coin.Denom)
-		// if the coin is not found in withdrawn coins, all of this coin is withdrawable
-		if !found {
-			withdrawableCoins = withdrawableCoins.Add(coin)
-			continue
-		}
-		// if the withdrawable amount is positive, then the coin with this amount is withdrawable
-		withdrawableCoinAmount := coin.Amount.Sub(withdrawnCoin.Amount)
-		if withdrawableCoinAmount.IsPositive() {
-			withdrawableCoin := sdk.NewCoin(coin.Denom, withdrawableCoinAmount)
-			withdrawableCoins = withdrawableCoins.Add(withdrawableCoin)
-		}
-	}
-	return withdrawableCoins
+	return rg.Coins.Sub(rg.WithdrawnCoins...)
 }
 
-// Clear makes the reward gauge to have no withdrawable coins
+// SetFullyWithdrawn makes the reward gauge to have no withdrawable coins
 // typically called after the stakeholder withdraws its reward
-func (rg *RewardGauge) Clear() {
+func (rg *RewardGauge) SetFullyWithdrawn() {
 	rg.WithdrawnCoins = sdk.NewCoins(rg.Coins...)
 }
 
-// IsEmpty returns whether the reward gauge has nothing to withdraw
-func (rg *RewardGauge) IsEmpty() bool {
+// IsFullyWithdrawn returns whether the reward gauge has nothing to withdraw
+func (rg *RewardGauge) IsFullyWithdrawn() bool {
 	return rg.Coins.IsEqual(rg.WithdrawnCoins)
+}
+
+func (rg *RewardGauge) Add(coins sdk.Coins) {
+	rg.Coins = rg.Coins.Add(coins...)
 }
 
 func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
@@ -111,18 +100,18 @@ func NewStakeHolderTypeFromString(stStr string) (StakeholderType, error) {
 	}
 }
 
-func (st *StakeholderType) Bytes() []byte {
-	return []byte{byte(*st)}
+func (st StakeholderType) Bytes() []byte {
+	return []byte{byte(st)}
 }
 
-func (st *StakeholderType) String() string {
-	if *st == SubmitterType {
+func (st StakeholderType) String() string {
+	if st == SubmitterType {
 		return "submitter"
-	} else if *st == ReporterType {
+	} else if st == ReporterType {
 		return "reporter"
-	} else if *st == BTCValidatorType {
+	} else if st == BTCValidatorType {
 		return "btc_validator"
-	} else if *st == BTCDelegationType {
+	} else if st == BTCDelegationType {
 		return "btc_delegation"
 	}
 	panic("invalid stakeholder type")

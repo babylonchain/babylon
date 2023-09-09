@@ -190,3 +190,12 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	require.NoError(n.t, err)
 	n.LogActionF("successfully executed")
 }
+
+func (n *NodeConfig) WithdrawReward(sType, sAddr, from string) {
+	n.LogActionF("withdraw reward of type %s address %s", sType, sAddr)
+	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, sAddr, fmt.Sprintf("--from=%s", from)}
+	n.LogActionF(strings.Join(cmd, " "))
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully withdrawn")
+}

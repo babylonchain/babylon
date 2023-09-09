@@ -28,7 +28,7 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 			rgMap := map[string]*types.RewardGauge{}
 			sAddr := datagen.GenRandomAccount().GetAddress()
 			sAddrList = append(sAddrList, sAddr)
-			for i := uint64(0); i < datagen.RandomInt(r, 4); i++ {
+			for i := uint64(0); i <= datagen.RandomInt(r, 4); i++ {
 				sType := datagen.GenRandomStakeholderType(r)
 				rg := datagen.GenRandomRewardGauge(r)
 				rgMap[sType.String()] = rg

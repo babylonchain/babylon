@@ -50,7 +50,7 @@ func GenRandomCoins(r *rand.Rand) sdk.Coins {
 
 func GenRandomRewardGauge(r *rand.Rand) *itypes.RewardGauge {
 	coins := GenRandomCoins(r)
-	return itypes.NewRewardGauge(coins)
+	return itypes.NewRewardGauge(coins...)
 }
 
 func GenRandomWithdrawnCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
@@ -71,7 +71,7 @@ func GenRandomWithdrawnCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 
 func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	coins := GenRandomCoins(r)
-	return itypes.NewGauge(coins)
+	return itypes.NewGauge(coins...)
 }
 
 func GenRandomBTCDelDistInfo(r *rand.Rand) *bstypes.BTCDelDistInfo {

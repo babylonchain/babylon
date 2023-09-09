@@ -40,14 +40,16 @@ func FuzzRewardBTCTimestamping(f *testing.F) {
 		btcTimestampingPortion := params.BTCTimestampingPortion()
 		bestPortion := math.LegacyNewDecWithPrec(80, 2) // 80 * 10^{-2} = 0.8
 
-		// mock bank transfer here
-		// best submitter
+		// expected values
 		distributedCoins := sdk.NewCoins()
+		submitterRewardMap := map[string]sdk.Coins{} // key: address, value: reward
+		reporterRewardMap := map[string]sdk.Coins{}  // key: address, value: reward
+
 		submitterPortion := params.SubmitterPortion.QuoTruncate(btcTimestampingPortion)
 		coinsToSubmitters := gauge.GetCoinsPortion(submitterPortion)
 		coinsToBestSubmitter := types.GetCoinsPortion(coinsToSubmitters, bestPortion)
 		if coinsToBestSubmitter.IsAllPositive() {
-			bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(rdi.Best.Submitter), gomock.Eq(coinsToBestSubmitter)).Times(1)
+			submitterRewardMap[rdi.Best.Submitter.String()] = coinsToBestSubmitter
 			distributedCoins.Add(coinsToBestSubmitter...)
 		}
 		// best reporter
@@ -55,7 +57,7 @@ func FuzzRewardBTCTimestamping(f *testing.F) {
 		coinsToReporters := gauge.GetCoinsPortion(reporterPortion)
 		coinsToBestReporter := types.GetCoinsPortion(coinsToReporters, bestPortion)
 		if coinsToBestReporter.IsAllPositive() {
-			bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(rdi.Best.Reporter), gomock.Eq(coinsToBestReporter)).Times(1)
+			reporterRewardMap[rdi.Best.Reporter.String()] = coinsToBestReporter
 			distributedCoins.Add(coinsToBestReporter...)
 		}
 		// other submitters and reporters
@@ -66,9 +68,9 @@ func FuzzRewardBTCTimestamping(f *testing.F) {
 			coinsToEachOtherSubmitter := types.GetCoinsPortion(coinsToOtherSubmitters, eachOtherSubmitterPortion)
 			if coinsToEachOtherSubmitter.IsAllPositive() {
 				for _, submission := range rdi.Others {
-					bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(submission.Submitter), gomock.Eq(coinsToEachOtherSubmitter)).Times(1)
+					submitterRewardMap[submission.Submitter.String()] = coinsToEachOtherSubmitter
+					distributedCoins.Add(coinsToEachOtherSubmitter...)
 				}
-				distributedCoins.Add(coinsToEachOtherSubmitter...)
 			}
 			// other reporters
 			coinsToOtherReporters := coinsToReporters.Sub(coinsToBestReporter...)
@@ -76,26 +78,44 @@ func FuzzRewardBTCTimestamping(f *testing.F) {
 			coinsToEachOtherReporter := types.GetCoinsPortion(coinsToOtherReporters, eachOtherReporterPortion)
 			if coinsToEachOtherReporter.IsAllPositive() {
 				for _, submission := range rdi.Others {
-					bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(submission.Reporter), gomock.Eq(coinsToEachOtherReporter)).Times(1)
+					reporterRewardMap[submission.Reporter.String()] = coinsToEachOtherReporter
+					distributedCoins.Add(coinsToEachOtherReporter...)
 				}
-				distributedCoins.Add(coinsToEachOtherReporter...)
 			}
 		} else {
 			// no other submission. give rest coins to best submitter/reporter
 			// give rest coins to the best submitter
 			restCoinsToSubmitter := coinsToSubmitters.Sub(coinsToBestSubmitter...)
 			if restCoinsToSubmitter.IsAllPositive() {
-				bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(rdi.Best.Submitter), gomock.Eq(restCoinsToSubmitter)).Times(1)
+				submitterRewardMap[rdi.Best.Submitter.String()] = submitterRewardMap[rdi.Best.Submitter.String()].Add(restCoinsToSubmitter...)
+				distributedCoins.Add(restCoinsToSubmitter...)
 			}
 			// give rest coins to the best reporter
 			restCoinsToReporter := coinsToReporters.Sub(coinsToBestReporter...)
 			if restCoinsToReporter.IsAllPositive() {
-				bankKeeper.EXPECT().SendCoinsFromModuleToAccount(gomock.Any(), gomock.Eq(types.ModuleName), gomock.Eq(rdi.Best.Reporter), gomock.Eq(restCoinsToReporter)).Times(1)
+				reporterRewardMap[rdi.Best.Reporter.String()] = reporterRewardMap[rdi.Best.Reporter.String()].Add(restCoinsToSubmitter...)
+				distributedCoins.Add(restCoinsToReporter...)
 			}
 		}
 
 		// distribute rewards in the gauge to BTC validators/delegations
 		keeper.RewardBTCTimestamping(ctx, epoch, rdi)
+
+		// assert consistency between reward map and reward gauge
+		for addrStr, reward := range submitterRewardMap {
+			addr, err := sdk.AccAddressFromBech32(addrStr)
+			require.NoError(t, err)
+			rg := keeper.GetRewardGauge(ctx, types.SubmitterType, addr)
+			require.NotNil(t, rg)
+			require.Equal(t, reward, rg.Coins)
+		}
+		for addrStr, reward := range reporterRewardMap {
+			addr, err := sdk.AccAddressFromBech32(addrStr)
+			require.NoError(t, err)
+			rg := keeper.GetRewardGauge(ctx, types.ReporterType, addr)
+			require.NotNil(t, rg)
+			require.Equal(t, reward, rg.Coins)
+		}
 
 		// assert distributedCoins is a subset of coins in gauge
 		require.True(t, gauge.Coins.IsAllGTE(distributedCoins))
