@@ -14,6 +14,7 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -28,6 +29,14 @@ func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
 }
 
 func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
+	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
+	if err != nil {
+		return nil, err
+	}
+	return GenRandomBTCValidatorWithBTCBabylonSKs(r, btcSK, bbnSK)
+}
+
+func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.BTCValidator, error) {
 	// commission
 	commission := sdk.NewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
 	// description
@@ -35,10 +44,7 @@ func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bst
 	// key pairs
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
-	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
-	if err != nil {
-		return nil, err
-	}
+	bbnPK := bbnSK.PubKey()
 	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
 	if !ok {
 		return nil, fmt.Errorf("failed to assert bbnPK to *secp256k1.PubKey")

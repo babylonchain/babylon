@@ -179,6 +179,8 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	// NOTE: nonValidatorNode.PublicAddress is the address associated with key name `val`
+	// and is both the submitter and reporter
 	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
 
 	// balance before withdraw
@@ -193,7 +195,7 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 	s.False(reporterRg.IsFullyWithdrawn())
 
 	// withdraw submitter reward
-	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), submitterReporterAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WithdrawReward(itypes.SubmitterType.String(), initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 
 	// balance after withdrawing submitter reward
@@ -210,7 +212,7 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 	s.True(rgs2[itypes.SubmitterType.String()].IsFullyWithdrawn())
 
 	// withdraw reporter reward
-	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), submitterReporterAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WithdrawReward(itypes.ReporterType.String(), initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 
 	// balance after withdrawing reporter reward

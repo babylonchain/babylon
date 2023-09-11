@@ -35,9 +35,9 @@ func GetTxCmd() *cobra.Command {
 
 func NewWithdrawRewardCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "withdraw-reward [type] [address]",
-		Short: "withdraw reward of a given stakeholder in a given type (one of {submitter, reporter, btc_validator, btc_delegation})",
-		Args:  cobra.ExactArgs(2),
+		Use:   "withdraw-reward [type]",
+		Short: "withdraw reward of the stakeholder behind the transaction submitter in a given type (one of {submitter, reporter, btc_validator, btc_delegation})",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -45,9 +45,8 @@ func NewWithdrawRewardCmd() *cobra.Command {
 			}
 
 			msg := types.MsgWithdrawReward{
-				Signer:  clientCtx.FromAddress.String(),
 				Type:    args[0],
-				Address: args[1],
+				Address: clientCtx.FromAddress.String(),
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

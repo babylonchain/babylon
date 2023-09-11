@@ -239,7 +239,6 @@ func (n *internalNode) export() *Node {
 	}
 
 	pub, err := n.keyInfo.GetPubKey()
-
 	if err != nil {
 		panic("pub key should be correct")
 	}
@@ -249,7 +248,8 @@ func (n *internalNode) export() *Node {
 		ConfigDir:     n.configDir(),
 		Mnemonic:      n.mnemonic,
 		PublicAddress: addr.String(),
-		PublicKey:     pub.Address().String(),
+		SecretKey:     n.privateKey,
+		PublicKey:     pub.String(),
 		PeerId:        n.peerId,
 		IsValidator:   n.isValidator,
 	}

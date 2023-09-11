@@ -52,7 +52,6 @@ func FuzzWithdrawReward(f *testing.F) {
 
 		// invoke withdraw and assert consistency
 		resp, err := ms.WithdrawReward(ctx, &types.MsgWithdrawReward{
-			Signer:  datagen.GenRandomAccount().Address,
 			Type:    sType.String(),
 			Address: sAddr.String(),
 		})

@@ -20,12 +20,11 @@ service Msg {
 
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 message MsgWithdrawReward {
-    string signer = 1;
-
     // {submitter, reporter, btc_validator, btc_delegation}
-    string type = 2;
+    string type = 1;
     // address is the address of the stakeholder in bech32 string
-    string address = 3;
+    // signer of this msg has to be this address
+    string address = 2;
 }
 
 // MsgWithdrawRewardResponse is the response to the MsgWithdrawReward message

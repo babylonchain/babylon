@@ -30,13 +30,10 @@ var (
 	r   = rand.New(rand.NewSource(time.Now().Unix()))
 	net = &chaincfg.SimNetParams
 	// BTC validator
-	valSK, _, _       = datagen.GenRandomBTCKeyPair(r)
-	btcVal, _         = datagen.GenRandomBTCValidatorWithBTCSK(r, valSK)
-	btcValBabylonAddr = sdk.AccAddress(btcVal.BabylonPk.Address())
+	valBTCSK, _, _ = datagen.GenRandomBTCKeyPair(r)
+	btcVal         *bstypes.BTCValidator
 	// BTC delegation
-	delBabylonSK, delBabylonPK, _ = datagen.GenRandomSecp256k1KeyPair(r)
-	delBabylonAddr                = sdk.AccAddress(delBabylonPK.Address())
-	delBTCSK, delBTCPK, _         = datagen.GenRandomBTCKeyPair(r)
+	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 	// jury
 	jurySK, _ = btcec.PrivKeyFromBytes(
 		[]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -83,6 +80,9 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	/*
 		create a random BTC validator on Babylon
 	*/
+	// NOTE: we use the node's secret key as Babylon secret key for the BTC validator
+	btcVal, err = datagen.GenRandomBTCValidatorWithBTCBabylonSKs(r, valBTCSK, nonValidatorNode.SecretKey)
+	s.NoError(err)
 	nonValidatorNode.CreateBTCValidator(btcVal.BabylonPk, btcVal.BtcPk, btcVal.Pop, btcVal.Description.Moniker, btcVal.Description.Identity, btcVal.Description.Website, btcVal.Description.SecurityContact, btcVal.Description.Details, btcVal.Commission)
 
 	// wait for a block so that above txs take effect
@@ -98,6 +98,8 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	*/
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
+	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
+	delBabylonSK := nonValidatorNode.SecretKey
 	pop, err := bstypes.NewPoP(delBabylonSK, delBTCSK)
 	s.NoError(err)
 	// generate staking tx and slashing tx
@@ -136,7 +138,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	stakingTxInfo := btcctypes.NewTransactionInfoFromSpvProof(blockWithStakingTx.SpvProof)
 
 	// submit the message for creating BTC delegation
-	nonValidatorNode.CreateBTCDelegation(delBabylonPK.(*secp256k1.PubKey), pop, stakingTx, stakingTxInfo, slashingTx, delegatorSig)
+	nonValidatorNode.CreateBTCDelegation(delBabylonSK.PubKey().(*secp256k1.PubKey), pop, stakingTx, stakingTxInfo, slashingTx, delegatorSig)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
@@ -229,7 +231,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		commit a number of public randomness since activatedHeight
 	*/
 	// commit public randomness list
-	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, valSK, activatedHeight, 100)
+	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, valBTCSK, activatedHeight, 100)
 	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
 		msgCommitPubRandList.ValBtcPk,
@@ -248,8 +250,10 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.Equal(pubRandMap[activatedHeight].MustMarshal(), msgCommitPubRandList.PubRandList[0].MustMarshal())
 
 	// no reward gauge for BTC validator and delegation yet
+	btcValBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
 	_, err = nonValidatorNode.QueryRewardGauge(btcValBabylonAddr)
 	s.Error(err)
+	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
 	_, err = nonValidatorNode.QueryRewardGauge(delBabylonAddr)
 	s.Error(err)
 
@@ -261,7 +265,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NoError(err)
 	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), blockToVote.LastCommitHash...)
 	// generate EOTS signature
-	sig, err := eots.Sign(valSK, srList[0], msgToSign)
+	sig, err := eots.Sign(valBTCSK, srList[0], msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
@@ -303,6 +307,8 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	s.NoError(err)
 
 	// BTC validator balance before withdraw
+	btcValBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
+	delBabylonAddr := sdk.AccAddress(nonValidatorNode.SecretKey.PubKey().Address().Bytes())
 	btcValBalance, err := nonValidatorNode.QueryBalances(btcValBabylonAddr.String())
 	s.NoError(err)
 	// BTC validator reward gauge should not be fully withdrawn
@@ -313,7 +319,7 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	s.False(btcValRg.IsFullyWithdrawn())
 
 	// withdraw BTC validator reward
-	nonValidatorNode.WithdrawReward(itypes.BTCValidatorType.String(), btcValBabylonAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WithdrawReward(itypes.BTCValidatorType.String(), initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 
 	// balance after withdrawing BTC validator reward
@@ -339,7 +345,7 @@ func (s *BTCStakingTestSuite) Test4WithdrawReward() {
 	s.False(btcDelRg.IsFullyWithdrawn())
 
 	// withdraw BTC delegation reward
-	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), delBabylonAddr.String(), initialization.ValidatorWalletName)
+	nonValidatorNode.WithdrawReward(itypes.BTCDelegationType.String(), initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
 
 	// balance after withdrawing BTC delegation reward
@@ -452,7 +458,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	validatorUnbondingSig, err := delegation.BtcUndelegation.UnbondingTx.Sign(
 		stakingTxMsg,
 		delegation.StakingTx.Script,
-		valSK,
+		valBTCSK,
 		net,
 	)
 	s.NoError(err)

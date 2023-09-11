@@ -119,10 +119,10 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		currentBtcTip, err := n.QueryTip()
 		require.NoError(n.t, err)
 
-		_, c, err := bech32.DecodeAndConvert(n.PublicAddress)
+		_, submitterAddr, err := bech32.DecodeAndConvert(n.PublicAddress)
 		require.NoError(n.t, err)
 
-		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, c)
+		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, submitterAddr)
 		require.NoError(n.t, err)
 
 		babylonTagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
@@ -191,9 +191,10 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	n.LogActionF("successfully executed")
 }
 
-func (n *NodeConfig) WithdrawReward(sType, sAddr, from string) {
-	n.LogActionF("withdraw reward of type %s address %s", sType, sAddr)
-	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, sAddr, fmt.Sprintf("--from=%s", from)}
+// NOTE: this command will withdraw the reward of the address associated with the tx signer `from`
+func (n *NodeConfig) WithdrawReward(sType, from string) {
+	n.LogActionF("withdraw reward of type %s for tx signer %s", sType, from)
+	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
 	n.LogActionF(strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
