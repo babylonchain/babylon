@@ -309,15 +309,34 @@ func (k Keeper) delegationView(
 		if err != nil {
 			continue
 		}
+		currentTip := k.btclcKeeper.GetTipInfo(ctx)
+		currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+
+		isActive := delegation.GetStatus(
+			currentTip.Height,
+			currentWValue,
+		) == types.BTCDelegationStatus_ACTIVE
+
+		var undelegationInfo *types.BTCUndelegationInfo = nil
+
+		if delegation.BtcUndelegation != nil {
+			undelegationInfo = &types.BTCUndelegationInfo{
+				UnbondingTx:           delegation.BtcUndelegation.UnbondingTx,
+				ValidatorUnbondingSig: delegation.BtcUndelegation.ValidatorUnbondingSig,
+				JuryUnbondingSig:      delegation.BtcUndelegation.JuryUnbondingSig,
+			}
+		}
 
 		return &types.QueryBTCDelegationResponse{
-			BtcPk:         delegation.BtcPk,
-			ValBtcPk:      delegation.ValBtcPk,
-			StartHeight:   delegation.StartHeight,
-			EndHeight:     delegation.EndHeight,
-			TotalSat:      delegation.TotalSat,
-			StakingTx:     hex.EncodeToString(delegation.StakingTx.Tx),
-			StakingScript: hex.EncodeToString(delegation.StakingTx.Script),
+			BtcPk:            delegation.BtcPk,
+			ValBtcPk:         delegation.ValBtcPk,
+			StartHeight:      delegation.StartHeight,
+			EndHeight:        delegation.EndHeight,
+			TotalSat:         delegation.TotalSat,
+			StakingTx:        hex.EncodeToString(delegation.StakingTx.Tx),
+			StakingScript:    hex.EncodeToString(delegation.StakingTx.Script),
+			Active:           isActive,
+			UndelegationInfo: undelegationInfo,
 		}
 	}
 	return nil

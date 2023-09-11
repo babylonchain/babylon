@@ -207,7 +207,7 @@ func FuzzBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 
 				txHash := btcDel.StakingTx.MustGetTxHash()
-
+				btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
 				delView, err := keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
 					StakingTxHashHex: txHash,
 				})

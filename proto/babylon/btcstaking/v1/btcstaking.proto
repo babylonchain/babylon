@@ -126,6 +126,26 @@ message BTCUndelegation {
     bytes validator_unbonding_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
+
+// BTCUndelegationInfo provides all necessary info about the undeleagation
+message BTCUndelegationInfo {
+    // unbonding_tx is the transaction which will transfer the funds from staking
+    // output to unbonding output. Unbonding output will usually have lower timelock
+    // than staking output.
+    BabylonBTCTaprootTx unbonding_tx = 1;
+
+    // validator_unbonding_sig is the signature on the unbonding tx
+    // by the validator (i.e., SK corresponding to the pk of the validator that the staker delegates to)
+    // It must be provided after processing undelagate message by Babylon
+    // It will be nil if validator didn't sign it yet
+    bytes validator_unbonding_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+
+    // jury_unbonding_sig is the signature on the unbonding tx
+    // by the jury (i.e., SK corresponding to jury_pk in params)
+    // it will be nil if jury didn't sign it yet
+    bytes jury_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
 // BTCDelegatorDelegations is a collection of BTC delegations, typically from the same delegator.
 message BTCDelegatorDelegations {
     repeated BTCDelegation dels = 1;

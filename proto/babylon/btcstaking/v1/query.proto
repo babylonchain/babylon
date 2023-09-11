@@ -246,4 +246,9 @@ message QueryBTCDelegationResponse {
   string staking_tx = 6;
   // staking_script is the script commited to in staking output
   string staking_script = 7;
+  // whether this delegation is active
+  bool active = 8;
+  // undelegation_info is the undelegation info of this delegation. It is nil
+  // if it is not undelegating
+  BTCUndelegationInfo undelegation_info = 9;
 }
