@@ -14,6 +14,8 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type msgServer struct {
@@ -75,6 +77,16 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 	// ensure the validator address does not exist before
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
+	if req.Pop.BtcSigType == types.BTCSigType_BIP322 {
+		if err := req.Pop.VerifyBIP322(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-322 encoding: %v", err)
+		}
+	} else if req.Pop.BtcSigType == types.BTCSigType_BIP340 {
+		if err := req.Pop.Verify(req.BabylonPk, req.BtcPk); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-340 encoding: %v", err)
+		}
+	}
+
 	// ensure commission rate is at least the minimum commission rate in parameters
 	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
 		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set validator commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
@@ -119,6 +131,16 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.StakerKey)
 	valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.ValidatorKey)
 	juryPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.JuryKey)
+
+	if req.Pop.BtcSigType == types.BTCSigType_BIP322 {
+		if err := req.Pop.VerifyBIP322(req.BabylonPk, delBTCPK, ms.btcNet); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-322 encoding: %v", err)
+		}
+	} else if req.Pop.BtcSigType == types.BTCSigType_BIP340 {
+		if err := req.Pop.Verify(req.BabylonPk, delBTCPK); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-340 encoding: %v", err)
+		}
+	}
 
 	// extract staking tx and its hash
 	stakingMsgTx, err := req.StakingTx.ToMsgTx()

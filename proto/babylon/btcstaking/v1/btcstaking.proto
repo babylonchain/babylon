@@ -5,6 +5,7 @@ import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/crypto/secp256k1/keys.proto";
 import "cosmos/staking/v1beta1/staking.proto";
+import "babylon/btcstaking/v1/pop.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
@@ -149,17 +150,6 @@ message BTCUndelegationInfo {
 // BTCDelegatorDelegations is a collection of BTC delegations, typically from the same delegator.
 message BTCDelegatorDelegations {
     repeated BTCDelegation dels = 1;
-}
-
-// ProofOfPossession is the proof of possession that a Babylon secp256k1
-// secret key and a Bitcoin secp256k1 secret key are held by the same
-// person
-message ProofOfPossession {
-    // babylon_sig is the signature generated via sign(sk_babylon, pk_btc)
-    bytes babylon_sig = 1;
-    // btc_sig is the signature generated via sign(sk_btc, babylon_sig)
-    // the signature follows encoding in BIP-340 spec
-    bytes btc_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
 // BabylonBtcTaprootTx is the bitcoin transaction which contains script recognized by Babylon and

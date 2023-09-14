@@ -31,12 +31,7 @@ func (v *BTCValidator) ValidateBasic() error {
 	if v.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-
-	// verify PoP
 	if err := v.Pop.ValidateBasic(); err != nil {
-		return err
-	}
-	if err := v.Pop.Verify(v.BabylonPk, v.BtcPk); err != nil {
 		return err
 	}
 
@@ -70,12 +65,7 @@ func (d *BTCDelegation) ValidateBasic() error {
 	if err := d.StakingTx.ValidateBasic(); err != nil {
 		return err
 	}
-
-	// verify PoP
 	if err := d.Pop.ValidateBasic(); err != nil {
-		return err
-	}
-	if err := d.Pop.Verify(d.BabylonPk, d.BtcPk); err != nil {
 		return err
 	}
 
@@ -289,9 +279,6 @@ func (p *ProofOfPossession) ValidateBasic() error {
 	}
 	if p.BtcSig == nil {
 		return fmt.Errorf("empty BTC signature")
-	}
-	if _, err := p.BtcSig.ToBTCSig(); err != nil {
-		return fmt.Errorf("BtcSig is incorrectly formatted: %w", err)
 	}
 
 	return nil

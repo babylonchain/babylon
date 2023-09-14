@@ -4,9 +4,11 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/babylonchain/babylon/crypto/bip322"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 )
@@ -16,7 +18,9 @@ import (
 // - pop.BabylonSig = sign(sk_Babylon, pk_BTC)
 // - pop.BtcSig = sign(sk_BTC, pop.BabylonSig)
 func NewPoP(babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) (*ProofOfPossession, error) {
-	pop := ProofOfPossession{}
+	pop := ProofOfPossession{
+		BtcSigType: BTCSigType_BIP340, // by default, we use BIP-340 encoding for BTC signature
+	}
 
 	// generate pop.BabylonSig = sign(sk_Babylon, pk_BTC)
 	btcPK := btcSK.PubKey()
@@ -36,7 +40,7 @@ func NewPoP(babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) (*ProofOfPos
 		return nil, err
 	}
 	bip340Sig := bbn.NewBIP340SignatureFromBTCSig(btcSig)
-	pop.BtcSig = &bip340Sig
+	pop.BtcSig = bip340Sig.MustMarshal()
 
 	return &pop, nil
 }
@@ -61,12 +65,20 @@ func (pop *ProofOfPossession) ToHexStr() (string, error) {
 	return hex.EncodeToString(popBytes), nil
 }
 
-// Verify verifies the validity of PoP
+// Verify verifies the validity of PoP where Bitcoin signature is in BIP-340
 // 1. verify(sig=sig_btc, pubkey=pk_btc, msg=pop.BabylonSig)?
 // 2. verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
 func (pop *ProofOfPossession) Verify(babylonPK cryptotypes.PubKey, bip340PK *bbn.BIP340PubKey) error {
+	if pop.BtcSigType != BTCSigType_BIP340 {
+		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using BIP-340 encoding")
+	}
+
 	// rule 1: verify(sig=sig_btc, pubkey=pk_btc, msg=pop.BabylonSig)?
-	btcSig, err := pop.BtcSig.ToBTCSig()
+	bip340Sig, err := bbn.NewBIP340Signature(pop.BtcSig)
+	if err != nil {
+		return err
+	}
+	btcSig, err := bip340Sig.ToBTCSig()
 	if err != nil {
 		return err
 	}
@@ -85,6 +97,43 @@ func (pop *ProofOfPossession) Verify(babylonPK cryptotypes.PubKey, bip340PK *bbn
 	if !babylonPK.VerifySignature(*bip340PK, pop.BabylonSig) {
 		return fmt.Errorf("failed to verify pop.BabylonSig")
 	}
+
+	return nil
+}
+
+// VerifyBIP322 verifies the validity of PoP where Bitcoin signature is in BIP-322
+// after decoding pop.BtcSig to bip322Sig which contains sig and address,
+// 1. verify(sig=bip322Sig.Sig, address=bip322Sig.Address, msg=pop.BabylonSig)?
+// 2. verify(sig=pop.BabylonSig, pubkey=babylonPK, msg=bip340PK)?
+// 3. verify pop.Address corresponds to bip340PK in the given network
+func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340PK *bbn.BIP340PubKey, net *chaincfg.Params) error {
+	if pop.BtcSigType != BTCSigType_BIP322 {
+		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using BIP-322 encoding")
+	}
+
+	// unmarshal pop.BtcSig to bip322Sig
+	var bip322Sig BIP322Sig
+	if err := bip322Sig.Unmarshal(pop.BtcSig); err != nil {
+		return nil
+	}
+
+	// rule 1: verify(sig=bip322Sig.Sig, address=bip322Sig.Address, msg=pop.BabylonSig)?
+	// TODO: temporary solution for MVP purposes.
+	// Eventually we need to use tmhash.Sum(pop.BabylonSig) rather than bbnSigHashHexBytes
+	// ref: https://github.com/babylonchain/babylon-private/issues/80
+	bbnSigHash := tmhash.Sum(pop.BabylonSig)
+	bbnSigHashHex := hex.EncodeToString(bbnSigHash)
+	bbnSigHashHexBytes := []byte(bbnSigHashHex)
+	if err := bip322.Verify(bbnSigHashHexBytes, bip322Sig.Sig, bip322Sig.Address, net); err != nil {
+		return err
+	}
+
+	// rule 2: verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
+	if !babylonPK.VerifySignature(*bip340PK, pop.BabylonSig) {
+		return fmt.Errorf("failed to verify pop.BabylonSig")
+	}
+
+	// TODO: rule 3: verify bip322Sig.Address corresponds to bip340PK
 
 	return nil
 }

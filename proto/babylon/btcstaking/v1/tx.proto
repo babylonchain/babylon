@@ -9,6 +9,7 @@ import "babylon/btcstaking/v1/params.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "cosmos/staking/v1beta1/staking.proto";
+import "babylon/btcstaking/v1/pop.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 

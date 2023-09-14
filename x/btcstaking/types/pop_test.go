@@ -40,7 +40,7 @@ func newInvalidPoP(r *rand.Rand, babylonSK cryptotypes.PrivKey, btcSK *btcec.Pri
 		panic(err)
 	}
 	bip340Sig := bbn.NewBIP340SignatureFromBTCSig(btcSig)
-	pop.BtcSig = &bip340Sig
+	pop.BtcSig = bip340Sig.MustMarshal()
 
 	return &pop
 }
@@ -72,3 +72,5 @@ func FuzzPoP(f *testing.F) {
 		require.Error(t, err)
 	})
 }
+
+// TODO: fuzz test for BIP322 PoP

@@ -5,7 +5,6 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -73,7 +72,8 @@ func (m *MsgCreateBTCValidator) ValidateBasic() error {
 	if err := m.Pop.ValidateBasic(); err != nil {
 		return err
 	}
-	return m.Pop.Verify(m.BabylonPk, m.BtcPk)
+
+	return nil
 }
 
 func (m *MsgCreateBTCDelegation) GetSigners() []sdk.AccAddress {
@@ -111,17 +111,7 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if err := m.StakingTx.ValidateBasic(); err != nil {
 		return err
 	}
-
-	// verify PoP
 	if err := m.Pop.ValidateBasic(); err != nil {
-		return err
-	}
-	stakingScriptData, err := m.StakingTx.GetScriptData()
-	if err != nil {
-		return err
-	}
-	btcPK := bbn.NewBIP340PubKeyFromBTCPK(stakingScriptData.StakerKey)
-	if err := m.Pop.Verify(m.BabylonPk, btcPK); err != nil {
 		return err
 	}
 
