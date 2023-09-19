@@ -264,7 +264,7 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		// Generate a random number of BTC delegations under each validator
 		startHeight := datagen.RandomInt(r, 100) + 1
 		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
-		numBTCDels := datagen.RandomInt(r, 10) + 1
+		numBTCDels := datagen.RandomInt(r, 100) + 1
 		unbondingBtcDelsMap := make(map[string]*types.BTCDelegation)
 		for _, btcVal := range btcVals {
 			for j := uint64(0); j < numBTCDels; j++ {
@@ -280,7 +280,12 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 						ValidatorUnbondingSig: btcDel.JurySig,
 					}
 
-					unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
+					if datagen.RandomInt(r, 2) == 1 {
+						// some undelegations already have jury sig so they should not be returned
+						btcDel.BtcUndelegation.JuryUnbondingSig = btcDel.JurySig
+					} else {
+						unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
+					}
 				}
 
 				err = keeper.SetBTCDelegation(ctx, btcDel)

@@ -146,12 +146,18 @@ func (k Keeper) UnbondingBTCDelegations(ctx context.Context, req *types.QueryUnb
 	btcDels := k.getDelegationsMatchingCriteria(
 		sdkCtx,
 		func(del *types.BTCDelegation) bool {
-			// grab all delegations which are unbonding and already have validator signature
+			// grab all delegations which are unbonding and already have validator signature, but did not receive
+			// jury signature yet
 			if del.BtcUndelegation == nil {
 				return false
 			}
 
 			if del.BtcUndelegation.ValidatorUnbondingSig == nil {
+				return false
+			}
+
+			// undelegation already received jury signature, no need to retrieve it
+			if del.BtcUndelegation.JuryUnbondingSig != nil {
 				return false
 			}
 
