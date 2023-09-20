@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"testing"
 
 	"github.com/babylonchain/babylon/x/btcstaking/types"
@@ -19,9 +20,16 @@ func TestGenesisState_Validate(t *testing.T) {
 			valid:    true,
 		},
 		{
-			desc:     "valid genesis state",
-			genState: &types.GenesisState{},
-			valid:    true,
+			desc: "valid genesis state",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					JuryPk:              types.DefaultParams().JuryPk,
+					SlashingAddress:     types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat: 500,
+					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
+				},
+			},
+			valid: true,
 		},
 	}
 	for _, tc := range tests {

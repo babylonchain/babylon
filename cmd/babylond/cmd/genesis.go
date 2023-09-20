@@ -69,7 +69,7 @@ Example:
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.JuryPK,
 					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
-					genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
+					genesisCliArgs.MinCommissionRate, genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
 					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 			} else if network == "mainnet" {
@@ -229,7 +229,7 @@ type GenesisParams struct {
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, juryPk string, slashingAddress string, minSlashingFee int64,
-	minPubRand uint64, inflationRateChange float64,
+	minCommissionRate sdk.Dec, minPubRand uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
 
@@ -309,7 +309,14 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	}
 	genParams.BtcstakingParams.SlashingAddress = slashingAddress
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
+	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
+		panic(err)
+	}
+
+	genParams.FinalityParams = finalitytypes.DefaultParams()
+	genParams.FinalityParams.MinPubRand = minPubRand
+	if err := genParams.FinalityParams.Validate(); err != nil {
 		panic(err)
 	}
 

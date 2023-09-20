@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
 
 	babylonApp "github.com/babylonchain/babylon/app"
@@ -30,6 +31,7 @@ const (
 	flagSlashingAddress        = "slashing-address"
 	flagMinSlashingFee         = "min-slashing-fee-sat"
 	flagMinPubRand             = "min-pub-rand"
+	flagMinCommissionRate      = "min-commission-rate"
 )
 
 type GenesisCLIArgs struct {
@@ -52,6 +54,7 @@ type GenesisCLIArgs struct {
 	SlashingAddress              string
 	MinSlashingTransactionFeeSat int64
 	MinPubRand                   uint64
+	MinCommissionRate            sdk.Dec
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -72,6 +75,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagJuryPk, btcstypes.DefaultParams().JuryPk.MarshalHex(), "Bitcoin staking jury public key")
 	cmd.Flags().String(flagSlashingAddress, btcstypes.DefaultParams().SlashingAddress, "Bitcoin staking slashing address")
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
+	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
 	// finality args
 	cmd.Flags().Uint64(flagMinPubRand, 100, "Bitcoin staking minimum public randomness commit")
 	// inflation args
@@ -98,6 +102,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	juryPk, _ := cmd.Flags().GetString(flagJuryPk)
 	slashingAddress, _ := cmd.Flags().GetString(flagSlashingAddress)
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
+	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
 	minPubRand, _ := cmd.Flags().GetUint64(flagMinPubRand)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
@@ -125,6 +130,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		JuryPK:                       juryPk,
 		SlashingAddress:              slashingAddress,
 		MinSlashingTransactionFeeSat: minSlashingFee,
+		MinCommissionRate:            sdk.MustNewDecFromStr(minCommissionRate),
 		MinPubRand:                   minPubRand,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,

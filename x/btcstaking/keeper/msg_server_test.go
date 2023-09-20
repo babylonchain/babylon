@@ -99,6 +99,7 @@ func getJuryInfo(t *testing.T,
 		JuryPk:              bbn.NewBIP340PubKeyFromBTCPK(juryPK),
 		SlashingAddress:     slashingAddr.String(),
 		MinSlashingTxFeeSat: 10,
+		MinCommissionRate:   sdk.MustNewDecFromStr("0.01"),
 	})
 	require.NoError(t, err)
 	return jurySK, juryPK, slashingAddr
@@ -404,6 +405,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		JuryPk:              bbn.NewBIP340PubKeyFromBTCPK(juryPK),
 		SlashingAddress:     slashingAddr.String(),
 		MinSlashingTxFeeSat: 10,
+		MinCommissionRate:   sdk.MustNewDecFromStr("0.01"),
 	})
 	require.NoError(t, err)
 

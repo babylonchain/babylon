@@ -2,10 +2,12 @@ package types
 
 import (
 	"cosmossdk.io/math"
+	"fmt"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -49,8 +51,36 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{}
 }
 
+func validateMinSlashingTxFeeSat(fee int64) error {
+	if fee <= 0 {
+		return fmt.Errorf("minimum slashing tx fee has to be positive")
+	}
+	return nil
+}
+
+func validateMinCommissionRate(rate sdk.Dec) error {
+	if rate.IsNil() {
+		return fmt.Errorf("minimum commission rate cannot be nil")
+	}
+
+	if rate.IsNegative() {
+		return fmt.Errorf("minimum commission rate cannot be negative")
+	}
+
+	if rate.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("minimum commission rate cannot be greater than 100%%")
+	}
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
+		return err
+	}
+	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
+		return err
+	}
 	return nil
 }
 

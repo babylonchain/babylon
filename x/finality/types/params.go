@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -24,8 +25,18 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 	return paramtypes.ParamSetPairs{}
 }
 
+func validateMinPubRand(minPubRand uint64) error {
+	if minPubRand == 0 {
+		return fmt.Errorf("Min Pub Rand cannot be 0")
+	}
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if err := validateMinPubRand(p.MinPubRand); err != nil {
+		return err
+	}
 	return nil
 }
 
