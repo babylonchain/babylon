@@ -1,6 +1,7 @@
 syntax = "proto3";
 package babylon.btcstaking.v1;
 
+import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
@@ -16,3 +17,39 @@ message EventNewBTCDelegation { BTCDelegation btc_del = 1; }
 // EventActivateBTCDelegation is the event emitted when jury activates a BTC delegation
 // such that the BTC delegation starts to have voting power in its timelock period
 message EventActivateBTCDelegation { BTCDelegation btc_del = 1; }
+
+// EventUnbondingBTCDelegation is the event emitted when receiving an unbonding request
+// for an existing BTC delegation
+message EventUnbondingBTCDelegation { 
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // val_btc_pk is the Bitcoin secp256k1 PK of the BTC validator that
+    // this BTC delegation delegates to
+    // the PK follows encoding in BIP-340 spec
+    bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // staking_tx_hash is the hash of the staking tx.
+    // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+    string staking_tx_hash = 3;
+    // unbonding_tx_hash is the hash of the unbonding tx.
+    string unbonding_tx_hash = 4;
+}
+
+// EventUnbondingBTCDelegation is the event emitted when an unbonding BTC delegation
+// receives all signatures needed for becoming unbonded 
+message EventUnbondedBTCDelegation { 
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // val_btc_pk is the Bitcoin secp256k1 PK of the BTC validator that
+    // this BTC delegation delegates to
+    // the PK follows encoding in BIP-340 spec
+    bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // staking_tx_hash is the hash of the staking tx.
+    // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+    string staking_tx_hash = 3;
+    // unbonding_tx_hash is the hash of the unbonding tx.
+    string unbonding_tx_hash = 4;
+    // from_state is the last state the BTC delegation was at
+    BTCDelegationStatus from_state = 5;
+}
