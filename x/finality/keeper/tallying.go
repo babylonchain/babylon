@@ -36,7 +36,6 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 	// - does not have validators, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
 	blockRevIter := k.blockStore(ctx).ReverseIterator(sdk.Uint64ToBigEndian(uint64(activatedHeight)), nil)
-	defer blockRevIter.Close()
 	for ; blockRevIter.Valid(); blockRevIter.Next() {
 		// get the indexed block
 		ibBytes := blockRevIter.Value()
@@ -61,6 +60,9 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 			panic(fmt.Errorf("block %d is finalized, but does not have a validator set", ib.Height))
 		}
 	}
+	// closing the iterator right now before finalising the finalisable blocks
+	// this is to follow the contract at https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/store/types/store.go#L239-L240
+	blockRevIter.Close()
 
 	// for each of these blocks from earliest to latest, tally the block w.r.t. existing votes
 	for i := len(blocksToFinalize) - 1; i >= 0; i-- {
