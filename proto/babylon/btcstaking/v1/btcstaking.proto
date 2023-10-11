@@ -147,9 +147,14 @@ message BTCUndelegationInfo {
     bytes jury_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
-// BTCDelegatorDelegations is a collection of BTC delegations, typically from the same delegator.
+// BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.
 message BTCDelegatorDelegations {
     repeated BTCDelegation dels = 1;
+}
+
+// BTCDelegatorDelegationIndex is a list of staking tx hashes of BTC delegations from the same delegator.
+message BTCDelegatorDelegationIndex {
+    repeated bytes staking_tx_hash_list = 1;
 }
 
 // BabylonBtcTaprootTx is the bitcoin transaction which contains script recognized by Babylon and
@@ -181,5 +186,7 @@ enum BTCDelegationStatus {
     // - or receiving unbonding tx and then receiving signatures from validator and jury for this
     // unbonding tx.
     UNBONDED = 3;
+    // ANY is any of the above status
+    ANY = 4;
 }
 

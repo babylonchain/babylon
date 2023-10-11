@@ -10,8 +10,26 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
+
+func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
+	switch statusStr {
+	case "pending":
+		return BTCDelegationStatus_PENDING, nil
+	case "active":
+		return BTCDelegationStatus_ACTIVE, nil
+	case "unbonding":
+		return BTCDelegationStatus_UNBONDING, nil
+	case "unbonded":
+		return BTCDelegationStatus_UNBONDED, nil
+	case "any":
+		return BTCDelegationStatus_ANY, nil
+	default:
+		return -1, fmt.Errorf("invalid status string; should be one of {pending, active, unbonding, unbonded, any}")
+	}
+}
 
 func (v *BTCValidator) IsSlashed() bool {
 	return v.SlashedBabylonHeight > 0
@@ -132,156 +150,22 @@ func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64) uint64 {
 	return d.GetTotalSat()
 }
 
-// GetStakingTxHash returns the staking tx hash of the BTC delegation
-// it can be used for uniquely identifying a BTC delegation
-func (d *BTCDelegation) GetStakingTxHash() (string, error) {
+func (d *BTCDelegation) GetStakingTxHash() (chainhash.Hash, error) {
 	return d.StakingTx.GetTxHash()
 }
 
-func (d *BTCDelegation) MustGetStakingTxHash() string {
+func (d *BTCDelegation) MustGetStakingTxHash() chainhash.Hash {
 	return d.StakingTx.MustGetTxHash()
 }
 
-func NewBTCDelegatorDelegations() *BTCDelegatorDelegations {
-	return &BTCDelegatorDelegations{
-		Dels: []*BTCDelegation{},
-	}
+// GetStakingTxHashStr returns the staking tx hash of the BTC delegation in hex string
+// it can be used for uniquely identifying a BTC delegation
+func (d *BTCDelegation) GetStakingTxHashStr() (string, error) {
+	return d.StakingTx.GetTxHashStr()
 }
 
-// Add appends a given BTC delegation to the BTC delegations
-// It requires the given BTC delegation is not in the list yet
-// TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegatorDelegations) Add(del *BTCDelegation) error {
-	stakingTxHash, err := del.GetStakingTxHash()
-	if err != nil {
-		return fmt.Errorf("failed to add BTC delegation to BTC delegations: %w", err)
-	}
-	// ensure the given del is not duplicated
-	if dels.Has(stakingTxHash) {
-		return fmt.Errorf("the given BTC delegation %s is duplicated", stakingTxHash)
-	}
-	// append
-	dels.Dels = append(dels.Dels, del)
-	return nil
-}
-
-func (dels *BTCDelegatorDelegations) getAndModifyDelegation(stakingTxHash string, modifyFn func(del *BTCDelegation) error) error {
-	del, err := dels.Get(stakingTxHash)
-	if err != nil {
-		return fmt.Errorf("cannot find the BTC delegation with staking tx hash %s: %w", stakingTxHash, err)
-	}
-
-	if err := modifyFn(del); err != nil {
-		return err
-	}
-	return nil
-}
-
-// AddJurySig adds a jury signature to an existing BTC delegation in the BTC delegations
-// TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegatorDelegations) AddJurySig(stakingTxHash string, sig *bbn.BIP340Signature) error {
-	addJurySig := func(del *BTCDelegation) error {
-		if del.JurySig != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a jury signature", stakingTxHash)
-		}
-		del.JurySig = sig
-		return nil
-	}
-
-	return dels.getAndModifyDelegation(stakingTxHash, addJurySig)
-}
-
-func (dels *BTCDelegatorDelegations) AddUndelegation(stakingTxHash string, ud *BTCUndelegation) error {
-	addUndelegation := func(del *BTCDelegation) error {
-		if del.BtcUndelegation != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
-		}
-		del.BtcUndelegation = ud
-		return nil
-	}
-
-	return dels.getAndModifyDelegation(stakingTxHash, addUndelegation)
-}
-
-func (dels *BTCDelegatorDelegations) AddValidatorSigToUndelegation(stakingTxHash string, sig *bbn.BIP340Signature) error {
-	addValidatorSig := func(del *BTCDelegation) error {
-		if del.BtcUndelegation == nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
-		}
-
-		if del.BtcUndelegation.ValidatorUnbondingSig != nil {
-			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid validator signature", stakingTxHash)
-		}
-
-		del.BtcUndelegation.ValidatorUnbondingSig = sig
-		return nil
-	}
-
-	return dels.getAndModifyDelegation(stakingTxHash, addValidatorSig)
-}
-
-func (dels *BTCDelegatorDelegations) AddJurySigsToUndelegation(
-	stakingTxHash string,
-	unbondingTxSig *bbn.BIP340Signature,
-	slashUnbondingTxSig *bbn.BIP340Signature,
-) error {
-	addJurySigs := func(del *BTCDelegation) error {
-		if del.BtcUndelegation == nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
-		}
-
-		if del.BtcUndelegation.JuryUnbondingSig != nil || del.BtcUndelegation.JurySlashingSig != nil {
-			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid jury signatures", stakingTxHash)
-		}
-
-		del.BtcUndelegation.JuryUnbondingSig = unbondingTxSig
-		del.BtcUndelegation.JurySlashingSig = slashUnbondingTxSig
-		return nil
-	}
-
-	return dels.getAndModifyDelegation(stakingTxHash, addJurySigs)
-}
-
-// TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegatorDelegations) Has(stakingTxHash string) bool {
-	for _, d := range dels.Dels {
-		dStakingTxHash := d.MustGetStakingTxHash()
-		if dStakingTxHash == stakingTxHash {
-			return true
-		}
-	}
-	return false
-}
-
-// TODO: this is an O(n) operation. Consider optimisation later
-func (dels *BTCDelegatorDelegations) Get(stakingTxHash string) (*BTCDelegation, error) {
-	for _, d := range dels.Dels {
-		dStakingTxHash := d.MustGetStakingTxHash()
-		if dStakingTxHash == stakingTxHash {
-			return d, nil
-		}
-	}
-	return nil, fmt.Errorf("cannot find the BTC delegation with staking tx hash %s", stakingTxHash)
-}
-
-// VotingPower calculates the total voting power of all BTC delegations
-func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint64, w uint64) uint64 {
-	power := uint64(0)
-	for _, del := range dels.Dels {
-		power += del.VotingPower(btcHeight, w)
-	}
-	return power
-}
-
-func (p *ProofOfPossession) ValidateBasic() error {
-	if len(p.BabylonSig) == 0 {
-		return fmt.Errorf("empty Babylon signature")
-	}
-	if p.BtcSig == nil {
-		return fmt.Errorf("empty BTC signature")
-	}
-
-	return nil
+func (d *BTCDelegation) MustGetStakingTxHashStr() string {
+	return d.StakingTx.MustGetTxHashStr()
 }
 
 func NewBabylonTaprootTxFromHex(txHex string) (*BabylonBTCTaprootTx, error) {
@@ -333,20 +217,36 @@ func (tx *BabylonBTCTaprootTx) ToMsgTx() (*wire.MsgTx, error) {
 	return &msgTx, nil
 }
 
-func (tx *BabylonBTCTaprootTx) GetTxHash() (string, error) {
+func (tx *BabylonBTCTaprootTx) GetTxHash() (chainhash.Hash, error) {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
-		return "", err
+		return chainhash.Hash{}, err
 	}
-	return msgTx.TxHash().String(), nil
+	return msgTx.TxHash(), nil
 }
 
-func (tx *BabylonBTCTaprootTx) MustGetTxHash() string {
-	msgTx, err := tx.ToMsgTx()
+func (tx *BabylonBTCTaprootTx) MustGetTxHash() chainhash.Hash {
+	txHash, err := tx.GetTxHash()
 	if err != nil {
 		panic(err)
 	}
-	return msgTx.TxHash().String()
+	return txHash
+}
+
+func (tx *BabylonBTCTaprootTx) GetTxHashStr() (string, error) {
+	txHash, err := tx.GetTxHash()
+	if err != nil {
+		return "", err
+	}
+	return txHash.String(), nil
+}
+
+func (tx *BabylonBTCTaprootTx) MustGetTxHashStr() string {
+	txHashStr, err := tx.GetTxHashStr()
+	if err != nil {
+		panic(err)
+	}
+	return txHashStr
 }
 
 func (tx *BabylonBTCTaprootTx) GetScriptData() (*btcstaking.StakingScriptData, error) {

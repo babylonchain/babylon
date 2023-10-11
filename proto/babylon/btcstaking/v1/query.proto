@@ -26,14 +26,9 @@ service Query {
     option (google.api.http).get = "/babylon/btcstaking/v1/btc_validators/{val_btc_pk_hex}/validator";
   }
 
-  // PendingBTCDelegations queries all pending BTC delegations
-  rpc PendingBTCDelegations(QueryPendingBTCDelegationsRequest) returns (QueryPendingBTCDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/pending_btc_delegations";
-  }
-
-  // UnbondingBTCDelegations queries all unbonding BTC delegations which require Jury signature
-  rpc UnbondingBTCDelegations(QueryUnbondingBTCDelegationsRequest) returns (QueryUnbondingBTCDelegationsResponse) {
-    option (google.api.http).get = "/babylon/btcstaking/v1/unbonding_btc_delegations";
+  // BTCDelegations queries all BTC delegations under a given status
+  rpc BTCDelegations(QueryBTCDelegationsRequest) returns (QueryBTCDelegationsResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations";
   }
 
   // ActiveBTCValidatorsAtHeight queries BTC validators with non zero voting power at given height.
@@ -107,26 +102,24 @@ message QueryBTCValidatorResponse {
   BTCValidator btc_validator = 1;
 }
 
-// QueryPendingBTCDelegationsRequest is the request type for the
-// Query/PendingBTCDelegations RPC method.
-message QueryPendingBTCDelegationsRequest {}
+// QueryBTCDelegationsRequest is the request type for the
+// Query/BTCDelegations RPC method.
+message QueryBTCDelegationsRequest {
+  // status is the queried status for BTC delegations
+  BTCDelegationStatus status = 1;
 
-// QueryPendingBTCDelegationsResponse is the response type for the
-// Query/PendingBTCDelegations RPC method.
-message QueryPendingBTCDelegationsResponse {
-  // btc_delegations contains all the queried BTC delegations.
-  repeated BTCDelegation btc_delegations = 1;
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
-// QueryUnbondingBTCDelegationsRequest is the request type for the
-// QueryUnbondingBTCDelegations RPC method.
-message QueryUnbondingBTCDelegationsRequest {}
-
-// QueryUnbondingBTCDelegationsResponse is the response type for the
-// QueryUnbondingBTCDelegations RPC method.
-message QueryUnbondingBTCDelegationsResponse {
-  // btc_delegations contains all the queried BTC delegations.
+// QueryBTCDelegationsResponse is the response type for the
+// Query/BTCDelegations RPC method.
+message QueryBTCDelegationsResponse {
+  // btc_delegations contains all the queried BTC delegations under the given status
   repeated BTCDelegation btc_delegations = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // QueryBTCValidatorPowerAtHeightRequest is the request type for the

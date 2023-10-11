@@ -3,6 +3,7 @@ package keeper
 import (
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -42,13 +43,18 @@ func (k Keeper) RecordRewardDistCache(ctx sdk.Context) {
 		// iterate over all BTC delegations under this validator to compute
 		// the BTC validator's distribution info
 		btcValDistInfo := types.NewBTCValDistInfo(btcVal)
-		btcDelIter := k.btcDelegationStore(ctx, valBTCPK).Iterator(nil, nil)
+		btcDelIter := k.btcDelegatorStore(ctx, valBTCPK).Iterator(nil, nil)
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
 			// unmarshal
-			var btcDels types.BTCDelegatorDelegations
-			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDels)
-			// process each of the BTC delegation
-			for _, btcDel := range btcDels.Dels {
+			var btcDelIndex types.BTCDelegatorDelegationIndex
+			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
+			// retrieve and process each of the BTC delegation
+			for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+				stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+				if err != nil {
+					panic(err) // only programming error is possible
+				}
+				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
 				btcValDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue)
 			}
 		}

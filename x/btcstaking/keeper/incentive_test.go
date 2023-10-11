@@ -58,7 +58,7 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
 				require.NoError(t, err)
-				err = keeper.SetBTCDelegation(ctx, btcDel)
+				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
 			}
 		}

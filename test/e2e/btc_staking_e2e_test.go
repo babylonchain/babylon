@@ -151,7 +151,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	s.Nil(pendingDels.Dels[0].JurySig)
 
 	// check delegation
-	delegation := nonValidatorNode.QueryBtcDelegation(stakingTx.MustGetTxHash())
+	delegation := nonValidatorNode.QueryBtcDelegation(stakingTx.MustGetTxHashStr())
 	s.NotNil(delegation)
 	expectedScript := hex.EncodeToString(stakingTx.Script)
 	s.Equal(expectedScript, delegation.StakingScript)
@@ -177,7 +177,7 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	stakingTx := pendingDel.StakingTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
 	s.NoError(err)
-	stakingTxHash := stakingTx.MustGetTxHash()
+	stakingTxHash := stakingTx.MustGetTxHashStr()
 
 	/*
 		generate and insert new jury signature, in order to activate the BTC delegation
@@ -383,7 +383,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	stakingTx := activeDel.StakingTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
 	s.NoError(err)
-	stakingTxHash := stakingTx.MustGetTxHash()
+	stakingTxHash := stakingTx.MustGetTxHashStr()
 	stakingTxChainHash, err := chainhash.NewHashFromStr(stakingTxHash)
 	s.NoError(err)
 
@@ -453,7 +453,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	// First sent validator signature
 	stakingTxMsg, err := delegation.StakingTx.ToMsgTx()
 	s.NoError(err)
-	stakingTxHash := delegation.StakingTx.MustGetTxHash()
+	stakingTxHash := delegation.StakingTx.MustGetTxHashStr()
 
 	validatorUnbondingSig, err := delegation.BtcUndelegation.UnbondingTx.Sign(
 		stakingTxMsg,

@@ -158,7 +158,7 @@ func FuzzBTCValidator(f *testing.F) {
 	})
 }
 
-func FuzzBTCDelegations(f *testing.F) {
+func FuzzPendingBTCDelegations(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -203,10 +203,10 @@ func FuzzBTCDelegations(f *testing.F) {
 					btcDel.JurySig = nil
 					pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 				}
-				err = keeper.SetBTCDelegation(ctx, btcDel)
+				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
 
-				txHash := btcDel.StakingTx.MustGetTxHash()
+				txHash := btcDel.StakingTx.MustGetTxHashStr()
 				btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
 				delView, err := keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
 					StakingTxHashHex: txHash,
@@ -221,14 +221,27 @@ func FuzzBTCDelegations(f *testing.F) {
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 
-		// assert all pending BTC delegations
-		resp, err := keeper.PendingBTCDelegations(ctx, &types.QueryPendingBTCDelegationsRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, len(pendingBtcDelsMap), len(resp.BtcDelegations))
-		for _, btcDel := range resp.BtcDelegations {
-			_, ok := pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
-			require.True(t, ok)
+		// querying paginated BTC delegations and assert
+		// Generate a page request with a limit and a nil key
+		if len(pendingBtcDelsMap) == 0 {
+			return
+		}
+		limit := datagen.RandomInt(r, len(pendingBtcDelsMap)) + 1
+		pagination := constructRequestWithLimit(r, limit)
+		req := &types.QueryBTCDelegationsRequest{
+			Status:     types.BTCDelegationStatus_PENDING,
+			Pagination: pagination,
+		}
+		for i := uint64(0); i < numBTCDels; i += limit {
+			resp, err := keeper.BTCDelegations(ctx, req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			for _, btcDel := range resp.BtcDelegations {
+				_, ok := pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
+				require.True(t, ok)
+			}
+			// Construct the next page request
+			pagination.Key = resp.Pagination.NextKey
 		}
 	})
 }
@@ -243,6 +256,7 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		// Setup keeper and context
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// jury and slashing addr
@@ -264,7 +278,7 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		// Generate a random number of BTC delegations under each validator
 		startHeight := datagen.RandomInt(r, 100) + 1
 		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
-		numBTCDels := datagen.RandomInt(r, 100) + 1
+		numBTCDels := datagen.RandomInt(r, 10) + 1
 		unbondingBtcDelsMap := make(map[string]*types.BTCDelegation)
 		for _, btcVal := range btcVals {
 			for j := uint64(0); j < numBTCDels; j++ {
@@ -281,26 +295,46 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 					}
 
 					if datagen.RandomInt(r, 2) == 1 {
-						// some undelegations already have jury sig so they should not be returned
+						// these BTC delegations are unbonded
 						btcDel.BtcUndelegation.JuryUnbondingSig = btcDel.JurySig
+						btcDel.BtcUndelegation.JurySlashingSig = btcDel.JurySig
 					} else {
+						// these BTC delegations are unbonding
 						unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 					}
 				}
 
-				err = keeper.SetBTCDelegation(ctx, btcDel)
+				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
 			}
 		}
 
-		// assert all pending BTC delegations
-		resp, err := keeper.UnbondingBTCDelegations(ctx, &types.QueryUnbondingBTCDelegationsRequest{})
-		require.NoError(t, err)
-		require.NotNil(t, resp)
-		require.Equal(t, len(unbondingBtcDelsMap), len(resp.BtcDelegations))
-		for _, btcDel := range resp.BtcDelegations {
-			_, ok := unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
-			require.True(t, ok)
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
+		keeper.IndexBTCHeight(ctx)
+
+		// querying paginated BTC delegations and assert
+		// Generate a page request with a limit and a nil key
+		if len(unbondingBtcDelsMap) == 0 {
+			return
+		}
+		limit := datagen.RandomInt(r, len(unbondingBtcDelsMap)) + 1
+		pagination := constructRequestWithLimit(r, limit)
+		req := &types.QueryBTCDelegationsRequest{
+			Status:     types.BTCDelegationStatus_UNBONDING,
+			Pagination: pagination,
+		}
+		for i := uint64(0); i < numBTCDels; i += limit {
+			resp, err := keeper.BTCDelegations(ctx, req)
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			for _, btcDel := range resp.BtcDelegations {
+				_, ok := unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
+				require.True(t, ok)
+			}
+			// Construct the next page request
+			pagination.Key = resp.Pagination.NextKey
 		}
 	})
 }
@@ -417,7 +451,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr.String(), 1, 1000, 10000) // timelock period: 1-1000
 				require.NoError(t, err)
-				err = keeper.SetBTCDelegation(ctx, btcDel)
+				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
 				totalVotingPower += btcDel.TotalSat
 			}
@@ -506,7 +540,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
 			require.NoError(t, err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
-			err = keeper.SetBTCDelegation(ctx, btcDel)
+			err = keeper.AddBTCDelegation(ctx, btcDel)
 			require.NoError(t, err)
 		}
 

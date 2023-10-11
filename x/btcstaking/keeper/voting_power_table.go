@@ -46,10 +46,16 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 
 		// iterate all BTC delegations under this validator
 		// to calculate this validator's total voting power
-		btcDelIter := k.btcDelegationStore(ctx, valBTCPK).Iterator(nil, nil)
+		btcDelIter := k.btcDelegatorStore(ctx, valBTCPK).Iterator(nil, nil)
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			var btcDels types.BTCDelegatorDelegations
-			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDels)
+			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
+			if err != nil {
+				panic(err) // only programming error is possible
+			}
+			btcDels, err := k.getBTCDelegatorDelegations(ctx, valBTCPK, delBTCPK)
+			if err != nil {
+				panic(err) // only programming error is possible
+			}
 			valPower += btcDels.VotingPower(btcTipHeight, wValue)
 		}
 		btcDelIter.Close()

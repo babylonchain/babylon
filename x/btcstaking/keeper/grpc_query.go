@@ -17,46 +17,6 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) getDelegationsMatchingCriteria(
-	sdkCtx sdk.Context,
-	match func(*types.BTCDelegation) bool,
-) []*types.BTCDelegation {
-	btcDels := []*types.BTCDelegation{}
-
-	// iterate over each BTC validator
-	valStore := k.btcValidatorStore(sdkCtx)
-	valIter := valStore.Iterator(nil, nil)
-	defer valIter.Close()
-
-	for ; valIter.Valid(); valIter.Next() {
-		valBTCPKBytes := valIter.Key()
-		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
-		if err != nil {
-			// this can only be programming error
-			panic("failed to unmarshal validator BTC PK in KVstore")
-		}
-		delStore := k.btcDelegationStore(sdkCtx, valBTCPK)
-		delIter := delStore.Iterator(nil, nil)
-
-		// iterate over each BTC delegation under this BTC validator
-		for ; delIter.Valid(); delIter.Next() {
-			var curBTCDels types.BTCDelegatorDelegations
-			btcDelsBytes := delIter.Value()
-			k.cdc.MustUnmarshal(btcDelsBytes, &curBTCDels)
-			for i, btcDel := range curBTCDels.Dels {
-				del := btcDel
-				if match(del) {
-					btcDels = append(btcDels, curBTCDels.Dels[i])
-				}
-			}
-		}
-
-		delIter.Close()
-	}
-
-	return btcDels
-}
-
 // BTCValidators returns a paginated list of all Babylon maintained validators
 func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidatorsRequest) (*types.QueryBTCValidatorsResponse, error) {
 	if req == nil {
@@ -107,9 +67,8 @@ func (k Keeper) BTCValidator(ctx context.Context, req *types.QueryBTCValidatorRe
 	return &types.QueryBTCValidatorResponse{BtcValidator: val}, nil
 }
 
-// PendingBTCDelegations returns all pending BTC delegations
-// TODO: find a good way to support pagination of this query
-func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendingBTCDelegationsRequest) (*types.QueryPendingBTCDelegationsResponse, error) {
+// BTCDelegations returns all BTC delegations under a given status
+func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegationsRequest) (*types.QueryBTCDelegationsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -124,48 +83,30 @@ func (k Keeper) PendingBTCDelegations(ctx context.Context, req *types.QueryPendi
 	// get value of w
 	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
 
-	btcDels := k.getDelegationsMatchingCriteria(
-		sdkCtx,
-		func(del *types.BTCDelegation) bool {
-			return del.GetStatus(btcTipHeight, wValue) == types.BTCDelegationStatus_PENDING
-		},
-	)
+	store := k.btcDelegationStore(sdkCtx)
+	var btcDels []*types.BTCDelegation
+	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
+		var btcDel types.BTCDelegation
+		k.cdc.MustUnmarshal(value, &btcDel)
 
-	return &types.QueryPendingBTCDelegationsResponse{BtcDelegations: btcDels}, nil
-}
+		// hit if the queried status is ANY or matches the BTC delegation status
+		if req.Status == types.BTCDelegationStatus_ANY || btcDel.GetStatus(btcTipHeight, wValue) == req.Status {
+			if accumulate {
+				btcDels = append(btcDels, &btcDel)
+			}
+			return true, nil
+		}
 
-// UnbondingBTCDelegations returns all unbonding BTC delegations which require jury signature
-// TODO: find a good way to support pagination of this query
-func (k Keeper) UnbondingBTCDelegations(ctx context.Context, req *types.QueryUnbondingBTCDelegationsRequest) (*types.QueryUnbondingBTCDelegationsResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
+		return false, nil
+	})
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	btcDels := k.getDelegationsMatchingCriteria(
-		sdkCtx,
-		func(del *types.BTCDelegation) bool {
-			// grab all delegations which are unbonding and already have validator signature, but did not receive
-			// jury signature yet
-			if del.BtcUndelegation == nil {
-				return false
-			}
-
-			if del.BtcUndelegation.ValidatorUnbondingSig == nil {
-				return false
-			}
-
-			// undelegation already received jury signature, no need to retrieve it
-			if del.BtcUndelegation.JuryUnbondingSig != nil {
-				return false
-			}
-
-			return true
-		},
-	)
-
-	return &types.QueryUnbondingBTCDelegationsResponse{BtcDelegations: btcDels}, nil
+	return &types.QueryBTCDelegationsResponse{
+		BtcDelegations: btcDels,
+		Pagination:     pageRes,
+	}, nil
 }
 
 // BTCValidatorPowerAtHeight returns the voting power of the specified validator
@@ -285,13 +226,21 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	btcDelStore := k.btcDelegationStore(sdkCtx, valPK)
+	btcDelStore := k.btcDelegatorStore(sdkCtx, valPK)
 
 	btcDels := []*types.BTCDelegatorDelegations{}
 	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
-		var curBTCDels types.BTCDelegatorDelegations
-		k.cdc.MustUnmarshal(value, &curBTCDels)
-		btcDels = append(btcDels, &curBTCDels)
+		delBTCPK, err := bbn.NewBIP340PubKey(key)
+		if err != nil {
+			return err
+		}
+
+		curBTCDels, err := k.getBTCDelegatorDelegations(sdkCtx, valPK, delBTCPK)
+		if err != nil {
+			return err
+		}
+
+		btcDels = append(btcDels, curBTCDels)
 		return nil
 	})
 	if err != nil {
@@ -301,53 +250,6 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 	return &types.QueryBTCValidatorDelegationsResponse{BtcDelegatorDelegations: btcDels, Pagination: pageRes}, nil
 }
 
-func (k Keeper) delegationView(
-	ctx sdk.Context,
-	validatorBtcPubKey *bbn.BIP340PubKey,
-	stakingTxHash *chainhash.Hash) *types.QueryBTCDelegationResponse {
-
-	btcDelIter := k.btcDelegationStore(ctx, validatorBtcPubKey).Iterator(nil, nil)
-	defer btcDelIter.Close()
-	for ; btcDelIter.Valid(); btcDelIter.Next() {
-		var btcDels types.BTCDelegatorDelegations
-		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDels)
-		delegation, err := btcDels.Get(stakingTxHash.String())
-		if err != nil {
-			continue
-		}
-		currentTip := k.btclcKeeper.GetTipInfo(ctx)
-		currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-
-		isActive := delegation.GetStatus(
-			currentTip.Height,
-			currentWValue,
-		) == types.BTCDelegationStatus_ACTIVE
-
-		var undelegationInfo *types.BTCUndelegationInfo = nil
-
-		if delegation.BtcUndelegation != nil {
-			undelegationInfo = &types.BTCUndelegationInfo{
-				UnbondingTx:           delegation.BtcUndelegation.UnbondingTx,
-				ValidatorUnbondingSig: delegation.BtcUndelegation.ValidatorUnbondingSig,
-				JuryUnbondingSig:      delegation.BtcUndelegation.JuryUnbondingSig,
-			}
-		}
-
-		return &types.QueryBTCDelegationResponse{
-			BtcPk:            delegation.BtcPk,
-			ValBtcPk:         delegation.ValBtcPk,
-			StartHeight:      delegation.StartHeight,
-			EndHeight:        delegation.EndHeight,
-			TotalSat:         delegation.TotalSat,
-			StakingTx:        hex.EncodeToString(delegation.StakingTx.Tx),
-			StakingScript:    hex.EncodeToString(delegation.StakingTx.Script),
-			Active:           isActive,
-			UndelegationInfo: undelegationInfo,
-		}
-	}
-	return nil
-}
-
 // BTCDelegation returns existing btc delegation by staking tx hash
 func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegationRequest) (*types.QueryBTCDelegationResponse, error) {
 	if req == nil {
@@ -355,31 +257,46 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHashHex)
 
+	// decode staking tx hash
+	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHashHex)
 	if err != nil {
 		return nil, err
 	}
 
-	btcValIter := k.btcValidatorStore(sdkCtx).Iterator(nil, nil)
-	defer btcValIter.Close()
-	for ; btcValIter.Valid(); btcValIter.Next() {
-		valBTCPKBytes := btcValIter.Key()
-		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
-
-		if err != nil {
-			// failed to unmarshal BTC validator PK in KVStore is a programming error
-			panic(err)
-		}
-
-		response := k.delegationView(sdkCtx, valBTCPK, stakingTxHash)
-
-		if response == nil {
-			continue
-		}
-
-		return response, nil
+	// find BTC delegation
+	btcDel := k.getBTCDelegation(sdkCtx, *stakingTxHash)
+	if btcDel == nil {
+		return nil, types.ErrBTCDelegationNotFound
 	}
 
-	return nil, types.ErrBTCDelNotFound
+	// check whether it's active
+	currentTip := k.btclcKeeper.GetTipInfo(sdkCtx)
+	currentWValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
+	isActive := btcDel.GetStatus(
+		currentTip.Height,
+		currentWValue,
+	) == types.BTCDelegationStatus_ACTIVE
+
+	// get its undelegation info
+	var undelegationInfo *types.BTCUndelegationInfo
+	if btcDel.BtcUndelegation != nil {
+		undelegationInfo = &types.BTCUndelegationInfo{
+			UnbondingTx:           btcDel.BtcUndelegation.UnbondingTx,
+			ValidatorUnbondingSig: btcDel.BtcUndelegation.ValidatorUnbondingSig,
+			JuryUnbondingSig:      btcDel.BtcUndelegation.JuryUnbondingSig,
+		}
+	}
+
+	return &types.QueryBTCDelegationResponse{
+		BtcPk:            btcDel.BtcPk,
+		ValBtcPk:         btcDel.ValBtcPk,
+		StartHeight:      btcDel.StartHeight,
+		EndHeight:        btcDel.EndHeight,
+		TotalSat:         btcDel.TotalSat,
+		StakingTx:        hex.EncodeToString(btcDel.StakingTx.Tx),
+		StakingScript:    hex.EncodeToString(btcDel.StakingTx.Script),
+		Active:           isActive,
+		UndelegationInfo: undelegationInfo,
+	}, nil
 }

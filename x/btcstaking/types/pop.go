@@ -137,3 +137,14 @@ func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340P
 
 	return nil
 }
+
+func (p *ProofOfPossession) ValidateBasic() error {
+	if len(p.BabylonSig) == 0 {
+		return fmt.Errorf("empty Babylon signature")
+	}
+	if p.BtcSig == nil {
+		return fmt.Errorf("empty BTC signature")
+	}
+
+	return nil
+}

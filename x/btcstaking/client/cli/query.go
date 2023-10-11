@@ -24,7 +24,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdBTCValidators())
-	cmd.AddCommand(CmdPendingBTCDelegations())
+	cmd.AddCommand(CmdBTCDelegations())
 	cmd.AddCommand(CmdBTCValidatorsAtHeight())
 	cmd.AddCommand(CmdBTCValidatorPowerAtHeight())
 	cmd.AddCommand(CmdActivatedHeight())
@@ -65,15 +65,29 @@ func CmdBTCValidators() *cobra.Command {
 	return cmd
 }
 
-func CmdPendingBTCDelegations() *cobra.Command {
+func CmdBTCDelegations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "pending-btc-delegations",
-		Short: "retrieve all pending BTC delegations",
-		Args:  cobra.NoArgs,
+		Use:   "btc-delegations [status]",
+		Short: "retrieve all BTC delegations under the given status (pending, active, unbonding, unbonded, any)",
+		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.PendingBTCDelegations(cmd.Context(), &types.QueryPendingBTCDelegationsRequest{})
+
+			pageReq, err := client.ReadPageRequest(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			status, err := types.NewBTCDelegationStatusFromString(args[0])
+			if err != nil {
+				return err
+			}
+
+			res, err := queryClient.BTCDelegations(cmd.Context(), &types.QueryBTCDelegationsRequest{
+				Status:     status,
+				Pagination: pageReq,
+			})
 			if err != nil {
 				return err
 			}
@@ -83,28 +97,7 @@ func CmdPendingBTCDelegations() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func CmdUnbondingBTCDelegations() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "unbonding-btc-delegations",
-		Short: "retrieve all unbonding BTC delegations which require jury signature",
-		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			queryClient := types.NewQueryClient(clientCtx)
-			res, err := queryClient.UnbondingBTCDelegations(cmd.Context(), &types.QueryUnbondingBTCDelegationsRequest{})
-			if err != nil {
-				return err
-			}
-
-			return clientCtx.PrintProto(res)
-		},
-	}
-
-	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "btc-delegations")
 
 	return cmd
 }

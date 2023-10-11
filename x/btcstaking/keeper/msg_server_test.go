@@ -160,7 +160,7 @@ func createDelegation(
 	// get msgTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
 	require.NoError(t, err)
-	stakingTxHash := stakingTx.MustGetTxHash()
+	stakingTxHash := stakingTx.MustGetTxHashStr()
 
 	// random signer
 	signer := datagen.GenRandomAccount().Address
@@ -220,7 +220,7 @@ func createJurySig(
 ) {
 	stakingMsgTx, err := msgCreateBTCDel.StakingTx.ToMsgTx()
 	require.NoError(t, err)
-	stakingTxHash := msgCreateBTCDel.StakingTx.MustGetTxHash()
+	stakingTxHash := msgCreateBTCDel.StakingTx.MustGetTxHashStr()
 	jurySig, err := msgCreateBTCDel.SlashingTx.Sign(
 		stakingMsgTx,
 		msgCreateBTCDel.StakingTx.Script,

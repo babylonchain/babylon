@@ -147,19 +147,19 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
 	}
-	stakingTxHash := stakingMsgTx.TxHash().String()
+	stakingTxHash := stakingMsgTx.TxHash()
 
 	// ensure the validator exists
 	if !ms.HasBTCValidator(ctx, *valBTCPK) {
 		return nil, types.ErrBTCValNotFound
 	}
 
-	delegations, err := ms.validatorDelegations(ctx, valBTCPK, delBTCPK.MustMarshal())
-
+	// ensure the staking tx is not duplicated
+	btcDelIndex, err := ms.getBTCDelegatorDelegationIndex(ctx, valBTCPK, delBTCPK)
 	if err == nil {
 		// err is nil, meaning there exists a BTC delegation for this validator and delegator
 		// ensure the staking tx is not duplicated
-		if delegations.Has(stakingTxHash) {
+		if btcDelIndex.Has(stakingTxHash) {
 			return nil, types.ErrReusedStakingTx
 		}
 	}
@@ -244,7 +244,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		JurySig:         nil, // NOTE: jury signature will be submitted in a separate msg by jury
 		BtcUndelegation: nil,
 	}
-	if err := ms.SetBTCDelegation(ctx, newBTCDel); err != nil {
+	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
 		panic("failed to set BTC delegation that has passed verification")
 	}
 
@@ -546,7 +546,7 @@ func (ms msgServer) AddJuryUnbondingSigs(
 			BtcPk:           btcDel.BtcPk,
 			ValBtcPk:        btcDel.ValBtcPk,
 			StakingTxHash:   req.StakingTxHash,
-			UnbondingTxHash: btcDel.BtcUndelegation.UnbondingTx.MustGetTxHash(),
+			UnbondingTxHash: btcDel.BtcUndelegation.UnbondingTx.MustGetTxHashStr(),
 			FromState:       types.BTCDelegationStatus_UNBONDING,
 		}
 		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
@@ -620,7 +620,7 @@ func (ms msgServer) AddValidatorUnbondingSig(
 			BtcPk:           btcDel.BtcPk,
 			ValBtcPk:        btcDel.ValBtcPk,
 			StakingTxHash:   req.StakingTxHash,
-			UnbondingTxHash: btcDel.BtcUndelegation.UnbondingTx.MustGetTxHash(),
+			UnbondingTxHash: btcDel.BtcUndelegation.UnbondingTx.MustGetTxHashStr(),
 			FromState:       types.BTCDelegationStatus_UNBONDING,
 		}
 		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
