@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newInvalidPoP(r *rand.Rand, babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) *types.ProofOfPossession {
+func newInvalidBIP340PoP(r *rand.Rand, babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKey) *types.ProofOfPossession {
 	pop := types.ProofOfPossession{}
 
 	randomNum := datagen.RandomInt(r, 2) // 0 or 1
@@ -45,7 +45,7 @@ func newInvalidPoP(r *rand.Rand, babylonSK cryptotypes.PrivKey, btcSK *btcec.Pri
 	return &pop
 }
 
-func FuzzPoP(f *testing.F) {
+func FuzzPoP_BIP340(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -63,14 +63,37 @@ func FuzzPoP(f *testing.F) {
 		// generate and verify PoP, correct case
 		pop, err := types.NewPoP(babylonSK, btcSK)
 		require.NoError(t, err)
-		err = pop.Verify(babylonPK, bip340PK)
+		err = pop.VerifyBIP340(babylonPK, bip340PK)
 		require.NoError(t, err)
 
 		// generate and verify PoP, invalid case
-		invalidPoP := newInvalidPoP(r, babylonSK, btcSK)
-		err = invalidPoP.Verify(babylonPK, bip340PK)
+		invalidPoP := newInvalidBIP340PoP(r, babylonSK, btcSK)
+		err = invalidPoP.VerifyBIP340(babylonPK, bip340PK)
 		require.Error(t, err)
 	})
 }
 
 // TODO: fuzz test for BIP322 PoP
+
+func FuzzPoP_ECDSA(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// generate BTC key pair
+		btcSK, btcPK, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+
+		// generate Babylon key pair
+		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
+		require.NoError(t, err)
+
+		// generate and verify PoP, correct case
+		pop, err := types.NewPoPWithECDSABTCSig(babylonSK, btcSK)
+		require.NoError(t, err)
+		err = pop.VerifyECDSA(babylonPK, bip340PK)
+		require.NoError(t, err)
+	})
+}

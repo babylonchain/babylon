@@ -77,14 +77,9 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 	// ensure the validator address does not exist before
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	if req.Pop.BtcSigType == types.BTCSigType_BIP322 {
-		if err := req.Pop.VerifyBIP322(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-322 encoding: %v", err)
-		}
-	} else if req.Pop.BtcSigType == types.BTCSigType_BIP340 {
-		if err := req.Pop.Verify(req.BabylonPk, req.BtcPk); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-340 encoding: %v", err)
-		}
+	// verify proof of possession
+	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
 	// ensure commission rate is at least the minimum commission rate in parameters
@@ -132,14 +127,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.ValidatorKey)
 	juryPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.JuryKey)
 
-	if req.Pop.BtcSigType == types.BTCSigType_BIP322 {
-		if err := req.Pop.VerifyBIP322(req.BabylonPk, delBTCPK, ms.btcNet); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-322 encoding: %v", err)
-		}
-	} else if req.Pop.BtcSigType == types.BTCSigType_BIP340 {
-		if err := req.Pop.Verify(req.BabylonPk, delBTCPK); err != nil {
-			return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession in BIP-340 encoding: %v", err)
-		}
+	// verify proof of possession
+	if err := req.Pop.Verify(req.BabylonPk, delBTCPK, ms.btcNet); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
 	// extract staking tx and its hash
