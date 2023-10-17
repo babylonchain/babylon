@@ -2,9 +2,11 @@ package ecdsa
 
 import (
 	"bytes"
+	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/ecdsa"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 )
@@ -35,6 +37,14 @@ func Sign(sk *btcec.PrivateKey, msg string) ([]byte, error) {
 
 func Verify(pk *btcec.PublicKey, msg string, sigBytes []byte) error {
 	msgHash := magicHash(msg)
-	_, _, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
-	return err
+	recoveredPK, _, err := ecdsa.RecoverCompact(sigBytes, msgHash[:])
+	if err != nil {
+		return err
+	}
+	pkBytes := schnorr.SerializePubKey(pk)
+	recoveredPKBytes := schnorr.SerializePubKey(recoveredPK)
+	if !bytes.Equal(pkBytes, recoveredPKBytes) {
+		return fmt.Errorf("the recovered PK does not match the given PK")
+	}
+	return nil
 }
