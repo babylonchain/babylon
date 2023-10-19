@@ -202,6 +202,10 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	activeDel := activeDels.Dels[0]
 	s.NotNil(activeDel.JurySig)
 
+	// wait for a block so that above txs take effect and the voting power table
+	// is updated in the next block's BeginBlock
+	nonValidatorNode.WaitForNextBlock()
+
 	// ensure BTC staking is activated
 	activatedHeight := nonValidatorNode.QueryActivatedHeight()
 	s.Positive(activatedHeight)
