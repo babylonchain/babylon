@@ -124,7 +124,10 @@ func (k Keeper) BTCValidatorPowerAtHeight(ctx context.Context, req *types.QueryB
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	power := k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), req.Height)
 
-	return &types.QueryBTCValidatorPowerAtHeightResponse{VotingPower: power}, nil
+	return &types.QueryBTCValidatorPowerAtHeightResponse{
+		LastCommitHash: sdkCtx.BlockHeader().LastCommitHash,
+		VotingPower:    power,
+	}, nil
 }
 
 // BTCValidatorCurrentPower returns the voting power of the specified validator
@@ -154,7 +157,11 @@ func (k Keeper) BTCValidatorCurrentPower(ctx context.Context, req *types.QueryBT
 		power = k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), curHeight)
 	}
 
-	return &types.QueryBTCValidatorCurrentPowerResponse{Height: curHeight, VotingPower: power}, nil
+	return &types.QueryBTCValidatorCurrentPowerResponse{
+		Height:         curHeight,
+		LastCommitHash: sdkCtx.BlockHeader().LastCommitHash,
+		VotingPower:    power,
+	}, nil
 }
 
 // ActiveBTCValidatorsAtHeight returns the active BTC validators at the provided height

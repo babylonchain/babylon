@@ -11,6 +11,7 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/golang/mock/gomock"
@@ -352,8 +353,14 @@ func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
 		require.NoError(t, err)
 		// add this BTC validator
 		keeper.SetBTCValidator(ctx, btcVal)
-		// set random voting power at random height
+		// set block header with random last commit hash and height
 		randomHeight := datagen.RandomInt(r, 100) + 1
+		randomLch := datagen.GenRandomByteArray(r, 32)
+		ctx = ctx.WithBlockHeader(tmproto.Header{
+			Height:         int64(randomHeight),
+			LastCommitHash: randomLch,
+		})
+		// set random voting power at random height
 		randomPower := datagen.RandomInt(r, 100) + 1
 		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomHeight, randomPower)
 
@@ -364,6 +371,7 @@ func FuzzBTCValidatorVotingPowerAtHeight(f *testing.F) {
 		resp, err := keeper.BTCValidatorPowerAtHeight(ctx, req)
 		require.NoError(t, err)
 		require.Equal(t, randomPower, resp.VotingPower)
+		require.Equal(t, randomLch, resp.LastCommitHash)
 	})
 }
 
@@ -382,7 +390,11 @@ func FuzzBTCValidatorCurrentVotingPower(f *testing.F) {
 		keeper.SetBTCValidator(ctx, btcVal)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
-		ctx = ctx.WithBlockHeight(int64(randomHeight))
+		randomLch := datagen.GenRandomByteArray(r, 32)
+		ctx = ctx.WithBlockHeader(tmproto.Header{
+			Height:         int64(randomHeight),
+			LastCommitHash: randomLch,
+		})
 		randomPower := datagen.RandomInt(r, 100) + 1
 		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomHeight, randomPower)
 
@@ -393,6 +405,7 @@ func FuzzBTCValidatorCurrentVotingPower(f *testing.F) {
 		resp, err := keeper.BTCValidatorCurrentPower(ctx, req)
 		require.NoError(t, err)
 		require.Equal(t, randomHeight, resp.Height)
+		require.Equal(t, randomLch, resp.LastCommitHash)
 		require.Equal(t, randomPower, resp.VotingPower)
 
 		// if height increments but voting power hasn't recorded yet, then
