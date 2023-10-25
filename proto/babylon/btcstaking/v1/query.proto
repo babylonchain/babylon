@@ -137,11 +137,8 @@ message QueryBTCValidatorPowerAtHeightRequest {
 // QueryBTCValidatorPowerAtHeightResponse is the response type for the
 // Query/BTCValidatorPowerAtHeight RPC method.
 message QueryBTCValidatorPowerAtHeightResponse {
-  // last_commit_hash is the last commit hash of the block at the given height
-  // it will be used for the BTC validator program to generate finality signatures
-  bytes last_commit_hash = 1;
   // voting_power is the voting power of the BTC validator
-  uint64 voting_power = 2;
+  uint64 voting_power = 1;
 }
 
 // QueryBTCValidatorCurrentPowerRequest is the request type for the
@@ -158,11 +155,8 @@ message QueryBTCValidatorCurrentPowerRequest {
 message QueryBTCValidatorCurrentPowerResponse {
   // height is the current height
   uint64 height = 1;
-  // last_commit_hash is the last commit hash of the block at the current height
-  // it will be used for the BTC validator program to generate finality signatures
-  bytes last_commit_hash = 2;
   // voting_power is the voting power of the BTC validator
-  uint64 voting_power = 3;
+  uint64 voting_power = 2;
 }
 
 // QueryActiveBTCValidatorsAtHeightRequest is the request type for the
