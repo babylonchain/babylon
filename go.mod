@@ -4,7 +4,7 @@ module github.com/babylonchain/babylon
 
 require (
 	github.com/CosmWasm/wasmd v0.40.0
-	github.com/btcsuite/btcd v0.23.4
+	github.com/btcsuite/btcd v0.23.5-0.20230711222809-7faa9b266231
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.8.0
 	github.com/cosmos/cosmos-sdk v0.47.3

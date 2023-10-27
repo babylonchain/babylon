@@ -11,6 +11,7 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzMsgInsertHeader(f *testing.F) {
@@ -58,23 +59,41 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			t.Skip()
 		}
 
+		numHeaders := r.Intn(20) + 1
+		headersHex := ""
+		for i := 0; i < numHeaders; i++ {
+			headersHex += newHeaderHex
+		}
+
+		// empty string
+		_, err := types.NewMsgInsertHeaders(signer, "")
+		require.NotNil(t, err)
+
+		// hex string with invalid length
+		invalidLength := uint64(r.Int31n(79) + 1)
+		_, err = types.NewMsgInsertHeaders(signer, headersHex+datagen.GenRandomHexStr(r, invalidLength))
+		require.NotNil(t, err)
+
 		// Check the message creation
-		msgInsertHeader, err := types.NewMsgInsertHeader(signer, newHeaderHex)
+		msgInsertHeader, err := types.NewMsgInsertHeaders(signer, headersHex)
 		if err != nil {
 			t.Errorf("Valid parameters led to error")
 		}
 		if msgInsertHeader == nil {
 			t.Fatalf("nil returned")
 		}
-		if msgInsertHeader.Header == nil {
-			t.Errorf("nil header")
+		if msgInsertHeader.Headers == nil || len(msgInsertHeader.Headers) != numHeaders {
+			t.Errorf("invalid number of headers")
 		}
-		if !bytes.Equal(newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal()) {
-			t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), msgInsertHeader.Header.MustMarshal())
+
+		for _, header := range msgInsertHeader.Headers {
+			if !bytes.Equal(newHeader.MustMarshal(), header.MustMarshal()) {
+				t.Errorf("Expected header bytes %s got %s", newHeader.MustMarshal(), header.MustMarshal())
+			}
 		}
 
 		// Validate the message
-		err = msgInsertHeader.ValidateHeader(&maxDifficulty)
+		err = msgInsertHeader.ValidateHeaders(&maxDifficulty)
 		if err != nil && errorKind == 0 {
 			t.Errorf("Valid message %s failed with %s", headerHex, err)
 		}

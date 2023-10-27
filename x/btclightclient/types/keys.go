@@ -24,35 +24,14 @@ const (
 
 var (
 	HeadersPrefix       = []byte{0x0}                // reserve this namespace for headers
-	HeadersObjectPrefix = append(HeadersPrefix, 0x0) // where we save the concrete header bytes
-	HashToHeightPrefix  = append(HeadersPrefix, 0x1) // where we map hash to height
-	HashToWorkPrefix    = append(HeadersPrefix, 0x2) // where we map hash to height
-	TipPrefix           = append(HeadersPrefix, 0x3) // where we store the tip
+	HeadersObjectPrefix = append(HeadersPrefix, 0x0) // reserve this namespace mapping: Height -> BTCHeaderInfo
+	HashToHeightPrefix  = append(HeadersPrefix, 0x1) // reserve this namespace mapping: Hash -> Height
 )
 
-func HeadersObjectKey(height uint64, hash *bbn.BTCHeaderHashBytes) []byte {
-	he := sdk.Uint64ToBigEndian(height)
-	hashBytes := hash.MustMarshal()
-
-	var prefix []byte
-	prefix = append(prefix, he...)
-	return append(prefix, hashBytes...)
+func HeadersObjectKey(height uint64) []byte {
+	return sdk.Uint64ToBigEndian(height)
 }
 
 func HeadersObjectHeightKey(hash *bbn.BTCHeaderHashBytes) []byte {
-	var prefix []byte
-	return append(prefix, hash.MustMarshal()...)
-}
-
-func HeadersObjectWorkKey(hash *bbn.BTCHeaderHashBytes) []byte {
-	var prefix []byte
-	return append(prefix, hash.MustMarshal()...)
-}
-
-func TipKey() []byte {
-	return TipPrefix
-}
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
+	return hash.MustMarshal()
 }

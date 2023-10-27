@@ -7,7 +7,6 @@ import (
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/testutil/mocks"
-	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	types2 "github.com/babylonchain/babylon/x/epoching/types"
@@ -35,15 +34,17 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		// Insert header tree
-		tree := datagen.NewBTCHeaderTree()
 		root := lck.GetBaseBTCHeader(ctx)
-		tree.Add(root, nil)
-		tree.GenRandomBTCHeaderTree(r, 1, 10, root, func(header *btclightclienttypes.BTCHeaderInfo) bool {
-			err := lck.InsertHeader(ctx, header.Header)
-			require.NoError(t, err)
-			return true
-		})
+		chain := datagen.GenRandomValidChainStartingFrom(
+			r,
+			0,
+			root.Header.ToBlockHeader(),
+			nil,
+			10,
+		)
+		headerBytes := datagen.HeaderToHeaderBytes(chain)
+		err := lck.InsertHeaders(ctx, headerBytes)
+		require.NoError(t, err)
 
 		// EndBlock of block 1
 		ctx = helper.EndBlock()
@@ -96,15 +97,17 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		// Insert header tree
-		tree := datagen.NewBTCHeaderTree()
 		root := lck.GetBaseBTCHeader(ctx)
-		tree.Add(root, nil)
-		tree.GenRandomBTCHeaderTree(r, 1, 10, root, func(header *btclightclienttypes.BTCHeaderInfo) bool {
-			err := lck.InsertHeader(ctx, header.Header)
-			require.NoError(t, err)
-			return true
-		})
+		chain := datagen.GenRandomValidChainStartingFrom(
+			r,
+			0,
+			root.Header.ToBlockHeader(),
+			nil,
+			10,
+		)
+		headerBytes := datagen.HeaderToHeaderBytes(chain)
+		err := lck.InsertHeaders(ctx, headerBytes)
+		require.NoError(t, err)
 
 		// Add checkpoint
 		valBlsSet, privKeys := datagen.GenerateValidatorSetWithBLSPrivKeys(int(datagen.RandomIntOtherThan(r, 0, 10)))
@@ -121,7 +124,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		mockEk.EXPECT().GetValidatorSet(gomock.Any(), gomock.Eq(mockCkptWithMeta.Ckpt.EpochNum)).Return(valSet).AnyTimes()
 		// make sure voting power is always sufficient
 		mockEk.EXPECT().GetTotalVotingPower(gomock.Any(), gomock.Eq(mockCkptWithMeta.Ckpt.EpochNum)).Return(int64(0)).AnyTimes()
-		err := ck.AddRawCheckpoint(
+		err = ck.AddRawCheckpoint(
 			ctx,
 			mockCkptWithMeta,
 		)

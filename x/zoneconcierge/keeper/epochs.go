@@ -1,30 +1,29 @@
 package keeper
 
 import (
-	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// GetFinalizingBTCTip gets the BTC tip when the last epoch is finalised
-func (k Keeper) GetFinalizingBTCTip(ctx sdk.Context) *btclctypes.BTCHeaderInfo {
+// GetLastSentSegment get last broadcasted btc light client segment
+func (k Keeper) GetLastSentSegment(ctx sdk.Context) *types.BTCChainSegment {
 	store := ctx.KVStore(k.storeKey)
 	if !store.Has(types.FinalizingBTCTipKey) {
 		return nil
 	}
-	btcTipBytes := store.Get(types.FinalizingBTCTipKey)
-	var btcTip btclctypes.BTCHeaderInfo
-	k.cdc.MustUnmarshal(btcTipBytes, &btcTip)
-	return &btcTip
+	segmentBytes := store.Get(types.FinalizingBTCTipKey)
+	var segment types.BTCChainSegment
+	k.cdc.MustUnmarshal(segmentBytes, &segment)
+	return &segment
 }
 
-// setFinalizingBTCTip sets the last finalised BTC tip
+// setLastSentSegment sets the last segment which was broadcasted to the other light clients
 // called upon each AfterRawCheckpointFinalized hook invocation
-func (k Keeper) setFinalizingBTCTip(ctx sdk.Context, btcTip *btclctypes.BTCHeaderInfo) {
+func (k Keeper) setLastSentSegment(ctx sdk.Context, segment *types.BTCChainSegment) {
 	store := ctx.KVStore(k.storeKey)
-	btcTipBytes := k.cdc.MustMarshal(btcTip)
-	store.Set(types.FinalizingBTCTipKey, btcTipBytes)
+	segmentBytes := k.cdc.MustMarshal(segment)
+	store.Set(types.FinalizingBTCTipKey, segmentBytes)
 }
 
 // GetFinalizedEpoch gets the last finalised epoch

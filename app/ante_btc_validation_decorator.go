@@ -38,10 +38,9 @@ func (bvd BtcValidationDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulat
 					return ctx, btccheckpointtypes.ErrInvalidCheckpointProof.Wrap(err.Error())
 				}
 
-			case *btclightclient.MsgInsertHeader:
+			case *btclightclient.MsgInsertHeaders:
 				powLimit := bvd.BtcCfg.PowLimit()
-				err := msg.ValidateHeader(&powLimit)
-
+				err := msg.ValidateHeaders(&powLimit)
 				if err != nil {
 					return ctx, btclightclient.ErrInvalidProofOfWOrk
 				}

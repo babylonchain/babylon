@@ -55,7 +55,7 @@ func (n *NodeConfig) BankSend(amount string, sendAddress string, receiveAddress 
 
 func (n *NodeConfig) SendHeaderHex(headerHex string) {
 	n.LogActionF("btclightclient sending header %s", headerHex)
-	cmd := []string{"babylond", "tx", "btclightclient", "insert-header", headerHex, "--from=val", "--gas=500000"}
+	cmd := []string{"babylond", "tx", "btclightclient", "insert-headers", headerHex, "--from=val", "--gas=500000"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully inserted header %s", headerHex)

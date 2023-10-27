@@ -9,6 +9,7 @@ import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -130,4 +131,9 @@ message ProofFinalizedChainInfo {
   // in BTC ledger It is the two TransactionInfo in the best (i.e., earliest)
   // checkpoint submission
   repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 7;
+}
+
+// Btc light client chain segment grown during last finalized epoch
+message BTCChainSegment {
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 2;
 }

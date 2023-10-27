@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
@@ -398,7 +399,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		// mock btclc keeper
 		btclcKeeper := zctypes.NewMockBTCLightClientKeeper(ctrl)
 		mockBTCHeaderInfo := datagen.GenRandomBTCHeaderInfo(r)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockBTCHeaderInfo).AnyTimes()
+		btclcKeeper.EXPECT().GetMainChainFrom(gomock.Any(), gomock.Any()).Return([]*btclightclienttypes.BTCHeaderInfo{mockBTCHeaderInfo}).AnyTimes()
 
 		// mock Tendermint client
 		// TODO: integration tests with Tendermint

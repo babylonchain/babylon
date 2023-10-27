@@ -51,10 +51,6 @@ const (
 	submissionUnknownErr submissionBtcError = submissionBtcError(
 		"One of submission blocks is not known to btclightclient",
 	)
-
-	subbmisionOnForkErr submissionBtcError = submissionBtcError(
-		"One of submission blocks is not on the btc mainchain ",
-	)
 )
 
 func NewKeeper(
@@ -117,12 +113,6 @@ func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes)
 		// one of blocks is not known to light client
 		return 0, submissionUnknownErr
 	}
-
-	if blockDepth < 0 {
-		//  one of submission blocks is on fork, treat whole submission as being on fork
-		return 0, subbmisionOnForkErr
-	}
-
 	return uint64(blockDepth), nil
 }
 

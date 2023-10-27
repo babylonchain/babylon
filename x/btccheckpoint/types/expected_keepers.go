@@ -26,9 +26,8 @@ type BTCLightClientKeeper interface {
 	// in case this is false it should return error
 	BlockHeight(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error)
 
-	// MainChainDepth returns the depth of the header in the main chain or -1 if it does not exist in it
-	// Error is returned if header is unknown to lightclient
-	MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (int64, error)
+	// MainChainDepth returns the depth of the header in the main chain or error if the header does not exist
+	MainChainDepth(ctx sdk.Context, headerBytes *bbn.BTCHeaderHashBytes) (uint64, error)
 }
 
 type CheckpointingKeeper interface {

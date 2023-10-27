@@ -312,7 +312,8 @@ func CreateBlockWithTransaction(
 	transactions = append(transactions, tx)
 
 	randHeader := GenRandomBtcdHeader(r)
-	randHeader.Version = ph.Version
+	// for simnet, requirement for block versions to be >= 4, is enabled from initial block
+	randHeader.Version = 4
 	randHeader.PrevBlock = ph.BlockHash()
 	randHeader.Bits = ph.Bits
 	randHeader.Timestamp = ph.Timestamp.Add(50 * time.Second)

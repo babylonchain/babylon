@@ -1,12 +1,19 @@
 package keeper_test
 
 import (
-	"fmt"
+	"math/big"
+	"math/rand"
+	"testing"
+
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
+	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/rand"
+	"github.com/stretchr/testify/require"
 )
 
 // Mock hooks interface
@@ -43,40 +50,75 @@ func (m *MockHooks) AfterBTCHeaderInserted(_ sdk.Context, headerInfo *types.BTCH
 	m.AfterBTCHeaderInsertedStore = append(m.AfterBTCHeaderInsertedStore, headerInfo)
 }
 
-// Methods for generating trees
-
-// genRandomTree generates a tree of headers. It accomplishes this by generating a root
-// which will serve as the base header and then invokes the `genRandomTreeWithRoot` utility.
-// The `minTreeHeight` and `maxTreeHeight` parameters denote the minimum and maximum height
-// of the tree that is generated. For example, a `minTreeHeight` of 1,
-// means that the tree should have at least one node (the root), while
-// a `maxTreeHeight` of 4, denotes that the maximum height of the tree should be 4.
-func genRandomTree(r *rand.Rand, k *keeper.Keeper, ctx sdk.Context, minHeight uint64, maxHeight uint64) *datagen.BTCHeaderTree {
-	tree := datagen.NewBTCHeaderTree()
-	// Generate the root for the tree
-	root := datagen.GenRandomBTCHeaderInfo(r)
-	tree.Add(root, nil)
-	k.SetBaseBTCHeader(ctx, *root)
-
-	genRandomTreeWithParent(r, k, ctx, minHeight-1, maxHeight-1, root, tree)
-
-	return tree
+func allFieldsEqual(a *types.BTCHeaderInfo, b *types.BTCHeaderInfo) bool {
+	return a.Height == b.Height && a.Hash.Eq(b.Hash) && a.Header.Eq(b.Header) && a.Work.Equal(*b.Work)
 }
 
-// genRandomTreeWithParent is a utility function for inserting the headers
-// While the tree is generated, the headers that are generated for it are inserted into storage.
-func genRandomTreeWithParent(r *rand.Rand, k *keeper.Keeper, ctx sdk.Context, minHeight uint64,
-	maxHeight uint64, root *types.BTCHeaderInfo, tree *datagen.BTCHeaderTree) {
+// this function must not be used at difficulty adjustment boundaries, as then
+// difficulty adjustment calculation will fail
+func genRandomChain(
+	t *testing.T,
+	r *rand.Rand,
+	k *keeper.Keeper,
+	ctx sdk.Context,
+	initialHeight uint64,
+	chainLength uint64,
+) (*types.BTCHeaderInfo, *datagen.BTCHeaderPartialChain) {
+	genesisHeader := datagen.NewBTCHeaderChainWithLength(r, initialHeight, 0, 1)
+	genesisHeaderInfo := genesisHeader.GetChainInfo()[0]
+	k.SetBaseBTCHeader(ctx, *genesisHeaderInfo)
+	randomChain := datagen.NewBTCHeaderChainFromParentInfo(
+		r,
+		genesisHeaderInfo,
+		uint32(chainLength),
+	)
+	err := k.InsertHeaders(ctx, randomChain.ChainToBytes())
+	require.NoError(t, err)
+	tip := k.GetTipInfo(ctx)
+	randomChainTipInfo := randomChain.GetTipInfo()
+	require.True(t, allFieldsEqual(tip, randomChainTipInfo))
+	return genesisHeaderInfo, randomChain
+}
 
-	if minHeight > maxHeight {
-		panic("Min height more than max height")
+func checkTip(
+	t *testing.T,
+	ctx sdk.Context,
+	blcKeeper *keeper.Keeper,
+	expectedWork sdkmath.Uint,
+	expectedHeight uint64,
+	expectedTipHeader *wire.BlockHeader) {
+
+	currentTip := blcKeeper.GetTipInfo(ctx)
+	blockByHeight := blcKeeper.GetHeaderByHeight(ctx, currentTip.Height)
+	blockByHash := blcKeeper.GetHeaderByHash(ctx, currentTip.Hash)
+
+	// Consistency check between tip and block by height and block by hash
+	require.NotNil(t, blockByHeight)
+	require.NotNil(t, currentTip)
+	require.NotNil(t, blockByHash)
+	require.True(t, allFieldsEqual(currentTip, blockByHeight))
+	require.True(t, allFieldsEqual(currentTip, blockByHash))
+
+	// check all tip fields
+	require.True(t, currentTip.Work.Equal(expectedWork))
+	require.Equal(t, currentTip.Height, expectedHeight)
+	expectedTipHeaderHash := expectedTipHeader.BlockHash()
+	require.True(t, currentTip.Hash.ToChainhash().IsEqual(&expectedTipHeaderHash))
+	require.True(t, currentTip.Header.Hash().ToChainhash().IsEqual(&expectedTipHeaderHash))
+}
+
+func chainToChainBytes(chain []*wire.BlockHeader) []bbn.BTCHeaderBytes {
+	chainBytes := make([]bbn.BTCHeaderBytes, len(chain))
+	for i, header := range chain {
+		chainBytes[i] = bbn.NewBTCHeaderBytesFromBlockHeader(header)
 	}
+	return chainBytes
+}
 
-	tree.GenRandomBTCHeaderTree(r, minHeight, maxHeight, root, func(header *types.BTCHeaderInfo) bool {
-		err := k.InsertHeader(ctx, header.Header)
-		if err != nil {
-			panic(fmt.Sprintf("header insertion failed: %s", err))
-		}
-		return true
-	})
+func chainWork(chain []*wire.BlockHeader) *sdkmath.Uint {
+	totalWork := sdkmath.NewUint(0)
+	for _, header := range chain {
+		totalWork = sdkmath.NewUintFromBigInt(new(big.Int).Add(totalWork.BigInt(), blockchain.CalcWork(header.Bits)))
+	}
+	return &totalWork
 }

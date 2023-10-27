@@ -21,7 +21,3 @@ func (m *BTCHeaderInfo) HasParent(parent *BTCHeaderInfo) bool {
 func (m *BTCHeaderInfo) Eq(other *BTCHeaderInfo) bool {
 	return m.Hash.Eq(other.Hash)
 }
-
-func (m BTCHeaderInfo) Validate() error {
-	return nil
-}

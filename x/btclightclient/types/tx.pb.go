@@ -29,24 +29,24 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgInsertHeader defines the message for incoming header bytes
-type MsgInsertHeader struct {
-	Signer string                                                `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	Header *github_com_babylonchain_babylon_types.BTCHeaderBytes `protobuf:"bytes,2,opt,name=header,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderBytes" json:"header,omitempty"`
+// MsgInsertHeaders defines the message for multiple incoming header bytes
+type MsgInsertHeaders struct {
+	Signer  string                                                 `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	Headers []github_com_babylonchain_babylon_types.BTCHeaderBytes `protobuf:"bytes,2,rep,name=headers,proto3,customtype=github.com/babylonchain/babylon/types.BTCHeaderBytes" json:"headers,omitempty"`
 }
 
-func (m *MsgInsertHeader) Reset()         { *m = MsgInsertHeader{} }
-func (m *MsgInsertHeader) String() string { return proto.CompactTextString(m) }
-func (*MsgInsertHeader) ProtoMessage()    {}
-func (*MsgInsertHeader) Descriptor() ([]byte, []int) {
+func (m *MsgInsertHeaders) Reset()         { *m = MsgInsertHeaders{} }
+func (m *MsgInsertHeaders) String() string { return proto.CompactTextString(m) }
+func (*MsgInsertHeaders) ProtoMessage()    {}
+func (*MsgInsertHeaders) Descriptor() ([]byte, []int) {
 	return fileDescriptor_5f638eee60234021, []int{0}
 }
-func (m *MsgInsertHeader) XXX_Unmarshal(b []byte) error {
+func (m *MsgInsertHeaders) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgInsertHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgInsertHeaders) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgInsertHeader.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgInsertHeaders.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -56,41 +56,41 @@ func (m *MsgInsertHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return b[:n], nil
 	}
 }
-func (m *MsgInsertHeader) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgInsertHeader.Merge(m, src)
+func (m *MsgInsertHeaders) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInsertHeaders.Merge(m, src)
 }
-func (m *MsgInsertHeader) XXX_Size() int {
+func (m *MsgInsertHeaders) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgInsertHeader) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgInsertHeader.DiscardUnknown(m)
+func (m *MsgInsertHeaders) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInsertHeaders.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgInsertHeader proto.InternalMessageInfo
+var xxx_messageInfo_MsgInsertHeaders proto.InternalMessageInfo
 
-func (m *MsgInsertHeader) GetSigner() string {
+func (m *MsgInsertHeaders) GetSigner() string {
 	if m != nil {
 		return m.Signer
 	}
 	return ""
 }
 
-// MsgInsertHeaderResponse defines the response for the InsertHeader transaction
-type MsgInsertHeaderResponse struct {
+// MsgInsertHeadersResponse defines the response for the InsertHeaders transaction
+type MsgInsertHeadersResponse struct {
 }
 
-func (m *MsgInsertHeaderResponse) Reset()         { *m = MsgInsertHeaderResponse{} }
-func (m *MsgInsertHeaderResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgInsertHeaderResponse) ProtoMessage()    {}
-func (*MsgInsertHeaderResponse) Descriptor() ([]byte, []int) {
+func (m *MsgInsertHeadersResponse) Reset()         { *m = MsgInsertHeadersResponse{} }
+func (m *MsgInsertHeadersResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgInsertHeadersResponse) ProtoMessage()    {}
+func (*MsgInsertHeadersResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_5f638eee60234021, []int{1}
 }
-func (m *MsgInsertHeaderResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgInsertHeadersResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgInsertHeaderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgInsertHeadersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgInsertHeaderResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgInsertHeadersResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -100,21 +100,21 @@ func (m *MsgInsertHeaderResponse) XXX_Marshal(b []byte, deterministic bool) ([]b
 		return b[:n], nil
 	}
 }
-func (m *MsgInsertHeaderResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgInsertHeaderResponse.Merge(m, src)
+func (m *MsgInsertHeadersResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgInsertHeadersResponse.Merge(m, src)
 }
-func (m *MsgInsertHeaderResponse) XXX_Size() int {
+func (m *MsgInsertHeadersResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgInsertHeaderResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgInsertHeaderResponse.DiscardUnknown(m)
+func (m *MsgInsertHeadersResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgInsertHeadersResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgInsertHeaderResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgInsertHeadersResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgInsertHeader)(nil), "babylon.btclightclient.v1.MsgInsertHeader")
-	proto.RegisterType((*MsgInsertHeaderResponse)(nil), "babylon.btclightclient.v1.MsgInsertHeaderResponse")
+	proto.RegisterType((*MsgInsertHeaders)(nil), "babylon.btclightclient.v1.MsgInsertHeaders")
+	proto.RegisterType((*MsgInsertHeadersResponse)(nil), "babylon.btclightclient.v1.MsgInsertHeadersResponse")
 }
 
 func init() {
@@ -122,24 +122,24 @@ func init() {
 }
 
 var fileDescriptor_5f638eee60234021 = []byte{
-	// 265 bytes of a gzipped FileDescriptorProto
+	// 266 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x52, 0x4a, 0x4a, 0x4c, 0xaa,
 	0xcc, 0xc9, 0xcf, 0xd3, 0x4f, 0x2a, 0x49, 0xce, 0xc9, 0x4c, 0xcf, 0x00, 0x91, 0xa9, 0x79, 0x25,
 	0xfa, 0x65, 0x86, 0xfa, 0x25, 0x15, 0x7a, 0x05, 0x45, 0xf9, 0x25, 0xf9, 0x42, 0x92, 0x50, 0x35,
 	0x7a, 0xa8, 0x6a, 0xf4, 0xca, 0x0c, 0xa5, 0x44, 0xd2, 0xf3, 0xd3, 0xf3, 0xc1, 0xaa, 0xf4, 0x41,
-	0x2c, 0x88, 0x06, 0xa5, 0x6a, 0x2e, 0x7e, 0xdf, 0xe2, 0x74, 0xcf, 0xbc, 0xe2, 0xd4, 0xa2, 0x12,
-	0x8f, 0xd4, 0xc4, 0x94, 0xd4, 0x22, 0x21, 0x31, 0x2e, 0xb6, 0xe2, 0xcc, 0xf4, 0xbc, 0xd4, 0x22,
-	0x09, 0x46, 0x05, 0x46, 0x0d, 0xce, 0x20, 0x28, 0x4f, 0x28, 0x80, 0x8b, 0x2d, 0x03, 0xac, 0x42,
-	0x82, 0x49, 0x81, 0x51, 0x83, 0xc7, 0xc9, 0xe2, 0xd6, 0x3d, 0x79, 0x93, 0xf4, 0xcc, 0x92, 0x8c,
-	0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xa8, 0xd5, 0xc9, 0x19, 0x89, 0x99, 0x79, 0x30, 0x8e,
-	0x7e, 0x49, 0x65, 0x41, 0x6a, 0xb1, 0x9e, 0x53, 0x88, 0x33, 0xc4, 0x70, 0xa7, 0xca, 0x92, 0xd4,
-	0xe2, 0x20, 0xa8, 0x39, 0x4a, 0x92, 0x5c, 0xe2, 0x68, 0x96, 0x07, 0xa5, 0x16, 0x17, 0xe4, 0xe7,
-	0x15, 0xa7, 0x1a, 0x95, 0x73, 0x31, 0xfb, 0x16, 0xa7, 0x0b, 0x15, 0x70, 0xf1, 0xa0, 0xb8, 0x4d,
-	0x4b, 0x0f, 0xa7, 0x07, 0xf5, 0xd0, 0x8c, 0x92, 0x32, 0x22, 0x5e, 0x2d, 0xcc, 0x5a, 0x25, 0x06,
-	0xa7, 0x80, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc2,
-	0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x23, 0xe4, 0xd7,
-	0x0a, 0xf4, 0x98, 0x01, 0x7b, 0x3e, 0x89, 0x0d, 0x1c, 0xd2, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff,
-	0xff, 0x26, 0x30, 0x43, 0x4d, 0xc0, 0x01, 0x00, 0x00,
+	0x2c, 0x88, 0x06, 0xa5, 0x3a, 0x2e, 0x01, 0xdf, 0xe2, 0x74, 0xcf, 0xbc, 0xe2, 0xd4, 0xa2, 0x12,
+	0x8f, 0xd4, 0xc4, 0x94, 0xd4, 0xa2, 0x62, 0x21, 0x31, 0x2e, 0xb6, 0xe2, 0xcc, 0xf4, 0xbc, 0xd4,
+	0x22, 0x09, 0x46, 0x05, 0x46, 0x0d, 0xce, 0x20, 0x28, 0x4f, 0x28, 0x88, 0x8b, 0x3d, 0x03, 0xa2,
+	0x44, 0x82, 0x49, 0x81, 0x59, 0x83, 0xc7, 0xc9, 0xe2, 0xd6, 0x3d, 0x79, 0x93, 0xf4, 0xcc, 0x92,
+	0x8c, 0xd2, 0x24, 0xbd, 0xe4, 0xfc, 0x5c, 0x7d, 0xa8, 0xe5, 0xc9, 0x19, 0x89, 0x99, 0x79, 0x30,
+	0x8e, 0x7e, 0x49, 0x65, 0x41, 0x6a, 0xb1, 0x9e, 0x53, 0x88, 0x33, 0xc4, 0x78, 0xa7, 0xca, 0x92,
+	0xd4, 0xe2, 0x20, 0x98, 0x41, 0x4a, 0x52, 0x5c, 0x12, 0xe8, 0xf6, 0x07, 0xa5, 0x16, 0x17, 0xe4,
+	0xe7, 0x15, 0xa7, 0x1a, 0x55, 0x71, 0x31, 0xfb, 0x16, 0xa7, 0x0b, 0x15, 0x73, 0xf1, 0xa2, 0xba,
+	0x4f, 0x5b, 0x0f, 0xa7, 0x2f, 0xf5, 0xd0, 0x0d, 0x93, 0x32, 0x26, 0x41, 0x31, 0xcc, 0x66, 0x25,
+	0x06, 0xa7, 0x80, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71,
+	0xc2, 0x63, 0x39, 0x86, 0x0b, 0x8f, 0xe5, 0x18, 0x6e, 0x3c, 0x96, 0x63, 0x88, 0x32, 0x23, 0xe4,
+	0xe1, 0x0a, 0xf4, 0x08, 0x02, 0x87, 0x40, 0x12, 0x1b, 0x38, 0xc0, 0x8d, 0x01, 0x01, 0x00, 0x00,
+	0xff, 0xff, 0x75, 0x7e, 0xfc, 0x67, 0xc7, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -154,9 +154,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// InsertHeader adds a header to the BTC light client chain maintained by
-	// Babylon.
-	InsertHeader(ctx context.Context, in *MsgInsertHeader, opts ...grpc.CallOption) (*MsgInsertHeaderResponse, error)
+	// InsertHeaders adds a batch of headers to the BTC light client chain
+	InsertHeaders(ctx context.Context, in *MsgInsertHeaders, opts ...grpc.CallOption) (*MsgInsertHeadersResponse, error)
 }
 
 type msgClient struct {
@@ -167,9 +166,9 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
 }
 
-func (c *msgClient) InsertHeader(ctx context.Context, in *MsgInsertHeader, opts ...grpc.CallOption) (*MsgInsertHeaderResponse, error) {
-	out := new(MsgInsertHeaderResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btclightclient.v1.Msg/InsertHeader", in, out, opts...)
+func (c *msgClient) InsertHeaders(ctx context.Context, in *MsgInsertHeaders, opts ...grpc.CallOption) (*MsgInsertHeadersResponse, error) {
+	out := new(MsgInsertHeadersResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btclightclient.v1.Msg/InsertHeaders", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -178,37 +177,36 @@ func (c *msgClient) InsertHeader(ctx context.Context, in *MsgInsertHeader, opts 
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// InsertHeader adds a header to the BTC light client chain maintained by
-	// Babylon.
-	InsertHeader(context.Context, *MsgInsertHeader) (*MsgInsertHeaderResponse, error)
+	// InsertHeaders adds a batch of headers to the BTC light client chain
+	InsertHeaders(context.Context, *MsgInsertHeaders) (*MsgInsertHeadersResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) InsertHeader(ctx context.Context, req *MsgInsertHeader) (*MsgInsertHeaderResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method InsertHeader not implemented")
+func (*UnimplementedMsgServer) InsertHeaders(ctx context.Context, req *MsgInsertHeaders) (*MsgInsertHeadersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method InsertHeaders not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
 }
 
-func _Msg_InsertHeader_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgInsertHeader)
+func _Msg_InsertHeaders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgInsertHeaders)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).InsertHeader(ctx, in)
+		return srv.(MsgServer).InsertHeaders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btclightclient.v1.Msg/InsertHeader",
+		FullMethod: "/babylon.btclightclient.v1.Msg/InsertHeaders",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).InsertHeader(ctx, req.(*MsgInsertHeader))
+		return srv.(MsgServer).InsertHeaders(ctx, req.(*MsgInsertHeaders))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -218,15 +216,15 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "InsertHeader",
-			Handler:    _Msg_InsertHeader_Handler,
+			MethodName: "InsertHeaders",
+			Handler:    _Msg_InsertHeaders_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "babylon/btclightclient/v1/tx.proto",
 }
 
-func (m *MsgInsertHeader) Marshal() (dAtA []byte, err error) {
+func (m *MsgInsertHeaders) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -236,27 +234,29 @@ func (m *MsgInsertHeader) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgInsertHeader) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgInsertHeaders) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgInsertHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgInsertHeaders) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Header != nil {
-		{
-			size := m.Header.Size()
-			i -= size
-			if _, err := m.Header.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
+	if len(m.Headers) > 0 {
+		for iNdEx := len(m.Headers) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size := m.Headers[iNdEx].Size()
+				i -= size
+				if _, err := m.Headers[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+					return 0, err
+				}
+				i = encodeVarintTx(dAtA, i, uint64(size))
 			}
-			i = encodeVarintTx(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x12
 		}
-		i--
-		dAtA[i] = 0x12
 	}
 	if len(m.Signer) > 0 {
 		i -= len(m.Signer)
@@ -268,7 +268,7 @@ func (m *MsgInsertHeader) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgInsertHeaderResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgInsertHeadersResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -278,12 +278,12 @@ func (m *MsgInsertHeaderResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgInsertHeaderResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgInsertHeadersResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgInsertHeaderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgInsertHeadersResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -302,7 +302,7 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgInsertHeader) Size() (n int) {
+func (m *MsgInsertHeaders) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -312,14 +312,16 @@ func (m *MsgInsertHeader) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	if m.Header != nil {
-		l = m.Header.Size()
-		n += 1 + l + sovTx(uint64(l))
+	if len(m.Headers) > 0 {
+		for _, e := range m.Headers {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
 	}
 	return n
 }
 
-func (m *MsgInsertHeaderResponse) Size() (n int) {
+func (m *MsgInsertHeadersResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -334,7 +336,7 @@ func sovTx(x uint64) (n int) {
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *MsgInsertHeader) Unmarshal(dAtA []byte) error {
+func (m *MsgInsertHeaders) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -357,10 +359,10 @@ func (m *MsgInsertHeader) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgInsertHeader: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgInsertHeaders: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgInsertHeader: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgInsertHeaders: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -397,7 +399,7 @@ func (m *MsgInsertHeader) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Header", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Headers", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -425,8 +427,8 @@ func (m *MsgInsertHeader) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			var v github_com_babylonchain_babylon_types.BTCHeaderBytes
-			m.Header = &v
-			if err := m.Header.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.Headers = append(m.Headers, v)
+			if err := m.Headers[len(m.Headers)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -451,7 +453,7 @@ func (m *MsgInsertHeader) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgInsertHeaderResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgInsertHeadersResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -474,10 +476,10 @@ func (m *MsgInsertHeaderResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgInsertHeaderResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgInsertHeadersResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgInsertHeaderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgInsertHeadersResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

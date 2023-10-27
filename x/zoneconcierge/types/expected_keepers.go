@@ -3,6 +3,7 @@ package types
 import (
 	context "context"
 
+	bbn "github.com/babylonchain/babylon/types"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -81,10 +82,9 @@ type ScopedKeeper interface {
 
 type BTCLightClientKeeper interface {
 	GetTipInfo(ctx sdk.Context) *btclctypes.BTCHeaderInfo
-	GetBaseBTCHeader(ctx sdk.Context) *btclctypes.BTCHeaderInfo
-	GetHighestCommonAncestor(ctx sdk.Context, header1 *btclctypes.BTCHeaderInfo, header2 *btclctypes.BTCHeaderInfo) *btclctypes.BTCHeaderInfo
-	GetInOrderAncestorsUntil(ctx sdk.Context, descendant *btclctypes.BTCHeaderInfo, ancestor *btclctypes.BTCHeaderInfo) []*btclctypes.BTCHeaderInfo
+	GetMainChainFrom(ctx sdk.Context, startHeight uint64) []*btclctypes.BTCHeaderInfo
 	GetMainChainUpTo(ctx sdk.Context, depth uint64) []*btclctypes.BTCHeaderInfo
+	GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *btclctypes.BTCHeaderInfo
 }
 
 type BtcCheckpointKeeper interface {
