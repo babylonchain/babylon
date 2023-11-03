@@ -1,8 +1,9 @@
 package types
 
 import (
-	"cosmossdk.io/math"
 	"fmt"
+
+	"cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -43,6 +44,8 @@ func DefaultParams() Params {
 		SlashingAddress:     defaultSlashingAddress(),
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   math.LegacyZeroDec(),
+		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
+		SlashingRate: math.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
 	}
 }
 
@@ -73,12 +76,23 @@ func validateMinCommissionRate(rate sdk.Dec) error {
 	return nil
 }
 
+// validateSlashingRate checks if the slashing rate is within the valid range (0, 1].
+func validateSlashingRate(slashingRate sdk.Dec) error {
+	if slashingRate.LTE(math.LegacyZeroDec()) || slashingRate.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("slashing rate must be in the range (0, 1] i.e., 0 exclusive and 1 inclusive")
+	}
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
 		return err
 	}
 	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
+		return err
+	}
+	if err := validateSlashingRate(p.SlashingRate); err != nil {
 		return err
 	}
 	return nil

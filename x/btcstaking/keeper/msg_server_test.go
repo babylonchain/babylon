@@ -100,6 +100,7 @@ func getJuryInfo(t *testing.T,
 		SlashingAddress:     slashingAddr.String(),
 		MinSlashingTxFeeSat: 10,
 		MinCommissionRate:   sdk.MustNewDecFromStr("0.01"),
+		SlashingRate:        sdk.MustNewDecFromStr("0.1"),
 	})
 	require.NoError(t, err)
 	return jurySK, juryPK, slashingAddr
@@ -406,6 +407,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		SlashingAddress:     slashingAddr.String(),
 		MinSlashingTxFeeSat: 10,
 		MinCommissionRate:   sdk.MustNewDecFromStr("0.01"),
+		SlashingRate:        sdk.MustNewDecFromStr("0.1"),
 	})
 	require.NoError(t, err)
 

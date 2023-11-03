@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
@@ -15,7 +16,7 @@ message Params {
   // slashing address is the address that the slashed BTC goes to
   // the address is in string on Bitcoin
   string slashing_address = 2;
-  // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified 
+  // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
   // in Satoshi) needed for the pre-signed slashing tx
   // TODO: change to satoshi per byte?
   int64 min_slashing_tx_fee_sat = 3;
@@ -23,5 +24,12 @@ message Params {
   string min_commission_rate = 4 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
     (gogoproto.nullable)   = false
+  ];
+  // slashing_rate determines the portion of the staked amount to be slashed,
+  // expressed as a decimal (e.g., 0.5 for 50%).
+  string slashing_rate = 5 [
+      (cosmos_proto.scalar)  = "cosmos.Dec",
+      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.nullable)   = false
   ];
 }

@@ -1,8 +1,9 @@
 package cmd
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	babylonApp "github.com/babylonchain/babylon/app"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -30,6 +31,7 @@ const (
 	flagJuryPk                 = "jury-pk"
 	flagSlashingAddress        = "slashing-address"
 	flagMinSlashingFee         = "min-slashing-fee-sat"
+	flagSlashingRate           = "slashing-rate"
 	flagMinPubRand             = "min-pub-rand"
 	flagMinCommissionRate      = "min-commission-rate"
 )
@@ -53,6 +55,7 @@ type GenesisCLIArgs struct {
 	JuryPK                       string
 	SlashingAddress              string
 	MinSlashingTransactionFeeSat int64
+	SlashingRate                 sdk.Dec
 	MinPubRand                   uint64
 	MinCommissionRate            sdk.Dec
 }
@@ -76,6 +79,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagSlashingAddress, btcstypes.DefaultParams().SlashingAddress, "Bitcoin staking slashing address")
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
+	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
 	// finality args
 	cmd.Flags().Uint64(flagMinPubRand, 100, "Bitcoin staking minimum public randomness commit")
 	// inflation args
@@ -103,6 +107,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	slashingAddress, _ := cmd.Flags().GetString(flagSlashingAddress)
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
+	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
 	minPubRand, _ := cmd.Flags().GetUint64(flagMinPubRand)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
@@ -131,6 +136,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		SlashingAddress:              slashingAddress,
 		MinSlashingTransactionFeeSat: minSlashingFee,
 		MinCommissionRate:            sdk.MustNewDecFromStr(minCommissionRate),
+		SlashingRate:                 sdk.MustNewDecFromStr(slashingRate),
 		MinPubRand:                   minPubRand,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,

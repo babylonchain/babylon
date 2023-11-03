@@ -1,8 +1,9 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/stretchr/testify/require"
@@ -27,9 +28,23 @@ func TestGenesisState_Validate(t *testing.T) {
 					SlashingAddress:     types.DefaultParams().SlashingAddress,
 					MinSlashingTxFeeSat: 500,
 					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:        sdkmath.LegacyMustNewDecFromStr("0.1"),
 				},
 			},
 			valid: true,
+		},
+		{
+			desc: "invalid slashing rate in genesis",
+			genState: &types.GenesisState{
+				Params: types.Params{
+					JuryPk:              types.DefaultParams().JuryPk,
+					SlashingAddress:     types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat: 500,
+					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:        sdkmath.LegacyZeroDec(), // invalid slashing rate
+				},
+			},
+			valid: false,
 		},
 	}
 	for _, tc := range tests {
