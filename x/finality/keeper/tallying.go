@@ -16,11 +16,6 @@ import (
 // - non-finalisable blocks (i.e., block with no active validator)
 // but without block that has validator set AND does not receive QC
 func (k Keeper) TallyBlocks(ctx sdk.Context) {
-	// blocksToFinalize is the set of blocks to finalise within this tallying attempt
-	blocksToFinalize := []*types.IndexedBlock{}
-	// valSets is the BTC validator set at each height with a non-finalised block
-	valSets := map[uint64]map[string]uint64{}
-
 	activatedHeight, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx)
 	if err != nil {
 		// invoking TallyBlocks when BTC staking protocol is not activated is a programming error
@@ -28,54 +23,51 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 			ctx.BlockHeight(), activatedHeight))
 	}
 
-	// find all blocks that are non-finalised AND have validator set, from latest to the earliest activated height
+	// start finalising blocks since max(activatedHeight, nextHeightToFinalize)
+	startHeight := k.getNextHeightToFinalize(ctx)
+	if startHeight < activatedHeight {
+		startHeight = activatedHeight
+	}
+
+	// find all blocks that are non-finalised AND have validator set since max(activatedHeight, lastFinalizedHeight+1)
 	// There are 4 different scenarios as follows
-	// - has validators, non-finalised: can finalise, add to blocksToFinalize
-	// - does not have validators, non-finalised: non-finalisable, skip
-	// - has validators, finalised, break here
+	// - has validators, non-finalised: tally and try to finalise
+	// - does not have validators, non-finalised: non-finalisable, continue
+	// - has validators, finalised: impossible to happen, panic
 	// - does not have validators, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
-	blockRevIter := k.blockStore(ctx).ReverseIterator(sdk.Uint64ToBigEndian(uint64(activatedHeight)), nil)
-	for ; blockRevIter.Valid(); blockRevIter.Next() {
-		// get the indexed block
-		ibBytes := blockRevIter.Value()
-		var ib types.IndexedBlock
-		k.cdc.MustUnmarshal(ibBytes, &ib)
+	for i := startHeight; i <= uint64(ctx.BlockHeight()); i++ {
+		ib, err := k.GetBlock(ctx, i)
+		if err != nil {
+			panic(err) // failing to get an existing block is a programming error
+		}
+
 		// get the validator set of this block
 		valSet := k.BTCStakingKeeper.GetVotingPowerTable(ctx, ib.Height)
 
 		if valSet != nil && !ib.Finalized {
-			// has validators, non-finalised: can finalise, add block and valset
-			blocksToFinalize = append(blocksToFinalize, &ib)
-			valSets[ib.Height] = valSet
+			// has validators, non-finalised: tally and try to finalise the block
+			voterBTCPKs := k.GetVoters(ctx, ib.Height)
+			if tally(valSet, voterBTCPKs) {
+				// if this block gets >2/3 votes, finalise it
+				k.finalizeBlock(ctx, ib, voterBTCPKs)
+			} else {
+				// if not, then this block and all subsequent blocks should not be finalised
+				// thus, we need to break here
+				break
+			}
 		} else if valSet == nil && !ib.Finalized {
-			// does not have validators, non-finalised: not finalisable, skip
+			// does not have validators, non-finalised: not finalisable,
+			// increment the next height to finalise and continue
+			k.setNextHeightToFinalize(ctx, ib.Height+1)
 			continue
 		} else if valSet != nil && ib.Finalized {
 			// has validators and the block has finalised
-			// this means that the entire prefix has been finalised, break here
-			break
+			// this can only be a programming error
+			panic(fmt.Errorf("block %d is finalized, but last finalized height in DB does not reach here", ib.Height))
 		} else if valSet == nil && ib.Finalized {
 			// does not have validators, finalised: impossible to happen, panic
 			panic(fmt.Errorf("block %d is finalized, but does not have a validator set", ib.Height))
-		}
-	}
-	// closing the iterator right now before finalising the finalisable blocks
-	// this is to follow the contract at https://github.com/cosmos/cosmos-sdk/blob/v0.47.4/store/types/store.go#L239-L240
-	blockRevIter.Close()
-
-	// for each of these blocks from earliest to latest, tally the block w.r.t. existing votes
-	for i := len(blocksToFinalize) - 1; i >= 0; i-- {
-		blockToFinalize := blocksToFinalize[i]
-		voterBTCPKs := k.GetVoters(ctx, blockToFinalize.Height)
-		valSet := valSets[blockToFinalize.Height]
-		if tally(valSet, voterBTCPKs) {
-			// if this block gets >2/3 votes, finalise it
-			k.finalizeBlock(ctx, blockToFinalize, voterBTCPKs)
-		} else {
-			// if not, then this block and all subsequent blocks should not be finalised
-			// thus, we need to break here
-			break
 		}
 	}
 }
@@ -86,6 +78,8 @@ func (k Keeper) finalizeBlock(ctx sdk.Context, block *types.IndexedBlock, voterB
 	// set block to be finalised in KVStore
 	block.Finalized = true
 	k.SetBlock(ctx, block)
+	// set next height to finalise as height+1
+	k.setNextHeightToFinalize(ctx, block.Height+1)
 	// distribute rewards to BTC staking stakeholders w.r.t. the reward distribution cache
 	rdc, err := k.BTCStakingKeeper.GetRewardDistCache(ctx, block.Height)
 	if err != nil {
@@ -110,5 +104,23 @@ func tally(valSet map[string]uint64, voterBTCPKs map[string]struct{}) bool {
 			votedPower += power
 		}
 	}
-	return votedPower > totalPower*2/3
+	return votedPower*3 > totalPower*2
+}
+
+// setNextHeightToFinalize sets the next height to finalise as the given height
+func (k Keeper) setNextHeightToFinalize(ctx sdk.Context, height uint64) {
+	store := ctx.KVStore(k.storeKey)
+	heightBytes := sdk.Uint64ToBigEndian(height)
+	store.Set(types.NextHeightToFinalizeKey, heightBytes)
+}
+
+// getNextHeightToFinalize gets the next height to finalise
+func (k Keeper) getNextHeightToFinalize(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	bz := store.Get(types.NextHeightToFinalizeKey)
+	if bz == nil {
+		return 0
+	}
+	height := sdk.BigEndianToUint64(bz)
+	return height
 }

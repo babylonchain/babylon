@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FuzzTallying(f *testing.F) {
+func FuzzTallying_PanicCases(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -39,14 +39,29 @@ func FuzzTallying(f *testing.F) {
 			Finalized:      true,
 		})
 		// activate BTC staking protocol at height 1
+		ctx = ctx.WithBlockHeight(1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(1), nil).Times(1)
 		bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(uint64(1))).Return(nil).Times(1)
 		require.Panics(t, func() { fKeeper.TallyBlocks(ctx) })
+	})
+}
+
+func FuzzTallying_FinalizingNoBlock(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
 
 		// activate BTC staking protocol at a random height
 		activatedHeight := datagen.RandomInt(r, 10) + 1
 
-		// Case 3: index a list of blocks, don't give them QCs, and tally them
+		// index a list of blocks, don't give them QCs, and tally them
 		// Expect they are not finalised
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			// index blocks
@@ -55,22 +70,12 @@ func FuzzTallying(f *testing.F) {
 				LastCommitHash: datagen.GenRandomByteArray(r, 32),
 				Finalized:      false,
 			})
-			// 1 vote
-			votedValPK, err := datagen.GenRandomBIP340PubKey(r)
+			// this block does not have QC
+			err := giveNoQCToHeight(r, ctx, bsKeeper, fKeeper, i)
 			require.NoError(t, err)
-			votedSig, err := bbn.NewSchnorrEOTSSig(datagen.GenRandomByteArray(r, 32))
-			require.NoError(t, err)
-			fKeeper.SetSig(ctx, i, votedValPK, votedSig)
-			// 4 BTC vals
-			valSet := map[string]uint64{
-				hex.EncodeToString(votedValPK.MustMarshal()):          1,
-				hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
-				hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
-				hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
-			}
-			bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(i)).Return(valSet).Times(1)
 		}
 		// add mock queries to GetBTCStakingActivatedHeight
+		ctx = ctx.WithBlockHeight(int64(activatedHeight) + 10 - 1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
 		// tally blocks and none of them should be finalised
 		fKeeper.TallyBlocks(ctx)
@@ -79,8 +84,26 @@ func FuzzTallying(f *testing.F) {
 			require.NoError(t, err)
 			require.False(t, ib.Finalized)
 		}
+	})
 
-		// Case 4: index a list of blocks, give some of them QCs, and tally them.
+}
+
+func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		iKeeper := types.NewMockIncentiveKeeper(ctrl)
+		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
+
+		// activate BTC staking protocol at a random height
+		activatedHeight := datagen.RandomInt(r, 10) + 1
+
+		// index a list of blocks, give some of them QCs, and tally them.
 		// Expect they are all finalised
 		numWithQCs := datagen.RandomInt(r, 5) + 1
 		for i := activatedHeight; i < activatedHeight+10; i++ {
@@ -105,6 +128,7 @@ func FuzzTallying(f *testing.F) {
 		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		bsKeeper.EXPECT().RemoveRewardDistCache(gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// add mock queries to GetBTCStakingActivatedHeight
+		ctx = ctx.WithBlockHeight(int64(activatedHeight) + 10 - 1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
 		// tally blocks and none of them should be finalised
 		fKeeper.TallyBlocks(ctx)
@@ -118,6 +142,7 @@ func FuzzTallying(f *testing.F) {
 			}
 		}
 	})
+
 }
 
 func giveQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakingKeeper, fKeeper *keeper.Keeper, height uint64) error {
@@ -162,7 +187,7 @@ func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStak
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 	}
-	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(valSet).Times(1)
+	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(valSet).MaxTimes(1)
 
 	return nil
 }
