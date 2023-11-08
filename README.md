@@ -6,6 +6,7 @@ Bringing Bitcoin security to Cosmos and beyond.
 [![Whitepaper](https://badgen.net/badge/icon/whitepaper?label=)](https://arxiv.org/abs/2207.08392)
 [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/babylon_chain)
 [![Discord](https://badgen.net/badge/icon/discord?icon=discord&label)](https://discord.gg/babylonchain)
+[![Medium](https://badgen.net/badge/icon/medium?icon=medium&label)](https://medium.com/babylonchain-io)
 
 ## Build and install
 
