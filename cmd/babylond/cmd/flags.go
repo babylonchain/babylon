@@ -28,7 +28,7 @@ const (
 	flagBlocksPerYear          = "blocks-per-year"
 	flagGenesisTime            = "genesis-time"
 	flagBlockGasLimit          = "block-gas-limit"
-	flagJuryPk                 = "jury-pk"
+	flagCovenantPk             = "covenant-pk"
 	flagSlashingAddress        = "slashing-address"
 	flagMinSlashingFee         = "min-slashing-fee-sat"
 	flagSlashingRate           = "slashing-rate"
@@ -52,7 +52,7 @@ type GenesisCLIArgs struct {
 	BlocksPerYear                uint64
 	GenesisTime                  time.Time
 	BlockGasLimit                int64
-	JuryPK                       string
+	CovenantPK                   string
 	SlashingAddress              string
 	MinSlashingTransactionFeeSat int64
 	SlashingRate                 sdk.Dec
@@ -75,7 +75,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
 	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
 	// btcstaking args
-	cmd.Flags().String(flagJuryPk, btcstypes.DefaultParams().JuryPk.MarshalHex(), "Bitcoin staking jury public key")
+	cmd.Flags().String(flagCovenantPk, btcstypes.DefaultParams().CovenantPk.MarshalHex(), "Bitcoin staking covenant public key")
 	cmd.Flags().String(flagSlashingAddress, btcstypes.DefaultParams().SlashingAddress, "Bitcoin staking slashing address")
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
@@ -103,7 +103,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 	baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
 	baseBtcHeaderHeight, _ := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
-	juryPk, _ := cmd.Flags().GetString(flagJuryPk)
+	covenantPk, _ := cmd.Flags().GetString(flagCovenantPk)
 	slashingAddress, _ := cmd.Flags().GetString(flagSlashingAddress)
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
@@ -132,7 +132,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		EpochInterval:                epochInterval,
 		BaseBtcHeaderHeight:          baseBtcHeaderHeight,
 		BaseBtcHeaderHex:             baseBtcHeaderHex,
-		JuryPK:                       juryPk,
+		CovenantPK:                   covenantPk,
 		SlashingAddress:              slashingAddress,
 		MinSlashingTransactionFeeSat: minSlashingFee,
 		MinCommissionRate:            sdk.MustNewDecFromStr(minCommissionRate),

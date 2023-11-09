@@ -80,16 +80,16 @@ message BTCDelegation {
     BabylonBTCTaprootTx staking_tx = 8;
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by
-    // validator or jury yet.
+    // validator or covenant yet.
     bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the staking tx output.
     bytes delegator_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // jury_sig is the signature signature on the slashing tx
-    // by the jury (i.e., SK corresponding to jury_pk in params)
+    // covenant_sig is the signature signature on the slashing tx
+    // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It will be a part of the witness for the staking tx output.
-    bytes jury_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes covenant_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
     // if this object is present it menans that staker requested undelegation, and whole
     // delegation is being undelegated.
@@ -106,23 +106,23 @@ message BTCUndelegation {
     BabylonBTCTaprootTx unbonding_tx = 1;
     // slashing_tx is the slashing tx for unbodning transactions
     // It is partially signed by SK corresponding to btc_pk, but not signed by
-    // validator or jury yet.
+    // validator or covenant yet.
     bytes slashing_tx = 2 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_slashing_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the unbodning tx output.
     bytes delegator_slashing_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // jury_slashing_sig is the signature on the slashing tx
-    // by the jury (i.e., SK corresponding to jury_pk in params)
+    // covenant_slashing_sig is the signature on the slashing tx
+    // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon
-    bytes jury_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // jury_unbonding_sig is the signature on the unbonding tx
-    // by the jury (i.e., SK corresponding to jury_pk in params)
+    bytes covenant_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // covenant_unbonding_sig is the signature on the unbonding tx
+    // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon and after
     // validator sig will be provided by validator
-    bytes jury_unbonding_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes covenant_unbonding_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // validator_unbonding_sig is the signature on the unbonding tx
-    // by the validator (i.e., SK corresponding to jury_pk in params)
+    // by the validator (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon
     bytes validator_unbonding_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
@@ -141,10 +141,10 @@ message BTCUndelegationInfo {
     // It will be nil if validator didn't sign it yet
     bytes validator_unbonding_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
-    // jury_unbonding_sig is the signature on the unbonding tx
-    // by the jury (i.e., SK corresponding to jury_pk in params)
-    // it will be nil if jury didn't sign it yet
-    bytes jury_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // covenant_unbonding_sig is the signature on the unbonding tx
+    // by the covenant (i.e., SK corresponding to covenant_pk in params)
+    // it will be nil if covenant didn't sign it yet
+    bytes covenant_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
 // BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.
@@ -173,17 +173,17 @@ message BabylonBTCTaprootTx {
 // 2. PENDING _> ACTIVE -> UNBONDING -> UNBONDED - this is the path when staker requests undelegation through
 // MsgBTCUndelegate message.
 enum BTCDelegationStatus {
-    // PENDING defines a delegation that is waiting for a jury signature to become active.
+    // PENDING defines a delegation that is waiting for a covenant signature to become active.
     PENDING = 0;
     // ACTIVE defines a delegation that has voting power
     ACTIVE = 1;
     // UNBONDING defines a delegation that is being unbonded i.e it received an unbonding tx
-    // from staker, but not yet received signatures from validator and jury.
+    // from staker, but not yet received signatures from validator and covenant.
     // Delegation in this state already lost its voting power.
     UNBONDING = 2;
     // UNBONDED defines a delegation no longer has voting power:
     // - either reaching the end of staking transaction timelock
-    // - or receiving unbonding tx and then receiving signatures from validator and jury for this
+    // - or receiving unbonding tx and then receiving signatures from validator and covenant for this
     // unbonding tx.
     UNBONDED = 3;
     // ANY is any of the above status

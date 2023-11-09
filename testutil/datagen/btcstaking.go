@@ -63,11 +63,11 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 	}, nil
 }
 
-func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btcec.PrivateKey, jurySK *btcec.PrivateKey, slashingAddr string, startHeight uint64, endHeight uint64, totalSat uint64) (*bstypes.BTCDelegation, error) {
+func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btcec.PrivateKey, covenantSK *btcec.PrivateKey, slashingAddr string, startHeight uint64, endHeight uint64, totalSat uint64) (*bstypes.BTCDelegation, error) {
 	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
-	juryBTCPK := jurySK.PubKey()
+	covenantBTCPK := covenantSK.PubKey()
 	valPK, err := valBTCPK.ToBTCPK()
 	if err != nil {
 		return nil, err
@@ -88,17 +88,17 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btc
 		return nil, err
 	}
 	// staking/slashing tx
-	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(r, net, delSK, valPK, juryBTCPK, uint16(endHeight-startHeight), int64(totalSat), slashingAddr)
+	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(r, net, delSK, valPK, covenantBTCPK, uint16(endHeight-startHeight), int64(totalSat), slashingAddr)
 	if err != nil {
 		return nil, err
 	}
 
-	// jury sig and delegator sig
+	// covenant sig and delegator sig
 	stakingMsgTx, err := stakingTx.ToMsgTx()
 	if err != nil {
 		return nil, err
 	}
-	jurySig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, jurySK, net)
+	covenantSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, covenantSK, net)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btc
 		EndHeight:    endHeight,
 		TotalSat:     totalSat,
 		DelegatorSig: delegatorSig,
-		JurySig:      jurySig,
+		CovenantSig:  covenantSig,
 		StakingTx:    stakingTx,
 		SlashingTx:   slashingTx,
 	}, nil
@@ -128,7 +128,7 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	outPoint *wire.OutPoint,
 	stakerSK *btcec.PrivateKey,
 	validatorPK *btcec.PublicKey,
-	juryPK *btcec.PublicKey,
+	covenantPK *btcec.PublicKey,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress string,
@@ -137,7 +137,7 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
 		stakerSK.PubKey(),
 		validatorPK,
-		juryPK,
+		covenantPK,
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		btcNet,
@@ -198,7 +198,7 @@ func GenBTCStakingSlashingTx(
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
 	validatorPK *btcec.PublicKey,
-	juryPK *btcec.PublicKey,
+	covenantPK *btcec.PublicKey,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress string,
@@ -206,7 +206,7 @@ func GenBTCStakingSlashingTx(
 	// an arbitrary input
 	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
 	outPoint := &spend.prevOut
-	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, outPoint, stakerSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddress, true)
+	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, outPoint, stakerSK, validatorPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddress, true)
 }
 
 func GenBTCUnbondingSlashingTx(
@@ -214,11 +214,11 @@ func GenBTCUnbondingSlashingTx(
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
 	validatorPK *btcec.PublicKey,
-	juryPK *btcec.PublicKey,
+	covenantPK *btcec.PublicKey,
 	stakingTransactionOutpoint *wire.OutPoint,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress string,
 ) (*bstypes.BabylonBTCTaprootTx, *bstypes.BTCSlashingTx, error) {
-	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, stakingTransactionOutpoint, stakerSK, validatorPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddress, false)
+	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, stakingTransactionOutpoint, stakerSK, validatorPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddress, false)
 }

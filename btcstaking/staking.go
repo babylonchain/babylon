@@ -109,7 +109,7 @@ func makeScriptNum(v []byte, requireMinimal bool, scriptNumLen int) (int64, erro
 type StakingScriptData struct {
 	StakerKey    *btcec.PublicKey
 	ValidatorKey *btcec.PublicKey
-	JuryKey      *btcec.PublicKey
+	CovenantKey  *btcec.PublicKey
 	StakingTime  uint16
 }
 
@@ -126,17 +126,17 @@ type StakingOutputInfo struct {
 func NewStakingScriptData(
 	stakerKey,
 	validatorKey,
-	juryKey *btcec.PublicKey,
+	covenantKey *btcec.PublicKey,
 	stakingTime uint16) (*StakingScriptData, error) {
 
-	if stakerKey == nil || validatorKey == nil || juryKey == nil {
-		return nil, fmt.Errorf("staker, validator and jury keys cannot be nil")
+	if stakerKey == nil || validatorKey == nil || covenantKey == nil {
+		return nil, fmt.Errorf("staker, validator and covenant keys cannot be nil")
 	}
 
 	return &StakingScriptData{
 		StakerKey:    stakerKey,
 		ValidatorKey: validatorKey,
-		JuryKey:      juryKey,
+		CovenantKey:  covenantKey,
 		StakingTime:  stakingTime,
 	}, nil
 }
@@ -145,7 +145,7 @@ func NewStakingScriptData(
 // <StakerKey> OP_CHECKSIG
 // OP_NOTIF
 //
-//	<StakerKey> OP_CHECKSIG <ValidatorKey> OP_CHECKSIGADD <JuryKey> OP_CHECKSIGADD 3 OP_NUMEQUAL
+//	<StakerKey> OP_CHECKSIG <ValidatorKey> OP_CHECKSIGADD <CovenantKey> OP_CHECKSIGADD 3 OP_NUMEQUAL
 //
 // OP_ELSE
 //
@@ -161,7 +161,7 @@ func (sd *StakingScriptData) BuildStakingScript() ([]byte, error) {
 	builder.AddOp(txscript.OP_CHECKSIG)
 	builder.AddData(schnorr.SerializePubKey(sd.ValidatorKey))
 	builder.AddOp(txscript.OP_CHECKSIGADD)
-	builder.AddData(schnorr.SerializePubKey(sd.JuryKey))
+	builder.AddData(schnorr.SerializePubKey(sd.CovenantKey))
 	builder.AddOp(txscript.OP_CHECKSIGADD)
 	builder.AddInt64(expectedMultiSigSigners)
 	builder.AddOp(txscript.OP_NUMEQUAL)
@@ -181,7 +181,7 @@ func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 	// <StakerKey> OP_CHECKSIG
 	// OP_NOTIF
 	//
-	//	<StakerKey> OP_CHECKSIG <ValidatorKey> OP_CHECKSIGADD <JuryKey> OP_CHECKSIGADD 3 OP_NUMEQUAL
+	//	<StakerKey> OP_CHECKSIG <ValidatorKey> OP_CHECKSIGADD <CovenantKey> OP_CHECKSIGADD 3 OP_NUMEQUAL
 	//
 	// OP_ELSE
 	//
@@ -284,8 +284,8 @@ func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 		return nil, err
 	}
 
-	// Jury public key
-	juryPk, err := schnorr.ParsePubKey(template[7].extractedData)
+	// Covenant public key
+	covenantPk, err := schnorr.ParsePubKey(template[7].extractedData)
 
 	if err != nil {
 		return nil, err
@@ -305,7 +305,7 @@ func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 	scriptData, err := NewStakingScriptData(
 		stakerPk1,
 		validatorPk,
-		juryPk,
+		covenantPk,
 		uint16(template[12].extractedInt),
 	)
 
@@ -376,12 +376,12 @@ func BuildUnspendableTaprootPkScript(rawScript []byte, net *chaincfg.Params) ([]
 func BuildStakingOutput(
 	stakerKey,
 	validatorKey,
-	juryKey *btcec.PublicKey,
+	covenantKey *btcec.PublicKey,
 	stTime uint16,
 	stAmount btcutil.Amount,
 	net *chaincfg.Params) (*wire.TxOut, []byte, error) {
 
-	sd, err := NewStakingScriptData(stakerKey, validatorKey, juryKey, stTime)
+	sd, err := NewStakingScriptData(stakerKey, validatorKey, covenantKey, stTime)
 
 	if err != nil {
 		return nil, nil, err
@@ -705,39 +705,39 @@ func CheckTransactions(
 		return nil, fmt.Errorf("slashing transaction min fee must be larger than 0")
 	}
 
-	//1. Check slashing tx
+	// 1. Check slashing tx
 	if err := IsSlashingTx(slashingTx, slashingAddress); err != nil {
 		return nil, err
 	}
 
-	//2. Check staking script.
+	// 2. Check staking script.
 	scriptData, err := ParseStakingTransactionScript(script)
 
 	if err != nil {
 		return nil, err
 	}
 
-	//3. Check that staking transaction has output committing to the provided script
+	// 3. Check that staking transaction has output committing to the provided script
 	stakingOutputIdx, err := GetIdxOutputCommitingToScript(fundingTransaction, script, net)
 
 	if err != nil {
 		return nil, err
 	}
 
-	//4. Check that slashing transaction input is pointing to staking transaction
+	// 4. Check that slashing transaction input is pointing to staking transaction
 	stakingTxHash := fundingTransaction.TxHash()
 	if !slashingTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
 		return nil, fmt.Errorf("slashing transaction must spend staking output")
 	}
 
-	//5. Check that index of the fund output matches index of the input in slashing transaction
+	// 5. Check that index of the fund output matches index of the input in slashing transaction
 	if slashingTx.TxIn[0].PreviousOutPoint.Index != uint32(stakingOutputIdx) {
 		return nil, fmt.Errorf("slashing transaction input must spend staking output")
 	}
 
 	stakingOutput := fundingTransaction.TxOut[stakingOutputIdx]
 
-	//6. Check fees
+	// 6. Check fees
 	if slashingTx.TxOut[0].Value <= 0 || stakingOutput.Value <= 0 {
 		return nil, fmt.Errorf("values of slashing and staking transaction must be larger than 0")
 	}

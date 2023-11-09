@@ -171,8 +171,8 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
-		// jury and slashing addr
-		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -196,11 +196,11 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
+				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, covenantSK, slashingAddr.String(), startHeight, endHeight, 10000)
 				require.NoError(t, err)
 				if datagen.RandomInt(r, 2) == 1 {
-					// remove jury sig in random BTC delegations to make them inactive
-					btcDel.JurySig = nil
+					// remove covenant sig in random BTC delegations to make them inactive
+					btcDel.CovenantSig = nil
 					pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 				}
 				err = keeper.AddBTCDelegation(ctx, btcDel)
@@ -259,8 +259,8 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
-		// jury and slashing addr
-		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -284,20 +284,20 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
+				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, covenantSK, slashingAddr.String(), startHeight, endHeight, 10000)
 				require.NoError(t, err)
 
 				if datagen.RandomInt(r, 2) == 1 {
-					// add unbonding object in random BTC delegations to make them ready to receive jury sig
+					// add unbonding object in random BTC delegations to make them ready to receive covenant sig
 					btcDel.BtcUndelegation = &types.BTCUndelegation{
 						// doesn't matter what we put here
-						ValidatorUnbondingSig: btcDel.JurySig,
+						ValidatorUnbondingSig: btcDel.CovenantSig,
 					}
 
 					if datagen.RandomInt(r, 2) == 1 {
 						// these BTC delegations are unbonded
-						btcDel.BtcUndelegation.JuryUnbondingSig = btcDel.JurySig
-						btcDel.BtcUndelegation.JurySlashingSig = btcDel.JurySig
+						btcDel.BtcUndelegation.CovenantUnbondingSig = btcDel.CovenantSig
+						btcDel.BtcUndelegation.CovenantSlashingSig = btcDel.CovenantSig
 					} else {
 						// these BTC delegations are unbonding
 						unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
@@ -420,8 +420,8 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 		// Setup keeper and context
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 
-		// jury and slashing addr
-		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -449,7 +449,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr.String(), 1, 1000, 10000) // timelock period: 1-1000
+				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, 10000) // timelock period: 1-1000
 				require.NoError(t, err)
 				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
@@ -518,8 +518,8 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
-		// jury and slashing addr
-		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -537,7 +537,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		for j := uint64(0); j < numBTCDels; j++ {
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, jurySK, slashingAddr.String(), startHeight, endHeight, 10000)
+			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, covenantSK, slashingAddr.String(), startHeight, endHeight, 10000)
 			require.NoError(t, err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 			err = keeper.AddBTCDelegation(ctx, btcDel)

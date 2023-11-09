@@ -29,11 +29,11 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 		delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		jurySK, juryPK, err := datagen.GenRandomBTCKeyPair(r)
+		covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
 		// generate staking/slashing tx
-		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, valPK, juryPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
+		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, valPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
 		require.NoError(t, err)
 		stakingOutInfo, err := stakingTx.GetBabylonOutputInfo(net)
 		require.NoError(t, err)
@@ -46,7 +46,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 		delSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, delSK, net)
 		require.NoError(t, err)
-		jurySig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, jurySK, net)
+		covenantSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, covenantSK, net)
 		require.NoError(t, err)
 
 		// verify signatures first
@@ -54,11 +54,11 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, delPK, delSig)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, juryPK, jurySig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, covenantPK, covenantSig)
 		require.NoError(t, err)
 
 		// build slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.ToMsgTxWithWitness(stakingTx, valSig, delSig, jurySig)
+		slashingMsgTxWithWitness, err := slashingTx.ToMsgTxWithWitness(stakingTx, valSig, delSig, covenantSig)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness

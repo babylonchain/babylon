@@ -21,12 +21,12 @@ service Msg {
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
   // BtcUndelegate undelegates funds from exsitng btc delegation
   rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
-  // AddJurySig handles a signature from jury for slashing tx of staking tx for delegation
-  rpc AddJurySig(MsgAddJurySig) returns (MsgAddJurySigResponse);
-  // AddJuryUnbondingSigs handles two signatures from jury for:
+  // AddCovenantSig handles a signature from covenant for slashing tx of staking tx for delegation
+  rpc AddCovenantSig(MsgAddCovenantSig) returns (MsgAddCovenantSigResponse);
+  // AddCovenantUnbondingSigs handles two signatures from covenant for:
   // - unbonding tx submitted to babylon by staker
   // - slashing tx corresponding to unbodning tx submitted to babylon by staker
-  rpc AddJuryUnbondingSigs(MsgAddJuryUnbondingSigs) returns (MsgAddJuryUnbondingSigsResponse);
+  rpc AddCovenantUnbondingSigs(MsgAddCovenantUnbondingSigs) returns (MsgAddCovenantUnbondingSigsResponse);
   // AddValidatorUnbondingSig handles a signature from validator for unbonding tx submitted to babylon by staker
   rpc AddValidatorUnbondingSig(MsgAddValidatorUnbondingSig) returns (MsgAddValidatorUnbondingSigResponse);
   // UpdateParams updates the btcstaking module parameters.
@@ -71,7 +71,7 @@ message MsgCreateBTCDelegation {
   bytes slashing_tx = 6 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the staking tx output.
-  // The staking tx output further needs signatures from jury and validator in
+  // The staking tx output further needs signatures from covenant and validator in
   // order to be spendable.
   bytes delegator_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
@@ -95,8 +95,8 @@ message MsgBTCUndelegate {
 // MsgBtcUndelegateResponse is the response for MsgBtcUndelegate
 message MsgBTCUndelegateResponse {}
 
-// MsgAddJurySig is the message for handling a signature from jury
-message MsgAddJurySig {
+// MsgAddCovenantSig is the message for handling a signature from covenant
+message MsgAddCovenantSig {
   string signer = 1;
   // val_pk is the Bitcoin secp256k1 PK of the BTC validator
   // the PK follows encoding in BIP-340 spec
@@ -107,12 +107,12 @@ message MsgAddJurySig {
   // staking_tx_hash is the hash of the staking tx.
   // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
   string staking_tx_hash = 4;
-  // sig is the signature of the jury
+  // sig is the signature of the covenant
   // the signature follows encoding in BIP-340 spec
   bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
-// MsgAddJurySigResponse is the response for MsgAddJurySig
-message MsgAddJurySigResponse {}
+// MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
+message MsgAddCovenantSigResponse {}
 
 // MsgUpdateParams defines a message for updating btcstaking module parameters.
 message MsgUpdateParams {
@@ -133,8 +133,8 @@ message MsgUpdateParams {
 // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
 
-// MsgAddJuryUnbondingSigs is the message for handling a signature from jury
-message MsgAddJuryUnbondingSigs {
+// MsgAddCovenantUnbondingSigs is the message for handling a signature from covenant
+message MsgAddCovenantUnbondingSigs {
   string signer = 1;
   // val_pk is the Bitcoin secp256k1 PK of the BTC validator
   // the PK follows encoding in BIP-340 spec
@@ -145,16 +145,16 @@ message MsgAddJuryUnbondingSigs {
   // staking_tx_hash is the hash of the staking tx.
   // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
   string staking_tx_hash = 4;
-  // unbonding_tx_sig is the signature of the jury on the unbonding tx submitted to babylon
+  // unbonding_tx_sig is the signature of the covenant on the unbonding tx submitted to babylon
   // the signature follows encoding in BIP-340 spec
   bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-  // slashing_unbonding_tx_sig is the signature of the jury on slashing tx corresponding to unbodning tx submitted to babylon
+  // slashing_unbonding_tx_sig is the signature of the covenant on slashing tx corresponding to unbodning tx submitted to babylon
   // the signature follows encoding in BIP-340 spec
   bytes slashing_unbonding_tx_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
 }
-// MsgAddJurySigResponse is the response for MsgAddJurySig
-message MsgAddJuryUnbondingSigsResponse {}
+// MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
+message MsgAddCovenantUnbondingSigsResponse {}
 
 // MsgAddValidatorUnbondingSig is the message for unbodning tx submitted to babylon by staker
 message MsgAddValidatorUnbondingSig {
@@ -172,5 +172,5 @@ message MsgAddValidatorUnbondingSig {
   // the signature follows encoding in BIP-340 spec
   bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
-// MsgAddJurySigResponse is the response for MsgAddJurySig
+// MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
 message MsgAddValidatorUnbondingSigResponse {}

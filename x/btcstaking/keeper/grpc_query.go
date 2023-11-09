@@ -284,7 +284,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		undelegationInfo = &types.BTCUndelegationInfo{
 			UnbondingTx:           btcDel.BtcUndelegation.UnbondingTx,
 			ValidatorUnbondingSig: btcDel.BtcUndelegation.ValidatorUnbondingSig,
-			JuryUnbondingSig:      btcDel.BtcUndelegation.JuryUnbondingSig,
+			CovenantUnbondingSig:  btcDel.BtcUndelegation.CovenantUnbondingSig,
 		}
 	}
 

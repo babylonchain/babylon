@@ -39,9 +39,9 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		NewCreateBTCValidatorCmd(),
 		NewCreateBTCDelegationCmd(),
-		NewAddJurySigCmd(),
+		NewAddCovenantSigCmd(),
 		NewCreateBTCUndelegationCmd(),
-		NewAddJuryUnbondingSigsCmd(),
+		NewAddCovenantUnbondingSigsCmd(),
 		NewAddValidatorUnbondingSigCmd(),
 	)
 
@@ -205,13 +205,13 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 	return cmd
 }
 
-func NewAddJurySigCmd() *cobra.Command {
+func NewAddCovenantSigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-jury-sig [val_pk] [del_pk] [staking_tx_hash] [sig]",
+		Use:   "add-covenant-sig [val_pk] [del_pk] [staking_tx_hash] [sig]",
 		Args:  cobra.ExactArgs(4),
-		Short: "Add a jury signature",
+		Short: "Add a covenant signature",
 		Long: strings.TrimSpace(
-			`Add a jury signature.`, // TODO: example
+			`Add a covenant signature.`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -234,13 +234,13 @@ func NewAddJurySigCmd() *cobra.Command {
 			// get staking tx hash
 			stakingTxHash := args[2]
 
-			// get jury sigature
+			// get covenant sigature
 			sig, err := bbn.NewBIP340SignatureFromHex(args[3])
 			if err != nil {
 				return err
 			}
 
-			msg := types.MsgAddJurySig{
+			msg := types.MsgAddCovenantSig{
 				Signer:        clientCtx.FromAddress.String(),
 				ValPk:         valPK,
 				DelPk:         delPK,
@@ -305,11 +305,11 @@ func NewCreateBTCUndelegationCmd() *cobra.Command {
 	return cmd
 }
 
-func NewAddJuryUnbondingSigsCmd() *cobra.Command {
+func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-jury-unbonding-sigs [val_pk] [del_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig]",
+		Use:   "add-covenant-unbonding-sigs [val_pk] [del_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig]",
 		Args:  cobra.ExactArgs(5),
-		Short: "Add jury signatures for unbonding tx and slash unbonding tx",
+		Short: "Add covenant signatures for unbonding tx and slash unbonding tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -331,19 +331,19 @@ func NewAddJuryUnbondingSigsCmd() *cobra.Command {
 			// get staking tx hash
 			stakingTxHash := args[2]
 
-			// get jury sigature for unbonding tx
+			// get covenant sigature for unbonding tx
 			unbondingSig, err := bbn.NewBIP340SignatureFromHex(args[3])
 			if err != nil {
 				return err
 			}
 
-			// get jury sigature for slash unbonding tx
+			// get covenant sigature for slash unbonding tx
 			slashUnbondingSig, err := bbn.NewBIP340SignatureFromHex(args[4])
 			if err != nil {
 				return err
 			}
 
-			msg := types.MsgAddJuryUnbondingSigs{
+			msg := types.MsgAddCovenantUnbondingSigs{
 				Signer:                 clientCtx.FromAddress.String(),
 				ValPk:                  valPK,
 				DelPk:                  delPK,

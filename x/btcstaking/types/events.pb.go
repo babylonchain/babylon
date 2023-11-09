@@ -71,7 +71,7 @@ func (m *EventNewBTCValidator) GetBtcVal() *BTCValidator {
 
 // EventNewBTCDelegation is the event emitted when a BTC delegation is created
 // NOTE: the BTC delegation is not active thus does not have voting power yet
-// only after it receives a jury signature it becomes activated and has voting power
+// only after it receives a covenant signature it becomes activated and has voting power
 type EventNewBTCDelegation struct {
 	BtcDel *BTCDelegation `protobuf:"bytes,1,opt,name=btc_del,json=btcDel,proto3" json:"btc_del,omitempty"`
 }
@@ -116,7 +116,7 @@ func (m *EventNewBTCDelegation) GetBtcDel() *BTCDelegation {
 	return nil
 }
 
-// EventActivateBTCDelegation is the event emitted when jury activates a BTC delegation
+// EventActivateBTCDelegation is the event emitted when covenant activates a BTC delegation
 // such that the BTC delegation starts to have voting power in its timelock period
 type EventActivateBTCDelegation struct {
 	BtcDel *BTCDelegation `protobuf:"bytes,1,opt,name=btc_del,json=btcDel,proto3" json:"btc_del,omitempty"`

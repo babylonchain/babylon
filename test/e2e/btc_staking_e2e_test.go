@@ -34,8 +34,8 @@ var (
 	btcVal         *bstypes.BTCValidator
 	// BTC delegation
 	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
-	// jury
-	jurySK, _ = btcec.PrivKeyFromBytes(
+	// covenant
+	covenantSK, _ = btcec.PrivKeyFromBytes(
 		[]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
 	)
 
@@ -109,7 +109,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		net,
 		delBTCSK,
 		btcVal.BtcPk.MustToBTCPK(),
-		params.JuryPk.MustToBTCPK(),
+		params.CovenantPk.MustToBTCPK(),
 		stakingTimeBlocks,
 		stakingValue,
 		params.SlashingAddress,
@@ -148,7 +148,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	pendingDels := pendingDelSet[0]
 	s.Len(pendingDels.Dels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Nil(pendingDels.Dels[0].JurySig)
+	s.Nil(pendingDels.Dels[0].CovenantSig)
 
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTx.MustGetTxHashStr())
@@ -157,9 +157,9 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	s.Equal(expectedScript, delegation.StakingScript)
 }
 
-// Test2SubmitJurySignature is an end-to-end test for user
-// story 2: jury approves the BTC delegation
-func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
+// Test2SubmitCovenantSignature is an end-to-end test for user
+// story 2: covenant approves the BTC delegation
+func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainA.WaitUntilHeight(1)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
@@ -171,7 +171,7 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDel := pendingDels.Dels[0]
-	s.Nil(pendingDel.JurySig)
+	s.Nil(pendingDel.CovenantSig)
 
 	slashingTx := pendingDel.SlashingTx
 	stakingTx := pendingDel.StakingTx
@@ -180,27 +180,27 @@ func (s *BTCStakingTestSuite) Test2SubmitJurySignature() {
 	stakingTxHash := stakingTx.MustGetTxHashStr()
 
 	/*
-		generate and insert new jury signature, in order to activate the BTC delegation
+		generate and insert new covenant signature, in order to activate the BTC delegation
 	*/
-	jurySig, err := slashingTx.Sign(
+	covenantSig, err := slashingTx.Sign(
 		stakingMsgTx,
 		stakingTx.Script,
-		jurySK,
+		covenantSK,
 		net,
 	)
 	s.NoError(err)
-	nonValidatorNode.AddJurySig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, jurySig)
+	nonValidatorNode.AddCovenantSig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, covenantSig)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	// ensure the BTC delegation has jury sig now
+	// ensure the BTC delegation has covenant sig now
 	activeDelsSet := nonValidatorNode.QueryBTCValidatorDelegations(btcVal.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDel := activeDels.Dels[0]
-	s.NotNil(activeDel.JurySig)
+	s.NotNil(activeDel.CovenantSig)
 
 	// wait for a block so that above txs take effect and the voting power table
 	// is updated in the next block's BeginBlock
@@ -379,9 +379,9 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDel := activeDels.Dels[0]
-	s.NotNil(activeDel.JurySig)
+	s.NotNil(activeDel.CovenantSig)
 
-	// params for juryPk and slashing address
+	// params for covenantPk and slashing address
 	params := nonValidatorNode.QueryBTCStakingParams()
 
 	stakingTx := activeDel.StakingTx
@@ -402,7 +402,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		net,
 		delBTCSK,
 		btcVal.BtcPk.MustToBTCPK(),
-		params.JuryPk.MustToBTCPK(),
+		params.CovenantPk.MustToBTCPK(),
 		wire.NewOutPoint(stakingTxChainHash, uint32(stakingOutputIdx)),
 		initialization.BabylonBtcFinalizationPeriod+1,
 		stakingValue-fee,
@@ -433,7 +433,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	s.NotNil(delegation.BtcUndelegation)
 }
 
-// Test6SubmitStakerUnbonding is an end-to-end test for jury and validator submitting signatures
+// Test6SubmitStakerUnbonding is an end-to-end test for covenant and validator submitting signatures
 // for unbonding transaction
 func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	chainA := s.configurer.GetChainConfig(0)
@@ -451,8 +451,8 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 
 	s.NotNil(delegation.BtcUndelegation)
 	s.Nil(delegation.BtcUndelegation.ValidatorUnbondingSig)
-	s.Nil(delegation.BtcUndelegation.JuryUnbondingSig)
-	s.Nil(delegation.BtcUndelegation.JurySlashingSig)
+	s.Nil(delegation.BtcUndelegation.CovenantUnbondingSig)
+	s.Nil(delegation.BtcUndelegation.CovenantSlashingSig)
 
 	// First sent validator signature
 	stakingTxMsg, err := delegation.StakingTx.ToMsgTx()
@@ -486,25 +486,25 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 		delegationWithValSig.GetStatus(btcTip.Height, initialization.BabylonBtcFinalizationPeriod),
 	)
 
-	// Next send jury signatures
-	juryUnbondingSig, err := delegation.BtcUndelegation.UnbondingTx.Sign(
+	// Next send covenant signatures
+	covenantUnbondingSig, err := delegation.BtcUndelegation.UnbondingTx.Sign(
 		stakingTxMsg,
 		delegation.StakingTx.Script,
-		jurySK,
+		covenantSK,
 		net,
 	)
 	s.NoError(err)
 
 	unbondingTxMsg, err := delegation.BtcUndelegation.UnbondingTx.ToMsgTx()
 	s.NoError(err)
-	jurySlashingSig, err := delegation.BtcUndelegation.SlashingTx.Sign(
+	covenantSlashingSig, err := delegation.BtcUndelegation.SlashingTx.Sign(
 		unbondingTxMsg,
 		delegation.BtcUndelegation.UnbondingTx.Script,
-		jurySK,
+		covenantSK,
 		net,
 	)
 	s.NoError(err)
-	nonValidatorNode.AddJuryUnbondingSigs(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, juryUnbondingSig, jurySlashingSig)
+	nonValidatorNode.AddCovenantUnbondingSigs(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, covenantUnbondingSig, covenantSlashingSig)
 	nonValidatorNode.WaitForNextBlock()
 
 	// Check all signatures are properly registered
@@ -513,8 +513,8 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	delegationWithSigs := allDelegationsWithSigs[0].Dels[0]
 	s.NotNil(delegationWithSigs.BtcUndelegation)
 	s.NotNil(delegationWithSigs.BtcUndelegation.ValidatorUnbondingSig)
-	s.NotNil(delegationWithSigs.BtcUndelegation.JuryUnbondingSig)
-	s.NotNil(delegationWithSigs.BtcUndelegation.JurySlashingSig)
+	s.NotNil(delegationWithSigs.BtcUndelegation.CovenantUnbondingSig)
+	s.NotNil(delegationWithSigs.BtcUndelegation.CovenantSlashingSig)
 	btcTip, err = nonValidatorNode.QueryTip()
 	s.NoError(err)
 	s.Equal(

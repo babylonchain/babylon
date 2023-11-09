@@ -10,10 +10,10 @@ import (
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateBTCValidator{}, "btcstaking/MsgCreateBTCValidator", nil)
 	cdc.RegisterConcrete(&MsgCreateBTCDelegation{}, "btcstaking/MsgCreateBTCDelegation", nil)
-	cdc.RegisterConcrete(&MsgAddJurySig{}, "btcstaking/MsgAddJurySig", nil)
+	cdc.RegisterConcrete(&MsgAddCovenantSig{}, "btcstaking/MsgAddCovenantSig", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "btcstaking/MsgUpdateParams", nil)
 	cdc.RegisterConcrete(&MsgBTCUndelegate{}, "btcstaking/MsgBtcUndelegate", nil)
-	cdc.RegisterConcrete(&MsgAddJuryUnbondingSigs{}, "btcstaking/MsgAddJuryUnbondingSigs", nil)
+	cdc.RegisterConcrete(&MsgAddCovenantUnbondingSigs{}, "btcstaking/MsgAddCovenantUnbondingSigs", nil)
 	cdc.RegisterConcrete(&MsgAddValidatorUnbondingSig{}, "btcstaking/MsgAddValidatorUnbondingSig", nil)
 }
 
@@ -23,10 +23,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		(*sdk.Msg)(nil),
 		&MsgCreateBTCValidator{},
 		&MsgCreateBTCDelegation{},
-		&MsgAddJurySig{},
+		&MsgAddCovenantSig{},
 		&MsgUpdateParams{},
 		&MsgBTCUndelegate{},
-		&MsgAddJuryUnbondingSigs{},
+		&MsgAddCovenantUnbondingSigs{},
 		&MsgAddValidatorUnbondingSig{},
 	)
 

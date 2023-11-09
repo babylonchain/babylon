@@ -70,18 +70,18 @@ func (k Keeper) updateBTCDelegation(
 	return nil
 }
 
-// AddJurySigToBTCDelegation adds a given jury sig to a BTC delegation
+// AddCovenantSigToBTCDelegation adds a given covenant sig to a BTC delegation
 // with the given (val PK, del PK, staking tx hash) tuple
-func (k Keeper) AddJurySigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string, jurySig *bbn.BIP340Signature) error {
-	addJurySig := func(btcDel *types.BTCDelegation) error {
-		if btcDel.JurySig != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a jury signature", stakingTxHash)
+func (k Keeper) AddCovenantSigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string, covenantSig *bbn.BIP340Signature) error {
+	addCovenantSig := func(btcDel *types.BTCDelegation) error {
+		if btcDel.CovenantSig != nil {
+			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a covenant signature", stakingTxHash)
 		}
-		btcDel.JurySig = jurySig
+		btcDel.CovenantSig = covenantSig
 		return nil
 	}
 
-	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addJurySig)
+	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addCovenantSig)
 }
 
 func (k Keeper) AddUndelegationToBTCDelegation(
@@ -125,7 +125,7 @@ func (k Keeper) AddValidatorSigToUndelegation(
 	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addValidatorSig)
 }
 
-func (k Keeper) AddJurySigsToUndelegation(
+func (k Keeper) AddCovenantSigsToUndelegation(
 	ctx sdk.Context,
 	valBTCPK *bbn.BIP340PubKey,
 	delBTCPK *bbn.BIP340PubKey,
@@ -133,21 +133,21 @@ func (k Keeper) AddJurySigsToUndelegation(
 	unbondingTxSig *bbn.BIP340Signature,
 	slashUnbondingTxSig *bbn.BIP340Signature,
 ) error {
-	addJurySigs := func(btcDel *types.BTCDelegation) error {
+	addCovenantSigs := func(btcDel *types.BTCDelegation) error {
 		if btcDel.BtcUndelegation == nil {
 			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
 		}
 
-		if btcDel.BtcUndelegation.JuryUnbondingSig != nil || btcDel.BtcUndelegation.JurySlashingSig != nil {
-			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid jury signatures", stakingTxHash)
+		if btcDel.BtcUndelegation.CovenantUnbondingSig != nil || btcDel.BtcUndelegation.CovenantSlashingSig != nil {
+			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid covenant signatures", stakingTxHash)
 		}
 
-		btcDel.BtcUndelegation.JuryUnbondingSig = unbondingTxSig
-		btcDel.BtcUndelegation.JurySlashingSig = slashUnbondingTxSig
+		btcDel.BtcUndelegation.CovenantUnbondingSig = unbondingTxSig
+		btcDel.BtcUndelegation.CovenantSlashingSig = slashUnbondingTxSig
 		return nil
 	}
 
-	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addJurySigs)
+	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addCovenantSigs)
 }
 
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given BTC validator

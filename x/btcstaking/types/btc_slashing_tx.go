@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonchain/babylon/btcstaking"
+	bbn "github.com/babylonchain/babylon/types"
 )
 
 type BTCSlashingTx []byte
@@ -100,7 +101,7 @@ func (tx *BTCSlashingTx) Validate(net *chaincfg.Params, slashingAddress string) 
 	return btcstaking.IsSlashingTx(msgTx, decodedAddr)
 }
 
-// Sign generates a signature on the slashing tx signed by staker, validator or jury
+// Sign generates a signature on the slashing tx signed by staker, validator or covenant
 func (tx *BTCSlashingTx) Sign(stakingMsgTx *wire.MsgTx, stakingScript []byte, sk *btcec.PrivateKey, net *chaincfg.Params) (*bbn.BIP340Signature, error) {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
@@ -120,7 +121,7 @@ func (tx *BTCSlashingTx) Sign(stakingMsgTx *wire.MsgTx, stakingScript []byte, sk
 	return &sig, nil
 }
 
-// VerifySignature verifies a signature on the slashing tx signed by staker, validator or jury
+// VerifySignature verifies a signature on the slashing tx signed by staker, validator or covenant
 func (tx *BTCSlashingTx) VerifySignature(stakingPkScript []byte, stakingAmount int64, stakingScript []byte, pk *btcec.PublicKey, sig *bbn.BIP340Signature) error {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
@@ -140,8 +141,8 @@ func (tx *BTCSlashingTx) VerifySignature(stakingPkScript []byte, stakingAmount i
 // - the staking tx
 // - validator signature
 // - delegator signature
-// - jury signature
-func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *BabylonBTCTaprootTx, valSig, delSig, jurySig *bbn.BIP340Signature) (*wire.MsgTx, error) {
+// - covenant signature
+func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *BabylonBTCTaprootTx, valSig, delSig, covenantSig *bbn.BIP340Signature) (*wire.MsgTx, error) {
 	// get staking script
 	stakingScript := stakingTx.Script
 
@@ -154,9 +155,9 @@ func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *BabylonBTCTaprootTx, valS
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert BTC delegator signature to Schnorr signature format: %w", err)
 	}
-	jurySchnorrSig, err := jurySig.ToBTCSig()
+	covenantSchnorrSig, err := covenantSig.ToBTCSig()
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert jury signature to Schnorr signature format: %w", err)
+		return nil, fmt.Errorf("failed to convert covenant signature to Schnorr signature format: %w", err)
 	}
 
 	// build witness from each signature
@@ -168,13 +169,13 @@ func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *BabylonBTCTaprootTx, valS
 	if err != nil {
 		return nil, fmt.Errorf("failed to build witness for BTC delegator: %w", err)
 	}
-	juryWitness, err := btcstaking.NewWitnessFromStakingScriptAndSignature(stakingScript, jurySchnorrSig)
+	covenantWitness, err := btcstaking.NewWitnessFromStakingScriptAndSignature(stakingScript, covenantSchnorrSig)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build witness for jury: %w", err)
+		return nil, fmt.Errorf("failed to build witness for covenant: %w", err)
 	}
 
 	// To Construct valid witness, for multisig case we need:
-	// - jury signature - witnessJury[0]
+	// - covenant signature - witnessCovenant[0]
 	// - validator signature - witnessValidator[0]
 	// - staker signature - witnessStaker[0]
 	// - empty signature - which is just an empty byte array which signals we are going to use multisig.
@@ -186,7 +187,7 @@ func (tx *BTCSlashingTx) ToMsgTxWithWitness(stakingTx *BabylonBTCTaprootTx, valS
 		return nil, fmt.Errorf("failed to convert slashing tx to Bitcoin format: %w", err)
 	}
 	slashingMsgTx.TxIn[0].Witness = [][]byte{
-		juryWitness[0], valWitness[0], delWitness[0], []byte{}, delWitness[1], delWitness[2],
+		covenantWitness[0], valWitness[0], delWitness[0], []byte{}, delWitness[1], delWitness[2],
 	}
 
 	return slashingMsgTx, nil

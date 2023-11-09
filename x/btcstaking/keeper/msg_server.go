@@ -125,7 +125,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.StakerKey)
 	valBTCPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.ValidatorKey)
-	juryPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.JuryKey)
+	covenantPK := bbn.NewBIP340PubKeyFromBTCPK(stakingOutputInfo.StakingScriptData.CovenantKey)
 
 	// verify proof of possession
 	if err := req.Pop.Verify(req.BabylonPk, delBTCPK, ms.btcNet); err != nil {
@@ -154,10 +154,10 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		}
 	}
 
-	// ensure staking tx is using correct jury PK
-	paramJuryPK := params.JuryPk
-	if !juryPK.Equals(paramJuryPK) {
-		return nil, types.ErrInvalidJuryPK.Wrapf("expected: %s; actual: %s", hex.EncodeToString(*paramJuryPK), hex.EncodeToString(*juryPK))
+	// ensure staking tx is using correct covenant PK
+	paramCovenantPK := params.CovenantPk
+	if !covenantPK.Equals(paramCovenantPK) {
+		return nil, types.ErrInvalidCovenantPK.Wrapf("expected: %s; actual: %s", hex.EncodeToString(*paramCovenantPK), hex.EncodeToString(*covenantPK))
 	}
 
 	// get startheight and endheight of the timelock
@@ -219,7 +219,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// all good, construct BTCDelegation and insert BTC delegation
 	// NOTE: the BTC delegation does not have voting power yet. It will
 	// have voting power only when 1) its corresponding staking tx is k-deep,
-	// and 2) it receives a jury signature
+	// and 2) it receives a covenant signature
 	newBTCDel := &types.BTCDelegation{
 		BabylonPk:       req.BabylonPk,
 		BtcPk:           delBTCPK,
@@ -231,7 +231,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		StakingTx:       req.StakingTx,
 		SlashingTx:      req.SlashingTx,
 		DelegatorSig:    req.DelegatorSig,
-		JurySig:         nil, // NOTE: jury signature will be submitted in a separate msg by jury
+		CovenantSig:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 		BtcUndelegation: nil,
 	}
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
@@ -305,13 +305,13 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidUnbodningTx.Wrapf("unbonding time must be larger than finalization time")
 	}
 
-	// 5. Check Jury Key from script is consistent with params
+	// 5. Check Covenant Key from script is consistent with params
 	publicKeyInfos := types.KeyDataFromScript(unbondingOutputInfo.StakingScriptData)
-	if !publicKeyInfos.JuryKey.Equals(params.JuryPk) {
-		return nil, types.ErrInvalidJuryPK.Wrapf(
+	if !publicKeyInfos.CovenantKey.Equals(params.CovenantPk) {
+		return nil, types.ErrInvalidCovenantPK.Wrapf(
 			"expected: %s; actual: %s",
-			hex.EncodeToString(*params.JuryPk),
-			hex.EncodeToString(*publicKeyInfos.JuryKey),
+			hex.EncodeToString(*params.CovenantPk),
+			hex.EncodeToString(*publicKeyInfos.CovenantKey),
 		)
 	}
 
@@ -348,7 +348,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
 		// burden on staker to choose right fee.
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
-		// allow staker to spam the network with unbonding txs, which would force jury and validator to send signatures.
+		// allow staker to spam the network with unbonding txs, which would force covenant and validator to send signatures.
 		return nil, types.ErrInvalidUnbodningTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
@@ -356,12 +356,12 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		UnbondingTx:          req.UnbondingTx,
 		SlashingTx:           req.SlashingTx,
 		DelegatorSlashingSig: req.DelegatorSlashingSig,
-		// following objects needs to be filled by jury and validator
+		// following objects needs to be filled by covenant and validator
 		// Jurry needs to provide two sigs:
 		// - one for unbonding tx
 		// - one for slashing tx of unbonding tx
-		JurySlashingSig:       nil,
-		JuryUnbondingSig:      nil,
+		CovenantSlashingSig:   nil,
+		CovenantUnbondingSig:  nil,
 		ValidatorUnbondingSig: nil,
 	}
 
@@ -388,8 +388,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
 
-// AddJurySig adds a signature from jury to a BTC delegation
-func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) (*types.MsgAddJurySigResponse, error) {
+// AddCovenantSig adds a signature from covenant to a BTC delegation
+func (ms msgServer) AddCovenantSig(goCtx context.Context, req *types.MsgAddCovenantSig) (*types.MsgAddCovenantSigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure BTC delegation exists
@@ -397,8 +397,8 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 	if err != nil {
 		return nil, err
 	}
-	if btcDel.HasJurySig() {
-		return nil, types.ErrDuplicatedJurySig
+	if btcDel.HasCovenantSig() {
+		return nil, types.ErrDuplicatedCovenantSig
 	}
 
 	stakingOutputInfo, err := btcDel.StakingTx.GetBabylonOutputInfo(ms.btcNet)
@@ -407,26 +407,26 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
 	}
 
-	juryPK, err := ms.GetParams(ctx).JuryPk.ToBTCPK()
+	covenantPK, err := ms.GetParams(ctx).CovenantPk.ToBTCPK()
 	if err != nil {
-		// failing to cast a verified jury PK a programming error
-		panic(fmt.Errorf("failed to cast a verified jury public key"))
+		// failing to cast a verified covenant PK a programming error
+		panic(fmt.Errorf("failed to cast a verified covenant public key"))
 	}
 
-	// verify signature w.r.t. jury PK and signature
+	// verify signature w.r.t. covenant PK and signature
 	err = btcDel.SlashingTx.VerifySignature(
 		stakingOutputInfo.StakingPkScript,
 		int64(stakingOutputInfo.StakingAmount),
 		btcDel.StakingTx.Script,
-		juryPK,
+		covenantPK,
 		req.Sig,
 	)
 	if err != nil {
-		return nil, types.ErrInvalidJurySig.Wrap(err.Error())
+		return nil, types.ErrInvalidCovenantSig.Wrap(err.Error())
 	}
 
 	// all good, add signature to BTC delegation and set it back to KVStore
-	if err := ms.AddJurySigToBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash, req.Sig); err != nil {
+	if err := ms.AddCovenantSigToBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash, req.Sig); err != nil {
 		panic("failed to set BTC delegation that has passed verification")
 	}
 
@@ -435,12 +435,12 @@ func (ms msgServer) AddJurySig(goCtx context.Context, req *types.MsgAddJurySig) 
 		panic(fmt.Errorf("failed to emit EventActivateBTCDelegation: %w", err))
 	}
 
-	return &types.MsgAddJurySigResponse{}, nil
+	return &types.MsgAddCovenantSigResponse{}, nil
 }
 
-func (ms msgServer) AddJuryUnbondingSigs(
+func (ms msgServer) AddCovenantUnbondingSigs(
 	goCtx context.Context,
-	req *types.MsgAddJuryUnbondingSigs) (*types.MsgAddJuryUnbondingSigsResponse, error) {
+	req *types.MsgAddCovenantUnbondingSigs) (*types.MsgAddCovenantUnbondingSigsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
@@ -458,18 +458,18 @@ func (ms msgServer) AddJuryUnbondingSigs(
 		return nil, types.ErrInvalidDelegationState.Wrapf("Expected status: %s, actual: %s", types.BTCDelegationStatus_UNBONDING.String(), status.String())
 	}
 
-	// 3. Check that we did not recevie jury signature yet
-	if btcDel.BtcUndelegation.HasJurySigs() {
-		return nil, types.ErrDuplicatedJurySig.Wrap("Jury signature for undelegation already received")
+	// 3. Check that we did not recevie covenant signature yet
+	if btcDel.BtcUndelegation.HasCovenantSigs() {
+		return nil, types.ErrDuplicatedCovenantSig.Wrap("Covenant signature for undelegation already received")
 	}
 
 	// 4. Check that we already received validator signature
 	if !btcDel.BtcUndelegation.HasValidatorSig() {
-		// Jury should provide signature only after validator to avoid validator and staker
+		// Covenant should provide signature only after validator to avoid validator and staker
 		// collusion i.e sending unbonding tx to btc without leaving validator signature on babylon chain.
 		// TODO: Maybe it is worth accepting signatures and just emmiting some kind of warning event ? as if this msg
 		// processing fails, it will still be included on babylon chain, so anybody could still retrieve
-		// all jury signatures included in msg. And with warning we will at least have some kind of
+		// all covenant signatures included in msg. And with warning we will at least have some kind of
 		// indication that something is wrong.
 		return nil, types.ErrUnbondingUnexpectedValidatorSig
 	}
@@ -481,10 +481,10 @@ func (ms msgServer) AddJuryUnbondingSigs(
 		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
 	}
 
-	juryPK, err := ms.GetParams(ctx).JuryPk.ToBTCPK()
+	covenantPK, err := ms.GetParams(ctx).CovenantPk.ToBTCPK()
 	if err != nil {
-		// failing to cast a verified jury PK is a programming error
-		panic(fmt.Errorf("failed to cast a verified jury public key"))
+		// failing to cast a verified covenant PK is a programming error
+		panic(fmt.Errorf("failed to cast a verified covenant public key"))
 	}
 
 	// UnbondingTx has exactly one input and one output so we may re-use the same
@@ -493,11 +493,11 @@ func (ms msgServer) AddJuryUnbondingSigs(
 		stakingOutputInfo.StakingPkScript,
 		int64(stakingOutputInfo.StakingAmount),
 		btcDel.StakingTx.Script,
-		juryPK,
+		covenantPK,
 		req.UnbondingTxSig,
 	)
 	if err != nil {
-		return nil, types.ErrInvalidJurySig.Wrap(err.Error())
+		return nil, types.ErrInvalidCovenantSig.Wrap(err.Error())
 	}
 
 	// 5. Verify signature of slashing tx against unbonding tx output
@@ -511,7 +511,7 @@ func (ms msgServer) AddJuryUnbondingSigs(
 		unbondingOutputInfo.StakingPkScript,
 		int64(unbondingOutputInfo.StakingAmount),
 		btcDel.BtcUndelegation.UnbondingTx.Script,
-		juryPK,
+		covenantPK,
 		req.SlashingUnbondingTxSig,
 	)
 	if err != nil {
@@ -519,7 +519,7 @@ func (ms msgServer) AddJuryUnbondingSigs(
 	}
 
 	// all good, add signature to BTC delegation and set it back to KVStore
-	if err := ms.AddJurySigsToUndelegation(
+	if err := ms.AddCovenantSigsToUndelegation(
 		ctx,
 		req.ValPk,
 		req.DelPk,
@@ -603,9 +603,9 @@ func (ms msgServer) AddValidatorUnbondingSig(
 		panic("failed to set BTC delegation that has passed verification")
 	}
 
-	// if the BTC undelegation has jury sigs, then after above operations the
+	// if the BTC undelegation has covenant sigs, then after above operations the
 	// BTC delegation will become unbonded
-	if btcDel.BtcUndelegation.HasJurySigs() {
+	if btcDel.BtcUndelegation.HasCovenantSigs() {
 		event := &types.EventUnbondedBTCDelegation{
 			BtcPk:           btcDel.BtcPk,
 			ValBtcPk:        btcDel.ValBtcPk,

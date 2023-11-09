@@ -24,7 +24,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					JuryPk:              types.DefaultParams().JuryPk,
+					CovenantPk:          types.DefaultParams().CovenantPk,
 					SlashingAddress:     types.DefaultParams().SlashingAddress,
 					MinSlashingTxFeeSat: 500,
 					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
@@ -37,7 +37,7 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "invalid slashing rate in genesis",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					JuryPk:              types.DefaultParams().JuryPk,
+					CovenantPk:          types.DefaultParams().CovenantPk,
 					SlashingAddress:     types.DefaultParams().SlashingAddress,
 					MinSlashingTxFeeSat: 500,
 					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),

@@ -28,8 +28,8 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
-		// jury and slashing addr
-		jurySK, _, err := datagen.GenRandomBTCKeyPair(r)
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -56,7 +56,7 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, jurySK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
 				require.NoError(t, err)
 				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)

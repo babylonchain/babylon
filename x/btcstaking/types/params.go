@@ -15,7 +15,7 @@ import (
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 
-func defaultJuryPk() *bbn.BIP340PubKey {
+func defaultCovenantPk() *bbn.BIP340PubKey {
 	// 32 bytes
 	skBytes := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	_, defaultPK := btcec.PrivKeyFromBytes(skBytes)
@@ -40,7 +40,7 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		JuryPk:              defaultJuryPk(),
+		CovenantPk:          defaultCovenantPk(),
 		SlashingAddress:     defaultSlashingAddress(),
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   math.LegacyZeroDec(),

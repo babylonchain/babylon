@@ -14,9 +14,9 @@ var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgCreateBTCValidator{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
-	_ sdk.Msg = &MsgAddJurySig{}
+	_ sdk.Msg = &MsgAddCovenantSig{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
-	_ sdk.Msg = &MsgAddJuryUnbondingSigs{}
+	_ sdk.Msg = &MsgAddCovenantUnbondingSigs{}
 	_ sdk.Msg = &MsgAddValidatorUnbondingSig{}
 )
 
@@ -118,7 +118,7 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-func (m *MsgAddJurySig) GetSigners() []sdk.AccAddress {
+func (m *MsgAddCovenantSig) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
 		panic(err)
@@ -126,7 +126,7 @@ func (m *MsgAddJurySig) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgAddJurySig) ValidateBasic() error {
+func (m *MsgAddCovenantSig) ValidateBasic() error {
 	if m.ValPk == nil {
 		return fmt.Errorf("empty BTC validator public key")
 	}
@@ -134,7 +134,7 @@ func (m *MsgAddJurySig) ValidateBasic() error {
 		return fmt.Errorf("empty BTC delegation public key")
 	}
 	if m.Sig == nil {
-		return fmt.Errorf("empty jury signature")
+		return fmt.Errorf("empty covenant signature")
 	}
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
 		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
@@ -183,7 +183,7 @@ func (m *MsgBTCUndelegate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgAddJuryUnbondingSigs) GetSigners() []sdk.AccAddress {
+func (m *MsgAddCovenantUnbondingSigs) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
 		panic(err)
@@ -191,7 +191,7 @@ func (m *MsgAddJuryUnbondingSigs) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgAddJuryUnbondingSigs) ValidateBasic() error {
+func (m *MsgAddCovenantUnbondingSigs) ValidateBasic() error {
 	if m.ValPk == nil {
 		return fmt.Errorf("empty BTC validator public key")
 	}
@@ -199,10 +199,10 @@ func (m *MsgAddJuryUnbondingSigs) ValidateBasic() error {
 		return fmt.Errorf("empty BTC delegation public key")
 	}
 	if m.UnbondingTxSig == nil {
-		return fmt.Errorf("empty jury signature")
+		return fmt.Errorf("empty covenant signature")
 	}
 	if m.SlashingUnbondingTxSig == nil {
-		return fmt.Errorf("empty jury signature")
+		return fmt.Errorf("empty covenant signature")
 	}
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
 		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
@@ -226,7 +226,7 @@ func (m *MsgAddValidatorUnbondingSig) ValidateBasic() error {
 		return fmt.Errorf("empty BTC delegation public key")
 	}
 	if m.UnbondingTxSig == nil {
-		return fmt.Errorf("empty jury signature")
+		return fmt.Errorf("empty covenant signature")
 	}
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
 		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)

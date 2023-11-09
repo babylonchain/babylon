@@ -90,13 +90,13 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-// HasJurySig returns whether a BTC delegation has a jury signature
-func (d *BTCDelegation) HasJurySig() bool {
-	return d.JurySig != nil
+// HasCovenantSig returns whether a BTC delegation has a covenant signature
+func (d *BTCDelegation) HasCovenantSig() bool {
+	return d.CovenantSig != nil
 }
 
-func (ud *BTCUndelegation) HasJurySigs() bool {
-	return ud.JurySlashingSig != nil && ud.JuryUnbondingSig != nil
+func (ud *BTCUndelegation) HasCovenantSigs() bool {
+	return ud.CovenantSlashingSig != nil && ud.CovenantUnbondingSig != nil
 }
 
 func (ud *BTCUndelegation) HasValidatorSig() bool {
@@ -104,7 +104,7 @@ func (ud *BTCUndelegation) HasValidatorSig() bool {
 }
 
 func (ud *BTCUndelegation) HasAllSignatures() bool {
-	return ud.HasJurySigs() && ud.HasValidatorSig()
+	return ud.HasCovenantSigs() && ud.HasValidatorSig()
 }
 
 // GetStatus returns the status of the BTC Delegation based on a BTC height and a w value
@@ -112,8 +112,8 @@ func (ud *BTCUndelegation) HasAllSignatures() bool {
 // we can only have expired delegations. If we accept optimistic submissions,
 // we could also have delegations that are in the waiting, so we need an extra status.
 // This is covered by expired for now as it is the default value.
-// Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has a jury sig
-// Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a jury sig
+// Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has a covenant sig
+// Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a covenant sig
 // Expired: Delegation timelock
 func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatus {
 	if d.BtcUndelegation != nil {
@@ -123,7 +123,7 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatu
 		// If we received an undelegation but is still does not have all required signature,
 		// delegation receives UNBONING status.
 		// Voting power from this delegation is removed from the total voting power and now we
-		// are waiting for signatures from validator and jury for delegation to become expired.
+		// are waiting for signatures from validator and covenant for delegation to become expired.
 		// For now we do not have any unbonding time on Babylon chain, only time lock on BTC chain
 		// we may consider adding unbonding time on Babylon chain later to avoid situation where
 		// we can lose to much voting power in to short time.
@@ -131,7 +131,7 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatu
 	}
 
 	if d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
-		if d.HasJurySig() {
+		if d.HasCovenantSig() {
 			return BTCDelegationStatus_ACTIVE
 		} else {
 			return BTCDelegationStatus_PENDING

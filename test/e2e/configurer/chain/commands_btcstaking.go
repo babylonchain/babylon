@@ -60,17 +60,17 @@ func (n *NodeConfig) CreateBTCDelegation(babylonPK *secp256k1.PubKey, pop *bstyp
 	n.LogActionF("successfully created BTC delegation")
 }
 
-func (n *NodeConfig) AddJurySig(valPK *bbn.BIP340PubKey, delPK *bbn.BIP340PubKey, stakingTxHash string, sig *bbn.BIP340Signature) {
-	n.LogActionF("adding jury signature")
+func (n *NodeConfig) AddCovenantSig(valPK *bbn.BIP340PubKey, delPK *bbn.BIP340PubKey, stakingTxHash string, sig *bbn.BIP340Signature) {
+	n.LogActionF("adding covenant signature")
 
 	valPKHex := valPK.MarshalHex()
 	delPKHex := delPK.MarshalHex()
 	sigHex := sig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "add-jury-sig", valPKHex, delPKHex, stakingTxHash, sigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sig", valPKHex, delPKHex, stakingTxHash, sigHex, "--from=val"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully added jury sig")
+	n.LogActionF("successfully added covenant sig")
 }
 
 func (n *NodeConfig) CommitPubRandList(valBTCPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand, sig *bbn.BIP340Signature) {
@@ -150,7 +150,7 @@ func (n *NodeConfig) AddValidatorUnbondingSig(valPK *bbn.BIP340PubKey, delPK *bb
 	n.LogActionF("successfully added validator unbonding sig")
 }
 
-func (n *NodeConfig) AddJuryUnbondingSigs(
+func (n *NodeConfig) AddCovenantUnbondingSigs(
 	valPK *bbn.BIP340PubKey,
 	delPK *bbn.BIP340PubKey,
 	stakingTxHash string,
@@ -163,8 +163,8 @@ func (n *NodeConfig) AddJuryUnbondingSigs(
 	unbondingTxSigHex := unbondingTxSig.ToHexStr()
 	slashUnbondingTxSigHex := slashUnbondingTxSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "add-jury-unbonding-sigs", valPKHex, delPKHex, stakingTxHash, unbondingTxSigHex, slashUnbondingTxSigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-unbonding-sigs", valPKHex, delPKHex, stakingTxHash, unbondingTxSigHex, slashUnbondingTxSigHex, "--from=val"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully added jury unbonding sigs")
+	n.LogActionF("successfully added covenant unbonding sigs")
 }

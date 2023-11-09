@@ -22,14 +22,14 @@ import (
 func genValidStakingScriptData(t *testing.T, r *rand.Rand) *btcstaking.StakingScriptData {
 	stakerPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	validatorPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
-	juryPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
+	covenantPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	stakingTime := uint16(r.Intn(math.MaxUint16))
 
 	_, stakerPublicKey := btcec.PrivKeyFromBytes(stakerPrivKeyBytes)
 	_, validatorPublicKey := btcec.PrivKeyFromBytes(validatorPrivKeyBytes)
-	_, juryPublicKey := btcec.PrivKeyFromBytes(juryPrivKeyBytes)
+	_, covenantPublicKey := btcec.PrivKeyFromBytes(covenantPrivKeyBytes)
 
-	sd, _ := btcstaking.NewStakingScriptData(stakerPublicKey, validatorPublicKey, juryPublicKey, stakingTime)
+	sd, _ := btcstaking.NewStakingScriptData(stakerPublicKey, validatorPublicKey, covenantPublicKey, stakingTime)
 
 	return sd
 }
@@ -49,7 +49,7 @@ func FuzzGeneratingParsingValidStakingScript(f *testing.F) {
 		require.Equal(t, parsedScript.StakingTime, sd.StakingTime)
 		require.Equal(t, schnorr.SerializePubKey(sd.StakerKey), schnorr.SerializePubKey(parsedScript.StakerKey))
 		require.Equal(t, schnorr.SerializePubKey(sd.ValidatorKey), schnorr.SerializePubKey(parsedScript.ValidatorKey))
-		require.Equal(t, schnorr.SerializePubKey(sd.JuryKey), schnorr.SerializePubKey(parsedScript.JuryKey))
+		require.Equal(t, schnorr.SerializePubKey(sd.CovenantKey), schnorr.SerializePubKey(parsedScript.CovenantKey))
 	})
 }
 
@@ -76,7 +76,7 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 				stakingOutput, _, err := btcstaking.BuildStakingOutput(
 					sd.StakerKey,
 					sd.ValidatorKey,
-					sd.JuryKey,
+					sd.CovenantKey,
 					sd.StakingTime,
 					btcutil.Amount(r.Intn(5000)+minStakingValue),
 					&chaincfg.MainNetParams,
@@ -196,7 +196,7 @@ func TestStakingScriptExecutionSingleStaker(t *testing.T) {
 	validatorPrivKey, err := btcec.NewPrivateKey()
 	require.NoError(t, err)
 
-	juryPrivKey, err := btcec.NewPrivateKey()
+	covenantPrivKey, err := btcec.NewPrivateKey()
 	require.NoError(t, err)
 
 	txid, err := chainhash.NewHash(datagen.GenRandomByteArray(r, 32))
@@ -210,7 +210,7 @@ func TestStakingScriptExecutionSingleStaker(t *testing.T) {
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
 		stakerPrivKey.PubKey(),
 		validatorPrivKey.PubKey(),
-		juryPrivKey.PubKey(),
+		covenantPrivKey.PubKey(),
 		stakingTimeBlocks,
 		stakingValue,
 		&chaincfg.MainNetParams,
@@ -272,7 +272,7 @@ func TestStakingScriptExecutionMulitSig(t *testing.T) {
 	validatorPrivKey, err := btcec.NewPrivateKey()
 	require.NoError(t, err)
 
-	juryPrivKey, err := btcec.NewPrivateKey()
+	covenantPrivKey, err := btcec.NewPrivateKey()
 	require.NoError(t, err)
 
 	txid, err := chainhash.NewHash(datagen.GenRandomByteArray(r, 32))
@@ -286,7 +286,7 @@ func TestStakingScriptExecutionMulitSig(t *testing.T) {
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
 		stakerPrivKey.PubKey(),
 		validatorPrivKey.PubKey(),
-		juryPrivKey.PubKey(),
+		covenantPrivKey.PubKey(),
 		stakingTimeBlocks,
 		stakingValue,
 		&chaincfg.MainNetParams,
@@ -322,17 +322,17 @@ func TestStakingScriptExecutionMulitSig(t *testing.T) {
 
 	require.NoError(t, err)
 
-	witnessJury, err := btcstaking.BuildWitnessToSpendStakingOutput(
+	witnessCovenant, err := btcstaking.BuildWitnessToSpendStakingOutput(
 		spendStakeTx,
 		stakingOutput,
 		stakingScript,
-		juryPrivKey,
+		covenantPrivKey,
 	)
 
 	require.NoError(t, err)
 
 	// To Construct valid witness, for multisig case we need:
-	// - jury signature - witnessJury[0]
+	// - covenant signature - witnessCovenant[0]
 	// - validator signature - witnessValidator[0]
 	// - staker signature - witnessStaker[0]
 	// - empty signature - which is just an empty byte array which signals we are going to use multisig.
@@ -340,7 +340,7 @@ func TestStakingScriptExecutionMulitSig(t *testing.T) {
 	// - whole script - witnessStaker[1] (any other wittness[1] will work as well)
 	// - control block - witnessStaker[2] (any other wittness[2] will work as well)
 	spendStakeTx.TxIn[0].Witness = [][]byte{
-		witnessJury[0], witnessValidator[0], witnessStaker[0], []byte{}, witnessStaker[1], witnessStaker[2],
+		witnessCovenant[0], witnessValidator[0], witnessStaker[0], []byte{}, witnessStaker[1], witnessStaker[2],
 	}
 
 	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
