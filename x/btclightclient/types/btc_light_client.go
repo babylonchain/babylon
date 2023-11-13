@@ -314,7 +314,7 @@ func (l *BtcLightClient) processNewHeadersChain(
 		)
 
 		if err != nil {
-			return err
+			return fmt.Errorf("provided header contains invalid header. Error msg: %s: %w", err.Error(), ErrInvalidHeader)
 		}
 
 		childWork := CalcHeaderWork(h)
@@ -378,7 +378,7 @@ func (l *BtcLightClient) InsertHeaders(readStore BtcChainReadStore, headers []*w
 		forkParent, err := readStore.GetHeaderByHash(&parentHash)
 
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot find parent header with hash %s for provided chain: %w", parentHash.String(), ErrHeaderParentDoesNotExist)
 		}
 
 		forkParentInfo := toLocalInfo(forkParent)
@@ -390,7 +390,7 @@ func (l *BtcLightClient) InsertHeaders(readStore BtcChainReadStore, headers []*w
 		tipOfNewChain := store.headers[len(store.headers)-1]
 
 		if tipOfNewChain.totalWork.LTE(currentTip.totalWork) {
-			return nil, fmt.Errorf("the new chain has less or equal work than the current tip")
+			return nil, fmt.Errorf("new chain work %d, is not better than current tip work %d: %w", tipOfNewChain.totalWork, currentTip.totalWork, ErrChainWithNotEnoughWork)
 		}
 
 		return &InsertResult{

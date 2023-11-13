@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"errors"
 	"math/rand"
 	"testing"
 
@@ -342,6 +343,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 		chain := datagen.NewBTCHeaderChainWithLength(r, 0, 0, 10)
 		errNoParent := blcKeeper.InsertHeaders(ctx, chain.ChainToBytes()[1:])
 		require.Error(t, errNoParent)
+		require.True(t, errors.Is(errNoParent, types.ErrHeaderParentDoesNotExist))
 
 		// Inserting header chain with invalid header should result in error
 		newChainLength := uint32(datagen.RandomInt(r, 10) + 5)
@@ -374,6 +376,7 @@ func FuzzKeeperInsertInvalidChain(f *testing.F) {
 		)
 		errWorseChain := blcKeeper.InsertHeaders(ctx, chainToChainBytes(worseChain))
 		require.Error(t, errWorseChain)
+		require.True(t, errors.Is(errWorseChain, types.ErrChainWithNotEnoughWork))
 	})
 }
 

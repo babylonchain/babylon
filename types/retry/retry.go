@@ -13,6 +13,8 @@ import (
 // unrecoverableErrors is a list of errors which are unsafe and should not be retried.
 var unrecoverableErrors = []error{
 	btclctypes.ErrHeaderParentDoesNotExist,
+	btclctypes.ErrChainWithNotEnoughWork,
+	btclctypes.ErrInvalidHeader,
 	btcctypes.ErrProvidedHeaderDoesNotHaveAncestor,
 	btcctypes.ErrInvalidHeader,
 	btcctypes.ErrNoCheckpointsForPreviousEpoch,
@@ -23,7 +25,6 @@ var unrecoverableErrors = []error{
 
 // expectedErrors is a list of errors which can safely be ignored and should not be retried.
 var expectedErrors = []error{
-	btclctypes.ErrDuplicateHeader,
 	btcctypes.ErrDuplicatedSubmission,
 	btcctypes.ErrInvalidHeader,
 	// TODO Add more errors here
