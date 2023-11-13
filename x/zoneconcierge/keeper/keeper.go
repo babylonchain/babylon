@@ -18,6 +18,7 @@ type (
 		memKey   storetypes.StoreKey
 
 		ics4Wrapper         types.ICS4Wrapper
+		clientKeeper        types.ClientKeeper
 		channelKeeper       types.ChannelKeeper
 		portKeeper          types.PortKeeper
 		authKeeper          types.AccountKeeper
@@ -40,6 +41,7 @@ func NewKeeper(
 	storeKey,
 	memKey storetypes.StoreKey,
 	ics4Wrapper types.ICS4Wrapper,
+	clientKeeper types.ClientKeeper,
 	channelKeeper types.ChannelKeeper,
 	portKeeper types.PortKeeper,
 	authKeeper types.AccountKeeper,
@@ -58,6 +60,7 @@ func NewKeeper(
 		storeKey:            storeKey,
 		memKey:              memKey,
 		ics4Wrapper:         ics4Wrapper,
+		clientKeeper:        clientKeeper,
 		channelKeeper:       channelKeeper,
 		portKeeper:          portKeeper,
 		authKeeper:          authKeeper,

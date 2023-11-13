@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
 )
@@ -30,10 +30,10 @@ func GenRandomIBCTMHeader(r *rand.Rand, chainID string, height uint64) *ibctmtyp
 	}
 }
 
-func HeaderToHeaderInfo(header *ibctmtypes.Header) *extendedkeeper.HeaderInfo {
-	return &extendedkeeper.HeaderInfo{
-		Hash:     header.Header.LastCommitHash,
-		ChaindId: header.Header.ChainID,
-		Height:   uint64(header.Header.Height),
+func HeaderToHeaderInfo(header *ibctmtypes.Header) *zctypes.HeaderInfo {
+	return &zctypes.HeaderInfo{
+		Hash:    header.Header.LastCommitHash,
+		ChainId: header.Header.ChainID,
+		Height:  uint64(header.Header.Height),
 	}
 }

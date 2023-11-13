@@ -18,11 +18,10 @@ func FuzzCanonicalChainIndexer(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
 
 		// simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
-		headers := SimulateHeadersViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders)
+		headers := SimulateNewHeaders(ctx, r, &zcKeeper, czChain.ChainID, 0, numHeaders)
 
 		// check if the canonical chain index is correct or not
 		for i := uint64(0); i < numHeaders; i++ {
@@ -54,7 +53,6 @@ func FuzzFindClosestHeader(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
 
 		// no header at the moment, FindClosestHeader invocation should give error
 		_, err := zcKeeper.FindClosestHeader(ctx, czChain.ChainID, 100)
@@ -62,7 +60,7 @@ func FuzzFindClosestHeader(f *testing.F) {
 
 		// simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
-		headers := SimulateHeadersViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders)
+		headers := SimulateNewHeaders(ctx, r, &zcKeeper, czChain.ChainID, 0, numHeaders)
 
 		header, err := zcKeeper.FindClosestHeader(ctx, czChain.ChainID, numHeaders)
 		require.NoError(t, err)
@@ -73,7 +71,7 @@ func FuzzFindClosestHeader(f *testing.F) {
 
 		// simulate a random number of blocks
 		// where the new batch of headers has a gap with the previous batch
-		SimulateHeadersViaHook(ctx, r, hooks, czChain.ChainID, numHeaders+gap+1, numHeaders)
+		SimulateNewHeaders(ctx, r, &zcKeeper, czChain.ChainID, numHeaders+gap+1, numHeaders)
 
 		// get a random height that is in this gap
 		randomHeightInGap := datagen.RandomInt(r, int(gap+1)) + numHeaders

@@ -12,9 +12,10 @@ import (
 	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	clientexported "github.com/cosmos/ibc-go/v7/modules/core/02-client/exported"
+	clientkeeper "github.com/cosmos/ibc-go/v7/modules/core/02-client/keeper"
 	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	commitmenttypes "github.com/cosmos/ibc-go/v7/modules/core/23-commitment/types"
 	"github.com/cosmos/ibc-go/v7/modules/core/exported"
@@ -42,7 +43,7 @@ type ZoneConciergeTestSuite struct {
 	// System states of the simulated Babylon chain
 	cdc            codec.Codec
 	ctx            sdk.Context
-	keeper         clientexported.ClientKeeper
+	keeper         clientkeeper.Keeper
 	zcKeeper       zckeeper.Keeper
 	consensusState *ibctmtypes.ConsensusState
 	header         *ibctmtypes.Header
@@ -234,7 +235,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			conflictConsState := updateHeader.ConsensusState()
 			conflictConsState.Root = commitmenttypes.NewMerkleRoot([]byte("conflicting apphash"))
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientConsensusState(suite.babylonChain.GetContext(), clientID, updateHeader.GetHeight(), conflictConsState)
-		}, false, true}, // Babylon modification: fork headers are rejected before being passed to ClientState, and are recorded in the fork index
+		}, false, true}, // Babylon modification: fork headers will be recorded in the fork index
 		{"misbehaviour in dishonest majority CZ: monotonic time violation", func() {
 			clientState := path.EndpointA.GetClientState().(*ibctmtypes.ClientState)
 			clientID := path.EndpointA.ClientID
@@ -256,7 +257,7 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 			suite.babylonChain.App.GetIBCKeeper().ClientKeeper.SetClientState(suite.babylonChain.GetContext(), clientID, clientState)
 
 			updateHeader = createFutureUpdateFn(trustedHeight)
-		}, false, true}, // Babylon modification: non-monotonic headers are rejected before being passed to ClientState, and are recorded in the fork index
+		}, false, true}, // Babylon modification: non-monotonic headers will be recorded in the fork index
 		{"client state not found", func() {
 			updateHeader = createFutureUpdateFn(path.EndpointA.GetClientState().GetLatestHeight().(clienttypes.Height))
 
@@ -296,7 +297,55 @@ func (suite *ZoneConciergeTestSuite) TestUpdateClientTendermint() {
 				clientState = path.EndpointA.GetClientState()
 			}
 
-			err := suite.babylonChain.App.GetIBCKeeper().ClientKeeper.UpdateClient(suite.babylonChain.GetContext(), path.EndpointA.ClientID, updateHeader)
+			msg, err := clienttypes.NewMsgUpdateClient(path.EndpointA.ClientID, updateHeader, path.EndpointA.Chain.SenderAccount.GetAddress().String())
+			suite.Require().NoError(err)
+
+			// define SendMsgsOverride such that SendMsgs does not make expectation on whether
+			// the tx is successful or not. Here ZoneConcierge only cares about whether headers
+			// are indexed as expected
+			suite.babylonChain.SendMsgsOverride = func(msgs ...sdk.Msg) (*sdk.Result, error) {
+				chain := suite.babylonChain
+				// ensure the chain has the latest time
+				chain.Coordinator.UpdateTimeForChain(chain)
+
+				// generate a signed mock tx
+				tx, err := simtestutil.GenSignedMockTx(
+					rand.New(rand.NewSource(time.Now().UnixNano())),
+					chain.TxConfig,
+					msgs,
+					sdk.Coins{sdk.NewInt64Coin(sdk.DefaultBondDenom, 0)},
+					simtestutil.DefaultGenTxGas,
+					chain.ChainID,
+					[]uint64{chain.SenderAccount.GetAccountNumber()},
+					[]uint64{chain.SenderAccount.GetSequence()},
+					chain.SenderPrivKey,
+				)
+				if err != nil {
+					return nil, err
+				}
+
+				// Simulate a sending a transaction
+				_, res, err := chain.App.GetBaseApp().SimDeliver(chain.TxConfig.TxEncoder(), tx)
+				if err != nil {
+					return nil, err
+				}
+
+				// NextBlock calls app.Commit()
+				chain.NextBlock()
+
+				// increment sequence for successful transaction execution
+				err = chain.SenderAccount.SetSequence(chain.SenderAccount.GetSequence() + 1)
+				if err != nil {
+					return nil, err
+				}
+
+				// increment time
+				chain.Coordinator.IncrementTime()
+
+				return res, nil
+			}
+			// send message!
+			_, err = suite.babylonChain.SendMsgs(msg)
 
 			if tc.expPass {
 				suite.Require().NoError(err, err)

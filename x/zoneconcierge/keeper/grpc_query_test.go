@@ -37,7 +37,6 @@ func FuzzChainList(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times with random chain IDs
 		numHeaders := datagen.RandomInt(r, 100) + 1
@@ -52,7 +51,7 @@ func FuzzChainList(f *testing.F) {
 				allChainIDs = append(allChainIDs, chainID)
 			}
 			header := datagen.GenRandomIBCTMHeader(r, chainID, 0)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
+			zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
 		}
 
 		limit := datagen.RandomInt(r, len(allChainIDs)) + 1
@@ -84,7 +83,6 @@ func FuzzChainsInfo(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
 
 		var (
 			chainsInfo []chainInfo
@@ -95,7 +93,7 @@ func FuzzChainsInfo(f *testing.F) {
 			chainID := datagen.GenRandomHexStr(r, 30)
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, 0, numHeaders, numForkHeaders)
+			SimulateNewHeadersAndForks(ctx, r, &zcKeeper, chainID, 0, numHeaders, numForkHeaders)
 
 			chainIDs = append(chainIDs, chainID)
 			chainsInfo = append(chainsInfo, chainInfo{
@@ -128,12 +126,11 @@ func FuzzHeader(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 2
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		headers, forkHeaders := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		headers, forkHeaders := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// find header at a random height and assert correctness against the expected header
 		randomHeight := datagen.RandomInt(r, int(numHeaders-1))
@@ -192,7 +189,7 @@ func FuzzEpochChainsInfo(f *testing.F) {
 				numForkHeaders := datagen.RandomInt(r, 10) + 1
 
 				// trigger hooks to append these headers and fork headers
-				SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, chainHeaderStartHeights[j], numHeaders, numForkHeaders)
+				SimulateNewHeadersAndForks(ctx, r, &zcKeeper, chainID, chainHeaderStartHeights[j], numHeaders, numForkHeaders)
 
 				epochToChainInfo[epochNum][chainID] = chainInfo{
 					chainID:           chainID,
@@ -260,12 +257,11 @@ func FuzzListHeaders(f *testing.F) {
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 
 		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		headers, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		headers, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// a request with randomised pagination
 		limit := datagen.RandomInt(r, int(numHeaders)) + 1
@@ -324,7 +320,7 @@ func FuzzListEpochHeaders(f *testing.F) {
 			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
 			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
 			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
@@ -424,7 +420,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 			// invoke the hook a random number of times to simulate a random number of blocks
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, czChainID, 0, numHeaders, numForkHeaders)
+			SimulateNewHeadersAndForks(ctx, r, zcKeeper, czChainID, 0, numHeaders, numForkHeaders)
 
 			chainIDs = append(chainIDs, czChainID)
 			chainsInfo = append(chainsInfo, chainInfo{

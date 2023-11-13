@@ -86,6 +86,7 @@ func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, c
 		storeKey,
 		memStoreKey,
 		nil, // TODO: mock this keeper
+		nil, // TODO: mock this keeper
 		zoneconciergeChannelKeeper{},
 		zoneconciergePortKeeper{},
 		nil, // TODO: mock this keeper

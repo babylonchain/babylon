@@ -59,7 +59,8 @@ type ChannelKeeper interface {
 
 // ClientKeeper defines the expected IBC client keeper
 type ClientKeeper interface {
-	GetClientConsensusState(ctx sdk.Context, clientID string) (connection ibcexported.ConsensusState, found bool)
+	GetClientState(ctx sdk.Context, clientID string) (ibcexported.ClientState, bool)
+	SetClientState(ctx sdk.Context, clientID string, clientState ibcexported.ClientState)
 }
 
 // ConnectionKeeper defines the expected IBC connection keeper

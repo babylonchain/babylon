@@ -31,7 +31,7 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChain.ChainID, 0, numHeaders, numForkHeaders)
 
 		// end this epoch
 		hooks.AfterEpochEnds(ctx, epochNum)
@@ -85,7 +85,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
 			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
 			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])

@@ -130,7 +130,6 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
-	extendedkeeper "github.com/babylonchain/babylon/x/zoneconcierge/extended-client-keeper"
 	ibcfee "github.com/cosmos/ibc-go/v7/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/keeper"
 	ibcfeetypes "github.com/cosmos/ibc-go/v7/modules/apps/29-fee/types"
@@ -592,6 +591,7 @@ func NewBabylonApp(
 		keys[zctypes.StoreKey],
 		keys[zctypes.MemStoreKey],
 		app.IBCFeeKeeper,
+		app.IBCKeeper.ClientKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		&app.IBCKeeper.PortKeeper,
 		app.AccountKeeper,
@@ -605,15 +605,6 @@ func NewBabylonApp(
 		scopedZoneConciergeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
-
-	// replace IBC keeper's client keeper with our ExtendedKeeper
-	extendedClientKeeper := extendedkeeper.NewExtendedKeeper(appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), app.StakingKeeper, app.UpgradeKeeper)
-	// make zcKeeper to hooks onto extendedClientKeeper so that zcKeeper can receive notifications of new headers
-	extendedClientKeeper = *extendedClientKeeper.SetHooks(
-		extendedkeeper.NewMultiClientHooks(zcKeeper.Hooks()),
-	)
-	app.IBCKeeper.ClientKeeper = extendedClientKeeper
-
 	app.ZoneConciergeKeeper = *zcKeeper
 
 	// Create Transfer Keepers
@@ -938,6 +929,12 @@ func NewBabylonApp(
 		NewBtcValidationDecorator(btcConfig, &app.BtcCheckpointKeeper),
 	)
 	app.SetAnteHandler(anteHandler)
+
+	// set postHandler
+	postHandler := sdk.ChainPostDecorators(
+		zckeeper.NewIBCHeaderDecorator(app.ZoneConciergeKeeper),
+	)
+	app.SetPostHandler(postHandler)
 
 	// must be before Loading version
 	// requires the snapshot store to be created and registered as a BaseAppOption
