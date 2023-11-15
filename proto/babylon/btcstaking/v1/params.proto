@@ -32,4 +32,6 @@ message Params {
       (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
       (gogoproto.nullable)   = false
   ];
+  // max_active_btc_validators is the maximum number of active BTC validators in the BTC staking protocol
+  uint32 max_active_btc_validators = 6;
 }

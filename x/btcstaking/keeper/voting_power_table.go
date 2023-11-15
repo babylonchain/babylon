@@ -22,9 +22,9 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 	// get value of w
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	// iterate all BTC validators
+	// filter out all BTC validators with positive voting power
+	activeBTCVals := []*types.BTCValidatorWithMeta{}
 	btcValIter := k.btcValidatorStore(ctx).Iterator(nil, nil)
-	defer btcValIter.Close()
 	for ; btcValIter.Valid(); btcValIter.Next() {
 		valBTCPKBytes := btcValIter.Key()
 		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
@@ -61,8 +61,26 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 		btcDelIter.Close()
 
 		if valPower > 0 {
-			k.SetVotingPower(ctx, valBTCPKBytes, babylonTipHeight, valPower)
+			activeBTCVals = append(activeBTCVals, &types.BTCValidatorWithMeta{
+				BtcPk:       valBTCPK,
+				VotingPower: valPower,
+				// other fields do not matter
+			})
 		}
+	}
+	btcValIter.Close()
+
+	// return directly if there is no active BTC validator
+	if len(activeBTCVals) == 0 {
+		return
+	}
+
+	// filter out top `MaxActiveBtcValidators` active validators in terms of voting power
+	activeBTCVals = types.FilterTopNBTCValidators(activeBTCVals, k.GetParams(ctx).MaxActiveBtcValidators)
+
+	// set voting power for each active BTC validators
+	for _, btcVal := range activeBTCVals {
+		k.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), babylonTipHeight, btcVal.VotingPower)
 	}
 }
 

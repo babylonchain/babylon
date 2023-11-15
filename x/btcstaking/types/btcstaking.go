@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"sort"
 
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
@@ -331,4 +332,22 @@ func (tx *BabylonBTCTaprootTx) VerifySignature(stakingPkScript []byte, stakingAm
 		pk,
 		*sig,
 	)
+}
+
+// FilterTopNBTCValidators returns the top n validators based on VotingPower.
+func FilterTopNBTCValidators(validators []*BTCValidatorWithMeta, n uint32) []*BTCValidatorWithMeta {
+	numVals := uint32(len(validators))
+
+	// if the given validator set is no bigger than n, no need to do anything
+	if numVals <= n {
+		return validators
+	}
+
+	// Sort the validators slice, from higher to lower voting power
+	sort.SliceStable(validators, func(i, j int) bool {
+		return validators[i].VotingPower > validators[j].VotingPower
+	})
+
+	// Return the top n elements
+	return validators[:n]
 }

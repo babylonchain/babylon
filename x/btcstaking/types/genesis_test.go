@@ -24,11 +24,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					CovenantPk:          types.DefaultParams().CovenantPk,
-					SlashingAddress:     types.DefaultParams().SlashingAddress,
-					MinSlashingTxFeeSat: 500,
-					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
-					SlashingRate:        sdkmath.LegacyMustNewDecFromStr("0.1"),
+					CovenantPk:             types.DefaultParams().CovenantPk,
+					SlashingAddress:        types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat:    500,
+					MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
+					MaxActiveBtcValidators: 100,
 				},
 			},
 			valid: true,
@@ -37,11 +38,12 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "invalid slashing rate in genesis",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					CovenantPk:          types.DefaultParams().CovenantPk,
-					SlashingAddress:     types.DefaultParams().SlashingAddress,
-					MinSlashingTxFeeSat: 500,
-					MinCommissionRate:   sdkmath.LegacyMustNewDecFromStr("0.5"),
-					SlashingRate:        sdkmath.LegacyZeroDec(), // invalid slashing rate
+					CovenantPk:             types.DefaultParams().CovenantPk,
+					SlashingAddress:        types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat:    500,
+					MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:           sdkmath.LegacyZeroDec(), // invalid slashing rate
+					MaxActiveBtcValidators: 100,
 				},
 			},
 			valid: false,

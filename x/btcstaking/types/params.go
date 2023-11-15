@@ -13,6 +13,10 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+const (
+	defaultMaxActiveBtcValidators uint32 = 100
+)
+
 var _ paramtypes.ParamSet = (*Params)(nil)
 
 func defaultCovenantPk() *bbn.BIP340PubKey {
@@ -45,7 +49,8 @@ func DefaultParams() Params {
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   math.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
-		SlashingRate: math.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
+		SlashingRate:           math.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
+		MaxActiveBtcValidators: defaultMaxActiveBtcValidators,
 	}
 }
 
@@ -84,6 +89,15 @@ func validateSlashingRate(slashingRate sdk.Dec) error {
 	return nil
 }
 
+// validateMaxActiveBTCValidators checks if the maximum number of
+// active BTC validators is at least the default value
+func validateMaxActiveBTCValidators(maxActiveBtcValidators uint32) error {
+	if maxActiveBtcValidators < defaultMaxActiveBtcValidators {
+		return fmt.Errorf("maximum number of BTC validators is at least %d", defaultMaxActiveBtcValidators)
+	}
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
@@ -93,6 +107,9 @@ func (p Params) Validate() error {
 		return err
 	}
 	if err := validateSlashingRate(p.SlashingRate); err != nil {
+		return err
+	}
+	if err := validateMaxActiveBTCValidators(p.MaxActiveBtcValidators); err != nil {
 		return err
 	}
 	return nil

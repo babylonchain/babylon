@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
+	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
@@ -166,5 +167,185 @@ func FuzzVotingPowerTable(f *testing.F) {
 		activatedHeight2, err := keeper.GetBTCStakingActivatedHeight(ctx)
 		require.NoError(t, err)
 		require.Equal(t, activatedHeight, activatedHeight2)
+	})
+}
+
+func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
+		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+
+		// generate a random batch of validators, each with a BTC delegation with random power
+		btcValsWithMeta := []*types.BTCValidatorWithMeta{}
+		numBTCVals := datagen.RandomInt(r, 300) + 1
+		for i := uint64(0); i < numBTCVals; i++ {
+			// generate BTC validator
+			btcVal, err := datagen.GenRandomBTCValidator(r)
+			require.NoError(t, err)
+			keeper.SetBTCValidator(ctx, btcVal)
+
+			// delegate to this BTC validator
+			stakingValue := datagen.RandomInt(r, 100000) + 100000
+			valBTCPK := btcVal.BtcPk
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+			require.NoError(t, err)
+			err = keeper.AddBTCDelegation(ctx, btcDel)
+			require.NoError(t, err)
+
+			// record voting power
+			btcValsWithMeta = append(btcValsWithMeta, &types.BTCValidatorWithMeta{
+				BtcPk:       btcVal.BtcPk,
+				VotingPower: stakingValue,
+			})
+		}
+
+		maxActiveBTCValsParam := keeper.GetParams(ctx).MaxActiveBtcValidators
+		// get a map of expected active BTC validators
+		expectedActiveBTCVals := types.FilterTopNBTCValidators(btcValsWithMeta, maxActiveBTCValsParam)
+		expectedActiveBTCValMap := map[string]uint64{}
+		for _, btcVal := range expectedActiveBTCVals {
+			expectedActiveBTCValMap[btcVal.BtcPk.MarshalHex()] = btcVal.VotingPower
+		}
+
+		// record voting power table
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
+		keeper.IndexBTCHeight(ctx)
+		keeper.RecordVotingPowerTable(ctx)
+
+		//  only BTC validators in expectedActiveBTCValMap have voting power
+		for _, btcVal := range btcValsWithMeta {
+			power := keeper.GetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), babylonHeight)
+			if expectedPower, ok := expectedActiveBTCValMap[btcVal.BtcPk.MarshalHex()]; ok {
+				require.Equal(t, expectedPower, power)
+			} else {
+				require.Equal(t, uint64(0), power)
+			}
+		}
+
+		// also, get voting power table and assert there is
+		// min(len(expectedActiveBTCVals), MaxActiveBtcValidators) active BTC validators
+		powerTable := keeper.GetVotingPowerTable(ctx, babylonHeight)
+		expectedNumActiveBTCVals := len(expectedActiveBTCValMap)
+		if expectedNumActiveBTCVals > int(maxActiveBTCValsParam) {
+			expectedNumActiveBTCVals = int(maxActiveBTCValsParam)
+		}
+		require.Len(t, powerTable, expectedNumActiveBTCVals)
+		// assert consistency of voting power
+		for pkHex, expectedPower := range expectedActiveBTCValMap {
+			require.Equal(t, powerTable[pkHex], expectedPower)
+		}
+	})
+}
+
+func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
+		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+
+		// covenant and slashing addr
+		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+
+		// generate a random batch of validators, each with a BTC delegation with random power
+		btcValsWithMeta := []*types.BTCValidatorWithMeta{}
+		numBTCVals := uint64(200) // there has to be more than `maxActiveBtcValidators` validators
+		for i := uint64(0); i < numBTCVals; i++ {
+			// generate BTC validator
+			btcVal, err := datagen.GenRandomBTCValidator(r)
+			require.NoError(t, err)
+			keeper.SetBTCValidator(ctx, btcVal)
+
+			// delegate to this BTC validator
+			stakingValue := datagen.RandomInt(r, 100000) + 100000
+			valBTCPK := btcVal.BtcPk
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+			require.NoError(t, err)
+			err = keeper.AddBTCDelegation(ctx, btcDel)
+			require.NoError(t, err)
+
+			// record voting power
+			btcValsWithMeta = append(btcValsWithMeta, &types.BTCValidatorWithMeta{
+				BtcPk:       btcVal.BtcPk,
+				VotingPower: stakingValue,
+			})
+		}
+
+		// record voting power table
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
+		keeper.IndexBTCHeight(ctx)
+		keeper.RecordVotingPowerTable(ctx)
+
+		// get maps of active/inactive BTC validators
+		activeBTCValMap := map[string]uint64{}
+		inactiveBTCValMap := map[string]uint64{}
+		for _, btcVal := range btcValsWithMeta {
+			power := keeper.GetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), babylonHeight)
+			if power > 0 {
+				activeBTCValMap[btcVal.BtcPk.MarshalHex()] = power
+			} else {
+				inactiveBTCValMap[btcVal.BtcPk.MarshalHex()] = power
+			}
+		}
+
+		// delegate a huge amount of tokens to one of the inactive BTC validator
+		var activatedValBTCPK *bbn.BIP340PubKey
+		for valBTCPKHex := range inactiveBTCValMap {
+			stakingValue := uint64(10000000)
+			activatedValBTCPK, _ = bbn.NewBIP340PubKeyFromHex(valBTCPKHex)
+			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+			require.NoError(t, err)
+			btcDel, err := datagen.GenRandomBTCDelegation(r, activatedValBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+			require.NoError(t, err)
+			err = keeper.AddBTCDelegation(ctx, btcDel)
+			require.NoError(t, err)
+
+			break
+		}
+
+		// record voting power table
+		babylonHeight += 1
+		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
+		keeper.IndexBTCHeight(ctx)
+		keeper.RecordVotingPowerTable(ctx)
+
+		// ensure that the activated BTC validator now has entered the active validator set
+		// i.e., has voting power
+		power := keeper.GetVotingPower(ctx, activatedValBTCPK.MustMarshal(), babylonHeight)
+		require.Positive(t, power)
 	})
 }

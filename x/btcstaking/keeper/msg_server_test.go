@@ -96,11 +96,12 @@ func getCovenantInfo(t *testing.T,
 	slashingAddr, err := datagen.GenRandomBTCAddress(r, net)
 	require.NoError(t, err)
 	err = bsKeeper.SetParams(sdkCtx, types.Params{
-		CovenantPk:          bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
-		SlashingAddress:     slashingAddr.String(),
-		MinSlashingTxFeeSat: 10,
-		MinCommissionRate:   sdk.MustNewDecFromStr("0.01"),
-		SlashingRate:        sdk.MustNewDecFromStr("0.1"),
+		CovenantPk:             bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
+		SlashingAddress:        slashingAddr.String(),
+		MinSlashingTxFeeSat:    10,
+		MinCommissionRate:      sdk.MustNewDecFromStr("0.01"),
+		SlashingRate:           sdk.MustNewDecFromStr("0.1"),
+		MaxActiveBtcValidators: 100,
 	})
 	require.NoError(t, err)
 	return covenantSK, covenantPK, slashingAddr
@@ -403,11 +404,12 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	slashingAddr, err := datagen.GenRandomBTCAddress(r, net)
 	require.NoError(t, err)
 	err = bsKeeper.SetParams(ctx, types.Params{
-		CovenantPk:          bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
-		SlashingAddress:     slashingAddr.String(),
-		MinSlashingTxFeeSat: 10,
-		MinCommissionRate:   sdk.MustNewDecFromStr("0.01"),
-		SlashingRate:        sdk.MustNewDecFromStr("0.1"),
+		CovenantPk:             bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
+		SlashingAddress:        slashingAddr.String(),
+		MinSlashingTxFeeSat:    10,
+		MinCommissionRate:      sdk.MustNewDecFromStr("0.01"),
+		SlashingRate:           sdk.MustNewDecFromStr("0.1"),
+		MaxActiveBtcValidators: 100,
 	})
 	require.NoError(t, err)
 
