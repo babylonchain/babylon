@@ -6,14 +6,14 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 
 	wasmapp "github.com/CosmWasm/wasmd/app"
-	"github.com/CosmWasm/wasmd/x/wasm"
+	wasm "github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonchain/babylon/client/docs"
 	bbn "github.com/babylonchain/babylon/types"
 	owasm "github.com/babylonchain/babylon/wasmbinding"
@@ -254,30 +254,8 @@ var (
 	EnableSpecificWasmProposals = ""
 
 	// EmptyWasmOpts defines a type alias for a list of wasm options.
-	EmptyWasmOpts []wasm.Option
+	EmptyWasmOpts []wasmkeeper.Option
 )
-
-// GetWasmEnabledProposals parses the WasmProposalsEnabled and
-// EnableSpecificWasmProposals values to produce a list of enabled proposals to
-// pass into the application.
-func GetWasmEnabledProposals() []wasm.ProposalType {
-	if EnableSpecificWasmProposals == "" {
-		if WasmProposalsEnabled == "true" {
-			return wasm.EnableAllProposals
-		}
-
-		return wasm.DisableAllProposals
-	}
-
-	chunks := strings.Split(EnableSpecificWasmProposals, ",")
-
-	proposals, err := wasm.ConvertToProposals(chunks)
-	if err != nil {
-		panic(err)
-	}
-
-	return proposals
-}
 
 var (
 	_ App                     = (*BabylonApp)(nil)
@@ -337,7 +315,7 @@ type BabylonApp struct {
 	FinalityKeeper   finalitykeeper.Keeper
 
 	// wasm smart contract module
-	WasmKeeper wasm.Keeper
+	WasmKeeper wasmkeeper.Keeper
 
 	// tokenomics-related modules
 	IncentiveKeeper incentivekeeper.Keeper
@@ -373,8 +351,7 @@ func NewBabylonApp(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, loadLatest bool, skipUpgradeHeights map[int64]bool,
 	homePath string, invCheckPeriod uint, encodingConfig appparams.EncodingConfig, privSigner *PrivSigner,
 	appOpts servertypes.AppOptions,
-	wasmEnabledProposals []wasm.ProposalType,
-	wasmOpts []wasm.Option,
+	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *BabylonApp {
 	// we could also take it from global object which should be initilised in rootCmd
@@ -414,7 +391,7 @@ func NewBabylonApp(
 		btcstakingtypes.StoreKey,
 		finalitytypes.StoreKey,
 		// WASM
-		wasm.StoreKey,
+		wasmtypes.StoreKey,
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
 	)
@@ -448,7 +425,7 @@ func NewBabylonApp(
 	scopedIBCKeeper := app.CapabilityKeeper.ScopeToModule(ibcexported.ModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedZoneConciergeKeeper := app.CapabilityKeeper.ScopeToModule(zctypes.ModuleName)
-	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasm.ModuleName)
+	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
 
 	// Applications that wish to enforce statically created ScopedKeepers should call `Seal` after creating
 	// their scoped modules in `NewApp` with `ScopeToModule`
@@ -665,9 +642,9 @@ func NewBabylonApp(
 
 	wasmOpts = append(owasm.RegisterCustomPlugins(&app.EpochingKeeper, &app.ZoneConciergeKeeper, &app.BTCLightClientKeeper), wasmOpts...)
 
-	app.WasmKeeper = wasm.NewKeeper(
+	app.WasmKeeper = wasmkeeper.NewKeeper(
 		appCodec,
-		keys[wasm.StoreKey],
+		keys[wasmtypes.StoreKey],
 		app.AccountKeeper,
 		app.BankKeeper,
 		app.StakingKeeper,
@@ -703,16 +680,11 @@ func NewBabylonApp(
 	ibcRouter := porttypes.NewRouter().
 		AddRoute(ibctransfertypes.ModuleName, transferStack).
 		AddRoute(zctypes.ModuleName, zoneConciergeStack).
-		AddRoute(wasm.ModuleName, wasmStack)
+		AddRoute(wasmtypes.ModuleName, wasmStack)
 
 	// Setting Router will finalize all routes by sealing router
 	// No more routes can be added
 	app.IBCKeeper.SetRouter(ibcRouter)
-
-	// The gov proposal types can be individually enabled
-	if len(wasmEnabledProposals) != 0 {
-		govRouter.AddRoute(wasm.RouterKey, wasm.NewWasmProposalHandler(app.WasmKeeper, wasmEnabledProposals))
-	}
 
 	// Set legacy router for backwards compatibility with gov v1beta1
 	app.GovKeeper.SetLegacyRouter(govRouter)
@@ -746,7 +718,7 @@ func NewBabylonApp(
 		params.NewAppModule(app.ParamsKeeper),
 		consensus.NewAppModule(appCodec, app.ConsensusParamsKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
-		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasm.ModuleName)),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		// Babylon modules
 		epoching.NewAppModule(appCodec, app.EpochingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		btclightclient.NewAppModule(appCodec, app.BTCLightClientKeeper, app.AccountKeeper, app.BankKeeper),
@@ -791,7 +763,7 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -819,7 +791,7 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -851,7 +823,7 @@ func NewBabylonApp(
 		ibctransfertypes.ModuleName,
 		zctypes.ModuleName,
 		ibcfeetypes.ModuleName,
-		wasm.ModuleName,
+		wasmtypes.ModuleName,
 		// BTC staking related modules
 		btcstakingtypes.ModuleName,
 		finalitytypes.ModuleName,
@@ -915,7 +887,8 @@ func NewBabylonApp(
 			},
 			IBCKeeper:         app.IBCKeeper,
 			WasmConfig:        &wasmConfig,
-			TXCounterStoreKey: keys[wasm.StoreKey],
+			TXCounterStoreKey: keys[wasmtypes.StoreKey],
+			WasmKeeper:        &app.WasmKeeper,
 		},
 	)
 

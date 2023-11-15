@@ -18,7 +18,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/babylonchain/babylon/app/params"
 	appparams "github.com/babylonchain/babylon/app/params"
 	bbn "github.com/babylonchain/babylon/types"
 	dbm "github.com/cometbft/cometbft-db"
@@ -53,7 +52,7 @@ type SetupOptions struct {
 	InvCheckPeriod     uint
 	HomePath           string
 	SkipUpgradeHeights map[int64]bool
-	EncConfig          params.EncodingConfig
+	EncConfig          appparams.EncodingConfig
 	AppOpts            types.AppOptions
 }
 
@@ -64,7 +63,7 @@ func setup(withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	if err != nil {
 		panic(err)
 	}
-	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{}, GetWasmEnabledProposals(), EmptyWasmOpts)
+	app := NewBabylonApp(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, invCheckPeriod, encCdc, privSigner, EmptyAppOptions{}, EmptyWasmOpts)
 	if withGenesis {
 		return app, NewDefaultGenesisState(encCdc.Marshaler)
 	}
@@ -103,7 +102,9 @@ func NewBabyblonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *P
 		options.InvCheckPeriod,
 		options.EncConfig,
 		privSigner,
-		options.AppOpts, GetWasmEnabledProposals(), EmptyWasmOpts)
+		options.AppOpts,
+		EmptyWasmOpts,
+	)
 	genesisState := NewDefaultGenesisState(app.appCodec)
 	genesisState = genesisStateWithValSet(t, app, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 

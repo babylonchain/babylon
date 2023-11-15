@@ -92,8 +92,8 @@ func validateSlashingRate(slashingRate sdk.Dec) error {
 // validateMaxActiveBTCValidators checks if the maximum number of
 // active BTC validators is at least the default value
 func validateMaxActiveBTCValidators(maxActiveBtcValidators uint32) error {
-	if maxActiveBtcValidators < defaultMaxActiveBtcValidators {
-		return fmt.Errorf("maximum number of BTC validators is at least %d", defaultMaxActiveBtcValidators)
+	if maxActiveBtcValidators == 0 {
+		return fmt.Errorf("max validators must be positive")
 	}
 	return nil
 }

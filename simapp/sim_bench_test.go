@@ -49,7 +49,6 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 		app.GetEncodingConfig(),
 		privSigner,
 		sims.EmptyAppOptions{},
-		app.GetWasmEnabledProposals(),
 		app.EmptyWasmOpts,
 		interBlockCacheOpt())
 
@@ -116,7 +115,6 @@ func BenchmarkInvariants(b *testing.B) {
 		app.GetEncodingConfig(),
 		privSigner,
 		sims.EmptyAppOptions{},
-		app.GetWasmEnabledProposals(),
 		app.EmptyWasmOpts,
 		interBlockCacheOpt())
 
