@@ -81,14 +81,6 @@ func validateMinCommissionRate(rate sdk.Dec) error {
 	return nil
 }
 
-// validateSlashingRate checks if the slashing rate is within the valid range (0, 1].
-func validateSlashingRate(slashingRate sdk.Dec) error {
-	if slashingRate.LTE(math.LegacyZeroDec()) || slashingRate.GT(math.LegacyOneDec()) {
-		return fmt.Errorf("slashing rate must be in the range (0, 1] i.e., 0 exclusive and 1 inclusive")
-	}
-	return nil
-}
-
 // validateMaxActiveBTCValidators checks if the maximum number of
 // active BTC validators is at least the default value
 func validateMaxActiveBTCValidators(maxActiveBtcValidators uint32) error {
@@ -106,9 +98,11 @@ func (p Params) Validate() error {
 	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
 		return err
 	}
-	if err := validateSlashingRate(p.SlashingRate); err != nil {
-		return err
+
+	if !bbn.IsValidSlashingRate(p.SlashingRate) {
+		return fmt.Errorf("slashing rate must be in the range (0, 1)")
 	}
+
 	if err := validateMaxActiveBTCValidators(p.MaxActiveBtcValidators); err != nil {
 		return err
 	}

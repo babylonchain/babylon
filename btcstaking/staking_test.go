@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -16,6 +17,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -67,7 +69,8 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		minStakingValue := 5000
 		minFee := 2000
-
+		// generate a random slashing rate in range [0.01, 0.99]
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 99)+1), 2)
 		slashingAddress, err := btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
 		require.NoError(t, err)
 
@@ -102,18 +105,16 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 			script,
 			&chaincfg.MainNetParams,
 		)
-
 		require.NoError(t, err)
-
 		_, err = btcstaking.CheckTransactions(
 			slashingTx,
 			stakingTx,
 			int64(minFee),
+			slashingRate,
 			slashingAddress,
 			script,
 			&chaincfg.MainNetParams,
 		)
-
 		require.NoError(t, err)
 
 		// Check case with some random fee
@@ -126,19 +127,39 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 			script,
 			&chaincfg.MainNetParams,
 		)
-
 		require.NoError(t, err)
-
 		_, err = btcstaking.CheckTransactions(
 			slashingTx,
 			stakingTx,
 			int64(minFee),
+			slashingRate,
 			slashingAddress,
 			script,
 			&chaincfg.MainNetParams,
 		)
-
 		require.NoError(t, err)
+
+		// Check case when slashing rate is invalid
+		_, err = btcstaking.CheckTransactions(
+			slashingTx,
+			stakingTx,
+			int64(minFee),
+			sdkmath.LegacyMustNewDecFromStr("1.5"), // invalid slashing rate
+			slashingAddress,
+			script,
+			&chaincfg.MainNetParams,
+		)
+		require.Error(t, err)
+		_, err = btcstaking.CheckTransactions(
+			slashingTx,
+			stakingTx,
+			int64(minFee),
+			sdkmath.LegacyZeroDec(), // invalid slashing rate
+			slashingAddress,
+			script,
+			&chaincfg.MainNetParams,
+		)
+		require.Error(t, err)
 	})
 }
 

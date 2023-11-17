@@ -189,14 +189,18 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if err != nil {
 		return nil, types.ErrInvalidSlashingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
 	}
+
+	// decode slashing address
 	slashingAddr, err := btcutil.DecodeAddress(params.SlashingAddress, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
 	}
+
 	if _, err := btcstaking.CheckTransactions(
 		slashingMsgTx,
 		stakingMsgTx,
 		params.MinSlashingTxFeeSat,
+		params.SlashingRate,
 		slashingAddr,
 		req.StakingTx.Script,
 		ms.btcNet,
@@ -279,11 +283,11 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		slashingMsgTx,
 		unbondingMsgTx,
 		params.MinSlashingTxFeeSat,
+		params.SlashingRate,
 		slashingAddress,
 		req.UnbondingTx.Script,
 		ms.btcNet,
 	)
-
 	if err != nil {
 		return nil, types.ErrInvalidUnbodningTx.Wrapf("invalid unbonding tx: %v", err)
 	}

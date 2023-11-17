@@ -100,7 +100,7 @@ func getCovenantInfo(t *testing.T,
 		SlashingAddress:        slashingAddr.String(),
 		MinSlashingTxFeeSat:    10,
 		MinCommissionRate:      sdk.MustNewDecFromStr("0.01"),
-		SlashingRate:           sdk.MustNewDecFromStr("0.1"),
+		SlashingRate:           sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 99)+1), 2),
 		MaxActiveBtcValidators: 100,
 	})
 	require.NoError(t, err)
@@ -408,7 +408,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		SlashingAddress:        slashingAddr.String(),
 		MinSlashingTxFeeSat:    10,
 		MinCommissionRate:      sdk.MustNewDecFromStr("0.01"),
-		SlashingRate:           sdk.MustNewDecFromStr("0.1"),
+		SlashingRate:           sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 99)+1), 2),
 		MaxActiveBtcValidators: 100,
 	})
 	require.NoError(t, err)

@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	"github.com/babylonchain/babylon/btcstaking"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCSlashingTx []byte
@@ -89,7 +89,12 @@ func (tx *BTCSlashingTx) ToMsgTx() (*wire.MsgTx, error) {
 	return &msgTx, nil
 }
 
-func (tx *BTCSlashingTx) Validate(net *chaincfg.Params, slashingAddress string) error {
+func (tx *BTCSlashingTx) Validate(
+	net *chaincfg.Params,
+	slashingAddress string,
+	slashingRate sdk.Dec,
+	slashingTxMinFee, stakingOutputValue int64,
+) error {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return err
@@ -98,7 +103,12 @@ func (tx *BTCSlashingTx) Validate(net *chaincfg.Params, slashingAddress string) 
 	if err != nil {
 		return err
 	}
-	return btcstaking.IsSlashingTx(msgTx, decodedAddr)
+	return btcstaking.ValidateSlashingTx(
+		msgTx,
+		decodedAddr,
+		slashingRate,
+		slashingTxMinFee, stakingOutputValue,
+	)
 }
 
 // Sign generates a signature on the slashing tx signed by staker, validator or covenant

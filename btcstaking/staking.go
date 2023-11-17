@@ -6,12 +6,15 @@ import (
 	"fmt"
 	"math"
 
+	"github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -642,26 +645,95 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 	return nil
 }
 
-// IsSlashingTx perform basic checks on slashing transaction:
-// - slashing transaction is not nil
-// - slashing transaction has exactly one input
-// - slashing transaction is not replacable
-// - slashing transaction has exactly one output
-// - slashing transaction locktime is 0
-// - slashing transaction output is simple pay to address script paying to provided slashing address
-func IsSlashingTx(slashingTx *wire.MsgTx, slashingAddress btcutil.Address) error {
-	if err := IsSimpleTransfer(slashingTx); err != nil {
-		return fmt.Errorf("invalid slashing tx: %w", err)
+// ValidateSlashingTx performs basic checks on a slashing transaction:
+// - the slashing transaction is not nil.
+// - the slashing transaction has exactly one input.
+// - the slashing transaction is non-replaceable.
+// - the lock time of the slashing transaction is 0.
+// - the slashing transaction has exactly two outputs, and:
+//   - the first output must pay to the provided slashing address.
+//   - the first output must pay at least (staking output value * slashing rate) to the slashing address.
+//   - neither of the outputs are considered dust.
+// - the min fee for slashing tx is preserved
+func ValidateSlashingTx(
+	slashingTx *wire.MsgTx,
+	slashingAddress btcutil.Address,
+	slashingRate sdk.Dec,
+	slashingTxMinFee, stakingOutputValue int64,
+) error {
+	// Verify that the slashing transaction is not nil.
+	if slashingTx == nil {
+		return fmt.Errorf("slashing transaction must not be nil")
 	}
 
-	pkScript, err := txscript.PayToAddrScript(slashingAddress)
+	// Verify that the slashing transaction has exactly one input.
+	if len(slashingTx.TxIn) != 1 {
+		return fmt.Errorf("slashing transaction must have exactly one input")
+	}
 
+	// Verify that the slashing transaction is non-replaceable.
+	if slashingTx.TxIn[0].Sequence != wire.MaxTxInSequenceNum {
+		return fmt.Errorf("slashing transaction must not be replaceable")
+	}
+
+	// Verify that lock time of the slashing transaction is 0.
+	if slashingTx.LockTime != 0 {
+		return fmt.Errorf("slashing tx must not have locktime")
+	}
+
+	// Verify that the slashing transaction has exactly two outputs.
+	if len(slashingTx.TxOut) != 2 {
+		return fmt.Errorf("slashing transaction must have exactly 2 outputs")
+	}
+
+	// Verify that at least staking output value * slashing rate is slashed.
+	slashingRateFloat64, err := slashingRate.Float64()
 	if err != nil {
-		return err
+		return fmt.Errorf("error converting slashing rate to float64: %w", err)
+	}
+	minSlashingAmount := btcutil.Amount(stakingOutputValue).MulF64(slashingRateFloat64)
+	if btcutil.Amount(slashingTx.TxOut[0].Value) < minSlashingAmount {
+		return fmt.Errorf("slashing transaction must slash at least staking output value * slashing rate")
 	}
 
-	if !bytes.Equal(slashingTx.TxOut[0].PkScript, pkScript) {
-		return fmt.Errorf("slashing transaction must pay to provided slashing address")
+	// Verify that the first output pays to the provided slashing address.
+	slashingPkScript, err := txscript.PayToAddrScript(slashingAddress)
+	if err != nil {
+		return fmt.Errorf("error creating slashing pk script: %w", err)
+	}
+	if !bytes.Equal(slashingTx.TxOut[0].PkScript, slashingPkScript) {
+		return fmt.Errorf("slashing transaction must pay to the provided slashing address")
+	}
+
+	// Verify that the none of the outputs is a dust output.
+	for _, out := range slashingTx.TxOut {
+		if mempool.IsDust(out, mempool.DefaultMinRelayTxFee) {
+			return fmt.Errorf("slashing transaction must not have a dust output")
+		}
+	}
+
+	/*
+		Check Fees
+	*/
+	// Check that values of slashing and staking transaction are larger than 0
+	if slashingTx.TxOut[0].Value <= 0 || stakingOutputValue <= 0 {
+		return fmt.Errorf("values of slashing and staking transaction must be larger than 0")
+	}
+
+	// Calculate the sum of output values in the slashing transaction.
+	slashingTxOutSum := int64(0)
+	for _, out := range slashingTx.TxOut {
+		slashingTxOutSum += out.Value
+	}
+
+	// Ensure that the staking transaction value is larger than the sum of slashing transaction output values.
+	if stakingOutputValue <= slashingTxOutSum {
+		return fmt.Errorf("slashing transaction must not spend more than staking transaction")
+	}
+
+	// Ensure that the slashing transaction fee is larger than the specified minimum fee.
+	if stakingOutputValue-slashingTxOutSum < slashingTxMinFee {
+		return fmt.Errorf("slashing transaction fee must be larger than %d", slashingTxMinFee)
 	}
 
 	return nil
@@ -703,40 +775,49 @@ func GetIdxOutputCommitingToScript(
 }
 
 // CheckTransactions validates all relevant data of slashing and funding transaction.
-// - slashing transaction is valid
 // - funding transaction script is valid
 // - funding transaction has output committing to the provided script
-// - slashing transaction input is pointing to funding transaction output commiting to the script
-// - that min fee for slashing tx is preserved
-// In case of success, it returns data extracted from valid staking script and staking amount.
+// - slashing transaction is valid
+// - slashing transaction input hash is pointing to funding transaction hash
+// - slashing transaction input index is pointing to funding transaction output commiting to the script
 func CheckTransactions(
 	slashingTx *wire.MsgTx,
 	fundingTransaction *wire.MsgTx,
 	slashingTxMinFee int64,
+	slashingRate sdk.Dec,
 	slashingAddress btcutil.Address,
 	script []byte,
 	net *chaincfg.Params,
 ) (*StakingOutputInfo, error) {
+	// Check if slashing tx min fee is valid
 	if slashingTxMinFee <= 0 {
 		return nil, fmt.Errorf("slashing transaction min fee must be larger than 0")
 	}
 
-	// 1. Check slashing tx
-	if err := IsSlashingTx(slashingTx, slashingAddress); err != nil {
-		return nil, err
+	// Check if slashing rate is in the valid range (0,1)
+	if !types.IsValidSlashingRate(slashingRate) {
+		return nil, fmt.Errorf("slashing rate must be in the range (0, 1)")
 	}
 
-	// 2. Check staking script.
+	// 1. Check if the staking script is valid and extract data from it
 	scriptData, err := ParseStakingTransactionScript(script)
-
 	if err != nil {
 		return nil, err
 	}
 
-	// 3. Check that staking transaction has output committing to the provided script
+	// 2. Check that staking transaction has output committing to the provided script
 	stakingOutputIdx, err := GetIdxOutputCommitingToScript(fundingTransaction, script, net)
-
 	if err != nil {
+		return nil, err
+	}
+
+	stakingOutput := fundingTransaction.TxOut[stakingOutputIdx]
+	// 3. Check if slashing transaction is valid
+	if err := ValidateSlashingTx(
+		slashingTx,
+		slashingAddress,
+		slashingRate,
+		slashingTxMinFee, stakingOutput.Value); err != nil {
 		return nil, err
 	}
 
@@ -749,21 +830,6 @@ func CheckTransactions(
 	// 5. Check that index of the fund output matches index of the input in slashing transaction
 	if slashingTx.TxIn[0].PreviousOutPoint.Index != uint32(stakingOutputIdx) {
 		return nil, fmt.Errorf("slashing transaction input must spend staking output")
-	}
-
-	stakingOutput := fundingTransaction.TxOut[stakingOutputIdx]
-
-	// 6. Check fees
-	if slashingTx.TxOut[0].Value <= 0 || stakingOutput.Value <= 0 {
-		return nil, fmt.Errorf("values of slashing and staking transaction must be larger than 0")
-	}
-
-	if stakingOutput.Value <= slashingTx.TxOut[0].Value {
-		return nil, fmt.Errorf("slashing transaction must not spend more than staking transaction")
-	}
-
-	if stakingOutput.Value-slashingTx.TxOut[0].Value < slashingTxMinFee {
-		return nil, fmt.Errorf("slashing transaction fee must be larger than %d", slashingTxMinFee)
 	}
 
 	return &StakingOutputInfo{
