@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -69,10 +68,10 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		minStakingValue := 5000
 		minFee := 2000
-		// generate a random slashing rate in range [0.01, 0.99]
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 99)+1), 2)
-		slashingAddress, err := btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
-		require.NoError(t, err)
+		// generate a random slashing rate with random precision,
+		// this will include both valid and invalid ranges, so we can test both cases
+		randomPrecision := r.Int63n(4) // [0,3]
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 1001)), randomPrecision) // [0,1000] / 10^{randomPrecision}
 
 		for i := 0; i < stakingTxNumOutputs; i++ {
 			if i == stakingOutputIdx {
@@ -97,70 +96,79 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		}
 
 		// Always check case with min fee
-		slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
-			stakingTx,
-			uint32(stakingOutputIdx),
-			slashingAddress,
-			int64(minFee),
-			script,
-			&chaincfg.MainNetParams,
-		)
-		require.NoError(t, err)
-		_, err = btcstaking.CheckTransactions(
-			slashingTx,
-			stakingTx,
-			int64(minFee),
-			slashingRate,
-			slashingAddress,
-			script,
-			&chaincfg.MainNetParams,
-		)
-		require.NoError(t, err)
+		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, script, int64(minFee))
 
 		// Check case with some random fee
 		fee := int64(r.Intn(1000) + minFee)
-		slashingTx, err = btcstaking.BuildSlashingTxFromStakingTxStrict(
-			stakingTx,
-			uint32(stakingOutputIdx),
-			slashingAddress,
-			fee,
-			script,
-			&chaincfg.MainNetParams,
-		)
-		require.NoError(t, err)
-		_, err = btcstaking.CheckTransactions(
-			slashingTx,
-			stakingTx,
-			int64(minFee),
-			slashingRate,
-			slashingAddress,
-			script,
-			&chaincfg.MainNetParams,
-		)
-		require.NoError(t, err)
+		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, script, fee)
 
-		// Check case when slashing rate is invalid
-		_, err = btcstaking.CheckTransactions(
-			slashingTx,
-			stakingTx,
-			int64(minFee),
-			sdkmath.LegacyMustNewDecFromStr("1.5"), // invalid slashing rate
-			slashingAddress,
-			script,
-			&chaincfg.MainNetParams,
-		)
-		require.Error(t, err)
-		_, err = btcstaking.CheckTransactions(
-			slashingTx,
-			stakingTx,
-			int64(minFee),
-			sdkmath.LegacyZeroDec(), // invalid slashing rate
-			slashingAddress,
-			script,
-			&chaincfg.MainNetParams,
-		)
-		require.Error(t, err)
 	})
+}
+
+func genRandomBTCAddress(r *rand.Rand) (*btcutil.AddressPubKeyHash, error) {
+	return btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
+}
+
+func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOutputIdx int, slashingRate sdk.Dec,
+	script []byte, fee int64) {
+	dustThreshold := 546 // in satoshis
+
+	// Generate random slashing and change addresses
+	slashingAddress, err := genRandomBTCAddress(r)
+	require.NoError(t, err)
+
+	changeAddress, err := genRandomBTCAddress(r)
+	require.NoError(t, err)
+
+	// Construct slashing transaction using the provided parameters
+	slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+		stakingTx,
+		uint32(stakingOutputIdx),
+		slashingAddress, changeAddress,
+		fee,
+		slashingRate,
+		script,
+		&chaincfg.MainNetParams,
+	)
+
+	if btcstaking.IsSlashingRateValid(slashingRate) {
+		// If the slashing rate is valid i.e., in the range (0,1) with at most 2 decimal places,
+		// it is still possible that the slashing transaction is invalid. The following checks will confirm that
+		// slashing tx is not constructed if
+		// - the change output has insufficient funds.
+		// - the change output is less than the dust threshold.
+		// - The slashing output is less than the dust threshold.
+
+		slashingRateFloat64, err2 := slashingRate.Float64()
+		require.NoError(t, err2)
+
+		stakingAmount := btcutil.Amount(stakingTx.TxOut[stakingOutputIdx].Value)
+		slashingAmount := stakingAmount.MulF64(slashingRateFloat64)
+		changeAmount := stakingAmount - slashingAmount - btcutil.Amount(fee)
+
+		if changeAmount <= 0 {
+			require.Error(t, err)
+			require.ErrorIs(t, err, btcstaking.ErrInsufficientChangeAmount)
+		} else if changeAmount <= btcutil.Amount(dustThreshold) || slashingAmount <= btcutil.Amount(dustThreshold) {
+			require.Error(t, err)
+			require.ErrorIs(t, err, btcstaking.ErrDustOutputFound)
+		} else {
+			require.NoError(t, err)
+			_, err = btcstaking.CheckTransactions(
+				slashingTx,
+				stakingTx,
+				fee,
+				slashingRate,
+				slashingAddress,
+				script,
+				&chaincfg.MainNetParams,
+			)
+			require.NoError(t, err)
+		}
+	} else {
+		require.Error(t, err)
+		require.ErrorIs(t, err, btcstaking.ErrInvalidSlashingRate)
+	}
 }
 
 func FuzzGeneratingSignatureValidation(f *testing.F) {

@@ -40,6 +40,8 @@ var (
 	)
 
 	stakingValue = int64(2 * 10e8)
+
+	changeAddress, _ = datagen.GenRandomBTCAddress(r, net)
 )
 
 type BTCStakingTestSuite struct {
@@ -112,7 +114,8 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		params.CovenantPk.MustToBTCPK(),
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress,
+		params.SlashingAddress, changeAddress.String(),
+		params.SlashingRate,
 	)
 	s.NoError(err)
 	stakingMsgTx, err := stakingTx.ToMsgTx()
@@ -406,7 +409,8 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		wire.NewOutPoint(stakingTxChainHash, uint32(stakingOutputIdx)),
 		initialization.BabylonBtcFinalizationPeriod+1,
 		stakingValue-fee,
-		params.SlashingAddress,
+		params.SlashingAddress, changeAddress.String(),
+		params.SlashingRate,
 	)
 	s.NoError(err)
 

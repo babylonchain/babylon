@@ -3,8 +3,6 @@ package types
 import (
 	"fmt"
 	"reflect"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func Reverse(s interface{}) {
@@ -30,11 +28,4 @@ func CheckForDuplicatesAndEmptyStrings(input []string) error {
 	}
 
 	return nil
-}
-
-// IsValidSlashingRate checks if the given slashing rate is b/w the valid range i.e., (0,1)
-func IsValidSlashingRate(slashingRate sdk.Dec) bool {
-	// TODO: add check to confirm precision is max 2 decimal places
-
-	return slashingRate.GT(sdk.ZeroDec()) && slashingRate.LT(sdk.OneDec())
 }

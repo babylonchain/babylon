@@ -11,6 +11,7 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -32,8 +33,16 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of validators
 		btcVals := []*types.BTCValidator{}
@@ -50,11 +59,18 @@ func FuzzVotingPowerTable(f *testing.F) {
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
-			valBTCPK := btcVals[i].BtcPk
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+				btcDel, err := datagen.GenRandomBTCDelegation(
+					r,
+					btcVals[i].BtcPk,
+					delSK,
+					covenantSK,
+					slashingAddress.String(), changeAddress.String(),
+					1, 1000, stakingValue,
+					slashingRate,
+				)
 				require.NoError(t, err)
 				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
@@ -187,8 +203,16 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of validators, each with a BTC delegation with random power
 		btcValsWithMeta := []*types.BTCValidatorWithMeta{}
@@ -204,7 +228,15 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 			valBTCPK := btcVal.BtcPk
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+			btcDel, err := datagen.GenRandomBTCDelegation(
+				r,
+				valBTCPK,
+				delSK,
+				covenantSK,
+				slashingAddress.String(), changeAddress.String(),
+				1, 1000, stakingValue, // timelock period: 1-1000
+				slashingRate,
+			)
 			require.NoError(t, err)
 			err = keeper.AddBTCDelegation(ctx, btcDel)
 			require.NoError(t, err)
@@ -273,8 +305,16 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of validators, each with a BTC delegation with random power
 		btcValsWithMeta := []*types.BTCValidatorWithMeta{}
@@ -290,7 +330,15 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 			valBTCPK := btcVal.BtcPk
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+			btcDel, err := datagen.GenRandomBTCDelegation(
+				r,
+				valBTCPK,
+				delSK,
+				covenantSK,
+				slashingAddress.String(), changeAddress.String(),
+				1, 1000, stakingValue, // timelock period: 1-1000
+				slashingRate,
+			)
 			require.NoError(t, err)
 			err = keeper.AddBTCDelegation(ctx, btcDel)
 			require.NoError(t, err)
@@ -328,7 +376,15 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 			activatedValBTCPK, _ = bbn.NewBIP340PubKeyFromHex(valBTCPKHex)
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(r, activatedValBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, stakingValue) // timelock period: 1-1000
+			btcDel, err := datagen.GenRandomBTCDelegation(
+				r,
+				activatedValBTCPK,
+				delSK,
+				covenantSK,
+				slashingAddress.String(), changeAddress.String(),
+				1, 1000, stakingValue, // timelock period: 1-1000
+				slashingRate,
+			)
 			require.NoError(t, err)
 			err = keeper.AddBTCDelegation(ctx, btcDel)
 			require.NoError(t, err)

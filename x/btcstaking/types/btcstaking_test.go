@@ -8,6 +8,7 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -27,9 +28,27 @@ func FuzzStakingTx(f *testing.F) {
 
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		stakingTx, _, err := datagen.GenBTCStakingSlashingTx(r, net, stakerSK, validatorPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
+		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		stakingTx, _, err := datagen.GenBTCStakingSlashingTx(
+			r,
+			net,
+			stakerSK,
+			validatorPK,
+			covenantPK,
+			stakingTimeBlocks,
+			stakingValue,
+			slashingAddress.String(), changeAddress.String(),
+			slashingRate,
+		)
 		require.NoError(t, err)
 
 		err = stakingTx.ValidateBasic()

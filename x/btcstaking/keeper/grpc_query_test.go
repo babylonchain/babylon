@@ -174,8 +174,16 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a random number of BTC validators
 		numBTCVals := datagen.RandomInt(r, 5) + 1
@@ -196,7 +204,15 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, covenantSK, slashingAddr.String(), startHeight, endHeight, 10000)
+				btcDel, err := datagen.GenRandomBTCDelegation(
+					r,
+					btcVal.BtcPk,
+					delSK,
+					covenantSK,
+					slashingAddress.String(), changeAddress.String(),
+					startHeight, endHeight, 10000,
+					slashingRate,
+				)
 				require.NoError(t, err)
 				if datagen.RandomInt(r, 2) == 1 {
 					// remove covenant sig in random BTC delegations to make them inactive
@@ -262,8 +278,16 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a random number of BTC validators
 		numBTCVals := datagen.RandomInt(r, 5) + 1
@@ -284,7 +308,15 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, covenantSK, slashingAddr.String(), startHeight, endHeight, 10000)
+				btcDel, err := datagen.GenRandomBTCDelegation(
+					r,
+					btcVal.BtcPk,
+					delSK,
+					covenantSK,
+					slashingAddress.String(), changeAddress.String(),
+					startHeight, endHeight, 10000,
+					slashingRate,
+				)
 				require.NoError(t, err)
 
 				if datagen.RandomInt(r, 2) == 1 {
@@ -423,8 +455,16 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a random batch of validators
 		var btcVals []*types.BTCValidator
@@ -449,7 +489,15 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(r, valBTCPK, delSK, covenantSK, slashingAddr.String(), 1, 1000, 10000) // timelock period: 1-1000
+				btcDel, err := datagen.GenRandomBTCDelegation(
+					r,
+					valBTCPK,
+					delSK,
+					covenantSK,
+					slashingAddress.String(), changeAddress.String(),
+					1, 1000, 10000,
+					slashingRate,
+				)
 				require.NoError(t, err)
 				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
@@ -506,7 +554,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 }
 
 func FuzzBTCValidatorDelegations(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+	datagen.AddRandomSeedsToFuzzer(f, 100)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		ctrl := gomock.NewController(t)
@@ -521,8 +569,16 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		// covenant and slashing addr
 		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		slashingAddr, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
+		require.NoError(t, err)
+		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
+		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
+		// with value below the dust threshold, causing test failure.
+		// Our goal is not to test failure due to such extreme cases here;
+		// this is already covered in FuzzGeneratingValidStakingSlashingTx
+		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a btc validator
 		btcVal, err := datagen.GenRandomBTCValidator(r)
@@ -537,7 +593,15 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		for j := uint64(0); j < numBTCDels; j++ {
 			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(r, btcVal.BtcPk, delSK, covenantSK, slashingAddr.String(), startHeight, endHeight, 10000)
+			btcDel, err := datagen.GenRandomBTCDelegation(
+				r,
+				btcVal.BtcPk,
+				delSK,
+				covenantSK,
+				slashingAddress.String(), changeAddress.String(),
+				startHeight, endHeight, 10000,
+				slashingRate,
+			)
 			require.NoError(t, err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 			err = keeper.AddBTCDelegation(ctx, btcDel)

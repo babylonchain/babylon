@@ -13,7 +13,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -63,7 +63,15 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 	}, nil
 }
 
-func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btcec.PrivateKey, covenantSK *btcec.PrivateKey, slashingAddr string, startHeight uint64, endHeight uint64, totalSat uint64) (*bstypes.BTCDelegation, error) {
+func GenRandomBTCDelegation(
+	r *rand.Rand,
+	valBTCPK *bbn.BIP340PubKey,
+	delSK *btcec.PrivateKey,
+	covenantSK *btcec.PrivateKey,
+	slashingAddress, changeAddress string,
+	startHeight, endHeight, totalSat uint64,
+	slashingRate sdk.Dec,
+) (*bstypes.BTCDelegation, error) {
 	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
@@ -88,7 +96,16 @@ func GenRandomBTCDelegation(r *rand.Rand, valBTCPK *bbn.BIP340PubKey, delSK *btc
 		return nil, err
 	}
 	// staking/slashing tx
-	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(r, net, delSK, valPK, covenantBTCPK, uint16(endHeight-startHeight), int64(totalSat), slashingAddr)
+	stakingTx, slashingTx, err := GenBTCStakingSlashingTx(
+		r,
+		net,
+		delSK,
+		valPK,
+		covenantBTCPK,
+		uint16(endHeight-startHeight),
+		int64(totalSat),
+		slashingAddress, changeAddress,
+		slashingRate)
 	if err != nil {
 		return nil, err
 	}
@@ -131,7 +148,8 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	covenantPK *btcec.PublicKey,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress string,
+	slashingAddress, changeAddress string,
+	slashingRate sdk.Dec,
 	withChange bool,
 ) (*bstypes.BabylonBTCTaprootTx, *bstypes.BTCSlashingTx, error) {
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
@@ -181,7 +199,18 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	if err != nil {
 		return nil, nil, err
 	}
-	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(tx, 0, slashingAddrBtc, 2000, stakingScript, btcNet)
+	changeAddrBtc, err := btcutil.DecodeAddress(changeAddress, btcNet)
+	if err != nil {
+		return nil, nil, err
+	}
+	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
+		tx,
+		0,
+		slashingAddrBtc, changeAddrBtc,
+		2000,
+		slashingRate,
+		stakingScript,
+		btcNet)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -201,12 +230,24 @@ func GenBTCStakingSlashingTx(
 	covenantPK *btcec.PublicKey,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress string,
+	slashingAddress, changeAddress string,
+	slashingRate sdk.Dec,
 ) (*bstypes.BabylonBTCTaprootTx, *bstypes.BTCSlashingTx, error) {
 	// an arbitrary input
 	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
 	outPoint := &spend.prevOut
-	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, outPoint, stakerSK, validatorPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddress, true)
+	return GenBTCStakingSlashingTxWithOutPoint(
+		r,
+		btcNet,
+		outPoint,
+		stakerSK,
+		validatorPK,
+		covenantPK,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingAddress, changeAddress,
+		slashingRate,
+		true)
 }
 
 func GenBTCUnbondingSlashingTx(
@@ -218,7 +259,19 @@ func GenBTCUnbondingSlashingTx(
 	stakingTransactionOutpoint *wire.OutPoint,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress string,
+	slashingAddress, changeAddress string,
+	slashingRate sdk.Dec,
 ) (*bstypes.BabylonBTCTaprootTx, *bstypes.BTCSlashingTx, error) {
-	return GenBTCStakingSlashingTxWithOutPoint(r, btcNet, stakingTransactionOutpoint, stakerSK, validatorPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddress, false)
+	return GenBTCStakingSlashingTxWithOutPoint(
+		r,
+		btcNet,
+		stakingTransactionOutpoint,
+		stakerSK,
+		validatorPK,
+		covenantPK,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingAddress, changeAddress,
+		slashingRate,
+		false)
 }

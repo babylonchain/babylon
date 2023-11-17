@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -489,33 +488,84 @@ func ValidateStakingOutputPkScript(
 	return ParseStakingTransactionScript(script)
 }
 
-// BuildSlashingTxFromOutpoint builds valid slashing transaction, using provided:
-// - stakingOutput - staking output
-// - slashingAddress - address to which slashed funds will go
-// - fee - fee for the transaction
-// It does not attach script sig to the transaction nor the witness.
-// It only validates that provided address is standard btc address and slashing value is larger than 0
+// BuildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion
+// of staked funds and directs them to a specified slashing address. The transaction also includes a change output sent back to
+// the specified change address. The slashing rate determines the proportion of staked funds to be slashed.
+//
+// Parameters:
+//   - stakingOutput: The staking output to be spent in the transaction.
+//   - stakingAmount: The amount of staked funds in the staking output.
+//   - fee: The transaction fee to be paid.
+//   - slashingAddress: The Bitcoin address to which the slashed funds will be sent.
+//   - changeAddress: The Bitcoin address to receive the change from the transaction.
+//   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
+//
+// Returns:
+//   - *wire.MsgTx: The constructed slashing transaction without a script signature or witness.
+//   - error: An error if any validation or construction step fails.
 func BuildSlashingTxFromOutpoint(
 	stakingOutput wire.OutPoint,
-	slashingAddress btcutil.Address,
-	slashingValue int64) (*wire.MsgTx, error) {
+	stakingAmount, fee int64,
+	slashingAddress, changeAddress btcutil.Address,
+	slashingRate sdk.Dec,
+) (*wire.MsgTx, error) {
+	// Validate staking amount
+	if stakingAmount <= 0 {
+		return nil, fmt.Errorf("staking amount must be larger than 0")
+	}
 
-	addrScript, err := txscript.PayToAddrScript(slashingAddress)
+	// Validate slashing rate
+	if !IsSlashingRateValid(slashingRate) {
+		return nil, ErrInvalidSlashingRate
+	}
 
+	// Check if slashing address and change address are the same
+	if slashingAddress.EncodeAddress() == changeAddress.EncodeAddress() {
+		return nil, ErrSameAddress
+	}
+
+	// Calculate the amount to be slashed
+	slashingRateFloat64, err := slashingRate.Float64()
+	if err != nil {
+		return nil, fmt.Errorf("error converting slashing rate to float64: %w", err)
+	}
+	slashingAmount := btcutil.Amount(stakingAmount).MulF64(slashingRateFloat64)
+	if slashingAmount <= 0 {
+		return nil, ErrInsufficientSlashingAmount
+	}
+	// Generate script for slashing address
+	slashingAddrScript, err := txscript.PayToAddrScript(slashingAddress)
 	if err != nil {
 		return nil, err
 	}
 
-	if slashingValue <= 0 {
-		return nil, fmt.Errorf("slashing value cannot be smaller or equal 0")
+	// Calculate the change amount
+	changeAmount := btcutil.Amount(stakingAmount) - slashingAmount - btcutil.Amount(fee)
+	if changeAmount <= 0 {
+		return nil, ErrInsufficientChangeAmount
+	}
+	// Generate script for change address
+	changeAddrScript, err := txscript.PayToAddrScript(changeAddress)
+	if err != nil {
+		return nil, err
 	}
 
+	// Create a new btc transaction
 	tx := wire.NewMsgTx(wire.TxVersion)
 	// TODO: this builds input with sequence number equal to MaxTxInSequenceNum, which
 	// means this tx is not replacable.
 	input := wire.NewTxIn(&stakingOutput, nil, nil)
 	tx.AddTxIn(input)
-	tx.AddTxOut(wire.NewTxOut(slashingValue, addrScript))
+	tx.AddTxOut(wire.NewTxOut(int64(slashingAmount), slashingAddrScript))
+	tx.AddTxOut(wire.NewTxOut(int64(changeAmount), changeAddrScript))
+
+	// Verify that the none of the outputs is a dust output.
+	for _, out := range tx.TxOut {
+		if mempool.IsDust(out, mempool.DefaultMinRelayTxFee) {
+			return nil, ErrDustOutputFound
+		}
+	}
+
 	return tx, nil
 }
 
@@ -540,70 +590,100 @@ func getPossibleStakingOutput(
 	return stakingOutput, nil
 }
 
-// BuildSlashingTxFromOutpoint builds valid slashing transaction, using provided:
-// - stakingTx - staking trasaction
-// - stakingOutputIdx - index of the output committing to staking script
-// - slashingAddress - address to which slashed funds will go
-// - fee - fee for the transaction
-// It does not attach script sig to the transaction nor the witness.
-// It validates:
-// - stakingTx is not nil
-// - staking tx has output at stakingOutputIdx
-// - staking output at stakingOutputIdx is valid staking output i.e p2tr output
+// BuildSlashingTxFromStakingTx constructs a valid slashing transaction using information from a staking transaction,
+// a specified staking output index, and other parameters such as slashing and change addresses, slashing rate, and transaction fee.
+//
+// Parameters:
+//   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
+//   - stakingOutputIdx: The index of the staking output in the staking transaction.
+//   - slashingAddress: The Bitcoin address to which the slashed funds will be sent.
+//   - changeAddress: The Bitcoin address to receive the change from the transaction.
+//   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
+//   - fee: The transaction fee to be paid.
+//
+// Returns:
+//   - *wire.MsgTx: The constructed slashing transaction without a script signature or witness.
+//   - error: An error if any validation or construction step fails.
+//
+// This function validates that the staking transaction is not nil, has an output at the specified index,
+// and that the staking output at the specified index is a valid staking output.
+// It then calls BuildSlashingTxFromOutpoint to build the slashing transaction using the validated staking output.
 func BuildSlashingTxFromStakingTx(
 	stakingTx *wire.MsgTx,
 	stakingOutputIdx uint32,
-	slashingAddress btcutil.Address,
+	slashingAddress, changeAddress btcutil.Address,
+	slashingRate sdk.Dec,
 	fee int64,
 ) (*wire.MsgTx, error) {
+	// Get the staking output at the specified index from the staking transaction
 	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
-
 	if err != nil {
 		return nil, err
 	}
 
+	// Create an OutPoint for the staking output
 	stakingTxHash := stakingTx.TxHash()
-
 	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
 
-	return BuildSlashingTxFromOutpoint(*stakingOutpoint, slashingAddress, stakingOutput.Value-fee)
+	// Build the slashing transaction using the staking output
+	return BuildSlashingTxFromOutpoint(
+		*stakingOutpoint,
+		stakingOutput.Value, fee,
+		slashingAddress, changeAddress,
+		slashingRate)
 }
 
-// BuildSlashingTxFromStakingTxStrict builds valid slashing transaction, using provided:
-// - stakingTx - staking trasaction
-// - stakingOutputIdx - index of the output committing to staking script
-// - slashingAddress - address to which slashed funds will go
-// - fee - fee for the transaction
-// - script - staking script to which staking output should commit
-// - scriptVersion - version of the script
-// - net - network on wchich transactions should take place
-// It validates:
-// - the same stuff as BuildSlashingTxFromStakingTx
-// - wheter staking output commits to the provided script
-// - whether provided script is valid staking script
+// BuildSlashingTxFromStakingTxStrict constructs a valid slashing transaction using information from a staking transaction,
+// a specified staking output index, and additional parameters such as slashing and change addresses, transaction fee,
+// staking script, script version, and network. This function performs stricter validation compared to BuildSlashingTxFromStakingTx.
+//
+// Parameters:
+//   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
+//   - stakingOutputIdx: The index of the staking output in the staking transaction.
+//   - slashingAddress: The Bitcoin address to which the slashed funds will be sent.
+//   - changeAddress: The Bitcoin address to receive the change from the transaction.
+//   - fee: The transaction fee to be paid.
+//   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
+//   - script: The staking script to which the staking output should commit.
+//   - net: The network on which transactions should take place (e.g., mainnet, testnet).
+//
+// Returns:
+//   - *wire.MsgTx: The constructed slashing transaction without script signature or witness.
+//   - error: An error if any validation or construction step fails.
+//
+// This function validates the same conditions as BuildSlashingTxFromStakingTx and additionally checks whether the
+// staking output at the specified index commits to the provided script and whether the provided script is a valid
+// staking script for the given network. If any of these additional validations fail, an error is returned.
 func BuildSlashingTxFromStakingTxStrict(
 	stakingTx *wire.MsgTx,
 	stakingOutputIdx uint32,
-	slashingAddress btcutil.Address,
+	slashingAddress, changeAddress btcutil.Address,
 	fee int64,
+	slashingRate sdk.Dec,
 	script []byte,
 	net *chaincfg.Params,
 ) (*wire.MsgTx, error) {
+	// Get the staking output at the specified index from the staking transaction
 	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
-
 	if err != nil {
 		return nil, err
 	}
 
-	if _, err := ValidateStakingOutputPkScript(stakingOutput, script, net); err != nil {
+	// Validate that the staking output commits to the provided script and the script is valid
+	if _, err = ValidateStakingOutputPkScript(stakingOutput, script, net); err != nil {
 		return nil, err
 	}
 
+	// Create an OutPoint for the staking output
 	stakingTxHash := stakingTx.TxHash()
-
 	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
 
-	return BuildSlashingTxFromOutpoint(*stakingOutpoint, slashingAddress, stakingOutput.Value-fee)
+	// Build slashing tx with the staking output information
+	return BuildSlashingTxFromOutpoint(
+		*stakingOutpoint,
+		stakingOutput.Value, fee,
+		slashingAddress, changeAddress,
+		slashingRate)
 }
 
 // Transfer transaction is a transaction which:
@@ -708,7 +788,7 @@ func ValidateSlashingTx(
 	// Verify that the none of the outputs is a dust output.
 	for _, out := range slashingTx.TxOut {
 		if mempool.IsDust(out, mempool.DefaultMinRelayTxFee) {
-			return fmt.Errorf("slashing transaction must not have a dust output")
+			return ErrDustOutputFound
 		}
 	}
 
@@ -795,8 +875,8 @@ func CheckTransactions(
 	}
 
 	// Check if slashing rate is in the valid range (0,1)
-	if !types.IsValidSlashingRate(slashingRate) {
-		return nil, fmt.Errorf("slashing rate must be in the range (0, 1)")
+	if !IsSlashingRateValid(slashingRate) {
+		return nil, ErrInvalidSlashingRate
 	}
 
 	// 1. Check if the staking script is valid and extract data from it
@@ -1041,4 +1121,21 @@ func VerifyTransactionSigWithOutputData(
 	}
 
 	return nil
+}
+
+// IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
+func IsSlashingRateValid(slashingRate sdk.Dec) bool {
+	// Check if the slashing rate is between 0 and 1
+	if slashingRate.LTE(sdk.ZeroDec()) || slashingRate.GTE(sdk.OneDec()) {
+		return false
+	}
+
+	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
+	multipliedRate := slashingRate.Mul(sdk.NewDec(100))
+
+	// Truncate the rate to remove decimal places
+	truncatedRate := multipliedRate.TruncateDec()
+
+	// Check if the truncated rate is equal to the original rate
+	return multipliedRate.Equal(truncatedRate)
 }

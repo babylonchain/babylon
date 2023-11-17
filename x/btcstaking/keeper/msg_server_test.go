@@ -93,18 +93,18 @@ func getCovenantInfo(t *testing.T,
 	sdkCtx sdk.Context) (*btcec.PrivateKey, *btcec.PublicKey, btcutil.Address) {
 	covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	slashingAddr, err := datagen.GenRandomBTCAddress(r, net)
+	slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 	require.NoError(t, err)
 	err = bsKeeper.SetParams(sdkCtx, types.Params{
 		CovenantPk:             bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
-		SlashingAddress:        slashingAddr.String(),
+		SlashingAddress:        slashingAddress.String(),
 		MinSlashingTxFeeSat:    10,
 		MinCommissionRate:      sdk.MustNewDecFromStr("0.01"),
-		SlashingRate:           sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 99)+1), 2),
+		SlashingRate:           sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveBtcValidators: 100,
 	})
 	require.NoError(t, err)
-	return covenantSK, covenantPK, slashingAddr
+	return covenantSK, covenantPK, slashingAddress
 
 }
 
@@ -141,7 +141,8 @@ func createDelegation(
 	net *chaincfg.Params,
 	validatorPK *btcec.PublicKey,
 	covenantPK *btcec.PublicKey,
-	slashingAddr string,
+	slashingAddress, changeAddress string,
+	slashingRate sdk.Dec,
 	stakingTime uint16,
 ) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation) {
 	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
@@ -156,7 +157,8 @@ func createDelegation(
 		covenantPK,
 		stakingTimeBlocks,
 		stakingValue,
-		slashingAddr,
+		slashingAddress, changeAddress,
+		slashingRate,
 	)
 	require.NoError(t, err)
 	// get msgTx
@@ -286,7 +288,8 @@ func createUndelegation(
 	delSK *btcec.PrivateKey,
 	validatorPK *btcec.PublicKey,
 	covenantPK *btcec.PublicKey,
-	slashingAddr string,
+	slashingAddress, changeAddress string,
+	slashingRate sdk.Dec,
 ) *types.MsgBTCUndelegate {
 	stkTxHash, err := chainhash.NewHashFromStr(stakingTxHash)
 	require.NoError(t, err)
@@ -302,7 +305,8 @@ func createUndelegation(
 		wire.NewOutPoint(stkTxHash, stkOutputIdx),
 		uint16(defaultParams.CheckpointFinalizationTimeout)+1,
 		int64(actualDel.TotalSat)-1000,
-		slashingAddr,
+		slashingAddress, changeAddress,
+		slashingRate,
 	)
 	require.NoError(t, err)
 	// random signer
@@ -347,7 +351,10 @@ func FuzzCreateBTCDelegationAndAddCovenantSig(f *testing.F) {
 		goCtx := sdk.WrapSDKContext(ctx)
 
 		// set covenant PK to params
-		covenantSK, covenantPK, slashingAddr := getCovenantInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+		covenantSK, covenantPK, slashingAddress := getCovenantInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+
+		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
 
 		/*
 			generate and insert new BTC validator
@@ -367,7 +374,8 @@ func FuzzCreateBTCDelegationAndAddCovenantSig(f *testing.F) {
 			net,
 			validatorPK,
 			covenantPK,
-			slashingAddr.String(),
+			slashingAddress.String(), changeAddress.String(),
+			bsKeeper.GetParams(ctx).SlashingRate,
 			1000,
 		)
 
@@ -401,14 +409,16 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	// set covenant PK to params
 	_, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
-	slashingAddr, err := datagen.GenRandomBTCAddress(r, net)
+	slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+	require.NoError(t, err)
+	changeAddress, err := datagen.GenRandomBTCAddress(r, net)
 	require.NoError(t, err)
 	err = bsKeeper.SetParams(ctx, types.Params{
 		CovenantPk:             bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
-		SlashingAddress:        slashingAddr.String(),
+		SlashingAddress:        slashingAddress.String(),
 		MinSlashingTxFeeSat:    10,
 		MinCommissionRate:      sdk.MustNewDecFromStr("0.01"),
-		SlashingRate:           sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 99)+1), 2),
+		SlashingRate:           sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveBtcValidators: 100,
 	})
 	require.NoError(t, err)
@@ -425,7 +435,17 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	require.NoError(t, err)
 	stakingTimeBlocks := uint16(5)
 	stakingValue := int64(2 * 10e8)
-	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(r, net, delSK, validatorPK, covenantPK, stakingTimeBlocks, stakingValue, slashingAddr.String())
+	stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(
+		r,
+		net,
+		delSK,
+		validatorPK,
+		covenantPK,
+		stakingTimeBlocks,
+		stakingValue,
+		slashingAddress.String(), changeAddress.String(),
+		bsKeeper.GetParams(ctx).SlashingRate,
+	)
 	require.NoError(t, err)
 	// get msgTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
@@ -485,7 +505,9 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 		ms := keeper.NewMsgServerImpl(*bsKeeper)
 		goCtx := sdk.WrapSDKContext(ctx)
 
-		covenantSK, covenantPK, slashingAddr := getCovenantInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+		covenantSK, covenantPK, slashingAddress := getCovenantInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
 		_, validatorPK, _ := createValidator(t, r, goCtx, ms)
 		stakingTxHash, delSK, delPK, msgCreateBTCDel := createDelegation(
 			t,
@@ -497,7 +519,8 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 			net,
 			validatorPK,
 			covenantPK,
-			slashingAddr.String(),
+			slashingAddress.String(), changeAddress.String(),
+			bsKeeper.GetParams(ctx).SlashingRate,
 			1000,
 		)
 		actualDel := getDelegationAndCheckValues(t, r, ms, bsKeeper, ctx, msgCreateBTCDel, validatorPK, delPK, stakingTxHash)
@@ -515,7 +538,8 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 			delSK,
 			validatorPK,
 			covenantPK,
-			slashingAddr.String(),
+			slashingAddress.String(), changeAddress.String(),
+			bsKeeper.GetParams(ctx).SlashingRate,
 		)
 
 		actualDelegationWithUnbonding, err := bsKeeper.GetBTCDelegation(ctx, actualDel.ValBtcPk, actualDel.BtcPk, stakingTxHash)
@@ -547,7 +571,9 @@ func FuzzAddCovenantAndValidatorSignaturesToUnbondind(f *testing.F) {
 		ms := keeper.NewMsgServerImpl(*bsKeeper)
 		goCtx := sdk.WrapSDKContext(ctx)
 
-		covenantSK, covenantPK, slashingAddr := getCovenantInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+		covenantSK, covenantPK, slashingAddress := getCovenantInfo(t, r, goCtx, ms, net, bsKeeper, ctx)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
 		valSk, validatorPK, _ := createValidator(t, r, goCtx, ms)
 		stakingTxHash, delSK, delPK, msgCreateBTCDel := createDelegation(
 			t,
@@ -559,7 +585,8 @@ func FuzzAddCovenantAndValidatorSignaturesToUnbondind(f *testing.F) {
 			net,
 			validatorPK,
 			covenantPK,
-			slashingAddr.String(),
+			slashingAddress.String(), changeAddress.String(),
+			bsKeeper.GetParams(ctx).SlashingRate,
 			1000,
 		)
 		actualDel := getDelegationAndCheckValues(t, r, ms, bsKeeper, ctx, msgCreateBTCDel, validatorPK, delPK, stakingTxHash)
@@ -577,7 +604,8 @@ func FuzzAddCovenantAndValidatorSignaturesToUnbondind(f *testing.F) {
 			delSK,
 			validatorPK,
 			covenantPK,
-			slashingAddr.String(),
+			slashingAddress.String(), changeAddress.String(),
+			bsKeeper.GetParams(ctx).SlashingRate,
 		)
 
 		del, err := bsKeeper.GetBTCDelegation(ctx, actualDel.ValBtcPk, actualDel.BtcPk, stakingTxHash)

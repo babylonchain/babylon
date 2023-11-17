@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
@@ -95,12 +96,13 @@ func (p Params) Validate() error {
 	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
 		return err
 	}
+
 	if err := validateMinCommissionRate(p.MinCommissionRate); err != nil {
 		return err
 	}
 
-	if !bbn.IsValidSlashingRate(p.SlashingRate) {
-		return fmt.Errorf("slashing rate must be in the range (0, 1)")
+	if !btcstaking.IsSlashingRateValid(p.SlashingRate) {
+		return btcstaking.ErrInvalidSlashingRate
 	}
 
 	if err := validateMaxActiveBTCValidators(p.MaxActiveBtcValidators); err != nil {
