@@ -23,6 +23,26 @@ const (
 	unspendableKeyPath = "0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
 )
 
+var (
+	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+)
+
+func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
+	keyBytes, err := hex.DecodeString(keyHex)
+
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: %v", err))
+	}
+
+	// We are using btcec here, as key is 33 byte compressed format.
+	pubKey, err := btcec.ParsePubKey(keyBytes)
+
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: %v", err))
+	}
+	return *pubKey
+}
+
 // Following methods are copied from btcd. In most recent they are not exported.
 // TODO: on btcd master those are already exported. Remove this copies
 // when this will be released.
@@ -215,6 +235,7 @@ func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 
 	var templateOffset int
 	tokenizer := txscript.MakeScriptTokenizer(0, script)
+
 	for tokenizer.Next() {
 		// Not an staking script if it has more opcodes than expected in the
 		// template.
@@ -316,13 +337,8 @@ func ParseStakingTransactionScript(script []byte) (*StakingScriptData, error) {
 	return scriptData, nil
 }
 
-func UnspendableKeyPathInternalPubKey() *btcec.PublicKey {
-	// TODO: We could cache it in some cached private package variable if performance
-	// is necessary, as this returns always the same value.
-	keyBytes, _ := hex.DecodeString(unspendableKeyPath)
-	// We are using btcec here, as key is 33 byte compressed format.
-	pubKey, _ := btcec.ParsePubKey(keyBytes)
-	return pubKey
+func UnspendableKeyPathInternalPubKey() btcec.PublicKey {
+	return unspendableKeyPathKey
 }
 
 // TaprootAddressForScript returns a Taproot address commiting to the given script, built taproot tree
@@ -357,7 +373,7 @@ func TaprootAddressForScript(
 func BuildUnspendableTaprootPkScript(rawScript []byte, net *chaincfg.Params) ([]byte, error) {
 	internalPubKey := UnspendableKeyPathInternalPubKey()
 
-	address, err := TaprootAddressForScript(rawScript, internalPubKey, net)
+	address, err := TaprootAddressForScript(rawScript, &internalPubKey, net)
 
 	if err != nil {
 		return nil, err
@@ -413,7 +429,7 @@ func NewWitnessFromStakingScriptAndSignature(
 	internalPubKey := UnspendableKeyPathInternalPubKey()
 	tapLeaf := txscript.NewBaseTapLeaf(stakingScript)
 	tapScriptTree := txscript.AssembleTaprootScriptTree(tapLeaf)
-	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(internalPubKey)
+	ctrlBlock := tapScriptTree.LeafMerkleProofs[0].ToControlBlock(&internalPubKey)
 	ctrlBlockBytes, err := ctrlBlock.ToBytes()
 	if err != nil {
 		return nil, err
@@ -786,7 +802,7 @@ func signTxWithOneScriptSpendInputFromTapLeafInternal(
 		return nil, err
 	}
 
-	return parsedSig, err
+	return parsedSig, nil
 }
 
 // SignTxWithOneScriptSpendInputFromTapLeaf signs transaction with one input coming
