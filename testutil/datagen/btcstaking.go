@@ -65,9 +65,9 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 
 func GenRandomBTCDelegation(
 	r *rand.Rand,
-	valBTCPK *bbn.BIP340PubKey,
+	valBTCPKs []bbn.BIP340PubKey,
 	delSK *btcec.PrivateKey,
-	covenantSK *btcec.PrivateKey,
+	covenantSKs []*btcec.PrivateKey,
 	slashingAddress, changeAddress string,
 	startHeight, endHeight, totalSat uint64,
 	slashingRate sdk.Dec,
@@ -75,10 +75,19 @@ func GenRandomBTCDelegation(
 	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
 	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
-	covenantBTCPK := covenantSK.PubKey()
-	valPK, err := valBTCPK.ToBTCPK()
-	if err != nil {
-		return nil, err
+	// list of covenant PKs
+	covenantBTCPKs := []*btcec.PublicKey{}
+	for _, covenantSK := range covenantSKs {
+		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
+	}
+	// list of validator PKs
+	valPKs := []*btcec.PublicKey{}
+	for _, valBTCPK := range valBTCPKs {
+		valPK, err := valBTCPK.ToBTCPK()
+		if err != nil {
+			return nil, err
+		}
+		valPKs = append(valPKs, valPK)
 	}
 
 	// BTC delegation Babylon key pairs
@@ -100,8 +109,8 @@ func GenRandomBTCDelegation(
 		r,
 		net,
 		delSK,
-		valPK,
-		covenantBTCPK,
+		valPKs,
+		covenantBTCPKs,
 		uint16(endHeight-startHeight),
 		int64(totalSat),
 		slashingAddress, changeAddress,
@@ -115,7 +124,8 @@ func GenRandomBTCDelegation(
 	if err != nil {
 		return nil, err
 	}
-	covenantSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, covenantSK, net)
+	// TODO: covenant multisig
+	covenantSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, covenantSKs[0], net)
 	if err != nil {
 		return nil, err
 	}
@@ -128,7 +138,7 @@ func GenRandomBTCDelegation(
 		BabylonPk:    secp256k1PK,
 		BtcPk:        delBTCPK,
 		Pop:          pop,
-		ValBtcPk:     valBTCPK,
+		ValBtcPkList: valBTCPKs,
 		StartHeight:  startHeight,
 		EndHeight:    endHeight,
 		TotalSat:     totalSat,
@@ -144,18 +154,19 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	btcNet *chaincfg.Params,
 	outPoint *wire.OutPoint,
 	stakerSK *btcec.PrivateKey,
-	validatorPK *btcec.PublicKey,
-	covenantPK *btcec.PublicKey,
+	validatorPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress, changeAddress string,
 	slashingRate sdk.Dec,
 	withChange bool,
 ) (*bstypes.BabylonBTCTaprootTx, *bstypes.BTCSlashingTx, error) {
+	// TODO: covenant multisig
 	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
 		stakerSK.PubKey(),
-		validatorPK,
-		covenantPK,
+		validatorPKs[0],
+		covenantPKs[0],
 		stakingTimeBlocks,
 		btcutil.Amount(stakingValue),
 		btcNet,
@@ -226,8 +237,8 @@ func GenBTCStakingSlashingTx(
 	r *rand.Rand,
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
-	validatorPK *btcec.PublicKey,
-	covenantPK *btcec.PublicKey,
+	validatorPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress, changeAddress string,
@@ -241,8 +252,8 @@ func GenBTCStakingSlashingTx(
 		btcNet,
 		outPoint,
 		stakerSK,
-		validatorPK,
-		covenantPK,
+		validatorPKs,
+		covenantPKs,
 		stakingTimeBlocks,
 		stakingValue,
 		slashingAddress, changeAddress,
@@ -254,8 +265,8 @@ func GenBTCUnbondingSlashingTx(
 	r *rand.Rand,
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
-	validatorPK *btcec.PublicKey,
-	covenantPK *btcec.PublicKey,
+	validatorPKs []*btcec.PublicKey,
+	covenantPKs []*btcec.PublicKey,
 	stakingTransactionOutpoint *wire.OutPoint,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
@@ -267,8 +278,8 @@ func GenBTCUnbondingSlashingTx(
 		btcNet,
 		stakingTransactionOutpoint,
 		stakerSK,
-		validatorPK,
-		covenantPK,
+		validatorPKs,
+		covenantPKs,
 		stakingTimeBlocks,
 		stakingValue,
 		slashingAddress, changeAddress,

@@ -6,9 +6,11 @@ import (
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
+	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -66,9 +68,9 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
-					btcVal.BtcPk,
+					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
-					covenantSK,
+					[]*btcec.PrivateKey{covenantSK},
 					slashingAddress.String(), changeAddress.String(),
 					1, 1000, stakingValue,
 					slashingRate,

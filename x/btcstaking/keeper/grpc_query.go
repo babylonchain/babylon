@@ -290,7 +290,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 
 	return &types.QueryBTCDelegationResponse{
 		BtcPk:            btcDel.BtcPk,
-		ValBtcPk:         btcDel.ValBtcPk,
+		ValBtcPkList:     btcDel.ValBtcPkList,
 		StartHeight:      btcDel.StartHeight,
 		EndHeight:        btcDel.EndHeight,
 		TotalSat:         btcDel.TotalSat,

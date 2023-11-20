@@ -13,30 +13,37 @@ import (
 // AddBTCDelegation indexes the given BTC delegation in the BTC delegator store, and saves
 // it under BTC delegation store
 func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
-	var (
-		btcDelIndex = types.NewBTCDelegatorDelegationIndex()
-		err         error
-	)
-	if k.hasBTCDelegatorDelegations(ctx, btcDel.ValBtcPk, btcDel.BtcPk) {
-		btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, btcDel.ValBtcPk, btcDel.BtcPk)
-		if err != nil {
-			// this can only be a programming error
-			panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
-		}
+	if err := btcDel.ValidateBasic(); err != nil {
+		return err
 	}
-	// index staking tx hash of this BTC delegation
+
+	// get staking tx hash
 	stakingTxHash, err := btcDel.GetStakingTxHash()
 	if err != nil {
 		return err
 	}
-	if err := btcDelIndex.Add(stakingTxHash); err != nil {
-		return types.ErrInvalidStakingTx.Wrapf(err.Error())
+
+	// for each BTC validator the delegation restakes to, update its index
+	for _, valBTCPK := range btcDel.ValBtcPkList {
+		var btcDelIndex = types.NewBTCDelegatorDelegationIndex()
+		if k.hasBTCDelegatorDelegations(ctx, &valBTCPK, btcDel.BtcPk) {
+			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &valBTCPK, btcDel.BtcPk)
+			if err != nil {
+				// this can only be a programming error
+				panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
+			}
+		}
+
+		// index staking tx hash of this BTC delegation
+		if err := btcDelIndex.Add(stakingTxHash); err != nil {
+			return types.ErrInvalidStakingTx.Wrapf(err.Error())
+		}
+		// save the index
+		store := k.btcDelegatorStore(ctx, &valBTCPK)
+		delBTCPKBytes := btcDel.BtcPk.MustMarshal()
+		btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
+		store.Set(delBTCPKBytes, btcDelIndexBytes)
 	}
-	// save the index
-	store := k.btcDelegatorStore(ctx, btcDel.ValBtcPk)
-	delBTCPKBytes := btcDel.BtcPk.MustMarshal()
-	btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
-	store.Set(delBTCPKBytes, btcDelIndexBytes)
 
 	// save this BTC delegation
 	k.setBTCDelegation(ctx, btcDel)
@@ -54,7 +61,7 @@ func (k Keeper) updateBTCDelegation(
 	modifyFn func(*types.BTCDelegation) error,
 ) error {
 	// get the BTC delegation
-	btcDel, err := k.GetBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHashStr)
+	btcDel, err := k.GetBTCDelegation(ctx, stakingTxHashStr)
 	if err != nil {
 		return err
 	}
@@ -204,22 +211,12 @@ func (k Keeper) getBTCDelegatorDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340
 	return &types.BTCDelegatorDelegations{Dels: btcDels}, nil
 }
 
-// GetBTCDelegation gets the BTC delegation with a given BTC PK and staking tx hash under a given BTC validator
-// TODO: only take stakingTxHash as input could be enough?
-func (k Keeper) GetBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHashStr string) (*types.BTCDelegation, error) {
-	// find the BTC delegation index
-	btcDelIndex, err := k.getBTCDelegatorDelegationIndex(ctx, valBTCPK, delBTCPK)
-	if err != nil {
-		return nil, err
-	}
+// GetBTCDelegation gets the BTC delegation with a given staking tx hash
+func (k Keeper) GetBTCDelegation(ctx sdk.Context, stakingTxHashStr string) (*types.BTCDelegation, error) {
 	// decode staking tx hash string
 	stakingTxHash, err := chainhash.NewHashFromStr(stakingTxHashStr)
 	if err != nil {
 		return nil, err
-	}
-	// ensure the BTC delegation index has this staking tx hash
-	if !btcDelIndex.Has(*stakingTxHash) {
-		return nil, types.ErrBTCDelegatorNotFound.Wrapf(err.Error())
 	}
 
 	return k.getBTCDelegation(ctx, *stakingTxHash), nil

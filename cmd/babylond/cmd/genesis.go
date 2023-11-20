@@ -305,10 +305,12 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.BtclightclientBaseBtcHeader = *baseBtcHeaderInfo
 
 	genParams.BtcstakingParams = btcstakingtypes.DefaultParams()
-	genParams.BtcstakingParams.CovenantPk, err = bbn.NewBIP340PubKeyFromHex(covenantPk)
+	covenantPK, err := bbn.NewBIP340PubKeyFromHex(covenantPk)
 	if err != nil {
 		panic(err)
 	}
+	genParams.BtcstakingParams.CovenantPks = []bbn.BIP340PubKey{*covenantPK}
+	genParams.BtcstakingParams.CovenantQuorum = 1 // TODO: multisig covenant
 	genParams.BtcstakingParams.SlashingAddress = slashingAddress
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate

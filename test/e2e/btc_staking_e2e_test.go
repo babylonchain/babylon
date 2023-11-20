@@ -100,6 +100,11 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	*/
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
+	// get covenant BTC PKs
+	covenantBTCPKs := []*btcec.PublicKey{}
+	for _, covenantPK := range params.CovenantPks {
+		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
+	}
 	// NOTE: we use the node's secret key as Babylon secret key for the BTC delegation
 	delBabylonSK := nonValidatorNode.SecretKey
 	pop, err := bstypes.NewPoP(delBabylonSK, delBTCSK)
@@ -110,8 +115,8 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		r,
 		net,
 		delBTCSK,
-		btcVal.BtcPk.MustToBTCPK(),
-		params.CovenantPk.MustToBTCPK(),
+		[]*btcec.PublicKey{btcVal.BtcPk.MustToBTCPK()},
+		covenantBTCPKs,
 		stakingTimeBlocks,
 		stakingValue,
 		params.SlashingAddress, changeAddress.String(),
@@ -386,6 +391,11 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 
 	// params for covenantPk and slashing address
 	params := nonValidatorNode.QueryBTCStakingParams()
+	// get covenant BTC PKs
+	covenantBTCPKs := []*btcec.PublicKey{}
+	for _, covenantPK := range params.CovenantPks {
+		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
+	}
 
 	stakingTx := activeDel.StakingTx
 	stakingMsgTx, err := stakingTx.ToMsgTx()
@@ -404,8 +414,8 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		r,
 		net,
 		delBTCSK,
-		btcVal.BtcPk.MustToBTCPK(),
-		params.CovenantPk.MustToBTCPK(),
+		[]*btcec.PublicKey{btcVal.BtcPk.MustToBTCPK()},
+		covenantBTCPKs,
 		wire.NewOutPoint(stakingTxChainHash, uint32(stakingOutputIdx)),
 		initialization.BabylonBtcFinalizationPeriod+1,
 		stakingValue-fee,

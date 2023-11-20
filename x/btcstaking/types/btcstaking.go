@@ -67,8 +67,11 @@ func (d *BTCDelegation) ValidateBasic() error {
 	if d.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-	if d.ValBtcPk == nil {
-		return fmt.Errorf("empty Validator BTC public key")
+	if len(d.ValBtcPkList) == 0 {
+		return fmt.Errorf("empty list of BTC validator PKs")
+	}
+	if existsDup(d.ValBtcPkList) {
+		return fmt.Errorf("list of BTC validator PKs has duplication")
 	}
 	if d.StakingTx == nil {
 		return fmt.Errorf("empty staking tx")
@@ -350,4 +353,19 @@ func FilterTopNBTCValidators(validators []*BTCValidatorWithMeta, n uint32) []*BT
 
 	// Return the top n elements
 	return validators[:n]
+}
+
+func existsDup(btcPKs []bbn.BIP340PubKey) bool {
+	seen := make(map[string]struct{})
+
+	for _, btcPK := range btcPKs {
+		pkStr := string(btcPK)
+		if _, found := seen[pkStr]; found {
+			return true
+		} else {
+			seen[pkStr] = struct{}{}
+		}
+	}
+
+	return false
 }

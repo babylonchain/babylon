@@ -6,6 +6,7 @@ import (
 
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -46,8 +47,8 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			r,
 			net,
 			delSK,
-			valPK,
-			covenantPK,
+			[]*btcec.PublicKey{valPK},
+			[]*btcec.PublicKey{covenantPK},
 			stakingTimeBlocks,
 			stakingValue,
 			slashingAddress.String(), changeAddress.String(),

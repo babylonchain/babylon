@@ -119,6 +119,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
 
 	// extract staking script from staking tx
+	// TODO: use new algorithm that reconstructs staking tx output then asserts consistency
 	stakingOutputInfo, err := req.StakingTx.GetBabylonOutputInfo(ms.btcNet)
 	if err != nil {
 		return nil, err
@@ -155,7 +156,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// ensure staking tx is using correct covenant PK
-	paramCovenantPK := params.CovenantPk
+	paramCovenantPK := &params.CovenantPks[0] // TODO: verifying covenant committee PKs
 	if !covenantPK.Equals(paramCovenantPK) {
 		return nil, types.ErrInvalidCovenantPK.Wrapf("expected: %s; actual: %s", hex.EncodeToString(*paramCovenantPK), hex.EncodeToString(*covenantPK))
 	}
@@ -225,10 +226,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// have voting power only when 1) its corresponding staking tx is k-deep,
 	// and 2) it receives a covenant signature
 	newBTCDel := &types.BTCDelegation{
-		BabylonPk:       req.BabylonPk,
-		BtcPk:           delBTCPK,
-		Pop:             req.Pop,
-		ValBtcPk:        valBTCPK,
+		BabylonPk: req.BabylonPk,
+		BtcPk:     delBTCPK,
+		Pop:       req.Pop,
+		// TODO: ValBtcPkList will be provided in the message
+		ValBtcPkList:    []bbn.BIP340PubKey{*valBTCPK},
 		StartHeight:     startHeight,
 		EndHeight:       endHeight,
 		TotalSat:        uint64(stakingOutputInfo.StakingAmount),
@@ -311,10 +313,11 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// 5. Check Covenant Key from script is consistent with params
 	publicKeyInfos := types.KeyDataFromScript(unbondingOutputInfo.StakingScriptData)
-	if !publicKeyInfos.CovenantKey.Equals(params.CovenantPk) {
+	paramCovenantPK := &params.CovenantPks[0] // TODO: verifying covenant committee PKs
+	if !publicKeyInfos.CovenantKey.Equals(paramCovenantPK) {
 		return nil, types.ErrInvalidCovenantPK.Wrapf(
 			"expected: %s; actual: %s",
-			hex.EncodeToString(*params.CovenantPk),
+			hex.EncodeToString(*paramCovenantPK),
 			hex.EncodeToString(*publicKeyInfos.CovenantKey),
 		)
 	}
@@ -322,7 +325,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// 6. Check delegation exists for the given validator and delegator and given staking tx hash
 	// as all keys are taken from script, it effectively check that values in delegation staking script
 	// matches the values in the unbonding tx staking script
-	del, err := ms.GetBTCDelegation(ctx, publicKeyInfos.ValidatorKey, publicKeyInfos.StakerKey, stakingTxHash)
+	del, err := ms.GetBTCDelegation(ctx, stakingTxHash)
 
 	if err != nil {
 		return nil, err
@@ -381,7 +384,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// notify subscriber
 	event := &types.EventUnbondingBTCDelegation{
 		BtcPk:           del.BtcPk,
-		ValBtcPk:        del.ValBtcPk,
+		ValBtcPkList:    del.ValBtcPkList,
 		StakingTxHash:   stakingTxHash,
 		UnbondingTxHash: unbondingMsgTx.TxHash().String(),
 	}
@@ -397,7 +400,7 @@ func (ms msgServer) AddCovenantSig(goCtx context.Context, req *types.MsgAddCoven
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +414,9 @@ func (ms msgServer) AddCovenantSig(goCtx context.Context, req *types.MsgAddCoven
 		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
 	}
 
-	covenantPK, err := ms.GetParams(ctx).CovenantPk.ToBTCPK()
+	// TODO: covenant PK will be a field in the message. Then the verification will be
+	// that the given covenant PK has to be one of the covenant PKs in the parameter
+	covenantPK, err := ms.GetParams(ctx).CovenantPks[0].ToBTCPK()
 	if err != nil {
 		// failing to cast a verified covenant PK a programming error
 		panic(fmt.Errorf("failed to cast a verified covenant public key"))
@@ -449,7 +454,7 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	// 1. Check that delegation even exists for provided params
-	btcDel, err := ms.GetBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
@@ -485,7 +490,9 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 		panic(fmt.Errorf("failed to get staking output info from a verified staking tx"))
 	}
 
-	covenantPK, err := ms.GetParams(ctx).CovenantPk.ToBTCPK()
+	// TODO: covenant PK will be a field in the message. Then the verification will be
+	// that the given covenant PK has to be one of the covenant PKs in the parameter
+	covenantPK, err := ms.GetParams(ctx).CovenantPks[0].ToBTCPK()
 	if err != nil {
 		// failing to cast a verified covenant PK is a programming error
 		panic(fmt.Errorf("failed to cast a verified covenant public key"))
@@ -538,7 +545,7 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 	if btcDel.BtcUndelegation.HasValidatorSig() {
 		event := &types.EventUnbondedBTCDelegation{
 			BtcPk:           btcDel.BtcPk,
-			ValBtcPk:        btcDel.ValBtcPk,
+			ValBtcPkList:    btcDel.ValBtcPkList,
 			StakingTxHash:   req.StakingTxHash,
 			UnbondingTxHash: btcDel.BtcUndelegation.UnbondingTx.MustGetTxHashStr(),
 			FromState:       types.BTCDelegationStatus_UNBONDING,
@@ -558,7 +565,7 @@ func (ms msgServer) AddValidatorUnbondingSig(
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	// 1. Check that delegation even exists for provided params
-	btcDel, err := ms.GetBTCDelegation(ctx, req.ValPk, req.DelPk, req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
 	}
@@ -612,7 +619,7 @@ func (ms msgServer) AddValidatorUnbondingSig(
 	if btcDel.BtcUndelegation.HasCovenantSigs() {
 		event := &types.EventUnbondedBTCDelegation{
 			BtcPk:           btcDel.BtcPk,
-			ValBtcPk:        btcDel.ValBtcPk,
+			ValBtcPkList:    btcDel.ValBtcPkList,
 			StakingTxHash:   req.StakingTxHash,
 			UnbondingTxHash: btcDel.BtcUndelegation.UnbondingTx.MustGetTxHashStr(),
 			FromState:       types.BTCDelegationStatus_UNBONDING,

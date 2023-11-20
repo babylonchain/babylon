@@ -7,6 +7,7 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -42,8 +43,8 @@ func FuzzStakingTx(f *testing.F) {
 			r,
 			net,
 			stakerSK,
-			validatorPK,
-			covenantPK,
+			[]*btcec.PublicKey{validatorPK},
+			[]*btcec.PublicKey{covenantPK},
 			stakingTimeBlocks,
 			stakingValue,
 			slashingAddress.String(), changeAddress.String(),

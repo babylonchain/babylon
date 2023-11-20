@@ -20,11 +20,12 @@ const (
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 
-func defaultCovenantPk() *bbn.BIP340PubKey {
+// TODO: default values for multisig covenant
+func defaultCovenantPks() []bbn.BIP340PubKey {
 	// 32 bytes
 	skBytes := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
 	_, defaultPK := btcec.PrivKeyFromBytes(skBytes)
-	return bbn.NewBIP340PubKeyFromBTCPK(defaultPK)
+	return []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(defaultPK)}
 }
 
 func defaultSlashingAddress() string {
@@ -45,7 +46,8 @@ func ParamKeyTable() paramtypes.KeyTable {
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
 	return Params{
-		CovenantPk:          defaultCovenantPk(),
+		CovenantPks:         defaultCovenantPks(), // TODO: default values for multisig covenant
+		CovenantQuorum:      1,                    // TODO: default values for multisig covenant
 		SlashingAddress:     defaultSlashingAddress(),
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   math.LegacyZeroDec(),
@@ -93,6 +95,14 @@ func validateMaxActiveBTCValidators(maxActiveBtcValidators uint32) error {
 
 // Validate validates the set of params
 func (p Params) Validate() error {
+	if p.CovenantQuorum == 0 {
+		return fmt.Errorf("covenant quorum size has to be positive")
+	}
+	if p.CovenantQuorum*3 <= uint32(len(p.CovenantPks))*2 {
+		// NOTE: we assume covenant member can be adversarial, including
+		// equivocation, so >2/3 quorum is needed
+		return fmt.Errorf("covenant quorum size has to be more than 2/3 of the covenant committee size")
+	}
 	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
 		return err
 	}

@@ -222,10 +222,9 @@ message QueryBTCDelegationResponse {
     // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec
   bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // val_btc_pk is the Bitcoin secp256k1 PK of the BTC validator that
+  // val_btc_pk_list is the list of BIP-340 PKs of the BTC validators that
   // this BTC delegation delegates to
-  // the PK follows encoding in BIP-340 spec
-  bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  repeated bytes val_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // start_height is the start BTC height of the BTC delegation
   // it is the start BTC height of the timelock
   uint64 start_height = 3;

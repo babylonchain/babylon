@@ -63,10 +63,11 @@ message BTCDelegation {
     bytes btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // pop is the proof of possession of babylon_pk and btc_pk
     ProofOfPossession pop = 3;
-    // val_btc_pk is the Bitcoin secp256k1 PK of the BTC validator that
+    // val_btc_pk_list is the list of BIP-340 PKs of the BTC validators that
     // this BTC delegation delegates to
-    // the PK follows encoding in BIP-340 spec
-    bytes val_btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // If there is more than 1 PKs, then this means the delegation is restaked
+    // to multiple BTC validators
+    repeated bytes val_btc_pk_list = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // start_height is the start BTC height of the BTC delegation
     // it is the start BTC height of the timelock
     uint64 start_height = 5;
@@ -89,6 +90,7 @@ message BTCDelegation {
     // covenant_sig is the signature signature on the slashing tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It will be a part of the witness for the staking tx output.
+    // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
     bytes covenant_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
     // if this object is present it menans that staker requested undelegation, and whole
@@ -115,15 +117,18 @@ message BTCUndelegation {
     // covenant_slashing_sig is the signature on the slashing tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon
+    // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
     bytes covenant_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // covenant_unbonding_sig is the signature on the unbonding tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon and after
     // validator sig will be provided by validator
+    // TODO: change to a set of (covenant PK, covenant Schnorr signature) tuples
     bytes covenant_unbonding_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // validator_unbonding_sig is the signature on the unbonding tx
     // by the validator (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon
+    // TODO: this is no longer needed
     bytes validator_unbonding_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
@@ -139,11 +144,13 @@ message BTCUndelegationInfo {
     // by the validator (i.e., SK corresponding to the pk of the validator that the staker delegates to)
     // It must be provided after processing undelagate message by Babylon
     // It will be nil if validator didn't sign it yet
+    // TODO: this is no longer needed
     bytes validator_unbonding_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
     // covenant_unbonding_sig is the signature on the unbonding tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // it will be nil if covenant didn't sign it yet
+    // TODO: change to a set of (covenant PK, covenant Schnorr signature) tuples
     bytes covenant_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
@@ -190,3 +197,8 @@ enum BTCDelegationStatus {
     ANY = 4;
 }
 
+// SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK
+message SignatureInfo {
+    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    bytes sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}

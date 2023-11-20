@@ -7,9 +7,11 @@ import (
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -206,9 +208,9 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
-					btcVal.BtcPk,
+					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
-					covenantSK,
+					[]*btcec.PrivateKey{covenantSK},
 					slashingAddress.String(), changeAddress.String(),
 					startHeight, endHeight, 10000,
 					slashingRate,
@@ -310,9 +312,9 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
-					btcVal.BtcPk,
+					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
-					covenantSK,
+					[]*btcec.PrivateKey{covenantSK},
 					slashingAddress.String(), changeAddress.String(),
 					startHeight, endHeight, 10000,
 					slashingRate,
@@ -491,9 +493,9 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
-					valBTCPK,
+					[]bbn.BIP340PubKey{*valBTCPK},
 					delSK,
-					covenantSK,
+					[]*btcec.PrivateKey{covenantSK},
 					slashingAddress.String(), changeAddress.String(),
 					1, 1000, 10000,
 					slashingRate,
@@ -595,9 +597,9 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
-				btcVal.BtcPk,
+				[]bbn.BIP340PubKey{*btcVal.BtcPk},
 				delSK,
-				covenantSK,
+				[]*btcec.PrivateKey{covenantSK},
 				slashingAddress.String(), changeAddress.String(),
 				startHeight, endHeight, 10000,
 				slashingRate,
@@ -638,7 +640,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			for _, btcDels := range resp.BtcDelegatorDelegations {
 				require.Len(t, btcDels.Dels, 1)
 				btcDel := btcDels.Dels[0]
-				require.Equal(t, btcVal.BtcPk, btcDel.ValBtcPk)
+				require.Equal(t, btcVal.BtcPk, &btcDel.ValBtcPkList[0])
 				// Check if the pk exists in the map
 				_, ok := expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()]
 				require.True(t, ok)

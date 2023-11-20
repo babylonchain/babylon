@@ -10,6 +10,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -64,9 +65,9 @@ func FuzzVotingPowerTable(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
-					btcVals[i].BtcPk,
+					[]bbn.BIP340PubKey{*btcVals[i].BtcPk},
 					delSK,
-					covenantSK,
+					[]*btcec.PrivateKey{covenantSK},
 					slashingAddress.String(), changeAddress.String(),
 					1, 1000, stakingValue,
 					slashingRate,
@@ -230,9 +231,9 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
-				valBTCPK,
+				[]bbn.BIP340PubKey{*valBTCPK},
 				delSK,
-				covenantSK,
+				[]*btcec.PrivateKey{covenantSK},
 				slashingAddress.String(), changeAddress.String(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
@@ -332,9 +333,9 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
-				valBTCPK,
+				[]bbn.BIP340PubKey{*valBTCPK},
 				delSK,
-				covenantSK,
+				[]*btcec.PrivateKey{covenantSK},
 				slashingAddress.String(), changeAddress.String(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
@@ -378,9 +379,9 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
-				activatedValBTCPK,
+				[]bbn.BIP340PubKey{*activatedValBTCPK},
 				delSK,
-				covenantSK,
+				[]*btcec.PrivateKey{covenantSK},
 				slashingAddress.String(), changeAddress.String(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
