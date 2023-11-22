@@ -73,7 +73,7 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
 					1,
-					slashingAddress.String(), changeAddress.String(),
+					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					1, 1000, stakingValue,
 					slashingRate,
 				)

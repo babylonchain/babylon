@@ -214,7 +214,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
 					1,
-					slashingAddress.String(), changeAddress.String(),
+					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					startHeight, endHeight, 10000,
 					slashingRate,
 				)
@@ -320,7 +320,7 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
 					1,
-					slashingAddress.String(), changeAddress.String(),
+					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					startHeight, endHeight, 10000,
 					slashingRate,
 				)
@@ -500,7 +500,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
 					1,
-					slashingAddress.String(), changeAddress.String(),
+					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					1, 1000, 10000,
 					slashingRate,
 				)
@@ -606,7 +606,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
 				1,
-				slashingAddress.String(), changeAddress.String(),
+				slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 				startHeight, endHeight, 10000,
 				slashingRate,
 			)

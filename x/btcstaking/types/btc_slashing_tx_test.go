@@ -54,7 +54,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			1,
 			stakingTimeBlocks,
 			stakingValue,
-			slashingAddress.String(), changeAddress.String(),
+			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 			slashingRate,
 		)
 

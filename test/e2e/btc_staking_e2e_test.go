@@ -121,7 +121,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		1,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress, changeAddress.String(),
+		params.SlashingAddress, changeAddress.EncodeAddress(),
 		params.SlashingRate,
 	)
 
@@ -465,7 +465,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		wire.NewOutPoint(stakingTxChainHash, uint32(activeDel.StakingOutputIdx)),
 		initialization.BabylonBtcFinalizationPeriod+1,
 		stakingValue-fee,
-		params.SlashingAddress, changeAddress.String(),
+		params.SlashingAddress, changeAddress.EncodeAddress(),
 		params.SlashingRate,
 	)
 	s.NoError(err)

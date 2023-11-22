@@ -100,7 +100,7 @@ func getCovenantInfo(t *testing.T,
 	err = bsKeeper.SetParams(sdkCtx, types.Params{
 		CovenantPks:            []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(covenantPK)},
 		CovenantQuorum:         1,
-		SlashingAddress:        slashingAddress.String(),
+		SlashingAddress:        slashingAddress.EncodeAddress(),
 		MinSlashingTxFeeSat:    10,
 		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:           sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
@@ -423,7 +423,7 @@ func FuzzCreateBTCDelegationAndAddCovenantSig(f *testing.F) {
 			net,
 			validatorPK,
 			covenantPK,
-			slashingAddress.String(), changeAddress.String(),
+			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 			bsKeeper.GetParams(ctx).SlashingRate,
 			1000,
 		)
@@ -464,7 +464,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	err = bsKeeper.SetParams(ctx, types.Params{
 		CovenantPks:            []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(covenantPK)},
 		CovenantQuorum:         1,
-		SlashingAddress:        slashingAddress.String(),
+		SlashingAddress:        slashingAddress.EncodeAddress(),
 		MinSlashingTxFeeSat:    10,
 		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:           sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
@@ -494,7 +494,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		1,
 		stakingTimeBlocks,
 		stakingValue,
-		slashingAddress.String(), changeAddress.String(),
+		slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 		bsKeeper.GetParams(ctx).SlashingRate,
 	)
 	// get msgTx
@@ -579,7 +579,7 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 			net,
 			validatorPK,
 			covenantPK,
-			slashingAddress.String(), changeAddress.String(),
+			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 			bsKeeper.GetParams(ctx).SlashingRate,
 			1000,
 		)
@@ -598,7 +598,7 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 			delSK,
 			validatorPK,
 			covenantPK,
-			slashingAddress.String(), changeAddress.String(),
+			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 			bsKeeper.GetParams(ctx).SlashingRate,
 		)
 
@@ -643,7 +643,7 @@ func FuzzAddCovenantSigToUnbonding(f *testing.F) {
 			net,
 			validatorPK,
 			covenantPK,
-			slashingAddress.String(), changeAddress.String(),
+			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 			bsKeeper.GetParams(ctx).SlashingRate,
 			1000,
 		)
@@ -662,7 +662,7 @@ func FuzzAddCovenantSigToUnbonding(f *testing.F) {
 			delSK,
 			validatorPK,
 			covenantPK,
-			slashingAddress.String(), changeAddress.String(),
+			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 			bsKeeper.GetParams(ctx).SlashingRate,
 		)
 

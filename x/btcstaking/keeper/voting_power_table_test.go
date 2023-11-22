@@ -70,7 +70,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
 					1,
-					slashingAddress.String(), changeAddress.String(),
+					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					1, 1000, stakingValue,
 					slashingRate,
 				)
@@ -238,7 +238,7 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
 				1,
-				slashingAddress.String(), changeAddress.String(),
+				slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
 			)
@@ -342,7 +342,7 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
 				1,
-				slashingAddress.String(), changeAddress.String(),
+				slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
 			)
@@ -390,7 +390,7 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
 				1,
-				slashingAddress.String(), changeAddress.String(),
+				slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
 			)
