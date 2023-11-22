@@ -20,7 +20,7 @@ func FuzzStakingTx(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		net := &chaincfg.SimNetParams
 
-		stakerSK, stakerPK, err := datagen.GenRandomBTCKeyPair(r)
+		stakerSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 		_, validatorPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
@@ -39,31 +39,21 @@ func FuzzStakingTx(f *testing.F) {
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
-		stakingTx, _, err := datagen.GenBTCStakingSlashingTx(
+		testInfo := datagen.GenBTCStakingSlashingTx(
 			r,
+			t,
 			net,
 			stakerSK,
 			[]*btcec.PublicKey{validatorPK},
 			[]*btcec.PublicKey{covenantPK},
+			1,
 			stakingTimeBlocks,
 			stakingValue,
 			slashingAddress.String(), changeAddress.String(),
 			slashingRate,
 		)
 		require.NoError(t, err)
-
-		err = stakingTx.ValidateBasic()
-		require.NoError(t, err)
-
-		// extract staking script and staked value
-		stakingOutputInfo, err := stakingTx.GetBabylonOutputInfo(&chaincfg.SimNetParams)
-		require.NoError(t, err)
-		// NOTE: given that PK derived from SK has 2 possibilities on a curve, we can only compare x value but not y value
-		require.Equal(t, stakingOutputInfo.StakingScriptData.StakerKey.SerializeCompressed()[1:], stakerPK.SerializeCompressed()[1:])
-		require.Equal(t, stakingOutputInfo.StakingScriptData.ValidatorKey.SerializeCompressed()[1:], validatorPK.SerializeCompressed()[1:])
-		require.Equal(t, stakingOutputInfo.StakingScriptData.CovenantKey.SerializeCompressed()[1:], covenantPK.SerializeCompressed()[1:])
-		require.Equal(t, stakingOutputInfo.StakingScriptData.StakingTime, stakingTimeBlocks)
-		require.Equal(t, int64(stakingOutputInfo.StakingAmount), stakingValue)
+		require.Equal(t, testInfo.StakingInfo.StakingOutput.Value, stakingValue)
 	})
 }
 

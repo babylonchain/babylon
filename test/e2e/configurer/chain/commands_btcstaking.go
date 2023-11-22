@@ -5,9 +5,12 @@ import (
 	"strconv"
 
 	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
 )
@@ -33,28 +36,45 @@ func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.
 	n.LogActionF("successfully created BTC validator")
 }
 
-func (n *NodeConfig) CreateBTCDelegation(babylonPK *secp256k1.PubKey, pop *bstypes.ProofOfPossession, stakingTx *bstypes.BabylonBTCTaprootTx, stakingTxInfo *btcctypes.TransactionInfo, slashingTx *bstypes.BTCSlashingTx, delegatorSig *bbn.BIP340Signature) {
+func (n *NodeConfig) CreateBTCDelegation(
+	babylonPK *secp256k1.PubKey,
+	btcPk *bbn.BIP340PubKey,
+	pop *bstypes.ProofOfPossession,
+	stakingTxInfo *btcctypes.TransactionInfo,
+	valPK *bbn.BIP340PubKey,
+	stakingTimeBlocks uint16,
+	stakingValue btcutil.Amount,
+	slashingTx *bstypes.BTCSlashingTx,
+	delegatorSig *bbn.BIP340Signature,
+) {
 	n.LogActionF("creating BTC delegation")
 
 	// get babylon PK hex
 	babylonPKBytes, err := babylonPK.Marshal()
 	require.NoError(n.t, err)
 	babylonPKHex := hex.EncodeToString(babylonPKBytes)
+
+	btcPkHex := btcPk.MarshalHex()
+
 	// get pop hex
 	popHex, err := pop.ToHexStr()
 	require.NoError(n.t, err)
-	// get staking tx hex
-	stakingTxHex, err := stakingTx.ToHexStr()
-	require.NoError(n.t, err)
+
 	// get staking tx info hex
 	stakingTxInfoHex, err := stakingTxInfo.ToHexStr()
 	require.NoError(n.t, err)
+
+	valPKHex := valPK.MarshalHex()
+
+	stakingTimeString := sdkmath.NewUint(uint64(stakingTimeBlocks)).String()
+	stakingValueString := sdkmath.NewInt(int64(stakingValue)).String()
+
 	// get slashing tx hex
 	slashingTxHex := slashingTx.ToHexStr()
 	// get delegator sig hex
 	delegatorSigHex := delegatorSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, popHex, stakingTxHex, stakingTxInfoHex, slashingTxHex, delegatorSigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, valPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, "--from=val"}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
@@ -121,17 +141,27 @@ func (n *NodeConfig) AddFinalitySig(valBTCPK *bbn.BIP340PubKey, blockHeight uint
 	n.LogActionF("successfully added finality signature")
 }
 
-func (n *NodeConfig) CreateBTCUndelegation(unbondingTx *bstypes.BabylonBTCTaprootTx, slashingTx *bstypes.BTCSlashingTx, delegatorSig *bbn.BIP340Signature) {
+func (n *NodeConfig) CreateBTCUndelegation(
+	unbondingTx *wire.MsgTx,
+	slashingTx *bstypes.BTCSlashingTx,
+	unbondingTimeBlocks uint16,
+	unbondingValue btcutil.Amount,
+	delegatorSig *bbn.BIP340Signature) {
 	n.LogActionF("creating BTC undelegation")
-	// get staking tx hex
-	unbondingTxHex, err := unbondingTx.ToHexStr()
+
+	txBytes, err := bstypes.SerializeBtcTx(unbondingTx)
 	require.NoError(n.t, err)
+	// get staking tx hex
+	unbondingTxHex := hex.EncodeToString(txBytes)
 	// get slashing tx hex
 	slashingTxHex := slashingTx.ToHexStr()
 	// get delegator sig hex
 	delegatorSigHex := delegatorSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-undelegation", unbondingTxHex, slashingTxHex, delegatorSigHex, "--from=val"}
+	unbondingTimeStr := sdkmath.NewUint(uint64(unbondingTimeBlocks)).String()
+	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
+
+	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-undelegation", unbondingTxHex, slashingTxHex, unbondingTimeStr, unbondingValueStr, delegatorSigHex, "--from=val"}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")

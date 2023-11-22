@@ -208,9 +208,11 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
+					t,
 					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
+					1,
 					slashingAddress.String(), changeAddress.String(),
 					startHeight, endHeight, 10000,
 					slashingRate,
@@ -224,7 +226,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 				err = keeper.AddBTCDelegation(ctx, btcDel)
 				require.NoError(t, err)
 
-				txHash := btcDel.StakingTx.MustGetTxHashStr()
+				txHash := btcDel.MustGetStakingTxHash().String()
 				btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
 				delView, err := keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
 					StakingTxHashHex: txHash,
@@ -312,9 +314,11 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
+					t,
 					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
+					1,
 					slashingAddress.String(), changeAddress.String(),
 					startHeight, endHeight, 10000,
 					slashingRate,
@@ -323,10 +327,7 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 
 				if datagen.RandomInt(r, 2) == 1 {
 					// add unbonding object in random BTC delegations to make them ready to receive covenant sig
-					btcDel.BtcUndelegation = &types.BTCUndelegation{
-						// doesn't matter what we put here
-						ValidatorUnbondingSig: btcDel.CovenantSig,
-					}
+					btcDel.BtcUndelegation = &types.BTCUndelegation{}
 
 					if datagen.RandomInt(r, 2) == 1 {
 						// these BTC delegations are unbonded
@@ -493,9 +494,11 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
+					t,
 					[]bbn.BIP340PubKey{*valBTCPK},
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
+					1,
 					slashingAddress.String(), changeAddress.String(),
 					1, 1000, 10000,
 					slashingRate,
@@ -597,9 +600,11 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
+				t,
 				[]bbn.BIP340PubKey{*btcVal.BtcPk},
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
+				1,
 				slashingAddress.String(), changeAddress.String(),
 				startHeight, endHeight, 10000,
 				slashingRate,

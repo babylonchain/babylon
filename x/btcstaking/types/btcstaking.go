@@ -1,18 +1,11 @@
 package types
 
 import (
-	"bytes"
-	"encoding/hex"
 	"fmt"
 	"sort"
 
-	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
 )
 
 func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
@@ -70,7 +63,7 @@ func (d *BTCDelegation) ValidateBasic() error {
 	if len(d.ValBtcPkList) == 0 {
 		return fmt.Errorf("empty list of BTC validator PKs")
 	}
-	if existsDup(d.ValBtcPkList) {
+	if ExistsDup(d.ValBtcPkList) {
 		return fmt.Errorf("list of BTC validator PKs has duplication")
 	}
 	if d.StakingTx == nil {
@@ -84,7 +77,7 @@ func (d *BTCDelegation) ValidateBasic() error {
 	}
 
 	// ensure staking tx is correctly formatted
-	if err := d.StakingTx.ValidateBasic(); err != nil {
+	if _, err := ParseBtcTx(d.StakingTx); err != nil {
 		return err
 	}
 	if err := d.Pop.ValidateBasic(); err != nil {
@@ -103,12 +96,8 @@ func (ud *BTCUndelegation) HasCovenantSigs() bool {
 	return ud.CovenantSlashingSig != nil && ud.CovenantUnbondingSig != nil
 }
 
-func (ud *BTCUndelegation) HasValidatorSig() bool {
-	return ud.ValidatorUnbondingSig != nil
-}
-
 func (ud *BTCUndelegation) HasAllSignatures() bool {
-	return ud.HasCovenantSigs() && ud.HasValidatorSig()
+	return ud.HasCovenantSigs()
 }
 
 // GetStatus returns the status of the BTC Delegation based on a BTC height and a w value
@@ -155,186 +144,23 @@ func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64) uint64 {
 }
 
 func (d *BTCDelegation) GetStakingTxHash() (chainhash.Hash, error) {
-	return d.StakingTx.GetTxHash()
-}
+	parsed, err := ParseBtcTx(d.StakingTx)
 
-func (d *BTCDelegation) MustGetStakingTxHash() chainhash.Hash {
-	return d.StakingTx.MustGetTxHash()
-}
-
-// GetStakingTxHashStr returns the staking tx hash of the BTC delegation in hex string
-// it can be used for uniquely identifying a BTC delegation
-func (d *BTCDelegation) GetStakingTxHashStr() (string, error) {
-	return d.StakingTx.GetTxHashStr()
-}
-
-func (d *BTCDelegation) MustGetStakingTxHashStr() string {
-	return d.StakingTx.MustGetTxHashStr()
-}
-
-func NewBabylonTaprootTxFromHex(txHex string) (*BabylonBTCTaprootTx, error) {
-	txBytes, err := hex.DecodeString(txHex)
-	if err != nil {
-		return nil, err
-	}
-	var tx BabylonBTCTaprootTx
-	if err := tx.Unmarshal(txBytes); err != nil {
-		return nil, err
-	}
-	return &tx, nil
-}
-
-func (tx *BabylonBTCTaprootTx) ToHexStr() (string, error) {
-	txBytes, err := tx.Marshal()
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(txBytes), nil
-}
-
-func (tx *BabylonBTCTaprootTx) Equals(tx2 *BabylonBTCTaprootTx) bool {
-	return bytes.Equal(tx.Tx, tx2.Tx) && bytes.Equal(tx.Script, tx2.Script)
-}
-
-func (tx *BabylonBTCTaprootTx) ValidateBasic() error {
-	// unmarshal tx bytes to MsgTx
-	var msgTx wire.MsgTx
-	rbuf := bytes.NewReader(tx.Tx)
-	if err := msgTx.Deserialize(rbuf); err != nil {
-		return err
-	}
-
-	// parse staking script
-	if _, err := btcstaking.ParseStakingTransactionScript(tx.Script); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (tx *BabylonBTCTaprootTx) ToMsgTx() (*wire.MsgTx, error) {
-	var msgTx wire.MsgTx
-	rbuf := bytes.NewReader(tx.Tx)
-	if err := msgTx.Deserialize(rbuf); err != nil {
-		return nil, err
-	}
-	return &msgTx, nil
-}
-
-func (tx *BabylonBTCTaprootTx) GetTxHash() (chainhash.Hash, error) {
-	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return chainhash.Hash{}, err
 	}
-	return msgTx.TxHash(), nil
+
+	return parsed.TxHash(), nil
 }
 
-func (tx *BabylonBTCTaprootTx) MustGetTxHash() chainhash.Hash {
-	txHash, err := tx.GetTxHash()
+func (d *BTCDelegation) MustGetStakingTxHash() chainhash.Hash {
+	txHash, err := d.GetStakingTxHash()
+
 	if err != nil {
 		panic(err)
 	}
+
 	return txHash
-}
-
-func (tx *BabylonBTCTaprootTx) GetTxHashStr() (string, error) {
-	txHash, err := tx.GetTxHash()
-	if err != nil {
-		return "", err
-	}
-	return txHash.String(), nil
-}
-
-func (tx *BabylonBTCTaprootTx) MustGetTxHashStr() string {
-	txHashStr, err := tx.GetTxHashStr()
-	if err != nil {
-		panic(err)
-	}
-	return txHashStr
-}
-
-func (tx *BabylonBTCTaprootTx) GetScriptData() (*btcstaking.StakingScriptData, error) {
-	return btcstaking.ParseStakingTransactionScript(tx.Script)
-}
-
-func (tx *BabylonBTCTaprootTx) GetBabylonOutputInfo(net *chaincfg.Params) (*btcstaking.StakingOutputInfo, error) {
-	var (
-		scriptData *btcstaking.StakingScriptData
-		outValue   int64
-		err        error
-	)
-
-	// unmarshal tx bytes to MsgTx
-	var msgTx wire.MsgTx
-	rbuf := bytes.NewReader(tx.Tx)
-	if err := msgTx.Deserialize(rbuf); err != nil {
-		return nil, err
-	}
-
-	// parse staking script
-	scriptData, err = btcstaking.ParseStakingTransactionScript(tx.Script)
-	if err != nil {
-		return nil, err
-	}
-	expectedPkScript, err := btcstaking.BuildUnspendableTaprootPkScript(tx.Script, net)
-	if err != nil {
-		return nil, err
-	}
-
-	// find the output that corresponds to the staking script
-	for _, txOut := range msgTx.TxOut {
-		if bytes.Equal(expectedPkScript, txOut.PkScript) {
-			outValue = txOut.Value
-		}
-	}
-	if outValue == 0 {
-		// not found
-		return nil, fmt.Errorf("the tx contains no StakingTransactionScript")
-	}
-
-	return &btcstaking.StakingOutputInfo{
-		StakingScriptData: scriptData,
-		StakingPkScript:   expectedPkScript,
-		StakingAmount:     btcutil.Amount(outValue),
-	}, nil
-}
-
-func (tx *BabylonBTCTaprootTx) Sign(
-	fundingTx *wire.MsgTx,
-	fundingTxScript []byte,
-	sk *btcec.PrivateKey,
-	net *chaincfg.Params) (*bbn.BIP340Signature, error) {
-	msgTx, err := tx.ToMsgTx()
-	if err != nil {
-		return nil, err
-	}
-	schnorrSig, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
-		msgTx,
-		fundingTx,
-		sk,
-		fundingTxScript,
-		net,
-	)
-	if err != nil {
-		return nil, err
-	}
-	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
-	return &sig, nil
-}
-
-func (tx *BabylonBTCTaprootTx) VerifySignature(stakingPkScript []byte, stakingAmount int64, stakingScript []byte, pk *btcec.PublicKey, sig *bbn.BIP340Signature) error {
-	msgTx, err := tx.ToMsgTx()
-	if err != nil {
-		return err
-	}
-	return btcstaking.VerifyTransactionSigWithOutputData(
-		msgTx,
-		stakingPkScript,
-		stakingAmount,
-		stakingScript,
-		pk,
-		*sig,
-	)
 }
 
 // FilterTopNBTCValidators returns the top n validators based on VotingPower.
@@ -355,7 +181,7 @@ func FilterTopNBTCValidators(validators []*BTCValidatorWithMeta, n uint32) []*BT
 	return validators[:n]
 }
 
-func existsDup(btcPKs []bbn.BIP340PubKey) bool {
+func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
 	seen := make(map[string]struct{})
 
 	for _, btcPK := range btcPKs {

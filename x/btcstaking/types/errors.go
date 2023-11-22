@@ -26,4 +26,7 @@ var (
 	ErrUnbodningInvalidValidatorSig    = errorsmod.Register(ModuleName, 1117, "the validator signature is not valid")
 	ErrUnbondingUnexpectedValidatorSig = errorsmod.Register(ModuleName, 1118, "the BTC undelegation did not receive validator signature yet")
 	ErrRewardDistCacheNotFound         = errorsmod.Register(ModuleName, 1119, "the reward distribution cache is not found")
+	ErrEmptyValidatorList              = errorsmod.Register(ModuleName, 1120, "the validator list is empty")
+	ErrInvalidProofOfPossession        = errorsmod.Register(ModuleName, 1121, "the proof of possession is not valid")
+	ErrDuplicatedValidator             = errorsmod.Register(ModuleName, 1122, "the staking request contains duplicated validator public key")
 )

@@ -14,7 +14,6 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "btcstaking/MsgUpdateParams", nil)
 	cdc.RegisterConcrete(&MsgBTCUndelegate{}, "btcstaking/MsgBtcUndelegate", nil)
 	cdc.RegisterConcrete(&MsgAddCovenantUnbondingSigs{}, "btcstaking/MsgAddCovenantUnbondingSigs", nil)
-	cdc.RegisterConcrete(&MsgAddValidatorUnbondingSig{}, "btcstaking/MsgAddValidatorUnbondingSig", nil)
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
@@ -27,7 +26,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUpdateParams{},
 		&MsgBTCUndelegate{},
 		&MsgAddCovenantUnbondingSigs{},
-		&MsgAddValidatorUnbondingSig{},
 	)
 
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

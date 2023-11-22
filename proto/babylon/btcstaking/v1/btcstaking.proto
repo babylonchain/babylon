@@ -78,26 +78,28 @@ message BTCDelegation {
     // quantified in satoshi
     uint64 total_sat = 7;
     // staking_tx is the staking tx
-    BabylonBTCTaprootTx staking_tx = 8;
+    bytes staking_tx  = 8;
+    // staking_output_idx is the index of the staking output in the staking tx
+    uint32 staking_output_idx = 9;
     // slashing_tx is the slashing tx
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // validator or covenant yet.
-    bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+    bytes slashing_tx = 10 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the staking tx output.
-    bytes delegator_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes delegator_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // covenant_sig is the signature signature on the slashing tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It will be a part of the witness for the staking tx output.
     // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
-    bytes covenant_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes covenant_sig = 12 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
     // if this object is present it menans that staker requested undelegation, and whole
     // delegation is being undelegated.
     // TODO: Consider whether it would be better to store it in separate store, and not
     // directly in delegation object
-    BTCUndelegation btc_undelegation = 12;
+    BTCUndelegation btc_undelegation = 13;
 }
 
 // BTCUndelegation signalizes that the delegation is being undelegated
@@ -105,31 +107,28 @@ message BTCUndelegation {
     // unbonding_tx is the transaction which will transfer the funds from staking
     // output to unbonding output. Unbonding output will usually have lower timelock
     // than staking output.
-    BabylonBTCTaprootTx unbonding_tx = 1;
+    bytes unbonding_tx = 1;
+    // unbonding_time describes how long the funds will be locked in the unbonding output
+    uint32 unbonding_time = 2;
     // slashing_tx is the slashing tx for unbodning transactions
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // validator or covenant yet.
-    bytes slashing_tx = 2 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+    bytes slashing_tx = 3 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_slashing_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the unbodning tx output.
-    bytes delegator_slashing_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes delegator_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // covenant_slashing_sig is the signature on the slashing tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon
     // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
-    bytes covenant_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes covenant_slashing_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // covenant_unbonding_sig is the signature on the unbonding tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon and after
     // validator sig will be provided by validator
     // TODO: change to a set of (covenant PK, covenant Schnorr signature) tuples
-    bytes covenant_unbonding_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // validator_unbonding_sig is the signature on the unbonding tx
-    // by the validator (i.e., SK corresponding to covenant_pk in params)
-    // It must be provided after processing undelagate message by Babylon
-    // TODO: this is no longer needed
-    bytes validator_unbonding_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes covenant_unbonding_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
 
@@ -138,20 +137,13 @@ message BTCUndelegationInfo {
     // unbonding_tx is the transaction which will transfer the funds from staking
     // output to unbonding output. Unbonding output will usually have lower timelock
     // than staking output.
-    BabylonBTCTaprootTx unbonding_tx = 1;
-
-    // validator_unbonding_sig is the signature on the unbonding tx
-    // by the validator (i.e., SK corresponding to the pk of the validator that the staker delegates to)
-    // It must be provided after processing undelagate message by Babylon
-    // It will be nil if validator didn't sign it yet
-    // TODO: this is no longer needed
-    bytes validator_unbonding_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes unbonding_tx = 1;
 
     // covenant_unbonding_sig is the signature on the unbonding tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // it will be nil if covenant didn't sign it yet
     // TODO: change to a set of (covenant PK, covenant Schnorr signature) tuples
-    bytes covenant_unbonding_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes covenant_unbonding_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 
 // BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.
@@ -162,15 +154,6 @@ message BTCDelegatorDelegations {
 // BTCDelegatorDelegationIndex is a list of staking tx hashes of BTC delegations from the same delegator.
 message BTCDelegatorDelegationIndex {
     repeated bytes staking_tx_hash_list = 1;
-}
-
-// BabylonBtcTaprootTx is the bitcoin transaction which contains script recognized by Babylon and
-// transaction which commits to the provided script.
-message BabylonBTCTaprootTx {
-    // tx is the transaction bytes
-    bytes tx = 1;
-    // script is the script recognized by Babylon
-    bytes script = 2;
 }
 
 // BTCDelegationStatus is the status of a delegation. There are two possible state

@@ -4,17 +4,13 @@ import (
 	"math"
 	"math/rand"
 	"testing"
-	"time"
 
 	"github.com/babylonchain/babylon/btcstaking"
-	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -35,25 +31,6 @@ func genValidStakingScriptData(t *testing.T, r *rand.Rand) *btcstaking.StakingSc
 	return sd
 }
 
-func FuzzGeneratingParsingValidStakingScript(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-
-		sd := genValidStakingScriptData(t, r)
-
-		script, err := sd.BuildStakingScript()
-		require.NoError(t, err)
-		parsedScript, err := btcstaking.ParseStakingTransactionScript(script)
-		require.NoError(t, err)
-
-		require.Equal(t, parsedScript.StakingTime, sd.StakingTime)
-		require.Equal(t, schnorr.SerializePubKey(sd.StakerKey), schnorr.SerializePubKey(parsedScript.StakerKey))
-		require.Equal(t, schnorr.SerializePubKey(sd.ValidatorKey), schnorr.SerializePubKey(parsedScript.ValidatorKey))
-		require.Equal(t, schnorr.SerializePubKey(sd.CovenantKey), schnorr.SerializePubKey(parsedScript.CovenantKey))
-	})
-}
-
 func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -64,27 +41,28 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		// always more outputs than stakingOutputIdx
 		stakingTxNumOutputs := r.Intn(5) + 10
 		sd := genValidStakingScriptData(t, r)
-		script, err := sd.BuildStakingScript()
-		require.NoError(t, err)
+
 		minStakingValue := 5000
 		minFee := 2000
 		// generate a random slashing rate with random precision,
 		// this will include both valid and invalid ranges, so we can test both cases
-		randomPrecision := r.Int63n(4) // [0,3]
+		randomPrecision := r.Int63n(4)                                                         // [0,3]
 		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 1001)), randomPrecision) // [0,1000] / 10^{randomPrecision}
 
 		for i := 0; i < stakingTxNumOutputs; i++ {
 			if i == stakingOutputIdx {
-				stakingOutput, _, err := btcstaking.BuildStakingOutput(
+				info, err := btcstaking.BuildStakingInfo(
 					sd.StakerKey,
-					sd.ValidatorKey,
-					sd.CovenantKey,
+					[]*btcec.PublicKey{sd.ValidatorKey},
+					[]*btcec.PublicKey{sd.CovenantKey},
+					1,
 					sd.StakingTime,
 					btcutil.Amount(r.Intn(5000)+minStakingValue),
 					&chaincfg.MainNetParams,
 				)
+
 				require.NoError(t, err)
-				stakingTx.AddTxOut(stakingOutput)
+				stakingTx.AddTxOut(info.StakingOutput)
 			} else {
 				stakingTx.AddTxOut(
 					&wire.TxOut{
@@ -96,11 +74,11 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		}
 
 		// Always check case with min fee
-		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, script, int64(minFee))
+		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, int64(minFee))
 
 		// Check case with some random fee
 		fee := int64(r.Intn(1000) + minFee)
-		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, script, fee)
+		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, fee)
 
 	})
 }
@@ -109,8 +87,7 @@ func genRandomBTCAddress(r *rand.Rand) (*btcutil.AddressPubKeyHash, error) {
 	return btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
 }
 
-func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOutputIdx int, slashingRate sdk.Dec,
-	script []byte, fee int64) {
+func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOutputIdx int, slashingRate sdk.Dec, fee int64) {
 	dustThreshold := 546 // in satoshis
 
 	// Generate random slashing and change addresses
@@ -127,7 +104,6 @@ func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOu
 		slashingAddress, changeAddress,
 		fee,
 		slashingRate,
-		script,
 		&chaincfg.MainNetParams,
 	)
 
@@ -154,13 +130,13 @@ func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOu
 			require.ErrorIs(t, err, btcstaking.ErrDustOutputFound)
 		} else {
 			require.NoError(t, err)
-			_, err = btcstaking.CheckTransactions(
+			err = btcstaking.CheckTransactions(
 				slashingTx,
 				stakingTx,
+				uint32(stakingOutputIdx),
 				fee,
 				slashingRate,
 				slashingAddress,
-				script,
 				&chaincfg.MainNetParams,
 			)
 			require.NoError(t, err)
@@ -209,180 +185,4 @@ func FuzzGeneratingSignatureValidation(f *testing.F) {
 
 		require.NoError(t, err)
 	})
-}
-
-func TestStakingScriptExecutionSingleStaker(t *testing.T) {
-	const (
-		stakingValue      = btcutil.Amount(2 * 10e8)
-		stakingTimeBlocks = 5
-	)
-
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	stakerPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
-
-	validatorPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
-
-	covenantPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
-
-	txid, err := chainhash.NewHash(datagen.GenRandomByteArray(r, 32))
-	require.NoError(t, err)
-
-	stakingOut := &wire.OutPoint{
-		Hash:  *txid,
-		Index: 0,
-	}
-
-	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
-		stakerPrivKey.PubKey(),
-		validatorPrivKey.PubKey(),
-		covenantPrivKey.PubKey(),
-		stakingTimeBlocks,
-		stakingValue,
-		&chaincfg.MainNetParams,
-	)
-
-	require.NoError(t, err)
-
-	spendStakeTx := wire.NewMsgTx(2)
-
-	spendStakeTx.AddTxIn(wire.NewTxIn(stakingOut, nil, nil))
-
-	spendStakeTx.AddTxOut(
-		&wire.TxOut{
-			PkScript: []byte("doesn't matter"),
-			Value:    1 * 10e8,
-		},
-	)
-
-	// to spend tx as staker, we need to set the sequence number to be >= stakingTimeBlocks
-	spendStakeTx.TxIn[0].Sequence = stakingTimeBlocks
-
-	witness, err := btcstaking.BuildWitnessToSpendStakingOutput(
-		spendStakeTx,
-		stakingOutput,
-		stakingScript,
-		stakerPrivKey,
-	)
-
-	require.NoError(t, err)
-
-	spendStakeTx.TxIn[0].Witness = witness
-
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingOutput.PkScript, stakingOutput.Value,
-	)
-
-	newEngine := func() (*txscript.Engine, error) {
-		return txscript.NewEngine(
-			stakingOutput.PkScript,
-			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
-			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingOutput.Value,
-			prevOutputFetcher,
-		)
-	}
-	btctest.AssertEngineExecution(t, 0, true, newEngine)
-}
-
-func TestStakingScriptExecutionMulitSig(t *testing.T) {
-	const (
-		stakingValue      = btcutil.Amount(2 * 10e8)
-		stakingTimeBlocks = 5
-	)
-
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	stakerPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
-
-	validatorPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
-
-	covenantPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
-
-	txid, err := chainhash.NewHash(datagen.GenRandomByteArray(r, 32))
-	require.NoError(t, err)
-
-	stakingOut := &wire.OutPoint{
-		Hash:  *txid,
-		Index: 0,
-	}
-
-	stakingOutput, stakingScript, err := btcstaking.BuildStakingOutput(
-		stakerPrivKey.PubKey(),
-		validatorPrivKey.PubKey(),
-		covenantPrivKey.PubKey(),
-		stakingTimeBlocks,
-		stakingValue,
-		&chaincfg.MainNetParams,
-	)
-
-	require.NoError(t, err)
-
-	spendStakeTx := wire.NewMsgTx(2)
-
-	spendStakeTx.AddTxIn(wire.NewTxIn(stakingOut, nil, nil))
-
-	spendStakeTx.AddTxOut(
-		&wire.TxOut{
-			PkScript: []byte("doesn't matter"),
-			Value:    1 * 10e8,
-		},
-	)
-
-	witnessStaker, err := btcstaking.BuildWitnessToSpendStakingOutput(
-		spendStakeTx,
-		stakingOutput,
-		stakingScript,
-		stakerPrivKey,
-	)
-	require.NoError(t, err)
-
-	witnessValidator, err := btcstaking.BuildWitnessToSpendStakingOutput(
-		spendStakeTx,
-		stakingOutput,
-		stakingScript,
-		validatorPrivKey,
-	)
-
-	require.NoError(t, err)
-
-	witnessCovenant, err := btcstaking.BuildWitnessToSpendStakingOutput(
-		spendStakeTx,
-		stakingOutput,
-		stakingScript,
-		covenantPrivKey,
-	)
-
-	require.NoError(t, err)
-
-	// To Construct valid witness, for multisig case we need:
-	// - covenant signature - witnessCovenant[0]
-	// - validator signature - witnessValidator[0]
-	// - staker signature - witnessStaker[0]
-	// - empty signature - which is just an empty byte array which signals we are going to use multisig.
-	// 	 This must be signagure on top of the stack.
-	// - whole script - witnessStaker[1] (any other wittness[1] will work as well)
-	// - control block - witnessStaker[2] (any other wittness[2] will work as well)
-	spendStakeTx.TxIn[0].Witness = [][]byte{
-		witnessCovenant[0], witnessValidator[0], witnessStaker[0], []byte{}, witnessStaker[1], witnessStaker[2],
-	}
-
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingOutput.PkScript, stakingOutput.Value,
-	)
-
-	newEngine := func() (*txscript.Engine, error) {
-		return txscript.NewEngine(
-			stakingOutput.PkScript,
-			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
-			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingOutput.Value,
-			prevOutputFetcher,
-		)
-	}
-	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }

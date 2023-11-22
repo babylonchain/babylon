@@ -234,13 +234,11 @@ message QueryBTCDelegationResponse {
   // total_sat is the total amount of BTC stakes in this delegation
   // quantified in satoshi
   uint64 total_sat = 5;
-  // staking_tx is the staking tx
-  string staking_tx = 6;
-  // staking_script is the script commited to in staking output
-  string staking_script = 7;
+  // staking_tx_hex is the hex string of staking tx
+  string staking_tx_hex = 6;
   // whether this delegation is active
-  bool active = 8;
+  bool active = 7;
   // undelegation_info is the undelegation info of this delegation. It is nil
   // if it is not undelegating
-  BTCUndelegationInfo undelegation_info = 9;
+  BTCUndelegationInfo undelegation_info = 8;
 }

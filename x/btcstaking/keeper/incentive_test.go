@@ -68,9 +68,11 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
+					t,
 					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
+					1,
 					slashingAddress.String(), changeAddress.String(),
 					1, 1000, stakingValue,
 					slashingRate,

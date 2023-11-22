@@ -55,8 +55,6 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 // and staking tx hash by using a given function
 func (k Keeper) updateBTCDelegation(
 	ctx sdk.Context,
-	valBTCPK *bbn.BIP340PubKey,
-	delBTCPK *bbn.BIP340PubKey,
 	stakingTxHashStr string,
 	modifyFn func(*types.BTCDelegation) error,
 ) error {
@@ -88,13 +86,11 @@ func (k Keeper) AddCovenantSigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP
 		return nil
 	}
 
-	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addCovenantSig)
+	return k.updateBTCDelegation(ctx, stakingTxHash, addCovenantSig)
 }
 
 func (k Keeper) AddUndelegationToBTCDelegation(
 	ctx sdk.Context,
-	valBTCPK *bbn.BIP340PubKey,
-	delBTCPK *bbn.BIP340PubKey,
 	stakingTxHash string,
 	ud *types.BTCUndelegation,
 ) error {
@@ -106,36 +102,11 @@ func (k Keeper) AddUndelegationToBTCDelegation(
 		return nil
 	}
 
-	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addUndelegation)
-}
-
-func (k Keeper) AddValidatorSigToUndelegation(
-	ctx sdk.Context,
-	valBTCPK *bbn.BIP340PubKey,
-	delBTCPK *bbn.BIP340PubKey,
-	stakingTxHash string,
-	sig *bbn.BIP340Signature,
-) error {
-	addValidatorSig := func(btcDel *types.BTCDelegation) error {
-		if btcDel.BtcUndelegation == nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
-		}
-
-		if btcDel.BtcUndelegation.ValidatorUnbondingSig != nil {
-			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid validator signature", stakingTxHash)
-		}
-
-		btcDel.BtcUndelegation.ValidatorUnbondingSig = sig
-		return nil
-	}
-
-	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addValidatorSig)
+	return k.updateBTCDelegation(ctx, stakingTxHash, addUndelegation)
 }
 
 func (k Keeper) AddCovenantSigsToUndelegation(
 	ctx sdk.Context,
-	valBTCPK *bbn.BIP340PubKey,
-	delBTCPK *bbn.BIP340PubKey,
 	stakingTxHash string,
 	unbondingTxSig *bbn.BIP340Signature,
 	slashUnbondingTxSig *bbn.BIP340Signature,
@@ -154,7 +125,7 @@ func (k Keeper) AddCovenantSigsToUndelegation(
 		return nil
 	}
 
-	return k.updateBTCDelegation(ctx, valBTCPK, delBTCPK, stakingTxHash, addCovenantSigs)
+	return k.updateBTCDelegation(ctx, stakingTxHash, addCovenantSigs)
 }
 
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given BTC validator

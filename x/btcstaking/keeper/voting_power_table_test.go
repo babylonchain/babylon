@@ -65,9 +65,11 @@ func FuzzVotingPowerTable(f *testing.F) {
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
+					t,
 					[]bbn.BIP340PubKey{*btcVals[i].BtcPk},
 					delSK,
 					[]*btcec.PrivateKey{covenantSK},
+					1,
 					slashingAddress.String(), changeAddress.String(),
 					1, 1000, stakingValue,
 					slashingRate,
@@ -231,9 +233,11 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
+				t,
 				[]bbn.BIP340PubKey{*valBTCPK},
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
+				1,
 				slashingAddress.String(), changeAddress.String(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
@@ -333,9 +337,11 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
+				t,
 				[]bbn.BIP340PubKey{*valBTCPK},
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
+				1,
 				slashingAddress.String(), changeAddress.String(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,
@@ -379,9 +385,11 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 			require.NoError(t, err)
 			btcDel, err := datagen.GenRandomBTCDelegation(
 				r,
+				t,
 				[]bbn.BIP340PubKey{*activatedValBTCPK},
 				delSK,
 				[]*btcec.PrivateKey{covenantSK},
+				1,
 				slashingAddress.String(), changeAddress.String(),
 				1, 1000, stakingValue, // timelock period: 1-1000
 				slashingRate,

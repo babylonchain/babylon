@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/btcstaking"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -43,44 +44,63 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate staking/slashing tx
-		stakingTx, slashingTx, err := datagen.GenBTCStakingSlashingTx(
+		testStakingInfo := datagen.GenBTCStakingSlashingTx(
 			r,
+			t,
 			net,
 			delSK,
 			[]*btcec.PublicKey{valPK},
 			[]*btcec.PublicKey{covenantPK},
+			1,
 			stakingTimeBlocks,
 			stakingValue,
 			slashingAddress.String(), changeAddress.String(),
 			slashingRate,
 		)
+
+		slashingTx := testStakingInfo.SlashingTx
+		stakingMsgTx := testStakingInfo.StakingTx
+		stakingPkScript := testStakingInfo.StakingInfo.StakingOutput.PkScript
+
+		slashingScriptInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 		require.NoError(t, err)
-		stakingOutInfo, err := stakingTx.GetBabylonOutputInfo(net)
-		require.NoError(t, err)
-		stakingPkScript := stakingOutInfo.StakingPkScript
-		stakingMsgTx, err := stakingTx.ToMsgTx()
-		require.NoError(t, err)
+		slashingScript := slashingScriptInfo.RevealedLeaf.Script
 
 		// sign slashing tx
-		valSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, valSK, net)
+		valSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, valSK, net)
 		require.NoError(t, err)
-		delSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, delSK, net)
+		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, delSK, net)
 		require.NoError(t, err)
-		covenantSig, err := slashingTx.Sign(stakingMsgTx, stakingTx.Script, covenantSK, net)
+		covenantSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, covenantSK, net)
 		require.NoError(t, err)
 
 		// verify signatures first
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, valPK, valSig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, valPK, valSig)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, delPK, delSig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, delPK, delSig)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, stakingTx.Script, covenantPK, covenantSig)
-		require.NoError(t, err)
-
-		// build slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.ToMsgTxWithWitness(stakingTx, valSig, delSig, covenantSig)
+		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, covenantPK, covenantSig)
 		require.NoError(t, err)
 
+		stakerSigBytes := delSig.MustMarshal()
+		validatorSigBytes := valSig.MustMarshal()
+		covSigBytes := covenantSig.MustMarshal()
+
+		// TODO: use comittee
+		witness, err := btcstaking.CreateBabylonWitness(
+			[][]byte{
+				covSigBytes,
+				validatorSigBytes,
+				stakerSigBytes,
+			},
+			slashingScriptInfo,
+		)
+		require.NoError(t, err)
+
+		slashingMsgTxWithWitness, err := slashingTx.ToMsgTx()
+		require.NoError(t, err)
+
+		slashingMsgTxWithWitness.TxIn[0].Witness = witness
 		// verify slashing tx with witness
 		prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
 			stakingPkScript, stakingValue,
