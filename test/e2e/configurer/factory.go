@@ -91,7 +91,7 @@ var (
 	}
 )
 
-// New returns a new Configurer for BTC timestamping service.
+// NewBTCTimestampingConfigurer returns a new Configurer for BTC timestamping service.
 // TODO currently only one configuration is available. Consider testing upgrades
 // when necessary
 func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
@@ -110,7 +110,7 @@ func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configu
 	), nil
 }
 
-// New returns a new Configurer for BTC staking service
+// NewBTCStakingConfigurer returns a new Configurer for BTC staking service
 func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 	containerManager, err := containers.NewManager(isDebugLogEnabled)
 	if err != nil {

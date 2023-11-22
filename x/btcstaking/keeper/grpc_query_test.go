@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"errors"
 	"math/rand"
 	"testing"
@@ -185,7 +186,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a random number of BTC validators
 		numBTCVals := datagen.RandomInt(r, 5) + 1
@@ -291,7 +292,7 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a random number of BTC validators
 		numBTCVals := datagen.RandomInt(r, 5) + 1
@@ -467,7 +468,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a random batch of validators
 		var btcVals []*types.BTCValidator
@@ -583,7 +584,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// Generate a btc validator
 		btcVal, err := datagen.GenRandomBTCValidator(r)

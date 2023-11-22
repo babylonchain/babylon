@@ -11,6 +11,8 @@ option go_package = "github.com/babylonchain/babylon/x/incentive/types";
 
 // Msg defines the Msg service.
 service Msg {
+    option (cosmos.msg.v1.service) = true;
+
     // WithdrawReward defines a method to withdraw rewards of a stakeholder
     rpc WithdrawReward(MsgWithdrawReward) returns (MsgWithdrawRewardResponse);
     // UpdateParams updates the incentive module parameters.
@@ -20,6 +22,7 @@ service Msg {
 
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 message MsgWithdrawReward {
+    option (cosmos.msg.v1.signer) = "address";
     // {submitter, reporter, btc_validator, btc_delegation}
     string type = 1;
     // address is the address of the stakeholder in bech32 string

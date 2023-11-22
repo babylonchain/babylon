@@ -1,6 +1,7 @@
 package epoching
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -24,9 +25,10 @@ import (
 //   - record the sealer header for the previous epoch
 //
 // NOTE: we follow Cosmos SDK's slashing/evidence modules for MVP. No need to modify them at the moment.
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
+func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// record the current AppHash
 	k.RecordAppHash(ctx)
 
@@ -45,19 +47,20 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 		// trigger AfterEpochBegins hook
 		k.AfterEpochBegins(ctx, incEpoch.EpochNumber)
 		// emit BeginEpoch event
-		err := ctx.EventManager().EmitTypedEvent(
+		err := sdkCtx.EventManager().EmitTypedEvent(
 			&types.EventBeginEpoch{
 				EpochNumber: incEpoch.EpochNumber,
 			},
 		)
 		if err != nil {
-			panic(err)
+			return err
 		}
 	}
 
 	if epoch.IsSecondBlock(ctx) {
 		k.RecordSealerHeaderForPrevEpoch(ctx)
 	}
+	return nil
 }
 
 // EndBlocker is called at the end of every block.
@@ -66,9 +69,10 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) 
 // - trigger AfterEpochEnds hook
 // - emit EndEpoch event
 // NOTE: The epoching module is not responsible for checkpoint-assisted unbonding (unbonding -> unbonded). Instead, it wraps the staking module and exposes interfaces to the checkpointing module. The checkpointing module will do the actual checkpoint-assisted unbonding upon each EndBlock.
-func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
+func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	validatorSetUpdate := []abci.ValidatorUpdate{}
 
 	// if reaching an epoch boundary, then
@@ -76,7 +80,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 	if epoch.IsLastBlock(ctx) {
 		// finalise this epoch, i.e., record the current header and the Merkle root of all AppHashs in this epoch
 		if err := k.RecordLastHeaderAndAppHashRoot(ctx); err != nil {
-			panic(err)
+			return nil, err
 		}
 		// get all msgs in the msg queue
 		queuedMsgs := k.GetCurrentEpochMsgs(ctx)
@@ -89,7 +93,7 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 			// honest validators will have consistent execution results on the queued messages
 			if err != nil {
 				// emit an event signalling the failed execution
-				err := ctx.EventManager().EmitTypedEvent(
+				err := sdkCtx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
 						EpochNumber: epoch.EpochNumber,
 						Height:      msg.BlockHeight,
@@ -99,14 +103,14 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 					},
 				)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 				// skip this failed msg
 				continue
 			}
 			// for each event, emit an wrapped event EventTypeHandleQueuedMsg, which attaches the original attributes plus the original event type, the epoch number, txid and msgid to the event here
 			for _, event := range res.Events {
-				err := ctx.EventManager().EmitTypedEvent(
+				err := sdkCtx.EventManager().EmitTypedEvent(
 					&types.EventHandleQueuedMsg{
 						OriginalEventType:  event.Type,
 						EpochNumber:        epoch.EpochNumber,
@@ -116,27 +120,27 @@ func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
 					},
 				)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 			}
 		}
 
 		// update validator set
 		validatorSetUpdate = k.ApplyAndReturnValidatorSetUpdates(ctx)
-		ctx.Logger().Info(fmt.Sprintf("Epoching: validator set update of epoch %d: %v", epoch.EpochNumber, validatorSetUpdate))
+		sdkCtx.Logger().Info(fmt.Sprintf("Epoching: validator set update of epoch %d: %v", epoch.EpochNumber, validatorSetUpdate))
 
 		// trigger AfterEpochEnds hook
 		k.AfterEpochEnds(ctx, epoch.EpochNumber)
 		// emit EndEpoch event
-		err := ctx.EventManager().EmitTypedEvent(
+		err := sdkCtx.EventManager().EmitTypedEvent(
 			&types.EventEndEpoch{
 				EpochNumber: epoch.EpochNumber,
 			},
 		)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	}
 
-	return validatorSetUpdate
+	return validatorSetUpdate, nil
 }

@@ -58,25 +58,25 @@ func GenRandomEvidence(r *rand.Rand, sk *btcec.PrivateKey, height uint64) (*ftyp
 	if err != nil {
 		return nil, err
 	}
-	cLch := GenRandomByteArray(r, 32)
-	cSig, err := eots.Sign(sk, sr, append(sdk.Uint64ToBigEndian(height), cLch...))
+	cAppHash := GenRandomByteArray(r, 32)
+	cSig, err := eots.Sign(sk, sr, append(sdk.Uint64ToBigEndian(height), cAppHash...))
 	if err != nil {
 		return nil, err
 	}
-	fLch := GenRandomByteArray(r, 32)
-	fSig, err := eots.Sign(sk, sr, append(sdk.Uint64ToBigEndian(height), fLch...))
+	fAppHash := GenRandomByteArray(r, 32)
+	fSig, err := eots.Sign(sk, sr, append(sdk.Uint64ToBigEndian(height), fAppHash...))
 	if err != nil {
 		return nil, err
 	}
 
 	evidence := &ftypes.Evidence{
-		ValBtcPk: bip340PK,
-		BlockHeight: height,
-		PubRand: bbn.NewSchnorrPubRandFromFieldVal(pr),
-		CanonicalLastCommitHash: cLch,
-		ForkLastCommitHash: fLch,
+		ValBtcPk:             bip340PK,
+		BlockHeight:          height,
+		PubRand:              bbn.NewSchnorrPubRandFromFieldVal(pr),
+		CanonicalAppHash:     cAppHash,
+		ForkAppHash:          fAppHash,
 		CanonicalFinalitySig: bbn.NewSchnorrEOTSSigFromModNScalar(cSig),
-		ForkFinalitySig: bbn.NewSchnorrEOTSSigFromModNScalar(fSig),
+		ForkFinalitySig:      bbn.NewSchnorrEOTSSigFromModNScalar(fSig),
 	}
 	return evidence, nil
 }

@@ -25,14 +25,14 @@ message Params {
   int64 min_slashing_tx_fee_sat = 4;
   // min_commission_rate is the chain-wide minimum commission rate that a validator can charge their delegators
   string min_commission_rate = 5 [
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
   ];
   // slashing_rate determines the portion of the staked amount to be slashed,
   // expressed as a decimal (e.g., 0.5 for 50%).
   string slashing_rate = 6 [
       (cosmos_proto.scalar)  = "cosmos.Dec",
-      (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+      (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
       (gogoproto.nullable)   = false
   ];
   // max_active_btc_validators is the maximum number of active BTC validators in the BTC staking protocol

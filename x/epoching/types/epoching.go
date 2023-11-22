@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -41,19 +42,19 @@ func (e Epoch) GetSecondBlockHeight() uint64 {
 	return e.FirstBlockHeight + 1
 }
 
-func (e Epoch) IsLastBlock(ctx sdk.Context) bool {
-	return e.GetLastBlockHeight() == uint64(ctx.BlockHeight())
+func (e Epoch) IsLastBlock(ctx context.Context) bool {
+	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).BlockHeader().Height)
 }
 
-func (e Epoch) IsFirstBlock(ctx sdk.Context) bool {
-	return e.FirstBlockHeight == uint64(ctx.BlockHeight())
+func (e Epoch) IsFirstBlock(ctx context.Context) bool {
+	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).BlockHeader().Height)
 }
 
-func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
+func (e Epoch) IsSecondBlock(ctx context.Context) bool {
 	if e.EpochNumber == 0 {
 		return false
 	}
-	return e.GetSecondBlockHeight() == uint64(ctx.BlockHeight())
+	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).BlockHeader().Height)
 }
 
 // IsFirstBlockOfNextEpoch checks whether the current block is the first block of
@@ -61,11 +62,12 @@ func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
 // CONTRACT: IsFirstBlockOfNextEpoch can only be called by the epoching module
 // once upon the first block of a new epoch
 // other modules should use IsFirstBlock instead.
-func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
+func (e Epoch) IsFirstBlockOfNextEpoch(ctx context.Context) bool {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if e.EpochNumber == 0 {
-		return ctx.BlockHeight() == 1
+		return sdkCtx.BlockHeader().Height == 1
 	} else {
-		height := uint64(ctx.BlockHeight())
+		height := uint64(sdkCtx.BlockHeader().Height)
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
 }
@@ -136,15 +138,6 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 		Msg:         qmsg,
 	}
 	return queuedMsg, nil
-}
-
-func (qm QueuedMessage) GetSigners() []sdk.AccAddress {
-	return qm.UnwrapToSdkMsg().GetSigners()
-}
-
-func (qm QueuedMessage) ValidateBasic() error {
-	return qm.UnwrapToSdkMsg().ValidateBasic()
-
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces

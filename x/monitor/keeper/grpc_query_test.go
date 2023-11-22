@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/testutil/mocks"
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	types2 "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/monitor/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -20,20 +20,17 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		// a genesis validator is generated for setup
-		helper := testepoching.NewHelper(t)
-		lck := helper.App.BTCLightClientKeeper
-		mk := helper.App.MonitorKeeper
-		ek := helper.EpochingKeeper
-		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
+
+		babylonApp := app.Setup(t, false)
+		ctx := babylonApp.NewContext(false)
+		lck := babylonApp.BTCLightClientKeeper
+		mk := babylonApp.MonitorKeeper
+
+		queryHelper := baseapp.NewQueryServerTestHelper(ctx, babylonApp.InterfaceRegistry())
 		types.RegisterQueryServer(queryHelper, mk)
 		queryClient := types.NewQueryClient(queryHelper)
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
-		epoch := ek.GetEpoch(ctx)
-		require.Equal(t, uint64(1), epoch.EpochNumber)
-
+		// a genesis validator is generated for setup
 		root := lck.GetBaseBTCHeader(ctx)
 		chain := datagen.GenRandomValidChainStartingFrom(
 			r,
@@ -46,15 +43,8 @@ func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
 		err := lck.InsertHeaders(ctx, headerBytes)
 		require.NoError(t, err)
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// go to BeginBlock of block 11, and thus entering epoch 2
-		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
-		}
-		epoch = ek.GetEpoch(ctx)
-		require.Equal(t, uint64(2), epoch.EpochNumber)
+		mk.Hooks().AfterEpochEnds(ctx, 1)
 
 		// query epoch 0 ended BTC light client height, should return base height
 		req := types.QueryEndedEpochBtcHeightRequest{
@@ -78,24 +68,25 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+
 		// a genesis validator is generated for setup
-		helper := testepoching.NewHelper(t)
 		ctl := gomock.NewController(t)
 		defer ctl.Finish()
-		lck := helper.App.BTCLightClientKeeper
-		mk := helper.App.MonitorKeeper
-		ek := helper.EpochingKeeper
-		ck := helper.App.CheckpointingKeeper
+
+		babylonApp := app.Setup(t, false)
+		ctx := babylonApp.NewContext(false)
+		lck := babylonApp.BTCLightClientKeeper
+		mk := babylonApp.MonitorKeeper
+		ck := babylonApp.CheckpointingKeeper
 		mockEk := mocks.NewMockEpochingKeeper(ctl)
 		ck.SetEpochingKeeper(mockEk)
-		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
+
+		queryHelper := baseapp.NewQueryServerTestHelper(ctx, babylonApp.InterfaceRegistry())
 		types.RegisterQueryServer(queryHelper, mk)
 		queryClient := types.NewQueryClient(queryHelper)
 
 		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
-		epoch := ek.GetEpoch(ctx)
-		require.Equal(t, uint64(1), epoch.EpochNumber)
+		mk.Hooks().AfterEpochEnds(ctx, 0)
 
 		root := lck.GetBaseBTCHeader(ctx)
 		chain := datagen.GenRandomValidChainStartingFrom(
@@ -133,7 +124,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		// Verify checkpoint
 		btcCkpt := btctxformatter.RawBtcCheckpoint{
 			Epoch:            mockCkptWithMeta.Ckpt.EpochNum,
-			LastCommitHash:   *mockCkptWithMeta.Ckpt.LastCommitHash,
+			AppHash:   *mockCkptWithMeta.Ckpt.AppHash,
 			BitMap:           mockCkptWithMeta.Ckpt.Bitmap,
 			SubmitterAddress: datagen.GenRandomByteArray(r, btctxformatter.AddressLength),
 			BlsSig:           *mockCkptWithMeta.Ckpt.BlsMultiSig,

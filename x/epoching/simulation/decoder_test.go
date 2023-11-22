@@ -1,7 +1,9 @@
 package simulation_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
+	"github.com/babylonchain/babylon/app"
 	"testing"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -12,22 +14,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
 
-	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/x/epoching/simulation"
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
-// nolint:deadcode,unused,varcheck
 var (
 	delPk1      = ed25519.GenPrivKey().PubKey()
-	delAddr1    = sdk.AccAddress(delPk1.Address())
 	valAddr1    = sdk.ValAddress(delPk1.Address())
-	consAddr1   = sdk.ConsAddress(delPk1.Address().Bytes())
-	oneBytes, _ = sdk.NewInt(1).Marshal()
+	oneBytes, _ = sdkmath.NewInt(1).Marshal()
 )
 
 func TestDecodeStore(t *testing.T) {
-	cdc := app.GetEncodingConfig().Marshaler
+	cdc := app.GetEncodingConfig().Codec
 	dec := simulation.NewDecodeStore(cdc)
 
 	epochNumber := uint64(123)
@@ -65,8 +63,8 @@ func TestDecodeStore(t *testing.T) {
 		{"QueuedMsg", fmt.Sprintf("%v\n%v", queuedMsg.MsgId, queuedMsg.MsgId)},
 		{"ValidatorSet", fmt.Sprintf("%v\n%v", valSet, valSet)},
 		{"SlashedValidatorSet", fmt.Sprintf("%v\n%v", valSet, valSet)},
-		{"VotingPower", fmt.Sprintf("%v\n%v", sdk.NewInt(1), sdk.NewInt(1))},
-		{"SlashedVotingPower", fmt.Sprintf("%v\n%v", sdk.NewInt(1), sdk.NewInt(1))},
+		{"VotingPower", fmt.Sprintf("%v\n%v", sdkmath.NewInt(1), sdkmath.NewInt(1))},
+		{"SlashedVotingPower", fmt.Sprintf("%v\n%v", sdkmath.NewInt(1), sdkmath.NewInt(1))},
 		{"other", ""},
 	}
 	for i, tt := range tests {

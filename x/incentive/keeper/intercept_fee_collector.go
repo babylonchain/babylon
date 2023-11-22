@@ -1,15 +1,15 @@
 package keeper
 
 import (
+	"context"
 	"github.com/babylonchain/babylon/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // HandleCoinsInFeeCollector intercepts a portion of coins in fee collector, and distributes
 // them to BTC staking gauge and BTC timestamping gauge of the current height and epoch, respectively.
 // It is invoked upon every `BeginBlock`.
 // adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L15-L26
-func (k Keeper) HandleCoinsInFeeCollector(ctx sdk.Context) {
+func (k Keeper) HandleCoinsInFeeCollector(ctx context.Context) {
 	params := k.GetParams(ctx)
 
 	// find the fee collector account

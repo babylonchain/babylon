@@ -1,26 +1,28 @@
 package keeper
 
 import (
+	"context"
+	corestoretypes "cosmossdk.io/core/store"
+	storetypes "cosmossdk.io/store/types"
 	"encoding/hex"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"math/big"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/store/prefix"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
 	Keeper struct {
 		cdc                  codec.BinaryCodec
-		storeKey             storetypes.StoreKey
-		tstoreKey            storetypes.StoreKey
-		memKey               storetypes.StoreKey
+		storeService         corestoretypes.KVStoreService
+		tsKey                storetypes.StoreKey
 		btcLightClientKeeper types.BTCLightClientKeeper
 		checkpointingKeeper  types.CheckpointingKeeper
 		incentiveKeeper      types.IncentiveKeeper
@@ -55,9 +57,8 @@ const (
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey,
-	tstoreKey,
-	memKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
+	tsKey storetypes.StoreKey,
 	bk types.BTCLightClientKeeper,
 	ck types.CheckpointingKeeper,
 	ik types.IncentiveKeeper,
@@ -67,9 +68,8 @@ func NewKeeper(
 
 	return Keeper{
 		cdc:                  cdc,
-		storeKey:             storeKey,
-		tstoreKey:            tstoreKey,
-		memKey:               memKey,
+		storeService:         storeService,
+		tsKey:                tsKey,
 		btcLightClientKeeper: bk,
 		checkpointingKeeper:  ck,
 		incentiveKeeper:      ik,
@@ -86,7 +86,7 @@ func (k Keeper) GetPowLimit() *big.Int {
 // hex string to bytes.
 // NOTE: keeper could probably cache decoded tag, but it is rather improbable this function
 // will ever be a bottleneck so it is not worth it.
-func (k Keeper) GetExpectedTag(ctx sdk.Context) txformat.BabylonTag {
+func (k Keeper) GetExpectedTag(ctx context.Context) txformat.BabylonTag {
 	tag := k.GetParams(ctx).CheckpointTag
 
 	tagAsBytes, err := hex.DecodeString(tag)
@@ -102,11 +102,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-func (k Keeper) GetBlockHeight(ctx sdk.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) GetBlockHeight(ctx context.Context, b *bbn.BTCHeaderHashBytes) (uint64, error) {
 	return k.btcLightClientKeeper.BlockHeight(ctx, b)
 }
 
-func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) headerDepth(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
 	blockDepth, err := k.btcLightClientKeeper.MainChainDepth(ctx, headerHash)
 
 	if err != nil {
@@ -121,7 +121,7 @@ func (k Keeper) headerDepth(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes)
 // - it is on main chain
 // - its lowest depth is larger than highest depth of new submission
 func (k Keeper) checkAncestors(
-	ctx sdk.Context,
+	ctx context.Context,
 	submisionEpoch uint64,
 	newSubmissionInfo *types.SubmissionBtcInfo,
 ) error {
@@ -175,25 +175,27 @@ func (k Keeper) checkAncestors(
 	return nil
 }
 
-func (k Keeper) setBtcLightClientUpdated(ctx sdk.Context) {
-	store := ctx.TransientStore(k.tstoreKey)
+func (k Keeper) setBtcLightClientUpdated(ctx context.Context) {
+	store := sdk.UnwrapSDKContext(ctx).TransientStore(k.tsKey)
 	store.Set(types.GetBtcLightClientUpdatedKey(), []byte{1})
 }
 
 // BtcLightClientUpdated checks if btc light client was updated during block execution
-func (k Keeper) BtcLightClientUpdated(ctx sdk.Context) bool {
+func (k Keeper) BtcLightClientUpdated(ctx context.Context) bool {
 	// transient store is cleared after each block execution, therfore if
 	// BtcLightClientKey is set, it means setBtcLightClientUpdated was called during
 	// current block execution
-	store := ctx.TransientStore(k.tstoreKey)
+	store := sdk.UnwrapSDKContext(ctx).TransientStore(k.tsKey)
 	lcUpdated := store.Get(types.GetBtcLightClientUpdatedKey())
 	return len(lcUpdated) > 0
 }
 
-func (k Keeper) getLastFinalizedEpochNumber(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	epoch := store.Get(types.GetLatestFinalizedEpochKey())
-
+func (k Keeper) getLastFinalizedEpochNumber(ctx context.Context) uint64 {
+	store := k.storeService.OpenKVStore(ctx)
+	epoch, err := store.Get(types.GetLatestFinalizedEpochKey())
+	if err != nil {
+		panic(err)
+	}
 	if len(epoch) == 0 {
 		return uint64(0)
 	}
@@ -201,13 +203,15 @@ func (k Keeper) getLastFinalizedEpochNumber(ctx sdk.Context) uint64 {
 	return sdk.BigEndianToUint64(epoch)
 }
 
-func (k Keeper) setLastFinalizedEpochNumber(ctx sdk.Context, epoch uint64) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.GetLatestFinalizedEpochKey(), sdk.Uint64ToBigEndian(epoch))
+func (k Keeper) setLastFinalizedEpochNumber(ctx context.Context, epoch uint64) {
+	store := k.storeService.OpenKVStore(ctx)
+	if err := store.Set(types.GetLatestFinalizedEpochKey(), sdk.Uint64ToBigEndian(epoch)); err != nil {
+		panic(err)
+	}
 }
 
 func (k Keeper) getEpochChanges(
-	ctx sdk.Context,
+	ctx context.Context,
 	parentEpochBestSubmission *types.SubmissionBtcInfo,
 	ed *types.EpochData) *epochChangesSummary {
 
@@ -265,7 +269,7 @@ func (k Keeper) getEpochChanges(
 }
 
 // OnTipChange is the callback function to be called when btc light client tip changes
-func (k Keeper) OnTipChange(ctx sdk.Context) {
+func (k Keeper) OnTipChange(ctx context.Context) {
 	k.checkCheckpoints(ctx)
 }
 
@@ -299,11 +303,8 @@ func (k Keeper) OnTipChange(ctx sdk.Context) {
 // 7. If the epoch loses all of its submissions, delete all submissions from child
 // 		epoch as then we do not have parent for those.
 
-func (k Keeper) checkCheckpoints(ctx sdk.Context) {
-	store := prefix.NewStore(
-		ctx.KVStore(k.storeKey),
-		types.EpochDataPrefix,
-	)
+func (k Keeper) checkCheckpoints(ctx context.Context) {
+	store := k.epochDataStore(ctx)
 
 	lastFinalizedEpoch := k.getLastFinalizedEpochNumber(ctx)
 
@@ -426,4 +427,9 @@ func (k Keeper) checkCheckpoints(ctx sdk.Context) {
 		// save epoch with all applied changes
 		store.Set(it.Key(), k.cdc.MustMarshal(&currentEpoch))
 	}
+}
+
+func (k *Keeper) epochDataStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.EpochDataPrefix)
 }

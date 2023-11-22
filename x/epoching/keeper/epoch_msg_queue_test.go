@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
 
 	appparams "github.com/babylonchain/babylon/app/params"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -30,9 +31,7 @@ func FuzzEnqueueMsg(f *testing.F) {
 		require.Empty(t, keeper.GetCurrentEpochMsgs(ctx))
 		require.Equal(t, uint64(0), keeper.GetCurrentQueueLength(ctx))
 
-		// enter the 1st block and thus epoch 1
-		// Note that the genesis block does not trigger BeginBlock or EndBlock
-		ctx = helper.GenAndApplyEmptyBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 		// ensure that the epoch msg queue is correct at epoch 1
@@ -76,8 +75,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx = helper.BeginBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -103,12 +101,10 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewDels, int64(len(epochMsgs)))
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < params.EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -132,15 +128,14 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
-		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -168,12 +163,10 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewUndels, int64(len(epochMsgs)))
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -188,7 +181,8 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		require.Equal(t, valPower-reducedPower, valPower2)
 
 		// ensure the genesis account has these unbonding tokens
-		unbondingDels := helper.StakingKeeper.GetAllUnbondingDelegations(ctx, genAddr)
+		unbondingDels, err := helper.StakingKeeper.GetAllUnbondingDelegations(ctx, genAddr)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(unbondingDels)) // there is only 1 type of tokens
 
 		// from cosmos v47, all undelegations made at the same height are represented
@@ -206,15 +200,14 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		helper := testepoching.NewHelperWithValSet(t)
-		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -249,12 +242,10 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewRedels, int64(len(epochMsgs)))
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -277,7 +268,8 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		require.Equal(t, val2Power+redelegatedPower, val2Power2)
 
 		// ensure the genesis account has these redelegating tokens
-		redelegations := helper.StakingKeeper.GetAllRedelegations(ctx, genAddr, val1, val2)
+		redelegations, err := helper.StakingKeeper.GetAllRedelegations(ctx, genAddr, val1, val2)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(redelegations))                              // there is only 1 type of tokens
 		require.Equal(t, numNewRedels, int64(len(redelegations[0].Entries))) // there are numNewRedels entries
 		for _, entry := range redelegations[0].Entries {

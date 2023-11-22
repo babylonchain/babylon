@@ -1,46 +1,59 @@
 package keeper
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/runtime"
+
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) setAppHash(ctx sdk.Context, height uint64, appHash []byte) {
+func (k Keeper) setAppHash(ctx context.Context, height uint64, appHash []byte) {
 	store := k.appHashStore(ctx)
 	heightBytes := sdk.Uint64ToBigEndian(height)
 	store.Set(heightBytes, appHash)
 }
 
 // GetAppHash gets the AppHash of the header at the given height
-func (k Keeper) GetAppHash(ctx sdk.Context, height uint64) ([]byte, error) {
+func (k Keeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
 	store := k.appHashStore(ctx)
 	heightBytes := sdk.Uint64ToBigEndian(height)
 	appHash := store.Get(heightBytes)
 	if appHash == nil {
-		return nil, errorsmod.Wrapf(types.ErrInvalidHeight, "height %d is now known in DB yet", height)
+		return nil, errorsmod.Wrapf(types.ErrInvalidHeight, "height %d is not known in DB yet", height)
 	}
 	return appHash, nil
 }
 
 // RecordAppHash stores the AppHash of the current header to KVStore
-func (k Keeper) RecordAppHash(ctx sdk.Context) {
-	header := ctx.BlockHeader()
-	height := uint64(header.Height)
-	k.setAppHash(ctx, height, header.AppHash)
+func (k Keeper) RecordAppHash(ctx context.Context) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height := uint64(sdkCtx.BlockHeader().Height)
+	appHash := sdkCtx.BlockHeader().AppHash
+	// HACK: the app hash for the first height is set to nil
+	// instead of the hash of an empty byte slice as intended
+	// see proposed fix: https://github.com/cosmos/cosmos-sdk/pull/18524
+	if height == 1 {
+		// $ echo -n '' | sha256sum
+		// e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+		emptyHash := sha256.Sum256([]byte{})
+		appHash = emptyHash[:]
+	}
+	k.setAppHash(ctx, height, appHash)
 }
 
-// GetAllAppHashsForEpoch fetches all AppHashs in the given epoch
-func (k Keeper) GetAllAppHashsForEpoch(ctx sdk.Context, epoch *types.Epoch) ([][]byte, error) {
+// GetAllAppHashesForEpoch fetches all AppHashes in the given epoch
+func (k Keeper) GetAllAppHashesForEpoch(ctx context.Context, epoch *types.Epoch) ([][]byte, error) {
 	// if this epoch is the most recent AND has not ended, then we cannot get all AppHashs for this epoch
-	if k.GetEpoch(ctx).EpochNumber == epoch.EpochNumber && !epoch.IsLastBlock(ctx) {
-		return nil, errorsmod.Wrapf(types.ErrInvalidHeight, "GetAllAppHashsForEpoch can only be invoked when this epoch has ended")
+	if k.GetEpoch(ctx).EpochNumber == epoch.EpochNumber && !epoch.IsLastBlock(sdk.UnwrapSDKContext(ctx)) {
+		return nil, errorsmod.Wrapf(types.ErrInvalidHeight, "GetAllAppHashesForEpoch can only be invoked when this epoch has ended")
 	}
 
 	// fetch each AppHash in this epoch
@@ -57,7 +70,7 @@ func (k Keeper) GetAllAppHashsForEpoch(ctx sdk.Context, epoch *types.Epoch) ([][
 }
 
 // ProveAppHashInEpoch generates a proof that the given appHash is in a given epoch
-func (k Keeper) ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error) {
+func (k Keeper) ProveAppHashInEpoch(ctx context.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error) {
 	// ensure height is inside this epoch
 	epoch, err := k.GetHistoricalEpoch(ctx, epochNumber)
 	if err != nil {
@@ -71,7 +84,7 @@ func (k Keeper) ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber 
 	idx := height - epoch.FirstBlockHeight
 
 	// fetch all AppHashs, calculate Merkle tree and proof
-	appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
+	appHashs, err := k.GetAllAppHashesForEpoch(ctx, epoch)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +116,7 @@ func VerifyAppHashInclusion(appHash []byte, appHashRoot []byte, proof *tmcrypto.
 // prefix: AppHashKey
 // key: height
 // value: AppHash in bytes
-func (k Keeper) appHashStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.AppHashKey)
+func (k Keeper) appHashStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.AppHashKey)
 }

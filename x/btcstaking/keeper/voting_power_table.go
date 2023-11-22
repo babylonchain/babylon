@@ -1,20 +1,22 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
+	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // RecordVotingPowerTable computes the voting power table at the current block height
 // and saves the power table to KVStore
 // triggered upon each EndBlock
-func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
+func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	// tip of Babylon and Bitcoin
-	babylonTipHeight := uint64(ctx.BlockHeight())
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
 	if err != nil {
 		return
@@ -85,13 +87,13 @@ func (k Keeper) RecordVotingPowerTable(ctx sdk.Context) {
 }
 
 // SetVotingPower sets the voting power of a given BTC validator at a given Babylon height
-func (k Keeper) SetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64, power uint64) {
+func (k Keeper) SetVotingPower(ctx context.Context, valBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerStore(ctx, height)
 	store.Set(valBTCPK, sdk.Uint64ToBigEndian(power))
 }
 
 // GetVotingPower gets the voting power of a given BTC validator at a given Babylon height
-func (k Keeper) GetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64) uint64 {
+func (k Keeper) GetVotingPower(ctx context.Context, valBTCPK []byte, height uint64) uint64 {
 	if !k.HasBTCValidator(ctx, valBTCPK) {
 		return 0
 	}
@@ -104,7 +106,7 @@ func (k Keeper) GetVotingPower(ctx sdk.Context, valBTCPK []byte, height uint64) 
 }
 
 // HasVotingPowerTable checks if the voting power table exists at a given height
-func (k Keeper) HasVotingPowerTable(ctx sdk.Context, height uint64) bool {
+func (k Keeper) HasVotingPowerTable(ctx context.Context, height uint64) bool {
 	store := k.votingPowerStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
@@ -112,7 +114,7 @@ func (k Keeper) HasVotingPowerTable(ctx sdk.Context, height uint64) bool {
 }
 
 // GetVotingPowerTable gets the voting power table, i.e., validator set at a given height
-func (k Keeper) GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]uint64 {
+func (k Keeper) GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64 {
 	store := k.votingPowerStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
@@ -139,9 +141,9 @@ func (k Keeper) GetVotingPowerTable(ctx sdk.Context, height uint64) map[string]u
 // GetBTCStakingActivatedHeight returns the height when the BTC staking protocol is activated
 // i.e., the first height where a BTC validator has voting power
 // Before the BTC staking protocol is activated, we don't index or tally any block
-func (k Keeper) GetBTCStakingActivatedHeight(ctx sdk.Context) (uint64, error) {
-	store := ctx.KVStore(k.storeKey)
-	votingPowerStore := prefix.NewStore(store, types.VotingPowerKey)
+func (k Keeper) GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error) {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	votingPowerStore := prefix.NewStore(storeAdapter, types.VotingPowerKey)
 	iter := votingPowerStore.Iterator(nil, nil)
 	defer iter.Close()
 	// if the iterator is valid, then there exists a height that has a BTC validator with voting power
@@ -152,9 +154,9 @@ func (k Keeper) GetBTCStakingActivatedHeight(ctx sdk.Context) (uint64, error) {
 	}
 }
 
-func (k Keeper) IsBTCStakingActivated(ctx sdk.Context) bool {
-	store := ctx.KVStore(k.storeKey)
-	votingPowerStore := prefix.NewStore(store, types.VotingPowerKey)
+func (k Keeper) IsBTCStakingActivated(ctx context.Context) bool {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	votingPowerStore := prefix.NewStore(storeAdapter, types.VotingPowerKey)
 	iter := votingPowerStore.Iterator(nil, nil)
 	defer iter.Close()
 	// if the iterator is valid, then BTC staking is already activated
@@ -165,8 +167,8 @@ func (k Keeper) IsBTCStakingActivated(ctx sdk.Context) bool {
 // prefix: (VotingPowerKey || Babylon block height)
 // key: Bitcoin secp256k1 PK
 // value: voting power quantified in Satoshi
-func (k Keeper) votingPowerStore(ctx sdk.Context, height uint64) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	votingPowerStore := prefix.NewStore(store, types.VotingPowerKey)
+func (k Keeper) votingPowerStore(ctx context.Context, height uint64) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	votingPowerStore := prefix.NewStore(storeAdapter, types.VotingPowerKey)
 	return prefix.NewStore(votingPowerStore, sdk.Uint64ToBigEndian(height))
 }

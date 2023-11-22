@@ -1,23 +1,26 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type CheckpointsState struct {
 	cdc         codec.BinaryCodec
-	checkpoints sdk.KVStore
+	checkpoints storetypes.KVStore
 }
 
-func (k Keeper) CheckpointsState(ctx sdk.Context) CheckpointsState {
+func (k Keeper) CheckpointsState(ctx context.Context) CheckpointsState {
 	// Build the CheckpointsState storage
-	store := ctx.KVStore(k.storeKey)
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return CheckpointsState{
 		cdc:         k.cdc,
-		checkpoints: prefix.NewStore(store, types.CkptsObjectPrefix),
+		checkpoints: prefix.NewStore(storeAdapter, types.CkptsObjectPrefix),
 	}
 }
 

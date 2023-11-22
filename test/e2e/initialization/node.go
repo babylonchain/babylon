@@ -1,8 +1,17 @@
 package initialization
 
 import (
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"os"
 	"path"
 	"path/filepath"
@@ -11,11 +20,10 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	bbn "github.com/babylonchain/babylon/types"
-	tmconfig "github.com/cometbft/cometbft/config"
-	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtconfig "github.com/cometbft/cometbft/config"
+	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/p2p"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -25,8 +33,7 @@ import (
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
-	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
@@ -81,15 +88,15 @@ func (n *internalNode) configDir() string {
 func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(n.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		Rate:          math.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       math.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: math.LegacyMustNewDecFromStr("0.01"),
 	}
 
 	// get the initial validator min self delegation
-	minSelfDelegation, _ := sdk.NewIntFromString("1")
+	minSelfDelegation, _ := math.NewIntFromString("1")
 
-	valPubKey, err := cryptocodec.FromTmPubKeyInterface(n.consensusKey.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(n.consensusKey.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +108,7 @@ func (n *internalNode) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error)
 	}
 
 	return stakingtypes.NewMsgCreateValidator(
-		sdk.ValAddress(addr),
+		sdk.ValAddress(addr).String(),
 		valPubKey,
 		amount,
 		description,
@@ -164,17 +171,17 @@ func (n *internalNode) createConsensusKey() error {
 	config.Moniker = n.moniker
 
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0o777); err != nil {
+	if err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0o777); err != nil {
 		return err
 	}
 
 	pvStateFile := config.PrivValidatorStateFile()
-	if err := tmos.EnsureDir(filepath.Dir(pvStateFile), 0o777); err != nil {
+	if err := cmtos.EnsureDir(filepath.Dir(pvStateFile), 0o777); err != nil {
 		return err
 	}
 
 	// privval.LoadOrGenWrappedFilePV()
-	privKey := tmed25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
+	privKey := cmted25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
 	blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(n.mnemonic))
 	filePV := privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
 
@@ -249,7 +256,7 @@ func (n *internalNode) export() *Node {
 		Mnemonic:      n.mnemonic,
 		PublicAddress: addr.String(),
 		SecretKey:     n.privateKey,
-		PublicKey:     pub.String(),
+		PublicKey:     pub.Bytes(),
 		PeerId:        n.peerId,
 		IsValidator:   n.isValidator,
 	}
@@ -259,13 +266,13 @@ func (n *internalNode) getNodeKey() *p2p.NodeKey {
 	return &n.nodeKey
 }
 
-func (n *internalNode) getGenesisDoc() (*tmtypes.GenesisDoc, error) {
+func (n *internalNode) getAppGenesis() (*genutiltypes.AppGenesis, error) {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
 	config.SetRoot(n.configDir())
 
 	genFile := config.GenesisFile()
-	doc := &tmtypes.GenesisDoc{}
+	appGenesis := &genutiltypes.AppGenesis{}
 
 	if _, err := os.Stat(genFile); err != nil {
 		if !os.IsNotExist(err) {
@@ -274,13 +281,13 @@ func (n *internalNode) getGenesisDoc() (*tmtypes.GenesisDoc, error) {
 	} else {
 		var err error
 
-		doc, err = tmtypes.GenesisDocFromFile(genFile)
+		_, appGenesis, err = genutiltypes.GenesisStateFromGenFile(genFile)
 		if err != nil {
 			return nil, fmt.Errorf("failed to read genesis doc from file: %w", err)
 		}
 	}
 
-	return doc, nil
+	return appGenesis, nil
 }
 
 func (n *internalNode) init() error {
@@ -294,27 +301,45 @@ func (n *internalNode) init() error {
 	config.SetRoot(n.configDir())
 	config.Moniker = n.moniker
 
-	genDoc, err := n.getGenesisDoc()
+	appOptions := make(simsutils.AppOptionsMap, 0)
+	appOptions[flags.FlagHome] = n.configDir()
+	appOptions["btc-config.network"] = string(bbn.BtcSimnet)
+
+	privSigner, _ := babylonApp.SetupPrivSigner()
+	// Create a temp app to get the default genesis state
+	tempApp := babylonApp.NewBabylonApp(
+		log.NewNopLogger(),
+		dbm.NewMemDB(),
+		nil,
+		true,
+		map[int64]bool{},
+		0,
+		privSigner,
+		appOptions,
+		[]wasmkeeper.Option{})
+
+	appGenesis, err := n.getAppGenesis()
 	if err != nil {
 		return err
 	}
 
-	appState, err := json.MarshalIndent(babylonApp.ModuleBasics.DefaultGenesis(util.Cdc), "", " ")
+	appState, err := json.MarshalIndent(tempApp.DefaultGenesis(), "", " ")
 	if err != nil {
 		return fmt.Errorf("failed to JSON encode app genesis state: %w", err)
 	}
 
-	genDoc.ChainID = n.chain.chainMeta.Id
-	genDoc.Validators = nil
-	genDoc.AppState = appState
-	genDoc.ConsensusParams = tmtypes.DefaultConsensusParams()
-	genDoc.ConsensusParams.Block.MaxGas = babylonApp.DefaultGasLimit
+	appGenesis.ChainID = n.chain.chainMeta.Id
+	appGenesis.AppState = appState
+	appGenesis.Consensus = &genutiltypes.ConsensusGenesis{
+		Params: cmttypes.DefaultConsensusParams(),
+	}
+	appGenesis.Consensus.Params.Block.MaxGas = babylonApp.DefaultGasLimit
 
-	if err = genutil.ExportGenesisFile(genDoc, config.GenesisFile()); err != nil {
+	if err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile()); err != nil {
 		return fmt.Errorf("failed to export app genesis state: %w", err)
 	}
 
-	tmconfig.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
+	cmtconfig.WriteConfigFile(filepath.Join(config.RootDir, "config", "config.toml"), config)
 	return nil
 }
 
@@ -333,15 +358,15 @@ func (n *internalNode) createMnemonic() (string, error) {
 }
 
 func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
-	tmCfgPath := filepath.Join(n.configDir(), "config", "config.toml")
+	cmtCfgPath := filepath.Join(n.configDir(), "config", "config.toml")
 
 	vpr := viper.New()
-	vpr.SetConfigFile(tmCfgPath)
+	vpr.SetConfigFile(cmtCfgPath)
 	if err := vpr.ReadInConfig(); err != nil {
 		return err
 	}
 
-	valConfig := tmconfig.DefaultConfig()
+	valConfig := cmtconfig.DefaultConfig()
 	if err := vpr.Unmarshal(valConfig); err != nil {
 		return err
 	}
@@ -355,31 +380,31 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	valConfig.P2P.PersistentPeers = strings.Join(persistentPeers, ",")
 	valConfig.Storage.DiscardABCIResponses = true
 
-	tmconfig.WriteConfigFile(tmCfgPath, valConfig)
+	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
 	return nil
 }
 
 func (n *internalNode) initStateSyncConfig(trustHeight int64, trustHash string, stateSyncRPCServers []string) error {
-	tmCfgPath := filepath.Join(n.configDir(), "config", "config.toml")
+	cmtCfgPath := filepath.Join(n.configDir(), "config", "config.toml")
 
 	vpr := viper.New()
-	vpr.SetConfigFile(tmCfgPath)
+	vpr.SetConfigFile(cmtCfgPath)
 	if err := vpr.ReadInConfig(); err != nil {
 		return err
 	}
 
-	valConfig := tmconfig.DefaultConfig()
+	valConfig := cmtconfig.DefaultConfig()
 	if err := vpr.Unmarshal(valConfig); err != nil {
 		return err
 	}
 
-	valConfig.StateSync = tmconfig.DefaultStateSyncConfig()
+	valConfig.StateSync = cmtconfig.DefaultStateSyncConfig()
 	valConfig.StateSync.Enable = true
 	valConfig.StateSync.TrustHeight = trustHeight
 	valConfig.StateSync.TrustHash = trustHash
 	valConfig.StateSync.RPCServers = stateSyncRPCServers
 
-	tmconfig.WriteConfigFile(tmCfgPath, valConfig)
+	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
 	return nil
 }
 
@@ -396,18 +421,23 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	txBuilder.SetFeeAmount(sdk.NewCoins())
 	txBuilder.SetGasLimit(uint64(200000 * len(msgs)))
 
+	addr, err := n.keyInfo.GetAddress()
+	if err != nil {
+		return nil, err
+	}
+	pub, err := n.keyInfo.GetPubKey()
+	if err != nil {
+		return nil, err
+	}
 	// TODO: Find a better way to sign this tx with less code.
 	signerData := authsigning.SignerData{
 		ChainID:       n.chain.chainMeta.Id,
 		AccountNumber: 0,
 		Sequence:      0,
+		Address:       addr.String(),
+		PubKey:        pub,
 	}
 
-	pub, err := n.keyInfo.GetPubKey()
-
-	if err != nil {
-		return nil, err
-	}
 	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
 	// TxBuilder under the hood, and SignerInfos is needed to generate the sign
 	// bytes. This is the reason for setting SetSignatures here, with a nil
@@ -416,10 +446,10 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
 	// also doesn't affect its generated sign bytes, so for code's simplicity
 	// sake, we put it here.
-	sig := txsigning.SignatureV2{
+	sig := sdksigning.SignatureV2{
 		PubKey: pub,
-		Data: &txsigning.SingleSignatureData{
-			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
+		Data: &sdksigning.SingleSignatureData{
+			SignMode:  sdksigning.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: 0,
@@ -429,8 +459,10 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	bytesToSign, err := util.EncodingConfig.TxConfig.SignModeHandler().GetSignBytes(
-		txsigning.SignMode_SIGN_MODE_DIRECT,
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		sdk.Context{}, // TODO: this is an empty context
+		util.EncodingConfig.TxConfig.SignModeHandler(),
+		sdksigning.SignMode_SIGN_MODE_DIRECT,
 		signerData,
 		txBuilder.GetTx(),
 	)
@@ -447,10 +479,10 @@ func (n *internalNode) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	sig = txsigning.SignatureV2{
+	sig = sdksigning.SignatureV2{
 		PubKey: pub,
-		Data: &txsigning.SingleSignatureData{
-			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
+		Data: &sdksigning.SingleSignatureData{
+			SignMode:  sdksigning.SignMode_SIGN_MODE_DIRECT,
 			Signature: sigBytes,
 		},
 		Sequence: 0,

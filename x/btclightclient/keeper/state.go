@@ -1,28 +1,31 @@
 package keeper
 
 import (
+	"context"
+	storetypes "cosmossdk.io/store/types"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
+	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type headersState struct {
 	cdc          codec.BinaryCodec
-	headers      sdk.KVStore
-	hashToHeight sdk.KVStore
+	headers      storetypes.KVStore
+	hashToHeight storetypes.KVStore
 }
 
-func (k Keeper) headersState(ctx sdk.Context) headersState {
+func (k Keeper) headersState(ctx context.Context) headersState {
 	// Build the headersState storage
-	store := ctx.KVStore(k.storeKey)
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return headersState{
 		cdc:          k.cdc,
-		headers:      prefix.NewStore(store, types.HeadersObjectPrefix),
-		hashToHeight: prefix.NewStore(store, types.HashToHeightPrefix),
+		headers:      prefix.NewStore(storeAdapter, types.HeadersObjectPrefix),
+		hashToHeight: prefix.NewStore(storeAdapter, types.HashToHeightPrefix),
 	}
 }
 
@@ -75,7 +78,7 @@ func (s headersState) rollBackHeadersUpTo(height uint64) {
 	}
 }
 
-// GetHeader Retrieve a header by its height and hash
+// GetHeaderByHeight Retrieve a header by its height and hash
 func (s headersState) GetHeaderByHeight(height uint64) (*types.BTCHeaderInfo, error) {
 	headersKey := types.HeadersObjectKey(height)
 
@@ -143,7 +146,7 @@ func (s headersState) TipExists() bool {
 }
 
 func (s headersState) IterateReverseHeaders(fn func(*types.BTCHeaderInfo) bool) {
-	// Iterate it in reverse in order to get highest heights first
+	// Iterate it in reverse in order to get the highest heights first
 	iter := s.headers.ReverseIterator(nil, nil)
 	defer iter.Close()
 

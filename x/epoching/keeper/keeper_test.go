@@ -16,11 +16,11 @@ func TestParams(t *testing.T) {
 
 	expParams := types.DefaultParams()
 
-	//check that the empty keeper loads the default
+	// check that the empty keeper loads the default
 	resParams := helper.EpochingKeeper.GetParams(ctx)
 	require.True(t, expParams.Equal(resParams))
 
-	//modify a params, save, and retrieve
+	// modify a params, save, and retrieve
 	expParams.EpochInterval = 777
 
 	if err := keeper.SetParams(ctx, expParams); err != nil {

@@ -1,6 +1,7 @@
 package initialization
 
 import (
+	"cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
@@ -65,9 +66,9 @@ const (
 )
 
 var (
-	StakeAmountIntA  = sdk.NewInt(StakeAmountA)
+	StakeAmountIntA  = math.NewInt(StakeAmountA)
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
-	StakeAmountIntB  = sdk.NewInt(StakeAmountB)
+	StakeAmountIntB  = math.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
 
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
@@ -297,7 +298,7 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     240000000000,
-		MinCommissionRate: sdk.ZeroDec(),
+		MinCommissionRate: math.LegacyZeroDec(),
 	}
 }
 
@@ -370,7 +371,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 				panic("It should be possible to build proof of possesion from validator private keys")
 			}
 
-			valPubKey, err := cryptocodec.FromTmPubKeyInterface(node.consensusKey.PubKey)
+			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(node.consensusKey.PubKey)
 
 			if err != nil {
 				panic("It should be possible to retrieve validator public key")

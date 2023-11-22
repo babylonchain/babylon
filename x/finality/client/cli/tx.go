@@ -134,7 +134,7 @@ func NewAddFinalitySigCmd() *cobra.Command {
 				Signer:              clientCtx.FromAddress.String(),
 				ValBtcPk:            valBTCPK,
 				BlockHeight:         blockHeight,
-				BlockLastCommitHash: blockLch,
+				BlockAppHash: blockLch,
 				FinalitySig:         finalitySig,
 			}
 

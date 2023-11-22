@@ -1,14 +1,16 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) RecordRewardDistCache(ctx sdk.Context) {
+func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 	// get BTC tip height and w, which are necessary for determining a BTC
 	// delegation's voting power
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
@@ -65,15 +67,15 @@ func (k Keeper) RecordRewardDistCache(ctx sdk.Context) {
 	}
 
 	// all good, set the reward distribution cache of the current height
-	k.setRewardDistCache(ctx, uint64(ctx.BlockHeight()), rdc)
+	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).BlockHeight()), rdc)
 }
 
-func (k Keeper) setRewardDistCache(ctx sdk.Context, height uint64, rdc *types.RewardDistCache) {
+func (k Keeper) setRewardDistCache(ctx context.Context, height uint64, rdc *types.RewardDistCache) {
 	store := k.rewardDistCacheStore(ctx)
 	store.Set(sdk.Uint64ToBigEndian(height), k.cdc.MustMarshal(rdc))
 }
 
-func (k Keeper) GetRewardDistCache(ctx sdk.Context, height uint64) (*types.RewardDistCache, error) {
+func (k Keeper) GetRewardDistCache(ctx context.Context, height uint64) (*types.RewardDistCache, error) {
 	store := k.rewardDistCacheStore(ctx)
 	rdcBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(rdcBytes) == 0 {
@@ -84,7 +86,7 @@ func (k Keeper) GetRewardDistCache(ctx sdk.Context, height uint64) (*types.Rewar
 	return &rdc, nil
 }
 
-func (k Keeper) RemoveRewardDistCache(ctx sdk.Context, height uint64) {
+func (k Keeper) RemoveRewardDistCache(ctx context.Context, height uint64) {
 	store := k.rewardDistCacheStore(ctx)
 	store.Delete(sdk.Uint64ToBigEndian(height))
 }
@@ -93,7 +95,7 @@ func (k Keeper) RemoveRewardDistCache(ctx sdk.Context, height uint64) {
 // prefix: RewardDistCacheKey
 // key: Babylon block height
 // value: RewardDistCache
-func (k Keeper) rewardDistCacheStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.RewardDistCacheKey)
+func (k Keeper) rewardDistCacheStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.RewardDistCacheKey)
 }

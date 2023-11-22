@@ -3,13 +3,12 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -50,9 +49,9 @@ func DefaultParams() Params {
 		CovenantQuorum:      1,                    // TODO: default values for multisig covenant
 		SlashingAddress:     defaultSlashingAddress(),
 		MinSlashingTxFeeSat: 1000,
-		MinCommissionRate:   math.LegacyZeroDec(),
+		MinCommissionRate:   sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
-		SlashingRate:           math.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
+		SlashingRate:           sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
 		MaxActiveBtcValidators: defaultMaxActiveBtcValidators,
 	}
 }
@@ -69,7 +68,7 @@ func validateMinSlashingTxFeeSat(fee int64) error {
 	return nil
 }
 
-func validateMinCommissionRate(rate sdk.Dec) error {
+func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
 	if rate.IsNil() {
 		return fmt.Errorf("minimum commission rate cannot be nil")
 	}
@@ -78,7 +77,7 @@ func validateMinCommissionRate(rate sdk.Dec) error {
 		return fmt.Errorf("minimum commission rate cannot be negative")
 	}
 
-	if rate.GT(math.LegacyOneDec()) {
+	if rate.GT(sdkmath.LegacyOneDec()) {
 		return fmt.Errorf("minimum commission rate cannot be greater than 100%%")
 	}
 	return nil

@@ -1,33 +1,35 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
+	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) setPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, height uint64, pr *bbn.SchnorrPubRand) {
+func (k Keeper) setPubRand(ctx context.Context, valBtcPK *bbn.BIP340PubKey, height uint64, pr *bbn.SchnorrPubRand) {
 	store := k.pubRandStore(ctx, valBtcPK)
 	store.Set(sdk.Uint64ToBigEndian(height), *pr)
 }
 
 // SetPubRandList sets a list of public randomness starting from a given startHeight
 // for a given BTC validator
-func (k Keeper) SetPubRandList(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand) {
+func (k Keeper) SetPubRandList(ctx context.Context, valBtcPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand) {
 	for i, pr := range pubRandList {
 		k.setPubRand(ctx, valBtcPK, startHeight+uint64(i), &pr)
 	}
 }
 
-func (k Keeper) HasPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, height uint64) bool {
+func (k Keeper) HasPubRand(ctx context.Context, valBtcPK *bbn.BIP340PubKey, height uint64) bool {
 	store := k.pubRandStore(ctx, valBtcPK)
 	return store.Has(sdk.Uint64ToBigEndian(height))
 }
 
-func (k Keeper) GetPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, height uint64) (*bbn.SchnorrPubRand, error) {
+func (k Keeper) GetPubRand(ctx context.Context, valBtcPK *bbn.BIP340PubKey, height uint64) (*bbn.SchnorrPubRand, error) {
 	store := k.pubRandStore(ctx, valBtcPK)
 	prBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(prBytes) == 0 {
@@ -36,7 +38,7 @@ func (k Keeper) GetPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey, height u
 	return bbn.NewSchnorrPubRand(prBytes)
 }
 
-func (k Keeper) IsFirstPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey) bool {
+func (k Keeper) IsFirstPubRand(ctx context.Context, valBtcPK *bbn.BIP340PubKey) bool {
 	store := k.pubRandStore(ctx, valBtcPK)
 	iter := store.ReverseIterator(nil, nil)
 
@@ -45,7 +47,7 @@ func (k Keeper) IsFirstPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey) bool
 }
 
 // GetLastPubRand retrieves the last public randomness committed by the given BTC validator
-func (k Keeper) GetLastPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey) (uint64, *bbn.SchnorrPubRand, error) {
+func (k Keeper) GetLastPubRand(ctx context.Context, valBtcPK *bbn.BIP340PubKey) (uint64, *bbn.SchnorrPubRand, error) {
 	store := k.pubRandStore(ctx, valBtcPK)
 	iter := store.ReverseIterator(nil, nil)
 
@@ -67,8 +69,8 @@ func (k Keeper) GetLastPubRand(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey) (uin
 // prefix: PubRandKey
 // key: (BTC validator || PK block height)
 // value: PublicRandomness
-func (k Keeper) pubRandStore(ctx sdk.Context, valBtcPK *bbn.BIP340PubKey) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	prefixedStore := prefix.NewStore(store, types.PubRandKey)
+func (k Keeper) pubRandStore(ctx context.Context, valBtcPK *bbn.BIP340PubKey) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	prefixedStore := prefix.NewStore(storeAdapter, types.PubRandKey)
 	return prefix.NewStore(prefixedStore, valBtcPK.MustMarshal())
 }

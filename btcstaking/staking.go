@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
@@ -12,7 +13,6 @@ import (
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
@@ -91,7 +91,7 @@ func BuildSlashingTxFromOutpoint(
 	stakingOutput wire.OutPoint,
 	stakingAmount, fee int64,
 	slashingAddress, changeAddress btcutil.Address,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 ) (*wire.MsgTx, error) {
 	// Validate staking amount
 	if stakingAmount <= 0 {
@@ -196,7 +196,7 @@ func BuildSlashingTxFromStakingTx(
 	stakingTx *wire.MsgTx,
 	stakingOutputIdx uint32,
 	slashingAddress, changeAddress btcutil.Address,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 	fee int64,
 ) (*wire.MsgTx, error) {
 	// Get the staking output at the specified index from the staking transaction
@@ -243,7 +243,7 @@ func BuildSlashingTxFromStakingTxStrict(
 	stakingOutputIdx uint32,
 	slashingAddress, changeAddress btcutil.Address,
 	fee int64,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 	net *chaincfg.Params,
 ) (*wire.MsgTx, error) {
 	// Get the staking output at the specified index from the staking transaction
@@ -264,7 +264,7 @@ func BuildSlashingTxFromStakingTxStrict(
 		slashingRate)
 }
 
-// Transfer transaction is a transaction which:
+// IsTransferTx Transfer transaction is a transaction which:
 // - has exactly one input
 // - has exactly one output
 func IsTransferTx(tx *wire.MsgTx) error {
@@ -283,7 +283,7 @@ func IsTransferTx(tx *wire.MsgTx) error {
 	return nil
 }
 
-// Simple transfer transaction is a transaction which:
+// IsSimpleTransfer Simple transfer transaction is a transaction which:
 // - has exactly one input
 // - has exactly one output
 // - is not replacable
@@ -317,7 +317,7 @@ func IsSimpleTransfer(tx *wire.MsgTx) error {
 func ValidateSlashingTx(
 	slashingTx *wire.MsgTx,
 	slashingAddress btcutil.Address,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 	slashingTxMinFee, stakingOutputValue int64,
 ) error {
 	// Verify that the slashing transaction is not nil.
@@ -408,7 +408,7 @@ func CheckTransactions(
 	fundingTransaction *wire.MsgTx,
 	fundingOutputIdx uint32,
 	slashingTxMinFee int64,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 	slashingAddress btcutil.Address,
 	net *chaincfg.Params,
 ) error {
@@ -653,14 +653,14 @@ func VerifyTransactionSigWithOutputData(
 }
 
 // IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
-func IsSlashingRateValid(slashingRate sdk.Dec) bool {
+func IsSlashingRateValid(slashingRate sdkmath.LegacyDec) bool {
 	// Check if the slashing rate is between 0 and 1
-	if slashingRate.LTE(sdk.ZeroDec()) || slashingRate.GTE(sdk.OneDec()) {
+	if slashingRate.LTE(sdkmath.LegacyZeroDec()) || slashingRate.GTE(sdkmath.LegacyOneDec()) {
 		return false
 	}
 
 	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
-	multipliedRate := slashingRate.Mul(sdk.NewDec(100))
+	multipliedRate := slashingRate.Mul(sdkmath.LegacyNewDec(100))
 
 	// Truncate the rate to remove decimal places
 	truncatedRate := multipliedRate.TruncateDec()

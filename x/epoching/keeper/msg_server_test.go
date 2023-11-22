@@ -7,7 +7,6 @@ import (
 
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
@@ -18,8 +17,8 @@ func TestMsgWrappedDelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx := helper.GenAndApplyEmptyBlock(r)
-	wctx := sdk.WrapSDKContext(ctx)
+	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name      string
@@ -34,7 +33,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedDelegate(tc.req)
-		_, err := msgSrvr.WrappedDelegate(wctx, wrappedMsg)
+		_, err := msgSrvr.WrappedDelegate(ctx, wrappedMsg)
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {
@@ -48,8 +47,8 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx := helper.GenAndApplyEmptyBlock(r)
-	wctx := sdk.WrapSDKContext(ctx)
+	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name      string
@@ -64,7 +63,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedUndelegate(tc.req)
-		_, err := msgSrvr.WrappedUndelegate(wctx, wrappedMsg)
+		_, err := msgSrvr.WrappedUndelegate(ctx, wrappedMsg)
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {
@@ -78,8 +77,8 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	helper := testepoching.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx := helper.GenAndApplyEmptyBlock(r)
-	wctx := sdk.WrapSDKContext(ctx)
+	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	require.NoError(t, err)
 
 	testCases := []struct {
 		name      string
@@ -95,7 +94,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	for _, tc := range testCases {
 		wrappedMsg := types.NewMsgWrappedBeginRedelegate(tc.req)
 
-		_, err := msgSrvr.WrappedBeginRedelegate(wctx, wrappedMsg)
+		_, err := msgSrvr.WrappedBeginRedelegate(ctx, wrappedMsg)
 		if tc.expectErr {
 			require.Error(t, err)
 		} else {

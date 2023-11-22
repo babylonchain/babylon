@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"context"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -12,7 +13,6 @@ import (
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/wire"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,15 +38,15 @@ func NewMockHooks() *MockHooks {
 	}
 }
 
-func (m *MockHooks) AfterBTCRollForward(_ sdk.Context, headerInfo *types.BTCHeaderInfo) {
+func (m *MockHooks) AfterBTCRollForward(_ context.Context, headerInfo *types.BTCHeaderInfo) {
 	m.AfterBTCRollForwardStore = append(m.AfterBTCRollForwardStore, headerInfo)
 }
 
-func (m *MockHooks) AfterBTCRollBack(_ sdk.Context, headerInfo *types.BTCHeaderInfo) {
+func (m *MockHooks) AfterBTCRollBack(_ context.Context, headerInfo *types.BTCHeaderInfo) {
 	m.AfterBTCRollBackStore = append(m.AfterBTCRollBackStore, headerInfo)
 }
 
-func (m *MockHooks) AfterBTCHeaderInserted(_ sdk.Context, headerInfo *types.BTCHeaderInfo) {
+func (m *MockHooks) AfterBTCHeaderInserted(_ context.Context, headerInfo *types.BTCHeaderInfo) {
 	m.AfterBTCHeaderInsertedStore = append(m.AfterBTCHeaderInsertedStore, headerInfo)
 }
 
@@ -60,7 +60,7 @@ func genRandomChain(
 	t *testing.T,
 	r *rand.Rand,
 	k *keeper.Keeper,
-	ctx sdk.Context,
+	ctx context.Context,
 	initialHeight uint64,
 	chainLength uint64,
 ) (*types.BTCHeaderInfo, *datagen.BTCHeaderPartialChain) {
@@ -82,7 +82,7 @@ func genRandomChain(
 
 func checkTip(
 	t *testing.T,
-	ctx sdk.Context,
+	ctx context.Context,
 	blcKeeper *keeper.Keeper,
 	expectedWork sdkmath.Uint,
 	expectedHeight uint64,

@@ -63,10 +63,10 @@ func FuzzBlock(f *testing.F) {
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		height := datagen.RandomInt(r, 100)
-		lch := datagen.GenRandomByteArray(r, 32)
+		appHash := datagen.GenRandomByteArray(r, 32)
 		ib := &types.IndexedBlock{
-			Height:         height,
-			LastCommitHash: lch,
+			Height:  height,
+			AppHash: appHash,
 		}
 
 		if datagen.RandomInt(r, 2) == 1 {
@@ -80,7 +80,7 @@ func FuzzBlock(f *testing.F) {
 		resp, err := keeper.Block(ctx, req)
 		require.NoError(t, err)
 		require.Equal(t, height, resp.Block.Height)
-		require.Equal(t, lch, resp.Block.LastCommitHash)
+		require.Equal(t, appHash, resp.Block.AppHash)
 	})
 }
 
@@ -101,8 +101,8 @@ func FuzzListBlocks(f *testing.F) {
 		indexedBlocks := make(map[uint64]*types.IndexedBlock)
 		for i := startHeight; i < startHeight+numIndexedBlocks; i++ {
 			ib := &types.IndexedBlock{
-				Height:         i,
-				LastCommitHash: datagen.GenRandomByteArray(r, 32),
+				Height:  i,
+				AppHash: datagen.GenRandomByteArray(r, 32),
 			}
 			// randomly finalise some of them
 			if datagen.RandomInt(r, 2) == 1 {
@@ -133,7 +133,7 @@ func FuzzListBlocks(f *testing.F) {
 			require.LessOrEqual(t, len(resp1.Blocks), int(limit)) // check if pagination takes effect
 			require.EqualValues(t, resp1.Pagination.Total, len(finalizedIndexedBlocks))
 			for _, actualIB := range resp1.Blocks {
-				require.Equal(t, finalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+				require.Equal(t, finalizedIndexedBlocks[actualIB.Height].AppHash, actualIB.AppHash)
 			}
 		}
 
@@ -152,7 +152,7 @@ func FuzzListBlocks(f *testing.F) {
 			require.LessOrEqual(t, len(resp2.Blocks), int(limit)) // check if pagination takes effect
 			require.EqualValues(t, resp2.Pagination.Total, len(nonFinalizedIndexedBlocks))
 			for _, actualIB := range resp2.Blocks {
-				require.Equal(t, nonFinalizedIndexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+				require.Equal(t, nonFinalizedIndexedBlocks[actualIB.Height].AppHash, actualIB.AppHash)
 			}
 		}
 
@@ -170,7 +170,7 @@ func FuzzListBlocks(f *testing.F) {
 		require.LessOrEqual(t, len(resp3.Blocks), int(limit)) // check if pagination takes effect
 		require.EqualValues(t, resp3.Pagination.Total, len(indexedBlocks))
 		for _, actualIB := range resp3.Blocks {
-			require.Equal(t, indexedBlocks[actualIB.Height].LastCommitHash, actualIB.LastCommitHash)
+			require.Equal(t, indexedBlocks[actualIB.Height].AppHash, actualIB.AppHash)
 		}
 	})
 }
@@ -322,8 +322,8 @@ func FuzzListEvidences(f *testing.F) {
 		require.LessOrEqual(t, len(resp.Evidences), int(limit))     // check if pagination takes effect
 		require.EqualValues(t, resp.Pagination.Total, numEvidences) // ensure evidences before startHeight are not included
 		for _, actualEvidence := range resp.Evidences {
-			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].CanonicalLastCommitHash, actualEvidence.CanonicalLastCommitHash)
-			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].ForkLastCommitHash, actualEvidence.ForkLastCommitHash)
+			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].CanonicalAppHash, actualEvidence.CanonicalAppHash)
+			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].ForkAppHash, actualEvidence.ForkAppHash)
 		}
 	})
 }

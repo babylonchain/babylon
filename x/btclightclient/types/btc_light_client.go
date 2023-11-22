@@ -256,7 +256,7 @@ func (d *DisableHeaderInTheFutureValidationTimeSource) AdjustedTime() time.Time 
 	return d.h.Timestamp
 }
 
-func (d *DisableHeaderInTheFutureValidationTimeSource) AddTimeSample(id string, timeVal time.Time) {
+func (d *DisableHeaderInTheFutureValidationTimeSource) AddTimeSample(_ string, _ time.Time) {
 	//no op
 }
 
@@ -390,7 +390,8 @@ func (l *BtcLightClient) InsertHeaders(readStore BtcChainReadStore, headers []*w
 		tipOfNewChain := store.headers[len(store.headers)-1]
 
 		if tipOfNewChain.totalWork.LTE(currentTip.totalWork) {
-			return nil, fmt.Errorf("new chain work %d, is not better than current tip work %d: %w", tipOfNewChain.totalWork, currentTip.totalWork, ErrChainWithNotEnoughWork)
+			return nil, fmt.Errorf("new chain work %s, is not better than current tip work %s: %w",
+				tipOfNewChain.totalWork.String(), currentTip.totalWork.String(), ErrChainWithNotEnoughWork)
 		}
 
 		return &InsertResult{

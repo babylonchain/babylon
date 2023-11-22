@@ -1,58 +1,54 @@
 package cli_test
 
 import (
-	"bytes"
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"fmt"
+	"github.com/babylonchain/babylon/app"
+	"github.com/cosmos/cosmos-sdk/testutil"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"io"
 	"path/filepath"
 	"testing"
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/cosmos/cosmos-sdk/testutil/mock"
-	"github.com/golang/mock/gomock"
-
-	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
-
 	abci "github.com/cometbft/cometbft/abci/types"
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	tmbytes "github.com/cometbft/cometbft/libs/bytes"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/privval"
 	testutilcli "github.com/babylonchain/babylon/testutil/cli"
 	checkpointcli "github.com/babylonchain/babylon/x/checkpointing/client/cli"
 )
 
-type mockTendermintRPC struct {
+type mockCometRPC struct {
 	rpcclientmock.Client
 
 	responseQuery abci.ResponseQuery
 }
 
-func newMockTendermintRPC(respQuery abci.ResponseQuery) mockTendermintRPC {
-	return mockTendermintRPC{responseQuery: respQuery}
+func newMockCometRPC(respQuery abci.ResponseQuery) mockCometRPC {
+	return mockCometRPC{responseQuery: respQuery}
 }
 
-func (mockTendermintRPC) BroadcastTxSync(_ context.Context, _ tmtypes.Tx) (*coretypes.ResultBroadcastTx, error) {
+func (mockCometRPC) BroadcastTxSync(_ context.Context, _ tmtypes.Tx) (*coretypes.ResultBroadcastTx, error) {
 	return &coretypes.ResultBroadcastTx{}, nil
 }
 
-func (m mockTendermintRPC) ABCIQueryWithOptions(
+func (m mockCometRPC) ABCIQueryWithOptions(
 	_ context.Context,
 	_ string, _ tmbytes.HexBytes,
 	_ rpcclient.ABCIQueryOptions,
@@ -64,7 +60,7 @@ type CLITestSuite struct {
 	suite.Suite
 
 	kr        keyring.Keyring
-	encCfg    params.EncodingConfig
+	encCfg    *params.EncodingConfig
 	baseCtx   client.Context
 	clientCtx client.Context
 	addrs     []sdk.AccAddress
@@ -72,46 +68,43 @@ type CLITestSuite struct {
 
 func (s *CLITestSuite) SetupSuite() {
 	s.encCfg = app.GetEncodingConfig()
-	s.kr = keyring.NewInMemory(s.encCfg.Marshaler)
-	ctrl := gomock.NewController(s.T())
-	mockAccountRetriever := mock.NewMockAccountRetriever(ctrl)
-	mockAccountRetriever.EXPECT().EnsureExists(gomock.Any(), gomock.Any()).Return(nil)
-	mockAccountRetriever.EXPECT().GetAccountNumberSequence(gomock.Any(), gomock.Any()).Return(uint64(0), uint64(0), nil)
+	s.kr = keyring.NewInMemory(s.encCfg.Codec)
 	s.baseCtx = client.Context{}.
 		WithKeyring(s.kr).
 		WithTxConfig(s.encCfg.TxConfig).
-		WithCodec(s.encCfg.Marshaler).
-		WithClient(mockTendermintRPC{Client: rpcclientmock.Client{}}).
-		WithAccountRetriever(mockAccountRetriever).
+		WithCodec(s.encCfg.Codec).
+		WithClient(mockCometRPC{Client: rpcclientmock.Client{}}).
+		WithAccountRetriever(client.MockAccountRetriever{}).
 		WithOutput(io.Discard).
 		WithChainID("test-chain")
 
-	var outBuf bytes.Buffer
 	ctxGen := func() client.Context {
-		bz, _ := s.encCfg.Marshaler.Marshal(&sdk.TxResponse{})
-		c := newMockTendermintRPC(abci.ResponseQuery{
+		bz, _ := s.encCfg.Codec.Marshal(&sdk.TxResponse{})
+		c := newMockCometRPC(abci.ResponseQuery{
 			Value: bz,
 		})
 		return s.baseCtx.WithClient(c)
 	}
-	s.clientCtx = ctxGen().WithOutput(&outBuf)
+	s.clientCtx = ctxGen()
+
 	s.addrs = make([]sdk.AccAddress, 0)
 	for i := 0; i < 3; i++ {
-		k, _, err := s.clientCtx.Keyring.NewMnemonic(fmt.Sprintf("NewWrappedValidator%v", i), keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
+		k, _, err := s.clientCtx.Keyring.NewMnemonic("NewValidator", keyring.English, sdk.FullFundraiserPath, keyring.DefaultBIP39Passphrase, hd.Secp256k1)
 		s.Require().NoError(err)
 
-		pub, _ := k.GetPubKey()
+		pub, err := k.GetPubKey()
+		s.Require().NoError(err)
 
 		newAddr := sdk.AccAddress(pub.Address())
 		s.addrs = append(s.addrs, newAddr)
 	}
 }
 
-// test cases copied from https://github.com/cosmos/cosmos-sdk/blob/dabcedce71b43161c8357d051715d0d3a0919883/x/staking/client/cli/tx_test.go#L191
+// test cases copied from https://github.com/cosmos/cosmos-sdk/blob/v0.50.1/x/staking/client/cli/tx_test.go#L163
 func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	require := s.Require()
 	homeDir := s.T().TempDir()
-	nodeCfg := tmconfig.DefaultConfig()
+	nodeCfg := cmtconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
 	require.NoError(err)
@@ -119,103 +112,145 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
 	require.NoError(err)
 	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
-	cmd := checkpointcli.CmdWrappedCreateValidator()
+	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))
 
 	consPrivKey := wrappedPV.GetValPrivKey()
-	consPubKey, err := cryptocodec.FromTmPubKeyInterface(consPrivKey.PubKey())
+	consPubKey, err := cryptocodec.FromCmtPubKeyInterface(consPrivKey.PubKey())
 	require.NoError(err)
 	consPubKeyBz, err := s.clientCtx.Codec.MarshalInterfaceJSON(consPubKey)
 	require.NoError(err)
 	require.NotNil(consPubKeyBz)
 
+	validJSON := fmt.Sprintf(`
+	{
+  		"pubkey": %s,
+  		"amount": "%dstake",
+  		"moniker": "NewValidator",
+		"identity": "AFAF00C4",
+		"website": "https://newvalidator.io",
+		"security": "contact@newvalidator.io",
+		"details": "'Hey, I am a new validator. Please delegate!'",
+  		"commission-rate": "0.5",
+  		"commission-max-rate": "1.0",
+  		"commission-max-change-rate": "0.1",
+  		"min-self-delegation": "1"
+	}`, consPubKeyBz, 100)
+	validJSONFile := testutil.WriteToNewTempFile(s.T(), validJSON)
+	defer validJSONFile.Close()
+
+	validJSONWithoutOptionalFields := fmt.Sprintf(`
+	{
+  		"pubkey": %s,
+  		"amount": "%dstake",
+  		"moniker": "NewValidator",
+  		"commission-rate": "0.5",
+  		"commission-max-rate": "1.0",
+  		"commission-max-change-rate": "0.1",
+  		"min-self-delegation": "1"
+	}`, consPubKeyBz, 100)
+	validJSONWOOptionalFile := testutil.WriteToNewTempFile(s.T(), validJSONWithoutOptionalFields)
+	defer validJSONWOOptionalFile.Close()
+
+	noAmountJSON := fmt.Sprintf(`
+	{
+  		"pubkey": %s,
+  		"moniker": "NewValidator",
+  		"commission-rate": "0.5",
+  		"commission-max-rate": "1.0",
+  		"commission-max-change-rate": "0.1",
+  		"min-self-delegation": "1"
+	}`, consPubKeyBz)
+	noAmountJSONFile := testutil.WriteToNewTempFile(s.T(), noAmountJSON)
+	defer noAmountJSONFile.Close()
+
+	noPubKeyJSON := fmt.Sprintf(`
+	{
+  		"amount": "%dstake",
+  		"moniker": "NewValidator",
+  		"commission-rate": "0.5",
+  		"commission-max-rate": "1.0",
+  		"commission-max-change-rate": "0.1",
+  		"min-self-delegation": "1"
+	}`, 100)
+	noPubKeyJSONFile := testutil.WriteToNewTempFile(s.T(), noPubKeyJSON)
+	defer noPubKeyJSONFile.Close()
+
+	noMonikerJSON := fmt.Sprintf(`
+	{
+  		"pubkey": {"@type":"/cosmos.crypto.ed25519.PubKey","key":"oWg2ISpLF405Jcm2vXV+2v4fnjodh6aafuIdeoW+rUw="},
+  		"amount": "%dstake",
+  		"commission-rate": "0.5",
+  		"commission-max-rate": "1.0",
+  		"commission-max-change-rate": "0.1",
+  		"min-self-delegation": "1"
+	}`, 100)
+	noMonikerJSONFile := testutil.WriteToNewTempFile(s.T(), noMonikerJSON)
+	defer noMonikerJSONFile.Close()
+
 	testCases := []struct {
 		name         string
 		args         []string
-		expectErr    bool
-		expectedCode uint32
-		respType     proto.Message
+		expectErrMsg string
 	}{
 		{
 			"invalid transaction (missing amount)",
 			[]string{
-				fmt.Sprintf("--%s=AFAF00C4", cli.FlagIdentity),
-				fmt.Sprintf("--%s=https://newvalidator.io", cli.FlagWebsite),
-				fmt.Sprintf("--%s=contact@newvalidator.io", cli.FlagSecurityContact),
-				fmt.Sprintf("--%s='Hey, I am a new validator. Please delegate!'", cli.FlagDetails),
-				fmt.Sprintf("--%s=0.5", cli.FlagCommissionRate),
-				fmt.Sprintf("--%s=1.0", cli.FlagCommissionMaxRate),
-				fmt.Sprintf("--%s=0.1", cli.FlagCommissionMaxChangeRate),
-				fmt.Sprintf("--%s=1", cli.FlagMinSelfDelegation),
+				noAmountJSONFile.Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
 			},
-			true, 0, nil,
+			"must specify amount of coins to bond",
 		},
 		{
 			"invalid transaction (missing pubkey)",
 			[]string{
-				fmt.Sprintf("--%s=%dstake", cli.FlagAmount, 100),
-				fmt.Sprintf("--%s=AFAF00C4", cli.FlagIdentity),
-				fmt.Sprintf("--%s=https://newvalidator.io", cli.FlagWebsite),
-				fmt.Sprintf("--%s=contact@newvalidator.io", cli.FlagSecurityContact),
-				fmt.Sprintf("--%s='Hey, I am a new validator. Please delegate!'", cli.FlagDetails),
-				fmt.Sprintf("--%s=0.5", cli.FlagCommissionRate),
-				fmt.Sprintf("--%s=1.0", cli.FlagCommissionMaxRate),
-				fmt.Sprintf("--%s=0.1", cli.FlagCommissionMaxChangeRate),
-				fmt.Sprintf("--%s=1", cli.FlagMinSelfDelegation),
+				noPubKeyJSONFile.Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
 			},
-			true, 0, nil,
+			"must specify the JSON encoded pubkey",
 		},
 		{
 			"invalid transaction (missing moniker)",
 			[]string{
-				fmt.Sprintf("--%s=%s", cli.FlagPubKey, consPubKeyBz),
-				fmt.Sprintf("--%s=%dstake", cli.FlagAmount, 100),
-				fmt.Sprintf("--%s=AFAF00C4", cli.FlagIdentity),
-				fmt.Sprintf("--%s=https://newvalidator.io", cli.FlagWebsite),
-				fmt.Sprintf("--%s=contact@newvalidator.io", cli.FlagSecurityContact),
-				fmt.Sprintf("--%s='Hey, I am a new validator. Please delegate!'", cli.FlagDetails),
-				fmt.Sprintf("--%s=0.5", cli.FlagCommissionRate),
-				fmt.Sprintf("--%s=1.0", cli.FlagCommissionMaxRate),
-				fmt.Sprintf("--%s=0.1", cli.FlagCommissionMaxChangeRate),
-				fmt.Sprintf("--%s=1", cli.FlagMinSelfDelegation),
+				noMonikerJSONFile.Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 10)).String()),
 				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
 			},
-			true, 0, nil,
+			"must specify the moniker name",
 		},
 		{
-			"valid transaction",
+			"valid transaction with all fields",
 			[]string{
-				fmt.Sprintf("--%s=%s", cli.FlagPubKey, consPubKeyBz),
-				fmt.Sprintf("--%s=%dstake", cli.FlagAmount, 100),
-				fmt.Sprintf("--%s=NewValidator", cli.FlagMoniker),
-				fmt.Sprintf("--%s=AFAF00C4", cli.FlagIdentity),
-				fmt.Sprintf("--%s=https://newvalidator.io", cli.FlagWebsite),
-				fmt.Sprintf("--%s=contact@newvalidator.io", cli.FlagSecurityContact),
-				fmt.Sprintf("--%s='Hey, I am a new validator. Please delegate!'", cli.FlagDetails),
-				fmt.Sprintf("--%s=0.5", cli.FlagCommissionRate),
-				fmt.Sprintf("--%s=1.0", cli.FlagCommissionMaxRate),
-				fmt.Sprintf("--%s=0.1", cli.FlagCommissionMaxChangeRate),
-				fmt.Sprintf("--%s=1", cli.FlagMinSelfDelegation),
+				validJSONFile.Name(),
 				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
 				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
 				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
-				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(10))).String()),
 				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
 			},
-			false, 0, &sdk.TxResponse{},
+			"",
+		},
+		{
+			"valid transaction without optional fields",
+			[]string{
+				validJSONWOOptionalFile.Name(),
+				fmt.Sprintf("--%s=%s", flags.FlagFrom, s.addrs[0]),
+				fmt.Sprintf("--%s=true", flags.FlagSkipConfirmation),
+				fmt.Sprintf("--%s=%s", flags.FlagBroadcastMode, flags.BroadcastSync),
+				fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(10))).String()),
+				fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir),
+			},
+			"",
 		},
 	}
 
@@ -223,16 +258,14 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 		tc := tc
 		s.Run(tc.name, func() {
 			out, err := testutilcli.ExecTestCLICmd(s.clientCtx, cmd, tc.args)
-			if tc.expectErr {
+			if tc.expectErrMsg != "" {
 				require.Error(err)
+				require.Contains(err.Error(), tc.expectErrMsg)
 			} else {
 				require.NoError(err, "test: %s\noutput: %s", tc.name, out.String())
-				err = s.clientCtx.Codec.UnmarshalJSON(out.Bytes(), tc.respType)
+				resp := &sdk.TxResponse{}
+				err = s.clientCtx.Codec.UnmarshalJSON(out.Bytes(), resp)
 				require.NoError(err, out.String(), "test: %s, output\n:", tc.name, out.String())
-
-				txResp := tc.respType.(*sdk.TxResponse)
-				require.Equal(tc.expectedCode, txResp.Code,
-					"test: %s, output\n:", tc.name, out.String())
 			}
 		})
 	}

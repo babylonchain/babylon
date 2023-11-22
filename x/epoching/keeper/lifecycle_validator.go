@@ -1,8 +1,10 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -28,15 +30,15 @@ func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state
 	return nil
 }
 
-func (k Keeper) SetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress, lc *types.ValidatorLifecycle) {
+func (k Keeper) SetValLifecycle(ctx context.Context, valAddr sdk.ValAddress, lc *types.ValidatorLifecycle) {
 	store := k.valLifecycleStore(ctx)
 	lcBytes := k.cdc.MustMarshal(lc)
-	store.Set([]byte(valAddr), lcBytes)
+	store.Set(valAddr, lcBytes)
 }
 
-func (k Keeper) GetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.ValidatorLifecycle {
+func (k Keeper) GetValLifecycle(ctx context.Context, valAddr sdk.ValAddress) *types.ValidatorLifecycle {
 	store := k.valLifecycleStore(ctx)
-	lcBytes := store.Get([]byte(valAddr))
+	lcBytes := store.Get(valAddr)
 	if len(lcBytes) == 0 {
 		return nil
 	}
@@ -49,7 +51,7 @@ func (k Keeper) GetValLifecycle(ctx sdk.Context, valAddr sdk.ValAddress) *types.
 // prefix: ValidatorLifecycleKey
 // key: val_addr
 // value: ValidatorLifecycle object
-func (k Keeper) valLifecycleStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.ValidatorLifecycleKey)
+func (k Keeper) valLifecycleStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.ValidatorLifecycleKey)
 }

@@ -17,7 +17,6 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
-		wctx := sdk.WrapSDKContext(ctx)
 
 		// generate a list of random RewardGauge map and insert them to KVStore
 		// where in each map, key is stakeholder type and address is the reward gauge
@@ -43,7 +42,7 @@ func FuzzRewardGaugesQuery(f *testing.F) {
 			req := &types.QueryRewardGaugesRequest{
 				Address: sAddrList[i].String(),
 			}
-			resp, err := keeper.RewardGauges(wctx, req)
+			resp, err := keeper.RewardGauges(ctx, req)
 			require.NoError(t, err)
 			for sTypeStr, rg := range rgMaps[i] {
 				require.Equal(t, rg.Coins, resp.RewardGauges[sTypeStr].Coins)
@@ -58,7 +57,6 @@ func FuzzBTCStakingGaugeQuery(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
-		wctx := sdk.WrapSDKContext(ctx)
 
 		// generate a list of random Gauges at random heights, then insert them to KVStore
 		heightList := []uint64{}
@@ -77,9 +75,9 @@ func FuzzBTCStakingGaugeQuery(f *testing.F) {
 			req := &types.QueryBTCStakingGaugeRequest{
 				Height: heightList[i],
 			}
-			resp, err := keeper.BTCStakingGauge(wctx, req)
+			resp, err := keeper.BTCStakingGauge(ctx, req)
 			require.NoError(t, err)
-			require.True(t, resp.Gauge.Coins.IsEqual(gaugeList[i].Coins))
+			require.True(t, resp.Gauge.Coins.Equal(gaugeList[i].Coins))
 		}
 	})
 }
@@ -90,7 +88,6 @@ func FuzzBTCTimestampingGaugeQuery(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
-		wctx := sdk.WrapSDKContext(ctx)
 
 		// generate a list of random Gauges at random heights, then insert them to KVStore
 		epochList := []uint64{}
@@ -109,9 +106,9 @@ func FuzzBTCTimestampingGaugeQuery(f *testing.F) {
 			req := &types.QueryBTCTimestampingGaugeRequest{
 				EpochNum: epochList[i],
 			}
-			resp, err := keeper.BTCTimestampingGauge(wctx, req)
+			resp, err := keeper.BTCTimestampingGauge(ctx, req)
 			require.NoError(t, err)
-			require.True(t, resp.Gauge.Coins.IsEqual(gaugeList[i].Coins))
+			require.True(t, resp.Gauge.Coins.Equal(gaugeList[i].Coins))
 		}
 	})
 }

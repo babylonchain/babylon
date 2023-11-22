@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -17,9 +18,10 @@ import (
 // - an unbonding/redelegation becomes mature when its corresponding epoch and all previous epochs have been checkpointed.
 // Triggered by the checkpointing module upon the above condition.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L32-L91)
-func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
+func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// save the current ctx for emitting events and recording lifecycle
-	currentCtx := ctx
+	currentSdkCtx := sdkCtx
 
 	// get the ctx of the last block of the given epoch, while offsetting the time to nullify UnbondingTime
 	finalizedEpoch, err := k.GetHistoricalEpoch(ctx, epochNumber)
@@ -27,21 +29,32 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 		panic(err)
 	}
 	epochBoundaryHeader := finalizedEpoch.LastBlockHeader
-	epochBoundaryHeader.Time = epochBoundaryHeader.Time.Add(k.stk.GetParams(ctx).UnbondingTime) // nullifies the effect of UnbondingTime in staking module
-	ctx = ctx.WithBlockHeader(*epochBoundaryHeader)
+	params, err := k.stk.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+	epochBoundaryHeader.Time = epochBoundaryHeader.Time.Add(params.UnbondingTime) // nullifies the effect of UnbondingTime in staking module
+	ctx = sdkCtx.WithBlockHeader(*epochBoundaryHeader)
 
 	// unbond all mature validators till the last block of the given epoch
-	matureValidators := k.getAllMatureValidators(ctx)
-	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding validators matured in epoch %d: %v", epochNumber, matureValidators))
-	k.stk.UnbondAllMatureValidators(ctx)
+	matureValidators := k.getAllMatureValidators(sdkCtx)
+	currentSdkCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding validators matured in epoch %d: %v", epochNumber, matureValidators))
+	if err := k.stk.UnbondAllMatureValidators(ctx); err != nil {
+		panic(err)
+	}
 	// record state update of being UNBONDED for mature validators
 	for _, valAddr := range matureValidators {
-		k.RecordNewValState(currentCtx, valAddr, types.BondState_UNBONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
+		if err := k.RecordNewValState(currentSdkCtx, valAddr, types.BondState_UNBONDED); err != nil {
+			panic(err)
+		}
 	}
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
-	matureUnbonds := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
-	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations matured in epoch %d: %v", epochNumber, matureUnbonds))
+	matureUnbonds, err := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
+	if err != nil {
+		panic(err)
+	}
+	currentSdkCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following unbonding delegations matured in epoch %d: %v", epochNumber, matureUnbonds))
 
 	// unbond all mature delegations
 	for _, dvPair := range matureUnbonds {
@@ -60,9 +73,11 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the validator
-		k.RecordNewDelegationState(currentCtx, delAddr, valAddr, types.BondState_UNBONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valAddr, types.BondState_UNBONDED); err != nil {
+			panic(err)
+		}
 
-		currentCtx.EventManager().EmitEvent(
+		currentSdkCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				stakingtypes.EventTypeCompleteUnbonding,
 				sdk.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
@@ -73,8 +88,11 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 	}
 
 	// get all mature redelegations till the epoch boundary from the red queue.
-	matureRedelegations := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
-	currentCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations matured in epoch %d: %v", epochNumber, matureRedelegations))
+	matureRedelegations, err := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
+	if err != nil {
+		panic(err)
+	}
+	currentSdkCtx.Logger().Info(fmt.Sprintf("Epoching: start completing the following redelegations matured in epoch %d: %v", epochNumber, matureRedelegations))
 
 	// finish all mature redelegations
 	for _, dvvTriplet := range matureRedelegations {
@@ -102,11 +120,17 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		k.RecordNewDelegationState(currentCtx, delAddr, valSrcAddr, types.BondState_UNBONDED) //nolint:errcheck // either we ignore the error here, or propoagate up the stack
-		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_CREATED)  //nolint:errcheck // either we ignore the error here, or propoagate up the stack
-		k.RecordNewDelegationState(currentCtx, delAddr, valDstAddr, types.BondState_BONDED)   //nolint:errcheck // either we ignore the error here, or propoagate up the stack
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valSrcAddr, types.BondState_UNBONDED); err != nil {
+			panic(err)
+		}
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valDstAddr, types.BondState_CREATED); err != nil {
+			panic(err)
+		}
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valDstAddr, types.BondState_BONDED); err != nil {
+			panic(err)
+		}
 
-		currentCtx.EventManager().EmitEvent(
+		currentSdkCtx.EventManager().EmitEvent(
 			sdk.NewEvent(
 				stakingtypes.EventTypeCompleteRedelegation,
 				sdk.NewAttribute(sdk.AttributeKeyAmount, balances.String()),
@@ -126,7 +150,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx sdk.Context, epochNumber uint64) {
 // * Updates relevant indices.
 // Triggered upon every epoch.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/x/staking/keeper/val_state_change.go#L18-L30)
-func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx sdk.Context) []abci.ValidatorUpdate {
+func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) []abci.ValidatorUpdate {
 	validatorUpdates, err := k.stk.ApplyAndReturnValidatorSetUpdates(ctx)
 	if err != nil {
 		panic(err)
@@ -148,7 +172,10 @@ func (k Keeper) getAllMatureValidators(ctx sdk.Context) []sdk.ValAddress {
 	// ValidatorQueueKey | timeBzLen (8-byte big endian) | timeBz | heightBz (8-byte big endian),
 	// so it may be possible that certain validator addresses that are iterated
 	// over are not ready to unbond, so an explicit check is required.
-	unbondingValIterator := k.stk.ValidatorQueueIterator(ctx, blockTime, blockHeight)
+	unbondingValIterator, err := k.stk.ValidatorQueueIterator(ctx, blockTime, blockHeight)
+	if err != nil {
+		panic(fmt.Errorf("could not get iterator to validator's queue: %s", err))
+	}
 	defer unbondingValIterator.Close()
 
 	for ; unbondingValIterator.Valid(); unbondingValIterator.Next() {
@@ -167,9 +194,9 @@ func (k Keeper) getAllMatureValidators(ctx sdk.Context) []sdk.ValAddress {
 				if err != nil {
 					panic(err)
 				}
-				val, found := k.stk.GetValidator(ctx, addr)
-				if !found {
-					panic("validator in the unbonding queue was not found")
+				val, err := k.stk.GetValidator(ctx, addr)
+				if err != nil {
+					panic(err)
 				}
 
 				if !val.IsUnbonding() {

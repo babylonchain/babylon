@@ -1,7 +1,9 @@
 package keeper
 
 import (
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"context"
+	"cosmossdk.io/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bbn "github.com/babylonchain/babylon/types"
@@ -9,7 +11,7 @@ import (
 )
 
 // GetEpochChainInfo gets the latest chain info of a given epoch for a given chain ID
-func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) (*types.ChainInfo, error) {
+func (k Keeper) GetEpochChainInfo(ctx context.Context, chainID string, epochNumber uint64) (*types.ChainInfo, error) {
 	if !k.EpochChainInfoExists(ctx, chainID, epochNumber) {
 		return nil, types.ErrEpochChainInfoNotFound
 	}
@@ -23,14 +25,14 @@ func (k Keeper) GetEpochChainInfo(ctx sdk.Context, chainID string, epochNumber u
 }
 
 // EpochChainInfoExists checks if the latest chain info exists of a given epoch for a given chain ID
-func (k Keeper) EpochChainInfoExists(ctx sdk.Context, chainID string, epochNumber uint64) bool {
+func (k Keeper) EpochChainInfoExists(ctx context.Context, chainID string, epochNumber uint64) bool {
 	store := k.epochChainInfoStore(ctx, chainID)
 	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
 	return store.Has(epochNumberBytes)
 }
 
 // GetEpochHeaders gets the headers timestamped in a given epoch, in the ascending order
-func (k Keeper) GetEpochHeaders(ctx sdk.Context, chainID string, epochNumber uint64) ([]*types.IndexedHeader, error) {
+func (k Keeper) GetEpochHeaders(ctx context.Context, chainID string, epochNumber uint64) ([]*types.IndexedHeader, error) {
 	headers := []*types.IndexedHeader{}
 
 	// find the last timestamped header of this chain in the epoch
@@ -70,11 +72,11 @@ func (k Keeper) GetEpochHeaders(ctx sdk.Context, chainID string, epochNumber uin
 
 // recordEpochChainInfo records the chain info for a given epoch number of given chain ID
 // where the latest chain info is retrieved from the chain info indexer
-func (k Keeper) recordEpochChainInfo(ctx sdk.Context, chainID string, epochNumber uint64) {
+func (k Keeper) recordEpochChainInfo(ctx context.Context, chainID string, epochNumber uint64) {
 	// get the latest known chain info
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
-		k.Logger(ctx).Debug("chain info does not exist yet, nothing to record")
+		k.Logger(sdk.UnwrapSDKContext(ctx)).Debug("chain info does not exist yet, nothing to record")
 		return
 	}
 	// NOTE: we can record epoch chain info without ancestor since IBC connection can be established at any height
@@ -86,9 +88,9 @@ func (k Keeper) recordEpochChainInfo(ctx sdk.Context, chainID string, epochNumbe
 // prefix: EpochChainInfoKey || chainID
 // key: epochNumber
 // value: ChainInfo
-func (k Keeper) epochChainInfoStore(ctx sdk.Context, chainID string) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	epochChainInfoStore := prefix.NewStore(store, types.EpochChainInfoKey)
+func (k Keeper) epochChainInfoStore(ctx context.Context, chainID string) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	epochChainInfoStore := prefix.NewStore(storeAdapter, types.EpochChainInfoKey)
 	chainIDBytes := []byte(chainID)
 	return prefix.NewStore(epochChainInfoStore, chainIDBytes)
 }

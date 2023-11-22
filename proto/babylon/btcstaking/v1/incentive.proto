@@ -24,7 +24,7 @@ message BTCValDistInfo {
     // commission defines the commission rate of BTC validator
     string commission = 3  [
         (cosmos_proto.scalar)  = "cosmos.Dec",
-        (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+        (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
     ];
     // total_voting_power is the total voting power of the BTC validator
     uint64 total_voting_power = 4;

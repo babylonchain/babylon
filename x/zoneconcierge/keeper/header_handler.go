@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -9,8 +10,8 @@ import (
 )
 
 // HandleHeaderWithValidCommit handles a CZ header with a valid QC
-func (k Keeper) HandleHeaderWithValidCommit(ctx sdk.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
-	babylonHeader := ctx.BlockHeader()
+func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
+	babylonHeader := sdk.UnwrapSDKContext(ctx).BlockHeader()
 	indexedHeader := types.IndexedHeader{
 		ChainId:       header.ChainId,
 		Hash:          header.Hash,

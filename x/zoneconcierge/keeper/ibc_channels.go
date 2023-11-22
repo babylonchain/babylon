@@ -1,16 +1,17 @@
 package keeper
 
 import (
+	"context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 )
 
-func (k Keeper) GetAllChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
-	return k.channelKeeper.GetAllChannels(ctx)
+func (k Keeper) GetAllChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
+	return k.channelKeeper.GetAllChannels(sdk.UnwrapSDKContext(ctx))
 }
 
 // GetAllOpenZCChannels returns all open channels that are connected to ZoneConcierge's port
-func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedChannel {
+func (k Keeper) GetAllOpenZCChannels(ctx context.Context) []channeltypes.IdentifiedChannel {
 	zcPort := k.GetPort(ctx)
 	channels := k.GetAllChannels(ctx)
 
@@ -30,10 +31,11 @@ func (k Keeper) GetAllOpenZCChannels(ctx sdk.Context) []channeltypes.IdentifiedC
 
 // isChannelUninitialized checks whether the channel is not initilialised yet
 // it's done by checking whether the packet sequence number is 1 (the first sequence number) or not
-func (k Keeper) isChannelUninitialized(ctx sdk.Context, channel channeltypes.IdentifiedChannel) bool {
+func (k Keeper) isChannelUninitialized(ctx context.Context, channel channeltypes.IdentifiedChannel) bool {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	portID := channel.PortId
 	channelID := channel.ChannelId
 	// NOTE: channeltypes.IdentifiedChannel object is guaranteed to exist, so guaranteed to be found
-	nextSeqSend, _ := k.channelKeeper.GetNextSequenceSend(ctx, portID, channelID)
+	nextSeqSend, _ := k.channelKeeper.GetNextSequenceSend(sdkCtx, portID, channelID)
 	return nextSeqSend == 1
 }

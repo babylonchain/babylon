@@ -12,7 +12,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type RetargetInfo struct {
@@ -93,7 +92,7 @@ func GenRandomBTCHeaderBits(r *rand.Rand) uint32 {
 	if difficulty == 0 {
 		difficulty += 1
 	}
-	bigDifficulty := sdk.NewUint(difficulty)
+	bigDifficulty := sdkmath.NewUint(difficulty)
 
 	workBits := blockchain.BigToCompact(bigDifficulty.BigInt())
 	return workBits

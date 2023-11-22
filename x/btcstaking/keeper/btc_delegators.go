@@ -1,18 +1,19 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
+	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // AddBTCDelegation indexes the given BTC delegation in the BTC delegator store, and saves
 // it under BTC delegation store
-func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
+func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
 	}
@@ -54,7 +55,7 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 // updateBTCDelegation updates an existing BTC delegation w.r.t. validator BTC PK, delegator BTC PK,
 // and staking tx hash by using a given function
 func (k Keeper) updateBTCDelegation(
-	ctx sdk.Context,
+	ctx context.Context,
 	stakingTxHashStr string,
 	modifyFn func(*types.BTCDelegation) error,
 ) error {
@@ -77,7 +78,7 @@ func (k Keeper) updateBTCDelegation(
 
 // AddCovenantSigToBTCDelegation adds a given covenant sig to a BTC delegation
 // with the given (val PK, del PK, staking tx hash) tuple
-func (k Keeper) AddCovenantSigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string, covenantSig *bbn.BIP340Signature) error {
+func (k Keeper) AddCovenantSigToBTCDelegation(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string, covenantSig *bbn.BIP340Signature) error {
 	addCovenantSig := func(btcDel *types.BTCDelegation) error {
 		if btcDel.CovenantSig != nil {
 			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a covenant signature", stakingTxHash)
@@ -90,7 +91,7 @@ func (k Keeper) AddCovenantSigToBTCDelegation(ctx sdk.Context, valBTCPK *bbn.BIP
 }
 
 func (k Keeper) AddUndelegationToBTCDelegation(
-	ctx sdk.Context,
+	ctx context.Context,
 	stakingTxHash string,
 	ud *types.BTCUndelegation,
 ) error {
@@ -106,7 +107,7 @@ func (k Keeper) AddUndelegationToBTCDelegation(
 }
 
 func (k Keeper) AddCovenantSigsToUndelegation(
-	ctx sdk.Context,
+	ctx context.Context,
 	stakingTxHash string,
 	unbondingTxSig *bbn.BIP340Signature,
 	slashUnbondingTxSig *bbn.BIP340Signature,
@@ -129,7 +130,7 @@ func (k Keeper) AddCovenantSigsToUndelegation(
 }
 
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given BTC validator
-func (k Keeper) hasBTCDelegatorDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
+func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
 	valBTCPKBytes := valBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
 
@@ -141,7 +142,7 @@ func (k Keeper) hasBTCDelegatorDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340
 }
 
 // getBTCDelegatorDelegationIndex gets the BTC delegation index with a given BTC PK under a given BTC validator
-func (k Keeper) getBTCDelegatorDelegationIndex(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegationIndex, error) {
+func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegationIndex, error) {
 	valBTCPKBytes := valBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
 	store := k.btcDelegatorStore(ctx, valBTCPK)
@@ -163,7 +164,7 @@ func (k Keeper) getBTCDelegatorDelegationIndex(ctx sdk.Context, valBTCPK *bbn.BI
 }
 
 // getBTCDelegatorDelegations gets the BTC delegations with a given BTC PK under a given BTC validator
-func (k Keeper) getBTCDelegatorDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
+func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
 	btcDelIndex, err := k.getBTCDelegatorDelegationIndex(ctx, valBTCPK, delBTCPK)
 	if err != nil {
 		return nil, err
@@ -183,7 +184,7 @@ func (k Keeper) getBTCDelegatorDelegations(ctx sdk.Context, valBTCPK *bbn.BIP340
 }
 
 // GetBTCDelegation gets the BTC delegation with a given staking tx hash
-func (k Keeper) GetBTCDelegation(ctx sdk.Context, stakingTxHashStr string) (*types.BTCDelegation, error) {
+func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*types.BTCDelegation, error) {
 	// decode staking tx hash string
 	stakingTxHash, err := chainhash.NewHashFromStr(stakingTxHashStr)
 	if err != nil {
@@ -197,8 +198,8 @@ func (k Keeper) GetBTCDelegation(ctx sdk.Context, stakingTxHashStr string) (*typ
 // prefix: BTCDelegatorKey || validator's Bitcoin secp256k1 PK
 // key: delegator's Bitcoin secp256k1 PK
 // value: BTCDelegatorDelegationIndex (a list of BTCDelegations' staking tx hashes)
-func (k Keeper) btcDelegatorStore(ctx sdk.Context, valBTCPK *bbn.BIP340PubKey) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	delegationStore := prefix.NewStore(store, types.BTCDelegatorKey)
+func (k Keeper) btcDelegatorStore(ctx context.Context, valBTCPK *bbn.BIP340PubKey) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	delegationStore := prefix.NewStore(storeAdapter, types.BTCDelegatorKey)
 	return prefix.NewStore(delegationStore, valBTCPK.MustMarshal())
 }

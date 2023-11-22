@@ -1,10 +1,10 @@
 package types
 
 import (
-	context "context"
+	"context"
 
 	bbn "github.com/babylonchain/babylon/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
@@ -13,26 +13,25 @@ import (
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	connectiontypes "github.com/cosmos/ibc-go/v7/modules/core/03-connection/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	connectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 )
 
 // AccountKeeper defines the contract required for account APIs.
 type AccountKeeper interface {
 	GetModuleAddress(name string) sdk.AccAddress
-	GetModuleAccount(ctx sdk.Context, name string) types.ModuleAccountI
+	GetModuleAccount(ctx context.Context, name string) sdk.ModuleAccountI
 }
 
 // BankKeeper defines the expected bank keeper
 type BankKeeper interface {
-	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-	BurnCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromAccountToModule(ctx sdk.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
+	SendCoins(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+	MintCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
+	BurnCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromAccountToModule(ctx context.Context, senderAddr sdk.AccAddress, recipientModule string, amt sdk.Coins) error
 	BlockedAddr(addr sdk.AccAddress) bool
 }
 
@@ -82,32 +81,32 @@ type ScopedKeeper interface {
 }
 
 type BTCLightClientKeeper interface {
-	GetTipInfo(ctx sdk.Context) *btclctypes.BTCHeaderInfo
-	GetMainChainFrom(ctx sdk.Context, startHeight uint64) []*btclctypes.BTCHeaderInfo
-	GetMainChainUpTo(ctx sdk.Context, depth uint64) []*btclctypes.BTCHeaderInfo
-	GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *btclctypes.BTCHeaderInfo
+	GetTipInfo(ctx context.Context) *btclctypes.BTCHeaderInfo
+	GetMainChainFrom(ctx context.Context, startHeight uint64) []*btclctypes.BTCHeaderInfo
+	GetMainChainUpTo(ctx context.Context, depth uint64) []*btclctypes.BTCHeaderInfo
+	GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) *btclctypes.BTCHeaderInfo
 }
 
 type BtcCheckpointKeeper interface {
-	GetParams(ctx sdk.Context) (p btcctypes.Params)
-	GetEpochData(ctx sdk.Context, e uint64) *btcctypes.EpochData
-	GetBestSubmission(ctx sdk.Context, e uint64) (btcctypes.BtcStatus, *btcctypes.SubmissionKey, error)
-	GetSubmissionData(ctx sdk.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
-	GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *btcctypes.EpochData) *btcctypes.SubmissionBtcInfo
+	GetParams(ctx context.Context) (p btcctypes.Params)
+	GetEpochData(ctx context.Context, e uint64) *btcctypes.EpochData
+	GetBestSubmission(ctx context.Context, e uint64) (btcctypes.BtcStatus, *btcctypes.SubmissionKey, error)
+	GetSubmissionData(ctx context.Context, sk btcctypes.SubmissionKey) *btcctypes.SubmissionData
+	GetEpochBestSubmissionBtcInfo(ctx context.Context, ed *btcctypes.EpochData) *btcctypes.SubmissionBtcInfo
 }
 
 type CheckpointingKeeper interface {
-	GetBLSPubKeySet(ctx sdk.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
-	GetRawCheckpoint(ctx sdk.Context, epochNumber uint64) (*checkpointingtypes.RawCheckpointWithMeta, error)
+	GetBLSPubKeySet(ctx context.Context, epochNumber uint64) ([]*checkpointingtypes.ValidatorWithBlsKey, error)
+	GetRawCheckpoint(ctx context.Context, epochNumber uint64) (*checkpointingtypes.RawCheckpointWithMeta, error)
 }
 
 type EpochingKeeper interface {
-	GetHistoricalEpoch(ctx sdk.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
-	GetEpoch(ctx sdk.Context) *epochingtypes.Epoch
-	ProveAppHashInEpoch(ctx sdk.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error)
+	GetHistoricalEpoch(ctx context.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
+	GetEpoch(ctx context.Context) *epochingtypes.Epoch
+	ProveAppHashInEpoch(ctx context.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error)
 }
 
-// TMClient is a Tendermint client that allows to query tx inclusion proofs
-type TMClient interface {
+// CometClient is a Comet client that allows to query tx inclusion proofs
+type CometClient interface {
 	Tx(ctx context.Context, hash []byte, prove bool) (*ctypes.ResultTx, error)
 }

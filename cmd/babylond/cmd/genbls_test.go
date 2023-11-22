@@ -7,8 +7,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	tmconfig "github.com/cometbft/cometbft/config"
-	"github.com/cometbft/cometbft/libs/log"
+	dbm "github.com/cosmos/cosmos-db"
+
+	"cosmossdk.io/log"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -28,19 +30,27 @@ import (
 
 func Test_GenBlsCmd(t *testing.T) {
 	home := t.TempDir()
-	encodingConfig := app.GetEncodingConfig()
 	logger := log.NewNopLogger()
-	cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	err = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Marshaler)
+	signer, err := app.SetupPrivSigner()
+	require.NoError(t, err)
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+		Logger:             logger,
+		DB:                 dbm.NewMemDB(),
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            app.EmptyAppOptions{},
+	})
+	err = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
 	require.NoError(t, err)
 
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
 	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(bbn.AppCodec()).
 		WithHomeDir(home).
-		WithTxConfig(encodingConfig.TxConfig)
+		WithTxConfig(bbn.TxConfig())
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
@@ -58,7 +68,7 @@ func Test_GenBlsCmd(t *testing.T) {
 	require.NoError(t, err)
 
 	// create BLS keys
-	nodeCfg := tmconfig.DefaultConfig()
+	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
 	filePV := privval.GenWrappedFilePV(keyPath, statePath)

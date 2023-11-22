@@ -35,7 +35,7 @@ var (
 
 type testCheckpointData struct {
 	epoch            uint64
-	lastCommitHash   []byte
+	appHash          []byte
 	bitmap           []byte
 	blsSig           []byte
 	submitterAddress []byte
@@ -460,7 +460,7 @@ func GenerateMessageWithRandomSubmitter(blockResults []*BlockCreationResult) *bt
 func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData {
 	return testCheckpointData{
 		epoch:            e,
-		lastCommitHash:   GenRandomByteArray(r, txformat.LastCommitHashLength),
+		appHash:          GenRandomByteArray(r, txformat.AppHashLength),
 		bitmap:           GenRandomByteArray(r, txformat.BitMapLength),
 		blsSig:           GenRandomByteArray(r, txformat.BlsSigLength),
 		submitterAddress: GenRandomByteArray(r, txformat.AddressLength),
@@ -504,7 +504,7 @@ func RandomRawCheckpointDataForEpoch(r *rand.Rand, e uint64) (*TestRawCheckpoint
 	checkpointData := getRandomCheckpointDataForEpoch(r, e)
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
-		LastCommitHash:   checkpointData.lastCommitHash,
+		AppHash:          checkpointData.appHash,
 		BitMap:           checkpointData.bitmap,
 		SubmitterAddress: checkpointData.submitterAddress,
 		BlsSig:           checkpointData.blsSig,

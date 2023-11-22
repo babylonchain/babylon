@@ -1,7 +1,7 @@
 package types
 
 import (
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -36,8 +36,8 @@ func (rdc *RewardDistCache) FilterVotedBTCVals(voterBTCPKs map[string]struct{}) 
 }
 
 // GetBTCValPortion returns the portion of a BTC validator's voting power out of the total voting power
-func (rdc *RewardDistCache) GetBTCValPortion(v *BTCValDistInfo) sdk.Dec {
-	return math.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(math.LegacyNewDec(int64(rdc.TotalVotingPower)))
+func (rdc *RewardDistCache) GetBTCValPortion(v *BTCValDistInfo) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(rdc.TotalVotingPower)))
 }
 
 func NewBTCValDistInfo(btcVal *BTCValidator) *BTCValDistInfo {
@@ -67,10 +67,10 @@ func (v *BTCValDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wVal
 	}
 }
 
-// GetBTCValPortion returns the portion of a BTC delegation's voting power out of
+// GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
 // the BTC validator's total voting power
-func (v *BTCValDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdk.Dec {
-	return math.LegacyNewDec(int64(d.VotingPower)).QuoTruncate(math.LegacyNewDec(int64(v.TotalVotingPower)))
+func (v *BTCValDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(int64(d.VotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalVotingPower)))
 }
 
 func (d *BTCDelDistInfo) GetAddress() sdk.AccAddress {

@@ -17,7 +17,8 @@ func FuzzEpochValSet(f *testing.F) {
 
 		helper := testepoching.NewHelperWithValSet(t)
 		ctx, keeper := helper.Ctx, helper.EpochingKeeper
-		valSet := helper.StakingKeeper.GetLastValidators(helper.Ctx)
+		valSet, err := helper.StakingKeeper.GetLastValidators(helper.Ctx)
+		require.NoError(t, err)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 		require.Equal(t, len(valSet), len(getValSet))
 		for i := range getValSet {
@@ -29,7 +30,8 @@ func FuzzEpochValSet(f *testing.F) {
 		// generate a random number of new blocks
 		numIncBlocks := r.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			require.NoError(t, err)
 		}
 
 		// check whether the validator set remains the same or not

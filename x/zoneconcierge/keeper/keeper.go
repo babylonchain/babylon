@@ -1,21 +1,22 @@
 package keeper
 
 import (
+	"context"
+	corestoretypes "cosmossdk.io/core/store"
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 )
 
 type (
 	Keeper struct {
-		cdc      codec.BinaryCodec
-		storeKey storetypes.StoreKey
-		memKey   storetypes.StoreKey
+		cdc          codec.BinaryCodec
+		storeService corestoretypes.KVStoreService
 
 		ics4Wrapper         types.ICS4Wrapper
 		clientKeeper        types.ClientKeeper
@@ -27,8 +28,8 @@ type (
 		checkpointingKeeper types.CheckpointingKeeper
 		btccKeeper          types.BtcCheckpointKeeper
 		epochingKeeper      types.EpochingKeeper
-		tmClient            types.TMClient
-		storeQuerier        sdk.Queryable
+		cmtClient           types.CometClient
+		storeQuerier        storetypes.Queryable
 		scopedKeeper        types.ScopedKeeper
 		// the address capable of executing a MsgUpdateParams message. Typically, this
 		// should be the x/gov module account.
@@ -38,8 +39,7 @@ type (
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey,
-	memKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
 	ics4Wrapper types.ICS4Wrapper,
 	clientKeeper types.ClientKeeper,
 	channelKeeper types.ChannelKeeper,
@@ -50,15 +50,14 @@ func NewKeeper(
 	checkpointingKeeper types.CheckpointingKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	epochingKeeper types.EpochingKeeper,
-	tmClient types.TMClient,
-	storeQuerier sdk.Queryable,
+	cmtClient types.CometClient,
+	storeQuerier storetypes.Queryable,
 	scopedKeeper types.ScopedKeeper,
 	authority string,
 ) *Keeper {
 	return &Keeper{
 		cdc:                 cdc,
-		storeKey:            storeKey,
-		memKey:              memKey,
+		storeService:        storeService,
 		ics4Wrapper:         ics4Wrapper,
 		clientKeeper:        clientKeeper,
 		channelKeeper:       channelKeeper,
@@ -69,7 +68,7 @@ func NewKeeper(
 		checkpointingKeeper: checkpointingKeeper,
 		btccKeeper:          btccKeeper,
 		epochingKeeper:      epochingKeeper,
-		tmClient:            tmClient,
+		cmtClient:           cmtClient,
 		storeQuerier:        storeQuerier,
 		scopedKeeper:        scopedKeeper,
 		authority:           authority,
@@ -95,15 +94,21 @@ func (k Keeper) BindPort(ctx sdk.Context, portID string) error {
 }
 
 // GetPort returns the portID for the transfer module. Used in ExportGenesis
-func (k Keeper) GetPort(ctx sdk.Context) string {
-	store := ctx.KVStore(k.storeKey)
-	return string(store.Get(types.PortKey))
+func (k Keeper) GetPort(ctx context.Context) string {
+	store := k.storeService.OpenKVStore(ctx)
+	port, err := store.Get(types.PortKey)
+	if err != nil {
+		panic(err)
+	}
+	return string(port)
 }
 
 // SetPort sets the portID for the transfer module. Used in InitGenesis
-func (k Keeper) SetPort(ctx sdk.Context, portID string) {
-	store := ctx.KVStore(k.storeKey)
-	store.Set(types.PortKey, []byte(portID))
+func (k Keeper) SetPort(ctx context.Context, portID string) {
+	store := k.storeService.OpenKVStore(ctx)
+	if err := store.Set(types.PortKey, []byte(portID)); err != nil {
+		panic(err)
+	}
 }
 
 // AuthenticateCapability wraps the scopedKeeper's AuthenticateCapability function

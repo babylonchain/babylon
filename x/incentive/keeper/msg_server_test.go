@@ -9,14 +9,13 @@ import (
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/incentive/keeper"
 	"github.com/babylonchain/babylon/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {
 	k, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
-	return keeper.NewMsgServerImpl(*k), sdk.WrapSDKContext(ctx)
+	return keeper.NewMsgServerImpl(*k), ctx
 }
 
 func TestMsgServer(t *testing.T) {

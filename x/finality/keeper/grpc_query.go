@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"cosmossdk.io/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -155,8 +156,8 @@ func (k Keeper) ListEvidences(ctx context.Context, req *types.QueryListEvidences
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	var evidences []*types.Evidence
 
-	store := sdkCtx.KVStore(k.storeKey)
-	eStore := prefix.NewStore(store, types.EvidenceKey)
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	eStore := prefix.NewStore(storeAdapter, types.EvidenceKey)
 
 	pageRes, err := query.FilteredPaginate(eStore, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
 		// NOTE: we have to strip the rest bytes after the first 32 bytes

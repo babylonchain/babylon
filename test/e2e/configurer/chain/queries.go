@@ -68,7 +68,7 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 	return bz, nil
 }
 
-// QueryModuleAccoint returns the address of a given module
+// QueryModuleAddress returns the address of a given module
 func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
 	path := fmt.Sprintf("/cosmos/auth/v1beta1/module_accounts/%s", name)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
@@ -79,7 +79,7 @@ func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
 		return sdk.AccAddress{}, err
 	}
 	// cast to account
-	var account authtypes.AccountI
+	var account sdk.AccountI
 	if err := util.EncodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account); err != nil {
 		return sdk.AccAddress{}, err
 	}
@@ -107,7 +107,7 @@ func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
 
 	var supplyResp banktypes.QuerySupplyOfResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &supplyResp); err != nil {
-		return sdk.NewInt(0), err
+		return sdkmath.NewInt(0), err
 	}
 	return supplyResp.Amount.Amount, nil
 }

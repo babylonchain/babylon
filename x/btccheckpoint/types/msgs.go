@@ -18,7 +18,7 @@ var (
 	_ sdk.Msg = (*MsgUpdateParams)(nil)
 )
 
-// Parse and Validate transactions which should contain OP_RETURN data.
+// ParseTwoProofs Parse and Validate transactions which should contain OP_RETURN data.
 // OP_RETURN bytes are not validated in any way. It is up to the caller attach
 // semantic meaning and validity to those bytes.
 // Returned ParsedProofs are in same order as raw proofs

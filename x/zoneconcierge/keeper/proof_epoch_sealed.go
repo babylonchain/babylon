@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
@@ -47,7 +48,7 @@ func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, err
 // - the epoch's validator set has a valid multisig over the sealer header
 // - the epoch's validator set is committed to the sealer header's last_commit_hash
 // - the epoch's metadata is committed to the sealer header's last_commit_hash
-func (k Keeper) ProveEpochSealed(ctx sdk.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
+func (k Keeper) ProveEpochSealed(ctx context.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
 	var (
 		proof = &types.ProofEpochSealed{}
 		err   error
@@ -113,13 +114,13 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 
 	// ensure the raw checkpoint's last_commit_hash is same as in the header of the sealer header
 	// NOTE: since this proof is assembled by a Babylon node who has verified the checkpoint,
-	// the two lch values should always be the same, otherwise this Babylon node is malicious.
+	// the two appHash values should always be the same, otherwise this Babylon node is malicious.
 	// This is different from the checkpoint verification rules in checkpointing,
-	// where a checkpoint with valid BLS multisig but different lch signals a dishonest majority equivocation.
-	lchInCkpt := rawCkpt.LastCommitHash
-	lchInSealerHeader := checkpointingtypes.LastCommitHash(epoch.SealerHeader.LastCommitHash)
-	if !lchInCkpt.Equal(lchInSealerHeader) {
-		return fmt.Errorf("LastCommitHash is not same in rawCkpt (%s) and epoch's SealerHeader (%s)", lchInCkpt.String(), lchInSealerHeader.String())
+	// where a checkpoint with valid BLS multisig but different appHash signals a dishonest majority equivocation.
+	appHashInCkpt := rawCkpt.AppHash
+	appHashInSealerHeader := checkpointingtypes.AppHash(epoch.SealerHeader.AppHash)
+	if !appHashInCkpt.Equal(appHashInSealerHeader) {
+		return fmt.Errorf("AppHash is not same in rawCkpt (%s) and epoch's SealerHeader (%s)", appHashInCkpt.String(), appHashInSealerHeader.String())
 	}
 
 	/*

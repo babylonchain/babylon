@@ -42,7 +42,7 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 		return false
 	} else if ih.Height != ih2.Height {
 		return false
-	} else if !bytes.Equal(ih.BabylonHeader.LastCommitHash, ih2.BabylonHeader.LastCommitHash) {
+	} else if !bytes.Equal(ih.BabylonHeader.AppHash, ih2.BabylonHeader.AppHash) {
 		return false
 	} else if ih.BabylonEpoch != ih2.BabylonEpoch {
 		return false

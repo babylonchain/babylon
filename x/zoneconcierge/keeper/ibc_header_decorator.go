@@ -4,8 +4,8 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	clienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
+	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
 
 func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) (*types.HeaderInfo, *ibctmtypes.ClientState) {
@@ -19,7 +19,7 @@ func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) 
 	if err != nil {
 		return nil, nil
 	}
-	// ensure the ClientMsg is a Tendermint header
+	// ensure the ClientMsg is a Comet header
 	ibctmHeader, ok := clientMsg.(*ibctmtypes.Header)
 	if !ok {
 		return nil, nil
@@ -29,7 +29,7 @@ func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) 
 	headerInfo := &types.HeaderInfo{
 		ClientId: msgUpdateClient.ClientId,
 		ChainId:  ibctmHeader.Header.ChainID,
-		Hash:     ibctmHeader.Header.LastCommitHash,
+		Hash:     ibctmHeader.Header.AppHash,
 		Height:   uint64(ibctmHeader.Header.Height),
 		Time:     ibctmHeader.Header.Time,
 	}
@@ -39,13 +39,13 @@ func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) 
 	if !exist {
 		return nil, nil
 	}
-	// ensure the clientState is a Tendermint clientState
-	tmClientState, ok := clientState.(*ibctmtypes.ClientState)
+	// ensure the clientState is a Comet clientState
+	cmtClientState, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
 		return nil, nil
 	}
 
-	return headerInfo, tmClientState
+	return headerInfo, cmtClientState
 }
 
 type IBCHeaderDecorator struct {

@@ -211,11 +211,11 @@ func (pop *ProofOfPossession) VerifyECDSA(babylonPK cryptotypes.PubKey, bip340PK
 	return nil
 }
 
-func (p *ProofOfPossession) ValidateBasic() error {
-	if len(p.BabylonSig) == 0 {
+func (pop *ProofOfPossession) ValidateBasic() error {
+	if len(pop.BabylonSig) == 0 {
 		return fmt.Errorf("empty Babylon signature")
 	}
-	if p.BtcSig == nil {
+	if pop.BtcSig == nil {
 		return fmt.Errorf("empty BTC signature")
 	}
 

@@ -5,11 +5,10 @@
 package types
 
 import (
+	context "context"
 	reflect "reflect"
 
 	types "github.com/babylonchain/babylon/x/btcstaking/types"
-	types0 "github.com/cosmos/cosmos-sdk/types"
-	types1 "github.com/cosmos/cosmos-sdk/x/auth/types"
 	gomock "github.com/golang/mock/gomock"
 )
 
@@ -37,7 +36,7 @@ func (m *MockBTCStakingKeeper) EXPECT() *MockBTCStakingKeeperMockRecorder {
 }
 
 // GetBTCStakingActivatedHeight mocks base method.
-func (m *MockBTCStakingKeeper) GetBTCStakingActivatedHeight(ctx types0.Context) (uint64, error) {
+func (m *MockBTCStakingKeeper) GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBTCStakingActivatedHeight", ctx)
 	ret0, _ := ret[0].(uint64)
@@ -52,7 +51,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCStakingActivatedHeight(ctx int
 }
 
 // GetBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) GetBTCValidator(ctx types0.Context, valBTCPK []byte) (*types.BTCValidator, error) {
+func (m *MockBTCStakingKeeper) GetBTCValidator(ctx context.Context, valBTCPK []byte) (*types.BTCValidator, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBTCValidator", ctx, valBTCPK)
 	ret0, _ := ret[0].(*types.BTCValidator)
@@ -67,7 +66,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCValidator(ctx, valBTCPK interf
 }
 
 // GetRewardDistCache mocks base method.
-func (m *MockBTCStakingKeeper) GetRewardDistCache(ctx types0.Context, height uint64) (*types.RewardDistCache, error) {
+func (m *MockBTCStakingKeeper) GetRewardDistCache(ctx context.Context, height uint64) (*types.RewardDistCache, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRewardDistCache", ctx, height)
 	ret0, _ := ret[0].(*types.RewardDistCache)
@@ -82,7 +81,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetRewardDistCache(ctx, height inter
 }
 
 // GetVotingPower mocks base method.
-func (m *MockBTCStakingKeeper) GetVotingPower(ctx types0.Context, valBTCPK []byte, height uint64) uint64 {
+func (m *MockBTCStakingKeeper) GetVotingPower(ctx context.Context, valBTCPK []byte, height uint64) uint64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVotingPower", ctx, valBTCPK, height)
 	ret0, _ := ret[0].(uint64)
@@ -96,7 +95,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, valBTCPK, height
 }
 
 // GetVotingPowerTable mocks base method.
-func (m *MockBTCStakingKeeper) GetVotingPowerTable(ctx types0.Context, height uint64) map[string]uint64 {
+func (m *MockBTCStakingKeeper) GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVotingPowerTable", ctx, height)
 	ret0, _ := ret[0].(map[string]uint64)
@@ -110,7 +109,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPowerTable(ctx, height inte
 }
 
 // HasBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) HasBTCValidator(ctx types0.Context, valBTCPK []byte) bool {
+func (m *MockBTCStakingKeeper) HasBTCValidator(ctx context.Context, valBTCPK []byte) bool {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "HasBTCValidator", ctx, valBTCPK)
 	ret0, _ := ret[0].(bool)
@@ -124,7 +123,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasBTCValidator(ctx, valBTCPK interf
 }
 
 // RecordRewardDistCache mocks base method.
-func (m *MockBTCStakingKeeper) RecordRewardDistCache(ctx types0.Context) {
+func (m *MockBTCStakingKeeper) RecordRewardDistCache(ctx context.Context) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RecordRewardDistCache", ctx)
 }
@@ -136,7 +135,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) RecordRewardDistCache(ctx interface{
 }
 
 // RemoveRewardDistCache mocks base method.
-func (m *MockBTCStakingKeeper) RemoveRewardDistCache(ctx types0.Context, height uint64) {
+func (m *MockBTCStakingKeeper) RemoveRewardDistCache(ctx context.Context, height uint64) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RemoveRewardDistCache", ctx, height)
 }
@@ -148,7 +147,7 @@ func (mr *MockBTCStakingKeeperMockRecorder) RemoveRewardDistCache(ctx, height in
 }
 
 // SlashBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx types0.Context, valBTCPK []byte) error {
+func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx context.Context, valBTCPK []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SlashBTCValidator", ctx, valBTCPK)
 	ret0, _ := ret[0].(error)
@@ -159,80 +158,6 @@ func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx types0.Context, valBTCPK []
 func (mr *MockBTCStakingKeeperMockRecorder) SlashBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlashBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SlashBTCValidator), ctx, valBTCPK)
-}
-
-// MockAccountKeeper is a mock of AccountKeeper interface.
-type MockAccountKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockAccountKeeperMockRecorder
-}
-
-// MockAccountKeeperMockRecorder is the mock recorder for MockAccountKeeper.
-type MockAccountKeeperMockRecorder struct {
-	mock *MockAccountKeeper
-}
-
-// NewMockAccountKeeper creates a new mock instance.
-func NewMockAccountKeeper(ctrl *gomock.Controller) *MockAccountKeeper {
-	mock := &MockAccountKeeper{ctrl: ctrl}
-	mock.recorder = &MockAccountKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
-	return m.recorder
-}
-
-// GetAccount mocks base method.
-func (m *MockAccountKeeper) GetAccount(ctx types0.Context, addr types0.AccAddress) types1.AccountI {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccount", ctx, addr)
-	ret0, _ := ret[0].(types1.AccountI)
-	return ret0
-}
-
-// GetAccount indicates an expected call of GetAccount.
-func (mr *MockAccountKeeperMockRecorder) GetAccount(ctx, addr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockAccountKeeper)(nil).GetAccount), ctx, addr)
-}
-
-// MockBankKeeper is a mock of BankKeeper interface.
-type MockBankKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockBankKeeperMockRecorder
-}
-
-// MockBankKeeperMockRecorder is the mock recorder for MockBankKeeper.
-type MockBankKeeperMockRecorder struct {
-	mock *MockBankKeeper
-}
-
-// NewMockBankKeeper creates a new mock instance.
-func NewMockBankKeeper(ctrl *gomock.Controller) *MockBankKeeper {
-	mock := &MockBankKeeper{ctrl: ctrl}
-	mock.recorder = &MockBankKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
-	return m.recorder
-}
-
-// SpendableCoins mocks base method.
-func (m *MockBankKeeper) SpendableCoins(ctx types0.Context, addr types0.AccAddress) types0.Coins {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SpendableCoins", ctx, addr)
-	ret0, _ := ret[0].(types0.Coins)
-	return ret0
-}
-
-// SpendableCoins indicates an expected call of SpendableCoins.
-func (mr *MockBankKeeperMockRecorder) SpendableCoins(ctx, addr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendableCoins", reflect.TypeOf((*MockBankKeeper)(nil).SpendableCoins), ctx, addr)
 }
 
 // MockIncentiveKeeper is a mock of IncentiveKeeper interface.
@@ -259,7 +184,7 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 }
 
 // RewardBTCStaking mocks base method.
-func (m *MockIncentiveKeeper) RewardBTCStaking(ctx types0.Context, height uint64, rdc *types.RewardDistCache) {
+func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *types.RewardDistCache) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, rdc)
 }

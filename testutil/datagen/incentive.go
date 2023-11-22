@@ -3,10 +3,11 @@ package datagen
 import (
 	"math/rand"
 
+	sdkmath "cosmossdk.io/math"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
-	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -63,7 +64,7 @@ func GenRandomWithdrawnCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 		// a subset of the coin has been withdrawn
 		amount := coin.Amount.Uint64()
 		withdrawnAmount := RandomInt(r, int(amount)-1) + 1
-		withdrawnCoin := sdk.NewCoin(coin.Denom, sdk.NewIntFromUint64(withdrawnAmount))
+		withdrawnCoin := sdk.NewCoin(coin.Denom, sdkmath.NewIntFromUint64(withdrawnAmount))
 		withdrawnCoins = withdrawnCoins.Add(withdrawnCoin)
 	}
 	return withdrawnCoins

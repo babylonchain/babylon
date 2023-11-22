@@ -14,6 +14,8 @@ option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // CreateBTCValidator creates a new BTC validator
   rpc CreateBTCValidator(MsgCreateBTCValidator) returns (MsgCreateBTCValidatorResponse);
   // CreateBTCDelegation creates a new BTC delegation
@@ -32,6 +34,8 @@ service Msg {
 
 // MsgCreateBTCValidator is the message for creating a BTC validator
 message MsgCreateBTCValidator {
+  option (cosmos.msg.v1.signer) = "signer";
+
   string signer = 1;
 
   // description defines the description terms for the BTC validator.
@@ -39,7 +43,7 @@ message MsgCreateBTCValidator {
   // commission defines the commission rate of BTC validator.
   string commission = 3 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
   // babylon_pk is the Babylon secp256k1 PK of this BTC validator
   cosmos.crypto.secp256k1.PubKey babylon_pk = 4;
@@ -54,6 +58,8 @@ message MsgCreateBTCValidatorResponse {}
 
 // MsgCreateBTCDelegation is the message for creating a BTC delegation
 message MsgCreateBTCDelegation {
+  option (cosmos.msg.v1.signer) = "signer";
+
   string signer = 1;
   // babylon_pk is the Babylon secp256k1 PK of this BTC delegation
   cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
@@ -84,6 +90,8 @@ message MsgCreateBTCDelegationResponse {}
 
 // MsgBTCUndelegate is the message undelegating existing and active delegation
 message MsgBTCUndelegate {
+  option (cosmos.msg.v1.signer) = "signer";
+
   string signer = 1;
   // unbonding_tx is bitcoin unbonding transaction i.e transaction that spends
   // staking output and sends it to the unbonding output
@@ -105,6 +113,8 @@ message MsgBTCUndelegateResponse {}
 
 // MsgAddCovenantSig is the message for handling a signature from covenant
 message MsgAddCovenantSig {
+  option (cosmos.msg.v1.signer) = "signer";
+
   string signer = 1;
   // val_pk is the Bitcoin secp256k1 PK of the BTC validator
   // the PK follows encoding in BIP-340 spec
@@ -143,6 +153,8 @@ message MsgUpdateParamsResponse {}
 
 // MsgAddCovenantUnbondingSigs is the message for handling a signature from covenant
 message MsgAddCovenantUnbondingSigs {
+  option (cosmos.msg.v1.signer) = "signer";
+
   string signer = 1;
   // val_pk is the Bitcoin secp256k1 PK of the BTC validator
   // the PK follows encoding in BIP-340 spec

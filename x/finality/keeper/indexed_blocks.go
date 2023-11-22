@@ -1,35 +1,37 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/finality/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // IndexBlock indexes the current block, saves the corresponding indexed block
 // to KVStore
-func (k Keeper) IndexBlock(ctx sdk.Context) {
-	header := ctx.BlockHeader()
+func (k Keeper) IndexBlock(ctx context.Context) {
+	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
 	ib := &types.IndexedBlock{
-		Height:         uint64(header.Height),
-		LastCommitHash: header.LastCommitHash,
-		Finalized:      false,
+		Height:    uint64(header.Height),
+		AppHash:   header.AppHash,
+		Finalized: false,
 	}
 	k.SetBlock(ctx, ib)
 }
 
-func (k Keeper) SetBlock(ctx sdk.Context, block *types.IndexedBlock) {
+func (k Keeper) SetBlock(ctx context.Context, block *types.IndexedBlock) {
 	store := k.blockStore(ctx)
 	blockBytes := k.cdc.MustMarshal(block)
 	store.Set(sdk.Uint64ToBigEndian(block.Height), blockBytes)
 }
 
-func (k Keeper) HasBlock(ctx sdk.Context, height uint64) bool {
+func (k Keeper) HasBlock(ctx context.Context, height uint64) bool {
 	store := k.blockStore(ctx)
 	return store.Has(sdk.Uint64ToBigEndian(height))
 }
 
-func (k Keeper) GetBlock(ctx sdk.Context, height uint64) (*types.IndexedBlock, error) {
+func (k Keeper) GetBlock(ctx context.Context, height uint64) (*types.IndexedBlock, error) {
 	store := k.blockStore(ctx)
 	blockBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(blockBytes) == 0 {
@@ -44,7 +46,7 @@ func (k Keeper) GetBlock(ctx sdk.Context, height uint64) (*types.IndexedBlock, e
 // prefix: BlockKey
 // key: block height
 // value: IndexedBlock
-func (k Keeper) blockStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.BlockKey)
+func (k Keeper) blockStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.BlockKey)
 }

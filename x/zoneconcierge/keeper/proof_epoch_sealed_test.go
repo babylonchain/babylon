@@ -60,12 +60,12 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 
 		// construct the rawCkpt
 		// Note that the BlsMultiSig will be generated and assigned later
-		lch := checkpointingtypes.LastCommitHash(epoch.SealerHeader.LastCommitHash)
+		appHash := checkpointingtypes.AppHash(epoch.SealerHeader.AppHash)
 		rawCkpt := &checkpointingtypes.RawCheckpoint{
-			EpochNum:       epoch.EpochNumber,
-			LastCommitHash: &lch,
-			Bitmap:         bm,
-			BlsMultiSig:    nil,
+			EpochNum:    epoch.EpochNumber,
+			AppHash:     &appHash,
+			Bitmap:      bm,
+			BlsMultiSig: nil,
 		}
 
 		// let the subset generate a BLS multisig over sealer header's last_commit_hash

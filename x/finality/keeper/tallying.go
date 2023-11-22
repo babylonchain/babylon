@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/finality/types"
@@ -15,12 +16,13 @@ import (
 // - finalised blocks (i.e., block with validator set AND QC of this validator set)
 // - non-finalisable blocks (i.e., block with no active validator)
 // but without block that has validator set AND does not receive QC
-func (k Keeper) TallyBlocks(ctx sdk.Context) {
+func (k Keeper) TallyBlocks(ctx context.Context) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	activatedHeight, err := k.BTCStakingKeeper.GetBTCStakingActivatedHeight(ctx)
 	if err != nil {
 		// invoking TallyBlocks when BTC staking protocol is not activated is a programming error
 		panic(fmt.Errorf("cannot tally a block when the BTC staking protocol hasn't been activated yet, current height: %v, activated height: %v",
-			ctx.BlockHeight(), activatedHeight))
+			sdkCtx.BlockHeight(), activatedHeight))
 	}
 
 	// start finalising blocks since max(activatedHeight, nextHeightToFinalize)
@@ -36,7 +38,7 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 	// - has validators, finalised: impossible to happen, panic
 	// - does not have validators, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
-	for i := startHeight; i <= uint64(ctx.BlockHeight()); i++ {
+	for i := startHeight; i <= uint64(sdkCtx.BlockHeight()); i++ {
 		ib, err := k.GetBlock(ctx, i)
 		if err != nil {
 			panic(err) // failing to get an existing block is a programming error
@@ -74,7 +76,7 @@ func (k Keeper) TallyBlocks(ctx sdk.Context) {
 
 // finalizeBlock sets a block to be finalised in KVStore and distributes rewards to
 // BTC validators and delegations
-func (k Keeper) finalizeBlock(ctx sdk.Context, block *types.IndexedBlock, voterBTCPKs map[string]struct{}) {
+func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, voterBTCPKs map[string]struct{}) {
 	// set block to be finalised in KVStore
 	block.Finalized = true
 	k.SetBlock(ctx, block)
@@ -108,16 +110,21 @@ func tally(valSet map[string]uint64, voterBTCPKs map[string]struct{}) bool {
 }
 
 // setNextHeightToFinalize sets the next height to finalise as the given height
-func (k Keeper) setNextHeightToFinalize(ctx sdk.Context, height uint64) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) setNextHeightToFinalize(ctx context.Context, height uint64) {
+	store := k.storeService.OpenKVStore(ctx)
 	heightBytes := sdk.Uint64ToBigEndian(height)
-	store.Set(types.NextHeightToFinalizeKey, heightBytes)
+	if err := store.Set(types.NextHeightToFinalizeKey, heightBytes); err != nil {
+		panic(err)
+	}
 }
 
 // getNextHeightToFinalize gets the next height to finalise
-func (k Keeper) getNextHeightToFinalize(ctx sdk.Context) uint64 {
-	store := ctx.KVStore(k.storeKey)
-	bz := store.Get(types.NextHeightToFinalizeKey)
+func (k Keeper) getNextHeightToFinalize(ctx context.Context) uint64 {
+	store := k.storeService.OpenKVStore(ctx)
+	bz, err := store.Get(types.NextHeightToFinalizeKey)
+	if err != nil {
+		panic(err)
+	}
 	if bz == nil {
 		return 0
 	}

@@ -15,7 +15,7 @@ func GenerateGenesisKey() *types.GenesisKey {
 	tmValPrivKey := ed255192.GenPrivKey()
 	blsPrivKey := bls12381.GenPrivKey()
 	tmValPubKey := tmValPrivKey.PubKey()
-	valPubKey, err := codec.FromTmPubKeyInterface(tmValPubKey)
+	valPubKey, err := codec.FromCmtPubKeyInterface(tmValPubKey)
 	if err != nil {
 		panic(err)
 	}

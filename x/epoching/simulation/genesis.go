@@ -1,7 +1,5 @@
 package simulation
 
-// DONTCOVER
-
 import (
 	"encoding/json"
 	"fmt"
@@ -25,7 +23,7 @@ func genEpochInterval(r *rand.Rand) uint64 {
 func RandomizedGenState(simState *module.SimulationState) {
 	var epochInterval uint64
 	simState.AppParams.GetOrGenerate(
-		simState.Cdc, EpochIntervalKey, &epochInterval, simState.Rand,
+		EpochIntervalKey, &epochInterval, simState.Rand,
 		func(r *rand.Rand) { epochInterval = genEpochInterval(r) },
 	)
 	params := types.NewParams(epochInterval)

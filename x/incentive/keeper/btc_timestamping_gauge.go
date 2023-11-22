@@ -1,16 +1,18 @@
 package keeper
 
 import (
+	"context"
 	"cosmossdk.io/math"
+	"cosmossdk.io/store/prefix"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/incentive/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // RewardBTCTimestamping distributes rewards to submitters/reporters of a checkpoint at a given epoch
 // according to the reward distribution cache
-func (k Keeper) RewardBTCTimestamping(ctx sdk.Context, epoch uint64, rdi *btcctypes.RewardDistInfo) {
+func (k Keeper) RewardBTCTimestamping(ctx context.Context, epoch uint64, rdi *btcctypes.RewardDistInfo) {
 	gauge := k.GetBTCTimestampingGauge(ctx, epoch)
 	if gauge == nil {
 		// failing to get a reward gauge at a finalised epoch is a programming error
@@ -67,7 +69,7 @@ func (k Keeper) RewardBTCTimestamping(ctx sdk.Context, epoch uint64, rdi *btccty
 	}
 }
 
-func (k Keeper) accumulateBTCTimestampingReward(ctx sdk.Context, btcTimestampingReward sdk.Coins) {
+func (k Keeper) accumulateBTCTimestampingReward(ctx context.Context, btcTimestampingReward sdk.Coins) {
 	epoch := k.epochingKeeper.GetEpoch(ctx)
 
 	// update BTC timestamping reward gauge
@@ -90,13 +92,13 @@ func (k Keeper) accumulateBTCTimestampingReward(ctx sdk.Context, btcTimestamping
 	}
 }
 
-func (k Keeper) SetBTCTimestampingGauge(ctx sdk.Context, epoch uint64, gauge *types.Gauge) {
+func (k Keeper) SetBTCTimestampingGauge(ctx context.Context, epoch uint64, gauge *types.Gauge) {
 	store := k.btcTimestampingGaugeStore(ctx)
 	gaugeBytes := k.cdc.MustMarshal(gauge)
 	store.Set(sdk.Uint64ToBigEndian(epoch), gaugeBytes)
 }
 
-func (k Keeper) GetBTCTimestampingGauge(ctx sdk.Context, epoch uint64) *types.Gauge {
+func (k Keeper) GetBTCTimestampingGauge(ctx context.Context, epoch uint64) *types.Gauge {
 	store := k.btcTimestampingGaugeStore(ctx)
 	gaugeBytes := store.Get(sdk.Uint64ToBigEndian(epoch))
 	if gaugeBytes == nil {
@@ -113,7 +115,7 @@ func (k Keeper) GetBTCTimestampingGauge(ctx sdk.Context, epoch uint64) *types.Ga
 // prefix: BTCTimestampingGaugeKey
 // key: epoch number
 // value: gauge of rewards for BTC timestamping at this epoch
-func (k Keeper) btcTimestampingGaugeStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.BTCTimestampingGaugeKey)
+func (k Keeper) btcTimestampingGaugeStore(ctx context.Context) prefix.Store {
+	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdaptor, types.BTCTimestampingGaugeKey)
 }

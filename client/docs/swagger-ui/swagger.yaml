@@ -1775,7 +1775,7 @@ paths:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -1818,7 +1818,7 @@ paths:
                         sealer_header is the 2nd header of the next epoch
 
                         This validator set has generated a BLS multisig on
-                        `last_commit_hash` of
+                        `app_hash` of
 
                         the sealer header
                       type: object
@@ -1866,7 +1866,7 @@ paths:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -2262,7 +2262,7 @@ paths:
                                 type: string
                                 format: byte
                             title: PartsetHeader
-                      last_commit_hash:
+                      app_hash:
                         type: string
                         format: byte
                         title: hashes of block data
@@ -2305,7 +2305,7 @@ paths:
                       sealer_header is the 2nd header of the next epoch
 
                       This validator set has generated a BLS multisig on
-                      `last_commit_hash` of
+                      `app_hash` of
 
                       the sealer header
                     type: object
@@ -2353,7 +2353,7 @@ paths:
                                 type: string
                                 format: byte
                             title: PartsetHeader
-                      last_commit_hash:
+                      app_hash:
                         type: string
                         format: byte
                         title: hashes of block data
@@ -5044,11 +5044,11 @@ paths:
                     title: >-
                       epoch_num defines the epoch number the raw checkpoint is
                       for
-                  last_commit_hash:
+                  app_hash:
                     type: string
                     format: byte
                     title: >-
-                      last_commit_hash defines the 'LastCommitHash' that
+                      app_hash defines the 'AppHash' that
                       individual BLS sigs are
 
                       signed on
@@ -5127,11 +5127,11 @@ paths:
                         title: >-
                           epoch_num defines the epoch number the raw checkpoint
                           is for
-                      last_commit_hash:
+                      app_hash:
                         type: string
                         format: byte
                         title: >-
-                          last_commit_hash defines the 'LastCommitHash' that
+                          app_hash defines the 'AppHash' that
                           individual BLS sigs are
 
                           signed on
@@ -5293,11 +5293,11 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: >-
-                            last_commit_hash defines the 'LastCommitHash' that
+                            app_hash defines the 'AppHash' that
                             individual BLS sigs are
 
                             signed on
@@ -5531,11 +5531,11 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: >-
-                            last_commit_hash defines the 'LastCommitHash' that
+                            app_hash defines the 'AppHash' that
                             individual BLS sigs are
 
                             signed on
@@ -5843,7 +5843,7 @@ paths:
                                 type: string
                                 format: byte
                             title: PartsetHeader
-                      last_commit_hash:
+                      app_hash:
                         type: string
                         format: byte
                         title: hashes of block data
@@ -5975,7 +5975,7 @@ paths:
                                       type: string
                                       format: byte
                                   title: PartsetHeader
-                            last_commit_hash:
+                            app_hash:
                               type: string
                               format: byte
                               title: hashes of block data
@@ -6663,7 +6663,7 @@ paths:
                                       type: string
                                       format: byte
                                   title: PartsetHeader
-                            last_commit_hash:
+                            app_hash:
                               type: string
                               format: byte
                               title: hashes of block data
@@ -6799,7 +6799,7 @@ paths:
                                             type: string
                                             format: byte
                                         title: PartsetHeader
-                                  last_commit_hash:
+                                  app_hash:
                                     type: string
                                     format: byte
                                     title: hashes of block data
@@ -7204,7 +7204,7 @@ paths:
                                       type: string
                                       format: byte
                                   title: PartsetHeader
-                            last_commit_hash:
+                            app_hash:
                               type: string
                               format: byte
                               title: hashes of block data
@@ -7340,7 +7340,7 @@ paths:
                                             type: string
                                             format: byte
                                         title: PartsetHeader
-                                  last_commit_hash:
+                                  app_hash:
                                     type: string
                                     format: byte
                                     title: hashes of block data
@@ -7753,7 +7753,7 @@ paths:
                                     type: string
                                     format: byte
                                 title: PartsetHeader
-                          last_commit_hash:
+                          app_hash:
                             type: string
                             format: byte
                             title: hashes of block data
@@ -7888,7 +7888,7 @@ paths:
                                           type: string
                                           format: byte
                                       title: PartsetHeader
-                                last_commit_hash:
+                                app_hash:
                                   type: string
                                   format: byte
                                   title: hashes of block data
@@ -8060,7 +8060,7 @@ paths:
                                 type: string
                                 format: byte
                             title: PartsetHeader
-                      last_commit_hash:
+                      app_hash:
                         type: string
                         format: byte
                         title: hashes of block data
@@ -8103,7 +8103,7 @@ paths:
                       sealer_header is the 2nd header of the next epoch
 
                       This validator set has generated a BLS multisig on
-                      `last_commit_hash` of
+                      `app_hash` of
 
                       the sealer header
                     type: object
@@ -8151,7 +8151,7 @@ paths:
                                 type: string
                                 format: byte
                             title: PartsetHeader
-                      last_commit_hash:
+                      app_hash:
                         type: string
                         format: byte
                         title: hashes of block data
@@ -8192,11 +8192,11 @@ paths:
                     title: >-
                       epoch_num defines the epoch number the raw checkpoint is
                       for
-                  last_commit_hash:
+                  app_hash:
                     type: string
                     format: byte
                     title: >-
-                      last_commit_hash defines the 'LastCommitHash' that
+                      app_hash defines the 'AppHash' that
                       individual BLS sigs are
 
                       signed on
@@ -8325,7 +8325,7 @@ paths:
                           validator_set is the validator set of the sealed epoch
 
                           This validator set has generated a BLS multisig on
-                          `last_commit_hash` of
+                          `app_hash` of
 
                           the sealer header
                       proof_epoch_info:
@@ -8781,7 +8781,7 @@ paths:
                                           type: string
                                           format: byte
                                       title: PartsetHeader
-                                last_commit_hash:
+                                app_hash:
                                   type: string
                                   format: byte
                                   title: hashes of block data
@@ -8920,7 +8920,7 @@ paths:
                                                 type: string
                                                 format: byte
                                             title: PartsetHeader
-                                      last_commit_hash:
+                                      app_hash:
                                         type: string
                                         format: byte
                                         title: hashes of block data
@@ -9096,7 +9096,7 @@ paths:
                                       type: string
                                       format: byte
                                   title: PartsetHeader
-                            last_commit_hash:
+                            app_hash:
                               type: string
                               format: byte
                               title: hashes of block data
@@ -9139,7 +9139,7 @@ paths:
                             sealer_header is the 2nd header of the next epoch
 
                             This validator set has generated a BLS multisig on
-                            `last_commit_hash` of
+                            `app_hash` of
 
                             the sealer header
                           type: object
@@ -9187,7 +9187,7 @@ paths:
                                       type: string
                                       format: byte
                                   title: PartsetHeader
-                            last_commit_hash:
+                            app_hash:
                               type: string
                               format: byte
                               title: hashes of block data
@@ -9228,11 +9228,11 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: >-
-                            last_commit_hash defines the 'LastCommitHash' that
+                            app_hash defines the 'AppHash' that
                             individual BLS sigs are
 
                             signed on
@@ -9364,7 +9364,7 @@ paths:
                                 epoch
 
                                 This validator set has generated a BLS multisig
-                                on `last_commit_hash` of
+                                on `app_hash` of
 
                                 the sealer header
                             proof_epoch_info:
@@ -9803,7 +9803,7 @@ paths:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -10234,7 +10234,7 @@ paths:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -12141,7 +12141,7 @@ definitions:
                     type: string
                     format: byte
                 title: PartsetHeader
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: hashes of block data
@@ -12181,7 +12181,7 @@ definitions:
         title: >-
           sealer_header is the 2nd header of the next epoch
 
-          This validator set has generated a BLS multisig on `last_commit_hash`
+          This validator set has generated a BLS multisig on `app_hash`
           of
 
           the sealer header
@@ -12230,7 +12230,7 @@ definitions:
                     type: string
                     format: byte
                 title: PartsetHeader
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: hashes of block data
@@ -12409,7 +12409,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -12450,7 +12450,7 @@ definitions:
               sealer_header is the 2nd header of the next epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of
+              `app_hash` of
 
               the sealer header
             type: object
@@ -12498,7 +12498,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -13054,7 +13054,7 @@ definitions:
                           type: string
                           format: byte
                       title: PartsetHeader
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: hashes of block data
@@ -13095,7 +13095,7 @@ definitions:
                 sealer_header is the 2nd header of the next epoch
 
                 This validator set has generated a BLS multisig on
-                `last_commit_hash` of
+                `app_hash` of
 
                 the sealer header
               type: object
@@ -13143,7 +13143,7 @@ definitions:
                           type: string
                           format: byte
                       title: PartsetHeader
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: hashes of block data
@@ -14889,7 +14889,7 @@ definitions:
                 type: string
                 format: byte
             title: PartsetHeader
-      last_commit_hash:
+      app_hash:
         type: string
         format: byte
         title: hashes of block data
@@ -15078,11 +15078,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: >-
-              last_commit_hash defines the 'LastCommitHash' that individual BLS
+              app_hash defines the 'AppHash' that individual BLS
               sigs are
 
               signed on
@@ -15119,11 +15119,11 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: >-
-                    last_commit_hash defines the 'LastCommitHash' that
+                    app_hash defines the 'AppHash' that
                     individual BLS sigs are
 
                     signed on
@@ -15259,11 +15259,11 @@ definitions:
                 type: string
                 format: uint64
                 title: epoch_num defines the epoch number the raw checkpoint is for
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: >-
-                  last_commit_hash defines the 'LastCommitHash' that individual
+                  app_hash defines the 'AppHash' that individual
                   BLS sigs are
 
                   signed on
@@ -15381,11 +15381,11 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: >-
-                    last_commit_hash defines the 'LastCommitHash' that
+                    app_hash defines the 'AppHash' that
                     individual BLS sigs are
 
                     signed on
@@ -15534,11 +15534,11 @@ definitions:
         type: string
         format: uint64
         title: epoch_num defines the epoch number the raw checkpoint is for
-      last_commit_hash:
+      app_hash:
         type: string
         format: byte
         title: >-
-          last_commit_hash defines the 'LastCommitHash' that individual BLS sigs
+          app_hash defines the 'AppHash' that individual BLS sigs
           are
 
           signed on
@@ -15567,11 +15567,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: >-
-              last_commit_hash defines the 'LastCommitHash' that individual BLS
+              app_hash defines the 'AppHash' that individual BLS
               sigs are
 
               signed on
@@ -15757,7 +15757,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -15887,7 +15887,7 @@ definitions:
                               type: string
                               format: byte
                           title: PartsetHeader
-                    last_commit_hash:
+                    app_hash:
                       type: string
                       format: byte
                       title: hashes of block data
@@ -16067,7 +16067,7 @@ definitions:
                             type: string
                             format: byte
                         title: PartsetHeader
-                  last_commit_hash:
+                  app_hash:
                     type: string
                     format: byte
                     title: hashes of block data
@@ -16198,7 +16198,7 @@ definitions:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -16367,7 +16367,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -16408,7 +16408,7 @@ definitions:
               sealer_header is the 2nd header of the next epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of
+              `app_hash` of
 
               the sealer header
             type: object
@@ -16456,7 +16456,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -16495,11 +16495,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: >-
-              last_commit_hash defines the 'LastCommitHash' that individual BLS
+              app_hash defines the 'AppHash' that individual BLS
               sigs are
 
               signed on
@@ -16626,7 +16626,7 @@ definitions:
                   validator_set is the validator set of the sealed epoch
 
                   This validator set has generated a BLS multisig on
-                  `last_commit_hash` of
+                  `app_hash` of
 
                   the sealer header
               proof_epoch_info:
@@ -16834,7 +16834,7 @@ definitions:
                           type: string
                           format: byte
                       title: PartsetHeader
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: hashes of block data
@@ -16983,7 +16983,7 @@ definitions:
                     type: string
                     format: byte
                 title: PartsetHeader
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: hashes of block data
@@ -17065,7 +17065,7 @@ definitions:
         title: >-
           validator_set is the validator set of the sealed epoch
 
-          This validator set has generated a BLS multisig on `last_commit_hash`
+          This validator set has generated a BLS multisig on `app_hash`
           of
 
           the sealer header
@@ -17129,11 +17129,11 @@ definitions:
 
       The verifier can perform the following verification rules:
 
-      - The raw checkpoint's `last_commit_hash` is same as in the sealer header
+      - The raw checkpoint's `app_hash` is same as in the sealer header
 
       - More than 1/3 (in voting power) validators in the validator set of this
 
-      epoch have signed `last_commit_hash` of the sealer header
+      epoch have signed `app_hash` of the sealer header
 
       - The epoch medatata is committed to the `app_hash` of the sealer header
 
@@ -17223,7 +17223,7 @@ definitions:
               validator_set is the validator set of the sealed epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of
+              `app_hash` of
 
               the sealer header
           proof_epoch_info:
@@ -17476,7 +17476,7 @@ definitions:
                               type: string
                               format: byte
                           title: PartsetHeader
-                    last_commit_hash:
+                    app_hash:
                       type: string
                       format: byte
                       title: hashes of block data
@@ -17608,7 +17608,7 @@ definitions:
                                     type: string
                                     format: byte
                                 title: PartsetHeader
-                          last_commit_hash:
+                          app_hash:
                             type: string
                             format: byte
                             title: hashes of block data
@@ -17798,7 +17798,7 @@ definitions:
                               type: string
                               format: byte
                           title: PartsetHeader
-                    last_commit_hash:
+                    app_hash:
                       type: string
                       format: byte
                       title: hashes of block data
@@ -17930,7 +17930,7 @@ definitions:
                                     type: string
                                     format: byte
                                 title: PartsetHeader
-                          last_commit_hash:
+                          app_hash:
                             type: string
                             format: byte
                             title: hashes of block data
@@ -18121,7 +18121,7 @@ definitions:
                             type: string
                             format: byte
                         title: PartsetHeader
-                  last_commit_hash:
+                  app_hash:
                     type: string
                     format: byte
                     title: hashes of block data
@@ -18252,7 +18252,7 @@ definitions:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -18421,7 +18421,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -18462,7 +18462,7 @@ definitions:
               sealer_header is the 2nd header of the next epoch
 
               This validator set has generated a BLS multisig on
-              `last_commit_hash` of
+              `app_hash` of
 
               the sealer header
             type: object
@@ -18510,7 +18510,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -18549,11 +18549,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          last_commit_hash:
+          app_hash:
             type: string
             format: byte
             title: >-
-              last_commit_hash defines the 'LastCommitHash' that individual BLS
+              app_hash defines the 'AppHash' that individual BLS
               sigs are
 
               signed on
@@ -18680,7 +18680,7 @@ definitions:
                   validator_set is the validator set of the sealed epoch
 
                   This validator set has generated a BLS multisig on
-                  `last_commit_hash` of
+                  `app_hash` of
 
                   the sealer header
               proof_epoch_info:
@@ -18905,7 +18905,7 @@ definitions:
                                   type: string
                                   format: byte
                               title: PartsetHeader
-                        last_commit_hash:
+                        app_hash:
                           type: string
                           format: byte
                           title: hashes of block data
@@ -19039,7 +19039,7 @@ definitions:
                                         type: string
                                         format: byte
                                     title: PartsetHeader
-                              last_commit_hash:
+                              app_hash:
                                 type: string
                                 format: byte
                                 title: hashes of block data
@@ -19209,7 +19209,7 @@ definitions:
                               type: string
                               format: byte
                           title: PartsetHeader
-                    last_commit_hash:
+                    app_hash:
                       type: string
                       format: byte
                       title: hashes of block data
@@ -19252,7 +19252,7 @@ definitions:
                     sealer_header is the 2nd header of the next epoch
 
                     This validator set has generated a BLS multisig on
-                    `last_commit_hash` of
+                    `app_hash` of
 
                     the sealer header
                   type: object
@@ -19300,7 +19300,7 @@ definitions:
                               type: string
                               format: byte
                           title: PartsetHeader
-                    last_commit_hash:
+                    app_hash:
                       type: string
                       format: byte
                       title: hashes of block data
@@ -19339,11 +19339,11 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: >-
-                    last_commit_hash defines the 'LastCommitHash' that
+                    app_hash defines the 'AppHash' that
                     individual BLS sigs are
 
                     signed on
@@ -19472,7 +19472,7 @@ definitions:
                         validator_set is the validator set of the sealed epoch
 
                         This validator set has generated a BLS multisig on
-                        `last_commit_hash` of
+                        `app_hash` of
 
                         the sealer header
                     proof_epoch_info:
@@ -19681,7 +19681,7 @@ definitions:
                         type: string
                         format: byte
                     title: PartsetHeader
-              last_commit_hash:
+              app_hash:
                 type: string
                 format: byte
                 title: hashes of block data
@@ -19811,7 +19811,7 @@ definitions:
                               type: string
                               format: byte
                           title: PartsetHeader
-                    last_commit_hash:
+                    app_hash:
                       type: string
                       format: byte
                       title: hashes of block data
@@ -19970,7 +19970,7 @@ definitions:
                           type: string
                           format: byte
                       title: PartsetHeader
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: hashes of block data
@@ -20103,7 +20103,7 @@ definitions:
                           type: string
                           format: byte
                       title: PartsetHeader
-                last_commit_hash:
+                app_hash:
                   type: string
                   format: byte
                   title: hashes of block data

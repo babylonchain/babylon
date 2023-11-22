@@ -1,6 +1,7 @@
 package types_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
 
@@ -9,7 +10,6 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -38,7 +38,7 @@ func FuzzStakingTx(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 		testInfo := datagen.GenBTCStakingSlashingTx(
 			r,
 			t,

@@ -1,11 +1,11 @@
 package keeper
 
 import (
+	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/finality/types"
@@ -13,12 +13,9 @@ import (
 
 type (
 	Keeper struct {
-		cdc      codec.BinaryCodec
-		storeKey storetypes.StoreKey
-		memKey   storetypes.StoreKey
+		cdc          codec.BinaryCodec
+		storeService corestoretypes.KVStoreService
 
-		accountKeeper    types.AccountKeeper
-		bankKeeper       types.BankKeeper
 		BTCStakingKeeper types.BTCStakingKeeper
 		IncentiveKeeper  types.IncentiveKeeper
 		// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -29,22 +26,16 @@ type (
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey,
-	memKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
 
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
 	btctakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
 	authority string,
 ) Keeper {
 	return Keeper{
-		cdc:      cdc,
-		storeKey: storeKey,
-		memKey:   memKey,
+		cdc:          cdc,
+		storeService: storeService,
 
-		accountKeeper:    accountKeeper,
-		bankKeeper:       bankKeeper,
 		BTCStakingKeeper: btctakingKeeper,
 		IncentiveKeeper:  incentiveKeeper,
 		authority:        authority,

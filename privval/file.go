@@ -187,7 +187,7 @@ func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, e
 		return outputFileName, err
 	}
 
-	pubkey, err := codec.FromTmPubKeyInterface(validatorKey.ValPubkey)
+	pubkey, err := codec.FromCmtPubKeyInterface(validatorKey.ValPubkey)
 	if err != nil {
 		return outputFileName, err
 	}

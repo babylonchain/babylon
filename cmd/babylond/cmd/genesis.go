@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -55,7 +56,7 @@ Example:
 
 			genFile := config.GenesisFile()
 
-			appState, genDoc, err := genutiltypes.GenesisStateFromGenFile(genFile)
+			genesisState, genesis, err := genutiltypes.GenesisStateFromGenFile(genFile)
 			if err != nil {
 				return fmt.Errorf("failed to unmarshal genesis state: %s", err)
 			}
@@ -81,16 +82,16 @@ Example:
 				return fmt.Errorf("please choose testnet or mainnet")
 			}
 
-			err = PrepareGenesis(clientCtx, appState, genDoc, genesisParams, chainID)
+			err = PrepareGenesis(clientCtx, genesisState, genesis, genesisParams, chainID)
 			if err != nil {
 				return fmt.Errorf("failed to prepare genesis: %w", err)
 			}
 
-			if err = mbm.ValidateGenesis(clientCtx.Codec, clientCtx.TxConfig, appState); err != nil {
+			if err = mbm.ValidateGenesis(clientCtx.Codec, clientCtx.TxConfig, genesisState); err != nil {
 				return fmt.Errorf("error validating genesis file: %s", err)
 			}
 
-			return genutil.ExportGenesisFile(genDoc, genFile)
+			return genutil.ExportGenesisFile(genesis, genFile)
 		},
 	}
 
@@ -102,12 +103,12 @@ Example:
 
 func PrepareGenesis(
 	clientCtx client.Context,
-	appState map[string]json.RawMessage,
-	genDoc *comettypes.GenesisDoc,
+	genesisState map[string]json.RawMessage,
+	genesis *genutiltypes.AppGenesis,
 	genesisParams GenesisParams,
 	chainID string,
 ) error {
-	if genDoc == nil {
+	if genesis == nil {
 		return fmt.Errorf("provided genesis must not be nil")
 	}
 
@@ -115,76 +116,76 @@ func PrepareGenesis(
 	cdc := depCdc
 
 	// Add ChainID
-	genDoc.ChainID = chainID
-	genDoc.GenesisTime = genesisParams.GenesisTime
+	genesis.ChainID = chainID
+	genesis.GenesisTime = genesisParams.GenesisTime
 
-	if genDoc.ConsensusParams == nil {
-		genDoc.ConsensusParams = comettypes.DefaultConsensusParams()
+	if genesis.Consensus == nil {
+		genesis.Consensus = genutiltypes.NewConsensusGenesis(comettypes.DefaultConsensusParams().ToProto(), nil)
 	}
 
 	// Set gas limit
-	genDoc.ConsensusParams.Block.MaxGas = genesisParams.BlockGasLimit
+	genesis.Consensus.Params.Block.MaxGas = genesisParams.BlockGasLimit
 
 	// Set the confirmation and finalization parameters
 	btccheckpointGenState := btccheckpointtypes.DefaultGenesis()
 	btccheckpointGenState.Params = genesisParams.BtccheckpointParams
-	appState[btccheckpointtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btccheckpointGenState)
+	genesisState[btccheckpointtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btccheckpointGenState)
 
 	// btclightclient genesis
 	btclightclientGenState := btclightclienttypes.DefaultGenesis()
 	btclightclientGenState.BaseBtcHeader = genesisParams.BtclightclientBaseBtcHeader
-	appState[btclightclienttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btclightclientGenState)
+	genesisState[btclightclienttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btclightclientGenState)
 
 	// epoching module genesis
 	epochingGenState := epochingtypes.DefaultGenesis()
 	epochingGenState.Params = genesisParams.EpochingParams
-	appState[epochingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(epochingGenState)
+	genesisState[epochingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(epochingGenState)
 
 	// checkpointing module genesis
 	checkpointingGenState := checkpointingtypes.DefaultGenesis()
 	checkpointingGenState.GenesisKeys = genesisParams.CheckpointingGenKeys
-	appState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(checkpointingGenState)
+	genesisState[checkpointingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(checkpointingGenState)
 
 	// btcstaking module genesis
 	btcstakingGenState := btcstakingtypes.DefaultGenesis()
 	btcstakingGenState.Params = genesisParams.BtcstakingParams
-	appState[btcstakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btcstakingGenState)
+	genesisState[btcstakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(btcstakingGenState)
 
 	// finality module genesis
 	finalityGenState := finalitytypes.DefaultGenesis()
 	finalityGenState.Params = genesisParams.FinalityParams
-	appState[finalitytypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(finalityGenState)
+	genesisState[finalitytypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(finalityGenState)
 
 	// staking module genesis
-	stakingGenState := stakingtypes.GetGenesisStateFromAppState(depCdc, appState)
-	clientCtx.Codec.MustUnmarshalJSON(appState[stakingtypes.ModuleName], stakingGenState)
+	stakingGenState := stakingtypes.GetGenesisStateFromAppState(depCdc, genesisState)
+	clientCtx.Codec.MustUnmarshalJSON(genesisState[stakingtypes.ModuleName], stakingGenState)
 	stakingGenState.Params = genesisParams.StakingParams
-	appState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(stakingGenState)
+	genesisState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(stakingGenState)
 
 	// mint module genesis
 	mintGenState := minttypes.DefaultGenesisState()
 	mintGenState.Params = genesisParams.MintParams
-	appState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenState)
+	genesisState[minttypes.ModuleName] = cdc.MustMarshalJSON(mintGenState)
 
 	// distribution module genesis
 	distributionGenState := distributiontypes.DefaultGenesisState()
 	distributionGenState.Params = genesisParams.DistributionParams
-	appState[distributiontypes.ModuleName] = cdc.MustMarshalJSON(distributionGenState)
+	genesisState[distributiontypes.ModuleName] = cdc.MustMarshalJSON(distributionGenState)
 
 	// gov module genesis
 	govGenState := govv1.DefaultGenesisState()
 	govGenState.Params = &genesisParams.GovParams
-	appState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
+	genesisState[govtypes.ModuleName] = cdc.MustMarshalJSON(govGenState)
 
 	// crisis module genesis
 	crisisGenState := crisistypes.DefaultGenesisState()
 	crisisGenState.ConstantFee = genesisParams.CrisisConstantFee
-	appState[crisistypes.ModuleName] = cdc.MustMarshalJSON(crisisGenState)
+	genesisState[crisistypes.ModuleName] = cdc.MustMarshalJSON(crisisGenState)
 
 	// auth module genesis
 	authGenState := authtypes.DefaultGenesisState()
 	authGenState.Accounts = genesisParams.AuthAccounts
-	appState[authtypes.ModuleName] = cdc.MustMarshalJSON(authGenState)
+	genesisState[authtypes.ModuleName] = cdc.MustMarshalJSON(authGenState)
 
 	// bank module genesis
 	bankGenState := banktypes.DefaultGenesisState()
@@ -192,15 +193,15 @@ func PrepareGenesis(
 	for _, bal := range bankGenState.Balances {
 		bankGenState.Supply = bankGenState.Supply.Add(bal.Coins...)
 	}
-	appState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenState)
+	genesisState[banktypes.ModuleName] = cdc.MustMarshalJSON(bankGenState)
 
-	appGenStateJSON, err := json.MarshalIndent(appState, "", "  ")
+	appGenStateJSON, err := json.MarshalIndent(genesisState, "", "  ")
 
 	if err != nil {
 		return err
 	}
 
-	genDoc.AppState = appGenStateJSON
+	genesis.AppState = appGenStateJSON
 
 	return nil
 }
@@ -231,7 +232,7 @@ type GenesisParams struct {
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, covenantPk string, slashingAddress string, minSlashingFee int64,
-	minCommissionRate sdk.Dec, slashingRate sdk.Dec, minPubRand uint64, inflationRateChange float64,
+	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, minPubRand uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
 
@@ -270,20 +271,20 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.MintParams.MintDenom = genParams.NativeCoinMetadatas[0].Base
 	genParams.MintParams.BlocksPerYear = blocksPerYear
 	// This should always work as inflation rate is already a float64
-	genParams.MintParams.InflationRateChange = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationRateChange))
-	genParams.MintParams.InflationMin = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationMin))
-	genParams.MintParams.InflationMax = sdk.MustNewDecFromStr(fmt.Sprintf("%f", inflationMax))
-	genParams.MintParams.GoalBonded = sdk.MustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
+	genParams.MintParams.InflationRateChange = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationRateChange))
+	genParams.MintParams.InflationMin = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationMin))
+	genParams.MintParams.InflationMax = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", inflationMax))
+	genParams.MintParams.GoalBonded = sdkmath.LegacyMustNewDecFromStr(fmt.Sprintf("%f", goalBonded))
 
 	genParams.GovParams = govv1.DefaultParams()
 	genParams.GovParams.MinDeposit = sdk.NewCoins(sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
-		sdk.NewInt(2_500_000_000),
+		sdkmath.NewInt(2_500_000_000),
 	))
 
 	genParams.CrisisConstantFee = sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
-		sdk.NewInt(500_000_000_000),
+		sdkmath.NewInt(500_000_000_000),
 	)
 
 	genParams.BtccheckpointParams = btccheckpointtypes.DefaultParams()

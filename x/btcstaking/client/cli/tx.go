@@ -14,8 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
 )
@@ -81,7 +80,7 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 			)
 			// get commission
 			rateStr, _ := fs.GetString(FlagCommissionRate)
-			rate, err := sdk.NewDecFromStr(rateStr)
+			rate, err := sdkmath.LegacyNewDecFromStr(rateStr)
 			if err != nil {
 				return err
 			}

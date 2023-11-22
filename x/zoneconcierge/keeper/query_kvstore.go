@@ -1,12 +1,12 @@
 package keeper
 
 import (
+	storetypes "cosmossdk.io/store/types"
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
+	"cosmossdk.io/store/rootmulti"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 )
 
 // QueryStore queries a KV pair in the KVStore, where
@@ -25,12 +25,15 @@ func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64)
 	path := fmt.Sprintf("/%s/key", moduleStoreKey)
 
 	// query the KV with Merkle proof
-	resp := k.storeQuerier.Query(abci.RequestQuery{
+	resp, err := k.storeQuerier.Query(&storetypes.RequestQuery{
 		Path:   path,
 		Data:   key,
 		Height: queryHeight - 1, // NOTE: the inclusion proof corresponds to the NEXT header
 		Prove:  true,
 	})
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	if resp.Code != 0 {
 		return nil, nil, nil, fmt.Errorf("query (with path %s) failed with response: %v", path, resp)
 	}

@@ -29,7 +29,7 @@ func GetRandomRawBtcCheckpoint(r *rand.Rand) *btctxformatter.RawBtcCheckpoint {
 	rawCkpt := GenRandomRawCheckpoint(r)
 	return &btctxformatter.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
-		LastCommitHash:   *rawCkpt.LastCommitHash,
+		AppHash:          *rawCkpt.AppHash,
 		BitMap:           rawCkpt.Bitmap,
 		SubmitterAddress: GenRandomByteArray(r, btctxformatter.AddressLength),
 		BlsSig:           rawCkpt.BlsMultiSig.Bytes(),
@@ -46,13 +46,13 @@ func GenRandomRawCheckpointWithMeta(r *rand.Rand) *types.RawCheckpointWithMeta {
 }
 
 func GenRandomRawCheckpoint(r *rand.Rand) *types.RawCheckpoint {
-	randomHashBytes := GenRandomLastCommitHash(r)
+	randomHashBytes := GenRandomAppHash(r)
 	randomBLSSig := GenRandomBlsMultiSig(r)
 	return &types.RawCheckpoint{
-		EpochNum:       GenRandomEpochNum(r),
-		LastCommitHash: &randomHashBytes,
-		Bitmap:         bitmap.New(types.BitmapBits),
-		BlsMultiSig:    &randomBLSSig,
+		EpochNum:    GenRandomEpochNum(r),
+		AppHash:     &randomHashBytes,
+		Bitmap:      bitmap.New(types.BitmapBits),
+		BlsMultiSig: &randomBLSSig,
 	}
 }
 
@@ -110,8 +110,8 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 	// ensure sufficient signers
 	signerNum := n/3 + 1
 	epochNum := GenRandomEpochNum(r)
-	lch := GenRandomLastCommitHash(r)
-	msgBytes := types.GetSignBytes(epochNum, lch)
+	appHash := GenRandomAppHash(r)
+	msgBytes := types.GetSignBytes(epochNum, appHash)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
 	bm := bitmap.New(types.BitmapBits)
@@ -119,16 +119,16 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 		bm.Set(i, true)
 	}
 	btcCheckpoint := &types.RawCheckpoint{
-		EpochNum:       epochNum,
-		LastCommitHash: &lch,
-		Bitmap:         bm,
-		BlsMultiSig:    &multiSig,
+		EpochNum:    epochNum,
+		AppHash:     &appHash,
+		Bitmap:      bm,
+		BlsMultiSig: &multiSig,
 	}
 
 	return btcCheckpoint
 }
 
-func GenRandomLastCommitHash(r *rand.Rand) types.LastCommitHash {
+func GenRandomAppHash(r *rand.Rand) types.AppHash {
 	return GenRandomByteArray(r, types.HashSize)
 }
 

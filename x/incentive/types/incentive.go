@@ -1,7 +1,7 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -37,7 +37,7 @@ func (rg *RewardGauge) SetFullyWithdrawn() {
 
 // IsFullyWithdrawn returns whether the reward gauge has nothing to withdraw
 func (rg *RewardGauge) IsFullyWithdrawn() bool {
-	return rg.Coins.IsEqual(rg.WithdrawnCoins)
+	return rg.Coins.Equal(rg.WithdrawnCoins)
 }
 
 func (rg *RewardGauge) Add(coins sdk.Coins) {
@@ -55,7 +55,7 @@ func GetCoinsPortion(coinsInt sdk.Coins, portion math.LegacyDec) sdk.Coins {
 	return portionCoinsInt
 }
 
-// enum for stakeholder type, used as key prefix in KVStore
+// StakeholderType enum for stakeholder type, used as key prefix in KVStore
 type StakeholderType byte
 
 const (

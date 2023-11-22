@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Semantically valid checkpoint submission with:
+// RawCheckpointSubmission Semantically valid checkpoint submission with:
 // - valid submitter address
 // - at least 2 parsed proof
 // Modelling proofs as separate Proof1 and Proof2, as this is more explicit than
@@ -82,22 +82,22 @@ func toTransactionKey(p *ParsedProof) TransactionKey {
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
+func (s *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 	var keys []*TransactionKey
-	k1 := toTransactionKey(&rsc.Proof1)
+	k1 := toTransactionKey(&s.Proof1)
 	keys = append(keys, &k1)
-	k2 := toTransactionKey(&rsc.Proof2)
+	k2 := toTransactionKey(&s.Proof2)
 	keys = append(keys, &k2)
 	return SubmissionKey{
 		Key: keys,
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
+func (s *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
 		VigilanteAddresses: &CheckpointAddresses{
-			Reporter:  rsc.Reporter.Bytes(),
-			Submitter: rsc.CheckpointData.SubmitterAddress,
+			Reporter:  s.Reporter.Bytes(),
+			Submitter: s.CheckpointData.SubmitterAddress,
 		},
 		TxsInfo: txsInfo,
 		Epoch:   epochNum,

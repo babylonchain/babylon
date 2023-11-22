@@ -35,7 +35,7 @@ func FuzzTallying_PanicCases(f *testing.F) {
 		// Case 2: expect to panic if finalised block with nil validator set
 		fKeeper.SetBlock(ctx, &types.IndexedBlock{
 			Height:         1,
-			LastCommitHash: datagen.GenRandomByteArray(r, 32),
+			AppHash: datagen.GenRandomByteArray(r, 32),
 			Finalized:      true,
 		})
 		// activate BTC staking protocol at height 1
@@ -67,7 +67,7 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 			// index blocks
 			fKeeper.SetBlock(ctx, &types.IndexedBlock{
 				Height:         i,
-				LastCommitHash: datagen.GenRandomByteArray(r, 32),
+				AppHash: datagen.GenRandomByteArray(r, 32),
 				Finalized:      false,
 			})
 			// this block does not have QC
@@ -110,7 +110,7 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 			// index blocks
 			fKeeper.SetBlock(ctx, &types.IndexedBlock{
 				Height:         i,
-				LastCommitHash: datagen.GenRandomByteArray(r, 32),
+				AppHash: datagen.GenRandomByteArray(r, 32),
 				Finalized:      false,
 			})
 			if i < activatedHeight+numWithQCs {

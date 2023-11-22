@@ -1,14 +1,14 @@
 package keeper
 
 import (
+	"context"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // rewardBTCTimestamping finds the (submitter, reporter) pairs of all submissions at the
 // given finalised epoch according to the given epoch data, then distribute rewards to them
 // by invoking the incentive module
-func (k Keeper) rewardBTCTimestamping(ctx sdk.Context, epoch uint64, ed *types.EpochData, bestIdx int) {
+func (k Keeper) rewardBTCTimestamping(ctx context.Context, epoch uint64, ed *types.EpochData, bestIdx int) {
 	var (
 		bestSubmissionAddrs  *types.CheckpointAddressPair
 		otherSubmissionAddrs []*types.CheckpointAddressPair

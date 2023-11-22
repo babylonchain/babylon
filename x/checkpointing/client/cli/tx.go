@@ -1,7 +1,10 @@
 package cli
 
 import (
+	"cosmossdk.io/core/address"
 	"fmt"
+	appparams "github.com/babylonchain/babylon/app/params"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -19,12 +22,6 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-//nolint:unused
-const (
-	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
-	listSeparator              = ","
-)
-
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -36,7 +33,7 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdTxAddBlsSig())
-	cmd.AddCommand(CmdWrappedCreateValidator())
+	cmd.AddCommand(CmdWrappedCreateValidator(authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr)))
 
 	return cmd
 }
@@ -57,7 +54,7 @@ func CmdTxAddBlsSig() *cobra.Command {
 				return err
 			}
 
-			lch, err := types.NewLastCommitHashFromHex(args[1])
+			appHash, err := types.NewAppHashFromHex(args[1])
 			if err != nil {
 				return err
 			}
@@ -72,7 +69,7 @@ func CmdTxAddBlsSig() *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgAddBlsSig(clientCtx.GetFromAddress(), epoch_num, lch, blsSig, addr)
+			msg := types.NewMsgAddBlsSig(clientCtx.GetFromAddress(), epoch_num, appHash, blsSig, addr)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
@@ -83,15 +80,14 @@ func CmdTxAddBlsSig() *cobra.Command {
 	return cmd
 }
 
-func CmdWrappedCreateValidator() *cobra.Command {
-	cmd := cosmoscli.NewCreateValidatorCmd()
-	cmd.Long = strings.TrimSpace(
-		string(`create-validator will create a new validator initialized
+func CmdWrappedCreateValidator(valAddrCodec address.Codec) *cobra.Command {
+	cmd := cosmoscli.NewCreateValidatorCmd(valAddrCodec)
+	cmd.Long = strings.TrimSpace(`create-validator will create a new validator initialized
 with a self-delegation to it using the BLS key generated for the validator (e.g., via babylond create-bls-key).
 
 This command creates a MsgWrappedCreateValidator message which is a wrapper of cosmos-sdk's
 create validator with a pair of BLS key. The BLS key should exist in priv_validator_key.json
-before running the command (e.g., via babylond create-bls-key).`))
+before running the command (e.g., via babylond create-bls-key).`)
 	cmd.RunE = func(cmd *cobra.Command, args []string) error {
 		clientCtx, err := client.GetClientTxContext(cmd)
 		if err != nil {
@@ -99,14 +95,18 @@ before running the command (e.g., via babylond create-bls-key).`))
 		}
 
 		txf, err := tx.NewFactoryCLI(clientCtx, cmd.Flags())
+		if err != nil {
+			return err
+		}
 
+		val, err := parseAndValidateValidatorJSON(clientCtx.Codec, args[0])
 		if err != nil {
 			return err
 		}
 
 		txf = txf.WithTxConfig(clientCtx.TxConfig).WithAccountRetriever(clientCtx.AccountRetriever)
 
-		txf, msg, err := buildWrappedCreateValidatorMsg(clientCtx, txf, cmd.Flags())
+		txf, msg, err := buildWrappedCreateValidatorMsg(clientCtx, txf, cmd.Flags(), val, valAddrCodec)
 		if err != nil {
 			return err
 		}

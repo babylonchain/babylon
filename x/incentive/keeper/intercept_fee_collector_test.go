@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
 
@@ -16,7 +17,7 @@ import (
 
 var (
 	feeCollectorAcc = authtypes.NewEmptyModuleAccount(authtypes.FeeCollectorName)
-	fees            = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100)))
+	fees            = sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(100)))
 )
 
 func FuzzInterceptFeeCollector(f *testing.F) {

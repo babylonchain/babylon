@@ -34,25 +34,12 @@ func (msg MsgWrappedDelegate) Route() string { return RouterKey }
 // Type implements the sdk.Msg interface.
 func (msg MsgWrappedDelegate) Type() string { return TypeMsgWrappedDelegate }
 
-// GetSigners implements the sdk.Msg interface. It returns the address(es) that
-// must sign over msg.GetSignBytes().
-// If the validator address is not same as delegator's, then the validator must
-// sign the msg as well.
-func (msg MsgWrappedDelegate) GetSigners() []sdk.AccAddress {
-	return msg.Msg.GetSigners()
-}
-
-// GetSignBytes returns the message bytes to sign over.
-func (msg MsgWrappedDelegate) GetSignBytes() []byte {
-	return msg.Msg.GetSignBytes()
-}
-
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedDelegate) ValidateBasic() error {
 	if msg.Msg == nil {
 		return ErrNoWrappedMsg
 	}
-	return msg.Msg.ValidateBasic()
+	return nil
 }
 
 // NewMsgWrappedUndelegate creates a new MsgWrappedUndelegate instance.
@@ -68,25 +55,12 @@ func (msg MsgWrappedUndelegate) Route() string { return RouterKey }
 // Type implements the sdk.Msg interface.
 func (msg MsgWrappedUndelegate) Type() string { return TypeMsgWrappedUndelegate }
 
-// GetSigners implements the sdk.Msg interface. It returns the address(es) that
-// must sign over msg.GetSignBytes().
-// If the validator address is not same as delegator's, then the validator must
-// sign the msg as well.
-func (msg MsgWrappedUndelegate) GetSigners() []sdk.AccAddress {
-	return msg.Msg.GetSigners()
-}
-
-// GetSignBytes returns the message bytes to sign over.
-func (msg MsgWrappedUndelegate) GetSignBytes() []byte {
-	return msg.Msg.GetSignBytes()
-}
-
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedUndelegate) ValidateBasic() error {
 	if msg.Msg == nil {
 		return ErrNoWrappedMsg
 	}
-	return msg.Msg.ValidateBasic()
+	return nil
 }
 
 // NewMsgWrappedBeginRedelegate creates a new MsgWrappedBeginRedelegate instance.
@@ -102,25 +76,12 @@ func (msg MsgWrappedBeginRedelegate) Route() string { return RouterKey }
 // Type implements the sdk.Msg interface.
 func (msg MsgWrappedBeginRedelegate) Type() string { return TypeMsgWrappedBeginRedelegate }
 
-// GetSigners implements the sdk.Msg interface. It returns the address(es) that
-// must sign over msg.GetSignBytes().
-// If the validator address is not same as delegator's, then the validator must
-// sign the msg as well.
-func (msg MsgWrappedBeginRedelegate) GetSigners() []sdk.AccAddress {
-	return msg.Msg.GetSigners()
-}
-
-// GetSignBytes returns the message bytes to sign over.
-func (msg MsgWrappedBeginRedelegate) GetSignBytes() []byte {
-	return msg.Msg.GetSignBytes()
-}
-
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedBeginRedelegate) ValidateBasic() error {
 	if msg.Msg == nil {
 		return ErrNoWrappedMsg
 	}
-	return msg.Msg.ValidateBasic()
+	return nil
 }
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.

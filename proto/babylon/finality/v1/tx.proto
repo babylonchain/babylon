@@ -10,6 +10,8 @@ import "babylon/finality/v1/params.proto";
 
 // Msg defines the Msg service.
 service Msg {
+    option (cosmos.msg.v1.service) = true;
+
     // AddFinalitySig adds a finality signature to a given block
     rpc AddFinalitySig(MsgAddFinalitySig) returns (MsgAddFinalitySigResponse);
     // CommitPubRandList commits a list of public randomness for EOTS
@@ -21,6 +23,8 @@ service Msg {
 
 // MsgAddFinalitySig defines a message for adding a vote
 message MsgAddFinalitySig {
+    option (cosmos.msg.v1.signer) = "signer";
+
     string signer = 1;
     // val_btc_pk is the BTC Pk of the validator that casts this vote
     bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
@@ -39,6 +43,8 @@ message MsgAddFinalitySigResponse{}
 
 // MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
 message MsgCommitPubRandList {
+    option (cosmos.msg.v1.signer) = "signer";
+
     string signer = 1;
     // val_btc_pk is the BTC Pk of the validator that commits the public randomness
     bytes val_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];

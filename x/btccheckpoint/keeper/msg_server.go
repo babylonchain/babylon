@@ -24,12 +24,12 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 // TODO at some point add proper logging of error
 // TODO emit some events for external consumers. Those should be probably emited
 // at EndBlockerCallback
-func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
+func (ms msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBTCSpvProof) (*types.MsgInsertBTCSpvProofResponse, error) {
 
 	// Get the SDK wrapped context
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	rawSubmission, err := types.ParseSubmission(req, m.k.GetPowLimit(), m.k.GetExpectedTag(sdkCtx))
+	rawSubmission, err := types.ParseSubmission(req, ms.k.GetPowLimit(), ms.k.GetExpectedTag(sdkCtx))
 
 	if err != nil {
 		return nil, types.ErrInvalidCheckpointProof.Wrap(err.Error())
@@ -37,11 +37,11 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 
 	submissionKey := rawSubmission.GetSubmissionKey()
 
-	if m.k.HasSubmission(sdkCtx, submissionKey) {
+	if ms.k.HasSubmission(sdkCtx, submissionKey) {
 		return nil, types.ErrDuplicatedSubmission
 	}
 
-	newSubmissionOldestHeaderDepth, err := m.k.GetSubmissionBtcInfo(sdkCtx, submissionKey)
+	newSubmissionOldestHeaderDepth, err := ms.k.GetSubmissionBtcInfo(sdkCtx, submissionKey)
 
 	if err != nil {
 		return nil, types.ErrInvalidHeader.Wrap(err.Error())
@@ -53,7 +53,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// - header is proved to be part of the chain we know about through BTCLightClient
 	// - this is new checkpoint submission
 	// Verify if this is expected checkpoint
-	err = m.k.checkpointingKeeper.VerifyCheckpoint(sdkCtx, rawSubmission.CheckpointData)
+	err = ms.k.checkpointingKeeper.VerifyCheckpoint(sdkCtx, rawSubmission.CheckpointData)
 
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	// by checkpointing module
 	epochNum := rawSubmission.CheckpointData.Epoch
 
-	err = m.k.checkAncestors(sdkCtx, epochNum, newSubmissionOldestHeaderDepth)
+	err = ms.k.checkAncestors(sdkCtx, epochNum, newSubmissionOldestHeaderDepth)
 
 	if err != nil {
 		return nil, err
@@ -81,7 +81,7 @@ func (m msgServer) InsertBTCSpvProof(ctx context.Context, req *types.MsgInsertBT
 	submissionData := rawSubmission.GetSubmissionData(epochNum, txsInfo)
 
 	// Everything is fine, save new checkpoint and update Epoch data
-	err = m.k.addEpochSubmission(
+	err = ms.k.addEpochSubmission(
 		sdkCtx,
 		epochNum,
 		submissionKey,

@@ -1,6 +1,7 @@
 package btcstaking_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"math"
 	"math/rand"
 	"testing"
@@ -12,11 +13,10 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
-func genValidStakingScriptData(t *testing.T, r *rand.Rand) *btcstaking.StakingScriptData {
+func genValidStakingScriptData(_ *testing.T, r *rand.Rand) *btcstaking.StakingScriptData {
 	stakerPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	validatorPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	covenantPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
@@ -46,8 +46,8 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		minFee := 2000
 		// generate a random slashing rate with random precision,
 		// this will include both valid and invalid ranges, so we can test both cases
-		randomPrecision := r.Int63n(4)                                                         // [0,3]
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 1001)), randomPrecision) // [0,1000] / 10^{randomPrecision}
+		randomPrecision := r.Int63n(4)                                                                   // [0,3]
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 1001)), randomPrecision) // [0,1000] / 10^{randomPrecision}
 
 		for i := 0; i < stakingTxNumOutputs; i++ {
 			if i == stakingOutputIdx {
@@ -87,7 +87,7 @@ func genRandomBTCAddress(r *rand.Rand) (*btcutil.AddressPubKeyHash, error) {
 	return btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
 }
 
-func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOutputIdx int, slashingRate sdk.Dec, fee int64) {
+func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOutputIdx int, slashingRate sdkmath.LegacyDec, fee int64) {
 	dustThreshold := 546 // in satoshis
 
 	// Generate random slashing and change addresses

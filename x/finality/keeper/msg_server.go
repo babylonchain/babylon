@@ -102,7 +102,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	if err != nil {
 		return nil, err
 	}
-	if !bytes.Equal(indexedBlock.LastCommitHash, req.BlockLastCommitHash) {
+	if !bytes.Equal(indexedBlock.AppHash, req.BlockAppHash) {
 		// the BTC validator votes for a fork!
 
 		// construct evidence
@@ -110,9 +110,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			ValBtcPk:                req.ValBtcPk,
 			BlockHeight:             req.BlockHeight,
 			PubRand:                 pubRand,
-			CanonicalLastCommitHash: indexedBlock.LastCommitHash,
+			CanonicalAppHash: indexedBlock.AppHash,
 			CanonicalFinalitySig:    nil,
-			ForkLastCommitHash:      req.BlockLastCommitHash,
+			ForkAppHash:      req.BlockAppHash,
 			ForkFinalitySig:         req.FinalitySig,
 		}
 
@@ -202,7 +202,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 // slashBTCValidator slashes a BTC validator with the given evidence
 // including setting its voting power to zero, extracting its BTC SK,
 // and emit an event
-func (k Keeper) slashBTCValidator(ctx sdk.Context, valBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) {
+func (k Keeper) slashBTCValidator(ctx context.Context, valBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) {
 	// slash this BTC validator, i.e., set its voting power to zero
 	if err := k.BTCStakingKeeper.SlashBTCValidator(ctx, valBtcPk.MustMarshal()); err != nil {
 		panic(fmt.Errorf("failed to slash BTC validator: %v", err))
@@ -210,7 +210,7 @@ func (k Keeper) slashBTCValidator(ctx sdk.Context, valBtcPk *bbn.BIP340PubKey, e
 
 	// emit slashing event
 	eventSlashing := types.NewEventSlashedBTCValidator(evidence)
-	if err := ctx.EventManager().EmitTypedEvent(eventSlashing); err != nil {
+	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
 		panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
 	}
 }

@@ -20,7 +20,7 @@ func TestRawCheckpointWithMeta_Accumulate1(t *testing.T) {
 	n := 1
 	totalPower := int64(10)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
-	lch := datagen.GenRandomLastCommitHash(r)
+	lch := datagen.GenRandomAppHash(r)
 	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)
@@ -43,7 +43,7 @@ func TestRawCheckpointWithMeta_Accumulate4(t *testing.T) {
 	n := 4
 	totalPower := int64(10) * int64(n)
 	ckptkeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
-	lch := datagen.GenRandomLastCommitHash(r)
+	lch := datagen.GenRandomAppHash(r)
 	msg := types.GetSignBytes(epochNum, lch)
 	blsPubkeys, blsSigs := datagen.GenRandomPubkeysAndSigs(n, msg)
 	ckpt, err := ckptkeeper.BuildRawCheckpoint(ctx, epochNum, lch)

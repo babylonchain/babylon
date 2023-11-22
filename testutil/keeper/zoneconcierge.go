@@ -1,26 +1,27 @@
 package keeper
 
 import (
+	"cosmossdk.io/store/metrics"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"testing"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	tmdb "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	"github.com/stretchr/testify/require"
 )
 
@@ -56,24 +57,23 @@ func (zoneconciergePortKeeper) BindPort(ctx sdk.Context, portID string) *capabil
 
 type zoneconciergeStoreQuerier struct{}
 
-func (zoneconciergeStoreQuerier) Query(req abci.RequestQuery) abci.ResponseQuery {
-	return abci.ResponseQuery{
+func (zoneconciergeStoreQuerier) Query(req *storetypes.RequestQuery) (*storetypes.ResponseQuery, error) {
+	return &storetypes.ResponseQuery{
 		ProofOps: &tmcrypto.ProofOps{
 			Ops: []tmcrypto.ProofOp{
 				tmcrypto.ProofOp{},
 			},
 		},
-	}
+	}, nil
 }
 
-func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, tmClient types.TMClient) (*keeper.Keeper, sdk.Context) {
-	logger := log.NewNopLogger()
-
-	storeKey := sdk.NewKVStoreKey(types.StoreKey)
+func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, checkpointingKeeper types.CheckpointingKeeper, btccKeeper types.BtcCheckpointKeeper, epochingKeeper types.EpochingKeeper, cmtClient types.CometClient) (*keeper.Keeper, sdk.Context) {
+	logger := log.NewTestLogger(t)
+	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 	memStoreKey := storetypes.NewMemoryStoreKey(types.MemStoreKey)
 
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, logger, metrics.NewNoOpMetrics())
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
 	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
 	require.NoError(t, stateStore.LoadLatestVersion())
@@ -83,8 +83,7 @@ func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, c
 	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
 	k := keeper.NewKeeper(
 		appCodec,
-		storeKey,
-		memStoreKey,
+		runtime.NewKVStoreService(storeKey),
 		nil, // TODO: mock this keeper
 		nil, // TODO: mock this keeper
 		zoneconciergeChannelKeeper{},
@@ -95,7 +94,7 @@ func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, c
 		checkpointingKeeper,
 		btccKeeper,
 		epochingKeeper,
-		tmClient,
+		cmtClient,
 		zoneconciergeStoreQuerier{},
 		capabilityKeeper.ScopeToModule("ZoneconciergeScopedKeeper"),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

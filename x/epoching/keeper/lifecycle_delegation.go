@@ -1,15 +1,17 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // TODO: add more tests on the lifecycle record
 
 // RecordNewDelegationState adds a state for a delegation lifecycle, including created, bonded, unbonding and unbonded
-func (k Keeper) RecordNewDelegationState(ctx sdk.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, state types.BondState) error {
+func (k Keeper) RecordNewDelegationState(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, state types.BondState) error {
 	lc := k.GetDelegationLifecycle(ctx, delAddr)
 	if lc == nil {
 		lc = &types.DelegationLifecycle{
@@ -17,7 +19,8 @@ func (k Keeper) RecordNewDelegationState(ctx sdk.Context, delAddr sdk.AccAddress
 			DelLife: []*types.DelegationStateUpdate{},
 		}
 	}
-	height, time := ctx.BlockHeight(), ctx.BlockTime()
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height, time := sdkCtx.BlockHeight(), sdkCtx.BlockTime()
 	DelegationStateUpdate := types.DelegationStateUpdate{
 		State:       state,
 		ValAddr:     valAddr.String(),
@@ -29,15 +32,15 @@ func (k Keeper) RecordNewDelegationState(ctx sdk.Context, delAddr sdk.AccAddress
 	return nil
 }
 
-func (k Keeper) SetDelegationLifecycle(ctx sdk.Context, delAddr sdk.AccAddress, lc *types.DelegationLifecycle) {
+func (k Keeper) SetDelegationLifecycle(ctx context.Context, delAddr sdk.AccAddress, lc *types.DelegationLifecycle) {
 	store := k.delegationLifecycleStore(ctx)
 	lcBytes := k.cdc.MustMarshal(lc)
-	store.Set([]byte(delAddr), lcBytes)
+	store.Set(delAddr, lcBytes)
 }
 
-func (k Keeper) GetDelegationLifecycle(ctx sdk.Context, delAddr sdk.AccAddress) *types.DelegationLifecycle {
+func (k Keeper) GetDelegationLifecycle(ctx context.Context, delAddr sdk.AccAddress) *types.DelegationLifecycle {
 	store := k.delegationLifecycleStore(ctx)
-	lcBytes := store.Get([]byte(delAddr))
+	lcBytes := store.Get(delAddr)
 	if len(lcBytes) == 0 {
 		return nil
 	}
@@ -50,7 +53,7 @@ func (k Keeper) GetDelegationLifecycle(ctx sdk.Context, delAddr sdk.AccAddress) 
 // prefix: DelegationLifecycleKey
 // key: del_addr
 // value: DelegationLifecycle object
-func (k Keeper) delegationLifecycleStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.DelegationLifecycleKey)
+func (k Keeper) delegationLifecycleStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.DelegationLifecycleKey)
 }

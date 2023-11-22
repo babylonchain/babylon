@@ -29,7 +29,7 @@ type IndexedBlock struct {
 	// height is the height of the block
 	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
 	// last_commit_hash is the last_commit_hash of the block
-	LastCommitHash []byte `protobuf:"bytes,2,opt,name=last_commit_hash,json=lastCommitHash,proto3" json:"last_commit_hash,omitempty"`
+	AppHash []byte `protobuf:"bytes,2,opt,name=last_commit_hash,json=appHash,proto3" json:"last_commit_hash,omitempty"`
 	// finalized indicates whether the IndexedBlock is finalised by 2/3
 	// BTC validators or not
 	Finalized bool `protobuf:"varint,3,opt,name=finalized,proto3" json:"finalized,omitempty"`
@@ -75,9 +75,9 @@ func (m *IndexedBlock) GetHeight() uint64 {
 	return 0
 }
 
-func (m *IndexedBlock) GetLastCommitHash() []byte {
+func (m *IndexedBlock) GetAppHash() []byte {
 	if m != nil {
-		return m.LastCommitHash
+		return m.AppHash
 	}
 	return nil
 }
@@ -99,9 +99,9 @@ type Evidence struct {
 	// pub_rand is the public randomness the BTC validator has committed to
 	PubRand *github_com_babylonchain_babylon_types.SchnorrPubRand `protobuf:"bytes,3,opt,name=pub_rand,json=pubRand,proto3,customtype=github.com/babylonchain/babylon/types.SchnorrPubRand" json:"pub_rand,omitempty"`
 	// canonical_last_commit_hash is the last_commit_hash of the canonical block
-	CanonicalLastCommitHash []byte `protobuf:"bytes,4,opt,name=canonical_last_commit_hash,json=canonicalLastCommitHash,proto3" json:"canonical_last_commit_hash,omitempty"`
+	CanonicalAppHash []byte `protobuf:"bytes,4,opt,name=canonical_last_commit_hash,json=canonicalAppHash,proto3" json:"canonical_last_commit_hash,omitempty"`
 	// fork_last_commit_hash is the last_commit_hash of the fork block
-	ForkLastCommitHash []byte `protobuf:"bytes,5,opt,name=fork_last_commit_hash,json=forkLastCommitHash,proto3" json:"fork_last_commit_hash,omitempty"`
+	ForkAppHash []byte `protobuf:"bytes,5,opt,name=fork_last_commit_hash,json=forkAppHash,proto3" json:"fork_last_commit_hash,omitempty"`
 	// canonical_finality_sig is the finality signature to the canonical block
 	// where finality signature is an EOTS signature, i.e.,
 	// the `s` in a Schnorr signature `(r, s)`
@@ -152,16 +152,16 @@ func (m *Evidence) GetBlockHeight() uint64 {
 	return 0
 }
 
-func (m *Evidence) GetCanonicalLastCommitHash() []byte {
+func (m *Evidence) GetCanonicalAppHash() []byte {
 	if m != nil {
-		return m.CanonicalLastCommitHash
+		return m.CanonicalAppHash
 	}
 	return nil
 }
 
-func (m *Evidence) GetForkLastCommitHash() []byte {
+func (m *Evidence) GetForkAppHash() []byte {
 	if m != nil {
-		return m.ForkLastCommitHash
+		return m.ForkAppHash
 	}
 	return nil
 }
@@ -237,10 +237,10 @@ func (m *IndexedBlock) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x18
 	}
-	if len(m.LastCommitHash) > 0 {
-		i -= len(m.LastCommitHash)
-		copy(dAtA[i:], m.LastCommitHash)
-		i = encodeVarintFinality(dAtA, i, uint64(len(m.LastCommitHash)))
+	if len(m.AppHash) > 0 {
+		i -= len(m.AppHash)
+		copy(dAtA[i:], m.AppHash)
+		i = encodeVarintFinality(dAtA, i, uint64(len(m.AppHash)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -296,17 +296,17 @@ func (m *Evidence) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x32
 	}
-	if len(m.ForkLastCommitHash) > 0 {
-		i -= len(m.ForkLastCommitHash)
-		copy(dAtA[i:], m.ForkLastCommitHash)
-		i = encodeVarintFinality(dAtA, i, uint64(len(m.ForkLastCommitHash)))
+	if len(m.ForkAppHash) > 0 {
+		i -= len(m.ForkAppHash)
+		copy(dAtA[i:], m.ForkAppHash)
+		i = encodeVarintFinality(dAtA, i, uint64(len(m.ForkAppHash)))
 		i--
 		dAtA[i] = 0x2a
 	}
-	if len(m.CanonicalLastCommitHash) > 0 {
-		i -= len(m.CanonicalLastCommitHash)
-		copy(dAtA[i:], m.CanonicalLastCommitHash)
-		i = encodeVarintFinality(dAtA, i, uint64(len(m.CanonicalLastCommitHash)))
+	if len(m.CanonicalAppHash) > 0 {
+		i -= len(m.CanonicalAppHash)
+		copy(dAtA[i:], m.CanonicalAppHash)
+		i = encodeVarintFinality(dAtA, i, uint64(len(m.CanonicalAppHash)))
 		i--
 		dAtA[i] = 0x22
 	}
@@ -362,7 +362,7 @@ func (m *IndexedBlock) Size() (n int) {
 	if m.Height != 0 {
 		n += 1 + sovFinality(uint64(m.Height))
 	}
-	l = len(m.LastCommitHash)
+	l = len(m.AppHash)
 	if l > 0 {
 		n += 1 + l + sovFinality(uint64(l))
 	}
@@ -389,11 +389,11 @@ func (m *Evidence) Size() (n int) {
 		l = m.PubRand.Size()
 		n += 1 + l + sovFinality(uint64(l))
 	}
-	l = len(m.CanonicalLastCommitHash)
+	l = len(m.CanonicalAppHash)
 	if l > 0 {
 		n += 1 + l + sovFinality(uint64(l))
 	}
-	l = len(m.ForkLastCommitHash)
+	l = len(m.ForkAppHash)
 	if l > 0 {
 		n += 1 + l + sovFinality(uint64(l))
 	}
@@ -464,7 +464,7 @@ func (m *IndexedBlock) Unmarshal(dAtA []byte) error {
 			}
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LastCommitHash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field AppHash", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -491,9 +491,9 @@ func (m *IndexedBlock) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.LastCommitHash = append(m.LastCommitHash[:0], dAtA[iNdEx:postIndex]...)
-			if m.LastCommitHash == nil {
-				m.LastCommitHash = []byte{}
+			m.AppHash = append(m.AppHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.AppHash == nil {
+				m.AppHash = []byte{}
 			}
 			iNdEx = postIndex
 		case 3:
@@ -657,7 +657,7 @@ func (m *Evidence) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field CanonicalLastCommitHash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field CanonicalAppHash", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -684,14 +684,14 @@ func (m *Evidence) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.CanonicalLastCommitHash = append(m.CanonicalLastCommitHash[:0], dAtA[iNdEx:postIndex]...)
-			if m.CanonicalLastCommitHash == nil {
-				m.CanonicalLastCommitHash = []byte{}
+			m.CanonicalAppHash = append(m.CanonicalAppHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.CanonicalAppHash == nil {
+				m.CanonicalAppHash = []byte{}
 			}
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ForkLastCommitHash", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ForkAppHash", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -718,9 +718,9 @@ func (m *Evidence) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ForkLastCommitHash = append(m.ForkLastCommitHash[:0], dAtA[iNdEx:postIndex]...)
-			if m.ForkLastCommitHash == nil {
-				m.ForkLastCommitHash = []byte{}
+			m.ForkAppHash = append(m.ForkAppHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.ForkAppHash == nil {
+				m.ForkAppHash = []byte{}
 			}
 			iNdEx = postIndex
 		case 6:

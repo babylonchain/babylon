@@ -1,12 +1,13 @@
 package keeper
 
 import (
+	"context"
+	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
 
+	"cosmossdk.io/log"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/wire"
-	"github.com/cometbft/cometbft/libs/log"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -15,12 +16,11 @@ import (
 
 type (
 	Keeper struct {
-		cdc       codec.BinaryCodec
-		storeKey  storetypes.StoreKey
-		memKey    storetypes.StoreKey
-		hooks     types.BTCLightClientHooks
-		btcConfig bbn.BtcConfig
-		bl        *types.BtcLightClient
+		cdc          codec.BinaryCodec
+		storeService corestoretypes.KVStoreService
+		hooks        types.BTCLightClientHooks
+		btcConfig    bbn.BtcConfig
+		bl           *types.BtcLightClient
 	}
 )
 
@@ -28,19 +28,17 @@ var _ types.BtcChainReadStore = (*headersState)(nil)
 
 func NewKeeper(
 	cdc codec.BinaryCodec,
-	storeKey,
-	memKey storetypes.StoreKey,
+	storeService corestoretypes.KVStoreService,
 	btcConfig bbn.BtcConfig,
 ) Keeper {
 	bl := types.NewBtcLightClientFromParams(btcConfig.NetParams())
 
 	return Keeper{
-		cdc:       cdc,
-		storeKey:  storeKey,
-		memKey:    memKey,
-		hooks:     nil,
-		btcConfig: btcConfig,
-		bl:        bl,
+		cdc:          cdc,
+		storeService: storeService,
+		hooks:        nil,
+		btcConfig:    btcConfig,
+		bl:           bl,
 	}
 }
 
@@ -59,7 +57,7 @@ func (k *Keeper) SetHooks(bh types.BTCLightClientHooks) *Keeper {
 }
 
 func (k Keeper) insertHeaders(
-	ctx sdk.Context,
+	ctx context.Context,
 	headers []*wire.BlockHeader,
 ) error {
 
@@ -90,7 +88,7 @@ func (k Keeper) insertHeaders(
 	return nil
 }
 
-func (k Keeper) InsertHeaders(ctx sdk.Context, headers []bbn.BTCHeaderBytes) error {
+func (k Keeper) InsertHeaders(ctx context.Context, headers []bbn.BTCHeaderBytes) error {
 	if len(headers) == 0 {
 		return types.ErrEmptyMessage
 	}
@@ -104,7 +102,7 @@ func (k Keeper) InsertHeaders(ctx sdk.Context, headers []bbn.BTCHeaderBytes) err
 }
 
 // BlockHeight returns the height of the provided header
-func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) BlockHeight(ctx context.Context, headerHash *bbn.BTCHeaderHashBytes) (uint64, error) {
 	if headerHash == nil {
 		return 0, types.ErrEmptyMessage
 	}
@@ -119,7 +117,7 @@ func (k Keeper) BlockHeight(ctx sdk.Context, headerHash *bbn.BTCHeaderHashBytes)
 }
 
 // MainChainDepth returns the depth of the header in the main chain, or error if it does not exists
-func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbn.BTCHeaderHashBytes) (uint64, error) {
+func (k Keeper) MainChainDepth(ctx context.Context, headerHashBytes *bbn.BTCHeaderHashBytes) (uint64, error) {
 	if headerHashBytes == nil {
 		return 0, types.ErrEmptyMessage
 	}
@@ -141,12 +139,12 @@ func (k Keeper) MainChainDepth(ctx sdk.Context, headerHashBytes *bbn.BTCHeaderHa
 	return headerDepth, nil
 }
 
-func (k Keeper) GetTipInfo(ctx sdk.Context) *types.BTCHeaderInfo {
+func (k Keeper) GetTipInfo(ctx context.Context) *types.BTCHeaderInfo {
 	return k.headersState(ctx).GetTip()
 }
 
 // GetHeaderByHash returns header with given hash, if it does not exists returns nil
-func (k Keeper) GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
+func (k Keeper) GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) *types.BTCHeaderInfo {
 	info, err := k.headersState(ctx).GetHeaderByHash(hash)
 
 	if err != nil {
@@ -157,7 +155,7 @@ func (k Keeper) GetHeaderByHash(ctx sdk.Context, hash *bbn.BTCHeaderHashBytes) *
 }
 
 // GetHeaderByHeight returns header with given height from main chain, returns nil if such header is not found
-func (k Keeper) GetHeaderByHeight(ctx sdk.Context, height uint64) *types.BTCHeaderInfo {
+func (k Keeper) GetHeaderByHeight(ctx context.Context, height uint64) *types.BTCHeaderInfo {
 	header, err := k.headersState(ctx).GetHeaderByHeight(height)
 
 	if err != nil {
@@ -170,7 +168,7 @@ func (k Keeper) GetHeaderByHeight(ctx sdk.Context, height uint64) *types.BTCHead
 // GetMainChainFrom returns the current canonical chain from the given height up to the tip
 // If the height is higher than the tip, it returns an empty slice
 // If startHeight is 0, it returns the entire main chain
-func (k Keeper) GetMainChainFrom(ctx sdk.Context, startHeight uint64) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0)
 	accHeaderFn := func(header *types.BTCHeaderInfo) bool {
 		headers = append(headers, header)
@@ -182,7 +180,7 @@ func (k Keeper) GetMainChainFrom(ctx sdk.Context, startHeight uint64) []*types.B
 
 // GetMainChainUpTo returns the current canonical chain as a collection of block headers
 // starting from the tip and ending on the header that has `depth` distance from it.
-func (k Keeper) GetMainChainUpTo(ctx sdk.Context, depth uint64) []*types.BTCHeaderInfo {
+func (k Keeper) GetMainChainUpTo(ctx context.Context, depth uint64) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0)
 
 	var currentDepth = uint64(0)
@@ -202,13 +200,13 @@ func (k Keeper) GetMainChainUpTo(ctx sdk.Context, depth uint64) []*types.BTCHead
 	return headers
 }
 
-// Retrieves whole header chain in reverse order
-func (K Keeper) GetMainChainReverse(ctx sdk.Context) []*types.BTCHeaderInfo {
+// GetMainChainReverse Retrieves whole header chain in reverse order
+func (k Keeper) GetMainChainReverse(ctx context.Context) []*types.BTCHeaderInfo {
 	headers := make([]*types.BTCHeaderInfo, 0)
 	accHeaderFn := func(header *types.BTCHeaderInfo) bool {
 		headers = append(headers, header)
 		return false
 	}
-	K.headersState(ctx).IterateReverseHeaders(accHeaderFn)
+	k.headersState(ctx).IterateReverseHeaders(accHeaderFn)
 	return headers
 }

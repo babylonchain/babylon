@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
 
@@ -12,7 +13,6 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -43,7 +43,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of validators
 		btcVals := []*types.BTCValidator{}
@@ -107,7 +107,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		keeper.RecordVotingPowerTable(ctx)
 		for i := uint64(0); i < numBTCValsWithVotingPower; i++ {
 			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
-			require.Equal(t, uint64(numBTCDels)*stakingValue, power)
+			require.Equal(t, numBTCDels*stakingValue, power)
 		}
 		for i := numBTCValsWithVotingPower; i < numBTCVals; i++ {
 			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
@@ -150,7 +150,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			if i == slashedIdx {
 				require.Zero(t, power)
 			} else {
-				require.Equal(t, uint64(numBTCDels)*stakingValue, power)
+				require.Equal(t, numBTCDels*stakingValue, power)
 			}
 		}
 		for i := numBTCValsWithVotingPower; i < numBTCVals; i++ {
@@ -215,7 +215,7 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of validators, each with a BTC delegation with random power
 		btcValsWithMeta := []*types.BTCValidatorWithMeta{}
@@ -319,7 +319,7 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 		// with value below the dust threshold, causing test failure.
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdk.NewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of validators, each with a BTC delegation with random power
 		btcValsWithMeta := []*types.BTCValidatorWithMeta{}

@@ -1,14 +1,16 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // IndexBTCHeight indexes the current BTC height, and saves it to KVStore
-func (k Keeper) IndexBTCHeight(ctx sdk.Context) {
-	babylonHeight := uint64(ctx.BlockHeight())
+func (k Keeper) IndexBTCHeight(ctx context.Context) {
+	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
 		return
@@ -18,7 +20,7 @@ func (k Keeper) IndexBTCHeight(ctx sdk.Context) {
 	store.Set(sdk.Uint64ToBigEndian(babylonHeight), sdk.Uint64ToBigEndian(btcHeight))
 }
 
-func (k Keeper) GetBTCHeightAtBabylonHeight(ctx sdk.Context, babylonHeight uint64) (uint64, error) {
+func (k Keeper) GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight uint64) (uint64, error) {
 	store := k.btcHeightStore(ctx)
 	btcHeightBytes := store.Get(sdk.Uint64ToBigEndian(babylonHeight))
 	if len(btcHeightBytes) == 0 {
@@ -27,8 +29,8 @@ func (k Keeper) GetBTCHeightAtBabylonHeight(ctx sdk.Context, babylonHeight uint6
 	return sdk.BigEndianToUint64(btcHeightBytes), nil
 }
 
-func (k Keeper) GetCurrentBTCHeight(ctx sdk.Context) (uint64, error) {
-	babylonHeight := uint64(ctx.BlockHeight())
+func (k Keeper) GetCurrentBTCHeight(ctx context.Context) (uint64, error) {
+	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	return k.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
 }
 
@@ -36,7 +38,7 @@ func (k Keeper) GetCurrentBTCHeight(ctx sdk.Context) (uint64, error) {
 // prefix: BTCHeightKey
 // key: Babylon block height
 // value: BTC block height
-func (k Keeper) btcHeightStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.BTCHeightKey)
+func (k Keeper) btcHeightStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.BTCHeightKey)
 }

@@ -10,7 +10,6 @@ import (
 
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func FuzzHashesQuery(f *testing.F) {
@@ -36,10 +35,9 @@ func FuzzHashesQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		sdkCtx := sdk.WrapSDKContext(ctx)
 
 		// Test nil request
-		resp, err := blcKeeper.Hashes(sdkCtx, nil)
+		resp, err := blcKeeper.Hashes(ctx, nil)
 		if resp != nil {
 			t.Errorf("Nil input led to a non-nil response")
 		}
@@ -53,7 +51,7 @@ func FuzzHashesQuery(f *testing.F) {
 		key := datagen.GenRandomByteArray(r, bzSz)
 		pagination := constructRequestWithKey(r, key)
 		hashesRequest := types.NewQueryHashesRequest(pagination)
-		resp, err = blcKeeper.Hashes(sdkCtx, hashesRequest)
+		resp, err = blcKeeper.Hashes(ctx, hashesRequest)
 		if resp != nil {
 			t.Errorf("Invalid key led to a non-nil response")
 		}
@@ -87,7 +85,7 @@ func FuzzHashesQuery(f *testing.F) {
 		hashesFound := make(map[string]bool, 0)
 
 		for headersRetrieved := uint64(0); headersRetrieved < chainSize; headersRetrieved += limit {
-			resp, err = blcKeeper.Hashes(sdkCtx, hashesRequest)
+			resp, err = blcKeeper.Hashes(ctx, hashesRequest)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
 			}
@@ -136,10 +134,9 @@ func FuzzContainsQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		sdkCtx := sdk.WrapSDKContext(ctx)
 
 		// Test nil input
-		resp, err := blcKeeper.Contains(sdkCtx, nil)
+		resp, err := blcKeeper.Contains(ctx, nil)
 		if resp != nil {
 			t.Fatalf("Nil input led to a non-nil response")
 		}
@@ -159,7 +156,7 @@ func FuzzContainsQuery(f *testing.F) {
 
 		// Test with a non-existent header
 		query, _ := types.NewQueryContainsRequest(datagen.GenRandomBTCHeaderInfo(r).Hash.MarshalHex())
-		resp, err = blcKeeper.Contains(sdkCtx, query)
+		resp, err = blcKeeper.Contains(ctx, query)
 		if err != nil {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
@@ -172,7 +169,7 @@ func FuzzContainsQuery(f *testing.F) {
 
 		// Test with an existing header
 		query, _ = types.NewQueryContainsRequest(chain.GetRandomHeaderInfo(r).Hash.MarshalHex())
-		resp, err = blcKeeper.Contains(sdkCtx, query)
+		resp, err = blcKeeper.Contains(ctx, query)
 		if err != nil {
 			t.Errorf("Valid input let to an error: %s", err)
 		}
@@ -204,10 +201,9 @@ func FuzzMainChainQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		sdkCtx := sdk.WrapSDKContext(ctx)
 
 		// Test nil input
-		resp, err := blcKeeper.MainChain(sdkCtx, nil)
+		resp, err := blcKeeper.MainChain(ctx, nil)
 		if resp != nil {
 			t.Errorf("Nil input led to a non-nil response")
 		}
@@ -221,7 +217,7 @@ func FuzzMainChainQuery(f *testing.F) {
 		key := datagen.GenRandomByteArray(r, bzSz)
 		pagination := constructRequestWithKey(r, key)
 		mainchainRequest := types.NewQueryMainChainRequest(pagination)
-		resp, err = blcKeeper.MainChain(sdkCtx, mainchainRequest)
+		resp, err = blcKeeper.MainChain(ctx, mainchainRequest)
 		if resp != nil {
 			t.Errorf("Invalid key led to a non-nil response")
 		}
@@ -242,7 +238,7 @@ func FuzzMainChainQuery(f *testing.F) {
 		// Check whether the key being set to an element that does not exist leads to an error
 		pagination = constructRequestWithKey(r, datagen.GenRandomBTCHeaderInfo(r).Hash.MustMarshal())
 		mainchainRequest = types.NewQueryMainChainRequest(pagination)
-		resp, err = blcKeeper.MainChain(sdkCtx, mainchainRequest)
+		resp, err = blcKeeper.MainChain(ctx, mainchainRequest)
 		if resp != nil {
 			t.Errorf("Key corresponding to header that does not exist led to a non-nil response")
 		}
@@ -279,7 +275,7 @@ func FuzzMainChainQuery(f *testing.F) {
 		// Generate the initial query
 		mainchainRequest = types.NewQueryMainChainRequest(pagination)
 		for headersRetrieved := uint64(0); headersRetrieved < mcSize; headersRetrieved += limit {
-			resp, err = blcKeeper.MainChain(sdkCtx, mainchainRequest)
+			resp, err = blcKeeper.MainChain(ctx, mainchainRequest)
 			if err != nil {
 				t.Errorf("Valid request led to an error %s", err)
 			}
@@ -332,10 +328,9 @@ func FuzzTipQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		sdkCtx := sdk.WrapSDKContext(ctx)
 
 		// Test nil input
-		resp, err := blcKeeper.Tip(sdkCtx, nil)
+		resp, err := blcKeeper.Tip(ctx, nil)
 		if resp != nil {
 			t.Errorf("Nil input led to a non-nil response")
 		}
@@ -353,7 +348,7 @@ func FuzzTipQuery(f *testing.F) {
 			datagen.RandomInt(r, 50)+100,
 		)
 
-		resp, err = blcKeeper.Tip(sdkCtx, types.NewQueryTipRequest())
+		resp, err = blcKeeper.Tip(ctx, types.NewQueryTipRequest())
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}
@@ -379,10 +374,9 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		blcKeeper, ctx := testkeeper.BTCLightClientKeeper(t)
-		sdkCtx := sdk.WrapSDKContext(ctx)
 
 		// Test nil input
-		resp, err := blcKeeper.BaseHeader(sdkCtx, nil)
+		resp, err := blcKeeper.BaseHeader(ctx, nil)
 		if resp != nil {
 			t.Errorf("Nil input led to a non-nil response")
 		}
@@ -400,7 +394,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 			datagen.RandomInt(r, 50)+100,
 		)
 
-		resp, err = blcKeeper.BaseHeader(sdkCtx, types.NewQueryBaseHeaderRequest())
+		resp, err = blcKeeper.BaseHeader(ctx, types.NewQueryBaseHeaderRequest())
 		if err != nil {
 			t.Errorf("valid input led to an error: %s", err)
 		}

@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"testing"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -65,7 +64,7 @@ func FuzzProofEpochSubmitted(f *testing.F) {
 		tagAsBytes, _ := hex.DecodeString(babylonTag)
 
 		// verify
-		err = zckeeper.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, powLimit, txformat.BabylonTag(tagAsBytes))
+		err = zckeeper.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, powLimit, tagAsBytes)
 		require.NoError(t, err)
 	})
 }

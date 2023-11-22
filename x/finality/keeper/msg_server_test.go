@@ -12,14 +12,13 @@ import (
 	"github.com/babylonchain/babylon/x/finality/keeper"
 	"github.com/babylonchain/babylon/x/finality/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
 
 func setupMsgServer(t testing.TB) (*keeper.Keeper, types.MsgServer, context.Context) {
 	fKeeper, ctx := keepertest.FinalityKeeper(t, nil, nil)
-	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), sdk.WrapSDKContext(ctx)
+	return fKeeper, keeper.NewMsgServerImpl(*fKeeper), ctx
 }
 
 func TestMsgServer(t *testing.T) {
@@ -157,7 +156,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 3: successful if the BTC validator has voting power and has not casted this vote yet
 		// index this block first
-		ctx = ctx.WithBlockHeader(tmproto.Header{Height: int64(blockHeight), LastCommitHash: blockHash})
+		ctx = ctx.WithBlockHeader(tmproto.Header{Height: int64(blockHeight), AppHash: blockHash})
 		fKeeper.IndexBlock(ctx)
 		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		// add vote and it should work
@@ -189,7 +188,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, msg2.BlockHeight, evidence.BlockHeight)
 		require.Equal(t, msg2.ValBtcPk.MustMarshal(), evidence.ValBtcPk.MustMarshal())
-		require.Equal(t, msg2.BlockLastCommitHash, evidence.ForkLastCommitHash)
+		require.Equal(t, msg2.BlockAppHash, evidence.ForkAppHash)
 		require.Equal(t, msg2.FinalitySig.MustMarshal(), evidence.ForkFinalitySig.MustMarshal())
 		// extract the SK and assert the extracted SK is correct
 		btcSK2, err := evidence.ExtractBTCSK()

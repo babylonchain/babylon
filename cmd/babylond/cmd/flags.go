@@ -1,9 +1,8 @@
 package cmd
 
 import (
+	"cosmossdk.io/math"
 	"time"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	babylonApp "github.com/babylonchain/babylon/app"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -55,9 +54,9 @@ type GenesisCLIArgs struct {
 	CovenantPK                   string
 	SlashingAddress              string
 	MinSlashingTransactionFeeSat int64
-	SlashingRate                 sdk.Dec
+	SlashingRate                 math.LegacyDec
 	MinPubRand                   uint64
-	MinCommissionRate            sdk.Dec
+	MinCommissionRate            math.LegacyDec
 }
 
 func addGenesisFlags(cmd *cobra.Command) {
@@ -135,8 +134,8 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		CovenantPK:                   covenantPk,
 		SlashingAddress:              slashingAddress,
 		MinSlashingTransactionFeeSat: minSlashingFee,
-		MinCommissionRate:            sdk.MustNewDecFromStr(minCommissionRate),
-		SlashingRate:                 sdk.MustNewDecFromStr(slashingRate),
+		MinCommissionRate:            math.LegacyMustNewDecFromStr(minCommissionRate),
+		SlashingRate:                 math.LegacyMustNewDecFromStr(slashingRate),
 		MinPubRand:                   minPubRand,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,

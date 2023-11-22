@@ -14,16 +14,17 @@ import (
 var (
 	// Ensure that MsgInsertHeader implements all functions of the Msg interface
 	_ sdk.Msg = (*MsgAddBlsSig)(nil)
+	_ sdk.Msg = (*MsgWrappedCreateValidator)(nil)
 )
 
-func NewMsgAddBlsSig(signer sdk.AccAddress, epochNum uint64, lch LastCommitHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
+func NewMsgAddBlsSig(signer sdk.AccAddress, epochNum uint64, appHash AppHash, sig bls12381.Signature, addr sdk.ValAddress) *MsgAddBlsSig {
 	return &MsgAddBlsSig{
 		Signer: signer.String(),
 		BlsSig: &BlsSig{
-			EpochNum:       epochNum,
-			LastCommitHash: &lch,
-			BlsSig:         &sig,
-			SignerAddress:  addr.String(),
+			EpochNum:      epochNum,
+			AppHash:       &appHash,
+			BlsSig:        &sig,
+			SignerAddress: addr.String(),
 		},
 	}
 }
@@ -50,7 +51,7 @@ func (m *MsgAddBlsSig) ValidateBasic() error {
 	if err != nil {
 		return err
 	}
-	err = m.BlsSig.LastCommitHash.ValidateBasic()
+	err = m.BlsSig.AppHash.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -78,12 +79,8 @@ func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 	if m.MsgCreateValidator == nil {
 		return errors.New("MsgCreateValidator is nil")
 	}
-	err := m.MsgCreateValidator.ValidateBasic()
-	if err != nil {
-		return err
-	}
 	var pubKey ed255192.PubKey
-	err = pubKey.Unmarshal(m.MsgCreateValidator.Pubkey.GetValue())
+	err := pubKey.Unmarshal(m.MsgCreateValidator.Pubkey.GetValue())
 	if err != nil {
 		return err
 	}
@@ -93,10 +90,6 @@ func (m *MsgWrappedCreateValidator) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func (m *MsgWrappedCreateValidator) GetSigners() []sdk.AccAddress {
-	return m.MsgCreateValidator.GetSigners()
 }
 
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces

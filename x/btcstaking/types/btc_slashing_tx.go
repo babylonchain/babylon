@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	sdkmath "cosmossdk.io/math"
 	"encoding/hex"
 
 	"github.com/babylonchain/babylon/btcstaking"
@@ -10,7 +11,6 @@ import (
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type BTCSlashingTx []byte
@@ -86,7 +86,7 @@ func (tx *BTCSlashingTx) ToMsgTx() (*wire.MsgTx, error) {
 func (tx *BTCSlashingTx) Validate(
 	net *chaincfg.Params,
 	slashingAddress string,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 	slashingTxMinFee, stakingOutputValue int64,
 ) error {
 	msgTx, err := tx.ToMsgTx()

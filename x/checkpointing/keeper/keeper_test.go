@@ -53,7 +53,7 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 		_, err = ckptKeeper.BuildRawCheckpoint(
 			ctx,
 			mockCkptWithMeta.Ckpt.EpochNum,
-			datagen.GenRandomLastCommitHash(r),
+			datagen.GenRandomAppHash(r),
 		)
 		require.Errorf(t, err, "raw checkpoint with the same epoch already exists")
 	})
@@ -181,7 +181,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		localCkptWithMeta.Status = types.Sealed
 		localCkptWithMeta.PowerSum = 10
 		localCkptWithMeta.Ckpt.Bitmap = bm
-		msgBytes := types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, *localCkptWithMeta.Ckpt.LastCommitHash)
+		msgBytes := types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, *localCkptWithMeta.Ckpt.AppHash)
 		sig := bls12381.Sign(blsPrivKey1, msgBytes)
 		localCkptWithMeta.Ckpt.BlsMultiSig = &sig
 		_ = ckptKeeper.AddRawCheckpoint(
@@ -193,7 +193,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		rawBtcCheckpoint := makeBtcCkptBytes(
 			r,
 			localCkptWithMeta.Ckpt.EpochNum,
-			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
+			localCkptWithMeta.Ckpt.AppHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
 			localCkptWithMeta.Ckpt.BlsMultiSig.Bytes(),
 			t,
@@ -206,7 +206,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		rawBtcCheckpoint = makeBtcCkptBytes(
 			r,
 			localCkptWithMeta.Ckpt.EpochNum,
-			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
+			localCkptWithMeta.Ckpt.AppHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
 			datagen.GenRandomByteArray(r, btctxformatter.BlsSigLength),
 			t,
@@ -214,13 +214,13 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		err = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
 		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
 
-		// 3. check a conflicting checkpoint; signed on a random lastcommithash
-		conflictLastCommitHash := datagen.GenRandomByteArray(r, btctxformatter.LastCommitHashLength)
-		msgBytes = types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictLastCommitHash)
+		// 3. check a conflicting checkpoint; signed on a random AppHash
+		conflictAppHash := datagen.GenRandomByteArray(r, btctxformatter.AppHashLength)
+		msgBytes = types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictAppHash)
 		rawBtcCheckpoint = makeBtcCkptBytes(
 			r,
 			localCkptWithMeta.Ckpt.EpochNum,
-			conflictLastCommitHash,
+			conflictAppHash,
 			localCkptWithMeta.Ckpt.Bitmap,
 			bls12381.Sign(blsPrivKey1, msgBytes),
 			t,
@@ -238,7 +238,7 @@ func makeBtcCkptBytes(r *rand.Rand, epoch uint64, lch []byte, bitmap []byte, bls
 
 	rawBTCCkpt := &btctxformatter.RawBtcCheckpoint{
 		Epoch:            epoch,
-		LastCommitHash:   lch,
+		AppHash:   lch,
 		BitMap:           bitmap,
 		SubmitterAddress: address,
 		BlsSig:           blsSig,

@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
@@ -43,9 +43,9 @@ type PrivSigner struct {
 	ClientCtx client.Context
 }
 
-func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring, feePayer string, encodingCfg appparams.EncodingConfig) (*PrivSigner, error) {
+func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring, feePayer string, encodingCfg *appparams.EncodingConfig) (*PrivSigner, error) {
 	// setup private validator
-	nodeCfg := tmconfig.DefaultConfig()
+	nodeCfg := cmtconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
 	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
 	if err != nil {
@@ -60,7 +60,7 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 
 	clientCtx = clientCtx.
 		WithInterfaceRegistry(encodingCfg.InterfaceRegistry).
-		WithCodec(encodingCfg.Marshaler).
+		WithCodec(encodingCfg.Codec).
 		WithLegacyAmino(encodingCfg.Amino).
 		WithTxConfig(encodingCfg.TxConfig).
 		WithAccountRetriever(types.AccountRetriever{}).

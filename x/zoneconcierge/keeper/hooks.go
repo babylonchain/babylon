@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -19,7 +20,7 @@ var _ epochingtypes.EpochingHooks = Hooks{}
 func (k Keeper) Hooks() Hooks { return Hooks{k} }
 
 // AfterEpochEnds is triggered upon an epoch has ended
-func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
+func (h Hooks) AfterEpochEnds(ctx context.Context, epoch uint64) {
 	// upon an epoch has ended, index the current chain info for each CZ
 	for _, chainID := range h.k.GetAllChainIDs(ctx) {
 		h.k.recordEpochChainInfo(ctx, chainID, epoch)
@@ -27,7 +28,7 @@ func (h Hooks) AfterEpochEnds(ctx sdk.Context, epoch uint64) {
 }
 
 // AfterRawCheckpointFinalized is triggered upon an epoch has been finalised
-func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	// upon an epoch has been finalised, update the last finalised epoch
 	h.k.setFinalizedEpoch(ctx, epoch)
 
@@ -44,14 +45,14 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error 
 
 // Other unused hooks
 
-func (h Hooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error { return nil }
-func (h Hooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error     { return nil }
+func (h Hooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error { return nil }
+func (h Hooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error     { return nil }
 
-func (h Hooks) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+func (h Hooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
 	return nil
 }
-func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
+func (h Hooks) AfterRawCheckpointBlsSigVerified(ctx context.Context, ckpt *checkpointingtypes.RawCheckpoint) error {
 	return nil
 }
-func (h Hooks) AfterEpochBegins(ctx sdk.Context, epoch uint64)                          {}
-func (h Hooks) BeforeSlashThreshold(ctx sdk.Context, valSet epochingtypes.ValidatorSet) {}
+func (h Hooks) AfterEpochBegins(ctx context.Context, epoch uint64)                          {}
+func (h Hooks) BeforeSlashThreshold(ctx context.Context, valSet epochingtypes.ValidatorSet) {}

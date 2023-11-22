@@ -16,7 +16,7 @@ import (
 
 func setupMsgServer(t testing.TB) (types.MsgServer, *keeper.Keeper, context.Context) {
 	k, ctx := keepertest.BTCLightClientKeeper(t)
-	return keeper.NewMsgServerImpl(*k), k, sdk.WrapSDKContext(ctx)
+	return keeper.NewMsgServerImpl(*k), k, ctx
 }
 
 // Property: Inserting valid chain which has current tip as parent, should always update the chain
@@ -106,7 +106,7 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 		reorgDepth := r.Intn(int(chainLength-1)) + 1
 
 		forkHeaderHeight := initTip.Height - uint64(reorgDepth)
-		forkHeader := blcKeeper.GetHeaderByHeight(ctx, uint64(forkHeaderHeight))
+		forkHeader := blcKeeper.GetHeaderByHeight(ctx, forkHeaderHeight)
 		require.NotNil(t, forkHeader)
 
 		// fork chain will always be longer that current c

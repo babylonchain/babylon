@@ -1,11 +1,12 @@
 package keeper
 
 import (
+	"context"
+	errorsmod "cosmossdk.io/errors"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	errorsmod "cosmossdk.io/errors"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
@@ -14,7 +15,8 @@ import (
 // The checkpointing module will use this function to verify the `MsgCreateValidator` message
 // inside a `MsgWrappedCreateValidator` message.
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.10/x/staking/keeper/msg_server.go#L34-L108)
-func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCreateValidator) error {
+func (k Keeper) CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// ensure validator address is correctly encoded
 	valAddr, err := sdk.ValAddressFromBech32(msg.ValidatorAddress)
 	if err != nil {
@@ -22,7 +24,10 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// get parameters of the staking module
-	sParams := k.stk.GetParams(ctx)
+	sParams, err := k.stk.GetParams(ctx)
+	if err != nil {
+		return err
+	}
 
 	// check commission rate
 	if msg.Commission.Rate.LT(sParams.MinCommissionRate) {
@@ -30,7 +35,7 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// ensure the validator operator was not registered before
-	if _, found := k.stk.GetValidator(ctx, valAddr); found {
+	if _, err := k.stk.GetValidator(ctx, valAddr); err == nil {
 		return stakingtypes.ErrValidatorOwnerExists
 	}
 
@@ -41,7 +46,7 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// ensure the validator was not registered before
-	if _, found := k.stk.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); found {
+	if _, err := k.stk.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(pk)); err == nil {
 		return stakingtypes.ErrValidatorPubKeyExists
 	}
 
@@ -58,8 +63,8 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// ensure public key type is supported
-	cp := ctx.ConsensusParams()
-	if cp != nil && cp.Validator != nil {
+	cp := sdkCtx.ConsensusParams()
+	if cp.Validator != nil {
 		pkType := pk.Type()
 		hasKeyType := false
 		for _, keyType := range cp.Validator.PubKeyTypes {
@@ -77,7 +82,7 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	}
 
 	// check validator
-	validator, err := stakingtypes.NewValidator(valAddr, pk, msg.Description)
+	validator, err := stakingtypes.NewValidator(valAddr.String(), pk, msg.Description)
 	if err != nil {
 		return err
 	}
@@ -85,14 +90,14 @@ func (k Keeper) CheckMsgCreateValidator(ctx sdk.Context, msg *stakingtypes.MsgCr
 	// check if SetInitialCommission fails or not
 	commission := stakingtypes.NewCommissionWithTime(
 		msg.Commission.Rate, msg.Commission.MaxRate,
-		msg.Commission.MaxChangeRate, ctx.BlockHeader().Time,
+		msg.Commission.MaxChangeRate, sdkCtx.BlockHeader().Time,
 	)
 	if _, err := validator.SetInitialCommission(commission); err != nil {
 		return err
 	}
 
-	// sanity check on delegator address
-	delegatorAddr, err := sdk.AccAddressFromBech32(msg.DelegatorAddress)
+	// sanity check on delegator address -- delegator is the same as validator
+	delegatorAddr := sdk.AccAddress(valAddr)
 	if err != nil {
 		return err
 	}

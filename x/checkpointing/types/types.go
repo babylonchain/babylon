@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -18,18 +19,18 @@ const (
 	BitmapBits = 104 // 104 bits for 104 validators at top
 )
 
-type LastCommitHash []byte
+type AppHash []byte
 
 type BlsSigHash []byte
 
 type RawCkptHash []byte
 
-func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
+func NewCheckpoint(epochNum uint64, appHash AppHash) *RawCheckpoint {
 	return &RawCheckpoint{
-		EpochNum:       epochNum,
-		LastCommitHash: &lch,
-		Bitmap:         bitmap.New(BitmapBits), // 13 bytes, holding 100 validators
-		BlsMultiSig:    nil,
+		EpochNum:    epochNum,
+		AppHash:     &appHash,
+		Bitmap:      bitmap.New(BitmapBits), // 13 bytes, holding 100 validators
+		BlsMultiSig: nil,
 	}
 }
 
@@ -110,8 +111,9 @@ func (cm *RawCheckpointWithMeta) IsMoreMatureThanStatus(status CheckpointStatus)
 
 // RecordStateUpdate appends a new state update to the raw ckpt with meta
 // where the time/height are captured by the current ctx
-func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx sdk.Context, status CheckpointStatus) {
-	height, time := ctx.BlockHeight(), ctx.BlockTime()
+func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx context.Context, status CheckpointStatus) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height, time := sdkCtx.BlockHeight(), sdkCtx.BlockTime()
 	stateUpdate := &CheckpointStateUpdate{
 		State:       status,
 		BlockHeight: uint64(height),
@@ -120,74 +122,70 @@ func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx sdk.Context, status Check
 	cm.Lifecycle = append(cm.Lifecycle, stateUpdate)
 }
 
-func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
+func NewAppHashFromHex(s string) (AppHash, error) {
 	bz, err := hex.DecodeString(s)
 	if err != nil {
 		return nil, err
 	}
 
-	var lch LastCommitHash
+	var appHash AppHash
 
-	err = lch.Unmarshal(bz)
+	err = appHash.Unmarshal(bz)
 	if err != nil {
 		return nil, err
 	}
 
-	return lch, nil
+	return appHash, nil
 }
 
-func (lch *LastCommitHash) Unmarshal(bz []byte) error {
+func (appHash *AppHash) Unmarshal(bz []byte) error {
 	if len(bz) != HashSize {
-		return errors.New("invalid lastCommitHash length")
+		return errors.New("invalid appHash length")
 	}
-	*lch = bz
+	*appHash = bz
 	return nil
 }
 
-func (lch *LastCommitHash) Size() (n int) {
-	if lch == nil {
+func (appHash *AppHash) Size() (n int) {
+	if appHash == nil {
 		return 0
 	}
-	return len(*lch)
+	return len(*appHash)
 }
 
-func (lch *LastCommitHash) Equal(l LastCommitHash) bool {
-	return lch.String() == l.String()
+func (appHash *AppHash) Equal(l AppHash) bool {
+	return appHash.String() == l.String()
 }
 
-func (lch *LastCommitHash) String() string {
-	return hex.EncodeToString(*lch)
+func (appHash *AppHash) String() string {
+	return hex.EncodeToString(*appHash)
 }
 
-func (lch *LastCommitHash) MustMarshal() []byte {
-	bz, err := lch.Marshal()
+func (appHash *AppHash) MustMarshal() []byte {
+	bz, err := appHash.Marshal()
 	if err != nil {
 		panic(err)
 	}
 	return bz
 }
 
-func (lch *LastCommitHash) Marshal() ([]byte, error) {
-	return *lch, nil
+func (appHash *AppHash) Marshal() ([]byte, error) {
+	return *appHash, nil
 }
 
-func (lch LastCommitHash) MarshalTo(data []byte) (int, error) {
-	copy(data, lch)
+func (appHash AppHash) MarshalTo(data []byte) (int, error) {
+	copy(data, appHash)
 	return len(data), nil
 }
 
-func (lch *LastCommitHash) ValidateBasic() error {
-	if lch == nil {
-		return errors.New("invalid lastCommitHash")
+func (appHash *AppHash) ValidateBasic() error {
+	if appHash == nil {
+		return errors.New("invalid appHash")
 	}
-	if len(*lch) != HashSize {
-		return errors.New("invalid lastCommitHash")
+	if len(*appHash) != HashSize {
+		return errors.New("invalid appHash")
 	}
 	return nil
-}
-
-func RawCkptToBytes(cdc codec.BinaryCodec, ckpt *RawCheckpoint) []byte {
-	return cdc.MustMarshal(ckpt)
 }
 
 // ValidateBasic does sanity checks on a raw checkpoint
@@ -195,7 +193,7 @@ func (ckpt RawCheckpoint) ValidateBasic() error {
 	if ckpt.Bitmap == nil {
 		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
 	}
-	err := ckpt.LastCommitHash.ValidateBasic()
+	err := ckpt.AppHash.ValidateBasic()
 	if err != nil {
 		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
 	}

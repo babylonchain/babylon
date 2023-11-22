@@ -1,16 +1,18 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/incentive/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // RewardBTCStaking distributes rewards to BTC validators/delegations at a given height according
 // to the reward distribution cache
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
-func (k Keeper) RewardBTCStaking(ctx sdk.Context, height uint64, rdc *bstypes.RewardDistCache) {
+func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *bstypes.RewardDistCache) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// failing to get a reward gauge at previous height is a programming error
@@ -36,9 +38,9 @@ func (k Keeper) RewardBTCStaking(ctx sdk.Context, height uint64, rdc *bstypes.Re
 	// TODO: handle the change in the gauge due to the truncating operations
 }
 
-func (k Keeper) accumulateBTCStakingReward(ctx sdk.Context, btcStakingReward sdk.Coins) {
+func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {
 	// update BTC staking gauge
-	height := uint64(ctx.BlockHeight())
+	height := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	gauge := types.NewGauge(btcStakingReward...)
 	k.SetBTCStakingGauge(ctx, height, gauge)
 
@@ -50,13 +52,13 @@ func (k Keeper) accumulateBTCStakingReward(ctx sdk.Context, btcStakingReward sdk
 	}
 }
 
-func (k Keeper) SetBTCStakingGauge(ctx sdk.Context, height uint64, gauge *types.Gauge) {
+func (k Keeper) SetBTCStakingGauge(ctx context.Context, height uint64, gauge *types.Gauge) {
 	store := k.btcStakingGaugeStore(ctx)
 	gaugeBytes := k.cdc.MustMarshal(gauge)
 	store.Set(sdk.Uint64ToBigEndian(height), gaugeBytes)
 }
 
-func (k Keeper) GetBTCStakingGauge(ctx sdk.Context, height uint64) *types.Gauge {
+func (k Keeper) GetBTCStakingGauge(ctx context.Context, height uint64) *types.Gauge {
 	store := k.btcStakingGaugeStore(ctx)
 	gaugeBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if gaugeBytes == nil {
@@ -73,7 +75,7 @@ func (k Keeper) GetBTCStakingGauge(ctx sdk.Context, height uint64) *types.Gauge 
 // prefix: BTCStakingGaugeKey
 // key: gauge height
 // value: gauge of rewards for BTC staking at this height
-func (k Keeper) btcStakingGaugeStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.BTCStakingGaugeKey)
+func (k Keeper) btcStakingGaugeStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.BTCStakingGaugeKey)
 }

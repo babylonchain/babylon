@@ -27,7 +27,7 @@ func (p *Params) ParamSetPairs() paramtypes.ParamSetPairs {
 
 func validateMinPubRand(minPubRand uint64) error {
 	if minPubRand == 0 {
-		return fmt.Errorf("Min Pub Rand cannot be 0")
+		return fmt.Errorf("min Pub Rand cannot be 0")
 	}
 	return nil
 }

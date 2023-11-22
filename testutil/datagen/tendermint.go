@@ -6,7 +6,7 @@ import (
 
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
 
 func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *tmproto.Header {
@@ -14,7 +14,7 @@ func GenRandomTMHeader(r *rand.Rand, chainID string, height uint64) *tmproto.Hea
 		ChainID:        chainID,
 		Height:         int64(height),
 		Time:           time.Now(),
-		LastCommitHash: GenRandomByteArray(r, 32),
+		AppHash: GenRandomByteArray(r, 32),
 	}
 }
 
@@ -24,7 +24,7 @@ func GenRandomIBCTMHeader(r *rand.Rand, chainID string, height uint64) *ibctmtyp
 			Header: &tmproto.Header{
 				ChainID:        chainID,
 				Height:         int64(height),
-				LastCommitHash: GenRandomByteArray(r, 32),
+				AppHash: GenRandomByteArray(r, 32),
 			},
 		},
 	}
@@ -32,7 +32,7 @@ func GenRandomIBCTMHeader(r *rand.Rand, chainID string, height uint64) *ibctmtyp
 
 func HeaderToHeaderInfo(header *ibctmtypes.Header) *zctypes.HeaderInfo {
 	return &zctypes.HeaderInfo{
-		Hash:    header.Header.LastCommitHash,
+		Hash:    header.Header.AppHash,
 		ChainId: header.Header.ChainID,
 		Height:  uint64(header.Header.Height),
 	}

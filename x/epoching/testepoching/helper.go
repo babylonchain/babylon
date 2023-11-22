@@ -4,8 +4,14 @@ import (
 	"math/rand"
 	"testing"
 
+	"cosmossdk.io/core/header"
 	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/privval"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/ed25519"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	"cosmossdk.io/math"
 	proto "github.com/cosmos/gogoproto/proto"
@@ -13,7 +19,6 @@ import (
 
 	appparams "github.com/babylonchain/babylon/app/params"
 
-	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -28,9 +33,9 @@ import (
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
-type ValidatorInfo struct {
-	BlsKey  bls12381.PrivateKey
-	Address sdk.ValAddress
+type GenesisValidators struct {
+	GenesisKeys []*checkpointingtypes.GenesisKey
+	BlsPrivKeys []bls12381.PrivateKey
 }
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
@@ -44,25 +49,25 @@ type Helper struct {
 	QueryClient    types.QueryClient
 	StakingKeeper  *stakingkeeper.Keeper
 
-	GenAccs        []authtypes.GenesisAccount
-	ValBlsPrivKeys []ValidatorInfo
+	GenAccs       []authtypes.GenesisAccount
+	GenValidators *GenesisValidators
 }
 
 // NewHelper creates the helper for testing the epoching module
 func NewHelper(t *testing.T) *Helper {
-	app := app.Setup(t, false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	valSet, err := GenesisValidatorSet(1)
+	require.NoError(t, err)
+	// generate genesis account
+	acc := authtypes.NewBaseAccount(valSet.GenesisKeys[0].ValPubkey.Address().Bytes(), valSet.GenesisKeys[0].ValPubkey, 0, 0)
+	balance := banktypes.Balance{
+		Address: acc.GetAddress().String(),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(100000000000000))),
+	}
+
+	app := app.SetupWithGenesisValSet(t, valSet.GenesisKeys, []authtypes.GenesisAccount{acc}, balance)
+	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	epochingKeeper := app.EpochingKeeper
-
-	// add BLS pubkey to the genesis validator
-	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
-	require.Len(t, valSet, 1)
-	genesisVal := valSet[0]
-	blsPrivKey := bls12381.GenPrivKey()
-	genesisBLSPubkey := blsPrivKey.PubKey()
-	err := app.CheckpointingKeeper.CreateRegistration(ctx, genesisBLSPubkey, genesisVal.Addr)
-	require.NoError(t, err)
 
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
@@ -79,17 +84,14 @@ func NewHelper(t *testing.T) *Helper {
 		queryClient,
 		app.StakingKeeper,
 		nil,
-		[]ValidatorInfo{ValidatorInfo{
-			blsPrivKey,
-			genesisVal.Addr,
-		}},
+		valSet,
 	}
 }
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
 func NewHelperWithValSet(t *testing.T) *Helper {
 	// generate the validator set with 10 validators
-	tmValSet, err := GenTmValidatorSet(10)
+	valSet, err := GenesisValidatorSet(10)
 	require.NoError(t, err)
 
 	// generate the genesis account
@@ -103,77 +105,77 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, tmValSet, GenAccs, balance)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	app := app.SetupWithGenesisValSet(t, valSet.GenesisKeys, GenAccs, balance)
+	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
-	valInfos := []ValidatorInfo{}
-	// add BLS pubkey to the genesis validator
-	valSet := epochingKeeper.GetValidatorSet(ctx, 0)
-	for _, val := range valSet {
-		blsPrivKey := bls12381.GenPrivKey()
-		valInfos = append(valInfos, ValidatorInfo{blsPrivKey, val.Addr})
-		blsPubkey := blsPrivKey.PubKey()
-		err = app.CheckpointingKeeper.CreateRegistration(ctx, blsPubkey, val.Addr)
-		require.NoError(t, err)
-	}
 	querier := keeper.Querier{Keeper: epochingKeeper}
 	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, querier)
 	queryClient := types.NewQueryClient(queryHelper)
 	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
 
-	return &Helper{t, ctx, app, &epochingKeeper, msgSrvr, queryClient, app.StakingKeeper, GenAccs, valInfos}
+	return &Helper{
+		t,
+		ctx,
+		app,
+		&epochingKeeper,
+		msgSrvr,
+		queryClient,
+		app.StakingKeeper,
+		GenAccs,
+		valSet,
+	}
 }
 
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
-func (h *Helper) GenAndApplyEmptyBlock(r *rand.Rand) sdk.Context {
+func (h *Helper) GenAndApplyEmptyBlock(r *rand.Rand) (sdk.Context, error) {
 	newHeight := h.App.LastBlockHeight() + 1
-	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
+	valSet, err := h.StakingKeeper.GetLastValidators(h.Ctx)
+	if err != nil {
+		return sdk.Context{}, err
+	}
 	valhash := CalculateValHash(valSet)
 	newHeader := tmproto.Header{
 		Height:             newHeight,
 		ValidatorsHash:     valhash,
 		NextValidatorsHash: valhash,
-		AppHash:            datagen.GenRandomByteArray(r, 32),
-		LastCommitHash:     datagen.GenRandomLastCommitHash(r),
 	}
 
-	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
-	h.App.EndBlock(abci.RequestEndBlock{})
-	h.App.Commit()
-
-	h.Ctx = h.Ctx.WithBlockHeader(newHeader)
-	return h.Ctx
-}
-
-func (h *Helper) BeginBlock(r *rand.Rand) sdk.Context {
-	newHeight := h.App.LastBlockHeight() + 1
-	valSet := h.StakingKeeper.GetLastValidators(h.Ctx)
-	valhash := CalculateValHash(valSet)
-	newHeader := tmproto.Header{
-		Height:             newHeight,
-		AppHash:            datagen.GenRandomByteArray(r, 32),
-		ValidatorsHash:     valhash,
-		NextValidatorsHash: valhash,
+	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height:             newHeader.Height,
+		NextValidatorsHash: newHeader.NextValidatorsHash,
+	})
+	if err != nil {
+		return sdk.Context{}, err
 	}
 
-	h.App.BeginBlock(abci.RequestBeginBlock{Header: newHeader})
-	h.Ctx = h.Ctx.WithBlockHeader(newHeader)
-	return h.Ctx
-}
+	newHeader.AppHash = resp.AppHash
+	ctxDuringHeight := h.Ctx.WithHeaderInfo(header.Info{
+		Height:  newHeader.Height,
+		AppHash: resp.AppHash,
+	}).WithBlockHeader(newHeader)
 
-func (h *Helper) EndBlock() sdk.Context {
-	h.App.EndBlock(abci.RequestEndBlock{})
-	h.App.Commit()
-	return h.Ctx
+	_, err = h.App.Commit()
+	if err != nil {
+		return sdk.Context{}, err
+	}
+
+	if newHeight == 1 {
+		// do it again
+		// TODO: Figure out why when ctx height is 1, GenAndApplyEmptyBlock
+		// will still give ctx height 1 once, then start to increment
+		return h.GenAndApplyEmptyBlock(r)
+	}
+
+	return ctxDuringHeight, nil
 }
 
 // WrappedDelegate calls handler to delegate stake for a validator
 func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount math.Int) *sdk.Result {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
-	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
+	msg := stakingtypes.NewMsgDelegate(delegator.String(), val.String(), coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
 	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
 		return h.MsgSrvr.WrappedDelegate(ctx, wmsg)
@@ -183,7 +185,7 @@ func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, a
 // WrappedDelegateWithPower calls handler to delegate stake for a validator
 func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValAddress, power int64) *sdk.Result {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
-	msg := stakingtypes.NewMsgDelegate(delegator, val, coin)
+	msg := stakingtypes.NewMsgDelegate(delegator.String(), val.String(), coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
 	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
 		return h.MsgSrvr.WrappedDelegate(ctx, wmsg)
@@ -193,7 +195,7 @@ func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValA
 // WrappedUndelegate calls handler to unbound some stake from a validator.
 func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress, amount math.Int) *sdk.Result {
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
-	msg := stakingtypes.NewMsgUndelegate(delegator, val, unbondAmt)
+	msg := stakingtypes.NewMsgUndelegate(delegator.String(), val.String(), unbondAmt)
 	wmsg := types.NewMsgWrappedUndelegate(msg)
 	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
 		return h.MsgSrvr.WrappedUndelegate(ctx, wmsg)
@@ -203,7 +205,7 @@ func (h *Helper) WrappedUndelegate(delegator sdk.AccAddress, val sdk.ValAddress,
 // WrappedBeginRedelegate calls handler to redelegate some stake from a validator to another
 func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.ValAddress, dstVal sdk.ValAddress, amount math.Int) *sdk.Result {
 	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
-	msg := stakingtypes.NewMsgBeginRedelegate(delegator, srcVal, dstVal, unbondAmt)
+	msg := stakingtypes.NewMsgBeginRedelegate(delegator.String(), srcVal.String(), dstVal.String(), unbondAmt)
 	wmsg := types.NewMsgWrappedBeginRedelegate(msg)
 	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
 		return h.MsgSrvr.WrappedBeginRedelegate(ctx, wmsg)
@@ -213,7 +215,9 @@ func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.Val
 // Handle executes an action function with the Helper's context, wraps the result into an SDK service result, and performs two assertions before returning it
 func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Result {
 	res, err := action(h.Ctx)
-	r, _ := sdk.WrapServiceResult(h.Ctx, res, err)
+	require.NoError(h.t, err)
+	r, err := sdk.WrapServiceResult(h.Ctx, res, err)
+	require.NoError(h.t, err)
 	require.NotNil(h.t, r)
 	require.NoError(h.t, err)
 	return r
@@ -222,8 +226,8 @@ func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Re
 // CheckValidator asserts that a validor exists and has a given status (if status!="")
 // and if has a right jailed flag.
 func (h *Helper) CheckValidator(addr sdk.ValAddress, status stakingtypes.BondStatus, jailed bool) stakingtypes.Validator {
-	v, ok := h.StakingKeeper.GetValidator(h.Ctx, addr)
-	require.True(h.t, ok)
+	v, err := h.StakingKeeper.GetValidator(h.Ctx, addr)
+	require.NoError(h.t, err)
 	require.Equal(h.t, jailed, v.Jailed, "wrong Jalied status")
 	if status >= 0 {
 		require.Equal(h.t, status, v.Status)
@@ -235,4 +239,37 @@ func (h *Helper) CheckValidator(addr sdk.ValAddress, status stakingtypes.BondSta
 func (h *Helper) CheckDelegator(delegator sdk.AccAddress, val sdk.ValAddress, found bool) {
 	_, ok := h.StakingKeeper.GetDelegation(h.Ctx, delegator, val)
 	require.Equal(h.t, ok, found)
+}
+
+// GenesisValidatorSet generates a set with `numVals` genesis validators
+func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
+	genesisKeys := make([]*checkpointingtypes.GenesisKey, 0, numVals)
+	blsPrivKeys := make([]bls12381.PrivateKey, 0, numVals)
+	for i := 0; i < numVals; i++ {
+		blsPrivKey := bls12381.GenPrivKey()
+		// create validator set with single validator
+		valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), blsPrivKey)
+		if err != nil {
+			return nil, err
+		}
+		valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
+		if err != nil {
+			return nil, err
+		}
+		genesisKey, err := checkpointingtypes.NewGenesisKey(
+			sdk.ValAddress(valKeys.ValPubkey.Address()),
+			&valKeys.BlsPubkey,
+			valKeys.PoP,
+			&cosmosed.PubKey{Key: valPubkey.Bytes()},
+		)
+		if err != nil {
+			return nil, err
+		}
+		genesisKeys = append(genesisKeys, genesisKey)
+		blsPrivKeys = append(blsPrivKeys, blsPrivKey)
+	}
+	return &GenesisValidators{
+		GenesisKeys: genesisKeys,
+		BlsPrivKeys: blsPrivKeys,
+	}, nil
 }

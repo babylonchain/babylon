@@ -17,5 +17,5 @@ var (
 	ErrBlsPrivKeyDoesNotExist = errorsmod.Register(ModuleName, 1211, "BLS private key does not exist")
 	ErrInvalidBlsSignature    = errorsmod.Register(ModuleName, 1212, "BLS signature is invalid")
 	ErrConflictingCheckpoint  = errorsmod.Register(ModuleName, 1213, "Conflicting checkpoint is found")
-	ErrInvalidLastCommitHash  = errorsmod.Register(ModuleName, 1214, "Provided last commit hash is Invalid")
+	ErrInvalidAppHash  = errorsmod.Register(ModuleName, 1214, "Provided app hash is Invalid")
 )

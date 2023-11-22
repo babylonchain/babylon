@@ -6,17 +6,16 @@ import (
 	"fmt"
 	"testing"
 
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	dbm "github.com/cosmos/cosmos-db"
+
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -27,58 +26,55 @@ import (
 
 func TestCheckCorrespondence(t *testing.T) {
 	homePath := t.TempDir()
-	encodingCft := app.GetEncodingConfig()
-	clientCtx := client.Context{}.WithCodec(encodingCft.Marshaler).WithTxConfig(encodingCft.TxConfig)
-
 	// generate valid genesis doc
-	validGenState, genDoc := generateTestGenesisState(homePath, 2)
-	validGenDocJSON, err := tmjson.MarshalIndent(genDoc, "", "  ")
+	bbn, appState := generateTestGenesisState(t, homePath, 2)
+	clientCtx := client.Context{}.WithCodec(bbn.AppCodec()).WithTxConfig(bbn.TxConfig())
+
+	// Copy the appState into a new struct
+	bz, err := json.Marshal(appState)
 	require.NoError(t, err)
+	var mismatchedAppState map[string]json.RawMessage
+	err = json.Unmarshal(bz, &mismatchedAppState)
+	require.NoError(t, err)
+
+	genutilGenesisState := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, mismatchedAppState)
+	checkpointingGenesisState := checkpointingtypes.GetGenesisStateFromAppState(clientCtx.Codec, mismatchedAppState)
 
 	// generate mismatched genesis doc by deleting one item from gentx and genKeys in different positions
-	gentxs := genutiltypes.GetGenesisStateFromAppState(clientCtx.Codec, validGenState)
-	genKeys := types.GetGenesisStateFromAppState(clientCtx.Codec, validGenState)
-	gentxs.GenTxs = gentxs.GenTxs[:1]
-	genKeys.GenesisKeys = genKeys.GenesisKeys[1:]
-	genTxsBz, err := clientCtx.Codec.MarshalJSON(gentxs)
+	genutilGenesisState.GenTxs = genutilGenesisState.GenTxs[:1]
+	checkpointingGenesisState.GenesisKeys = checkpointingGenesisState.GenesisKeys[1:]
+
+	// Update the for the genutil module with the invalid data
+	genTxsBz, err := clientCtx.Codec.MarshalJSON(genutilGenesisState)
 	require.NoError(t, err)
-	genKeysBz, err := clientCtx.Codec.MarshalJSON(&genKeys)
+	mismatchedAppState[genutiltypes.ModuleName] = genTxsBz
+
+	// Update the for the checkpointing module with the invalid data
+	genKeysBz, err := clientCtx.Codec.MarshalJSON(&checkpointingGenesisState)
 	require.NoError(t, err)
-	validGenState[genutiltypes.ModuleName] = genTxsBz
-	validGenState[types.ModuleName] = genKeysBz
-	misMatchedGenStateBz, err := json.Marshal(validGenState)
-	require.NoError(t, err)
-	genDoc.AppState = misMatchedGenStateBz
-	misMatchedGenDocJSON, err := tmjson.MarshalIndent(genDoc, "", "  ")
-	require.NoError(t, err)
+	mismatchedAppState[checkpointingtypes.ModuleName] = genKeysBz
 
 	testCases := []struct {
-		name    string
-		genesis []byte
-		expErr  bool
+		name     string
+		appState map[string]json.RawMessage
+		expErr   bool
 	}{
 		{
 			"valid genesis gentx and BLS key pair",
-			validGenDocJSON,
+			appState,
 			false,
 		},
 		{
 			"mismatched genesis state",
-			misMatchedGenDocJSON,
+			mismatchedAppState,
 			true,
 		},
 	}
 
-	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+	gentxModule := bbn.BasicModuleManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 
 	for _, tc := range testCases {
-		genDoc, err := tmtypes.GenesisDocFromJSON(tc.genesis)
-		require.NoError(t, err)
-		require.NotEmpty(t, genDoc)
-		genesisState, err := genutiltypes.GenesisStateFromGenDoc(*genDoc)
-		require.NoError(t, err)
-		require.NotEmpty(t, genesisState)
-		err = cmd.CheckCorrespondence(clientCtx, genesisState, gentxModule.GenTxValidator)
+		err = cmd.CheckCorrespondence(clientCtx, tc.appState, gentxModule.GenTxValidator)
 		if tc.expErr {
 			require.Error(t, err)
 		} else {
@@ -87,23 +83,32 @@ func TestCheckCorrespondence(t *testing.T) {
 	}
 }
 
-func generateTestGenesisState(home string, n int) (map[string]json.RawMessage, *tmtypes.GenesisDoc) {
-	encodingConfig := app.GetEncodingConfig()
+func generateTestGenesisState(t *testing.T, home string, n int) (*app.BabylonApp, map[string]json.RawMessage) {
 	logger := log.NewNopLogger()
-	cfg, _ := genutiltest.CreateDefaultTendermintConfig(home)
+	cfg, _ := genutiltest.CreateDefaultCometConfig(home)
 
-	_ = genutiltest.ExecInitCmd(app.ModuleBasics, home, encodingConfig.Marshaler)
+	signer, err := app.SetupPrivSigner()
+	require.NoError(t, err)
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+		Logger:             logger,
+		DB:                 dbm.NewMemDB(),
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            app.EmptyAppOptions{},
+	})
+
+	_ = genutiltest.ExecInitCmd(bbn.BasicModuleManager, home, bbn.AppCodec())
 
 	serverCtx := server.NewContext(viper.New(), cfg, logger)
 	clientCtx := client.Context{}.
-		WithCodec(encodingConfig.Marshaler).
+		WithCodec(bbn.AppCodec()).
 		WithHomeDir(home).
-		WithTxConfig(encodingConfig.TxConfig)
+		WithTxConfig(bbn.TxConfig())
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, server.ServerContextKey, serverCtx)
 	ctx = context.WithValue(ctx, client.ClientContextKey, &clientCtx)
-	testnetCmd := cmd.TestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{})
+	testnetCmd := cmd.TestnetCmd(bbn.BasicModuleManager, banktypes.GenesisBalancesIterator{})
 	testnetCmd.SetArgs([]string{
 		fmt.Sprintf("--%s=test", flags.FlagKeyringBackend),
 		fmt.Sprintf("--v=%v", n),
@@ -112,6 +117,6 @@ func generateTestGenesisState(home string, n int) (map[string]json.RawMessage, *
 	_ = testnetCmd.ExecuteContext(ctx)
 
 	genFile := cfg.GenesisFile()
-	appState, gendoc, _ := genutiltypes.GenesisStateFromGenFile(genFile)
-	return appState, gendoc
+	genState, _, _ := genutiltypes.GenesisStateFromGenFile(genFile)
+	return bbn, genState
 }

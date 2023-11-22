@@ -1,6 +1,7 @@
 package datagen
 
 import (
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -15,7 +16,6 @@ import (
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +39,7 @@ func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bst
 
 func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.BTCValidator, error) {
 	// commission
-	commission := sdk.NewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
+	commission := sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
 	// description
 	description := stakingtypes.Description{}
 	// key pairs
@@ -73,7 +73,7 @@ func GenRandomBTCDelegation(
 	covenantThreshold uint32,
 	slashingAddress, changeAddress string,
 	startHeight, endHeight, totalSat uint64,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 ) (*bstypes.BTCDelegation, error) {
 	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
@@ -181,7 +181,7 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress, changeAddress string,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 ) *TestStakingSlashingInfo {
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
@@ -242,7 +242,7 @@ func GenBTCStakingSlashingTx(
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress, changeAddress string,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 ) *TestStakingSlashingInfo {
 	// an arbitrary input
 	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
@@ -274,7 +274,7 @@ func GenBTCUnbondingSlashingTx(
 	stakingTimeBlocks uint16,
 	stakingValue int64,
 	slashingAddress, changeAddress string,
-	slashingRate sdk.Dec,
+	slashingRate sdkmath.LegacyDec,
 ) *TestUnbondingSlashingInfo {
 
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(

@@ -11,6 +11,8 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // UpdateParams updates the zoneconcierge module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -33,4 +35,3 @@ message MsgUpdateParams {
   
   // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
   message MsgUpdateParamsResponse {}
-  

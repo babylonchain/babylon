@@ -1,23 +1,28 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math"
 
+	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) HasSubmission(ctx sdk.Context, sk types.SubmissionKey) bool {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) HasSubmission(ctx context.Context, sk types.SubmissionKey) bool {
+	store := k.storeService.OpenKVStore(ctx)
 	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
-	return store.Has(kBytes)
+	has, err := store.Has(kBytes)
+	if err != nil {
+		panic(err)
+	}
+	return has
 }
 
 // GetBestSubmission gets the status and the best submission of a given finalized epoch
-func (k Keeper) GetBestSubmission(ctx sdk.Context, epochNumber uint64) (types.BtcStatus, *types.SubmissionKey, error) {
+func (k Keeper) GetBestSubmission(ctx context.Context, epochNumber uint64) (types.BtcStatus, *types.SubmissionKey, error) {
 	// find the btc checkpoint tx index of this epoch
 	ed := k.GetEpochData(ctx, epochNumber)
 	if ed == nil {
@@ -39,7 +44,7 @@ func (k Keeper) GetBestSubmission(ctx sdk.Context, epochNumber uint64) (types.Bt
 // Provided submmission should be known to btclightclient and all of its blocks
 // should be on btc main chaing as viewed by btclightclient
 func (k Keeper) addEpochSubmission(
-	ctx sdk.Context,
+	ctx context.Context,
 	epochNum uint64,
 	sk types.SubmissionKey,
 	sd types.SubmissionData,
@@ -78,25 +83,32 @@ func (k Keeper) addEpochSubmission(
 	return nil
 }
 
-func (k Keeper) saveSubmission(ctx sdk.Context, sk types.SubmissionKey, sd types.SubmissionData) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) saveSubmission(ctx context.Context, sk types.SubmissionKey, sd types.SubmissionData) {
+	store := k.storeService.OpenKVStore(ctx)
 	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
 	sBytes := k.cdc.MustMarshal(&sd)
-	store.Set(kBytes, sBytes)
+	if err := store.Set(kBytes, sBytes); err != nil {
+		panic(err)
+	}
 }
 
-func (k Keeper) deleteSubmission(ctx sdk.Context, sk types.SubmissionKey) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) deleteSubmission(ctx context.Context, sk types.SubmissionKey) {
+	store := k.storeService.OpenKVStore(ctx)
 	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
-	store.Delete(kBytes)
+	if err := store.Delete(kBytes); err != nil {
+		panic(err)
+	}
 }
 
 // GetSubmissionData returns submission data for a given key or nil if there is no data
 // under the given key
-func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *types.SubmissionData {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) GetSubmissionData(ctx context.Context, sk types.SubmissionKey) *types.SubmissionData {
+	store := k.storeService.OpenKVStore(ctx)
 	kBytes := types.PrefixedSubmisionKey(k.cdc, &sk)
-	sdBytes := store.Get(kBytes)
+	sdBytes, err := store.Get(kBytes)
+	if err != nil {
+		panic(err)
+	}
 
 	if len(sdBytes) == 0 {
 		return nil
@@ -107,7 +119,7 @@ func (k Keeper) GetSubmissionData(ctx sdk.Context, sk types.SubmissionKey) *type
 	return &sd
 }
 
-func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *types.SubmissionBtcInfo) types.BtcStatus {
+func (k Keeper) checkSubmissionStatus(ctx context.Context, info *types.SubmissionBtcInfo) types.BtcStatus {
 	subDepth := info.SubmissionDepth()
 	if subDepth >= k.GetParams(ctx).CheckpointFinalizationTimeout {
 		return types.Finalized
@@ -118,14 +130,14 @@ func (k Keeper) checkSubmissionStatus(ctx sdk.Context, info *types.SubmissionBtc
 	}
 }
 
-func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
+func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey) (*types.SubmissionBtcInfo, error) {
 
 	var youngestBlockDepth uint64 = math.MaxUint64
 	var youngestBlockHash *bbn.BTCHeaderHashBytes
 
 	var lowestIndexInMostFreshBlock uint32 = math.MaxUint32
 
-	var oldestBlockDepth uint64 = uint64(0)
+	var oldestBlockDepth = uint64(0)
 
 	for _, tk := range sk.Key {
 		currentBlockDepth, err := k.headerDepth(ctx, tk.Hash)
@@ -177,14 +189,14 @@ func (k Keeper) GetSubmissionBtcInfo(ctx sdk.Context, sk types.SubmissionKey) (*
 	}, nil
 }
 
-func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *types.EpochData) *types.SubmissionBtcInfo {
-	// there is no submissions for this epoch, so transitivly there is no best submission
+func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx context.Context, ed *types.EpochData) *types.SubmissionBtcInfo {
+	// there are no submissions for this epoch, so transitivly there is no best submission
 	if ed == nil || len(ed.Keys) == 0 {
 		return nil
 	}
 
 	// There is only one submission for this epoch:
-	// - either epoch is already finalized and we already chosen the best submission
+	// - either epoch is already finalized, and we already chose the best submission
 	// - or we only received one submission for this epoch
 	// Either way, we do not need to decide which submission is the best one.
 	if len(ed.Keys) == 1 {
@@ -192,11 +204,11 @@ func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *types.EpochDa
 		btcInfo, err := k.GetSubmissionBtcInfo(ctx, sk)
 
 		if err != nil {
-			k.Logger(ctx).Debug("Previously stored submission is not valid anymore. Submission key: %+v", sk)
+			k.Logger(sdk.UnwrapSDKContext(ctx)).Debug("Previously stored submission is not valid anymore. Submission key: %+v", sk)
 		}
 
 		// we only log error, as the only error which we can receive here is that submission
-		// is not longer on btc canoncial chain, which essentially means that there is no valid submission
+		// is no longer on btc canonical chain, which essentially means that there is no valid submission
 		return btcInfo
 	}
 
@@ -207,9 +219,12 @@ func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx sdk.Context, ed *types.EpochDa
 }
 
 // GetEpochData returns epoch data for given epoch, if there is not epoch data yet returns nil
-func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
-	store := ctx.KVStore(k.storeKey)
-	bytes := store.Get(types.GetEpochIndexKey(e))
+func (k Keeper) GetEpochData(ctx context.Context, e uint64) *types.EpochData {
+	store := k.storeService.OpenKVStore(ctx)
+	bytes, err := store.Get(types.GetEpochIndexKey(e))
+	if err != nil {
+		panic(err)
+	}
 
 	// note: Cannot check len(bytes) == 0, as empty bytes encoding of types.EpochData
 	// is epoch data with Status == Submitted and no valid submissions
@@ -222,15 +237,17 @@ func (k Keeper) GetEpochData(ctx sdk.Context, e uint64) *types.EpochData {
 	return ed
 }
 
-func (k Keeper) saveEpochData(ctx sdk.Context, e uint64, ed *types.EpochData) {
-	store := ctx.KVStore(k.storeKey)
+func (k Keeper) saveEpochData(ctx context.Context, e uint64, ed *types.EpochData) {
+	store := k.storeService.OpenKVStore(ctx)
 	ek := types.GetEpochIndexKey(e)
 	eb := k.cdc.MustMarshal(ed)
-	store.Set(ek, eb)
+	if err := store.Set(ek, eb); err != nil {
+		panic(err)
+	}
 }
 
 func (k Keeper) clearEpochData(
-	ctx sdk.Context,
+	ctx context.Context,
 	epoch []byte,
 	epochDataStore prefix.Store,
 	currentEpoch *types.EpochData) {

@@ -29,7 +29,8 @@ func FuzzMsgInsertHeader(f *testing.F) {
 
 		// Get the signer structure
 		var signer sdk.AccAddress
-		signer.Unmarshal(addressBytes) //nolint:errcheck // this is a test
+		err := signer.Unmarshal(addressBytes)
+		require.NoError(t, err)
 
 		// Perform modifications on the header
 		errorKind = r.Intn(2)
@@ -41,7 +42,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 			bitsBig = sdkmath.NewUintFromBigInt(&maxDifficulty)
 		case 1:
 			// Zero PoW
-			bitsBig = sdk.NewUint(0)
+			bitsBig = sdkmath.NewUint(0)
 		default:
 			bitsBig = sdkmath.NewUintFromBigInt(&maxDifficulty)
 		}
@@ -66,7 +67,7 @@ func FuzzMsgInsertHeader(f *testing.F) {
 		}
 
 		// empty string
-		_, err := types.NewMsgInsertHeaders(signer, "")
+		_, err = types.NewMsgInsertHeaders(signer, "")
 		require.NotNil(t, err)
 
 		// hex string with invalid length

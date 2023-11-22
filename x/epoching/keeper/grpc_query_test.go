@@ -9,7 +9,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 )
@@ -39,7 +38,6 @@ func FuzzParamsQuery(f *testing.F) {
 
 		helper := testepoching.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
-		wctx := sdk.WrapSDKContext(ctx)
 		// if setParamsFlag == 0, set params
 		setParamsFlag := r.Intn(2)
 		if setParamsFlag == 0 {
@@ -48,7 +46,7 @@ func FuzzParamsQuery(f *testing.F) {
 			}
 		}
 		req := types.QueryParamsRequest{}
-		resp, err := queryClient.Params(wctx, &req)
+		resp, err := queryClient.Params(ctx, &req)
 		require.NoError(t, err)
 		// if setParamsFlag == 0, resp.Params should be changed, otherwise default
 		if setParamsFlag == 0 {
@@ -69,21 +67,20 @@ func FuzzCurrentEpoch(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		increment := datagen.RandomInt(r, 100)
+		increment := datagen.RandomInt(r, 100) + 1
 
 		helper := testepoching.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
-		wctx := sdk.WrapSDKContext(ctx)
 
 		epochInterval := keeper.GetParams(ctx).EpochInterval
-		for i := uint64(0); i < increment; i++ {
+		// starting from epoch 1
+		for i := uint64(1); i < increment; i++ {
 			// this ensures that IncEpoch is invoked only at the first header of each epoch
 			ctx = ctx.WithBlockHeader(*datagen.GenRandomTMHeader(r, "chain-test", i*epochInterval+1))
-			wctx = sdk.WrapSDKContext(ctx)
 			keeper.IncEpoch(ctx)
 		}
 		req := types.QueryCurrentEpochRequest{}
-		resp, err := queryClient.CurrentEpoch(wctx, &req)
+		resp, err := queryClient.CurrentEpoch(ctx, &req)
 		require.NoError(t, err)
 		require.Equal(t, increment, resp.CurrentEpoch)
 		require.Equal(t, increment*epochInterval, resp.EpochBoundary)
@@ -95,18 +92,19 @@ func FuzzEpochsInfo(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		numEpochs := datagen.RandomInt(r, 10) + 1
+		var err error
+		numEpochs := datagen.RandomInt(r, 10) + 2
 		limit := datagen.RandomInt(r, 10) + 1
 
 		helper := testepoching.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
-		wctx := sdk.WrapSDKContext(ctx)
 
-		// enque the first block of the numEpochs'th epoch
+		// enque the 1st block of the numEpochs'th epoch
 		epochInterval := keeper.GetParams(ctx).EpochInterval
-		for i := uint64(0); i < numEpochs-1; i++ {
+		for i := uint64(0); i < (numEpochs - 2); i++ { // exclude the existing epoch 0 and 1
 			for j := uint64(0); j < epochInterval; j++ {
-				helper.GenAndApplyEmptyBlock(r)
+				ctx, err = helper.GenAndApplyEmptyBlock(r)
+				require.NoError(t, err)
 			}
 		}
 
@@ -116,10 +114,10 @@ func FuzzEpochsInfo(f *testing.F) {
 				Limit: limit,
 			},
 		}
-		resp, err := queryClient.EpochsInfo(wctx, &req)
+		resp, err := queryClient.EpochsInfo(ctx, &req)
 		require.NoError(t, err)
 
-		require.Equal(t, testepoching.Min(numEpochs, limit), uint64(len(resp.Epochs)))
+		require.Equal(t, min(numEpochs, limit), uint64(len(resp.Epochs)))
 		for i, epoch := range resp.Epochs {
 			require.Equal(t, uint64(i), epoch.EpochNumber)
 		}
@@ -141,7 +139,6 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 		txidsMap := map[string]bool{}
 		helper := testepoching.NewHelper(t)
 		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
-		wctx := sdk.WrapSDKContext(ctx)
 		// enque a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {
 			txid := datagen.GenRandomByteArray(r, 32)
@@ -154,15 +151,15 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 		}
 		// get epoch msgs
 		req := types.QueryEpochMsgsRequest{
-			EpochNum: 0,
+			EpochNum: 1,
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
 		}
-		resp, err := queryClient.EpochMsgs(wctx, &req)
+		resp, err := queryClient.EpochMsgs(ctx, &req)
 		require.NoError(t, err)
 
-		require.Equal(t, testepoching.Min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
+		require.Equal(t, min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
 		for idx := range resp.Msgs {
 			_, ok := txidsMap[string(resp.Msgs[idx].TxId)]
 			require.True(t, ok)
@@ -170,12 +167,12 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 
 		// epoch 1 is out of scope
 		req = types.QueryEpochMsgsRequest{
-			EpochNum: 1,
+			EpochNum: 2,
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
 		}
-		_, err = queryClient.EpochMsgs(wctx, &req)
+		_, err = queryClient.EpochMsgs(ctx, &req)
 		require.Error(t, err)
 	})
 }
@@ -193,7 +190,7 @@ func FuzzEpochValSetQuery(f *testing.F) {
 
 		limit := uint64(r.Int() % 100)
 		req := &types.QueryEpochValSetRequest{
-			EpochNum: 0,
+			EpochNum: 1,
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
@@ -205,7 +202,8 @@ func FuzzEpochValSetQuery(f *testing.F) {
 		// generate a random number of new blocks
 		numIncBlocks := r.Uint64()%1000 + 1
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			require.NoError(t, err)
 		}
 
 		// check whether the validator set remains the same or not

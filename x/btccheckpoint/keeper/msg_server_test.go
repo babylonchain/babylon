@@ -40,11 +40,6 @@ func b2Hash(m *btcctypes.MsgInsertBTCSpvProof) *bbn.BTCHeaderHashBytes {
 	return m.Proofs[1].ConfirmingBtcHeader.Hash()
 }
 
-//nolint:unused
-func b2TxIdx(m *btcctypes.MsgInsertBTCSpvProof) uint32 {
-	return m.Proofs[1].BtcTransactionIndex
-}
-
 func InitTestKeepers(
 	t *testing.T,
 ) *TestKeepers {
@@ -58,7 +53,7 @@ func InitTestKeepers(
 
 	return &TestKeepers{
 		SdkCtx:         ctx,
-		Ctx:            sdk.WrapSDKContext(ctx),
+		Ctx:            ctx,
 		BTCLightClient: lc,
 		Checkpointing:  cc,
 		Incentive:      ic,
@@ -421,12 +416,12 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 	require.Len(t, ed.Keys, 3)
 
 	// deepest submission is submission in msg3
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), uint64(wDeep))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), uint64(wDeep+1))
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), uint64(wDeep+2))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), uint64(wDeep+3))
-	tk.BTCLightClient.SetDepth(b1Hash(msg3), uint64(wDeep+4))
-	tk.BTCLightClient.SetDepth(b2Hash(msg3), uint64(wDeep+5))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), wDeep)
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), wDeep+1)
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), wDeep+2)
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), wDeep+3)
+	tk.BTCLightClient.SetDepth(b1Hash(msg3), wDeep+4)
+	tk.BTCLightClient.SetDepth(b2Hash(msg3), wDeep+5)
 
 	tk.onTipChange()
 
@@ -466,10 +461,10 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 	// Both submissions have the same depth the most fresh block i.e
 	// it is the same block
 	// When finalizing the one with lower TxIx should be treated as better
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), uint64(wDeep))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), uint64(wDeep+1))
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), uint64(wDeep))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), uint64(wDeep+3))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), wDeep)
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), wDeep+1)
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), wDeep)
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), wDeep+3)
 
 	tk.onTipChange()
 
@@ -527,8 +522,8 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	}
 
 	// Now we will return depth enough for moving submission to confirmed
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(kDeep))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(kDeep))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), kDeep)
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), kDeep)
 
 	// fire tip change callback
 	tk.onTipChange()
@@ -544,8 +539,8 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 		t.Errorf("Epoch should be in submitted stated")
 	}
 
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(wDeep))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(wDeep))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), wDeep)
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), wDeep)
 
 	tk.onTipChange()
 
@@ -602,21 +597,21 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 					}
 					finalizationDepth = finalizationDepth - 1
 				} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
-					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(confirmationDepth))
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), confirmationDepth)
 					confirmationDepth = confirmationDepth - 1
-					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(confirmationDepth))
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), confirmationDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
-						bestSumbissionInfos[epoch] = uint64(confirmationDepth)
+						bestSumbissionInfos[epoch] = confirmationDepth
 					}
 					confirmationDepth = confirmationDepth - 1
 				} else {
-					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(sumbissionDepth))
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), sumbissionDepth)
 					sumbissionDepth = sumbissionDepth - 1
-					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(sumbissionDepth))
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), sumbissionDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
-						bestSumbissionInfos[epoch] = uint64(sumbissionDepth)
+						bestSumbissionInfos[epoch] = sumbissionDepth
 					}
 					sumbissionDepth = sumbissionDepth - 1
 				}

@@ -317,13 +317,15 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// get block to vote
 	blockToVote, err := nonValidatorNode.QueryBlock(int64(activatedHeight))
 	s.NoError(err)
-	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), blockToVote.LastCommitHash...)
+	appHash := blockToVote.AppHash
+
+	msgToSign := append(sdk.Uint64ToBigEndian(activatedHeight), appHash...)
 	// generate EOTS signature
 	sig, err := eots.Sign(valBTCSK, srList[0], msgToSign)
 	s.NoError(err)
 	eotsSig := bbn.NewSchnorrEOTSSigFromModNScalar(sig)
 	// submit finality signature
-	nonValidatorNode.AddFinalitySig(btcVal.BtcPk, activatedHeight, blockToVote.LastCommitHash, eotsSig)
+	nonValidatorNode.AddFinalitySig(btcVal.BtcPk, activatedHeight, appHash, eotsSig)
 
 	// ensure vote is eventually cast
 	nonValidatorNode.WaitForNextBlock()
@@ -332,14 +334,15 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 		votes = nonValidatorNode.QueryVotesAtHeight(activatedHeight)
 		return len(votes) > 0
 	}, time.Minute, time.Second*5)
+	s.Equal(1, len(votes))
 	s.Equal(votes[0].MarshalHex(), btcVal.BtcPk.MarshalHex())
 	// once the vote is cast, ensure block is finalised
 	finalizedBlock := nonValidatorNode.QueryIndexedBlock(activatedHeight)
 	s.NotEmpty(finalizedBlock)
-	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlock.LastCommitHash)
+	s.Equal(appHash.Bytes(), finalizedBlock.AppHash)
 	finalizedBlocks := nonValidatorNode.QueryListBlocks(ftypes.QueriedBlockStatus_FINALIZED)
 	s.NotEmpty(finalizedBlocks)
-	s.Equal(blockToVote.LastCommitHash.Bytes(), finalizedBlocks[0].LastCommitHash)
+	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 
 	// ensure BTC validator has received rewards after the block is finalised
 	btcValRewardGauges, err := nonValidatorNode.QueryRewardGauge(btcValBabylonAddr)

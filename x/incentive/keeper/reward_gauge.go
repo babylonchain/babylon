@@ -1,12 +1,14 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/incentive/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) withdrawReward(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress) (sdk.Coins, error) {
+func (k Keeper) withdrawReward(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress) (sdk.Coins, error) {
 	// retrieve reward gauge of the given stakeholder
 	rg := k.GetRewardGauge(ctx, sType, addr)
 	if rg == nil {
@@ -29,7 +31,7 @@ func (k Keeper) withdrawReward(ctx sdk.Context, sType types.StakeholderType, add
 }
 
 // accumulateRewardGauge accumulates the given reward of of a given stakeholder in a given type
-func (k Keeper) accumulateRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress, reward sdk.Coins) {
+func (k Keeper) accumulateRewardGauge(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress, reward sdk.Coins) {
 	// if reward contains nothing, do nothing
 	if !reward.IsAllPositive() {
 		return
@@ -45,13 +47,13 @@ func (k Keeper) accumulateRewardGauge(ctx sdk.Context, sType types.StakeholderTy
 	k.SetRewardGauge(ctx, sType, addr, rg)
 }
 
-func (k Keeper) SetRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress, rg *types.RewardGauge) {
+func (k Keeper) SetRewardGauge(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress, rg *types.RewardGauge) {
 	store := k.rewardGaugeStore(ctx, sType)
 	rgBytes := k.cdc.MustMarshal(rg)
 	store.Set(addr.Bytes(), rgBytes)
 }
 
-func (k Keeper) GetRewardGauge(ctx sdk.Context, sType types.StakeholderType, addr sdk.AccAddress) *types.RewardGauge {
+func (k Keeper) GetRewardGauge(ctx context.Context, sType types.StakeholderType, addr sdk.AccAddress) *types.RewardGauge {
 	store := k.rewardGaugeStore(ctx, sType)
 	rgBytes := store.Get(addr.Bytes())
 	if rgBytes == nil {
@@ -68,8 +70,8 @@ func (k Keeper) GetRewardGauge(ctx sdk.Context, sType types.StakeholderType, add
 // prefix: RewardGaugeKey
 // key: (stakeholder type || stakeholder address)
 // value: reward gauge
-func (k Keeper) rewardGaugeStore(ctx sdk.Context, sType types.StakeholderType) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	rgStore := prefix.NewStore(store, types.RewardGaugeKey)
+func (k Keeper) rewardGaugeStore(ctx context.Context, sType types.StakeholderType) prefix.Store {
+	storeAdaptor := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	rgStore := prefix.NewStore(storeAdaptor, types.RewardGaugeKey)
 	return prefix.NewStore(rgStore, sType.Bytes())
 }

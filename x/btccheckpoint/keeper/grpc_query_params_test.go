@@ -6,7 +6,6 @@ import (
 
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,7 +52,6 @@ func FuzzParamsQuery(f *testing.F) {
 		}
 
 		keeper, ctx := testkeeper.NewBTCCheckpointKeeper(t, nil, nil, nil, nil)
-		wctx := sdk.WrapSDKContext(ctx)
 
 		// if setParamsFlag == 0, set params
 		setParamsFlag := r.Intn(2)
@@ -63,7 +61,7 @@ func FuzzParamsQuery(f *testing.F) {
 			}
 		}
 		req := types.QueryParamsRequest{}
-		resp, err := keeper.Params(wctx, &req)
+		resp, err := keeper.Params(ctx, &req)
 		require.NoError(t, err)
 		// if setParamsFlag == 0, resp.Params should be changed, otherwise default
 		if setParamsFlag == 0 {

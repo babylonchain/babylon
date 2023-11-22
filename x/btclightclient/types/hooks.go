@@ -1,7 +1,7 @@
 package types
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"context"
 )
 
 var _ BTCLightClientHooks = &MultiBTCLightClientHooks{}
@@ -12,19 +12,19 @@ func NewMultiBTCLightClientHooks(hooks ...BTCLightClientHooks) MultiBTCLightClie
 	return hooks
 }
 
-func (h MultiBTCLightClientHooks) AfterBTCHeaderInserted(ctx sdk.Context, headerInfo *BTCHeaderInfo) {
+func (h MultiBTCLightClientHooks) AfterBTCHeaderInserted(ctx context.Context, headerInfo *BTCHeaderInfo) {
 	for i := range h {
 		h[i].AfterBTCHeaderInserted(ctx, headerInfo)
 	}
 }
 
-func (h MultiBTCLightClientHooks) AfterBTCRollBack(ctx sdk.Context, headerInfo *BTCHeaderInfo) {
+func (h MultiBTCLightClientHooks) AfterBTCRollBack(ctx context.Context, headerInfo *BTCHeaderInfo) {
 	for i := range h {
 		h[i].AfterBTCRollBack(ctx, headerInfo)
 	}
 }
 
-func (h MultiBTCLightClientHooks) AfterBTCRollForward(ctx sdk.Context, headerInfo *BTCHeaderInfo) {
+func (h MultiBTCLightClientHooks) AfterBTCRollForward(ctx context.Context, headerInfo *BTCHeaderInfo) {
 	for i := range h {
 		h[i].AfterBTCRollForward(ctx, headerInfo)
 	}

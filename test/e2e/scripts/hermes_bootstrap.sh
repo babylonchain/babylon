@@ -38,7 +38,7 @@ port = 3001
 id = '$BBN_A_E2E_CHAIN_ID'
 rpc_addr = 'http://$BBN_A_E2E_VAL_HOST:26657'
 grpc_addr = 'http://$BBN_A_E2E_VAL_HOST:9090'
-websocket_addr = 'ws://$BBN_A_E2E_VAL_HOST:26657/websocket'
+event_source = { mode = 'push', url = 'ws://$BBN_A_E2E_VAL_HOST:26657/websocket', batch_delay = '500ms' }
 rpc_timeout = '10s'
 account_prefix = 'bbn'
 key_name = 'val01-bbn-a'
@@ -53,7 +53,7 @@ trust_threshold = { numerator = '1', denominator = '3' }
 id = '$BBN_B_E2E_CHAIN_ID'
 rpc_addr = 'http://$BBN_B_E2E_VAL_HOST:26657'
 grpc_addr = 'http://$BBN_B_E2E_VAL_HOST:9090'
-websocket_addr = 'ws://$BBN_B_E2E_VAL_HOST:26657/websocket'
+event_source = { mode = 'push', url = 'ws://$BBN_A_E2E_VAL_HOST:26657/websocket', batch_delay = '500ms' }
 rpc_timeout = '10s'
 account_prefix = 'bbn'
 key_name = 'val01-bbn-b'

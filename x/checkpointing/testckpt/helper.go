@@ -1,24 +1,22 @@
 package testckpt
 
 import (
+	"context"
 	"testing"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingkeeper "github.com/babylonchain/babylon/x/epoching/keeper"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	proto "github.com/cosmos/gogoproto/proto"
+	"github.com/cosmos/gogoproto/proto"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +24,7 @@ import (
 type Helper struct {
 	t *testing.T
 
-	Ctx                 sdk.Context
+	Ctx                 context.Context
 	App                 *app.BabylonApp
 	CheckpointingKeeper *keeper.Keeper
 	MsgSrvr             types.MsgServer
@@ -37,67 +35,41 @@ type Helper struct {
 	GenAccs []authtypes.GenesisAccount
 }
 
-// NewHelper creates the helper for testing the epoching module
-func NewHelper(t *testing.T, n int) *Helper {
-	accs, balances := datagen.GenRandomAccWithBalance(n)
-	app := app.SetupWithGenesisAccounts(accs, balances...)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
-
-	checkpointingKeeper := app.CheckpointingKeeper
-	epochingKeeper := app.EpochingKeeper
-	stakingKeeper := app.StakingKeeper
-	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, checkpointingKeeper)
-	queryClient := types.NewQueryClient(queryHelper)
-	msgSrvr := keeper.NewMsgServerImpl(checkpointingKeeper)
-
-	return &Helper{
-		t:                   t,
-		Ctx:                 ctx,
-		App:                 app,
-		CheckpointingKeeper: &checkpointingKeeper,
-		MsgSrvr:             msgSrvr,
-		QueryClient:         queryClient,
-		StakingKeeper:       stakingKeeper,
-		EpochingKeeper:      &epochingKeeper,
-		GenAccs:             accs,
-	}
-}
-
 // CreateValidator calls handler to create a new staking validator
-func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, stakeAmount math.Int, ok bool) {
+func (h *Helper) CreateValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, stakeAmount sdkmath.Int) {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
-	h.createValidator(addr, pk, blsPK, pop, coin, ok)
+	h.createValidator(addr, pk, blsPK, pop, coin)
 }
 
 // CreateValidatorWithValPower calls handler to create a new staking validator with zero commission
-func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, valPower int64, ok bool) math.Int {
+func (h *Helper) CreateValidatorWithValPower(addr sdk.ValAddress, pk cryptotypes.PubKey,
+	blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, valPower int64) sdkmath.Int {
 	amount := h.StakingKeeper.TokensFromConsensusPower(h.Ctx, valPower)
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, amount)
-	h.createValidator(addr, pk, blsPK, pop, coin, ok)
+	h.createValidator(addr, pk, blsPK, pop, coin)
 	return amount
 }
 
 // CreateValidatorMsg returns a message used to create validator in this service.
-func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, stakeAmount math.Int) *types.MsgWrappedCreateValidator {
+func (h *Helper) CreateValidatorMsg(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, stakeAmount sdkmath.Int) *types.MsgWrappedCreateValidator {
 	coin := sdk.NewCoin(appparams.DefaultBondDenom, stakeAmount)
-	msg, err := stakingtypes.NewMsgCreateValidator(addr, pk, coin, stakingtypes.Description{}, ZeroCommission(), sdk.OneInt())
+	msg, err := stakingtypes.NewMsgCreateValidator(addr.String(), pk, coin, stakingtypes.Description{}, ZeroCommission(), sdkmath.OneInt())
 	require.NoError(h.t, err)
 	wmsg, err := types.NewMsgWrappedCreateValidator(msg, blsPK, pop)
 	require.NoError(h.t, err)
 	return wmsg
 }
 
-func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, coin sdk.Coin, ok bool) {
-	h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+func (h *Helper) createValidator(addr sdk.ValAddress, pk cryptotypes.PubKey, blsPK *bls12381.PublicKey, pop *types.ProofOfPossession, coin sdk.Coin) {
+	h.Handle(func(ctx context.Context) (proto.Message, error) {
 		return h.CreateValidatorMsg(addr, pk, blsPK, pop, coin.Amount), nil
 	})
 }
 
 // Handle executes an action function with the Helper's context, wraps the result into an SDK service result, and performs two assertions before returning it
-func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Result {
+func (h *Helper) Handle(action func(context.Context) (proto.Message, error)) *sdk.Result {
 	res, err := action(h.Ctx)
-	r, _ := sdk.WrapServiceResult(h.Ctx, res, err)
+	r, _ := sdk.WrapServiceResult(sdk.UnwrapSDKContext(h.Ctx), res, err)
 	require.NotNil(h.t, r)
 	require.NoError(h.t, err)
 	return r
@@ -105,5 +77,5 @@ func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Re
 
 // ZeroCommission constructs a commission rates with all zeros.
 func ZeroCommission() stakingtypes.CommissionRates {
-	return stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
+	return stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
 }

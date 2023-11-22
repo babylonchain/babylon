@@ -1,6 +1,7 @@
 package incentive
 
 import (
+	"context"
 	"time"
 
 	"github.com/babylonchain/babylon/x/incentive/keeper"
@@ -10,20 +11,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func BeginBlocker(ctx sdk.Context, k keeper.Keeper, req abci.RequestBeginBlock) {
+func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	// handle coins in the fee collector account, including
 	// - send a portion of coins in the fee collector account to the incentive module account
 	// - accumulate BTC staking gauge at the current height
 	// - accumulate BTC timestamping gauge at the current epoch
-	if ctx.BlockHeight() > 0 {
+	if sdk.UnwrapSDKContext(ctx).BlockHeight() > 0 {
 		k.HandleCoinsInFeeCollector(ctx)
 	}
+	return nil
 }
 
-func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
+func EndBlocker(ctx context.Context, k keeper.Keeper) ([]abci.ValidatorUpdate, error) {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyEndBlocker)
 
-	return []abci.ValidatorUpdate{}
+	return []abci.ValidatorUpdate{}, nil
 }

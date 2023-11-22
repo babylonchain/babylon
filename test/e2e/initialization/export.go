@@ -17,7 +17,7 @@ type Node struct {
 	Mnemonic      string `json:"mnemonic"`
 	PublicAddress string `json:"publicAddress"`
 	SecretKey     cryptotypes.PrivKey
-	PublicKey     string `json:"publicKey"`
+	PublicKey     []byte `json:"publicKey"`
 	PeerId        string `json:"peerId"`
 	IsValidator   bool   `json:"isValidator"`
 }

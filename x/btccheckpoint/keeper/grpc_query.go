@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -15,7 +14,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) getCheckpointInfo(ctx sdk.Context, epochNum uint64, epochData *types.EpochData) (*types.BTCCheckpointInfo, error) {
+func (k Keeper) getCheckpointInfo(ctx context.Context, epochNum uint64, epochData *types.EpochData) (*types.BTCCheckpointInfo, error) {
 	bestSubmission := k.GetEpochBestSubmissionBtcInfo(ctx, epochData)
 
 	if bestSubmission == nil {
@@ -62,15 +61,12 @@ func (k Keeper) BtcCheckpointInfo(c context.Context, req *types.QueryBtcCheckpoi
 	return resp, nil
 }
 
-func (k Keeper) BtcCheckpointsInfo(c context.Context, req *types.QueryBtcCheckpointsInfoRequest) (*types.QueryBtcCheckpointsInfoResponse, error) {
+func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheckpointsInfoRequest) (*types.QueryBtcCheckpointsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-
-	store := ctx.KVStore(k.storeKey)
-	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
+	epochDataStore := k.epochDataStore(ctx)
 
 	ckptInfoList := []*types.BTCCheckpointInfo{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data

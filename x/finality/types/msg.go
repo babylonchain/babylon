@@ -42,7 +42,7 @@ func NewMsgAddFinalitySig(signer string, sk *btcec.PrivateKey, sr *eots.PrivateR
 		Signer:              signer,
 		ValBtcPk:            bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
 		BlockHeight:         blockHeight,
-		BlockLastCommitHash: blockHash,
+		BlockAppHash: blockHash,
 	}
 	msgToSign := msg.MsgToSign()
 	sig, err := eots.Sign(sk, sr, msgToSign)
@@ -68,7 +68,7 @@ func (m *MsgAddFinalitySig) ValidateBasic() error {
 	if m.ValBtcPk == nil {
 		return fmt.Errorf("empty validator BTC PK")
 	}
-	if len(m.BlockLastCommitHash) != tmhash.Size {
+	if len(m.BlockAppHash) != tmhash.Size {
 		return fmt.Errorf("malformed block hash")
 	}
 	if m.FinalitySig == nil {
@@ -79,7 +79,7 @@ func (m *MsgAddFinalitySig) ValidateBasic() error {
 }
 
 func (m *MsgAddFinalitySig) MsgToSign() []byte {
-	return msgToSignForVote(m.BlockHeight, m.BlockLastCommitHash)
+	return msgToSignForVote(m.BlockHeight, m.BlockAppHash)
 }
 
 func (m *MsgAddFinalitySig) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {

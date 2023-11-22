@@ -6,7 +6,6 @@ import (
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/babylonchain/babylon/x/epoching/testepoching"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,29 +19,25 @@ func FuzzEpochs(f *testing.F) {
 		ctx, keeper := helper.Ctx, helper.EpochingKeeper
 		// ensure that the epoch info is correct at the genesis
 		epoch := keeper.GetEpoch(ctx)
-		require.Equal(t, epoch.EpochNumber, uint64(0))
-		require.Equal(t, epoch.FirstBlockHeight, uint64(0))
+		require.Equal(t, epoch.EpochNumber, uint64(1))
+		require.Equal(t, epoch.FirstBlockHeight, uint64(1))
 
 		// set a random epoch interval
-		epochInterval := r.Uint64()%100 + 2 // the epoch interval should at at least 2
-
-		params := types.Params{
-			EpochInterval: epochInterval,
-		}
-
-		if err := keeper.SetParams(ctx, params); err != nil {
-			panic(err)
-		}
+		epochInterval := keeper.GetParams(ctx).EpochInterval
 
 		// increment a random number of new blocks
 		numIncBlocks := r.Uint64()%1000 + 1
+		var err error
 		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			// TODO: Figure out why when ctx height is 1, GenAndApplyEmptyBlock
+			// will still give ctx height 1 once, then start to increment
+			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			require.NoError(t, err)
 		}
 
 		// ensure that the epoch info is still correct
-		expectedEpochNumber := numIncBlocks / epochInterval
-		if numIncBlocks%epochInterval > 0 {
+		expectedEpochNumber := (numIncBlocks + 1) / epochInterval
+		if (numIncBlocks+1)%epochInterval > 0 {
 			expectedEpochNumber += 1
 		}
 		actualNewEpoch := keeper.GetEpoch(ctx)

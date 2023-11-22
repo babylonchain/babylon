@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -20,8 +21,9 @@ type BlsSigner interface {
 	GetBlsPubkey() (bls12381.PublicKey, error)
 }
 
-// SendBlsSig prepares a BLS signature message and sends it to Tendermint
-func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommitHash, valSet epochingtypes.ValidatorSet) error {
+// SendBlsSig prepares a BLS signature message and sends it to Comet
+func (k Keeper) SendBlsSig(ctx context.Context, epochNum uint64, appHash types.AppHash, valSet epochingtypes.ValidatorSet) error {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	// get self address
 	addr := k.blsSigner.GetAddress()
 
@@ -33,31 +35,31 @@ func (k Keeper) SendBlsSig(ctx sdk.Context, epochNum uint64, lch types.LastCommi
 	}
 
 	// get BLS signature by signing
-	signBytes := types.GetSignBytes(epochNum, lch)
+	signBytes := types.GetSignBytes(epochNum, appHash)
 	blsSig, err := k.blsSigner.SignMsgWithBls(signBytes)
 	if err != nil {
 		return err
 	}
 
 	// create MsgAddBlsSig message
-	msg := types.NewMsgAddBlsSig(k.clientCtx.GetFromAddress(), epochNum, lch, blsSig, addr)
+	msg := types.NewMsgAddBlsSig(k.clientCtx.GetFromAddress(), epochNum, appHash, blsSig, addr)
 
-	// keep sending the message to Tendermint until success or timeout
+	// keep sending the message to Comet until success or timeout
 	// TODO should read the parameters from config file
 	var res *sdk.TxResponse
 	err = retry.Do(1*time.Second, 1*time.Minute, func() error {
-		res, err = tx.SendMsgToTendermint(k.clientCtx, msg)
+		res, err = tx.SendMsgToComet(ctx, k.clientCtx, msg)
 		if err != nil {
 			return err
 		}
 		return nil
 	})
 	if err != nil {
-		ctx.Logger().Error(fmt.Sprintf("Failed to send the BLS sig tx for epoch %v: %v", epochNum, err))
+		sdkCtx.Logger().Error(fmt.Sprintf("Failed to send the BLS sig tx for epoch %v: %v", epochNum, err))
 		return err
 	}
 
-	ctx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %d, tx hash: %s, gas used: %d, gas wanted: %d", epochNum, res.TxHash, res.GasUsed, res.GasWanted))
+	sdkCtx.Logger().Info(fmt.Sprintf("Successfully sent BLS-sig tx for epoch %d, tx hash: %s, gas used: %d, gas wanted: %d", epochNum, res.TxHash, res.GasUsed, res.GasWanted))
 
 	return nil
 }

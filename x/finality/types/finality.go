@@ -16,7 +16,7 @@ func msgToSignForVote(blockHeight uint64, blockHash []byte) []byte {
 }
 
 func (ib *IndexedBlock) Equal(ib2 *IndexedBlock) bool {
-	if !bytes.Equal(ib.LastCommitHash, ib2.LastCommitHash) {
+	if !bytes.Equal(ib.AppHash, ib2.AppHash) {
 		return false
 	}
 	if ib.Height != ib2.Height {
@@ -27,15 +27,15 @@ func (ib *IndexedBlock) Equal(ib2 *IndexedBlock) bool {
 }
 
 func (ib *IndexedBlock) MsgToSign() []byte {
-	return msgToSignForVote(ib.Height, ib.LastCommitHash)
+	return msgToSignForVote(ib.Height, ib.AppHash)
 }
 
 func (e *Evidence) canonicalMsgToSign() []byte {
-	return msgToSignForVote(e.BlockHeight, e.CanonicalLastCommitHash)
+	return msgToSignForVote(e.BlockHeight, e.CanonicalAppHash)
 }
 
 func (e *Evidence) forkMsgToSign() []byte {
-	return msgToSignForVote(e.BlockHeight, e.ForkLastCommitHash)
+	return msgToSignForVote(e.BlockHeight, e.ForkAppHash)
 }
 
 func (e *Evidence) ValidateBasic() error {
@@ -45,11 +45,11 @@ func (e *Evidence) ValidateBasic() error {
 	if e.PubRand == nil {
 		return fmt.Errorf("empty PubRand")
 	}
-	if len(e.CanonicalLastCommitHash) != 32 {
-		return fmt.Errorf("malformed CanonicalLastCommitHash")
+	if len(e.CanonicalAppHash) != 32 {
+		return fmt.Errorf("malformed CanonicalAppHash")
 	}
-	if len(e.ForkLastCommitHash) != 32 {
-		return fmt.Errorf("malformed ForkLastCommitHash")
+	if len(e.ForkAppHash) != 32 {
+		return fmt.Errorf("malformed ForkAppHash")
 	}
 	if e.ForkFinalitySig == nil {
 		return fmt.Errorf("empty ValBtcPk")

@@ -2,17 +2,22 @@ syntax = "proto3";
 package babylon.btclightclient.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btclightclient/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
+
   // InsertHeaders adds a batch of headers to the BTC light client chain
   rpc InsertHeaders(MsgInsertHeaders) returns (MsgInsertHeadersResponse) {};
 }
 
 // MsgInsertHeaders defines the message for multiple incoming header bytes
 message MsgInsertHeaders {
+  option (cosmos.msg.v1.signer) = "signer";
+
   string signer = 1;
   repeated bytes headers = 2
       [ (gogoproto.customtype) =

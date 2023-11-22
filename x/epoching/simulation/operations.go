@@ -33,19 +33,19 @@ func WeightedOperations(
 		weightMsgWrappedBeginRedelegate int
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedDelegate, &weightMsgWrappedDelegate, nil,
+	appParams.GetOrGenerate(OpWeightMsgWrappedDelegate, &weightMsgWrappedDelegate, nil,
 		func(_ *rand.Rand) {
 			weightMsgWrappedDelegate = simappparams.DefaultWeightMsgDelegate // TODO: use our own (and randomised) weight rather than those from the unwrapped msgs
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedUndelegate, &weightMsgWrappedUndelegate, nil,
+	appParams.GetOrGenerate(OpWeightMsgWrappedUndelegate, &weightMsgWrappedUndelegate, nil,
 		func(_ *rand.Rand) {
 			weightMsgWrappedUndelegate = simappparams.DefaultWeightMsgUndelegate // TODO: use our own (and randomised) weight rather than those from the unwrapped msgs
 		},
 	)
 
-	appParams.GetOrGenerate(cdc, OpWeightMsgWrappedBeginRedelegate, &weightMsgWrappedBeginRedelegate, nil,
+	appParams.GetOrGenerate(OpWeightMsgWrappedBeginRedelegate, &weightMsgWrappedBeginRedelegate, nil,
 		func(_ *rand.Rand) {
 			weightMsgWrappedBeginRedelegate = simappparams.DefaultWeightMsgBeginRedelegate // TODO: use our own (and randomised) weight rather than those from the unwrapped msgs
 		},
@@ -80,9 +80,9 @@ func SimulateMsgWrappedDelegate(ak types.AccountKeeper, bk types.BankKeeper, stk
 
 		// pick a random validator
 		i := r.Intn(len(valSet))
-		val, ok := stk.GetValidator(ctx, valSet[i].Addr)
-		if !ok {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "unable to pick a validator"), nil, nil
+		val, err := stk.GetValidator(ctx, valSet[i].Addr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "unable to pick a validator"), nil, err
 		}
 		if val.InvalidExRate() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "validator's invalid exchange rate"), nil, nil
@@ -90,12 +90,16 @@ func SimulateMsgWrappedDelegate(ak types.AccountKeeper, bk types.BankKeeper, stk
 
 		// pick a random bondAmt
 		simAccount, _ := simtypes.RandomAcc(r, accs)
-		denom := stk.GetParams(ctx).BondDenom
+		params, err := stk.GetParams(ctx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "unable to get params"), nil, err
+		}
+		denom := params.BondDenom
 		amount := bk.GetBalance(ctx, simAccount.Address, denom).Amount
 		if !amount.IsPositive() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "balance is negative"), nil, nil
 		}
-		amount, err := simtypes.RandPositiveInt(r, amount)
+		amount, err = simtypes.RandPositiveInt(r, amount)
 		if err != nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedDelegate, "unable to generate positive amount"), nil, err
 		}
@@ -113,14 +117,13 @@ func SimulateMsgWrappedDelegate(ak types.AccountKeeper, bk types.BankKeeper, stk
 			}
 		}
 
-		msg := stakingtypes.NewMsgDelegate(simAccount.Address, val.GetOperator(), bondAmt)
+		msg := stakingtypes.NewMsgDelegate(simAccount.Address.String(), val.GetOperator(), bondAmt)
 		wmsg := types.NewMsgWrappedDelegate(msg)
 		txCtx := simulation.OperationInput{
 			App:           app,
 			TxGen:         moduletestutil.MakeTestEncodingConfig().TxConfig,
 			Cdc:           nil,
 			Msg:           wmsg,
-			MsgType:       wmsg.Type(),
 			Context:       ctx,
 			SimAccount:    simAccount,
 			AccountKeeper: ak,
@@ -144,24 +147,36 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 
 		// pick a random validator
 		i := r.Intn(len(valSet))
-		val, ok := stk.GetValidator(ctx, valSet[i].Addr)
-		if !ok {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to pick a validator"), nil, nil
+		val, err := stk.GetValidator(ctx, valSet[i].Addr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to pick a validator"), nil, err
 		}
 		if val.InvalidExRate() {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "validator's invalid exchange rate"), nil, nil
 		}
 
 		// pick a random delegator from validator
-		valAddr := val.GetOperator()
-		delegations := stk.GetValidatorDelegations(ctx, val.GetOperator())
+		valAddr, err := sdk.ValAddressFromBech32(val.GetOperator())
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get validator address"), nil, err
+		}
+		delegations, err := stk.GetValidatorDelegations(ctx, valAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get validator delegations"), nil, err
+		}
 		if delegations == nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "keeper does not have any delegation entries"), nil, nil
 		}
 		delegation := delegations[r.Intn(len(delegations))]
-		delAddr := delegation.GetDelegatorAddr()
-
-		if stk.HasMaxUnbondingDelegationEntries(ctx, delAddr, valAddr) {
+		delAddr, err := sdk.AccAddressFromBech32(delegation.GetDelegatorAddr())
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get delegation address"), nil, err
+		}
+		hasMaxUnbEntries, err := stk.HasMaxUnbondingDelegationEntries(ctx, delAddr, valAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "could not check whether delegator has max unbonding entries"), nil, err
+		}
+		if hasMaxUnbEntries {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "keeper reaches max unbonding delegation entries"), nil, nil
 		}
 
@@ -178,8 +193,12 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unbond amount is zero"), nil, nil
 		}
 
+		bondDenom, err := stk.BondDenom(ctx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get bond denomination"), nil, err
+		}
 		msg := stakingtypes.NewMsgUndelegate(
-			delAddr, valAddr, sdk.NewCoin(stk.BondDenom(ctx), unbondAmt),
+			delAddr.String(), valAddr.String(), sdk.NewCoin(bondDenom, unbondAmt),
 		)
 		wmsg := types.NewMsgWrappedUndelegate(msg)
 
@@ -194,7 +213,7 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 		}
 		// if simaccount.PrivKey == nil, delegation address does not exist in accs. Return error
 		if simAccount.PrivKey == nil {
-			return simtypes.NoOpMsg(types.ModuleName, msg.Type(), "account private key is nil"), nil, fmt.Errorf("delegation addr: %s does not exist in simulation accounts", delAddr)
+			return simtypes.NoOpMsg(types.ModuleName, wmsg.Type(), "account private key is nil"), nil, fmt.Errorf("delegation addr: %s does not exist in simulation accounts", delAddr)
 		}
 
 		account := ak.GetAccount(ctx, delAddr)
@@ -206,7 +225,6 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 			TxGen:           moduletestutil.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             wmsg,
-			MsgType:         wmsg.Type(),
 			Context:         ctx,
 			SimAccount:      simAccount,
 			AccountKeeper:   ak,
@@ -219,7 +237,7 @@ func SimulateMsgWrappedUndelegate(ak types.AccountKeeper, bk types.BankKeeper, s
 	}
 }
 
-// SimulateMsgBeginRedelegate generates a MsgBeginRedelegate with random values
+// SimulateMsgWrappedBeginRedelegate generates a MsgBeginRedelegate with random values
 func SimulateMsgWrappedBeginRedelegate(ak types.AccountKeeper, bk types.BankKeeper, stk types.StakingKeeper, k keeper.Keeper) simtypes.Operation {
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simtypes.Account, chainID string,
@@ -232,33 +250,54 @@ func SimulateMsgWrappedBeginRedelegate(ak types.AccountKeeper, bk types.BankKeep
 
 		// pick a random source validator
 		i := r.Intn(len(valSet))
-		srcVal, ok := stk.GetValidator(ctx, valSet[i].Addr)
-		if !ok {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "unable to pick a validator"), nil, nil
+		srcVal, err := stk.GetValidator(ctx, valSet[i].Addr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "unable to pick a validator"), nil, err
 		}
 
-		srcAddr := srcVal.GetOperator()
-		delegations := stk.GetValidatorDelegations(ctx, srcAddr)
+		srcAddr, err := sdk.ValAddressFromBech32(srcVal.GetOperator())
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get validator address"), nil, err
+		}
+
+		delegations, err := stk.GetValidatorDelegations(ctx, srcAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "unable to find validator delegations"), nil, err
+		}
 		if delegations == nil {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "keeper does have any delegation entries"), nil, nil
 		}
 
 		// pick a random delegator from src validator
 		delegation := delegations[r.Intn(len(delegations))]
-		delAddr := delegation.GetDelegatorAddr()
+		delAddr, err := sdk.AccAddressFromBech32(delegation.GetDelegatorAddr())
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get delegation address"), nil, err
+		}
 
-		if stk.HasReceivingRedelegation(ctx, delAddr, srcAddr) {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "receiving redelegation is not allowed"), nil, nil // skip
+		hasRedel, err := stk.HasReceivingRedelegation(ctx, delAddr, srcAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "could not check whether validator has redelegations"), nil, err
+		}
+		if hasRedel {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "receiving redelegation is not allowed"), nil, nil
 		}
 
 		// pick a random destination validator
 		i = r.Intn(len(valSet))
-		destVal, ok := stk.GetValidator(ctx, valSet[i].Addr)
-		if !ok {
-			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "unable to pick a validator"), nil, nil
+		destVal, err := stk.GetValidator(ctx, valSet[i].Addr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "unable to pick a validator"), nil, err
 		}
-		destAddr := destVal.GetOperator()
-		if srcAddr.Equals(destAddr) || destVal.InvalidExRate() || stk.HasMaxRedelegationEntries(ctx, delAddr, srcAddr, destAddr) {
+		destAddr, err := sdk.ValAddressFromBech32(destVal.GetOperator())
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to get validator address"), nil, err
+		}
+		hasMaxRedelEntries, err := stk.HasMaxRedelegationEntries(ctx, delAddr, srcAddr, destAddr)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedUndelegate, "unable to check whether delegator has max redelegations"), nil, err
+		}
+		if srcAddr.Equals(destAddr) || destVal.InvalidExRate() || hasMaxRedelEntries {
 			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "checks failed"), nil, nil
 		}
 
@@ -303,9 +342,13 @@ func SimulateMsgWrappedBeginRedelegate(ak types.AccountKeeper, bk types.BankKeep
 		account := ak.GetAccount(ctx, delAddr)
 		spendable := bk.SpendableCoins(ctx, account.GetAddress())
 
+		bondDenom, err := stk.BondDenom(ctx)
+		if err != nil {
+			return simtypes.NoOpMsg(types.ModuleName, types.TypeMsgWrappedBeginRedelegate, "could not get bond denomination"), nil, err
+		}
 		msg := stakingtypes.NewMsgBeginRedelegate(
-			delAddr, srcAddr, destAddr,
-			sdk.NewCoin(stk.BondDenom(ctx), redAmt),
+			delAddr.String(), srcAddr.String(), destAddr.String(),
+			sdk.NewCoin(bondDenom, redAmt),
 		)
 		wmsg := types.NewMsgWrappedBeginRedelegate(msg)
 
@@ -315,7 +358,6 @@ func SimulateMsgWrappedBeginRedelegate(ak types.AccountKeeper, bk types.BankKeep
 			TxGen:           moduletestutil.MakeTestEncodingConfig().TxConfig,
 			Cdc:             nil,
 			Msg:             wmsg,
-			MsgType:         wmsg.Type(),
 			Context:         ctx,
 			SimAccount:      simAccount,
 			AccountKeeper:   ak,
