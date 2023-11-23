@@ -251,7 +251,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 			msg := types.MsgCreateBTCDelegation{
 				Signer:       clientCtx.FromAddress.String(),
 				BabylonPk:    &babylonPK,
-				StakerBtcPk:  btcPK,
+				BtcPk:        btcPK,
 				ValBtcPkList: []bbn.BIP340PubKey{*valPK},
 				Pop:          pop,
 				StakingTime:  uint32(stakingTime),
@@ -272,8 +272,8 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 
 func NewAddCovenantSigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-covenant-sig [val_pk] [del_pk] [staking_tx_hash] [sig]",
-		Args:  cobra.ExactArgs(4),
+		Use:   "add-covenant-sig [covenant_pk] [staking_tx_hash] [sig]",
+		Args:  cobra.ExactArgs(3),
 		Short: "Add a covenant signature",
 		Long: strings.TrimSpace(
 			`Add a covenant signature.`, // TODO: example
@@ -284,31 +284,23 @@ func NewAddCovenantSigCmd() *cobra.Command {
 				return err
 			}
 
-			// get validator PK
-			valPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
-			if err != nil {
-				return err
-			}
-
-			// get delegator PK
-			delPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			covPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
 				return err
 			}
 
 			// get staking tx hash
-			stakingTxHash := args[2]
+			stakingTxHash := args[1]
 
 			// get covenant sigature
-			sig, err := bbn.NewBIP340SignatureFromHex(args[3])
+			sig, err := bbn.NewBIP340SignatureFromHex(args[2])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgAddCovenantSig{
 				Signer:        clientCtx.FromAddress.String(),
-				ValPk:         valPK,
-				DelPk:         delPK,
+				Pk:            covPK,
 				StakingTxHash: stakingTxHash,
 				Sig:           sig,
 			}
@@ -387,8 +379,8 @@ func NewCreateBTCUndelegationCmd() *cobra.Command {
 
 func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-covenant-unbonding-sigs [val_pk] [del_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig]",
-		Args:  cobra.ExactArgs(5),
+		Use:   "add-covenant-unbonding-sigs [covenant_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig]",
+		Args:  cobra.ExactArgs(4),
 		Short: "Add covenant signatures for unbonding tx and slash unbonding tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -396,37 +388,30 @@ func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 				return err
 			}
 
-			// get validator PK
-			valPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
-			if err != nil {
-				return err
-			}
-
-			// get delegator PK
-			delPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			// get covenant PK
+			covPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
 				return err
 			}
 
 			// get staking tx hash
-			stakingTxHash := args[2]
+			stakingTxHash := args[1]
 
 			// get covenant sigature for unbonding tx
-			unbondingSig, err := bbn.NewBIP340SignatureFromHex(args[3])
+			unbondingSig, err := bbn.NewBIP340SignatureFromHex(args[2])
 			if err != nil {
 				return err
 			}
 
 			// get covenant sigature for slash unbonding tx
-			slashUnbondingSig, err := bbn.NewBIP340SignatureFromHex(args[4])
+			slashUnbondingSig, err := bbn.NewBIP340SignatureFromHex(args[3])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgAddCovenantUnbondingSigs{
 				Signer:                 clientCtx.FromAddress.String(),
-				ValPk:                  valPK,
-				DelPk:                  delPK,
+				Pk:                     covPK,
 				StakingTxHash:          stakingTxHash,
 				UnbondingTxSig:         unbondingSig,
 				SlashingUnbondingTxSig: slashUnbondingSig,

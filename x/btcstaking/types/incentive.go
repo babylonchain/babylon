@@ -54,10 +54,10 @@ func (v *BTCValDistInfo) GetAddress() sdk.AccAddress {
 	return sdk.AccAddress(v.BabylonPk.Address())
 }
 
-func (v *BTCValDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64) {
+func (v *BTCValDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
 	btcDelDistInfo := &BTCDelDistInfo{
 		BabylonPk:   btcDel.BabylonPk,
-		VotingPower: btcDel.VotingPower(btcHeight, wValue),
+		VotingPower: btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
 	}
 
 	if btcDelDistInfo.VotingPower > 0 {

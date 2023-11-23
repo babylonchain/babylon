@@ -36,7 +36,7 @@ func (m RawCheckpoint) HashStr() string {
 }
 
 // SignedMsg is the message corresponding to the BLS sig in this raw checkpoint
-// Its value should be (epoch_number || last_commit_hash)
+// Its value should be (epoch_number || app_hash)
 func (m RawCheckpoint) SignedMsg() []byte {
 	return append(sdk.Uint64ToBigEndian(m.EpochNum), *m.AppHash...)
 }

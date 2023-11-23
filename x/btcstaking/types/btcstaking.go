@@ -88,16 +88,35 @@ func (d *BTCDelegation) ValidateBasic() error {
 }
 
 // HasCovenantSig returns whether a BTC delegation has a covenant signature
-func (d *BTCDelegation) HasCovenantSig() bool {
+func (d *BTCDelegation) HasCovenantQuorum(quorum uint32) bool {
+	// TODO: accomodate covenant committee for CovenantSig
 	return d.CovenantSig != nil
 }
 
-func (ud *BTCUndelegation) HasCovenantSigs() bool {
-	return ud.CovenantSlashingSig != nil && ud.CovenantUnbondingSig != nil
+// IsSignedByCovMember checks whether the given covenant PK has signed the delegation
+func (d *BTCDelegation) IsSignedByCovMember(covPK *bbn.BIP340PubKey) bool {
+	// TODO: accomodate covenant committee for CovenantSig
+	return d.CovenantSig != nil
 }
 
-func (ud *BTCUndelegation) HasAllSignatures() bool {
-	return ud.HasCovenantSigs()
+func (ud *BTCUndelegation) HasCovenantQuorum(quorum uint32) bool {
+	// TODO: accomodate covenant committee for CovenantSlashingSig
+	return ud.CovenantSlashingSig != nil && len(ud.CovenantUnbondingSigList) >= int(quorum)
+}
+
+// IsSignedByCovMember checks whether the given covenant PK has signed the undelegation
+func (ud *BTCUndelegation) IsSignedByCovMember(covPK *bbn.BIP340PubKey) bool {
+	// TODO: accomodate covenant committee for CovenantSlashingSig
+	for _, sigInfo := range ud.CovenantUnbondingSigList {
+		if sigInfo.Pk.Equals(covPK) {
+			return true
+		}
+	}
+	return false
+}
+
+func (ud *BTCUndelegation) HasAllSignatures(covenantQuorum uint32) bool {
+	return ud.HasCovenantQuorum(covenantQuorum)
 }
 
 // GetStatus returns the status of the BTC Delegation based on a BTC height and a w value
@@ -108,9 +127,9 @@ func (ud *BTCUndelegation) HasAllSignatures() bool {
 // Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has a covenant sig
 // Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a covenant sig
 // Expired: Delegation timelock
-func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatus {
+func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uint32) BTCDelegationStatus {
 	if d.BtcUndelegation != nil {
-		if d.BtcUndelegation.HasAllSignatures() {
+		if d.BtcUndelegation.HasAllSignatures(covenantQuorum) {
 			return BTCDelegationStatus_UNBONDED
 		}
 		// If we received an undelegation but is still does not have all required signature,
@@ -124,7 +143,7 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatu
 	}
 
 	if d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
-		if d.HasCovenantSig() {
+		if d.HasCovenantQuorum(covenantQuorum) {
 			return BTCDelegationStatus_ACTIVE
 		} else {
 			return BTCDelegationStatus_PENDING
@@ -136,8 +155,8 @@ func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64) BTCDelegationStatu
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
 // and a given w value.
 // The BTC delegation d has voting power iff it is active.
-func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64) uint64 {
-	if d.GetStatus(btcHeight, w) != BTCDelegationStatus_ACTIVE {
+func (d *BTCDelegation) VotingPower(btcHeight uint64, w uint64, covenantQuorum uint32) uint64 {
+	if d.GetStatus(btcHeight, w, covenantQuorum) != BTCDelegationStatus_ACTIVE {
 		return 0
 	}
 	return d.GetTotalSat()
@@ -194,4 +213,11 @@ func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
 	}
 
 	return false
+}
+
+func NewSignatureInfo(pk *bbn.BIP340PubKey, sig *bbn.BIP340Signature) *SignatureInfo {
+	return &SignatureInfo{
+		Pk:  pk,
+		Sig: sig,
+	}
 }

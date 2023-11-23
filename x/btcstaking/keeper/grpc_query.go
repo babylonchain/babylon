@@ -74,6 +74,7 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 
 	// get current BTC height
 	btcTipHeight, err := k.GetCurrentBTCHeight(sdkCtx)
@@ -90,7 +91,7 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		k.cdc.MustUnmarshal(value, &btcDel)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		if req.Status == types.BTCDelegationStatus_ANY || btcDel.GetStatus(btcTipHeight, wValue) == req.Status {
+		if req.Status == types.BTCDelegationStatus_ANY || btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum) == req.Status {
 			if accumulate {
 				btcDels = append(btcDels, &btcDel)
 			}
@@ -276,14 +277,15 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	isActive := btcDel.GetStatus(
 		currentTip.Height,
 		currentWValue,
+		k.GetParams(ctx).CovenantQuorum,
 	) == types.BTCDelegationStatus_ACTIVE
 
 	// get its undelegation info
 	var undelegationInfo *types.BTCUndelegationInfo
 	if btcDel.BtcUndelegation != nil {
 		undelegationInfo = &types.BTCUndelegationInfo{
-			UnbondingTx:          btcDel.BtcUndelegation.UnbondingTx,
-			CovenantUnbondingSig: btcDel.BtcUndelegation.CovenantUnbondingSig,
+			UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
+			CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
 		}
 	}
 

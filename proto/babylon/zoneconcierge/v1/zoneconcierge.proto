@@ -94,14 +94,14 @@ message FinalizedChainInfo {
 // - Metadata of this epoch, which includes the sealer header
 // - Raw checkpoint of this epoch
 // The verifier can perform the following verification rules:
-// - The raw checkpoint's `last_commit_hash` is same as in the sealer header
+// - The raw checkpoint's `app_hash` is same as in the sealer header
 // - More than 1/3 (in voting power) validators in the validator set of this
-// epoch have signed `last_commit_hash` of the sealer header
+// epoch have signed `app_hash` of the sealer header
 // - The epoch medatata is committed to the `app_hash` of the sealer header
 // - The validator set is committed to the `app_hash` of the sealer header
 message ProofEpochSealed {
   // validator_set is the validator set of the sealed epoch
-  // This validator set has generated a BLS multisig on `last_commit_hash` of
+  // This validator set has generated a BLS multisig on `app_hash` of
   // the sealer header
   repeated babylon.checkpointing.v1.ValidatorWithBlsKey validator_set = 1;
   // proof_epoch_info is the Merkle proof that the epoch's metadata is committed

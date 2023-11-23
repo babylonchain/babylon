@@ -27,7 +27,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module, including portions of rewards
 // distributed to each type of stakeholder. Note that sum of the portions should
-// be strictly less than 1 so that the rest will go to Tendermint validators/delegations
+// be strictly less than 1 so that the rest will go to Comet validators/delegations
 // adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/proto/cosmos/distribution/v1beta1/distribution.proto
 type Params struct {
 	// submitter_portion is the portion of rewards that goes to submitter

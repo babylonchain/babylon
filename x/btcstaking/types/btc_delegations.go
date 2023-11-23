@@ -36,10 +36,10 @@ func (i *BTCDelegatorDelegationIndex) Add(stakingTxHash chainhash.Hash) error {
 }
 
 // VotingPower calculates the total voting power of all BTC delegations
-func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint64, w uint64) uint64 {
+func (dels *BTCDelegatorDelegations) VotingPower(btcHeight uint64, w uint64, covenantQuorum uint32) uint64 {
 	power := uint64(0)
 	for _, del := range dels.Dels {
-		power += del.VotingPower(btcHeight, w)
+		power += del.VotingPower(btcHeight, w, covenantQuorum)
 	}
 	return power
 }

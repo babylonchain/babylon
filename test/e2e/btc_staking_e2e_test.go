@@ -238,7 +238,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 		net,
 	)
 	s.NoError(err)
-	nonValidatorNode.AddCovenantSig(btcVal.BtcPk, bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, covenantSig)
+	nonValidatorNode.AddCovenantSig(&params.CovenantPks[0], stakingTxHash, covenantSig)
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
@@ -264,8 +264,8 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.NoError(err)
 	activeBTCVals := nonValidatorNode.QueryActiveBTCValidatorsAtHeight(activatedHeight)
 	s.Len(activeBTCVals, 1)
-	s.Equal(activeBTCVals[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod))
-	s.Equal(activeBTCVals[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod))
+	s.Equal(activeBTCVals[0].VotingPower, activeDels.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
+	s.Equal(activeBTCVals[0].VotingPower, activeDel.VotingPower(currentBtcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum))
 }
 
 // Test2CommitPublicRandomnessAndSubmitFinalitySignature is an end-to-end
@@ -519,7 +519,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	delegation := delegatorDelegations.Dels[0]
 
 	s.NotNil(delegation.BtcUndelegation)
-	s.Nil(delegation.BtcUndelegation.CovenantUnbondingSig)
+	s.Empty(delegation.BtcUndelegation.CovenantUnbondingSigList)
 	s.Nil(delegation.BtcUndelegation.CovenantSlashingSig)
 
 	// params for covenantPk and slashing address
@@ -593,8 +593,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	)
 	s.NoError(err)
 	nonValidatorNode.AddCovenantUnbondingSigs(
-		btcVal.BtcPk,
-		bbn.NewBIP340PubKeyFromBTCPK(delBTCPK), stakingTxHash, &covenantUnbondingSig, covenantSlashingSig)
+		&params.CovenantPks[0], stakingTxHash, &covenantUnbondingSig, covenantSlashingSig)
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
 
@@ -603,12 +602,12 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	s.Len(allDelegationsWithSigs, 1)
 	delegationWithSigs := allDelegationsWithSigs[0].Dels[0]
 	s.NotNil(delegationWithSigs.BtcUndelegation)
-	s.NotNil(delegationWithSigs.BtcUndelegation.CovenantUnbondingSig)
+	s.NotEmpty(delegationWithSigs.BtcUndelegation.CovenantUnbondingSigList)
 	s.NotNil(delegationWithSigs.BtcUndelegation.CovenantSlashingSig)
 	btcTip, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
 	s.Equal(
 		bstypes.BTCDelegationStatus_UNBONDED,
-		delegationWithSigs.GetStatus(btcTip.Height, initialization.BabylonBtcFinalizationPeriod),
+		delegationWithSigs.GetStatus(btcTip.Height, initialization.BabylonBtcFinalizationPeriod, params.CovenantQuorum),
 	)
 }

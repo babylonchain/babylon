@@ -94,7 +94,7 @@ func NewCommitPubRandListCmd() *cobra.Command {
 
 func NewAddFinalitySigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-finality-sig [val_btc_pk] [block_height] [block_last_commit_hash] [finality_sig]",
+		Use:   "add-finality-sig [val_btc_pk] [block_height] [block_app_hash] [finality_sig]",
 		Args:  cobra.ExactArgs(4),
 		Short: "Add a finality signature",
 		Long: strings.TrimSpace(
@@ -131,11 +131,11 @@ func NewAddFinalitySigCmd() *cobra.Command {
 			}
 
 			msg := types.MsgAddFinalitySig{
-				Signer:              clientCtx.FromAddress.String(),
-				ValBtcPk:            valBTCPK,
-				BlockHeight:         blockHeight,
+				Signer:       clientCtx.FromAddress.String(),
+				ValBtcPk:     valBTCPK,
+				BlockHeight:  blockHeight,
 				BlockAppHash: blockLch,
-				FinalitySig:         finalitySig,
+				FinalitySig:  finalitySig,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

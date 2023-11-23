@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -105,7 +106,7 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 
 // RecordSealerHeaderForPrevEpoch records the sealer header for the previous epoch,
 // where the sealer header of an epoch is the 2nd header of the next epoch
-// This validator set of the epoch has generated a BLS multisig on `last_commit_hash` of the sealer header
+// This validator set of the epoch has generated a BLS multisig on `app_hash` of the sealer header
 func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx context.Context) *types.Epoch {
 	// get the sealer header
 	epoch := k.GetEpoch(ctx)

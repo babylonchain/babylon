@@ -276,7 +276,7 @@ func (m *CheckpointStateUpdate) GetBlockTime() *time.Time {
 type BlsSig struct {
 	// epoch_num defines the epoch number that the BLS sig is signed on
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
-	// last_commit_hash defines the 'AppHash' that the BLS sig is signed on
+	// app_hash defines the 'AppHash' that the BLS sig is signed on
 	AppHash *AppHash                                                   `protobuf:"bytes,2,opt,name=app_hash,json=appHash,proto3,customtype=AppHash" json:"app_hash,omitempty"`
 	BlsSig  *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,3,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 	// can't find cosmos_proto.scalar when compiling due to cosmos v0.45.4 does

@@ -1,9 +1,10 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -84,7 +85,7 @@ func FuzzBTCDelegation(f *testing.F) {
 
 		// test expected voting power
 		hasVotingPower := hasCovenantSig && btcDel.StartHeight <= btcHeight && btcHeight+w <= btcDel.EndHeight
-		actualVotingPower := btcDel.VotingPower(btcHeight, w)
+		actualVotingPower := btcDel.VotingPower(btcHeight, w, 1)
 		if hasVotingPower {
 			require.Equal(t, btcDel.TotalSat, actualVotingPower)
 		} else {

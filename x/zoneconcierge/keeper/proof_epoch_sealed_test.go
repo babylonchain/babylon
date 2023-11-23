@@ -68,7 +68,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 			BlsMultiSig: nil,
 		}
 
-		// let the subset generate a BLS multisig over sealer header's last_commit_hash
+		// let the subset generate a BLS multisig over sealer header's app_hash
 		multiSig, err := signBLSWithBitmap(blsSKs, bm, rawCkpt.SignedMsg())
 		require.NoError(t, err)
 		// assign multiSig to rawCkpt

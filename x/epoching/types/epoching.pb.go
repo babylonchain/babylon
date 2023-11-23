@@ -84,7 +84,7 @@ type Epoch struct {
 	// It will be used for proving a block is in an epoch
 	AppHashRoot []byte `protobuf:"bytes,5,opt,name=app_hash_root,json=appHashRoot,proto3" json:"app_hash_root,omitempty"`
 	// sealer_header is the 2nd header of the next epoch
-	// This validator set has generated a BLS multisig on `last_commit_hash` of
+	// This validator set has generated a BLS multisig on `app_hash` of
 	// the sealer header
 	SealerHeader *types.Header `protobuf:"bytes,6,opt,name=sealer_header,json=sealerHeader,proto3" json:"sealer_header,omitempty"`
 }

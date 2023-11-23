@@ -336,7 +336,7 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 }
 
 // FuzzAddBlsSig_WrongAppHash tests adding BLS signatures via MsgAddBlsSig
-// in a scenario where the signature is signed over wrong last_commit_hash
+// in a scenario where the signature is signed over wrong app_hash
 // 4. a BLS signature is rejected if the signature is invalid
 func FuzzAddBlsSig_WrongAppHash(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 4)

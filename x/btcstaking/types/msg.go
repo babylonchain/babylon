@@ -91,8 +91,8 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-	if m.StakerBtcPk == nil {
-		return fmt.Errorf("empty staker BTC public key")
+	if m.BtcPk == nil {
+		return fmt.Errorf("empty delegator BTC public key")
 	}
 	if m.StakingTx == nil {
 		return fmt.Errorf("empty staking tx info")
@@ -127,11 +127,8 @@ func (m *MsgAddCovenantSig) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgAddCovenantSig) ValidateBasic() error {
-	if m.ValPk == nil {
-		return fmt.Errorf("empty BTC validator public key")
-	}
-	if m.DelPk == nil {
-		return fmt.Errorf("empty BTC delegation public key")
+	if m.Pk == nil {
+		return fmt.Errorf("empty BTC covenant public key")
 	}
 	if m.Sig == nil {
 		return fmt.Errorf("empty covenant signature")
@@ -187,11 +184,8 @@ func (m *MsgAddCovenantUnbondingSigs) GetSigners() []sdk.AccAddress {
 }
 
 func (m *MsgAddCovenantUnbondingSigs) ValidateBasic() error {
-	if m.ValPk == nil {
-		return fmt.Errorf("empty BTC validator public key")
-	}
-	if m.DelPk == nil {
-		return fmt.Errorf("empty BTC delegation public key")
+	if m.Pk == nil {
+		return fmt.Errorf("empty BTC covenant public key")
 	}
 	if m.UnbondingTxSig == nil {
 		return fmt.Errorf("empty covenant signature")

@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -78,7 +79,11 @@ func (k Keeper) updateBTCDelegation(
 
 // AddCovenantSigToBTCDelegation adds a given covenant sig to a BTC delegation
 // with the given (val PK, del PK, staking tx hash) tuple
-func (k Keeper) AddCovenantSigToBTCDelegation(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, stakingTxHash string, covenantSig *bbn.BIP340Signature) error {
+func (k Keeper) AddCovenantSigToBTCDelegation(
+	ctx context.Context,
+	stakingTxHash string,
+	covenantSig *bbn.BIP340Signature,
+) error {
 	addCovenantSig := func(btcDel *types.BTCDelegation) error {
 		if btcDel.CovenantSig != nil {
 			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a covenant signature", stakingTxHash)
@@ -109,7 +114,7 @@ func (k Keeper) AddUndelegationToBTCDelegation(
 func (k Keeper) AddCovenantSigsToUndelegation(
 	ctx context.Context,
 	stakingTxHash string,
-	unbondingTxSig *bbn.BIP340Signature,
+	unbondingTxSigInfo *types.SignatureInfo,
 	slashUnbondingTxSig *bbn.BIP340Signature,
 ) error {
 	addCovenantSigs := func(btcDel *types.BTCDelegation) error {
@@ -117,11 +122,12 @@ func (k Keeper) AddCovenantSigsToUndelegation(
 			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
 		}
 
-		if btcDel.BtcUndelegation.CovenantUnbondingSig != nil || btcDel.BtcUndelegation.CovenantSlashingSig != nil {
+		// TODO: ensure the given CovenantUnbondingSig does not exist in the BTC undelegation yet
+		if btcDel.BtcUndelegation.CovenantUnbondingSigList != nil || btcDel.BtcUndelegation.CovenantSlashingSig != nil {
 			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid covenant signatures", stakingTxHash)
 		}
 
-		btcDel.BtcUndelegation.CovenantUnbondingSig = unbondingTxSig
+		btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingTxSigInfo)
 		btcDel.BtcUndelegation.CovenantSlashingSig = slashUnbondingTxSig
 		return nil
 	}

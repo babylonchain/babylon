@@ -125,3 +125,12 @@ func (p Params) String() string {
 	out, _ := yaml.Marshal(p)
 	return string(out)
 }
+
+func (p Params) HasCovenantPK(pk *bbn.BIP340PubKey) bool {
+	for _, pk2 := range p.CovenantPks {
+		if pk2.Equals(pk) {
+			return true
+		}
+	}
+	return false
+}

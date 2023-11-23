@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -15,6 +16,7 @@ import (
 // and saves the power table to KVStore
 // triggered upon each EndBlock
 func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 	// tip of Babylon and Bitcoin
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
@@ -58,7 +60,7 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 			if err != nil {
 				panic(err) // only programming error is possible
 			}
-			valPower += btcDels.VotingPower(btcTipHeight, wValue)
+			valPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
 		}
 		btcDelIter.Close()
 

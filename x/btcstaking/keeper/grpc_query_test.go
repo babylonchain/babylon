@@ -1,10 +1,11 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"errors"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
@@ -281,7 +282,8 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// covenant and slashing addr
-		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
+		covBTCPK := bbn.NewBIP340PubKeyFromBTCPK(covenantPK)
 		require.NoError(t, err)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
@@ -332,7 +334,8 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 
 					if datagen.RandomInt(r, 2) == 1 {
 						// these BTC delegations are unbonded
-						btcDel.BtcUndelegation.CovenantUnbondingSig = btcDel.CovenantSig
+						unbondingSigInfo := types.NewSignatureInfo(covBTCPK, btcDel.CovenantSig)
+						btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingSigInfo)
 						btcDel.BtcUndelegation.CovenantSlashingSig = btcDel.CovenantSig
 					} else {
 						// these BTC delegations are unbonding

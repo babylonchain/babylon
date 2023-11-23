@@ -9,8 +9,8 @@ import "gogoproto/gogo.proto";
 message IndexedBlock {
     // height is the height of the block
     uint64 height = 1;
-    // last_commit_hash is the last_commit_hash of the block
-    bytes last_commit_hash = 2;
+    // app_hash is the AppHash of the block
+    bytes app_hash = 2;
     // finalized indicates whether the IndexedBlock is finalised by 2/3
     // BTC validators or not
     bool finalized = 3;
@@ -25,10 +25,10 @@ message Evidence {
     uint64 block_height = 2;
     // pub_rand is the public randomness the BTC validator has committed to
     bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
-    // canonical_last_commit_hash is the last_commit_hash of the canonical block
-    bytes canonical_last_commit_hash = 4;
-    // fork_last_commit_hash is the last_commit_hash of the fork block
-    bytes fork_last_commit_hash = 5;
+    // canonical_app_hash is the AppHash of the canonical block
+    bytes canonical_app_hash = 4;
+    // fork_app_hash is the AppHash of the fork block
+    bytes fork_app_hash = 5;
     // canonical_finality_sig is the finality signature to the canonical block
     // where finality signature is an EOTS signature, i.e.,
     // the `s` in a Schnorr signature `(r, s)`

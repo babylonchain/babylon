@@ -65,8 +65,8 @@ message MsgCreateBTCDelegation {
   cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 3;
-  // staker_btc_pk is the Bitcoin secp256k1 PK of the BTC staker
-  bytes staker_btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
+  bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // val_btc_pk_list is the list of Bitcoin secp256k1 PKs of the BTC validators, if there is more than one
   // validator pk it means that delegation is re-staked
   repeated bytes val_btc_pk_list = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
@@ -116,18 +116,15 @@ message MsgAddCovenantSig {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
-  // val_pk is the Bitcoin secp256k1 PK of the BTC validator
-  // the PK follows encoding in BIP-340 spec
-  bytes val_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
-  // the PK follows encoding in BIP-340 spec
-  bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // pk is the BTC public key of the covenant member
+  bytes pk = 2  [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // staking_tx_hash is the hash of the staking tx.
-  // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
-  string staking_tx_hash = 4;
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 3;
   // sig is the signature of the covenant
   // the signature follows encoding in BIP-340 spec
-  bytes sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  // TODO: change to adaptor signature
+  bytes sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 // MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
 message MsgAddCovenantSigResponse {}
@@ -156,22 +153,18 @@ message MsgAddCovenantUnbondingSigs {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
-  // val_pk is the Bitcoin secp256k1 PK of the BTC validator
-  // the PK follows encoding in BIP-340 spec
-  bytes val_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // del_pk is the Bitcoin secp256k1 PK of the BTC delegation
-  // the PK follows encoding in BIP-340 spec
-  bytes del_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // pk is the BTC public key of the covenant member
+  bytes pk = 2  [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // staking_tx_hash is the hash of the staking tx.
   // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
-  string staking_tx_hash = 4;
+  string staking_tx_hash = 3;
   // unbonding_tx_sig is the signature of the covenant on the unbonding tx submitted to babylon
   // the signature follows encoding in BIP-340 spec
-  bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  bytes unbonding_tx_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
   // slashing_unbonding_tx_sig is the signature of the covenant on slashing tx corresponding to unbodning tx submitted to babylon
   // the signature follows encoding in BIP-340 spec
-  bytes slashing_unbonding_tx_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-
+  // TODO: change to adaptor signature
+  bytes slashing_unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 // MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
 message MsgAddCovenantUnbondingSigsResponse {}

@@ -46,8 +46,8 @@ func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, err
 
 // ProveEpochSealed proves an epoch has been sealed, i.e.,
 // - the epoch's validator set has a valid multisig over the sealer header
-// - the epoch's validator set is committed to the sealer header's last_commit_hash
-// - the epoch's metadata is committed to the sealer header's last_commit_hash
+// - the epoch's validator set is committed to the sealer header's app_hash
+// - the epoch's metadata is committed to the sealer header's app_hash
 func (k Keeper) ProveEpochSealed(ctx context.Context, epochNumber uint64) (*types.ProofEpochSealed, error) {
 	var (
 		proof = &types.ProofEpochSealed{}
@@ -84,8 +84,8 @@ func (k Keeper) ProveEpochSealed(ctx context.Context, epochNumber uint64) (*type
 // VerifyEpochSealed verifies that the given `epoch` is sealed by the `rawCkpt` by using the given `proof`
 // The verification rules include:
 // - basic sanity checks
-// - The raw checkpoint's last_commit_hash is same as in the header of the sealer epoch
-// - More than 1/3 (in voting power) validators in the validator set of this epoch have signed last_commit_hash of the sealer epoch
+// - The raw checkpoint's app_hash is same as in the header of the sealer epoch
+// - More than 1/3 (in voting power) validators in the validator set of this epoch have signed app_hash of the sealer epoch
 // - The epoch medatata is committed to the app_hash of the sealer epoch
 // - The validator set is committed to the app_hash of the sealer epoch
 func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.RawCheckpoint, proof *types.ProofEpochSealed) error {
@@ -112,7 +112,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to rawCkpt.EpochNum (%d)", epoch.EpochNumber, rawCkpt.EpochNum)
 	}
 
-	// ensure the raw checkpoint's last_commit_hash is same as in the header of the sealer header
+	// ensure the raw checkpoint's app_hash is same as in the header of the sealer header
 	// NOTE: since this proof is assembled by a Babylon node who has verified the checkpoint,
 	// the two appHash values should always be the same, otherwise this Babylon node is malicious.
 	// This is different from the checkpoint verification rules in checkpointing,
@@ -124,7 +124,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	}
 
 	/*
-		Ensure more than 1/3 (in voting power) validators of this epoch have signed (epoch_num || last_commit_hash) in the raw checkpoint
+		Ensure more than 1/3 (in voting power) validators of this epoch have signed (epoch_num || app_hash) in the raw checkpoint
 	*/
 	valSet := checkpointingtypes.ValidatorWithBlsKeySet{ValSet: proof.ValidatorSet}
 	// filter validator set that contributes to the signature

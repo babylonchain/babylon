@@ -372,14 +372,14 @@ func (m *FinalizedChainInfo) GetProof() *ProofFinalizedChainInfo {
 // - Metadata of this epoch, which includes the sealer header
 // - Raw checkpoint of this epoch
 // The verifier can perform the following verification rules:
-// - The raw checkpoint's `last_commit_hash` is same as in the sealer header
+// - The raw checkpoint's `app_hash` is same as in the sealer header
 // - More than 1/3 (in voting power) validators in the validator set of this
-// epoch have signed `last_commit_hash` of the sealer header
+// epoch have signed `app_hash` of the sealer header
 // - The epoch medatata is committed to the `app_hash` of the sealer header
 // - The validator set is committed to the `app_hash` of the sealer header
 type ProofEpochSealed struct {
 	// validator_set is the validator set of the sealed epoch
-	// This validator set has generated a BLS multisig on `last_commit_hash` of
+	// This validator set has generated a BLS multisig on `app_hash` of
 	// the sealer header
 	ValidatorSet []*types2.ValidatorWithBlsKey `protobuf:"bytes,1,rep,name=validator_set,json=validatorSet,proto3" json:"validator_set,omitempty"`
 	// proof_epoch_info is the Merkle proof that the epoch's metadata is committed

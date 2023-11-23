@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
@@ -11,6 +12,7 @@ import (
 )
 
 func (k Keeper) RecordRewardDistCache(ctx context.Context) {
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 	// get BTC tip height and w, which are necessary for determining a BTC
 	// delegation's voting power
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
@@ -57,7 +59,7 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 					panic(err) // only programming error is possible
 				}
 				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-				btcValDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue)
+				btcValDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 			}
 		}
 		btcDelIter.Close()

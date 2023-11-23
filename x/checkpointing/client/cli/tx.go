@@ -1,14 +1,15 @@
 package cli
 
 import (
-	"cosmossdk.io/core/address"
 	"fmt"
-	appparams "github.com/babylonchain/babylon/app/params"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"cosmossdk.io/core/address"
+	appparams "github.com/babylonchain/babylon/app/params"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -40,7 +41,7 @@ func GetTxCmd() *cobra.Command {
 
 func CmdTxAddBlsSig() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "submit [epoch_number] [last_commit_hash] [bls_sig] [signer address]",
+		Use:   "submit [epoch_number] [app_hash] [bls_sig] [signer address]",
 		Short: "submit a BLS signature",
 		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) error {

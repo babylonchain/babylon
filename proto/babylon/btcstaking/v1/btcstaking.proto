@@ -93,6 +93,7 @@ message BTCDelegation {
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It will be a part of the witness for the staking tx output.
     // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
+    // over each restaked BTC validator (i.e., a matrix of tuples)
     bytes covenant_sig = 12 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
     // if this object is present it menans that staker requested undelegation, and whole
@@ -121,14 +122,12 @@ message BTCUndelegation {
     // covenant_slashing_sig is the signature on the slashing tx
     // by the covenant (i.e., SK corresponding to covenant_pk in params)
     // It must be provided after processing undelagate message by Babylon
-    // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
+    // TODO: change to a matrix of (covenant PK, covenant adaptor signature) tuples
     bytes covenant_slashing_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // covenant_unbonding_sig is the signature on the unbonding tx
-    // by the covenant (i.e., SK corresponding to covenant_pk in params)
-    // It must be provided after processing undelagate message by Babylon and after
-    // validator sig will be provided by validator
-    // TODO: change to a set of (covenant PK, covenant Schnorr signature) tuples
-    bytes covenant_unbonding_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
+    // by covenant members
+    // It must be provided after processing undelagate message by Babylon
+    repeated SignatureInfo covenant_unbonding_sig_list = 6;
 }
 
 
@@ -139,11 +138,11 @@ message BTCUndelegationInfo {
     // than staking output.
     bytes unbonding_tx = 1;
 
-    // covenant_unbonding_sig is the signature on the unbonding tx
-    // by the covenant (i.e., SK corresponding to covenant_pk in params)
-    // it will be nil if covenant didn't sign it yet
-    // TODO: change to a set of (covenant PK, covenant Schnorr signature) tuples
-    bytes covenant_unbonding_sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
+    // by covenant members
+    // It must be provided after processing undelagate message by Babylon and after
+    // validator sig will be provided by validator
+    repeated SignatureInfo covenant_unbonding_sig_list = 2;
 }
 
 // BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.

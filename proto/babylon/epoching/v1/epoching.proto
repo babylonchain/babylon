@@ -23,7 +23,7 @@ message Epoch {
   // It will be used for proving a block is in an epoch
   bytes app_hash_root = 5;
   // sealer_header is the 2nd header of the next epoch
-  // This validator set has generated a BLS multisig on `last_commit_hash` of
+  // This validator set has generated a BLS multisig on `app_hash` of
   // the sealer header
   tendermint.types.Header sealer_header = 6;
 }
