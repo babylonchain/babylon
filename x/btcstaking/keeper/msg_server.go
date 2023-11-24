@@ -517,6 +517,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		// - one for slashing tx of unbonding tx
 		CovenantSlashingSig:      nil,
 		CovenantUnbondingSigList: nil,
+		UnbondingTime:            req.UnbondingTime,
 	}
 
 	if err := ms.AddUndelegationToBTCDelegation(

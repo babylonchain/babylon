@@ -608,6 +608,7 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.UnbondingTx, undelegateMsg.UnbondingTx)
 		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.SlashingTx, undelegateMsg.SlashingTx)
 		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.DelegatorSlashingSig, undelegateMsg.DelegatorSlashingSig)
+		require.Equal(t, actualDelegationWithUnbonding.BtcUndelegation.UnbondingTime, undelegateMsg.UnbondingTime)
 		require.Nil(t, actualDelegationWithUnbonding.BtcUndelegation.CovenantSlashingSig)
 		require.Nil(t, actualDelegationWithUnbonding.BtcUndelegation.CovenantUnbondingSigList)
 	})
