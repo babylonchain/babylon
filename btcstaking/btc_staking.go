@@ -215,10 +215,10 @@ func BuildStakingInfo(
 		return nil, err
 	}
 
-	var unbodningPaths [][]byte
-	unbodningPaths = append(unbodningPaths, babylonScripts.timeLockPathScript)
-	unbodningPaths = append(unbodningPaths, babylonScripts.unbondingPathScript)
-	unbodningPaths = append(unbodningPaths, babylonScripts.slashingPathScript)
+	var unbondingPaths [][]byte
+	unbondingPaths = append(unbondingPaths, babylonScripts.timeLockPathScript)
+	unbondingPaths = append(unbondingPaths, babylonScripts.unbondingPathScript)
+	unbondingPaths = append(unbondingPaths, babylonScripts.slashingPathScript)
 
 	timeLockLeafHash := txscript.NewBaseTapLeaf(babylonScripts.timeLockPathScript).TapHash()
 	unbondingPathLeafHash := txscript.NewBaseTapLeaf(babylonScripts.unbondingPathScript).TapHash()
@@ -226,7 +226,7 @@ func BuildStakingInfo(
 
 	sh, err := newTaprootScriptHolder(
 		&unspendableKeyPathKey,
-		unbodningPaths,
+		unbondingPaths,
 	)
 
 	if err != nil {
@@ -295,16 +295,16 @@ func BuildUnbondingInfo(
 		return nil, err
 	}
 
-	var unbodningPaths [][]byte
-	unbodningPaths = append(unbodningPaths, babylonScripts.timeLockPathScript)
-	unbodningPaths = append(unbodningPaths, babylonScripts.slashingPathScript)
+	var unbondingPaths [][]byte
+	unbondingPaths = append(unbondingPaths, babylonScripts.timeLockPathScript)
+	unbondingPaths = append(unbondingPaths, babylonScripts.slashingPathScript)
 
 	timeLockLeafHash := txscript.NewBaseTapLeaf(babylonScripts.timeLockPathScript).TapHash()
 	slashingLeafHash := txscript.NewBaseTapLeaf(babylonScripts.slashingPathScript).TapHash()
 
 	sh, err := newTaprootScriptHolder(
 		&unspendableKeyPathKey,
-		unbodningPaths,
+		unbondingPaths,
 	)
 
 	if err != nil {

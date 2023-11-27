@@ -5,8 +5,18 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/babylonchain/babylon/crypto/eots"
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
@@ -16,14 +26,6 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	ftypes "github.com/babylonchain/babylon/x/finality/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/suite"
 )
 
 var (
@@ -136,7 +138,6 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		0,
 		stakingSlashingPathInfo.RevealedLeaf.Script,
 		delBTCSK,
-		net,
 	)
 	s.NoError(err)
 
@@ -173,7 +174,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	pendingDels := pendingDelSet[0]
 	s.Len(pendingDels.Dels, 1)
 	s.Equal(delBTCPK.SerializeCompressed()[1:], pendingDels.Dels[0].BtcPk.MustToBTCPK().SerializeCompressed()[1:])
-	s.Nil(pendingDels.Dels[0].CovenantSig)
+	s.Len(pendingDels.Dels[0].CovenantSigs, 0)
 
 	// check delegation
 	delegation := nonValidatorNode.QueryBtcDelegation(stakingTxHash)
@@ -194,7 +195,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDel := pendingDels.Dels[0]
-	s.Nil(pendingDel.CovenantSig)
+	s.Len(pendingDel.CovenantSigs, 0)
 
 	slashingTx := pendingDel.SlashingTx
 	stakingTx := pendingDel.StakingTx
@@ -230,12 +231,15 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	/*
 		generate and insert new covenant signature, in order to activate the BTC delegation
 	*/
-	covenantSig, err := slashingTx.Sign(
+	// TODO add multiple covenant sigs
+	encKey, err := asig.NewEncryptionKeyFromBTCPK(validatorBTCPKs[0])
+	s.NoError(err)
+	covenantSig, err := slashingTx.EncSign(
 		stakingMsgTx,
 		pendingDel.StakingOutputIdx,
 		stakingSlashingPathInfo.RevealedLeaf.Script,
 		covenantSK,
-		net,
+		encKey,
 	)
 	s.NoError(err)
 	nonValidatorNode.AddCovenantSig(&params.CovenantPks[0], stakingTxHash, covenantSig)
@@ -250,7 +254,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDel := activeDels.Dels[0]
-	s.NotNil(activeDel.CovenantSig)
+	s.NotNil(activeDel.CovenantSigs)
 
 	// wait for a block so that above txs take effect and the voting power table
 	// is updated in the next block's BeginBlock
@@ -432,7 +436,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
 	activeDel := activeDels.Dels[0]
-	s.NotNil(activeDel.CovenantSig)
+	s.NotNil(activeDel.CovenantSigs)
 
 	// params for covenantPk and slashing address
 	params := nonValidatorNode.QueryBTCStakingParams()
@@ -480,7 +484,6 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		0,
 		unbondingTxSlashingPathInfo.RevealedLeaf.Script,
 		delBTCSK,
-		net,
 	)
 	s.NoError(err)
 
@@ -520,7 +523,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 
 	s.NotNil(delegation.BtcUndelegation)
 	s.Empty(delegation.BtcUndelegation.CovenantUnbondingSigList)
-	s.Nil(delegation.BtcUndelegation.CovenantSlashingSig)
+	s.Len(delegation.BtcUndelegation.CovenantSlashingSigs, 0)
 
 	// params for covenantPk and slashing address
 	params := nonValidatorNode.QueryBTCStakingParams()
@@ -574,7 +577,6 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 		delegation.StakingOutputIdx,
 		stakingTxUnbondigPathInfo.RevealedLeaf.Script,
 		covenantSK,
-		net,
 	)
 	s.NoError(err)
 
@@ -584,12 +586,15 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	unbondingTxSlashingPath, err := unbondingInfo.SlashingPathSpendInfo()
 	s.NoError(err)
 
-	covenantSlashingSig, err := delegation.BtcUndelegation.SlashingTx.Sign(
+	// TODO accomodate multiple slashing sigs
+	encKey, err := asig.NewEncryptionKeyFromBTCPK(validatorBTCPKs[0])
+	s.NoError(err)
+	covenantSlashingSig, err := delegation.BtcUndelegation.SlashingTx.EncSign(
 		unbondingTx,
 		0,
 		unbondingTxSlashingPath.RevealedLeaf.Script,
 		covenantSK,
-		net,
+		encKey,
 	)
 	s.NoError(err)
 	nonValidatorNode.AddCovenantUnbondingSigs(
@@ -603,7 +608,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	delegationWithSigs := allDelegationsWithSigs[0].Dels[0]
 	s.NotNil(delegationWithSigs.BtcUndelegation)
 	s.NotEmpty(delegationWithSigs.BtcUndelegation.CovenantUnbondingSigList)
-	s.NotNil(delegationWithSigs.BtcUndelegation.CovenantSlashingSig)
+	s.NotNil(delegationWithSigs.BtcUndelegation.CovenantSlashingSigs)
 	btcTip, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
 	s.Equal(

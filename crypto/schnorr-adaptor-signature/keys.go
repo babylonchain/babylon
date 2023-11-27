@@ -18,6 +18,14 @@ func NewDecyptionKeyFromModNScalar(scalar *btcec.ModNScalar) (*DecryptionKey, er
 		return nil, fmt.Errorf("the given scalar is zero")
 	}
 
+	// enforce using a scalar corresponding to an even encryption key
+	var ekPoint btcec.JacobianPoint
+	btcec.ScalarBaseMultNonConst(scalar, &ekPoint)
+	ekPoint.ToAffine()
+	if ekPoint.Y.IsOdd() {
+		scalar = scalar.Negate()
+	}
+
 	return &DecryptionKey{*scalar}, nil
 }
 
@@ -71,6 +79,13 @@ func NewEncryptionKeyFromJacobianPoint(point *btcec.JacobianPoint) (*EncryptionK
 	affinePoint := *point
 	if !affinePoint.Z.IsOne() {
 		affinePoint.ToAffine()
+	}
+
+	// enforce affinePoint to be an even point
+	// this is needed since we cannot predict whether the given
+	// point or public key is odd or even
+	if affinePoint.Y.IsOdd() {
+		affinePoint.Y.Negate(1).Normalize()
 	}
 
 	return &EncryptionKey{affinePoint}, nil

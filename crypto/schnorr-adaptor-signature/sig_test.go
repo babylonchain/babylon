@@ -3,10 +3,11 @@ package schnorr_adaptor_signature_test
 import (
 	"testing"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/stretchr/testify/require"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 )
 
 func FuzzEncSignAndEncVerify(f *testing.F) {
@@ -134,9 +135,20 @@ func FuzzSerializeAdaptorSig(f *testing.F) {
 		require.NoError(t, err)
 
 		// roundtrip for serialising/deserialising adaptor signature
-		adaptorSigBytes := adaptorSig.ToBytes()
-		actualAdaptorSig, err := asig.NewAdaptorSignatureFromBytes(adaptorSigBytes)
+		adaptorSigBytes, err := adaptorSig.Marshal()
 		require.NoError(t, err)
-		require.Equal(t, adaptorSig, actualAdaptorSig)
+		var unmarshalledSig asig.AdaptorSignature
+		err = unmarshalledSig.Unmarshal(adaptorSigBytes)
+		require.NoError(t, err)
+		require.True(t, adaptorSig.Equals(unmarshalledSig))
+
+		fromBytesSig, err := asig.NewAdaptorSignatureFromBytes(adaptorSigBytes)
+		require.NoError(t, err)
+		require.True(t, adaptorSig.Equals(*fromBytesSig))
+
+		sigHex := adaptorSig.MarshalHex()
+		fromHexSig, err := asig.NewAdaptorSignatureFromHex(sigHex)
+		require.NoError(t, err)
+		require.True(t, adaptorSig.Equals(*fromHexSig))
 	})
 }

@@ -9,11 +9,13 @@ import (
 
 	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/stretchr/testify/require"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *math.LegacyDec) {
@@ -81,11 +83,12 @@ func (n *NodeConfig) CreateBTCDelegation(
 	n.LogActionF("successfully created BTC delegation")
 }
 
-func (n *NodeConfig) AddCovenantSig(covPK *bbn.BIP340PubKey, stakingTxHash string, sig *bbn.BIP340Signature) {
+// TODO accomodate multiple adaptor sigs
+func (n *NodeConfig) AddCovenantSig(covPK *bbn.BIP340PubKey, stakingTxHash string, sig *asig.AdaptorSignature) {
 	n.LogActionF("adding covenant signature")
 
 	covPKHex := covPK.MarshalHex()
-	sigHex := sig.ToHexStr()
+	sigHex := sig.MarshalHex()
 
 	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sig", covPKHex, stakingTxHash, sigHex, "--from=val"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
@@ -180,16 +183,17 @@ func (n *NodeConfig) AddValidatorUnbondingSig(valPK *bbn.BIP340PubKey, delPK *bb
 	n.LogActionF("successfully added validator unbonding sig")
 }
 
+// TODO accomodate multiple slashing sigs
 func (n *NodeConfig) AddCovenantUnbondingSigs(
 	covPK *bbn.BIP340PubKey,
 	stakingTxHash string,
 	unbondingTxSig *bbn.BIP340Signature,
-	slashUnbondingTxSig *bbn.BIP340Signature) {
+	slashUnbondingTxSig *asig.AdaptorSignature) {
 	n.LogActionF("adding validator signature")
 
 	covPKHex := covPK.MarshalHex()
 	unbondingTxSigHex := unbondingTxSig.ToHexStr()
-	slashUnbondingTxSigHex := slashUnbondingTxSig.ToHexStr()
+	slashUnbondingTxSigHex := slashUnbondingTxSig.MarshalHex()
 
 	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-unbonding-sigs", covPKHex, stakingTxHash, unbondingTxSigHex, slashUnbondingTxSigHex, "--from=val"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)

@@ -1,17 +1,20 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
-	"github.com/babylonchain/babylon/testutil/datagen"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/btcstaking"
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
+	"github.com/babylonchain/babylon/testutil/datagen"
 )
 
 func FuzzSlashingTxWithWitness(f *testing.F) {
@@ -67,11 +70,13 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		slashingScript := slashingScriptInfo.RevealedLeaf.Script
 
 		// sign slashing tx
-		valSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, valSK, net)
+		valSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, valSK)
 		require.NoError(t, err)
-		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, delSK, net)
+		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, delSK)
 		require.NoError(t, err)
-		covenantSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, covenantSK, net)
+		enckey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
+		require.NoError(t, err)
+		covenantSig, err := slashingTx.EncSign(stakingMsgTx, 0, slashingScript, covenantSK, enckey)
 		require.NoError(t, err)
 
 		// verify signatures first
@@ -79,17 +84,19 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, delPK, delSig)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, covenantPK, covenantSig)
+		err = slashingTx.EncVerifyAdaptorSignature(stakingPkScript, stakingValue, slashingScript, covenantPK, enckey, covenantSig)
 		require.NoError(t, err)
 
 		stakerSigBytes := delSig.MustMarshal()
 		validatorSigBytes := valSig.MustMarshal()
-		covSigBytes := covenantSig.MustMarshal()
+		decryptKey, err := asig.NewDecyptionKeyFromBTCSK(valSK)
+		require.NoError(t, err)
+		covSigDecryptedBytes := covenantSig.Decrypt(decryptKey).Serialize()
 
 		// TODO: use comittee
 		witness, err := btcstaking.CreateBabylonWitness(
 			[][]byte{
-				covSigBytes,
+				covSigDecryptedBytes,
 				validatorSigBytes,
 				stakerSigBytes,
 			},

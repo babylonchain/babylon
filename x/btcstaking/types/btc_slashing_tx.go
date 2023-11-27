@@ -2,15 +2,17 @@ package types
 
 import (
 	"bytes"
-	sdkmath "cosmossdk.io/math"
 	"encoding/hex"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
+
+	"github.com/babylonchain/babylon/btcstaking"
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/types"
 )
 
 type BTCSlashingTx []byte
@@ -105,13 +107,13 @@ func (tx *BTCSlashingTx) Validate(
 	)
 }
 
-// Sign generates a signature on the slashing tx signed by staker, validator or covenant
+// Sign generates a signature on the slashing tx
 func (tx *BTCSlashingTx) Sign(
 	stakingMsgTx *wire.MsgTx,
 	spendOutputIndex uint32,
 	scriptPath []byte,
 	sk *btcec.PrivateKey,
-	net *chaincfg.Params) (*bbn.BIP340Signature, error) {
+) (*types.BIP340Signature, error) {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return nil, err
@@ -122,12 +124,11 @@ func (tx *BTCSlashingTx) Sign(
 		spendOutputIndex,
 		scriptPath,
 		sk,
-		net,
 	)
 	if err != nil {
 		return nil, err
 	}
-	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
+	sig := types.NewBIP340SignatureFromBTCSig(schnorrSig)
 	return &sig, nil
 }
 
@@ -137,7 +138,7 @@ func (tx *BTCSlashingTx) VerifySignature(
 	stakingAmount int64,
 	stakingScript []byte,
 	pk *btcec.PublicKey,
-	sig *bbn.BIP340Signature) error {
+	sig *types.BIP340Signature) error {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return err
@@ -149,5 +150,58 @@ func (tx *BTCSlashingTx) VerifySignature(
 		stakingScript,
 		pk,
 		*sig,
+	)
+}
+
+// EncSign generates an adaptor signature on the slashing tx with validator's
+// public key as encryption key
+func (tx *BTCSlashingTx) EncSign(
+	stakingMsgTx *wire.MsgTx,
+	spendOutputIndex uint32,
+	scriptPath []byte,
+	sk *btcec.PrivateKey,
+	encKey *asig.EncryptionKey,
+) (*asig.AdaptorSignature, error) {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return nil, err
+	}
+	adaptorSig, err := btcstaking.EncSignTxWithOneScriptSpendInputStrict(
+		msgTx,
+		stakingMsgTx,
+		spendOutputIndex,
+		scriptPath,
+		sk,
+		encKey,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return adaptorSig, nil
+}
+
+// EncVerifyAdaptorSignature verifies an adaptor signature on the slashing tx
+// with the validator's public key as encryption key
+func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
+	stakingPkScript []byte,
+	stakingAmount int64,
+	stakingScript []byte,
+	pk *btcec.PublicKey,
+	encKey *asig.EncryptionKey,
+	sig *asig.AdaptorSignature,
+) error {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		return err
+	}
+	return btcstaking.EncVerifyTransactionSigWithOutputData(
+		msgTx,
+		stakingPkScript,
+		stakingAmount,
+		stakingScript,
+		pk,
+		encKey,
+		sig,
 	)
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+
 	"github.com/babylonchain/babylon/btcstaking"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -130,7 +131,7 @@ func (m *MsgAddCovenantSig) ValidateBasic() error {
 	if m.Pk == nil {
 		return fmt.Errorf("empty BTC covenant public key")
 	}
-	if m.Sig == nil {
+	if m.Sigs == nil {
 		return fmt.Errorf("empty covenant signature")
 	}
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
@@ -142,7 +143,7 @@ func (m *MsgAddCovenantSig) ValidateBasic() error {
 
 func (m *MsgBTCUndelegate) ValidateBasic() error {
 	if m.UnbondingTx == nil {
-		return fmt.Errorf("empty unbodning tx")
+		return fmt.Errorf("empty unbonding tx")
 	}
 	if m.SlashingTx == nil {
 		return fmt.Errorf("empty slashing tx")
@@ -190,7 +191,7 @@ func (m *MsgAddCovenantUnbondingSigs) ValidateBasic() error {
 	if m.UnbondingTxSig == nil {
 		return fmt.Errorf("empty covenant signature")
 	}
-	if m.SlashingUnbondingTxSig == nil {
+	if m.SlashingUnbondingTxSigs == nil {
 		return fmt.Errorf("empty covenant signature")
 	}
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {

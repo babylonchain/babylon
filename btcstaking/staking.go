@@ -13,6 +13,8 @@ import (
 	"github.com/btcsuite/btcd/mempool"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 )
 
 const (
@@ -541,34 +543,87 @@ func SignTxWithOneScriptSpendInputStrict(
 	fundingOutputIdx uint32,
 	signedScriptPath []byte,
 	privKey *btcec.PrivateKey,
-	net *chaincfg.Params,
 ) (*schnorr.Signature, error) {
 
-	if txToSign == nil {
-		return nil, fmt.Errorf("tx to sign must not be nil")
-	}
-
-	if len(txToSign.TxIn) != 1 {
-		return nil, fmt.Errorf("tx to sign must have exactly one input")
-	}
-
-	if fundingOutputIdx >= uint32(len(fundingTx.TxOut)) {
-		return nil, fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTx.TxOut))
-	}
-
-	fundingTxHash := fundingTx.TxHash()
-
-	if !txToSign.TxIn[0].PreviousOutPoint.Hash.IsEqual(&fundingTxHash) {
-		return nil, fmt.Errorf("txToSign must input point to fundingTx")
-	}
-
-	if txToSign.TxIn[0].PreviousOutPoint.Index != uint32(fundingOutputIdx) {
-		return nil, fmt.Errorf("txToSign inpunt index must point to output with provided script")
+	if err := checkTxBeforeSigning(txToSign, fundingTx, fundingOutputIdx); err != nil {
+		return nil, fmt.Errorf("invalid tx: %w", err)
 	}
 
 	fundingOutput := fundingTx.TxOut[fundingOutputIdx]
 
 	return SignTxWithOneScriptSpendInputFromScript(txToSign, fundingOutput, privKey, signedScriptPath)
+}
+
+// EncSignTxWithOneScriptSpendInputStrict is encrypted version of
+// SignTxWithOneScriptSpendInputStrict with the output to be encrypted
+// by an encryption key (adaptor signature)
+func EncSignTxWithOneScriptSpendInputStrict(
+	txToSign *wire.MsgTx,
+	fundingTx *wire.MsgTx,
+	fundingOutputIdx uint32,
+	signedScriptPath []byte,
+	privKey *btcec.PrivateKey,
+	encKey *asig.EncryptionKey,
+) (*asig.AdaptorSignature, error) {
+
+	if err := checkTxBeforeSigning(txToSign, fundingTx, fundingOutputIdx); err != nil {
+		return nil, fmt.Errorf("invalid tx: %w", err)
+	}
+
+	fundingOutput := fundingTx.TxOut[fundingOutputIdx]
+
+	tapLeaf := txscript.NewBaseTapLeaf(signedScriptPath)
+
+	inputFetcher := txscript.NewCannedPrevOutputFetcher(
+		fundingOutput.PkScript,
+		fundingOutput.Value,
+	)
+
+	sigHashes := txscript.NewTxSigHashes(txToSign, inputFetcher)
+
+	sigHash, err := txscript.CalcTapscriptSignaturehash(
+		sigHashes,
+		txscript.SigHashDefault,
+		txToSign,
+		0,
+		inputFetcher,
+		tapLeaf)
+	if err != nil {
+		return nil, err
+	}
+
+	adaptorSig, err := asig.EncSign(privKey, encKey, sigHash)
+	if err != nil {
+		return nil, err
+	}
+
+	return adaptorSig, nil
+}
+
+func checkTxBeforeSigning(txToSign *wire.MsgTx, fundingTx *wire.MsgTx, fundingOutputIdx uint32) error {
+	if txToSign == nil {
+		return fmt.Errorf("tx to sign must not be nil")
+	}
+
+	if len(txToSign.TxIn) != 1 {
+		return fmt.Errorf("tx to sign must have exactly one input")
+	}
+
+	if fundingOutputIdx >= uint32(len(fundingTx.TxOut)) {
+		return fmt.Errorf("invalid funding output index %d, tx has %d outputs", fundingOutputIdx, len(fundingTx.TxOut))
+	}
+
+	fundingTxHash := fundingTx.TxHash()
+
+	if !txToSign.TxIn[0].PreviousOutPoint.Hash.IsEqual(&fundingTxHash) {
+		return fmt.Errorf("txToSign must input point to fundingTx")
+	}
+
+	if txToSign.TxIn[0].PreviousOutPoint.Index != fundingOutputIdx {
+		return fmt.Errorf("txToSign inpunt index must point to output with provided script")
+	}
+
+	return nil
 }
 
 // VerifyTransactionSigWithOutput verifies that:
@@ -650,6 +705,51 @@ func VerifyTransactionSigWithOutputData(
 	}
 
 	return nil
+}
+
+// EncVerifyTransactionSigWithOutputData verifies that:
+// - provided transaction has exactly one input
+// - provided signature is valid adaptor signature
+// - provided signature is signing whole provided transaction (SigHashDefault)
+func EncVerifyTransactionSigWithOutputData(
+	transaction *wire.MsgTx,
+	fundingOutputPkScript []byte,
+	fundingOutputValue int64,
+	script []byte,
+	pubKey *btcec.PublicKey,
+	encKey *asig.EncryptionKey,
+	signature *asig.AdaptorSignature,
+) error {
+	if transaction == nil {
+		return fmt.Errorf("tx to verify not be nil")
+	}
+
+	if len(transaction.TxIn) != 1 {
+		return fmt.Errorf("tx to sign must have exactly one input")
+	}
+
+	if pubKey == nil {
+		return fmt.Errorf("public key must not be nil")
+	}
+
+	tapLeaf := txscript.NewBaseTapLeaf(script)
+
+	inputFetcher := txscript.NewCannedPrevOutputFetcher(
+		fundingOutputPkScript,
+		fundingOutputValue,
+	)
+
+	sigHashes := txscript.NewTxSigHashes(transaction, inputFetcher)
+
+	sigHash, err := txscript.CalcTapscriptSignaturehash(
+		sigHashes, txscript.SigHashDefault, transaction, 0, inputFetcher, tapLeaf,
+	)
+
+	if err != nil {
+		return err
+	}
+
+	return signature.EncVerify(pubKey, encKey, sigHash)
 }
 
 // IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.

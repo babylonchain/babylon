@@ -7,9 +7,6 @@ import (
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -17,6 +14,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/spf13/cobra"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 const (
@@ -286,23 +288,24 @@ func NewAddCovenantSigCmd() *cobra.Command {
 
 			covPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid public key: %w", err)
 			}
 
 			// get staking tx hash
 			stakingTxHash := args[1]
 
-			// get covenant sigature
-			sig, err := bbn.NewBIP340SignatureFromHex(args[2])
+			// TODO add multiple adaptor sigs from cli
+			// get adaptor sig
+			sig, err := asig.NewAdaptorSignatureFromHex(args[2])
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid covenant signature: %w", err)
 			}
 
 			msg := types.MsgAddCovenantSig{
 				Signer:        clientCtx.FromAddress.String(),
 				Pk:            covPK,
 				StakingTxHash: stakingTxHash,
-				Sig:           sig,
+				Sigs:          [][]byte{sig.MustMarshal()},
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -403,18 +406,19 @@ func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 				return err
 			}
 
-			// get covenant sigature for slash unbonding tx
-			slashUnbondingSig, err := bbn.NewBIP340SignatureFromHex(args[3])
+			// TODO add multiple adaptor sigs from cli
+			// get adaptor sig
+			slashingSig, err := asig.NewAdaptorSignatureFromHex(args[3])
 			if err != nil {
-				return err
+				return fmt.Errorf("invalid covenant signature: %w", err)
 			}
 
 			msg := types.MsgAddCovenantUnbondingSigs{
-				Signer:                 clientCtx.FromAddress.String(),
-				Pk:                     covPK,
-				StakingTxHash:          stakingTxHash,
-				UnbondingTxSig:         unbondingSig,
-				SlashingUnbondingTxSig: slashUnbondingSig,
+				Signer:                  clientCtx.FromAddress.String(),
+				Pk:                      covPK,
+				StakingTxHash:           stakingTxHash,
+				UnbondingTxSig:          unbondingSig,
+				SlashingUnbondingTxSigs: [][]byte{slashingSig.MustMarshal()},
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

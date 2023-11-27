@@ -1,14 +1,12 @@
 package datagen
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/btcstaking"
-	bbn "github.com/babylonchain/babylon/types"
-	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+	sdkmath "cosmossdk.io/math"
+
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -18,6 +16,11 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/btcstaking"
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	bbn "github.com/babylonchain/babylon/types"
+	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
@@ -129,15 +132,16 @@ func GenRandomBTCDelegation(
 	// covenant sig and delegator sig
 	stakingMsgTx := testingInfo.StakingTx
 	// TODO: covenant multisig
-	covenantSig, err := testingInfo.SlashingTx.Sign(stakingMsgTx, 0, script, covenantSKs[0], net)
-	if err != nil {
-		return nil, err
+	encKey, err := asig.NewEncryptionKeyFromBTCPK(valPKs[0])
+	require.NoError(t, err)
+	covenantSig, err := testingInfo.SlashingTx.EncSign(stakingMsgTx, 0, script, covenantSKs[0], encKey)
+	require.NoError(t, err)
+	covenantSigInfo := &bstypes.CovenantAdaptorSignatures{
+		CovPk:       bbn.NewBIP340PubKeyFromBTCPK(covenantBTCPKs[0]),
+		AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
 	}
-	delegatorSig, err := testingInfo.SlashingTx.Sign(stakingMsgTx, 0, script, delSK, net)
-	if err != nil {
-		return nil, err
-	}
-
+	delegatorSig, err := testingInfo.SlashingTx.Sign(stakingMsgTx, 0, script, delSK)
+	require.NoError(t, err)
 	serializedStaking, err := bstypes.SerializeBtcTx(testingInfo.StakingTx)
 	require.NoError(t, err)
 
@@ -151,7 +155,7 @@ func GenRandomBTCDelegation(
 		TotalSat:         totalSat,
 		StakingOutputIdx: 0,
 		DelegatorSig:     delegatorSig,
-		CovenantSig:      covenantSig,
+		CovenantSigs:     []*bstypes.CovenantAdaptorSignatures{covenantSigInfo},
 		StakingTx:        serializedStaking,
 		SlashingTx:       testingInfo.SlashingTx,
 	}, nil

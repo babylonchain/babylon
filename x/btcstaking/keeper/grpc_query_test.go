@@ -6,6 +6,14 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
+
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
@@ -13,12 +21,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzActivatedHeight(f *testing.F) {
@@ -222,7 +224,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 				if datagen.RandomInt(r, 2) == 1 {
 					// remove covenant sig in random BTC delegations to make them inactive
-					btcDel.CovenantSig = nil
+					btcDel.CovenantSigs = nil
 					pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
 				}
 				err = keeper.AddBTCDelegation(ctx, btcDel)
@@ -334,9 +336,12 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 
 					if datagen.RandomInt(r, 2) == 1 {
 						// these BTC delegations are unbonded
-						unbondingSigInfo := types.NewSignatureInfo(covBTCPK, btcDel.CovenantSig)
+						sig, err := schnorr.Sign(covenantSK, datagen.GenRandomByteArray(r, 32))
+						require.NoError(t, err)
+						unbondingSig := bbn.NewBIP340SignatureFromBTCSig(sig)
+						unbondingSigInfo := types.NewSignatureInfo(covBTCPK, &unbondingSig)
 						btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingSigInfo)
-						btcDel.BtcUndelegation.CovenantSlashingSig = btcDel.CovenantSig
+						btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs
 					} else {
 						// these BTC delegations are unbonding
 						unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel

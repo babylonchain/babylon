@@ -1,10 +1,12 @@
 package schnorr_adaptor_signature
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/btcsuite/btcd/btcec/v2"
-	schnorr "github.com/btcsuite/btcd/btcec/v2/schnorr"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	secp "github.com/decred/dcrd/dcrec/secp256k1/v4"
 )
@@ -90,8 +92,12 @@ func (sig *AdaptorSignature) Recover(decryptedSchnorrSig *schnorr.Signature) *De
 	return &DecryptionKey{*t}
 }
 
-func (sig *AdaptorSignature) ToBytes() []byte {
-	asigBytes := []byte{}
+// Marshal is to implement proto interface
+func (sig *AdaptorSignature) Marshal() ([]byte, error) {
+	if sig == nil {
+		return nil, nil
+	}
+	var asigBytes []byte
 	// append r
 	rBytes := btcec.JacobianToByteSlice(sig.r)
 	asigBytes = append(asigBytes, rBytes...)
@@ -104,7 +110,54 @@ func (sig *AdaptorSignature) ToBytes() []byte {
 	} else {
 		asigBytes = append(asigBytes, 0x00)
 	}
-	return asigBytes
+	return asigBytes, nil
+}
+
+func (sig *AdaptorSignature) MustMarshal() []byte {
+	if sig == nil {
+		return nil
+	}
+	bz, err := sig.Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	return bz
+}
+
+func (sig *AdaptorSignature) MarshalHex() string {
+	return hex.EncodeToString(sig.MustMarshal())
+}
+
+// Size is to implement proto interface
+func (sig *AdaptorSignature) Size() int {
+	return AdaptorSignatureSize
+}
+
+// MarshalTo is to implement proto interface
+func (sig *AdaptorSignature) MarshalTo(data []byte) (int, error) {
+	bz, err := sig.Marshal()
+	if err != nil {
+		return 0, err
+	}
+	copy(data, bz)
+	return len(data), nil
+}
+
+// Unmarshal is to implement proto interface
+func (sig *AdaptorSignature) Unmarshal(data []byte) error {
+	adaptorSig, err := NewAdaptorSignatureFromBytes(data)
+	if err != nil {
+		return err
+	}
+
+	*sig = *adaptorSig
+
+	return nil
+}
+
+func (sig *AdaptorSignature) Equals(sig2 AdaptorSignature) bool {
+	return bytes.Equal(sig.MustMarshal(), sig2.MustMarshal())
 }
 
 // EncSign generates an adaptor signature by using the given secret key,
@@ -176,4 +229,13 @@ func NewAdaptorSignatureFromBytes(asigBytes []byte) (*AdaptorSignature, error) {
 	needNegation := asigBytes[AdaptorSignatureSize-1] != 0x00
 
 	return newAdaptorSignature(&r, &sHat, needNegation), nil
+}
+
+// NewAdaptorSignatureFromHex parses the given hex string to an adaptor signature
+func NewAdaptorSignatureFromHex(asigHex string) (*AdaptorSignature, error) {
+	asigBytes, err := hex.DecodeString(asigHex)
+	if err != nil {
+		return nil, err
+	}
+	return NewAdaptorSignatureFromBytes(asigBytes)
 }

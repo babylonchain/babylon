@@ -89,14 +89,11 @@ message BTCDelegation {
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the staking tx output.
     bytes delegator_sig = 11 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // covenant_sig is the signature signature on the slashing tx
-    // by the covenant (i.e., SK corresponding to covenant_pk in params)
+    // covenant_sigs is a list of adaptor signatures on the slashing tx
+    // by each covenant member
     // It will be a part of the witness for the staking tx output.
-    // TODO: change to a set of (covenant PK, covenant adaptor signature) tuples
-    // over each restaked BTC validator (i.e., a matrix of tuples)
-    bytes covenant_sig = 12 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-
-    // if this object is present it menans that staker requested undelegation, and whole
+    repeated CovenantAdaptorSignatures covenant_sigs = 12;
+    // if this object is present it means that staker requested undelegation, and whole
     // delegation is being undelegated.
     // TODO: Consider whether it would be better to store it in separate store, and not
     // directly in delegation object
@@ -111,19 +108,18 @@ message BTCUndelegation {
     bytes unbonding_tx = 1;
     // unbonding_time describes how long the funds will be locked in the unbonding output
     uint32 unbonding_time = 2;
-    // slashing_tx is the slashing tx for unbodning transactions
+    // slashing_tx is the slashing tx for unbonding transactions
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // validator or covenant yet.
     bytes slashing_tx = 3 [ (gogoproto.customtype) = "BTCSlashingTx" ];
     // delegator_slashing_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
-    // It will be a part of the witness for the unbodning tx output.
+    // It will be a part of the witness for the unbonding tx output.
     bytes delegator_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-    // covenant_slashing_sig is the signature on the slashing tx
-    // by the covenant (i.e., SK corresponding to covenant_pk in params)
-    // It must be provided after processing undelagate message by Babylon
-    // TODO: change to a matrix of (covenant PK, covenant adaptor signature) tuples
-    bytes covenant_slashing_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    // covenant_slashing_sigs is a list of adaptor signatures on the slashing tx
+    // by each covenant member
+    // It will be a part of the witness for the staking tx output.
+    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
     // It must be provided after processing undelagate message by Babylon
@@ -140,8 +136,6 @@ message BTCUndelegationInfo {
 
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
-    // It must be provided after processing undelagate message by Babylon and after
-    // validator sig will be provided by validator
     repeated SignatureInfo covenant_unbonding_sig_list = 2;
 }
 
@@ -183,4 +177,13 @@ enum BTCDelegationStatus {
 message SignatureInfo {
     bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     bytes sig = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+
+// CovenantAdaptorSignatures is a list adaptor signatures signed by the
+// covenant with different validator's public keys as encryption keys
+message CovenantAdaptorSignatures {
+    // cov_pk is the public key of the covenant emulator, used as the public key of the adaptor signature
+    bytes cov_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // adaptor_sigs is a list of adaptor signatures, each encrypted by a restaked BTC validator's public key
+    repeated bytes adaptor_sigs = 2;
 }

@@ -6,12 +6,13 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 func FuzzStakingTx(f *testing.F) {
@@ -71,8 +72,20 @@ func FuzzBTCDelegation(f *testing.F) {
 		// randomise covenant sig
 		hasCovenantSig := datagen.RandomInt(r, 2) == 0
 		if hasCovenantSig {
-			covenantSig := bbn.BIP340Signature([]byte{1, 2, 3})
-			btcDel.CovenantSig = &covenantSig
+			encKey, _, err := asig.GenKeyPair()
+			require.NoError(t, err)
+			covenantSK, _ := btcec.PrivKeyFromBytes(
+				[]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+			)
+			covenantSig, err := asig.EncSign(covenantSK, encKey, datagen.GenRandomByteArray(r, 32))
+			require.NoError(t, err)
+			covPk, err := datagen.GenRandomBIP340PubKey(r)
+			require.NoError(t, err)
+			covSigInfo := &types.CovenantAdaptorSignatures{
+				CovPk:       covPk,
+				AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
+			}
+			btcDel.CovenantSigs = []*types.CovenantAdaptorSignatures{covSigInfo}
 		}
 
 		// randomise start height and end height

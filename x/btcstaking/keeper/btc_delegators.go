@@ -7,9 +7,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
+
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
 // AddBTCDelegation indexes the given BTC delegation in the BTC delegator store, and saves
@@ -77,19 +79,25 @@ func (k Keeper) updateBTCDelegation(
 	return nil
 }
 
-// AddCovenantSigToBTCDelegation adds a given covenant sig to a BTC delegation
+// AddCovenantSigsToBTCDelegation adds a given covenant sig to a BTC delegation
 // with the given (val PK, del PK, staking tx hash) tuple
-func (k Keeper) AddCovenantSigToBTCDelegation(
+func (k Keeper) AddCovenantSigsToBTCDelegation(
 	ctx context.Context,
 	stakingTxHash string,
-	covenantSig *bbn.BIP340Signature,
+	covenantSigs [][]byte,
+	covPk *bbn.BIP340PubKey,
+	quorum uint32,
 ) error {
-	addCovenantSig := func(btcDel *types.BTCDelegation) error {
-		if btcDel.CovenantSig != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has a covenant signature", stakingTxHash)
+	adaptorSigs := make([]asig.AdaptorSignature, 0, len(covenantSigs))
+	for _, s := range covenantSigs {
+		as, err := asig.NewAdaptorSignatureFromBytes(s)
+		if err != nil {
+			return err
 		}
-		btcDel.CovenantSig = covenantSig
-		return nil
+		adaptorSigs = append(adaptorSigs, *as)
+	}
+	addCovenantSig := func(btcDel *types.BTCDelegation) error {
+		return btcDel.AddCovenantSigs(covPk, adaptorSigs, quorum)
 	}
 
 	return k.updateBTCDelegation(ctx, stakingTxHash, addCovenantSig)
@@ -114,22 +122,25 @@ func (k Keeper) AddUndelegationToBTCDelegation(
 func (k Keeper) AddCovenantSigsToUndelegation(
 	ctx context.Context,
 	stakingTxHash string,
-	unbondingTxSigInfo *types.SignatureInfo,
-	slashUnbondingTxSig *bbn.BIP340Signature,
+	covPk *bbn.BIP340PubKey,
+	unbondingTxSigInfo *bbn.BIP340Signature,
+	slashUnbondingTxSigs [][]byte,
+	quorum uint32,
 ) error {
+	adaptorSigs := make([]asig.AdaptorSignature, 0, len(slashUnbondingTxSigs))
+	for _, s := range slashUnbondingTxSigs {
+		as, err := asig.NewAdaptorSignatureFromBytes(s)
+		if err != nil {
+			return err
+		}
+		adaptorSigs = append(adaptorSigs, *as)
+	}
 	addCovenantSigs := func(btcDel *types.BTCDelegation) error {
 		if btcDel.BtcUndelegation == nil {
 			return fmt.Errorf("the BTC delegation with staking tx hash %s did not receive undelegation request yet", stakingTxHash)
 		}
 
-		// TODO: ensure the given CovenantUnbondingSig does not exist in the BTC undelegation yet
-		if btcDel.BtcUndelegation.CovenantUnbondingSigList != nil || btcDel.BtcUndelegation.CovenantSlashingSig != nil {
-			return fmt.Errorf("the BTC undelegation for staking tx hash %s already has valid covenant signatures", stakingTxHash)
-		}
-
-		btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingTxSigInfo)
-		btcDel.BtcUndelegation.CovenantSlashingSig = slashUnbondingTxSig
-		return nil
+		return btcDel.BtcUndelegation.AddCovenantSigs(covPk, unbondingTxSigInfo, adaptorSigs, quorum)
 	}
 
 	return k.updateBTCDelegation(ctx, stakingTxHash, addCovenantSigs)
