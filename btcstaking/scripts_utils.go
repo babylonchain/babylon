@@ -3,15 +3,16 @@ package btcstaking
 import (
 	"bytes"
 	"fmt"
+	"sort"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/txscript"
 )
 
-// private helper to build multisig script
+// private helper to assemble multisig script
 // SCRIPT: <Pk1> OP_CHEKCSIG <Pk2> OP_CHECKSIGADD <Pk3> OP_CHECKSIGADD ... <PkN> OP_CHECKSIGADD <threshold> OP_GREATERTHANOREQUAL OP_VERIFY
-func buildMultiSigScript(
+func assembleMultiSigScript(
 	pubkeys []*btcec.PublicKey,
 	threshold uint32,
 	withVerify bool,
@@ -36,6 +37,18 @@ func buildMultiSigScript(
 	return builder.Script()
 }
 
+// sortKeys takes a set of schnorr public keys and returns a new slice that is
+// a copy of the keys sorted in lexicographical order bytes on the x-only
+// pubkey serialization.
+func sortKeys(keys []*btcec.PublicKey) []*btcec.PublicKey {
+	sort.SliceStable(keys, func(i, j int) bool {
+		keyIBytes := schnorr.SerializePubKey(keys[i])
+		keyJBytes := schnorr.SerializePubKey(keys[j])
+		return bytes.Compare(keyIBytes, keyJBytes) == -1
+	})
+	return keys
+}
+
 // prepareKeys prepares keys to be used in multisig script
 // Validates:
 // - whether there are at lest 2 keys
@@ -57,11 +70,11 @@ func prepareKeysForMultisigScript(keys []*btcec.PublicKey) ([]*btcec.PublicKey, 
 	return sortedKeys, nil
 }
 
-// BuildMultiSigScript creates multisig script with given keys and signer threshold to
+// buildMultiSigScript creates multisig script with given keys and signer threshold to
 // successfully execute script
 // it validates whether provided keys are unique and the threshold is not greater than number of keys
 // If there is only one key provided it will return single key sig script
-func BuildMultiSigScript(
+func buildMultiSigScript(
 	keys []*btcec.PublicKey,
 	threshold uint32,
 	withVerify bool,
@@ -76,7 +89,7 @@ func BuildMultiSigScript(
 
 	if len(keys) == 1 {
 		// if we have only one key we can use single key sig script
-		return BuildSingleKeySigScript(keys[0], withVerify)
+		return buildSingleKeySigScript(keys[0], withVerify)
 	}
 
 	sortedKeys, err := prepareKeysForMultisigScript(keys)
@@ -85,12 +98,12 @@ func BuildMultiSigScript(
 		return nil, err
 	}
 
-	return buildMultiSigScript(sortedKeys, threshold, withVerify)
+	return assembleMultiSigScript(sortedKeys, threshold, withVerify)
 }
 
 // Only holder of private key for given pubKey can spend after relative lock time
 // SCRIPT: <StakerPk> OP_CHECKSIGVERIFY <stakingTime> OP_CHECKSEQUENCEVERIFY
-func BuildTimeLockScript(
+func buildTimeLockScript(
 	pubKey *btcec.PublicKey,
 	lockTime uint16,
 ) ([]byte, error) {
@@ -104,7 +117,7 @@ func BuildTimeLockScript(
 
 // Only holder of private key for given pubKey can spend
 // SCRIPT: <pubKey> OP_CHECKSIGVERIFY
-func BuildSingleKeySigScript(
+func buildSingleKeySigScript(
 	pubKey *btcec.PublicKey,
 	withVerify bool,
 ) ([]byte, error) {

@@ -1,10 +1,12 @@
 package btcstaking_test
 
 import (
-	sdkmath "cosmossdk.io/math"
+	"fmt"
 	"math"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -16,7 +18,33 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func genValidStakingScriptData(_ *testing.T, r *rand.Rand) *btcstaking.StakingScriptData {
+// StakingScriptData is a struct that holds data parsed from staking script
+type StakingScriptData struct {
+	StakerKey    *btcec.PublicKey
+	ValidatorKey *btcec.PublicKey
+	CovenantKey  *btcec.PublicKey
+	StakingTime  uint16
+}
+
+func NewStakingScriptData(
+	stakerKey,
+	validatorKey,
+	covenantKey *btcec.PublicKey,
+	stakingTime uint16) (*StakingScriptData, error) {
+
+	if stakerKey == nil || validatorKey == nil || covenantKey == nil {
+		return nil, fmt.Errorf("staker, validator and covenant keys cannot be nil")
+	}
+
+	return &StakingScriptData{
+		StakerKey:    stakerKey,
+		ValidatorKey: validatorKey,
+		CovenantKey:  covenantKey,
+		StakingTime:  stakingTime,
+	}, nil
+}
+
+func genValidStakingScriptData(_ *testing.T, r *rand.Rand) *StakingScriptData {
 	stakerPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	validatorPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	covenantPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
@@ -26,7 +54,7 @@ func genValidStakingScriptData(_ *testing.T, r *rand.Rand) *btcstaking.StakingSc
 	_, validatorPublicKey := btcec.PrivKeyFromBytes(validatorPrivKeyBytes)
 	_, covenantPublicKey := btcec.PrivKeyFromBytes(covenantPrivKeyBytes)
 
-	sd, _ := btcstaking.NewStakingScriptData(stakerPublicKey, validatorPublicKey, covenantPublicKey, stakingTime)
+	sd, _ := NewStakingScriptData(stakerPublicKey, validatorPublicKey, covenantPublicKey, stakingTime)
 
 	return sd
 }

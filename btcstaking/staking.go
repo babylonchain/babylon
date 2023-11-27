@@ -2,7 +2,6 @@ package btcstaking
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
@@ -16,63 +15,6 @@ import (
 
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 )
-
-const (
-
-	// Point with unknown discrete logarithm defined in: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs
-	// using it as internal public key efectively disables taproot key spends
-	unspendableKeyPath = "0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
-)
-
-var (
-	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
-)
-
-func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
-	keyBytes, err := hex.DecodeString(keyHex)
-
-	if err != nil {
-		panic(fmt.Sprintf("unexpected error: %v", err))
-	}
-
-	// We are using btcec here, as key is 33 byte compressed format.
-	pubKey, err := btcec.ParsePubKey(keyBytes)
-
-	if err != nil {
-		panic(fmt.Sprintf("unexpected error: %v", err))
-	}
-	return *pubKey
-}
-
-// StakingScriptData is a struct that holds data parsed from staking script
-type StakingScriptData struct {
-	StakerKey    *btcec.PublicKey
-	ValidatorKey *btcec.PublicKey
-	CovenantKey  *btcec.PublicKey
-	StakingTime  uint16
-}
-
-func NewStakingScriptData(
-	stakerKey,
-	validatorKey,
-	covenantKey *btcec.PublicKey,
-	stakingTime uint16) (*StakingScriptData, error) {
-
-	if stakerKey == nil || validatorKey == nil || covenantKey == nil {
-		return nil, fmt.Errorf("staker, validator and covenant keys cannot be nil")
-	}
-
-	return &StakingScriptData{
-		StakerKey:    stakerKey,
-		ValidatorKey: validatorKey,
-		CovenantKey:  covenantKey,
-		StakingTime:  stakingTime,
-	}, nil
-}
-
-func UnspendableKeyPathInternalPubKey() btcec.PublicKey {
-	return unspendableKeyPathKey
-}
 
 // BuildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion
 // of staked funds and directs them to a specified slashing address. The transaction also includes a change output sent back to
@@ -752,19 +694,44 @@ func EncVerifyTransactionSigWithOutputData(
 	return signature.EncVerify(pubKey, encKey, sigHash)
 }
 
-// IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
-func IsSlashingRateValid(slashingRate sdkmath.LegacyDec) bool {
-	// Check if the slashing rate is between 0 and 1
-	if slashingRate.LTE(sdkmath.LegacyZeroDec()) || slashingRate.GTE(sdkmath.LegacyOneDec()) {
-		return false
+// CreateBabylonWitness creates babylon compatible witness, as babylon scripts
+// have witness with the same shape
+// - first come signatures
+// - then whole revealed script
+// - then control block
+func CreateBabylonWitness(
+	signatures [][]byte,
+	si *SpendInfo,
+) (wire.TxWitness, error) {
+	numSignatures := len(signatures)
+
+	if numSignatures == 0 {
+		return nil, fmt.Errorf("cannot build witness without signatures")
 	}
 
-	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
-	multipliedRate := slashingRate.Mul(sdkmath.LegacyNewDec(100))
+	if si == nil {
+		return nil, fmt.Errorf("cannot build witness without spend info")
+	}
 
-	// Truncate the rate to remove decimal places
-	truncatedRate := multipliedRate.TruncateDec()
+	controlBlockBytes, err := si.ControlBlock.ToBytes()
 
-	// Check if the truncated rate is equal to the original rate
-	return multipliedRate.Equal(truncatedRate)
+	if err != nil {
+		return nil, err
+	}
+
+	// witness stack has:
+	// all signatures
+	// whole revealed script
+	// control block
+	witnessStack := wire.TxWitness(make([][]byte, numSignatures+2))
+
+	for i, sig := range signatures {
+		sc := sig
+		witnessStack[i] = sc
+	}
+
+	witnessStack[numSignatures] = si.RevealedLeaf.Script
+	witnessStack[numSignatures+1] = controlBlockBytes
+
+	return witnessStack, nil
 }

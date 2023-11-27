@@ -1,15 +1,106 @@
 package btcstaking
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
+	"sort"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 )
+
+const (
+	// Point with unknown discrete logarithm defined in: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs
+	// using it as internal public key efectively disables taproot key spends
+	unspendableKeyPath = "0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
+)
+
+var (
+	unspendableKeyPathKey = unspendableKeyPathInternalPubKeyInternal(unspendableKeyPath)
+)
+
+func unspendableKeyPathInternalPubKeyInternal(keyHex string) btcec.PublicKey {
+	keyBytes, err := hex.DecodeString(keyHex)
+
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: %v", err))
+	}
+
+	// We are using btcec here, as key is 33 byte compressed format.
+	pubKey, err := btcec.ParsePubKey(keyBytes)
+
+	if err != nil {
+		panic(fmt.Sprintf("unexpected error: %v", err))
+	}
+	return *pubKey
+}
+
+func unspendableKeyPathInternalPubKey() btcec.PublicKey {
+	return unspendableKeyPathKey
+}
+
+func NewTaprootTreeFromScripts(
+	scripts [][]byte,
+) *txscript.IndexedTapScriptTree {
+	var tapLeafs []txscript.TapLeaf
+	for _, script := range scripts {
+		scr := script
+		tapLeafs = append(tapLeafs, txscript.NewBaseTapLeaf(scr))
+	}
+	return txscript.AssembleTaprootScriptTree(tapLeafs...)
+}
+
+func DeriveTaprootAddress(
+	tapScriptTree *txscript.IndexedTapScriptTree,
+	internalPubKey *btcec.PublicKey,
+	net *chaincfg.Params) (*btcutil.AddressTaproot, error) {
+
+	tapScriptRootHash := tapScriptTree.RootNode.TapHash()
+
+	outputKey := txscript.ComputeTaprootOutputKey(
+		internalPubKey, tapScriptRootHash[:],
+	)
+
+	address, err := btcutil.NewAddressTaproot(
+		schnorr.SerializePubKey(outputKey), net)
+
+	if err != nil {
+		return nil, fmt.Errorf("error encoding Taproot address: %v", err)
+	}
+
+	return address, nil
+}
+
+func DeriveTaprootPkScript(
+	tapScriptTree *txscript.IndexedTapScriptTree,
+	internalPubKey *btcec.PublicKey,
+	net *chaincfg.Params,
+) ([]byte, error) {
+	taprootAddress, err := DeriveTaprootAddress(
+		tapScriptTree,
+		&unspendableKeyPathKey,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taprootPkScript, err := txscript.PayToAddrScript(taprootAddress)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return taprootPkScript, nil
+}
 
 type taprootScriptHolder struct {
 	internalPubKey *btcec.PublicKey
@@ -83,6 +174,33 @@ func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, err
 	)
 }
 
+type SignatureInfo struct {
+	SignerPubKey *btcec.PublicKey
+	Signature    []byte
+}
+
+func NewSignatureInfo(
+	signerPubKey *btcec.PublicKey,
+	signature []byte,
+) *SignatureInfo {
+	return &SignatureInfo{
+		SignerPubKey: signerPubKey,
+		Signature:    signature,
+	}
+}
+
+// Helper function to sort all signatures in reverse lexicographical order of signing public keys
+// this way signatures are ready to be used in multisig witness with corresponding public keys
+func SortSignatureInfo(infos []*SignatureInfo) []*SignatureInfo {
+	sort.SliceStable(infos, func(i, j int) bool {
+		keyIBytes := schnorr.SerializePubKey(infos[i].SignerPubKey)
+		keyJBytes := schnorr.SerializePubKey(infos[j].SignerPubKey)
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+
+	return infos
+}
+
 // Package responsible for different kinds of btc scripts used by babylon
 // Staking script has 3 spending paths:
 // 1. Staker can spend after relative time lock - staking
@@ -105,6 +223,28 @@ type SpendInfo struct {
 	RevealedLeaf txscript.TapLeaf
 }
 
+func SpendInfoFromRevealedScript(
+	revealedScript []byte,
+	internalKey *btcec.PublicKey,
+	tree *txscript.IndexedTapScriptTree) (*SpendInfo, error) {
+
+	revealedLeaf := txscript.NewBaseTapLeaf(revealedScript)
+	leafHash := revealedLeaf.TapHash()
+
+	scriptIdx, ok := tree.LeafProofIndex[leafHash]
+
+	if !ok {
+		return nil, fmt.Errorf("script not found in script tree")
+	}
+
+	merkleProof := tree.LeafMerkleProofs[scriptIdx]
+
+	return &SpendInfo{
+		ControlBlock: merkleProof.ToControlBlock(internalKey),
+		RevealedLeaf: revealedLeaf,
+	}, nil
+}
+
 func aggregateScripts(scripts ...[]byte) []byte {
 	if len(scripts) == 0 {
 		return []byte{}
@@ -118,7 +258,7 @@ func aggregateScripts(scripts ...[]byte) []byte {
 	return finalScript
 }
 
-// babylonScriptPaths is and aggregate of all possible babylon script paths
+// babylonScriptPaths contains all possible babylon script paths
 // not every babylon output will contain all of those paths
 type babylonScriptPaths struct {
 	timeLockPathScript  []byte
@@ -137,13 +277,13 @@ func newBabylonScriptPaths(
 		return nil, fmt.Errorf("staker key is nil")
 	}
 
-	timeLockPathScript, err := BuildTimeLockScript(stakerKey, lockTime)
+	timeLockPathScript, err := buildTimeLockScript(stakerKey, lockTime)
 
 	if err != nil {
 		return nil, err
 	}
 
-	covenantMultisigScript, err := BuildMultiSigScript(
+	covenantMultisigScript, err := buildMultiSigScript(
 		covenantKeys,
 		covenantThreshold,
 		// covenant multisig is always last in script so we do not run verify and leave
@@ -156,13 +296,13 @@ func newBabylonScriptPaths(
 		return nil, err
 	}
 
-	stakerSigScript, err := BuildSingleKeySigScript(stakerKey, true)
+	stakerSigScript, err := buildSingleKeySigScript(stakerKey, true)
 
 	if err != nil {
 		return nil, err
 	}
 
-	validatorSigScript, err := BuildMultiSigScript(
+	validatorSigScript, err := buildMultiSigScript(
 		validatorKeys,
 		// we always require only one validator to sign
 		1,
@@ -201,7 +341,7 @@ func BuildStakingInfo(
 	stakingAmount btcutil.Amount,
 	net *chaincfg.Params,
 ) (*StakingInfo, error) {
-	unspendableKeyPathKey := UnspendableKeyPathInternalPubKey()
+	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
 
 	babylonScripts, err := newBabylonScriptPaths(
 		stakerKey,
@@ -281,7 +421,7 @@ func BuildUnbondingInfo(
 	unbondingAmount btcutil.Amount,
 	net *chaincfg.Params,
 ) (*UnbondingInfo, error) {
-	unspendableKeyPathKey := UnspendableKeyPathInternalPubKey()
+	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
 
 	babylonScripts, err := newBabylonScriptPaths(
 		stakerKey,
@@ -333,4 +473,21 @@ func (i *UnbondingInfo) TimeLockPathSpendInfo() (*SpendInfo, error) {
 
 func (i *UnbondingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 	return i.scriptHolder.scriptSpendInfoByName(i.slashingPathLeafHash)
+}
+
+// IsSlashingRateValid checks if the given slashing rate is between the valid range i.e., (0,1) with a precision of at most 2 decimal places.
+func IsSlashingRateValid(slashingRate sdkmath.LegacyDec) bool {
+	// Check if the slashing rate is between 0 and 1
+	if slashingRate.LTE(sdkmath.LegacyZeroDec()) || slashingRate.GTE(sdkmath.LegacyOneDec()) {
+		return false
+	}
+
+	// Multiply by 100 to move the decimal places and check if precision is at most 2 decimal places
+	multipliedRate := slashingRate.Mul(sdkmath.LegacyNewDec(100))
+
+	// Truncate the rate to remove decimal places
+	truncatedRate := multipliedRate.TruncateDec()
+
+	// Check if the truncated rate is equal to the original rate
+	return multipliedRate.Equal(truncatedRate)
 }
