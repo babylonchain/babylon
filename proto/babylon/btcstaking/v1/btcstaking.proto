@@ -134,9 +134,11 @@ message BTCUndelegationInfo {
     // than staking output.
     bytes unbonding_tx = 1;
 
+    // unbonding_time describes how long the funds will be locked in the unbonding output
+    uint32 unbonding_time = 2;
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
-    repeated SignatureInfo covenant_unbonding_sig_list = 2;
+    repeated SignatureInfo covenant_unbonding_sig_list = 3;
 }
 
 // BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.
