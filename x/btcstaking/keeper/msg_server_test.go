@@ -13,7 +13,6 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -157,7 +156,7 @@ func createDelegation(
 	stakingTimeBlocks := stakingTime
 	stakingValue := int64(2 * 10e8)
 
-	testStakingInfo := datagen.GenBTCStakingSlashingTx(
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
 		t,
 		net,
@@ -185,7 +184,7 @@ func createDelegation(
 	prevBlock, _ := datagen.GenRandomBtcdBlock(r, 0, nil)
 	btcHeaderWithProof := datagen.CreateBlockWithTransaction(r, &prevBlock.Header, testStakingInfo.StakingTx)
 	btcHeader := btcHeaderWithProof.HeaderBytes
-	serializedStakingTx, err := types.SerializeBtcTx(testStakingInfo.StakingTx)
+	serializedStakingTx, err := bbn.SerializeBTCTx(testStakingInfo.StakingTx)
 	require.NoError(t, err)
 
 	txInfo := btcctypes.NewTransactionInfo(&btcctypes.TransactionKey{Index: 1, Hash: btcHeader.Hash()}, serializedStakingTx, btcHeaderWithProof.SpvProof.MerkleNodes)
@@ -203,7 +202,7 @@ func createDelegation(
 	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
 		testStakingInfo.StakingTx,
 		0,
-		slashignSpendInfo.RevealedLeaf.Script,
+		slashignSpendInfo.GetPkScriptPath(),
 		delSK,
 	)
 	require.NoError(t, err)
@@ -241,7 +240,7 @@ func createCovenantSig(
 	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	delegation *types.BTCDelegation,
 ) {
-	stakingTx, err := types.ParseBtcTx(delegation.StakingTx)
+	stakingTx, err := bbn.NewBTCTxFromBytes(delegation.StakingTx)
 	require.NoError(t, err)
 	stakingTxHash := stakingTx.TxHash().String()
 
@@ -268,7 +267,7 @@ func createCovenantSig(
 	covenantSig, err := msgCreateBTCDel.SlashingTx.EncSign(
 		stakingTx,
 		0,
-		slashingPathInfo.RevealedLeaf.Script,
+		slashingPathInfo.GetPkScriptPath(),
 		covenantSK,
 		encKey,
 	)
@@ -324,14 +323,13 @@ func createUndelegation(
 	net *chaincfg.Params,
 	btclcKeeper *types.MockBTCLightClientKeeper,
 	actualDel *types.BTCDelegation,
-	stakingTxHash string,
 	delSK *btcec.PrivateKey,
 	validatorPK *btcec.PublicKey,
 	covenantPK *btcec.PublicKey,
 	slashingAddress, changeAddress string,
 	slashingRate sdkmath.LegacyDec,
 ) *types.MsgBTCUndelegate {
-	stkTxHash, err := chainhash.NewHashFromStr(stakingTxHash)
+	stkTxHash, err := actualDel.GetStakingTxHash()
 	require.NoError(t, err)
 	stkOutputIdx := uint32(0)
 	defaultParams := btcctypes.DefaultParams()
@@ -339,7 +337,7 @@ func createUndelegation(
 	unbondingTime := uint16(defaultParams.CheckpointFinalizationTimeout) + 1
 	unbondingValue := int64(actualDel.TotalSat) - 1000
 
-	testUnbondingInfo := datagen.GenBTCUnbondingSlashingTx(
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
 		t,
 		net,
@@ -347,7 +345,7 @@ func createUndelegation(
 		[]*btcec.PublicKey{validatorPK},
 		[]*btcec.PublicKey{covenantPK},
 		1,
-		wire.NewOutPoint(stkTxHash, stkOutputIdx),
+		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
 		unbondingTime,
 		unbondingValue,
 		slashingAddress, changeAddress,
@@ -364,12 +362,12 @@ func createUndelegation(
 	sig, err := testUnbondingInfo.SlashingTx.Sign(
 		unbondingTxMsg,
 		0,
-		unbondingSlashingPathInfo.RevealedLeaf.Script,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
 		delSK,
 	)
 	require.NoError(t, err)
 
-	serializedUnbondingTx, err := types.SerializeBtcTx(testUnbondingInfo.UnbondingTx)
+	serializedUnbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	require.NoError(t, err)
 
 	msg := &types.MsgBTCUndelegate{
@@ -486,7 +484,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	require.NoError(t, err)
 	stakingTimeBlocks := uint16(5)
 	stakingValue := int64(2 * 10e8)
-	testStakingInfo := datagen.GenBTCStakingSlashingTx(
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
 		t,
 		net,
@@ -501,7 +499,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	)
 	// get msgTx
 	stakingMsgTx := testStakingInfo.StakingTx
-	serializedStakingTx, err := types.SerializeBtcTx(stakingMsgTx)
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingMsgTx)
 	require.NoError(t, err)
 	// random signer
 	signer := datagen.GenRandomAccount().Address
@@ -528,7 +526,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
 		stakingMsgTx,
 		0,
-		slashingPathInfo.RevealedLeaf.Script,
+		slashingPathInfo.GetPkScriptPath(),
 		delSK,
 	)
 	require.NoError(t, err)
@@ -595,7 +593,6 @@ func FuzzCreateBTCDelegationAndUndelegation(f *testing.F) {
 			net,
 			btclcKeeper,
 			actualDel,
-			stakingTxHash,
 			delSK,
 			validatorPK,
 			covenantPK,
@@ -660,7 +657,6 @@ func FuzzAddCovenantSigToUnbonding(f *testing.F) {
 			net,
 			btclcKeeper,
 			actualDel,
-			stakingTxHash,
 			delSK,
 			validatorPK,
 			covenantPK,
@@ -672,10 +668,10 @@ func FuzzAddCovenantSigToUnbonding(f *testing.F) {
 		require.NoError(t, err)
 		require.NotNil(t, del.BtcUndelegation)
 
-		stakingTx, err := types.ParseBtcTx(del.StakingTx)
+		stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
 		require.NoError(t, err)
 
-		unbondingTx, err := types.ParseBtcTx(del.BtcUndelegation.UnbondingTx)
+		unbondingTx, err := bbn.NewBTCTxFromBytes(del.BtcUndelegation.UnbondingTx)
 		require.NoError(t, err)
 
 		// Check sending covenant signatures
@@ -698,7 +694,7 @@ func FuzzAddCovenantSigToUnbonding(f *testing.F) {
 			unbondingTx,
 			stakingTx,
 			del.StakingOutputIdx,
-			stakingUnbondingPathInfo.RevealedLeaf.Script,
+			stakingUnbondingPathInfo.GetPkScriptPath(),
 			covenantSK,
 		)
 
@@ -725,7 +721,7 @@ func FuzzAddCovenantSigToUnbonding(f *testing.F) {
 		slashUnbondingTxSignatureCovenant, err := undelegateMsg.SlashingTx.EncSign(
 			unbondingTx,
 			0,
-			unbondingSlashingPathInfo.RevealedLeaf.Script,
+			unbondingSlashingPathInfo.GetPkScriptPath(),
 			covenantSK,
 			enckey,
 		)

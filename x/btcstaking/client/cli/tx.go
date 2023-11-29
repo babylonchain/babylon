@@ -332,7 +332,7 @@ func NewCreateBTCUndelegationCmd() *cobra.Command {
 			}
 
 			// get staking tx
-			_, unbondingTxBytes, err := types.ParseBtcTxFromHex(args[0])
+			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[0])
 			if err != nil {
 				return err
 			}

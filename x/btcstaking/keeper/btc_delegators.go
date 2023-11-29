@@ -80,7 +80,7 @@ func (k Keeper) updateBTCDelegation(
 }
 
 // AddCovenantSigsToBTCDelegation adds a given covenant sig to a BTC delegation
-// with the given (val PK, del PK, staking tx hash) tuple
+// with the given staking tx hash
 func (k Keeper) AddCovenantSigsToBTCDelegation(
 	ctx context.Context,
 	stakingTxHash string,

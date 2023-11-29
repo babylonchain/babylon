@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
+	"fmt"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -12,7 +13,7 @@ import (
 
 	"github.com/babylonchain/babylon/btcstaking"
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	"github.com/babylonchain/babylon/types"
+	bbn "github.com/babylonchain/babylon/types"
 )
 
 type BTCSlashingTx []byte
@@ -82,7 +83,7 @@ func (tx *BTCSlashingTx) ToHexStr() string {
 }
 
 func (tx *BTCSlashingTx) ToMsgTx() (*wire.MsgTx, error) {
-	return ParseBtcTx(*tx)
+	return bbn.NewBTCTxFromBytes(*tx)
 }
 
 func (tx *BTCSlashingTx) Validate(
@@ -113,7 +114,7 @@ func (tx *BTCSlashingTx) Sign(
 	spendOutputIndex uint32,
 	scriptPath []byte,
 	sk *btcec.PrivateKey,
-) (*types.BIP340Signature, error) {
+) (*bbn.BIP340Signature, error) {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return nil, err
@@ -128,7 +129,7 @@ func (tx *BTCSlashingTx) Sign(
 	if err != nil {
 		return nil, err
 	}
-	sig := types.NewBIP340SignatureFromBTCSig(schnorrSig)
+	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
 	return &sig, nil
 }
 
@@ -138,7 +139,7 @@ func (tx *BTCSlashingTx) VerifySignature(
 	stakingAmount int64,
 	stakingScript []byte,
 	pk *btcec.PublicKey,
-	sig *types.BIP340Signature) error {
+	sig *bbn.BIP340Signature) error {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return err
@@ -204,4 +205,52 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 		encKey,
 		sig,
 	)
+}
+
+func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
+	valSK *btcec.PrivateKey,
+	fundingMsgTx *wire.MsgTx,
+	outputIdx uint32,
+	delegatorSig *bbn.BIP340Signature,
+	covenantSig *asig.AdaptorSignature,
+	slashingPathSpendInfo *btcstaking.SpendInfo,
+) (*wire.MsgTx, error) {
+	valSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), valSK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign slashing tx for the BTC validator: %w", err)
+	}
+
+	stakerSigBytes := delegatorSig.MustMarshal()
+	validatorSigBytes := valSig.MustMarshal()
+
+	// decrypt covenant adaptor signature to Schnorr signature using validator's SK,
+	// then marshal
+	// TODO: work with restaking
+	// TODO: use covenant committee
+	decKey, err := asig.NewDecyptionKeyFromBTCSK(valSK)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
+	}
+	covSig := covenantSig.Decrypt(decKey)
+	covSigBytes := bbn.NewBIP340SignatureFromBTCSig(covSig).MustMarshal()
+
+	// construct witness
+	witness, err := slashingPathSpendInfo.CreateWitness(
+		[][]byte{
+			covSigBytes,
+			validatorSigBytes,
+			stakerSigBytes,
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+	// add witness to slashing tx
+	slashingMsgTxWithWitness, err := tx.ToMsgTx()
+	if err != nil {
+		return nil, err
+	}
+	slashingMsgTxWithWitness.TxIn[0].Witness = witness
+
+	return slashingMsgTxWithWitness, nil
 }

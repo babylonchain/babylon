@@ -114,3 +114,23 @@ func (pk *BIP340PubKey) UnmarshalJSON(bz []byte) error {
 func (pk *BIP340PubKey) Equals(pk2 *BIP340PubKey) bool {
 	return bytes.Equal(*pk, *pk2)
 }
+
+func NewBTCPKsFromBIP340PKs(pks []BIP340PubKey) ([]*btcec.PublicKey, error) {
+	btcPks := make([]*btcec.PublicKey, 0, len(pks))
+	for _, pk := range pks {
+		btcPk, err := pk.ToBTCPK()
+		if err != nil {
+			return nil, err
+		}
+		btcPks = append(btcPks, btcPk)
+	}
+	return btcPks, nil
+}
+
+func NewBIP340PKsFromBTCPKs(btcPKs []*btcec.PublicKey) []BIP340PubKey {
+	pks := make([]BIP340PubKey, 0, len(btcPKs))
+	for _, btcPK := range btcPKs {
+		pks = append(pks, *NewBIP340PubKeyFromBTCPK(btcPK))
+	}
+	return pks
+}

@@ -113,7 +113,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	s.NoError(err)
 	// generate staking tx and slashing tx
 	stakingTimeBlocks := uint16(math.MaxUint16)
-	testStakingInfo := datagen.GenBTCStakingSlashingTx(
+	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
 		s.T(),
 		net,
@@ -136,7 +136,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 	delegatorSig, err := testStakingInfo.SlashingTx.Sign(
 		stakingMsgTx,
 		0,
-		stakingSlashingPathInfo.RevealedLeaf.Script,
+		stakingSlashingPathInfo.GetPkScriptPath(),
 		delBTCSK,
 	)
 	s.NoError(err)
@@ -199,7 +199,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 
 	slashingTx := pendingDel.SlashingTx
 	stakingTx := pendingDel.StakingTx
-	stakingMsgTx, err := bstypes.ParseBtcTx(stakingTx)
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 
@@ -237,7 +237,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	covenantSig, err := slashingTx.EncSign(
 		stakingMsgTx,
 		pendingDel.StakingOutputIdx,
-		stakingSlashingPathInfo.RevealedLeaf.Script,
+		stakingSlashingPathInfo.GetPkScriptPath(),
 		covenantSK,
 		encKey,
 	)
@@ -451,14 +451,14 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		validatorBTCPKs = append(validatorBTCPKs, valPK.MustToBTCPK())
 	}
 
-	stakingMsgTx, err := bstypes.ParseBtcTx(activeDel.StakingTx)
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(activeDel.StakingTx)
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 	stakingTxChainHash, err := chainhash.NewHashFromStr(stakingTxHash)
 	s.NoError(err)
 
 	fee := int64(1000)
-	testUnbondingInfo := datagen.GenBTCUnbondingSlashingTx(
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
 		s.T(),
 		net,
@@ -482,7 +482,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	slashingTxSig, err := testUnbondingInfo.SlashingTx.Sign(
 		unbondingTxMsg,
 		0,
-		unbondingTxSlashingPathInfo.RevealedLeaf.Script,
+		unbondingTxSlashingPathInfo.GetPkScriptPath(),
 		delBTCSK,
 	)
 	s.NoError(err)
@@ -549,9 +549,9 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	)
 	s.NoError(err)
 
-	unbondingTx, err := bstypes.ParseBtcTx(delegation.BtcUndelegation.UnbondingTx)
+	unbondingTx, err := bbn.NewBTCTxFromBytes(delegation.BtcUndelegation.UnbondingTx)
 	s.NoError(err)
-	stakingTx, err := bstypes.ParseBtcTx(delegation.StakingTx)
+	stakingTx, err := bbn.NewBTCTxFromBytes(delegation.StakingTx)
 	s.NoError(err)
 	stakingTxHash := stakingTx.TxHash().String()
 
@@ -575,7 +575,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 		unbondingTx,
 		stakingTx,
 		delegation.StakingOutputIdx,
-		stakingTxUnbondigPathInfo.RevealedLeaf.Script,
+		stakingTxUnbondigPathInfo.GetPkScriptPath(),
 		covenantSK,
 	)
 	s.NoError(err)
@@ -592,7 +592,7 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	covenantSlashingSig, err := delegation.BtcUndelegation.SlashingTx.EncSign(
 		unbondingTx,
 		0,
-		unbondingTxSlashingPath.RevealedLeaf.Script,
+		unbondingTxSlashingPath.GetPkScriptPath(),
 		covenantSK,
 		encKey,
 	)

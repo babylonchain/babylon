@@ -152,7 +152,7 @@ func (n *NodeConfig) CreateBTCUndelegation(
 	delegatorSig *bbn.BIP340Signature) {
 	n.LogActionF("creating BTC undelegation")
 
-	txBytes, err := bstypes.SerializeBtcTx(unbondingTx)
+	txBytes, err := bbn.SerializeBTCTx(unbondingTx)
 	require.NoError(n.t, err)
 	// get staking tx hex
 	unbondingTxHex := hex.EncodeToString(txBytes)

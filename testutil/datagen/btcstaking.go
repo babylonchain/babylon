@@ -111,7 +111,7 @@ func GenRandomBTCDelegation(
 		return nil, err
 	}
 	// staking/slashing tx
-	testingInfo := GenBTCStakingSlashingTx(
+	testingInfo := GenBTCStakingSlashingInfo(
 		r,
 		t,
 		net,
@@ -127,7 +127,7 @@ func GenRandomBTCDelegation(
 
 	slashingPathSpendInfo, err := testingInfo.StakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
-	script := slashingPathSpendInfo.RevealedLeaf.Script
+	script := slashingPathSpendInfo.GetPkScriptPath()
 
 	// covenant sig and delegator sig
 	stakingMsgTx := testingInfo.StakingTx
@@ -142,7 +142,7 @@ func GenRandomBTCDelegation(
 	}
 	delegatorSig, err := testingInfo.SlashingTx.Sign(stakingMsgTx, 0, script, delSK)
 	require.NoError(t, err)
-	serializedStaking, err := bstypes.SerializeBtcTx(testingInfo.StakingTx)
+	serializedStaking, err := bbn.SerializeBTCTx(testingInfo.StakingTx)
 	require.NoError(t, err)
 
 	return &bstypes.BTCDelegation{
@@ -173,7 +173,7 @@ type TestUnbondingSlashingInfo struct {
 	UnbondingInfo *btcstaking.UnbondingInfo
 }
 
-func GenBTCStakingSlashingTxWithOutPoint(
+func GenBTCStakingSlashingInfoWithOutPoint(
 	r *rand.Rand,
 	t *testing.T,
 	btcNet *chaincfg.Params,
@@ -235,7 +235,7 @@ func GenBTCStakingSlashingTxWithOutPoint(
 	}
 }
 
-func GenBTCStakingSlashingTx(
+func GenBTCStakingSlashingInfo(
 	r *rand.Rand,
 	t *testing.T,
 	btcNet *chaincfg.Params,
@@ -251,7 +251,7 @@ func GenBTCStakingSlashingTx(
 	// an arbitrary input
 	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
 	outPoint := &spend.prevOut
-	return GenBTCStakingSlashingTxWithOutPoint(
+	return GenBTCStakingSlashingInfoWithOutPoint(
 		r,
 		t,
 		btcNet,
@@ -266,7 +266,7 @@ func GenBTCStakingSlashingTx(
 		slashingRate)
 }
 
-func GenBTCUnbondingSlashingTx(
+func GenBTCUnbondingSlashingInfo(
 	r *rand.Rand,
 	t *testing.T,
 	btcNet *chaincfg.Params,

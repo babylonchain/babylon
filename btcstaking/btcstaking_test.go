@@ -132,22 +132,17 @@ func TestSpendingTimeLockPath(t *testing.T) {
 
 	require.NoError(t, err)
 
-	witness, err := btcstaking.CreateBabylonWitness(
-		[][]byte{sig.Serialize()},
-		si,
-	)
+	witness, err := si.CreateWitness([][]byte{sig.Serialize()})
 
 	require.NoError(t, err)
 
 	spendStakeTx.TxIn[0].Witness = witness
 
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingInfo.StakingOutput.PkScript, stakingInfo.StakingOutput.Value,
-	)
+	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
-			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.GetPkScript(),
 			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
 			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingInfo.StakingOutput.Value,
 			prevOutputFetcher,
@@ -255,20 +250,15 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 	var witnessSignatures [][]byte
 	witnessSignatures = append(witnessSignatures, covenantSigantures...)
 	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := btcstaking.CreateBabylonWitness(
-		witnessSignatures,
-		si,
-	)
+	witness, err := si.CreateWitness(witnessSignatures)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingInfo.StakingOutput.PkScript, stakingInfo.StakingOutput.Value,
-	)
+	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
-			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.GetPkScript(),
 			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
 			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingInfo.StakingOutput.Value,
 			prevOutputFetcher,
@@ -300,10 +290,7 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 
 		witnessSignatures = append(witnessSignatures, covenantSigantures...)
 		witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-		witness, err := btcstaking.CreateBabylonWitness(
-			witnessSignatures,
-			si,
-		)
+		witness, err := si.CreateWitness(witnessSignatures)
 		require.NoError(t, err)
 		spendStakeTx.TxIn[0].Witness = witness
 
@@ -375,20 +362,15 @@ func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {
 	var witnessSignatures [][]byte
 	witnessSignatures = append(witnessSignatures, covenantSigantures...)
 	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := btcstaking.CreateBabylonWitness(
-		witnessSignatures,
-		si,
-	)
+	witness, err := si.CreateWitness(witnessSignatures)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingInfo.StakingOutput.PkScript, stakingInfo.StakingOutput.Value,
-	)
+	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
-			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.GetPkScript(),
 			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
 			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingInfo.StakingOutput.Value,
 			prevOutputFetcher,
@@ -455,19 +437,14 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	var witnessSignatures [][]byte
 	witnessSignatures = append(witnessSignatures, covenantSigantures...)
 	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := btcstaking.CreateBabylonWitness(
-		witnessSignatures,
-		si,
-	)
+	witness, err := si.CreateWitness(witnessSignatures)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingInfo.StakingOutput.PkScript, stakingInfo.StakingOutput.Value,
-	)
+	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
-			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.GetPkScript(),
 			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
 			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingInfo.StakingOutput.Value,
 			prevOutputFetcher,
@@ -489,10 +466,7 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	witnessSignatures = append(witnessSignatures, covenantSigantures...)
 	witnessSignatures = append(witnessSignatures, validatorSig.Serialize())
 	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err = btcstaking.CreateBabylonWitness(
-		witnessSignatures,
-		si,
-	)
+	witness, err = si.CreateWitness(witnessSignatures)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
@@ -558,19 +532,14 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 	var witnessSignatures [][]byte
 	witnessSignatures = append(witnessSignatures, covenantSigantures...)
 	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := btcstaking.CreateBabylonWitness(
-		witnessSignatures,
-		si,
-	)
+	witness, err := si.CreateWitness(witnessSignatures)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
-	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-		stakingInfo.StakingOutput.PkScript, stakingInfo.StakingOutput.Value,
-	)
+	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
-			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.GetPkScript(),
 			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
 			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), stakingInfo.StakingOutput.Value,
 			prevOutputFetcher,
@@ -597,10 +566,7 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 	witnessSignatures = append(witnessSignatures, covenantSigantures...)
 	witnessSignatures = append(witnessSignatures, validatorsSignatures...)
 	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err = btcstaking.CreateBabylonWitness(
-		witnessSignatures,
-		si,
-	)
+	witness, err = si.CreateWitness(witnessSignatures)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 

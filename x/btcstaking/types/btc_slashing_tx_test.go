@@ -5,16 +5,12 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/txscript"
-	"github.com/stretchr/testify/require"
-
-	"github.com/babylonchain/babylon/btcstaking"
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/stretchr/testify/require"
 )
 
 func FuzzSlashingTxWithWitness(f *testing.F) {
@@ -47,7 +43,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate staking/slashing tx
-		testStakingInfo := datagen.GenBTCStakingSlashingTx(
+		testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 			r,
 			t,
 			net,
@@ -63,11 +59,11 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 
 		slashingTx := testStakingInfo.SlashingTx
 		stakingMsgTx := testStakingInfo.StakingTx
-		stakingPkScript := testStakingInfo.StakingInfo.StakingOutput.PkScript
+		stakingPkScript := testStakingInfo.StakingInfo.GetPkScript()
 
-		slashingScriptInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
+		slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 		require.NoError(t, err)
-		slashingScript := slashingScriptInfo.RevealedLeaf.Script
+		slashingScript := slashingSpendInfo.GetPkScriptPath()
 
 		// sign slashing tx
 		valSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, valSK)
@@ -87,39 +83,11 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		err = slashingTx.EncVerifyAdaptorSignature(stakingPkScript, stakingValue, slashingScript, covenantPK, enckey, covenantSig)
 		require.NoError(t, err)
 
-		stakerSigBytes := delSig.MustMarshal()
-		validatorSigBytes := valSig.MustMarshal()
-		decryptKey, err := asig.NewDecyptionKeyFromBTCSK(valSK)
-		require.NoError(t, err)
-		covSigDecryptedBytes := covenantSig.Decrypt(decryptKey).Serialize()
-
-		// TODO: use comittee
-		witness, err := btcstaking.CreateBabylonWitness(
-			[][]byte{
-				covSigDecryptedBytes,
-				validatorSigBytes,
-				stakerSigBytes,
-			},
-			slashingScriptInfo,
-		)
+		// create slashing tx with witness
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(valSK, stakingMsgTx, 0, delSig, covenantSig, slashingSpendInfo)
 		require.NoError(t, err)
 
-		slashingMsgTxWithWitness, err := slashingTx.ToMsgTx()
-		require.NoError(t, err)
-
-		slashingMsgTxWithWitness.TxIn[0].Witness = witness
 		// verify slashing tx with witness
-		prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
-			stakingPkScript, stakingValue,
-		)
-		newEngine := func() (*txscript.Engine, error) {
-			return txscript.NewEngine(
-				stakingPkScript,
-				slashingMsgTxWithWitness, 0, txscript.StandardVerifyFlags, nil,
-				txscript.NewTxSigHashes(slashingMsgTxWithWitness, prevOutputFetcher), stakingValue,
-				prevOutputFetcher,
-			)
-		}
-		btctest.AssertEngineExecution(t, 0, true, newEngine)
+		btctest.AssertSlashingTxExecution(t, testStakingInfo.StakingInfo.StakingOutput, slashingMsgTxWithWitness)
 	})
 }

@@ -214,6 +214,18 @@ type StakingInfo struct {
 	slashingPathLeafHash  chainhash.Hash
 }
 
+// GetPkScript returns the full staking taproot pkscript in the corresponding staking tx
+func (sti *StakingInfo) GetPkScript() []byte {
+	return sti.StakingOutput.PkScript
+}
+
+// GetOutputFetcher returns the fetcher of the staking tx's output
+func (sti *StakingInfo) GetOutputFetcher() *txscript.CannedPrevOutputFetcher {
+	return txscript.NewCannedPrevOutputFetcher(
+		sti.GetPkScript(), sti.StakingOutput.Value,
+	)
+}
+
 // SpendInfo contains information necessary to create witness for given script
 type SpendInfo struct {
 	// Control block contains merkle proof of inclusion of revealed script path
@@ -221,6 +233,12 @@ type SpendInfo struct {
 	// RevealedLeaf is the leaf of the script tree which is revealed i.e scriptpath
 	// which is being executed
 	RevealedLeaf txscript.TapLeaf
+}
+
+// GetPkScriptPath returns the path of the taproot pkscript corresponding
+// to the triggered spending condition of the tx associated with the SpendInfo
+func (si *SpendInfo) GetPkScriptPath() []byte {
+	return si.RevealedLeaf.Script
 }
 
 func SpendInfoFromRevealedScript(

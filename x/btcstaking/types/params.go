@@ -134,3 +134,11 @@ func (p Params) HasCovenantPK(pk *bbn.BIP340PubKey) bool {
 	}
 	return false
 }
+
+func (p Params) MustGetSlashingAddress(btcParams *chaincfg.Params) btcutil.Address {
+	slashingAddr, err := btcutil.DecodeAddress(p.SlashingAddress, btcParams)
+	if err != nil {
+		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
+	}
+	return slashingAddr
+}

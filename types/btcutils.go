@@ -1,6 +1,8 @@
 package types
 
 import (
+	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -48,4 +50,47 @@ func GetMaxDifficulty() big.Int {
 		panic("Conversion did not succeed")
 	}
 	return *maxDifficulty
+}
+
+func NewBTCTxFromBytes(txBytes []byte) (*wire.MsgTx, error) {
+	var msgTx wire.MsgTx
+	rbuf := bytes.NewReader(txBytes)
+	if err := msgTx.Deserialize(rbuf); err != nil {
+		return nil, err
+	}
+
+	return &msgTx, nil
+}
+
+func NewBTCTxFromHex(txHex string) (*wire.MsgTx, []byte, error) {
+	txBytes, err := hex.DecodeString(txHex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	parsed, err := NewBTCTxFromBytes(txBytes)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return parsed, txBytes, nil
+}
+
+func SerializeBTCTx(tx *wire.MsgTx) ([]byte, error) {
+	var txBuf bytes.Buffer
+	if err := tx.Serialize(&txBuf); err != nil {
+		return nil, err
+	}
+	return txBuf.Bytes(), nil
+}
+
+func GetOutputIdxInBTCTx(tx *wire.MsgTx, output *wire.TxOut) (uint32, error) {
+	for i, txOut := range tx.TxOut {
+		if bytes.Equal(txOut.PkScript, output.PkScript) && txOut.Value == output.Value {
+			return uint32(i), nil
+		}
+	}
+
+	return 0, fmt.Errorf("output not found")
 }

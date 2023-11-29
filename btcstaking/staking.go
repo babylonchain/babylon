@@ -694,15 +694,13 @@ func EncVerifyTransactionSigWithOutputData(
 	return signature.EncVerify(pubKey, encKey, sigHash)
 }
 
-// CreateBabylonWitness creates babylon compatible witness, as babylon scripts
-// have witness with the same shape
+// CreateWitness creates witness for spending the tx corresponding to
+// the spend info with the given stack of signatures
+// The returned witness stack follows the structure below:
 // - first come signatures
 // - then whole revealed script
 // - then control block
-func CreateBabylonWitness(
-	signatures [][]byte,
-	si *SpendInfo,
-) (wire.TxWitness, error) {
+func (si *SpendInfo) CreateWitness(signatures [][]byte) (wire.TxWitness, error) {
 	numSignatures := len(signatures)
 
 	if numSignatures == 0 {
@@ -730,7 +728,7 @@ func CreateBabylonWitness(
 		witnessStack[i] = sc
 	}
 
-	witnessStack[numSignatures] = si.RevealedLeaf.Script
+	witnessStack[numSignatures] = si.GetPkScriptPath()
 	witnessStack[numSignatures+1] = controlBlockBytes
 
 	return witnessStack, nil

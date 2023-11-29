@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/btcsuite/btcd/txscript"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,4 +70,22 @@ func AssertEngineExecution(t *testing.T, testNum int, valid bool,
 
 	t.Log(debugBuf.String())
 	t.Fatalf("%v spend test case #%v execution ended with: %v", validity, testNum, vmErr)
+}
+
+// AssertSlashingTxExecution asserts that the given tx has a valid witness for spending the given funding output
+func AssertSlashingTxExecution(t *testing.T, fundingOutput *wire.TxOut, txWithWitness *wire.MsgTx) {
+	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(fundingOutput.PkScript, fundingOutput.Value)
+	newEngine := func() (*txscript.Engine, error) {
+		return txscript.NewEngine(
+			fundingOutput.PkScript,
+			txWithWitness,
+			0,
+			txscript.StandardVerifyFlags,
+			nil,
+			txscript.NewTxSigHashes(txWithWitness, prevOutputFetcher),
+			fundingOutput.Value,
+			prevOutputFetcher,
+		)
+	}
+	AssertEngineExecution(t, 0, true, newEngine)
 }

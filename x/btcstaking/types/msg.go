@@ -6,6 +6,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 
 	"github.com/babylonchain/babylon/btcstaking"
+	bbn "github.com/babylonchain/babylon/types"
 
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -155,7 +156,7 @@ func (m *MsgBTCUndelegate) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
 	}
-	unbondingTxMsg, err := ParseBtcTx(m.UnbondingTx)
+	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(m.UnbondingTx)
 
 	if err != nil {
 		return err
