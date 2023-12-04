@@ -8,7 +8,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
@@ -178,8 +177,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// covenant and slashing addr
-		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		require.NoError(t, err)
+		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
@@ -215,8 +213,8 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					t,
 					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
-					[]*btcec.PrivateKey{covenantSK},
-					1,
+					covenantSKs,
+					covenantQuorum,
 					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					startHeight, endHeight, 10000,
 					slashingRate,
@@ -284,9 +282,8 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// covenant and slashing addr
-		covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
-		covBTCPK := bbn.NewBIP340PubKeyFromBTCPK(covenantPK)
-		require.NoError(t, err)
+		covenantSKs, covenantPKs, covenantQuorum := types.DefaultCovenantCommittee()
+		covBTCPKs := bbn.NewBIP340PKsFromBTCPKs(covenantPKs)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
@@ -322,8 +319,8 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 					t,
 					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
-					[]*btcec.PrivateKey{covenantSK},
-					1,
+					covenantSKs,
+					covenantQuorum,
 					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					startHeight, endHeight, 10000,
 					slashingRate,
@@ -336,11 +333,13 @@ func FuzzUnbondingBTCDelegations(f *testing.F) {
 
 					if datagen.RandomInt(r, 2) == 1 {
 						// these BTC delegations are unbonded
-						sig, err := schnorr.Sign(covenantSK, datagen.GenRandomByteArray(r, 32))
-						require.NoError(t, err)
-						unbondingSig := bbn.NewBIP340SignatureFromBTCSig(sig)
-						unbondingSigInfo := types.NewSignatureInfo(covBTCPK, &unbondingSig)
-						btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingSigInfo)
+						for i := range covenantSKs {
+							sig, err := schnorr.Sign(covenantSKs[i], datagen.GenRandomByteArray(r, 32))
+							require.NoError(t, err)
+							unbondingSig := bbn.NewBIP340SignatureFromBTCSig(sig)
+							unbondingSigInfo := types.NewSignatureInfo(&covBTCPKs[i], &unbondingSig)
+							btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingSigInfo)
+						}
 						btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs
 					} else {
 						// these BTC delegations are unbonding
@@ -465,8 +464,7 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, nil, nil)
 
 		// covenant and slashing addr
-		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		require.NoError(t, err)
+		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
@@ -506,8 +504,8 @@ func FuzzActiveBTCValidatorsAtHeight(f *testing.F) {
 					t,
 					[]bbn.BIP340PubKey{*valBTCPK},
 					delSK,
-					[]*btcec.PrivateKey{covenantSK},
-					1,
+					covenantSKs,
+					covenantQuorum,
 					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					1, 1000, 10000,
 					slashingRate,
@@ -581,8 +579,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// covenant and slashing addr
-		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		require.NoError(t, err)
+		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
@@ -612,8 +609,8 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 				t,
 				[]bbn.BIP340PubKey{*btcVal.BtcPk},
 				delSK,
-				[]*btcec.PrivateKey{covenantSK},
-				1,
+				covenantSKs,
+				covenantQuorum,
 				slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 				startHeight, endHeight, 10000,
 				slashingRate,

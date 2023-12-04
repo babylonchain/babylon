@@ -5,6 +5,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
@@ -118,11 +119,11 @@ func (pk *BIP340PubKey) Equals(pk2 *BIP340PubKey) bool {
 func NewBTCPKsFromBIP340PKs(pks []BIP340PubKey) ([]*btcec.PublicKey, error) {
 	btcPks := make([]*btcec.PublicKey, 0, len(pks))
 	for _, pk := range pks {
-		btcPk, err := pk.ToBTCPK()
+		btcPK, err := pk.ToBTCPK()
 		if err != nil {
 			return nil, err
 		}
-		btcPks = append(btcPks, btcPk)
+		btcPks = append(btcPks, btcPK)
 	}
 	return btcPks, nil
 }
@@ -133,4 +134,15 @@ func NewBIP340PKsFromBTCPKs(btcPKs []*btcec.PublicKey) []BIP340PubKey {
 		pks = append(pks, *NewBIP340PubKeyFromBTCPK(btcPK))
 	}
 	return pks
+}
+
+func SortBIP340PKs(keys []BIP340PubKey) []BIP340PubKey {
+	sortedPKs := make([]BIP340PubKey, len(keys))
+	copy(sortedPKs, keys)
+	sort.SliceStable(sortedPKs, func(i, j int) bool {
+		keyIBytes := sortedPKs[i].MustMarshal()
+		keyJBytes := sortedPKs[j].MustMarshal()
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+	return sortedPKs
 }

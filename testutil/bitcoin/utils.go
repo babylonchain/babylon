@@ -48,16 +48,16 @@ func AssertEngineExecution(t *testing.T, testNum int, valid bool,
 		done, err = vm.Step()
 		if err != nil && valid {
 			t.Log(debugBuf.String())
-			t.Fatalf("spend test case #%v failed, spend "+
-				"should be valid: %v", testNum, err)
+			t.Fatalf("spend test case #%v failed at (%v), spend "+
+				"should be valid: %v", testNum, dis, err)
 		} else if err == nil && !valid && done {
 			t.Log(debugBuf.String())
-			t.Fatalf("spend test case #%v succeed, spend "+
-				"should be invalid: %v", testNum, err)
+			t.Fatalf("spend test case #%v succeed at (%v), spend "+
+				"should be invalid: %v", testNum, dis, err)
 		}
 
-		debugBuf.WriteString(fmt.Sprintf("Stack: %v", vm.GetStack()))
-		debugBuf.WriteString(fmt.Sprintf("AltStack: %v", vm.GetAltStack()))
+		debugBuf.WriteString(fmt.Sprintf("Stack: %v\n", vm.GetStack()))
+		debugBuf.WriteString(fmt.Sprintf("AltStack: %v\n\n", vm.GetAltStack()))
 	}
 
 	// If we get to this point the unexpected case was not reached

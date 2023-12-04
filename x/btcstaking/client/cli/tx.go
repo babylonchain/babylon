@@ -274,8 +274,8 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 
 func NewAddCovenantSigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-covenant-sig [covenant_pk] [staking_tx_hash] [sig]",
-		Args:  cobra.ExactArgs(3),
+		Use:   "add-covenant-sig [covenant_pk] [staking_tx_hash] [sig1] [sig2] ...",
+		Args:  cobra.MinimumNArgs(3),
 		Short: "Add a covenant signature",
 		Long: strings.TrimSpace(
 			`Add a covenant signature.`, // TODO: example
@@ -294,18 +294,20 @@ func NewAddCovenantSigCmd() *cobra.Command {
 			// get staking tx hash
 			stakingTxHash := args[1]
 
-			// TODO add multiple adaptor sigs from cli
-			// get adaptor sig
-			sig, err := asig.NewAdaptorSignatureFromHex(args[2])
-			if err != nil {
-				return fmt.Errorf("invalid covenant signature: %w", err)
+			sigs := [][]byte{}
+			for _, sigHex := range args[2:] {
+				sig, err := asig.NewAdaptorSignatureFromHex(sigHex)
+				if err != nil {
+					return fmt.Errorf("invalid covenant signature: %w", err)
+				}
+				sigs = append(sigs, sig.MustMarshal())
 			}
 
 			msg := types.MsgAddCovenantSig{
 				Signer:        clientCtx.FromAddress.String(),
 				Pk:            covPK,
 				StakingTxHash: stakingTxHash,
-				Sigs:          [][]byte{sig.MustMarshal()},
+				Sigs:          sigs,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -382,8 +384,8 @@ func NewCreateBTCUndelegationCmd() *cobra.Command {
 
 func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-covenant-unbonding-sigs [covenant_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig]",
-		Args:  cobra.ExactArgs(4),
+		Use:   "add-covenant-unbonding-sigs [covenant_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig1] [slashing_unbonding_tx_sig2] ...",
+		Args:  cobra.MinimumNArgs(4),
 		Short: "Add covenant signatures for unbonding tx and slash unbonding tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -406,11 +408,13 @@ func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 				return err
 			}
 
-			// TODO add multiple adaptor sigs from cli
-			// get adaptor sig
-			slashingSig, err := asig.NewAdaptorSignatureFromHex(args[3])
-			if err != nil {
-				return fmt.Errorf("invalid covenant signature: %w", err)
+			slashingSigs := [][]byte{}
+			for _, sigHex := range args[3:] {
+				slashingSig, err := asig.NewAdaptorSignatureFromHex(sigHex)
+				if err != nil {
+					return fmt.Errorf("invalid covenant signature: %w", err)
+				}
+				slashingSigs = append(slashingSigs, slashingSig.MustMarshal())
 			}
 
 			msg := types.MsgAddCovenantUnbondingSigs{
@@ -418,7 +422,7 @@ func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
 				Pk:                      covPK,
 				StakingTxHash:           stakingTxHash,
 				UnbondingTxSig:          unbondingSig,
-				SlashingUnbondingTxSigs: [][]byte{slashingSig.MustMarshal()},
+				SlashingUnbondingTxSigs: slashingSigs,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

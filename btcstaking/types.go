@@ -1,10 +1,8 @@
 package btcstaking
 
 import (
-	"bytes"
 	"encoding/hex"
 	"fmt"
-	"sort"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -174,33 +172,6 @@ func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, err
 	)
 }
 
-type SignatureInfo struct {
-	SignerPubKey *btcec.PublicKey
-	Signature    []byte
-}
-
-func NewSignatureInfo(
-	signerPubKey *btcec.PublicKey,
-	signature []byte,
-) *SignatureInfo {
-	return &SignatureInfo{
-		SignerPubKey: signerPubKey,
-		Signature:    signature,
-	}
-}
-
-// Helper function to sort all signatures in reverse lexicographical order of signing public keys
-// this way signatures are ready to be used in multisig witness with corresponding public keys
-func SortSignatureInfo(infos []*SignatureInfo) []*SignatureInfo {
-	sort.SliceStable(infos, func(i, j int) bool {
-		keyIBytes := schnorr.SerializePubKey(infos[i].SignerPubKey)
-		keyJBytes := schnorr.SerializePubKey(infos[j].SignerPubKey)
-		return bytes.Compare(keyIBytes, keyJBytes) == 1
-	})
-
-	return infos
-}
-
 // Package responsible for different kinds of btc scripts used by babylon
 // Staking script has 3 spending paths:
 // 1. Staker can spend after relative time lock - staking
@@ -279,16 +250,25 @@ func aggregateScripts(scripts ...[]byte) []byte {
 // babylonScriptPaths contains all possible babylon script paths
 // not every babylon output will contain all of those paths
 type babylonScriptPaths struct {
-	timeLockPathScript  []byte
+	// timeLockPathScript is the script path for normal unbonding
+	// <Staker_PK> OP_CHECKSIGVERIFY  <Staking_Time_Blocks> OP_CHECKSEQUENCEVERIFY
+	timeLockPathScript []byte
+	// unbondingPathScript is the script path for on-demand early unbonding
+	// <Staker_PK> OP_CHECKSIGVERIFY
+	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
 	unbondingPathScript []byte
-	slashingPathScript  []byte
+	// slashingPathScript is the script path for slashing
+	// <Staker_PK> OP_CHECKSIGVERIFY
+	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
+	// <Validator_PK1> OP_CHECKSIG ... <Validator_PKN> OP_CHECKSIGADD 1 OP_GREATERTHANOREQUAL OP_VERIFY
+	slashingPathScript []byte
 }
 
 func newBabylonScriptPaths(
 	stakerKey *btcec.PublicKey,
 	validatorKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
-	covenantThreshold uint32,
+	covenantQuorum uint32,
 	lockTime uint16,
 ) (*babylonScriptPaths, error) {
 	if stakerKey == nil {
@@ -303,7 +283,7 @@ func newBabylonScriptPaths(
 
 	covenantMultisigScript, err := buildMultiSigScript(
 		covenantKeys,
-		covenantThreshold,
+		covenantQuorum,
 		// covenant multisig is always last in script so we do not run verify and leave
 		// last value on the stack. If we do not leave at least one element on the stack
 		// script will always error
@@ -354,7 +334,7 @@ func BuildStakingInfo(
 	stakerKey *btcec.PublicKey,
 	validatorKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
-	covenantThreshold uint32,
+	covenantQuorum uint32,
 	stakingTime uint16,
 	stakingAmount btcutil.Amount,
 	net *chaincfg.Params,
@@ -365,7 +345,7 @@ func BuildStakingInfo(
 		stakerKey,
 		validatorKeys,
 		covenantKeys,
-		covenantThreshold,
+		covenantQuorum,
 		stakingTime,
 	)
 
@@ -434,7 +414,7 @@ func BuildUnbondingInfo(
 	stakerKey *btcec.PublicKey,
 	validatorKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
-	covenantThreshold uint32,
+	covenantQuorum uint32,
 	unbondingTime uint16,
 	unbondingAmount btcutil.Amount,
 	net *chaincfg.Params,
@@ -445,7 +425,7 @@ func BuildUnbondingInfo(
 		stakerKey,
 		validatorKeys,
 		covenantKeys,
-		covenantThreshold,
+		covenantQuorum,
 		unbondingTime,
 	)
 

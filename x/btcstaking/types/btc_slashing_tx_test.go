@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
@@ -35,12 +36,17 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// Our goal is not to test failure due to such extreme cases here;
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+
+		// TODO: test restaking
 		valSK, valPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
+
+		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
+		covenantQuorum := uint32(3)
 
 		// generate staking/slashing tx
 		testStakingInfo := datagen.GenBTCStakingSlashingInfo(
@@ -49,8 +55,8 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			net,
 			delSK,
 			[]*btcec.PublicKey{valPK},
-			[]*btcec.PublicKey{covenantPK},
-			1,
+			covenantPKs,
+			covenantQuorum,
 			stakingTimeBlocks,
 			stakingValue,
 			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
@@ -59,32 +65,33 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 
 		slashingTx := testStakingInfo.SlashingTx
 		stakingMsgTx := testStakingInfo.StakingTx
-		stakingPkScript := testStakingInfo.StakingInfo.GetPkScript()
 
 		slashingSpendInfo, err := testStakingInfo.StakingInfo.SlashingPathSpendInfo()
 		require.NoError(t, err)
-		slashingScript := slashingSpendInfo.GetPkScriptPath()
+		slashingPkScriptPath := slashingSpendInfo.GetPkScriptPath()
 
 		// sign slashing tx
-		valSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, valSK)
-		require.NoError(t, err)
-		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingScript, delSK)
-		require.NoError(t, err)
-		enckey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
-		require.NoError(t, err)
-		covenantSig, err := slashingTx.EncSign(stakingMsgTx, 0, slashingScript, covenantSK, enckey)
+		delSig, err := slashingTx.Sign(stakingMsgTx, 0, slashingPkScriptPath, delSK)
 		require.NoError(t, err)
 
-		// verify signatures first
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, valPK, valSig)
+		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
+			covenantSKs,
+			[]*btcec.PublicKey{valPK},
+			stakingMsgTx,
+			slashingPkScriptPath,
+			slashingTx,
+		)
 		require.NoError(t, err)
-		err = slashingTx.VerifySignature(stakingPkScript, stakingValue, slashingScript, delPK, delSig)
-		require.NoError(t, err)
-		err = slashingTx.EncVerifyAdaptorSignature(stakingPkScript, stakingValue, slashingScript, covenantPK, enckey, covenantSig)
+
+		bsParams := types.Params{
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
+		}
+		covSigs, err := types.GetOrderedCovenantSignatures(0, covenantSigs, &bsParams)
 		require.NoError(t, err)
 
 		// create slashing tx with witness
-		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(valSK, stakingMsgTx, 0, delSig, covenantSig, slashingSpendInfo)
+		slashingMsgTxWithWitness, err := slashingTx.BuildSlashingTxWithWitness(valSK, stakingMsgTx, 0, delSig, covSigs, slashingSpendInfo)
 		require.NoError(t, err)
 
 		// verify slashing tx with witness

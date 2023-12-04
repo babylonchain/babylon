@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -30,9 +29,10 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		valPKList := []*btcec.PublicKey{valPK}
 
-		covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
+		// (3, 5) covenant committee
+		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
-		covPKList := []*btcec.PublicKey{covenantPK}
+		covenantQuorum := uint32(3)
 
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
@@ -49,8 +49,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			t,
 			bbn.NewBIP340PKsFromBTCPKs(valPKList),
 			delSK,
-			[]*btcec.PrivateKey{covenantSK},
-			1,
+			covenantSKs,
+			covenantQuorum,
 			slashingAddress.EncodeAddress(),
 			changeAddress.EncodeAddress(),
 			1000,
@@ -70,8 +70,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			net,
 			delSK,
 			valPKList,
-			covPKList,
-			1,
+			covenantPKs,
+			covenantQuorum,
 			wire.NewOutPoint(&stakingTxHash, 0),
 			unbondingTime,
 			unbondingValue,
@@ -96,33 +96,33 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			delSK,
 		)
 		require.NoError(t, err)
+
 		// covenant signs (using adaptor signature) the slashing tx
-		encKey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
+		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
+			covenantSKs,
+			[]*btcec.PublicKey{valPK},
+			testInfo.UnbondingTx,
+			unbondingSlashingSpendInfo.GetPkScriptPath(),
+			testInfo.SlashingTx,
+		)
 		require.NoError(t, err)
-		covenantSig, err := testInfo.SlashingTx.EncSign(testInfo.UnbondingTx, 0, unbondingSlashingSpendInfo.GetPkScriptPath(), covenantSK, encKey)
-		require.NoError(t, err)
-		covenantSigs := &types.CovenantAdaptorSignatures{
-			CovPk:       bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
-			AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
-		}
 
 		btcDel.BtcUndelegation = &types.BTCUndelegation{
 			UnbondingTx:              unbondingTxBytes,
 			UnbondingTime:            100 + 1,
 			SlashingTx:               testInfo.SlashingTx,
 			DelegatorSlashingSig:     delSig,
-			CovenantSlashingSigs:     []*types.CovenantAdaptorSignatures{covenantSigs},
+			CovenantSlashingSigs:     covenantSigs,
 			CovenantUnbondingSigList: nil, // not relevant here
 		}
 
 		bsParams := &types.Params{
-			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covPKList),
-			CovenantQuorum: 1,
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
 		}
-		btcNet := &chaincfg.SimNetParams
 
 		// build slashing tx with witness for spending the unbonding tx
-		unbondingSlashingTxWithWitness, err := btcDel.BuildUnbondingSlashingTxWithWitness(bsParams, btcNet, valSK)
+		unbondingSlashingTxWithWitness, err := btcDel.BuildUnbondingSlashingTxWithWitness(bsParams, net, valSK)
 		require.NoError(t, err)
 
 		// assert the execution

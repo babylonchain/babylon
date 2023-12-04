@@ -8,8 +8,6 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"google.golang.org/grpc/codes"
@@ -32,16 +30,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
-
-func mustGetStakingTxInfo(del *types.BTCDelegation, params *chaincfg.Params) (*wire.MsgTx, uint32) {
-	stakingTxMsg, err := bbn.NewBTCTxFromBytes(del.StakingTx)
-
-	if err != nil {
-		// failing to get staking output info from a verified staking tx is a programming error
-		panic(fmt.Errorf("failed deserialize staking tx from db"))
-	}
-	return stakingTxMsg, del.StakingOutputIdx
-}
 
 // UpdateParams updates the params
 func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
@@ -157,7 +145,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		covenantKeys = append(covenantKeys, covenantPK.MustToBTCPK())
 	}
 
-	si, err := btcstaking.BuildStakingInfo(
+	stakingInfo, err := btcstaking.BuildStakingInfo(
 		req.BtcPk.MustToBTCPK(),
 		validatorKeys,
 		covenantKeys,
@@ -171,7 +159,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidStakingTx.Wrapf("err: %v", err)
 	}
 
-	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(stakingMsgTx, si.StakingOutput)
+	stakingOutputIdx, err := bbn.GetOutputIdxInBTCTx(stakingMsgTx, stakingInfo.StakingOutput)
 
 	if err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrap("staking tx does not contain expected staking output")
@@ -231,7 +219,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	stakingOutput := stakingMsgTx.TxOut[stakingOutputIdx]
 
 	// 13. verify delegator sig against slashing path of the script
-	slashingPathInfo, err := si.SlashingPathSpendInfo()
+	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
 
 	if err != nil {
 		panic(fmt.Errorf("failed to construct slashing path from the staking tx: %w", err))
@@ -240,7 +228,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	err = req.SlashingTx.VerifySignature(
 		stakingOutput.PkScript,
 		stakingOutput.Value,
-		slashingPathInfo.GetPkScriptPath(),
+		slashingSpendInfo.GetPkScriptPath(),
 		req.BtcPk.MustToBTCPK(),
 		req.DelegatorSig,
 	)
@@ -348,7 +336,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		covenantKeys = append(covenantKeys, covenantPK.MustToBTCPK())
 	}
 
-	si, err := btcstaking.BuildUnbondingInfo(
+	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		del.BtcPk.MustToBTCPK(),
 		validatorKeys,
 		covenantKeys,
@@ -362,7 +350,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("err: %v", err)
 	}
 
-	unbondingOutputIdx, err := bbn.GetOutputIdxInBTCTx(unbondingMsgTx, si.UnbondingOutput)
+	unbondingOutputIdx, err := bbn.GetOutputIdxInBTCTx(unbondingMsgTx, unbondingInfo.UnbondingOutput)
 
 	if err != nil {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx does not contain expected unbonding output")
@@ -385,7 +373,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// 9. Check staker signature against slashing path of the unbonding tx
 	unbondingOutput := unbondingMsgTx.TxOut[unbondingOutputIdx]
 
-	slashingPathInfo, err := si.SlashingPathSpendInfo()
+	slashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
 
 	if err != nil {
 		// our staking info was constructed by using BuildStakingInfo constructor, so if
@@ -396,7 +384,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	err = req.SlashingTx.VerifySignature(
 		unbondingOutput.PkScript,
 		unbondingOutput.Value,
-		slashingPathInfo.GetPkScriptPath(),
+		slashingSpendInfo.GetPkScriptPath(),
 		del.BtcPk.MustToBTCPK(),
 		req.DelegatorSlashingSig,
 	)
@@ -407,15 +395,19 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// 8. Check unbonding tx against staking tx.
 	// - that input points to the staking tx, staking output
 	// - fee is larger than 0
-	stakingTxMsg, stakingOutputIndex := mustGetStakingTxInfo(del, ms.btcNet)
+	stakingTxMsg, err := bbn.NewBTCTxFromBytes(del.StakingTx)
+	if err != nil {
+		// failing to get staking output info from a verified staking tx is a programming error
+		panic(fmt.Errorf("failed deserialize staking tx from db"))
+	}
 
 	// we only check index of the staking output, as we already retrieved delegation
 	// by stakingTxHash computed from unbonding tx input
-	if unbondingTxFundingOutpoint.Index != uint32(stakingOutputIndex) {
+	if unbondingTxFundingOutpoint.Index != uint32(del.StakingOutputIdx) {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx does not point to staking tx staking output")
 	}
 
-	if unbondingMsgTx.TxOut[0].Value >= stakingTxMsg.TxOut[stakingOutputIndex].Value {
+	if unbondingMsgTx.TxOut[0].Value >= stakingTxMsg.TxOut[del.StakingOutputIdx].Value {
 		// Note: we do not enfore any minimum fee for unbonding tx, we only require that it is larger than 0
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
 		// burden on staker to choose right fee.
@@ -469,9 +461,6 @@ func (ms msgServer) AddCovenantSig(goCtx context.Context, req *types.MsgAddCoven
 		return nil, err
 	}
 
-	stakingTx, stakingOutputIdx := mustGetStakingTxInfo(btcDel, ms.btcNet)
-	stakingOutput := stakingTx.TxOut[stakingOutputIdx]
-
 	// Note: we assume the order of adaptor sigs is matched to the
 	// order of validators in the delegation
 	// TODO ensure the order, currently, we only have one validator
@@ -490,12 +479,12 @@ func (ms msgServer) AddCovenantSig(goCtx context.Context, req *types.MsgAddCoven
 		return nil, types.ErrInvalidCovenantPK.Wrapf("covenant pk: %s", req.Pk.MarshalHex())
 	}
 
-	spendInfo, err := btcDel.GetStakingInfo(&params, ms.btcNet)
+	stakingInfo, err := btcDel.GetStakingInfo(&params, ms.btcNet)
 	if err != nil {
 		panic(fmt.Errorf("failed to get staking info from a verified delegation: %w", err))
 	}
 
-	slashingPathInfo, err := spendInfo.SlashingPathSpendInfo()
+	slashingSpendInfo, err := stakingInfo.SlashingPathSpendInfo()
 	if err != nil {
 		// our staking info was constructed by using BuildStakingInfo constructor, so if
 		// this fails, it is a programming error
@@ -506,9 +495,9 @@ func (ms msgServer) AddCovenantSig(goCtx context.Context, req *types.MsgAddCoven
 	for i, sig := range req.Sigs {
 		err := verifySlashingTxAdaptorSig(
 			btcDel.SlashingTx,
-			stakingOutput.PkScript,
-			stakingOutput.Value,
-			slashingPathInfo.GetPkScriptPath(),
+			stakingInfo.StakingOutput.PkScript,
+			stakingInfo.StakingOutput.Value,
+			slashingSpendInfo.GetPkScriptPath(),
 			req.Pk.MustToBTCPK(),
 			btcDel.ValBtcPkList[i].MustToBTCPK(),
 			sig,
@@ -595,10 +584,6 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 			numAdaptorSig, numVals)
 	}
 
-	// 4. Verify signature of unbonding tx against staking tx output
-	stakingTx, stakingOutputIdx := mustGetStakingTxInfo(btcDel, ms.btcNet)
-	stakingOutput := stakingTx.TxOut[stakingOutputIdx]
-
 	// ensure that the given covenant PK is in the parameter
 	params := ms.GetParams(ctx)
 	if !params.HasCovenantPK(req.Pk) {
@@ -613,24 +598,24 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 
 	unbondingTxHash := unbondingTxMsg.TxHash().String()
 
-	stakingOutputSpendInfo, err := btcDel.GetStakingInfo(&params, ms.btcNet)
+	stakingInfo, err := btcDel.GetStakingInfo(&params, ms.btcNet)
 	if err != nil {
 		panic(err)
 	}
 
-	unbondingPathInfo, err := stakingOutputSpendInfo.UnbondingPathSpendInfo()
-
+	unbondingSpendInfo, err := stakingInfo.UnbondingPathSpendInfo()
 	if err != nil {
 		// our staking info was constructed by using BuildStakingInfo constructor, so if
 		// this fails, it is a programming error
 		panic(err)
 	}
 
+	// 4. Verify signature of unbonding tx against staking tx output
 	if err := btcstaking.VerifyTransactionSigWithOutputData(
 		unbondingTxMsg,
-		stakingOutput.PkScript,
-		stakingOutput.Value,
-		unbondingPathInfo.GetPkScriptPath(),
+		stakingInfo.StakingOutput.PkScript,
+		stakingInfo.StakingOutput.Value,
+		unbondingSpendInfo.GetPkScriptPath(),
 		req.Pk.MustToBTCPK(),
 		*req.UnbondingTxSig,
 	); err != nil {
@@ -645,7 +630,7 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 		panic(err)
 	}
 
-	slashingPathInfo, err := unbondingInfo.SlashingPathSpendInfo()
+	slashingSpendInfo, err := unbondingInfo.SlashingPathSpendInfo()
 
 	if err != nil {
 		// our unbonding info was constructed by using BuildStakingInfo constructor, so if
@@ -659,7 +644,7 @@ func (ms msgServer) AddCovenantUnbondingSigs(
 			btcDel.BtcUndelegation.SlashingTx,
 			unbondingOutput.PkScript,
 			unbondingOutput.Value,
-			slashingPathInfo.GetPkScriptPath(),
+			slashingSpendInfo.GetPkScriptPath(),
 			req.Pk.MustToBTCPK(),
 			btcDel.ValBtcPkList[i].MustToBTCPK(),
 			sig,

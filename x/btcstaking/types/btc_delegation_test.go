@@ -79,9 +79,10 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		valPKList := []*btcec.PublicKey{valPK}
 
-		covenantSK, covenantPK, err := datagen.GenRandomBTCKeyPair(r)
+		// (3, 5) covenant committee
+		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
-		covPKList := []*btcec.PublicKey{covenantPK}
+		covenantQuorum := uint32(3)
 
 		stakingTimeBlocks := uint16(5)
 		stakingValue := int64(2 * 10e8)
@@ -101,8 +102,8 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			net,
 			delSK,
 			valPKList,
-			covPKList,
-			1,
+			covenantPKs,
+			covenantQuorum,
 			stakingTimeBlocks,
 			stakingValue,
 			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
@@ -120,14 +121,9 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		delSig, err := testInfo.SlashingTx.Sign(testInfo.StakingTx, 0, slashingSpendInfo.GetPkScriptPath(), delSK)
 		require.NoError(t, err)
 		// covenant signs (using adaptor signature) the slashing tx
-		encKey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
+		covenantSigs, err := datagen.GenCovenantAdaptorSigs(covenantSKs, []*btcec.PublicKey{valPK}, testInfo.StakingTx, slashingSpendInfo.GetPkScriptPath(), testInfo.SlashingTx)
 		require.NoError(t, err)
-		covenantSig, err := testInfo.SlashingTx.EncSign(testInfo.StakingTx, 0, slashingSpendInfo.GetPkScriptPath(), covenantSK, encKey)
-		require.NoError(t, err)
-		covenantSigs := &types.CovenantAdaptorSignatures{
-			CovPk:       bbn.NewBIP340PubKeyFromBTCPK(covenantPK),
-			AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
-		}
+		covenantSigs = covenantSigs[2:] // discard 2 out of 5 signatures
 
 		// construct the BTC delegation with everything
 		btcDel := &types.BTCDelegation{
@@ -142,12 +138,12 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			StakingOutputIdx: 0,
 			SlashingTx:       testInfo.SlashingTx,
 			DelegatorSig:     delSig,
-			CovenantSigs:     []*types.CovenantAdaptorSignatures{covenantSigs},
+			CovenantSigs:     covenantSigs,
 		}
 
 		bsParams := &types.Params{
-			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covPKList),
-			CovenantQuorum: 1,
+			CovenantPks:    bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+			CovenantQuorum: covenantQuorum,
 		}
 		btcNet := &chaincfg.SimNetParams
 

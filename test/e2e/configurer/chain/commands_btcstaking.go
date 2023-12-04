@@ -83,17 +83,19 @@ func (n *NodeConfig) CreateBTCDelegation(
 	n.LogActionF("successfully created BTC delegation")
 }
 
-// TODO accomodate multiple adaptor sigs
-func (n *NodeConfig) AddCovenantSig(covPK *bbn.BIP340PubKey, stakingTxHash string, sig *asig.AdaptorSignature) {
+func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash string, sigs [][]byte) {
 	n.LogActionF("adding covenant signature")
 
 	covPKHex := covPK.MarshalHex()
-	sigHex := sig.MarshalHex()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sig", covPKHex, stakingTxHash, sigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sig", covPKHex, stakingTxHash}
+	for _, sig := range sigs {
+		cmd = append(cmd, hex.EncodeToString(sig))
+	}
+	cmd = append(cmd, "--from=val")
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully added covenant sig")
+	n.LogActionF("successfully added covenant sigatures")
 }
 
 func (n *NodeConfig) CommitPubRandList(valBTCPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand, sig *bbn.BIP340Signature) {
@@ -183,19 +185,21 @@ func (n *NodeConfig) AddValidatorUnbondingSig(valPK *bbn.BIP340PubKey, delPK *bb
 	n.LogActionF("successfully added validator unbonding sig")
 }
 
-// TODO accomodate multiple slashing sigs
 func (n *NodeConfig) AddCovenantUnbondingSigs(
 	covPK *bbn.BIP340PubKey,
 	stakingTxHash string,
 	unbondingTxSig *bbn.BIP340Signature,
-	slashUnbondingTxSig *asig.AdaptorSignature) {
+	slashUnbondingTxSigs []*asig.AdaptorSignature) {
 	n.LogActionF("adding validator signature")
 
 	covPKHex := covPK.MarshalHex()
 	unbondingTxSigHex := unbondingTxSig.ToHexStr()
-	slashUnbondingTxSigHex := slashUnbondingTxSig.MarshalHex()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-unbonding-sigs", covPKHex, stakingTxHash, unbondingTxSigHex, slashUnbondingTxSigHex, "--from=val"}
+	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-unbonding-sigs", covPKHex, stakingTxHash, unbondingTxSigHex}
+	for _, sig := range slashUnbondingTxSigs {
+		cmd = append(cmd, sig.MarshalHex())
+	}
+	cmd = append(cmd, "--from=val")
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added covenant unbonding sigs")

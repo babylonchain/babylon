@@ -37,9 +37,7 @@ var (
 	// BTC delegation
 	delBTCSK, delBTCPK, _ = datagen.GenRandomBTCKeyPair(r)
 	// covenant
-	covenantSK, _ = btcec.PrivKeyFromBytes(
-		[]byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-	)
+	covenantSKs, _, covenantQuorum = bstypes.DefaultCovenantCommittee()
 
 	stakingValue = int64(2 * 10e8)
 
@@ -120,7 +118,7 @@ func (s *BTCStakingTestSuite) Test1CreateBTCValidatorAndDelegation() {
 		delBTCSK,
 		[]*btcec.PublicKey{btcVal.BtcPk.MustToBTCPK()},
 		covenantBTCPKs,
-		1,
+		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
 		params.SlashingAddress, changeAddress.EncodeAddress(),
@@ -209,10 +207,8 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 		covenantBTCPKs = append(covenantBTCPKs, covenantPK.MustToBTCPK())
 	}
 
-	validatorBTCPKs := []*btcec.PublicKey{}
-	for _, valPK := range pendingDel.ValBtcPkList {
-		validatorBTCPKs = append(validatorBTCPKs, valPK.MustToBTCPK())
-	}
+	validatorBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.ValBtcPkList)
+	s.NoError(err)
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		pendingDel.BtcPk.MustToBTCPK(),
@@ -231,18 +227,18 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	/*
 		generate and insert new covenant signature, in order to activate the BTC delegation
 	*/
-	// TODO add multiple covenant sigs
-	encKey, err := asig.NewEncryptionKeyFromBTCPK(validatorBTCPKs[0])
-	s.NoError(err)
-	covenantSig, err := slashingTx.EncSign(
+	covenantSigs, err := datagen.GenCovenantAdaptorSigs(
+		covenantSKs,
+		validatorBTCPKs,
 		stakingMsgTx,
-		pendingDel.StakingOutputIdx,
 		stakingSlashingPathInfo.GetPkScriptPath(),
-		covenantSK,
-		encKey,
+		slashingTx,
 	)
 	s.NoError(err)
-	nonValidatorNode.AddCovenantSig(&params.CovenantPks[0], stakingTxHash, covenantSig)
+	s.GreaterOrEqual(uint32(len(covenantSigs)), covenantQuorum)
+	for i := 0; i < int(covenantQuorum); i++ {
+		nonValidatorNode.AddCovenantSigs(covenantSigs[i].CovPk, stakingTxHash, covenantSigs[i].AdaptorSigs)
+	}
 
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
@@ -571,34 +567,42 @@ func (s *BTCStakingTestSuite) Test6SubmitUnbondingSignatures() {
 	stakingTxUnbondigPathInfo, err := stakingInfo.UnbondingPathSpendInfo()
 	s.NoError(err)
 
-	covenantUnbondingSignature, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
-		unbondingTx,
-		stakingTx,
-		delegation.StakingOutputIdx,
-		stakingTxUnbondigPathInfo.GetPkScriptPath(),
-		covenantSK,
-	)
-	s.NoError(err)
+	for i := 0; i < int(covenantQuorum); i++ {
+		covenantUnbondingSignature, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
+			unbondingTx,
+			stakingTx,
+			delegation.StakingOutputIdx,
+			stakingTxUnbondigPathInfo.GetPkScriptPath(),
+			covenantSKs[i],
+		)
+		s.NoError(err)
 
-	covenantUnbondingSig := bbn.NewBIP340SignatureFromBTCSig(covenantUnbondingSignature)
+		covenantUnbondingSig := bbn.NewBIP340SignatureFromBTCSig(covenantUnbondingSignature)
 
-	// Next covenant signature on unbonding slashing tx
-	unbondingTxSlashingPath, err := unbondingInfo.SlashingPathSpendInfo()
-	s.NoError(err)
+		// Next covenant signature on unbonding slashing tx
+		unbondingTxSlashingPath, err := unbondingInfo.SlashingPathSpendInfo()
+		s.NoError(err)
 
-	// TODO accomodate multiple slashing sigs
-	encKey, err := asig.NewEncryptionKeyFromBTCPK(validatorBTCPKs[0])
-	s.NoError(err)
-	covenantSlashingSig, err := delegation.BtcUndelegation.SlashingTx.EncSign(
-		unbondingTx,
-		0,
-		unbondingTxSlashingPath.GetPkScriptPath(),
-		covenantSK,
-		encKey,
-	)
-	s.NoError(err)
-	nonValidatorNode.AddCovenantUnbondingSigs(
-		&params.CovenantPks[0], stakingTxHash, &covenantUnbondingSig, covenantSlashingSig)
+		// slashing signatures, each encrypted by a restaked BTC validator's PK
+		covenantSlashingSigs := []*asig.AdaptorSignature{}
+		for _, valPK := range validatorBTCPKs {
+			encKey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
+			s.NoError(err)
+			covenantSlashingSig, err := delegation.BtcUndelegation.SlashingTx.EncSign(
+				unbondingTx,
+				0,
+				unbondingTxSlashingPath.GetPkScriptPath(),
+				covenantSKs[i],
+				encKey,
+			)
+			s.NoError(err)
+			covenantSlashingSigs = append(covenantSlashingSigs, covenantSlashingSig)
+		}
+
+		nonValidatorNode.AddCovenantUnbondingSigs(
+			&params.CovenantPks[i], stakingTxHash, &covenantUnbondingSig, covenantSlashingSigs)
+	}
+
 	nonValidatorNode.WaitForNextBlock()
 	nonValidatorNode.WaitForNextBlock()
 

@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
@@ -11,7 +12,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -32,8 +32,7 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
 
 		// covenant and slashing addr
-		covenantSK, _, err := datagen.GenRandomBTCKeyPair(r)
-		require.NoError(t, err)
+		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
 		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
@@ -71,8 +70,8 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 					t,
 					[]bbn.BIP340PubKey{*btcVal.BtcPk},
 					delSK,
-					[]*btcec.PrivateKey{covenantSK},
-					1,
+					covenantSKs,
+					covenantQuorum,
 					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
 					1, 1000, stakingValue,
 					slashingRate,

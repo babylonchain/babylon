@@ -1,13 +1,16 @@
 package btcstaking_test
 
 import (
+	"bytes"
 	"math/rand"
+	"sort"
 	"testing"
 	"time"
 
 	"github.com/babylonchain/babylon/btcstaking"
 	btctest "github.com/babylonchain/babylon/testutil/bitcoin"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/txscript"
@@ -132,8 +135,7 @@ func TestSpendingTimeLockPath(t *testing.T) {
 
 	require.NoError(t, err)
 
-	witness, err := si.CreateWitness([][]byte{sig.Serialize()})
-
+	witness, err := si.CreateTimeLockPathWitness(sig)
 	require.NoError(t, err)
 
 	spendStakeTx.TxIn[0].Witness = witness
@@ -151,6 +153,35 @@ func TestSpendingTimeLockPath(t *testing.T) {
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }
 
+type SignatureInfo struct {
+	SignerPubKey *btcec.PublicKey
+	Signature    *schnorr.Signature
+}
+
+func NewSignatureInfo(
+	signerPubKey *btcec.PublicKey,
+	signature *schnorr.Signature,
+) *SignatureInfo {
+	return &SignatureInfo{
+		SignerPubKey: signerPubKey,
+		Signature:    signature,
+	}
+}
+
+// Helper function to sort all signatures in reverse lexicographical order of signing public keys
+// this way signatures are ready to be used in multisig witness with corresponding public keys
+func sortSignatureInfo(infos []*SignatureInfo) []*SignatureInfo {
+	sortedInfos := make([]*SignatureInfo, len(infos))
+	copy(sortedInfos, infos)
+	sort.SliceStable(sortedInfos, func(i, j int) bool {
+		keyIBytes := schnorr.SerializePubKey(sortedInfos[i].SignerPubKey)
+		keyJBytes := schnorr.SerializePubKey(sortedInfos[j].SignerPubKey)
+		return bytes.Compare(keyIBytes, keyJBytes) == 1
+	})
+
+	return sortedInfos
+}
+
 // generate list of signatures in valid order
 func GenerateSignatures(
 	t *testing.T,
@@ -158,9 +189,9 @@ func GenerateSignatures(
 	tx *wire.MsgTx,
 	stakingOutput *wire.TxOut,
 	leaf txscript.TapLeaf,
-) [][]byte {
+) []*schnorr.Signature {
 
-	var si []*btcstaking.SignatureInfo
+	var si []*SignatureInfo
 
 	for _, key := range keys {
 		pubKey := key.PubKey()
@@ -171,17 +202,17 @@ func GenerateSignatures(
 			leaf,
 		)
 		require.NoError(t, err)
-		info := btcstaking.NewSignatureInfo(
+		info := NewSignatureInfo(
 			pubKey,
-			sig.Serialize(),
+			sig,
 		)
 		si = append(si, info)
 	}
 
 	// sort signatures by public key
-	sortedSigInfo := btcstaking.SortSignatureInfo(si)
+	sortedSigInfo := sortSignatureInfo(si)
 
-	var sigs [][]byte = make([][]byte, len(sortedSigInfo))
+	var sigs []*schnorr.Signature = make([]*schnorr.Signature, len(sortedSigInfo))
 
 	for i, sigInfo := range sortedSigInfo {
 		sig := sigInfo
@@ -247,10 +278,7 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	var witnessSignatures [][]byte
-	witnessSignatures = append(witnessSignatures, covenantSigantures...)
-	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := si.CreateWitness(witnessSignatures)
+	witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
@@ -269,9 +297,6 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 	numOfCovenantMembers := len(scenario.CovenantKeys)
 	// with each loop iteration we remove one key from the list of signatures
 	for i := 0; i < numOfCovenantMembers; i++ {
-		// reset signatures
-		witnessSignatures = [][]byte{}
-
 		numOfRemovedSignatures := i + 1
 
 		covenantSigantures := GenerateSignatures(
@@ -285,12 +310,10 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 		for j := 0; j <= i; j++ {
 			// NOTE: Number provides signatures must match number of public keys in the script,
 			// if we are missing some signatures those must be set to empty signature in witness
-			covenantSigantures[j] = []byte{}
+			covenantSigantures[j] = nil
 		}
 
-		witnessSignatures = append(witnessSignatures, covenantSigantures...)
-		witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-		witness, err := si.CreateWitness(witnessSignatures)
+		witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
 		require.NoError(t, err)
 		spendStakeTx.TxIn[0].Witness = witness
 
@@ -359,10 +382,7 @@ func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	var witnessSignatures [][]byte
-	witnessSignatures = append(witnessSignatures, covenantSigantures...)
-	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := si.CreateWitness(witnessSignatures)
+	witness, err := si.CreateUnbondingPathWitness(covenantSigantures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
@@ -418,6 +438,7 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	si, err := stakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
 
+	// generate staker signature, covenant signatures, and validator signature
 	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
 		spendStakeTx,
 		stakingInfo.StakingOutput,
@@ -425,8 +446,6 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 		si.RevealedLeaf,
 	)
 	require.NoError(t, err)
-
-	// Case without validator signature
 	covenantSigantures := GenerateSignatures(
 		t,
 		scenario.CovenantKeys,
@@ -434,13 +453,23 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	var witnessSignatures [][]byte
-	witnessSignatures = append(witnessSignatures, covenantSigantures...)
-	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := si.CreateWitness(witnessSignatures)
+	validatorSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+		spendStakeTx,
+		stakingInfo.StakingOutput,
+		scenario.ValidatorKeys[0],
+		si.RevealedLeaf,
+	)
+	require.NoError(t, err)
+
+	witness, err := si.CreateSlashingPathWitness(
+		covenantSigantures,
+		[]*schnorr.Signature{validatorSig},
+		stakerSig,
+	)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
+	// now as we have validator signature execution should succeed
 	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
@@ -450,34 +479,13 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 			prevOutputFetcher,
 		)
 	}
-	// we expect it will fail because we are missing validator signature
-	btctest.AssertEngineExecution(t, 0, false, newEngine)
-
-	// Retry with the same values but now with validator signature present
-	witnessSignatures = [][]byte{}
-	validatorSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
-		spendStakeTx,
-		stakingInfo.StakingOutput,
-		scenario.ValidatorKeys[0],
-		si.RevealedLeaf,
-	)
-	require.NoError(t, err)
-
-	witnessSignatures = append(witnessSignatures, covenantSigantures...)
-	witnessSignatures = append(witnessSignatures, validatorSig.Serialize())
-	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err = si.CreateWitness(witnessSignatures)
-	require.NoError(t, err)
-	spendStakeTx.TxIn[0].Witness = witness
-
-	// now as we have validator signature execution should succeed
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }
 
 func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	// we are having here 3/5 covenant threshold sig, and we are restaking to 2 validators
+	// we have 3 out of 5 covenant committee, and we are restaking to 2 validators
 	scenario := GenerateTestScenario(
 		r,
 		t,
@@ -513,6 +521,7 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 	si, err := stakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
 
+	// generate staker signature, covenant signatures, and validator signature
 	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
 		spendStakeTx,
 		stakingInfo.StakingOutput,
@@ -521,7 +530,7 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 	)
 	require.NoError(t, err)
 
-	// Case without validator signature
+	// only use 3 out of 5 covenant signatures
 	covenantSigantures := GenerateSignatures(
 		t,
 		scenario.CovenantKeys,
@@ -529,10 +538,22 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	var witnessSignatures [][]byte
-	witnessSignatures = append(witnessSignatures, covenantSigantures...)
-	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err := si.CreateWitness(witnessSignatures)
+	covenantSigantures[0] = nil
+	covenantSigantures[1] = nil
+
+	// only use one of the validator signatures
+	// script should still be valid as we require only one validator signature
+	// to be present
+	validatorsSignatures := GenerateSignatures(
+		t,
+		scenario.ValidatorKeys,
+		spendStakeTx,
+		stakingInfo.StakingOutput,
+		si.RevealedLeaf,
+	)
+	validatorsSignatures[0] = nil
+
+	witness, err := si.CreateSlashingPathWitness(covenantSigantures, validatorsSignatures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
@@ -545,31 +566,5 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 			prevOutputFetcher,
 		)
 	}
-	// we expect it will fail because we are missing validators signature
-	btctest.AssertEngineExecution(t, 0, false, newEngine)
-
-	// Retry with the same values but now with validator signature present
-	witnessSignatures = [][]byte{}
-
-	validatorsSignatures := GenerateSignatures(
-		t,
-		scenario.ValidatorKeys,
-		spendStakeTx,
-		stakingInfo.StakingOutput,
-		si.RevealedLeaf,
-	)
-
-	// make one signature empty, script still should be valid as we require only one validator signature
-	// to be present
-	validatorsSignatures[0] = []byte{}
-
-	witnessSignatures = append(witnessSignatures, covenantSigantures...)
-	witnessSignatures = append(witnessSignatures, validatorsSignatures...)
-	witnessSignatures = append(witnessSignatures, stakerSig.Serialize())
-	witness, err = si.CreateWitness(witnessSignatures)
-	require.NoError(t, err)
-	spendStakeTx.TxIn[0].Witness = witness
-
-	// now as we have validator signature execution should succeed
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }

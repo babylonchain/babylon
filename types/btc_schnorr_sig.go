@@ -34,6 +34,14 @@ func (sig BIP340Signature) ToBTCSig() (*schnorr.Signature, error) {
 	return schnorr.ParseSignature(sig)
 }
 
+func (sig BIP340Signature) MustToBTCSig() *schnorr.Signature {
+	btcSig, err := schnorr.ParseSignature(sig)
+	if err != nil {
+		panic(err)
+	}
+	return btcSig
+}
+
 func (sig BIP340Signature) Size() int {
 	return len(sig.MustMarshal())
 }

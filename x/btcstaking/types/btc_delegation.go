@@ -262,10 +262,9 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	}
 
 	// TODO: work with restaking
-	// TODO: work with covenant committee
-	covAdaptorSig, err := asig.NewAdaptorSignatureFromBytes(d.CovenantSigs[0].AdaptorSigs[0])
+	covAdaptorSigs, err := GetOrderedCovenantSignatures(0, d.CovenantSigs, bsParams)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode a covenant adaptor signature: %w", err)
+		return nil, fmt.Errorf("failed to get ordered covenant adaptor signatures: %w", err)
 	}
 
 	// assemble witness for slashing tx
@@ -274,7 +273,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 		stakingMsgTx,
 		d.StakingOutputIdx,
 		d.DelegatorSig,
-		covAdaptorSig,
+		covAdaptorSigs,
 		slashingSpendInfo,
 	)
 	if err != nil {
@@ -306,10 +305,9 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	}
 
 	// TODO: work with restaking
-	// TODO: work with covenant committee
-	covAdaptorSig, err := asig.NewAdaptorSignatureFromBytes(d.BtcUndelegation.CovenantSlashingSigs[0].AdaptorSigs[0])
+	covAdaptorSigs, err := GetOrderedCovenantSignatures(0, d.BtcUndelegation.CovenantSlashingSigs, bsParams)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decode a covenant adaptor signature: %w", err)
+		return nil, fmt.Errorf("failed to get ordered covenant adaptor signatures: %w", err)
 	}
 
 	// assemble witness for unbonding slashing tx
@@ -318,7 +316,7 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 		unbondingMsgTx,
 		0,
 		d.BtcUndelegation.DelegatorSlashingSig,
-		covAdaptorSig, // TODO: accomodate covenant committee
+		covAdaptorSigs,
 		slashingSpendInfo,
 	)
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/cometbft/cometbft/crypto/tmhash"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"gopkg.in/yaml.v2"
 )
@@ -19,12 +20,17 @@ const (
 
 var _ paramtypes.ParamSet = (*Params)(nil)
 
-// TODO: default values for multisig covenant
-func defaultCovenantPks() []bbn.BIP340PubKey {
-	// 32 bytes
-	skBytes := []byte{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
-	_, defaultPK := btcec.PrivKeyFromBytes(skBytes)
-	return []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(defaultPK)}
+// DefaultCovenantCommittee deterministically generates a covenant committee
+// with 5 members and quorum size of 3
+func DefaultCovenantCommittee() ([]*btcec.PrivateKey, []*btcec.PublicKey, uint32) {
+	sks, pks := []*btcec.PrivateKey{}, []*btcec.PublicKey{}
+	for i := uint8(0); i < 5; i++ {
+		skBytes := tmhash.Sum([]byte{i})
+		sk, pk := btcec.PrivKeyFromBytes(skBytes)
+		sks = append(sks, sk)
+		pks = append(pks, pk)
+	}
+	return sks, pks, 3
 }
 
 func defaultSlashingAddress() string {
@@ -44,9 +50,10 @@ func ParamKeyTable() paramtypes.KeyTable {
 
 // DefaultParams returns a default set of parameters
 func DefaultParams() Params {
+	_, pks, quorum := DefaultCovenantCommittee()
 	return Params{
-		CovenantPks:         defaultCovenantPks(), // TODO: default values for multisig covenant
-		CovenantQuorum:      1,                    // TODO: default values for multisig covenant
+		CovenantPks:         bbn.NewBIP340PKsFromBTCPKs(pks),
+		CovenantQuorum:      quorum,
 		SlashingAddress:     defaultSlashingAddress(),
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   sdkmath.LegacyZeroDec(),
@@ -97,10 +104,8 @@ func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
 		return fmt.Errorf("covenant quorum size has to be positive")
 	}
-	if p.CovenantQuorum*3 <= uint32(len(p.CovenantPks))*2 {
-		// NOTE: we assume covenant member can be adversarial, including
-		// equivocation, so >2/3 quorum is needed
-		return fmt.Errorf("covenant quorum size has to be more than 2/3 of the covenant committee size")
+	if p.CovenantQuorum*2 <= uint32(len(p.CovenantPks))*1 {
+		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
 	}
 	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
 		return err
