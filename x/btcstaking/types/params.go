@@ -99,13 +99,24 @@ func validateMaxActiveBTCValidators(maxActiveBtcValidators uint32) error {
 	return nil
 }
 
+// validateCovenantPks checks whether the covenants list contains any duplicates
+func validateCovenantPks(covenantPks []bbn.BIP340PubKey) error {
+	if ExistsDup(covenantPks) {
+		return fmt.Errorf("duplicate covenant key")
+	}
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
 		return fmt.Errorf("covenant quorum size has to be positive")
 	}
-	if p.CovenantQuorum*2 <= uint32(len(p.CovenantPks))*1 {
+	if p.CovenantQuorum*2 <= uint32(len(p.CovenantPks)) {
 		return fmt.Errorf("covenant quorum size has to be more than 1/2 of the covenant committee size")
+	}
+	if err := validateCovenantPks(p.CovenantPks); err != nil {
+		return err
 	}
 	if err := validateMinSlashingTxFeeSat(p.MinSlashingTxFeeSat); err != nil {
 		return err
@@ -146,4 +157,12 @@ func (p Params) MustGetSlashingAddress(btcParams *chaincfg.Params) btcutil.Addre
 		panic(fmt.Errorf("failed to decode slashing address in genesis: %w", err))
 	}
 	return slashingAddr
+}
+
+func (p Params) CovenantPksHex() []string {
+	covPksHex := make([]string, 0, len(p.CovenantPks))
+	for _, pk := range p.CovenantPks {
+		covPksHex = append(covPksHex, pk.MarshalHex())
+	}
+	return covPksHex
 }
