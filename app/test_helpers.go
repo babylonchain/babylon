@@ -8,13 +8,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/docker/docker/pkg/ioutils"
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
 	"cosmossdk.io/math"
-	cmtconfig "github.com/cometbft/cometbft/config"
-
 	tmjson "github.com/cometbft/cometbft/libs/json"
 
 	"cosmossdk.io/log"
@@ -253,10 +253,16 @@ func SetupPrivSigner() (*PrivSigner, error) {
 	if err != nil {
 		return nil, err
 	}
-	nodeCfg := cmtconfig.DefaultConfig()
 	encodingCfg := appparams.DefaultEncodingConfig()
-	privSigner, _ := InitPrivSigner(client.Context{}, ".", kr, "", encodingCfg)
-	privSigner.WrappedPV.Clean(nodeCfg.PrivValidatorKeyFile(), nodeCfg.PrivValidatorStateFile())
+	// Create a temporary node directory
+	nodeDir, err := ioutils.TempDir("", "tmp-signer")
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		_ = os.RemoveAll(nodeDir)
+	}()
+	privSigner, _ := InitPrivSigner(client.Context{}, nodeDir, kr, "", encodingCfg)
 	return privSigner, nil
 }
 
