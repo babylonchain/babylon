@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	sdkmath "cosmossdk.io/math"
 	"fmt"
 	"math"
 
@@ -58,6 +59,10 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 	// ensure commission rate is at least the minimum commission rate in parameters
 	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
 		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set validator commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
+	}
+
+	if req.Commission.GT(sdkmath.LegacyOneDec()) {
+		return nil, types.ErrCommissionGTMaxRate
 	}
 
 	// ensure BTC validator does not exist before
