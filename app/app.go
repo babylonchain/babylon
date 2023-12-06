@@ -1239,7 +1239,7 @@ func (app *BabylonApp) AutoCliOpts() autocli.AppOptions {
 	return autocli.AppOptions{
 		Modules:               modules,
 		ModuleOptions:         runtimeservices.ExtractAutoCLIOptions(app.ModuleManager.Modules),
-		AddressCodec:          authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
+		AddressCodec:          authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
 		ValidatorAddressCodec: authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
 		ConsensusAddressCodec: authcodec.NewBech32Codec(appparams.Bech32PrefixConsAddr),
 	}
