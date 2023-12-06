@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	math "math"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -17,9 +18,8 @@ var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgCreateBTCValidator{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
-	_ sdk.Msg = &MsgAddCovenantSig{}
+	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
-	_ sdk.Msg = &MsgAddCovenantUnbondingSigs{}
 )
 
 // GetSigners returns the expected signers for a MsgUpdateParams message.
@@ -102,11 +102,24 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if m.SlashingTx == nil {
 		return fmt.Errorf("empty slashing tx")
 	}
-	if m.DelegatorSig == nil {
+	if m.DelegatorSlashingSig == nil {
 		return fmt.Errorf("empty delegator signature")
 	}
 	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
 		return err
+	}
+
+	// Check staking time is at most uint16
+	if m.StakingTime > math.MaxUint16 {
+		return ErrInvalidStakingTx.Wrapf("invalid lock time: %d, max: %d", m.StakingTime, math.MaxUint16)
+	}
+	// Ensure list of validator BTC PKs is not empty
+	if len(m.ValBtcPkList) == 0 {
+		return ErrEmptyValidatorList
+	}
+	// Ensure list of validator BTC PKs is not duplicated
+	if ExistsDup(m.ValBtcPkList) {
+		return ErrDuplicatedValidator
 	}
 
 	// staking tx should be correctly formatted
@@ -117,10 +130,33 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 		return err
 	}
 
+	// verifications about on-demand unbonding
+	if m.UnbondingTx == nil {
+		return fmt.Errorf("empty unbonding tx")
+	}
+	if m.UnbondingSlashingTx == nil {
+		return fmt.Errorf("empty slashing tx")
+	}
+	if m.DelegatorUnbondingSlashingSig == nil {
+		return fmt.Errorf("empty delegator signature")
+	}
+	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(m.UnbondingTx)
+	if err != nil {
+		return err
+	}
+	if err := btcstaking.IsSimpleTransfer(unbondingTxMsg); err != nil {
+		return err
+	}
+
+	// Check unbonding time is lower than max uint16
+	if uint64(m.UnbondingTime) > math.MaxUint16 {
+		return ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be lower than %d", m.UnbondingTime, math.MaxUint16)
+	}
+
 	return nil
 }
 
-func (m *MsgAddCovenantSig) GetSigners() []sdk.AccAddress {
+func (m *MsgAddCovenantSigs) GetSigners() []sdk.AccAddress {
 	signer, err := sdk.AccAddressFromBech32(m.Signer)
 	if err != nil {
 		panic(err)
@@ -128,42 +164,23 @@ func (m *MsgAddCovenantSig) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgAddCovenantSig) ValidateBasic() error {
+func (m *MsgAddCovenantSigs) ValidateBasic() error {
 	if m.Pk == nil {
 		return fmt.Errorf("empty BTC covenant public key")
 	}
-	if m.Sigs == nil {
-		return fmt.Errorf("empty covenant signature")
+	if m.SlashingTxSigs == nil {
+		return fmt.Errorf("empty covenant signatures on slashing tx")
 	}
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
 		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
 	}
 
-	return nil
-}
-
-func (m *MsgBTCUndelegate) ValidateBasic() error {
-	if m.UnbondingTx == nil {
-		return fmt.Errorf("empty unbonding tx")
+	// verifications about on-demand unbonding
+	if m.UnbondingTxSig == nil {
+		return fmt.Errorf("empty covenant signature")
 	}
-	if m.SlashingTx == nil {
-		return fmt.Errorf("empty slashing tx")
-	}
-	if m.DelegatorSlashingSig == nil {
-		return fmt.Errorf("empty delegator signature")
-	}
-
-	if _, err := sdk.AccAddressFromBech32(m.Signer); err != nil {
-		return err
-	}
-	unbondingTxMsg, err := bbn.NewBTCTxFromBytes(m.UnbondingTx)
-
-	if err != nil {
-		return err
-	}
-
-	if err := btcstaking.IsSimpleTransfer(unbondingTxMsg); err != nil {
-		return err
+	if m.SlashingUnbondingTxSigs == nil {
+		return fmt.Errorf("empty covenant signature")
 	}
 
 	return nil
@@ -177,26 +194,14 @@ func (m *MsgBTCUndelegate) GetSigners() []sdk.AccAddress {
 	return []sdk.AccAddress{signer}
 }
 
-func (m *MsgAddCovenantUnbondingSigs) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
-}
-
-func (m *MsgAddCovenantUnbondingSigs) ValidateBasic() error {
-	if m.Pk == nil {
-		return fmt.Errorf("empty BTC covenant public key")
-	}
-	if m.UnbondingTxSig == nil {
-		return fmt.Errorf("empty covenant signature")
-	}
-	if m.SlashingUnbondingTxSigs == nil {
-		return fmt.Errorf("empty covenant signature")
-	}
+func (m *MsgBTCUndelegate) ValidateBasic() error {
 	if len(m.StakingTxHash) != chainhash.MaxHashStringSize {
 		return fmt.Errorf("staking tx hash is not %d", chainhash.MaxHashStringSize)
 	}
+
+	if m.UnbondingTxSig == nil {
+		return fmt.Errorf("empty signature from the delegator")
+	}
+
 	return nil
 }

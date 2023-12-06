@@ -130,8 +130,7 @@ func (tx *BTCSlashingTx) Sign(
 	if err != nil {
 		return nil, err
 	}
-	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
-	return &sig, nil
+	return bbn.NewBIP340SignatureFromBTCSig(schnorrSig), nil
 }
 
 // VerifySignature verifies a signature on the slashing tx signed by staker, validator or covenant

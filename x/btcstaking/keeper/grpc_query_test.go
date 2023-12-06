@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 
 	"github.com/btcsuite/btcd/chaincfg"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -260,120 +259,6 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 			require.NotNil(t, resp)
 			for _, btcDel := range resp.BtcDelegations {
 				_, ok := pendingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
-				require.True(t, ok)
-			}
-			// Construct the next page request
-			pagination.Key = resp.Pagination.NextKey
-		}
-	})
-}
-
-func FuzzUnbondingBTCDelegations(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
-	f.Fuzz(func(t *testing.T, seed int64) {
-		r := rand.New(rand.NewSource(seed))
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		// Setup keeper and context
-		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
-		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := testkeeper.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
-
-		// covenant and slashing addr
-		covenantSKs, covenantPKs, covenantQuorum := types.DefaultCovenantCommittee()
-		covBTCPKs := bbn.NewBIP340PKsFromBTCPKs(covenantPKs)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
-
-		// Generate a random number of BTC validators
-		numBTCVals := datagen.RandomInt(r, 5) + 1
-		btcVals := []*types.BTCValidator{}
-		for i := uint64(0); i < numBTCVals; i++ {
-			btcVal, err := datagen.GenRandomBTCValidator(r)
-			require.NoError(t, err)
-			keeper.SetBTCValidator(ctx, btcVal)
-			btcVals = append(btcVals, btcVal)
-		}
-
-		// Generate a random number of BTC delegations under each validator
-		startHeight := datagen.RandomInt(r, 100) + 1
-		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
-		numBTCDels := datagen.RandomInt(r, 10) + 1
-		unbondingBtcDelsMap := make(map[string]*types.BTCDelegation)
-		for _, btcVal := range btcVals {
-			for j := uint64(0); j < numBTCDels; j++ {
-				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(
-					r,
-					t,
-					[]bbn.BIP340PubKey{*btcVal.BtcPk},
-					delSK,
-					covenantSKs,
-					covenantQuorum,
-					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
-					startHeight, endHeight, 10000,
-					slashingRate,
-				)
-				require.NoError(t, err)
-
-				if datagen.RandomInt(r, 2) == 1 {
-					// add unbonding object in random BTC delegations to make them ready to receive covenant sig
-					btcDel.BtcUndelegation = &types.BTCUndelegation{}
-
-					if datagen.RandomInt(r, 2) == 1 {
-						// these BTC delegations are unbonded
-						for i := range covenantSKs {
-							sig, err := schnorr.Sign(covenantSKs[i], datagen.GenRandomByteArray(r, 32))
-							require.NoError(t, err)
-							unbondingSig := bbn.NewBIP340SignatureFromBTCSig(sig)
-							unbondingSigInfo := types.NewSignatureInfo(&covBTCPKs[i], &unbondingSig)
-							btcDel.BtcUndelegation.CovenantUnbondingSigList = append(btcDel.BtcUndelegation.CovenantUnbondingSigList, unbondingSigInfo)
-						}
-						btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs
-					} else {
-						// these BTC delegations are unbonding
-						unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel
-					}
-				}
-
-				err = keeper.AddBTCDelegation(ctx, btcDel)
-				require.NoError(t, err)
-			}
-		}
-
-		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-
-		// querying paginated BTC delegations and assert
-		// Generate a page request with a limit and a nil key
-		if len(unbondingBtcDelsMap) == 0 {
-			return
-		}
-		limit := datagen.RandomInt(r, len(unbondingBtcDelsMap)) + 1
-		pagination := constructRequestWithLimit(r, limit)
-		req := &types.QueryBTCDelegationsRequest{
-			Status:     types.BTCDelegationStatus_UNBONDING,
-			Pagination: pagination,
-		}
-		for i := uint64(0); i < numBTCDels; i += limit {
-			resp, err := keeper.BTCDelegations(ctx, req)
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			for _, btcDel := range resp.BtcDelegations {
-				_, ok := unbondingBtcDelsMap[btcDel.BtcPk.MarshalHex()]
 				require.True(t, ok)
 			}
 			// Construct the next page request

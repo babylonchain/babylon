@@ -36,6 +36,6 @@ func FuzzBIP340Signature(f *testing.F) {
 		require.NoError(t, err)
 		err = sig2.Unmarshal(sigBytes)
 		require.NoError(t, err)
-		require.Equal(t, sig, sig2)
+		require.Equal(t, *sig, sig2)
 	})
 }

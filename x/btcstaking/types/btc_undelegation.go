@@ -37,8 +37,9 @@ func (ud *BTCUndelegation) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
 	return ud.IsSignedByCovMemberOnUnbonding(covPk) && ud.IsSignedByCovMemberOnSlashing(covPk)
 }
 
-func (ud *BTCUndelegation) HasAllSignatures(covenantQuorum uint32) bool {
-	return ud.HasCovenantQuorumOnUnbonding(covenantQuorum) && ud.HasCovenantQuorumOnSlashing(covenantQuorum)
+func (ud *BTCUndelegation) HasCovenantQuorums(covenantQuorum uint32) bool {
+	return ud.HasCovenantQuorumOnUnbonding(covenantQuorum) &&
+		ud.HasCovenantQuorumOnSlashing(covenantQuorum)
 }
 
 // AddCovenantSigs adds a Schnorr signature on the unbonding tx, and
@@ -52,7 +53,7 @@ func (ud *BTCUndelegation) AddCovenantSigs(
 	quorum uint32,
 ) error {
 	// we can ignore the covenant slashing sig if quorum is already reached
-	if ud.HasAllSignatures(quorum) {
+	if ud.HasCovenantQuorums(quorum) {
 		return nil
 	}
 

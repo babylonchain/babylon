@@ -80,21 +80,18 @@ func FuzzVotingPowerTable(f *testing.F) {
 		}
 
 		/*
-			Case 1: assert none of validators has voting power (since BTC height is 0)
+			Case 1: BTC height is 0 that is smaller than start height 1.
+			No BTC validator will have voting power
 		*/
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = ctx.WithBlockHeight(int64(babylonHeight))
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 0}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)
-		for _, btcVal := range btcVals {
-			power := keeper.GetVotingPower(ctx, *btcVal.BtcPk, babylonHeight)
+		for i := uint64(0); i < numBTCVals; i++ {
+			power := keeper.GetVotingPower(ctx, *btcVals[i].BtcPk, babylonHeight)
 			require.Zero(t, power)
 		}
-
-		// since there is no BTC validator with BTC delegation, the BTC staking protocol is not activated yet
-		_, err = keeper.GetBTCStakingActivatedHeight(ctx)
-		require.Error(t, err)
 
 		/*
 			Case 2: move to 1st BTC block, then assert the first numBTCValsWithVotingPower validators have voting power

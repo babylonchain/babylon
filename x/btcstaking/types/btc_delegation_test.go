@@ -25,6 +25,7 @@ func FuzzBTCDelegation(f *testing.F) {
 		btcDel := &types.BTCDelegation{}
 		// randomise voting power
 		btcDel.TotalSat = datagen.RandomInt(r, 100000)
+		btcDel.BtcUndelegation = &types.BTCUndelegation{}
 
 		// randomise covenant sig
 		hasCovenantSig := datagen.RandomInt(r, 2) == 0
@@ -43,6 +44,8 @@ func FuzzBTCDelegation(f *testing.F) {
 				AdaptorSigs: [][]byte{covenantSig.MustMarshal()},
 			}
 			btcDel.CovenantSigs = []*types.CovenantAdaptorSignatures{covSigInfo}
+			btcDel.BtcUndelegation.CovenantSlashingSigs = btcDel.CovenantSigs                                // doesn't matter
+			btcDel.BtcUndelegation.CovenantUnbondingSigList = []*types.SignatureInfo{&types.SignatureInfo{}} // doesn't matter
 		}
 
 		// randomise start height and end height

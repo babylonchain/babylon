@@ -25,9 +25,10 @@ func NewBIP340SignatureFromHex(sigHex string) (*BIP340Signature, error) {
 	return NewBIP340Signature(sigBytes)
 }
 
-func NewBIP340SignatureFromBTCSig(btcSig *schnorr.Signature) BIP340Signature {
+func NewBIP340SignatureFromBTCSig(btcSig *schnorr.Signature) *BIP340Signature {
 	sigBytes := btcSig.Serialize()
-	return BIP340Signature(sigBytes)
+	sig := BIP340Signature(sigBytes)
+	return &sig
 }
 
 func (sig BIP340Signature) ToBTCSig() (*schnorr.Signature, error) {

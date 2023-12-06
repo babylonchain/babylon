@@ -27,4 +27,5 @@ var (
 	ErrEmptyValidatorList       = errorsmod.Register(ModuleName, 1118, "the validator list is empty")
 	ErrInvalidProofOfPossession = errorsmod.Register(ModuleName, 1119, "the proof of possession is not valid")
 	ErrDuplicatedValidator      = errorsmod.Register(ModuleName, 1120, "the staking request contains duplicated validator public key")
+	ErrInvalidBTCUndelegateReq  = errorsmod.Register(ModuleName, 1121, "invalid undelegation request")
 )

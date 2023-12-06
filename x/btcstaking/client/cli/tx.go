@@ -3,11 +3,9 @@ package cli
 import (
 	"encoding/hex"
 	"fmt"
-	"math"
 	"strings"
 
 	sdkmath "cosmossdk.io/math"
-	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -43,9 +41,8 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(
 		NewCreateBTCValidatorCmd(),
 		NewCreateBTCDelegationCmd(),
-		NewAddCovenantSigCmd(),
-		NewCreateBTCUndelegationCmd(),
-		NewAddCovenantUnbondingSigsCmd(),
+		NewAddCovenantSigsCmd(),
+		NewBTCUndelegateCmd(),
 	)
 
 	return cmd
@@ -135,50 +132,10 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 	return cmd
 }
 
-func parseLockTime(str string) (uint16, error) {
-	num, ok := sdkmath.NewIntFromString(str)
-
-	if !ok {
-		return 0, fmt.Errorf("invalid staking time: %s", str)
-	}
-
-	if !num.IsUint64() {
-		return 0, fmt.Errorf("staking time is not valid uint")
-	}
-
-	asUint64 := num.Uint64()
-
-	if asUint64 > math.MaxUint16 {
-		return 0, fmt.Errorf("staking time is too large. Max is %d", math.MaxUint16)
-	}
-
-	return uint16(asUint64), nil
-}
-
-func parseBtcAmount(str string) (btcutil.Amount, error) {
-	num, ok := sdkmath.NewIntFromString(str)
-
-	if !ok {
-		return 0, fmt.Errorf("invalid staking value: %s", str)
-	}
-
-	if num.IsNegative() {
-		return 0, fmt.Errorf("staking value is negative")
-	}
-
-	if !num.IsInt64() {
-		return 0, fmt.Errorf("staking value is not valid uint")
-	}
-
-	asInt64 := num.Int64()
-
-	return btcutil.Amount(asInt64), nil
-}
-
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [val_pk] [staking_time] [staking_value] [slashing_tx] [delegator_sig]",
-		Args:  cobra.ExactArgs(9),
+		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [val_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Args:  cobra.ExactArgs(14),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
 			`Create a BTC delegation.`, // TODO: example
@@ -227,13 +184,11 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 
 			// get staking time
 			stakingTime, err := parseLockTime(args[5])
-
 			if err != nil {
 				return err
 			}
 
 			stakingValue, err := parseBtcAmount(args[6])
-
 			if err != nil {
 				return err
 			}
@@ -244,23 +199,57 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// get delegator sig
-			delegatorSig, err := bbn.NewBIP340SignatureFromHex(args[8])
+			// get delegator sig on slashing tx
+			delegatorSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[8])
+			if err != nil {
+				return err
+			}
+
+			// get unbonding tx
+			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[9])
+			if err != nil {
+				return err
+			}
+
+			// get unbonding slashing tx
+			unbondingSlashingTx, err := types.NewBTCSlashingTxFromHex(args[10])
+			if err != nil {
+				return err
+			}
+
+			// get staking time
+			unbondingTime, err := parseLockTime(args[11])
+			if err != nil {
+				return err
+			}
+
+			unbondingValue, err := parseBtcAmount(args[12])
+			if err != nil {
+				return err
+			}
+
+			// get delegator sig on unbonding slashing tx
+			delegatorUnbondingSlashingSig, err := bbn.NewBIP340SignatureFromHex(args[13])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgCreateBTCDelegation{
-				Signer:       clientCtx.FromAddress.String(),
-				BabylonPk:    &babylonPK,
-				BtcPk:        btcPK,
-				ValBtcPkList: []bbn.BIP340PubKey{*valPK},
-				Pop:          pop,
-				StakingTime:  uint32(stakingTime),
-				StakingValue: int64(stakingValue),
-				StakingTx:    stakingTxInfo,
-				SlashingTx:   slashingTx,
-				DelegatorSig: delegatorSig,
+				Signer:                        clientCtx.FromAddress.String(),
+				BabylonPk:                     &babylonPK,
+				BtcPk:                         btcPK,
+				ValBtcPkList:                  []bbn.BIP340PubKey{*valPK},
+				Pop:                           pop,
+				StakingTime:                   uint32(stakingTime),
+				StakingValue:                  int64(stakingValue),
+				StakingTx:                     stakingTxInfo,
+				SlashingTx:                    slashingTx,
+				DelegatorSlashingSig:          delegatorSlashingSig,
+				UnbondingTx:                   unbondingTxBytes,
+				UnbondingTime:                 uint32(unbondingTime),
+				UnbondingValue:                int64(unbondingValue),
+				UnbondingSlashingTx:           unbondingSlashingTx,
+				DelegatorUnbondingSlashingSig: delegatorUnbondingSlashingSig,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -272,10 +261,10 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 	return cmd
 }
 
-func NewAddCovenantSigCmd() *cobra.Command {
+func NewAddCovenantSigsCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-covenant-sig [covenant_pk] [staking_tx_hash] [sig1] [sig2] ...",
-		Args:  cobra.MinimumNArgs(3),
+		Use:   "add-covenant-sigs [covenant_pk] [staking_tx_hash] [slashing_tx_sig1],[slashing_tx_sig2],... [unbonding_tx_sig] [slashing_unbonding_tx_sig1],[slashing_unbonding_tx_sig2],...",
+		Args:  cobra.ExactArgs(5),
 		Short: "Add a covenant signature",
 		Long: strings.TrimSpace(
 			`Add a covenant signature.`, // TODO: example
@@ -294,20 +283,39 @@ func NewAddCovenantSigCmd() *cobra.Command {
 			// get staking tx hash
 			stakingTxHash := args[1]
 
-			sigs := [][]byte{}
-			for _, sigHex := range args[2:] {
+			// parse slashing tx sigs
+			slashingTxSigs := [][]byte{}
+			for _, sigHex := range strings.Split(args[2], ",") {
 				sig, err := asig.NewAdaptorSignatureFromHex(sigHex)
 				if err != nil {
 					return fmt.Errorf("invalid covenant signature: %w", err)
 				}
-				sigs = append(sigs, sig.MustMarshal())
+				slashingTxSigs = append(slashingTxSigs, sig.MustMarshal())
 			}
 
-			msg := types.MsgAddCovenantSig{
-				Signer:        clientCtx.FromAddress.String(),
-				Pk:            covPK,
-				StakingTxHash: stakingTxHash,
-				Sigs:          sigs,
+			// get covenant signature for unbonding tx
+			unbondingTxSig, err := bbn.NewBIP340SignatureFromHex(args[3])
+			if err != nil {
+				return err
+			}
+
+			// parse unbonding slashing tx sigs
+			unbondingSlashingSigs := [][]byte{}
+			for _, sigHex := range strings.Split(args[4], ",") {
+				slashingSig, err := asig.NewAdaptorSignatureFromHex(sigHex)
+				if err != nil {
+					return fmt.Errorf("invalid covenant signature: %w", err)
+				}
+				unbondingSlashingSigs = append(unbondingSlashingSigs, slashingSig.MustMarshal())
+			}
+
+			msg := types.MsgAddCovenantSigs{
+				Signer:                  clientCtx.FromAddress.String(),
+				Pk:                      covPK,
+				StakingTxHash:           stakingTxHash,
+				SlashingTxSigs:          slashingTxSigs,
+				UnbondingTxSig:          unbondingTxSig,
+				SlashingUnbondingTxSigs: unbondingSlashingSigs,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
@@ -319,13 +327,13 @@ func NewAddCovenantSigCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCreateBTCUndelegationCmd() *cobra.Command {
+func NewBTCUndelegateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-undelegation [unbonding_tx] [slashing_tx] [unbonding_time] [unbonding_value] [delegator_sig]",
-		Args:  cobra.ExactArgs(5),
-		Short: "Create a BTC undelegation",
+		Use:   "btc-undelegate [staking_tx_hash] [unbonding_tx_sig]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash. ",
 		Long: strings.TrimSpace(
-			`Create a BTC undelegation.`, // TODO: example
+			`Add a signature on the unbonding tx of a BTC delegation identified by a given staking tx hash signed by the delegator. The signature proves that delegator wants to unbond, and Babylon will consider the BTC delegation unbonded.`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -333,96 +341,19 @@ func NewCreateBTCUndelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// get staking tx
-			_, unbondingTxBytes, err := bbn.NewBTCTxFromHex(args[0])
-			if err != nil {
-				return err
-			}
+			// get staking tx hash
+			stakingTxHash := args[0]
 
-			// get slashing tx
-			slashingTx, err := types.NewBTCSlashingTxFromHex(args[1])
-			if err != nil {
-				return err
-			}
-
-			// get staking time
-			unbondingTime, err := parseLockTime(args[2])
-
-			if err != nil {
-				return err
-			}
-
-			unbondingValue, err := parseBtcAmount(args[3])
-
-			if err != nil {
-				return err
-			}
-
-			// get delegator sig
-			delegatorSig, err := bbn.NewBIP340SignatureFromHex(args[4])
+			// get delegator signature for unbonding tx
+			unbondingTxSig, err := bbn.NewBIP340SignatureFromHex(args[1])
 			if err != nil {
 				return err
 			}
 
 			msg := types.MsgBTCUndelegate{
-				Signer:               clientCtx.FromAddress.String(),
-				UnbondingTx:          unbondingTxBytes,
-				UnbondingTime:        uint32(unbondingTime),
-				UnbondingValue:       int64(unbondingValue),
-				SlashingTx:           slashingTx,
-				DelegatorSlashingSig: delegatorSig,
-			}
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
-
-	return cmd
-}
-
-func NewAddCovenantUnbondingSigsCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "add-covenant-unbonding-sigs [covenant_pk] [staking_tx_hash] [unbonding_tx_sg] [slashing_unbonding_tx_sig1] [slashing_unbonding_tx_sig2] ...",
-		Args:  cobra.MinimumNArgs(4),
-		Short: "Add covenant signatures for unbonding tx and slash unbonding tx",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			// get covenant PK
-			covPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
-			if err != nil {
-				return err
-			}
-
-			// get staking tx hash
-			stakingTxHash := args[1]
-
-			// get covenant sigature for unbonding tx
-			unbondingSig, err := bbn.NewBIP340SignatureFromHex(args[2])
-			if err != nil {
-				return err
-			}
-
-			slashingSigs := [][]byte{}
-			for _, sigHex := range args[3:] {
-				slashingSig, err := asig.NewAdaptorSignatureFromHex(sigHex)
-				if err != nil {
-					return fmt.Errorf("invalid covenant signature: %w", err)
-				}
-				slashingSigs = append(slashingSigs, slashingSig.MustMarshal())
-			}
-
-			msg := types.MsgAddCovenantUnbondingSigs{
-				Signer:                  clientCtx.FromAddress.String(),
-				Pk:                      covPK,
-				StakingTxHash:           stakingTxHash,
-				UnbondingTxSig:          unbondingSig,
-				SlashingUnbondingTxSigs: slashingSigs,
+				Signer:         clientCtx.FromAddress.String(),
+				StakingTxHash:  stakingTxHash,
+				UnbondingTxSig: unbondingTxSig,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

@@ -5,7 +5,6 @@ import (
 
 	"github.com/boljen/go-bitmap"
 
-	"github.com/babylonchain/babylon/btctxformatter"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -25,13 +24,13 @@ func GenRandomBitmap(r *rand.Rand) (bitmap.Bitmap, int) {
 	return bm, numSubset
 }
 
-func GetRandomRawBtcCheckpoint(r *rand.Rand) *btctxformatter.RawBtcCheckpoint {
+func GetRandomRawBtcCheckpoint(r *rand.Rand) *txformat.RawBtcCheckpoint {
 	rawCkpt := GenRandomRawCheckpoint(r)
-	return &btctxformatter.RawBtcCheckpoint{
+	return &txformat.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
 		AppHash:          *rawCkpt.AppHash,
 		BitMap:           rawCkpt.Bitmap,
-		SubmitterAddress: GenRandomByteArray(r, btctxformatter.AddressLength),
+		SubmitterAddress: GenRandomByteArray(r, txformat.AddressLength),
 		BlsSig:           rawCkpt.BlsMultiSig.Bytes(),
 	}
 }

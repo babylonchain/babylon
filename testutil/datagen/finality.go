@@ -46,8 +46,7 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 	if err != nil {
 		return nil, nil, err
 	}
-	sig := bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
-	msg.Sig = &sig
+	msg.Sig = bbn.NewBIP340SignatureFromBTCSig(schnorrSig)
 	return srList, msg, nil
 }
 

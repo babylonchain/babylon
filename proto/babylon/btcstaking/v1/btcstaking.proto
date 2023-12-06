@@ -112,18 +112,24 @@ message BTCUndelegation {
     // It is partially signed by SK corresponding to btc_pk, but not signed by
     // validator or covenant yet.
     bytes slashing_tx = 3 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+    // delegator_unbonding_sig is the signature on the unbonding tx
+    // by the delegator (i.e., SK corresponding to btc_pk).
+    // It effectively proves that the delegator wants to unbond and thus
+    // Babylon will consider this BTC delegation unbonded. Delegator's BTC
+    // on Bitcoin will be unbonded after timelock
+    bytes delegator_unbonding_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // delegator_slashing_sig is the signature on the slashing tx
     // by the delegator (i.e., SK corresponding to btc_pk).
     // It will be a part of the witness for the unbonding tx output.
-    bytes delegator_slashing_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+    bytes delegator_slashing_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
     // covenant_slashing_sigs is a list of adaptor signatures on the slashing tx
     // by each covenant member
     // It will be a part of the witness for the staking tx output.
-    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 5;
+    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
     // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
     // by covenant members
     // It must be provided after processing undelagate message by Babylon
-    repeated SignatureInfo covenant_unbonding_sig_list = 6;
+    repeated SignatureInfo covenant_unbonding_sig_list = 7;
 }
 
 
@@ -151,28 +157,21 @@ message BTCDelegatorDelegationIndex {
     repeated bytes staking_tx_hash_list = 1;
 }
 
-// BTCDelegationStatus is the status of a delegation. There are two possible state
-// transition paths:
-// 1. PENDING -> ACTIVE -> UNBONDED - this is the typical path when timelock of staking
-// transaction expires.
-// 2. PENDING _> ACTIVE -> UNBONDING -> UNBONDED - this is the path when staker requests undelegation through
-// MsgBTCUndelegate message.
+// BTCDelegationStatus is the status of a delegation. The state transition path is
+// PENDING -> ACTIVE -> UNBONDED with two possibilities:
+// 1. the typical path when timelock of staking transaction expires.
+// 2. the path when staker requests early undelegation through MsgBTCUndelegate message.
 enum BTCDelegationStatus {
-    // PENDING defines a delegation that is waiting for a covenant signature to become active.
+    // PENDING defines a delegation that is waiting for covenant signatures to become active.
     PENDING = 0;
     // ACTIVE defines a delegation that has voting power
     ACTIVE = 1;
-    // UNBONDING defines a delegation that is being unbonded i.e it received an unbonding tx
-    // from staker, but not yet received signatures from validator and covenant.
-    // Delegation in this state already lost its voting power.
-    UNBONDING = 2;
     // UNBONDED defines a delegation no longer has voting power:
     // - either reaching the end of staking transaction timelock
-    // - or receiving unbonding tx and then receiving signatures from validator and covenant for this
-    // unbonding tx.
-    UNBONDED = 3;
+    // - or receiving unbonding tx with signatures from staker and covenant committee
+    UNBONDED = 2;
     // ANY is any of the above status
-    ANY = 4;
+    ANY = 3;
 }
 
 // SignatureInfo is a BIP-340 signature together with its signer's BIP-340 PK

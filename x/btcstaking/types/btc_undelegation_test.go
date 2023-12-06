@@ -81,22 +81,16 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		)
 		require.NoError(t, err)
 
+		// delegator signs the unbonding slashing tx
+		delSlashingTxSig, err := testInfo.GenDelSlashingTxSig(delSK)
+		require.NoError(t, err)
+
 		unbondingTxBytes, err := bbn.SerializeBTCTx(testInfo.UnbondingTx)
 		require.NoError(t, err)
 
 		// spend info of the unbonding slashing tx
 		unbondingSlashingSpendInfo, err := testInfo.UnbondingInfo.SlashingPathSpendInfo()
 		require.NoError(t, err)
-
-		// delegator signs the unbonding slashing tx
-		delSig, err := testInfo.SlashingTx.Sign(
-			testInfo.UnbondingTx,
-			0,
-			unbondingSlashingSpendInfo.GetPkScriptPath(),
-			delSK,
-		)
-		require.NoError(t, err)
-
 		// covenant signs (using adaptor signature) the slashing tx
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSKs,
@@ -111,7 +105,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			UnbondingTx:              unbondingTxBytes,
 			UnbondingTime:            100 + 1,
 			SlashingTx:               testInfo.SlashingTx,
-			DelegatorSlashingSig:     delSig,
+			DelegatorUnbondingSig:    nil, // not relevant here
+			DelegatorSlashingSig:     delSlashingTxSig,
 			CovenantSlashingSigs:     covenantSigs,
 			CovenantUnbondingSigList: nil, // not relevant here
 		}

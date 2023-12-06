@@ -9,6 +9,7 @@ import (
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -21,8 +22,6 @@ func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, er
 		return BTCDelegationStatus_PENDING, nil
 	case "active":
 		return BTCDelegationStatus_ACTIVE, nil
-	case "unbonding":
-		return BTCDelegationStatus_UNBONDING, nil
 	case "unbonded":
 		return BTCDelegationStatus_UNBONDED, nil
 	case "any":
@@ -50,30 +49,31 @@ func (d *BTCDelegation) GetStakingTime() uint16 {
 // This is covered by expired for now as it is the default value.
 // Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has a covenant sig
 // Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a covenant sig
+// TODO: fix comment above
 // Expired: Delegation timelock
 func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uint32) BTCDelegationStatus {
-	if d.BtcUndelegation != nil {
-		if d.BtcUndelegation.HasAllSignatures(covenantQuorum) {
-			return BTCDelegationStatus_UNBONDED
-		}
-		// If we received an undelegation but is still does not have all required signature,
-		// delegation receives UNBONING status.
-		// Voting power from this delegation is removed from the total voting power and now we
-		// are waiting for signatures from validator and covenant for delegation to become expired.
-		// For now we do not have any unbonding time on Babylon chain, only time lock on BTC chain
-		// we may consider adding unbonding time on Babylon chain later to avoid situation where
-		// we can lose to much voting power in to short time.
-		return BTCDelegationStatus_UNBONDING
+	if d.BtcUndelegation.DelegatorUnbondingSig != nil {
+		// this means the delegator has signed unbonding signature, and Babylon will consider
+		// this BTC delegation unbonded directly
+		return BTCDelegationStatus_UNBONDED
 	}
 
-	if d.StartHeight <= btcHeight && btcHeight+w <= d.EndHeight {
-		if d.HasCovenantQuorum(covenantQuorum) {
-			return BTCDelegationStatus_ACTIVE
-		} else {
-			return BTCDelegationStatus_PENDING
-		}
+	if btcHeight < d.StartHeight || btcHeight+w > d.EndHeight {
+		// staking tx's timelock has not begun, or is less than w BTC
+		// blocks left, or is expired
+		return BTCDelegationStatus_UNBONDED
 	}
-	return BTCDelegationStatus_UNBONDED
+
+	// at this point, BTC delegation has an active timelock, and Babylon is not
+	// aware of unbonding tx with delegator's signature
+	if d.HasCovenantQuorums(covenantQuorum) {
+		// this BTC delegation receives covenant quorums on
+		// {slashing/unbonding/unbondingslashing} txs, thus is active
+		return BTCDelegationStatus_ACTIVE
+	}
+
+	// no covenant quorum yet, pending
+	return BTCDelegationStatus_PENDING
 }
 
 // VotingPower returns the voting power of the BTC delegation at a given BTC height
@@ -143,10 +143,13 @@ func (d *BTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-// HasCovenantQuorum returns whether a BTC delegation has sufficient sigs
-// from Covenant members to make a quorum
-func (d *BTCDelegation) HasCovenantQuorum(quorum uint32) bool {
-	return uint32(len(d.CovenantSigs)) >= quorum
+// HasCovenantQuorum returns whether a BTC delegation has a quorum number of signatures
+// from covenant members, including
+// - adaptor signatures on slashing tx
+// - Schnorr signatures on unbonding tx
+// - adaptor signatrues on unbonding slashing tx
+func (d *BTCDelegation) HasCovenantQuorums(quorum uint32) bool {
+	return uint32(len(d.CovenantSigs)) >= quorum && d.BtcUndelegation.HasCovenantQuorums(quorum)
 }
 
 // IsSignedByCovMember checks whether the given covenant PK has signed the delegation
@@ -165,7 +168,7 @@ func (d *BTCDelegation) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
 // each BTC validator's PK this BTC delegation restakes to
 func (d *BTCDelegation) AddCovenantSigs(covPk *bbn.BIP340PubKey, sigs []asig.AdaptorSignature, quorum uint32) error {
 	// we can ignore the covenant sig if quorum is already reached
-	if d.HasCovenantQuorum(quorum) {
+	if d.HasCovenantQuorums(quorum) {
 		return nil
 	}
 	// ensure that this covenant member has not signed the delegation yet
@@ -209,6 +212,37 @@ func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params
 		return nil, fmt.Errorf("could not create BTC staking info: %v", err)
 	}
 	return stakingInfo, nil
+}
+
+func (d *BTCDelegation) SignUnbondingTx(bsParams *Params, btcNet *chaincfg.Params, sk *btcec.PrivateKey) (*schnorr.Signature, error) {
+	stakingTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse staking transaction: %v", err)
+	}
+	unbondingTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse unbonding transaction: %v", err)
+	}
+	stakingInfo, err := d.GetStakingInfo(bsParams, btcNet)
+	if err != nil {
+		return nil, err
+	}
+	unbondingPath, err := stakingInfo.UnbondingPathSpendInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	sig, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
+		unbondingTx,
+		stakingTx,
+		d.StakingOutputIdx,
+		unbondingPath.GetPkScriptPath(),
+		sk,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return sig, nil
 }
 
 // GetUnbondingInfo returns the unbonding info of the BTC delegation

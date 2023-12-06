@@ -18,9 +18,13 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/btcstaking"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
+)
+
+const (
+	StakingOutIdx  = uint32(0)
+	UnbondingTxFee = int64(1000)
 )
 
 func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
@@ -30,36 +34,6 @@ func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
 		return nil, err
 	}
 	return GenRandomBTCValidatorWithBTCSK(r, btcSK)
-}
-
-func GenCovenantAdaptorSigs(
-	covenantSKs []*btcec.PrivateKey,
-	valPKs []*btcec.PublicKey,
-	fundingTx *wire.MsgTx,
-	pkScriptPath []byte,
-	slashingTx *bstypes.BTCSlashingTx,
-) ([]*bstypes.CovenantAdaptorSignatures, error) {
-	covenantSigs := []*bstypes.CovenantAdaptorSignatures{}
-	for _, covenantSK := range covenantSKs {
-		covMemberSigs := &bstypes.CovenantAdaptorSignatures{
-			CovPk:       bbn.NewBIP340PubKeyFromBTCPK(covenantSK.PubKey()),
-			AdaptorSigs: [][]byte{},
-		}
-		for _, valPK := range valPKs {
-			encKey, err := asig.NewEncryptionKeyFromBTCPK(valPK)
-			if err != nil {
-				return nil, err
-			}
-			covenantSig, err := slashingTx.EncSign(fundingTx, 0, pkScriptPath, covenantSK, encKey)
-			if err != nil {
-				return nil, err
-			}
-			covMemberSigs.AdaptorSigs = append(covMemberSigs.AdaptorSigs, covenantSig.MustMarshal())
-		}
-		covenantSigs = append(covenantSigs, covMemberSigs)
-	}
-
-	return covenantSigs, nil
 }
 
 func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
@@ -97,6 +71,7 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 	}, nil
 }
 
+// TODO: accomodate presign unbonding flow
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
@@ -141,7 +116,7 @@ func GenRandomBTCDelegation(
 		return nil, err
 	}
 	// staking/slashing tx
-	testingInfo := GenBTCStakingSlashingInfo(
+	stakingSlashingInfo := GenBTCStakingSlashingInfo(
 		r,
 		t,
 		net,
@@ -155,24 +130,34 @@ func GenRandomBTCDelegation(
 		slashingRate,
 	)
 
-	slashingPathSpendInfo, err := testingInfo.StakingInfo.SlashingPathSpendInfo()
+	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
-	pkScriptPath := slashingPathSpendInfo.GetPkScriptPath()
 
-	stakingMsgTx := testingInfo.StakingTx
-
-	// covenant sigs
-	covenantSigs, err := GenCovenantAdaptorSigs(covenantSKs, valPKs, stakingMsgTx, pkScriptPath, testingInfo.SlashingTx)
-	require.NoError(t, err)
+	stakingMsgTx := stakingSlashingInfo.StakingTx
 
 	// delegator sig
-	delegatorSig, err := testingInfo.SlashingTx.Sign(stakingMsgTx, 0, pkScriptPath, delSK)
+	delegatorSig, err := stakingSlashingInfo.SlashingTx.Sign(
+		stakingMsgTx,
+		StakingOutIdx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		delSK,
+	)
 	require.NoError(t, err)
 
-	serializedStakingTx, err := bbn.SerializeBTCTx(testingInfo.StakingTx)
+	// covenant sigs
+	covenantSigs, err := GenCovenantAdaptorSigs(
+		covenantSKs,
+		valPKs,
+		stakingMsgTx,
+		slashingPathSpendInfo.GetPkScriptPath(),
+		stakingSlashingInfo.SlashingTx,
+	)
 	require.NoError(t, err)
 
-	return &bstypes.BTCDelegation{
+	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
+	require.NoError(t, err)
+
+	del := &bstypes.BTCDelegation{
 		BabylonPk:        secp256k1PK,
 		BtcPk:            delBTCPK,
 		Pop:              pop,
@@ -180,12 +165,66 @@ func GenRandomBTCDelegation(
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         totalSat,
-		StakingOutputIdx: 0,
+		StakingOutputIdx: StakingOutIdx,
 		DelegatorSig:     delegatorSig,
 		CovenantSigs:     covenantSigs,
 		StakingTx:        serializedStakingTx,
-		SlashingTx:       testingInfo.SlashingTx,
-	}, nil
+		SlashingTx:       stakingSlashingInfo.SlashingTx,
+	}
+
+	/*
+		construct BTC undelegation
+	*/
+
+	// construct unbonding info
+	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
+	unbondingValue := totalSat - uint64(UnbondingTxFee)
+	w := uint16(100) // TODO: parameterise w
+	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		net,
+		delSK,
+		valPKs,
+		covenantBTCPKs,
+		covenantQuorum,
+		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
+		w+1,
+		int64(unbondingValue),
+		slashingAddress, changeAddress,
+		slashingRate,
+	)
+
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
+	require.NoError(t, err)
+	delSlashingTxSig, err := unbondingSlashingInfo.GenDelSlashingTxSig(delSK)
+	require.NoError(t, err)
+	del.BtcUndelegation = &bstypes.BTCUndelegation{
+		UnbondingTx:          unbondingTxBytes,
+		UnbondingTime:        uint32(w + 1),
+		SlashingTx:           unbondingSlashingInfo.SlashingTx,
+		DelegatorSlashingSig: delSlashingTxSig,
+	}
+
+	/*
+		covenant signs BTC undelegation
+	*/
+
+	unbondingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.UnbondingPathSpendInfo()
+	require.NoError(t, err)
+
+	covUnbondingSlashingSigs, covUnbondingSigs, err := unbondingSlashingInfo.GenCovenantSigs(
+		covenantSKs,
+		valPKs,
+		stakingMsgTx,
+		unbondingPathSpendInfo.GetPkScriptPath(),
+	)
+	require.NoError(t, err)
+
+	del.BtcUndelegation.CovenantSlashingSigs = covUnbondingSlashingSigs
+	del.BtcUndelegation.CovenantUnbondingSigList = covUnbondingSigs
+
+	return del, nil
 }
 
 type TestStakingSlashingInfo struct {
@@ -246,7 +285,7 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	require.NoError(t, err)
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
-		0,
+		StakingOutIdx,
 		slashingAddrBtc, changeAddrBtc,
 		2000,
 		slashingRate,
@@ -276,7 +315,7 @@ func GenBTCStakingSlashingInfo(
 	slashingRate sdkmath.LegacyDec,
 ) *TestStakingSlashingInfo {
 	// an arbitrary input
-	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+1000))
+	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+UnbondingTxFee))
 	outPoint := &spend.prevOut
 	return GenBTCStakingSlashingInfoWithOutPoint(
 		r,
@@ -332,7 +371,7 @@ func GenBTCUnbondingSlashingInfo(
 	require.NoError(t, err)
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
-		0,
+		StakingOutIdx,
 		slashingAddrBtc, changeAddrBtc,
 		2000,
 		slashingRate,
@@ -346,4 +385,63 @@ func GenBTCUnbondingSlashingInfo(
 		SlashingTx:    slashingTx,
 		UnbondingInfo: unbondingInfo,
 	}
+}
+
+func (info *TestUnbondingSlashingInfo) GenDelSlashingTxSig(sk *btcec.PrivateKey) (*bbn.BIP340Signature, error) {
+	unbondingTxMsg := info.UnbondingTx
+	unbondingTxSlashingPathInfo, err := info.UnbondingInfo.SlashingPathSpendInfo()
+	if err != nil {
+		return nil, err
+	}
+	slashingTxSig, err := info.SlashingTx.Sign(
+		unbondingTxMsg,
+		StakingOutIdx,
+		unbondingTxSlashingPathInfo.GetPkScriptPath(),
+		sk,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return slashingTxSig, nil
+}
+
+func (info *TestUnbondingSlashingInfo) GenCovenantSigs(
+	covSKs []*btcec.PrivateKey,
+	valPKs []*btcec.PublicKey,
+	stakingTx *wire.MsgTx,
+	unbondingPkScriptPath []byte,
+) ([]*bstypes.CovenantAdaptorSignatures, []*bstypes.SignatureInfo, error) {
+	unbondingSlashingPathInfo, err := info.UnbondingInfo.SlashingPathSpendInfo()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	covUnbondingSlashingSigs, err := GenCovenantAdaptorSigs(
+		covSKs,
+		valPKs,
+		info.UnbondingTx,
+		unbondingSlashingPathInfo.GetPkScriptPath(),
+		info.SlashingTx,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	covUnbondingSigs, err := GenCovenantUnbondingSigs(
+		covSKs,
+		stakingTx,
+		StakingOutIdx,
+		unbondingPkScriptPath,
+		info.UnbondingTx,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	covUnbondingSigList := []*bstypes.SignatureInfo{}
+	for i := range covUnbondingSigs {
+		covUnbondingSigList = append(covUnbondingSigList, &bstypes.SignatureInfo{
+			Pk:  bbn.NewBIP340PubKeyFromBTCPK(covSKs[i].PubKey()),
+			Sig: bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
+		})
+	}
+	return covUnbondingSlashingSigs, covUnbondingSigList, nil
 }

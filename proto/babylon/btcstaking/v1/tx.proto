@@ -13,6 +13,7 @@ import "babylon/btcstaking/v1/pop.proto";
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
 // Msg defines the Msg service.
+// TODO: handle unbonding tx with full witness
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
@@ -20,16 +21,12 @@ service Msg {
   rpc CreateBTCValidator(MsgCreateBTCValidator) returns (MsgCreateBTCValidatorResponse);
   // CreateBTCDelegation creates a new BTC delegation
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
-  // BtcUndelegate undelegates funds from exsitng btc delegation
-  rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
-  // AddCovenantSig handles a signature from covenant for slashing tx of staking tx for delegation
-  rpc AddCovenantSig(MsgAddCovenantSig) returns (MsgAddCovenantSigResponse);
-  // AddCovenantUnbondingSigs handles two signatures from covenant for:
-  // - unbonding tx submitted to babylon by staker
-  // - slashing tx corresponding to unbonding tx submitted to babylon by staker
-  rpc AddCovenantUnbondingSigs(MsgAddCovenantUnbondingSigs) returns (MsgAddCovenantUnbondingSigsResponse);
+  // AddCovenantSigs handles signatures from a covenant member
+  rpc AddCovenantSigs(MsgAddCovenantSigs) returns (MsgAddCovenantSigsResponse);
   // UpdateParams updates the btcstaking module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+  // BTCUndelegate handles a signature on unbonding tx from its delegator
+  rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
 }
 
 // MsgCreateBTCValidator is the message for creating a BTC validator
@@ -79,40 +76,32 @@ message MsgCreateBTCDelegation {
   // slashing_tx is the slashing tx
   // Note that the tx itself does not contain signatures, which are off-chain.
   bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
-  // delegator_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
+  // delegator_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the staking tx output.
   // The staking tx output further needs signatures from covenant and validator in
   // order to be spendable.
-  bytes delegator_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  bytes delegator_slashing_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+
+  /// fields related to on-demand unbonding
+  // unbonding_tx is bitcoin unbonding transaction i.e transaction that spends
+  // staking output and sends it to the unbonding output
+  bytes unbonding_tx = 11;
+  // unbonding_time is the time lock used in unbonding transaction
+  uint32 unbonding_time = 12;
+  // unbonding_value is amount of satoshis locked in unbonding output.
+  // NOTE: staking_value and unbonding_value could be different because of the difference between the fee for staking tx and that for unbonding
+  int64 unbonding_value = 13;
+  // unbonding_slashing_tx is the slashing tx which slash unbonding contract
+  // Note that the tx itself does not contain signatures, which are off-chain.
+  bytes unbonding_slashing_tx = 14 [ (gogoproto.customtype) = "BTCSlashingTx" ];
+  // delegator_unbonding_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
+  bytes delegator_unbonding_slashing_sig = 15 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 }
 // MsgCreateBTCDelegationResponse is the response for MsgCreateBTCDelegation
 message MsgCreateBTCDelegationResponse {}
 
-// MsgBTCUndelegate is the message undelegating existing and active delegation
-message MsgBTCUndelegate {
-  option (cosmos.msg.v1.signer) = "signer";
-
-  string signer = 1;
-  // unbonding_tx is bitcoin unbonding transaction i.e transaction that spends
-  // staking output and sends it to the unbonding output
-  bytes unbonding_tx = 2;
-  // unbonding_time is the time lock used in unbonding transaction
-  uint32 unbonding_time = 3;
-  // unbonding_value is amount of satoshis locked in unbonding output.
-  // NOTE: staking_value and unbonding_value could be different because of the difference between the fee for staking tx and that for unbonding
-  int64 unbonding_value = 4;
-  // slashing_tx is the slashing tx which slash unbonding contract
-  // Note that the tx itself does not contain signatures, which are off-chain.
-  bytes slashing_tx = 5 [ (gogoproto.customtype) = "BTCSlashingTx" ];
-  // delegator_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
-  bytes delegator_slashing_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-}
-
-// MsgBtcUndelegateResponse is the response for MsgBtcUndelegate
-message MsgBTCUndelegateResponse {}
-
-// MsgAddCovenantSig is the message for handling a signature from covenant
-message MsgAddCovenantSig {
+// MsgAddCovenantSigs is the message for handling signatures from a covenant member
+message MsgAddCovenantSigs {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
@@ -124,10 +113,36 @@ message MsgAddCovenantSig {
   // sigs is a list of adaptor signatures of the covenant
   // the order of sigs should respect the order of validators
   // of the corresponding delegation
-  repeated bytes sigs = 4;
+  repeated bytes slashing_tx_sigs = 4;
+  // unbonding_tx_sig is the signature of the covenant on the unbonding tx submitted to babylon
+  // the signature follows encoding in BIP-340 spec
+  bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+  // slashing_unbonding_tx_sigs is a list of adaptor signatures of the covenant
+  // on slashing tx corresponding to unbonding tx submitted to babylon
+  // the order of sigs should respect the order of validators
+  // of the corresponding delegation
+  repeated bytes slashing_unbonding_tx_sigs = 6;
 }
-// MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
-message MsgAddCovenantSigResponse {}
+// MsgAddCovenantSigsResponse is the response for MsgAddCovenantSigs
+message MsgAddCovenantSigsResponse {}
+
+
+// MsgBTCUndelegate is the message for handling signature on unbonding tx
+// from its delegator. This signature effectively proves that the delegator 
+// wants to unbond this BTC delegation
+message MsgBTCUndelegate {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  string signer = 1;
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 2;
+  // unbonding_tx_sig is the signature of the staker on the unbonding tx submitted to babylon
+  // the signature follows encoding in BIP-340 spec
+  bytes unbonding_tx_sig = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
+}
+// MsgBTCUndelegateResponse is the response for MsgBTCUndelegate
+message MsgBTCUndelegateResponse {}
 
 // MsgUpdateParams defines a message for updating btcstaking module parameters.
 message MsgUpdateParams {
@@ -147,25 +162,3 @@ message MsgUpdateParams {
 
 // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
 message MsgUpdateParamsResponse {}
-
-// MsgAddCovenantUnbondingSigs is the message for handling a signature from covenant
-message MsgAddCovenantUnbondingSigs {
-  option (cosmos.msg.v1.signer) = "signer";
-
-  string signer = 1;
-  // pk is the BTC public key of the covenant member
-  bytes pk = 2  [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // staking_tx_hash is the hash of the staking tx.
-  // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
-  string staking_tx_hash = 3;
-  // unbonding_tx_sig is the signature of the covenant on the unbonding tx submitted to babylon
-  // the signature follows encoding in BIP-340 spec
-  bytes unbonding_tx_sig = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-  // slashing_unbonding_tx_sigs is a list of adaptor signatures of the covenant
-  // on slashing tx corresponding to unbonding tx submitted to babylon
-  // the order of sigs should respect the order of validators
-  // of the corresponding delegation
-  repeated bytes slashing_unbonding_tx_sigs = 5;
-}
-// MsgAddCovenantSigResponse is the response for MsgAddCovenantSig
-message MsgAddCovenantUnbondingSigsResponse {}

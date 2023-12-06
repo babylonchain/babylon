@@ -3,11 +3,13 @@ package chain
 import (
 	"encoding/hex"
 	"strconv"
+	"strings"
 
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
-	"cosmossdk.io/math"
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/stretchr/testify/require"
@@ -18,7 +20,7 @@ import (
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *math.LegacyDec) {
+func (n *NodeConfig) CreateBTCValidator(babylonPK *secp256k1.PubKey, btcPK *bbn.BIP340PubKey, pop *bstypes.ProofOfPossession, moniker, identity, website, securityContract, details string, commission *sdkmath.LegacyDec) {
 	n.LogActionF("creating BTC validator")
 
 	// get babylon PK hex
@@ -49,6 +51,11 @@ func (n *NodeConfig) CreateBTCDelegation(
 	stakingValue btcutil.Amount,
 	slashingTx *bstypes.BTCSlashingTx,
 	delegatorSig *bbn.BIP340Signature,
+	unbondingTx *wire.MsgTx,
+	unbondingSlashingTx *bstypes.BTCSlashingTx,
+	unbondingTime uint16,
+	unbondingValue btcutil.Amount,
+	delUnbondingSlashingSig *bbn.BIP340Signature,
 ) {
 	n.LogActionF("creating BTC delegation")
 
@@ -77,22 +84,50 @@ func (n *NodeConfig) CreateBTCDelegation(
 	// get delegator sig hex
 	delegatorSigHex := delegatorSig.ToHexStr()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, valPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, "--from=val"}
+	// on-demand unbonding related
+	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingTx)
+	require.NoError(n.t, err)
+	unbondingTxHex := hex.EncodeToString(unbondingTxBytes)
+	unbondingSlashingTxHex := unbondingSlashingTx.ToHexStr()
+	unbondingTimeStr := sdkmath.NewUint(uint64(unbondingTime)).String()
+	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
+	delUnbondingSlashingSigHex := delUnbondingSlashingSig.ToHexStr()
+
+	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-delegation", babylonPKHex, btcPkHex, popHex, stakingTxInfoHex, valPKHex, stakingTimeString, stakingValueString, slashingTxHex, delegatorSigHex, unbondingTxHex, unbondingSlashingTxHex, unbondingTimeStr, unbondingValueStr, delUnbondingSlashingSigHex, "--from=val"}
 	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully created BTC delegation")
 }
 
-func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash string, sigs [][]byte) {
+func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash string, slashingSigs [][]byte, unbondingSig *bbn.BIP340Signature, unbondingSlashingSigs [][]byte) {
 	n.LogActionF("adding covenant signature")
 
 	covPKHex := covPK.MarshalHex()
 
-	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sig", covPKHex, stakingTxHash}
-	for _, sig := range sigs {
-		cmd = append(cmd, hex.EncodeToString(sig))
+	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sigs", covPKHex, stakingTxHash}
+
+	// slashing signatures
+	slashingSigStrList := []string{}
+	for _, sig := range slashingSigs {
+		slashingSigStrList = append(slashingSigStrList, hex.EncodeToString(sig))
 	}
+	slashingSigStr := strings.Join(slashingSigStrList, ",")
+	cmd = append(cmd, slashingSigStr)
+
+	// on-demand unbonding stuff
+	cmd = append(cmd, unbondingSig.ToHexStr())
+	unbondingSlashingSigStrList := []string{}
+	for _, sig := range unbondingSlashingSigs {
+		unbondingSlashingSigStrList = append(unbondingSlashingSigStrList, hex.EncodeToString(sig))
+	}
+	unbondingSlashingSigStr := strings.Join(unbondingSlashingSigStrList, ",")
+	cmd = append(cmd, unbondingSlashingSigStr)
+
+	// used key
 	cmd = append(cmd, "--from=val")
+	// gas
+	cmd = append(cmd, "--gas=auto", "--gas-prices=1ubbn", "--gas-adjustment=1.3")
+
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added covenant sigatures")
@@ -146,45 +181,6 @@ func (n *NodeConfig) AddFinalitySig(valBTCPK *bbn.BIP340PubKey, blockHeight uint
 	n.LogActionF("successfully added finality signature")
 }
 
-func (n *NodeConfig) CreateBTCUndelegation(
-	unbondingTx *wire.MsgTx,
-	slashingTx *bstypes.BTCSlashingTx,
-	unbondingTimeBlocks uint16,
-	unbondingValue btcutil.Amount,
-	delegatorSig *bbn.BIP340Signature) {
-	n.LogActionF("creating BTC undelegation")
-
-	txBytes, err := bbn.SerializeBTCTx(unbondingTx)
-	require.NoError(n.t, err)
-	// get staking tx hex
-	unbondingTxHex := hex.EncodeToString(txBytes)
-	// get slashing tx hex
-	slashingTxHex := slashingTx.ToHexStr()
-	// get delegator sig hex
-	delegatorSigHex := delegatorSig.ToHexStr()
-
-	unbondingTimeStr := sdkmath.NewUint(uint64(unbondingTimeBlocks)).String()
-	unbondingValueStr := sdkmath.NewInt(int64(unbondingValue)).String()
-
-	cmd := []string{"babylond", "tx", "btcstaking", "create-btc-undelegation", unbondingTxHex, slashingTxHex, unbondingTimeStr, unbondingValueStr, delegatorSigHex, "--from=val"}
-	_, _, err = n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
-	require.NoError(n.t, err)
-	n.LogActionF("successfully created BTC delegation")
-}
-
-func (n *NodeConfig) AddValidatorUnbondingSig(valPK *bbn.BIP340PubKey, delPK *bbn.BIP340PubKey, stakingTxHash string, sig *bbn.BIP340Signature) {
-	n.LogActionF("adding validator signature")
-
-	valPKHex := valPK.MarshalHex()
-	delPKHex := delPK.MarshalHex()
-	sigHex := sig.ToHexStr()
-
-	cmd := []string{"babylond", "tx", "btcstaking", "add-validator-unbonding-sig", valPKHex, delPKHex, stakingTxHash, sigHex, "--from=val"}
-	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
-	require.NoError(n.t, err)
-	n.LogActionF("successfully added validator unbonding sig")
-}
-
 func (n *NodeConfig) AddCovenantUnbondingSigs(
 	covPK *bbn.BIP340PubKey,
 	stakingTxHash string,
@@ -203,4 +199,15 @@ func (n *NodeConfig) AddCovenantUnbondingSigs(
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully added covenant unbonding sigs")
+}
+
+func (n *NodeConfig) BTCUndelegate(stakingTxHash *chainhash.Hash, delUnbondingSig *schnorr.Signature) {
+	n.LogActionF("undelegate by using signature on unbonding tx from delegator")
+
+	sigHex := bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig).ToHexStr()
+	cmd := []string{"babylond", "tx", "btcstaking", "btc-undelegate", stakingTxHash.String(), sigHex, "--from=val"}
+
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully added signature on unbonding tx from delegator")
 }

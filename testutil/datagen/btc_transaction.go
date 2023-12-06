@@ -10,8 +10,6 @@ import (
 	"time"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
-
-	"github.com/babylonchain/babylon/btctxformatter"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
@@ -367,7 +365,7 @@ func GenRandomTx(r *rand.Rand) *wire.MsgTx {
 	return tx
 }
 
-func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) {
+func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *txformat.RawBtcCheckpoint) {
 	txs := []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
 	builder := txscript.NewScriptBuilder()
 
@@ -375,9 +373,9 @@ func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *btctxformatter.RawBtc
 	rawBTCCkpt := GetRandomRawBtcCheckpoint(r)
 	tag := GenRandomByteArray(r, 4)
 	// encode raw checkpoint to two halves
-	firstHalf, secondHalf, err := btctxformatter.EncodeCheckpointData(
-		btctxformatter.BabylonTag(tag),
-		btctxformatter.CurrentVersion,
+	firstHalf, secondHalf, err := txformat.EncodeCheckpointData(
+		txformat.BabylonTag(tag),
+		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)
 	if err != nil {
