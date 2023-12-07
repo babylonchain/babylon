@@ -47,11 +47,6 @@ func BuildSlashingTxFromOutpoint(
 		return nil, ErrInvalidSlashingRate
 	}
 
-	// Check if slashing address and change address are the same
-	if slashingAddress.EncodeAddress() == changeAddress.EncodeAddress() {
-		return nil, ErrSameAddress
-	}
-
 	// Calculate the amount to be slashed
 	slashingRateFloat64, err := slashingRate.Float64()
 	if err != nil {
