@@ -22,7 +22,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 	if err != nil {
 		// invoking TallyBlocks when BTC staking protocol is not activated is a programming error
 		panic(fmt.Errorf("cannot tally a block when the BTC staking protocol hasn't been activated yet, current height: %v, activated height: %v",
-			sdkCtx.BlockHeight(), activatedHeight))
+			sdkCtx.HeaderInfo().Height, activatedHeight))
 	}
 
 	// start finalising blocks since max(activatedHeight, nextHeightToFinalize)
@@ -38,7 +38,7 @@ func (k Keeper) TallyBlocks(ctx context.Context) {
 	// - has validators, finalised: impossible to happen, panic
 	// - does not have validators, finalised: impossible to happen, panic
 	// After this for loop, the blocks since earliest activated height are either finalised or non-finalisable
-	for i := startHeight; i <= uint64(sdkCtx.BlockHeight()); i++ {
+	for i := startHeight; i <= uint64(sdkCtx.HeaderInfo().Height); i++ {
 		ib, err := k.GetBlock(ctx, i)
 		if err != nil {
 			panic(err) // failing to get an existing block is a programming error

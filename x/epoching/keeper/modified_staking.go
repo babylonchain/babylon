@@ -28,13 +28,16 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 	if err != nil {
 		panic(err)
 	}
-	epochBoundaryHeader := finalizedEpoch.LastBlockHeader
 	params, err := k.stk.GetParams(ctx)
 	if err != nil {
 		panic(err)
 	}
-	epochBoundaryHeader.Time = epochBoundaryHeader.Time.Add(params.UnbondingTime) // nullifies the effect of UnbondingTime in staking module
-	ctx = sdkCtx.WithBlockHeader(*epochBoundaryHeader)
+	// nullifies the effect of UnbondingTime in staking module
+	// NOTE: we offset time in both Header and HeaderInfo for full compatibility
+	finalizedTime := finalizedEpoch.LastBlockTime.Add(params.UnbondingTime)
+	headerInfo := sdkCtx.HeaderInfo()
+	headerInfo.Time = finalizedTime
+	ctx = sdkCtx.WithBlockTime(finalizedTime).WithHeaderInfo(headerInfo)
 
 	// unbond all mature validators till the last block of the given epoch
 	matureValidators := k.getAllMatureValidators(sdkCtx)
@@ -50,7 +53,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 	}
 
 	// get all mature unbonding delegations the epoch boundary from the ubd queue.
-	matureUnbonds, err := k.stk.DequeueAllMatureUBDQueue(ctx, epochBoundaryHeader.Time)
+	matureUnbonds, err := k.stk.DequeueAllMatureUBDQueue(ctx, finalizedTime)
 	if err != nil {
 		panic(err)
 	}
@@ -88,7 +91,7 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 	}
 
 	// get all mature redelegations till the epoch boundary from the red queue.
-	matureRedelegations, err := k.stk.DequeueAllMatureRedelegationQueue(ctx, epochBoundaryHeader.Time)
+	matureRedelegations, err := k.stk.DequeueAllMatureRedelegationQueue(ctx, finalizedTime)
 	if err != nil {
 		panic(err)
 	}
@@ -164,8 +167,8 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) []abci.Va
 func (k Keeper) getAllMatureValidators(ctx sdk.Context) []sdk.ValAddress {
 	matureValAddrs := []sdk.ValAddress{}
 
-	blockTime := ctx.BlockTime()
-	blockHeight := ctx.BlockHeight()
+	blockTime := ctx.HeaderInfo().Time
+	blockHeight := ctx.HeaderInfo().Height
 
 	// unbondingValIterator will contains all validator addresses indexed under
 	// the ValidatorQueueKey prefix. Note, the entire index key is composed as

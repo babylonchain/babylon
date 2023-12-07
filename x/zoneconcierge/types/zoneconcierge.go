@@ -21,11 +21,14 @@ func (p *ProofEpochSealed) ValidateBasic() error {
 func (ih *IndexedHeader) ValidateBasic() error {
 	if len(ih.ChainId) == 0 {
 		return fmt.Errorf("empty ChainID")
-	} else if len(ih.Hash) == 0 {
+	}
+	if len(ih.Hash) == 0 {
 		return fmt.Errorf("empty Hash")
-	} else if ih.BabylonHeader == nil {
-		return fmt.Errorf("nil BabylonHeader")
-	} else if len(ih.BabylonTxHash) == 0 {
+	}
+	if len(ih.BabylonHeaderHash) == 0 {
+		return fmt.Errorf("empty BabylonHeader hash")
+	}
+	if len(ih.BabylonTxHash) == 0 {
 		return fmt.Errorf("empty BabylonTxHash")
 	}
 	return nil
@@ -38,13 +41,20 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 
 	if ih.ChainId != ih2.ChainId {
 		return false
-	} else if !bytes.Equal(ih.Hash, ih2.Hash) {
+	}
+	if !bytes.Equal(ih.Hash, ih2.Hash) {
 		return false
-	} else if ih.Height != ih2.Height {
+	}
+	if ih.Height != ih2.Height {
 		return false
-	} else if !bytes.Equal(ih.BabylonHeader.AppHash, ih2.BabylonHeader.AppHash) {
+	}
+	if !bytes.Equal(ih.BabylonHeaderHash, ih2.BabylonHeaderHash) {
 		return false
-	} else if ih.BabylonEpoch != ih2.BabylonEpoch {
+	}
+	if ih.BabylonHeaderHeight != ih2.BabylonHeaderHeight {
+		return false
+	}
+	if ih.BabylonEpoch != ih2.BabylonEpoch {
 		return false
 	}
 	return bytes.Equal(ih.BabylonTxHash, ih2.BabylonTxHash)

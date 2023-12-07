@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/incentive/types"
@@ -40,7 +41,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *bstype
 
 func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {
 	// update BTC staking gauge
-	height := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
+	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	gauge := types.NewGauge(btcStakingReward...)
 	k.SetBTCStakingGauge(ctx, height, gauge)
 

@@ -29,7 +29,7 @@ func (k Keeper) proveFinalizedChainInfo(
 	}
 
 	// proof that the block is in this epoch
-	proof.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeader, epochInfo)
+	proof.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeaderHeight, epochInfo)
 	if err != nil {
 		return nil, err
 	}

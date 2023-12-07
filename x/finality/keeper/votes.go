@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -22,7 +23,7 @@ func (k Keeper) HasSig(ctx context.Context, height uint64, valBtcPK *bbn.BIP340P
 }
 
 func (k Keeper) GetSig(ctx context.Context, height uint64, valBtcPK *bbn.BIP340PubKey) (*bbn.SchnorrEOTSSig, error) {
-	if uint64(sdk.UnwrapSDKContext(ctx).BlockHeight()) < height {
+	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
 		return nil, types.ErrHeightTooHigh
 	}
 	store := k.voteStore(ctx, height)

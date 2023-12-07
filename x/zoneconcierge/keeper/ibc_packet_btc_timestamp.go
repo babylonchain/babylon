@@ -147,7 +147,7 @@ func (k Keeper) createBTCTimestamp(ctx context.Context, chainID string, channel 
 		}
 
 		// get proofHeaderInEpoch
-		proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader.BabylonHeader, finalizedInfo.EpochInfo)
+		proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader.BabylonHeaderHeight, finalizedInfo.EpochInfo)
 		if err != nil {
 			return nil, fmt.Errorf("failed to generate proofHeaderInEpoch for chain %s: %w", chainID, err)
 		}

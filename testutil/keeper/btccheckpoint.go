@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	"testing"
+
+	"cosmossdk.io/core/header"
 	storemetrics "cosmossdk.io/store/metrics"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	"testing"
 
 	"math/big"
 
@@ -51,6 +53,7 @@ func NewBTCCheckpointKeeper(
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	// Initialize params
 	if err := k.SetParams(ctx, btcctypes.DefaultParams()); err != nil {

@@ -3,13 +3,14 @@ package keeper
 import (
 	"context"
 	"fmt"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"time"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/telemetry"
-    clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
 	coretypes "github.com/cosmos/ibc-go/v8/modules/core/types"
@@ -35,7 +36,7 @@ func (k Keeper) SendIBCPacket(ctx context.Context, channel channeltypes.Identifi
 
 	// timeout
 	timeoutPeriod := time.Duration(k.GetParams(sdkCtx).IbcPacketTimeoutSeconds) * time.Second
-	timeoutTime := uint64(sdkCtx.BlockHeader().Time.Add(timeoutPeriod).UnixNano())
+	timeoutTime := uint64(sdkCtx.HeaderInfo().Time.Add(timeoutPeriod).UnixNano())
 	zeroheight := clienttypes.ZeroHeight()
 
 	seq, err := k.ics4Wrapper.SendPacket(

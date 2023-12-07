@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -20,7 +21,7 @@ func (k Keeper) RecordNewDelegationState(ctx context.Context, delAddr sdk.AccAdd
 		}
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height, time := sdkCtx.BlockHeight(), sdkCtx.BlockTime()
+	height, time := sdkCtx.HeaderInfo().Height, sdkCtx.HeaderInfo().Time
 	DelegationStateUpdate := types.DelegationStateUpdate{
 		State:       state,
 		ValAddr:     valAddr.String(),

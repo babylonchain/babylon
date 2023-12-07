@@ -73,18 +73,14 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 
 	// get current BTC height
-	btcTipHeight, err := k.GetCurrentBTCHeight(sdkCtx)
-	if err != nil {
-		return nil, err
-	}
+	btcTipHeight := k.btclcKeeper.GetTipInfo(ctx).Height
 	// get value of w
-	wValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
+	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	store := k.btcDelegationStore(sdkCtx)
+	store := k.btcDelegationStore(ctx)
 	var btcDels []*types.BTCDelegation
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		var btcDel types.BTCDelegation
@@ -142,7 +138,7 @@ func (k Keeper) BTCValidatorCurrentPower(ctx context.Context, req *types.QueryBT
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	power := uint64(0)
-	curHeight := uint64(sdkCtx.BlockHeight())
+	curHeight := uint64(sdkCtx.HeaderInfo().Height)
 
 	// if voting power table is recorded at the current height, use this voting power
 	if k.HasVotingPowerTable(sdkCtx, curHeight) {
@@ -257,8 +253,6 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
 	// decode staking tx hash
 	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHashHex)
 	if err != nil {
@@ -266,14 +260,14 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	}
 
 	// find BTC delegation
-	btcDel := k.getBTCDelegation(sdkCtx, *stakingTxHash)
+	btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
 	if btcDel == nil {
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
 	// check whether it's active
-	currentTip := k.btclcKeeper.GetTipInfo(sdkCtx)
-	currentWValue := k.btccKeeper.GetParams(sdkCtx).CheckpointFinalizationTimeout
+	currentTip := k.btclcKeeper.GetTipInfo(ctx)
+	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	isActive := btcDel.GetStatus(
 		currentTip.Height,
 		currentWValue,
@@ -281,13 +275,10 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	) == types.BTCDelegationStatus_ACTIVE
 
 	// get its undelegation info
-	var undelegationInfo *types.BTCUndelegationInfo
-	if btcDel.BtcUndelegation != nil {
-		undelegationInfo = &types.BTCUndelegationInfo{
-			UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
-			UnbondingTime:            btcDel.BtcUndelegation.UnbondingTime,
-			CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
-		}
+	undelegationInfo := &types.BTCUndelegationInfo{
+		UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
+		UnbondingTime:            btcDel.BtcUndelegation.UnbondingTime,
+		CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
 	}
 
 	return &types.QueryBTCDelegationResponse{

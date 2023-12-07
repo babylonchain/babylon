@@ -26,7 +26,7 @@ func FuzzBTCHeightIndex(f *testing.F) {
 
 		// randomise Babylon height and BTC height
 		babylonHeight := datagen.RandomInt(r, 100)
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btcHeight := datagen.RandomInt(r, 100)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: btcHeight}).Times(1)
 		keeper.IndexBTCHeight(ctx)

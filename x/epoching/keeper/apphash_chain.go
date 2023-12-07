@@ -35,8 +35,8 @@ func (k Keeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
 // RecordAppHash stores the AppHash of the current header to KVStore
 func (k Keeper) RecordAppHash(ctx context.Context) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height := uint64(sdkCtx.BlockHeader().Height)
-	appHash := sdkCtx.BlockHeader().AppHash
+	height := uint64(sdkCtx.HeaderInfo().Height)
+	appHash := sdkCtx.HeaderInfo().AppHash
 	// HACK: the app hash for the first height is set to nil
 	// instead of the hash of an empty byte slice as intended
 	// see proposed fix: https://github.com/cosmos/cosmos-sdk/pull/18524
@@ -58,7 +58,7 @@ func (k Keeper) GetAllAppHashesForEpoch(ctx context.Context, epoch *types.Epoch)
 
 	// fetch each AppHash in this epoch
 	appHashs := [][]byte{}
-	for i := epoch.FirstBlockHeight; i <= uint64(epoch.LastBlockHeader.Height); i++ {
+	for i := epoch.FirstBlockHeight; i <= epoch.GetLastBlockHeight(); i++ {
 		appHash, err := k.GetAppHash(ctx, i)
 		if err != nil {
 			return nil, err
@@ -77,7 +77,7 @@ func (k Keeper) ProveAppHashInEpoch(ctx context.Context, height uint64, epochNum
 		return nil, err
 	}
 	if !epoch.WithinBoundary(height) {
-		return nil, errorsmod.Wrapf(types.ErrInvalidHeight, "the given height %d is not in epoch %d (interval [%d, %d])", height, epoch.EpochNumber, epoch.FirstBlockHeight, uint64(epoch.LastBlockHeader.Height))
+		return nil, errorsmod.Wrapf(types.ErrInvalidHeight, "the given height %d is not in epoch %d (interval [%d, %d])", height, epoch.EpochNumber, epoch.FirstBlockHeight, epoch.GetLastBlockHeight())
 	}
 
 	// calculate index of this height in this epoch

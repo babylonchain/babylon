@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -90,7 +91,7 @@ func (k Keeper) CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.M
 	// check if SetInitialCommission fails or not
 	commission := stakingtypes.NewCommissionWithTime(
 		msg.Commission.Rate, msg.Commission.MaxRate,
-		msg.Commission.MaxChangeRate, sdkCtx.BlockHeader().Time,
+		msg.Commission.MaxChangeRate, sdkCtx.HeaderInfo().Time,
 	)
 	if _, err := validator.SetInitialCommission(commission); err != nil {
 		return err

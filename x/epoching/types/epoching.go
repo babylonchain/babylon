@@ -10,7 +10,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -18,12 +17,12 @@ import (
 // The relationship between block and epoch is as follows, assuming epoch interval of 5:
 // 0 | 1 2 3 4 5 | 6 7 8 9 10 |
 // 0 |     1     |     2      |
-func NewEpoch(epochNumber uint64, epochInterval uint64, firstBlockHeight uint64, lastBlockHeader *tmproto.Header) Epoch {
+func NewEpoch(epochNumber uint64, epochInterval uint64, firstBlockHeight uint64, lastBlockTime *time.Time) Epoch {
 	return Epoch{
 		EpochNumber:          epochNumber,
 		CurrentEpochInterval: epochInterval,
 		FirstBlockHeight:     firstBlockHeight,
-		LastBlockHeader:      lastBlockHeader,
+		LastBlockTime:        lastBlockTime,
 		// NOTE: SealerHeader will be set in the next epoch
 	}
 }
@@ -35,6 +34,10 @@ func (e Epoch) GetLastBlockHeight() uint64 {
 	return e.FirstBlockHeight + e.CurrentEpochInterval - 1
 }
 
+func (e Epoch) GetSealerBlockHeight() uint64 {
+	return e.GetLastBlockHeight() + 2
+}
+
 func (e Epoch) GetSecondBlockHeight() uint64 {
 	if e.EpochNumber == 0 {
 		panic("should not be called when epoch number is zero")
@@ -43,18 +46,18 @@ func (e Epoch) GetSecondBlockHeight() uint64 {
 }
 
 func (e Epoch) IsLastBlock(ctx context.Context) bool {
-	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).BlockHeader().Height)
+	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 }
 
 func (e Epoch) IsFirstBlock(ctx context.Context) bool {
-	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).BlockHeader().Height)
+	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 }
 
 func (e Epoch) IsSecondBlock(ctx context.Context) bool {
 	if e.EpochNumber == 0 {
 		return false
 	}
-	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).BlockHeader().Height)
+	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 }
 
 // IsFirstBlockOfNextEpoch checks whether the current block is the first block of
@@ -65,16 +68,16 @@ func (e Epoch) IsSecondBlock(ctx context.Context) bool {
 func (e Epoch) IsFirstBlockOfNextEpoch(ctx context.Context) bool {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if e.EpochNumber == 0 {
-		return sdkCtx.BlockHeader().Height == 1
+		return sdkCtx.HeaderInfo().Height == 1
 	} else {
-		height := uint64(sdkCtx.BlockHeader().Height)
+		height := uint64(sdkCtx.HeaderInfo().Height)
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
 }
 
 // WithinBoundary checks whether the given height is within this epoch or not
 func (e Epoch) WithinBoundary(height uint64) bool {
-	if height < e.FirstBlockHeight || height > uint64(e.LastBlockHeader.Height) {
+	if height < e.FirstBlockHeight || height > uint64(e.GetLastBlockHeight()) {
 		return false
 	} else {
 		return true

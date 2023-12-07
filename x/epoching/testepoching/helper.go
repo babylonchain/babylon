@@ -65,7 +65,7 @@ func NewHelper(t *testing.T) *Helper {
 	}
 
 	app := app.SetupWithGenesisValSet(t, valSet.GenesisKeys, []authtypes.GenesisAccount{acc}, balance)
-	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
+	ctx := app.BaseApp.NewContext(false).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	epochingKeeper := app.EpochingKeeper
 
@@ -106,7 +106,7 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 
 	// setup the app and ctx
 	app := app.SetupWithGenesisValSet(t, valSet.GenesisKeys, GenAccs, balance)
-	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
+	ctx := app.BaseApp.NewContext(false).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper

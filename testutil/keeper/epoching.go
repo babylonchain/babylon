@@ -1,9 +1,11 @@
 package keeper
 
 import (
+	"testing"
+
+	"cosmossdk.io/core/header"
 	storemetrics "cosmossdk.io/store/metrics"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	"testing"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -44,6 +46,7 @@ func EpochingKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 	// TODO: add msgServiceRouter?
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {

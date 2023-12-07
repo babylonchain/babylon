@@ -21,7 +21,7 @@ func getEpochInfoKey(epochNumber uint64) []byte {
 
 func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	epochInfoKey := getEpochInfoKey(epoch.EpochNumber)
-	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, epochInfoKey, epoch.SealerHeader.Height)
+	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, epochInfoKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func getValSetKey(epochNumber uint64) []byte {
 
 func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
 	valSetKey := getValSetKey(epoch.EpochNumber)
-	_, _, proof, err := k.QueryStore(checkpointingtypes.StoreKey, valSetKey, epoch.SealerHeader.Height)
+	_, _, proof, err := k.QueryStore(checkpointingtypes.StoreKey, valSetKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +118,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	// This is different from the checkpoint verification rules in checkpointing,
 	// where a checkpoint with valid BLS multisig but different appHash signals a dishonest majority equivocation.
 	appHashInCkpt := rawCkpt.AppHash
-	appHashInSealerHeader := checkpointingtypes.AppHash(epoch.SealerHeader.AppHash)
+	appHashInSealerHeader := checkpointingtypes.AppHash(epoch.SealerHeaderHash)
 	if !appHashInCkpt.Equal(appHashInSealerHeader) {
 		return fmt.Errorf("AppHash is not same in rawCkpt (%s) and epoch's SealerHeader (%s)", appHashInCkpt.String(), appHashInSealerHeader.String())
 	}
@@ -147,7 +147,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	}
 
 	// get the Merkle root, i.e., the AppHash of the sealer header
-	root := epoch.SealerHeader.AppHash
+	root := epoch.SealerHeaderHash
 
 	// Ensure The epoch medatata is committed to the app_hash of the sealer header
 	epochBytes, err := epoch.Marshal()

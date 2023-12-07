@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
+	"cosmossdk.io/core/header"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -76,7 +77,14 @@ func FuzzCurrentEpoch(f *testing.F) {
 		// starting from epoch 1
 		for i := uint64(1); i < increment; i++ {
 			// this ensures that IncEpoch is invoked only at the first header of each epoch
-			ctx = ctx.WithBlockHeader(*datagen.GenRandomTMHeader(r, "chain-test", i*epochInterval+1))
+			randomHeader := datagen.GenRandomTMHeader(r, "chain-test", i*epochInterval+1)
+			headerInfo := header.Info{
+				AppHash: randomHeader.AppHash,
+				Height:  randomHeader.Height,
+				Time:    randomHeader.Time,
+				ChainID: randomHeader.ChainID,
+			}
+			ctx = ctx.WithHeaderInfo(headerInfo)
 			keeper.IncEpoch(ctx)
 		}
 		req := types.QueryCurrentEpochRequest{}

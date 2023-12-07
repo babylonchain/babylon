@@ -288,7 +288,7 @@ func FuzzAddBlsSig_NotInValSet(f *testing.F) {
 		require.NoError(t, err)
 
 		// build BLS sig from a random validator (not in the validator set)
-		appHash := ctx.BlockHeader().AppHash
+		appHash := ctx.HeaderInfo().AppHash
 		blsPrivKey := bls12381.GenPrivKey()
 		valAddr := datagen.GenRandomValidatorAddress()
 		signBytes := types.GetSignBytes(endingEpoch, appHash)
@@ -321,7 +321,7 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 		// build BLS signature from a random validator of the validator set
 		n := len(helper.GenValidators.BlsPrivKeys)
 		i := r.Intn(n)
-		appHash := ctx.BlockHeader().AppHash
+		appHash := ctx.HeaderInfo().AppHash
 		blsPrivKey := helper.GenValidators.BlsPrivKeys[i]
 		addr, err := sdk.ValAddressFromBech32(helper.GenValidators.GenesisKeys[i].ValidatorAddress)
 		require.NoError(t, err)
@@ -412,7 +412,7 @@ func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
 		n := len(helper.GenValidators.BlsPrivKeys)
 		i := r.Intn(n)
 		// inject random last commit hash
-		appHash := ctx.BlockHeader().AppHash
+		appHash := ctx.HeaderInfo().AppHash
 		addr, err := sdk.ValAddressFromBech32(helper.GenValidators.GenesisKeys[i].ValidatorAddress)
 		require.NoError(t, err)
 		blsSig := datagen.GenRandomBlsMultiSig(r)

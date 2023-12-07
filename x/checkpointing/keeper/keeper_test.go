@@ -231,14 +231,14 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 	})
 }
 
-func makeBtcCkptBytes(r *rand.Rand, epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {
+func makeBtcCkptBytes(r *rand.Rand, epoch uint64, appHash []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {
 	tag := datagen.GenRandomByteArray(r, btctxformatter.TagLength)
 	babylonTag := btctxformatter.BabylonTag(tag[:btctxformatter.TagLength])
 	address := datagen.GenRandomByteArray(r, btctxformatter.AddressLength)
 
 	rawBTCCkpt := &btctxformatter.RawBtcCheckpoint{
 		Epoch:            epoch,
-		AppHash:   lch,
+		AppHash:          appHash,
 		BitMap:           bitmap,
 		SubmitterAddress: address,
 		BlsSig:           blsSig,
@@ -263,7 +263,7 @@ func makeBtcCkptBytes(r *rand.Rand, epoch uint64, lch []byte, bitmap []byte, bls
 }
 
 func curStateUpdate(ctx sdk.Context, status types.CheckpointStatus) *types.CheckpointStateUpdate {
-	height, time := ctx.BlockHeight(), ctx.BlockTime()
+	height, time := ctx.HeaderInfo().Height, ctx.HeaderInfo().Time
 	return &types.CheckpointStateUpdate{
 		State:       status,
 		BlockHeight: uint64(height),

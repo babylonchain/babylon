@@ -34,12 +34,12 @@ func FuzzTallying_PanicCases(f *testing.F) {
 
 		// Case 2: expect to panic if finalised block with nil validator set
 		fKeeper.SetBlock(ctx, &types.IndexedBlock{
-			Height:         1,
-			AppHash: datagen.GenRandomByteArray(r, 32),
-			Finalized:      true,
+			Height:    1,
+			AppHash:   datagen.GenRandomByteArray(r, 32),
+			Finalized: true,
 		})
 		// activate BTC staking protocol at height 1
-		ctx = ctx.WithBlockHeight(1)
+		ctx = datagen.WithCtxHeight(ctx, 1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(1), nil).Times(1)
 		bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(uint64(1))).Return(nil).Times(1)
 		require.Panics(t, func() { fKeeper.TallyBlocks(ctx) })
@@ -66,16 +66,16 @@ func FuzzTallying_FinalizingNoBlock(f *testing.F) {
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			// index blocks
 			fKeeper.SetBlock(ctx, &types.IndexedBlock{
-				Height:         i,
-				AppHash: datagen.GenRandomByteArray(r, 32),
-				Finalized:      false,
+				Height:    i,
+				AppHash:   datagen.GenRandomByteArray(r, 32),
+				Finalized: false,
 			})
 			// this block does not have QC
 			err := giveNoQCToHeight(r, ctx, bsKeeper, fKeeper, i)
 			require.NoError(t, err)
 		}
 		// add mock queries to GetBTCStakingActivatedHeight
-		ctx = ctx.WithBlockHeight(int64(activatedHeight) + 10 - 1)
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
 		// tally blocks and none of them should be finalised
 		fKeeper.TallyBlocks(ctx)
@@ -109,9 +109,9 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		for i := activatedHeight; i < activatedHeight+10; i++ {
 			// index blocks
 			fKeeper.SetBlock(ctx, &types.IndexedBlock{
-				Height:         i,
-				AppHash: datagen.GenRandomByteArray(r, 32),
-				Finalized:      false,
+				Height:    i,
+				AppHash:   datagen.GenRandomByteArray(r, 32),
+				Finalized: false,
 			})
 			if i < activatedHeight+numWithQCs {
 				// this block has QC
@@ -128,7 +128,7 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		bsKeeper.EXPECT().RemoveRewardDistCache(gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// add mock queries to GetBTCStakingActivatedHeight
-		ctx = ctx.WithBlockHeight(int64(activatedHeight) + 10 - 1)
+		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)
 		// tally blocks and none of them should be finalised
 		fKeeper.TallyBlocks(ctx)

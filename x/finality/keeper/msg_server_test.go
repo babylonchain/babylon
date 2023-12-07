@@ -5,13 +5,13 @@ import (
 	"math/rand"
 	"testing"
 
+	"cosmossdk.io/core/header"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/finality/keeper"
 	"github.com/babylonchain/babylon/x/finality/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -156,7 +156,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 3: successful if the BTC validator has voting power and has not casted this vote yet
 		// index this block first
-		ctx = ctx.WithBlockHeader(tmproto.Header{Height: int64(blockHeight), AppHash: blockHash})
+		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockHash})
 		fKeeper.IndexBlock(ctx)
 		bsKeeper.EXPECT().GetBTCValidator(gomock.Any(), gomock.Eq(valBTCPKBytes)).Return(btcVal, nil).Times(1)
 		// add vote and it should work

@@ -1,12 +1,12 @@
 package keeper
 
 import (
-	storemetrics "cosmossdk.io/store/metrics"
-	"github.com/cosmos/cosmos-sdk/runtime"
 	"testing"
 
+	"cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonchain/babylon/x/incentive/keeper"
 	"github.com/babylonchain/babylon/x/incentive/types"
@@ -14,6 +14,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -42,6 +43,7 @@ func IncentiveKeeper(t testing.TB, bankKeeper types.BankKeeper, accountKeeper ty
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	// Initialize params
 	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {

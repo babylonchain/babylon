@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/finality/types"
@@ -20,7 +21,7 @@ func (k Keeper) HasEvidence(ctx context.Context, valBtcPK *bbn.BIP340PubKey, hei
 }
 
 func (k Keeper) GetEvidence(ctx context.Context, valBtcPK *bbn.BIP340PubKey, height uint64) (*types.Evidence, error) {
-	if uint64(sdk.UnwrapSDKContext(ctx).BlockHeight()) < height {
+	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
 		return nil, types.ErrHeightTooHigh
 	}
 	store := k.evidenceStore(ctx, valBtcPK)

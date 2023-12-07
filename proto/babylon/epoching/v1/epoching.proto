@@ -3,7 +3,6 @@ package babylon.epoching.v1;
 
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
-import "tendermint/types/types.proto";
 import "cosmos/staking/v1beta1/tx.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
@@ -13,19 +12,20 @@ message Epoch {
   uint64 epoch_number = 1;
   uint64 current_epoch_interval = 2;
   uint64 first_block_height = 3;
-  // last_block_header is the header of the last block in this epoch.
-  // Babylon needs to remember the last header of each epoch to complete
+  // last_block_time is the time of the last block in this epoch.
+  // Babylon needs to remember the last header's time of each epoch to complete
   // unbonding validators/delegations when a previous epoch's checkpoint is
-  // finalised. The last_block_header field is nil in the epoch's beginning, and
+  // finalised. The last_block_time field is nil in the epoch's beginning, and
   // is set upon the end of this epoch.
-  tendermint.types.Header last_block_header = 4;
+  google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
   // app_hash_root is the Merkle root of all AppHashs in this epoch
   // It will be used for proving a block is in an epoch
   bytes app_hash_root = 5;
-  // sealer_header is the 2nd header of the next epoch
+  // sealer_header_hash is the app_hash of the sealer header, i.e., 2nd header 
+  // of the next epoch
   // This validator set has generated a BLS multisig on `app_hash` of
   // the sealer header
-  tendermint.types.Header sealer_header = 6;
+  bytes sealer_header_hash = 6;
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed

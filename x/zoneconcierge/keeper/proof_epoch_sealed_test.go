@@ -60,7 +60,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 
 		// construct the rawCkpt
 		// Note that the BlsMultiSig will be generated and assigned later
-		appHash := checkpointingtypes.AppHash(epoch.SealerHeader.AppHash)
+		appHash := checkpointingtypes.AppHash(epoch.SealerHeaderHash)
 		rawCkpt := &checkpointingtypes.RawCheckpoint{
 			EpochNum:    epoch.EpochNumber,
 			AppHash:     &appHash,

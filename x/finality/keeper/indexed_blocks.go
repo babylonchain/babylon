@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/finality/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -11,10 +12,10 @@ import (
 // IndexBlock indexes the current block, saves the corresponding indexed block
 // to KVStore
 func (k Keeper) IndexBlock(ctx context.Context) {
-	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
+	headerInfo := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	ib := &types.IndexedBlock{
-		Height:    uint64(header.Height),
-		AppHash:   header.AppHash,
+		Height:    uint64(headerInfo.Height),
+		AppHash:   headerInfo.AppHash,
 		Finalized: false,
 	}
 	k.SetBlock(ctx, ib)

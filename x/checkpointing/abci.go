@@ -34,7 +34,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 		// note that this epochNum is obtained after the BeginBlocker of the epoching module is executed
 		// meaning that the epochNum has been incremented upon a new epoch
 
-		appHash := sdkCtx.BlockHeader().AppHash
+		appHash := sdkCtx.HeaderInfo().AppHash
 		ckpt, err := k.BuildRawCheckpoint(ctx, epoch.EpochNumber-1, appHash)
 		if err != nil {
 			panic("failed to generate a raw checkpoint")

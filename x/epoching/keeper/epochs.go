@@ -56,12 +56,12 @@ func (k Keeper) getEpochInfo(ctx context.Context, epochNumber uint64) (*types.Ep
 
 // InitEpoch sets the zero epoch number to DB
 func (k Keeper) InitEpoch(ctx context.Context) {
-	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
+	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	if header.Height > 0 {
 		panic("InitEpoch can be invoked only at genesis")
 	}
 	epochInterval := k.GetParams(ctx).EpochInterval
-	epoch := types.NewEpoch(0, epochInterval, 0, &header)
+	epoch := types.NewEpoch(0, epochInterval, 0, &header.Time)
 	k.setEpochInfo(ctx, 0, &epoch)
 
 	k.setEpochNumber(ctx, 0)
@@ -90,8 +90,8 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 		return errorsmod.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
 	// record last block header
-	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
-	epoch.LastBlockHeader = &header
+	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+	epoch.LastBlockTime = &header.Time
 	// calculate and record the Merkle root
 	appHashes, err := k.GetAllAppHashesForEpoch(ctx, epoch)
 	if err != nil {
@@ -113,7 +113,7 @@ func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx context.Context) *types.Epoch
 	if !epoch.IsSecondBlock(ctx) {
 		panic("RecordSealerHeaderForPrevEpoch can only be invoked at the second header of a non-zero epoch")
 	}
-	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
+	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 
 	// get the sealed epoch, i.e., the epoch earlier than the current epoch
 	sealedEpoch, err := k.GetHistoricalEpoch(ctx, epoch.EpochNumber-1)
@@ -122,7 +122,7 @@ func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx context.Context) *types.Epoch
 	}
 
 	// record the sealer header for the sealed epoch
-	sealedEpoch.SealerHeader = &header
+	sealedEpoch.SealerHeaderHash = header.AppHash
 	k.setEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
 
 	return sealedEpoch
@@ -137,7 +137,7 @@ func (k Keeper) IncEpoch(ctx context.Context) types.Epoch {
 	k.setEpochNumber(ctx, incrementedEpochNumber)
 
 	epochInterval := k.GetParams(ctx).EpochInterval
-	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.BlockHeight()), nil)
+	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.HeaderInfo().Height), nil)
 	k.setEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
 
 	return newEpoch

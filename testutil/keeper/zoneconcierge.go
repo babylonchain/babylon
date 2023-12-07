@@ -1,10 +1,12 @@
 package keeper
 
 import (
+	"testing"
+
+	"cosmossdk.io/core/header"
 	"cosmossdk.io/store/metrics"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/runtime"
-	"testing"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -101,6 +103,7 @@ func ZoneConciergeKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, c
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
+	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	return k, ctx
 }

@@ -13,7 +13,7 @@ func (ci *ChainInfo) IsLatestHeader(header *IndexedHeader) bool {
 type HeaderInfo struct {
 	ClientId string
 	ChainId  string
-	Hash     []byte
+	AppHash  []byte
 	Height   uint64
 	Time     time.Time
 }

@@ -26,15 +26,18 @@ message IndexedHeader {
   // it is needed for CZ to unbond all mature validators/delegations
   // before this timestamp when this header is BTC-finalised
   google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
-  // babylon_header is the header of the babylon block that includes this CZ
+  // babylon_header_hash is the hash of the babylon block that includes this CZ
   // header
-  tendermint.types.Header babylon_header = 5;
+  bytes babylon_header_hash = 5;
+  // babylon_header_height is the height of the babylon block that includes this CZ
+  // header
+  uint64 babylon_header_height = 6;
   // epoch is the epoch number of this header on Babylon ledger
-  uint64 babylon_epoch = 6;
+  uint64 babylon_epoch = 7;
   // babylon_tx_hash is the hash of the tx that includes this header
   // (babylon_block_height, babylon_tx_hash) jointly provides the position of
   // the header on Babylon ledger
-  bytes babylon_tx_hash = 7;
+  bytes babylon_tx_hash = 8;
 }
 
 // Forks is a list of non-canonical `IndexedHeader`s at the same height.

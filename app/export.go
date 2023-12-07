@@ -1,9 +1,10 @@
 package app
 
 import (
-	storetypes "cosmossdk.io/store/types"
 	"encoding/json"
 	"log"
+
+	storetypes "cosmossdk.io/store/types"
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -116,8 +117,10 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 	app.DistrKeeper.DeleteAllValidatorHistoricalRewards(ctx)
 
 	// set context height to zero
-	height := ctx.BlockHeight()
-	ctx = ctx.WithBlockHeight(0)
+	height := ctx.HeaderInfo().Height
+	headerInfo := ctx.HeaderInfo()
+	headerInfo.Height = 0
+	ctx = ctx.WithHeaderInfo(headerInfo)
 
 	// reinitialize all validators
 	err = app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
@@ -164,7 +167,9 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 	}
 
 	// reset context height
-	ctx = ctx.WithBlockHeight(height)
+	headerInfo = ctx.HeaderInfo()
+	headerInfo.Height = height
+	ctx = ctx.WithHeaderInfo(headerInfo)
 
 	/* Handle staking state. */
 

@@ -11,15 +11,16 @@ import (
 
 // HandleHeaderWithValidCommit handles a CZ header with a valid QC
 func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
-	babylonHeader := sdk.UnwrapSDKContext(ctx).BlockHeader()
+	babylonHeader := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 	indexedHeader := types.IndexedHeader{
-		ChainId:       header.ChainId,
-		Hash:          header.Hash,
-		Height:        header.Height,
-		Time:          &header.Time,
-		BabylonHeader: &babylonHeader,
-		BabylonEpoch:  k.GetEpoch(ctx).EpochNumber,
-		BabylonTxHash: txHash,
+		ChainId:             header.ChainId,
+		Hash:                header.AppHash,
+		Height:              header.Height,
+		Time:                &header.Time,
+		BabylonHeaderHash:   babylonHeader.AppHash,
+		BabylonHeaderHeight: uint64(babylonHeader.Height),
+		BabylonEpoch:        k.GetEpoch(ctx).EpochNumber,
+		BabylonTxHash:       txHash,
 	}
 
 	var (

@@ -1,9 +1,10 @@
 package keeper_test
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"math/rand"
 	"testing"
+
+	sdkmath "cosmossdk.io/math"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
@@ -43,7 +44,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, accountKeeper, epochingKeeper)
 		height := datagen.RandomInt(r, 1000)
-		ctx = ctx.WithBlockHeight(int64(height))
+		ctx = datagen.WithCtxHeight(ctx, height)
 
 		// mock (thus ensure) that fees with the exact portion is intercepted
 		// NOTE: if the actual fees are different from feesForIncentive the test will fail
@@ -70,7 +71,7 @@ func FuzzInterceptFeeCollector(f *testing.F) {
 
 		// accumulate for this epoch again and see if the epoch's BTC timestamping gauge has accumulated or not
 		height += 1
-		ctx = ctx.WithBlockHeight(int64(height))
+		ctx = datagen.WithCtxHeight(ctx, height)
 		bankKeeper.EXPECT().GetAllBalances(gomock.Any(), feeCollectorAcc.GetAddress()).Return(fees).Times(1)
 		accountKeeper.EXPECT().GetModuleAccount(gomock.Any(), authtypes.FeeCollectorName).Return(feeCollectorAcc).Times(1)
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: epochNum}).Times(1)

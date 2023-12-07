@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
@@ -10,7 +11,7 @@ import (
 
 // IndexBTCHeight indexes the current BTC height, and saves it to KVStore
 func (k Keeper) IndexBTCHeight(ctx context.Context) {
-	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
+	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
 		return
@@ -30,7 +31,7 @@ func (k Keeper) GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight u
 }
 
 func (k Keeper) GetCurrentBTCHeight(ctx context.Context) (uint64, error) {
-	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
+	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	return k.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
 }
 

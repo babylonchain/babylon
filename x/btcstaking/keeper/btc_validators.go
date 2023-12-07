@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -45,7 +46,7 @@ func (k Keeper) SlashBTCValidator(ctx context.Context, valBTCPK []byte) error {
 	if btcVal.IsSlashed() {
 		return types.ErrBTCValAlreadySlashed
 	}
-	btcVal.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
+	btcVal.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
 		panic(fmt.Errorf("failed to get current BTC tip"))

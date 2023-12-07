@@ -84,7 +84,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			No BTC validator will have voting power
 		*/
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 0}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)
@@ -97,7 +97,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			Case 2: move to 1st BTC block, then assert the first numBTCValsWithVotingPower validators have voting power
 		*/
 		babylonHeight += datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)
@@ -135,7 +135,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 		require.NoError(t, err)
 		// move to later Babylon height and 2nd BTC height
 		babylonHeight += datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 2}).Times(1)
 		// index height and record power table
 		keeper.IndexBTCHeight(ctx)
@@ -169,7 +169,7 @@ func FuzzVotingPowerTable(f *testing.F) {
 			Case 4: move to 999th BTC block, then assert none of validators has voting power (since end height - w < BTC height)
 		*/
 		babylonHeight += datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 999}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)
@@ -258,7 +258,7 @@ func FuzzVotingPowerTable_ActiveBTCValidators(f *testing.F) {
 
 		// record voting power table
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)
@@ -353,7 +353,7 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 
 		// record voting power table
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)
@@ -397,7 +397,7 @@ func FuzzVotingPowerTable_ActiveBTCValidatorRotation(f *testing.F) {
 
 		// record voting power table
 		babylonHeight += 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 		keeper.RecordVotingPowerTable(ctx)

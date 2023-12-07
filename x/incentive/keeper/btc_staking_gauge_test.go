@@ -26,7 +26,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		// create incentive keeper
 		keeper, ctx := testkeeper.IncentiveKeeper(t, bankKeeper, nil, nil)
 		height := datagen.RandomInt(r, 1000)
-		ctx = ctx.WithBlockHeight(int64(height))
+		ctx = datagen.WithCtxHeight(ctx, height)
 
 		// set a random gauge
 		gauge := datagen.GenRandomGauge(r)

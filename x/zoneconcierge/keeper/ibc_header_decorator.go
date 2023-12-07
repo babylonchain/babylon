@@ -29,7 +29,7 @@ func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) 
 	headerInfo := &types.HeaderInfo{
 		ClientId: msgUpdateClient.ClientId,
 		ChainId:  ibctmHeader.Header.ChainID,
-		Hash:     ibctmHeader.Header.AppHash,
+		AppHash:  ibctmHeader.Header.AppHash,
 		Height:   uint64(ibctmHeader.Header.Height),
 		Time:     ibctmHeader.Header.Time,
 	}

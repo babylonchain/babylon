@@ -200,6 +200,8 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 
 		// Generate a random number of BTC delegations under each validator
 		startHeight := datagen.RandomInt(r, 100) + 1
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).AnyTimes()
+
 		endHeight := datagen.RandomInt(r, 1000) + startHeight + btcctypes.DefaultParams().CheckpointFinalizationTimeout + 1
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		pendingBtcDelsMap := make(map[string]*types.BTCDelegation)
@@ -228,7 +230,6 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 				require.NoError(t, err)
 
 				txHash := btcDel.MustGetStakingTxHash().String()
-				btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
 				delView, err := keeper.BTCDelegation(ctx, &types.QueryBTCDelegationRequest{
 					StakingTxHashHex: txHash,
 				})
@@ -238,9 +239,7 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		}
 
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
-		keeper.IndexBTCHeight(ctx)
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 
 		// querying paginated BTC delegations and assert
 		// Generate a page request with a limit and a nil key
@@ -310,7 +309,7 @@ func FuzzBTCValidatorCurrentVotingPower(f *testing.F) {
 		keeper.SetBTCValidator(ctx, btcVal)
 		// set random voting power at random height
 		randomHeight := datagen.RandomInt(r, 100) + 1
-		ctx = ctx.WithBlockHeight(int64(randomHeight))
+		ctx = datagen.WithCtxHeight(ctx, randomHeight)
 		randomPower := datagen.RandomInt(r, 100) + 1
 		keeper.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), randomHeight, randomPower)
 
@@ -325,14 +324,14 @@ func FuzzBTCValidatorCurrentVotingPower(f *testing.F) {
 
 		// if height increments but voting power hasn't recorded yet, then
 		// we need to return the height and voting power at the last height
-		ctx = ctx.WithBlockHeight(int64(randomHeight + 1))
+		ctx = datagen.WithCtxHeight(ctx, randomHeight+1)
 		resp, err = keeper.BTCValidatorCurrentPower(ctx, req)
 		require.NoError(t, err)
 		require.Equal(t, randomHeight, resp.Height)
 		require.Equal(t, randomPower, resp.VotingPower)
 
 		// but no more
-		ctx = ctx.WithBlockHeight(int64(randomHeight + 2))
+		ctx = datagen.WithCtxHeight(ctx, randomHeight+2)
 		resp, err = keeper.BTCValidatorCurrentPower(ctx, req)
 		require.NoError(t, err)
 		require.Equal(t, randomHeight+1, resp.Height)
@@ -512,7 +511,7 @@ func FuzzBTCValidatorDelegations(f *testing.F) {
 		require.Error(t, err)
 
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = ctx.WithBlockHeight(int64(babylonHeight))
+		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
 		keeper.IndexBTCHeight(ctx)
 
