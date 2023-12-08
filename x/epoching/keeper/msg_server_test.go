@@ -102,3 +102,34 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 		}
 	}
 }
+
+func TestMsgWrappedCancelUnbondingDelegation(t *testing.T) {
+	r := rand.New(rand.NewSource(time.Now().Unix()))
+	helper := testepoching.NewHelper(t)
+	msgSrvr := helper.MsgSrvr
+	// enter 1st epoch, in which BBN starts handling validator-related msgs
+	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	require.NoError(t, err)
+
+	testCases := []struct {
+		name      string
+		req       *stakingtypes.MsgCancelUnbondingDelegation
+		expectErr bool
+	}{
+		{
+			"empty wrapped msg",
+			&stakingtypes.MsgCancelUnbondingDelegation{},
+			true,
+		},
+	}
+	for _, tc := range testCases {
+		wrappedMsg := types.NewMsgWrappedCancelUnbondingDelegation(tc.req)
+
+		_, err := msgSrvr.WrappedCancelUnbondingDelegation(ctx, wrappedMsg)
+		if tc.expectErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+		}
+	}
+}

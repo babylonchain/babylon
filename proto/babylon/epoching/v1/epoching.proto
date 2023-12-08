@@ -4,6 +4,7 @@ package babylon.epoching.v1;
 import "google/protobuf/timestamp.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/staking/v1beta1/tx.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
@@ -46,7 +47,7 @@ message QueuedMessage {
     cosmos.staking.v1beta1.MsgDelegate msg_delegate = 6;
     cosmos.staking.v1beta1.MsgUndelegate msg_undelegate = 7;
     cosmos.staking.v1beta1.MsgBeginRedelegate msg_begin_redelegate = 8;
-    // TODO: after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+    cosmos.staking.v1beta1.MsgCancelUnbondingDelegation msg_cancel_unbonding_delegation = 9;
   }
 }
 
@@ -90,8 +91,9 @@ message ValidatorLifecycle {
 message DelegationStateUpdate {
   BondState state = 1;
   string val_addr = 2;
-  uint64 block_height = 3;
-  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+  cosmos.base.v1beta1.Coin amount = 3;
+  uint64 block_height = 4;
+  google.protobuf.Timestamp block_time = 5 [ (gogoproto.stdtime) = true ];
 }
 
 // ValidatorLifecycle is a message that records records the lifecycle of

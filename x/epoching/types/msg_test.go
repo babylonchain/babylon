@@ -1,10 +1,11 @@
 package types_test
 
 import (
-	sdkmath "cosmossdk.io/math"
-	appparams "github.com/babylonchain/babylon/app/params"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonchain/babylon/app/params"
 
 	"github.com/stretchr/testify/require"
 
@@ -168,6 +169,36 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 		} else {
 			msgUnwrapped := stakingtypes.NewMsgUndelegate(tc.delegatorAddr.String(), tc.validatorAddr.String(), tc.amount)
 			msg = types.NewMsgWrappedUndelegate(msgUnwrapped)
+		}
+		if tc.expectPass {
+			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
+		} else {
+			require.Error(t, msg.ValidateBasic(), "test: %v", tc.name)
+		}
+	}
+}
+
+// test ValidateBasic for MsgWrappedCancelUnbondingDelegation
+func TestMsgWrappedCancelUnbondingDelegation(t *testing.T) {
+	tests := []struct {
+		name           string
+		delegatorAddr  sdk.AccAddress
+		validatorAddr  sdk.ValAddress
+		amount         sdk.Coin
+		creationHeight int64
+		expectPass     bool
+	}{
+		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), 10, true},
+		{"no wrapped msg", nil, nil, coinPos, 0, false},
+	}
+
+	for _, tc := range tests {
+		var msg *types.MsgWrappedCancelUnbondingDelegation
+		if tc.delegatorAddr == nil {
+			msg = types.NewMsgWrappedCancelUnbondingDelegation(nil)
+		} else {
+			msgUnwrapped := stakingtypes.NewMsgCancelUnbondingDelegation(tc.delegatorAddr.String(), tc.validatorAddr.String(), tc.creationHeight, tc.amount)
+			msg = types.NewMsgWrappedCancelUnbondingDelegation(msgUnwrapped)
 		}
 		if tc.expectPass {
 			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)

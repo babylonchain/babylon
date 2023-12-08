@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	storetypes "cosmossdk.io/store/types"
 	"fmt"
+
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	errorsmod "cosmossdk.io/errors"
@@ -147,11 +148,12 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		if err != nil {
 			return nil, err
 		}
+		amount := &unwrappedMsg.MsgCreateValidator.Value
 		// self-bonded to the created validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
 			return nil, err
 		}
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgDelegate:
@@ -163,11 +165,12 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		if err != nil {
 			return nil, err
 		}
+		amount := &unwrappedMsg.MsgDelegate.Amount
 		// created and bonded to the validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_CREATED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_CREATED); err != nil {
 			return nil, err
 		}
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgUndelegate:
@@ -179,9 +182,10 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		if err != nil {
 			return nil, err
 		}
+		amount := &unwrappedMsg.MsgUndelegate.Amount
 		// unbonding from the validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, types.BondState_UNBONDING); err != nil {
+		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_UNBONDING); err != nil {
 			return nil, err
 		}
 	case *types.QueuedMessage_MsgBeginRedelegate:
@@ -193,9 +197,24 @@ func (k Keeper) HandleQueuedMsg(ctx context.Context, msg *types.QueuedMessage) (
 		if err != nil {
 			return nil, err
 		}
+		amount := &unwrappedMsg.MsgBeginRedelegate.Amount
 		// unbonding from the source validator
 		// (in `ApplyMatureUnbonding`) AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		if err := k.RecordNewDelegationState(ctx, delAddr, srcValAddr, types.BondState_UNBONDING); err != nil {
+		if err := k.RecordNewDelegationState(ctx, delAddr, srcValAddr, amount, types.BondState_UNBONDING); err != nil {
+			return nil, err
+		}
+	case *types.QueuedMessage_MsgCancelUnbondingDelegation:
+		delAddr, err := sdk.AccAddressFromBech32(unwrappedMsg.MsgCancelUnbondingDelegation.DelegatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		valAddr, err := sdk.ValAddressFromBech32(unwrappedMsg.MsgCancelUnbondingDelegation.ValidatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		amount := &unwrappedMsg.MsgCancelUnbondingDelegation.Amount
+		// this delegation is now bonded again
+		if err := k.RecordNewDelegationState(ctx, delAddr, valAddr, amount, types.BondState_BONDED); err != nil {
 			return nil, err
 		}
 	default:

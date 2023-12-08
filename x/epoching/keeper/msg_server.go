@@ -193,6 +193,71 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 	return &types.MsgWrappedBeginRedelegateResponse{}, nil
 }
 
+// WrappedCancelUnbondingDelegation handles the MsgWrappedCancelUnbondingDelegation request
+func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg *types.MsgWrappedCancelUnbondingDelegation) (*types.MsgWrappedCancelUnbondingDelegationResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// verification rules ported from staking module
+	if _, err := sdk.AccAddressFromBech32(msg.Msg.DelegatorAddress); err != nil {
+		return nil, err
+	}
+
+	if _, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorAddress); err != nil {
+		return nil, err
+	}
+
+	if !msg.Msg.Amount.IsValid() || !msg.Msg.Amount.Amount.IsPositive() {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"invalid amount",
+		)
+	}
+
+	if msg.Msg.CreationHeight <= 0 {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"invalid height",
+		)
+	}
+
+	bondDenom, err := ms.stk.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Msg.Amount.Denom != bondDenom {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
+		)
+	}
+
+	blockHeight := uint64(ctx.BlockHeader().Height)
+	if blockHeight == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+	blockTime := ctx.BlockTime()
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	ms.EnqueueMsg(ctx, queuedMsg)
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedCancelUnbondingDelegation{
+			DelegatorAddress: msg.Msg.DelegatorAddress,
+			ValidatorAddress: msg.Msg.ValidatorAddress,
+			Amount:           msg.Msg.Amount.Amount.Uint64(),
+			CreationHeight:   msg.Msg.CreationHeight,
+			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgWrappedCancelUnbondingDelegationResponse{}, nil
+}
+
 // UpdateParams updates the params.
 // TODO investigate when it is the best time to update the params. We can update them
 // when the epoch changes, but we can also update them during the epoch and extend

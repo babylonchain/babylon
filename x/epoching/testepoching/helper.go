@@ -212,6 +212,16 @@ func (h *Helper) WrappedBeginRedelegate(delegator sdk.AccAddress, srcVal sdk.Val
 	})
 }
 
+// WrappedCancelUnbondingDelegation calls handler to cancel unbonding a delegation
+func (h *Helper) WrappedCancelUnbondingDelegation(delegator sdk.AccAddress, val sdk.ValAddress, amount math.Int, creationHeight int64) *sdk.Result {
+	unbondAmt := sdk.NewCoin(appparams.DefaultBondDenom, amount)
+	msg := stakingtypes.NewMsgCancelUnbondingDelegation(delegator.String(), val.String(), creationHeight, unbondAmt)
+	wmsg := types.NewMsgWrappedCancelUnbondingDelegation(msg)
+	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
+		return h.MsgSrvr.WrappedCancelUnbondingDelegation(ctx, wmsg)
+	})
+}
+
 // Handle executes an action function with the Helper's context, wraps the result into an SDK service result, and performs two assertions before returning it
 func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Result {
 	res, err := action(h.Ctx)

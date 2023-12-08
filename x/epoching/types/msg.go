@@ -8,9 +8,10 @@ import (
 
 // staking message types
 const (
-	TypeMsgWrappedDelegate        = "wrapped_delegate"
-	TypeMsgWrappedUndelegate      = "wrapped_begin_unbonding"
-	TypeMsgWrappedBeginRedelegate = "wrapped_begin_redelegate"
+	TypeMsgWrappedDelegate                  = "wrapped_delegate"
+	TypeMsgWrappedUndelegate                = "wrapped_begin_unbonding"
+	TypeMsgWrappedBeginRedelegate           = "wrapped_begin_redelegate"
+	TypeMsgWrappedCancelUnbondingDelegation = "wrapped_cancel_unbonding_delegation"
 )
 
 // ensure that these message types implement the sdk.Msg interface
@@ -18,6 +19,7 @@ var (
 	_ sdk.Msg = &MsgWrappedDelegate{}
 	_ sdk.Msg = &MsgWrappedUndelegate{}
 	_ sdk.Msg = &MsgWrappedBeginRedelegate{}
+	_ sdk.Msg = &MsgWrappedCancelUnbondingDelegation{}
 	_ sdk.Msg = &MsgUpdateParams{}
 )
 
@@ -78,6 +80,29 @@ func (msg MsgWrappedBeginRedelegate) Type() string { return TypeMsgWrappedBeginR
 
 // ValidateBasic implements the sdk.Msg interface.
 func (msg MsgWrappedBeginRedelegate) ValidateBasic() error {
+	if msg.Msg == nil {
+		return ErrNoWrappedMsg
+	}
+	return nil
+}
+
+// NewMsgWrappedCancelUnbondingDelegation creates a new MsgWrappedCancelUnbondingDelegation instance.
+func NewMsgWrappedCancelUnbondingDelegation(msg *stakingtypes.MsgCancelUnbondingDelegation) *MsgWrappedCancelUnbondingDelegation {
+	return &MsgWrappedCancelUnbondingDelegation{
+		Msg: msg,
+	}
+}
+
+// Route implements the sdk.Msg interface.
+func (msg MsgWrappedCancelUnbondingDelegation) Route() string { return RouterKey }
+
+// Type implements the sdk.Msg interface.
+func (msg MsgWrappedCancelUnbondingDelegation) Type() string {
+	return TypeMsgWrappedCancelUnbondingDelegation
+}
+
+// ValidateBasic implements the sdk.Msg interface.
+func (msg MsgWrappedCancelUnbondingDelegation) ValidateBasic() error {
 	if msg.Msg == nil {
 		return ErrNoWrappedMsg
 	}

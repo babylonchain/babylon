@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	"cosmossdk.io/math"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -104,7 +105,7 @@ func (h Hooks) AfterValidatorBeginUnbonding(ctx context.Context, consAddr sdk.Co
 }
 
 func (h Hooks) BeforeDelegationRemoved(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
-	return h.k.RecordNewDelegationState(sdk.UnwrapSDKContext(ctx), delAddr, valAddr, types.BondState_REMOVED)
+	return h.k.RecordNewDelegationState(sdk.UnwrapSDKContext(ctx), delAddr, valAddr, nil, types.BondState_REMOVED)
 }
 
 func (h Hooks) AfterUnbondingInitiated(ctx context.Context, id uint64) error {

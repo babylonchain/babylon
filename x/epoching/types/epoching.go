@@ -95,8 +95,7 @@ func (e Epoch) ValidateBasic() error {
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg
 // i.e., wrapped -> unwrapped -> QueuedMessage
 func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg sdk.Msg) (QueuedMessage, error) {
-	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, ...) inside isQueuedMessage_Msg
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, MsgCancelUnbondingDelegation) inside isQueuedMessage_Msg
 	var qmsg isQueuedMessage_Msg
 	var msgBytes []byte
 	var err error
@@ -121,6 +120,13 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 		}
 		qmsg = &QueuedMessage_MsgUndelegate{
 			MsgUndelegate: msgWithType.Msg,
+		}
+	case *MsgWrappedCancelUnbondingDelegation:
+		if msgBytes, err = msgWithType.Msg.Marshal(); err != nil {
+			return QueuedMessage{}, err
+		}
+		qmsg = &QueuedMessage_MsgCancelUnbondingDelegation{
+			MsgCancelUnbondingDelegation: msgWithType.Msg,
 		}
 	case *stakingtypes.MsgCreateValidator:
 		if msgBytes, err = msgWithType.Marshal(); err != nil {
@@ -155,7 +161,6 @@ func (qm QueuedMessage) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error 
 
 func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 	var unwrappedMsgWithType sdk.Msg
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := qm.Msg.(type) {
 	case *QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
@@ -165,6 +170,8 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
 	case *QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
+	case *QueuedMessage_MsgCancelUnbondingDelegation:
+		unwrappedMsgWithType = unwrappedMsg.MsgCancelUnbondingDelegation
 	default:
 		panic(errorsmod.Wrap(ErrInvalidQueuedMessageType, qm.String()))
 	}

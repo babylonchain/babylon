@@ -19,6 +19,7 @@ func TestDropValidatorMsgDecorator(t *testing.T) {
 		{&stakingtypes.MsgDelegate{}, true},
 		{&stakingtypes.MsgUndelegate{}, true},
 		{&stakingtypes.MsgBeginRedelegate{}, true},
+		{&stakingtypes.MsgCancelUnbondingDelegation{}, true},
 		// allowed message types
 		{&stakingtypes.MsgEditValidator{}, false},
 	}

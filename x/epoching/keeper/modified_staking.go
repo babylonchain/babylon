@@ -76,7 +76,8 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the validator
-		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valAddr, types.BondState_UNBONDED); err != nil {
+		// TODO: find a way to specify amount?
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valAddr, nil, types.BondState_UNBONDED); err != nil {
 			panic(err)
 		}
 
@@ -123,13 +124,14 @@ func (k Keeper) ApplyMatureUnbonding(ctx context.Context, epochNumber uint64) {
 
 		// Babylon modification: record delegation state
 		// AFTER mature, unbonded from the source validator, created/bonded to the destination validator
-		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valSrcAddr, types.BondState_UNBONDED); err != nil {
+		// TODO: find a way to specify amount?
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valSrcAddr, nil, types.BondState_UNBONDED); err != nil {
 			panic(err)
 		}
-		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valDstAddr, types.BondState_CREATED); err != nil {
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valDstAddr, nil, types.BondState_CREATED); err != nil {
 			panic(err)
 		}
-		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valDstAddr, types.BondState_BONDED); err != nil {
+		if err := k.RecordNewDelegationState(currentSdkCtx, delAddr, valDstAddr, nil, types.BondState_BONDED); err != nil {
 			panic(err)
 		}
 

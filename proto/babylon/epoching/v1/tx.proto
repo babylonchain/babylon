@@ -28,6 +28,11 @@ service Msg {
   rpc WrappedBeginRedelegate(MsgWrappedBeginRedelegate)
       returns (MsgWrappedBeginRedelegateResponse);
 
+  // WrappedCancelUnbondingDelegation defines a method for cancelling unbonding of
+  // coins from a delegator and source validator to a destination validator.
+  rpc WrappedCancelUnbondingDelegation(MsgWrappedCancelUnbondingDelegation)
+      returns (MsgWrappedCancelUnbondingDelegationResponse);
+
   // UpdateParams defines a method for updating epoching module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
@@ -70,6 +75,20 @@ message MsgWrappedBeginRedelegate {
 // MsgWrappedBeginRedelegateResponse is the response to the
 // MsgWrappedBeginRedelegate message
 message MsgWrappedBeginRedelegateResponse {}
+
+// MsgWrappedCancelUnbondingDelegation is the message for cancelling
+// an unbonding delegation
+message MsgWrappedCancelUnbondingDelegation {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_getters) = false;
+  option (cosmos.msg.v1.signer) = "msg";
+
+  cosmos.staking.v1beta1.MsgCancelUnbondingDelegation msg = 1;
+}
+
+// MsgWrappedCancelUnbondingDelegationResponse is the response to the
+// MsgWrappedCancelUnbondingDelegation message
+message MsgWrappedCancelUnbondingDelegationResponse {}
 
 // MsgUpdateParams defines a message for updating epoching module parameters.
 message MsgUpdateParams {

@@ -12,7 +12,7 @@ import (
 // TODO: add more tests on the lifecycle record
 
 // RecordNewDelegationState adds a state for a delegation lifecycle, including created, bonded, unbonding and unbonded
-func (k Keeper) RecordNewDelegationState(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, state types.BondState) error {
+func (k Keeper) RecordNewDelegationState(ctx context.Context, delAddr sdk.AccAddress, valAddr sdk.ValAddress, amount *sdk.Coin, state types.BondState) error {
 	lc := k.GetDelegationLifecycle(ctx, delAddr)
 	if lc == nil {
 		lc = &types.DelegationLifecycle{
@@ -25,6 +25,7 @@ func (k Keeper) RecordNewDelegationState(ctx context.Context, delAddr sdk.AccAdd
 	DelegationStateUpdate := types.DelegationStateUpdate{
 		State:       state,
 		ValAddr:     valAddr.String(),
+		Amount:      amount,
 		BlockHeight: uint64(height),
 		BlockTime:   &time,
 	}

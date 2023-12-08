@@ -2,8 +2,10 @@ package cli
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
+	"strconv"
 	"strings"
+
+	"github.com/spf13/cobra"
 
 	"github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -29,6 +31,7 @@ func GetTxCmd() *cobra.Command {
 		NewDelegateCmd(),
 		NewRedelegateCmd(),
 		NewUnbondCmd(),
+		NewCancelUnbondingCmd(),
 	)
 
 	return cmd
@@ -119,6 +122,56 @@ $ %s tx epoching redelegate %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj %s1l2rsakp
 
 			stakingMsg := stakingtypes.NewMsgBeginRedelegate(delAddr.String(), valSrcAddr.String(), valDstAddr.String(), amount)
 			msg := types.NewMsgWrappedBeginRedelegate(stakingMsg)
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewCancelUnbondingCmd() *cobra.Command {
+	bech32PrefixValAddr := params.Bech32PrefixAccAddr
+	denom := params.DefaultBondDenom
+
+	cmd := &cobra.Command{
+		Use:   "cancel-unbond [validator-addr] [amount] [creation-height]",
+		Short: "Cancel unbonding delegation and delegate back to the validator",
+		Args:  cobra.ExactArgs(3),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Cancel Unbonding Delegation and delegate back to the validator.
+
+Example:
+$ %s tx staking cancel-unbond %s1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj 100%s 2 --from mykey
+`,
+				version.AppName, bech32PrefixValAddr, denom,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+			delAddr := clientCtx.GetFromAddress()
+			valAddr, err := sdk.ValAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			amount, err := sdk.ParseCoinNormalized(args[1])
+			if err != nil {
+				return err
+			}
+
+			creationHeight, err := strconv.ParseInt(args[2], 10, 64)
+			if err != nil {
+				return err
+			}
+
+			stakingMsg := stakingtypes.NewMsgCancelUnbondingDelegation(delAddr.String(), valAddr.String(), creationHeight, amount)
+			msg := types.NewMsgWrappedCancelUnbondingDelegation(stakingMsg)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},

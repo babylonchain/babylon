@@ -63,3 +63,13 @@ message EventWrappedBeginRedelegate {
   string denom = 5;
   uint64 epoch_boundary = 6;
 }
+
+// EventWrappedCancelUnbondingDelegation is the event emitted when a
+// MsgWrappedCancelUnbondingDelegation has been queued
+message EventWrappedCancelUnbondingDelegation {
+  string delegator_address = 1;
+  string validator_address = 2;
+  uint64 amount = 3;
+  int64 creation_height = 4;
+  uint64 epoch_boundary = 5;
+}
