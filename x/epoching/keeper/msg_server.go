@@ -26,6 +26,9 @@ var _ types.MsgServer = msgServer{}
 // WrappedDelegate handles the MsgWrappedDelegate request
 func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	valAddr, valErr := sdk.ValAddressFromBech32(msg.Msg.ValidatorAddress)
@@ -81,6 +84,9 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 // WrappedUndelegate handles the MsgWrappedUndelegate request
 func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	valAddr, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorAddress)
@@ -137,6 +143,9 @@ func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrapp
 // WrappedBeginRedelegate handles the MsgWrappedBeginRedelegate request
 func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	valSrcAddr, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorSrcAddress)
@@ -196,6 +205,9 @@ func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.Msg
 // WrappedCancelUnbondingDelegation handles the MsgWrappedCancelUnbondingDelegation request
 func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg *types.MsgWrappedCancelUnbondingDelegation) (*types.MsgWrappedCancelUnbondingDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	if _, err := sdk.AccAddressFromBech32(msg.Msg.DelegatorAddress); err != nil {
@@ -265,6 +277,9 @@ func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg 
 func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
+	}
+	if err := req.Params.Validate(); err != nil {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)

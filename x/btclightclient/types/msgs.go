@@ -39,27 +39,6 @@ func NewMsgInsertHeaders(signer sdk.AccAddress, headersHex string) (*MsgInsertHe
 	return &MsgInsertHeaders{Signer: signer.String(), Headers: headers}, nil
 }
 
-func (msg *MsgInsertHeaders) ValidateBasic() error {
-	// This function validates stateless message elements
-	// msg.Header is validated in ante-handler
-	_, err := sdk.AccAddressFromBech32(msg.Signer)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (msg *MsgInsertHeaders) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(msg.Signer)
-	if err != nil {
-		// Panic, since the GetSigners method is called after ValidateBasic
-		// which performs the same check.
-		panic(err)
-	}
-
-	return []sdk.AccAddress{signer}
-}
-
 func (msg *MsgInsertHeaders) ValidateHeaders(powLimit *big.Int) error {
 	// TOOD: Limit number of headers in message?
 	for _, header := range msg.Headers {

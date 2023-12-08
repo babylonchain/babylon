@@ -41,13 +41,7 @@ func NewMsgWrappedCreateValidator(msgCreateVal *stakingtypes.MsgCreateValidator,
 
 // ValidateBasic validates stateless message elements
 func (m *MsgAddBlsSig) ValidateBasic() error {
-	// This function validates stateless message elements
-	_, err := sdk.ValAddressFromBech32(m.BlsSig.SignerAddress)
-	if err != nil {
-		return err
-	}
-
-	err = m.BlsSig.BlsSig.ValidateBasic()
+	err := m.BlsSig.BlsSig.ValidateBasic()
 	if err != nil {
 		return err
 	}
@@ -57,17 +51,6 @@ func (m *MsgAddBlsSig) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func (m *MsgAddBlsSig) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
-	if err != nil {
-		// Panic, since the GetSigners method is called after ValidateBasic
-		// which performs the same check.
-		panic(err)
-	}
-
-	return []sdk.AccAddress{signer}
 }
 
 func (m *MsgWrappedCreateValidator) VerifyPoP(valPubkey cryptotypes.PubKey) bool {

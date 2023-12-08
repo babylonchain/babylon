@@ -575,18 +575,46 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	)
 	require.NoError(t, err)
 
+	stkTxHash := testStakingInfo.StakingTx.TxHash()
+	unbondingTime := 100 + 1
+	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
+	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
+		r,
+		t,
+		h.Net,
+		delSK,
+		[]*btcec.PublicKey{validatorPK},
+		covenantPKs,
+		bsParams.CovenantQuorum,
+		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
+		uint16(unbondingTime),
+		unbondingValue,
+		bsParams.SlashingAddress,
+		changeAddress.EncodeAddress(),
+		bsParams.SlashingRate,
+	)
+	unbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
+	h.NoError(err)
+	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delSK)
+	h.NoError(err)
+
 	// all good, construct and send MsgCreateBTCDelegation message
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
-		Signer:               signer,
-		BabylonPk:            delBabylonPK.(*secp256k1.PubKey),
-		ValBtcPkList:         []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(validatorPK)},
-		BtcPk:                bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
-		Pop:                  pop,
-		StakingTime:          uint32(stakingTimeBlocks),
-		StakingValue:         stakingValue,
-		StakingTx:            txInfo,
-		SlashingTx:           testStakingInfo.SlashingTx,
-		DelegatorSlashingSig: delegatorSig,
+		Signer:                        signer,
+		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
+		ValBtcPkList:                  []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(validatorPK)},
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
+		Pop:                           pop,
+		StakingTime:                   uint32(stakingTimeBlocks),
+		StakingValue:                  stakingValue,
+		StakingTx:                     txInfo,
+		SlashingTx:                    testStakingInfo.SlashingTx,
+		DelegatorSlashingSig:          delegatorSig,
+		UnbondingTx:                   unbondingTx,
+		UnbondingTime:                 uint32(unbondingTime),
+		UnbondingValue:                unbondingValue,
+		UnbondingSlashingTx:           testUnbondingInfo.SlashingTx,
+		DelegatorUnbondingSlashingSig: delUnbondingSlashingSig,
 	}
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)

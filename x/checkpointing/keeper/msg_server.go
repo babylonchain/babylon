@@ -27,7 +27,7 @@ var _ types.MsgServer = msgServer{}
 func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	ctx.Logger().Info(fmt.Sprintf("received BLS sig for epoch %d from %s", msg.BlsSig.EpochNum, msg.GetSigners()))
+	ctx.Logger().Info(fmt.Sprintf("received BLS sig for epoch %d from %s", msg.BlsSig.EpochNum, msg.Signer))
 
 	err := m.k.addBlsSig(ctx, msg.BlsSig)
 	if err != nil {

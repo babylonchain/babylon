@@ -37,6 +37,9 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
 	}
+	if err := req.Params.Validate(); err != nil {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
+	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := ms.SetParams(ctx, req.Params); err != nil {
@@ -50,6 +53,10 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCreateBTCValidator) (*types.MsgCreateBTCValidatorResponse, error) {
 	// ensure the validator address does not exist before
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	// basic stateless checks
+	if err := req.ValidateBasic(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	// verify proof of possession
 	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
@@ -92,6 +99,10 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 // TODO: refactor this handler. It's now too convoluted
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	// basic stateless checks
+	if err := req.ValidateBasic(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 
 	params := ms.GetParams(ctx)
 	btccParams := ms.btccKeeper.GetParams(ctx)
@@ -351,6 +362,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	// basic stateless checks
+	if err := req.ValidateBasic(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	params := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
@@ -484,6 +500,11 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 // AddCovenantSig adds a signature from covenant to a BTC delegation
 func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndelegate) (*types.MsgBTCUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	// basic stateless checks
+	if err := req.ValidateBasic(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	bsParams := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists

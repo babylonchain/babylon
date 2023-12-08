@@ -4,11 +4,8 @@ import (
 	"fmt"
 	math "math"
 
-	errorsmod "cosmossdk.io/errors"
-
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
-
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -21,33 +18,6 @@ var (
 	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
 )
-
-// GetSigners returns the expected signers for a MsgUpdateParams message.
-func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(m.Authority)
-	return []sdk.AccAddress{addr}
-}
-
-// ValidateBasic does a sanity check on the provided data.
-func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return errorsmod.Wrap(err, "invalid authority address")
-	}
-
-	if err := m.Params.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *MsgCreateBTCValidator) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
-}
 
 func (m *MsgCreateBTCValidator) ValidateBasic() error {
 	if m.Commission == nil {
@@ -76,14 +46,6 @@ func (m *MsgCreateBTCValidator) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func (m *MsgCreateBTCDelegation) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
 }
 
 func (m *MsgCreateBTCDelegation) ValidateBasic() error {
@@ -156,14 +118,6 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	return nil
 }
 
-func (m *MsgAddCovenantSigs) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
-}
-
 func (m *MsgAddCovenantSigs) ValidateBasic() error {
 	if m.Pk == nil {
 		return fmt.Errorf("empty BTC covenant public key")
@@ -184,14 +138,6 @@ func (m *MsgAddCovenantSigs) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-func (m *MsgBTCUndelegate) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(m.Signer)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
 }
 
 func (m *MsgBTCUndelegate) ValidateBasic() error {

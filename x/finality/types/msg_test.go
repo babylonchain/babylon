@@ -28,9 +28,6 @@ func FuzzMsgAddFinalitySig(f *testing.F) {
 		msg, err := types.NewMsgAddFinalitySig(signer, sk, sr, blockHeight, blockHash)
 		require.NoError(t, err)
 
-		// basic sanity checks
-		err = msg.ValidateBasic()
-		require.NoError(t, err)
 		// verify msg's EOTS sig against the given public randomness
 		err = msg.VerifyEOTSSig(bbn.NewSchnorrPubRandFromFieldVal(pr))
 		require.NoError(t, err)
@@ -52,7 +49,7 @@ func FuzzMsgCommitPubRandList(f *testing.F) {
 		require.NoError(t, err)
 
 		// sanity checks, including verifying signature
-		err = msg.ValidateBasic()
+		err = msg.VerifySig()
 		require.NoError(t, err)
 	})
 }

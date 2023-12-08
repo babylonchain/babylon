@@ -2,9 +2,10 @@ package epoching
 
 import (
 	"context"
-	"cosmossdk.io/core/appmodule"
 	"encoding/json"
 	"fmt"
+
+	"cosmossdk.io/core/appmodule"
 
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
@@ -23,10 +24,9 @@ import (
 )
 
 var (
-	_ module.AppModuleBasic      = AppModuleBasic{}
-	_ appmodule.HasBeginBlocker  = AppModule{}
-	_ module.HasABCIEndBlock     = AppModule{}
-	_ module.AppModuleSimulation = AppModule{}
+	_ module.AppModuleBasic     = AppModuleBasic{}
+	_ appmodule.HasBeginBlocker = AppModule{}
+	_ module.HasABCIEndBlock    = AppModule{}
 )
 
 // ----------------------------------------------------------------------------

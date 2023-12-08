@@ -31,6 +31,9 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
 	}
+	if err := req.Params.Validate(); err != nil {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
+	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	if err := ms.SetParams(ctx, req.Params); err != nil {
@@ -71,12 +74,18 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	// ensure the BTC validator has voting power at this height
+	if req.ValBtcPk == nil {
+		return nil, types.ErrInvalidFinalitySig.Wrap("empty validator BTC PK")
+	}
 	valPK := req.ValBtcPk
 	if ms.BTCStakingKeeper.GetVotingPower(ctx, valPK.MustMarshal(), req.BlockHeight) == 0 {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the BTC validator %v does not have voting power at height %d", valPK.MustMarshal(), req.BlockHeight)
 	}
 
 	// ensure the BTC validator has not casted the same vote yet
+	if req.FinalitySig == nil {
+		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality signature")
+	}
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		return nil, types.ErrDuplicatedFinalitySig
@@ -107,13 +116,13 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 		// construct evidence
 		evidence := &types.Evidence{
-			ValBtcPk:                req.ValBtcPk,
-			BlockHeight:             req.BlockHeight,
-			PubRand:                 pubRand,
-			CanonicalAppHash: indexedBlock.AppHash,
-			CanonicalFinalitySig:    nil,
-			ForkAppHash:      req.BlockAppHash,
-			ForkFinalitySig:         req.FinalitySig,
+			ValBtcPk:             req.ValBtcPk,
+			BlockHeight:          req.BlockHeight,
+			PubRand:              pubRand,
+			CanonicalAppHash:     indexedBlock.AppHash,
+			CanonicalFinalitySig: nil,
+			ForkAppHash:          req.BlockAppHash,
+			ForkFinalitySig:      req.FinalitySig,
 		}
 
 		// if this BTC validator has also signed canonical block, slash it
@@ -173,6 +182,9 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// ensure the BTC validator is registered
+	if req.ValBtcPk == nil {
+		return nil, types.ErrInvalidPubRand.Wrap("empty validator public key")
+	}
 	valBTCPKBytes := req.ValBtcPk.MustMarshal()
 	if !ms.BTCStakingKeeper.HasBTCValidator(ctx, valBTCPKBytes) {
 		return nil, bstypes.ErrBTCValNotFound.Wrapf("the validator with BTC PK %v is not registered", valBTCPKBytes)
@@ -192,6 +204,11 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 	if height >= req.StartHeight {
 		return nil, types.ErrInvalidPubRand.Wrapf("the start height (%d) has overlap with the height of the highest public randomness (%d)", req.StartHeight, height)
+	}
+
+	// verify signature over the list
+	if err := req.VerifySig(); err != nil {
+		return nil, types.ErrInvalidPubRand.Wrapf("invalid signature over the public randomness list: %v", err)
 	}
 
 	// all good, commit the given public randomness list
