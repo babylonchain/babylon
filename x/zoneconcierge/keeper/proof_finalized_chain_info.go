@@ -22,14 +22,8 @@ func (k Keeper) proveFinalizedChainInfo(
 		proof = &types.ProofFinalizedChainInfo{}
 	)
 
-	// Proof that the Babylon tx is in block
-	proof.ProofTxInBlock, err = k.ProveTxInBlock(ctx, chainInfo.LatestHeader.BabylonTxHash)
-	if err != nil {
-		return nil, err
-	}
-
-	// proof that the block is in this epoch
-	proof.ProofHeaderInEpoch, err = k.ProveHeaderInEpoch(ctx, chainInfo.LatestHeader.BabylonHeaderHeight, epochInfo)
+	// Proof that the CZ header is timestamped in epoch
+	proof.ProofCzHeaderInEpoch, err = k.ProveCZHeaderInEpoch(ctx, chainInfo.LatestHeader, epochInfo)
 	if err != nil {
 		return nil, err
 	}

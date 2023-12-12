@@ -82,7 +82,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(epoch).AnyTimes()
 		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(epoch, nil).AnyTimes()
 		// create zcKeeper and ctx
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, nil, checkpointingKeeper, nil, epochingKeeper, nil)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, nil, checkpointingKeeper, nil, epochingKeeper)
 
 		// prove
 		proof, err := zcKeeper.ProveEpochSealed(ctx, epoch.EpochNumber)

@@ -13,7 +13,6 @@ import (
 	types1 "github.com/babylonchain/babylon/x/btclightclient/types"
 	types2 "github.com/babylonchain/babylon/x/checkpointing/types"
 	types3 "github.com/babylonchain/babylon/x/epoching/types"
-	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
 	types4 "github.com/cosmos/cosmos-sdk/types"
 	types5 "github.com/cosmos/ibc-go/modules/capability/types"
@@ -787,21 +786,6 @@ func (m *MockEpochingKeeper) GetHistoricalEpoch(ctx context.Context, epochNumber
 func (mr *MockEpochingKeeperMockRecorder) GetHistoricalEpoch(ctx, epochNumber interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHistoricalEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetHistoricalEpoch), ctx, epochNumber)
-}
-
-// ProveAppHashInEpoch mocks base method.
-func (m *MockEpochingKeeper) ProveAppHashInEpoch(ctx context.Context, height, epochNumber uint64) (*crypto.Proof, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProveAppHashInEpoch", ctx, height, epochNumber)
-	ret0, _ := ret[0].(*crypto.Proof)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// ProveAppHashInEpoch indicates an expected call of ProveAppHashInEpoch.
-func (mr *MockEpochingKeeperMockRecorder) ProveAppHashInEpoch(ctx, height, epochNumber interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProveAppHashInEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).ProveAppHashInEpoch), ctx, height, epochNumber)
 }
 
 // MockCometClient is a mock of CometClient interface.

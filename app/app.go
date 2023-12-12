@@ -1,21 +1,22 @@
 package app
 
 import (
+	"encoding/json"
+	"fmt"
+	"io"
+	"os"
+	"path/filepath"
+
 	"cosmossdk.io/client/v2/autocli"
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/x/circuit"
 	circuitkeeper "cosmossdk.io/x/circuit/keeper"
-	"encoding/json"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/std"
 	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/gogoproto/proto"
-	"io"
-	"os"
-	"path/filepath"
 
 	autocliv1 "cosmossdk.io/api/cosmos/autocli/v1"
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -595,11 +596,6 @@ func NewBabylonApp(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// create Tendermint client
-	cmtClient, err := client.NewClientFromNode(privSigner.ClientCtx.NodeURI) // create a Tendermint client for ZoneConcierge
-	if err != nil {
-		panic(fmt.Errorf("couldn't get client from nodeURI %s: %w", privSigner.ClientCtx.NodeURI, err))
-	}
 	// create querier for KVStore
 	storeQuerier, ok := app.CommitMultiStore().(storetypes.Queryable)
 	if !ok {
@@ -626,7 +622,6 @@ func NewBabylonApp(
 		&checkpointingKeeper,
 		&btcCheckpointKeeper,
 		epochingKeeper,
-		cmtClient,
 		storeQuerier,
 		scopedZoneConciergeKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),

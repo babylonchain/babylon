@@ -36,11 +36,11 @@ func (k Keeper) getChainID(ctx context.Context, channel channeltypes.IdentifiedC
 	}
 	// cast clientState to comet clientState
 	// TODO: support for chains other than Cosmos zones
-	cmtClient, ok := clientState.(*ibctmtypes.ClientState)
+	cmtClientState, ok := clientState.(*ibctmtypes.ClientState)
 	if !ok {
-		return "", fmt.Errorf("client must be a Comet client, expected: %T, got: %T", &ibctmtypes.ClientState{}, cmtClient)
+		return "", fmt.Errorf("client must be a Comet client, expected: %T, got: %T", &ibctmtypes.ClientState{}, cmtClientState)
 	}
-	return cmtClient.ChainId, nil
+	return cmtClientState.ChainId, nil
 }
 
 // getFinalizedInfo returns metadata and proofs that are identical to all BTC timestamps in the same epoch
@@ -130,31 +130,23 @@ func (k Keeper) createBTCTimestamp(ctx context.Context, chainID string, channel 
 		RawCheckpoint:    finalizedInfo.RawCheckpoint,
 		BtcSubmissionKey: finalizedInfo.BTCSubmissionKey,
 		Proof: &types.ProofFinalizedChainInfo{
-			ProofTxInBlock:      nil,
-			ProofHeaderInEpoch:  nil,
-			ProofEpochSealed:    finalizedInfo.ProofEpochSealed,
-			ProofEpochSubmitted: finalizedInfo.ProofEpochSubmitted,
+			ProofCzHeaderInEpoch: nil,
+			ProofEpochSealed:     finalizedInfo.ProofEpochSealed,
+			ProofEpochSubmitted:  finalizedInfo.ProofEpochSubmitted,
 		},
 	}
 
 	// if there is a CZ header checkpointed in this finalised epoch,
 	// add this CZ header and corresponding proofs to the BTC timestamp
 	if finalizedChainInfo.LatestHeader.BabylonEpoch == epochNum {
-		// get proofTxInBlock
-		proofTxInBlock, err := k.ProveTxInBlock(ctx, finalizedChainInfo.LatestHeader.BabylonTxHash)
+		// get proofCZHeaderInEpoch
+		proofCZHeaderInEpoch, err := k.ProveCZHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader, finalizedInfo.EpochInfo)
 		if err != nil {
-			return nil, fmt.Errorf("failed to generate proofTxInBlock for chain %s: %w", chainID, err)
-		}
-
-		// get proofHeaderInEpoch
-		proofHeaderInEpoch, err := k.ProveHeaderInEpoch(ctx, finalizedChainInfo.LatestHeader.BabylonHeaderHeight, finalizedInfo.EpochInfo)
-		if err != nil {
-			return nil, fmt.Errorf("failed to generate proofHeaderInEpoch for chain %s: %w", chainID, err)
+			return nil, fmt.Errorf("failed to generate proofCZHeaderInEpoch for chain %s: %w", chainID, err)
 		}
 
 		btcTimestamp.Header = finalizedChainInfo.LatestHeader
-		btcTimestamp.Proof.ProofTxInBlock = proofTxInBlock
-		btcTimestamp.Proof.ProofHeaderInEpoch = proofHeaderInEpoch
+		btcTimestamp.Proof.ProofCzHeaderInEpoch = proofCZHeaderInEpoch
 	}
 
 	return btcTimestamp, nil

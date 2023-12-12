@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	corestoretypes "cosmossdk.io/core/store"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
@@ -28,7 +29,6 @@ type (
 		checkpointingKeeper types.CheckpointingKeeper
 		btccKeeper          types.BtcCheckpointKeeper
 		epochingKeeper      types.EpochingKeeper
-		cmtClient           types.CometClient
 		storeQuerier        storetypes.Queryable
 		scopedKeeper        types.ScopedKeeper
 		// the address capable of executing a MsgUpdateParams message. Typically, this
@@ -50,7 +50,6 @@ func NewKeeper(
 	checkpointingKeeper types.CheckpointingKeeper,
 	btccKeeper types.BtcCheckpointKeeper,
 	epochingKeeper types.EpochingKeeper,
-	cmtClient types.CometClient,
 	storeQuerier storetypes.Queryable,
 	scopedKeeper types.ScopedKeeper,
 	authority string,
@@ -68,7 +67,6 @@ func NewKeeper(
 		checkpointingKeeper: checkpointingKeeper,
 		btccKeeper:          btccKeeper,
 		epochingKeeper:      epochingKeeper,
-		cmtClient:           cmtClient,
 		storeQuerier:        storeQuerier,
 		scopedKeeper:        scopedKeeper,
 		authority:           authority,

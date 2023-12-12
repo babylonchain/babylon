@@ -6,9 +6,6 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
@@ -392,21 +389,12 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(epoch).AnyTimes()
 		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(epoch, nil).AnyTimes()
-		epochingKeeper.EXPECT().ProveAppHashInEpoch(gomock.Any(), gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(&tmcrypto.Proof{}, nil).AnyTimes()
 		// mock btclc keeper
 		btclcKeeper := zctypes.NewMockBTCLightClientKeeper(ctrl)
 		mockBTCHeaderInfo := datagen.GenRandomBTCHeaderInfo(r)
 		btclcKeeper.EXPECT().GetMainChainFrom(gomock.Any(), gomock.Any()).Return([]*btclightclienttypes.BTCHeaderInfo{mockBTCHeaderInfo}).AnyTimes()
 
-		// mock Comet client
-		// TODO: integration tests with Comet
-		cmtClient := zctypes.NewMockCometClient(ctrl)
-		resTx := &tmrpctypes.ResultTx{
-			Proof: tmtypes.TxProof{},
-		}
-		cmtClient.EXPECT().Tx(gomock.Any(), gomock.Any(), true).Return(resTx, nil).AnyTimes()
-
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, cmtClient)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper)
 		hooks := zcKeeper.Hooks()
 
 		var (

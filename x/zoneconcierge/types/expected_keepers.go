@@ -10,7 +10,6 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	ctypes "github.com/cometbft/cometbft/rpc/core/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
@@ -103,7 +102,6 @@ type CheckpointingKeeper interface {
 type EpochingKeeper interface {
 	GetHistoricalEpoch(ctx context.Context, epochNumber uint64) (*epochingtypes.Epoch, error)
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
-	ProveAppHashInEpoch(ctx context.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error)
 }
 
 // CometClient is a Comet client that allows to query tx inclusion proofs

@@ -3,7 +3,6 @@ package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
-import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
@@ -122,21 +121,18 @@ message ProofFinalizedChainInfo {
     The following fields include proofs that attest the chain info is
     BTC-finalised
   */
-  // proof_tx_in_block is the proof that tx that carries the header is included
-  // in a certain Babylon block
-  tendermint.types.TxProof proof_tx_in_block = 4;
-  // proof_header_in_epoch is the proof that the Babylon header is in a certain
-  // epoch
-  tendermint.crypto.Proof proof_header_in_epoch = 5;
+  // proof_cz_header_in_epoch is the proof that the CZ header is timestamped
+  // within a certain epoch
+  tendermint.crypto.ProofOps proof_cz_header_in_epoch = 1;
   // proof_epoch_sealed is the proof that the epoch is sealed
-  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 6;
+  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 2;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included
   // in BTC ledger It is the two TransactionInfo in the best (i.e., earliest)
   // checkpoint submission
-  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 7;
+  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 3;
 }
 
 // Btc light client chain segment grown during last finalized epoch
 message BTCChainSegment {
-  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 2;
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 1;
 }
