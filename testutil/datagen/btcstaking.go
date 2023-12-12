@@ -48,7 +48,7 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 	// commission
 	commission := sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
 	// description
-	description := stakingtypes.Description{}
+	description := stakingtypes.Description{Moniker: GenRandomHexStr(r, 10)}
 	// key pairs
 	btcPK := btcSK.PubKey()
 	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)

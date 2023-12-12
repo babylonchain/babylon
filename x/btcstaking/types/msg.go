@@ -26,6 +26,9 @@ func (m *MsgCreateBTCValidator) ValidateBasic() error {
 	if m.Description == nil {
 		return fmt.Errorf("empty description")
 	}
+	if len(m.Description.Moniker) == 0 {
+		return fmt.Errorf("empty moniker")
+	}
 	if _, err := m.Description.EnsureLength(); err != nil {
 		return err
 	}
