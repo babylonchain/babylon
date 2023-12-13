@@ -8309,7 +8309,7 @@ paths:
                                 calculating Merkle root
 
                                 The data could be arbitrary format, providing
-                                nessecary data
+                                necessary data
 
                                 for example neighbouring node hash
                       proof_epoch_val_set:
@@ -8338,7 +8338,7 @@ paths:
                                 calculating Merkle root
 
                                 The data could be arbitrary format, providing
-                                nessecary data
+                                necessary data
 
                                 for example neighbouring node hash
                   proof_epoch_submitted:
@@ -9353,7 +9353,7 @@ paths:
                                       calculating Merkle root
 
                                       The data could be arbitrary format,
-                                      providing nessecary data
+                                      providing necessary data
 
                                       for example neighbouring node hash
                             proof_epoch_val_set:
@@ -9382,7 +9382,7 @@ paths:
                                       calculating Merkle root
 
                                       The data could be arbitrary format,
-                                      providing nessecary data
+                                      providing necessary data
 
                                       for example neighbouring node hash
                         proof_epoch_submitted:
@@ -16619,7 +16619,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -16648,7 +16648,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -17062,7 +17062,7 @@ definitions:
                   format: byte
               title: |-
                 ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
+                The data could be arbitrary format, providing necessary data
                 for example neighbouring node hash
       proof_epoch_val_set:
         title: |-
@@ -17085,7 +17085,7 @@ definitions:
                   format: byte
               title: |-
                 ProofOp defines an operation used for calculating Merkle root
-                The data could be arbitrary format, providing nessecary data
+                The data could be arbitrary format, providing necessary data
                 for example neighbouring node hash
     title: >-
       ProofEpochSealed is the proof that an epoch is sealed by the sealer
@@ -17221,7 +17221,7 @@ definitions:
                     ProofOp defines an operation used for calculating Merkle
                     root
 
-                    The data could be arbitrary format, providing nessecary data
+                    The data could be arbitrary format, providing necessary data
 
                     for example neighbouring node hash
           proof_epoch_val_set:
@@ -17249,7 +17249,7 @@ definitions:
                     ProofOp defines an operation used for calculating Merkle
                     root
 
-                    The data could be arbitrary format, providing nessecary data
+                    The data could be arbitrary format, providing necessary data
 
                     for example neighbouring node hash
       proof_epoch_submitted:
@@ -18683,7 +18683,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -18712,7 +18712,7 @@ definitions:
                         ProofOp defines an operation used for calculating Merkle
                         root
 
-                        The data could be arbitrary format, providing nessecary
+                        The data could be arbitrary format, providing necessary
                         data
 
                         for example neighbouring node hash
@@ -19481,7 +19481,7 @@ definitions:
                               Merkle root
 
                               The data could be arbitrary format, providing
-                              nessecary data
+                              necessary data
 
                               for example neighbouring node hash
                     proof_epoch_val_set:
@@ -19510,7 +19510,7 @@ definitions:
                               Merkle root
 
                               The data could be arbitrary format, providing
-                              nessecary data
+                              necessary data
 
                               for example neighbouring node hash
                 proof_epoch_submitted:
@@ -20211,7 +20211,7 @@ definitions:
         format: byte
     title: |-
       ProofOp defines an operation used for calculating Merkle root
-      The data could be arbitrary format, providing nessecary data
+      The data could be arbitrary format, providing necessary data
       for example neighbouring node hash
   tendermint.crypto.ProofOps:
     type: object
@@ -20231,7 +20231,7 @@ definitions:
               format: byte
           title: |-
             ProofOp defines an operation used for calculating Merkle root
-            The data could be arbitrary format, providing nessecary data
+            The data could be arbitrary format, providing necessary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps
   tendermint.types.TxProof:
