@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// RewardBTCStaking distributes rewards to BTC validators/delegations at a given height according
+// RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
 // to the reward distribution cache
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
 func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *bstypes.RewardDistCache) {
@@ -19,18 +19,18 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *bstype
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
-	// reward each of the BTC validator and its BTC delegations in proportion
-	for _, btcVal := range rdc.BtcVals {
-		// get coins that will be allocated to the BTC validator and its BTC delegations
-		btcValPortion := rdc.GetBTCValPortion(btcVal)
-		coinsForBTCValAndDels := gauge.GetCoinsPortion(btcValPortion)
-		// reward the BTC validator with commission
-		coinsForCommission := types.GetCoinsPortion(coinsForBTCValAndDels, *btcVal.Commission)
-		k.accumulateRewardGauge(ctx, types.BTCValidatorType, btcVal.GetAddress(), coinsForCommission)
+	// reward each of the finality provider and its BTC delegations in proportion
+	for _, fp := range rdc.FinalityProviders {
+		// get coins that will be allocated to the finality provider and its BTC delegations
+		fpPortion := rdc.GetFinalityProviderPortion(fp)
+		coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
+		// reward the finality provider with commission
+		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
+		k.accumulateRewardGauge(ctx, types.FinalityProviderType, fp.GetAddress(), coinsForCommission)
 		// reward the rest of coins to each BTC delegation proportional to its voting power portion
-		coinsForBTCDels := coinsForBTCValAndDels.Sub(coinsForCommission...)
-		for _, btcDel := range btcVal.BtcDels {
-			btcDelPortion := btcVal.GetBTCDelPortion(btcDel)
+		coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
+		for _, btcDel := range fp.BtcDels {
+			btcDelPortion := fp.GetBTCDelPortion(btcDel)
 			coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
 			k.accumulateRewardGauge(ctx, types.BTCDelegationType, btcDel.GetAddress(), coinsForDel)
 		}

@@ -66,7 +66,7 @@ func (k Keeper) GetRewardGauge(ctx context.Context, sType types.StakeholderType,
 }
 
 // rewardGaugeStore returns the KVStore of the reward gauge of a stakeholder
-// of a given type {submitter, reporter, BTC validator, BTC delegation}
+// of a given type {submitter, reporter, finality provider, BTC delegation}
 // prefix: RewardGaugeKey
 // key: (stakeholder type || stakeholder address)
 // value: reward gauge

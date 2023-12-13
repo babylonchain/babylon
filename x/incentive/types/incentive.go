@@ -61,12 +61,12 @@ type StakeholderType byte
 const (
 	SubmitterType StakeholderType = iota
 	ReporterType
-	BTCValidatorType
+	FinalityProviderType
 	BTCDelegationType
 )
 
 func GetAllStakeholderTypes() []StakeholderType {
-	return []StakeholderType{SubmitterType, ReporterType, BTCValidatorType, BTCDelegationType}
+	return []StakeholderType{SubmitterType, ReporterType, FinalityProviderType, BTCDelegationType}
 }
 
 func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
@@ -77,8 +77,8 @@ func NewStakeHolderType(stBytes []byte) (StakeholderType, error) {
 		return SubmitterType, nil
 	} else if stBytes[0] == byte(ReporterType) {
 		return ReporterType, nil
-	} else if stBytes[0] == byte(BTCValidatorType) {
-		return BTCValidatorType, nil
+	} else if stBytes[0] == byte(FinalityProviderType) {
+		return FinalityProviderType, nil
 	} else if stBytes[0] == byte(BTCDelegationType) {
 		return BTCDelegationType, nil
 	} else {
@@ -91,8 +91,8 @@ func NewStakeHolderTypeFromString(stStr string) (StakeholderType, error) {
 		return SubmitterType, nil
 	} else if stStr == "reporter" {
 		return ReporterType, nil
-	} else if stStr == "btc_validator" {
-		return BTCValidatorType, nil
+	} else if stStr == "finality_provider" {
+		return FinalityProviderType, nil
 	} else if stStr == "btc_delegation" {
 		return BTCDelegationType, nil
 	} else {
@@ -109,8 +109,8 @@ func (st StakeholderType) String() string {
 		return "submitter"
 	} else if st == ReporterType {
 		return "reporter"
-	} else if st == BTCValidatorType {
-		return "btc_validator"
+	} else if st == FinalityProviderType {
+		return "finality_provider"
 	} else if st == BTCDelegationType {
 		return "btc_delegation"
 	}

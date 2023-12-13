@@ -25,9 +25,9 @@ message Params {
         (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
         (gogoproto.nullable)   = false
     ];
-    // btc_staking_portion is the portion of rewards that goes to BTC validators/delegations
-    // NOTE: the portion of each BTC validator/delegation is calculated by using its voting 
-    // power and BTC validator's commission
+    // btc_staking_portion is the portion of rewards that goes to Finality Providers/delegations
+    // NOTE: the portion of each Finality Provider/delegation is calculated by using its voting
+    // power and finality provider's commission
     string btc_staking_portion = 3 [
         (cosmos_proto.scalar)  = "cosmos.Dec",
         (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",

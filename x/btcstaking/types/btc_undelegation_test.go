@@ -25,9 +25,9 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
 
-		valSK, valPK, err := datagen.GenRandomBTCKeyPair(r)
+		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		valPKList := []*btcec.PublicKey{valPK}
+		fpPKList := []*btcec.PublicKey{fpPK}
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -47,7 +47,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		btcDel, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
-			bbn.NewBIP340PKsFromBTCPKs(valPKList),
+			bbn.NewBIP340PKsFromBTCPKs(fpPKList),
 			delSK,
 			covenantSKs,
 			covenantQuorum,
@@ -69,7 +69,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			t,
 			net,
 			delSK,
-			valPKList,
+			fpPKList,
 			covenantPKs,
 			covenantQuorum,
 			wire.NewOutPoint(&stakingTxHash, 0),
@@ -94,7 +94,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		// covenant signs (using adaptor signature) the slashing tx
 		covenantSigs, err := datagen.GenCovenantAdaptorSigs(
 			covenantSKs,
-			[]*btcec.PublicKey{valPK},
+			[]*btcec.PublicKey{fpPK},
 			testInfo.UnbondingTx,
 			unbondingSlashingSpendInfo.GetPkScriptPath(),
 			testInfo.SlashingTx,
@@ -117,7 +117,7 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		}
 
 		// build slashing tx with witness for spending the unbonding tx
-		unbondingSlashingTxWithWitness, err := btcDel.BuildUnbondingSlashingTxWithWitness(bsParams, net, valSK)
+		unbondingSlashingTxWithWitness, err := btcDel.BuildUnbondingSlashingTxWithWitness(bsParams, net, fpSK)
 		require.NoError(t, err)
 
 		// assert the execution

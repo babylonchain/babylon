@@ -11,20 +11,20 @@ import (
 )
 
 func (k Keeper) SetEvidence(ctx context.Context, evidence *types.Evidence) {
-	store := k.evidenceStore(ctx, evidence.ValBtcPk)
+	store := k.evidenceStore(ctx, evidence.FpBtcPk)
 	store.Set(sdk.Uint64ToBigEndian(evidence.BlockHeight), k.cdc.MustMarshal(evidence))
 }
 
-func (k Keeper) HasEvidence(ctx context.Context, valBtcPK *bbn.BIP340PubKey, height uint64) bool {
-	store := k.evidenceStore(ctx, valBtcPK)
-	return store.Has(valBtcPK.MustMarshal())
+func (k Keeper) HasEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
+	store := k.evidenceStore(ctx, fpBtcPK)
+	return store.Has(fpBtcPK.MustMarshal())
 }
 
-func (k Keeper) GetEvidence(ctx context.Context, valBtcPK *bbn.BIP340PubKey, height uint64) (*types.Evidence, error) {
+func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.Evidence, error) {
 	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
 		return nil, types.ErrHeightTooHigh
 	}
-	store := k.evidenceStore(ctx, valBtcPK)
+	store := k.evidenceStore(ctx, fpBtcPK)
 	evidenceBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(evidenceBytes) == 0 {
 		return nil, types.ErrEvidenceNotFound
@@ -37,10 +37,10 @@ func (k Keeper) GetEvidence(ctx context.Context, valBtcPK *bbn.BIP340PubKey, hei
 // GetFirstSlashableEvidence gets the first evidence that is slashable,
 // i.e., it contains all fields.
 // NOTE: it's possible that the CanonicalFinalitySig field is empty for
-// an evidence, which happens when the BTC validator signed a fork block
+// an evidence, which happens when the finality provider signed a fork block
 // but hasn't signed the canonical block yet.
-func (k Keeper) GetFirstSlashableEvidence(ctx context.Context, valBtcPK *bbn.BIP340PubKey) *types.Evidence {
-	store := k.evidenceStore(ctx, valBtcPK)
+func (k Keeper) GetFirstSlashableEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey) *types.Evidence {
+	store := k.evidenceStore(ctx, fpBtcPK)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 	for ; iter.Valid(); iter.Next() {
@@ -56,10 +56,10 @@ func (k Keeper) GetFirstSlashableEvidence(ctx context.Context, valBtcPK *bbn.BIP
 
 // evidenceStore returns the KVStore of the evidences
 // prefix: EvidenceKey
-// key: (BTC validator PK || height)
+// key: (finality provider PK || height)
 // value: Evidence
-func (k Keeper) evidenceStore(ctx context.Context, valBTCPK *bbn.BIP340PubKey) prefix.Store {
+func (k Keeper) evidenceStore(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	eStore := prefix.NewStore(storeAdapter, types.EvidenceKey)
-	return prefix.NewStore(eStore, valBTCPK.MustMarshal())
+	return prefix.NewStore(eStore, fpBTCPK.MustMarshal())
 }

@@ -23,31 +23,31 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 
 	rdc := types.NewRewardDistCache()
 
-	// iterate all BTC validators to add each BTC validator's distribution info
+	// iterate all finality providers to add each finality provider's distribution info
 	// to reward distribution cache
-	btcValIter := k.btcValidatorStore(ctx).Iterator(nil, nil)
-	defer btcValIter.Close()
-	for ; btcValIter.Valid(); btcValIter.Next() {
-		valBTCPKBytes := btcValIter.Key()
-		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
+	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
+	defer fpIter.Close()
+	for ; fpIter.Valid(); fpIter.Next() {
+		fpBTCPKBytes := fpIter.Key()
+		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
 		if err != nil {
-			// failing to unmarshal BTC validator PK in KVStore is a programming error
+			// failing to unmarshal finality provider PK in KVStore is a programming error
 			panic(err)
 		}
-		btcVal, err := k.GetBTCValidator(ctx, valBTCPKBytes)
+		fp, err := k.GetFinalityProvider(ctx, fpBTCPKBytes)
 		if err != nil {
-			// failing to get a BTC validator with voting power is a programming error
+			// failing to get a finality provider with voting power is a programming error
 			panic(err)
 		}
-		if btcVal.IsSlashed() {
-			// slashed BTC validator will not get any reward
+		if fp.IsSlashed() {
+			// slashed finality provider will not get any reward
 			continue
 		}
 
-		// iterate over all BTC delegations under this validator to compute
-		// the BTC validator's distribution info
-		btcValDistInfo := types.NewBTCValDistInfo(btcVal)
-		btcDelIter := k.btcDelegatorStore(ctx, valBTCPK).Iterator(nil, nil)
+		// iterate over all BTC delegations under this finality provider to compute
+		// the finality provider's distribution info
+		fpDistInfo := types.NewFinalityProviderDistInfo(fp)
+		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
 			// unmarshal
 			var btcDelIndex types.BTCDelegatorDelegationIndex
@@ -59,13 +59,13 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 					panic(err) // only programming error is possible
 				}
 				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-				btcValDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
+				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 			}
 		}
 		btcDelIter.Close()
 
-		// try to add this BTC validator distribution info to reward distribution cache
-		rdc.AddBTCValDistInfo(btcValDistInfo)
+		// try to add this finality provider distribution info to reward distribution cache
+		rdc.AddFinalityProviderDistInfo(fpDistInfo)
 	}
 
 	// all good, set the reward distribution cache of the current height

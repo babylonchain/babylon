@@ -24,13 +24,13 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					CovenantPks:            types.DefaultParams().CovenantPks,
-					CovenantQuorum:         types.DefaultParams().CovenantQuorum,
-					SlashingAddress:        types.DefaultParams().SlashingAddress,
-					MinSlashingTxFeeSat:    500,
-					MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.5"),
-					SlashingRate:           sdkmath.LegacyMustNewDecFromStr("0.1"),
-					MaxActiveBtcValidators: 100,
+					CovenantPks:                types.DefaultParams().CovenantPks,
+					CovenantQuorum:             types.DefaultParams().CovenantQuorum,
+					SlashingAddress:            types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat:        500,
+					MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:               sdkmath.LegacyMustNewDecFromStr("0.1"),
+					MaxActiveFinalityProviders: 100,
 				},
 			},
 			valid: true,
@@ -39,13 +39,13 @@ func TestGenesisState_Validate(t *testing.T) {
 			desc: "invalid slashing rate in genesis",
 			genState: &types.GenesisState{
 				Params: types.Params{
-					CovenantPks:            types.DefaultParams().CovenantPks,
-					CovenantQuorum:         types.DefaultParams().CovenantQuorum,
-					SlashingAddress:        types.DefaultParams().SlashingAddress,
-					MinSlashingTxFeeSat:    500,
-					MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.5"),
-					SlashingRate:           sdkmath.LegacyZeroDec(), // invalid slashing rate
-					MaxActiveBtcValidators: 100,
+					CovenantPks:                types.DefaultParams().CovenantPks,
+					CovenantQuorum:             types.DefaultParams().CovenantQuorum,
+					SlashingAddress:            types.DefaultParams().SlashingAddress,
+					MinSlashingTxFeeSat:        500,
+					MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.5"),
+					SlashingRate:               sdkmath.LegacyZeroDec(), // invalid slashing rate
+					MaxActiveFinalityProviders: 100,
 				},
 			},
 			valid: false,

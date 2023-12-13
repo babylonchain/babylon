@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	defaultMaxActiveBtcValidators uint32 = 100
+	defaultMaxActiveFinalityProviders uint32 = 100
 )
 
 var _ paramtypes.ParamSet = (*Params)(nil)
@@ -58,8 +58,8 @@ func DefaultParams() Params {
 		MinSlashingTxFeeSat: 1000,
 		MinCommissionRate:   sdkmath.LegacyZeroDec(),
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
-		SlashingRate:           sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
-		MaxActiveBtcValidators: defaultMaxActiveBtcValidators,
+		SlashingRate:               sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
+		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
 	}
 }
 
@@ -90,11 +90,11 @@ func validateMinCommissionRate(rate sdkmath.LegacyDec) error {
 	return nil
 }
 
-// validateMaxActiveBTCValidators checks if the maximum number of
-// active BTC validators is at least the default value
-func validateMaxActiveBTCValidators(maxActiveBtcValidators uint32) error {
-	if maxActiveBtcValidators == 0 {
-		return fmt.Errorf("max validators must be positive")
+// validateMaxActiveFinalityProviders checks if the maximum number of
+// active finality providers is at least the default value
+func validateMaxActiveFinalityProviders(maxActiveFinalityProviders uint32) error {
+	if maxActiveFinalityProviders == 0 {
+		return fmt.Errorf("max finality providers must be positive")
 	}
 	return nil
 }
@@ -130,7 +130,7 @@ func (p Params) Validate() error {
 		return btcstaking.ErrInvalidSlashingRate
 	}
 
-	if err := validateMaxActiveBTCValidators(p.MaxActiveBtcValidators); err != nil {
+	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
 		return err
 	}
 	return nil

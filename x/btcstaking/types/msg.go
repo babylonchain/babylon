@@ -13,13 +13,13 @@ import (
 // ensure that these message types implement the sdk.Msg interface
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
-	_ sdk.Msg = &MsgCreateBTCValidator{}
+	_ sdk.Msg = &MsgCreateFinalityProvider{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
 	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
 )
 
-func (m *MsgCreateBTCValidator) ValidateBasic() error {
+func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if m.Commission == nil {
 		return fmt.Errorf("empty commission")
 	}
@@ -78,13 +78,13 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	if m.StakingTime > math.MaxUint16 {
 		return ErrInvalidStakingTx.Wrapf("invalid lock time: %d, max: %d", m.StakingTime, math.MaxUint16)
 	}
-	// Ensure list of validator BTC PKs is not empty
-	if len(m.ValBtcPkList) == 0 {
-		return ErrEmptyValidatorList
+	// Ensure list of finality provider BTC PKs is not empty
+	if len(m.FpBtcPkList) == 0 {
+		return ErrEmptyFpList
 	}
-	// Ensure list of validator BTC PKs is not duplicated
-	if ExistsDup(m.ValBtcPkList) {
-		return ErrDuplicatedValidator
+	// Ensure list of finality provider BTC PKs is not duplicated
+	if ExistsDup(m.FpBtcPkList) {
+		return ErrDuplicatedFp
 	}
 
 	// staking tx should be correctly formatted

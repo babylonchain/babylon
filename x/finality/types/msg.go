@@ -20,7 +20,7 @@ var (
 func NewMsgAddFinalitySig(signer string, sk *btcec.PrivateKey, sr *eots.PrivateRand, blockHeight uint64, blockHash []byte) (*MsgAddFinalitySig, error) {
 	msg := &MsgAddFinalitySig{
 		Signer:       signer,
-		ValBtcPk:     bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+		FpBtcPk:      bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
 		BlockHeight:  blockHeight,
 		BlockAppHash: blockHash,
 	}
@@ -40,7 +40,7 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 
 func (m *MsgAddFinalitySig) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {
 	msgToSign := m.MsgToSign()
-	pk, err := m.ValBtcPk.ToBTCPK()
+	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (m *MsgCommitPubRandList) VerifySig() error {
 	if err != nil {
 		return err
 	}
-	pk, err := m.ValBtcPk.ToBTCPK()
+	pk, err := m.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return err
 	}

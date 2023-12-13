@@ -11,56 +11,56 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-// SetBTCValidator adds the given BTC validator to KVStore
-func (k Keeper) SetBTCValidator(ctx context.Context, btcVal *types.BTCValidator) {
-	store := k.btcValidatorStore(ctx)
-	btcValBytes := k.cdc.MustMarshal(btcVal)
-	store.Set(btcVal.BtcPk.MustMarshal(), btcValBytes)
+// SetFinalityProvider adds the given finality provider to KVStore
+func (k Keeper) SetFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
+	store := k.finalityProviderStore(ctx)
+	fpBytes := k.cdc.MustMarshal(fp)
+	store.Set(fp.BtcPk.MustMarshal(), fpBytes)
 }
 
-// HasBTCValidator checks if the BTC validator exists
-func (k Keeper) HasBTCValidator(ctx context.Context, valBTCPK []byte) bool {
-	store := k.btcValidatorStore(ctx)
-	return store.Has(valBTCPK)
+// HasFinalityProvider checks if the finality provider exists
+func (k Keeper) HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool {
+	store := k.finalityProviderStore(ctx)
+	return store.Has(fpBTCPK)
 }
 
-// GetBTCValidator gets the BTC validator with the given validator Bitcoin PK
-func (k Keeper) GetBTCValidator(ctx context.Context, valBTCPK []byte) (*types.BTCValidator, error) {
-	store := k.btcValidatorStore(ctx)
-	if !k.HasBTCValidator(ctx, valBTCPK) {
-		return nil, types.ErrBTCValNotFound
+// GetFinalityProvider gets the finality provider with the given finality provider Bitcoin PK
+func (k Keeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types.FinalityProvider, error) {
+	store := k.finalityProviderStore(ctx)
+	if !k.HasFinalityProvider(ctx, fpBTCPK) {
+		return nil, types.ErrFpNotFound
 	}
-	btcValBytes := store.Get(valBTCPK)
-	var btcVal types.BTCValidator
-	k.cdc.MustUnmarshal(btcValBytes, &btcVal)
-	return &btcVal, nil
+	fpBytes := store.Get(fpBTCPK)
+	var fp types.FinalityProvider
+	k.cdc.MustUnmarshal(fpBytes, &fp)
+	return &fp, nil
 }
 
-// SlashBTCValidator slashes a BTC validator with the given PK
-// A slashed BTC validator will not have voting power
-func (k Keeper) SlashBTCValidator(ctx context.Context, valBTCPK []byte) error {
-	btcVal, err := k.GetBTCValidator(ctx, valBTCPK)
+// SlashFinalityProvider slashes a finality provider with the given PK
+// A slashed finality provider will not have voting power
+func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
 	if err != nil {
 		return err
 	}
-	if btcVal.IsSlashed() {
-		return types.ErrBTCValAlreadySlashed
+	if fp.IsSlashed() {
+		return types.ErrFpAlreadySlashed
 	}
-	btcVal.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
 		panic(fmt.Errorf("failed to get current BTC tip"))
 	}
-	btcVal.SlashedBtcHeight = btcTip.Height
-	k.SetBTCValidator(ctx, btcVal)
+	fp.SlashedBtcHeight = btcTip.Height
+	k.SetFinalityProvider(ctx, fp)
 	return nil
 }
 
-// btcValidatorStore returns the KVStore of the BTC validator set
-// prefix: BTCValidatorKey
+// finalityProviderStore returns the KVStore of the finality provider set
+// prefix: FinalityProviderKey
 // key: Bitcoin secp256k1 PK
-// value: BTCValidator object
-func (k Keeper) btcValidatorStore(ctx context.Context) prefix.Store {
+// value: FinalityProvider object
+func (k Keeper) finalityProviderStore(ctx context.Context) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.BTCValidatorKey)
+	return prefix.NewStore(storeAdapter, types.FinalityProviderKey)
 }

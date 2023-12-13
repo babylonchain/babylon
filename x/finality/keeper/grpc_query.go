@@ -18,19 +18,19 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // ListPublicRandomness returns a list of public randomness committed by a given
-// BTC validator
+// finality provider
 func (k Keeper) ListPublicRandomness(ctx context.Context, req *types.QueryListPublicRandomnessRequest) (*types.QueryListPublicRandomnessResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	valBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal validator BTC PK hex: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.pubRandStore(sdkCtx, valBTCPK)
+	store := k.pubRandStore(sdkCtx, fpBTCPK)
 	pubRandMap := map[uint64]*bbn.SchnorrPubRand{}
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		height := sdk.BigEndianToUint64(key)
@@ -114,7 +114,7 @@ func (k Keeper) VotesAtHeight(ctx context.Context, req *types.QueryVotesAtHeight
 	for pkHex := range sigSet {
 		pk, err := bbn.NewBIP340PubKeyFromHex(pkHex)
 		if err != nil {
-			// failing to unmarshal validator BTC PK in KVStore is a programming error
+			// failing to unmarshal finality provider BTC PK in KVStore is a programming error
 			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
 		}
 
@@ -124,20 +124,20 @@ func (k Keeper) VotesAtHeight(ctx context.Context, req *types.QueryVotesAtHeight
 	return &types.QueryVotesAtHeightResponse{BtcPks: btcPks}, nil
 }
 
-// Evidence returns the first evidence that allows to extract the BTC validator's SK
-// associated with the given BTC validator's PK.
+// Evidence returns the first evidence that allows to extract the finality provider's SK
+// associated with the given finality provider's PK.
 func (k Keeper) Evidence(ctx context.Context, req *types.QueryEvidenceRequest) (*types.QueryEvidenceResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	valBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal validator BTC PK hex: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	evidence := k.GetFirstSlashableEvidence(sdkCtx, valBTCPK)
+	evidence := k.GetFirstSlashableEvidence(sdkCtx, fpBTCPK)
 	if evidence == nil {
 		return nil, types.ErrNoSlashableEvidence
 	}
@@ -164,13 +164,13 @@ func (k Keeper) ListEvidences(ctx context.Context, req *types.QueryListEvidences
 		// since there is another layer of KVStore (height -> evidence) under eStore
 		// in which height is uint64 thus takes 8 bytes
 		strippedKey := key[:bbn.BIP340PubKeyLen]
-		valBTCPK, err := bbn.NewBIP340PubKey(strippedKey)
+		fpBTCPK, err := bbn.NewBIP340PubKey(strippedKey)
 		if err != nil {
-			panic(err) // failing to unmarshal valBTCPK in KVStore can only be a programming error
+			panic(err) // failing to unmarshal fpBTCPK in KVStore can only be a programming error
 		}
-		evidence := k.GetFirstSlashableEvidence(sdkCtx, valBTCPK)
+		evidence := k.GetFirstSlashableEvidence(sdkCtx, fpBTCPK)
 
-		// hit if the BTC validator has a full evidence of equivocation
+		// hit if the finality provider has a full evidence of equivocation
 		if evidence != nil && evidence.BlockHeight >= req.StartHeight {
 			if accumulate {
 				evidences = append(evidences, evidence)

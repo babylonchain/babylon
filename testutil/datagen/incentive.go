@@ -82,34 +82,34 @@ func GenRandomBTCDelDistInfo(r *rand.Rand) *bstypes.BTCDelDistInfo {
 	}
 }
 
-func GenRandomBTCValDistInfo(r *rand.Rand) (*bstypes.BTCValDistInfo, error) {
-	// create BTC validator with random commission
-	btcVal, err := GenRandomBTCValidator(r)
+func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderDistInfo, error) {
+	// create finality provider with random commission
+	fp, err := GenRandomFinalityProvider(r)
 	if err != nil {
 		return nil, err
 	}
-	// create BTC validator distribution info
-	btcValDistInfo := bstypes.NewBTCValDistInfo(btcVal)
+	// create finality provider distribution info
+	fpDistInfo := bstypes.NewFinalityProviderDistInfo(fp)
 	// add a random number of BTC delegation distribution info
 	numBTCDels := RandomInt(r, 100) + 1
 	for i := uint64(0); i < numBTCDels; i++ {
 		btcDelDistInfo := GenRandomBTCDelDistInfo(r)
-		btcValDistInfo.BtcDels = append(btcValDistInfo.BtcDels, btcDelDistInfo)
-		btcValDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
+		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
+		fpDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
 	}
-	return btcValDistInfo, nil
+	return fpDistInfo, nil
 }
 
 func GenRandomBTCStakingRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
 	rdc := bstypes.NewRewardDistCache()
-	// a random number of BTC validators
-	numBTCVals := RandomInt(r, 10) + 1
-	for i := uint64(0); i < numBTCVals; i++ {
-		v, err := GenRandomBTCValDistInfo(r)
+	// a random number of finality providers
+	numFps := RandomInt(r, 10) + 1
+	for i := uint64(0); i < numFps; i++ {
+		v, err := GenRandomFinalityProviderDistInfo(r)
 		if err != nil {
 			return nil, err
 		}
-		rdc.AddBTCValDistInfo(v)
+		rdc.AddFinalityProviderDistInfo(v)
 	}
 	return rdc, nil
 }

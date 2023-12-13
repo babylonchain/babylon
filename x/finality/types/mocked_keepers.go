@@ -50,19 +50,19 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetBTCStakingActivatedHeight(ctx int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCStakingActivatedHeight", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCStakingActivatedHeight), ctx)
 }
 
-// GetBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) GetBTCValidator(ctx context.Context, valBTCPK []byte) (*types.BTCValidator, error) {
+// GetFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types.FinalityProvider, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBTCValidator", ctx, valBTCPK)
-	ret0, _ := ret[0].(*types.BTCValidator)
+	ret := m.ctrl.Call(m, "GetFinalityProvider", ctx, fpBTCPK)
+	ret0, _ := ret[0].(*types.FinalityProvider)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetBTCValidator indicates an expected call of GetBTCValidator.
-func (mr *MockBTCStakingKeeperMockRecorder) GetBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
+// GetFinalityProvider indicates an expected call of GetFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetBTCValidator), ctx, valBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
 }
 
 // GetRewardDistCache mocks base method.
@@ -81,17 +81,17 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetRewardDistCache(ctx, height inter
 }
 
 // GetVotingPower mocks base method.
-func (m *MockBTCStakingKeeper) GetVotingPower(ctx context.Context, valBTCPK []byte, height uint64) uint64 {
+func (m *MockBTCStakingKeeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetVotingPower", ctx, valBTCPK, height)
+	ret := m.ctrl.Call(m, "GetVotingPower", ctx, fpBTCPK, height)
 	ret0, _ := ret[0].(uint64)
 	return ret0
 }
 
 // GetVotingPower indicates an expected call of GetVotingPower.
-func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, valBTCPK, height interface{}) *gomock.Call {
+func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, fpBTCPK, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPower", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPower), ctx, valBTCPK, height)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPower", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPower), ctx, fpBTCPK, height)
 }
 
 // GetVotingPowerTable mocks base method.
@@ -108,18 +108,18 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPowerTable(ctx, height inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPowerTable", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPowerTable), ctx, height)
 }
 
-// HasBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) HasBTCValidator(ctx context.Context, valBTCPK []byte) bool {
+// HasFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasBTCValidator", ctx, valBTCPK)
+	ret := m.ctrl.Call(m, "HasFinalityProvider", ctx, fpBTCPK)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// HasBTCValidator indicates an expected call of HasBTCValidator.
-func (mr *MockBTCStakingKeeperMockRecorder) HasBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
+// HasFinalityProvider indicates an expected call of HasFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasBTCValidator), ctx, valBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
 // RecordRewardDistCache mocks base method.
@@ -146,18 +146,18 @@ func (mr *MockBTCStakingKeeperMockRecorder) RemoveRewardDistCache(ctx, height in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RemoveRewardDistCache), ctx, height)
 }
 
-// SlashBTCValidator mocks base method.
-func (m *MockBTCStakingKeeper) SlashBTCValidator(ctx context.Context, valBTCPK []byte) error {
+// SlashFinalityProvider mocks base method.
+func (m *MockBTCStakingKeeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SlashBTCValidator", ctx, valBTCPK)
+	ret := m.ctrl.Call(m, "SlashFinalityProvider", ctx, fpBTCPK)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// SlashBTCValidator indicates an expected call of SlashBTCValidator.
-func (mr *MockBTCStakingKeeperMockRecorder) SlashBTCValidator(ctx, valBTCPK interface{}) *gomock.Call {
+// SlashFinalityProvider indicates an expected call of SlashFinalityProvider.
+func (mr *MockBTCStakingKeeperMockRecorder) SlashFinalityProvider(ctx, fpBTCPK interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlashBTCValidator", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SlashBTCValidator), ctx, valBTCPK)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlashFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).SlashFinalityProvider), ctx, fpBTCPK)
 }
 
 // MockIncentiveKeeper is a mock of IncentiveKeeper interface.

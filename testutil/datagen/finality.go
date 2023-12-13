@@ -34,7 +34,7 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 
 	msg := &ftypes.MsgCommitPubRandList{
 		Signer:      GenRandomAccount().Address,
-		ValBtcPk:    bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+		FpBtcPk:     bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
 		StartHeight: startHeight,
 		PubRandList: prList,
 	}
@@ -69,7 +69,7 @@ func GenRandomEvidence(r *rand.Rand, sk *btcec.PrivateKey, height uint64) (*ftyp
 	}
 
 	evidence := &ftypes.Evidence{
-		ValBtcPk:             bip340PK,
+		FpBtcPk:              bip340PK,
 		BlockHeight:          height,
 		PubRand:              bbn.NewSchnorrPubRandFromFieldVal(pr),
 		CanonicalAppHash:     cAppHash,

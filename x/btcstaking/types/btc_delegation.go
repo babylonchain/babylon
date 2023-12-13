@@ -116,11 +116,11 @@ func (d *BTCDelegation) ValidateBasic() error {
 	if d.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-	if len(d.ValBtcPkList) == 0 {
-		return fmt.Errorf("empty list of BTC validator PKs")
+	if len(d.FpBtcPkList) == 0 {
+		return fmt.Errorf("empty list of finality provider PKs")
 	}
-	if ExistsDup(d.ValBtcPkList) {
-		return fmt.Errorf("list of BTC validator PKs has duplication")
+	if ExistsDup(d.FpBtcPkList) {
+		return fmt.Errorf("list of finality provider PKs has duplication")
 	}
 	if d.StakingTx == nil {
 		return fmt.Errorf("empty staking tx")
@@ -165,7 +165,7 @@ func (d *BTCDelegation) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
 
 // AddCovenantSigs adds signatures on the slashing tx from the given
 // covenant, where each signature is an adaptor signature encrypted by
-// each BTC validator's PK this BTC delegation restakes to
+// each finality provider's PK this BTC delegation restakes to
 func (d *BTCDelegation) AddCovenantSigs(covPk *bbn.BIP340PubKey, sigs []asig.AdaptorSignature, quorum uint32) error {
 	// we can ignore the covenant sig if quorum is already reached
 	if d.HasCovenantQuorums(quorum) {
@@ -189,11 +189,11 @@ func (d *BTCDelegation) AddCovenantSigs(covPk *bbn.BIP340PubKey, sigs []asig.Ada
 
 // GetStakingInfo returns the staking info of the BTC delegation
 // the staking info can be used for constructing witness of slashing tx
-// with access to a BTC validator's SK
+// with access to a finality provider's SK
 func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params) (*btcstaking.StakingInfo, error) {
-	valBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(d.ValBtcPkList)
+	fpBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(d.FpBtcPkList)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert validator pks to BTC pks %v", err)
+		return nil, fmt.Errorf("failed to convert finality provider pks to BTC pks %v", err)
 	}
 	covenantBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
 	if err != nil {
@@ -201,7 +201,7 @@ func (d *BTCDelegation) GetStakingInfo(bsParams *Params, btcNet *chaincfg.Params
 	}
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		d.BtcPk.MustToBTCPK(),
-		valBtcPkList,
+		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,
 		d.GetStakingTime(),
@@ -247,11 +247,11 @@ func (d *BTCDelegation) SignUnbondingTx(bsParams *Params, btcNet *chaincfg.Param
 
 // GetUnbondingInfo returns the unbonding info of the BTC delegation
 // the unbonding info can be used for constructing witness of unbonding slashing
-// tx with access to a BTC validator's SK
+// tx with access to a finality provider's SK
 func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Params) (*btcstaking.UnbondingInfo, error) {
-	valBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(d.ValBtcPkList)
+	fpBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(d.FpBtcPkList)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert validator pks to BTC pks: %v", err)
+		return nil, fmt.Errorf("failed to convert finality provider pks to BTC pks: %v", err)
 	}
 
 	covenantBtcPkList, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
@@ -265,7 +265,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		d.BtcPk.MustToBTCPK(),
-		valBtcPkList,
+		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,
 		uint16(d.BtcUndelegation.GetUnbondingTime()),
@@ -279,7 +279,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 	return unbondingInfo, nil
 }
 
-func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, valSK *btcec.PrivateKey) (*wire.MsgTx, error) {
+func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(d.StakingTx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert a Babylon staking tx to wire.MsgTx: %w", err)
@@ -303,7 +303,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 
 	// assemble witness for slashing tx
 	slashingMsgTxWithWitness, err := d.SlashingTx.BuildSlashingTxWithWitness(
-		valSK,
+		fpSK,
 		stakingMsgTx,
 		d.StakingOutputIdx,
 		d.DelegatorSig,
@@ -312,9 +312,9 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to build witness for BTC delegation of %s under BTC validator %s: %v",
+			"failed to build witness for BTC delegation of %s under finality provider %s: %v",
 			d.BtcPk.MarshalHex(),
-			bbn.NewBIP340PubKeyFromBTCPK(valSK.PubKey()).MarshalHex(),
+			bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey()).MarshalHex(),
 			err,
 		)
 	}
@@ -322,7 +322,7 @@ func (d *BTCDelegation) BuildSlashingTxWithWitness(bsParams *Params, btcNet *cha
 	return slashingMsgTxWithWitness, nil
 }
 
-func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, valSK *btcec.PrivateKey) (*wire.MsgTx, error) {
+func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, btcNet *chaincfg.Params, fpSK *btcec.PrivateKey) (*wire.MsgTx, error) {
 	unbondingMsgTx, err := bbn.NewBTCTxFromBytes(d.BtcUndelegation.UnbondingTx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert a Babylon unbonding tx to wire.MsgTx: %w", err)
@@ -346,7 +346,7 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 
 	// assemble witness for unbonding slashing tx
 	slashingMsgTxWithWitness, err := d.BtcUndelegation.SlashingTx.BuildSlashingTxWithWitness(
-		valSK,
+		fpSK,
 		unbondingMsgTx,
 		0,
 		d.BtcUndelegation.DelegatorSlashingSig,
@@ -355,9 +355,9 @@ func (d *BTCDelegation) BuildUnbondingSlashingTxWithWitness(bsParams *Params, bt
 	)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"failed to build witness for unbonding BTC delegation %s under BTC validator %s: %v",
+			"failed to build witness for unbonding BTC delegation %s under finality provider %s: %v",
 			d.BtcPk.MarshalHex(),
-			bbn.NewBIP340PubKeyFromBTCPK(valSK.PubKey()).MarshalHex(),
+			bbn.NewBIP340PubKeyFromBTCPK(fpSK.PubKey()).MarshalHex(),
 			err,
 		)
 	}

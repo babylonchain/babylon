@@ -176,7 +176,7 @@ func (t *taprootScriptHolder) taprootPkScript(net *chaincfg.Params) ([]byte, err
 // Staking script has 3 spending paths:
 // 1. Staker can spend after relative time lock - staking
 // 2. Staker can spend with covenat cooperation any time
-// 3. Staker can spend with validator and covenant cooperation any time.
+// 3. Staker can spend with finality provider and covenant cooperation any time.
 type StakingInfo struct {
 	StakingOutput         *wire.TxOut
 	scriptHolder          *taprootScriptHolder
@@ -260,13 +260,13 @@ type babylonScriptPaths struct {
 	// slashingPathScript is the script path for slashing
 	// <Staker_PK> OP_CHECKSIGVERIFY
 	// <Covenant_PK1> OP_CHECKSIG ... <Covenant_PKN> OP_CHECKSIGADD M OP_GREATERTHANOREQUAL OP_VERIFY
-	// <Validator_PK1> OP_CHECKSIG ... <Validator_PKN> OP_CHECKSIGADD 1 OP_GREATERTHANOREQUAL OP_VERIFY
+	// <FP_PK1> OP_CHECKSIG ... <FP_PKN> OP_CHECKSIGADD 1 OP_GREATERTHANOREQUAL OP_VERIFY
 	slashingPathScript []byte
 }
 
 func newBabylonScriptPaths(
 	stakerKey *btcec.PublicKey,
-	validatorKeys []*btcec.PublicKey,
+	fpKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
 	covenantQuorum uint32,
 	lockTime uint16,
@@ -300,11 +300,11 @@ func newBabylonScriptPaths(
 		return nil, err
 	}
 
-	validatorSigScript, err := buildMultiSigScript(
-		validatorKeys,
-		// we always require only one validator to sign
+	fpSigScript, err := buildMultiSigScript(
+		fpKeys,
+		// we always require only one finality provider to sign
 		1,
-		// we need to run verify to clear the stack, as validator multisig is in the middle of the script
+		// we need to run verify to clear the stack, as finality provider multisig is in the middle of the script
 		true,
 	)
 
@@ -319,7 +319,7 @@ func newBabylonScriptPaths(
 
 	slashingPathScript := aggregateScripts(
 		stakerSigScript,
-		validatorSigScript,
+		fpSigScript,
 		covenantMultisigScript,
 	)
 
@@ -332,7 +332,7 @@ func newBabylonScriptPaths(
 
 func BuildStakingInfo(
 	stakerKey *btcec.PublicKey,
-	validatorKeys []*btcec.PublicKey,
+	fpKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
 	covenantQuorum uint32,
 	stakingTime uint16,
@@ -343,7 +343,7 @@ func BuildStakingInfo(
 
 	babylonScripts, err := newBabylonScriptPaths(
 		stakerKey,
-		validatorKeys,
+		fpKeys,
 		covenantKeys,
 		covenantQuorum,
 		stakingTime,
@@ -402,7 +402,7 @@ func (i *StakingInfo) SlashingPathSpendInfo() (*SpendInfo, error) {
 
 // Unbonding script has 2 spending paths:
 // 1. Staker can spend after relative time lock - staking
-// 2. Staker can spend with validator and covenant cooperation any time.
+// 2. Staker can spend with finality provider and covenant cooperation any time.
 type UnbondingInfo struct {
 	UnbondingOutput      *wire.TxOut
 	scriptHolder         *taprootScriptHolder
@@ -412,7 +412,7 @@ type UnbondingInfo struct {
 
 func BuildUnbondingInfo(
 	stakerKey *btcec.PublicKey,
-	validatorKeys []*btcec.PublicKey,
+	fpKeys []*btcec.PublicKey,
 	covenantKeys []*btcec.PublicKey,
 	covenantQuorum uint32,
 	unbondingTime uint16,
@@ -423,7 +423,7 @@ func BuildUnbondingInfo(
 
 	babylonScripts, err := newBabylonScriptPaths(
 		stakerKey,
-		validatorKeys,
+		fpKeys,
 		covenantKeys,
 		covenantQuorum,
 		unbondingTime,

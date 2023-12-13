@@ -24,20 +24,20 @@ func FuzzListPublicRandomness(f *testing.F) {
 		ctx = sdk.UnwrapSDKContext(ctx)
 
 		// add a random list of EOTS public randomness
-		valBTCPK, err := datagen.GenRandomBIP340PubKey(r)
+		fpBTCPK, err := datagen.GenRandomBIP340PubKey(r)
 		require.NoError(t, err)
 		startHeight := datagen.RandomInt(r, 100)
 		numPubRand := datagen.RandomInt(r, 1000) + 2
 		_, prList, err := datagen.GenRandomPubRandList(r, numPubRand)
 		require.NoError(t, err)
-		keeper.SetPubRandList(ctx, valBTCPK, startHeight, prList)
+		keeper.SetPubRandList(ctx, fpBTCPK, startHeight, prList)
 
 		// perform a query to pubrand list and assert consistency
 		// NOTE: pagination is already tested in Cosmos SDK so we don't test it here again,
 		// instead only ensure it takes effect
 		limit := datagen.RandomInt(r, int(numPubRand)-1) + 1
 		req := &types.QueryListPublicRandomnessRequest{
-			ValBtcPkHex: valBTCPK.MarshalHex(),
+			FpBtcPkHex: fpBTCPK.MarshalHex(),
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
@@ -184,18 +184,18 @@ func FuzzVotesAtHeight(f *testing.F) {
 		keeper, ctx := testkeeper.FinalityKeeper(t, nil, nil)
 		ctx = sdk.UnwrapSDKContext(ctx)
 
-		// Add random number of voted validators to the store
+		// Add random number of voted finality providers to the store
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		numVotedVals := datagen.RandomInt(r, 10) + 1
-		votedValMap := make(map[string]bool, numVotedVals)
-		for i := uint64(0); i < numVotedVals; i++ {
-			votedValPK, err := datagen.GenRandomBIP340PubKey(r)
+		numVotedFps := datagen.RandomInt(r, 10) + 1
+		votedFpsMap := make(map[string]bool, numVotedFps)
+		for i := uint64(0); i < numVotedFps; i++ {
+			votedFpPK, err := datagen.GenRandomBIP340PubKey(r)
 			require.NoError(t, err)
 			votedSig, err := bbn.NewSchnorrEOTSSig(datagen.GenRandomByteArray(r, 32))
 			require.NoError(t, err)
-			keeper.SetSig(ctx, babylonHeight, votedValPK, votedSig)
+			keeper.SetSig(ctx, babylonHeight, votedFpPK, votedSig)
 
-			votedValMap[votedValPK.MarshalHex()] = true
+			votedFpsMap[votedFpPK.MarshalHex()] = true
 		}
 
 		resp, err := keeper.VotesAtHeight(ctx, &types.QueryVotesAtHeightRequest{
@@ -203,16 +203,16 @@ func FuzzVotesAtHeight(f *testing.F) {
 		})
 		require.NoError(t, err)
 
-		// Check if all voted validators are returned
-		valFoundMap := make(map[string]bool)
+		// Check if all voted finality providers are returned
+		fpsFoundMap := make(map[string]bool)
 		for _, pk := range resp.BtcPks {
-			if _, ok := votedValMap[pk.MarshalHex()]; !ok {
-				t.Fatalf("rpc returned a val that was not created")
+			if _, ok := votedFpsMap[pk.MarshalHex()]; !ok {
+				t.Fatalf("rpc returned a finality provider that was not created")
 			}
-			valFoundMap[pk.MarshalHex()] = true
+			fpsFoundMap[pk.MarshalHex()] = true
 		}
-		if len(valFoundMap) != len(votedValMap) {
-			t.Errorf("Some vals were missed. Got %d while %d were expected", len(valFoundMap), len(votedValMap))
+		if len(fpsFoundMap) != len(votedFpsMap) {
+			t.Errorf("Some finality providers were missed. Got %d while %d were expected", len(fpsFoundMap), len(votedFpsMap))
 		}
 	})
 }
@@ -252,7 +252,7 @@ func FuzzQueryEvidence(f *testing.F) {
 		}
 
 		// get first slashable evidence
-		evidenceResp, err := keeper.Evidence(ctx, &types.QueryEvidenceRequest{ValBtcPkHex: bip340PK.MarshalHex()})
+		evidenceResp, err := keeper.Evidence(ctx, &types.QueryEvidenceRequest{FpBtcPkHex: bip340PK.MarshalHex()})
 		if randomFirstSlashableEvidence == nil {
 			require.Error(t, err)
 			require.Nil(t, evidenceResp)
@@ -322,8 +322,8 @@ func FuzzListEvidences(f *testing.F) {
 		require.LessOrEqual(t, len(resp.Evidences), int(limit))     // check if pagination takes effect
 		require.EqualValues(t, resp.Pagination.Total, numEvidences) // ensure evidences before startHeight are not included
 		for _, actualEvidence := range resp.Evidences {
-			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].CanonicalAppHash, actualEvidence.CanonicalAppHash)
-			require.Equal(t, evidences[actualEvidence.ValBtcPk.MarshalHex()].ForkAppHash, actualEvidence.ForkAppHash)
+			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].CanonicalAppHash, actualEvidence.CanonicalAppHash)
+			require.Equal(t, evidences[actualEvidence.FpBtcPk.MarshalHex()].ForkAppHash, actualEvidence.ForkAppHash)
 		}
 	})
 }

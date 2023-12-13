@@ -34,9 +34,9 @@ type Params struct {
 	SubmitterPortion cosmossdk_io_math.LegacyDec `protobuf:"bytes,1,opt,name=submitter_portion,json=submitterPortion,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"submitter_portion"`
 	// reporter_portion is the portion of rewards that goes to reporter
 	ReporterPortion cosmossdk_io_math.LegacyDec `protobuf:"bytes,2,opt,name=reporter_portion,json=reporterPortion,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"reporter_portion"`
-	// btc_staking_portion is the portion of rewards that goes to BTC validators/delegations
-	// NOTE: the portion of each BTC validator/delegation is calculated by using its voting
-	// power and BTC validator's commission
+	// btc_staking_portion is the portion of rewards that goes to Finality Providers/delegations
+	// NOTE: the portion of each Finality Provider/delegation is calculated by using its voting
+	// power and finality provider's commission
 	BtcStakingPortion cosmossdk_io_math.LegacyDec `protobuf:"bytes,3,opt,name=btc_staking_portion,json=btcStakingPortion,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"btc_staking_portion"`
 }
 

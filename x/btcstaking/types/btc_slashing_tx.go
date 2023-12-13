@@ -133,7 +133,7 @@ func (tx *BTCSlashingTx) Sign(
 	return bbn.NewBIP340SignatureFromBTCSig(schnorrSig), nil
 }
 
-// VerifySignature verifies a signature on the slashing tx signed by staker, validator or covenant
+// VerifySignature verifies a signature on the slashing tx signed by staker, finality provider, or covenant
 func (tx *BTCSlashingTx) VerifySignature(
 	stakingPkScript []byte,
 	stakingAmount int64,
@@ -154,7 +154,7 @@ func (tx *BTCSlashingTx) VerifySignature(
 	)
 }
 
-// EncSign generates an adaptor signature on the slashing tx with validator's
+// EncSign generates an adaptor signature on the slashing tx with finality provider's
 // public key as encryption key
 func (tx *BTCSlashingTx) EncSign(
 	stakingMsgTx *wire.MsgTx,
@@ -183,7 +183,7 @@ func (tx *BTCSlashingTx) EncSign(
 }
 
 // EncVerifyAdaptorSignature verifies an adaptor signature on the slashing tx
-// with the validator's public key as encryption key
+// with the finality provider's public key as encryption key
 func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 	stakingPkScript []byte,
 	stakingAmount int64,
@@ -208,21 +208,21 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 }
 
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
-	valSK *btcec.PrivateKey,
+	fpSK *btcec.PrivateKey,
 	fundingMsgTx *wire.MsgTx,
 	outputIdx uint32,
 	delegatorSig *bbn.BIP340Signature,
 	covenantSigs []*asig.AdaptorSignature,
 	slashingPathSpendInfo *btcstaking.SpendInfo,
 ) (*wire.MsgTx, error) {
-	valSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), valSK)
+	fpSig, err := tx.Sign(fundingMsgTx, outputIdx, slashingPathSpendInfo.GetPkScriptPath(), fpSK)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign slashing tx for the BTC validator: %w", err)
+		return nil, fmt.Errorf("failed to sign slashing tx for the finality provider: %w", err)
 	}
 
-	// decrypt covenant adaptor signature to Schnorr signature using validator's SK,
+	// decrypt covenant adaptor signature to Schnorr signature using finality provider's SK,
 	// then marshal
-	decKey, err := asig.NewDecyptionKeyFromBTCSK(valSK)
+	decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get decryption key from BTC SK: %w", err)
 	}
@@ -239,7 +239,7 @@ func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(
 	// construct witness
 	witness, err := slashingPathSpendInfo.CreateSlashingPathWitness(
 		covSigs,
-		[]*schnorr.Signature{valSig.MustToBTCSig()}, // TODO: work with restaking
+		[]*schnorr.Signature{fpSig.MustToBTCSig()}, // TODO: work with restaking
 		delegatorSig.MustToBTCSig(),
 	)
 	if err != nil {

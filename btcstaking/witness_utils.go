@@ -46,7 +46,7 @@ func (si *SpendInfo) CreateUnbondingPathWitness(covenantSigs []*schnorr.Signatur
 	return CreateWitness(si, witnessStack)
 }
 
-func (si *SpendInfo) CreateSlashingPathWitness(covenantSigs []*schnorr.Signature, validatorSigs []*schnorr.Signature, delegatorSig *schnorr.Signature) (wire.TxWitness, error) {
+func (si *SpendInfo) CreateSlashingPathWitness(covenantSigs []*schnorr.Signature, fpSigs []*schnorr.Signature, delegatorSig *schnorr.Signature) (wire.TxWitness, error) {
 	if si == nil {
 		panic("cannot build witness without spend info")
 	}
@@ -66,16 +66,16 @@ func (si *SpendInfo) CreateSlashingPathWitness(covenantSigs []*schnorr.Signature
 		}
 	}
 
-	// add validator signatures to witness stack
-	// NOTE: only 1 of the validator signatures needs to be non-nil
-	if len(validatorSigs) == 0 {
-		return nil, fmt.Errorf("validator signatures should not be empty")
+	// add finality provider signatures to witness stack
+	// NOTE: only 1 of the finality provider signatures needs to be non-nil
+	if len(fpSigs) == 0 {
+		return nil, fmt.Errorf("finality provider signatures should not be empty")
 	}
-	for _, valSig := range validatorSigs {
-		if valSig == nil {
+	for _, fpSig := range fpSigs {
+		if fpSig == nil {
 			witnessStack = append(witnessStack, []byte{})
 		} else {
-			witnessStack = append(witnessStack, valSig.Serialize())
+			witnessStack = append(witnessStack, fpSig.Serialize())
 		}
 	}
 

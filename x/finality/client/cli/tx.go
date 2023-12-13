@@ -34,7 +34,7 @@ func GetTxCmd() *cobra.Command {
 
 func NewCommitPubRandListCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "commit-pubrand-list [val_btc_pk] [start_height] [pub_rand1]  [pub_rand2] ... [sig]",
+		Use:   "commit-pubrand-list [fp_btc_pk] [start_height] [pub_rand1]  [pub_rand2] ... [sig]",
 		Args:  cobra.MinimumNArgs(4),
 		Short: "Commit a list of public randomness",
 		Long: strings.TrimSpace(
@@ -46,8 +46,8 @@ func NewCommitPubRandListCmd() *cobra.Command {
 				return err
 			}
 
-			// get validator BTC PK
-			valBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			// get finality provider BTC PK
+			fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
 				return err
 			}
@@ -77,7 +77,7 @@ func NewCommitPubRandListCmd() *cobra.Command {
 
 			msg := types.MsgCommitPubRandList{
 				Signer:      clientCtx.FromAddress.String(),
-				ValBtcPk:    valBTCPK,
+				FpBtcPk:     fpBTCPK,
 				StartHeight: startHeight,
 				PubRandList: pubRandList,
 				Sig:         sig,
@@ -94,7 +94,7 @@ func NewCommitPubRandListCmd() *cobra.Command {
 
 func NewAddFinalitySigCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "add-finality-sig [val_btc_pk] [block_height] [block_app_hash] [finality_sig]",
+		Use:   "add-finality-sig [fp_btc_pk] [block_height] [block_app_hash] [finality_sig]",
 		Args:  cobra.ExactArgs(4),
 		Short: "Add a finality signature",
 		Long: strings.TrimSpace(
@@ -106,8 +106,8 @@ func NewAddFinalitySigCmd() *cobra.Command {
 				return err
 			}
 
-			// get validator BTC PK
-			valBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			// get finality provider BTC PK
+			fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
 			if err != nil {
 				return err
 			}
@@ -132,7 +132,7 @@ func NewAddFinalitySigCmd() *cobra.Command {
 
 			msg := types.MsgAddFinalitySig{
 				Signer:       clientCtx.FromAddress.String(),
-				ValBtcPk:     valBTCPK,
+				FpBtcPk:      fpBTCPK,
 				BlockHeight:  blockHeight,
 				BlockAppHash: blockLch,
 				FinalitySig:  finalitySig,

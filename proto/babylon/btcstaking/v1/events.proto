@@ -6,8 +6,8 @@ import "babylon/btcstaking/v1/btcstaking.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
-// EventNewBTCValidator is the event emitted when a BTC validator is created
-message EventNewBTCValidator { BTCValidator btc_val = 1; }
+// EventNewFinalityProvider is the event emitted when a finality provider is created
+message EventNewFinalityProvider { FinalityProvider fp = 1; }
 
 // EventNewBTCDelegation is the event emitted when a BTC delegation is created
 // NOTE: the BTC delegation is not active thus does not have voting power yet
@@ -24,13 +24,13 @@ message EventUnbondingBTCDelegation {
     // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // val_btc_pk_list is the list of BIP-340 PKs of the BTC validators that
+    // fp_btc_pk_list is the list of BIP-340 PKs of the BTC finality providers that
     // this BTC delegation delegates to
     // If there is more than 1 PKs, then this means the delegation is restaked
-    // to multiple BTC validators
-    repeated bytes val_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // to multiple finality providers
+    repeated bytes fp_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // staking_tx_hash is the hash of the staking tx.
-    // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+    // (fp_pks..., del_pk, staking_tx_hash) uniquely identifies a BTC delegation
     string staking_tx_hash = 3;
     // unbonding_tx_hash is the hash of the unbonding tx.
     string unbonding_tx_hash = 4;
@@ -42,13 +42,13 @@ message EventUnbondedBTCDelegation {
     // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // val_btc_pk_list is the list of BIP-340 PKs of the BTC validators that
+    // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
     // this BTC delegation delegates to
     // If there is more than 1 PKs, then this means the delegation is restaked
-    // to multiple BTC validators
-    repeated bytes val_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // to multiple finality providers
+    repeated bytes fp_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // staking_tx_hash is the hash of the staking tx.
-    // (val_pk, del_pk, staking_tx_hash) uniquely identifies a BTC delegation
+    // (fp_pks..., del_pk, staking_tx_hash) uniquely identifies a BTC delegation
     string staking_tx_hash = 3;
     // unbonding_tx_hash is the hash of the unbonding tx.
     string unbonding_tx_hash = 4;

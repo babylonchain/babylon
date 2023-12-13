@@ -17,54 +17,54 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-// BTCValidators returns a paginated list of all Babylon maintained validators
-func (k Keeper) BTCValidators(ctx context.Context, req *types.QueryBTCValidatorsRequest) (*types.QueryBTCValidatorsResponse, error) {
+// FinalityProviders returns a paginated list of all Babylon maintained finality providers
+func (k Keeper) FinalityProviders(ctx context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.btcValidatorStore(sdkCtx)
+	store := k.finalityProviderStore(sdkCtx)
 
-	var btcValidators []*types.BTCValidator
+	var finalityProviders []*types.FinalityProvider
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		var btcValidator types.BTCValidator
-		k.cdc.MustUnmarshal(value, &btcValidator)
-		btcValidators = append(btcValidators, &btcValidator)
+		var finalityProvider types.FinalityProvider
+		k.cdc.MustUnmarshal(value, &finalityProvider)
+		finalityProviders = append(finalityProviders, &finalityProvider)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryBTCValidatorsResponse{BtcValidators: btcValidators, Pagination: pageRes}, nil
+	return &types.QueryFinalityProvidersResponse{FinalityProviders: finalityProviders, Pagination: pageRes}, nil
 }
 
-// BTCValidator returns the validator with the specified validator BTC PK
-func (k Keeper) BTCValidator(ctx context.Context, req *types.QueryBTCValidatorRequest) (*types.QueryBTCValidatorResponse, error) {
+// FinalityProvider returns the finality provider with the specified finality provider BTC PK
+func (k Keeper) FinalityProvider(ctx context.Context, req *types.QueryFinalityProviderRequest) (*types.QueryFinalityProviderResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if len(req.ValBtcPkHex) == 0 {
+	if len(req.FpBtcPkHex) == 0 {
 		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "validator BTC public key cannot be empty")
+			sdkerrors.ErrInvalidRequest, "finality provider BTC public key cannot be empty")
 	}
 
-	valPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	fpPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
 		return nil, err
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	val, err := k.GetBTCValidator(sdkCtx, valPK.MustMarshal())
+	fp, err := k.GetFinalityProvider(sdkCtx, fpPK.MustMarshal())
 
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryBTCValidatorResponse{BtcValidator: val}, nil
+	return &types.QueryFinalityProviderResponse{FinalityProvider: fp}, nil
 }
 
 // BTCDelegations returns all BTC delegations under a given status
@@ -106,34 +106,34 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 	}, nil
 }
 
-// BTCValidatorPowerAtHeight returns the voting power of the specified validator
+// FinalityProviderPowerAtHeight returns the voting power of the specified finality provider
 // at the provided Babylon height
-func (k Keeper) BTCValidatorPowerAtHeight(ctx context.Context, req *types.QueryBTCValidatorPowerAtHeightRequest) (*types.QueryBTCValidatorPowerAtHeightResponse, error) {
+func (k Keeper) FinalityProviderPowerAtHeight(ctx context.Context, req *types.QueryFinalityProviderPowerAtHeightRequest) (*types.QueryFinalityProviderPowerAtHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	valBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal validator BTC PK hex: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	power := k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), req.Height)
+	power := k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), req.Height)
 
-	return &types.QueryBTCValidatorPowerAtHeightResponse{VotingPower: power}, nil
+	return &types.QueryFinalityProviderPowerAtHeightResponse{VotingPower: power}, nil
 }
 
-// BTCValidatorCurrentPower returns the voting power of the specified validator
+// FinalityProviderCurrentPower returns the voting power of the specified finality provider
 // at the current height
-func (k Keeper) BTCValidatorCurrentPower(ctx context.Context, req *types.QueryBTCValidatorCurrentPowerRequest) (*types.QueryBTCValidatorCurrentPowerResponse, error) {
+func (k Keeper) FinalityProviderCurrentPower(ctx context.Context, req *types.QueryFinalityProviderCurrentPowerRequest) (*types.QueryFinalityProviderCurrentPowerResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	valBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal validator BTC PK hex: %v", err)
+		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -142,20 +142,20 @@ func (k Keeper) BTCValidatorCurrentPower(ctx context.Context, req *types.QueryBT
 
 	// if voting power table is recorded at the current height, use this voting power
 	if k.HasVotingPowerTable(sdkCtx, curHeight) {
-		power = k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), curHeight)
+		power = k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), curHeight)
 	} else {
 		// NOTE: it's possible that the voting power is not recorded at the current height,
 		// e.g., `EndBlock` is not reached yet
 		// in this case, we use the last height
 		curHeight -= 1
-		power = k.GetVotingPower(sdkCtx, valBTCPK.MustMarshal(), curHeight)
+		power = k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), curHeight)
 	}
 
-	return &types.QueryBTCValidatorCurrentPowerResponse{Height: curHeight, VotingPower: power}, nil
+	return &types.QueryFinalityProviderCurrentPowerResponse{Height: curHeight, VotingPower: power}, nil
 }
 
-// ActiveBTCValidatorsAtHeight returns the active BTC validators at the provided height
-func (k Keeper) ActiveBTCValidatorsAtHeight(ctx context.Context, req *types.QueryActiveBTCValidatorsAtHeightRequest) (*types.QueryActiveBTCValidatorsAtHeightResponse, error) {
+// ActiveFinalityProvidersAtHeight returns the active finality providers at the provided height
+func (k Keeper) ActiveFinalityProvidersAtHeight(ctx context.Context, req *types.QueryActiveFinalityProvidersAtHeightRequest) (*types.QueryActiveFinalityProvidersAtHeightResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -163,23 +163,23 @@ func (k Keeper) ActiveBTCValidatorsAtHeight(ctx context.Context, req *types.Quer
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	store := k.votingPowerStore(sdkCtx, req.Height)
 
-	var btcValidatorsWithMeta []*types.BTCValidatorWithMeta
+	var finalityProvidersWithMeta []*types.FinalityProviderWithMeta
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		btcValidator, err := k.GetBTCValidator(sdkCtx, key)
+		finalityProvider, err := k.GetFinalityProvider(sdkCtx, key)
 		if err != nil {
 			return err
 		}
 
 		votingPower := k.GetVotingPower(sdkCtx, key, req.Height)
 		if votingPower > 0 {
-			btcValidatorWithMeta := types.BTCValidatorWithMeta{
-				BtcPk:                btcValidator.BtcPk,
+			finalityProviderWithMeta := types.FinalityProviderWithMeta{
+				BtcPk:                finalityProvider.BtcPk,
 				Height:               req.Height,
 				VotingPower:          votingPower,
-				SlashedBabylonHeight: btcValidator.SlashedBabylonHeight,
-				SlashedBtcHeight:     btcValidator.SlashedBtcHeight,
+				SlashedBabylonHeight: finalityProvider.SlashedBabylonHeight,
+				SlashedBtcHeight:     finalityProvider.SlashedBtcHeight,
 			}
-			btcValidatorsWithMeta = append(btcValidatorsWithMeta, &btcValidatorWithMeta)
+			finalityProvidersWithMeta = append(finalityProvidersWithMeta, &finalityProviderWithMeta)
 		}
 
 		return nil
@@ -188,7 +188,7 @@ func (k Keeper) ActiveBTCValidatorsAtHeight(ctx context.Context, req *types.Quer
 		return nil, err
 	}
 
-	return &types.QueryActiveBTCValidatorsAtHeightResponse{BtcValidators: btcValidatorsWithMeta, Pagination: pageRes}, nil
+	return &types.QueryActiveFinalityProvidersAtHeightResponse{FinalityProviders: finalityProvidersWithMeta, Pagination: pageRes}, nil
 }
 
 // ActivatedHeight returns the Babylon height in which the BTC Staking protocol was enabled
@@ -206,24 +206,24 @@ func (k Keeper) ActivatedHeight(ctx context.Context, req *types.QueryActivatedHe
 	return &types.QueryActivatedHeightResponse{Height: activatedHeight}, nil
 }
 
-// BTCValidatorDelegations returns all the delegations of the provided validator filtered by the provided status.
-func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTCValidatorDelegationsRequest) (*types.QueryBTCValidatorDelegationsResponse, error) {
+// FinalityProviderDelegations returns all the delegations of the provided finality provider filtered by the provided status.
+func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.QueryFinalityProviderDelegationsRequest) (*types.QueryFinalityProviderDelegationsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	if len(req.ValBtcPkHex) == 0 {
+	if len(req.FpBtcPkHex) == 0 {
 		return nil, errorsmod.Wrapf(
-			sdkerrors.ErrInvalidRequest, "validator BTC public key cannot be empty")
+			sdkerrors.ErrInvalidRequest, "finality provider BTC public key cannot be empty")
 	}
 
-	valPK, err := bbn.NewBIP340PubKeyFromHex(req.ValBtcPkHex)
+	fpPK, err := bbn.NewBIP340PubKeyFromHex(req.FpBtcPkHex)
 	if err != nil {
 		return nil, err
 	}
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	btcDelStore := k.btcDelegatorStore(sdkCtx, valPK)
+	btcDelStore := k.btcDelegatorStore(sdkCtx, fpPK)
 
 	btcDels := []*types.BTCDelegatorDelegations{}
 	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
@@ -232,7 +232,7 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 			return err
 		}
 
-		curBTCDels, err := k.getBTCDelegatorDelegations(sdkCtx, valPK, delBTCPK)
+		curBTCDels, err := k.getBTCDelegatorDelegations(sdkCtx, fpPK, delBTCPK)
 		if err != nil {
 			return err
 		}
@@ -244,7 +244,7 @@ func (k Keeper) BTCValidatorDelegations(ctx context.Context, req *types.QueryBTC
 		return nil, err
 	}
 
-	return &types.QueryBTCValidatorDelegationsResponse{BtcDelegatorDelegations: btcDels, Pagination: pageRes}, nil
+	return &types.QueryFinalityProviderDelegationsResponse{BtcDelegatorDelegations: btcDels, Pagination: pageRes}, nil
 }
 
 // BTCDelegation returns existing btc delegation by staking tx hash
@@ -283,7 +283,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 
 	return &types.QueryBTCDelegationResponse{
 		BtcPk:            btcDel.BtcPk,
-		ValBtcPkList:     btcDel.ValBtcPkList,
+		FpBtcPkList:      btcDel.FpBtcPkList,
 		StartHeight:      btcDel.StartHeight,
 		EndHeight:        btcDel.EndHeight,
 		TotalSat:         btcDel.TotalSat,

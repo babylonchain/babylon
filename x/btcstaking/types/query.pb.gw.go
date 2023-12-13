@@ -52,43 +52,43 @@ func local_request_Query_Params_0(ctx context.Context, marshaler runtime.Marshal
 }
 
 var (
-	filter_Query_BTCValidators_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
+	filter_Query_FinalityProviders_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
 
-func request_Query_BTCValidators_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorsRequest
+func request_Query_FinalityProviders_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProvidersRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_BTCValidators_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_FinalityProviders_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.BTCValidators(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.FinalityProviders(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Query_BTCValidators_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorsRequest
+func local_request_Query_FinalityProviders_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProvidersRequest
 	var metadata runtime.ServerMetadata
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_BTCValidators_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_FinalityProviders_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.BTCValidators(ctx, &protoReq)
+	msg, err := server.FinalityProviders(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_Query_BTCValidator_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorRequest
+func request_Query_FinalityProvider_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -98,24 +98,24 @@ func request_Query_BTCValidator_0(ctx context.Context, marshaler runtime.Marshal
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
-	msg, err := client.BTCValidator(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.FinalityProvider(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Query_BTCValidator_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorRequest
+func local_request_Query_FinalityProvider_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -125,18 +125,18 @@ func local_request_Query_BTCValidator_0(ctx context.Context, marshaler runtime.M
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
-	msg, err := server.BTCValidator(ctx, &protoReq)
+	msg, err := server.FinalityProvider(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -178,11 +178,11 @@ func local_request_Query_BTCDelegations_0(ctx context.Context, marshaler runtime
 }
 
 var (
-	filter_Query_ActiveBTCValidatorsAtHeight_0 = &utilities.DoubleArray{Encoding: map[string]int{"height": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Query_ActiveFinalityProvidersAtHeight_0 = &utilities.DoubleArray{Encoding: map[string]int{"height": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
-func request_Query_ActiveBTCValidatorsAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryActiveBTCValidatorsAtHeightRequest
+func request_Query_ActiveFinalityProvidersAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryActiveFinalityProvidersAtHeightRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -206,17 +206,17 @@ func request_Query_ActiveBTCValidatorsAtHeight_0(ctx context.Context, marshaler 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_ActiveBTCValidatorsAtHeight_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_ActiveFinalityProvidersAtHeight_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.ActiveBTCValidatorsAtHeight(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.ActiveFinalityProvidersAtHeight(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Query_ActiveBTCValidatorsAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryActiveBTCValidatorsAtHeightRequest
+func local_request_Query_ActiveFinalityProvidersAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryActiveFinalityProvidersAtHeightRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -240,17 +240,17 @@ func local_request_Query_ActiveBTCValidatorsAtHeight_0(ctx context.Context, mars
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_ActiveBTCValidatorsAtHeight_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_ActiveFinalityProvidersAtHeight_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.ActiveBTCValidatorsAtHeight(ctx, &protoReq)
+	msg, err := server.ActiveFinalityProvidersAtHeight(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_Query_BTCValidatorPowerAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorPowerAtHeightRequest
+func request_Query_FinalityProviderPowerAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderPowerAtHeightRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -260,15 +260,15 @@ func request_Query_BTCValidatorPowerAtHeight_0(ctx context.Context, marshaler ru
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
 	val, ok = pathParams["height"]
@@ -282,13 +282,13 @@ func request_Query_BTCValidatorPowerAtHeight_0(ctx context.Context, marshaler ru
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "height", err)
 	}
 
-	msg, err := client.BTCValidatorPowerAtHeight(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.FinalityProviderPowerAtHeight(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Query_BTCValidatorPowerAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorPowerAtHeightRequest
+func local_request_Query_FinalityProviderPowerAtHeight_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderPowerAtHeightRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -298,15 +298,15 @@ func local_request_Query_BTCValidatorPowerAtHeight_0(ctx context.Context, marsha
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
 	val, ok = pathParams["height"]
@@ -320,13 +320,13 @@ func local_request_Query_BTCValidatorPowerAtHeight_0(ctx context.Context, marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "height", err)
 	}
 
-	msg, err := server.BTCValidatorPowerAtHeight(ctx, &protoReq)
+	msg, err := server.FinalityProviderPowerAtHeight(ctx, &protoReq)
 	return msg, metadata, err
 
 }
 
-func request_Query_BTCValidatorCurrentPower_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorCurrentPowerRequest
+func request_Query_FinalityProviderCurrentPower_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderCurrentPowerRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -336,24 +336,24 @@ func request_Query_BTCValidatorCurrentPower_0(ctx context.Context, marshaler run
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
-	msg, err := client.BTCValidatorCurrentPower(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.FinalityProviderCurrentPower(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Query_BTCValidatorCurrentPower_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorCurrentPowerRequest
+func local_request_Query_FinalityProviderCurrentPower_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderCurrentPowerRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -363,18 +363,18 @@ func local_request_Query_BTCValidatorCurrentPower_0(ctx context.Context, marshal
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
-	msg, err := server.BTCValidatorCurrentPower(ctx, &protoReq)
+	msg, err := server.FinalityProviderCurrentPower(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -398,11 +398,11 @@ func local_request_Query_ActivatedHeight_0(ctx context.Context, marshaler runtim
 }
 
 var (
-	filter_Query_BTCValidatorDelegations_0 = &utilities.DoubleArray{Encoding: map[string]int{"val_btc_pk_hex": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
+	filter_Query_FinalityProviderDelegations_0 = &utilities.DoubleArray{Encoding: map[string]int{"fp_btc_pk_hex": 0}, Base: []int{1, 1, 0}, Check: []int{0, 1, 2}}
 )
 
-func request_Query_BTCValidatorDelegations_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorDelegationsRequest
+func request_Query_FinalityProviderDelegations_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderDelegationsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -412,31 +412,31 @@ func request_Query_BTCValidatorDelegations_0(ctx context.Context, marshaler runt
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_BTCValidatorDelegations_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_FinalityProviderDelegations_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.BTCValidatorDelegations(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.FinalityProviderDelegations(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
 
-func local_request_Query_BTCValidatorDelegations_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryBTCValidatorDelegationsRequest
+func local_request_Query_FinalityProviderDelegations_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq QueryFinalityProviderDelegationsRequest
 	var metadata runtime.ServerMetadata
 
 	var (
@@ -446,25 +446,25 @@ func local_request_Query_BTCValidatorDelegations_0(ctx context.Context, marshale
 		_   = err
 	)
 
-	val, ok = pathParams["val_btc_pk_hex"]
+	val, ok = pathParams["fp_btc_pk_hex"]
 	if !ok {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "val_btc_pk_hex")
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "fp_btc_pk_hex")
 	}
 
-	protoReq.ValBtcPkHex, err = runtime.String(val)
+	protoReq.FpBtcPkHex, err = runtime.String(val)
 
 	if err != nil {
-		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "val_btc_pk_hex", err)
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "fp_btc_pk_hex", err)
 	}
 
 	if err := req.ParseForm(); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_BTCValidatorDelegations_0); err != nil {
+	if err := runtime.PopulateQueryParameters(&protoReq, req.Form, filter_Query_FinalityProviderDelegations_0); err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := server.BTCValidatorDelegations(ctx, &protoReq)
+	msg, err := server.FinalityProviderDelegations(ctx, &protoReq)
 	return msg, metadata, err
 
 }
@@ -552,7 +552,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidators_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviders_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -563,7 +563,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Query_BTCValidators_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Query_FinalityProviders_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -571,11 +571,11 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Query_BTCValidators_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviders_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidator_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProvider_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -586,7 +586,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Query_BTCValidator_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Query_FinalityProvider_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -594,7 +594,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Query_BTCValidator_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProvider_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -621,7 +621,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 
 	})
 
-	mux.Handle("GET", pattern_Query_ActiveBTCValidatorsAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_ActiveFinalityProvidersAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -632,7 +632,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Query_ActiveBTCValidatorsAtHeight_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Query_ActiveFinalityProvidersAtHeight_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -640,11 +640,11 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Query_ActiveBTCValidatorsAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_ActiveFinalityProvidersAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidatorPowerAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviderPowerAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -655,7 +655,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Query_BTCValidatorPowerAtHeight_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Query_FinalityProviderPowerAtHeight_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -663,11 +663,11 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Query_BTCValidatorPowerAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviderPowerAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidatorCurrentPower_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviderCurrentPower_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -678,7 +678,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Query_BTCValidatorCurrentPower_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Query_FinalityProviderCurrentPower_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -686,7 +686,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Query_BTCValidatorCurrentPower_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviderCurrentPower_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -713,7 +713,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidatorDelegations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviderDelegations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		var stream runtime.ServerTransportStream
@@ -724,7 +724,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := local_request_Query_BTCValidatorDelegations_0(rctx, inboundMarshaler, server, req, pathParams)
+		resp, md, err := local_request_Query_FinalityProviderDelegations_0(rctx, inboundMarshaler, server, req, pathParams)
 		md.HeaderMD, md.TrailerMD = metadata.Join(md.HeaderMD, stream.Header()), metadata.Join(md.TrailerMD, stream.Trailer())
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
@@ -732,7 +732,7 @@ func RegisterQueryHandlerServer(ctx context.Context, mux *runtime.ServeMux, serv
 			return
 		}
 
-		forward_Query_BTCValidatorDelegations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviderDelegations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -820,7 +820,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidators_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviders_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -829,18 +829,18 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Query_BTCValidators_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_FinalityProviders_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Query_BTCValidators_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviders_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidator_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProvider_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -849,14 +849,14 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Query_BTCValidator_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_FinalityProvider_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Query_BTCValidator_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProvider_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -880,7 +880,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 
 	})
 
-	mux.Handle("GET", pattern_Query_ActiveBTCValidatorsAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_ActiveFinalityProvidersAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -889,18 +889,18 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Query_ActiveBTCValidatorsAtHeight_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_ActiveFinalityProvidersAtHeight_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Query_ActiveBTCValidatorsAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_ActiveFinalityProvidersAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidatorPowerAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviderPowerAtHeight_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -909,18 +909,18 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Query_BTCValidatorPowerAtHeight_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_FinalityProviderPowerAtHeight_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Query_BTCValidatorPowerAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviderPowerAtHeight_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidatorCurrentPower_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviderCurrentPower_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -929,14 +929,14 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Query_BTCValidatorCurrentPower_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_FinalityProviderCurrentPower_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Query_BTCValidatorCurrentPower_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviderCurrentPower_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -960,7 +960,7 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 
 	})
 
-	mux.Handle("GET", pattern_Query_BTCValidatorDelegations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("GET", pattern_Query_FinalityProviderDelegations_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -969,14 +969,14 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Query_BTCValidatorDelegations_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Query_FinalityProviderDelegations_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Query_BTCValidatorDelegations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Query_FinalityProviderDelegations_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -1006,21 +1006,21 @@ func RegisterQueryHandlerClient(ctx context.Context, mux *runtime.ServeMux, clie
 var (
 	pattern_Query_Params_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btcstaking", "v1", "params"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCValidators_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btcstaking", "v1", "btc_validators"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FinalityProviders_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btcstaking", "v1", "finality_providers"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCValidator_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "btc_validators", "val_btc_pk_hex", "validator"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FinalityProvider_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "finality_provider"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_BTCDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btcstaking", "v1", "btc_delegations"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_ActiveBTCValidatorsAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_validators", "height"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_ActiveFinalityProvidersAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "finality_providers", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCValidatorPowerAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "btcstaking", "v1", "btc_validators", "val_btc_pk_hex", "power", "height"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FinalityProviderPowerAtHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5, 1, 0, 4, 1, 5, 6}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "power", "height"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCValidatorCurrentPower_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "btc_validators", "val_btc_pk_hex", "power"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FinalityProviderCurrentPower_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "power"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_ActivatedHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"babylon", "btcstaking", "v1", "activated_height"}, "", runtime.AssumeColonVerbOpt(false)))
 
-	pattern_Query_BTCValidatorDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "btc_validators", "val_btc_pk_hex", "delegations"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Query_FinalityProviderDelegations_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4, 2, 5}, []string{"babylon", "btcstaking", "v1", "finality_providers", "fp_btc_pk_hex", "delegations"}, "", runtime.AssumeColonVerbOpt(false)))
 
 	pattern_Query_BTCDelegation_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 1, 0, 4, 1, 5, 4}, []string{"babylon", "btcstaking", "v1", "btc_delegations", "staking_tx_hash_hex"}, "", runtime.AssumeColonVerbOpt(false)))
 )
@@ -1028,21 +1028,21 @@ var (
 var (
 	forward_Query_Params_0 = runtime.ForwardResponseMessage
 
-	forward_Query_BTCValidators_0 = runtime.ForwardResponseMessage
+	forward_Query_FinalityProviders_0 = runtime.ForwardResponseMessage
 
-	forward_Query_BTCValidator_0 = runtime.ForwardResponseMessage
+	forward_Query_FinalityProvider_0 = runtime.ForwardResponseMessage
 
 	forward_Query_BTCDelegations_0 = runtime.ForwardResponseMessage
 
-	forward_Query_ActiveBTCValidatorsAtHeight_0 = runtime.ForwardResponseMessage
+	forward_Query_ActiveFinalityProvidersAtHeight_0 = runtime.ForwardResponseMessage
 
-	forward_Query_BTCValidatorPowerAtHeight_0 = runtime.ForwardResponseMessage
+	forward_Query_FinalityProviderPowerAtHeight_0 = runtime.ForwardResponseMessage
 
-	forward_Query_BTCValidatorCurrentPower_0 = runtime.ForwardResponseMessage
+	forward_Query_FinalityProviderCurrentPower_0 = runtime.ForwardResponseMessage
 
 	forward_Query_ActivatedHeight_0 = runtime.ForwardResponseMessage
 
-	forward_Query_BTCValidatorDelegations_0 = runtime.ForwardResponseMessage
+	forward_Query_FinalityProviderDelegations_0 = runtime.ForwardResponseMessage
 
 	forward_Query_BTCDelegation_0 = runtime.ForwardResponseMessage
 )

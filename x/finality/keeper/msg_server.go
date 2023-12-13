@@ -47,15 +47,15 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// ensure the BTC validator exists
-	btcVal, err := ms.BTCStakingKeeper.GetBTCValidator(ctx, req.ValBtcPk.MustMarshal())
+	// ensure the finality provider exists
+	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
 	if err != nil {
 		return nil, err
 	}
-	// ensure the BTC validator is not slashed at this time point
-	// NOTE: it's possible that the BTC validator equivocates for height h, and the signature is processed at
+	// ensure the finality provider is not slashed at this time point
+	// NOTE: it's possible that the finality provider equivocates for height h, and the signature is processed at
 	// height h' > h. In this case:
-	// - Babylon should reject any new signature from this BTC validator, since it's known to be adversarial
+	// - Babylon should reject any new signature from this finality provider, since it's known to be adversarial
 	// - Babylon should set its voting power since height h'+1 to be zero, due to the same reason
 	// - Babylon should NOT set its voting power between [h, h'] to be zero, since
 	//   - Babylon BTC staking ensures safety upon 2f+1 votes, *even if* f of them are adversarial. This is
@@ -66,43 +66,43 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	//     modify voting power table in the history, some finality decisions might be contradicting to the
 	//     signature set and voting power table.
 	//   - To fix the above issue, Babylon has to allow finalise and unfinalise blocks. However, this means
-	//     Babylon will lose safety under an adaptive adversary corrupting even 1 validator. It can simply
-	//     corrupt a new validator and equivocate a historical block over and over again, making a previous block
+	//     Babylon will lose safety under an adaptive adversary corrupting even 1 finality provider. It can simply
+	//     corrupt a new finality provider and equivocate a historical block over and over again, making a previous block
 	//     unfinalisable forever
-	if btcVal.IsSlashed() {
-		return nil, bstypes.ErrBTCValAlreadySlashed
+	if fp.IsSlashed() {
+		return nil, bstypes.ErrFpAlreadySlashed
 	}
 
-	// ensure the BTC validator has voting power at this height
-	if req.ValBtcPk == nil {
-		return nil, types.ErrInvalidFinalitySig.Wrap("empty validator BTC PK")
+	// ensure the finality providerhas voting power at this height
+	if req.FpBtcPk == nil {
+		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
 	}
-	valPK := req.ValBtcPk
-	if ms.BTCStakingKeeper.GetVotingPower(ctx, valPK.MustMarshal(), req.BlockHeight) == 0 {
-		return nil, types.ErrInvalidFinalitySig.Wrapf("the BTC validator %v does not have voting power at height %d", valPK.MustMarshal(), req.BlockHeight)
+	fpPK := req.FpBtcPk
+	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
+		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %v does not have voting power at height %d", fpPK.MustMarshal(), req.BlockHeight)
 	}
 
-	// ensure the BTC validator has not casted the same vote yet
+	// ensure the finality provider has not cast the same vote yet
 	if req.FinalitySig == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality signature")
 	}
-	existingSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
+	existingSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
 		return nil, types.ErrDuplicatedFinalitySig
 	}
 
-	// ensure the BTC validator has committed public randomness
-	pubRand, err := ms.GetPubRand(ctx, valPK, req.BlockHeight)
+	// ensure the finality provider has committed public randomness
+	pubRand, err := ms.GetPubRand(ctx, fpPK, req.BlockHeight)
 	if err != nil {
 		return nil, types.ErrPubRandNotFound
 	}
 
 	// verify EOTS signature w.r.t. public randomness
-	valBTCPK, err := valPK.ToBTCPK()
+	fpBTCPK, err := fpPK.ToBTCPK()
 	if err != nil {
 		return nil, err
 	}
-	if err := eots.Verify(valBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
+	if err := eots.Verify(fpBTCPK, pubRand.ToFieldVal(), req.MsgToSign(), req.FinalitySig.ToModNScalar()); err != nil {
 		return nil, types.ErrInvalidFinalitySig.Wrapf("the EOTS signature is invalid: %v", err)
 	}
 
@@ -112,11 +112,11 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, err
 	}
 	if !bytes.Equal(indexedBlock.AppHash, req.BlockAppHash) {
-		// the BTC validator votes for a fork!
+		// the finality provider votes for a fork!
 
 		// construct evidence
 		evidence := &types.Evidence{
-			ValBtcPk:             req.ValBtcPk,
+			FpBtcPk:              req.FpBtcPk,
 			BlockHeight:          req.BlockHeight,
 			PubRand:              pubRand,
 			CanonicalAppHash:     indexedBlock.AppHash,
@@ -125,14 +125,14 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			ForkFinalitySig:      req.FinalitySig,
 		}
 
-		// if this BTC validator has also signed canonical block, slash it
-		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, valPK)
+		// if this finality provider has also signed canonical block, slash it
+		canonicalSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 		if err == nil {
 			//set canonial sig
 			evidence.CanonicalFinalitySig = canonicalSig
-			// slash this BTC validator, including setting its voting power to
+			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
-			ms.slashBTCValidator(ctx, req.ValBtcPk, evidence)
+			ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 		}
 
 		// save evidence
@@ -144,16 +144,16 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 
 	// this signature is good, add vote to DB
-	ms.SetSig(ctx, req.BlockHeight, valPK, req.FinalitySig)
+	ms.SetSig(ctx, req.BlockHeight, fpPK, req.FinalitySig)
 
-	// if this BTC validator has signed the canonical block before,
+	// if this finality provider has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
-	if ms.HasEvidence(ctx, req.ValBtcPk, req.BlockHeight) {
-		// the BTC validator has voted for a fork before!
-		// If this evidence is at the same height as this signature, slash this BTC validator
+	if ms.HasEvidence(ctx, req.FpBtcPk, req.BlockHeight) {
+		// the finality provider has voted for a fork before!
+		// If this evidence is at the same height as this signature, slash this finality provider
 
 		// get evidence
-		evidence, err := ms.GetEvidence(ctx, req.ValBtcPk, req.BlockHeight)
+		evidence, err := ms.GetEvidence(ctx, req.FpBtcPk, req.BlockHeight)
 		if err != nil {
 			panic(fmt.Errorf("failed to get evidence despite HasEvidence returns true"))
 		}
@@ -162,9 +162,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		evidence.CanonicalFinalitySig = req.FinalitySig
 		ms.SetEvidence(ctx, evidence)
 
-		// slash this BTC validator, including setting its voting power to
+		// slash this finality provider, including setting its voting power to
 		// zero, extracting its BTC SK, and emit an event
-		ms.slashBTCValidator(ctx, req.ValBtcPk, evidence)
+		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
 	}
 
 	return &types.MsgAddFinalitySigResponse{}, nil
@@ -181,24 +181,24 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 		return nil, types.ErrTooFewPubRand.Wrapf("required minimum: %d, actual: %d", minPubRand, givenPubRand)
 	}
 
-	// ensure the BTC validator is registered
-	if req.ValBtcPk == nil {
-		return nil, types.ErrInvalidPubRand.Wrap("empty validator public key")
+	// ensure the finality provider is registered
+	if req.FpBtcPk == nil {
+		return nil, types.ErrInvalidPubRand.Wrap("empty finality provider public key")
 	}
-	valBTCPKBytes := req.ValBtcPk.MustMarshal()
-	if !ms.BTCStakingKeeper.HasBTCValidator(ctx, valBTCPKBytes) {
-		return nil, bstypes.ErrBTCValNotFound.Wrapf("the validator with BTC PK %v is not registered", valBTCPKBytes)
+	fpBTCPKBytes := req.FpBtcPk.MustMarshal()
+	if !ms.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPKBytes) {
+		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
-	// this BTC validator has not commit any public randomness,
+	// this finality provider has not commit any public randomness,
 	// commit the given public randomness list and return
-	if ms.IsFirstPubRand(ctx, req.ValBtcPk) {
-		ms.SetPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
+	if ms.IsFirstPubRand(ctx, req.FpBtcPk) {
+		ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
 		return &types.MsgCommitPubRandListResponse{}, nil
 	}
 
 	// ensure height and req.StartHeight do not overlap, i.e., height < req.StartHeight
-	height, _, err := ms.GetLastPubRand(ctx, req.ValBtcPk)
+	height, _, err := ms.GetLastPubRand(ctx, req.FpBtcPk)
 	if err != nil {
 		return nil, err
 	}
@@ -212,22 +212,22 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// all good, commit the given public randomness list
-	ms.SetPubRandList(ctx, req.ValBtcPk, req.StartHeight, req.PubRandList)
+	ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
 	return &types.MsgCommitPubRandListResponse{}, nil
 }
 
-// slashBTCValidator slashes a BTC validator with the given evidence
+// slashFinalityProvider slashes a finality provider with the given evidence
 // including setting its voting power to zero, extracting its BTC SK,
 // and emit an event
-func (k Keeper) slashBTCValidator(ctx context.Context, valBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) {
-	// slash this BTC validator, i.e., set its voting power to zero
-	if err := k.BTCStakingKeeper.SlashBTCValidator(ctx, valBtcPk.MustMarshal()); err != nil {
-		panic(fmt.Errorf("failed to slash BTC validator: %v", err))
+func (k Keeper) slashFinalityProvider(ctx context.Context, fpBtcPk *bbn.BIP340PubKey, evidence *types.Evidence) {
+	// slash this finality provider, i.e., set its voting power to zero
+	if err := k.BTCStakingKeeper.SlashFinalityProvider(ctx, fpBtcPk.MustMarshal()); err != nil {
+		panic(fmt.Errorf("failed to slash finality provider: %v", err))
 	}
 
 	// emit slashing event
-	eventSlashing := types.NewEventSlashedBTCValidator(evidence)
+	eventSlashing := types.NewEventSlashedFinalityProvider(evidence)
 	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(eventSlashing); err != nil {
-		panic(fmt.Errorf("failed to emit EventSlashedBTCValidator event: %w", err))
+		panic(fmt.Errorf("failed to emit EventSlashedFinalityProvider event: %w", err))
 	}
 }

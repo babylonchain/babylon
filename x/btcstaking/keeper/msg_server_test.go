@@ -66,39 +66,39 @@ func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.
 	slashingAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 	h.NoError(err)
 	err = h.BTCStakingKeeper.SetParams(h.Ctx, types.Params{
-		CovenantPks:            bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
-		CovenantQuorum:         3,
-		SlashingAddress:        slashingAddress.EncodeAddress(),
-		MinSlashingTxFeeSat:    10,
-		MinCommissionRate:      sdkmath.LegacyMustNewDecFromStr("0.01"),
-		SlashingRate:           sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
-		MaxActiveBtcValidators: 100,
+		CovenantPks:                bbn.NewBIP340PKsFromBTCPKs(covenantPKs),
+		CovenantQuorum:             3,
+		SlashingAddress:            slashingAddress.EncodeAddress(),
+		MinSlashingTxFeeSat:        10,
+		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
+		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
+		MaxActiveFinalityProviders: 100,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
 }
 
-func (h *Helper) CreateValidator(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.BTCValidator) {
-	validatorSK, validatorPK, err := datagen.GenRandomBTCKeyPair(r)
+func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
+	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
-	btcVal, err := datagen.GenRandomBTCValidatorWithBTCSK(r, validatorSK)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
 	h.NoError(err)
-	msgNewVal := types.MsgCreateBTCValidator{
+	msgNewFp := types.MsgCreateFinalityProvider{
 		Signer:      datagen.GenRandomAccount().Address,
-		Description: btcVal.Description,
-		Commission:  btcVal.Commission,
-		BabylonPk:   btcVal.BabylonPk,
-		BtcPk:       btcVal.BtcPk,
-		Pop:         btcVal.Pop,
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BabylonPk:   fp.BabylonPk,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
 	}
-	_, err = h.MsgServer.CreateBTCValidator(h.Ctx, &msgNewVal)
+	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
 	h.NoError(err)
-	return validatorSK, validatorPK, btcVal
+	return fpSK, fpPK, fp
 }
 
 func (h *Helper) CreateDelegation(
 	r *rand.Rand,
-	validatorPK *btcec.PublicKey,
+	fpPK *btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
@@ -114,7 +114,7 @@ func (h *Helper) CreateDelegation(
 		h.t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{validatorPK},
+		[]*btcec.PublicKey{fpPK},
 		covPKs,
 		bsParams.CovenantQuorum,
 		stakingTimeBlocks,
@@ -176,7 +176,7 @@ func (h *Helper) CreateDelegation(
 		h.t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{validatorPK},
+		[]*btcec.PublicKey{fpPK},
 		covPKs,
 		bsParams.CovenantQuorum,
 		wire.NewOutPoint(&stkTxHash, stkOutputIdx),
@@ -199,7 +199,7 @@ func (h *Helper) CreateDelegation(
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
 		BtcPk:                         stPk,
-		ValBtcPkList:                  []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(validatorPK)},
+		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
@@ -230,7 +230,7 @@ func (h *Helper) CreateCovenantSigs(
 
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 
-	vPKs, err := bbn.NewBTCPKsFromBIP340PKs(del.ValBtcPkList)
+	vPKs, err := bbn.NewBTCPKsFromBIP340PKs(del.FpBtcPkList)
 	h.NoError(err)
 
 	stakingInfo, err := del.GetStakingInfo(&bsParams, h.Net)
@@ -310,7 +310,7 @@ func (h *Helper) CreateCovenantSigs(
 func (h *Helper) GetDelegationAndCheckValues(
 	r *rand.Rand,
 	msgCreateBTCDel *types.MsgCreateBTCDelegation,
-	validatorPK *btcec.PublicKey,
+	fpPK *btcec.PublicKey,
 	delegatorPK *btcec.PublicKey,
 	stakingTxHash string,
 ) *types.BTCDelegation {
@@ -328,48 +328,48 @@ func (h *Helper) GetDelegationAndCheckValues(
 	return actualDel
 }
 
-func FuzzMsgCreateBTCValidator(f *testing.F) {
+func FuzzMsgCreateFinalityProvider(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		h := NewHelper(t, nil, nil)
 
-		// generate new BTC validators
-		btcVals := []*types.BTCValidator{}
+		// generate new finality providers
+		fps := []*types.FinalityProvider{}
 		for i := 0; i < int(datagen.RandomInt(r, 10)); i++ {
-			btcVal, err := datagen.GenRandomBTCValidator(r)
+			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			msg := &types.MsgCreateBTCValidator{
+			msg := &types.MsgCreateFinalityProvider{
 				Signer:      datagen.GenRandomAccount().Address,
-				Description: btcVal.Description,
-				Commission:  btcVal.Commission,
-				BabylonPk:   btcVal.BabylonPk,
-				BtcPk:       btcVal.BtcPk,
-				Pop:         btcVal.Pop,
+				Description: fp.Description,
+				Commission:  fp.Commission,
+				BabylonPk:   fp.BabylonPk,
+				BtcPk:       fp.BtcPk,
+				Pop:         fp.Pop,
 			}
-			_, err = h.MsgServer.CreateBTCValidator(h.Ctx, msg)
+			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.NoError(t, err)
 
-			btcVals = append(btcVals, btcVal)
+			fps = append(fps, fp)
 		}
-		// assert these validators exist in KVStore
-		for _, btcVal := range btcVals {
-			btcPK := *btcVal.BtcPk
-			require.True(t, h.BTCStakingKeeper.HasBTCValidator(h.Ctx, btcPK))
+		// assert these finality providers exist in KVStore
+		for _, fp := range fps {
+			btcPK := *fp.BtcPk
+			require.True(t, h.BTCStakingKeeper.HasFinalityProvider(h.Ctx, btcPK))
 		}
 
-		// duplicated BTC validators should not pass
-		for _, btcVal2 := range btcVals {
-			msg := &types.MsgCreateBTCValidator{
+		// duplicated finality providers should not pass
+		for _, fp2 := range fps {
+			msg := &types.MsgCreateFinalityProvider{
 				Signer:      datagen.GenRandomAccount().Address,
-				Description: btcVal2.Description,
-				Commission:  btcVal2.Commission,
-				BabylonPk:   btcVal2.BabylonPk,
-				BtcPk:       btcVal2.BtcPk,
-				Pop:         btcVal2.Pop,
+				Description: fp2.Description,
+				Commission:  fp2.Commission,
+				BabylonPk:   fp2.BabylonPk,
+				BtcPk:       fp2.BtcPk,
+				Pop:         fp2.Pop,
 			}
-			_, err := h.MsgServer.CreateBTCValidator(h.Ctx, msg)
+			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
 			require.Error(t, err)
 		}
 	})
@@ -394,14 +394,14 @@ func FuzzCreateBTCDelegationAndAddCovenantSigs(f *testing.F) {
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		require.NoError(t, err)
 
-		// generate and insert new BTC validator
-		_, validatorPK, _ := h.CreateValidator(r)
+		// generate and insert new finality provider
+		_, fpPK, _ := h.CreateFinalityProvider(r)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
 		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
 			r,
-			validatorPK,
+			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -454,14 +454,14 @@ func FuzzBTCUndelegate(f *testing.F) {
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		require.NoError(t, err)
 
-		// generate and insert new BTC validator
-		_, validatorPK, _ := h.CreateValidator(r)
+		// generate and insert new finality provider
+		_, fpPK, _ := h.CreateFinalityProvider(r)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
 		stakingTxHash, delSK, _, msgCreateBTCDel := h.CreateDelegation(
 			r,
-			validatorPK,
+			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
@@ -497,7 +497,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 	})
 }
 
-func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
+func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
@@ -515,9 +515,9 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 	require.NoError(t, err)
 
-	// We only generate a validator, but not insert it into KVStore. So later
+	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
-	_, validatorPK, err := datagen.GenRandomBTCKeyPair(r)
+	_, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	require.NoError(t, err)
 
 	/*
@@ -532,7 +532,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{validatorPK},
+		[]*btcec.PublicKey{fpPK},
 		covenantPKs,
 		bsParams.CovenantQuorum,
 		stakingTimeBlocks,
@@ -583,7 +583,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 		t,
 		h.Net,
 		delSK,
-		[]*btcec.PublicKey{validatorPK},
+		[]*btcec.PublicKey{fpPK},
 		covenantPKs,
 		bsParams.CovenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
@@ -602,7 +602,7 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
-		ValBtcPkList:                  []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(validatorPK)},
+		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
@@ -618,5 +618,5 @@ func TestDoNotAllowDelegationWithoutValidator(t *testing.T) {
 	}
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
-	require.True(t, errors.Is(err, types.ErrBTCValNotFound))
+	require.True(t, errors.Is(err, types.ErrFpNotFound))
 }

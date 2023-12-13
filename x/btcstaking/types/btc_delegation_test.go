@@ -78,9 +78,9 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		require.NoError(t, err)
 		delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
 
-		valSK, valPK, err := datagen.GenRandomBTCKeyPair(r)
+		fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 		require.NoError(t, err)
-		valPKList := []*btcec.PublicKey{valPK}
+		fpPKList := []*btcec.PublicKey{fpPK}
 
 		// (3, 5) covenant committee
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -104,7 +104,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			t,
 			net,
 			delSK,
-			valPKList,
+			fpPKList,
 			covenantPKs,
 			covenantQuorum,
 			stakingTimeBlocks,
@@ -124,7 +124,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		delSig, err := testInfo.SlashingTx.Sign(testInfo.StakingTx, 0, slashingSpendInfo.GetPkScriptPath(), delSK)
 		require.NoError(t, err)
 		// covenant signs (using adaptor signature) the slashing tx
-		covenantSigs, err := datagen.GenCovenantAdaptorSigs(covenantSKs, []*btcec.PublicKey{valPK}, testInfo.StakingTx, slashingSpendInfo.GetPkScriptPath(), testInfo.SlashingTx)
+		covenantSigs, err := datagen.GenCovenantAdaptorSigs(covenantSKs, []*btcec.PublicKey{fpPK}, testInfo.StakingTx, slashingSpendInfo.GetPkScriptPath(), testInfo.SlashingTx)
 		require.NoError(t, err)
 		covenantSigs = covenantSigs[2:] // discard 2 out of 5 signatures
 
@@ -133,7 +133,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			BabylonPk:        nil, // not relevant here
 			BtcPk:            delBTCPK,
 			Pop:              nil, // not relevant here
-			ValBtcPkList:     bbn.NewBIP340PKsFromBTCPKs(valPKList),
+			FpBtcPkList:      bbn.NewBIP340PKsFromBTCPKs(fpPKList),
 			StartHeight:      1000, // not relevant here
 			EndHeight:        uint64(1000 + stakingTimeBlocks),
 			TotalSat:         uint64(stakingValue),
@@ -151,7 +151,7 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		btcNet := &chaincfg.SimNetParams
 
 		// build slashing tx with witness for spending the staking tx
-		slashingTxWithWitness, err := btcDel.BuildSlashingTxWithWitness(bsParams, btcNet, valSK)
+		slashingTxWithWitness, err := btcDel.BuildSlashingTxWithWitness(bsParams, btcNet, fpSK)
 		require.NoError(t, err)
 
 		// assert execution

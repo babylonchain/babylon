@@ -49,9 +49,9 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 	return &types.MsgUpdateParamsResponse{}, nil
 }
 
-// CreateBTCValidator creates a BTC validator
-func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCreateBTCValidator) (*types.MsgCreateBTCValidatorResponse, error) {
-	// ensure the validator address does not exist before
+// CreateFinalityProvider creates a finality provider
+func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.MsgCreateFinalityProvider) (*types.MsgCreateFinalityProviderResponse, error) {
+	// ensure the finality provider address does not already exist
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
@@ -65,34 +65,34 @@ func (ms msgServer) CreateBTCValidator(goCtx context.Context, req *types.MsgCrea
 
 	// ensure commission rate is at least the minimum commission rate in parameters
 	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
-		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set validator commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
+		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
 	}
 
 	if req.Commission.GT(sdkmath.LegacyOneDec()) {
 		return nil, types.ErrCommissionGTMaxRate
 	}
 
-	// ensure BTC validator does not exist before
-	if ms.HasBTCValidator(ctx, *req.BtcPk) {
-		return nil, types.ErrDuplicatedBTCVal
+	// ensure finality provider does not already exist
+	if ms.HasFinalityProvider(ctx, *req.BtcPk) {
+		return nil, types.ErrFpRegistered
 	}
 
-	// all good, add this validator
-	btcVal := types.BTCValidator{
+	// all good, add this finality provider
+	fp := types.FinalityProvider{
 		Description: req.Description,
 		Commission:  req.Commission,
 		BabylonPk:   req.BabylonPk,
 		BtcPk:       req.BtcPk,
 		Pop:         req.Pop,
 	}
-	ms.SetBTCValidator(ctx, &btcVal)
+	ms.SetFinalityProvider(ctx, &fp)
 
 	// notify subscriber
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCValidator{BtcVal: &btcVal}); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewFinalityProvider{Fp: &fp}); err != nil {
 		return nil, err
 	}
 
-	return &types.MsgCreateBTCValidatorResponse{}, nil
+	return &types.MsgCreateFinalityProviderResponse{}, nil
 }
 
 // CreateBTCDelegation creates a BTC delegation
@@ -113,10 +113,10 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
-	// Ensure all validators are known to Babylon
-	for _, valBTCPK := range req.ValBtcPkList {
-		if !ms.HasBTCValidator(ctx, valBTCPK) {
-			return nil, types.ErrBTCValNotFound.Wrapf("validator pk: %s", valBTCPK.MarshalHex())
+	// Ensure all finality providers are known to Babylon
+	for _, fpBTCPK := range req.FpBtcPkList {
+		if !ms.HasFinalityProvider(ctx, fpBTCPK) {
+			return nil, types.ErrFpNotFound.Wrapf("finality provider pk: %s", fpBTCPK.MarshalHex())
 		}
 	}
 
@@ -134,9 +134,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// Check if data provided in request, matches data to which staking tx is committed
-	valPKs, err := bbn.NewBTCPKsFromBIP340PKs(req.ValBtcPkList)
+	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(req.FpBtcPkList)
 	if err != nil {
-		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse validator PK list: %v", err)
+		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse finality provider PK list: %v", err)
 	}
 	covenantPKs, err := bbn.NewBTCPKsFromBIP340PKs(params.CovenantPks)
 	if err != nil {
@@ -146,7 +146,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		req.BtcPk.MustToBTCPK(),
-		valPKs,
+		fpPKs,
 		covenantPKs,
 		params.CovenantQuorum,
 		uint16(req.StakingTime),
@@ -238,7 +238,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		BabylonPk:        req.BabylonPk,
 		BtcPk:            req.BtcPk,
 		Pop:              req.Pop,
-		ValBtcPkList:     req.ValBtcPkList,
+		FpBtcPkList:      req.FpBtcPkList,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         uint64(stakingInfo.StakingOutput.Value),
@@ -273,7 +273,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// building unbonding info
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		newBTCDel.BtcPk.MustToBTCPK(),
-		valPKs,
+		fpPKs,
 		covenantPKs,
 		params.CovenantQuorum,
 		uint16(req.UnbondingTime),
@@ -331,7 +331,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// Given that unbonding tx must not be replacable and we do not allow sending it second time, it places
 		// burden on staker to choose right fee.
 		// Unbonding tx should not be replaceable at babylon level (and by extension on btc level), as this would
-		// allow staker to spam the network with unbonding txs, which would force covenant and validator to send signatures.
+		// allow staker to spam the network with unbonding txs, which would force covenant and finality provider to send signatures.
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding tx fee must be larger that 0")
 	}
 
@@ -381,13 +381,13 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// Note: we assume the order of adaptor sigs is matched to the
-	// order of validators in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one validator
+	// order of finality providers in the delegation
+	// TODO: ensure the order for restaking, currently, we only have one finality provider
 	//  one covenant emulator
-	if len(req.SlashingTxSigs) != len(btcDel.ValBtcPkList) {
+	if len(req.SlashingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
-			"number of covenant signatures: %d, number of validators being staked to: %d",
-			len(req.SlashingTxSigs), len(btcDel.ValBtcPkList))
+			"number of covenant signatures: %d, number of finality providers being staked to: %d",
+			len(req.SlashingTxSigs), len(btcDel.FpBtcPkList))
 	}
 
 	/*
@@ -408,7 +408,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		slashingSpendInfo,
 		btcDel.SlashingTx,
 		req.Pk,
-		btcDel.ValBtcPkList,
+		btcDel.FpBtcPkList,
 		req.SlashingTxSigs,
 	)
 	if err != nil {
@@ -416,15 +416,15 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// Check that the number of covenant sigs and number of the
-	// validators are matched
+	// finality providers are matched
 	// Note: we assume the order of adaptor sigs is matched to the
-	// order of validators in the delegation
-	// TODO: ensure the order for restaking, currently, we only have one validator
+	// order of finality providers in the delegation
+	// TODO: ensure the order for restaking, currently, we only have one finality provider
 	//  one covenant emulator
-	if len(req.SlashingUnbondingTxSigs) != len(btcDel.ValBtcPkList) {
+	if len(req.SlashingUnbondingTxSigs) != len(btcDel.FpBtcPkList) {
 		return nil, types.ErrInvalidCovenantSig.Wrapf(
-			"number of covenant signatures: %d, number of validators being staked to: %d",
-			len(req.SlashingUnbondingTxSigs), len(btcDel.ValBtcPkList))
+			"number of covenant signatures: %d, number of finality providers being staked to: %d",
+			len(req.SlashingUnbondingTxSigs), len(btcDel.FpBtcPkList))
 	}
 
 	/*
@@ -470,7 +470,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		unbondingSlashingSpendInfo,
 		btcDel.BtcUndelegation.SlashingTx,
 		req.Pk,
-		btcDel.ValBtcPkList,
+		btcDel.FpBtcPkList,
 		req.SlashingUnbondingTxSigs,
 	)
 	if err != nil {
@@ -559,7 +559,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// notify subscriber about this unbonded BTC delegation
 	event := &types.EventUnbondedBTCDelegation{
 		BtcPk:           btcDel.BtcPk,
-		ValBtcPkList:    btcDel.ValBtcPkList,
+		FpBtcPkList:     btcDel.FpBtcPkList,
 		StakingTxHash:   req.StakingTxHash,
 		UnbondingTxHash: unbondingMsgTx.TxHash().String(),
 		FromState:       types.BTCDelegationStatus_ACTIVE,
@@ -572,7 +572,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 }
 
 // verifySlashingTxAdaptorSigs verifies a list of adaptor signatures, each
-// encrypted by a restaked validator PK and signed by the given PK, w.r.t. the
+// encrypted by a restaked finality provider PK and signed by the given PK, w.r.t. the
 // given funding output (in staking or unbonding tx), slashing spend info and
 // slashing tx
 func verifySlashingTxAdaptorSigs(
@@ -580,7 +580,7 @@ func verifySlashingTxAdaptorSigs(
 	slashingSpendInfo *btcstaking.SpendInfo,
 	slashingTx *types.BTCSlashingTx,
 	pk *bbn.BIP340PubKey,
-	valPKs []bbn.BIP340PubKey,
+	fpPKs []bbn.BIP340PubKey,
 	sigs [][]byte,
 ) error {
 	for i, sig := range sigs {
@@ -588,7 +588,7 @@ func verifySlashingTxAdaptorSigs(
 		if err != nil {
 			return err
 		}
-		encKey, err := asig.NewEncryptionKeyFromBTCPK(valPKs[i].MustToBTCPK())
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPKs[i].MustToBTCPK())
 		if err != nil {
 			return err
 		}

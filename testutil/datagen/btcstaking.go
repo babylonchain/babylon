@@ -27,24 +27,24 @@ const (
 	UnbondingTxFee = int64(1000)
 )
 
-func GenRandomBTCValidator(r *rand.Rand) (*bstypes.BTCValidator, error) {
+func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) {
 	// key pairs
 	btcSK, _, err := GenRandomBTCKeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomBTCValidatorWithBTCSK(r, btcSK)
+	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
 }
 
-func GenRandomBTCValidatorWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.BTCValidator, error) {
+func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
 	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
 	if err != nil {
 		return nil, err
 	}
-	return GenRandomBTCValidatorWithBTCBabylonSKs(r, btcSK, bbnSK)
+	return GenRandomFinalityProviderWithBTCBabylonSKs(r, btcSK, bbnSK)
 }
 
-func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.BTCValidator, error) {
+func GenRandomFinalityProviderWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKey, bbnSK cryptotypes.PrivKey) (*bstypes.FinalityProvider, error) {
 	// commission
 	commission := sdkmath.LegacyNewDecWithPrec(int64(RandomInt(r, 49)+1), 2) // [1/100, 50/100]
 	// description
@@ -62,7 +62,7 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 	if err != nil {
 		return nil, err
 	}
-	return &bstypes.BTCValidator{
+	return &bstypes.FinalityProvider{
 		Description: &description,
 		Commission:  &commission,
 		BabylonPk:   secp256k1PK,
@@ -75,7 +75,7 @@ func GenRandomBTCValidatorWithBTCBabylonSKs(r *rand.Rand, btcSK *btcec.PrivateKe
 func GenRandomBTCDelegation(
 	r *rand.Rand,
 	t *testing.T,
-	valBTCPKs []bbn.BIP340PubKey,
+	fpBTCPKs []bbn.BIP340PubKey,
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
 	covenantQuorum uint32,
@@ -91,14 +91,14 @@ func GenRandomBTCDelegation(
 	for _, covenantSK := range covenantSKs {
 		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
 	}
-	// list of validator PKs
-	valPKs := []*btcec.PublicKey{}
-	for _, valBTCPK := range valBTCPKs {
-		valPK, err := valBTCPK.ToBTCPK()
+	// list of finality provider PKs
+	fpPKs := []*btcec.PublicKey{}
+	for _, fpBTCPK := range fpBTCPKs {
+		fpPK, err := fpBTCPK.ToBTCPK()
 		if err != nil {
 			return nil, err
 		}
-		valPKs = append(valPKs, valPK)
+		fpPKs = append(fpPKs, fpPK)
 	}
 
 	// BTC delegation Babylon key pairs
@@ -121,7 +121,7 @@ func GenRandomBTCDelegation(
 		t,
 		net,
 		delSK,
-		valPKs,
+		fpPKs,
 		covenantBTCPKs,
 		covenantQuorum,
 		uint16(endHeight-startHeight),
@@ -147,7 +147,7 @@ func GenRandomBTCDelegation(
 	// covenant sigs
 	covenantSigs, err := GenCovenantAdaptorSigs(
 		covenantSKs,
-		valPKs,
+		fpPKs,
 		stakingMsgTx,
 		slashingPathSpendInfo.GetPkScriptPath(),
 		stakingSlashingInfo.SlashingTx,
@@ -161,7 +161,7 @@ func GenRandomBTCDelegation(
 		BabylonPk:        secp256k1PK,
 		BtcPk:            delBTCPK,
 		Pop:              pop,
-		ValBtcPkList:     valBTCPKs,
+		FpBtcPkList:      fpBTCPKs,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         totalSat,
@@ -185,7 +185,7 @@ func GenRandomBTCDelegation(
 		t,
 		net,
 		delSK,
-		valPKs,
+		fpPKs,
 		covenantBTCPKs,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
@@ -215,7 +215,7 @@ func GenRandomBTCDelegation(
 
 	covUnbondingSlashingSigs, covUnbondingSigs, err := unbondingSlashingInfo.GenCovenantSigs(
 		covenantSKs,
-		valPKs,
+		fpPKs,
 		stakingMsgTx,
 		unbondingPathSpendInfo.GetPkScriptPath(),
 	)
@@ -245,7 +245,7 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	btcNet *chaincfg.Params,
 	outPoint *wire.OutPoint,
 	stakerSK *btcec.PrivateKey,
-	validatorPKs []*btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	covenantPKs []*btcec.PublicKey,
 	covenantQuorum uint32,
 	stakingTimeBlocks uint16,
@@ -256,7 +256,7 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		stakerSK.PubKey(),
-		validatorPKs,
+		fpPKs,
 		covenantPKs,
 		covenantQuorum,
 		stakingTimeBlocks,
@@ -306,7 +306,7 @@ func GenBTCStakingSlashingInfo(
 	t *testing.T,
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
-	validatorPKs []*btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	covenantPKs []*btcec.PublicKey,
 	covenantQuorum uint32,
 	stakingTimeBlocks uint16,
@@ -323,7 +323,7 @@ func GenBTCStakingSlashingInfo(
 		btcNet,
 		outPoint,
 		stakerSK,
-		validatorPKs,
+		fpPKs,
 		covenantPKs,
 		covenantQuorum,
 		stakingTimeBlocks,
@@ -337,7 +337,7 @@ func GenBTCUnbondingSlashingInfo(
 	t *testing.T,
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
-	validatorPKs []*btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	covenantPKs []*btcec.PublicKey,
 	covenantQuorum uint32,
 	stakingTransactionOutpoint *wire.OutPoint,
@@ -349,7 +349,7 @@ func GenBTCUnbondingSlashingInfo(
 
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		stakerSK.PubKey(),
-		validatorPKs,
+		fpPKs,
 		covenantPKs,
 		covenantQuorum,
 		stakingTimeBlocks,
@@ -407,7 +407,7 @@ func (info *TestUnbondingSlashingInfo) GenDelSlashingTxSig(sk *btcec.PrivateKey)
 
 func (info *TestUnbondingSlashingInfo) GenCovenantSigs(
 	covSKs []*btcec.PrivateKey,
-	valPKs []*btcec.PublicKey,
+	fpPKs []*btcec.PublicKey,
 	stakingTx *wire.MsgTx,
 	unbondingPkScriptPath []byte,
 ) ([]*bstypes.CovenantAdaptorSignatures, []*bstypes.SignatureInfo, error) {
@@ -418,7 +418,7 @@ func (info *TestUnbondingSlashingInfo) GenCovenantSigs(
 
 	covUnbondingSlashingSigs, err := GenCovenantAdaptorSigs(
 		covSKs,
-		valPKs,
+		fpPKs,
 		info.UnbondingTx,
 		unbondingSlashingPathInfo.GetPkScriptPath(),
 		info.SlashingTx,

@@ -12,22 +12,22 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) SetSig(ctx context.Context, height uint64, valBtcPK *bbn.BIP340PubKey, sig *bbn.SchnorrEOTSSig) {
+func (k Keeper) SetSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340PubKey, sig *bbn.SchnorrEOTSSig) {
 	store := k.voteStore(ctx, height)
-	store.Set(valBtcPK.MustMarshal(), sig.MustMarshal())
+	store.Set(fpBtcPK.MustMarshal(), sig.MustMarshal())
 }
 
-func (k Keeper) HasSig(ctx context.Context, height uint64, valBtcPK *bbn.BIP340PubKey) bool {
+func (k Keeper) HasSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340PubKey) bool {
 	store := k.voteStore(ctx, height)
-	return store.Has(valBtcPK.MustMarshal())
+	return store.Has(fpBtcPK.MustMarshal())
 }
 
-func (k Keeper) GetSig(ctx context.Context, height uint64, valBtcPK *bbn.BIP340PubKey) (*bbn.SchnorrEOTSSig, error) {
+func (k Keeper) GetSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340PubKey) (*bbn.SchnorrEOTSSig, error) {
 	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
 		return nil, types.ErrHeightTooHigh
 	}
 	store := k.voteStore(ctx, height)
-	sigBytes := store.Get(valBtcPK.MustMarshal())
+	sigBytes := store.Get(fpBtcPK.MustMarshal())
 	if len(sigBytes) == 0 {
 		return nil, types.ErrVoteNotFound
 	}
@@ -51,9 +51,9 @@ func (k Keeper) GetSigSet(ctx context.Context, height uint64) map[string]*bbn.Sc
 
 	sigs := map[string]*bbn.SchnorrEOTSSig{}
 	for ; iter.Valid(); iter.Next() {
-		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
+		fpBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
 		if err != nil {
-			// failing to unmarshal validator BTC PK in KVStore is a programming error
+			// failing to unmarshal finality provider's BTC PK in KVStore is a programming error
 			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
 		}
 		sig, err := bbn.NewSchnorrEOTSSig(iter.Value())
@@ -61,7 +61,7 @@ func (k Keeper) GetSigSet(ctx context.Context, height uint64) map[string]*bbn.Sc
 			// failing to unmarshal EOTS sig in KVStore is a programming error
 			panic(fmt.Errorf("failed to unmarshal EOTS signature: %w", err))
 		}
-		sigs[valBTCPK.MarshalHex()] = sig
+		sigs[fpBTCPK.MarshalHex()] = sig
 	}
 	return sigs
 }
@@ -80,19 +80,19 @@ func (k Keeper) GetVoters(ctx context.Context, height uint64) map[string]struct{
 	voterBTCPKs := map[string]struct{}{}
 	for ; iter.Valid(); iter.Next() {
 		// accumulate voterBTCPKs
-		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
+		fpBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
 		if err != nil {
-			// failing to unmarshal validator BTC PK in KVStore is a programming error
+			// failing to unmarshal finality provider's BTC PK in KVStore is a programming error
 			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
 		}
-		voterBTCPKs[valBTCPK.MarshalHex()] = struct{}{}
+		voterBTCPKs[fpBTCPK.MarshalHex()] = struct{}{}
 	}
 	return voterBTCPKs
 }
 
 // voteStore returns the KVStore of the votes
 // prefix: VoteKey
-// key: (block height || BTC validator PK)
+// key: (block height || finality provider PK)
 // value: EOTS sig
 func (k Keeper) voteStore(ctx context.Context, height uint64) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))

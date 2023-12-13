@@ -44,31 +44,31 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 		// this is already covered in FuzzGeneratingValidStakingSlashingTx
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
-		// generate a random batch of validators
-		numBTCValsWithVotingPower := datagen.RandomInt(r, 10) + 2
-		numBTCVals := numBTCValsWithVotingPower + datagen.RandomInt(r, 10)
-		btcValsWithVotingPowerMap := map[string]*types.BTCValidator{}
-		for i := uint64(0); i < numBTCVals; i++ {
-			btcVal, err := datagen.GenRandomBTCValidator(r)
+		// generate a random batch of finality providers
+		numFpsWithVotingPower := datagen.RandomInt(r, 10) + 2
+		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
+		fpsWithVotingPowerMap := map[string]*types.FinalityProvider{}
+		for i := uint64(0); i < numFps; i++ {
+			fp, err := datagen.GenRandomFinalityProvider(r)
 			require.NoError(t, err)
-			keeper.SetBTCValidator(ctx, btcVal)
-			if i < numBTCValsWithVotingPower {
-				// these BTC validators will receive BTC delegations and have voting power
-				btcValsWithVotingPowerMap[btcVal.BabylonPk.String()] = btcVal
+			keeper.SetFinalityProvider(ctx, fp)
+			if i < numFpsWithVotingPower {
+				// these finality providers will receive BTC delegations and have voting power
+				fpsWithVotingPowerMap[fp.BabylonPk.String()] = fp
 			}
 		}
 
-		// for the first numBTCValsWithVotingPower validators, generate a random number of BTC delegations
+		// for the first numFpsWithVotingPower finality providers, generate a random number of BTC delegations
 		numBTCDels := datagen.RandomInt(r, 10) + 1
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
-		for _, btcVal := range btcValsWithVotingPowerMap {
+		for _, fp := range fpsWithVotingPowerMap {
 			for j := uint64(0); j < numBTCDels; j++ {
 				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
 				require.NoError(t, err)
 				btcDel, err := datagen.GenRandomBTCDelegation(
 					r,
 					t,
-					[]bbn.BIP340PubKey{*btcVal.BtcPk},
+					[]bbn.BIP340PubKey{*fp.BtcPk},
 					delSK,
 					covenantSKs,
 					covenantQuorum,
@@ -92,14 +92,14 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 		// assert reward distribution cache is correct
 		rdc, err := keeper.GetRewardDistCache(ctx, babylonHeight)
 		require.NoError(t, err)
-		require.Equal(t, rdc.TotalVotingPower, numBTCValsWithVotingPower*numBTCDels*stakingValue)
-		for _, valDistInfo := range rdc.BtcVals {
-			require.Equal(t, valDistInfo.TotalVotingPower, numBTCDels*stakingValue)
-			btcVal, ok := btcValsWithVotingPowerMap[valDistInfo.BabylonPk.String()]
+		require.Equal(t, rdc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
+		for _, fpDistInfo := range rdc.FinalityProviders {
+			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
+			fp, ok := fpsWithVotingPowerMap[fpDistInfo.BabylonPk.String()]
 			require.True(t, ok)
-			require.Equal(t, valDistInfo.Commission, btcVal.Commission)
-			require.Len(t, valDistInfo.BtcDels, int(numBTCDels))
-			for _, delDistInfo := range valDistInfo.BtcDels {
+			require.Equal(t, fpDistInfo.Commission, fp.Commission)
+			require.Len(t, fpDistInfo.BtcDels, int(numBTCDels))
+			for _, delDistInfo := range fpDistInfo.BtcDels {
 				require.Equal(t, delDistInfo.VotingPower, stakingValue)
 			}
 		}

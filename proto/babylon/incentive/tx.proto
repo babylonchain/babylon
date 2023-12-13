@@ -23,7 +23,7 @@ service Msg {
 // MsgWithdrawReward defines a message for withdrawing reward of a stakeholder.
 message MsgWithdrawReward {
     option (cosmos.msg.v1.signer) = "address";
-    // {submitter, reporter, btc_validator, btc_delegation}
+    // {submitter, reporter, finality_provider, btc_delegation}
     string type = 1;
     // address is the address of the stakeholder in bech32 string
     // signer of this msg has to be this address

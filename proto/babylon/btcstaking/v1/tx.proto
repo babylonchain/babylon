@@ -17,8 +17,8 @@ option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  // CreateBTCValidator creates a new BTC validator
-  rpc CreateBTCValidator(MsgCreateBTCValidator) returns (MsgCreateBTCValidatorResponse);
+  // CreateFinalityProvider creates a new finality provider
+  rpc CreateFinalityProvider(MsgCreateFinalityProvider) returns (MsgCreateFinalityProviderResponse);
   // CreateBTCDelegation creates a new BTC delegation
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
   // AddCovenantSigs handles signatures from a covenant member
@@ -29,29 +29,29 @@ service Msg {
   rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
 }
 
-// MsgCreateBTCValidator is the message for creating a BTC validator
-message MsgCreateBTCValidator {
+// MsgCreateFinalityProvider is the message for creating a finality provider
+message MsgCreateFinalityProvider {
   option (cosmos.msg.v1.signer) = "signer";
 
   string signer = 1;
 
-  // description defines the description terms for the BTC validator.
+  // description defines the description terms for the finality provider.
   cosmos.staking.v1beta1.Description description = 2;
-  // commission defines the commission rate of BTC validator.
+  // commission defines the commission rate of finality provider.
   string commission = 3 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
   ];
-  // babylon_pk is the Babylon secp256k1 PK of this BTC validator
+  // babylon_pk is the Babylon secp256k1 PK of this finality provider
   cosmos.crypto.secp256k1.PubKey babylon_pk = 4;
-  // btc_pk is the Bitcoin secp256k1 PK of this BTC validator
+  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
   // the PK follows encoding in BIP-340 spec
   bytes btc_pk = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 6;
 }
-// MsgCreateBTCValidatorResponse is the response for MsgCreateBTCValidator
-message MsgCreateBTCValidatorResponse {}
+// MsgCreateFinalityProviderResponse is the response for MsgCreateFinalityProvider
+message MsgCreateFinalityProviderResponse {}
 
 // MsgCreateBTCDelegation is the message for creating a BTC delegation
 message MsgCreateBTCDelegation {
@@ -64,26 +64,26 @@ message MsgCreateBTCDelegation {
   ProofOfPossession pop = 3;
   // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
   bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // val_btc_pk_list is the list of Bitcoin secp256k1 PKs of the BTC validators, if there is more than one
-  // validator pk it means that delegation is re-staked
-  repeated bytes val_btc_pk_list = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality providers, if there is more than one
+  // finality provider pk it means that delegation is re-staked
+  repeated bytes fp_btc_pk_list = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // staking_time is the time lock used in staking transaction
   uint32 staking_time = 6;
-  // staking_value  is amout of satoshis locked in staking output
+  // staking_value  is the amount of satoshis locked in staking output
   int64 staking_value = 7;
-  // staking_tx is the staking tx along with the merekle proof of inclusion in btc block
+  // staking_tx is the staking tx along with the merkle proof of inclusion in btc block
   babylon.btccheckpoint.v1.TransactionInfo staking_tx = 8;
   // slashing_tx is the slashing tx
   // Note that the tx itself does not contain signatures, which are off-chain.
   bytes slashing_tx = 9 [ (gogoproto.customtype) = "BTCSlashingTx" ];
   // delegator_slashing_sig is the signature on the slashing tx by the delegator (i.e., SK corresponding to btc_pk).
   // It will be a part of the witness for the staking tx output.
-  // The staking tx output further needs signatures from covenant and validator in
+  // The staking tx output further needs signatures from covenant and finality provider in
   // order to be spendable.
   bytes delegator_slashing_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
 
   /// fields related to on-demand unbonding
-  // unbonding_tx is bitcoin unbonding transaction i.e transaction that spends
+  // unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
   // staking output and sends it to the unbonding output
   bytes unbonding_tx = 11;
   // unbonding_time is the time lock used in unbonding transaction
@@ -111,7 +111,7 @@ message MsgAddCovenantSigs {
   // It uniquely identifies a BTC delegation
   string staking_tx_hash = 3;
   // sigs is a list of adaptor signatures of the covenant
-  // the order of sigs should respect the order of validators
+  // the order of sigs should respect the order of finality providers
   // of the corresponding delegation
   repeated bytes slashing_tx_sigs = 4;
   // unbonding_tx_sig is the signature of the covenant on the unbonding tx submitted to babylon
@@ -119,7 +119,7 @@ message MsgAddCovenantSigs {
   bytes unbonding_tx_sig = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
   // slashing_unbonding_tx_sigs is a list of adaptor signatures of the covenant
   // on slashing tx corresponding to unbonding tx submitted to babylon
-  // the order of sigs should respect the order of validators
+  // the order of sigs should respect the order of finality providers
   // of the corresponding delegation
   repeated bytes slashing_unbonding_tx_sigs = 6;
 }

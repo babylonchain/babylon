@@ -32,7 +32,7 @@ func FuzzTallying_PanicCases(f *testing.F) {
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(uint64(0), bstypes.ErrBTCStakingNotActivated).Times(1)
 		require.Panics(t, func() { fKeeper.TallyBlocks(ctx) })
 
-		// Case 2: expect to panic if finalised block with nil validator set
+		// Case 2: expect to panic if finalised block with nil finality provider
 		fKeeper.SetBlock(ctx, &types.IndexedBlock{
 			Height:    1,
 			AppHash:   datagen.GenRandomByteArray(r, 32),
@@ -146,11 +146,11 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 }
 
 func giveQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakingKeeper, fKeeper *keeper.Keeper, height uint64) error {
-	// 4 BTC vals
-	valSet := map[string]uint64{}
+	// 4 finality providers
+	fpSet := map[string]uint64{}
 	// 3 votes
 	for i := 0; i < 3; i++ {
-		votedValPK, err := datagen.GenRandomBIP340PubKey(r)
+		votedFpPK, err := datagen.GenRandomBIP340PubKey(r)
 		if err != nil {
 			return err
 		}
@@ -158,20 +158,20 @@ func giveQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakin
 		if err != nil {
 			return err
 		}
-		fKeeper.SetSig(ctx, height, votedValPK, votedSig)
-		// add val
-		valSet[votedValPK.MarshalHex()] = 1
+		fKeeper.SetSig(ctx, height, votedFpPK, votedSig)
+		// add finality provider
+		fpSet[votedFpPK.MarshalHex()] = 1
 	}
-	// the rest val that does not vote
-	valSet[hex.EncodeToString(datagen.GenRandomByteArray(r, 32))] = 1
-	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(valSet).Times(1)
+	// the rest of the finality providers do not vote
+	fpSet[hex.EncodeToString(datagen.GenRandomByteArray(r, 32))] = 1
+	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(fpSet).Times(1)
 
 	return nil
 }
 
 func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStakingKeeper, fKeeper *keeper.Keeper, height uint64) error {
 	// 1 vote
-	votedValPK, err := datagen.GenRandomBIP340PubKey(r)
+	votedFpPK, err := datagen.GenRandomBIP340PubKey(r)
 	if err != nil {
 		return err
 	}
@@ -179,15 +179,15 @@ func giveNoQCToHeight(r *rand.Rand, ctx sdk.Context, bsKeeper *types.MockBTCStak
 	if err != nil {
 		return err
 	}
-	fKeeper.SetSig(ctx, height, votedValPK, votedSig)
-	// 4 BTC vals
-	valSet := map[string]uint64{
-		votedValPK.MarshalHex():                               1,
+	fKeeper.SetSig(ctx, height, votedFpPK, votedSig)
+	// 4 finality providers
+	fpSet := map[string]uint64{
+		votedFpPK.MarshalHex():                                1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 		hex.EncodeToString(datagen.GenRandomByteArray(r, 32)): 1,
 	}
-	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(valSet).MaxTimes(1)
+	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Eq(height)).Return(fpSet).MaxTimes(1)
 
 	return nil
 }

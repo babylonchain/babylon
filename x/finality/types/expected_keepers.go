@@ -6,10 +6,10 @@ import (
 )
 
 type BTCStakingKeeper interface {
-	GetBTCValidator(ctx context.Context, valBTCPK []byte) (*bstypes.BTCValidator, error)
-	HasBTCValidator(ctx context.Context, valBTCPK []byte) bool
-	SlashBTCValidator(ctx context.Context, valBTCPK []byte) error
-	GetVotingPower(ctx context.Context, valBTCPK []byte, height uint64) uint64
+	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
+	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
+	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
+	GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64
 	GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
 	RecordRewardDistCache(ctx context.Context)

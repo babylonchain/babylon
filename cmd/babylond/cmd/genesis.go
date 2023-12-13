@@ -71,7 +71,7 @@ Example:
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
 					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
 					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
-					genesisCliArgs.MinCommissionRate, genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveBTCValidators,
+					genesisCliArgs.MinCommissionRate, genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders,
 					genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
 					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
@@ -232,7 +232,7 @@ type GenesisParams struct {
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, covenantPKs []string, covenantQuorum uint32, slashingAddress string, minSlashingFee int64,
-	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveBTCValidators uint32,
+	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32,
 	minPubRand uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
@@ -321,7 +321,7 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.BtcstakingParams.MinSlashingTxFeeSat = minSlashingFee
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
-	genParams.BtcstakingParams.MaxActiveBtcValidators = maxActiveBTCValidators
+	genParams.BtcstakingParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
 	}

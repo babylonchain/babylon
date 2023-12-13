@@ -23,7 +23,7 @@ message Params {
   // in Satoshi) needed for the pre-signed slashing tx
   // TODO: change to satoshi per byte?
   int64 min_slashing_tx_fee_sat = 4;
-  // min_commission_rate is the chain-wide minimum commission rate that a validator can charge their delegators
+  // min_commission_rate is the chain-wide minimum commission rate that a finality provider can charge their delegators
   string min_commission_rate = 5 [
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
     (gogoproto.nullable)   = false
@@ -35,6 +35,6 @@ message Params {
       (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
       (gogoproto.nullable)   = false
   ];
-  // max_active_btc_validators is the maximum number of active BTC validators in the BTC staking protocol
-  uint32 max_active_btc_validators = 7;
+  // max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
+  uint32 max_active_finality_providers = 7;
 }

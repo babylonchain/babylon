@@ -44,7 +44,7 @@ func (ud *BTCUndelegation) HasCovenantQuorums(covenantQuorum uint32) bool {
 
 // AddCovenantSigs adds a Schnorr signature on the unbonding tx, and
 // a list of adaptor signatures on the unbonding slashing tx, each encrypted
-// by a BTC validator's PK this BTC delegation restakes to, from the given
+// by a finality provider's PK this BTC delegation restakes to, from the given
 // covenant
 func (ud *BTCUndelegation) AddCovenantSigs(
 	covPk *bbn.BIP340PubKey,

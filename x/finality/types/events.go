@@ -1,7 +1,7 @@
 package types
 
-func NewEventSlashedBTCValidator(evidence *Evidence) *EventSlashedBTCValidator {
-	return &EventSlashedBTCValidator{
+func NewEventSlashedFinalityProvider(evidence *Evidence) *EventSlashedFinalityProvider {
+	return &EventSlashedFinalityProvider{
 		Evidence: evidence,
 	}
 }

@@ -30,7 +30,7 @@ func (k Keeper) GetParams(ctx context.Context) (p types.Params) {
 	return p
 }
 
-// MinCommissionRate returns the minimal commission rate of BTC validators
+// MinCommissionRate returns the minimal commission rate of finality providers
 func (k Keeper) MinCommissionRate(ctx context.Context) math.LegacyDec {
 	return k.GetParams(ctx).MinCommissionRate
 }

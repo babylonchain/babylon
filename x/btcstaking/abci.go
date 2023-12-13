@@ -19,7 +19,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	k.RecordVotingPowerTable(ctx)
 	// if BTC staking is activated, record reward distribution cache at the current height
 	// TODO: consider merging RecordVotingPowerTable and RecordRewardDistCache so that we
-	// only need to perform one full scan over BTC validators/delegations
+	// only need to perform one full scan over finality providers/delegations
 	if k.IsBTCStakingActivated(ctx) {
 		k.RecordRewardDistCache(ctx)
 	}

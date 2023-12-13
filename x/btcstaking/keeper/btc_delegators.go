@@ -27,11 +27,11 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 		return err
 	}
 
-	// for each BTC validator the delegation restakes to, update its index
-	for _, valBTCPK := range btcDel.ValBtcPkList {
+	// for each finality provider the delegation restakes to, update its index
+	for _, fpBTCPK := range btcDel.FpBtcPkList {
 		var btcDelIndex = types.NewBTCDelegatorDelegationIndex()
-		if k.hasBTCDelegatorDelegations(ctx, &valBTCPK, btcDel.BtcPk) {
-			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &valBTCPK, btcDel.BtcPk)
+		if k.hasBTCDelegatorDelegations(ctx, &fpBTCPK, btcDel.BtcPk) {
+			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
 			if err != nil {
 				// this can only be a programming error
 				panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
@@ -43,7 +43,7 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 			return types.ErrInvalidStakingTx.Wrapf(err.Error())
 		}
 		// save the index
-		store := k.btcDelegatorStore(ctx, &valBTCPK)
+		store := k.btcDelegatorStore(ctx, &fpBTCPK)
 		delBTCPKBytes := btcDel.BtcPk.MustMarshal()
 		btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
 		store.Set(delBTCPKBytes, btcDelIndexBytes)
@@ -55,7 +55,7 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	return nil
 }
 
-// updateBTCDelegation updates an existing BTC delegation w.r.t. validator BTC PK, delegator BTC PK,
+// updateBTCDelegation updates an existing BTC delegation w.r.t. finality provider BTC PK, delegator BTC PK,
 // and staking tx hash by using a given function
 func (k Keeper) updateBTCDelegation(
 	ctx context.Context,
@@ -97,9 +97,9 @@ func (k Keeper) AddUndelegationToBTCDelegation(
 
 // AddCovenantSigsToBTCDelegation adds covenant signatures to a BTC delegation
 // with the given staking tx hash, including
-// - a list of adaptor signatures over slashing tx, each encrypted by a restaked validator's PK
+// - a list of adaptor signatures over slashing tx, each encrypted by a restaked finality provider's PK
 // - a Schnorr signature over unbonding tx
-// - a list of adaptor signatures over unbonding slashing tx, each encrypted by a restaked validator's PK
+// - a list of adaptor signatures over unbonding slashing tx, each encrypted by a restaked finality provider's PK
 func (k Keeper) AddCovenantSigsToBTCDelegation(
 	ctx context.Context,
 	stakingTxHash string,
@@ -140,27 +140,27 @@ func (k Keeper) AddCovenantSigsToBTCDelegation(
 	return k.updateBTCDelegation(ctx, stakingTxHash, addCovenantSig)
 }
 
-// hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given BTC validator
-func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
-	valBTCPKBytes := valBTCPK.MustMarshal()
+// hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given finality provider
+func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
+	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
 
-	if !k.HasBTCValidator(ctx, valBTCPKBytes) {
+	if !k.HasFinalityProvider(ctx, fpBTCPKBytes) {
 		return false
 	}
-	store := k.btcDelegatorStore(ctx, valBTCPK)
+	store := k.btcDelegatorStore(ctx, fpBTCPK)
 	return store.Has(delBTCPKBytes)
 }
 
-// getBTCDelegatorDelegationIndex gets the BTC delegation index with a given BTC PK under a given BTC validator
-func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegationIndex, error) {
-	valBTCPKBytes := valBTCPK.MustMarshal()
+// getBTCDelegatorDelegationIndex gets the BTC delegation index with a given BTC PK under a given finality provider
+func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegationIndex, error) {
+	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
-	store := k.btcDelegatorStore(ctx, valBTCPK)
+	store := k.btcDelegatorStore(ctx, fpBTCPK)
 
-	// ensure the BTC validator exists
-	if !k.HasBTCValidator(ctx, valBTCPKBytes) {
-		return nil, types.ErrBTCValNotFound
+	// ensure the finality provider exists
+	if !k.HasFinalityProvider(ctx, fpBTCPKBytes) {
+		return nil, types.ErrFpNotFound
 	}
 
 	// ensure BTC delegator exists
@@ -174,9 +174,9 @@ func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, valBTCPK *bb
 	return &btcDelIndex, nil
 }
 
-// getBTCDelegatorDelegations gets the BTC delegations with a given BTC PK under a given BTC validator
-func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, valBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
-	btcDelIndex, err := k.getBTCDelegatorDelegationIndex(ctx, valBTCPK, delBTCPK)
+// getBTCDelegatorDelegations gets the BTC delegations with a given BTC PK under a given finality provider
+func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
+	btcDelIndex, err := k.getBTCDelegatorDelegationIndex(ctx, fpBTCPK, delBTCPK)
 	if err != nil {
 		return nil, err
 	}
@@ -206,11 +206,11 @@ func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (
 }
 
 // btcDelegatorStore returns the KVStore of the BTC delegators
-// prefix: BTCDelegatorKey || validator's Bitcoin secp256k1 PK
+// prefix: BTCDelegatorKey || finality provider's Bitcoin secp256k1 PK
 // key: delegator's Bitcoin secp256k1 PK
 // value: BTCDelegatorDelegationIndex (a list of BTCDelegations' staking tx hashes)
-func (k Keeper) btcDelegatorStore(ctx context.Context, valBTCPK *bbn.BIP340PubKey) prefix.Store {
+func (k Keeper) btcDelegatorStore(ctx context.Context, fpBTCPK *bbn.BIP340PubKey) prefix.Store {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	delegationStore := prefix.NewStore(storeAdapter, types.BTCDelegatorKey)
-	return prefix.NewStore(delegationStore, valBTCPK.MustMarshal())
+	return prefix.NewStore(delegationStore, fpBTCPK.MustMarshal())
 }

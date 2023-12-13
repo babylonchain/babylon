@@ -98,7 +98,7 @@ func FuzzRewardBTCTimestamping(f *testing.F) {
 			}
 		}
 
-		// distribute rewards in the gauge to BTC validators/delegations
+		// distribute rewards in the gauge to reporters/submitters
 		keeper.RewardBTCTimestamping(ctx, epoch, rdi)
 
 		// assert consistency between reward map and reward gauge

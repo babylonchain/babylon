@@ -14,28 +14,28 @@ import (
 )
 
 const (
-	flagMaxActiveValidators    = "max-active-validators"
-	flagBtcConfirmationDepth   = "btc-confirmation-depth"
-	flagEpochInterval          = "epoch-interval"
-	flagBtcFinalizationTimeout = "btc-finalization-timeout"
-	flagCheckpointTag          = "checkpoint-tag"
-	flagBaseBtcHeaderHex       = "btc-base-header"
-	flagBaseBtcHeaderHeight    = "btc-base-header-height"
-	flagInflationRateChange    = "inflation-rate-change"
-	flagInflationMax           = "inflation-max"
-	flagInflationMin           = "inflation-min"
-	flagGoalBonded             = "goal-bonded"
-	flagBlocksPerYear          = "blocks-per-year"
-	flagGenesisTime            = "genesis-time"
-	flagBlockGasLimit          = "block-gas-limit"
-	flagCovenantPks            = "covenant-pks"
-	flagCovenantQuorum         = "covenant-quorum"
-	flagMaxActiveBTCValidators = "max-active-btc-validators"
-	flagSlashingAddress        = "slashing-address"
-	flagMinSlashingFee         = "min-slashing-fee-sat"
-	flagSlashingRate           = "slashing-rate"
-	flagMinPubRand             = "min-pub-rand"
-	flagMinCommissionRate      = "min-commission-rate"
+	flagMaxActiveValidators        = "max-active-validators"
+	flagBtcConfirmationDepth       = "btc-confirmation-depth"
+	flagEpochInterval              = "epoch-interval"
+	flagBtcFinalizationTimeout     = "btc-finalization-timeout"
+	flagCheckpointTag              = "checkpoint-tag"
+	flagBaseBtcHeaderHex           = "btc-base-header"
+	flagBaseBtcHeaderHeight        = "btc-base-header-height"
+	flagInflationRateChange        = "inflation-rate-change"
+	flagInflationMax               = "inflation-max"
+	flagInflationMin               = "inflation-min"
+	flagGoalBonded                 = "goal-bonded"
+	flagBlocksPerYear              = "blocks-per-year"
+	flagGenesisTime                = "genesis-time"
+	flagBlockGasLimit              = "block-gas-limit"
+	flagCovenantPks                = "covenant-pks"
+	flagCovenantQuorum             = "covenant-quorum"
+	flagMaxActiveFinalityProviders = "max-active-finality-providers"
+	flagSlashingAddress            = "slashing-address"
+	flagMinSlashingFee             = "min-slashing-fee-sat"
+	flagSlashingRate               = "slashing-rate"
+	flagMinPubRand                 = "min-pub-rand"
+	flagMinCommissionRate          = "min-commission-rate"
 )
 
 type GenesisCLIArgs struct {
@@ -59,7 +59,7 @@ type GenesisCLIArgs struct {
 	SlashingAddress              string
 	MinSlashingTransactionFeeSat int64
 	SlashingRate                 math.LegacyDec
-	MaxActiveBTCValidators       uint32
+	MaxActiveFinalityProviders   uint32
 	MinPubRand                   uint64
 	MinCommissionRate            math.LegacyDec
 }
@@ -85,7 +85,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64(flagMinSlashingFee, 1000, "Bitcoin staking minimum slashing fee")
 	cmd.Flags().String(flagMinCommissionRate, "0", "Bitcoin staking validator minimum commission rate")
 	cmd.Flags().String(flagSlashingRate, "0.1", "Bitcoin staking slashing rate")
-	cmd.Flags().Uint32(flagMaxActiveBTCValidators, 100, "Bitcoin staking maximum active BTC validators")
+	cmd.Flags().Uint32(flagMaxActiveFinalityProviders, 100, "Bitcoin staking maximum active finality providers")
 	// finality args
 	cmd.Flags().Uint64(flagMinPubRand, 100, "Bitcoin staking minimum public randomness commit")
 	// inflation args
@@ -115,7 +115,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	minSlashingFee, _ := cmd.Flags().GetInt64(flagMinSlashingFee)
 	minCommissionRate, _ := cmd.Flags().GetString(flagMinCommissionRate)
 	slashingRate, _ := cmd.Flags().GetString(flagSlashingRate)
-	maxActiveBTCValidators, _ := cmd.Flags().GetUint32(flagMaxActiveBTCValidators)
+	maxActiveFinalityProviders, _ := cmd.Flags().GetUint32(flagMaxActiveFinalityProviders)
 	minPubRand, _ := cmd.Flags().GetUint64(flagMinPubRand)
 	genesisTimeUnix, _ := cmd.Flags().GetInt64(flagGenesisTime)
 	inflationRateChange, _ := cmd.Flags().GetFloat64(flagInflationRateChange)
@@ -146,7 +146,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		MinSlashingTransactionFeeSat: minSlashingFee,
 		MinCommissionRate:            math.LegacyMustNewDecFromStr(minCommissionRate),
 		SlashingRate:                 math.LegacyMustNewDecFromStr(slashingRate),
-		MaxActiveBTCValidators:       maxActiveBTCValidators,
+		MaxActiveFinalityProviders:   maxActiveFinalityProviders,
 		MinPubRand:                   minPubRand,
 		GenesisTime:                  genesisTime,
 		InflationRateChange:          inflationRateChange,

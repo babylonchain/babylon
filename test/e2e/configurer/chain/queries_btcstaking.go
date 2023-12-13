@@ -22,35 +22,35 @@ func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
 	return &resp.Params
 }
 
-func (n *NodeConfig) QueryBTCValidators() []*bstypes.BTCValidator {
-	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_validators", url.Values{})
+func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProvider {
+	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bstypes.QueryBTCValidatorsResponse
+	var resp bstypes.QueryFinalityProvidersResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return resp.BtcValidators
+	return resp.FinalityProviders
 }
 
-func (n *NodeConfig) QueryActiveBTCValidatorsAtHeight(height uint64) []*bstypes.BTCValidatorWithMeta {
-	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_validators/%d", height)
+func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*bstypes.FinalityProviderWithMeta {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%d", height)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bstypes.QueryActiveBTCValidatorsAtHeightResponse
+	var resp bstypes.QueryActiveFinalityProvidersAtHeightResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
-	return resp.BtcValidators
+	return resp.FinalityProviders
 }
 
-func (n *NodeConfig) QueryBTCValidatorDelegations(valBTCPK string) []*bstypes.BTCDelegatorDelegations {
-	path := fmt.Sprintf("/babylon/btcstaking/v1/btc_validators/%s/delegations", valBTCPK)
+func (n *NodeConfig) QueryFinalityProviderDelegations(fpBTCPK string) []*bstypes.BTCDelegatorDelegations {
+	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%s/delegations", fpBTCPK)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 
-	var resp bstypes.QueryBTCValidatorDelegationsResponse
+	var resp bstypes.QueryFinalityProviderDelegationsResponse
 	err = util.Cdc.UnmarshalJSON(bz, &resp)
 	require.NoError(n.t, err)
 
@@ -94,8 +94,8 @@ func (n *NodeConfig) QueryActivatedHeight() uint64 {
 }
 
 // TODO: pagination support
-func (n *NodeConfig) QueryListPublicRandomness(valBTCPK *bbn.BIP340PubKey) map[uint64]*bbn.SchnorrPubRand {
-	path := fmt.Sprintf("/babylon/finality/v1/btc_validators/%s/public_randomness_list", valBTCPK.MarshalHex())
+func (n *NodeConfig) QueryListPublicRandomness(fpBTCPK *bbn.BIP340PubKey) map[uint64]*bbn.SchnorrPubRand {
+	path := fmt.Sprintf("/babylon/finality/v1/finality_providers/%s/public_randomness_list", fpBTCPK.MarshalHex())
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
 

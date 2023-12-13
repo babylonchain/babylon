@@ -38,20 +38,20 @@ func FuzzRewardBTCStaking(f *testing.F) {
 
 		// expected values
 		distributedCoins := sdk.NewCoins()
-		btcValRewardMap := map[string]sdk.Coins{} // key: address, value: reward
+		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
-		for _, btcVal := range rdc.BtcVals {
-			btcValPortion := rdc.GetBTCValPortion(btcVal)
-			coinsForBTCValAndDels := gauge.GetCoinsPortion(btcValPortion)
-			coinsForCommission := types.GetCoinsPortion(coinsForBTCValAndDels, *btcVal.Commission)
+		for _, fp := range rdc.FinalityProviders {
+			fpPortion := rdc.GetFinalityProviderPortion(fp)
+			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
+			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 			if coinsForCommission.IsAllPositive() {
-				btcValRewardMap[btcVal.GetAddress().String()] = coinsForCommission
+				fpRewardMap[fp.GetAddress().String()] = coinsForCommission
 				distributedCoins.Add(coinsForCommission...)
 			}
-			coinsForBTCDels := coinsForBTCValAndDels.Sub(coinsForCommission...)
-			for _, btcDel := range btcVal.BtcDels {
-				btcDelPortion := btcVal.GetBTCDelPortion(btcDel)
+			coinsForBTCDels := coinsForFpsAndDels.Sub(coinsForCommission...)
+			for _, btcDel := range fp.BtcDels {
+				btcDelPortion := fp.GetBTCDelPortion(btcDel)
 				coinsForDel := types.GetCoinsPortion(coinsForBTCDels, btcDelPortion)
 				if coinsForDel.IsAllPositive() {
 					btcDelRewardMap[btcDel.GetAddress().String()] = coinsForDel
@@ -60,14 +60,14 @@ func FuzzRewardBTCStaking(f *testing.F) {
 			}
 		}
 
-		// distribute rewards in the gauge to BTC validators/delegations
+		// distribute rewards in the gauge to finality providers/delegations
 		keeper.RewardBTCStaking(ctx, height, rdc)
 
 		// assert consistency between reward map and reward gauge
-		for addrStr, reward := range btcValRewardMap {
+		for addrStr, reward := range fpRewardMap {
 			addr, err := sdk.AccAddressFromBech32(addrStr)
 			require.NoError(t, err)
-			rg := keeper.GetRewardGauge(ctx, types.BTCValidatorType, addr)
+			rg := keeper.GetRewardGauge(ctx, types.FinalityProviderType, addr)
 			require.NotNil(t, rg)
 			require.Equal(t, reward, rg.Coins)
 		}

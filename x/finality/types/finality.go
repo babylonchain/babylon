@@ -39,8 +39,8 @@ func (e *Evidence) forkMsgToSign() []byte {
 }
 
 func (e *Evidence) ValidateBasic() error {
-	if e.ValBtcPk == nil {
-		return fmt.Errorf("empty ValBtcPk")
+	if e.FpBtcPk == nil {
+		return fmt.Errorf("empty FpBtcPk")
 	}
 	if e.PubRand == nil {
 		return fmt.Errorf("empty PubRand")
@@ -52,7 +52,7 @@ func (e *Evidence) ValidateBasic() error {
 		return fmt.Errorf("malformed ForkAppHash")
 	}
 	if e.ForkFinalitySig == nil {
-		return fmt.Errorf("empty ValBtcPk")
+		return fmt.Errorf("empty ForkFinalitySig")
 	}
 	return nil
 }
@@ -72,7 +72,7 @@ func (e *Evidence) ExtractBTCSK() (*btcec.PrivateKey, error) {
 	if !e.IsSlashable() {
 		return nil, fmt.Errorf("the evidence lacks some fields so does not allow extracting BTC SK")
 	}
-	btcPK, err := e.ValBtcPk.ToBTCPK()
+	btcPK, err := e.FpBtcPk.ToBTCPK()
 	if err != nil {
 		return nil, err
 	}

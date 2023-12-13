@@ -7,28 +7,28 @@ import "cosmos/crypto/secp256k1/keys.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
-// RewardDistCache is the cache for reward distribution of BTC validators at a height
+// RewardDistCache is the cache for reward distribution of finality providers at a height
 message RewardDistCache {
     uint64 total_voting_power = 1;
-    // btc_vals is a list of BTC validators' voting power information 
-    repeated BTCValDistInfo btc_vals = 2;
+    // finality_providers is a list of finality providers' voting power information
+    repeated FinalityProviderDistInfo finality_providers = 2;
 }
 
-// BTCValDistInfo is the reward distribution of a BTC validator and its BTC delegations
-message BTCValDistInfo {
-    // btc_pk is the Bitcoin secp256k1 PK of this BTC validator
+// FinalityProviderDistInfo is the reward distribution of a finality provider and its BTC delegations
+message FinalityProviderDistInfo {
+    // btc_pk is the Bitcoin secp256k1 PK of this finality provider
     // the PK follows encoding in BIP-340 spec
     bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // babylon_pk is the Babylon public key of the BTC validator
+    // babylon_pk is the Babylon public key of the finality provider
     cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
-    // commission defines the commission rate of BTC validator
+    // commission defines the commission rate of finality provider
     string commission = 3  [
         (cosmos_proto.scalar)  = "cosmos.Dec",
         (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
     ];
-    // total_voting_power is the total voting power of the BTC validator
+    // total_voting_power is the total voting power of the finality provider
     uint64 total_voting_power = 4;
-    // btc_dels is a list of BTC delegations' voting power information under this BTC validator
+    // btc_dels is a list of BTC delegations' voting power information under this finality provider
     repeated BTCDelDistInfo btc_dels = 5;
 }
 

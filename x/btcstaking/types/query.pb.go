@@ -114,25 +114,25 @@ func (m *QueryParamsResponse) GetParams() Params {
 	return Params{}
 }
 
-// QueryBTCValidatorsRequest is the request type for the
-// Query/BTCValidators RPC method.
-type QueryBTCValidatorsRequest struct {
+// QueryFinalityProvidersRequest is the request type for the
+// Query/FinalityProviders RPC method.
+type QueryFinalityProvidersRequest struct {
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,1,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryBTCValidatorsRequest) Reset()         { *m = QueryBTCValidatorsRequest{} }
-func (m *QueryBTCValidatorsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorsRequest) ProtoMessage()    {}
-func (*QueryBTCValidatorsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProvidersRequest) Reset()         { *m = QueryFinalityProvidersRequest{} }
+func (m *QueryFinalityProvidersRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProvidersRequest) ProtoMessage()    {}
+func (*QueryFinalityProvidersRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{2}
 }
-func (m *QueryBTCValidatorsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProvidersRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProvidersRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProvidersRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -142,46 +142,46 @@ func (m *QueryBTCValidatorsRequest) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorsRequest.Merge(m, src)
+func (m *QueryFinalityProvidersRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProvidersRequest.Merge(m, src)
 }
-func (m *QueryBTCValidatorsRequest) XXX_Size() int {
+func (m *QueryFinalityProvidersRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorsRequest.DiscardUnknown(m)
+func (m *QueryFinalityProvidersRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProvidersRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProvidersRequest proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorsRequest) GetPagination() *query.PageRequest {
+func (m *QueryFinalityProvidersRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryBTCValidatorsResponse is the response type for the
-// Query/BTCValidators RPC method.
-type QueryBTCValidatorsResponse struct {
-	// btc_validators contains all the BTC validators
-	BtcValidators []*BTCValidator `protobuf:"bytes,1,rep,name=btc_validators,json=btcValidators,proto3" json:"btc_validators,omitempty"`
+// QueryFinalityProvidersResponse is the response type for the
+// Query/FinalityProviders RPC method.
+type QueryFinalityProvidersResponse struct {
+	// finality_providers contains all the finality providers
+	FinalityProviders []*FinalityProvider `protobuf:"bytes,1,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryBTCValidatorsResponse) Reset()         { *m = QueryBTCValidatorsResponse{} }
-func (m *QueryBTCValidatorsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorsResponse) ProtoMessage()    {}
-func (*QueryBTCValidatorsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProvidersResponse) Reset()         { *m = QueryFinalityProvidersResponse{} }
+func (m *QueryFinalityProvidersResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProvidersResponse) ProtoMessage()    {}
+func (*QueryFinalityProvidersResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{3}
 }
-func (m *QueryBTCValidatorsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProvidersResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProvidersResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProvidersResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -191,50 +191,50 @@ func (m *QueryBTCValidatorsResponse) XXX_Marshal(b []byte, deterministic bool) (
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorsResponse.Merge(m, src)
+func (m *QueryFinalityProvidersResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProvidersResponse.Merge(m, src)
 }
-func (m *QueryBTCValidatorsResponse) XXX_Size() int {
+func (m *QueryFinalityProvidersResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorsResponse.DiscardUnknown(m)
+func (m *QueryFinalityProvidersResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProvidersResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProvidersResponse proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorsResponse) GetBtcValidators() []*BTCValidator {
+func (m *QueryFinalityProvidersResponse) GetFinalityProviders() []*FinalityProvider {
 	if m != nil {
-		return m.BtcValidators
+		return m.FinalityProviders
 	}
 	return nil
 }
 
-func (m *QueryBTCValidatorsResponse) GetPagination() *query.PageResponse {
+func (m *QueryFinalityProvidersResponse) GetPagination() *query.PageResponse {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryBTCValidatorsRequest requests information about a BTC validator
-type QueryBTCValidatorRequest struct {
-	// val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
-	ValBtcPkHex string `protobuf:"bytes,1,opt,name=val_btc_pk_hex,json=valBtcPkHex,proto3" json:"val_btc_pk_hex,omitempty"`
+// QueryFinalityProviderRequest requests information about a finality provider
+type QueryFinalityProviderRequest struct {
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
 }
 
-func (m *QueryBTCValidatorRequest) Reset()         { *m = QueryBTCValidatorRequest{} }
-func (m *QueryBTCValidatorRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorRequest) ProtoMessage()    {}
-func (*QueryBTCValidatorRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderRequest) Reset()         { *m = QueryFinalityProviderRequest{} }
+func (m *QueryFinalityProviderRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderRequest) ProtoMessage()    {}
+func (*QueryFinalityProviderRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{4}
 }
-func (m *QueryBTCValidatorRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -244,43 +244,43 @@ func (m *QueryBTCValidatorRequest) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorRequest.Merge(m, src)
+func (m *QueryFinalityProviderRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderRequest.Merge(m, src)
 }
-func (m *QueryBTCValidatorRequest) XXX_Size() int {
+func (m *QueryFinalityProviderRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorRequest.DiscardUnknown(m)
+func (m *QueryFinalityProviderRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderRequest proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorRequest) GetValBtcPkHex() string {
+func (m *QueryFinalityProviderRequest) GetFpBtcPkHex() string {
 	if m != nil {
-		return m.ValBtcPkHex
+		return m.FpBtcPkHex
 	}
 	return ""
 }
 
-// QueryBTCValidatorsResponse resoponse contains information about a BTC validator
-type QueryBTCValidatorResponse struct {
-	// btc_validator contains the BTC validator
-	BtcValidator *BTCValidator `protobuf:"bytes,1,opt,name=btc_validator,json=btcValidator,proto3" json:"btc_validator,omitempty"`
+// QueryFinalityProviderResponse contains information about a finality provider
+type QueryFinalityProviderResponse struct {
+	// finality_provider contains the FinalityProvider
+	FinalityProvider *FinalityProvider `protobuf:"bytes,1,opt,name=finality_provider,json=finalityProvider,proto3" json:"finality_provider,omitempty"`
 }
 
-func (m *QueryBTCValidatorResponse) Reset()         { *m = QueryBTCValidatorResponse{} }
-func (m *QueryBTCValidatorResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorResponse) ProtoMessage()    {}
-func (*QueryBTCValidatorResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderResponse) Reset()         { *m = QueryFinalityProviderResponse{} }
+func (m *QueryFinalityProviderResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderResponse) ProtoMessage()    {}
+func (*QueryFinalityProviderResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{5}
 }
-func (m *QueryBTCValidatorResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -290,21 +290,21 @@ func (m *QueryBTCValidatorResponse) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorResponse.Merge(m, src)
+func (m *QueryFinalityProviderResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderResponse.Merge(m, src)
 }
-func (m *QueryBTCValidatorResponse) XXX_Size() int {
+func (m *QueryFinalityProviderResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorResponse.DiscardUnknown(m)
+func (m *QueryFinalityProviderResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderResponse proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorResponse) GetBtcValidator() *BTCValidator {
+func (m *QueryFinalityProviderResponse) GetFinalityProvider() *FinalityProvider {
 	if m != nil {
-		return m.BtcValidator
+		return m.FinalityProvider
 	}
 	return nil
 }
@@ -421,29 +421,33 @@ func (m *QueryBTCDelegationsResponse) GetPagination() *query.PageResponse {
 	return nil
 }
 
-// QueryBTCValidatorPowerAtHeightRequest is the request type for the
-// Query/BTCValidatorPowerAtHeight RPC method.
-type QueryBTCValidatorPowerAtHeightRequest struct {
-	// val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+// QueryFinalityProviderPowerAtHeightRequest is the request type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+type QueryFinalityProviderPowerAtHeightRequest struct {
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
 	// this BTC delegation delegates to
 	// the PK follows encoding in BIP-340 spec
-	ValBtcPkHex string `protobuf:"bytes,1,opt,name=val_btc_pk_hex,json=valBtcPkHex,proto3" json:"val_btc_pk_hex,omitempty"`
-	// height is used for querying the given validator's voting power at this height
+	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
+	// height is used for querying the given finality provider's voting power at this height
 	Height uint64 `protobuf:"varint,2,opt,name=height,proto3" json:"height,omitempty"`
 }
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) Reset()         { *m = QueryBTCValidatorPowerAtHeightRequest{} }
-func (m *QueryBTCValidatorPowerAtHeightRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorPowerAtHeightRequest) ProtoMessage()    {}
-func (*QueryBTCValidatorPowerAtHeightRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderPowerAtHeightRequest) Reset() {
+	*m = QueryFinalityProviderPowerAtHeightRequest{}
+}
+func (m *QueryFinalityProviderPowerAtHeightRequest) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryFinalityProviderPowerAtHeightRequest) ProtoMessage() {}
+func (*QueryFinalityProviderPowerAtHeightRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{8}
 }
-func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -453,53 +457,55 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Marshal(b []byte, determinis
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest.Merge(m, src)
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest.Merge(m, src)
 }
-func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_Size() int {
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorPowerAtHeightRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest.DiscardUnknown(m)
+func (m *QueryFinalityProviderPowerAtHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorPowerAtHeightRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderPowerAtHeightRequest proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) GetValBtcPkHex() string {
+func (m *QueryFinalityProviderPowerAtHeightRequest) GetFpBtcPkHex() string {
 	if m != nil {
-		return m.ValBtcPkHex
+		return m.FpBtcPkHex
 	}
 	return ""
 }
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) GetHeight() uint64 {
+func (m *QueryFinalityProviderPowerAtHeightRequest) GetHeight() uint64 {
 	if m != nil {
 		return m.Height
 	}
 	return 0
 }
 
-// QueryBTCValidatorPowerAtHeightResponse is the response type for the
-// Query/BTCValidatorPowerAtHeight RPC method.
-type QueryBTCValidatorPowerAtHeightResponse struct {
-	// voting_power is the voting power of the BTC validator
+// QueryFinalityProviderPowerAtHeightResponse is the response type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+type QueryFinalityProviderPowerAtHeightResponse struct {
+	// voting_power is the voting power of the finality provider
 	VotingPower uint64 `protobuf:"varint,1,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
 }
 
-func (m *QueryBTCValidatorPowerAtHeightResponse) Reset() {
-	*m = QueryBTCValidatorPowerAtHeightResponse{}
+func (m *QueryFinalityProviderPowerAtHeightResponse) Reset() {
+	*m = QueryFinalityProviderPowerAtHeightResponse{}
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorPowerAtHeightResponse) ProtoMessage()    {}
-func (*QueryBTCValidatorPowerAtHeightResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderPowerAtHeightResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryFinalityProviderPowerAtHeightResponse) ProtoMessage() {}
+func (*QueryFinalityProviderPowerAtHeightResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{9}
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -509,46 +515,48 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Marshal(b []byte, determini
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse.Merge(m, src)
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse.Merge(m, src)
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_Size() int {
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse.DiscardUnknown(m)
+func (m *QueryFinalityProviderPowerAtHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorPowerAtHeightResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderPowerAtHeightResponse proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorPowerAtHeightResponse) GetVotingPower() uint64 {
+func (m *QueryFinalityProviderPowerAtHeightResponse) GetVotingPower() uint64 {
 	if m != nil {
 		return m.VotingPower
 	}
 	return 0
 }
 
-// QueryBTCValidatorCurrentPowerRequest is the request type for the
-// Query/BTCValidatorCurrentPower RPC method.
-type QueryBTCValidatorCurrentPowerRequest struct {
-	// val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+// QueryFinalityProviderCurrentPowerRequest is the request type for the
+// Query/FinalityProviderCurrentPower RPC method.
+type QueryFinalityProviderCurrentPowerRequest struct {
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
 	// this BTC delegation delegates to
 	// the PK follows encoding in BIP-340 spec
-	ValBtcPkHex string `protobuf:"bytes,1,opt,name=val_btc_pk_hex,json=valBtcPkHex,proto3" json:"val_btc_pk_hex,omitempty"`
+	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
 }
 
-func (m *QueryBTCValidatorCurrentPowerRequest) Reset()         { *m = QueryBTCValidatorCurrentPowerRequest{} }
-func (m *QueryBTCValidatorCurrentPowerRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorCurrentPowerRequest) ProtoMessage()    {}
-func (*QueryBTCValidatorCurrentPowerRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderCurrentPowerRequest) Reset() {
+	*m = QueryFinalityProviderCurrentPowerRequest{}
+}
+func (m *QueryFinalityProviderCurrentPowerRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderCurrentPowerRequest) ProtoMessage()    {}
+func (*QueryFinalityProviderCurrentPowerRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{10}
 }
-func (m *QueryBTCValidatorCurrentPowerRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorCurrentPowerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorCurrentPowerRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -558,46 +566,50 @@ func (m *QueryBTCValidatorCurrentPowerRequest) XXX_Marshal(b []byte, determinist
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorCurrentPowerRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorCurrentPowerRequest.Merge(m, src)
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest.Merge(m, src)
 }
-func (m *QueryBTCValidatorCurrentPowerRequest) XXX_Size() int {
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorCurrentPowerRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorCurrentPowerRequest.DiscardUnknown(m)
+func (m *QueryFinalityProviderCurrentPowerRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorCurrentPowerRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderCurrentPowerRequest proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorCurrentPowerRequest) GetValBtcPkHex() string {
+func (m *QueryFinalityProviderCurrentPowerRequest) GetFpBtcPkHex() string {
 	if m != nil {
-		return m.ValBtcPkHex
+		return m.FpBtcPkHex
 	}
 	return ""
 }
 
-// QueryBTCValidatorCurrentPowerResponse is the response type for the
-// Query/BTCValidatorCurrentPower RPC method.
-type QueryBTCValidatorCurrentPowerResponse struct {
+// QueryFinalityProviderCurrentPowerResponse is the response type for the
+// Query/FinalityProviderCurrentPower RPC method.
+type QueryFinalityProviderCurrentPowerResponse struct {
 	// height is the current height
 	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
-	// voting_power is the voting power of the BTC validator
+	// voting_power is the voting power of the finality provider
 	VotingPower uint64 `protobuf:"varint,2,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
 }
 
-func (m *QueryBTCValidatorCurrentPowerResponse) Reset()         { *m = QueryBTCValidatorCurrentPowerResponse{} }
-func (m *QueryBTCValidatorCurrentPowerResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorCurrentPowerResponse) ProtoMessage()    {}
-func (*QueryBTCValidatorCurrentPowerResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderCurrentPowerResponse) Reset() {
+	*m = QueryFinalityProviderCurrentPowerResponse{}
+}
+func (m *QueryFinalityProviderCurrentPowerResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryFinalityProviderCurrentPowerResponse) ProtoMessage() {}
+func (*QueryFinalityProviderCurrentPowerResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{11}
 }
-func (m *QueryBTCValidatorCurrentPowerResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorCurrentPowerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorCurrentPowerResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -607,55 +619,57 @@ func (m *QueryBTCValidatorCurrentPowerResponse) XXX_Marshal(b []byte, determinis
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorCurrentPowerResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorCurrentPowerResponse.Merge(m, src)
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse.Merge(m, src)
 }
-func (m *QueryBTCValidatorCurrentPowerResponse) XXX_Size() int {
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorCurrentPowerResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorCurrentPowerResponse.DiscardUnknown(m)
+func (m *QueryFinalityProviderCurrentPowerResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorCurrentPowerResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderCurrentPowerResponse proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorCurrentPowerResponse) GetHeight() uint64 {
+func (m *QueryFinalityProviderCurrentPowerResponse) GetHeight() uint64 {
 	if m != nil {
 		return m.Height
 	}
 	return 0
 }
 
-func (m *QueryBTCValidatorCurrentPowerResponse) GetVotingPower() uint64 {
+func (m *QueryFinalityProviderCurrentPowerResponse) GetVotingPower() uint64 {
 	if m != nil {
 		return m.VotingPower
 	}
 	return 0
 }
 
-// QueryActiveBTCValidatorsAtHeightRequest is the request type for the
-// Query/ActiveBTCValidatorsAtHeight RPC method.
-type QueryActiveBTCValidatorsAtHeightRequest struct {
-	// height defines at which Babylon height to query the BTC validators info.
+// QueryActiveFinalityProvidersAtHeightRequest is the request type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+type QueryActiveFinalityProvidersAtHeightRequest struct {
+	// height defines at which Babylon height to query the finality providers info.
 	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) Reset() {
-	*m = QueryActiveBTCValidatorsAtHeightRequest{}
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Reset() {
+	*m = QueryActiveFinalityProvidersAtHeightRequest{}
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryActiveBTCValidatorsAtHeightRequest) ProtoMessage()    {}
-func (*QueryActiveBTCValidatorsAtHeightRequest) Descriptor() ([]byte, []int) {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryActiveFinalityProvidersAtHeightRequest) ProtoMessage() {}
+func (*QueryActiveFinalityProvidersAtHeightRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{12}
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryActiveBTCValidatorsAtHeightRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -665,55 +679,57 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) XXX_Marshal(b []byte, determin
 		return b[:n], nil
 	}
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryActiveBTCValidatorsAtHeightRequest.Merge(m, src)
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest.Merge(m, src)
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) XXX_Size() int {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryActiveBTCValidatorsAtHeightRequest.DiscardUnknown(m)
+func (m *QueryActiveFinalityProvidersAtHeightRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryActiveBTCValidatorsAtHeightRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryActiveFinalityProvidersAtHeightRequest proto.InternalMessageInfo
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) GetHeight() uint64 {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) GetHeight() uint64 {
 	if m != nil {
 		return m.Height
 	}
 	return 0
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) GetPagination() *query.PageRequest {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryActiveBTCValidatorsAtHeightResponse is the response type for the
-// Query/ActiveBTCValidatorsAtHeight RPC method.
-type QueryActiveBTCValidatorsAtHeightResponse struct {
-	// btc_validators contains all the queried BTC validators.
-	BtcValidators []*BTCValidatorWithMeta `protobuf:"bytes,1,rep,name=btc_validators,json=btcValidators,proto3" json:"btc_validators,omitempty"`
+// QueryActiveFinalityProvidersAtHeightResponse is the response type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+type QueryActiveFinalityProvidersAtHeightResponse struct {
+	// finality_providers contains all the queried finality providersn.
+	FinalityProviders []*FinalityProviderWithMeta `protobuf:"bytes,1,rep,name=finality_providers,json=finalityProviders,proto3" json:"finality_providers,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) Reset() {
-	*m = QueryActiveBTCValidatorsAtHeightResponse{}
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Reset() {
+	*m = QueryActiveFinalityProvidersAtHeightResponse{}
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryActiveBTCValidatorsAtHeightResponse) ProtoMessage()    {}
-func (*QueryActiveBTCValidatorsAtHeightResponse) Descriptor() ([]byte, []int) {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*QueryActiveFinalityProvidersAtHeightResponse) ProtoMessage() {}
+func (*QueryActiveFinalityProvidersAtHeightResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{13}
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryActiveBTCValidatorsAtHeightResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -723,26 +739,26 @@ func (m *QueryActiveBTCValidatorsAtHeightResponse) XXX_Marshal(b []byte, determi
 		return b[:n], nil
 	}
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryActiveBTCValidatorsAtHeightResponse.Merge(m, src)
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse.Merge(m, src)
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) XXX_Size() int {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryActiveBTCValidatorsAtHeightResponse.DiscardUnknown(m)
+func (m *QueryActiveFinalityProvidersAtHeightResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryActiveBTCValidatorsAtHeightResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryActiveFinalityProvidersAtHeightResponse proto.InternalMessageInfo
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) GetBtcValidators() []*BTCValidatorWithMeta {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) GetFinalityProviders() []*FinalityProviderWithMeta {
 	if m != nil {
-		return m.BtcValidators
+		return m.FinalityProviders
 	}
 	return nil
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) GetPagination() *query.PageResponse {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) GetPagination() *query.PageResponse {
 	if m != nil {
 		return m.Pagination
 	}
@@ -831,29 +847,31 @@ func (m *QueryActivatedHeightResponse) GetHeight() uint64 {
 	return 0
 }
 
-// QueryBTCValidatorDelegationsRequest is the request type for the
-// Query/BTCValidatorDelegations RPC method.
-type QueryBTCValidatorDelegationsRequest struct {
-	// val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator that
+// QueryFinalityProviderDelegationsRequest is the request type for the
+// Query/FinalityProviderDelegations RPC method.
+type QueryFinalityProviderDelegationsRequest struct {
+	// fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality providerthat
 	// this BTC delegation delegates to
 	// the PK follows encoding in BIP-340 spec
-	ValBtcPkHex string `protobuf:"bytes,1,opt,name=val_btc_pk_hex,json=valBtcPkHex,proto3" json:"val_btc_pk_hex,omitempty"`
+	FpBtcPkHex string `protobuf:"bytes,1,opt,name=fp_btc_pk_hex,json=fpBtcPkHex,proto3" json:"fp_btc_pk_hex,omitempty"`
 	// pagination defines an optional pagination for the request.
 	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryBTCValidatorDelegationsRequest) Reset()         { *m = QueryBTCValidatorDelegationsRequest{} }
-func (m *QueryBTCValidatorDelegationsRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorDelegationsRequest) ProtoMessage()    {}
-func (*QueryBTCValidatorDelegationsRequest) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderDelegationsRequest) Reset() {
+	*m = QueryFinalityProviderDelegationsRequest{}
+}
+func (m *QueryFinalityProviderDelegationsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderDelegationsRequest) ProtoMessage()    {}
+func (*QueryFinalityProviderDelegationsRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{16}
 }
-func (m *QueryBTCValidatorDelegationsRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderDelegationsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorDelegationsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderDelegationsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorDelegationsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderDelegationsRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -863,53 +881,55 @@ func (m *QueryBTCValidatorDelegationsRequest) XXX_Marshal(b []byte, deterministi
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorDelegationsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorDelegationsRequest.Merge(m, src)
+func (m *QueryFinalityProviderDelegationsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderDelegationsRequest.Merge(m, src)
 }
-func (m *QueryBTCValidatorDelegationsRequest) XXX_Size() int {
+func (m *QueryFinalityProviderDelegationsRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorDelegationsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorDelegationsRequest.DiscardUnknown(m)
+func (m *QueryFinalityProviderDelegationsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderDelegationsRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorDelegationsRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderDelegationsRequest proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorDelegationsRequest) GetValBtcPkHex() string {
+func (m *QueryFinalityProviderDelegationsRequest) GetFpBtcPkHex() string {
 	if m != nil {
-		return m.ValBtcPkHex
+		return m.FpBtcPkHex
 	}
 	return ""
 }
 
-func (m *QueryBTCValidatorDelegationsRequest) GetPagination() *query.PageRequest {
+func (m *QueryFinalityProviderDelegationsRequest) GetPagination() *query.PageRequest {
 	if m != nil {
 		return m.Pagination
 	}
 	return nil
 }
 
-// QueryBTCValidatorDelegationsResponse is the response type for the
-// Query/BTCValidatorDelegations RPC method.
-type QueryBTCValidatorDelegationsResponse struct {
+// QueryFinalityProviderDelegationsResponse is the response type for the
+// Query/FinalityProviderDelegations RPC method.
+type QueryFinalityProviderDelegationsResponse struct {
 	// btc_delegator_delegations contains all the queried BTC delegations.
 	BtcDelegatorDelegations []*BTCDelegatorDelegations `protobuf:"bytes,1,rep,name=btc_delegator_delegations,json=btcDelegatorDelegations,proto3" json:"btc_delegator_delegations,omitempty"`
 	// pagination defines the pagination in the response.
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
 
-func (m *QueryBTCValidatorDelegationsResponse) Reset()         { *m = QueryBTCValidatorDelegationsResponse{} }
-func (m *QueryBTCValidatorDelegationsResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryBTCValidatorDelegationsResponse) ProtoMessage()    {}
-func (*QueryBTCValidatorDelegationsResponse) Descriptor() ([]byte, []int) {
+func (m *QueryFinalityProviderDelegationsResponse) Reset() {
+	*m = QueryFinalityProviderDelegationsResponse{}
+}
+func (m *QueryFinalityProviderDelegationsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryFinalityProviderDelegationsResponse) ProtoMessage()    {}
+func (*QueryFinalityProviderDelegationsResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74d49d26f7429697, []int{17}
 }
-func (m *QueryBTCValidatorDelegationsResponse) XXX_Unmarshal(b []byte) error {
+func (m *QueryFinalityProviderDelegationsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryBTCValidatorDelegationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryFinalityProviderDelegationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryBTCValidatorDelegationsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryFinalityProviderDelegationsResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -919,26 +939,26 @@ func (m *QueryBTCValidatorDelegationsResponse) XXX_Marshal(b []byte, determinist
 		return b[:n], nil
 	}
 }
-func (m *QueryBTCValidatorDelegationsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryBTCValidatorDelegationsResponse.Merge(m, src)
+func (m *QueryFinalityProviderDelegationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryFinalityProviderDelegationsResponse.Merge(m, src)
 }
-func (m *QueryBTCValidatorDelegationsResponse) XXX_Size() int {
+func (m *QueryFinalityProviderDelegationsResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryBTCValidatorDelegationsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryBTCValidatorDelegationsResponse.DiscardUnknown(m)
+func (m *QueryFinalityProviderDelegationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryFinalityProviderDelegationsResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryBTCValidatorDelegationsResponse proto.InternalMessageInfo
+var xxx_messageInfo_QueryFinalityProviderDelegationsResponse proto.InternalMessageInfo
 
-func (m *QueryBTCValidatorDelegationsResponse) GetBtcDelegatorDelegations() []*BTCDelegatorDelegations {
+func (m *QueryFinalityProviderDelegationsResponse) GetBtcDelegatorDelegations() []*BTCDelegatorDelegations {
 	if m != nil {
 		return m.BtcDelegatorDelegations
 	}
 	return nil
 }
 
-func (m *QueryBTCValidatorDelegationsResponse) GetPagination() *query.PageResponse {
+func (m *QueryFinalityProviderDelegationsResponse) GetPagination() *query.PageResponse {
 	if m != nil {
 		return m.Pagination
 	}
@@ -998,9 +1018,9 @@ type QueryBTCDelegationResponse struct {
 	// btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
 	// the PK follows encoding in BIP-340 spec
 	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
-	// val_btc_pk_list is the list of BIP-340 PKs of the BTC validators that
+	// fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
 	// this BTC delegation delegates to
-	ValBtcPkList []github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,rep,name=val_btc_pk_list,json=valBtcPkList,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"val_btc_pk_list,omitempty"`
+	FpBtcPkList []github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,rep,name=fp_btc_pk_list,json=fpBtcPkList,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk_list,omitempty"`
 	// start_height is the start BTC height of the BTC delegation
 	// it is the start BTC height of the timelock
 	StartHeight uint64 `protobuf:"varint,3,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`
@@ -1097,22 +1117,22 @@ func (m *QueryBTCDelegationResponse) GetUndelegationInfo() *BTCUndelegationInfo 
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.btcstaking.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.btcstaking.v1.QueryParamsResponse")
-	proto.RegisterType((*QueryBTCValidatorsRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorsRequest")
-	proto.RegisterType((*QueryBTCValidatorsResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorsResponse")
-	proto.RegisterType((*QueryBTCValidatorRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorRequest")
-	proto.RegisterType((*QueryBTCValidatorResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorResponse")
+	proto.RegisterType((*QueryFinalityProvidersRequest)(nil), "babylon.btcstaking.v1.QueryFinalityProvidersRequest")
+	proto.RegisterType((*QueryFinalityProvidersResponse)(nil), "babylon.btcstaking.v1.QueryFinalityProvidersResponse")
+	proto.RegisterType((*QueryFinalityProviderRequest)(nil), "babylon.btcstaking.v1.QueryFinalityProviderRequest")
+	proto.RegisterType((*QueryFinalityProviderResponse)(nil), "babylon.btcstaking.v1.QueryFinalityProviderResponse")
 	proto.RegisterType((*QueryBTCDelegationsRequest)(nil), "babylon.btcstaking.v1.QueryBTCDelegationsRequest")
 	proto.RegisterType((*QueryBTCDelegationsResponse)(nil), "babylon.btcstaking.v1.QueryBTCDelegationsResponse")
-	proto.RegisterType((*QueryBTCValidatorPowerAtHeightRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorPowerAtHeightRequest")
-	proto.RegisterType((*QueryBTCValidatorPowerAtHeightResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorPowerAtHeightResponse")
-	proto.RegisterType((*QueryBTCValidatorCurrentPowerRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorCurrentPowerRequest")
-	proto.RegisterType((*QueryBTCValidatorCurrentPowerResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorCurrentPowerResponse")
-	proto.RegisterType((*QueryActiveBTCValidatorsAtHeightRequest)(nil), "babylon.btcstaking.v1.QueryActiveBTCValidatorsAtHeightRequest")
-	proto.RegisterType((*QueryActiveBTCValidatorsAtHeightResponse)(nil), "babylon.btcstaking.v1.QueryActiveBTCValidatorsAtHeightResponse")
+	proto.RegisterType((*QueryFinalityProviderPowerAtHeightRequest)(nil), "babylon.btcstaking.v1.QueryFinalityProviderPowerAtHeightRequest")
+	proto.RegisterType((*QueryFinalityProviderPowerAtHeightResponse)(nil), "babylon.btcstaking.v1.QueryFinalityProviderPowerAtHeightResponse")
+	proto.RegisterType((*QueryFinalityProviderCurrentPowerRequest)(nil), "babylon.btcstaking.v1.QueryFinalityProviderCurrentPowerRequest")
+	proto.RegisterType((*QueryFinalityProviderCurrentPowerResponse)(nil), "babylon.btcstaking.v1.QueryFinalityProviderCurrentPowerResponse")
+	proto.RegisterType((*QueryActiveFinalityProvidersAtHeightRequest)(nil), "babylon.btcstaking.v1.QueryActiveFinalityProvidersAtHeightRequest")
+	proto.RegisterType((*QueryActiveFinalityProvidersAtHeightResponse)(nil), "babylon.btcstaking.v1.QueryActiveFinalityProvidersAtHeightResponse")
 	proto.RegisterType((*QueryActivatedHeightRequest)(nil), "babylon.btcstaking.v1.QueryActivatedHeightRequest")
 	proto.RegisterType((*QueryActivatedHeightResponse)(nil), "babylon.btcstaking.v1.QueryActivatedHeightResponse")
-	proto.RegisterType((*QueryBTCValidatorDelegationsRequest)(nil), "babylon.btcstaking.v1.QueryBTCValidatorDelegationsRequest")
-	proto.RegisterType((*QueryBTCValidatorDelegationsResponse)(nil), "babylon.btcstaking.v1.QueryBTCValidatorDelegationsResponse")
+	proto.RegisterType((*QueryFinalityProviderDelegationsRequest)(nil), "babylon.btcstaking.v1.QueryFinalityProviderDelegationsRequest")
+	proto.RegisterType((*QueryFinalityProviderDelegationsResponse)(nil), "babylon.btcstaking.v1.QueryFinalityProviderDelegationsResponse")
 	proto.RegisterType((*QueryBTCDelegationRequest)(nil), "babylon.btcstaking.v1.QueryBTCDelegationRequest")
 	proto.RegisterType((*QueryBTCDelegationResponse)(nil), "babylon.btcstaking.v1.QueryBTCDelegationResponse")
 }
@@ -1120,85 +1140,86 @@ func init() {
 func init() { proto.RegisterFile("babylon/btcstaking/v1/query.proto", fileDescriptor_74d49d26f7429697) }
 
 var fileDescriptor_74d49d26f7429697 = []byte{
-	// 1246 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x58, 0xcf, 0x6f, 0x1b, 0x45,
-	0x14, 0xce, 0x24, 0xa9, 0x69, 0x5f, 0x9c, 0xa4, 0x4c, 0x0b, 0x75, 0x36, 0x8d, 0x93, 0x6e, 0x7e,
-	0x36, 0xa8, 0xbb, 0xb1, 0x83, 0x72, 0x20, 0xa1, 0xa5, 0x6e, 0xa0, 0x69, 0xd2, 0x48, 0x66, 0x5b,
-	0xa8, 0x84, 0x84, 0xac, 0x59, 0x67, 0xba, 0x5e, 0xe2, 0xec, 0xba, 0xde, 0xb1, 0x71, 0x54, 0xe5,
-	0xc2, 0x01, 0x09, 0x71, 0x41, 0xf0, 0x27, 0x70, 0x00, 0x89, 0x13, 0x07, 0x2e, 0x70, 0xe1, 0x46,
-	0x8f, 0x95, 0x90, 0x10, 0xa2, 0x52, 0x84, 0x12, 0x24, 0xfe, 0x0d, 0xe4, 0xd9, 0x71, 0x76, 0x37,
-	0x5e, 0xdb, 0x6b, 0x37, 0xdc, 0xe2, 0x9d, 0xf7, 0xe3, 0xfb, 0xde, 0x7c, 0xfb, 0xed, 0x53, 0xe0,
-	0x9a, 0x4e, 0xf4, 0xfd, 0xa2, 0x6d, 0xa9, 0x3a, 0xcb, 0x3b, 0x8c, 0xec, 0x9a, 0x96, 0xa1, 0x56,
-	0x53, 0xea, 0x93, 0x0a, 0x2d, 0xef, 0x2b, 0xa5, 0xb2, 0xcd, 0x6c, 0xfc, 0x9a, 0x08, 0x51, 0xbc,
-	0x10, 0xa5, 0x9a, 0x92, 0x2e, 0x1b, 0xb6, 0x61, 0xf3, 0x08, 0xb5, 0xfe, 0x97, 0x1b, 0x2c, 0x5d,
-	0x35, 0x6c, 0xdb, 0x28, 0x52, 0x95, 0x94, 0x4c, 0x95, 0x58, 0x96, 0xcd, 0x08, 0x33, 0x6d, 0xcb,
-	0x11, 0xa7, 0x8b, 0x79, 0xdb, 0xd9, 0xb3, 0x1d, 0x55, 0x27, 0x0e, 0x75, 0x7b, 0xa8, 0xd5, 0x94,
-	0x4e, 0x19, 0x49, 0xa9, 0x25, 0x62, 0x98, 0x16, 0x0f, 0x16, 0xb1, 0x72, 0x38, 0xb2, 0x12, 0x29,
-	0x93, 0xbd, 0x46, 0xbd, 0xb9, 0xf0, 0x18, 0x1f, 0x50, 0x1e, 0x27, 0x5f, 0x06, 0xfc, 0x7e, 0xbd,
-	0x5b, 0x96, 0x27, 0x6b, 0xf4, 0x49, 0x85, 0x3a, 0x4c, 0xd6, 0xe0, 0x52, 0xe0, 0xa9, 0x53, 0xb2,
-	0x2d, 0x87, 0xe2, 0x55, 0x88, 0xb9, 0x4d, 0x12, 0x68, 0x0a, 0x2d, 0x0c, 0xa5, 0x27, 0x94, 0xd0,
-	0x01, 0x28, 0x6e, 0x5a, 0x66, 0xf0, 0xd9, 0xe1, 0x64, 0x9f, 0x26, 0x52, 0xe4, 0x3c, 0x8c, 0xf1,
-	0x9a, 0x99, 0x87, 0x77, 0x3e, 0x24, 0x45, 0x73, 0x87, 0x30, 0xbb, 0xdc, 0x68, 0x88, 0xdf, 0x03,
-	0xf0, 0x68, 0x8a, 0xea, 0x73, 0x8a, 0x3b, 0x13, 0xa5, 0x3e, 0x13, 0xc5, 0x9d, 0xbb, 0x98, 0x89,
-	0x92, 0x25, 0x06, 0x15, 0xb9, 0x9a, 0x2f, 0x53, 0xfe, 0x11, 0x81, 0x14, 0xd6, 0x45, 0x10, 0xd8,
-	0x84, 0x11, 0x9d, 0xe5, 0x73, 0xd5, 0x93, 0x93, 0x04, 0x9a, 0x1a, 0x58, 0x18, 0x4a, 0x4f, 0xb7,
-	0x20, 0xe2, 0xaf, 0xa2, 0x0d, 0xeb, 0x2c, 0xef, 0xd5, 0xc4, 0x77, 0x03, 0x90, 0xfb, 0x39, 0xe4,
-	0xf9, 0x8e, 0x90, 0x5d, 0x20, 0x01, 0xcc, 0xb7, 0x20, 0xd1, 0x04, 0xb9, 0x31, 0x97, 0x69, 0x18,
-	0xa9, 0x92, 0x62, 0xae, 0x0e, 0xba, 0xb4, 0x9b, 0x2b, 0xd0, 0x1a, 0x9f, 0xcd, 0x05, 0x6d, 0xa8,
-	0x4a, 0x8a, 0x19, 0x96, 0xcf, 0xee, 0x6e, 0xd0, 0x9a, 0x4c, 0x43, 0x26, 0x7b, 0x42, 0x79, 0x03,
-	0x86, 0x03, 0x94, 0xc5, 0x70, 0x23, 0x31, 0x8e, 0xfb, 0x19, 0xcb, 0xdf, 0xfb, 0x66, 0xbb, 0x4e,
-	0x8b, 0xd4, 0x70, 0x05, 0xdc, 0x80, 0x9a, 0x81, 0x98, 0xc3, 0x08, 0xab, 0xb8, 0xe2, 0x18, 0x49,
-	0x2f, 0xb6, 0xee, 0xe0, 0x65, 0x3f, 0xe0, 0x19, 0x9a, 0xc8, 0x3c, 0x25, 0x83, 0xfe, 0x9e, 0x65,
-	0xf0, 0x13, 0x82, 0xf1, 0x50, 0xa8, 0x62, 0x28, 0xdb, 0x30, 0x5a, 0x1f, 0xca, 0x8e, 0x77, 0x24,
-	0x84, 0x30, 0x13, 0x05, 0xb4, 0x56, 0x17, 0x91, 0xaf, 0xec, 0xd9, 0x49, 0x61, 0x07, 0x66, 0x9b,
-	0x6e, 0x32, 0x6b, 0x7f, 0x4a, 0xcb, 0xb7, 0xd9, 0x06, 0x35, 0x8d, 0x02, 0xeb, 0x46, 0x17, 0xf8,
-	0x75, 0x88, 0x15, 0x78, 0x16, 0x87, 0x34, 0xa8, 0x89, 0x5f, 0xf2, 0x16, 0xcc, 0x75, 0xea, 0x22,
-	0xe6, 0x74, 0x0d, 0xe2, 0x55, 0x9b, 0x99, 0x96, 0x91, 0x2b, 0xd5, 0xcf, 0x79, 0x93, 0x41, 0x6d,
-	0xc8, 0x7d, 0xc6, 0x53, 0xe4, 0x2d, 0x98, 0x69, 0x2a, 0x76, 0xa7, 0x52, 0x2e, 0x53, 0x8b, 0xf1,
-	0x80, 0xae, 0x94, 0xac, 0x87, 0xf0, 0x0f, 0x16, 0x13, 0xc0, 0x3c, 0x6a, 0xc8, 0x4f, 0xad, 0x09,
-	0x70, 0x7f, 0x33, 0xe0, 0x2f, 0x10, 0xcc, 0xf3, 0x26, 0xb7, 0xf3, 0xcc, 0xac, 0xd2, 0x80, 0x51,
-	0x9c, 0x1e, 0x73, 0xab, 0x36, 0x67, 0xa5, 0xd3, 0xdf, 0x10, 0x2c, 0x74, 0xc6, 0x22, 0x38, 0x6b,
-	0x2d, 0xcc, 0xeb, 0x8d, 0x08, 0xaf, 0xf2, 0x23, 0x93, 0x15, 0xb6, 0x29, 0x23, 0xff, 0x9b, 0x89,
-	0x4d, 0x88, 0x17, 0x8e, 0x13, 0x21, 0x8c, 0xee, 0x04, 0x06, 0x29, 0xaf, 0xc0, 0xd5, 0xf0, 0xe3,
-	0xf6, 0xf7, 0x29, 0x7f, 0x8d, 0x60, 0xba, 0x49, 0x11, 0x21, 0xe6, 0x13, 0xe9, 0x7d, 0x38, 0xab,
-	0x5b, 0x7b, 0x81, 0x42, 0x34, 0x1f, 0x66, 0x33, 0x9f, 0xc0, 0x98, 0xcf, 0x66, 0xec, 0x72, 0x88,
-	0xe1, 0x28, 0x1d, 0x0d, 0x27, 0x58, 0xfa, 0x8a, 0x67, 0x3d, 0x81, 0x83, 0xb3, 0xbb, 0xc9, 0x4d,
-	0xef, 0x6b, 0xe2, 0xb3, 0x3c, 0x31, 0xe7, 0x1b, 0x70, 0x49, 0x80, 0xcc, 0xb1, 0x5a, 0xae, 0x40,
-	0x9c, 0x82, 0x6f, 0xd8, 0x17, 0xc5, 0xd1, 0xc3, 0xda, 0x06, 0x71, 0x0a, 0xf5, 0xf7, 0xf9, 0xd7,
-	0x81, 0xb0, 0x4f, 0x86, 0xcf, 0x86, 0x63, 0xee, 0x8d, 0xf1, 0x02, 0xf1, 0xcc, 0xca, 0x5f, 0x87,
-	0x93, 0x69, 0xc3, 0x64, 0x85, 0x8a, 0xae, 0xe4, 0xed, 0x3d, 0x55, 0x8c, 0x26, 0x5f, 0x20, 0xa6,
-	0xd5, 0xf8, 0xa1, 0xb2, 0xfd, 0x12, 0x75, 0x94, 0xcc, 0xbd, 0xec, 0xf2, 0x9b, 0x4b, 0xd9, 0x8a,
-	0xbe, 0x45, 0xf7, 0xb5, 0x73, 0x7a, 0xfd, 0x8a, 0xf1, 0xc7, 0x30, 0xea, 0x13, 0x41, 0xd1, 0x74,
-	0xea, 0xc6, 0x37, 0xf0, 0x12, 0x75, 0xe3, 0x0d, 0xf5, 0xdc, 0x37, 0x1d, 0xee, 0x2d, 0x0e, 0x23,
-	0x65, 0x96, 0x13, 0x4a, 0x1d, 0x70, 0xbd, 0x85, 0x3f, 0x73, 0xe5, 0x8c, 0x27, 0x00, 0xa8, 0xb5,
-	0xd3, 0x08, 0x18, 0xe4, 0x01, 0x17, 0xa8, 0x25, 0xd4, 0x8e, 0xc7, 0xe1, 0x02, 0xb3, 0x19, 0x29,
-	0xe6, 0x1c, 0xc2, 0x12, 0xe7, 0xf8, 0xe9, 0x79, 0xfe, 0xe0, 0x01, 0x61, 0x78, 0x06, 0x46, 0xfc,
-	0xa3, 0xa5, 0xb5, 0x44, 0x8c, 0x4f, 0x35, 0xee, 0x4d, 0xd5, 0xf5, 0x74, 0xc2, 0xbd, 0x22, 0xf1,
-	0xca, 0x14, 0x5a, 0x38, 0xaf, 0x89, 0x5f, 0xf8, 0x11, 0xbc, 0x5a, 0xb1, 0x3c, 0x79, 0xe5, 0x4c,
-	0xeb, 0xb1, 0x9d, 0x38, 0xcf, 0x55, 0xd0, 0xe6, 0x43, 0xfc, 0x81, 0x2f, 0xe5, 0x9e, 0xf5, 0xd8,
-	0xd6, 0x2e, 0x56, 0x4e, 0x3d, 0x49, 0x7f, 0x39, 0x0a, 0xe7, 0xf8, 0x15, 0xe2, 0xcf, 0x11, 0xc4,
-	0xdc, 0xcd, 0x0e, 0x5f, 0x6f, 0x51, 0xb2, 0x79, 0x95, 0x94, 0x16, 0xa3, 0x84, 0xba, 0x7a, 0x90,
-	0x67, 0x3f, 0xfb, 0xfd, 0x9f, 0x6f, 0xfa, 0x27, 0xf1, 0x84, 0xda, 0x6e, 0xc3, 0xc5, 0xdf, 0x22,
-	0x18, 0x0e, 0x58, 0x25, 0x5e, 0x6a, 0xd7, 0x24, 0x6c, 0xe1, 0x94, 0x52, 0x5d, 0x64, 0x08, 0x74,
-	0x37, 0x38, 0xba, 0x79, 0x3c, 0xab, 0xb6, 0xdc, 0xad, 0x7d, 0xe6, 0x8c, 0x7f, 0x41, 0x10, 0xf7,
-	0x17, 0xc2, 0x6a, 0xd4, 0x96, 0x0d, 0x8c, 0x4b, 0xd1, 0x13, 0x04, 0xc4, 0x0d, 0x0e, 0x31, 0x83,
-	0xdf, 0x89, 0x04, 0x51, 0x7d, 0x1a, 0xf4, 0xcc, 0x03, 0xf5, 0xe4, 0x0c, 0x7f, 0x87, 0x60, 0x24,
-	0xb8, 0x3c, 0xe1, 0x4e, 0x23, 0x6b, 0xb6, 0x65, 0x29, 0xdd, 0x4d, 0x8a, 0xe0, 0xa0, 0x70, 0x0e,
-	0x0b, 0x78, 0xae, 0x0d, 0x07, 0x9f, 0x8f, 0xe2, 0x3f, 0x10, 0x8c, 0xb7, 0xf9, 0x7c, 0xe2, 0x9b,
-	0xed, 0x30, 0x74, 0xde, 0x01, 0xa4, 0x5b, 0x3d, 0xe7, 0x0b, 0x42, 0x2b, 0x9c, 0xd0, 0x12, 0x56,
-	0x22, 0x5e, 0x8a, 0xeb, 0x1e, 0x07, 0xf8, 0x5f, 0x04, 0x63, 0x2d, 0x57, 0x34, 0xbc, 0x16, 0x55,
-	0x1c, 0x61, 0xfb, 0xa3, 0xf4, 0x76, 0x8f, 0xd9, 0x82, 0xd2, 0x36, 0xa7, 0x74, 0x17, 0xbf, 0xdb,
-	0xa3, 0xce, 0xf8, 0x72, 0xe6, 0x31, 0x7d, 0x81, 0x20, 0xd1, 0x6a, 0xe5, 0xc3, 0xab, 0x51, 0xa1,
-	0x86, 0x6c, 0x9d, 0xd2, 0x5a, 0x6f, 0xc9, 0x82, 0xe6, 0x3a, 0xa7, 0x79, 0x13, 0xaf, 0xbd, 0x0c,
-	0x4d, 0xfc, 0x03, 0x82, 0xd1, 0x53, 0x7b, 0x0f, 0x4e, 0x77, 0x14, 0x55, 0xd3, 0x0e, 0x25, 0x2d,
-	0x77, 0x95, 0x23, 0x28, 0xa8, 0x9c, 0xc2, 0x75, 0x3c, 0xdf, 0x82, 0x02, 0x69, 0xe4, 0x89, 0x8f,
-	0x16, 0x3e, 0x44, 0x70, 0xa5, 0xc5, 0x5e, 0x83, 0xdf, 0x8a, 0x3a, 0xcd, 0x10, 0x2b, 0x58, 0xed,
-	0x29, 0x57, 0xb0, 0xd8, 0xe4, 0x2c, 0xd6, 0x71, 0xa6, 0xc7, 0x8b, 0xf0, 0xfb, 0xc5, 0xcf, 0xee,
-	0xd7, 0xc3, 0x6b, 0xd3, 0xf1, 0xeb, 0xd1, 0xb4, 0x06, 0x49, 0xa9, 0x2e, 0x32, 0xba, 0xd0, 0x92,
-	0x0f, 0xa6, 0xfa, 0x34, 0x64, 0xcf, 0x3a, 0xc8, 0xdc, 0x7f, 0x76, 0x94, 0x44, 0xcf, 0x8f, 0x92,
-	0xe8, 0xef, 0xa3, 0x24, 0xfa, 0xea, 0x38, 0xd9, 0xf7, 0xfc, 0x38, 0xd9, 0xf7, 0xe7, 0x71, 0xb2,
-	0xef, 0xa3, 0x8e, 0xfb, 0x4d, 0xcd, 0xdf, 0x90, 0x2f, 0x3b, 0x7a, 0x8c, 0xff, 0x0f, 0x68, 0xf9,
-	0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x3d, 0x99, 0x87, 0xd2, 0xeb, 0x12, 0x00, 0x00,
+	// 1262 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x58, 0xcb, 0x6f, 0x1b, 0x45,
+	0x1c, 0xce, 0xe4, 0x61, 0x92, 0x5f, 0xd2, 0x3c, 0xa6, 0x05, 0x5c, 0x27, 0x76, 0x92, 0x55, 0xc9,
+	0xab, 0xb0, 0x5b, 0x3b, 0xa1, 0x07, 0x40, 0x4d, 0xe3, 0x94, 0x26, 0x7d, 0x44, 0x98, 0x4d, 0xa0,
+	0x12, 0x48, 0x58, 0x63, 0x67, 0xbc, 0x5e, 0xe2, 0xec, 0xba, 0xde, 0xb1, 0x71, 0x54, 0xe5, 0xc2,
+	0x81, 0x1b, 0x12, 0x12, 0xfc, 0x0f, 0x20, 0x71, 0x44, 0x5c, 0x38, 0x20, 0x71, 0xeb, 0xb1, 0x82,
+	0x03, 0x88, 0x43, 0x41, 0x09, 0xe2, 0x80, 0x84, 0xb8, 0x71, 0x46, 0x9e, 0x1d, 0xe3, 0xb5, 0x77,
+	0xd7, 0xd9, 0x4d, 0xd2, 0x5b, 0xbd, 0xf3, 0x7b, 0x7d, 0xdf, 0x7c, 0xfb, 0xed, 0xaf, 0x81, 0xd9,
+	0x1c, 0xc9, 0x1d, 0x94, 0x4c, 0x43, 0xc9, 0xb1, 0xbc, 0xc5, 0xc8, 0x9e, 0x6e, 0x68, 0x4a, 0x2d,
+	0xa9, 0x3c, 0xac, 0xd2, 0xca, 0x81, 0x5c, 0xae, 0x98, 0xcc, 0xc4, 0xcf, 0x8b, 0x10, 0xb9, 0x15,
+	0x22, 0xd7, 0x92, 0xb1, 0x4b, 0x9a, 0xa9, 0x99, 0x3c, 0x42, 0x69, 0xfc, 0xcb, 0x0e, 0x8e, 0x4d,
+	0x69, 0xa6, 0xa9, 0x95, 0xa8, 0x42, 0xca, 0xba, 0x42, 0x0c, 0xc3, 0x64, 0x84, 0xe9, 0xa6, 0x61,
+	0x89, 0xd3, 0xa5, 0xbc, 0x69, 0xed, 0x9b, 0x96, 0x92, 0x23, 0x16, 0xb5, 0x7b, 0x28, 0xb5, 0x64,
+	0x8e, 0x32, 0x92, 0x54, 0xca, 0x44, 0xd3, 0x0d, 0x1e, 0x2c, 0x62, 0x25, 0xef, 0xc9, 0xca, 0xa4,
+	0x42, 0xf6, 0x9b, 0xf5, 0xe6, 0xbc, 0x63, 0x1c, 0x83, 0xf2, 0x38, 0xe9, 0x12, 0xe0, 0xb7, 0x1b,
+	0xdd, 0x32, 0x3c, 0x59, 0xa5, 0x0f, 0xab, 0xd4, 0x62, 0x92, 0x0a, 0x17, 0xdb, 0x9e, 0x5a, 0x65,
+	0xd3, 0xb0, 0x28, 0x7e, 0x1d, 0x22, 0x76, 0x93, 0x28, 0x9a, 0x41, 0x0b, 0xc3, 0xa9, 0xb8, 0xec,
+	0x49, 0x80, 0x6c, 0xa7, 0xa5, 0xfb, 0x1f, 0x3f, 0x9d, 0xee, 0x51, 0x45, 0x8a, 0xa4, 0x41, 0x9c,
+	0xd7, 0xbc, 0xad, 0x1b, 0xa4, 0xa4, 0xb3, 0x83, 0x4c, 0xc5, 0xac, 0xe9, 0xbb, 0xb4, 0xd2, 0x6c,
+	0x8a, 0x6f, 0x03, 0xb4, 0xa0, 0x8a, 0x0e, 0x73, 0xb2, 0xcd, 0x8b, 0xdc, 0xe0, 0x45, 0xb6, 0xb9,
+	0x17, 0xbc, 0xc8, 0x19, 0xa2, 0x51, 0x91, 0xab, 0x3a, 0x32, 0xa5, 0x1f, 0x10, 0x24, 0xfc, 0x3a,
+	0x09, 0x20, 0xef, 0x02, 0x2e, 0x88, 0xc3, 0x6c, 0xb9, 0x79, 0x1a, 0x45, 0x33, 0x7d, 0x0b, 0xc3,
+	0xa9, 0x79, 0x1f, 0x50, 0x9d, 0xd5, 0xd4, 0x89, 0x42, 0x67, 0x7d, 0xbc, 0xd1, 0x06, 0xa1, 0x97,
+	0x43, 0x98, 0x3f, 0x11, 0x82, 0x3d, 0x54, 0x1b, 0x86, 0x35, 0x98, 0xf2, 0x84, 0xd0, 0xe4, 0x6a,
+	0x16, 0x2e, 0x14, 0xca, 0xd9, 0x1c, 0xcb, 0x67, 0xcb, 0x7b, 0xd9, 0x22, 0xad, 0x73, 0xba, 0x86,
+	0x54, 0x28, 0x94, 0xd3, 0x2c, 0x9f, 0xd9, 0xdb, 0xa4, 0x75, 0xa9, 0xea, 0xc3, 0xf7, 0xff, 0x24,
+	0xec, 0xc0, 0x84, 0x8b, 0x04, 0x41, 0x7b, 0x60, 0x0e, 0xc6, 0x3b, 0x39, 0x90, 0xbe, 0x42, 0x10,
+	0xe3, 0x7d, 0xd3, 0x3b, 0xeb, 0xb7, 0x68, 0x89, 0x6a, 0xb6, 0xcc, 0x9b, 0x83, 0xa7, 0x21, 0x62,
+	0x31, 0xc2, 0xaa, 0xb6, 0x84, 0x46, 0x53, 0x4b, 0x3e, 0x9d, 0xda, 0xb2, 0xb7, 0x79, 0x86, 0x2a,
+	0x32, 0x3b, 0x84, 0xd2, 0x7b, 0x6a, 0xa1, 0x7c, 0x8b, 0x60, 0xd2, 0x73, 0x54, 0x41, 0xd0, 0x16,
+	0x8c, 0x35, 0x18, 0xde, 0x6d, 0x1d, 0x09, 0x89, 0x5c, 0x09, 0x32, 0xb4, 0x3a, 0x9a, 0x63, 0x79,
+	0x47, 0xd9, 0xf3, 0x13, 0x47, 0x01, 0x16, 0x3d, 0x6f, 0x36, 0x63, 0x7e, 0x44, 0x2b, 0x6b, 0x6c,
+	0x93, 0xea, 0x5a, 0x91, 0x05, 0x57, 0x0a, 0x7e, 0x01, 0x22, 0x45, 0x9e, 0xc3, 0x87, 0xea, 0x57,
+	0xc5, 0x2f, 0xe9, 0x2d, 0x58, 0x0a, 0xd2, 0x47, 0xb0, 0x35, 0x0b, 0x23, 0x35, 0x93, 0xe9, 0x86,
+	0x96, 0x2d, 0x37, 0xce, 0x79, 0x9f, 0x7e, 0x75, 0xd8, 0x7e, 0xc6, 0x53, 0xa4, 0x2d, 0x58, 0xf0,
+	0x2c, 0xb8, 0x5e, 0xad, 0x54, 0xa8, 0xc1, 0x78, 0x50, 0x08, 0x85, 0xfb, 0xf1, 0xd0, 0x5e, 0x4e,
+	0x8c, 0xd7, 0x02, 0x89, 0x9c, 0x20, 0x5d, 0x63, 0xf7, 0xba, 0xc7, 0xfe, 0x14, 0xc1, 0x55, 0xde,
+	0x68, 0x2d, 0xcf, 0xf4, 0x1a, 0x75, 0xd9, 0x4a, 0x27, 0xe5, 0x7e, 0xad, 0xce, 0x4b, 0xb7, 0x3f,
+	0x23, 0x78, 0x39, 0xd8, 0x3c, 0x02, 0xfb, 0x07, 0x5d, 0xec, 0x4e, 0x09, 0xf8, 0xaa, 0x3f, 0xd0,
+	0x59, 0x71, 0x8b, 0x32, 0xf2, 0x4c, 0x6d, 0x2f, 0x2e, 0x5e, 0x48, 0x0e, 0x8c, 0x30, 0xba, 0xdb,
+	0x46, 0xac, 0x74, 0x5d, 0xb8, 0xa2, 0xeb, 0xb8, 0xfb, 0x1d, 0x4b, 0x5f, 0x20, 0x98, 0xf7, 0x54,
+	0x8a, 0x87, 0x41, 0x05, 0x78, 0x5f, 0xce, 0xeb, 0x1e, 0x7f, 0x43, 0x3e, 0xef, 0x83, 0x97, 0x19,
+	0x7d, 0x08, 0x97, 0x1d, 0x66, 0x64, 0x56, 0x3c, 0x6c, 0x49, 0x3e, 0xd1, 0x96, 0xcc, 0xb6, 0xd2,
+	0x2f, 0xb6, 0x0c, 0xaa, 0xed, 0xe0, 0xfc, 0xee, 0xf3, 0x2e, 0x5c, 0x76, 0x1b, 0x6c, 0x93, 0xe9,
+	0x57, 0xe0, 0xa2, 0x18, 0x32, 0xcb, 0xea, 0xd9, 0x22, 0xb1, 0x8a, 0x0e, 0xbe, 0xc7, 0xc5, 0xd1,
+	0x4e, 0x7d, 0x93, 0x58, 0xc5, 0xc6, 0xdb, 0xfe, 0x7d, 0x9f, 0xd7, 0x87, 0xc5, 0x61, 0xd6, 0x11,
+	0xfb, 0xd2, 0x78, 0x81, 0x91, 0xf4, 0xf5, 0x5f, 0x9f, 0x4e, 0xa7, 0x34, 0x9d, 0x15, 0xab, 0x39,
+	0x39, 0x6f, 0xee, 0x2b, 0x82, 0x9a, 0x7c, 0x91, 0xe8, 0x46, 0xf3, 0x87, 0xc2, 0x0e, 0xca, 0xd4,
+	0x92, 0xd3, 0x77, 0x32, 0xcb, 0x2b, 0xd7, 0x32, 0xd5, 0xdc, 0x3d, 0x7a, 0xa0, 0x0e, 0xe4, 0x1a,
+	0xd7, 0x8c, 0xdf, 0x87, 0xd1, 0x96, 0x0c, 0x4a, 0xba, 0xd5, 0xf0, 0xc6, 0xbe, 0x33, 0x94, 0x1d,
+	0x16, 0xfa, 0xb9, 0xaf, 0x73, 0x8d, 0x8d, 0x58, 0x8c, 0x54, 0x58, 0x56, 0xa8, 0xb5, 0xcf, 0xf6,
+	0x1c, 0xfe, 0xcc, 0x96, 0x34, 0x8e, 0x03, 0x50, 0x63, 0xb7, 0x19, 0xd0, 0xcf, 0x03, 0x86, 0xa8,
+	0x21, 0x14, 0x8f, 0x27, 0x61, 0x88, 0x99, 0x8c, 0x94, 0xb2, 0x16, 0x61, 0xd1, 0x01, 0x7e, 0x3a,
+	0xc8, 0x1f, 0x6c, 0x13, 0x86, 0xaf, 0xc0, 0xa8, 0x93, 0x58, 0x5a, 0x8f, 0x46, 0x38, 0xa7, 0x23,
+	0x2d, 0x4e, 0x6d, 0xd7, 0x27, 0xdc, 0x3f, 0xa2, 0xcf, 0xcd, 0xa0, 0x85, 0x41, 0x55, 0xfc, 0xc2,
+	0x0f, 0x60, 0xa2, 0x6a, 0xb4, 0xc4, 0x95, 0xd5, 0x8d, 0x82, 0x19, 0x1d, 0xe4, 0x1a, 0xe8, 0xf2,
+	0xb1, 0x7e, 0xc7, 0x91, 0x72, 0xc7, 0x28, 0x98, 0xea, 0x78, 0xb5, 0xe3, 0x49, 0xea, 0x9f, 0x31,
+	0x18, 0xe0, 0x17, 0x88, 0x3f, 0x41, 0x10, 0xb1, 0x77, 0x44, 0xbc, 0xe8, 0x53, 0xd2, 0xbd, 0x94,
+	0xc6, 0x96, 0x82, 0x84, 0xda, 0x6a, 0x90, 0x5e, 0xfa, 0xf8, 0xa7, 0x3f, 0x3e, 0xef, 0x9d, 0xc6,
+	0x71, 0xa5, 0xdb, 0xae, 0x8c, 0xbf, 0x41, 0x30, 0xe1, 0xb2, 0x4f, 0xbc, 0xd2, 0xad, 0x91, 0xdf,
+	0xfa, 0x1a, 0x7b, 0x35, 0x64, 0x96, 0x98, 0x34, 0xc9, 0x27, 0xbd, 0x8a, 0x17, 0x7d, 0x26, 0x75,
+	0x1b, 0x37, 0xfe, 0x11, 0xc1, 0x78, 0x67, 0x41, 0xbc, 0x1c, 0xa6, 0x7d, 0x73, 0xe6, 0x95, 0x70,
+	0x49, 0x62, 0xe4, 0x6d, 0x3e, 0xf2, 0x16, 0xbe, 0x17, 0x78, 0x64, 0xe5, 0x51, 0x9b, 0xa7, 0x1e,
+	0xba, 0x43, 0xf0, 0x97, 0x08, 0x46, 0xdb, 0xf7, 0x30, 0x9c, 0xec, 0x36, 0x9d, 0xe7, 0x7a, 0x19,
+	0x4b, 0x85, 0x49, 0x11, 0x70, 0x64, 0x0e, 0x67, 0x01, 0xcf, 0x29, 0xbe, 0xff, 0x67, 0x72, 0x9a,
+	0x2d, 0xfe, 0x13, 0xc1, 0xf4, 0x09, 0x5f, 0x5e, 0x9c, 0xee, 0x36, 0x47, 0xb0, 0x35, 0x22, 0xb6,
+	0x7e, 0xa6, 0x1a, 0x02, 0xdc, 0x6b, 0x1c, 0xdc, 0x0a, 0x4e, 0x85, 0xb8, 0x2b, 0xdb, 0x74, 0x0e,
+	0xf1, 0xbf, 0x08, 0xe2, 0x5d, 0x77, 0x3f, 0x7c, 0x33, 0x8c, 0x7e, 0xbc, 0xd6, 0xd3, 0xd8, 0xda,
+	0x19, 0x2a, 0x08, 0x88, 0x19, 0x0e, 0xf1, 0x2e, 0xde, 0x3c, 0xbd, 0x1c, 0xf9, 0xea, 0xd7, 0x02,
+	0xfe, 0x17, 0x82, 0xa9, 0x6e, 0x4b, 0x25, 0x5e, 0x0d, 0x33, 0xb5, 0xc7, 0x76, 0x1b, 0xbb, 0x79,
+	0xfa, 0x02, 0x02, 0xf5, 0x06, 0x47, 0xbd, 0x86, 0x57, 0xcf, 0x88, 0x1a, 0x7f, 0x8d, 0x60, 0xac,
+	0x63, 0xa1, 0xc2, 0xa9, 0x13, 0xa5, 0xe7, 0x5a, 0xce, 0x62, 0xcb, 0xa1, 0x72, 0x04, 0x0a, 0x85,
+	0xa3, 0x58, 0xc4, 0xf3, 0x3e, 0x28, 0x48, 0x33, 0x4f, 0x7c, 0x09, 0xf1, 0xdf, 0x08, 0x26, 0xbb,
+	0xac, 0x4b, 0xf8, 0x46, 0x18, 0x62, 0x3d, 0x0c, 0x64, 0xf5, 0xd4, 0xf9, 0x02, 0xd1, 0x16, 0x47,
+	0xb4, 0x81, 0xdf, 0x3c, 0xfd, 0xbd, 0x38, 0xcd, 0xe6, 0x3b, 0x04, 0x17, 0xda, 0x7c, 0x0b, 0x5f,
+	0x0b, 0x6c, 0x71, 0x4d, 0x4c, 0xc9, 0x10, 0x19, 0x02, 0xc5, 0x2d, 0x8e, 0xe2, 0x06, 0x7e, 0x23,
+	0x98, 0x27, 0x2a, 0x8f, 0x3c, 0x36, 0xb9, 0xc3, 0xf4, 0xfd, 0xc7, 0x47, 0x09, 0xf4, 0xe4, 0x28,
+	0x81, 0x7e, 0x3f, 0x4a, 0xa0, 0xcf, 0x8e, 0x13, 0x3d, 0x4f, 0x8e, 0x13, 0x3d, 0xbf, 0x1c, 0x27,
+	0x7a, 0xde, 0x3b, 0x71, 0x85, 0xaa, 0x3b, 0x1b, 0xf2, 0x7d, 0x2a, 0x17, 0xe1, 0x7f, 0xb1, 0x5a,
+	0xfe, 0x2f, 0x00, 0x00, 0xff, 0xff, 0x7a, 0xe1, 0xf1, 0x97, 0x99, 0x13, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1215,23 +1236,23 @@ const _ = grpc.SupportPackageIsVersion4
 type QueryClient interface {
 	// Parameters queries the parameters of the module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
-	// BTCValidators queries all BTC validators
-	BTCValidators(ctx context.Context, in *QueryBTCValidatorsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorsResponse, error)
-	// BTCValidator info about one validator
-	BTCValidator(ctx context.Context, in *QueryBTCValidatorRequest, opts ...grpc.CallOption) (*QueryBTCValidatorResponse, error)
+	// FinalityProviders queries all finality providers
+	FinalityProviders(ctx context.Context, in *QueryFinalityProvidersRequest, opts ...grpc.CallOption) (*QueryFinalityProvidersResponse, error)
+	// FinalityProvider info about one finality provider
+	FinalityProvider(ctx context.Context, in *QueryFinalityProviderRequest, opts ...grpc.CallOption) (*QueryFinalityProviderResponse, error)
 	// BTCDelegations queries all BTC delegations under a given status
 	BTCDelegations(ctx context.Context, in *QueryBTCDelegationsRequest, opts ...grpc.CallOption) (*QueryBTCDelegationsResponse, error)
-	// ActiveBTCValidatorsAtHeight queries BTC validators with non zero voting power at given height.
-	ActiveBTCValidatorsAtHeight(ctx context.Context, in *QueryActiveBTCValidatorsAtHeightRequest, opts ...grpc.CallOption) (*QueryActiveBTCValidatorsAtHeightResponse, error)
-	// BTCValidatorPowerAtHeight queries the voting power of a BTC validator at a given height
-	BTCValidatorPowerAtHeight(ctx context.Context, in *QueryBTCValidatorPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryBTCValidatorPowerAtHeightResponse, error)
-	// BTCValidatorCurrentPower queries the voting power of a BTC validator at the current height
-	BTCValidatorCurrentPower(ctx context.Context, in *QueryBTCValidatorCurrentPowerRequest, opts ...grpc.CallOption) (*QueryBTCValidatorCurrentPowerResponse, error)
+	// ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
+	ActiveFinalityProvidersAtHeight(ctx context.Context, in *QueryActiveFinalityProvidersAtHeightRequest, opts ...grpc.CallOption) (*QueryActiveFinalityProvidersAtHeightResponse, error)
+	// FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
+	FinalityProviderPowerAtHeight(ctx context.Context, in *QueryFinalityProviderPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryFinalityProviderPowerAtHeightResponse, error)
+	// FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
+	FinalityProviderCurrentPower(ctx context.Context, in *QueryFinalityProviderCurrentPowerRequest, opts ...grpc.CallOption) (*QueryFinalityProviderCurrentPowerResponse, error)
 	// ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
-	// there exists 1 BTC validator with voting power
+	// there exists 1 finality provider with voting power
 	ActivatedHeight(ctx context.Context, in *QueryActivatedHeightRequest, opts ...grpc.CallOption) (*QueryActivatedHeightResponse, error)
-	// BTCValidatorDelegations queries all BTC delegations of the given BTC validator
-	BTCValidatorDelegations(ctx context.Context, in *QueryBTCValidatorDelegationsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorDelegationsResponse, error)
+	// FinalityProviderDelegations queries all BTC delegations of the given finality provider
+	FinalityProviderDelegations(ctx context.Context, in *QueryFinalityProviderDelegationsRequest, opts ...grpc.CallOption) (*QueryFinalityProviderDelegationsResponse, error)
 	// BTCDelegation retrieves delegation by corresponding staking tx hash
 	BTCDelegation(ctx context.Context, in *QueryBTCDelegationRequest, opts ...grpc.CallOption) (*QueryBTCDelegationResponse, error)
 }
@@ -1253,18 +1274,18 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 	return out, nil
 }
 
-func (c *queryClient) BTCValidators(ctx context.Context, in *QueryBTCValidatorsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorsResponse, error) {
-	out := new(QueryBTCValidatorsResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidators", in, out, opts...)
+func (c *queryClient) FinalityProviders(ctx context.Context, in *QueryFinalityProvidersRequest, opts ...grpc.CallOption) (*QueryFinalityProvidersResponse, error) {
+	out := new(QueryFinalityProvidersResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/FinalityProviders", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) BTCValidator(ctx context.Context, in *QueryBTCValidatorRequest, opts ...grpc.CallOption) (*QueryBTCValidatorResponse, error) {
-	out := new(QueryBTCValidatorResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidator", in, out, opts...)
+func (c *queryClient) FinalityProvider(ctx context.Context, in *QueryFinalityProviderRequest, opts ...grpc.CallOption) (*QueryFinalityProviderResponse, error) {
+	out := new(QueryFinalityProviderResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/FinalityProvider", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1280,27 +1301,27 @@ func (c *queryClient) BTCDelegations(ctx context.Context, in *QueryBTCDelegation
 	return out, nil
 }
 
-func (c *queryClient) ActiveBTCValidatorsAtHeight(ctx context.Context, in *QueryActiveBTCValidatorsAtHeightRequest, opts ...grpc.CallOption) (*QueryActiveBTCValidatorsAtHeightResponse, error) {
-	out := new(QueryActiveBTCValidatorsAtHeightResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/ActiveBTCValidatorsAtHeight", in, out, opts...)
+func (c *queryClient) ActiveFinalityProvidersAtHeight(ctx context.Context, in *QueryActiveFinalityProvidersAtHeightRequest, opts ...grpc.CallOption) (*QueryActiveFinalityProvidersAtHeightResponse, error) {
+	out := new(QueryActiveFinalityProvidersAtHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/ActiveFinalityProvidersAtHeight", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) BTCValidatorPowerAtHeight(ctx context.Context, in *QueryBTCValidatorPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryBTCValidatorPowerAtHeightResponse, error) {
-	out := new(QueryBTCValidatorPowerAtHeightResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidatorPowerAtHeight", in, out, opts...)
+func (c *queryClient) FinalityProviderPowerAtHeight(ctx context.Context, in *QueryFinalityProviderPowerAtHeightRequest, opts ...grpc.CallOption) (*QueryFinalityProviderPowerAtHeightResponse, error) {
+	out := new(QueryFinalityProviderPowerAtHeightResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/FinalityProviderPowerAtHeight", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *queryClient) BTCValidatorCurrentPower(ctx context.Context, in *QueryBTCValidatorCurrentPowerRequest, opts ...grpc.CallOption) (*QueryBTCValidatorCurrentPowerResponse, error) {
-	out := new(QueryBTCValidatorCurrentPowerResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidatorCurrentPower", in, out, opts...)
+func (c *queryClient) FinalityProviderCurrentPower(ctx context.Context, in *QueryFinalityProviderCurrentPowerRequest, opts ...grpc.CallOption) (*QueryFinalityProviderCurrentPowerResponse, error) {
+	out := new(QueryFinalityProviderCurrentPowerResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/FinalityProviderCurrentPower", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1316,9 +1337,9 @@ func (c *queryClient) ActivatedHeight(ctx context.Context, in *QueryActivatedHei
 	return out, nil
 }
 
-func (c *queryClient) BTCValidatorDelegations(ctx context.Context, in *QueryBTCValidatorDelegationsRequest, opts ...grpc.CallOption) (*QueryBTCValidatorDelegationsResponse, error) {
-	out := new(QueryBTCValidatorDelegationsResponse)
-	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/BTCValidatorDelegations", in, out, opts...)
+func (c *queryClient) FinalityProviderDelegations(ctx context.Context, in *QueryFinalityProviderDelegationsRequest, opts ...grpc.CallOption) (*QueryFinalityProviderDelegationsResponse, error) {
+	out := new(QueryFinalityProviderDelegationsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btcstaking.v1.Query/FinalityProviderDelegations", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -1338,23 +1359,23 @@ func (c *queryClient) BTCDelegation(ctx context.Context, in *QueryBTCDelegationR
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
-	// BTCValidators queries all BTC validators
-	BTCValidators(context.Context, *QueryBTCValidatorsRequest) (*QueryBTCValidatorsResponse, error)
-	// BTCValidator info about one validator
-	BTCValidator(context.Context, *QueryBTCValidatorRequest) (*QueryBTCValidatorResponse, error)
+	// FinalityProviders queries all finality providers
+	FinalityProviders(context.Context, *QueryFinalityProvidersRequest) (*QueryFinalityProvidersResponse, error)
+	// FinalityProvider info about one finality provider
+	FinalityProvider(context.Context, *QueryFinalityProviderRequest) (*QueryFinalityProviderResponse, error)
 	// BTCDelegations queries all BTC delegations under a given status
 	BTCDelegations(context.Context, *QueryBTCDelegationsRequest) (*QueryBTCDelegationsResponse, error)
-	// ActiveBTCValidatorsAtHeight queries BTC validators with non zero voting power at given height.
-	ActiveBTCValidatorsAtHeight(context.Context, *QueryActiveBTCValidatorsAtHeightRequest) (*QueryActiveBTCValidatorsAtHeightResponse, error)
-	// BTCValidatorPowerAtHeight queries the voting power of a BTC validator at a given height
-	BTCValidatorPowerAtHeight(context.Context, *QueryBTCValidatorPowerAtHeightRequest) (*QueryBTCValidatorPowerAtHeightResponse, error)
-	// BTCValidatorCurrentPower queries the voting power of a BTC validator at the current height
-	BTCValidatorCurrentPower(context.Context, *QueryBTCValidatorCurrentPowerRequest) (*QueryBTCValidatorCurrentPowerResponse, error)
+	// ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
+	ActiveFinalityProvidersAtHeight(context.Context, *QueryActiveFinalityProvidersAtHeightRequest) (*QueryActiveFinalityProvidersAtHeightResponse, error)
+	// FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
+	FinalityProviderPowerAtHeight(context.Context, *QueryFinalityProviderPowerAtHeightRequest) (*QueryFinalityProviderPowerAtHeightResponse, error)
+	// FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
+	FinalityProviderCurrentPower(context.Context, *QueryFinalityProviderCurrentPowerRequest) (*QueryFinalityProviderCurrentPowerResponse, error)
 	// ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
-	// there exists 1 BTC validator with voting power
+	// there exists 1 finality provider with voting power
 	ActivatedHeight(context.Context, *QueryActivatedHeightRequest) (*QueryActivatedHeightResponse, error)
-	// BTCValidatorDelegations queries all BTC delegations of the given BTC validator
-	BTCValidatorDelegations(context.Context, *QueryBTCValidatorDelegationsRequest) (*QueryBTCValidatorDelegationsResponse, error)
+	// FinalityProviderDelegations queries all BTC delegations of the given finality provider
+	FinalityProviderDelegations(context.Context, *QueryFinalityProviderDelegationsRequest) (*QueryFinalityProviderDelegationsResponse, error)
 	// BTCDelegation retrieves delegation by corresponding staking tx hash
 	BTCDelegation(context.Context, *QueryBTCDelegationRequest) (*QueryBTCDelegationResponse, error)
 }
@@ -1366,29 +1387,29 @@ type UnimplementedQueryServer struct {
 func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
-func (*UnimplementedQueryServer) BTCValidators(ctx context.Context, req *QueryBTCValidatorsRequest) (*QueryBTCValidatorsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BTCValidators not implemented")
+func (*UnimplementedQueryServer) FinalityProviders(ctx context.Context, req *QueryFinalityProvidersRequest) (*QueryFinalityProvidersResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviders not implemented")
 }
-func (*UnimplementedQueryServer) BTCValidator(ctx context.Context, req *QueryBTCValidatorRequest) (*QueryBTCValidatorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BTCValidator not implemented")
+func (*UnimplementedQueryServer) FinalityProvider(ctx context.Context, req *QueryFinalityProviderRequest) (*QueryFinalityProviderResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProvider not implemented")
 }
 func (*UnimplementedQueryServer) BTCDelegations(ctx context.Context, req *QueryBTCDelegationsRequest) (*QueryBTCDelegationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BTCDelegations not implemented")
 }
-func (*UnimplementedQueryServer) ActiveBTCValidatorsAtHeight(ctx context.Context, req *QueryActiveBTCValidatorsAtHeightRequest) (*QueryActiveBTCValidatorsAtHeightResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ActiveBTCValidatorsAtHeight not implemented")
+func (*UnimplementedQueryServer) ActiveFinalityProvidersAtHeight(ctx context.Context, req *QueryActiveFinalityProvidersAtHeightRequest) (*QueryActiveFinalityProvidersAtHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ActiveFinalityProvidersAtHeight not implemented")
 }
-func (*UnimplementedQueryServer) BTCValidatorPowerAtHeight(ctx context.Context, req *QueryBTCValidatorPowerAtHeightRequest) (*QueryBTCValidatorPowerAtHeightResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BTCValidatorPowerAtHeight not implemented")
+func (*UnimplementedQueryServer) FinalityProviderPowerAtHeight(ctx context.Context, req *QueryFinalityProviderPowerAtHeightRequest) (*QueryFinalityProviderPowerAtHeightResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderPowerAtHeight not implemented")
 }
-func (*UnimplementedQueryServer) BTCValidatorCurrentPower(ctx context.Context, req *QueryBTCValidatorCurrentPowerRequest) (*QueryBTCValidatorCurrentPowerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BTCValidatorCurrentPower not implemented")
+func (*UnimplementedQueryServer) FinalityProviderCurrentPower(ctx context.Context, req *QueryFinalityProviderCurrentPowerRequest) (*QueryFinalityProviderCurrentPowerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderCurrentPower not implemented")
 }
 func (*UnimplementedQueryServer) ActivatedHeight(ctx context.Context, req *QueryActivatedHeightRequest) (*QueryActivatedHeightResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ActivatedHeight not implemented")
 }
-func (*UnimplementedQueryServer) BTCValidatorDelegations(ctx context.Context, req *QueryBTCValidatorDelegationsRequest) (*QueryBTCValidatorDelegationsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method BTCValidatorDelegations not implemented")
+func (*UnimplementedQueryServer) FinalityProviderDelegations(ctx context.Context, req *QueryFinalityProviderDelegationsRequest) (*QueryFinalityProviderDelegationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method FinalityProviderDelegations not implemented")
 }
 func (*UnimplementedQueryServer) BTCDelegation(ctx context.Context, req *QueryBTCDelegationRequest) (*QueryBTCDelegationResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BTCDelegation not implemented")
@@ -1416,38 +1437,38 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BTCValidators_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBTCValidatorsRequest)
+func _Query_FinalityProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProvidersRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).BTCValidators(ctx, in)
+		return srv.(QueryServer).FinalityProviders(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstaking.v1.Query/BTCValidators",
+		FullMethod: "/babylon.btcstaking.v1.Query/FinalityProviders",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BTCValidators(ctx, req.(*QueryBTCValidatorsRequest))
+		return srv.(QueryServer).FinalityProviders(ctx, req.(*QueryFinalityProvidersRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BTCValidator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBTCValidatorRequest)
+func _Query_FinalityProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).BTCValidator(ctx, in)
+		return srv.(QueryServer).FinalityProvider(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstaking.v1.Query/BTCValidator",
+		FullMethod: "/babylon.btcstaking.v1.Query/FinalityProvider",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BTCValidator(ctx, req.(*QueryBTCValidatorRequest))
+		return srv.(QueryServer).FinalityProvider(ctx, req.(*QueryFinalityProviderRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1470,56 +1491,56 @@ func _Query_BTCDelegations_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_ActiveBTCValidatorsAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryActiveBTCValidatorsAtHeightRequest)
+func _Query_ActiveFinalityProvidersAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryActiveFinalityProvidersAtHeightRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).ActiveBTCValidatorsAtHeight(ctx, in)
+		return srv.(QueryServer).ActiveFinalityProvidersAtHeight(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstaking.v1.Query/ActiveBTCValidatorsAtHeight",
+		FullMethod: "/babylon.btcstaking.v1.Query/ActiveFinalityProvidersAtHeight",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).ActiveBTCValidatorsAtHeight(ctx, req.(*QueryActiveBTCValidatorsAtHeightRequest))
+		return srv.(QueryServer).ActiveFinalityProvidersAtHeight(ctx, req.(*QueryActiveFinalityProvidersAtHeightRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BTCValidatorPowerAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBTCValidatorPowerAtHeightRequest)
+func _Query_FinalityProviderPowerAtHeight_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderPowerAtHeightRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).BTCValidatorPowerAtHeight(ctx, in)
+		return srv.(QueryServer).FinalityProviderPowerAtHeight(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstaking.v1.Query/BTCValidatorPowerAtHeight",
+		FullMethod: "/babylon.btcstaking.v1.Query/FinalityProviderPowerAtHeight",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BTCValidatorPowerAtHeight(ctx, req.(*QueryBTCValidatorPowerAtHeightRequest))
+		return srv.(QueryServer).FinalityProviderPowerAtHeight(ctx, req.(*QueryFinalityProviderPowerAtHeightRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BTCValidatorCurrentPower_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBTCValidatorCurrentPowerRequest)
+func _Query_FinalityProviderCurrentPower_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderCurrentPowerRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).BTCValidatorCurrentPower(ctx, in)
+		return srv.(QueryServer).FinalityProviderCurrentPower(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstaking.v1.Query/BTCValidatorCurrentPower",
+		FullMethod: "/babylon.btcstaking.v1.Query/FinalityProviderCurrentPower",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BTCValidatorCurrentPower(ctx, req.(*QueryBTCValidatorCurrentPowerRequest))
+		return srv.(QueryServer).FinalityProviderCurrentPower(ctx, req.(*QueryFinalityProviderCurrentPowerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1542,20 +1563,20 @@ func _Query_ActivatedHeight_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_BTCValidatorDelegations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBTCValidatorDelegationsRequest)
+func _Query_FinalityProviderDelegations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryFinalityProviderDelegationsRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(QueryServer).BTCValidatorDelegations(ctx, in)
+		return srv.(QueryServer).FinalityProviderDelegations(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/babylon.btcstaking.v1.Query/BTCValidatorDelegations",
+		FullMethod: "/babylon.btcstaking.v1.Query/FinalityProviderDelegations",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).BTCValidatorDelegations(ctx, req.(*QueryBTCValidatorDelegationsRequest))
+		return srv.(QueryServer).FinalityProviderDelegations(ctx, req.(*QueryFinalityProviderDelegationsRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1587,36 +1608,36 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Query_Params_Handler,
 		},
 		{
-			MethodName: "BTCValidators",
-			Handler:    _Query_BTCValidators_Handler,
+			MethodName: "FinalityProviders",
+			Handler:    _Query_FinalityProviders_Handler,
 		},
 		{
-			MethodName: "BTCValidator",
-			Handler:    _Query_BTCValidator_Handler,
+			MethodName: "FinalityProvider",
+			Handler:    _Query_FinalityProvider_Handler,
 		},
 		{
 			MethodName: "BTCDelegations",
 			Handler:    _Query_BTCDelegations_Handler,
 		},
 		{
-			MethodName: "ActiveBTCValidatorsAtHeight",
-			Handler:    _Query_ActiveBTCValidatorsAtHeight_Handler,
+			MethodName: "ActiveFinalityProvidersAtHeight",
+			Handler:    _Query_ActiveFinalityProvidersAtHeight_Handler,
 		},
 		{
-			MethodName: "BTCValidatorPowerAtHeight",
-			Handler:    _Query_BTCValidatorPowerAtHeight_Handler,
+			MethodName: "FinalityProviderPowerAtHeight",
+			Handler:    _Query_FinalityProviderPowerAtHeight_Handler,
 		},
 		{
-			MethodName: "BTCValidatorCurrentPower",
-			Handler:    _Query_BTCValidatorCurrentPower_Handler,
+			MethodName: "FinalityProviderCurrentPower",
+			Handler:    _Query_FinalityProviderCurrentPower_Handler,
 		},
 		{
 			MethodName: "ActivatedHeight",
 			Handler:    _Query_ActivatedHeight_Handler,
 		},
 		{
-			MethodName: "BTCValidatorDelegations",
-			Handler:    _Query_BTCValidatorDelegations_Handler,
+			MethodName: "FinalityProviderDelegations",
+			Handler:    _Query_FinalityProviderDelegations_Handler,
 		},
 		{
 			MethodName: "BTCDelegation",
@@ -1683,7 +1704,7 @@ func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProvidersRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1693,12 +1714,12 @@ func (m *QueryBTCValidatorsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProvidersRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProvidersRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1718,7 +1739,7 @@ func (m *QueryBTCValidatorsRequest) MarshalToSizedBuffer(dAtA []byte) (int, erro
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProvidersResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1728,12 +1749,12 @@ func (m *QueryBTCValidatorsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProvidersResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProvidersResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1750,10 +1771,10 @@ func (m *QueryBTCValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.BtcValidators) > 0 {
-		for iNdEx := len(m.BtcValidators) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FinalityProviders) > 0 {
+		for iNdEx := len(m.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.BtcValidators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1767,7 +1788,7 @@ func (m *QueryBTCValidatorsResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1777,27 +1798,27 @@ func (m *QueryBTCValidatorRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ValBtcPkHex) > 0 {
-		i -= len(m.ValBtcPkHex)
-		copy(dAtA[i:], m.ValBtcPkHex)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ValBtcPkHex)))
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1807,19 +1828,19 @@ func (m *QueryBTCValidatorResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.BtcValidator != nil {
+	if m.FinalityProvider != nil {
 		{
-			size, err := m.BtcValidator.MarshalToSizedBuffer(dAtA[:i])
+			size, err := m.FinalityProvider.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
@@ -1921,7 +1942,7 @@ func (m *QueryBTCDelegationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderPowerAtHeightRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1931,12 +1952,12 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) Marshal() (dAtA []byte, err erro
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderPowerAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderPowerAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1946,17 +1967,17 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) MarshalToSizedBuffer(dAtA []byte
 		i--
 		dAtA[i] = 0x10
 	}
-	if len(m.ValBtcPkHex) > 0 {
-		i -= len(m.ValBtcPkHex)
-		copy(dAtA[i:], m.ValBtcPkHex)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ValBtcPkHex)))
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorPowerAtHeightResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderPowerAtHeightResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1966,12 +1987,12 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) Marshal() (dAtA []byte, err err
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorPowerAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderPowerAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorPowerAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderPowerAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1984,7 +2005,7 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) MarshalToSizedBuffer(dAtA []byt
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorCurrentPowerRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderCurrentPowerRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1994,27 +2015,27 @@ func (m *QueryBTCValidatorCurrentPowerRequest) Marshal() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorCurrentPowerRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderCurrentPowerRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorCurrentPowerRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderCurrentPowerRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.ValBtcPkHex) > 0 {
-		i -= len(m.ValBtcPkHex)
-		copy(dAtA[i:], m.ValBtcPkHex)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ValBtcPkHex)))
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorCurrentPowerResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderCurrentPowerResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2024,12 +2045,12 @@ func (m *QueryBTCValidatorCurrentPowerResponse) Marshal() (dAtA []byte, err erro
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorCurrentPowerResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderCurrentPowerResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorCurrentPowerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderCurrentPowerResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2047,7 +2068,7 @@ func (m *QueryBTCValidatorCurrentPowerResponse) MarshalToSizedBuffer(dAtA []byte
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2057,12 +2078,12 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) Marshal() (dAtA []byte, err er
 	return dAtA[:n], nil
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2087,7 +2108,7 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) MarshalToSizedBuffer(dAtA []by
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2097,12 +2118,12 @@ func (m *QueryActiveBTCValidatorsAtHeightResponse) Marshal() (dAtA []byte, err e
 	return dAtA[:n], nil
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2119,10 +2140,10 @@ func (m *QueryActiveBTCValidatorsAtHeightResponse) MarshalToSizedBuffer(dAtA []b
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.BtcValidators) > 0 {
-		for iNdEx := len(m.BtcValidators) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FinalityProviders) > 0 {
+		for iNdEx := len(m.FinalityProviders) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.BtcValidators[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.FinalityProviders[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -2187,7 +2208,7 @@ func (m *QueryActivatedHeightResponse) MarshalToSizedBuffer(dAtA []byte) (int, e
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorDelegationsRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderDelegationsRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2197,12 +2218,12 @@ func (m *QueryBTCValidatorDelegationsRequest) Marshal() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorDelegationsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderDelegationsRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorDelegationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderDelegationsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2219,17 +2240,17 @@ func (m *QueryBTCValidatorDelegationsRequest) MarshalToSizedBuffer(dAtA []byte) 
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.ValBtcPkHex) > 0 {
-		i -= len(m.ValBtcPkHex)
-		copy(dAtA[i:], m.ValBtcPkHex)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.ValBtcPkHex)))
+	if len(m.FpBtcPkHex) > 0 {
+		i -= len(m.FpBtcPkHex)
+		copy(dAtA[i:], m.FpBtcPkHex)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FpBtcPkHex)))
 		i--
 		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryBTCValidatorDelegationsResponse) Marshal() (dAtA []byte, err error) {
+func (m *QueryFinalityProviderDelegationsResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -2239,12 +2260,12 @@ func (m *QueryBTCValidatorDelegationsResponse) Marshal() (dAtA []byte, err error
 	return dAtA[:n], nil
 }
 
-func (m *QueryBTCValidatorDelegationsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderDelegationsResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryBTCValidatorDelegationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryFinalityProviderDelegationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -2372,12 +2393,12 @@ func (m *QueryBTCDelegationResponse) MarshalToSizedBuffer(dAtA []byte) (int, err
 		i--
 		dAtA[i] = 0x18
 	}
-	if len(m.ValBtcPkList) > 0 {
-		for iNdEx := len(m.ValBtcPkList) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FpBtcPkList) > 0 {
+		for iNdEx := len(m.FpBtcPkList) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size := m.ValBtcPkList[iNdEx].Size()
+				size := m.FpBtcPkList[iNdEx].Size()
 				i -= size
-				if _, err := m.ValBtcPkList[iNdEx].MarshalTo(dAtA[i:]); err != nil {
+				if _, err := m.FpBtcPkList[iNdEx].MarshalTo(dAtA[i:]); err != nil {
 					return 0, err
 				}
 				i = encodeVarintQuery(dAtA, i, uint64(size))
@@ -2432,7 +2453,7 @@ func (m *QueryParamsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorsRequest) Size() (n int) {
+func (m *QueryFinalityProvidersRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2445,14 +2466,14 @@ func (m *QueryBTCValidatorsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorsResponse) Size() (n int) {
+func (m *QueryFinalityProvidersResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.BtcValidators) > 0 {
-		for _, e := range m.BtcValidators {
+	if len(m.FinalityProviders) > 0 {
+		for _, e := range m.FinalityProviders {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -2464,27 +2485,27 @@ func (m *QueryBTCValidatorsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorRequest) Size() (n int) {
+func (m *QueryFinalityProviderRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ValBtcPkHex)
+	l = len(m.FpBtcPkHex)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryBTCValidatorResponse) Size() (n int) {
+func (m *QueryFinalityProviderResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.BtcValidator != nil {
-		l = m.BtcValidator.Size()
+	if m.FinalityProvider != nil {
+		l = m.FinalityProvider.Size()
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
@@ -2525,13 +2546,13 @@ func (m *QueryBTCDelegationsResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorPowerAtHeightRequest) Size() (n int) {
+func (m *QueryFinalityProviderPowerAtHeightRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ValBtcPkHex)
+	l = len(m.FpBtcPkHex)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -2541,7 +2562,7 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorPowerAtHeightResponse) Size() (n int) {
+func (m *QueryFinalityProviderPowerAtHeightResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2553,20 +2574,20 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorCurrentPowerRequest) Size() (n int) {
+func (m *QueryFinalityProviderCurrentPowerRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ValBtcPkHex)
+	l = len(m.FpBtcPkHex)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
 
-func (m *QueryBTCValidatorCurrentPowerResponse) Size() (n int) {
+func (m *QueryFinalityProviderCurrentPowerResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2581,7 +2602,7 @@ func (m *QueryBTCValidatorCurrentPowerResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightRequest) Size() (n int) {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2597,14 +2618,14 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryActiveBTCValidatorsAtHeightResponse) Size() (n int) {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.BtcValidators) > 0 {
-		for _, e := range m.BtcValidators {
+	if len(m.FinalityProviders) > 0 {
+		for _, e := range m.FinalityProviders {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -2637,13 +2658,13 @@ func (m *QueryActivatedHeightResponse) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorDelegationsRequest) Size() (n int) {
+func (m *QueryFinalityProviderDelegationsRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	l = len(m.ValBtcPkHex)
+	l = len(m.FpBtcPkHex)
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
@@ -2654,7 +2675,7 @@ func (m *QueryBTCValidatorDelegationsRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryBTCValidatorDelegationsResponse) Size() (n int) {
+func (m *QueryFinalityProviderDelegationsResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -2696,8 +2717,8 @@ func (m *QueryBTCDelegationResponse) Size() (n int) {
 		l = m.BtcPk.Size()
 		n += 1 + l + sovQuery(uint64(l))
 	}
-	if len(m.ValBtcPkList) > 0 {
-		for _, e := range m.ValBtcPkList {
+	if len(m.FpBtcPkList) > 0 {
+		for _, e := range m.FpBtcPkList {
 			l = e.Size()
 			n += 1 + l + sovQuery(uint64(l))
 		}
@@ -2864,7 +2885,7 @@ func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProvidersRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2887,10 +2908,10 @@ func (m *QueryBTCValidatorsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProvidersRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProvidersRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2950,7 +2971,7 @@ func (m *QueryBTCValidatorsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProvidersResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2973,15 +2994,15 @@ func (m *QueryBTCValidatorsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProvidersResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProvidersResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BtcValidators", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviders", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3008,8 +3029,8 @@ func (m *QueryBTCValidatorsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BtcValidators = append(m.BtcValidators, &BTCValidator{})
-			if err := m.BtcValidators[len(m.BtcValidators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FinalityProviders = append(m.FinalityProviders, &FinalityProvider{})
+			if err := m.FinalityProviders[len(m.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3070,7 +3091,7 @@ func (m *QueryBTCValidatorsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3093,15 +3114,15 @@ func (m *QueryBTCValidatorRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPkHex", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3129,7 +3150,7 @@ func (m *QueryBTCValidatorRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValBtcPkHex = string(dAtA[iNdEx:postIndex])
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3152,7 +3173,7 @@ func (m *QueryBTCValidatorRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3175,15 +3196,15 @@ func (m *QueryBTCValidatorResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BtcValidator", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProvider", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3210,10 +3231,10 @@ func (m *QueryBTCValidatorResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.BtcValidator == nil {
-				m.BtcValidator = &BTCValidator{}
+			if m.FinalityProvider == nil {
+				m.FinalityProvider = &FinalityProvider{}
 			}
-			if err := m.BtcValidator.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.FinalityProvider.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -3463,7 +3484,7 @@ func (m *QueryBTCDelegationsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3486,15 +3507,15 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPkHex", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3522,7 +3543,7 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValBtcPkHex = string(dAtA[iNdEx:postIndex])
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 0 {
@@ -3564,7 +3585,7 @@ func (m *QueryBTCValidatorPowerAtHeightRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorPowerAtHeightResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderPowerAtHeightResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3587,10 +3608,10 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorPowerAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderPowerAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3633,7 +3654,7 @@ func (m *QueryBTCValidatorPowerAtHeightResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorCurrentPowerRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderCurrentPowerRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3656,15 +3677,15 @@ func (m *QueryBTCValidatorCurrentPowerRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorCurrentPowerRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorCurrentPowerRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPkHex", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -3692,7 +3713,7 @@ func (m *QueryBTCValidatorCurrentPowerRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValBtcPkHex = string(dAtA[iNdEx:postIndex])
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -3715,7 +3736,7 @@ func (m *QueryBTCValidatorCurrentPowerRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorCurrentPowerResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderCurrentPowerResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3738,10 +3759,10 @@ func (m *QueryBTCValidatorCurrentPowerResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorCurrentPowerResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorCurrentPowerResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderCurrentPowerResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3803,7 +3824,7 @@ func (m *QueryBTCValidatorCurrentPowerResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryActiveBTCValidatorsAtHeightRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryActiveFinalityProvidersAtHeightRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3826,10 +3847,10 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryActiveBTCValidatorsAtHeightRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryActiveBTCValidatorsAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -3908,7 +3929,7 @@ func (m *QueryActiveBTCValidatorsAtHeightRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryActiveBTCValidatorsAtHeightResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryActiveFinalityProvidersAtHeightResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -3931,15 +3952,15 @@ func (m *QueryActiveBTCValidatorsAtHeightResponse) Unmarshal(dAtA []byte) error 
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryActiveBTCValidatorsAtHeightResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryActiveBTCValidatorsAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryActiveFinalityProvidersAtHeightResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BtcValidators", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FinalityProviders", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -3966,8 +3987,8 @@ func (m *QueryActiveBTCValidatorsAtHeightResponse) Unmarshal(dAtA []byte) error 
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.BtcValidators = append(m.BtcValidators, &BTCValidatorWithMeta{})
-			if err := m.BtcValidators[len(m.BtcValidators)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FinalityProviders = append(m.FinalityProviders, &FinalityProviderWithMeta{})
+			if err := m.FinalityProviders[len(m.FinalityProviders)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -4147,7 +4168,7 @@ func (m *QueryActivatedHeightResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorDelegationsRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderDelegationsRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4170,15 +4191,15 @@ func (m *QueryBTCValidatorDelegationsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorDelegationsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderDelegationsRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorDelegationsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderDelegationsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPkHex", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkHex", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4206,7 +4227,7 @@ func (m *QueryBTCValidatorDelegationsRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.ValBtcPkHex = string(dAtA[iNdEx:postIndex])
+			m.FpBtcPkHex = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -4265,7 +4286,7 @@ func (m *QueryBTCValidatorDelegationsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryBTCValidatorDelegationsResponse) Unmarshal(dAtA []byte) error {
+func (m *QueryFinalityProviderDelegationsResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4288,10 +4309,10 @@ func (m *QueryBTCValidatorDelegationsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryBTCValidatorDelegationsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryFinalityProviderDelegationsResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryBTCValidatorDelegationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryFinalityProviderDelegationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4533,7 +4554,7 @@ func (m *QueryBTCDelegationResponse) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ValBtcPkList", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkList", wireType)
 			}
 			var byteLen int
 			for shift := uint(0); ; shift += 7 {
@@ -4561,8 +4582,8 @@ func (m *QueryBTCDelegationResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			var v github_com_babylonchain_babylon_types.BIP340PubKey
-			m.ValBtcPkList = append(m.ValBtcPkList, v)
-			if err := m.ValBtcPkList[len(m.ValBtcPkList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FpBtcPkList = append(m.FpBtcPkList, v)
+			if err := m.FpBtcPkList[len(m.FpBtcPkList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

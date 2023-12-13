@@ -8,47 +8,47 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 )
 
-func (v *BTCValidator) IsSlashed() bool {
-	return v.SlashedBabylonHeight > 0
+func (fp *FinalityProvider) IsSlashed() bool {
+	return fp.SlashedBabylonHeight > 0
 }
 
-func (v *BTCValidator) ValidateBasic() error {
+func (fp *FinalityProvider) ValidateBasic() error {
 	// ensure fields are non-empty and well-formatted
-	if v.BabylonPk == nil {
+	if fp.BabylonPk == nil {
 		return fmt.Errorf("empty Babylon public key")
 	}
-	if v.BtcPk == nil {
+	if fp.BtcPk == nil {
 		return fmt.Errorf("empty BTC public key")
 	}
-	if _, err := v.BtcPk.ToBTCPK(); err != nil {
+	if _, err := fp.BtcPk.ToBTCPK(); err != nil {
 		return fmt.Errorf("BtcPk is not correctly formatted: %w", err)
 	}
-	if v.Pop == nil {
+	if fp.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
-	if err := v.Pop.ValidateBasic(); err != nil {
+	if err := fp.Pop.ValidateBasic(); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// FilterTopNBTCValidators returns the top n validators based on VotingPower.
-func FilterTopNBTCValidators(validators []*BTCValidatorWithMeta, n uint32) []*BTCValidatorWithMeta {
-	numVals := uint32(len(validators))
+// FilterTopNFinalityProviders returns the top n finality providers based on VotingPower.
+func FilterTopNFinalityProviders(fps []*FinalityProviderWithMeta, n uint32) []*FinalityProviderWithMeta {
+	numFps := uint32(len(fps))
 
-	// if the given validator set is no bigger than n, no need to do anything
-	if numVals <= n {
-		return validators
+	// if the given finality provider set is no bigger than n, no need to do anything
+	if numFps <= n {
+		return fps
 	}
 
-	// Sort the validators slice, from higher to lower voting power
-	sort.SliceStable(validators, func(i, j int) bool {
-		return validators[i].VotingPower > validators[j].VotingPower
+	// Sort the finality providers slice, from higher to lower voting power
+	sort.SliceStable(fps, func(i, j int) bool {
+		return fps[i].VotingPower > fps[j].VotingPower
 	})
 
 	// Return the top n elements
-	return validators[:n]
+	return fps[:n]
 }
 
 func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
@@ -74,20 +74,20 @@ func NewSignatureInfo(pk *bbn.BIP340PubKey, sig *bbn.BIP340Signature) *Signature
 }
 
 // GetOrderedCovenantSignatures returns the ordered covenant adaptor signatures
-// encrypted by the BTC validator's PK at the given index from the given list of
+// encrypted by the finality provider's PK at the given index from the given list of
 // covenant signatures
 // the order of covenant adaptor signatures will follow the reverse lexicographical order
 // of signing public keys, in order to be used as tx witness
-func GetOrderedCovenantSignatures(valIdx int, covSigsList []*CovenantAdaptorSignatures, params *Params) ([]*asig.AdaptorSignature, error) {
+func GetOrderedCovenantSignatures(fpIdx int, covSigsList []*CovenantAdaptorSignatures, params *Params) ([]*asig.AdaptorSignature, error) {
 	// construct the map where key is the covenant PK and value is this
-	// covenant member's adaptor signature encrypted by the given validator's PK
+	// covenant member's adaptor signature encrypted by the given finality provider's PK
 	covSigsMap := map[string]*asig.AdaptorSignature{}
 	for _, covSigs := range covSigsList {
-		// find the adaptor signature at the corresponding BTC validator's index
-		if valIdx >= len(covSigs.AdaptorSigs) {
-			return nil, fmt.Errorf("validator index is out of the scope")
+		// find the adaptor signature at the corresponding finality provider's index
+		if fpIdx >= len(covSigs.AdaptorSigs) {
+			return nil, fmt.Errorf("finality provider index is out of the scope")
 		}
-		covSigBytes := covSigs.AdaptorSigs[valIdx]
+		covSigBytes := covSigs.AdaptorSigs[fpIdx]
 		// decode the adaptor signature bytes
 		covSig, err := asig.NewAdaptorSignatureFromBytes(covSigBytes)
 		if err != nil {

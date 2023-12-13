@@ -39,7 +39,7 @@ func GetTxCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		NewCreateBTCValidatorCmd(),
+		NewCreateFinalityProvicerCmd(),
 		NewCreateBTCDelegationCmd(),
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
@@ -48,13 +48,13 @@ func GetTxCmd() *cobra.Command {
 	return cmd
 }
 
-func NewCreateBTCValidatorCmd() *cobra.Command {
+func NewCreateFinalityProvicerCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-validator [babylon_pk] [btc_pk] [pop]",
+		Use:   "create-finality-provider [babylon_pk] [btc_pk] [pop]",
 		Args:  cobra.ExactArgs(3),
-		Short: "Create a BTC validator",
+		Short: "Create a finality provider",
 		Long: strings.TrimSpace(
-			`Create a BTC validator.`, // TODO: example
+			`Create a finality provider.`, // TODO: example
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -106,7 +106,7 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 				return err
 			}
 
-			msg := types.MsgCreateBTCValidator{
+			msg := types.MsgCreateFinalityProvider{
 				Signer:      clientCtx.FromAddress.String(),
 				Description: &description,
 				Commission:  &rate,
@@ -120,10 +120,10 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 	}
 
 	fs := cmd.Flags()
-	fs.String(FlagMoniker, "", "The validator's (optional) moniker")
-	fs.String(FlagWebsite, "", "The validator's (optional) website")
-	fs.String(FlagSecurityContact, "", "The validator's (optional) security contact email")
-	fs.String(FlagDetails, "", "The validator's (optional) details")
+	fs.String(FlagMoniker, "", "The finality provider's (optional) moniker")
+	fs.String(FlagWebsite, "", "The finality provider's (optional) website")
+	fs.String(FlagSecurityContact, "", "The finality provider's (optional) security contact email")
+	fs.String(FlagDetails, "", "The finality provider's (optional) details")
 	fs.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
 	fs.String(FlagCommissionRate, "0", "The initial commission rate percentage")
 
@@ -134,7 +134,7 @@ func NewCreateBTCValidatorCmd() *cobra.Command {
 
 func NewCreateBTCDelegationCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [val_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
+		Use:   "create-btc-delegation [babylon_pk] [btc_pk] [pop] [staking_tx_info] [fp_pk] [staking_time] [staking_value] [slashing_tx] [delegator_slashing_sig] [unbonding_tx] [unbonding_slashing_tx] [unbonding_time] [unbonding_value] [delegator_unbonding_slashing_sig]",
 		Args:  cobra.ExactArgs(14),
 		Short: "Create a BTC delegation",
 		Long: strings.TrimSpace(
@@ -175,9 +175,9 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				return err
 			}
 
-			// TODO: Support multiple validators
-			// get validator PK
-			valPK, err := bbn.NewBIP340PubKeyFromHex(args[4])
+			// TODO: Support multiple finality providers
+			// get finality provider PK
+			fpPK, err := bbn.NewBIP340PubKeyFromHex(args[4])
 			if err != nil {
 				return err
 			}
@@ -238,7 +238,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				Signer:                        clientCtx.FromAddress.String(),
 				BabylonPk:                     &babylonPK,
 				BtcPk:                         btcPK,
-				ValBtcPkList:                  []bbn.BIP340PubKey{*valPK},
+				FpBtcPkList:                   []bbn.BIP340PubKey{*fpPK},
 				Pop:                           pop,
 				StakingTime:                   uint32(stakingTime),
 				StakingValue:                  int64(stakingValue),

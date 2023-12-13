@@ -7,54 +7,54 @@ import (
 
 func NewRewardDistCache() *RewardDistCache {
 	return &RewardDistCache{
-		TotalVotingPower: 0,
-		BtcVals:          []*BTCValDistInfo{},
+		TotalVotingPower:  0,
+		FinalityProviders: []*FinalityProviderDistInfo{},
 	}
 }
 
-func (rdc *RewardDistCache) AddBTCValDistInfo(v *BTCValDistInfo) {
+func (rdc *RewardDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
 	if v.TotalVotingPower > 0 {
-		// append BTC validator dist info and accumulate voting power
-		rdc.BtcVals = append(rdc.BtcVals, v)
+		// append finality provider dist info and accumulate voting power
+		rdc.FinalityProviders = append(rdc.FinalityProviders, v)
 		rdc.TotalVotingPower += v.TotalVotingPower
 	}
 }
 
-// FilterVotedBTCVals filters out BTC validators that have voted according to a map of given voters
+// FilterVotedFinalityProviders filters out finality providers that have voted according to a map of given voters
 // and update total voted power accordingly
-func (rdc *RewardDistCache) FilterVotedBTCVals(voterBTCPKs map[string]struct{}) {
-	filteredBTCVals := []*BTCValDistInfo{}
+func (rdc *RewardDistCache) FilterVotedFinalityProviders(voterBTCPKs map[string]struct{}) {
+	filteredFps := []*FinalityProviderDistInfo{}
 	totalVotingPower := uint64(0)
-	for _, v := range rdc.BtcVals {
+	for _, v := range rdc.FinalityProviders {
 		if _, ok := voterBTCPKs[v.BtcPk.MarshalHex()]; ok {
-			filteredBTCVals = append(filteredBTCVals, v)
+			filteredFps = append(filteredFps, v)
 			totalVotingPower += v.TotalVotingPower
 		}
 	}
-	rdc.BtcVals = filteredBTCVals
+	rdc.FinalityProviders = filteredFps
 	rdc.TotalVotingPower = totalVotingPower
 }
 
-// GetBTCValPortion returns the portion of a BTC validator's voting power out of the total voting power
-func (rdc *RewardDistCache) GetBTCValPortion(v *BTCValDistInfo) sdkmath.LegacyDec {
+// GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
+func (rdc *RewardDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
 	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(rdc.TotalVotingPower)))
 }
 
-func NewBTCValDistInfo(btcVal *BTCValidator) *BTCValDistInfo {
-	return &BTCValDistInfo{
-		BtcPk:            btcVal.BtcPk,
-		BabylonPk:        btcVal.BabylonPk,
-		Commission:       btcVal.Commission,
+func NewFinalityProviderDistInfo(fp *FinalityProvider) *FinalityProviderDistInfo {
+	return &FinalityProviderDistInfo{
+		BtcPk:            fp.BtcPk,
+		BabylonPk:        fp.BabylonPk,
+		Commission:       fp.Commission,
 		TotalVotingPower: 0,
 		BtcDels:          []*BTCDelDistInfo{},
 	}
 }
 
-func (v *BTCValDistInfo) GetAddress() sdk.AccAddress {
+func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 	return sdk.AccAddress(v.BabylonPk.Address())
 }
 
-func (v *BTCValDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
+func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
 	btcDelDistInfo := &BTCDelDistInfo{
 		BabylonPk:   btcDel.BabylonPk,
 		VotingPower: btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
@@ -68,8 +68,8 @@ func (v *BTCValDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wVal
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
-// the BTC validator's total voting power
-func (v *BTCValDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.LegacyDec {
+// the finality provider's total voting power
+func (v *FinalityProviderDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.LegacyDec {
 	return sdkmath.LegacyNewDec(int64(d.VotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(v.TotalVotingPower)))
 }
 

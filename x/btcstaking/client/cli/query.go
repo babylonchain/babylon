@@ -23,20 +23,20 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
-	cmd.AddCommand(CmdBTCValidators())
+	cmd.AddCommand(CmdFinalityProviders())
 	cmd.AddCommand(CmdBTCDelegations())
-	cmd.AddCommand(CmdBTCValidatorsAtHeight())
-	cmd.AddCommand(CmdBTCValidatorPowerAtHeight())
+	cmd.AddCommand(CmdFinalityProvidersAtHeight())
+	cmd.AddCommand(CmdFinalityProviderPowerAtHeight())
 	cmd.AddCommand(CmdActivatedHeight())
-	cmd.AddCommand(CmdBTCValidatorDelegations())
+	cmd.AddCommand(CmdFinalityProviderDelegations())
 
 	return cmd
 }
 
-func CmdBTCValidators() *cobra.Command {
+func CmdFinalityProviders() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-validators",
-		Short: "retrieve all BTC validators",
+		Use:   "finality-providers",
+		Short: "retrieve all finality providers",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -48,7 +48,7 @@ func CmdBTCValidators() *cobra.Command {
 				return err
 			}
 
-			res, err := queryClient.BTCValidators(cmd.Context(), &types.QueryBTCValidatorsRequest{
+			res, err := queryClient.FinalityProviders(cmd.Context(), &types.QueryFinalityProvidersRequest{
 				Pagination: pageReq,
 			})
 			if err != nil {
@@ -60,7 +60,7 @@ func CmdBTCValidators() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "btc-validators")
+	flags.AddPaginationFlagsToCmd(cmd, "finality-providers")
 
 	return cmd
 }
@@ -102,10 +102,10 @@ func CmdBTCDelegations() *cobra.Command {
 	return cmd
 }
 
-func CmdBTCValidatorPowerAtHeight() *cobra.Command {
+func CmdFinalityProviderPowerAtHeight() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-validator-power-at-height [val_btc_pk_hex] [height]",
-		Short: "get the voting power of a given BTC validator at a given height",
+		Use:   "finality-provider-power-at-height [fp_btc_pk_hex] [height]",
+		Short: "get the voting power of a given finality provider at a given height",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -116,9 +116,9 @@ func CmdBTCValidatorPowerAtHeight() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			res, err := queryClient.BTCValidatorPowerAtHeight(cmd.Context(), &types.QueryBTCValidatorPowerAtHeightRequest{
-				ValBtcPkHex: args[0],
-				Height:      height,
+			res, err := queryClient.FinalityProviderPowerAtHeight(cmd.Context(), &types.QueryFinalityProviderPowerAtHeightRequest{
+				FpBtcPkHex: args[0],
+				Height:     height,
 			})
 			if err != nil {
 				return err
@@ -136,7 +136,7 @@ func CmdBTCValidatorPowerAtHeight() *cobra.Command {
 func CmdActivatedHeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "activated-height",
-		Short: "get activated height, i.e., the first height where there exists 1 BTC validator with voting power",
+		Short: "get activated height, i.e., the first height where there exists 1 finality provider with voting power",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -157,10 +157,10 @@ func CmdActivatedHeight() *cobra.Command {
 	return cmd
 }
 
-func CmdBTCValidatorsAtHeight() *cobra.Command {
+func CmdFinalityProvidersAtHeight() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-validators-at-height [height]",
-		Short: "retrieve all BTC validators at a given babylon height",
+		Use:   "finality-providers-at-height [height]",
+		Short: "retrieve all finality providers at a given babylon height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -177,7 +177,7 @@ func CmdBTCValidatorsAtHeight() *cobra.Command {
 				return err
 			}
 
-			res, err := queryClient.ActiveBTCValidatorsAtHeight(cmd.Context(), &types.QueryActiveBTCValidatorsAtHeightRequest{
+			res, err := queryClient.ActiveFinalityProvidersAtHeight(cmd.Context(), &types.QueryActiveFinalityProvidersAtHeightRequest{
 				Height:     height,
 				Pagination: pageReq,
 			})
@@ -190,15 +190,15 @@ func CmdBTCValidatorsAtHeight() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "btc-validators-at-height")
+	flags.AddPaginationFlagsToCmd(cmd, "finality-providers-at-height")
 
 	return cmd
 }
 
-func CmdBTCValidatorDelegations() *cobra.Command {
+func CmdFinalityProviderDelegations() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "btc-validator-delegations [btc_val_pk_hex]",
-		Short: "retrieve all delegations under a given BTC validator",
+		Use:   "finality-provider-delegations [fp_pk_hex]",
+		Short: "retrieve all delegations under a given finality provider",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -210,9 +210,9 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 				return err
 			}
 
-			res, err := queryClient.BTCValidatorDelegations(cmd.Context(), &types.QueryBTCValidatorDelegationsRequest{
-				ValBtcPkHex: args[0],
-				Pagination:  pageReq,
+			res, err := queryClient.FinalityProviderDelegations(cmd.Context(), &types.QueryFinalityProviderDelegationsRequest{
+				FpBtcPkHex: args[0],
+				Pagination: pageReq,
 			})
 			if err != nil {
 				return err
@@ -223,7 +223,7 @@ func CmdBTCValidatorDelegations() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "btc-validator-delegations")
+	flags.AddPaginationFlagsToCmd(cmd, "finality-provider-delegations")
 
 	return cmd
 }

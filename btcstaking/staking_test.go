@@ -20,41 +20,41 @@ import (
 
 // StakingScriptData is a struct that holds data parsed from staking script
 type StakingScriptData struct {
-	StakerKey    *btcec.PublicKey
-	ValidatorKey *btcec.PublicKey
-	CovenantKey  *btcec.PublicKey
-	StakingTime  uint16
+	StakerKey           *btcec.PublicKey
+	FinalityProviderKey *btcec.PublicKey
+	CovenantKey         *btcec.PublicKey
+	StakingTime         uint16
 }
 
 func NewStakingScriptData(
 	stakerKey,
-	validatorKey,
+	fpKey,
 	covenantKey *btcec.PublicKey,
 	stakingTime uint16) (*StakingScriptData, error) {
 
-	if stakerKey == nil || validatorKey == nil || covenantKey == nil {
-		return nil, fmt.Errorf("staker, validator and covenant keys cannot be nil")
+	if stakerKey == nil || fpKey == nil || covenantKey == nil {
+		return nil, fmt.Errorf("staker, finality provider and covenant keys cannot be nil")
 	}
 
 	return &StakingScriptData{
-		StakerKey:    stakerKey,
-		ValidatorKey: validatorKey,
-		CovenantKey:  covenantKey,
-		StakingTime:  stakingTime,
+		StakerKey:           stakerKey,
+		FinalityProviderKey: fpKey,
+		CovenantKey:         covenantKey,
+		StakingTime:         stakingTime,
 	}, nil
 }
 
 func genValidStakingScriptData(_ *testing.T, r *rand.Rand) *StakingScriptData {
 	stakerPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
-	validatorPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
+	fpPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	covenantPrivKeyBytes := datagen.GenRandomByteArray(r, 32)
 	stakingTime := uint16(r.Intn(math.MaxUint16))
 
 	_, stakerPublicKey := btcec.PrivKeyFromBytes(stakerPrivKeyBytes)
-	_, validatorPublicKey := btcec.PrivKeyFromBytes(validatorPrivKeyBytes)
+	_, fpPublicKey := btcec.PrivKeyFromBytes(fpPrivKeyBytes)
 	_, covenantPublicKey := btcec.PrivKeyFromBytes(covenantPrivKeyBytes)
 
-	sd, _ := NewStakingScriptData(stakerPublicKey, validatorPublicKey, covenantPublicKey, stakingTime)
+	sd, _ := NewStakingScriptData(stakerPublicKey, fpPublicKey, covenantPublicKey, stakingTime)
 
 	return sd
 }
@@ -81,7 +81,7 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 			if i == stakingOutputIdx {
 				info, err := btcstaking.BuildStakingInfo(
 					sd.StakerKey,
-					[]*btcec.PublicKey{sd.ValidatorKey},
+					[]*btcec.PublicKey{sd.FinalityProviderKey},
 					[]*btcec.PublicKey{sd.CovenantKey},
 					1,
 					sd.StakingTime,

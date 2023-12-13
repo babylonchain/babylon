@@ -16,9 +16,9 @@ service Query {
     option (google.api.http).get = "/babylon/finality/v1/params";
   }
 
-  // ListPublicRandomness is a range query for public randomness of a given BTC validator
+  // ListPublicRandomness is a range query for public randomness of a given finality provider
   rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
-    option (google.api.http).get = "/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/public_randomness_list";
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/public_randomness_list";
   }
 
   // Block queries a block at a given height
@@ -31,14 +31,14 @@ service Query {
     option (google.api.http).get = "/babylon/finality/v1/blocks";
   }
 
-  // VotesAtHeight queries BTC validators who have signed the block at given height.
+  // VotesAtHeight queries finality providers who have signed the block at given height.
   rpc VotesAtHeight(QueryVotesAtHeightRequest) returns (QueryVotesAtHeightResponse) {
     option (google.api.http).get = "/babylon/finality/v1/votes/{height}";
   }
 
   // Evidence queries the first evidence which can be used for extracting the BTC SK
   rpc Evidence(QueryEvidenceRequest) returns (QueryEvidenceResponse) {
-    option (google.api.http).get = "/babylon/finality/v1/btc_validators/{val_btc_pk_hex}/evidence";
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/evidence";
   }
 
   // ListEvidences queries is a range query for evidences
@@ -59,8 +59,8 @@ message QueryParamsResponse {
 // QueryListPublicRandomnessRequest is the request type for the
 // Query/ListPublicRandomness RPC method.
 message QueryListPublicRandomnessRequest {
-  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the BTC validator
-  string val_btc_pk_hex = 1;
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
 
   // pagination defines an optional pagination for the request.
   cosmos.base.query.v1beta1.PageRequest pagination = 2;
@@ -70,7 +70,7 @@ message QueryListPublicRandomnessRequest {
 // Query/ListPublicRandomness RPC method.
 message QueryListPublicRandomnessResponse {
   // pub_rand_map is the map where the key is the height and the value
-  // is the public randomness at this height for the given BTC validator
+  // is the public randomness at this height for the given finality provider
   map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
 
   // pagination defines the pagination in the response.
@@ -125,14 +125,14 @@ message QueryListBlocksResponse {
 // QueryVotesAtHeightRequest is the request type for the
 // Query/VotesAtHeight RPC method.
 message QueryVotesAtHeightRequest {
-  // height defines at which height to query the BTC validators.
+  // height defines at which height to query the finality providers.
   uint64 height = 1;
 }
 
 // QueryVotesAtHeightResponse is the response type for the
 // Query/VotesAtHeight RPC method.
 message QueryVotesAtHeightResponse {
-  // btc_pk is the Bitcoin secp256k1 PK of BTC validators who have signed the block at given height.
+  // btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
   // the PK follows encoding in BIP-340 spec
   repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey"];
 }
@@ -140,9 +140,9 @@ message QueryVotesAtHeightResponse {
 // QueryEvidenceRequest is the request type for the
 // Query/Evidence RPC method.
 message QueryEvidenceRequest {
-  // val_btc_pk_hex is the hex str of Bitcoin secp256k1 PK
-  // (in BIP340 format) of the BTC validator
-  string val_btc_pk_hex = 1;
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK
+  // (in BIP340 format) of the finality provider
+  string fp_btc_pk_hex = 1;
 }
 
 // QueryEvidenceResponse is the response type for the

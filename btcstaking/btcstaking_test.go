@@ -20,7 +20,7 @@ import (
 
 type TestScenario struct {
 	StakerKey            *btcec.PrivateKey
-	ValidatorKeys        []*btcec.PrivateKey
+	FinalityProviderKeys []*btcec.PrivateKey
 	CovenantKeys         []*btcec.PrivateKey
 	RequiredCovenantSigs uint32
 	StakingAmount        btcutil.Amount
@@ -30,7 +30,7 @@ type TestScenario struct {
 func GenerateTestScenario(
 	r *rand.Rand,
 	t *testing.T,
-	numValidatorKeys uint32,
+	numFinalityProviderKeys uint32,
 	numCovenantKeys uint32,
 	requiredCovenantSigs uint32,
 	stakingAmount btcutil.Amount,
@@ -39,12 +39,12 @@ func GenerateTestScenario(
 	stakerPrivKey, err := btcec.NewPrivateKey()
 	require.NoError(t, err)
 
-	validatorKeys := make([]*btcec.PrivateKey, numValidatorKeys)
-	for i := uint32(0); i < numValidatorKeys; i++ {
+	finalityProviderKeys := make([]*btcec.PrivateKey, numFinalityProviderKeys)
+	for i := uint32(0); i < numFinalityProviderKeys; i++ {
 		covenantPrivKey, err := btcec.NewPrivateKey()
 		require.NoError(t, err)
 
-		validatorKeys[i] = covenantPrivKey
+		finalityProviderKeys[i] = covenantPrivKey
 	}
 
 	covenantKeys := make([]*btcec.PrivateKey, numCovenantKeys)
@@ -58,7 +58,7 @@ func GenerateTestScenario(
 
 	return &TestScenario{
 		StakerKey:            stakerPrivKey,
-		ValidatorKeys:        validatorKeys,
+		FinalityProviderKeys: finalityProviderKeys,
 		CovenantKeys:         covenantKeys,
 		RequiredCovenantSigs: requiredCovenantSigs,
 		StakingAmount:        stakingAmount,
@@ -76,14 +76,14 @@ func (t *TestScenario) CovenantPublicKeys() []*btcec.PublicKey {
 	return covenantPubKeys
 }
 
-func (t *TestScenario) ValidatorPublicKeys() []*btcec.PublicKey {
-	validatorPubKeys := make([]*btcec.PublicKey, len(t.ValidatorKeys))
+func (t *TestScenario) FinalityProviderPublicKeys() []*btcec.PublicKey {
+	finalityProviderPubKeys := make([]*btcec.PublicKey, len(t.FinalityProviderKeys))
 
-	for i, validatorKey := range t.ValidatorKeys {
-		validatorPubKeys[i] = validatorKey.PubKey()
+	for i, fpKey := range t.FinalityProviderKeys {
+		finalityProviderPubKeys[i] = fpKey.PubKey()
 	}
 
-	return validatorPubKeys
+	return finalityProviderPubKeys
 }
 
 func TestSpendingTimeLockPath(t *testing.T) {
@@ -100,7 +100,7 @@ func TestSpendingTimeLockPath(t *testing.T) {
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		scenario.StakerKey.PubKey(),
-		scenario.ValidatorPublicKeys(),
+		scenario.FinalityProviderPublicKeys(),
 		scenario.CovenantPublicKeys(),
 		scenario.RequiredCovenantSigs,
 		scenario.StakingTime,
@@ -238,7 +238,7 @@ func TestSpendingUnbondingPathCovenant35MultiSig(t *testing.T) {
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		scenario.StakerKey.PubKey(),
-		scenario.ValidatorPublicKeys(),
+		scenario.FinalityProviderPublicKeys(),
 		scenario.CovenantPublicKeys(),
 		scenario.RequiredCovenantSigs,
 		scenario.StakingTime,
@@ -343,7 +343,7 @@ func TestSpendingUnbondingPathSingleKeyCovenant(t *testing.T) {
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		scenario.StakerKey.PubKey(),
-		scenario.ValidatorPublicKeys(),
+		scenario.FinalityProviderPublicKeys(),
 		scenario.CovenantPublicKeys(),
 		scenario.RequiredCovenantSigs,
 		scenario.StakingTime,
@@ -415,7 +415,7 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		scenario.StakerKey.PubKey(),
-		scenario.ValidatorPublicKeys(),
+		scenario.FinalityProviderPublicKeys(),
 		scenario.CovenantPublicKeys(),
 		scenario.RequiredCovenantSigs,
 		scenario.StakingTime,
@@ -438,7 +438,7 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	si, err := stakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
 
-	// generate staker signature, covenant signatures, and validator signature
+	// generate staker signature, covenant signatures, and finality provider signature
 	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
 		spendStakeTx,
 		stakingInfo.StakingOutput,
@@ -453,23 +453,23 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	validatorSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+	fpSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
 		spendStakeTx,
 		stakingInfo.StakingOutput,
-		scenario.ValidatorKeys[0],
+		scenario.FinalityProviderKeys[0],
 		si.RevealedLeaf,
 	)
 	require.NoError(t, err)
 
 	witness, err := si.CreateSlashingPathWitness(
 		covenantSigantures,
-		[]*schnorr.Signature{validatorSig},
+		[]*schnorr.Signature{fpSig},
 		stakerSig,
 	)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 
-	// now as we have validator signature execution should succeed
+	// now as we have finality provider signature execution should succeed
 	prevOutputFetcher := stakingInfo.GetOutputFetcher()
 	newEngine := func() (*txscript.Engine, error) {
 		return txscript.NewEngine(
@@ -482,10 +482,10 @@ func TestSpendingSlashingPathCovenant35MultiSig(t *testing.T) {
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }
 
-func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) {
+func TestSpendingSlashingPathCovenant35MultiSigFinalityProviderRestaking(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
-	// we have 3 out of 5 covenant committee, and we are restaking to 2 validators
+	// we have 3 out of 5 covenant committee, and we are restaking to 2 finality providers
 	scenario := GenerateTestScenario(
 		r,
 		t,
@@ -498,7 +498,7 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		scenario.StakerKey.PubKey(),
-		scenario.ValidatorPublicKeys(),
+		scenario.FinalityProviderPublicKeys(),
 		scenario.CovenantPublicKeys(),
 		scenario.RequiredCovenantSigs,
 		scenario.StakingTime,
@@ -521,7 +521,7 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 	si, err := stakingInfo.SlashingPathSpendInfo()
 	require.NoError(t, err)
 
-	// generate staker signature, covenant signatures, and validator signature
+	// generate staker signature, covenant signatures, and finality provider signature
 	stakerSig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
 		spendStakeTx,
 		stakingInfo.StakingOutput,
@@ -541,19 +541,19 @@ func TestSpendingSlashingPathCovenant35MultiSigValidatorRestaking(t *testing.T) 
 	covenantSigantures[0] = nil
 	covenantSigantures[1] = nil
 
-	// only use one of the validator signatures
-	// script should still be valid as we require only one validator signature
+	// only use one of the finality provider signatures
+	// script should still be valid as we require only one finality provider signature
 	// to be present
-	validatorsSignatures := GenerateSignatures(
+	fpSignatures := GenerateSignatures(
 		t,
-		scenario.ValidatorKeys,
+		scenario.FinalityProviderKeys,
 		spendStakeTx,
 		stakingInfo.StakingOutput,
 		si.RevealedLeaf,
 	)
-	validatorsSignatures[0] = nil
+	fpSignatures[0] = nil
 
-	witness, err := si.CreateSlashingPathWitness(covenantSigantures, validatorsSignatures, stakerSig)
+	witness, err := si.CreateSlashingPathWitness(covenantSigantures, fpSignatures, stakerSig)
 	require.NoError(t, err)
 	spendStakeTx.TxIn[0].Witness = witness
 

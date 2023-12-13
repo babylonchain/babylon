@@ -41,7 +41,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func CmdVotesAtHeight() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "votes-at-height [height]",
-		Short: "retrieve all BTC val pks who voted at requested babylon height",
+		Short: "retrieve all finality provider pks who voted at requested babylon height",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -69,8 +69,8 @@ func CmdVotesAtHeight() *cobra.Command {
 
 func CmdListPublicRandomness() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "list-public-randomness [val_btc_pk_hex]",
-		Short: "list public randomness committed by a given BTC validator",
+		Use:   "list-public-randomness [fp_btc_pk_hex]",
+		Short: "list public randomness committed by a given finality provider",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -83,8 +83,8 @@ func CmdListPublicRandomness() *cobra.Command {
 			}
 
 			res, err := queryClient.ListPublicRandomness(cmd.Context(), &types.QueryListPublicRandomnessRequest{
-				ValBtcPkHex: args[0],
-				Pagination:  pageReq,
+				FpBtcPkHex: args[0],
+				Pagination: pageReq,
 			})
 			if err != nil {
 				return err

@@ -26,81 +26,81 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	// get value of w
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	// filter out all BTC validators with positive voting power
-	activeBTCVals := []*types.BTCValidatorWithMeta{}
-	btcValIter := k.btcValidatorStore(ctx).Iterator(nil, nil)
-	for ; btcValIter.Valid(); btcValIter.Next() {
-		valBTCPKBytes := btcValIter.Key()
-		valBTCPK, err := bbn.NewBIP340PubKey(valBTCPKBytes)
+	// filter out all finality providers with positive voting power
+	activeFps := []*types.FinalityProviderWithMeta{}
+	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
+	for ; fpIter.Valid(); fpIter.Next() {
+		fpBTCPKBytes := fpIter.Key()
+		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
 		if err != nil {
-			// failed to unmarshal BTC validator PK in KVStore is a programming error
+			// failed to unmarshal finality provider PK in KVStore is a programming error
 			panic(err)
 		}
-		btcVal, err := k.GetBTCValidator(ctx, valBTCPKBytes)
+		fp, err := k.GetFinalityProvider(ctx, fpBTCPKBytes)
 		if err != nil {
-			// failed to get a BTC validator with voting power is a programming error
+			// failed to get a finality provider with voting power is a programming error
 			panic(err)
 		}
-		if btcVal.IsSlashed() {
-			// slashed BTC validator is removed from BTC validator set
+		if fp.IsSlashed() {
+			// slashed finality provider is removed from finality provider set
 			continue
 		}
 
-		valPower := uint64(0)
+		fpPower := uint64(0)
 
-		// iterate all BTC delegations under this validator
-		// to calculate this validator's total voting power
-		btcDelIter := k.btcDelegatorStore(ctx, valBTCPK).Iterator(nil, nil)
+		// iterate all BTC delegations under this finality provider
+		// to calculate this finality provider's total voting power
+		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
 			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
 			if err != nil {
 				panic(err) // only programming error is possible
 			}
-			btcDels, err := k.getBTCDelegatorDelegations(ctx, valBTCPK, delBTCPK)
+			btcDels, err := k.getBTCDelegatorDelegations(ctx, fpBTCPK, delBTCPK)
 			if err != nil {
 				panic(err) // only programming error is possible
 			}
-			valPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
+			fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
 		}
 		btcDelIter.Close()
 
-		if valPower > 0 {
-			activeBTCVals = append(activeBTCVals, &types.BTCValidatorWithMeta{
-				BtcPk:       valBTCPK,
-				VotingPower: valPower,
+		if fpPower > 0 {
+			activeFps = append(activeFps, &types.FinalityProviderWithMeta{
+				BtcPk:       fpBTCPK,
+				VotingPower: fpPower,
 				// other fields do not matter
 			})
 		}
 	}
-	btcValIter.Close()
+	fpIter.Close()
 
-	// return directly if there is no active BTC validator
-	if len(activeBTCVals) == 0 {
+	// return directly if there is no active finality provider
+	if len(activeFps) == 0 {
 		return
 	}
 
-	// filter out top `MaxActiveBtcValidators` active validators in terms of voting power
-	activeBTCVals = types.FilterTopNBTCValidators(activeBTCVals, k.GetParams(ctx).MaxActiveBtcValidators)
+	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
+	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
 
-	// set voting power for each active BTC validators
-	for _, btcVal := range activeBTCVals {
-		k.SetVotingPower(ctx, btcVal.BtcPk.MustMarshal(), babylonTipHeight, btcVal.VotingPower)
+	// set voting power for each active finality providers
+	for _, fp := range activeFps {
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
 	}
 }
 
-// SetVotingPower sets the voting power of a given BTC validator at a given Babylon height
-func (k Keeper) SetVotingPower(ctx context.Context, valBTCPK []byte, height uint64, power uint64) {
+// SetVotingPower sets the voting power of a given finality provider at a given Babylon height
+func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerStore(ctx, height)
-	store.Set(valBTCPK, sdk.Uint64ToBigEndian(power))
+	store.Set(fpBTCPK, sdk.Uint64ToBigEndian(power))
 }
 
-// GetVotingPower gets the voting power of a given BTC validator at a given Babylon height
-func (k Keeper) GetVotingPower(ctx context.Context, valBTCPK []byte, height uint64) uint64 {
-	if !k.HasBTCValidator(ctx, valBTCPK) {
+// GetVotingPower gets the voting power of a given finality provider at a given Babylon height
+func (k Keeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64 {
+	if !k.HasFinalityProvider(ctx, fpBTCPK) {
 		return 0
 	}
 	store := k.votingPowerStore(ctx, height)
-	powerBytes := store.Get(valBTCPK)
+	powerBytes := store.Get(fpBTCPK)
 	if len(powerBytes) == 0 {
 		return 0
 	}
@@ -115,40 +115,40 @@ func (k Keeper) HasVotingPowerTable(ctx context.Context, height uint64) bool {
 	return iter.Valid()
 }
 
-// GetVotingPowerTable gets the voting power table, i.e., validator set at a given height
+// GetVotingPowerTable gets the voting power table, i.e., finality provider set at a given height
 func (k Keeper) GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64 {
 	store := k.votingPowerStore(ctx, height)
 	iter := store.Iterator(nil, nil)
 	defer iter.Close()
 
-	// if no validator at this height, return nil
+	// if no finality provider at this height, return nil
 	if !iter.Valid() {
 		return nil
 	}
 
-	// get all validators at this height
-	valSet := map[string]uint64{}
+	// get all finality providers at this height
+	fpSet := map[string]uint64{}
 	for ; iter.Valid(); iter.Next() {
-		valBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
+		fpBTCPK, err := bbn.NewBIP340PubKey(iter.Key())
 		if err != nil {
-			// failing to unmarshal validator BTC PK in KVStore is a programming error
+			// failing to unmarshal finality provider BTC PK in KVStore is a programming error
 			panic(fmt.Errorf("%w: %w", bbn.ErrUnmarshal, err))
 		}
-		valSet[valBTCPK.MarshalHex()] = sdk.BigEndianToUint64(iter.Value())
+		fpSet[fpBTCPK.MarshalHex()] = sdk.BigEndianToUint64(iter.Value())
 	}
 
-	return valSet
+	return fpSet
 }
 
 // GetBTCStakingActivatedHeight returns the height when the BTC staking protocol is activated
-// i.e., the first height where a BTC validator has voting power
+// i.e., the first height where a finality provider has voting power
 // Before the BTC staking protocol is activated, we don't index or tally any block
 func (k Keeper) GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error) {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	votingPowerStore := prefix.NewStore(storeAdapter, types.VotingPowerKey)
 	iter := votingPowerStore.Iterator(nil, nil)
 	defer iter.Close()
-	// if the iterator is valid, then there exists a height that has a BTC validator with voting power
+	// if the iterator is valid, then there exists a height that has a finality provider with voting power
 	if iter.Valid() {
 		return sdk.BigEndianToUint64(iter.Key()), nil
 	} else {
@@ -165,7 +165,7 @@ func (k Keeper) IsBTCStakingActivated(ctx context.Context) bool {
 	return iter.Valid()
 }
 
-// votingPowerStore returns the KVStore of the BTC validators' voting power
+// votingPowerStore returns the KVStore of the finality providers' voting power
 // prefix: (VotingPowerKey || Babylon block height)
 // key: Bitcoin secp256k1 PK
 // value: voting power quantified in Satoshi
