@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,8 +15,8 @@ func FuzzEpochs(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelper(t)
-		ctx, keeper := helper.Ctx, helper.EpochingKeeper
+		helper := testhelper.NewHelper(t)
+		ctx, keeper := helper.Ctx, helper.App.EpochingKeeper
 		// ensure that the epoch info is correct at the genesis
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, epoch.EpochNumber, uint64(1))

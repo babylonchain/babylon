@@ -7,8 +7,8 @@ import (
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
@@ -20,8 +20,8 @@ func FuzzSlashedValSet(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		var err error
 
-		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper, stakingKeeper := helper.Ctx, helper.EpochingKeeper, helper.StakingKeeper
+		helper := testhelper.NewHelperWithValSet(t)
+		ctx, keeper, stakingKeeper := helper.Ctx, helper.App.EpochingKeeper, helper.App.StakingKeeper
 		getValSet := keeper.GetValidatorSet(ctx, 1)
 
 		// slash a random subset of validators

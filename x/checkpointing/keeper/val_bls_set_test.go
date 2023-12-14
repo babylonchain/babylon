@@ -8,9 +8,9 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/stretchr/testify/require"
 )
@@ -20,9 +20,9 @@ func FuzzGetValidatorBlsKeySet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		// a genesis validator is generated for setup
-		helper := testepoching.NewHelper(t)
+		helper := testhelper.NewHelper(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
 		types.RegisterQueryServer(queryHelper, ck)

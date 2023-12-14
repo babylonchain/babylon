@@ -1,11 +1,12 @@
 package keeper_test
 
 import (
-	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 )
@@ -15,9 +16,9 @@ func FuzzEpochValSet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper := helper.Ctx, helper.EpochingKeeper
-		valSet, err := helper.StakingKeeper.GetLastValidators(helper.Ctx)
+		helper := testhelper.NewHelperWithValSet(t)
+		ctx, keeper := helper.Ctx, helper.App.EpochingKeeper
+		valSet, err := helper.App.StakingKeeper.GetLastValidators(helper.Ctx)
 		require.NoError(t, err)
 		getValSet := keeper.GetValidatorSet(ctx, 0)
 		require.Equal(t, len(valSet), len(getValSet))

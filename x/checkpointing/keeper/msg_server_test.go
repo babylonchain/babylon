@@ -16,9 +16,9 @@ import (
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
@@ -32,9 +32,9 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
-		helper := testepoching.NewHelper(t)
+		helper := testhelper.NewHelper(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -79,13 +79,13 @@ func FuzzWrappedCreateValidator_InsufficientTokens(f *testing.F) {
 		// ensure all validators (not just validators in the val set) have correct bond status
 		// - the 1st validator is bonded
 		// - all the rest are unbonded since they have zero voting power
-		iterator, err := helper.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
+		iterator, err := helper.App.StakingKeeper.ValidatorsPowerStoreIterator(ctx)
 		require.NoError(t, err)
 		defer iterator.Close()
 		count := 0
 		for ; iterator.Valid(); iterator.Next() {
 			valAddr := sdk.ValAddress(iterator.Value())
-			val, err := helper.StakingKeeper.GetValidator(ctx, valAddr)
+			val, err := helper.App.StakingKeeper.GetValidator(ctx, valAddr)
 			require.NoError(t, err)
 			count++
 			if count == 1 {
@@ -107,9 +107,9 @@ func FuzzWrappedCreateValidator_InsufficientBalance(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
-		helper := testepoching.NewHelper(t)
+		helper := testhelper.NewHelper(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -148,9 +148,9 @@ func FuzzWrappedCreateValidator(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
-		helper := testepoching.NewHelper(t)
+		helper := testhelper.NewHelper(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -214,9 +214,9 @@ func FuzzAddBlsSig_NoError(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 
 		// a genesis validator is generate for setup
-		helper := testepoching.NewHelper(t)
+		helper := testhelper.NewHelper(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -268,9 +268,9 @@ func FuzzAddBlsSig_NotInValSet(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		var err error
 
-		helper := testepoching.NewHelperWithValSet(t)
+		helper := testhelper.NewHelperWithValSet(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -308,9 +308,9 @@ func FuzzAddBlsSig_CkptNotExist(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
+		helper := testhelper.NewHelperWithValSet(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -345,9 +345,9 @@ func FuzzAddBlsSig_WrongAppHash(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		var err error
 
-		helper := testepoching.NewHelperWithValSet(t)
+		helper := testhelper.NewHelperWithValSet(t)
 		ctx := helper.Ctx
-		ek := helper.EpochingKeeper
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 
@@ -390,8 +390,8 @@ func FuzzAddBlsSig_InvalidSignature(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
-		ek := helper.EpochingKeeper
+		helper := testhelper.NewHelperWithValSet(t)
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		msgServer := checkpointingkeeper.NewMsgServerImpl(ck)
 		ctx := helper.Ctx

@@ -1,4 +1,4 @@
-package testepoching
+package helper
 
 import (
 	"github.com/cometbft/cometbft/crypto/merkle"

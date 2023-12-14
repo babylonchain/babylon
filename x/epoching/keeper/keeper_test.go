@@ -5,19 +5,19 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func TestParams(t *testing.T) {
-	helper := testepoching.NewHelper(t)
-	keeper := helper.EpochingKeeper
+	helper := testhelper.NewHelper(t)
+	keeper := helper.App.EpochingKeeper
 	ctx := helper.Ctx
 
 	expParams := types.DefaultParams()
 
 	// check that the empty keeper loads the default
-	resParams := helper.EpochingKeeper.GetParams(ctx)
+	resParams := helper.App.EpochingKeeper.GetParams(ctx)
 	require.True(t, expParams.Equal(resParams))
 
 	// modify a params, save, and retrieve

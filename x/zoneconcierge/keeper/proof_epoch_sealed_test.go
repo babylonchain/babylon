@@ -6,6 +6,7 @@ import (
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
@@ -102,20 +103,84 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 	})
 }
 
-// - TODO: epoch metadata has a valid inclusion proof
 func FuzzProofEpochSealed_Epoch(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		// r := rand.New(rand.NewSource(seed))
+		r := rand.New(rand.NewSource(seed))
+		h := testhelper.NewHelper(t)
+		ek := h.App.EpochingKeeper
+		zck := h.App.ZoneConciergeKeeper
+		var err error
+
+		// chain is at height 1
+
+		// enter the 1st block of a random epoch
+		epochInterval := ek.GetParams(h.Ctx).EpochInterval
+		newEpochs := datagen.RandomInt(r, 10) + 2
+		for i := 0; i < int(newEpochs); i++ {
+			for j := 0; j < int(epochInterval); j++ {
+				h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+				h.NoError(err)
+			}
+		}
+
+		// seal the last epoch at the 2nd block of the current epoch
+		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		h.NoError(err)
+
+		// prove the inclusion of last epoch
+		lastEpochNumber := ek.GetEpoch(h.Ctx).EpochNumber - 1
+		h.NoError(err)
+		lastEpoch, err := ek.GetHistoricalEpoch(h.Ctx, lastEpochNumber)
+		h.NoError(err)
+		proof, err := zck.ProveEpochInfo(lastEpoch)
+		h.NoError(err)
+
+		// verify inclusion proof
+		err = zckeeper.VerifyEpochInfo(lastEpoch, proof)
+		h.NoError(err)
 	})
 }
 
-// - TODO: BLS val set has a valid inclusion proof
 func FuzzProofEpochSealed_ValSet(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
-		// r := rand.New(rand.NewSource(seed))
+		r := rand.New(rand.NewSource(seed))
+		h := testhelper.NewHelperWithValSet(t)
+		ek := h.App.EpochingKeeper
+		ck := h.App.CheckpointingKeeper
+		zck := h.App.ZoneConciergeKeeper
+		var err error
+
+		// chain is at height 1
+
+		// enter the 1st block of a random epoch
+		epochInterval := ek.GetParams(h.Ctx).EpochInterval
+		newEpochs := datagen.RandomInt(r, 10) + 2
+		for i := 0; i < int(newEpochs); i++ {
+			for j := 0; j < int(epochInterval); j++ {
+				h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+				h.NoError(err)
+			}
+		}
+
+		// seal the last epoch at the 2nd block of the current epoch
+		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		h.NoError(err)
+
+		// prove the inclusion of last epoch
+		lastEpochNumber := ek.GetEpoch(h.Ctx).EpochNumber - 1
+		h.NoError(err)
+		lastEpoch, err := ek.GetHistoricalEpoch(h.Ctx, lastEpochNumber)
+		h.NoError(err)
+		lastEpochValSet := ck.GetValidatorBlsKeySet(h.Ctx, lastEpochNumber)
+		proof, err := zck.ProveValSet(lastEpoch)
+		h.NoError(err)
+
+		// verify inclusion proof
+		err = zckeeper.VerifyValSet(lastEpoch, lastEpochValSet, proof)
+		h.NoError(err)
 	})
 }

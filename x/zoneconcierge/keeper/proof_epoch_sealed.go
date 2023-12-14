@@ -29,6 +29,27 @@ func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, 
 	return proof, nil
 }
 
+func VerifyEpochInfo(epoch *epochingtypes.Epoch, proof *tmcrypto.ProofOps) error {
+	// get the Merkle root, i.e., the AppHash of the sealer header
+	root := epoch.SealerHeaderHash
+
+	// Ensure The epoch medatata is committed to the app_hash of the sealer header
+	// NOTE: the proof is generated when sealer header is generated. At that time
+	// sealer header hash is not given to epoch metadata. Thus we need to clear the
+	// sealer header hash when verifying the proof.
+	epochNoSealerHeader := *epoch
+	epochNoSealerHeader.SealerHeaderHash = []byte{}
+	epochBytes, err := epochNoSealerHeader.Marshal()
+	if err != nil {
+		return err
+	}
+	if err := VerifyStore(root, epochingtypes.StoreKey, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof); err != nil {
+		return errorsmod.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %v", err)
+	}
+
+	return nil
+}
+
 func getValSetKey(epochNumber uint64) []byte {
 	valSetKey := checkpointingtypes.ValidatorBlsKeySetPrefix
 	valSetKey = append(valSetKey, sdk.Uint64ToBigEndian(epochNumber)...)
@@ -42,6 +63,18 @@ func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, err
 		return nil, err
 	}
 	return proof, nil
+}
+
+func VerifyValSet(epoch *epochingtypes.Epoch, valSet *checkpointingtypes.ValidatorWithBlsKeySet, proof *tmcrypto.ProofOps) error {
+	valSetBytes, err := valSet.Marshal()
+	if err != nil {
+		return err
+	}
+	if err := VerifyStore(epoch.SealerHeaderHash, checkpointingtypes.StoreKey, getValSetKey(epoch.EpochNumber), valSetBytes, proof); err != nil {
+		return errorsmod.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %v", err)
+	}
+
+	return nil
 }
 
 // ProveEpochSealed proves an epoch has been sealed, i.e.,
@@ -126,7 +159,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	/*
 		Ensure more than 1/3 (in voting power) validators of this epoch have signed (epoch_num || app_hash) in the raw checkpoint
 	*/
-	valSet := checkpointingtypes.ValidatorWithBlsKeySet{ValSet: proof.ValidatorSet}
+	valSet := &checkpointingtypes.ValidatorWithBlsKeySet{ValSet: proof.ValidatorSet}
 	// filter validator set that contributes to the signature
 	signerSet, signerSetPower, err := valSet.FindSubsetWithPowerSum(rawCkpt.Bitmap)
 	if err != nil {
@@ -146,25 +179,14 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return fmt.Errorf("BLS signature does not match the public key")
 	}
 
-	// get the Merkle root, i.e., the AppHash of the sealer header
-	root := epoch.SealerHeaderHash
-
 	// Ensure The epoch medatata is committed to the app_hash of the sealer header
-	epochBytes, err := epoch.Marshal()
-	if err != nil {
+	if err := VerifyEpochInfo(epoch, proof.ProofEpochInfo); err != nil {
 		return err
-	}
-	if err := VerifyStore(root, epochingtypes.StoreKey, getEpochInfoKey(epoch.EpochNumber), epochBytes, proof.ProofEpochInfo); err != nil {
-		return errorsmod.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %v", err)
 	}
 
 	// Ensure The validator set is committed to the app_hash of the sealer header
-	valSetBytes, err := valSet.Marshal()
-	if err != nil {
+	if err := VerifyValSet(epoch, valSet, proof.ProofEpochValSet); err != nil {
 		return err
-	}
-	if err := VerifyStore(root, checkpointingtypes.StoreKey, getValSetKey(epoch.EpochNumber), valSetBytes, proof.ProofEpochValSet); err != nil {
-		return errorsmod.Wrapf(types.ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %v", err)
 	}
 
 	return nil

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,8 +17,8 @@ func FuzzAppHashChain(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		var err error
 
-		helper := testepoching.NewHelper(t)
-		ctx, k := helper.Ctx, helper.EpochingKeeper
+		helper := testhelper.NewHelper(t)
+		ctx, k := helper.Ctx, helper.App.EpochingKeeper
 		// ensure that the epoch info is correct at the genesis
 		epoch := k.GetEpoch(ctx)
 		require.Equal(t, epoch.EpochNumber, uint64(1))

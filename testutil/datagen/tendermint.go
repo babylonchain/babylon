@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"cosmossdk.io/core/header"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,10 +32,22 @@ func GenRandomIBCTMHeader(r *rand.Rand, chainID string, height uint64) *ibctmtyp
 	}
 }
 
+func GenRandomTMHeaderInfo(r *rand.Rand, chainID string, height uint64) *header.Info {
+	tmHeader := GenRandomIBCTMHeader(r, chainID, height)
+	return &header.Info{
+		Height:  tmHeader.Header.Height,
+		Hash:    tmHeader.Header.DataHash,
+		Time:    tmHeader.Header.Time,
+		ChainID: tmHeader.Header.ChainID,
+		AppHash: tmHeader.Header.AppHash,
+	}
+}
+
 func HeaderToHeaderInfo(header *ibctmtypes.Header) *zctypes.HeaderInfo {
 	return &zctypes.HeaderInfo{
 		AppHash: header.Header.AppHash,
 		ChainId: header.Header.ChainID,
+		Time:    header.Header.Time,
 		Height:  uint64(header.Header.Height),
 	}
 }

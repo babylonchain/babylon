@@ -1,36 +1,31 @@
-package testepoching
+package helper
 
 import (
 	"math/rand"
 	"testing"
 
 	"cosmossdk.io/core/header"
+	"cosmossdk.io/math"
+	"github.com/babylonchain/babylon/app"
+	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/babylonchain/babylon/x/epoching/keeper"
+	"github.com/babylonchain/babylon/x/epoching/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-
-	"cosmossdk.io/math"
-	proto "github.com/cosmos/gogoproto/proto"
-	"github.com/stretchr/testify/require"
-
-	appparams "github.com/babylonchain/babylon/app/params"
-
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
+	proto "github.com/cosmos/gogoproto/proto"
+	"github.com/stretchr/testify/require"
 )
 
 type GenesisValidators struct {
@@ -42,12 +37,10 @@ type GenesisValidators struct {
 type Helper struct {
 	t *testing.T
 
-	Ctx            sdk.Context
-	App            *app.BabylonApp
-	EpochingKeeper *keeper.Keeper
-	MsgSrvr        types.MsgServer
-	QueryClient    types.QueryClient
-	StakingKeeper  *stakingkeeper.Keeper
+	Ctx         sdk.Context
+	App         *app.BabylonApp
+	MsgSrvr     types.MsgServer
+	QueryClient types.QueryClient
 
 	GenAccs       []authtypes.GenesisAccount
 	GenValidators *GenesisValidators
@@ -79,10 +72,8 @@ func NewHelper(t *testing.T) *Helper {
 		t,
 		ctx,
 		app,
-		&epochingKeeper,
 		msgSrvr,
 		queryClient,
-		app.StakingKeeper,
 		nil,
 		valSet,
 	}
@@ -120,19 +111,21 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 		t,
 		ctx,
 		app,
-		&epochingKeeper,
 		msgSrvr,
 		queryClient,
-		app.StakingKeeper,
 		GenAccs,
 		valSet,
 	}
 }
 
+func (h *Helper) NoError(err error) {
+	require.NoError(h.t, err)
+}
+
 // GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
 func (h *Helper) GenAndApplyEmptyBlock(r *rand.Rand) (sdk.Context, error) {
 	newHeight := h.App.LastBlockHeight() + 1
-	valSet, err := h.StakingKeeper.GetLastValidators(h.Ctx)
+	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
 	if err != nil {
 		return sdk.Context{}, err
 	}
@@ -184,7 +177,7 @@ func (h *Helper) WrappedDelegate(delegator sdk.AccAddress, val sdk.ValAddress, a
 
 // WrappedDelegateWithPower calls handler to delegate stake for a validator
 func (h *Helper) WrappedDelegateWithPower(delegator sdk.AccAddress, val sdk.ValAddress, power int64) *sdk.Result {
-	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
+	coin := sdk.NewCoin(appparams.DefaultBondDenom, h.App.StakingKeeper.TokensFromConsensusPower(h.Ctx, power))
 	msg := stakingtypes.NewMsgDelegate(delegator.String(), val.String(), coin)
 	wmsg := types.NewMsgWrappedDelegate(msg)
 	return h.Handle(func(ctx sdk.Context) (proto.Message, error) {
@@ -236,7 +229,7 @@ func (h *Helper) Handle(action func(sdk.Context) (proto.Message, error)) *sdk.Re
 // CheckValidator asserts that a validor exists and has a given status (if status!="")
 // and if has a right jailed flag.
 func (h *Helper) CheckValidator(addr sdk.ValAddress, status stakingtypes.BondStatus, jailed bool) stakingtypes.Validator {
-	v, err := h.StakingKeeper.GetValidator(h.Ctx, addr)
+	v, err := h.App.StakingKeeper.GetValidator(h.Ctx, addr)
 	require.NoError(h.t, err)
 	require.Equal(h.t, jailed, v.Jailed, "wrong Jalied status")
 	if status >= 0 {
@@ -247,7 +240,7 @@ func (h *Helper) CheckValidator(addr sdk.ValAddress, status stakingtypes.BondSta
 
 // CheckDelegator asserts that a delegator exists
 func (h *Helper) CheckDelegator(delegator sdk.AccAddress, val sdk.ValAddress, found bool) {
-	_, ok := h.StakingKeeper.GetDelegation(h.Ctx, delegator, val)
+	_, ok := h.App.StakingKeeper.GetDelegation(h.Ctx, delegator, val)
 	require.Equal(h.t, ok, found)
 }
 

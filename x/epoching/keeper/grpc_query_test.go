@@ -8,7 +8,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
@@ -37,8 +37,8 @@ func FuzzParamsQuery(f *testing.F) {
 			params.EpochInterval = uint64(r.Int())
 		}
 
-		helper := testepoching.NewHelper(t)
-		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
+		helper := testhelper.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.App.EpochingKeeper, helper.QueryClient
 		// if setParamsFlag == 0, set params
 		setParamsFlag := r.Intn(2)
 		if setParamsFlag == 0 {
@@ -70,8 +70,8 @@ func FuzzCurrentEpoch(f *testing.F) {
 
 		increment := datagen.RandomInt(r, 100) + 1
 
-		helper := testepoching.NewHelper(t)
-		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
+		helper := testhelper.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.App.EpochingKeeper, helper.QueryClient
 
 		epochInterval := keeper.GetParams(ctx).EpochInterval
 		// starting from epoch 1
@@ -104,8 +104,8 @@ func FuzzEpochsInfo(f *testing.F) {
 		numEpochs := datagen.RandomInt(r, 10) + 2
 		limit := datagen.RandomInt(r, 10) + 1
 
-		helper := testepoching.NewHelper(t)
-		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
+		helper := testhelper.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.App.EpochingKeeper, helper.QueryClient
 
 		// enque the 1st block of the numEpochs'th epoch
 		epochInterval := keeper.GetParams(ctx).EpochInterval
@@ -145,8 +145,8 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 		limit := uint64(r.Int()%100) + 1
 
 		txidsMap := map[string]bool{}
-		helper := testepoching.NewHelper(t)
-		ctx, keeper, queryClient := helper.Ctx, helper.EpochingKeeper, helper.QueryClient
+		helper := testhelper.NewHelper(t)
+		ctx, keeper, queryClient := helper.Ctx, helper.App.EpochingKeeper, helper.QueryClient
 		// enque a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {
 			txid := datagen.GenRandomByteArray(r, 32)
@@ -193,7 +193,7 @@ func FuzzEpochValSetQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
+		helper := testhelper.NewHelperWithValSet(t)
 		ctx, queryClient := helper.Ctx, helper.QueryClient
 
 		limit := uint64(r.Int() % 100)

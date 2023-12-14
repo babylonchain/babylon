@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	storetypes "cosmossdk.io/store/types"
 	"fmt"
+
+	storetypes "cosmossdk.io/store/types"
 
 	"cosmossdk.io/store/rootmulti"
 	"github.com/cometbft/cometbft/crypto/merkle"
@@ -51,5 +52,13 @@ func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, p
 	keypath = keypath.AppendKey(key, merkle.KeyEncodingURL)
 	keypathStr := keypath.String()
 
-	return prt.VerifyAbsence(proof, root, keypathStr) // TODO: verify value rather than just existence
+	// NOTE: the proof can specify verification rules, either only verifying the
+	// top Merkle root w.r.t. all KV pairs, or verifying every layer of Merkle root
+	// TODO: investigate how the verification rules are chosen when generating the
+	// proof
+	if err := prt.VerifyValue(proof, root, keypathStr, value); err != nil {
+		return prt.VerifyAbsence(proof, root, keypathStr)
+	}
+
+	return nil
 }

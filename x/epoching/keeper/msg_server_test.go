@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
@@ -14,7 +14,7 @@ import (
 // TODO (fuzz tests): replace the following tests with fuzz ones
 func TestMsgWrappedDelegate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	helper := testepoching.NewHelper(t)
+	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx, err := helper.GenAndApplyEmptyBlock(r)
@@ -44,7 +44,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 
 func TestMsgWrappedUndelegate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	helper := testepoching.NewHelper(t)
+	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx, err := helper.GenAndApplyEmptyBlock(r)
@@ -74,7 +74,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 
 func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	helper := testepoching.NewHelper(t)
+	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx, err := helper.GenAndApplyEmptyBlock(r)
@@ -105,7 +105,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 
 func TestMsgWrappedCancelUnbondingDelegation(t *testing.T) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-	helper := testepoching.NewHelper(t)
+	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
 	ctx, err := helper.GenAndApplyEmptyBlock(r)
