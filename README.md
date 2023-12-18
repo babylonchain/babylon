@@ -35,7 +35,7 @@ For the most up-to-date documentation please visit [docs.babylonchain.io](https:
 
 ## Joining the testnet
 
-Please follow the instructions on the [Joining the Testnet documentation page](https://docs.babylonchain.io/docs/testnet/overview).
+Please follow the instructions on the [Joining the Testnet documentation page](https://docs.babylonchain.io/docs/user-guides/btc-timestamping-testnet/overview).
 
 ## Contributing
 
