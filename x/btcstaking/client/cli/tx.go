@@ -43,6 +43,7 @@ func GetTxCmd() *cobra.Command {
 		NewCreateBTCDelegationCmd(),
 		NewAddCovenantSigsCmd(),
 		NewBTCUndelegateCmd(),
+		NewSelectiveSlashingEvidenceCmd(),
 	)
 
 	return cmd
@@ -354,6 +355,44 @@ func NewBTCUndelegateCmd() *cobra.Command {
 				Signer:         clientCtx.FromAddress.String(),
 				StakingTxHash:  stakingTxHash,
 				UnbondingTxSig: unbondingTxSig,
+			}
+
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func NewSelectiveSlashingEvidenceCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "selective-slashing-evidence [staking_tx_hash] [recovered_fp_btc_sk]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Add the recovered BTC SK of a finality provider that launched selective slashing offence.",
+		Long: strings.TrimSpace(
+			`Add the recovered BTC SK of a finality provider that launched selective slashing offence. The SK is recovered from a pair of Schnorr/adaptor signatures`, // TODO: example
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			// get staking tx hash
+			stakingTxHash := args[0]
+
+			// get delegator signature for unbonding tx
+			fpSKBytes, err := hex.DecodeString(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.MsgSelectiveSlashingEvidence{
+				Signer:           clientCtx.FromAddress.String(),
+				StakingTxHash:    stakingTxHash,
+				RecoveredFpBtcSk: fpSKBytes,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)

@@ -7,17 +7,15 @@ import (
 	sdkmath "cosmossdk.io/math"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/babylonchain/babylon/btcstaking"
+	bbn "github.com/babylonchain/babylon/types"
+	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/babylonchain/babylon/btcstaking"
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
-	bbn "github.com/babylonchain/babylon/types"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 type msgServer struct {
@@ -358,7 +356,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	return &types.MsgCreateBTCDelegationResponse{}, nil
 }
 
-// AddCovenantSig adds a signature from covenant to a BTC delegation
+// AddCovenantSig adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -403,10 +401,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	err = verifySlashingTxAdaptorSigs(
+	err = btcDel.SlashingTx.EncVerifyAdaptorSignatures(
 		stakingInfo.StakingOutput,
 		slashingSpendInfo,
-		btcDel.SlashingTx,
 		req.Pk,
 		btcDel.FpBtcPkList,
 		req.SlashingTxSigs,
@@ -465,10 +462,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	err = verifySlashingTxAdaptorSigs(
+	err = btcDel.BtcUndelegation.SlashingTx.EncVerifyAdaptorSignatures(
 		unbondingOutput,
 		unbondingSlashingSpendInfo,
-		btcDel.BtcUndelegation.SlashingTx,
 		req.Pk,
 		btcDel.FpBtcPkList,
 		req.SlashingUnbondingTxSigs,
@@ -497,7 +493,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
 
-// AddCovenantSig adds a signature from covenant to a BTC delegation
+// BTCUndelegate adds a signature on the unbonding tx from the BTC delegator
+// this effectively proves that the BTC delegator wants to unbond and Babylon
+// will consider its BTC delegation unbonded
 func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndelegate) (*types.MsgBTCUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
@@ -571,38 +569,63 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	return &types.MsgBTCUndelegateResponse{}, nil
 }
 
-// verifySlashingTxAdaptorSigs verifies a list of adaptor signatures, each
-// encrypted by a restaked finality provider PK and signed by the given PK, w.r.t. the
-// given funding output (in staking or unbonding tx), slashing spend info and
-// slashing tx
-func verifySlashingTxAdaptorSigs(
-	fundingOut *wire.TxOut,
-	slashingSpendInfo *btcstaking.SpendInfo,
-	slashingTx *types.BTCSlashingTx,
-	pk *bbn.BIP340PubKey,
-	fpPKs []bbn.BIP340PubKey,
-	sigs [][]byte,
-) error {
-	for i, sig := range sigs {
-		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)
-		if err != nil {
-			return err
-		}
-		encKey, err := asig.NewEncryptionKeyFromBTCPK(fpPKs[i].MustToBTCPK())
-		if err != nil {
-			return err
-		}
-		err = slashingTx.EncVerifyAdaptorSignature(
-			fundingOut.PkScript,
-			fundingOut.Value,
-			slashingSpendInfo.GetPkScriptPath(),
-			pk.MustToBTCPK(),
-			encKey,
-			adaptorSig,
-		)
-		if err != nil {
-			return types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
-		}
+// SelectiveSlashingEvidence handles the evidence that a finality provider has
+// selectively slashed a BTC delegation
+func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.MsgSelectiveSlashingEvidence) (*types.MsgSelectiveSlashingEvidenceResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	bsParams := ms.GetParams(ctx)
+
+	// ensure BTC delegation exists
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	if err != nil {
+		return nil, err
 	}
-	return nil
+	// ensure the BTC delegation is active, or its BTC undelegation receives an
+	// unbonding signature from the staker
+	btcTip := ms.btclcKeeper.GetTipInfo(ctx)
+	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	covQuorum := bsParams.CovenantQuorum
+	if btcDel.GetStatus(btcTip.Height, wValue, covQuorum) != types.BTCDelegationStatus_ACTIVE && !btcDel.IsUnbondedEarly() {
+		return nil, types.ErrBTCDelegationNotFound.Wrap("a BTC delegation that is not active or unbonding early cannot be slashed")
+	}
+
+	// decode the finality provider's BTC SK/PK
+	fpSK, fpPK := btcec.PrivKeyFromBytes(req.RecoveredFpBtcSk)
+	fpBTCPK := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+	// ensure the BTC delegation is staked to the given finality provider
+	fpIdx := btcDel.GetFpIdx(fpBTCPK)
+	if fpIdx == -1 {
+		return nil, types.ErrFpNotFound.Wrapf("BTC delegation is not staked to the finality provider")
+	}
+
+	// ensure the finality provider exists and is not slashed
+	fp, err := ms.GetFinalityProvider(ctx, fpBTCPK.MustMarshal())
+	if err != nil {
+		panic(types.ErrFpNotFound.Wrapf("failing to find the finality provider with BTC delegations"))
+	}
+	if fp.IsSlashed() {
+		return nil, types.ErrFpAlreadySlashed
+	}
+
+	// at this point, the finality provider must have done selective slashing and must be
+	// adversarial
+
+	// slash the finality provider now
+	if err := ms.SlashFinalityProvider(ctx, fpBTCPK.MustMarshal()); err != nil {
+		panic(err) // failed to slash the finality provider, must be programming error
+	}
+
+	// emit selective slashing event
+	evidence := &types.SelectiveSlashingEvidence{
+		StakingTxHash:    req.StakingTxHash,
+		FpBtcPk:          fpBTCPK,
+		RecoveredFpBtcSk: fpSK.Serialize(),
+	}
+	event := &types.EventSelectiveSlashing{Evidence: evidence}
+	if err := sdk.UnwrapSDKContext(ctx).EventManager().EmitTypedEvent(event); err != nil {
+		panic(fmt.Errorf("failed to emit EventSelectiveSlashing event: %w", err))
+	}
+
+	return &types.MsgSelectiveSlashingEvidenceResponse{}, nil
 }

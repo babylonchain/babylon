@@ -7,15 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/core/header"
 	sdkmath "cosmossdk.io/math"
 
-	"github.com/btcsuite/btcd/btcec/v2"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
-
+	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -23,6 +18,12 @@ import (
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/keeper"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 type Helper struct {
@@ -38,6 +39,7 @@ type Helper struct {
 
 func NewHelper(t *testing.T, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper) *Helper {
 	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	return &Helper{
@@ -295,7 +297,7 @@ func (h *Helper) CreateCovenantSigs(
 	*/
 	actualDelWithCovenantSigs, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 	h.NoError(err)
-	require.Equal(h.t, len(actualDelWithCovenantSigs.CovenantSigs), int(bsParams.CovenantQuorum)) // TODO: fix
+	require.Equal(h.t, len(actualDelWithCovenantSigs.CovenantSigs), int(bsParams.CovenantQuorum))
 	require.True(h.t, actualDelWithCovenantSigs.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 	require.NotNil(h.t, actualDelWithCovenantSigs.BtcUndelegation)
@@ -494,6 +496,146 @@ func FuzzBTCUndelegate(f *testing.F) {
 		h.NoError(err)
 		status = actualDel.GetStatus(btcTip, wValue, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_UNBONDED, status)
+	})
+}
+
+func FuzzSelectiveSlashing(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
+
+		// generate and insert new finality provider
+		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
+		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+		// generate and insert new BTC delegation
+		stakingValue := int64(2 * 10e8)
+		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+			r,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+		)
+
+		// add covenant signatures to this BTC delegation
+		// so that the BTC delegation becomes bonded
+		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// now BTC delegation has all covenant signatures
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum))
+
+		// submit evidence of selective slashing
+		msg := &types.MsgSelectiveSlashingEvidence{
+			Signer:           datagen.GenRandomAccount().Address,
+			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
+			RecoveredFpBtcSk: fpSK.Serialize(),
+		}
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
+		h.NoError(err)
+
+		// ensure the finality provider is slashed
+		slashedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBtcPk.MustMarshal())
+		h.NoError(err)
+		require.True(t, slashedFp.IsSlashed())
+	})
+}
+
+func FuzzSelectiveSlashing_StakingTx(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
+
+		// generate and insert new finality provider
+		fpSK, fpPK, _ := h.CreateFinalityProvider(r)
+		fpBtcPk := bbn.NewBIP340PubKeyFromBTCPK(fpPK)
+
+		// generate and insert new BTC delegation
+		stakingValue := int64(2 * 10e8)
+		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+			r,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+		)
+
+		// add covenant signatures to this BTC delegation
+		// so that the BTC delegation becomes bonded
+		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		// now BTC delegation has all covenant signatures
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum))
+
+		// finality provider pulls off selective slashing by decrypting covenant's adaptor signature
+		// on the slashing tx
+		// choose a random covenant adaptor signature
+		covIdx := datagen.RandomInt(r, int(bsParams.CovenantQuorum))
+		covPK := bbn.NewBIP340PubKeyFromBTCPK(covenantSKs[covIdx].PubKey())
+		fpIdx := datagen.RandomInt(r, len(actualDel.FpBtcPkList))
+		covASig, err := actualDel.GetCovSlashingAdaptorSig(covPK, int(fpIdx), bsParams.CovenantQuorum)
+		h.NoError(err)
+
+		// finality provider decrypts the covenant signature
+		decKey, err := asig.NewDecyptionKeyFromBTCSK(fpSK)
+		h.NoError(err)
+		decryptedCovenantSig := bbn.NewBIP340SignatureFromBTCSig(covASig.Decrypt(decKey))
+
+		// recover the fpSK by using adaptor signature and decrypted Schnorr signature
+		recoveredFPDecKey := covASig.Recover(decryptedCovenantSig.MustToBTCSig())
+		recoveredFPSK := recoveredFPDecKey.ToBTCSK()
+		// ensure the recovered finality provider SK is same as the real one
+		require.Equal(t, fpSK.Serialize(), recoveredFPSK.Serialize())
+
+		// submit evidence of selective slashing
+		msg := &types.MsgSelectiveSlashingEvidence{
+			Signer:           datagen.GenRandomAccount().Address,
+			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
+			RecoveredFpBtcSk: recoveredFPSK.Serialize(),
+		}
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
+		h.NoError(err)
+
+		// ensure the finality provider is slashed
+		slashedFp, err := h.BTCStakingKeeper.GetFinalityProvider(h.Ctx, fpBtcPk.MustMarshal())
+		h.NoError(err)
+		require.True(t, slashedFp.IsSlashed())
 	})
 }
 

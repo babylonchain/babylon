@@ -18,24 +18,6 @@ message EventNewBTCDelegation { BTCDelegation btc_del = 1; }
 // such that the BTC delegation starts to have voting power in its timelock period
 message EventActivateBTCDelegation { BTCDelegation btc_del = 1; }
 
-// EventUnbondingBTCDelegation is the event emitted when receiving an unbonding request
-// for an existing BTC delegation
-message EventUnbondingBTCDelegation { 
-    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
-    // the PK follows encoding in BIP-340 spec
-    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // fp_btc_pk_list is the list of BIP-340 PKs of the BTC finality providers that
-    // this BTC delegation delegates to
-    // If there is more than 1 PKs, then this means the delegation is restaked
-    // to multiple finality providers
-    repeated bytes fp_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-    // staking_tx_hash is the hash of the staking tx.
-    // (fp_pks..., del_pk, staking_tx_hash) uniquely identifies a BTC delegation
-    string staking_tx_hash = 3;
-    // unbonding_tx_hash is the hash of the unbonding tx.
-    string unbonding_tx_hash = 4;
-}
-
 // EventUnbondingBTCDelegation is the event emitted when an unbonding BTC delegation
 // receives all signatures needed for becoming unbonded 
 message EventUnbondedBTCDelegation { 
@@ -54,4 +36,11 @@ message EventUnbondedBTCDelegation {
     string unbonding_tx_hash = 4;
     // from_state is the last state the BTC delegation was at
     BTCDelegationStatus from_state = 5;
+}
+
+// EventSelectiveSlashing is the event emitted when an adversarial BTC
+// validator selectively slashes a BTC delegation
+message EventSelectiveSlashing {
+    // evidence is the evidence of selective slashing
+    SelectiveSlashingEvidence evidence = 1;
 }

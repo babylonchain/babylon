@@ -6,7 +6,7 @@ import (
 )
 
 func (ud *BTCUndelegation) HasCovenantQuorumOnSlashing(quorum uint32) bool {
-	return len(ud.CovenantUnbondingSigList) >= int(quorum)
+	return len(ud.CovenantSlashingSigs) >= int(quorum)
 }
 
 func (ud *BTCUndelegation) HasCovenantQuorumOnUnbonding(quorum uint32) bool {
@@ -40,6 +40,27 @@ func (ud *BTCUndelegation) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
 func (ud *BTCUndelegation) HasCovenantQuorums(covenantQuorum uint32) bool {
 	return ud.HasCovenantQuorumOnUnbonding(covenantQuorum) &&
 		ud.HasCovenantQuorumOnSlashing(covenantQuorum)
+}
+
+func (ud *BTCUndelegation) GetCovSlashingAdaptorSig(
+	covBTCPK *bbn.BIP340PubKey,
+	valIdx int,
+	quorum uint32,
+) (*asig.AdaptorSignature, error) {
+	if !ud.HasCovenantQuorums(quorum) {
+		return nil, ErrInvalidDelegationState.Wrap("BTC undelegation does not have a covenant quorum yet")
+	}
+	for _, covASigs := range ud.CovenantSlashingSigs {
+		if covASigs.CovPk.Equals(covBTCPK) {
+			if valIdx >= len(covASigs.AdaptorSigs) {
+				return nil, ErrFpNotFound.Wrap("validator index is out of scope")
+			}
+			sigBytes := covASigs.AdaptorSigs[valIdx]
+			return asig.NewAdaptorSignatureFromBytes(sigBytes)
+		}
+	}
+
+	return nil, ErrInvalidCovenantPK.Wrap("covenant PK is not found")
 }
 
 // AddCovenantSigs adds a Schnorr signature on the unbonding tx, and

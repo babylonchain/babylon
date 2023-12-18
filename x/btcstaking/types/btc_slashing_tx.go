@@ -10,6 +10,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/babylonchain/babylon/btcstaking"
@@ -87,6 +88,15 @@ func (tx *BTCSlashingTx) ToMsgTx() (*wire.MsgTx, error) {
 	return bbn.NewBTCTxFromBytes(*tx)
 }
 
+func (tx *BTCSlashingTx) MustGetTxHash() *chainhash.Hash {
+	msgTx, err := tx.ToMsgTx()
+	if err != nil {
+		panic(err)
+	}
+	txHash := msgTx.TxHash()
+	return &txHash
+}
+
 func (tx *BTCSlashingTx) Validate(
 	net *chaincfg.Params,
 	slashingAddress string,
@@ -111,9 +121,9 @@ func (tx *BTCSlashingTx) Validate(
 
 // Sign generates a signature on the slashing tx
 func (tx *BTCSlashingTx) Sign(
-	stakingMsgTx *wire.MsgTx,
+	fundingTx *wire.MsgTx,
 	spendOutputIndex uint32,
-	scriptPath []byte,
+	slashingPkScriptPath []byte,
 	sk *btcec.PrivateKey,
 ) (*bbn.BIP340Signature, error) {
 	msgTx, err := tx.ToMsgTx()
@@ -122,9 +132,9 @@ func (tx *BTCSlashingTx) Sign(
 	}
 	schnorrSig, err := btcstaking.SignTxWithOneScriptSpendInputStrict(
 		msgTx,
-		stakingMsgTx,
+		fundingTx,
 		spendOutputIndex,
-		scriptPath,
+		slashingPkScriptPath,
 		sk,
 	)
 	if err != nil {
@@ -135,19 +145,20 @@ func (tx *BTCSlashingTx) Sign(
 
 // VerifySignature verifies a signature on the slashing tx signed by staker, finality provider, or covenant
 func (tx *BTCSlashingTx) VerifySignature(
-	stakingPkScript []byte,
-	stakingAmount int64,
+	fundingPkScript []byte,
+	fundingAmount int64,
 	slashingPkScriptPath []byte,
 	pk *btcec.PublicKey,
-	sig *bbn.BIP340Signature) error {
+	sig *bbn.BIP340Signature,
+) error {
 	msgTx, err := tx.ToMsgTx()
 	if err != nil {
 		return err
 	}
 	return btcstaking.VerifyTransactionSigWithOutputData(
 		msgTx,
-		stakingPkScript,
-		stakingAmount,
+		fundingPkScript,
+		fundingAmount,
 		slashingPkScriptPath,
 		pk,
 		*sig,
@@ -157,9 +168,9 @@ func (tx *BTCSlashingTx) VerifySignature(
 // EncSign generates an adaptor signature on the slashing tx with finality provider's
 // public key as encryption key
 func (tx *BTCSlashingTx) EncSign(
-	stakingMsgTx *wire.MsgTx,
+	fundingMsgTx *wire.MsgTx,
 	spendOutputIndex uint32,
-	scriptPath []byte,
+	slashingPkScriptPath []byte,
 	sk *btcec.PrivateKey,
 	encKey *asig.EncryptionKey,
 ) (*asig.AdaptorSignature, error) {
@@ -169,9 +180,9 @@ func (tx *BTCSlashingTx) EncSign(
 	}
 	adaptorSig, err := btcstaking.EncSignTxWithOneScriptSpendInputStrict(
 		msgTx,
-		stakingMsgTx,
+		fundingMsgTx,
 		spendOutputIndex,
-		scriptPath,
+		slashingPkScriptPath,
 		sk,
 		encKey,
 	)
@@ -205,6 +216,41 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 		encKey,
 		sig,
 	)
+}
+
+// EncVerifyAdaptorSignatures verifies a list of adaptor signatures, each
+// encrypted by a restaked validator PK and signed by the given PK, w.r.t. the
+// given funding output (in staking or unbonding tx), slashing spend info and
+// slashing tx
+func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
+	fundingOut *wire.TxOut,
+	slashingSpendInfo *btcstaking.SpendInfo,
+	pk *bbn.BIP340PubKey,
+	valPKs []bbn.BIP340PubKey,
+	sigs [][]byte,
+) error {
+	for i, sig := range sigs {
+		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)
+		if err != nil {
+			return err
+		}
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(valPKs[i].MustToBTCPK())
+		if err != nil {
+			return err
+		}
+		err = tx.EncVerifyAdaptorSignature(
+			fundingOut.PkScript,
+			fundingOut.Value,
+			slashingSpendInfo.GetPkScriptPath(),
+			pk.MustToBTCPK(),
+			encKey,
+			adaptorSig,
+		)
+		if err != nil {
+			return ErrInvalidCovenantSig.Wrapf("err: %v", err)
+		}
+	}
+	return nil
 }
 
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(

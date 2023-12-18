@@ -7407,62 +7407,35 @@ paths:
                 title: proof is the proof that the chain info is finalized
                 type: object
                 properties:
-                  proof_tx_in_block:
+                  proof_cz_header_in_epoch:
                     title: >-
-                      proof_tx_in_block is the proof that tx that carries the
-                      header is included
+                      proof_cz_header_in_epoch is the proof that the CZ header
+                      is timestamped
 
-                      in a certain Babylon block
+                      within a certain epoch
                     type: object
                     properties:
-                      root_hash:
-                        type: string
-                        format: byte
-                      data:
-                        type: string
-                        format: byte
-                      proof:
-                        type: object
-                        properties:
-                          total:
-                            type: string
-                            format: int64
-                          index:
-                            type: string
-                            format: int64
-                          leaf_hash:
-                            type: string
-                            format: byte
-                          aunts:
-                            type: array
-                            items:
-                              type: string
-                              format: byte
-                    description: >-
-                      TxProof represents a Merkle proof of the presence of a
-                      transaction in the Merkle tree.
-                  proof_header_in_epoch:
-                    type: object
-                    properties:
-                      total:
-                        type: string
-                        format: int64
-                      index:
-                        type: string
-                        format: int64
-                      leaf_hash:
-                        type: string
-                        format: byte
-                      aunts:
+                      ops:
                         type: array
                         items:
-                          type: string
-                          format: byte
-                    title: >-
-                      proof_header_in_epoch is the proof that the Babylon header
-                      is in a certain
+                          type: object
+                          properties:
+                            type:
+                              type: string
+                            key:
+                              type: string
+                              format: byte
+                            data:
+                              type: string
+                              format: byte
+                          title: >-
+                            ProofOp defines an operation used for calculating
+                            Merkle root
 
-                      epoch
+                            The data could be arbitrary format, providing
+                            nessecary data
+
+                            for example neighbouring node hash
                   proof_epoch_sealed:
                     title: proof_epoch_sealed is the proof that the epoch is sealed
                     type: object
@@ -8163,62 +8136,35 @@ paths:
                       title: proof is the proof that the chain info is finalized
                       type: object
                       properties:
-                        proof_tx_in_block:
+                        proof_cz_header_in_epoch:
                           title: >-
-                            proof_tx_in_block is the proof that tx that carries
-                            the header is included
+                            proof_cz_header_in_epoch is the proof that the CZ
+                            header is timestamped
 
-                            in a certain Babylon block
+                            within a certain epoch
                           type: object
                           properties:
-                            root_hash:
-                              type: string
-                              format: byte
-                            data:
-                              type: string
-                              format: byte
-                            proof:
-                              type: object
-                              properties:
-                                total:
-                                  type: string
-                                  format: int64
-                                index:
-                                  type: string
-                                  format: int64
-                                leaf_hash:
-                                  type: string
-                                  format: byte
-                                aunts:
-                                  type: array
-                                  items:
-                                    type: string
-                                    format: byte
-                          description: >-
-                            TxProof represents a Merkle proof of the presence of
-                            a transaction in the Merkle tree.
-                        proof_header_in_epoch:
-                          type: object
-                          properties:
-                            total:
-                              type: string
-                              format: int64
-                            index:
-                              type: string
-                              format: int64
-                            leaf_hash:
-                              type: string
-                              format: byte
-                            aunts:
+                            ops:
                               type: array
                               items:
-                                type: string
-                                format: byte
-                          title: >-
-                            proof_header_in_epoch is the proof that the Babylon
-                            header is in a certain
+                                type: object
+                                properties:
+                                  type:
+                                    type: string
+                                  key:
+                                    type: string
+                                    format: byte
+                                  data:
+                                    type: string
+                                    format: byte
+                                title: >-
+                                  ProofOp defines an operation used for
+                                  calculating Merkle root
 
-                            epoch
+                                  The data could be arbitrary format, providing
+                                  nessecary data
+
+                                  for example neighbouring node hash
                         proof_epoch_sealed:
                           title: >-
                             proof_epoch_sealed is the proof that the epoch is
@@ -14562,62 +14508,34 @@ definitions:
         title: proof is the proof that the chain info is finalized
         type: object
         properties:
-          proof_tx_in_block:
+          proof_cz_header_in_epoch:
             title: >-
-              proof_tx_in_block is the proof that tx that carries the header is
-              included
+              proof_cz_header_in_epoch is the proof that the CZ header is
+              timestamped
 
-              in a certain Babylon block
+              within a certain epoch
             type: object
             properties:
-              root_hash:
-                type: string
-                format: byte
-              data:
-                type: string
-                format: byte
-              proof:
-                type: object
-                properties:
-                  total:
-                    type: string
-                    format: int64
-                  index:
-                    type: string
-                    format: int64
-                  leaf_hash:
-                    type: string
-                    format: byte
-                  aunts:
-                    type: array
-                    items:
-                      type: string
-                      format: byte
-            description: >-
-              TxProof represents a Merkle proof of the presence of a transaction
-              in the Merkle tree.
-          proof_header_in_epoch:
-            type: object
-            properties:
-              total:
-                type: string
-                format: int64
-              index:
-                type: string
-                format: int64
-              leaf_hash:
-                type: string
-                format: byte
-              aunts:
+              ops:
                 type: array
                 items:
-                  type: string
-                  format: byte
-            title: >-
-              proof_header_in_epoch is the proof that the Babylon header is in a
-              certain
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
 
-              epoch
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
           proof_epoch_sealed:
             title: proof_epoch_sealed is the proof that the epoch is sealed
             type: object
@@ -15024,62 +14942,31 @@ definitions:
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo:
     type: object
     properties:
-      proof_tx_in_block:
+      proof_cz_header_in_epoch:
         title: >-
-          proof_tx_in_block is the proof that tx that carries the header is
-          included
+          proof_cz_header_in_epoch is the proof that the CZ header is
+          timestamped
 
-          in a certain Babylon block
+          within a certain epoch
         type: object
         properties:
-          root_hash:
-            type: string
-            format: byte
-          data:
-            type: string
-            format: byte
-          proof:
-            type: object
-            properties:
-              total:
-                type: string
-                format: int64
-              index:
-                type: string
-                format: int64
-              leaf_hash:
-                type: string
-                format: byte
-              aunts:
-                type: array
-                items:
-                  type: string
-                  format: byte
-        description: >-
-          TxProof represents a Merkle proof of the presence of a transaction in
-          the Merkle tree.
-      proof_header_in_epoch:
-        type: object
-        properties:
-          total:
-            type: string
-            format: int64
-          index:
-            type: string
-            format: int64
-          leaf_hash:
-            type: string
-            format: byte
-          aunts:
+          ops:
             type: array
             items:
-              type: string
-              format: byte
-        title: >-
-          proof_header_in_epoch is the proof that the Babylon header is in a
-          certain
-
-          epoch
+              type: object
+              properties:
+                type:
+                  type: string
+                key:
+                  type: string
+                  format: byte
+                data:
+                  type: string
+                  format: byte
+              title: |-
+                ProofOp defines an operation used for calculating Merkle root
+                The data could be arbitrary format, providing nessecary data
+                for example neighbouring node hash
       proof_epoch_sealed:
         title: proof_epoch_sealed is the proof that the epoch is sealed
         type: object
@@ -15935,62 +15822,34 @@ definitions:
         title: proof is the proof that the chain info is finalized
         type: object
         properties:
-          proof_tx_in_block:
+          proof_cz_header_in_epoch:
             title: >-
-              proof_tx_in_block is the proof that tx that carries the header is
-              included
+              proof_cz_header_in_epoch is the proof that the CZ header is
+              timestamped
 
-              in a certain Babylon block
+              within a certain epoch
             type: object
             properties:
-              root_hash:
-                type: string
-                format: byte
-              data:
-                type: string
-                format: byte
-              proof:
-                type: object
-                properties:
-                  total:
-                    type: string
-                    format: int64
-                  index:
-                    type: string
-                    format: int64
-                  leaf_hash:
-                    type: string
-                    format: byte
-                  aunts:
-                    type: array
-                    items:
-                      type: string
-                      format: byte
-            description: >-
-              TxProof represents a Merkle proof of the presence of a transaction
-              in the Merkle tree.
-          proof_header_in_epoch:
-            type: object
-            properties:
-              total:
-                type: string
-                format: int64
-              index:
-                type: string
-                format: int64
-              leaf_hash:
-                type: string
-                format: byte
-              aunts:
+              ops:
                 type: array
                 items:
-                  type: string
-                  format: byte
-            title: >-
-              proof_header_in_epoch is the proof that the Babylon header is in a
-              certain
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    key:
+                      type: string
+                      format: byte
+                    data:
+                      type: string
+                      format: byte
+                  title: >-
+                    ProofOp defines an operation used for calculating Merkle
+                    root
 
-              epoch
+                    The data could be arbitrary format, providing nessecary data
+
+                    for example neighbouring node hash
           proof_epoch_sealed:
             title: proof_epoch_sealed is the proof that the epoch is sealed
             type: object
@@ -16448,62 +16307,35 @@ definitions:
               title: proof is the proof that the chain info is finalized
               type: object
               properties:
-                proof_tx_in_block:
+                proof_cz_header_in_epoch:
                   title: >-
-                    proof_tx_in_block is the proof that tx that carries the
-                    header is included
+                    proof_cz_header_in_epoch is the proof that the CZ header is
+                    timestamped
 
-                    in a certain Babylon block
+                    within a certain epoch
                   type: object
                   properties:
-                    root_hash:
-                      type: string
-                      format: byte
-                    data:
-                      type: string
-                      format: byte
-                    proof:
-                      type: object
-                      properties:
-                        total:
-                          type: string
-                          format: int64
-                        index:
-                          type: string
-                          format: int64
-                        leaf_hash:
-                          type: string
-                          format: byte
-                        aunts:
-                          type: array
-                          items:
-                            type: string
-                            format: byte
-                  description: >-
-                    TxProof represents a Merkle proof of the presence of a
-                    transaction in the Merkle tree.
-                proof_header_in_epoch:
-                  type: object
-                  properties:
-                    total:
-                      type: string
-                      format: int64
-                    index:
-                      type: string
-                      format: int64
-                    leaf_hash:
-                      type: string
-                      format: byte
-                    aunts:
+                    ops:
                       type: array
                       items:
-                        type: string
-                        format: byte
-                  title: >-
-                    proof_header_in_epoch is the proof that the Babylon header
-                    is in a certain
+                        type: object
+                        properties:
+                          type:
+                            type: string
+                          key:
+                            type: string
+                            format: byte
+                          data:
+                            type: string
+                            format: byte
+                        title: >-
+                          ProofOp defines an operation used for calculating
+                          Merkle root
 
-                    epoch
+                          The data could be arbitrary format, providing
+                          nessecary data
+
+                          for example neighbouring node hash
                 proof_epoch_sealed:
                   title: proof_epoch_sealed is the proof that the epoch is sealed
                   type: object
@@ -16990,23 +16822,6 @@ definitions:
 
               IBC packet becomes timeout, measured in seconds
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
-  tendermint.crypto.Proof:
-    type: object
-    properties:
-      total:
-        type: string
-        format: int64
-      index:
-        type: string
-        format: int64
-      leaf_hash:
-        type: string
-        format: byte
-      aunts:
-        type: array
-        items:
-          type: string
-          format: byte
   tendermint.crypto.ProofOp:
     type: object
     properties:
@@ -17043,32 +16858,3 @@ definitions:
             The data could be arbitrary format, providing nessecary data
             for example neighbouring node hash
     title: ProofOps is Merkle proof defined by the list of ProofOps
-  tendermint.types.TxProof:
-    type: object
-    properties:
-      root_hash:
-        type: string
-        format: byte
-      data:
-        type: string
-        format: byte
-      proof:
-        type: object
-        properties:
-          total:
-            type: string
-            format: int64
-          index:
-            type: string
-            format: int64
-          leaf_hash:
-            type: string
-            format: byte
-          aunts:
-            type: array
-            items:
-              type: string
-              format: byte
-    description: >-
-      TxProof represents a Merkle proof of the presence of a transaction in the
-      Merkle tree.

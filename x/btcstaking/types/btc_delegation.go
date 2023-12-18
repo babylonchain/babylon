@@ -42,19 +42,51 @@ func (d *BTCDelegation) GetStakingTime() uint16 {
 	return uint16(diff)
 }
 
-// GetStatus returns the status of the BTC Delegation based on a BTC height and a w value
-// TODO: Given that we only accept delegations that can be activated immediately,
-// we can only have expired delegations. If we accept optimistic submissions,
-// we could also have delegations that are in the waiting, so we need an extra status.
-// This is covered by expired for now as it is the default value.
-// Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has a covenant sig
-// Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have a covenant sig
-// TODO: fix comment above
-// Expired: Delegation timelock
+// GetFpIdx returns the index of the finality provider in the list of finality providers
+// that the BTC delegation is restaked to
+func (d *BTCDelegation) GetFpIdx(fpBTCPK *bbn.BIP340PubKey) int {
+	for i := 0; i < len(d.FpBtcPkList); i++ {
+		if d.FpBtcPkList[i].Equals(fpBTCPK) {
+			return i
+		}
+	}
+	return -1
+}
+
+func (d *BTCDelegation) GetCovSlashingAdaptorSig(
+	covBTCPK *bbn.BIP340PubKey,
+	valIdx int,
+	quorum uint32,
+) (*asig.AdaptorSignature, error) {
+	if !d.HasCovenantQuorums(quorum) {
+		return nil, ErrInvalidDelegationState.Wrap("BTC delegation does not have a covenant quorum yet")
+	}
+	for _, covASigs := range d.CovenantSigs {
+		if covASigs.CovPk.Equals(covBTCPK) {
+			if valIdx >= len(covASigs.AdaptorSigs) {
+				return nil, ErrFpNotFound.Wrap("validator index is out of scope")
+			}
+			sigBytes := covASigs.AdaptorSigs[valIdx]
+			return asig.NewAdaptorSignatureFromBytes(sigBytes)
+		}
+	}
+
+	return nil, ErrInvalidCovenantPK.Wrap("covenant PK is not found")
+}
+
+// IsUnbondedEarly returns whether the delegator has signed unbonding signature.
+// Signing unbonding signature means the delegator wants to unbond early, and
+// Babylon will consider this BTC delegation unbonded directly
+func (d *BTCDelegation) IsUnbondedEarly() bool {
+	return d.BtcUndelegation.DelegatorUnbondingSig != nil
+}
+
+// GetStatus returns the status of the BTC Delegation based on BTC height, w value, and covenant quorum
+// Pending: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation does not have covenant signatures
+// Active: the BTC height is in the range of d's [startHeight, endHeight-w] and the delegation has quorum number of signatures over slashing tx, unbonding tx, and slashing unbonding tx from covenant committee
+// Unbonded: the BTC height is larger than `endHeight-w` or the BTC delegation has received a signature on unbonding tx from the delegator
 func (d *BTCDelegation) GetStatus(btcHeight uint64, w uint64, covenantQuorum uint32) BTCDelegationStatus {
-	if d.BtcUndelegation.DelegatorUnbondingSig != nil {
-		// this means the delegator has signed unbonding signature, and Babylon will consider
-		// this BTC delegation unbonded directly
+	if d.IsUnbondedEarly() {
 		return BTCDelegationStatus_UNBONDED
 	}
 

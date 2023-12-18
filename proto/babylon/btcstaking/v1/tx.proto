@@ -23,10 +23,13 @@ service Msg {
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
   // AddCovenantSigs handles signatures from a covenant member
   rpc AddCovenantSigs(MsgAddCovenantSigs) returns (MsgAddCovenantSigsResponse);
-  // UpdateParams updates the btcstaking module parameters.
-  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
   // BTCUndelegate handles a signature on unbonding tx from its delegator
   rpc BTCUndelegate(MsgBTCUndelegate) returns (MsgBTCUndelegateResponse);
+  // SelectiveSlashingEvidence handles the evidence of selective slashing launched
+  // by a finality provider
+  rpc SelectiveSlashingEvidence(MsgSelectiveSlashingEvidence) returns (MsgSelectiveSlashingEvidenceResponse);
+  // UpdateParams updates the btcstaking module parameters.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
 // MsgCreateFinalityProvider is the message for creating a finality provider
@@ -126,7 +129,6 @@ message MsgAddCovenantSigs {
 // MsgAddCovenantSigsResponse is the response for MsgAddCovenantSigs
 message MsgAddCovenantSigsResponse {}
 
-
 // MsgBTCUndelegate is the message for handling signature on unbonding tx
 // from its delegator. This signature effectively proves that the delegator 
 // wants to unbond this BTC delegation
@@ -143,6 +145,24 @@ message MsgBTCUndelegate {
 }
 // MsgBTCUndelegateResponse is the response for MsgBTCUndelegate
 message MsgBTCUndelegateResponse {}
+
+// MsgSelectiveSlashingEvidence is the message for handling evidence of selective slashing
+// launched by a finality provider
+message MsgSelectiveSlashingEvidence {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  string signer = 1;
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 2;
+  // recovered_fp_btc_sk is the BTC SK of the finality provider who
+  // launches the selective slashing offence. The SK is recovered by
+  // using a covenant adaptor signature and the corresponding Schnorr
+  // signature
+  bytes recovered_fp_btc_sk = 3;
+}
+// MsgSelectiveSlashingEvidenceResponse is the response for MsgSelectiveSlashingEvidence
+message MsgSelectiveSlashingEvidenceResponse {}
 
 // MsgUpdateParams defines a message for updating btcstaking module parameters.
 message MsgUpdateParams {
