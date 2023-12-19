@@ -229,7 +229,7 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 }
 
 func (s *BTCTimestampingTestSuite) Test6Wasm() {
-	contractPath := "/bytecode/storage_contract.wasm"
+	contractPath := "/bytecode/babylon_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
