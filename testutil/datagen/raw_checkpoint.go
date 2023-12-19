@@ -10,6 +10,15 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
+func GenFullBitmap() bitmap.Bitmap {
+	bmBytes := make([]byte, txformat.BitMapLength)
+	bm := bitmap.Bitmap(bmBytes)
+	for i := 0; i < bm.Len(); i++ {
+		bitmap.Set(bm, i, true)
+	}
+	return bm
+}
+
 // GenRandomBitmap generates a random bitmap for the validator set
 // It returns a random bitmap and the number of validators in the subset
 func GenRandomBitmap(r *rand.Rand) (bitmap.Bitmap, int) {

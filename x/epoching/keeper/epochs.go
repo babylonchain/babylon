@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
@@ -10,30 +11,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
-
-// setEpochNumber sets epoch number
-func (k Keeper) setEpochNumber(ctx context.Context, epochNumber uint64) {
-	store := k.storeService.OpenKVStore(ctx)
-
-	epochNumberBytes := sdk.Uint64ToBigEndian(epochNumber)
-	err := store.Set(types.EpochNumberKey, epochNumberBytes)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func (k Keeper) getEpochNumber(ctx context.Context) uint64 {
-	store := k.storeService.OpenKVStore(ctx)
-	bz, err := store.Get(types.EpochNumberKey)
-	if err != nil {
-		panic(err)
-	}
-	if bz == nil {
-		panic(types.ErrUnknownEpochNumber)
-	}
-	epochNumber := sdk.BigEndianToUint64(bz)
-	return epochNumber
-}
 
 func (k Keeper) setEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {
 	store := k.epochInfoStore(ctx)
@@ -63,18 +40,18 @@ func (k Keeper) InitEpoch(ctx context.Context) {
 	epochInterval := k.GetParams(ctx).EpochInterval
 	epoch := types.NewEpoch(0, epochInterval, 0, &header.Time)
 	k.setEpochInfo(ctx, 0, &epoch)
-
-	k.setEpochNumber(ctx, 0)
 }
 
 // GetEpoch fetches the current epoch
 func (k Keeper) GetEpoch(ctx context.Context) *types.Epoch {
-	epochNumber := k.getEpochNumber(ctx)
-	epoch, err := k.getEpochInfo(ctx, epochNumber)
-	if err != nil {
-		panic(err)
-	}
-	return epoch
+	store := k.epochInfoStore(ctx)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+	epochBytes := iter.Value()
+	var epoch types.Epoch
+	k.cdc.MustUnmarshal(epochBytes, &epoch)
+
+	return &epoch
 }
 
 func (k Keeper) GetHistoricalEpoch(ctx context.Context, epochNumber uint64) (*types.Epoch, error) {
@@ -111,7 +88,7 @@ func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx context.Context) *types.Epoch
 	// get the sealer header
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsSecondBlock(ctx) {
-		panic("RecordSealerHeaderForPrevEpoch can only be invoked at the second header of a non-zero epoch")
+		panic(fmt.Errorf("RecordSealerHeaderForPrevEpoch can only be invoked at the second header of a non-zero epoch. current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
 	}
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 
@@ -134,7 +111,6 @@ func (k Keeper) IncEpoch(ctx context.Context) types.Epoch {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	epochNumber := k.GetEpoch(ctx).EpochNumber
 	incrementedEpochNumber := epochNumber + 1
-	k.setEpochNumber(ctx, incrementedEpochNumber)
 
 	epochInterval := k.GetParams(ctx).EpochInterval
 	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.HeaderInfo().Height), nil)

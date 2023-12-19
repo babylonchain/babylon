@@ -5,8 +5,6 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 
-	"cosmossdk.io/store/rootmulti"
-	"github.com/cometbft/cometbft/crypto/merkle"
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )
 
@@ -40,25 +38,4 @@ func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64)
 	}
 
 	return resp.Key, resp.Value, resp.ProofOps, nil
-}
-
-// VerifyStore verifies whether a KV pair is committed to the Merkle root, with the assistance of a Merkle proof
-// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/store/rootmulti/proof_test.go)
-func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, proof *tmcrypto.ProofOps) error {
-	prt := rootmulti.DefaultProofRuntime()
-
-	keypath := merkle.KeyPath{}
-	keypath = keypath.AppendKey([]byte(moduleStoreKey), merkle.KeyEncodingURL)
-	keypath = keypath.AppendKey(key, merkle.KeyEncodingURL)
-	keypathStr := keypath.String()
-
-	// NOTE: the proof can specify verification rules, either only verifying the
-	// top Merkle root w.r.t. all KV pairs, or verifying every layer of Merkle root
-	// TODO: investigate how the verification rules are chosen when generating the
-	// proof
-	if err := prt.VerifyValue(proof, root, keypathStr, value); err != nil {
-		return prt.VerifyAbsence(proof, root, keypathStr)
-	}
-
-	return nil
 }

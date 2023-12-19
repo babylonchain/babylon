@@ -2,11 +2,13 @@ package keeper
 
 import (
 	"context"
-	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
+
+	corestoretypes "cosmossdk.io/core/store"
 
 	"cosmossdk.io/log"
 	bbn "github.com/babylonchain/babylon/types"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 
 	"github.com/babylonchain/babylon/x/btclightclient/types"
@@ -209,4 +211,8 @@ func (k Keeper) GetMainChainReverse(ctx context.Context) []*types.BTCHeaderInfo 
 	}
 	k.headersState(ctx).IterateReverseHeaders(accHeaderFn)
 	return headers
+}
+
+func (k Keeper) GetBTCNet() *chaincfg.Params {
+	return k.btcConfig.NetParams()
 }

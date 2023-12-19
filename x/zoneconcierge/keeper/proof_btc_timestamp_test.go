@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -8,13 +9,67 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/boljen/go-bitmap"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
+
+func FuzzProofCZHeaderInEpoch(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		h := testhelper.NewHelper(t)
+		ek := h.App.EpochingKeeper
+		zck := h.App.ZoneConciergeKeeper
+		var err error
+
+		// chain is at height 1 thus epoch 1
+
+		// enter the 1st block of epoch 2
+		epochInterval := ek.GetParams(h.Ctx).EpochInterval
+		for j := 0; j < int(epochInterval); j++ {
+			h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+			h.NoError(err)
+		}
+
+		// handle a random header from a random consumer chain
+		chainID := datagen.GenRandomHexStr(r, 10)
+		height := datagen.RandomInt(r, 100) + 1
+		ibctmHeader := datagen.GenRandomIBCTMHeader(r, chainID, height)
+		headerInfo := datagen.HeaderToHeaderInfo(ibctmHeader)
+		zck.HandleHeaderWithValidCommit(h.Ctx, datagen.GenRandomByteArray(r, 32), headerInfo, false)
+
+		// ensure the header is successfully inserted
+		indexedHeader, err := zck.GetHeader(h.Ctx, chainID, height)
+		h.NoError(err)
+
+		// enter the 1st block of the next epoch
+		for j := 0; j < int(epochInterval); j++ {
+			h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+			h.NoError(err)
+		}
+		// seal last epoch
+		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		h.NoError(err)
+
+		epochWithHeader, err := ek.GetHistoricalEpoch(h.Ctx, indexedHeader.BabylonEpoch)
+		h.NoError(err)
+
+		// generate inclusion proof
+		proof, err := zck.ProveCZHeaderInEpoch(h.Ctx, indexedHeader, epochWithHeader)
+		h.NoError(err)
+
+		// verify the inclusion proof
+		err = zctypes.VerifyCZHeaderInEpoch(indexedHeader, epochWithHeader, proof)
+		h.NoError(err)
+	})
+}
 
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
 	sigs := []bls12381.Signature{}
@@ -89,7 +144,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		proof, err := zcKeeper.ProveEpochSealed(ctx, epoch.EpochNumber)
 		require.NoError(t, err)
 		// verify
-		err = zckeeper.VerifyEpochSealed(epoch, rawCkpt, proof)
+		err = zctypes.VerifyEpochSealed(epoch, rawCkpt, proof)
 
 		if subsetPower <= valSet.GetTotalPower()*1/3 { // BLS sig does not reach a quorum
 			require.LessOrEqual(t, numSubSet, numVals*1/3)
@@ -138,7 +193,7 @@ func FuzzProofEpochSealed_Epoch(f *testing.F) {
 		h.NoError(err)
 
 		// verify inclusion proof
-		err = zckeeper.VerifyEpochInfo(lastEpoch, proof)
+		err = zctypes.VerifyEpochInfo(lastEpoch, proof)
 		h.NoError(err)
 	})
 }
@@ -180,7 +235,62 @@ func FuzzProofEpochSealed_ValSet(f *testing.F) {
 		h.NoError(err)
 
 		// verify inclusion proof
-		err = zckeeper.VerifyValSet(lastEpoch, lastEpochValSet, proof)
+		err = zctypes.VerifyValSet(lastEpoch, lastEpochValSet, proof)
 		h.NoError(err)
+	})
+}
+
+func FuzzProofEpochSubmitted(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+
+		// generate random epoch, random rawBtcCkpt and random rawCkpt
+		epoch := datagen.GenRandomEpoch(r)
+		rawBtcCkpt := datagen.GetRandomRawBtcCheckpoint(r)
+		rawBtcCkpt.Epoch = epoch.EpochNumber
+		rawCkpt, err := checkpointingtypes.FromBTCCkptToRawCkpt(rawBtcCkpt)
+		require.NoError(t, err)
+
+		// encode ckpt to BTC txs in BTC blocks
+		testRawCkptData := datagen.EncodeRawCkptToTestData(rawBtcCkpt)
+		idxs := []uint64{datagen.RandomInt(r, 5) + 1, datagen.RandomInt(r, 5) + 1}
+		offsets := []uint64{datagen.RandomInt(r, 5) + 1, datagen.RandomInt(r, 5) + 1}
+		btcBlocks := []*datagen.BlockCreationResult{
+			datagen.CreateBlock(r, 1, uint32(idxs[0]+offsets[0]), uint32(idxs[0]), testRawCkptData.FirstPart),
+			datagen.CreateBlock(r, 2, uint32(idxs[1]+offsets[1]), uint32(idxs[1]), testRawCkptData.SecondPart),
+		}
+		// create MsgInsertBtcSpvProof for the rawCkpt
+		msgInsertBtcSpvProof := datagen.GenerateMessageWithRandomSubmitter([]*datagen.BlockCreationResult{btcBlocks[0], btcBlocks[1]})
+
+		// get headers for verification
+		btcHeaders := []*wire.BlockHeader{
+			btcBlocks[0].HeaderBytes.ToBlockHeader(),
+			btcBlocks[1].HeaderBytes.ToBlockHeader(),
+		}
+
+		// get 2 tx info for the ckpt parts
+		txsInfo := []*btcctypes.TransactionInfo{
+			{
+				Key:         &btcctypes.TransactionKey{Index: uint32(idxs[0]), Hash: btcBlocks[0].HeaderBytes.Hash()},
+				Transaction: msgInsertBtcSpvProof.Proofs[0].BtcTransaction,
+				Proof:       msgInsertBtcSpvProof.Proofs[0].MerkleNodes,
+			},
+			{
+				Key:         &btcctypes.TransactionKey{Index: uint32(idxs[1]), Hash: btcBlocks[1].HeaderBytes.Hash()},
+				Transaction: msgInsertBtcSpvProof.Proofs[1].BtcTransaction,
+				Proof:       msgInsertBtcSpvProof.Proofs[1].MerkleNodes,
+			},
+		}
+
+		// net param, babylonTag
+		powLimit := chaincfg.SimNetParams.PowLimit
+		babylonTag := btcctypes.DefaultCheckpointTag
+		tagAsBytes, _ := hex.DecodeString(babylonTag)
+
+		// verify
+		err = zctypes.VerifyEpochSubmitted(rawCkpt, txsInfo, btcHeaders, powLimit, tagAsBytes)
+		require.NoError(t, err)
 	})
 }

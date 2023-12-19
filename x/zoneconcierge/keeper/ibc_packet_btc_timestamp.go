@@ -95,7 +95,12 @@ func (k Keeper) getFinalizedInfo(
 
 // createBTCTimestamp creates a BTC timestamp from finalizedInfo for a given IBC channel
 // where the counterparty is a Cosmos zone
-func (k Keeper) createBTCTimestamp(ctx context.Context, chainID string, channel channeltypes.IdentifiedChannel, finalizedInfo *finalizedInfo) (*types.BTCTimestamp, error) {
+func (k Keeper) createBTCTimestamp(
+	ctx context.Context,
+	chainID string,
+	channel channeltypes.IdentifiedChannel,
+	finalizedInfo *finalizedInfo,
+) (*types.BTCTimestamp, error) {
 	// if the Babylon contract in this channel has not been initialised, get headers from
 	// the tip to (w+1+len(finalizedInfo.BTCHeaders))-deep header
 	var btcHeaders []*btclctypes.BTCHeaderInfo
@@ -236,5 +241,3 @@ func (k Keeper) BroadcastBTCTimestamps(
 		}
 	}
 }
-
-// TODO: test case with at BTC headers and checkpoints
