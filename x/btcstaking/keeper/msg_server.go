@@ -262,6 +262,15 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("cannot be converted to wire.MsgTx: %v", err)
 	}
 
+	// Check that unbonding tx input is pointing to staking tx
+	if !unbondingMsgTx.TxIn[0].PreviousOutPoint.Hash.IsEqual(&stakingTxHash) {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("slashing transaction must spend staking output")
+	}
+	// Check that staking tx output index matches unbonding tx output index
+	if unbondingMsgTx.TxIn[0].PreviousOutPoint.Index != stakingOutputIdx {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("slashing transaction input must spend staking output")
+	}
+
 	// Check unbonding time (staking time from unbonding tx) is larger than finalization time
 	// Unbonding time must be strictly larger that babylon finalization time.
 	if uint64(req.UnbondingTime) <= wValue {
