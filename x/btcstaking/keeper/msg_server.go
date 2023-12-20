@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
-
 	errorsmod "cosmossdk.io/errors"
+
+	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
@@ -270,11 +270,14 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if unbondingMsgTx.TxIn[0].PreviousOutPoint.Index != stakingOutputIdx {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("slashing transaction input must spend staking output")
 	}
+	minUnbondingTime := types.MinimumUnbondingTime(params, btccParams)
 
-	// Check unbonding time (staking time from unbonding tx) is larger than finalization time
-	// Unbonding time must be strictly larger that babylon finalization time.
-	if uint64(req.UnbondingTime) <= wValue {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than finalization time %d", req.UnbondingTime, wValue)
+	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
+	// which is larger value from:
+	// - MinUnbondingTime
+	// - CheckpointFinalizationTimeout
+	if uint64(req.UnbondingTime) <= minUnbondingTime {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", req.UnbondingTime, minUnbondingTime)
 	}
 
 	// building unbonding info

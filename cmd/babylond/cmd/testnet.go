@@ -2,16 +2,17 @@ package cmd
 
 import (
 	"bufio"
-	"cosmossdk.io/math"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"net"
 	"os"
 	"path/filepath"
 	"time"
+
+	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
 	appparams "github.com/babylonchain/babylon/app/params"
 	bbn "github.com/babylonchain/babylon/types"
@@ -100,8 +101,8 @@ Example:
 				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex, genesisCliArgs.BaseBtcHeaderHeight,
 				genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum, genesisCliArgs.SlashingAddress,
 				genesisCliArgs.MinSlashingTransactionFeeSat, genesisCliArgs.MinCommissionRate,
-				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinPubRand,
-				genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
+				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime,
+				genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
 				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
 				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 

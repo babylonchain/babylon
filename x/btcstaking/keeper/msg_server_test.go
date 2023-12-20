@@ -75,6 +75,7 @@ func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
+		MinUnbondingTime:           0,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs

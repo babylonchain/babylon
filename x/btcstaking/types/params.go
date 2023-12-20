@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"math"
 
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
@@ -60,6 +61,9 @@ func DefaultParams() Params {
 		// The Default slashing rate is 0.1 i.e., 10% of the total staked BTC will be burned.
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(1, 1), // 1 * 10^{-1} = 0.1
 		MaxActiveFinalityProviders: defaultMaxActiveFinalityProviders,
+		// The default minimum unbonding time is 0, which effectively defaults to checkpoint
+		// finalization timeout.
+		MinUnbondingTime: 0,
 	}
 }
 
@@ -107,6 +111,14 @@ func validateCovenantPks(covenantPks []bbn.BIP340PubKey) error {
 	return nil
 }
 
+func validateMinUnbondingTime(minUnbondingTimeBlocks uint32) error {
+	if minUnbondingTimeBlocks > math.MaxUint16 {
+		return fmt.Errorf("minimum unbonding time blocks cannot be greater than %d", math.MaxUint16)
+	}
+
+	return nil
+}
+
 // Validate validates the set of params
 func (p Params) Validate() error {
 	if p.CovenantQuorum == 0 {
@@ -133,6 +145,11 @@ func (p Params) Validate() error {
 	if err := validateMaxActiveFinalityProviders(p.MaxActiveFinalityProviders); err != nil {
 		return err
 	}
+
+	if err := validateMinUnbondingTime(p.MinUnbondingTime); err != nil {
+		return err
+	}
+
 	return nil
 }
 

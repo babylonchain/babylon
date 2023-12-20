@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
 
 	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	finalitytypes "github.com/babylonchain/babylon/x/finality/types"
@@ -72,7 +73,7 @@ Example:
 					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
 					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
 					genesisCliArgs.MinCommissionRate, genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders,
-					genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
+					genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
 					genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
 					genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
 			} else if network == "mainnet" {
@@ -232,7 +233,7 @@ type GenesisParams struct {
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
 	baseBtcHeaderHeight uint64, covenantPKs []string, covenantQuorum uint32, slashingAddress string, minSlashingFee int64,
-	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32,
+	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32, minUnbondingTime uint16,
 	minPubRand uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
 	blocksPerYear uint64, genesisTime time.Time, blockGasLimit int64) GenesisParams {
@@ -322,6 +323,7 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	genParams.BtcstakingParams.MinCommissionRate = minCommissionRate
 	genParams.BtcstakingParams.SlashingRate = slashingRate
 	genParams.BtcstakingParams.MaxActiveFinalityProviders = maxActiveFinalityProviders
+	genParams.BtcstakingParams.MinUnbondingTime = uint32(minUnbondingTime)
 	if err := genParams.BtcstakingParams.Validate(); err != nil {
 		panic(err)
 	}
