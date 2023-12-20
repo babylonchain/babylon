@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -236,21 +237,17 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 
 	// store the wasm code
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
-	s.Eventually(func() bool {
-		newLatestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-		if latestWasmId+1 > newLatestWasmId {
-			return false
-		}
-		latestWasmId = newLatestWasmId
-		return true
-	}, time.Second*10, time.Second)
-
-	// instantiate the wasm contract
-	var contracts []string
+	babylon_tag := "[1,2,3,4]"
+	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
+		"testnet",
+		base64.StdEncoding.EncodeToString([]byte(babylon_tag)),
+		1,
+		2,
+		"false",
+	)
 	nonValidatorNode.InstantiateWasmContract(
 		strconv.Itoa(latestWasmId),
-		`{}`,
+		initMsg,
 		initialization.ValidatorWalletName,
 	)
 	s.Eventually(func() bool {
