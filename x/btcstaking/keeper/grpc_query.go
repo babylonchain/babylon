@@ -279,6 +279,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
 		UnbondingTime:            btcDel.BtcUndelegation.UnbondingTime,
 		CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
+		CovenantSlashingSigs:     btcDel.BtcUndelegation.CovenantSlashingSigs,
 	}
 
 	return &types.QueryBTCDelegationResponse{
@@ -288,6 +289,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		EndHeight:        btcDel.EndHeight,
 		TotalSat:         btcDel.TotalSat,
 		StakingTxHex:     hex.EncodeToString(btcDel.StakingTx),
+		CovenantSigs:     btcDel.CovenantSigs,
 		Active:           isActive,
 		UndelegationInfo: undelegationInfo,
 	}, nil

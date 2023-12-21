@@ -236,9 +236,13 @@ message QueryBTCDelegationResponse {
   uint64 total_sat = 5;
   // staking_tx_hex is the hex string of staking tx
   string staking_tx_hex = 6;
+  // covenant_sigs is a list of adaptor signatures on the slashing tx
+  // by each covenant member
+  // It will be a part of the witness for the staking tx output.
+  repeated CovenantAdaptorSignatures covenant_sigs = 7;
   // whether this delegation is active
-  bool active = 7;
+  bool active = 8;
   // undelegation_info is the undelegation info of this delegation. It is nil
   // if it is not undelegating
-  BTCUndelegationInfo undelegation_info = 8;
+  BTCUndelegationInfo undelegation_info = 9;
 }
