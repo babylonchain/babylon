@@ -2,8 +2,10 @@ package types
 
 import (
 	"context"
-	storetypes "cosmossdk.io/store/types"
 	"time"
+
+	storetypes "cosmossdk.io/store/types"
+	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	"cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -44,6 +46,7 @@ type StakingKeeper interface {
 	ValidatorQueueIterator(ctx context.Context, endTime time.Time, endHeight int64) (storetypes.Iterator, error)
 	UnbondAllMatureValidators(ctx context.Context) error
 	GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error)
+	GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error)
 }
 
 // Event Hooks

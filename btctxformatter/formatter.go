@@ -25,7 +25,7 @@ type BabylonData struct {
 
 type RawBtcCheckpoint struct {
 	Epoch            uint64
-	AppHash          []byte
+	BlockHash        []byte
 	BitMap           []byte
 	SubmitterAddress []byte
 	BlsSig           []byte
@@ -154,7 +154,7 @@ func EncodeCheckpointData(
 		return nil, nil, errors.New("invalid format version")
 	}
 
-	if len(rawBTCCheckpoint.AppHash) != AppHashLength {
+	if len(rawBTCCheckpoint.BlockHash) != AppHashLength {
 		return nil, nil, errors.New("appHash should have 32 bytes")
 	}
 
@@ -174,7 +174,7 @@ func EncodeCheckpointData(
 		tag,
 		version,
 		rawBTCCheckpoint.Epoch,
-		rawBTCCheckpoint.AppHash,
+		rawBTCCheckpoint.BlockHash,
 		rawBTCCheckpoint.BitMap,
 		rawBTCCheckpoint.SubmitterAddress,
 	)
@@ -325,7 +325,7 @@ func DecodeRawCheckpoint(version FormatVersion, btcCkptBytes []byte) (*RawBtcChe
 
 	rawCheckpoint := &RawBtcCheckpoint{
 		Epoch:            binary.BigEndian.Uint64(epochBytes),
-		AppHash:          appHashBytes,
+		BlockHash:        appHashBytes,
 		BitMap:           bitmapBytes,
 		SubmitterAddress: addressBytes,
 		BlsSig:           blsSigBytes,

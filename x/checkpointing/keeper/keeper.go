@@ -2,16 +2,18 @@ package keeper
 
 import (
 	"context"
-	corestoretypes "cosmossdk.io/core/store"
 	"errors"
 	"fmt"
+
+	corestoretypes "cosmossdk.io/core/store"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 
 	"cosmossdk.io/log"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
@@ -25,7 +27,6 @@ type (
 		blsSigner      BlsSigner
 		epochingKeeper types.EpochingKeeper
 		hooks          types.CheckpointingHooks
-		clientCtx      client.Context
 	}
 )
 
@@ -34,7 +35,6 @@ func NewKeeper(
 	storeService corestoretypes.KVStoreService,
 	signer BlsSigner,
 	ek types.EpochingKeeper,
-	clientCtx client.Context,
 ) Keeper {
 	return Keeper{
 		cdc:            cdc,
@@ -42,7 +42,6 @@ func NewKeeper(
 		blsSigner:      signer,
 		epochingKeeper: ek,
 		hooks:          nil,
-		clientCtx:      clientCtx,
 	}
 }
 
@@ -61,43 +60,42 @@ func (k *Keeper) SetHooks(sh types.CheckpointingHooks) *Keeper {
 	return k
 }
 
-// addBlsSig adds a BLS signature to the raw checkpoint and updates the status
-// if sufficient signatures are accumulated for the epoch.
-func (k Keeper) addBlsSig(ctx context.Context, sig *types.BlsSig) error {
-	// assuming stateless checks have done in Antehandler
+func (k Keeper) SealCheckpoint(ctx context.Context, ckptWithMeta *types.RawCheckpointWithMeta) error {
+	if ckptWithMeta.Status != types.Sealed {
+		return fmt.Errorf("the checkpoint is not Sealed")
+	}
+
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	// get raw checkpoint
-	ckptWithMeta, err := k.GetRawCheckpoint(ctx, sig.GetEpochNum())
-	if err != nil {
-		return err
+	// record state update of Sealed
+	ckptWithMeta.RecordStateUpdate(ctx, types.Sealed)
+	// log in console
+	k.Logger(sdkCtx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
+	// emit event
+	if err := sdkCtx.EventManager().EmitTypedEvent(
+		&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
+	); err != nil {
+		panic(fmt.Errorf("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum))
 	}
 
-	// the checkpoint is not accumulating
-	if ckptWithMeta.Status != types.Accumulating {
-		return nil
-	}
+	// if reaching this line, it means ckptWithMeta is updated,
+	// and we need to write the updated ckptWithMeta back to KVStore
+	return k.AddRawCheckpoint(ctx, ckptWithMeta)
+}
 
-	if !sig.AppHash.Equal(*ckptWithMeta.Ckpt.AppHash) {
-		// processed BlsSig message is for invalid last commit hash
-		return types.ErrInvalidAppHash
-	}
-
+func (k Keeper) VerifyBLSSig(ctx context.Context, sig *types.BlsSig) error {
 	// get signer's address
 	signerAddr, err := sdk.ValAddressFromBech32(sig.SignerAddress)
 	if err != nil {
 		return err
 	}
 
-	// get validators for the epoch
-	vals := k.GetValidatorSet(ctx, sig.GetEpochNum())
 	signerBlsKey, err := k.GetBlsPubKey(ctx, signerAddr)
 	if err != nil {
 		return err
 	}
 
 	// verify BLS sig
-	signBytes := types.GetSignBytes(sig.GetEpochNum(), *sig.AppHash)
+	signBytes := types.GetSignBytes(sig.GetEpochNum(), *sig.BlockHash)
 	ok, err := bls12381.Verify(*sig.BlsSig, signerBlsKey, signBytes)
 	if err != nil {
 		return err
@@ -106,33 +104,18 @@ func (k Keeper) addBlsSig(ctx context.Context, sig *types.BlsSig) error {
 		return types.ErrInvalidBlsSignature
 	}
 
-	// accumulate BLS signatures
-	err = ckptWithMeta.Accumulate(vals, signerAddr, signerBlsKey, *sig.BlsSig, k.GetTotalVotingPower(ctx, sig.GetEpochNum()))
-	if err != nil {
-		return err
-	}
-
-	if ckptWithMeta.Status == types.Sealed {
-		// emit event
-		err = sdkCtx.EventManager().EmitTypedEvent(
-			&types.EventCheckpointSealed{Checkpoint: ckptWithMeta},
-		)
-		if err != nil {
-			k.Logger(sdkCtx).Error("failed to emit checkpoint sealed event for epoch %v", ckptWithMeta.Ckpt.EpochNum)
-		}
-		// record state update of Sealed
-		ckptWithMeta.RecordStateUpdate(ctx, types.Sealed)
-		// log in console
-		k.Logger(sdkCtx).Info(fmt.Sprintf("Checkpointing: checkpoint for epoch %v is Sealed", ckptWithMeta.Ckpt.EpochNum))
-	}
-
-	// if reaching this line, it means ckptWithMeta is updated,
-	// and we need to write the updated ckptWithMeta back to KVStore
-	if err = k.UpdateCheckpoint(ctx, ckptWithMeta); err != nil {
-		return err
-	}
-
 	return nil
+}
+
+func (k Keeper) GetVotingPowerByAddress(ctx context.Context, epochNum uint64, valAddr sdk.ValAddress) (int64, error) {
+	vals := k.GetValidatorSet(ctx, epochNum)
+
+	v, _, err := vals.FindValidatorWithIndex(valAddr)
+	if err != nil {
+		return 0, err
+	}
+
+	return v.Power, nil
 }
 
 func (k Keeper) GetRawCheckpoint(ctx context.Context, epochNum uint64) (*types.RawCheckpointWithMeta, error) {
@@ -152,8 +135,8 @@ func (k Keeper) AddRawCheckpoint(ctx context.Context, ckptWithMeta *types.RawChe
 	return k.CheckpointsState(ctx).CreateRawCkptWithMeta(ckptWithMeta)
 }
 
-func (k Keeper) BuildRawCheckpoint(ctx context.Context, epochNum uint64, appHash types.AppHash) (*types.RawCheckpointWithMeta, error) {
-	ckptWithMeta := types.NewCheckpointWithMeta(types.NewCheckpoint(epochNum, appHash), types.Accumulating)
+func (k Keeper) BuildRawCheckpoint(ctx context.Context, epochNum uint64, blockHash types.BlockHash) (*types.RawCheckpointWithMeta, error) {
+	ckptWithMeta := types.NewCheckpointWithMeta(types.NewCheckpoint(epochNum, blockHash), types.Accumulating)
 	ckptWithMeta.RecordStateUpdate(ctx, types.Accumulating) // record the state update of Accumulating
 	err := k.AddRawCheckpoint(ctx, ckptWithMeta)
 	if err != nil {
@@ -162,6 +145,38 @@ func (k Keeper) BuildRawCheckpoint(ctx context.Context, epochNum uint64, appHash
 	k.Logger(sdk.UnwrapSDKContext(ctx)).Info(fmt.Sprintf("Checkpointing: a new raw checkpoint is built for epoch %v", epochNum))
 
 	return ckptWithMeta, nil
+}
+
+func (k Keeper) VerifyRawCheckpoint(ctx context.Context, ckpt *types.RawCheckpoint) error {
+	// check whether sufficient voting power is accumulated
+	// and verify if the multi signature is valid
+	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
+	signerSet, err := k.GetValidatorSet(ctx, ckpt.EpochNum).FindSubset(ckpt.Bitmap)
+	if err != nil {
+		return fmt.Errorf("failed to get the signer set via bitmap of epoch %d: %w", ckpt.EpochNum, err)
+	}
+	var sum int64
+	signersPubKeys := make([]bls12381.PublicKey, len(signerSet))
+	for i, v := range signerSet {
+		signersPubKeys[i], err = k.GetBlsPubKey(ctx, v.Addr)
+		if err != nil {
+			return err
+		}
+		sum += v.Power
+	}
+	if sum*3 <= totalPower*2 {
+		return types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
+	}
+	msgBytes := types.GetSignBytes(ckpt.GetEpochNum(), *ckpt.BlockHash)
+	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
+	}
+
+	return nil
 }
 
 // VerifyCheckpoint verifies checkpoint from BTC. It verifies
@@ -210,32 +225,9 @@ func (k Keeper) verifyCkptBytes(ctx context.Context, rawCheckpoint *txformat.Raw
 		return ckptWithMeta, nil
 	}
 
-	// next verify if the multi signature is valid
-	// check whether sufficient voting power is accumulated
-	totalPower := k.GetTotalVotingPower(ctx, ckpt.EpochNum)
-	signerSet, err := k.GetValidatorSet(ctx, ckpt.EpochNum).FindSubset(ckpt.Bitmap)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get the signer set via bitmap of epoch %d: %w", ckpt.EpochNum, err)
-	}
-	var sum int64
-	signersPubKeys := make([]bls12381.PublicKey, len(signerSet))
-	for i, v := range signerSet {
-		signersPubKeys[i], err = k.GetBlsPubKey(ctx, v.Addr)
-		if err != nil {
-			return nil, err
-		}
-		sum += v.Power
-	}
-	if sum <= totalPower*1/3 {
-		return nil, types.ErrInvalidRawCheckpoint.Wrap("insufficient voting power")
-	}
-	msgBytes := types.GetSignBytes(ckpt.GetEpochNum(), *ckpt.AppHash)
-	ok, err := bls12381.VerifyMultiSig(*ckpt.BlsMultiSig, signersPubKeys, msgBytes)
-	if err != nil {
+	// verify raw checkpoint
+	if err := k.VerifyRawCheckpoint(ctx, ckpt); err != nil {
 		return nil, err
-	}
-	if !ok {
-		return nil, types.ErrInvalidRawCheckpoint.Wrap("invalid BLS multi-sig")
 	}
 
 	// record verified checkpoint
@@ -244,10 +236,10 @@ func (k Keeper) verifyCkptBytes(ctx context.Context, rawCheckpoint *txformat.Raw
 		return nil, fmt.Errorf("failed to record verified checkpoint of epoch %d for monitoring: %w", ckpt.EpochNum, err)
 	}
 
-	// now the checkpoint's multi-sig is valid, if the AppHash is the
+	// now the checkpoint's multi-sig is valid, if the BlockHash is the
 	// same with that of the local checkpoint, it means it is valid except that
 	// it is signed by a different signer set
-	if ckptWithMeta.Ckpt.AppHash.Equal(*ckpt.AppHash) {
+	if ckptWithMeta.Ckpt.BlockHash.Equal(*ckpt.BlockHash) {
 		return ckptWithMeta, nil
 	}
 
@@ -398,4 +390,8 @@ func (k Keeper) GetValidatorSet(ctx context.Context, epochNumber uint64) epochin
 
 func (k Keeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64 {
 	return k.epochingKeeper.GetTotalVotingPower(ctx, epochNumber)
+}
+
+func (k Keeper) GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error) {
+	return k.epochingKeeper.GetPubKeyByConsAddr(ctx, consAddr)
 }

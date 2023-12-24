@@ -6,14 +6,15 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
 )
 
 // FuzzQueryBLSKeySet does the following checks
@@ -67,7 +68,7 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 
 		// go to block 11, and thus entering epoch 2
 		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 		epoch = ek.GetEpoch(ctx)

@@ -6,12 +6,13 @@ import (
 
 	"cosmossdk.io/math"
 
-	babylonApp "github.com/babylonchain/babylon/app"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	btcstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	babylonApp "github.com/babylonchain/babylon/app"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btcstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 const (
@@ -29,6 +30,7 @@ const (
 	flagBlocksPerYear              = "blocks-per-year"
 	flagGenesisTime                = "genesis-time"
 	flagBlockGasLimit              = "block-gas-limit"
+	flagVoteExtensionEnableHeight  = "vote-extension-enable-height"
 	flagCovenantPks                = "covenant-pks"
 	flagCovenantQuorum             = "covenant-quorum"
 	flagMaxActiveFinalityProviders = "max-active-finality-providers"
@@ -56,6 +58,7 @@ type GenesisCLIArgs struct {
 	BlocksPerYear                uint64
 	GenesisTime                  time.Time
 	BlockGasLimit                int64
+	VoteExtensionEnableHeight    int64
 	CovenantPKs                  []string
 	CovenantQuorum               uint32
 	SlashingAddress              string
@@ -102,6 +105,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64(flagGenesisTime, time.Now().Unix(), "Genesis time")
 	// blocks args
 	cmd.Flags().Int64(flagBlockGasLimit, babylonApp.DefaultGasLimit, "Block gas limit")
+	cmd.Flags().Int64(flagVoteExtensionEnableHeight, babylonApp.DefaultVoteExtensionsEnableHeight, "Vote extension enable height")
 }
 
 func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
@@ -129,6 +133,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	goalBonded, _ := cmd.Flags().GetFloat64(flagGoalBonded)
 	blocksPerYear, _ := cmd.Flags().GetUint64(flagBlocksPerYear)
 	blockGasLimit, _ := cmd.Flags().GetInt64(flagBlockGasLimit)
+	voteExtensionEnableHeight, _ := cmd.Flags().GetInt64(flagVoteExtensionEnableHeight)
 
 	if chainID == "" {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
@@ -161,5 +166,6 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		GoalBonded:                   goalBonded,
 		BlocksPerYear:                blocksPerYear,
 		BlockGasLimit:                blockGasLimit,
+		VoteExtensionEnableHeight:    voteExtensionEnableHeight,
 	}
 }

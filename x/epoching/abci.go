@@ -15,7 +15,7 @@ import (
 
 // BeginBlocker is called at the beginning of every block.
 // Upon each BeginBlock,
-// - record the current AppHash
+// - record the current BlockHash
 // - if reaching the epoch beginning, then
 //   - increment epoch number
 //   - trigger AfterEpochBegins hook
@@ -29,7 +29,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// record the current AppHash
+	// record the current BlockHash
 	k.RecordAppHash(ctx)
 
 	// if this block is the first block of the next epoch
@@ -38,6 +38,9 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
 		incEpoch := k.IncEpoch(ctx)
+		// record the BlockHash referencing
+		// the last block of the previous epoch
+		k.RecordSealerAppHashForPrevEpoch(ctx)
 		// init the msg queue of this new epoch
 		k.InitMsgQueue(ctx)
 		// init the slashed voting power of this new epoch
@@ -57,8 +60,10 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 		}
 	}
 
-	if epoch.IsSecondBlock(ctx) {
-		k.RecordSealerHeaderForPrevEpoch(ctx)
+	if epoch.IsLastBlock(ctx) {
+		// record the block hash of the last block
+		// of the sealing epoch
+		k.RecordSealerBlockHashForEpoch(ctx)
 	}
 	return nil
 }

@@ -4,10 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzAppHashChain(f *testing.F) {
@@ -28,9 +29,9 @@ func FuzzAppHashChain(f *testing.F) {
 		epochInterval := k.GetParams(ctx).EpochInterval
 
 		// reach the end of the 1st epoch
-		expectedHeight := epochInterval - 1
+		expectedHeight := epochInterval - 2
 		for i := uint64(0); i < expectedHeight; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 		// ensure epoch number is 1

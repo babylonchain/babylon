@@ -11,17 +11,17 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/x/checkpointing/keeper"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
-func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner, cliCtx client.Context) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
+func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.BlsSigner) (*keeper.Keeper, sdk.Context, *codec.ProtoCodec) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -38,7 +38,6 @@ func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.Bl
 		runtime.NewKVStoreService(storeKey),
 		signer,
 		ek,
-		cliCtx,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())

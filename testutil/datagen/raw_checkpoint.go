@@ -37,7 +37,7 @@ func GetRandomRawBtcCheckpoint(r *rand.Rand) *txformat.RawBtcCheckpoint {
 	rawCkpt := GenRandomRawCheckpoint(r)
 	return &txformat.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
-		AppHash:          *rawCkpt.AppHash,
+		BlockHash:        *rawCkpt.BlockHash,
 		BitMap:           rawCkpt.Bitmap,
 		SubmitterAddress: GenRandomByteArray(r, txformat.AddressLength),
 		BlsSig:           rawCkpt.BlsMultiSig.Bytes(),
@@ -54,11 +54,11 @@ func GenRandomRawCheckpointWithMeta(r *rand.Rand) *types.RawCheckpointWithMeta {
 }
 
 func GenRandomRawCheckpoint(r *rand.Rand) *types.RawCheckpoint {
-	randomHashBytes := GenRandomAppHash(r)
+	randomHashBytes := GenRandomBlockHash(r)
 	randomBLSSig := GenRandomBlsMultiSig(r)
 	return &types.RawCheckpoint{
 		EpochNum:    GenRandomEpochNum(r),
-		AppHash:     &randomHashBytes,
+		BlockHash:   &randomHashBytes,
 		Bitmap:      bitmap.New(types.BitmapBits),
 		BlsMultiSig: &randomBLSSig,
 	}
@@ -118,8 +118,8 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 	// ensure sufficient signers
 	signerNum := n/3 + 1
 	epochNum := GenRandomEpochNum(r)
-	appHash := GenRandomAppHash(r)
-	msgBytes := types.GetSignBytes(epochNum, appHash)
+	blockHash := GenRandomBlockHash(r)
+	msgBytes := types.GetSignBytes(epochNum, blockHash)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
 	bm := bitmap.New(types.BitmapBits)
@@ -128,7 +128,7 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 	}
 	btcCheckpoint := &types.RawCheckpoint{
 		EpochNum:    epochNum,
-		AppHash:     &appHash,
+		BlockHash:   &blockHash,
 		Bitmap:      bm,
 		BlsMultiSig: &multiSig,
 	}
@@ -136,7 +136,7 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 	return btcCheckpoint
 }
 
-func GenRandomAppHash(r *rand.Rand) types.AppHash {
+func GenRandomBlockHash(r *rand.Rand) types.BlockHash {
 	return GenRandomByteArray(r, types.HashSize)
 }
 

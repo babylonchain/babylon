@@ -2,8 +2,9 @@ package app
 
 import (
 	"fmt"
-	abci "github.com/cometbft/cometbft/abci/types"
 	"testing"
+
+	abci "github.com/cometbft/cometbft/abci/types"
 
 	"cosmossdk.io/log"
 	dbm "github.com/cosmos/cosmos-db"
@@ -14,7 +15,7 @@ import (
 
 func TestBabylonBlockedAddrs(t *testing.T) {
 	db := dbm.NewMemDB()
-	signer, _ := SetupPrivSigner()
+	signer, _ := SetupTestPrivSigner()
 	logger := log.NewTestLogger(t)
 
 	app := NewBabylonAppWithCustomOptions(t, false, signer, SetupOptions{
@@ -71,7 +72,7 @@ func TestGetMaccPerms(t *testing.T) {
 
 func TestUpgradeStateOnGenesis(t *testing.T) {
 	db := dbm.NewMemDB()
-	privSigner, err := SetupPrivSigner()
+	privSigner, err := SetupTestPrivSigner()
 	require.NoError(t, err)
 	logger := log.NewTestLogger(t)
 

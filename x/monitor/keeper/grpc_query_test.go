@@ -4,6 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -11,9 +15,6 @@ import (
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	types2 "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/monitor/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzQueryEndedEpochBtcHeight(f *testing.F) {
@@ -124,7 +125,7 @@ func FuzzQueryReportedCheckpointBtcHeight(f *testing.F) {
 		// Verify checkpoint
 		btcCkpt := btctxformatter.RawBtcCheckpoint{
 			Epoch:            mockCkptWithMeta.Ckpt.EpochNum,
-			AppHash:   *mockCkptWithMeta.Ckpt.AppHash,
+			BlockHash:        *mockCkptWithMeta.Ckpt.BlockHash,
 			BitMap:           mockCkptWithMeta.Ckpt.Bitmap,
 			SubmitterAddress: datagen.GenRandomByteArray(r, btctxformatter.AddressLength),
 			BlsSig:           *mockCkptWithMeta.Ckpt.BlsMultiSig,

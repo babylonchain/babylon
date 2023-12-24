@@ -16,12 +16,6 @@ import (
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/testutil/cli"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	"github.com/cometbft/cometbft/libs/tempfile"
@@ -34,6 +28,13 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/cli"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 func newConfig() depinject.Config {
@@ -73,7 +74,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	require.NoError(t, err)
 
 	db := dbm.NewMemDB()
-	signer, err := app.SetupPrivSigner()
+	signer, err := app.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,
@@ -115,7 +116,7 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 // error is expected if adding duplicate
 func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 	db := dbm.NewMemDB()
-	signer, err := app.SetupPrivSigner()
+	signer, err := app.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             log.NewNopLogger(),

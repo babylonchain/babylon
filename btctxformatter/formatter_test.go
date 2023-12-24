@@ -28,7 +28,7 @@ func FuzzEncodingDecoding(f *testing.F) {
 
 		rawBTCCkpt := &RawBtcCheckpoint{
 			Epoch:            epoch,
-			AppHash:          appHash,
+			BlockHash:        appHash,
 			BitMap:           bitMap,
 			SubmitterAddress: blsSig,
 			BlsSig:           address,
@@ -78,8 +78,8 @@ func FuzzEncodingDecoding(f *testing.F) {
 			t.Errorf("Epoch should match. Expected: %v. Got: %v", epoch, ckpt.Epoch)
 		}
 
-		if !bytes.Equal(appHash, ckpt.AppHash) {
-			t.Errorf("AppHash should match. Expected: %v. Got: %v", appHash, ckpt.AppHash)
+		if !bytes.Equal(appHash, ckpt.BlockHash) {
+			t.Errorf("BlockHash should match. Expected: %v. Got: %v", appHash, ckpt.BlockHash)
 		}
 
 		if !bytes.Equal(bitMap, ckpt.BitMap) {

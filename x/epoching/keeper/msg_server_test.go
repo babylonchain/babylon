@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 // TODO (fuzz tests): replace the following tests with fuzz ones
@@ -17,7 +18,7 @@ func TestMsgWrappedDelegate(t *testing.T) {
 	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -47,7 +48,7 @@ func TestMsgWrappedUndelegate(t *testing.T) {
 	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -77,7 +78,7 @@ func TestMsgWrappedBeginRedelegate(t *testing.T) {
 	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
 
 	testCases := []struct {
@@ -108,7 +109,7 @@ func TestMsgWrappedCancelUnbondingDelegation(t *testing.T) {
 	helper := testhelper.NewHelper(t)
 	msgSrvr := helper.MsgSrvr
 	// enter 1st epoch, in which BBN starts handling validator-related msgs
-	ctx, err := helper.GenAndApplyEmptyBlock(r)
+	ctx, err := helper.ApplyEmptyBlockWithVoteExtension(r)
 	require.NoError(t, err)
 
 	testCases := []struct {

@@ -4,17 +4,15 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"cosmossdk.io/core/address"
-	appparams "github.com/babylonchain/babylon/app/params"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
+	appparams "github.com/babylonchain/babylon/app/params"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
 	"github.com/spf13/cobra"
 
@@ -33,50 +31,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	cmd.AddCommand(CmdTxAddBlsSig())
 	cmd.AddCommand(CmdWrappedCreateValidator(authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr)))
-
-	return cmd
-}
-
-func CmdTxAddBlsSig() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "submit [epoch_number] [app_hash] [bls_sig] [signer address]",
-		Short: "submit a BLS signature",
-		Args:  cobra.ExactArgs(4),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx, err := client.GetClientTxContext(cmd)
-			if err != nil {
-				return err
-			}
-
-			epoch_num, err := strconv.ParseUint(args[0], 10, 64)
-			if err != nil {
-				return err
-			}
-
-			appHash, err := types.NewAppHashFromHex(args[1])
-			if err != nil {
-				return err
-			}
-
-			blsSig, err := bls12381.NewBLSSigFromHex(args[2])
-			if err != nil {
-				return err
-			}
-
-			addr, err := sdk.ValAddressFromBech32(args[3])
-			if err != nil {
-				return err
-			}
-
-			msg := types.NewMsgAddBlsSig(clientCtx.GetFromAddress(), epoch_num, appHash, blsSig, addr)
-
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
-		},
-	}
-
-	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
 }

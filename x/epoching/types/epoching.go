@@ -35,7 +35,7 @@ func (e Epoch) GetLastBlockHeight() uint64 {
 }
 
 func (e Epoch) GetSealerBlockHeight() uint64 {
-	return e.GetLastBlockHeight() + 2
+	return e.GetLastBlockHeight() + 1
 }
 
 func (e Epoch) GetSecondBlockHeight() uint64 {
@@ -49,6 +49,10 @@ func (e Epoch) IsLastBlock(ctx context.Context) bool {
 	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 }
 
+func (e Epoch) IsLastBlockByHeight(height int64) bool {
+	return e.GetLastBlockHeight() == uint64(height)
+}
+
 func (e Epoch) IsFirstBlock(ctx context.Context) bool {
 	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 }
@@ -58,6 +62,13 @@ func (e Epoch) IsSecondBlock(ctx context.Context) bool {
 		return false
 	}
 	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+}
+
+func (e Epoch) IsVoteExtensionProposal(ctx context.Context) bool {
+	if e.EpochNumber == 0 {
+		return false
+	}
+	return e.IsFirstBlockOfNextEpoch(ctx)
 }
 
 // IsFirstBlockOfNextEpoch checks whether the current block is the first block of

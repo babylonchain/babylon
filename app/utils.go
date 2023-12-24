@@ -7,15 +7,10 @@ import (
 	"path/filepath"
 	"text/template"
 
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-
 	cmtconfig "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/privval"
 )
 
@@ -40,11 +35,9 @@ broadcast-mode = "{{ .BroadcastMode }}"
 
 type PrivSigner struct {
 	WrappedPV *privval.WrappedFilePV
-	ClientCtx client.Context
 }
 
-func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring, feePayer string, encodingCfg *appparams.EncodingConfig) (*PrivSigner, error) {
-	// setup private validator
+func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
 	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
@@ -58,33 +51,8 @@ func InitPrivSigner(clientCtx client.Context, nodeDir string, kr keyring.Keyring
 	}
 	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 
-	clientCtx = clientCtx.
-		WithInterfaceRegistry(encodingCfg.InterfaceRegistry).
-		WithCodec(encodingCfg.Codec).
-		WithLegacyAmino(encodingCfg.Amino).
-		WithTxConfig(encodingCfg.TxConfig).
-		WithAccountRetriever(types.AccountRetriever{}).
-		WithSkipConfirmation(true).
-		WithKeyring(kr).
-		WithNodeURI(nodeCfg.RPC.ListenAddress)
-
-	if feePayer != "" {
-		feePayerRecord, err := kr.Key(feePayer)
-		if err != nil {
-			return nil, err
-		}
-		feePayerAddress, err := feePayerRecord.GetAddress()
-		if err != nil {
-			return nil, err
-		}
-		clientCtx = clientCtx.
-			WithFromAddress(feePayerAddress).
-			WithFromName(feePayer)
-	}
-
 	return &PrivSigner{
 		WrappedPV: wrappedPV,
-		ClientCtx: clientCtx,
 	}, nil
 }
 

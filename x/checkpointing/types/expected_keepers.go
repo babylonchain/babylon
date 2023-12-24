@@ -2,18 +2,23 @@ package types
 
 import (
 	"context"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
+
+	cmtprotocrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 // EpochingKeeper defines the expected interface needed to retrieve epoch info
 type EpochingKeeper interface {
 	GetEpoch(ctx context.Context) *epochingtypes.Epoch
 	EnqueueMsg(ctx context.Context, msg epochingtypes.QueuedMessage)
+	GetAppHash(ctx context.Context, height uint64) ([]byte, error)
 	GetValidatorSet(ctx context.Context, epochNumer uint64) epochingtypes.ValidatorSet
 	GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64
 	CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.MsgCreateValidator) error
+	GetPubKeyByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (cmtprotocrypto.PublicKey, error)
 }
 
 // Event Hooks

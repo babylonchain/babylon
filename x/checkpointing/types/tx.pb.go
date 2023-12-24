@@ -6,7 +6,6 @@ package types
 import (
 	context "context"
 	fmt "fmt"
-	_ "github.com/cosmos/cosmos-proto"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
 	types "github.com/cosmos/cosmos-sdk/x/staking/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
@@ -31,86 +30,6 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgAddBlsSig defines a message to add a bls signature from a
-// validator
-type MsgAddBlsSig struct {
-	// signer corresponds to the submitter of the transaction
-	// This might be a different entity compared to the one that created the BLS signature
-	// (i.e. the validator owner of the BLS key which is specified by the `bls_sig.signer_address`)
-	Signer string  `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	BlsSig *BlsSig `protobuf:"bytes,2,opt,name=bls_sig,json=blsSig,proto3" json:"bls_sig,omitempty"`
-}
-
-func (m *MsgAddBlsSig) Reset()         { *m = MsgAddBlsSig{} }
-func (m *MsgAddBlsSig) String() string { return proto.CompactTextString(m) }
-func (*MsgAddBlsSig) ProtoMessage()    {}
-func (*MsgAddBlsSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b16c54750152c21, []int{0}
-}
-func (m *MsgAddBlsSig) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgAddBlsSig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgAddBlsSig.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgAddBlsSig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddBlsSig.Merge(m, src)
-}
-func (m *MsgAddBlsSig) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgAddBlsSig) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddBlsSig.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgAddBlsSig proto.InternalMessageInfo
-
-// MsgAddBlsSigResponse defines the MsgAddBlsSig response type.
-type MsgAddBlsSigResponse struct {
-}
-
-func (m *MsgAddBlsSigResponse) Reset()         { *m = MsgAddBlsSigResponse{} }
-func (m *MsgAddBlsSigResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgAddBlsSigResponse) ProtoMessage()    {}
-func (*MsgAddBlsSigResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b16c54750152c21, []int{1}
-}
-func (m *MsgAddBlsSigResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgAddBlsSigResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgAddBlsSigResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgAddBlsSigResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgAddBlsSigResponse.Merge(m, src)
-}
-func (m *MsgAddBlsSigResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgAddBlsSigResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgAddBlsSigResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgAddBlsSigResponse proto.InternalMessageInfo
-
 // MsgWrappedCreateValidator defines a wrapped message to create a validator
 type MsgWrappedCreateValidator struct {
 	Key                *BlsKey                   `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
@@ -121,7 +40,7 @@ func (m *MsgWrappedCreateValidator) Reset()         { *m = MsgWrappedCreateValid
 func (m *MsgWrappedCreateValidator) String() string { return proto.CompactTextString(m) }
 func (*MsgWrappedCreateValidator) ProtoMessage()    {}
 func (*MsgWrappedCreateValidator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b16c54750152c21, []int{2}
+	return fileDescriptor_6b16c54750152c21, []int{0}
 }
 func (m *MsgWrappedCreateValidator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -159,7 +78,7 @@ func (m *MsgWrappedCreateValidatorResponse) Reset()         { *m = MsgWrappedCre
 func (m *MsgWrappedCreateValidatorResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgWrappedCreateValidatorResponse) ProtoMessage()    {}
 func (*MsgWrappedCreateValidatorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_6b16c54750152c21, []int{3}
+	return fileDescriptor_6b16c54750152c21, []int{1}
 }
 func (m *MsgWrappedCreateValidatorResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -189,8 +108,6 @@ func (m *MsgWrappedCreateValidatorResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgWrappedCreateValidatorResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgAddBlsSig)(nil), "babylon.checkpointing.v1.MsgAddBlsSig")
-	proto.RegisterType((*MsgAddBlsSigResponse)(nil), "babylon.checkpointing.v1.MsgAddBlsSigResponse")
 	proto.RegisterType((*MsgWrappedCreateValidator)(nil), "babylon.checkpointing.v1.MsgWrappedCreateValidator")
 	proto.RegisterType((*MsgWrappedCreateValidatorResponse)(nil), "babylon.checkpointing.v1.MsgWrappedCreateValidatorResponse")
 }
@@ -198,37 +115,30 @@ func init() {
 func init() { proto.RegisterFile("babylon/checkpointing/v1/tx.proto", fileDescriptor_6b16c54750152c21) }
 
 var fileDescriptor_6b16c54750152c21 = []byte{
-	// 476 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0x4f, 0x6b, 0xd4, 0x40,
-	0x18, 0xc6, 0x33, 0x16, 0x57, 0x3a, 0x7a, 0x1a, 0x97, 0xba, 0xcd, 0x21, 0xfb, 0x47, 0x28, 0x75,
-	0xc1, 0x89, 0xdd, 0xe2, 0xc1, 0x7a, 0xea, 0x7a, 0x94, 0x45, 0x48, 0x41, 0x41, 0x84, 0x65, 0x92,
-	0x0c, 0xb3, 0xc3, 0x26, 0x99, 0x90, 0x77, 0x5c, 0x9a, 0x9b, 0x78, 0x12, 0x4f, 0xfd, 0x08, 0xfd,
-	0x08, 0x3d, 0xf8, 0x21, 0x3c, 0x2e, 0x9e, 0x3c, 0xca, 0xee, 0xa1, 0x7e, 0x0a, 0x91, 0x4d, 0x26,
-	0xec, 0x5a, 0x1b, 0x15, 0x4f, 0xc9, 0xcc, 0xfc, 0xde, 0xe7, 0x7d, 0x9e, 0x37, 0x19, 0xdc, 0xf5,
-	0x99, 0x9f, 0x47, 0x2a, 0x71, 0x83, 0x09, 0x0f, 0xa6, 0xa9, 0x92, 0x89, 0x96, 0x89, 0x70, 0x67,
-	0x07, 0xae, 0x3e, 0xa5, 0x69, 0xa6, 0xb4, 0x22, 0x2d, 0x83, 0xd0, 0x5f, 0x10, 0x3a, 0x3b, 0xb0,
-	0x9b, 0x42, 0x09, 0x55, 0x40, 0xee, 0xea, 0xad, 0xe4, 0xed, 0x07, 0xb5, 0x92, 0xeb, 0x0d, 0x83,
-	0xee, 0xd5, 0xa2, 0x7e, 0x04, 0xe3, 0x29, 0xcf, 0x0d, 0xd7, 0x0e, 0x14, 0xc4, 0x0a, 0x5c, 0xd0,
-	0x6c, 0x5a, 0x02, 0x3e, 0xd7, 0x6c, 0xed, 0xd1, 0xde, 0x2d, 0x81, 0x71, 0x69, 0xa6, 0x5c, 0x98,
-	0xa3, 0x7b, 0xa6, 0x36, 0x86, 0x42, 0x38, 0x06, 0x51, 0x1e, 0xf4, 0xce, 0x10, 0xbe, 0x33, 0x02,
-	0x71, 0x1c, 0x86, 0xc3, 0x08, 0x4e, 0xa4, 0x20, 0x8f, 0x70, 0x03, 0xa4, 0x48, 0x78, 0xd6, 0x42,
-	0x1d, 0xb4, 0xbf, 0x3d, 0x6c, 0x7d, 0xf9, 0xf4, 0xb0, 0x69, 0xb4, 0x8e, 0xc3, 0x30, 0xe3, 0x00,
-	0x27, 0x3a, 0x93, 0x89, 0xf0, 0x0c, 0x47, 0x9e, 0xe0, 0x5b, 0x2b, 0xa3, 0x20, 0x45, 0xeb, 0x46,
-	0x07, 0xed, 0xdf, 0x1e, 0x74, 0x68, 0xdd, 0xb0, 0x68, 0xd9, 0xc4, 0x6b, 0xf8, 0xc5, 0xf3, 0xe8,
-	0xee, 0x87, 0xf3, 0xb6, 0xf5, 0xfd, 0xbc, 0x6d, 0xbd, 0xbf, 0xbc, 0xe8, 0x1b, 0xbd, 0xde, 0x0e,
-	0x6e, 0x6e, 0x3a, 0xf2, 0x38, 0xa4, 0x2a, 0x01, 0xde, 0x9b, 0x23, 0xbc, 0x3b, 0x02, 0xf1, 0x2a,
-	0x63, 0x69, 0xca, 0xc3, 0x67, 0x19, 0x67, 0x9a, 0xbf, 0x64, 0x91, 0x0c, 0x99, 0x56, 0x19, 0x19,
-	0xe0, 0xad, 0x29, 0xcf, 0x0b, 0xd3, 0x7f, 0x73, 0xf0, 0x9c, 0xe7, 0xde, 0x0a, 0x26, 0x6f, 0x70,
-	0x33, 0x06, 0x31, 0x0e, 0x0a, 0xa9, 0xf1, 0xac, 0xd2, 0x32, 0x31, 0xfa, 0xd4, 0xc4, 0x36, 0x03,
-	0xa7, 0x66, 0xe0, 0x74, 0x04, 0xe2, 0x4a, 0x77, 0x8f, 0xc4, 0xbf, 0xed, 0x1d, 0x75, 0x37, 0xc3,
-	0x5d, 0xdb, 0xa8, 0x77, 0x1f, 0x77, 0x6b, 0x13, 0x55, 0xb9, 0x07, 0x3f, 0x10, 0xde, 0x1a, 0x81,
-	0x20, 0x01, 0xde, 0x5e, 0x7f, 0xa6, 0xbd, 0xfa, 0x84, 0x9b, 0xc3, 0xb3, 0xe9, 0xbf, 0x71, 0x55,
-	0x33, 0xf2, 0x11, 0xe1, 0x9d, 0x9a, 0x09, 0x1f, 0xfe, 0x51, 0xea, 0xfa, 0x22, 0xfb, 0xe9, 0x7f,
-	0x14, 0x55, 0x66, 0xec, 0x9b, 0xef, 0x2e, 0x2f, 0xfa, 0x68, 0xf8, 0xe2, 0xf3, 0xc2, 0x41, 0xf3,
-	0x85, 0x83, 0xbe, 0x2d, 0x1c, 0x74, 0xb6, 0x74, 0xac, 0xf9, 0xd2, 0xb1, 0xbe, 0x2e, 0x1d, 0xeb,
-	0xf5, 0x63, 0x21, 0xf5, 0xe4, 0xad, 0x4f, 0x03, 0x15, 0xbb, 0xa6, 0x4f, 0x30, 0x61, 0x32, 0xa9,
-	0x16, 0xee, 0xe9, 0x95, 0x4b, 0xa5, 0xf3, 0x94, 0x83, 0xdf, 0x28, 0xfe, 0xfd, 0xc3, 0x9f, 0x01,
-	0x00, 0x00, 0xff, 0xff, 0xb7, 0x5a, 0x7e, 0xa6, 0xf8, 0x03, 0x00, 0x00,
+	// 357 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x92, 0x3d, 0x4b, 0xfb, 0x40,
+	0x1c, 0xc7, 0x73, 0xff, 0xf2, 0x77, 0x38, 0xb7, 0x50, 0xb4, 0x66, 0x48, 0x1f, 0x04, 0x91, 0x0e,
+	0x77, 0xb4, 0xc5, 0x45, 0xb7, 0x3a, 0x4a, 0x11, 0x3a, 0x28, 0x88, 0x50, 0x2e, 0xe9, 0x71, 0x0d,
+	0x79, 0xb8, 0x90, 0xdf, 0x59, 0x9a, 0x4d, 0x9c, 0xc4, 0xc9, 0xd5, 0xad, 0x2f, 0xa1, 0x2f, 0xc3,
+	0xb1, 0xa3, 0xa3, 0xb4, 0x43, 0x7d, 0x19, 0xd2, 0x24, 0x45, 0xac, 0xde, 0xe2, 0x76, 0x0f, 0x9f,
+	0xdf, 0xf7, 0x81, 0x3b, 0x5c, 0x77, 0x98, 0x93, 0x06, 0x32, 0xa2, 0xee, 0x88, 0xbb, 0x7e, 0x2c,
+	0xbd, 0x48, 0x79, 0x91, 0xa0, 0xe3, 0x16, 0x55, 0x13, 0x12, 0x27, 0x52, 0x49, 0xb3, 0x52, 0x20,
+	0xe4, 0x1b, 0x42, 0xc6, 0x2d, 0xab, 0x2c, 0xa4, 0x90, 0x19, 0x44, 0xd7, 0xab, 0x9c, 0xb7, 0x8e,
+	0xb4, 0x92, 0x4e, 0x00, 0x03, 0x9f, 0xa7, 0x05, 0x57, 0x75, 0x25, 0x84, 0x12, 0x28, 0x28, 0xe6,
+	0xe7, 0x80, 0xc3, 0x15, 0xfb, 0x32, 0xb6, 0xf6, 0x0b, 0x20, 0x84, 0x6c, 0x3a, 0x04, 0x91, 0x5f,
+	0x34, 0xe6, 0x08, 0x1f, 0xf4, 0x40, 0x5c, 0x27, 0x2c, 0x8e, 0xf9, 0xf0, 0x3c, 0xe1, 0x4c, 0xf1,
+	0x2b, 0x16, 0x78, 0x43, 0xa6, 0x64, 0x62, 0xb6, 0x71, 0xc9, 0xe7, 0x69, 0x05, 0xd5, 0xd0, 0xf1,
+	0x6e, 0xbb, 0x46, 0x74, 0xe9, 0x49, 0x37, 0x80, 0x0b, 0x9e, 0xf6, 0xd7, 0xb0, 0x79, 0x8b, 0xcb,
+	0x21, 0x88, 0x81, 0x9b, 0x49, 0x0d, 0xc6, 0x1b, 0xad, 0xca, 0xbf, 0x4c, 0xa4, 0x49, 0xf2, 0x24,
+	0xa4, 0x88, 0x4a, 0x8a, 0xa8, 0xa4, 0x07, 0x62, 0xcb, 0xbd, 0x6f, 0x86, 0x3f, 0xce, 0x4e, 0xeb,
+	0x8f, 0xd3, 0xaa, 0xf1, 0x31, 0xad, 0x1a, 0x0f, 0xab, 0x59, 0xf3, 0x57, 0xa3, 0xc6, 0x21, 0xae,
+	0x6b, 0x1b, 0xf5, 0x39, 0xc4, 0x32, 0x02, 0xde, 0x7e, 0x41, 0xb8, 0xd4, 0x03, 0x61, 0x3e, 0x21,
+	0xbc, 0xa7, 0x29, 0xdf, 0xd1, 0xf7, 0xd5, 0xea, 0x5b, 0x67, 0x7f, 0x18, 0xda, 0x84, 0xb2, 0xfe,
+	0xdf, 0xaf, 0x66, 0x4d, 0xd4, 0xbd, 0x7c, 0x5d, 0xd8, 0x68, 0xbe, 0xb0, 0xd1, 0xfb, 0xc2, 0x46,
+	0xcf, 0x4b, 0xdb, 0x98, 0x2f, 0x6d, 0xe3, 0x6d, 0x69, 0x1b, 0x37, 0x27, 0xc2, 0x53, 0xa3, 0x3b,
+	0x87, 0xb8, 0x32, 0xa4, 0x85, 0x8f, 0x3b, 0x62, 0x5e, 0xb4, 0xd9, 0xd0, 0xc9, 0xd6, 0x4f, 0x51,
+	0x69, 0xcc, 0xc1, 0xd9, 0xc9, 0xde, 0xba, 0xf3, 0x19, 0x00, 0x00, 0xff, 0xff, 0xd4, 0x29, 0x9a,
+	0x31, 0xa2, 0x02, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -243,8 +153,6 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
-	// AddBlsSig defines a method for accumulating BLS signatures
-	AddBlsSig(ctx context.Context, in *MsgAddBlsSig, opts ...grpc.CallOption) (*MsgAddBlsSigResponse, error)
 	// WrappedCreateValidator defines a method for registering a new validator
 	WrappedCreateValidator(ctx context.Context, in *MsgWrappedCreateValidator, opts ...grpc.CallOption) (*MsgWrappedCreateValidatorResponse, error)
 }
@@ -255,15 +163,6 @@ type msgClient struct {
 
 func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 	return &msgClient{cc}
-}
-
-func (c *msgClient) AddBlsSig(ctx context.Context, in *MsgAddBlsSig, opts ...grpc.CallOption) (*MsgAddBlsSigResponse, error) {
-	out := new(MsgAddBlsSigResponse)
-	err := c.cc.Invoke(ctx, "/babylon.checkpointing.v1.Msg/AddBlsSig", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *msgClient) WrappedCreateValidator(ctx context.Context, in *MsgWrappedCreateValidator, opts ...grpc.CallOption) (*MsgWrappedCreateValidatorResponse, error) {
@@ -277,8 +176,6 @@ func (c *msgClient) WrappedCreateValidator(ctx context.Context, in *MsgWrappedCr
 
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
-	// AddBlsSig defines a method for accumulating BLS signatures
-	AddBlsSig(context.Context, *MsgAddBlsSig) (*MsgAddBlsSigResponse, error)
 	// WrappedCreateValidator defines a method for registering a new validator
 	WrappedCreateValidator(context.Context, *MsgWrappedCreateValidator) (*MsgWrappedCreateValidatorResponse, error)
 }
@@ -287,33 +184,12 @@ type MsgServer interface {
 type UnimplementedMsgServer struct {
 }
 
-func (*UnimplementedMsgServer) AddBlsSig(ctx context.Context, req *MsgAddBlsSig) (*MsgAddBlsSigResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddBlsSig not implemented")
-}
 func (*UnimplementedMsgServer) WrappedCreateValidator(ctx context.Context, req *MsgWrappedCreateValidator) (*MsgWrappedCreateValidatorResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WrappedCreateValidator not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
 	s.RegisterService(&_Msg_serviceDesc, srv)
-}
-
-func _Msg_AddBlsSig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgAddBlsSig)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).AddBlsSig(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/babylon.checkpointing.v1.Msg/AddBlsSig",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).AddBlsSig(ctx, req.(*MsgAddBlsSig))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Msg_WrappedCreateValidator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -339,81 +215,12 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddBlsSig",
-			Handler:    _Msg_AddBlsSig_Handler,
-		},
-		{
 			MethodName: "WrappedCreateValidator",
 			Handler:    _Msg_WrappedCreateValidator_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "babylon/checkpointing/v1/tx.proto",
-}
-
-func (m *MsgAddBlsSig) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgAddBlsSig) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgAddBlsSig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.BlsSig != nil {
-		{
-			size, err := m.BlsSig.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintTx(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Signer) > 0 {
-		i -= len(m.Signer)
-		copy(dAtA[i:], m.Signer)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Signer)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgAddBlsSigResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgAddBlsSigResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgAddBlsSigResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
 }
 
 func (m *MsgWrappedCreateValidator) Marshal() (dAtA []byte, err error) {
@@ -497,32 +304,6 @@ func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *MsgAddBlsSig) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Signer)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.BlsSig != nil {
-		l = m.BlsSig.Size()
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgAddBlsSigResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
 func (m *MsgWrappedCreateValidator) Size() (n int) {
 	if m == nil {
 		return 0
@@ -554,174 +335,6 @@ func sovTx(x uint64) (n int) {
 }
 func sozTx(x uint64) (n int) {
 	return sovTx(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *MsgAddBlsSig) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddBlsSig: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddBlsSig: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Signer", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Signer = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BlsSig", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.BlsSig == nil {
-				m.BlsSig = &BlsSig{}
-			}
-			if err := m.BlsSig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgAddBlsSigResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgAddBlsSigResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgAddBlsSigResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *MsgWrappedCreateValidator) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)

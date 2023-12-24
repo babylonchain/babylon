@@ -1,20 +1,15 @@
 package initialization
 
 import (
-	"cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"time"
 
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	tmjson "github.com/cometbft/cometbft/libs/json"
+	"cosmossdk.io/math"
+
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -25,6 +20,12 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+
+	"github.com/babylonchain/babylon/privval"
+	bbn "github.com/babylonchain/babylon/types"
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
 )
@@ -257,16 +258,16 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 
 	genDoc.AppState = bz
 
-	genesisJson, err := tmjson.MarshalIndent(genDoc, "", "  ")
-	if err != nil {
-		return err
-	}
-
 	// write the updated genesis file to each validator
 	for _, val := range chain.nodes {
-		if err := util.WriteFile(filepath.Join(val.configDir(), "config", "genesis.json"), genesisJson); err != nil {
-			return err
+		path := filepath.Join(val.configDir(), "config", "genesis.json")
+
+		// We need to use genutil.ExportGenesisFile to marshal and write the genesis file
+		// to use correct json encoding.
+		if err = genutil.ExportGenesisFile(genDoc, path); err != nil {
+			return fmt.Errorf("failed to export app genesis state: %w", err)
 		}
+
 	}
 	return nil
 }

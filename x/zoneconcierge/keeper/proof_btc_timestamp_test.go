@@ -5,6 +5,13 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/boljen/go-bitmap"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
+
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
@@ -12,11 +19,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
-	"github.com/boljen/go-bitmap"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzProofCZHeaderInEpoch(f *testing.F) {
@@ -33,8 +35,8 @@ func FuzzProofCZHeaderInEpoch(f *testing.F) {
 
 		// enter the 1st block of epoch 2
 		epochInterval := ek.GetParams(h.Ctx).EpochInterval
-		for j := 0; j < int(epochInterval); j++ {
-			h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		for j := 0; j < int(epochInterval)-1; j++ {
+			h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 			h.NoError(err)
 		}
 
@@ -51,12 +53,9 @@ func FuzzProofCZHeaderInEpoch(f *testing.F) {
 
 		// enter the 1st block of the next epoch
 		for j := 0; j < int(epochInterval); j++ {
-			h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+			h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 			h.NoError(err)
 		}
-		// seal last epoch
-		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
-		h.NoError(err)
 
 		epochWithHeader, err := ek.GetHistoricalEpoch(h.Ctx, indexedHeader.BabylonEpoch)
 		h.NoError(err)
@@ -116,10 +115,10 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 
 		// construct the rawCkpt
 		// Note that the BlsMultiSig will be generated and assigned later
-		appHash := checkpointingtypes.AppHash(epoch.SealerHeaderHash)
+		blockHash := checkpointingtypes.BlockHash(epoch.SealerBlockHash)
 		rawCkpt := &checkpointingtypes.RawCheckpoint{
 			EpochNum:    epoch.EpochNumber,
-			AppHash:     &appHash,
+			BlockHash:   &blockHash,
 			Bitmap:      bm,
 			BlsMultiSig: nil,
 		}
@@ -146,12 +145,12 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		// verify
 		err = zctypes.VerifyEpochSealed(epoch, rawCkpt, proof)
 
-		if subsetPower <= valSet.GetTotalPower()*1/3 { // BLS sig does not reach a quorum
-			require.LessOrEqual(t, numSubSet, numVals*1/3)
+		if subsetPower*3 <= valSet.GetTotalPower()*2 { // BLS sig does not reach a quorum
+			require.LessOrEqual(t, numSubSet, numVals*2/3)
 			require.Error(t, err)
 			require.NotErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		} else { // BLS sig has a valid quorum
-			require.Greater(t, numSubSet, numVals*1/3)
+			require.Greater(t, numSubSet, numVals*2/3)
 			require.Error(t, err)
 			require.ErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		}
@@ -175,14 +174,10 @@ func FuzzProofEpochSealed_Epoch(f *testing.F) {
 		newEpochs := datagen.RandomInt(r, 10) + 2
 		for i := 0; i < int(newEpochs); i++ {
 			for j := 0; j < int(epochInterval); j++ {
-				h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+				h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 				h.NoError(err)
 			}
 		}
-
-		// seal the last epoch at the 2nd block of the current epoch
-		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
-		h.NoError(err)
 
 		// prove the inclusion of last epoch
 		lastEpochNumber := ek.GetEpoch(h.Ctx).EpochNumber - 1
@@ -203,26 +198,27 @@ func FuzzProofEpochSealed_ValSet(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		h := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ek := h.App.EpochingKeeper
 		ck := h.App.CheckpointingKeeper
 		zck := h.App.ZoneConciergeKeeper
-		var err error
 
 		// chain is at height 1
-
 		// enter the 1st block of a random epoch
 		epochInterval := ek.GetParams(h.Ctx).EpochInterval
 		newEpochs := datagen.RandomInt(r, 10) + 2
 		for i := 0; i < int(newEpochs); i++ {
 			for j := 0; j < int(epochInterval); j++ {
-				h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+				_, err = h.ApplyEmptyBlockWithVoteExtension(r)
 				h.NoError(err)
 			}
 		}
 
 		// seal the last epoch at the 2nd block of the current epoch
-		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		h.NoError(err)
 
 		// prove the inclusion of last epoch

@@ -24,19 +24,20 @@ import (
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
-	"github.com/babylonchain/babylon/client/docs"
-	bbn "github.com/babylonchain/babylon/types"
-	owasm "github.com/babylonchain/babylon/wasmbinding"
 	nodeservice "github.com/cosmos/cosmos-sdk/client/grpc/node"
 	runtimeservices "github.com/cosmos/cosmos-sdk/runtime/services"
 	"github.com/cosmos/cosmos-sdk/x/consensus"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 
+	"github.com/babylonchain/babylon/client/docs"
+	bbn "github.com/babylonchain/babylon/types"
+	owasm "github.com/babylonchain/babylon/wasmbinding"
+
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/spf13/cast"
 
@@ -110,6 +111,9 @@ import (
 	appparams "github.com/babylonchain/babylon/app/params"
 
 	storetypes "cosmossdk.io/store/types"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+
 	"github.com/babylonchain/babylon/x/btccheckpoint"
 	btccheckpointkeeper "github.com/babylonchain/babylon/x/btccheckpoint/keeper"
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -134,8 +138,6 @@ import (
 	"github.com/babylonchain/babylon/x/monitor"
 	monitorkeeper "github.com/babylonchain/babylon/x/monitor/keeper"
 	monitortypes "github.com/babylonchain/babylon/x/monitor/types"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 
 	ibcfee "github.com/cosmos/ibc-go/v8/modules/apps/29-fee"
 	ibcfeekeeper "github.com/cosmos/ibc-go/v8/modules/apps/29-fee/keeper"
@@ -148,11 +150,12 @@ import (
 	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 
+	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+
 	// IBC-related
 	"github.com/babylonchain/babylon/x/zoneconcierge"
 	zckeeper "github.com/babylonchain/babylon/x/zoneconcierge/keeper"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
 
 const (
@@ -174,6 +177,8 @@ const (
 	// https://medium.com/cosmwasm/cosmwasm-for-ctos-iv-native-integrations-713140bf75fc
 	// suggests 50M as reasonable limits. Me may want to adjust it later.
 	DefaultGasLimit int64 = 50000000
+
+	DefaultVoteExtensionsEnableHeight = 1
 )
 
 var (
@@ -316,12 +321,6 @@ func NewBabylonApp(
 	std.RegisterLegacyAminoCodec(legacyAmino)
 	std.RegisterInterfaces(interfaceRegistry)
 
-	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
-	bApp.SetCommitMultiStoreTracer(traceStore)
-	bApp.SetVersion(version.Version)
-	bApp.SetInterfaceRegistry(interfaceRegistry)
-	bApp.SetTxEncoder(txConfig.TxEncoder())
-
 	keys := storetypes.NewKVStoreKeys(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey, crisistypes.StoreKey,
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
@@ -347,6 +346,64 @@ func NewBabylonApp(
 		// tokenomics-related modules
 		incentivetypes.StoreKey,
 	)
+	accountKeeper := authkeeper.NewAccountKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
+		authtypes.ProtoBaseAccount,
+		maccPerms,
+		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
+		appparams.Bech32PrefixAccAddr,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	bankKeeper := bankkeeper.NewBaseKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
+		accountKeeper,
+		BlockedAddresses(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		logger,
+	)
+
+	stakingKeeper := stakingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
+		accountKeeper,
+		bankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
+		authcodec.NewBech32Codec(appparams.Bech32PrefixConsAddr),
+	)
+
+	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
+	epochingKeeper := epochingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[epochingtypes.StoreKey]),
+		bankKeeper,
+		stakingKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	checkpointingKeeper := checkpointingkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[checkpointingtypes.StoreKey]),
+		privSigner.WrappedPV,
+		epochingKeeper,
+	)
+
+	voteExtOp := func(bApp *baseapp.BaseApp) {
+		voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
+		voteExtHandler.SetHandlers(bApp)
+		proposalHandler := checkpointing.NewProposalHandler(logger, &checkpointingKeeper, bApp.Mempool(), bApp)
+		proposalHandler.SetHandlers(bApp)
+	}
+	baseAppOptions = append(baseAppOptions, voteExtOp)
+
+	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
+	bApp.SetCommitMultiStoreTracer(traceStore)
+	bApp.SetVersion(version.Version)
+	bApp.SetInterfaceRegistry(interfaceRegistry)
+	bApp.SetTxEncoder(txConfig.TxEncoder())
 
 	tkeys := storetypes.NewTransientStoreKeys(
 		paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)
@@ -403,34 +460,11 @@ func NewBabylonApp(
 	app.CapabilityKeeper.Seal()
 
 	// add keepers
-	app.AccountKeeper = authkeeper.NewAccountKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[authtypes.StoreKey]),
-		authtypes.ProtoBaseAccount,
-		maccPerms,
-		authcodec.NewBech32Codec(appparams.Bech32PrefixAccAddr),
-		appparams.Bech32PrefixAccAddr,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
+	app.AccountKeeper = accountKeeper
 
-	app.BankKeeper = bankkeeper.NewBaseKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
-		app.AccountKeeper,
-		BlockedAddresses(),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		logger,
-	)
+	app.BankKeeper = bankKeeper
 
-	app.StakingKeeper = stakingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[stakingtypes.StoreKey]),
-		app.AccountKeeper,
-		app.BankKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
-		authcodec.NewBech32Codec(appparams.Bech32PrefixConsAddr),
-	)
+	app.StakingKeeper = stakingKeeper
 
 	app.CircuitKeeper = circuitkeeper.NewKeeper(
 		appCodec,
@@ -457,16 +491,6 @@ func NewBabylonApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-
-	// set up epoching keeper
-	// NOTE: the epoching module has to be set before the chekpointing module, as the checkpointing module will have access to the epoching module
-	epochingKeeper := epochingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[epochingtypes.StoreKey]),
-		app.BankKeeper,
-		app.StakingKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -578,13 +602,7 @@ func NewBabylonApp(
 		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
 		btcConfig,
 	)
-	checkpointingKeeper := checkpointingkeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[checkpointingtypes.StoreKey]),
-		privSigner.WrappedPV,
-		epochingKeeper,
-		privSigner.ClientCtx,
-	)
+
 	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[btccheckpointtypes.StoreKey]),
@@ -991,7 +1009,6 @@ func NewBabylonApp(
 
 	// initialize BaseApp
 	app.SetInitChainer(app.InitChainer)
-	app.SetPreBlocker(app.PreBlocker)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(anteHandler)
@@ -1037,7 +1054,7 @@ func NewBabylonApp(
 			tmos.Exit(err.Error())
 		}
 
-		ctx := app.BaseApp.NewUncachedContext(true, tmproto.Header{})
+		ctx := app.BaseApp.NewUncachedContext(true, cmtproto.Header{})
 
 		// Initialize pinned codes in wasmvm as they are not persisted there
 		if err := app.WasmKeeper.InitializePinnedCodes(ctx); err != nil {
@@ -1087,7 +1104,12 @@ func (app *BabylonApp) InitChainer(ctx sdk.Context, req *abci.RequestInitChain) 
 		panic("FAULTY")
 	}
 
-	return app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	res, err := app.ModuleManager.InitGenesis(ctx, app.appCodec, genesisState)
+	if err != nil {
+		panic(err)
+	}
+
+	return res, nil
 }
 
 // LoadHeight loads a particular height

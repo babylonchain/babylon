@@ -14,17 +14,20 @@ import (
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
-	"github.com/babylonchain/babylon/app"
+	appparams "github.com/babylonchain/babylon/app/params"
+	bbn "github.com/babylonchain/babylon/types"
+
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
+
+	"github.com/babylonchain/babylon/app"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
@@ -104,7 +107,7 @@ Example:
 				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime,
 				genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
 				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
-				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
+				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,

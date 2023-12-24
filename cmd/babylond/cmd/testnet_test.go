@@ -3,8 +3,9 @@ package cmd
 import (
 	"context"
 	"fmt"
-	dbm "github.com/cosmos/cosmos-db"
 	"testing"
+
+	dbm "github.com/cosmos/cosmos-db"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -25,7 +26,7 @@ func Test_TestnetCmd(t *testing.T) {
 	cfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	signer, err := app.SetupPrivSigner()
+	signer, err := app.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,

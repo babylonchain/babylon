@@ -5,6 +5,11 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/boljen/go-bitmap"
+	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/wire"
+	"github.com/stretchr/testify/require"
+
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -12,10 +17,6 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	"github.com/boljen/go-bitmap"
-	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/wire"
-	"github.com/stretchr/testify/require"
 )
 
 func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byte) (bls12381.Signature, error) {
@@ -34,10 +35,12 @@ func FuzzBTCTimestamp(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		h := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		h := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ek := &h.App.EpochingKeeper
 		zck := h.App.ZoneConciergeKeeper
-		var err error
 
 		// empty BTC timestamp
 		btcTs := &types.BTCTimestamp{}
@@ -50,8 +53,8 @@ func FuzzBTCTimestamp(f *testing.F) {
 		*/
 		// enter block 11, 1st block of epoch 2
 		epochInterval := ek.GetParams(h.Ctx).EpochInterval
-		for j := 0; j < int(epochInterval); j++ {
-			h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		for j := 0; j < int(epochInterval)-2; j++ {
+			h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 			h.NoError(err)
 		}
 
@@ -68,11 +71,11 @@ func FuzzBTCTimestamp(f *testing.F) {
 
 		// enter block 21, 1st block of epoch 3
 		for j := 0; j < int(epochInterval); j++ {
-			h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+			h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 			h.NoError(err)
 		}
 		// seal last epoch
-		h.Ctx, err = h.GenAndApplyEmptyBlock(r)
+		h.Ctx, err = h.ApplyEmptyBlockWithVoteExtension(r)
 		h.NoError(err)
 
 		epochWithHeader, err := ek.GetHistoricalEpoch(h.Ctx, indexedHeader.BabylonEpoch)
@@ -92,15 +95,15 @@ func FuzzBTCTimestamp(f *testing.F) {
 		// construct the rawCkpt
 		// Note that the BlsMultiSig will be generated and assigned later
 		bm := datagen.GenFullBitmap()
-		appHash := checkpointingtypes.AppHash(epochWithHeader.SealerHeaderHash)
+		blockHash := checkpointingtypes.BlockHash(epochWithHeader.SealerBlockHash)
 		rawCkpt := &checkpointingtypes.RawCheckpoint{
 			EpochNum:    epochWithHeader.EpochNumber,
-			AppHash:     &appHash,
+			BlockHash:   &blockHash,
 			Bitmap:      bm,
 			BlsMultiSig: nil,
 		}
 		// let the subset generate a BLS multisig over sealer header's app_hash
-		multiSig, err := signBLSWithBitmap(h.GenValidators.BlsPrivKeys, bm, rawCkpt.SignedMsg())
+		multiSig, err := signBLSWithBitmap(h.GenValidators.GetBLSPrivKeys(), bm, rawCkpt.SignedMsg())
 		require.NoError(t, err)
 		// assign multiSig to rawCkpt
 		rawCkpt.BlsMultiSig = &multiSig

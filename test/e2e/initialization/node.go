@@ -1,10 +1,15 @@
 package initialization
 
 import (
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cmtos "github.com/cometbft/cometbft/libs/os"
 	dbm "github.com/cosmos/cosmos-db"
@@ -12,14 +17,7 @@ import (
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"os"
-	"path"
-	"path/filepath"
-	"strings"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cometbft/cometbft/p2p"
@@ -38,6 +36,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
+	bbn "github.com/babylonchain/babylon/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
 
@@ -63,18 +65,18 @@ func newNode(chain *internalChain, nodeConfig *NodeConfig) (*internalNode, error
 		moniker:     fmt.Sprintf("%s-node-%s", chain.chainMeta.Id, nodeConfig.Name),
 		isValidator: nodeConfig.IsValidator,
 	}
+	// creating keys comes before init
+	if err := node.createKey(ValidatorWalletName); err != nil {
+		return nil, err
+	}
+	if err := node.createConsensusKey(); err != nil {
+		return nil, err
+	}
 	// generate genesis files
 	if err := node.init(); err != nil {
 		return nil, err
 	}
-	// create keys
-	if err := node.createKey(ValidatorWalletName); err != nil {
-		return nil, err
-	}
 	if err := node.createNodeKey(); err != nil {
-		return nil, err
-	}
-	if err := node.createConsensusKey(); err != nil {
 		return nil, err
 	}
 	node.createAppConfig(nodeConfig)
@@ -180,7 +182,6 @@ func (n *internalNode) createConsensusKey() error {
 		return err
 	}
 
-	// privval.LoadOrGenWrappedFilePV()
 	privKey := cmted25519.GenPrivKeyFromSecret([]byte(n.mnemonic))
 	blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(n.mnemonic))
 	filePV := privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
@@ -305,7 +306,7 @@ func (n *internalNode) init() error {
 	appOptions[flags.FlagHome] = n.configDir()
 	appOptions["btc-config.network"] = string(bbn.BtcSimnet)
 
-	privSigner, _ := babylonApp.SetupPrivSigner()
+	privSigner := &babylonApp.PrivSigner{WrappedPV: &privval.WrappedFilePV{Key: n.consensusKey}}
 	// Create a temp app to get the default genesis state
 	tempApp := babylonApp.NewBabylonApp(
 		log.NewNopLogger(),
@@ -334,6 +335,7 @@ func (n *internalNode) init() error {
 		Params: cmttypes.DefaultConsensusParams(),
 	}
 	appGenesis.Consensus.Params.Block.MaxGas = babylonApp.DefaultGasLimit
+	appGenesis.Consensus.Params.ABCI.VoteExtensionsEnableHeight = babylonApp.DefaultVoteExtensionsEnableHeight
 
 	if err = genutil.ExportGenesisFile(appGenesis, config.GenesisFile()); err != nil {
 		return fmt.Errorf("failed to export app genesis state: %w", err)

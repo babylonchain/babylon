@@ -75,7 +75,7 @@ func (pvKey WrappedFilePVKey) Save() {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 
 // WrappedFilePV wraps FilePV with WrappedFilePVKey.
 type WrappedFilePV struct {
@@ -150,7 +150,7 @@ func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *Wrapp
 	}
 
 	// adding path is not needed
-	//pvState.filePath = stateFilePath
+	// pvState.filePath = stateFilePath
 
 	return &WrappedFilePV{
 		Key:           pvKey,
@@ -253,6 +253,10 @@ func (pv *WrappedFilePV) GetBlsPubkey() (bls12381.PublicKey, error) {
 		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
 	}
 	return blsPrivKey.PubKey(), nil
+}
+
+func (pv *WrappedFilePV) GetValidatorPubkey() (tmcrypto.PubKey, error) {
+	return pv.GetPubKey()
 }
 
 // Save persists the FilePV to disk.

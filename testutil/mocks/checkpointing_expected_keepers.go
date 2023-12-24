@@ -10,6 +10,7 @@ import (
 
 	types "github.com/babylonchain/babylon/x/checkpointing/types"
 	types0 "github.com/babylonchain/babylon/x/epoching/types"
+	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types1 "github.com/cosmos/cosmos-sdk/types"
 	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
@@ -64,6 +65,21 @@ func (mr *MockEpochingKeeperMockRecorder) EnqueueMsg(ctx, msg interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueMsg", reflect.TypeOf((*MockEpochingKeeper)(nil).EnqueueMsg), ctx, msg)
 }
 
+// GetAppHash mocks base method.
+func (m *MockEpochingKeeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAppHash", ctx, height)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAppHash indicates an expected call of GetAppHash.
+func (mr *MockEpochingKeeperMockRecorder) GetAppHash(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAppHash", reflect.TypeOf((*MockEpochingKeeper)(nil).GetAppHash), ctx, height)
+}
+
 // GetEpoch mocks base method.
 func (m *MockEpochingKeeper) GetEpoch(ctx context.Context) *types0.Epoch {
 	m.ctrl.T.Helper()
@@ -76,6 +92,21 @@ func (m *MockEpochingKeeper) GetEpoch(ctx context.Context) *types0.Epoch {
 func (mr *MockEpochingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpoch), ctx)
+}
+
+// GetPubKeyByConsAddr mocks base method.
+func (m *MockEpochingKeeper) GetPubKeyByConsAddr(ctx context.Context, consAddr types1.ConsAddress) (crypto.PublicKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPubKeyByConsAddr", ctx, consAddr)
+	ret0, _ := ret[0].(crypto.PublicKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPubKeyByConsAddr indicates an expected call of GetPubKeyByConsAddr.
+func (mr *MockEpochingKeeperMockRecorder) GetPubKeyByConsAddr(ctx, consAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPubKeyByConsAddr", reflect.TypeOf((*MockEpochingKeeper)(nil).GetPubKeyByConsAddr), ctx, consAddr)
 }
 
 // GetTotalVotingPower mocks base method.

@@ -1,37 +1,31 @@
 package helper
 
 import (
-	"math/rand"
 	"testing"
 
 	"cosmossdk.io/core/header"
-	"cosmossdk.io/math"
-	"github.com/babylonchain/babylon/app"
-	appparams "github.com/babylonchain/babylon/app/params"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
+
+	"cosmossdk.io/math"
+	"github.com/cosmos/gogoproto/proto"
+	"github.com/stretchr/testify/require"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	proto "github.com/cosmos/gogoproto/proto"
-	"github.com/stretchr/testify/require"
-)
 
-type GenesisValidators struct {
-	GenesisKeys []*checkpointingtypes.GenesisKey
-	BlsPrivKeys []bls12381.PrivateKey
-}
+	"github.com/babylonchain/babylon/app"
+	appparams "github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/x/epoching/keeper"
+	"github.com/babylonchain/babylon/x/epoching/types"
+)
 
 // Helper is a structure which wraps the entire app and exposes functionalities for testing the epoching module
 type Helper struct {
@@ -43,51 +37,25 @@ type Helper struct {
 	QueryClient types.QueryClient
 
 	GenAccs       []authtypes.GenesisAccount
-	GenValidators *GenesisValidators
+	GenValidators *datagen.GenesisValidators
 }
 
 // NewHelper creates the helper for testing the epoching module
 func NewHelper(t *testing.T) *Helper {
-	valSet, err := GenesisValidatorSet(1)
+	valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
 	require.NoError(t, err)
-	// generate genesis account
-	acc := authtypes.NewBaseAccount(valSet.GenesisKeys[0].ValPubkey.Address().Bytes(), valSet.GenesisKeys[0].ValPubkey, 0, 0)
-	balance := banktypes.Balance{
-		Address: acc.GetAddress().String(),
-		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(100000000000000))),
-	}
 
-	app := app.SetupWithGenesisValSet(t, valSet.GenesisKeys, []authtypes.GenesisAccount{acc}, balance)
-	ctx := app.BaseApp.NewContext(false).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
-
-	epochingKeeper := app.EpochingKeeper
-
-	querier := keeper.Querier{Keeper: epochingKeeper}
-	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, querier)
-	queryClient := types.NewQueryClient(queryHelper)
-	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
-
-	return &Helper{
-		t,
-		ctx,
-		app,
-		msgSrvr,
-		queryClient,
-		nil,
-		valSet,
-	}
+	return NewHelperWithValSet(t, valSet, privSigner)
 }
 
 // NewHelperWithValSet is same as NewHelper, except that it creates a set of validators
-func NewHelperWithValSet(t *testing.T) *Helper {
-	// generate the validator set with 10 validators
-	valSet, err := GenesisValidatorSet(10)
-	require.NoError(t, err)
-
+// the privSigner is the 0th validator in valSet
+func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSigner *app.PrivSigner) *Helper {
 	// generate the genesis account
-	senderPrivKey := secp256k1.GenPrivKey()
-	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	signerPubKey := privSigner.WrappedPV.Key.PubKey
+	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
+	privSigner.WrappedPV.Key.DelegatorAddress = acc.Address
+	valSet.Keys[0].ValidatorAddress = privSigner.WrappedPV.GetAddress().String()
 	// ensure the genesis account has a sufficient amount of tokens
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
@@ -96,8 +64,8 @@ func NewHelperWithValSet(t *testing.T) *Helper {
 	GenAccs := []authtypes.GenesisAccount{acc}
 
 	// setup the app and ctx
-	app := app.SetupWithGenesisValSet(t, valSet.GenesisKeys, GenAccs, balance)
-	ctx := app.BaseApp.NewContext(false).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
+	app := app.SetupWithGenesisValSet(t, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
+	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
 
 	// get necessary subsets of the app/keeper
 	epochingKeeper := app.EpochingKeeper
@@ -122,47 +90,29 @@ func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
-// GenAndApplyEmptyBlock generates a new empty block and appends it to the current blockchain
-func (h *Helper) GenAndApplyEmptyBlock(r *rand.Rand) (sdk.Context, error) {
-	newHeight := h.App.LastBlockHeight() + 1
-	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
-	if err != nil {
-		return sdk.Context{}, err
-	}
-	valhash := CalculateValHash(valSet)
-	newHeader := tmproto.Header{
-		Height:             newHeight,
-		ValidatorsHash:     valhash,
-		NextValidatorsHash: valhash,
-	}
-
-	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Height:             newHeader.Height,
-		NextValidatorsHash: newHeader.NextValidatorsHash,
-	})
-	if err != nil {
-		return sdk.Context{}, err
-	}
-
-	newHeader.AppHash = resp.AppHash
-	ctxDuringHeight := h.Ctx.WithHeaderInfo(header.Info{
-		Height:  newHeader.Height,
-		AppHash: resp.AppHash,
-	}).WithBlockHeader(newHeader)
-
-	_, err = h.App.Commit()
-	if err != nil {
-		return sdk.Context{}, err
+func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash checkpointingtypes.BlockHash, valSet *datagen.GenesisValidators) ([]abci.ExtendedVoteInfo, error) {
+	blsPrivKeys := valSet.GetBLSPrivKeys()
+	genesisKeys := valSet.GetGenesisKeys()
+	signBytes := checkpointingtypes.GetSignBytes(epochNum, blockHash)
+	extendedVotes := make([]abci.ExtendedVoteInfo, 0, len(valSet.Keys))
+	for i, sk := range blsPrivKeys {
+		sig := bls12381.Sign(sk, signBytes)
+		ve := checkpointingtypes.VoteExtension{
+			Signer:    genesisKeys[i].ValidatorAddress,
+			BlockHash: blockHash,
+			EpochNum:  epochNum,
+			Height:    height,
+			BlsSig:    &sig,
+		}
+		veBytes, err := ve.Marshal()
+		if err != nil {
+			return nil, err
+		}
+		veInfo := abci.ExtendedVoteInfo{VoteExtension: veBytes}
+		extendedVotes = append(extendedVotes, veInfo)
 	}
 
-	if newHeight == 1 {
-		// do it again
-		// TODO: Figure out why when ctx height is 1, GenAndApplyEmptyBlock
-		// will still give ctx height 1 once, then start to increment
-		return h.GenAndApplyEmptyBlock(r)
-	}
-
-	return ctxDuringHeight, nil
+	return extendedVotes, nil
 }
 
 // WrappedDelegate calls handler to delegate stake for a validator
@@ -242,37 +192,4 @@ func (h *Helper) CheckValidator(addr sdk.ValAddress, status stakingtypes.BondSta
 func (h *Helper) CheckDelegator(delegator sdk.AccAddress, val sdk.ValAddress, found bool) {
 	_, ok := h.App.StakingKeeper.GetDelegation(h.Ctx, delegator, val)
 	require.Equal(h.t, ok, found)
-}
-
-// GenesisValidatorSet generates a set with `numVals` genesis validators
-func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
-	genesisKeys := make([]*checkpointingtypes.GenesisKey, 0, numVals)
-	blsPrivKeys := make([]bls12381.PrivateKey, 0, numVals)
-	for i := 0; i < numVals; i++ {
-		blsPrivKey := bls12381.GenPrivKey()
-		// create validator set with single validator
-		valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), blsPrivKey)
-		if err != nil {
-			return nil, err
-		}
-		valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
-		if err != nil {
-			return nil, err
-		}
-		genesisKey, err := checkpointingtypes.NewGenesisKey(
-			sdk.ValAddress(valKeys.ValPubkey.Address()),
-			&valKeys.BlsPubkey,
-			valKeys.PoP,
-			&cosmosed.PubKey{Key: valPubkey.Bytes()},
-		)
-		if err != nil {
-			return nil, err
-		}
-		genesisKeys = append(genesisKeys, genesisKey)
-		blsPrivKeys = append(blsPrivKeys, blsPrivKey)
-	}
-	return &GenesisValidators{
-		GenesisKeys: genesisKeys,
-		BlsPrivKeys: blsPrivKeys,
-	}, nil
 }

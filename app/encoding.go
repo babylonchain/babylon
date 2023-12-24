@@ -3,12 +3,13 @@ package app
 import (
 	"cosmossdk.io/log"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	appparams "github.com/babylonchain/babylon/app/params"
 	dbm "github.com/cosmos/cosmos-db"
+
+	appparams "github.com/babylonchain/babylon/app/params"
 )
 
 func NewTmpBabylonApp() *BabylonApp {
-	signer, _ := SetupPrivSigner()
+	signer, _ := SetupTestPrivSigner()
 	return NewBabylonApp(
 		log.NewNopLogger(),
 		dbm.NewMemDB(),

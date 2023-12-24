@@ -6,6 +6,10 @@ import (
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
+	"github.com/btcsuite/btcd/wire"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	bbn "github.com/babylonchain/babylon/types"
@@ -13,9 +17,6 @@ import (
 	btclckeeper "github.com/babylonchain/babylon/x/btclightclient/keeper"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/btcsuite/btcd/wire"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func GetCZHeaderKey(chainID string, height uint64) []byte {
@@ -38,19 +39,19 @@ func GetValSetKey(epochNumber uint64) []byte {
 }
 
 func VerifyEpochInfo(epoch *epochingtypes.Epoch, proof *tmcrypto.ProofOps) error {
-	// get the Merkle root, i.e., the AppHash of the sealer header
-	root := epoch.SealerHeaderHash
+	// get the Merkle root, i.e., the BlockHash of the sealer header
+	root := epoch.SealerAppHash
 
 	// Ensure The epoch medatata is committed to the app_hash of the sealer header
 	// NOTE: the proof is generated when sealer header is generated. At that time
 	// sealer header hash is not given to epoch metadata. Thus we need to clear the
 	// sealer header hash when verifying the proof.
-	epoch.SealerHeaderHash = []byte{}
+	epoch.SealerAppHash = []byte{}
 	epochBytes, err := epoch.Marshal()
 	if err != nil {
 		return err
 	}
-	epoch.SealerHeaderHash = root
+	epoch.SealerAppHash = root
 	if err := VerifyStore(root, epochingtypes.StoreKey, GetEpochInfoKey(epoch.EpochNumber), epochBytes, proof); err != nil {
 		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for epoch metadata: %v", err)
 	}
@@ -63,7 +64,7 @@ func VerifyValSet(epoch *epochingtypes.Epoch, valSet *checkpointingtypes.Validat
 	if err != nil {
 		return err
 	}
-	if err := VerifyStore(epoch.SealerHeaderHash, checkpointingtypes.StoreKey, GetValSetKey(epoch.EpochNumber), valSetBytes, proof); err != nil {
+	if err := VerifyStore(epoch.SealerAppHash, checkpointingtypes.StoreKey, GetValSetKey(epoch.EpochNumber), valSetBytes, proof); err != nil {
 		return errorsmod.Wrapf(ErrInvalidMerkleProof, "invalid inclusion proof for validator set: %v", err)
 	}
 
@@ -73,10 +74,10 @@ func VerifyValSet(epoch *epochingtypes.Epoch, valSet *checkpointingtypes.Validat
 // VerifyEpochSealed verifies that the given `epoch` is sealed by the `rawCkpt` by using the given `proof`
 // The verification rules include:
 // - basic sanity checks
-// - The raw checkpoint's app_hash is same as in the header of the sealer epoch
-// - More than 1/3 (in voting power) validators in the validator set of this epoch have signed app_hash of the sealer epoch
-// - The epoch medatata is committed to the app_hash of the sealer epoch
-// - The validator set is committed to the app_hash of the sealer epoch
+// - The raw checkpoint's BlockHash is same as the sealer_block_hash of the sealed epoch
+// - More than 2/3 (in voting power) validators in the validator set of this epoch have signed sealer_block_hash of the sealed epoch
+// - The epoch medatata is committed to the sealer_app_hash of the sealed epoch
+// - The validator set is committed to the sealer_app_hash of the sealed epoch
 func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.RawCheckpoint, proof *ProofEpochSealed) error {
 	// nil check
 	if epoch == nil {
@@ -101,19 +102,19 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to rawCkpt.EpochNum (%d)", epoch.EpochNumber, rawCkpt.EpochNum)
 	}
 
-	// ensure the raw checkpoint's app_hash is same as in the header of the sealer header
+	// ensure the raw checkpoint's block_hash is same as the sealer_block_hash of the sealed epoch
 	// NOTE: since this proof is assembled by a Babylon node who has verified the checkpoint,
-	// the two appHash values should always be the same, otherwise this Babylon node is malicious.
+	// the two blockhash values should always be the same, otherwise this Babylon node is malicious.
 	// This is different from the checkpoint verification rules in checkpointing,
-	// where a checkpoint with valid BLS multisig but different appHash signals a dishonest majority equivocation.
-	appHashInCkpt := rawCkpt.AppHash
-	appHashInSealerHeader := checkpointingtypes.AppHash(epoch.SealerHeaderHash)
-	if !appHashInCkpt.Equal(appHashInSealerHeader) {
-		return fmt.Errorf("AppHash is not same in rawCkpt (%s) and epoch's SealerHeader (%s)", appHashInCkpt.String(), appHashInSealerHeader.String())
+	// where a checkpoint with valid BLS multisig but different blockhashes signals a dishonest majority equivocation.
+	blockHashInCkpt := rawCkpt.BlockHash
+	blockHashInSealerHeader := checkpointingtypes.BlockHash(epoch.SealerBlockHash)
+	if !blockHashInCkpt.Equal(blockHashInSealerHeader) {
+		return fmt.Errorf("BlockHash is not same in rawCkpt (%s) and epoch's SealerHeader (%s)", blockHashInCkpt.String(), blockHashInSealerHeader.String())
 	}
 
 	/*
-		Ensure more than 1/3 (in voting power) validators of this epoch have signed (epoch_num || app_hash) in the raw checkpoint
+		Ensure more than 2/3 (in voting power) validators of this epoch have signed (epoch_num || block_hash) in the raw checkpoint
 	*/
 	valSet := &checkpointingtypes.ValidatorWithBlsKeySet{ValSet: proof.ValidatorSet}
 	// filter validator set that contributes to the signature
@@ -121,9 +122,9 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	if err != nil {
 		return err
 	}
-	// ensure the signerSet has > 1/3 voting power
-	if signerSetPower <= valSet.GetTotalPower()*1/3 {
-		return fmt.Errorf("the BLS signature involves insufficient voting power")
+	// ensure the signerSet has > 2/3 voting power
+	if signerSetPower*3 <= valSet.GetTotalPower()*2 {
+		return checkpointingtypes.ErrInsufficientVotingPower
 	}
 	// verify BLS multisig
 	signedMsgBytes := rawCkpt.SignedMsg()
@@ -170,10 +171,10 @@ func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, pr
 		return fmt.Errorf("epoch.EpochNumber (%d) is not equal to header.BabylonEpoch (%d)", epoch.EpochNumber, header.BabylonEpoch)
 	}
 
-	// get the Merkle root, i.e., the AppHash of the sealer header
-	root := epoch.SealerHeaderHash
+	// get the Merkle root, i.e., the BlockHash of the sealer header
+	root := epoch.SealerAppHash
 
-	// Ensure The header is committed to the AppHash of the sealer header
+	// Ensure The header is committed to the BlockHash of the sealer header
 	headerBytes, err := header.Marshal()
 	if err != nil {
 		return err

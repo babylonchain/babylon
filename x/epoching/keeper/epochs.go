@@ -6,10 +6,11 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func (k Keeper) setEpochInfo(ctx context.Context, epochNumber uint64, epoch *types.Epoch) {
@@ -81,14 +82,13 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 	return nil
 }
 
-// RecordSealerHeaderForPrevEpoch records the sealer header for the previous epoch,
-// where the sealer header of an epoch is the 2nd header of the next epoch
-// This validator set of the epoch has generated a BLS multisig on `app_hash` of the sealer header
-func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx context.Context) *types.Epoch {
-	// get the sealer header
+// RecordSealerAppHashForPrevEpoch records the BlockHash referencing
+// the last block of the previous epoch
+func (k Keeper) RecordSealerAppHashForPrevEpoch(ctx context.Context) *types.Epoch {
 	epoch := k.GetEpoch(ctx)
-	if !epoch.IsSecondBlock(ctx) {
-		panic(fmt.Errorf("RecordSealerHeaderForPrevEpoch can only be invoked at the second header of a non-zero epoch. current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
+	if !epoch.IsFirstBlock(ctx) {
+		panic(fmt.Errorf("RecordSealerAppHashForPrevEpoch can only be invoked at the first header of a non-zero epoch. "+
+			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
 	}
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 
@@ -99,10 +99,28 @@ func (k Keeper) RecordSealerHeaderForPrevEpoch(ctx context.Context) *types.Epoch
 	}
 
 	// record the sealer header for the sealed epoch
-	sealedEpoch.SealerHeaderHash = header.AppHash
+	sealedEpoch.SealerAppHash = header.AppHash
 	k.setEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
 
 	return sealedEpoch
+}
+
+// RecordSealerBlockHashForEpoch records the block hash of
+// the last block of the current epoch
+func (k Keeper) RecordSealerBlockHashForEpoch(ctx context.Context) *types.Epoch {
+	// get the sealer header
+	epoch := k.GetEpoch(ctx)
+	if !epoch.IsLastBlock(ctx) {
+		panic(fmt.Errorf("RecordSealerBlockHashForEpoch can only be invoked at the last header of a non-zero epoch. "+
+			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
+	}
+	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+
+	// record the sealer block hash for the sealing epoch
+	epoch.SealerBlockHash = header.Hash
+	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
+
+	return epoch
 }
 
 // IncEpoch adds epoch number by 1

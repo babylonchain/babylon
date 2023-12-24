@@ -38,6 +38,7 @@ func GenRandomEpoch(r *rand.Rand) *epochingtypes.Epoch {
 		&lastBlockHeader.Time,
 	)
 	sealerHeader := GenRandomTMHeader(r, "test-chain", firstBlockHeight+epochInterval+1) // 2nd block in the next epoch
-	epoch.SealerHeaderHash = sealerHeader.AppHash
+	epoch.SealerBlockHash = GenRandomBlockHash(r)
+	epoch.SealerAppHash = sealerHeader.AppHash
 	return &epoch
 }

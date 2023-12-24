@@ -6,12 +6,14 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 
-	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/x/epoching/types"
 )
 
 func FuzzSlashedValSet(f *testing.F) {
@@ -20,9 +22,16 @@ func FuzzSlashedValSet(f *testing.F) {
 		r := rand.New(rand.NewSource(seed))
 		var err error
 
-		helper := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ctx, keeper, stakingKeeper := helper.Ctx, helper.App.EpochingKeeper, helper.App.StakingKeeper
 		getValSet := keeper.GetValidatorSet(ctx, 1)
+
+		// at epoch 1 right now
+		epoch := keeper.GetEpoch(ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
 
 		// slash a random subset of validators
 		numSlashed := r.Intn(len(getValSet))
@@ -50,11 +59,12 @@ func FuzzSlashedValSet(f *testing.F) {
 		// go to epoch 2
 		epochInterval := keeper.GetParams(ctx).EpochInterval
 		for i := uint64(0); i < epochInterval; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
-		epochNumber := keeper.GetEpoch(ctx).EpochNumber
-		require.Equal(t, uint64(2), epochNumber)
+		epoch = keeper.GetEpoch(ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
+
 		// no validator is slashed in epoch 1
 		require.Empty(t, keeper.GetSlashedValidators(ctx, 2))
 	})

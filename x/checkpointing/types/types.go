@@ -6,11 +6,12 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 const (
@@ -19,16 +20,16 @@ const (
 	BitmapBits = 104 // 104 bits for 104 validators at top
 )
 
-type AppHash []byte
+type BlockHash []byte
 
 type BlsSigHash []byte
 
 type RawCkptHash []byte
 
-func NewCheckpoint(epochNum uint64, appHash AppHash) *RawCheckpoint {
+func NewCheckpoint(epochNum uint64, blockHash BlockHash) *RawCheckpoint {
 	return &RawCheckpoint{
 		EpochNum:    epochNum,
-		AppHash:     &appHash,
+		BlockHash:   &blockHash,
 		Bitmap:      bitmap.New(BitmapBits), // 13 bytes, holding 100 validators
 		BlsMultiSig: nil,
 	}
@@ -98,7 +99,7 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 
 	// accumulate voting power and update status when the threshold is reached
 	cm.PowerSum += uint64(val.Power)
-	if int64(cm.PowerSum) > totalPower/3 {
+	if int64(cm.PowerSum)*3 > totalPower*2 {
 		cm.Status = Sealed
 	}
 
@@ -122,68 +123,52 @@ func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx context.Context, status C
 	cm.Lifecycle = append(cm.Lifecycle, stateUpdate)
 }
 
-func NewAppHashFromHex(s string) (AppHash, error) {
-	bz, err := hex.DecodeString(s)
-	if err != nil {
-		return nil, err
-	}
-
-	var appHash AppHash
-
-	err = appHash.Unmarshal(bz)
-	if err != nil {
-		return nil, err
-	}
-
-	return appHash, nil
-}
-
-func (appHash *AppHash) Unmarshal(bz []byte) error {
+func (bh *BlockHash) Unmarshal(bz []byte) error {
 	if len(bz) != HashSize {
 		return errors.New("invalid appHash length")
 	}
-	*appHash = bz
+	*bh = bz
 	return nil
 }
 
-func (appHash *AppHash) Size() (n int) {
-	if appHash == nil {
+func (bh *BlockHash) Size() (n int) {
+	if bh == nil {
 		return 0
 	}
-	return len(*appHash)
+	return len(*bh)
 }
 
-func (appHash *AppHash) Equal(l AppHash) bool {
-	return appHash.String() == l.String()
+func (bh *BlockHash) Equal(l BlockHash) bool {
+	return bh.String() == l.String()
 }
 
-func (appHash *AppHash) String() string {
-	return hex.EncodeToString(*appHash)
+func (bh *BlockHash) String() string {
+	return hex.EncodeToString(*bh)
 }
 
-func (appHash *AppHash) MustMarshal() []byte {
-	bz, err := appHash.Marshal()
+func (bh *BlockHash) MustMarshal() []byte {
+	bz, err := bh.Marshal()
 	if err != nil {
 		panic(err)
 	}
 	return bz
 }
 
-func (appHash *AppHash) Marshal() ([]byte, error) {
-	return *appHash, nil
+func (bh *BlockHash) Marshal() ([]byte, error) {
+	return *bh, nil
 }
 
-func (appHash AppHash) MarshalTo(data []byte) (int, error) {
-	copy(data, appHash)
+func (bh BlockHash) MarshalTo(data []byte) (int, error) {
+	copy(data, bh)
 	return len(data), nil
 }
 
-func (appHash *AppHash) ValidateBasic() error {
-	if appHash == nil {
-		return errors.New("invalid appHash")
+func (bh *BlockHash) ValidateBasic() error {
+	if bh == nil {
+		return errors.New("invalid block hash")
 	}
-	if len(*appHash) != HashSize {
-		return errors.New("invalid appHash")
+	if len(*bh) != HashSize {
+		return errors.New("invalid block hash")
 	}
 	return nil
 }
@@ -193,7 +178,7 @@ func (ckpt RawCheckpoint) ValidateBasic() error {
 	if ckpt.Bitmap == nil {
 		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
 	}
-	err := ckpt.AppHash.ValidateBasic()
+	err := ckpt.BlockHash.ValidateBasic()
 	if err != nil {
 		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
 	}
@@ -213,4 +198,15 @@ func BytesToCkptWithMeta(cdc codec.BinaryCodec, bz []byte) (*RawCheckpointWithMe
 	ckptWithMeta := new(RawCheckpointWithMeta)
 	err := cdc.Unmarshal(bz, ckptWithMeta)
 	return ckptWithMeta, err
+}
+
+func (ve *VoteExtension) ToBLSSig() *BlsSig {
+	blockHash := BlockHash(ve.BlockHash)
+	return &BlsSig{
+		EpochNum:         ve.EpochNum,
+		BlockHash:        &blockHash,
+		BlsSig:           ve.BlsSig,
+		SignerAddress:    ve.Signer,
+		ValidatorAddress: ve.ValidatorAddress,
+	}
 }

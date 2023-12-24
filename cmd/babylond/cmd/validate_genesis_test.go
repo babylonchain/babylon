@@ -6,22 +6,24 @@ import (
 	"fmt"
 	"testing"
 
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	dbm "github.com/cosmos/cosmos-db"
+
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
 	"cosmossdk.io/log"
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd"
 )
 
 func TestCheckCorrespondence(t *testing.T) {
@@ -87,7 +89,7 @@ func generateTestGenesisState(t *testing.T, home string, n int) (*app.BabylonApp
 	logger := log.NewNopLogger()
 	cfg, _ := genutiltest.CreateDefaultCometConfig(home)
 
-	signer, err := app.SetupPrivSigner()
+	signer, err := app.SetupTestPrivSigner()
 	require.NoError(t, err)
 	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
 		Logger:             logger,

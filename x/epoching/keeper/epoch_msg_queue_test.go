@@ -4,13 +4,16 @@ import (
 	"math/rand"
 	"testing"
 
-	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	appparams "github.com/babylonchain/babylon/app/params"
 )
 
 var (
@@ -64,7 +67,10 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ctx, keeper, genAccs := helper.Ctx, helper.App.EpochingKeeper, helper.GenAccs
 		params := keeper.GetParams(ctx)
 
@@ -101,7 +107,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < params.EpochInterval; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
@@ -125,7 +131,10 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ctx, keeper, genAccs := helper.Ctx, helper.App.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
@@ -163,7 +172,7 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
@@ -197,7 +206,10 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ctx, keeper, genAccs := helper.Ctx, helper.App.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
@@ -242,7 +254,7 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)

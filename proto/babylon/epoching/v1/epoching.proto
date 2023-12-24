@@ -22,11 +22,14 @@ message Epoch {
   // app_hash_root is the Merkle root of all AppHashs in this epoch
   // It will be used for proving a block is in an epoch
   bytes app_hash_root = 5;
-  // sealer_header_hash is the app_hash of the sealer header, i.e., 2nd header 
+  // sealer is the last block of the sealed epoch
+  // sealer_app_hash points to the sealer but stored in the 1st header
   // of the next epoch
-  // This validator set has generated a BLS multisig on `app_hash` of
-  // the sealer header
-  bytes sealer_header_hash = 6;
+  bytes sealer_app_hash = 6;
+  // sealer_block_hash is the hash of the sealer
+  // the validator set has generated a BLS multisig on the hash,
+  // i.e., hash of the last block in the epoch
+  bytes sealer_block_hash = 7;
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed

@@ -4,9 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
-	"github.com/stretchr/testify/require"
 )
 
 func FuzzEpochs(f *testing.F) {
@@ -28,10 +29,10 @@ func FuzzEpochs(f *testing.F) {
 		// increment a random number of new blocks
 		numIncBlocks := r.Uint64()%1000 + 1
 		var err error
-		for i := uint64(0); i < numIncBlocks; i++ {
-			// TODO: Figure out why when ctx height is 1, GenAndApplyEmptyBlock
+		for i := uint64(0); i < numIncBlocks-1; i++ {
+			// TODO: Figure out why when ctx height is 1, ApplyEmptyBlockWithVoteExtension
 			// will still give ctx height 1 once, then start to increment
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 

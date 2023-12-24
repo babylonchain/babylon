@@ -15,7 +15,6 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -26,7 +25,7 @@ func FuzzQueryEpoch(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
 
 		// test querying a raw checkpoint with epoch number
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta(r)
@@ -53,7 +52,7 @@ func FuzzQueryRawCheckpoints(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
 
 		// add a random number of checkpoints
 		checkpoints := datagen.GenRandomSequenceRawCheckpointsWithMeta(r)
@@ -93,7 +92,7 @@ func FuzzQueryStatusCount(f *testing.F) {
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch + 1})
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 		expectedCounts := make(map[string]uint64)
 		epochCount := uint64(r.Int63n(int64(tipEpoch)))
 		for e, ckpt := range checkpoints {
@@ -130,7 +129,7 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch}).AnyTimes()
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(r, tipEpoch)
 		finalizedEpoch := datagen.RandomInt(r, int(tipEpoch))
 		for e := uint64(0); e < tipEpoch; e++ {
@@ -173,7 +172,7 @@ func FuzzQueryRawCheckpointList(f *testing.F) {
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ek.EXPECT().GetEpoch(gomock.Any()).Return(&epochingtypes.Epoch{EpochNumber: tipEpoch}).AnyTimes()
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 		checkpoints := datagen.GenSequenceRawCheckpointsWithMeta(r, tipEpoch)
 		finalizedEpoch := datagen.RandomInt(r, int(tipEpoch))
 

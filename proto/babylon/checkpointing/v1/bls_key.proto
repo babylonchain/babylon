@@ -8,12 +8,12 @@ option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 // BlsKey wraps BLS public key with PoP
 message BlsKey {
   // pubkey is the BLS public key of a validator
-  bytes pubkey = 2
+  bytes pubkey = 1
       [ (gogoproto.customtype) =
             "github.com/babylonchain/babylon/crypto/bls12381.PublicKey" ];
 
   // pop is the proof-of-possession of the BLS key
-  ProofOfPossession pop = 3;
+  ProofOfPossession pop = 2;
 }
 
 // ProofOfPossession defines proof for the ownership of Ed25519 and BLS private
@@ -21,10 +21,10 @@ message BlsKey {
 message ProofOfPossession {
   // ed25519_sig is used for verification, ed25519_sig = sign(key = Ed25519_sk,
   // data = BLS_pk)
-  bytes ed25519_sig = 2;
+  bytes ed25519_sig = 1;
   // bls_sig is the result of PoP, bls_sig = sign(key = BLS_sk, data =
   // ed25519_sig)
-  bytes bls_sig = 3
+  bytes bls_sig = 2
       [ (gogoproto.customtype) =
             "github.com/babylonchain/babylon/crypto/bls12381.Signature" ];
 }
@@ -38,4 +38,16 @@ message ValidatorWithBlsKey {
   string validator_address = 1;
   bytes bls_pub_key = 2;
   uint64 voting_power = 3;
+}
+
+// VoteExtension defines the structure used to create a BLS vote extension.
+message VoteExtension {
+  string signer = 1;
+  string validator_address = 2;
+  bytes block_hash = 3;
+  uint64 epoch_num = 4;
+  uint64 height =5;
+  bytes bls_sig = 6
+  [ (gogoproto.customtype) =
+    "github.com/babylonchain/babylon/crypto/bls12381.Signature" ];
 }

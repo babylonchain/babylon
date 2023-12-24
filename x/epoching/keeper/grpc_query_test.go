@@ -7,11 +7,12 @@ import (
 	"cosmossdk.io/core/header"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
+
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
 )
 
 // FuzzParamsQuery fuzzes queryClient.Params
@@ -111,7 +112,7 @@ func FuzzEpochsInfo(f *testing.F) {
 		epochInterval := keeper.GetParams(ctx).EpochInterval
 		for i := uint64(0); i < (numEpochs - 2); i++ { // exclude the existing epoch 0 and 1
 			for j := uint64(0); j < epochInterval; j++ {
-				ctx, err = helper.GenAndApplyEmptyBlock(r)
+				ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 				require.NoError(t, err)
 			}
 		}
@@ -193,7 +194,10 @@ func FuzzEpochValSetQuery(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testhelper.NewHelperWithValSet(t)
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
 		ctx, queryClient := helper.Ctx, helper.QueryClient
 
 		limit := uint64(r.Int() % 100)
@@ -207,10 +211,11 @@ func FuzzEpochValSetQuery(f *testing.F) {
 		resp, err := queryClient.EpochValSet(ctx, req)
 		require.NoError(t, err)
 
+		params := helper.App.EpochingKeeper.GetParams(ctx)
+
 		// generate a random number of new blocks
-		numIncBlocks := r.Uint64()%1000 + 1
-		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx, err = helper.GenAndApplyEmptyBlock(r)
+		for i := uint64(0); i < params.EpochInterval; i++ {
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
 			require.NoError(t, err)
 		}
 

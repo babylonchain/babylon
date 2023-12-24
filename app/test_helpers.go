@@ -2,24 +2,25 @@ package app
 
 import (
 	"encoding/json"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/docker/docker/pkg/ioutils"
 	"math/rand"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/docker/docker/pkg/ioutils"
+
 	"cosmossdk.io/math"
 	tmjson "github.com/cometbft/cometbft/libs/json"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"cosmossdk.io/log"
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
 	dbm "github.com/cosmos/cosmos-db"
@@ -27,7 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -37,6 +37,9 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
+
+	appparams "github.com/babylonchain/babylon/app/params"
+	bbn "github.com/babylonchain/babylon/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.
@@ -48,7 +51,7 @@ type SetupOptions struct {
 	AppOpts            types.AppOptions
 }
 
-func setup(t *testing.T, withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
+func setup(t *testing.T, ps *PrivSigner, withGenesis bool, invCheckPeriod uint) (*BabylonApp, GenesisState) {
 	db := dbm.NewMemDB()
 	nodeHome := t.TempDir()
 
@@ -56,10 +59,6 @@ func setup(t *testing.T, withGenesis bool, invCheckPeriod uint) (*BabylonApp, Ge
 	appOptions[flags.FlagHome] = nodeHome // ensure unique folder
 	appOptions[server.FlagInvCheckPeriod] = invCheckPeriod
 	appOptions["btc-config.network"] = string(bbn.BtcSimnet)
-	privSigner, err := SetupPrivSigner()
-	if err != nil {
-		panic(err)
-	}
 	app := NewBabylonApp(
 		log.NewNopLogger(),
 		db,
@@ -67,7 +66,7 @@ func setup(t *testing.T, withGenesis bool, invCheckPeriod uint) (*BabylonApp, Ge
 		true,
 		map[int64]bool{},
 		invCheckPeriod,
-		privSigner,
+		ps,
 		EmptyAppOptions{},
 		EmptyWasmOpts,
 	)
@@ -123,11 +122,15 @@ func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *Pr
 		require.NoError(t, err)
 
 		// Initialize the chain
+		consensusParams := simsutils.DefaultConsensusParams
+		initialHeight := app.LastBlockHeight() + 1
+		consensusParams.Abci = &cmtproto.ABCIParams{VoteExtensionsEnableHeight: initialHeight}
 		_, err = app.InitChain(
 			&abci.RequestInitChain{
 				Validators:      []abci.ValidatorUpdate{},
-				ConsensusParams: simsutils.DefaultConsensusParams,
+				ConsensusParams: consensusParams,
 				AppStateBytes:   stateBytes,
+				InitialHeight:   initialHeight,
 			},
 		)
 		require.NoError(t, err)
@@ -221,39 +224,28 @@ func genesisStateWithValSet(t *testing.T,
 func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
 	t.Helper()
 
-	// create validator set with single validator
-	valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
+	ps, err := SetupTestPrivSigner()
 	require.NoError(t, err)
-	valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
-	require.NoError(t, err)
-	genesisKey, err := checkpointingtypes.NewGenesisKey(
-		sdk.ValAddress(valKeys.ValPubkey.Address()),
-		&valKeys.BlsPubkey,
-		valKeys.PoP,
-		&cosmosed.PubKey{Key: valPubkey.Bytes()},
-	)
-	require.NoError(t, err)
-	genesisValSet := []*checkpointingtypes.GenesisKey{genesisKey}
-
+	valPubKey := ps.WrappedPV.Key.PubKey
 	// generate genesis account
-	acc := authtypes.NewBaseAccount(valPubkey.Address().Bytes(), valPubkey, 0, 0)
+	acc := authtypes.NewBaseAccount(valPubKey.Address().Bytes(), &cosmosed.PubKey{Key: valPubKey.Bytes()}, 0, 0)
 	balance := banktypes.Balance{
 		Address: acc.GetAddress().String(),
 		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, math.NewInt(100000000000000))),
 	}
+	ps.WrappedPV.Key.DelegatorAddress = acc.GetAddress().String()
+	// create validator set with single validator
+	genesisKey, err := GenesisKeyFromPrivSigner(ps)
+	require.NoError(t, err)
+	genesisValSet := []*checkpointingtypes.GenesisKey{genesisKey}
 
-	app := SetupWithGenesisValSet(t, genesisValSet, []authtypes.GenesisAccount{acc}, balance)
+	app := SetupWithGenesisValSet(t, genesisValSet, ps, []authtypes.GenesisAccount{acc}, balance)
 
 	return app
 }
 
-// SetupPrivSigner sets up a PrivSigner for testing
-func SetupPrivSigner() (*PrivSigner, error) {
-	kr, err := client.NewKeyringFromBackend(client.Context{}, keyring.BackendMemory)
-	if err != nil {
-		return nil, err
-	}
-	encodingCfg := appparams.DefaultEncodingConfig()
+// SetupTestPrivSigner sets up a PrivSigner for testing
+func SetupTestPrivSigner() (*PrivSigner, error) {
 	// Create a temporary node directory
 	nodeDir, err := ioutils.TempDir("", "tmp-signer")
 	if err != nil {
@@ -262,7 +254,7 @@ func SetupPrivSigner() (*PrivSigner, error) {
 	defer func() {
 		_ = os.RemoveAll(nodeDir)
 	}()
-	privSigner, _ := InitPrivSigner(client.Context{}, nodeDir, kr, "", encodingCfg)
+	privSigner, _ := InitPrivSigner(nodeDir)
 	return privSigner, nil
 }
 
@@ -270,9 +262,10 @@ func SetupPrivSigner() (*PrivSigner, error) {
 // that also act as delegators. For simplicity, each validator is bonded with a delegation
 // of one consensus engine unit (10^6) in the default token of the babylon app from first genesis
 // account. A Nop logger is set in BabylonApp.
-func SetupWithGenesisValSet(t *testing.T, valSet []*checkpointingtypes.GenesisKey, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *BabylonApp {
+// Note that the privSigner should be the 0th item of valSet
+func SetupWithGenesisValSet(t *testing.T, valSet []*checkpointingtypes.GenesisKey, privSigner *PrivSigner, genAccs []authtypes.GenesisAccount, balances ...banktypes.Balance) *BabylonApp {
 	t.Helper()
-	app, genesisState := setup(t, true, 5)
+	app, genesisState := setup(t, privSigner, true, 5)
 	genesisState = genesisStateWithValSet(t, app, genesisState, valSet, genAccs, balances...)
 
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
@@ -281,23 +274,43 @@ func SetupWithGenesisValSet(t *testing.T, valSet []*checkpointingtypes.GenesisKe
 	// init chain will set the validator set and initialize the genesis accounts
 	consensusParams := simsutils.DefaultConsensusParams
 	consensusParams.Block.MaxGas = 100 * simsutils.DefaultGenTxGas
+	// it is required that the VoteExtensionsEnableHeight > 0 to enable vote extension
+	initialHeight := app.LastBlockHeight() + 1
+	consensusParams.Abci = &cmtproto.ABCIParams{VoteExtensionsEnableHeight: initialHeight}
 	_, err = app.InitChain(&abci.RequestInitChain{
 		ChainId:         app.ChainID(),
 		Time:            time.Now().UTC(),
 		Validators:      []abci.ValidatorUpdate{},
 		ConsensusParams: consensusParams,
-		InitialHeight:   app.LastBlockHeight() + 1,
+		InitialHeight:   initialHeight,
 		AppStateBytes:   stateBytes,
 	})
 	require.NoError(t, err)
 
 	_, err = app.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Height: app.LastBlockHeight() + 1,
+		Height: initialHeight,
 		Hash:   app.LastCommitID().Hash,
 	})
 	require.NoError(t, err)
 
 	return app
+}
+
+func GenesisKeyFromPrivSigner(ps *PrivSigner) (*checkpointingtypes.GenesisKey, error) {
+	valKeys, err := privval.NewValidatorKeys(ps.WrappedPV.GetValPrivKey(), ps.WrappedPV.GetBlsPrivKey())
+	if err != nil {
+		return nil, err
+	}
+	valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
+	if err != nil {
+		return nil, err
+	}
+	return checkpointingtypes.NewGenesisKey(
+		ps.WrappedPV.GetAddress(),
+		&valKeys.BlsPubkey,
+		valKeys.PoP,
+		&cosmosed.PubKey{Key: valPubkey.Bytes()},
+	)
 }
 
 // createRandomAccounts is a strategy used by addTestAddrs() in order to generated addresses in random order.

@@ -9,9 +9,6 @@ import (
 	"runtime"
 	"time"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -19,6 +16,10 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
 
 var (
@@ -33,7 +34,7 @@ var (
 
 type testCheckpointData struct {
 	epoch            uint64
-	appHash          []byte
+	blockHash        []byte
 	bitmap           []byte
 	blsSig           []byte
 	submitterAddress []byte
@@ -458,7 +459,7 @@ func GenerateMessageWithRandomSubmitter(blockResults []*BlockCreationResult) *bt
 func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData {
 	return testCheckpointData{
 		epoch:            e,
-		appHash:          GenRandomByteArray(r, txformat.AppHashLength),
+		blockHash:        GenRandomByteArray(r, txformat.AppHashLength),
 		bitmap:           GenRandomByteArray(r, txformat.BitMapLength),
 		blsSig:           GenRandomByteArray(r, txformat.BlsSigLength),
 		submitterAddress: GenRandomByteArray(r, txformat.AddressLength),
@@ -502,7 +503,7 @@ func RandomRawCheckpointDataForEpoch(r *rand.Rand, e uint64) (*TestRawCheckpoint
 	checkpointData := getRandomCheckpointDataForEpoch(r, e)
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
-		AppHash:          checkpointData.appHash,
+		BlockHash:        checkpointData.blockHash,
 		BitMap:           checkpointData.bitmap,
 		SubmitterAddress: checkpointData.submitterAddress,
 		BlsSig:           checkpointData.blsSig,

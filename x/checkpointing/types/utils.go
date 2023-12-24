@@ -14,7 +14,7 @@ import (
 func (m BlsSig) Hash() BlsSigHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.AppHash.MustMarshal(),
+		m.BlockHash.MustMarshal(),
 		m.BlsSig.MustMarshal(),
 		[]byte(m.SignerAddress),
 	}
@@ -24,7 +24,7 @@ func (m BlsSig) Hash() BlsSigHash {
 func (m RawCheckpoint) Hash() RawCkptHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.AppHash.MustMarshal(),
+		m.BlockHash.MustMarshal(),
 		m.BlsMultiSig.MustMarshal(),
 		m.Bitmap,
 	}
@@ -38,7 +38,7 @@ func (m RawCheckpoint) HashStr() string {
 // SignedMsg is the message corresponding to the BLS sig in this raw checkpoint
 // Its value should be (epoch_number || app_hash)
 func (m RawCheckpoint) SignedMsg() []byte {
-	return append(sdk.Uint64ToBigEndian(m.EpochNum), *m.AppHash...)
+	return append(sdk.Uint64ToBigEndian(m.EpochNum), *m.BlockHash...)
 }
 
 func hash(fields [][]byte) []byte {
@@ -78,8 +78,8 @@ func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {
 }
 
 func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpoint, error) {
-	var appHash AppHash
-	err := appHash.Unmarshal(btcCkpt.AppHash)
+	var blockHash BlockHash
+	err := blockHash.Unmarshal(btcCkpt.BlockHash)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +90,7 @@ func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpo
 	}
 	rawCheckpoint := &RawCheckpoint{
 		EpochNum:    btcCkpt.Epoch,
-		AppHash:     &appHash,
+		BlockHash:   &blockHash,
 		Bitmap:      btcCkpt.BitMap,
 		BlsMultiSig: &blsSig,
 	}
@@ -99,7 +99,7 @@ func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpo
 }
 
 func FromRawCkptToBTCCkpt(rawCkpt *RawCheckpoint, address []byte) (*btctxformatter.RawBtcCheckpoint, error) {
-	appHashBytes, err := rawCkpt.AppHash.Marshal()
+	appHashBytes, err := rawCkpt.BlockHash.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func FromRawCkptToBTCCkpt(rawCkpt *RawCheckpoint, address []byte) (*btctxformatt
 
 	btcCkpt := &btctxformatter.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
-		AppHash:          appHashBytes,
+		BlockHash:        appHashBytes,
 		BitMap:           rawCkpt.Bitmap,
 		SubmitterAddress: address,
 		BlsSig:           blsSigBytes,

@@ -1,8 +1,11 @@
 package cmd
 
 import (
-	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"errors"
+	"io"
+	"os"
+
+	confixcmd "cosmossdk.io/tools/confix/cmd"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	cmtcfg "github.com/cometbft/cometbft/config"
@@ -13,8 +16,6 @@ import (
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"io"
-	"os"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -37,7 +38,6 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
-	bbntypes "github.com/babylonchain/babylon/types"
 )
 
 // NewRootCmd creates a new root command for babylond. It is called once in the
@@ -249,26 +249,7 @@ func newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts serverty
 	}
 
 	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
-	encCfg := app.GetEncodingConfig()
-	clientCtx, err := config.ReadFromClientConfig(
-		client.Context{}.
-			WithHomeDir(homeDir).
-			WithViper("").
-			WithKeyringDir(homeDir).
-			WithInput(os.Stdin).
-			// Warning: It is important that ReadFromClientConfig receives context
-			// with already initialized codec. It creates keyring inside, and from cosmos
-			// 0.46.0 keyring requires codec. Without codec, operations performed by
-			// keyring ends with nil pointer exception (`panic`)
-			WithCodec(encCfg.Codec),
-	)
-	if err != nil {
-		panic(err)
-	}
-	// parse the key name that will be used for signing BLS-sig txs from app.toml
-	keyName := bbntypes.ParseKeyNameFromConfig(appOpts)
-
-	privSigner, err := app.InitPrivSigner(clientCtx, homeDir, clientCtx.Keyring, keyName, encCfg)
+	privSigner, err := app.InitPrivSigner(homeDir)
 	if err != nil {
 		panic(err)
 	}
@@ -307,28 +288,7 @@ func appExport(
 		return servertypes.ExportedApp{}, errors.New("application home not set")
 	}
 
-	encCfg := app.GetEncodingConfig()
-	clientCtx, err := config.ReadFromClientConfig(
-		client.Context{}.
-			WithHomeDir(homePath).
-			WithViper("").
-			WithKeyringDir(homePath).
-			WithInput(os.Stdin).
-			// Warning: It is important that ReadFromClientConfig receives context
-			// with already initialized codec. It creates keyring inside, and from cosmos
-			// 0.46.0 keyring requires codec. Without codec, operations performed by
-			// keyring ends with nil pointer exception (`panic`)
-			WithCodec(encCfg.Codec),
-	)
-	if err != nil {
-		panic(err)
-	}
-	kr, err := client.NewKeyringFromBackend(clientCtx, keyring.BackendMemory)
-	if err != nil {
-		panic(err)
-	}
-
-	privSigner, err := app.InitPrivSigner(clientCtx, homePath, kr, "", encCfg)
+	privSigner, err := app.InitPrivSigner(homePath)
 	if err != nil {
 		panic(err)
 	}
