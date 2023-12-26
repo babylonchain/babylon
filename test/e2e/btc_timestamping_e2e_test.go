@@ -35,7 +35,7 @@ func (s *BTCTimestampingTestSuite) SetupSuite() {
 	//   * For each chain, set up several validator nodes
 	//   * Initialize configs and genesis for all them.
 	// 2. Start both networks.
-	// 3. Run IBC relayer betweeen the two chains.
+	// 3. Run IBC relayer between the two chains.
 	// 4. Execute various e2e tests, including IBC
 	s.configurer, err = configurer.NewBTCTimestampingConfigurer(s.T(), true)
 
@@ -116,13 +116,13 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	s.NoError(err)
 	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
-	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
+	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
 	var (
 		startEpochNum uint64 = 1
 		endEpochNum   uint64 = 3
 	)
 
-	// submitter/reporter address should not have any reward yet
+	// submitter/reporter address should not have any rewards yet
 	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
 	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.Error(err)

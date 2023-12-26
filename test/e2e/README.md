@@ -16,6 +16,6 @@ This contract uses feature specific to Babylon, through Babylon bindings library
 ### Common Problems
 
 Please note that if the tests are stopped mid-way, the e2e framework might fail to start again due to duplicated containers. Make sure that
-containers are removed before running the tests again: `docker containers rm -f $(docker containers ls -a -q)`.
+containers are removed before running the tests again: `docker container rm -f $(docker container ls -a -q)`.
 
 Additionally, Docker networks do not get auto-removed. Therefore, you can manually remove them by running `docker network prune`.

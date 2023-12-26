@@ -123,7 +123,7 @@ func (m *Manager) ExecCmd(t *testing.T, containerName string, command []string, 
 
 			errBufString := errBuf.String()
 			// Note that this does not match all errors.
-			// This only works if CLI outpurs "Error" or "error"
+			// This only works if CLI outputs "Error" or "error"
 			// to stderr.
 			if (errRegex.MatchString(errBufString) || m.isDebugLogEnabled) && maxDebugLogTriesLeft > 0 {
 				t.Log("\nstderr:")
