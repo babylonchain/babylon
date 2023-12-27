@@ -16,7 +16,7 @@ func withIBC(setupHandler setupFn) setupFn {
 		if err := setupHandler(configurer); err != nil {
 			return err
 		}
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 		if err := configurer.RunIBC(); err != nil {
 			return err
 		}

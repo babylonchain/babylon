@@ -162,7 +162,7 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 
 	// XXX: Give time to both networks to start, otherwise we might see gRPC
 	// transport errors.
-	time.Sleep(10 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	// create the client, connection and channel between the two babylon chains
 	return bc.connectIBCChains(chainConfigA, chainConfigB)
