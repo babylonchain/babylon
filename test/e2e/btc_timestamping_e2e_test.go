@@ -237,10 +237,10 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	// store the wasm code
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
 	network := "testnet"
-	babylon_tag := "[1,2,3,4]"
+	babylonTag := "[1,2,3,4]"
 	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
 		network,
-		base64.StdEncoding.EncodeToString([]byte(babylon_tag)),
+		base64.StdEncoding.EncodeToString([]byte(babylonTag)),
 		1,
 		2,
 		"false",

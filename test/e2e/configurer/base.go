@@ -1,6 +1,7 @@
 package configurer
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
 
@@ -69,6 +71,50 @@ func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 			return err
 		}
 	}
+	return nil
+}
+
+func (bc *baseConfigurer) InstantiateBabylonContract() error {
+	// Store the contract on the first chain (A).
+	chainConfig := bc.chainConfigs[0]
+	contractPath := "/bytecode/babylon_contract.wasm"
+	nonValidatorNode, err := chainConfig.GetNodeAtIndex(2)
+	if err != nil {
+		bc.t.Logf("error getting non-validator node: %v", err)
+		return err
+	}
+	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+
+	// Instantiate the contract
+	// TODO: Get these from the chain config.
+	network := "testnet"
+	babylonTag := "[1,2,3,4]"
+	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
+		network,
+		base64.StdEncoding.EncodeToString([]byte(babylonTag)),
+		1,
+		2,
+		"false",
+	)
+	nonValidatorNode.InstantiateWasmContract(
+		strconv.Itoa(latestWasmId),
+		initMsg,
+		initialization.ValidatorWalletName,
+	)
+	nonValidatorNode.WaitForNextBlock()
+	contracts, err := nonValidatorNode.QueryContractsFromId(1)
+	if err != nil {
+		bc.t.Logf("error querying contracts from id: %v", err)
+		return err
+	}
+	require.Len(bc.t, contracts, 1, "Wrong number of contracts for the counter")
+	contractAddr := contracts[0]
+
+	// Set the contract address in the IBC chain config port id.
+	chainConfig.IBCConfig.PortID = fmt.Sprintf("wasm.%s", contractAddr)
+
 	return nil
 }
 

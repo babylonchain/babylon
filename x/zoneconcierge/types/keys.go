@@ -18,7 +18,8 @@ const (
 	MemStoreKey = "mem_zoneconcierge"
 
 	// Version defines the current version the IBC module supports
-	Version = "zoneconcierge-1"
+	Version  = "zoneconcierge-1"
+	Version2 = "zoneconcierge-2"
 
 	// Ordering defines the ordering the IBC module supports
 	Ordering = channeltypes.ORDERED
