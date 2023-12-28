@@ -1,6 +1,8 @@
 package configurer
 
 import (
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"testing"
 
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
@@ -24,7 +26,7 @@ type Configurer interface {
 
 var (
 	// Last nodes are non validator nodes to serve as the ones using relayer. Out
-	// validators are constantly sending bls transactions which make relayer operatrions
+	// validators are constantly sending bls transactions which make relayer operations
 	// fail constantly
 
 	// each started validator container corresponds to one of
@@ -89,6 +91,16 @@ var (
 			IsValidator:        false,
 		},
 	}
+	ibcConfigChainA = &ibctesting.ChannelConfig{
+		PortID:  zctypes.PortID,
+		Order:   zctypes.Ordering,
+		Version: zctypes.Version,
+	}
+	ibcConfigChainB = &ibctesting.ChannelConfig{
+		PortID:  zctypes.PortID,
+		Order:   zctypes.Ordering,
+		Version: zctypes.Version,
+	}
 )
 
 // NewBTCTimestampingConfigurer returns a new Configurer for BTC timestamping service.
@@ -102,8 +114,8 @@ func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configu
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB),
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
 		},
 		withIBC(baseSetup), // base set up with IBC
 		containerManager,
@@ -120,7 +132,7 @@ func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
 			// we only need 1 chain for testing BTC staking
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA),
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, nil),
 		},
 		baseSetup, // base set up
 		containerManager,

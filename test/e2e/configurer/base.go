@@ -17,7 +17,6 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 // baseConfigurer is the base implementation for the
@@ -170,11 +169,13 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 
 func (bc *baseConfigurer) connectIBCChains(chainA *chain.Config, chainB *chain.Config) error {
 	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	require.Equal(bc.t, chainA.IBCConfig.Order, chainB.IBCConfig.Order)
+	require.Equal(bc.t, chainA.IBCConfig.Version, chainB.IBCConfig.Version)
 	cmd := []string{"hermes", "create", "channel",
 		"--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, // channel ID
-		"--a-port", zctypes.PortID, "--b-port", zctypes.PortID, // port
-		"--order", zctypes.Ordering.String(), // ordering
-		"--channel-version", zctypes.Version, // version
+		"--a-port", chainA.IBCConfig.PortID, "--b-port", chainB.IBCConfig.PortID, // port
+		"--order", chainA.IBCConfig.Order.String(),
+		"--channel-version", chainA.IBCConfig.Version,
 		"--new-client-connection", "--yes",
 	}
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
