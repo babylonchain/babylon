@@ -99,19 +99,9 @@ var (
 		Version: zctypes.Version,
 	}
 	ibcConfigChainB = &ibctesting.ChannelConfig{
-		PortID:  zctypes.PortID,
+		PortID:  zctypes.PortID, // Will be replaced by the contract address in Phase 2 tests
 		Order:   zctypes.Ordering,
 		Version: zctypes.Version,
-	}
-	ibcConfigChainAV2 = &ibctesting.ChannelConfig{
-		PortID:  "wasm.<babylon_contract_address>", // Will be replaced by the contract address
-		Order:   zctypes.Ordering,
-		Version: zctypes.Version2,
-	}
-	ibcConfigChainBV2 = &ibctesting.ChannelConfig{
-		PortID:  zctypes.PortID,
-		Order:   zctypes.Ordering,
-		Version: zctypes.Version2,
 	}
 )
 
@@ -143,8 +133,8 @@ func NewBTCTimestampingPhase2Configurer(t *testing.T, isDebugLogEnabled bool) (C
 
 	return NewCurrentBranchConfigurer(t,
 		[]*chain.Config{
-			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainAV2),
-			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainBV2),
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
 		},
 		withPhase2IBC(baseSetup), // IBC setup (requires contract address)
 		containerManager,
