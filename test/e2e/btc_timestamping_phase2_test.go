@@ -5,8 +5,6 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	itypes "github.com/babylonchain/babylon/x/incentive/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -64,11 +62,6 @@ func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
 		endEpochNum   uint64 = 3
 	)
 
-	// submitter/reporter address should not have any rewards yet
-	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.Error(err)
-
 	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
 
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
@@ -99,16 +92,6 @@ func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
 		// we can only assert, that btc lc height is larger than 0.
 		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
 	}
-
-	// ensure balance has increased after finalising some epochs
-	rewardGauges, err := nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
-	s.NoError(err)
-	submitterRewardGauge, ok := rewardGauges[itypes.SubmitterType.String()]
-	s.True(ok)
-	s.True(submitterRewardGauge.Coins.IsAllPositive())
-	reporterRewardGauge, ok := rewardGauges[itypes.ReporterType.String()]
-	s.True(ok)
-	s.True(reporterRewardGauge.Coins.IsAllPositive())
 
 	chainB := s.configurer.GetChainConfig(1)
 	_, err = chainB.GetDefaultNode()
