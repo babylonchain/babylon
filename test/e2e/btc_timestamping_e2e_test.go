@@ -270,7 +270,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	require.NoError(s.T(), err)
 	accountResponse := queryResult["account"].(string)
 
-	require.Equal(s.T(), "TODO: replace me", accountResponse)
+	s.Equal("TODO: replace me", accountResponse)
 }
 
 func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
