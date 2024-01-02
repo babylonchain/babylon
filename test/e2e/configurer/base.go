@@ -75,8 +75,8 @@ func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 }
 
 func (bc *baseConfigurer) InstantiateBabylonContract() error {
-	// Store the contract on the first chain (A).
-	chainConfig := bc.chainConfigs[0]
+	// Store the contract on the second chain (B)
+	chainConfig := bc.chainConfigs[1]
 	contractPath := "/bytecode/babylon_contract.wasm"
 	nonValidatorNode, err := chainConfig.GetNodeAtIndex(2)
 	if err != nil {
