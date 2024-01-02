@@ -418,7 +418,6 @@ localnet-start: localnet-stop build-docker localnet-start-nodes
 # localnet-stop will stop all localnets running
 localnet-stop:
 	docker-compose down
-	rm -rf $(CURDIR)/.testnets
 
 build-test-wasm:
 	docker run --rm -v "$(WASM_DIR)":/code \

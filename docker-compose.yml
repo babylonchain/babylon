@@ -44,8 +44,13 @@ services:
   babylondnode2:
     container_name: babylondnode2
     image: "babylonchain/babylond"
+    environment:
+      - HOME=/data/node2/babylond
+      - LOG=${LOG:-babylond.log}
     command: >
       babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
+    cap_add:
+      - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
     ports:
@@ -62,8 +67,13 @@ services:
   babylondnode3:
     container_name: babylondnode3
     image: "babylonchain/babylond"
+    environment:
+      - HOME=/data/node3/babylond
+      - LOG=${LOG:-babylond.log}
     command: >
       babylond --home /babylondhome start --log_format 'plain' 2>&1 | tee /babylondhome/babylond.log
+    cap_add:
+      - SYS_PTRACE
     security_opt:
       - seccomp:unconfined
     ports:
@@ -76,6 +86,7 @@ services:
     networks:
       localnet:
         ipv4_address: 192.168.10.5
+
 
 networks:
   localnet:
