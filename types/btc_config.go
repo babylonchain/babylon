@@ -19,6 +19,7 @@ const (
 	BtcTestnet SupportedBtcNetwork = "testnet"
 	BtcSimnet  SupportedBtcNetwork = "simnet"
 	BtcRegtest SupportedBtcNetwork = "regtest"
+	BtcSignet  SupportedBtcNetwork = "signet"
 )
 
 func getParams(opts servertypes.AppOptions) *chaincfg.Params {
@@ -42,8 +43,10 @@ func getParams(opts servertypes.AppOptions) *chaincfg.Params {
 		return &chaincfg.SimNetParams
 	} else if network == string(BtcRegtest) {
 		return &chaincfg.RegressionNetParams
+	} else if network == string(BtcSignet) {
+		return &chaincfg.SigNetParams
 	} else {
-		panic("Bitcoin network should be one of [mainet, testnet, simnet, regtest]")
+		panic("Bitcoin network should be one of [mainet, testnet, simnet, regtest, signet]")
 	}
 }
 
