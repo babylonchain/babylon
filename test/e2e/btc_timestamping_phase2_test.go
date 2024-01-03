@@ -22,11 +22,11 @@ func (s *BTCTimestampingPhase2TestSuite) SetupSuite() {
 
 	// The e2e test flow is as follows:
 	//
-	// 1. Configure two chains - chan A and chain B.
+	// 1. Configure two chains - chain A and chain B.
 	//   * For each chain, set up several validator nodes
 	//   * Initialize configs and genesis for all them.
 	// 2. Start both networks.
-	// 3. Store and instantiate babylon contract on chain A.
+	// 3. Store and instantiate babylon contract on chain B.
 	// 3. Execute various e2e tests, excluding IBC
 	s.configurer, err = configurer.NewBTCTimestampingPhase2Configurer(s.T(), true)
 
