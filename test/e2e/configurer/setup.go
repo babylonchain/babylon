@@ -30,8 +30,8 @@ func withPhase2IBC(setupHandler setupFn) setupFn {
 		if err := setupHandler(configurer); err != nil {
 			return err
 		}
-		time.Sleep(1 * time.Second)
-		// Instantiate contract on chain A
+		time.Sleep(2 * time.Second)
+		// Instantiate contract on (CZ-like) chain B
 		if err := configurer.InstantiateBabylonContract(); err != nil {
 			return err
 		}
