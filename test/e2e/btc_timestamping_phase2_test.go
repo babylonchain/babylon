@@ -133,7 +133,7 @@ func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
 	// Validate channel state and kind
 	s.Equal("STATE_OPEN", channelsResponse.Channels[1].State)
 	s.Equal("ORDER_ORDERED", channelsResponse.Channels[1].Ordering)
-	s.Contains("wasm", channelsResponse.Channels[1].PortID)
+	s.Contains(channelsResponse.Channels[1].PortID, "wasm.")
 	// Define channel and port ids
 	channelID := channelsResponse.Channels[1].ChannelID
 	portID := channelsResponse.Channels[1].PortID
