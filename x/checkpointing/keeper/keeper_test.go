@@ -213,7 +213,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
 
 		// 3. check a conflicting checkpoint; signed on a random BlockHash
-		conflictBlockHash := datagen.GenRandomByteArray(r, btctxformatter.AppHashLength)
+		conflictBlockHash := datagen.GenRandomByteArray(r, btctxformatter.BlockHashLength)
 		msgBytes = types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictBlockHash)
 		rawBtcCheckpoint = makeBtcCkptBytes(
 			r,

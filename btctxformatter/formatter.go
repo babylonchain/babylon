@@ -43,7 +43,7 @@ const (
 	// 4bytes tag + 4 bits version + 4 bits part index
 	headerLength = TagLength + 1
 
-	AppHashLength = 32
+	BlockHashLength = 32
 
 	BitMapLength = 13
 
@@ -61,11 +61,11 @@ const (
 	// 8 bytes are for 64bit unsigned epoch number
 	EpochLength = 8
 
-	firstPartLength = headerLength + AppHashLength + AddressLength + EpochLength + BitMapLength
+	firstPartLength = headerLength + BlockHashLength + AddressLength + EpochLength + BitMapLength
 
 	secondPartLength = headerLength + BlsSigLength + firstPartHashLength
 
-	RawBTCCheckpointLength = EpochLength + AppHashLength + BitMapLength + BlsSigLength + AddressLength
+	RawBTCCheckpointLength = EpochLength + BlockHashLength + BitMapLength + BlsSigLength + AddressLength
 )
 
 func getVerHalf(version FormatVersion, halfNumber uint8) uint8 {
@@ -154,7 +154,7 @@ func EncodeCheckpointData(
 		return nil, nil, errors.New("invalid format version")
 	}
 
-	if len(rawBTCCheckpoint.BlockHash) != AppHashLength {
+	if len(rawBTCCheckpoint.BlockHash) != BlockHashLength {
 		return nil, nil, errors.New("appHash should have 32 bytes")
 	}
 
@@ -318,7 +318,7 @@ func DecodeRawCheckpoint(version FormatVersion, btcCkptBytes []byte) (*RawBtcChe
 	var b bytes.Buffer
 	b.Write(btcCkptBytes)
 	epochBytes := b.Next(EpochLength)
-	appHashBytes := b.Next(AppHashLength)
+	appHashBytes := b.Next(BlockHashLength)
 	bitmapBytes := b.Next(BitMapLength)
 	addressBytes := b.Next(AddressLength)
 	blsSigBytes := b.Next(BlsSigLength)

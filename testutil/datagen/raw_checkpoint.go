@@ -116,7 +116,7 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 	// number of validators, at least 4
 	n := len(privKeys)
 	// ensure sufficient signers
-	signerNum := n/3 + 1
+	signerNum := n*2/3 + 1
 	epochNum := GenRandomEpochNum(r)
 	blockHash := GenRandomBlockHash(r)
 	msgBytes := types.GetSignBytes(epochNum, blockHash)

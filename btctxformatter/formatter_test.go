@@ -14,9 +14,9 @@ func randNBytes(n int) []byte {
 }
 
 func FuzzEncodingDecoding(f *testing.F) {
-	f.Add(uint64(5), randNBytes(TagLength), randNBytes(AppHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
-	f.Add(uint64(20), randNBytes(TagLength), randNBytes(AppHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
-	f.Add(uint64(2000), randNBytes(TagLength), randNBytes(AppHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
+	f.Add(uint64(5), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
+	f.Add(uint64(20), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
+	f.Add(uint64(2000), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
 
 	f.Fuzz(func(t *testing.T, epoch uint64, tag []byte, appHash []byte, bitMap []byte, blsSig []byte, address []byte) {
 

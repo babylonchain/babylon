@@ -459,7 +459,7 @@ func GenerateMessageWithRandomSubmitter(blockResults []*BlockCreationResult) *bt
 func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData {
 	return testCheckpointData{
 		epoch:            e,
-		blockHash:        GenRandomByteArray(r, txformat.AppHashLength),
+		blockHash:        GenRandomByteArray(r, txformat.BlockHashLength),
 		bitmap:           GenRandomByteArray(r, txformat.BitMapLength),
 		blsSig:           GenRandomByteArray(r, txformat.BlsSigLength),
 		submitterAddress: GenRandomByteArray(r, txformat.AddressLength),
