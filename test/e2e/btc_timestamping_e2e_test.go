@@ -1,9 +1,9 @@
 package e2e
 
 import (
-	"encoding/base64"
 	"encoding/hex"
 	"fmt"
+	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"math/rand"
 	"strconv"
 	"time"
@@ -236,11 +236,9 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 
 	// store the wasm code
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-	network := "testnet"
-	babylonTag := "[1,2,3,4]"
 	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
-		network,
-		base64.StdEncoding.EncodeToString([]byte(babylonTag)),
+		bbn.BtcRegtest,
+		types.DefaultCheckpointTag,
 		1,
 		2,
 		"false",
