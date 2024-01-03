@@ -1,10 +1,10 @@
 package configurer
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/babylonchain/babylon/types"
+	types2 "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"io"
 	"net/http"
 	"os"
@@ -90,10 +90,9 @@ func (bc *baseConfigurer) InstantiateBabylonContract() error {
 
 	// Instantiate the contract
 	// TODO: Get this from the chain config
-	babylonTag := "[1,2,3,4]"
 	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
 		types.BtcRegtest,
-		base64.StdEncoding.EncodeToString([]byte(babylonTag)),
+		types2.DefaultCheckpointTag,
 		1,
 		2,
 		"false",
