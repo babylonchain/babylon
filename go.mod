@@ -3,7 +3,7 @@ go 1.21
 module github.com/babylonchain/babylon
 
 require (
-	github.com/CosmWasm/wasmd v0.50.0-rc.2
+	github.com/CosmWasm/wasmd v0.50.0
 	github.com/btcsuite/btcd v0.23.5-0.20230711222809-7faa9b266231
 	github.com/cometbft/cometbft v0.38.2
 	github.com/cometbft/cometbft-db v0.8.0 // indirect
