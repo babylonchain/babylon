@@ -300,7 +300,7 @@ func (d *BTCDelegation) GetUnbondingInfo(bsParams *Params, btcNet *chaincfg.Para
 		fpBtcPkList,
 		covenantBtcPkList,
 		bsParams.CovenantQuorum,
-		uint16(d.BtcUndelegation.GetUnbondingTime()),
+		uint16(d.GetUnbondingTime()),
 		btcutil.Amount(unbondingTx.TxOut[0].Value),
 		btcNet,
 	)

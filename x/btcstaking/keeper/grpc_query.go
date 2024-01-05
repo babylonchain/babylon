@@ -277,7 +277,6 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 	// get its undelegation info
 	undelegationInfo := &types.BTCUndelegationInfo{
 		UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
-		UnbondingTime:            btcDel.BtcUndelegation.UnbondingTime,
 		CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
 		CovenantSlashingSigs:     btcDel.BtcUndelegation.CovenantSlashingSigs,
 	}
@@ -291,6 +290,7 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		StakingTxHex:     hex.EncodeToString(btcDel.StakingTx),
 		CovenantSigs:     btcDel.CovenantSigs,
 		Active:           isActive,
+		UnbondingTime:    btcDel.UnbondingTime,
 		UndelegationInfo: undelegationInfo,
 	}, nil
 }

@@ -79,9 +79,10 @@ func GenRandomBTCDelegation(
 	delSK *btcec.PrivateKey,
 	covenantSKs []*btcec.PrivateKey,
 	covenantQuorum uint32,
-	slashingAddress, changeAddress string,
+	slashingAddress string,
 	startHeight, endHeight, totalSat uint64,
 	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
 ) (*bstypes.BTCDelegation, error) {
 	net := &chaincfg.SimNetParams
 	delPK := delSK.PubKey()
@@ -126,8 +127,9 @@ func GenRandomBTCDelegation(
 		covenantQuorum,
 		uint16(endHeight-startHeight),
 		int64(totalSat),
-		slashingAddress, changeAddress,
+		slashingAddress,
 		slashingRate,
+		slashingChangeLockTime,
 	)
 
 	slashingPathSpendInfo, err := stakingSlashingInfo.StakingInfo.SlashingPathSpendInfo()
@@ -156,7 +158,7 @@ func GenRandomBTCDelegation(
 
 	serializedStakingTx, err := bbn.SerializeBTCTx(stakingSlashingInfo.StakingTx)
 	require.NoError(t, err)
-
+	w := uint16(100) // TODO: parameterise w
 	del := &bstypes.BTCDelegation{
 		BabylonPk:        secp256k1PK,
 		BtcPk:            delBTCPK,
@@ -168,6 +170,7 @@ func GenRandomBTCDelegation(
 		StakingOutputIdx: StakingOutIdx,
 		DelegatorSig:     delegatorSig,
 		CovenantSigs:     covenantSigs,
+		UnbondingTime:    uint32(w + 1),
 		StakingTx:        serializedStakingTx,
 		SlashingTx:       stakingSlashingInfo.SlashingTx,
 	}
@@ -179,7 +182,7 @@ func GenRandomBTCDelegation(
 	// construct unbonding info
 	stkTxHash := stakingSlashingInfo.StakingTx.TxHash()
 	unbondingValue := totalSat - uint64(UnbondingTxFee)
-	w := uint16(100) // TODO: parameterise w
+
 	unbondingSlashingInfo := GenBTCUnbondingSlashingInfo(
 		r,
 		t,
@@ -191,8 +194,9 @@ func GenRandomBTCDelegation(
 		wire.NewOutPoint(&stkTxHash, StakingOutIdx),
 		w+1,
 		int64(unbondingValue),
-		slashingAddress, changeAddress,
+		slashingAddress,
 		slashingRate,
+		slashingChangeLockTime,
 	)
 
 	unbondingTxBytes, err := bbn.SerializeBTCTx(unbondingSlashingInfo.UnbondingTx)
@@ -201,7 +205,6 @@ func GenRandomBTCDelegation(
 	require.NoError(t, err)
 	del.BtcUndelegation = &bstypes.BTCUndelegation{
 		UnbondingTx:          unbondingTxBytes,
-		UnbondingTime:        uint32(w + 1),
 		SlashingTx:           unbondingSlashingInfo.SlashingTx,
 		DelegatorSlashingSig: delSlashingTxSig,
 	}
@@ -250,8 +253,9 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	covenantQuorum uint32,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress, changeAddress string,
+	slashingAddress string,
 	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
@@ -281,12 +285,13 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 	// construct slashing tx
 	slashingAddrBtc, err := btcutil.DecodeAddress(slashingAddress, btcNet)
 	require.NoError(t, err)
-	changeAddrBtc, err := btcutil.DecodeAddress(changeAddress, btcNet)
-	require.NoError(t, err)
+
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
 		StakingOutIdx,
-		slashingAddrBtc, changeAddrBtc,
+		slashingAddrBtc,
+		stakerSK.PubKey(),
+		slashingChangeLockTime,
 		2000,
 		slashingRate,
 		btcNet)
@@ -311,8 +316,9 @@ func GenBTCStakingSlashingInfo(
 	covenantQuorum uint32,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress, changeAddress string,
+	slashingAddress string,
 	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
 ) *TestStakingSlashingInfo {
 	// an arbitrary input
 	spend := makeSpendableOutWithRandOutPoint(r, btcutil.Amount(stakingValue+UnbondingTxFee))
@@ -328,8 +334,10 @@ func GenBTCStakingSlashingInfo(
 		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		slashingAddress, changeAddress,
-		slashingRate)
+		slashingAddress,
+		slashingRate,
+		slashingChangeLockTime,
+	)
 }
 
 func GenBTCUnbondingSlashingInfo(
@@ -343,8 +351,9 @@ func GenBTCUnbondingSlashingInfo(
 	stakingTransactionOutpoint *wire.OutPoint,
 	stakingTimeBlocks uint16,
 	stakingValue int64,
-	slashingAddress, changeAddress string,
+	slashingAddress string,
 	slashingRate sdkmath.LegacyDec,
+	slashingChangeLockTime uint16,
 ) *TestUnbondingSlashingInfo {
 
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
@@ -367,12 +376,13 @@ func GenBTCUnbondingSlashingInfo(
 	// construct slashing tx
 	slashingAddrBtc, err := btcutil.DecodeAddress(slashingAddress, btcNet)
 	require.NoError(t, err)
-	changeAddrBtc, err := btcutil.DecodeAddress(changeAddress, btcNet)
-	require.NoError(t, err)
+
 	slashingMsgTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		tx,
 		StakingOutIdx,
-		slashingAddrBtc, changeAddrBtc,
+		slashingAddrBtc,
+		stakerSK.PubKey(),
+		slashingChangeLockTime,
 		2000,
 		slashingRate,
 		btcNet)

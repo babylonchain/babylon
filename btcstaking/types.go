@@ -489,3 +489,69 @@ func IsSlashingRateValid(slashingRate sdkmath.LegacyDec) bool {
 	// Check if the truncated rate is equal to the original rate
 	return multipliedRate.Equal(truncatedRate)
 }
+
+type RelativeTimeLockTapScriptInfo struct {
+	// data necessary to build witness for given script
+	SpendInfo *SpendInfo
+	// lock time in script, required to set proper sequence number when spending output
+	// with relative time lock
+	LockTime uint16
+	// taproot address of the script
+	TapAddress btcutil.Address
+	// pkscript in output wchich commits to the given script/leaf
+	PkScript []byte
+}
+
+func BuildRelativeTimelockTaprootScript(
+	pk *btcec.PublicKey,
+	lockTime uint16,
+	net *chaincfg.Params,
+) (*RelativeTimeLockTapScriptInfo, error) {
+	unspendableKeyPathKey := unspendableKeyPathInternalPubKey()
+
+	script, err := buildTimeLockScript(pk, lockTime)
+
+	if err != nil {
+		return nil, err
+	}
+
+	sh, err := newTaprootScriptHolder(
+		&unspendableKeyPathKey,
+		[][]byte{script},
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// there is only one script path in tree, so we can use index 0
+	proof := sh.scriptTree.LeafMerkleProofs[0]
+
+	spendInfo := &SpendInfo{
+		ControlBlock: proof.ToControlBlock(&unspendableKeyPathKey),
+		RevealedLeaf: proof.TapLeaf,
+	}
+
+	taprootAddress, err := DeriveTaprootAddress(
+		sh.scriptTree,
+		&unspendableKeyPathKey,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	taprootPkScript, err := txscript.PayToAddrScript(taprootAddress)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &RelativeTimeLockTapScriptInfo{
+		SpendInfo:  spendInfo,
+		LockTime:   lockTime,
+		TapAddress: taprootAddress,
+		PkScript:   taprootPkScript,
+	}, nil
+}

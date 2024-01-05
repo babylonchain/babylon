@@ -5,11 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	sdkmath "cosmossdk.io/math"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcec/v2/schnorr"
-	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
 
@@ -95,28 +92,6 @@ func (tx *BTCSlashingTx) MustGetTxHash() *chainhash.Hash {
 	}
 	txHash := msgTx.TxHash()
 	return &txHash
-}
-
-func (tx *BTCSlashingTx) Validate(
-	net *chaincfg.Params,
-	slashingAddress string,
-	slashingRate sdkmath.LegacyDec,
-	slashingTxMinFee, stakingOutputValue int64,
-) error {
-	msgTx, err := tx.ToMsgTx()
-	if err != nil {
-		return err
-	}
-	decodedAddr, err := btcutil.DecodeAddress(slashingAddress, net)
-	if err != nil {
-		return err
-	}
-	return btcstaking.ValidateSlashingTx(
-		msgTx,
-		decodedAddr,
-		slashingRate,
-		slashingTxMinFee, stakingOutputValue,
-	)
 }
 
 // Sign generates a signature on the slashing tx

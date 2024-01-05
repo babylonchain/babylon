@@ -2,6 +2,7 @@ package btcstaking
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 
 	sdkmath "cosmossdk.io/math"
@@ -16,7 +17,7 @@ import (
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 )
 
-// BuildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion
+// buildSlashingTxFromOutpoint builds a valid slashing transaction by creating a new Bitcoin transaction that slashes a portion
 // of staked funds and directs them to a specified slashing address. The transaction also includes a change output sent back to
 // the specified change address. The slashing rate determines the proportion of staked funds to be slashed.
 //
@@ -31,7 +32,7 @@ import (
 // Returns:
 //   - *wire.MsgTx: The constructed slashing transaction without a script signature or witness.
 //   - error: An error if any validation or construction step fails.
-func BuildSlashingTxFromOutpoint(
+func buildSlashingTxFromOutpoint(
 	stakingOutput wire.OutPoint,
 	stakingAmount, fee int64,
 	slashingAddress, changeAddress btcutil.Address,
@@ -113,49 +114,6 @@ func getPossibleStakingOutput(
 	return stakingOutput, nil
 }
 
-// BuildSlashingTxFromStakingTx constructs a valid slashing transaction using information from a staking transaction,
-// a specified staking output index, and other parameters such as slashing and change addresses, slashing rate, and transaction fee.
-//
-// Parameters:
-//   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
-//   - stakingOutputIdx: The index of the staking output in the staking transaction.
-//   - slashingAddress: The Bitcoin address to which the slashed funds will be sent.
-//   - changeAddress: The Bitcoin address to receive the change from the transaction.
-//   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
-//   - fee: The transaction fee to be paid.
-//
-// Returns:
-//   - *wire.MsgTx: The constructed slashing transaction without a script signature or witness.
-//   - error: An error if any validation or construction step fails.
-//
-// This function validates that the staking transaction is not nil, has an output at the specified index,
-// and that the staking output at the specified index is a valid staking output.
-// It then calls BuildSlashingTxFromOutpoint to build the slashing transaction using the validated staking output.
-func BuildSlashingTxFromStakingTx(
-	stakingTx *wire.MsgTx,
-	stakingOutputIdx uint32,
-	slashingAddress, changeAddress btcutil.Address,
-	slashingRate sdkmath.LegacyDec,
-	fee int64,
-) (*wire.MsgTx, error) {
-	// Get the staking output at the specified index from the staking transaction
-	stakingOutput, err := getPossibleStakingOutput(stakingTx, stakingOutputIdx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create an OutPoint for the staking output
-	stakingTxHash := stakingTx.TxHash()
-	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
-
-	// Build the slashing transaction using the staking output
-	return BuildSlashingTxFromOutpoint(
-		*stakingOutpoint,
-		stakingOutput.Value, fee,
-		slashingAddress, changeAddress,
-		slashingRate)
-}
-
 // BuildSlashingTxFromStakingTxStrict constructs a valid slashing transaction using information from a staking transaction,
 // a specified staking output index, and additional parameters such as slashing and change addresses, transaction fee,
 // staking script, script version, and network. This function performs stricter validation compared to BuildSlashingTxFromStakingTx.
@@ -164,7 +122,8 @@ func BuildSlashingTxFromStakingTx(
 //   - stakingTx: The staking transaction from which the staking output is to be used for slashing.
 //   - stakingOutputIdx: The index of the staking output in the staking transaction.
 //   - slashingAddress: The Bitcoin address to which the slashed funds will be sent.
-//   - changeAddress: The Bitcoin address to receive the change from the transaction.
+//   - stakerPk: public key of the staker i.e the btc holder who can spend staking output after lock time
+//   - slashingChangeLockTime: lock time which will be used on slashing transaction change output
 //   - fee: The transaction fee to be paid.
 //   - slashingRate: The rate at which the staked funds will be slashed, expressed as a decimal.
 //   - script: The staking script to which the staking output should commit.
@@ -180,7 +139,9 @@ func BuildSlashingTxFromStakingTx(
 func BuildSlashingTxFromStakingTxStrict(
 	stakingTx *wire.MsgTx,
 	stakingOutputIdx uint32,
-	slashingAddress, changeAddress btcutil.Address,
+	slashingAddress btcutil.Address,
+	stakerPk *btcec.PublicKey,
+	slashChangeLockTime uint16,
 	fee int64,
 	slashingRate sdkmath.LegacyDec,
 	net *chaincfg.Params,
@@ -195,11 +156,22 @@ func BuildSlashingTxFromStakingTxStrict(
 	stakingTxHash := stakingTx.TxHash()
 	stakingOutpoint := wire.NewOutPoint(&stakingTxHash, stakingOutputIdx)
 
+	// Create taproot address commiting to timelock script
+	si, err := BuildRelativeTimelockTaprootScript(
+		stakerPk,
+		slashChangeLockTime,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
 	// Build slashing tx with the staking output information
-	return BuildSlashingTxFromOutpoint(
+	return buildSlashingTxFromOutpoint(
 		*stakingOutpoint,
 		stakingOutput.Value, fee,
-		slashingAddress, changeAddress,
+		slashingAddress, si.TapAddress,
 		slashingRate)
 }
 
@@ -258,6 +230,9 @@ func ValidateSlashingTx(
 	slashingAddress btcutil.Address,
 	slashingRate sdkmath.LegacyDec,
 	slashingTxMinFee, stakingOutputValue int64,
+	stakerPk *btcec.PublicKey,
+	slashingChangeLockTime uint16,
+	net *chaincfg.Params,
 ) error {
 	// Verify that the slashing transaction is not nil.
 	if slashingTx == nil {
@@ -301,6 +276,22 @@ func ValidateSlashingTx(
 	}
 	if !bytes.Equal(slashingTx.TxOut[0].PkScript, slashingPkScript) {
 		return fmt.Errorf("slashing transaction must pay to the provided slashing address")
+	}
+
+	// Verify that the second output pays to the taproot address which locks funds for
+	// slashingChangeLockTime
+	si, err := BuildRelativeTimelockTaprootScript(
+		stakerPk,
+		slashingChangeLockTime,
+		net,
+	)
+
+	if err != nil {
+		return fmt.Errorf("error creating change timelock script: %w", err)
+	}
+
+	if !bytes.Equal(slashingTx.TxOut[1].PkScript, si.PkScript) {
+		return fmt.Errorf("invalid slashing tx change output pkscript, expected: %s, got: %s", hex.EncodeToString(si.PkScript), hex.EncodeToString(slashingTx.TxOut[1].PkScript))
 	}
 
 	// Verify that the none of the outputs is a dust output.
@@ -349,6 +340,8 @@ func CheckTransactions(
 	slashingTxMinFee int64,
 	slashingRate sdkmath.LegacyDec,
 	slashingAddress btcutil.Address,
+	stakerPk *btcec.PublicKey,
+	slashingChangeLockTime uint16,
 	net *chaincfg.Params,
 ) error {
 	// Check if slashing tx min fee is valid
@@ -371,7 +364,11 @@ func CheckTransactions(
 		slashingTx,
 		slashingAddress,
 		slashingRate,
-		slashingTxMinFee, stakingOutput.Value); err != nil {
+		slashingTxMinFee,
+		stakingOutput.Value,
+		stakerPk,
+		slashingChangeLockTime,
+		net); err != nil {
 		return err
 	}
 

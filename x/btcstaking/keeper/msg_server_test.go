@@ -58,9 +58,21 @@ func (h *Helper) NoError(err error) {
 }
 
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
+	return h.GenAndApplyCustomParams(r, 100, 0)
+}
+
+func (h *Helper) GenAndApplyCustomParams(
+	r *rand.Rand,
+	finalizationTimeout uint64,
+	minUnbondingTime uint32,
+) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	// mocking stuff for BTC checkpoint keeper
 	h.BTCCheckpointKeeper.EXPECT().GetPowLimit().Return(h.Net.PowLimit).AnyTimes()
-	h.BTCCheckpointKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
+
+	params := btcctypes.DefaultParams()
+	params.CheckpointFinalizationTimeout = finalizationTimeout
+
+	h.BTCCheckpointKeeper.EXPECT().GetParams(gomock.Any()).Return(params).AnyTimes()
 
 	// randomise covenant committee
 	covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
@@ -75,7 +87,7 @@ func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.
 		MinCommissionRate:          sdkmath.LegacyMustNewDecFromStr("0.01"),
 		SlashingRate:               sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2),
 		MaxActiveFinalityProviders: 100,
-		MinUnbondingTime:           0,
+		MinUnbondingTime:           minUnbondingTime,
 	})
 	h.NoError(err)
 	return covenantSKs, covenantPKs
@@ -99,19 +111,21 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 	return fpSK, fpPK, fp
 }
 
-func (h *Helper) CreateDelegation(
+func (h *Helper) CreateDelegationCustom(
 	r *rand.Rand,
 	fpPK *btcec.PublicKey,
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation) {
+	unbondingTime uint16,
+) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, error) {
 	delSK, delPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)
 	stakingTimeBlocks := stakingTime
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	covPKs, err := bbn.NewBTCPKsFromBIP340PKs(bsParams.CovenantPks)
 	h.NoError(err)
+
 	testStakingInfo := datagen.GenBTCStakingSlashingInfo(
 		r,
 		h.t,
@@ -123,8 +137,8 @@ func (h *Helper) CreateDelegation(
 		stakingTimeBlocks,
 		stakingValue,
 		bsParams.SlashingAddress,
-		changeAddress,
 		bsParams.SlashingRate,
+		unbondingTime,
 	)
 	h.NoError(err)
 	stakingTxHash := testStakingInfo.StakingTx.TxHash().String()
@@ -170,9 +184,7 @@ func (h *Helper) CreateDelegation(
 	*/
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
 	stkOutputIdx := uint32(0)
-	defaultParams := btcctypes.DefaultParams()
 
-	unbondingTime := uint16(defaultParams.CheckpointFinalizationTimeout) + 1
 	unbondingValue := stakingValue - 1000
 	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
@@ -186,8 +198,8 @@ func (h *Helper) CreateDelegation(
 		unbondingTime,
 		unbondingValue,
 		bsParams.SlashingAddress,
-		changeAddress,
 		bsParams.SlashingRate,
+		unbondingTime,
 	)
 	h.NoError(err)
 
@@ -217,7 +229,40 @@ func (h *Helper) CreateDelegation(
 	}
 
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
+
+	if err != nil {
+		return "", nil, nil, nil, err
+	}
+
+	return stakingTxHash, delSK, delPK, msgCreateBTCDel, nil
+}
+
+func (h *Helper) CreateDelegation(
+	r *rand.Rand,
+	fpPK *btcec.PublicKey,
+	changeAddress string,
+	stakingValue int64,
+	stakingTime uint16,
+) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation) {
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
+
+	minUnbondingTime := types.MinimumUnbondingTime(
+		bsParams,
+		bcParams,
+	)
+
+	stakingTxHash, delSK, delPK, msgCreateBTCDel, err := h.CreateDelegationCustom(
+		r,
+		fpPK,
+		changeAddress,
+		stakingValue,
+		stakingTime,
+		uint16(minUnbondingTime)+1,
+	)
+
 	h.NoError(err)
+
 	return stakingTxHash, delSK, delPK, msgCreateBTCDel
 }
 
@@ -654,9 +699,14 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	// set covenant PK to params
 	_, covenantPKs := h.GenAndApplyParams(r)
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
-	changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
-	require.NoError(t, err)
+	minUnbondingTime := types.MinimumUnbondingTime(
+		bsParams,
+		bcParams,
+	)
+
+	slashingChangeLockTime := uint16(minUnbondingTime) + 1
 
 	// We only generate a finality provider, but not insert it into KVStore. So later
 	// insertion of delegation should fail.
@@ -681,8 +731,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		stakingTimeBlocks,
 		stakingValue,
 		bsParams.SlashingAddress,
-		changeAddress.EncodeAddress(),
 		bsParams.SlashingRate,
+		slashingChangeLockTime,
 	)
 	// get msgTx
 	stakingMsgTx := testStakingInfo.StakingTx
@@ -733,8 +783,8 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		uint16(unbondingTime),
 		unbondingValue,
 		bsParams.SlashingAddress,
-		changeAddress.EncodeAddress(),
 		bsParams.SlashingRate,
+		slashingChangeLockTime,
 	)
 	unbondingTx, err := bbn.SerializeBTCTx(testUnbondingInfo.UnbondingTx)
 	h.NoError(err)
@@ -762,4 +812,86 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	_, err = h.MsgServer.CreateBTCDelegation(h.Ctx, msgCreateBTCDel)
 	require.Error(t, err)
 	require.True(t, errors.Is(err, types.ErrFpNotFound))
+}
+
+func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
+	tests := []struct {
+		name                      string
+		finalizationTimeout       uint64
+		minUnbondingTime          uint32
+		unbondingTimeInDelegation uint16
+		err                       error
+	}{
+		{
+			name:                      "successful delegation when ubonding time in delegation is larger than finalization timeout when finalization timeout is larger than min unbonding time",
+			unbondingTimeInDelegation: 101,
+			minUnbondingTime:          99,
+			finalizationTimeout:       100,
+			err:                       nil,
+		},
+		{
+			name:                      "failed delegation when ubonding time in delegation is not larger than finalization time when min unbonding time is lower than finalization timeout",
+			unbondingTimeInDelegation: 100,
+			minUnbondingTime:          99,
+			finalizationTimeout:       100,
+			err:                       types.ErrInvalidUnbondingTx,
+		},
+		{
+			name:                      "successful delegation when ubonding time ubonding time in delegation is larger than min unbonding time when min unbonding time is larger than finalization timeout",
+			unbondingTimeInDelegation: 151,
+			minUnbondingTime:          150,
+			finalizationTimeout:       100,
+			err:                       nil,
+		},
+		{
+			name:                      "failed delegation when ubonding time in delegation is not larger than minUnbondingTime when min unbonding time is larger than finalization timeout",
+			unbondingTimeInDelegation: 150,
+			minUnbondingTime:          150,
+			finalizationTimeout:       100,
+			err:                       types.ErrInvalidUnbondingTx,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := rand.New(rand.NewSource(time.Now().Unix()))
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			// mock BTC light client and BTC checkpoint modules
+			btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+			btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+			h := NewHelper(t, btclcKeeper, btccKeeper)
+
+			// set all parameters
+			_, _ = h.GenAndApplyCustomParams(r, tt.finalizationTimeout, tt.minUnbondingTime)
+
+			changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+			require.NoError(t, err)
+
+			// generate and insert new finality provider
+			_, fpPK, _ := h.CreateFinalityProvider(r)
+
+			// generate and insert new BTC delegation
+			stakingValue := int64(2 * 10e8)
+			stakingTxHash, _, _, _, err := h.CreateDelegationCustom(
+				r,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				stakingValue,
+				1000,
+				tt.unbondingTimeInDelegation,
+			)
+			if tt.err != nil {
+				require.Error(t, err)
+				require.True(t, errors.Is(err, tt.err))
+			} else {
+				require.NoError(t, err)
+				// Retrieve delegation from keeper
+				delegation, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+				require.NoError(t, err)
+				require.Equal(t, tt.unbondingTimeInDelegation, uint16(delegation.UnbondingTime))
+			}
+		})
+	}
 }

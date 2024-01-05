@@ -38,10 +38,11 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
-		require.NoError(t, err)
 
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		unbondingTime := uint16(100) + 1
+		unbondingValue := stakingValue - 1000
+		slashingChangeLockTime := unbondingTime
 
 		// construct the BTC delegation with everything
 		btcDel, err := datagen.GenRandomBTCDelegation(
@@ -52,17 +53,15 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			covenantSKs,
 			covenantQuorum,
 			slashingAddress.EncodeAddress(),
-			changeAddress.EncodeAddress(),
 			1000,
 			uint64(1000+stakingTimeBlocks),
 			uint64(stakingValue),
 			slashingRate,
+			slashingChangeLockTime,
 		)
 		require.NoError(t, err)
 
 		stakingTxHash := btcDel.MustGetStakingTxHash()
-		unbondingTime := uint16(100) + 1
-		unbondingValue := stakingValue - 1000
 
 		testInfo := datagen.GenBTCUnbondingSlashingInfo(
 			r,
@@ -76,8 +75,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			unbondingTime,
 			unbondingValue,
 			slashingAddress.EncodeAddress(),
-			changeAddress.EncodeAddress(),
 			slashingRate,
+			slashingChangeLockTime,
 		)
 		require.NoError(t, err)
 
@@ -100,10 +99,8 @@ func FuzzBTCUndelegation_SlashingTx(f *testing.F) {
 			testInfo.SlashingTx,
 		)
 		require.NoError(t, err)
-
 		btcDel.BtcUndelegation = &types.BTCUndelegation{
 			UnbondingTx:              unbondingTxBytes,
-			UnbondingTime:            100 + 1,
 			SlashingTx:               testInfo.SlashingTx,
 			DelegatorUnbondingSig:    nil, // not relevant here
 			DelegatorSlashingSig:     delSlashingTxSig,

@@ -68,6 +68,7 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		stakingOutputIdx := r.Intn(5)
 		// always more outputs than stakingOutputIdx
 		stakingTxNumOutputs := r.Intn(5) + 10
+		slashingLockTime := uint16(r.Intn(1000) + 1)
 		sd := genValidStakingScriptData(t, r)
 
 		minStakingValue := 5000
@@ -102,11 +103,11 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		}
 
 		// Always check case with min fee
-		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, int64(minFee))
+		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, int64(minFee), sd.StakerKey, slashingLockTime)
 
 		// Check case with some random fee
 		fee := int64(r.Intn(1000) + minFee)
-		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, fee)
+		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, fee, sd.StakerKey, slashingLockTime)
 
 	})
 }
@@ -115,21 +116,29 @@ func genRandomBTCAddress(r *rand.Rand) (*btcutil.AddressPubKeyHash, error) {
 	return btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
 }
 
-func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOutputIdx int, slashingRate sdkmath.LegacyDec, fee int64) {
+func testSlashingTx(
+	r *rand.Rand,
+	t *testing.T,
+	stakingTx *wire.MsgTx,
+	stakingOutputIdx int,
+	slashingRate sdkmath.LegacyDec,
+	fee int64,
+	stakerPk *btcec.PublicKey,
+	slashingChangeLockTime uint16,
+) {
 	dustThreshold := 546 // in satoshis
 
 	// Generate random slashing and change addresses
 	slashingAddress, err := genRandomBTCAddress(r)
 	require.NoError(t, err)
 
-	changeAddress, err := genRandomBTCAddress(r)
-	require.NoError(t, err)
-
 	// Construct slashing transaction using the provided parameters
 	slashingTx, err := btcstaking.BuildSlashingTxFromStakingTxStrict(
 		stakingTx,
 		uint32(stakingOutputIdx),
-		slashingAddress, changeAddress,
+		slashingAddress,
+		stakerPk,
+		slashingChangeLockTime,
 		fee,
 		slashingRate,
 		&chaincfg.MainNetParams,
@@ -165,6 +174,8 @@ func testSlashingTx(r *rand.Rand, t *testing.T, stakingTx *wire.MsgTx, stakingOu
 				fee,
 				slashingRate,
 				slashingAddress,
+				stakerPk,
+				slashingChangeLockTime,
 				&chaincfg.MainNetParams,
 			)
 			require.NoError(t, err)

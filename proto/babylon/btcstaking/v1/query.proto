@@ -242,7 +242,9 @@ message QueryBTCDelegationResponse {
   repeated CovenantAdaptorSignatures covenant_sigs = 7;
   // whether this delegation is active
   bool active = 8;
-  // undelegation_info is the undelegation info of this delegation. It is nil
-  // if it is not undelegating
-  BTCUndelegationInfo undelegation_info = 9;
+  // unbonding_time used in unbonding output timelock path and in slashing transactions
+  // change outputs
+  uint32 unbonding_time = 9;
+  // undelegation_info is the undelegation info of this delegation.
+  BTCUndelegationInfo undelegation_info = 10;
 }

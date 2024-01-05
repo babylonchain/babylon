@@ -37,8 +37,6 @@ var (
 	covenantSKs, _, covenantQuorum = bstypes.DefaultCovenantCommittee()
 
 	stakingValue = int64(2 * 10e8)
-
-	changeAddress, _ = datagen.GenRandomBTCAddress(r, net)
 )
 
 type BTCStakingTestSuite struct {
@@ -97,6 +95,10 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	*/
 	// BTC staking params, BTC delegation key pairs and PoP
 	params := nonValidatorNode.QueryBTCStakingParams()
+
+	// minimal required unbonding time
+	unbondingTime := uint16(initialization.BabylonBtcFinalizationPeriod) + 1
+
 	// get covenant BTC PKs
 	covenantBTCPKs := []*btcec.PublicKey{}
 	for _, covenantPK := range params.CovenantPks {
@@ -118,8 +120,9 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		covenantQuorum,
 		stakingTimeBlocks,
 		stakingValue,
-		params.SlashingAddress, changeAddress.EncodeAddress(),
+		params.SlashingAddress,
 		params.SlashingRate,
+		unbondingTime,
 	)
 
 	stakingMsgTx := testStakingInfo.StakingTx
@@ -149,7 +152,6 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 
 	// generate BTC undelegation stuff
 	stkTxHash := testStakingInfo.StakingTx.TxHash()
-	unbondingTime := initialization.BabylonBtcFinalizationPeriod + 1
 	unbondingValue := stakingValue - datagen.UnbondingTxFee // TODO: parameterise fee
 	testUnbondingInfo := datagen.GenBTCUnbondingSlashingInfo(
 		r,
@@ -160,10 +162,11 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		covenantBTCPKs,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
-		uint16(unbondingTime),
+		unbondingTime,
 		unbondingValue,
-		params.SlashingAddress, changeAddress.EncodeAddress(),
+		params.SlashingAddress,
 		params.SlashingRate,
+		unbondingTime,
 	)
 	delUnbondingSlashingSig, err := testUnbondingInfo.GenDelSlashingTxSig(delBTCSK)
 	s.NoError(err)

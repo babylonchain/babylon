@@ -568,3 +568,70 @@ func TestSpendingSlashingPathCovenant35MultiSigFinalityProviderRestaking(t *test
 	}
 	btctest.AssertEngineExecution(t, 0, true, newEngine)
 }
+
+func TestSpendingRelativeTimeLockScript(t *testing.T) {
+	stakerPrivKey, err := btcec.NewPrivateKey()
+	require.NoError(t, err)
+	stakerPubKey := stakerPrivKey.PubKey()
+	lockTime := uint16(10)
+	lockedAmount := btcutil.Amount(2 * 10e8)
+
+	// to spend output with relative timelock transaction need to be version two or higher
+	spendStakeTx := wire.NewMsgTx(2)
+	spendStakeTx.AddTxIn(wire.NewTxIn(&wire.OutPoint{}, nil, nil))
+	spendStakeTx.AddTxOut(
+		&wire.TxOut{
+			PkScript: []byte("doesn't matter"),
+			// spend half of the staking amount
+			Value: int64(lockedAmount.MulF64(0.5)),
+		},
+	)
+
+	tls, err := btcstaking.BuildRelativeTimelockTaprootScript(
+		stakerPubKey,
+		lockTime,
+		&chaincfg.MainNetParams,
+	)
+	require.NoError(t, err)
+
+	timeLockOutput := &wire.TxOut{
+		PkScript: tls.PkScript,
+		Value:    int64(lockedAmount),
+	}
+
+	// we need to set sequence number before signing, as signing commits to sequence
+	// number
+	spendStakeTx.TxIn[0].Sequence = uint32(tls.LockTime)
+
+	sig, err := btcstaking.SignTxWithOneScriptSpendInputFromTapLeaf(
+		spendStakeTx,
+		timeLockOutput,
+		stakerPrivKey,
+		tls.SpendInfo.RevealedLeaf,
+	)
+
+	require.NoError(t, err)
+
+	witness, err := btcstaking.CreateWitness(
+		tls.SpendInfo,
+		[][]byte{sig.Serialize()},
+	)
+
+	require.NoError(t, err)
+
+	spendStakeTx.TxIn[0].Witness = witness
+
+	prevOutputFetcher := txscript.NewCannedPrevOutputFetcher(
+		timeLockOutput.PkScript, timeLockOutput.Value,
+	)
+
+	newEngine := func() (*txscript.Engine, error) {
+		return txscript.NewEngine(
+			timeLockOutput.PkScript,
+			spendStakeTx, 0, txscript.StandardVerifyFlags, nil,
+			txscript.NewTxSigHashes(spendStakeTx, prevOutputFetcher), timeLockOutput.Value,
+			prevOutputFetcher,
+		)
+	}
+	btctest.AssertEngineExecution(t, 0, true, newEngine)
+}

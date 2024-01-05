@@ -106,6 +106,21 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	btccParams := ms.btccKeeper.GetParams(ctx)
 	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
 
+	minUnbondingTime := types.MinimumUnbondingTime(params, btccParams)
+
+	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
+	// which is larger value from:
+	// - MinUnbondingTime
+	// - CheckpointFinalizationTimeout
+	if uint64(req.UnbondingTime) <= minUnbondingTime {
+		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", req.UnbondingTime, minUnbondingTime)
+	}
+
+	// At this point we know that unbonding time in request:
+	// - is larger than min unbonding time
+	// - is smaller than math.MaxUint16 (due to check in req.ValidateBasic())
+	validatedUnbondingTime := uint16(req.UnbondingTime)
+
 	// verify proof of possession
 	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
@@ -141,9 +156,10 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// programming error
 		panic("failed to parse covenant PKs in KVStore")
 	}
+	stakerPk := req.BtcPk.MustToBTCPK()
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
-		req.BtcPk.MustToBTCPK(),
+		stakerPk,
 		fpPKs,
 		covenantPKs,
 		params.CovenantQuorum,
@@ -206,6 +222,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		params.MinSlashingTxFeeSat,
 		params.SlashingRate,
 		slashingAddr,
+		stakerPk,
+		validatedUnbondingTime,
 		ms.btcNet,
 	); err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrap(err.Error())
@@ -221,7 +239,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		stakingInfo.StakingOutput.PkScript,
 		stakingInfo.StakingOutput.Value,
 		slashingSpendInfo.GetPkScriptPath(),
-		req.BtcPk.MustToBTCPK(),
+		stakerPk,
 		req.DelegatorSlashingSig,
 	)
 	if err != nil {
@@ -244,6 +262,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		StakingOutputIdx: stakingOutputIdx,
 		SlashingTx:       req.SlashingTx,
 		DelegatorSig:     req.DelegatorSlashingSig,
+		UnbondingTime:    uint32(validatedUnbondingTime),
 		CovenantSigs:     nil, // NOTE: covenant signature will be submitted in a separate msg by covenant
 		BtcUndelegation:  nil, // this will be constructed in below code
 	}
@@ -270,15 +289,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	if unbondingMsgTx.TxIn[0].PreviousOutPoint.Index != stakingOutputIdx {
 		return nil, types.ErrInvalidUnbondingTx.Wrapf("slashing transaction input must spend staking output")
 	}
-	minUnbondingTime := types.MinimumUnbondingTime(params, btccParams)
-
-	// Check unbonding time (staking time from unbonding tx) is larger than min unbonding time
-	// which is larger value from:
-	// - MinUnbondingTime
-	// - CheckpointFinalizationTimeout
-	if uint64(req.UnbondingTime) <= minUnbondingTime {
-		return nil, types.ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be larger than %d", req.UnbondingTime, minUnbondingTime)
-	}
 
 	// building unbonding info
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
@@ -286,7 +296,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		fpPKs,
 		covenantPKs,
 		params.CovenantQuorum,
-		uint16(req.UnbondingTime),
+		validatedUnbondingTime,
 		btcutil.Amount(req.UnbondingValue),
 		ms.btcNet,
 	)
@@ -308,6 +318,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		params.MinSlashingTxFeeSat,
 		params.SlashingRate,
 		params.MustGetSlashingAddress(ms.btcNet),
+		stakerPk,
+		validatedUnbondingTime,
 		ms.btcNet,
 	)
 	if err != nil {
@@ -353,7 +365,6 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		DelegatorUnbondingSig:    nil,
 		CovenantSlashingSigs:     nil,
 		CovenantUnbondingSigList: nil,
-		UnbondingTime:            req.UnbondingTime,
 	}
 
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {

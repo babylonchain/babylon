@@ -91,8 +91,9 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 		stakingValue := int64(2 * 10e8)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
-		require.NoError(t, err)
+
+		slashingChangeLockTime := uint16(101)
+
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -109,8 +110,9 @@ func FuzzBTCDelegation_SlashingTx(f *testing.F) {
 			covenantQuorum,
 			stakingTimeBlocks,
 			stakingValue,
-			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
+			slashingAddress.EncodeAddress(),
 			slashingRate,
+			slashingChangeLockTime,
 		)
 		require.NoError(t, err)
 

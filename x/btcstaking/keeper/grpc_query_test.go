@@ -179,8 +179,8 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
+		slashingChangeLockTime := uint16(101)
+
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -216,9 +216,10 @@ func FuzzPendingBTCDelegations(f *testing.F) {
 					delSK,
 					covenantSKs,
 					covenantQuorum,
-					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
+					slashingAddress.EncodeAddress(),
 					startHeight, endHeight, 10000,
 					slashingRate,
+					slashingChangeLockTime,
 				)
 				require.NoError(t, err)
 				if datagen.RandomInt(r, 2) == 1 {
@@ -351,8 +352,9 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
+
+		slashingChangeLockTime := uint16(101)
+
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -390,9 +392,10 @@ func FuzzActiveFinalityProvidersAtHeight(f *testing.F) {
 					delSK,
 					covenantSKs,
 					covenantQuorum,
-					slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
+					slashingAddress.EncodeAddress(),
 					1, 1000, 10000,
 					slashingRate,
+					slashingChangeLockTime,
 				)
 				require.NoError(t, err)
 				err = keeper.AddBTCDelegation(ctx, btcDel)
@@ -466,8 +469,8 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
+		slashingChangeLockTime := uint16(101)
+
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -495,9 +498,10 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 				delSK,
 				covenantSKs,
 				covenantQuorum,
-				slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
+				slashingAddress.EncodeAddress(),
 				startHeight, endHeight, 10000,
 				slashingRate,
+				slashingChangeLockTime,
 			)
 			require.NoError(t, err)
 			expectedBtcDelsMap[btcDel.BtcPk.MarshalHex()] = btcDel

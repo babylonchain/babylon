@@ -114,7 +114,7 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	}
 
 	// Check unbonding time is lower than max uint16
-	if uint64(m.UnbondingTime) > math.MaxUint16 {
+	if m.UnbondingTime > math.MaxUint16 {
 		return ErrInvalidUnbondingTx.Wrapf("unbonding time %d must be lower than %d", m.UnbondingTime, math.MaxUint16)
 	}
 

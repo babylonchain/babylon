@@ -23,7 +23,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func BTCStakingKeeper(t testing.TB, btclcKeeper types.BTCLightClientKeeper, btccKeeper types.BtcCheckpointKeeper) (*keeper.Keeper, sdk.Context) {
+func BTCStakingKeeper(
+	t testing.TB,
+	btclcKeeper types.BTCLightClientKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()

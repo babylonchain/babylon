@@ -84,13 +84,16 @@ message MsgCreateBTCDelegation {
   // The staking tx output further needs signatures from covenant and finality provider in
   // order to be spendable.
   bytes delegator_slashing_sig = 10 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340Signature" ];
-
-  /// fields related to on-demand unbonding
+  // unbonding_time is the time lock used when funds are being unbonded. It is be used in:
+  // - unbonding transaction, time lock spending path
+  // - staking slashing transaction, change output
+  // - unbonding slashing transaction, change output
+  // It must be smaller than math.MaxUInt16 and larger that max(MinUnbondingTime, CheckpointFinalizationTimeout)
+  uint32 unbonding_time = 11;
+  // fields related to unbonding transaction
   // unbonding_tx is a bitcoin unbonding transaction i.e transaction that spends
   // staking output and sends it to the unbonding output
-  bytes unbonding_tx = 11;
-  // unbonding_time is the time lock used in unbonding transaction
-  uint32 unbonding_time = 12;
+  bytes unbonding_tx = 12;
   // unbonding_value is amount of satoshis locked in unbonding output.
   // NOTE: staking_value and unbonding_value could be different because of the difference between the fee for staking tx and that for unbonding
   int64 unbonding_value = 13;
@@ -130,7 +133,7 @@ message MsgAddCovenantSigs {
 message MsgAddCovenantSigsResponse {}
 
 // MsgBTCUndelegate is the message for handling signature on unbonding tx
-// from its delegator. This signature effectively proves that the delegator 
+// from its delegator. This signature effectively proves that the delegator
 // wants to unbond this BTC delegation
 message MsgBTCUndelegate {
   option (cosmos.msg.v1.signer) = "signer";

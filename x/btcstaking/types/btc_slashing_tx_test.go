@@ -28,8 +28,6 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		// slashing address and key paris
 		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
 		require.NoError(t, err)
-		changeAddress, err := datagen.GenRandomBTCAddress(r, net)
-		require.NoError(t, err)
 		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
 		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
 		// with value below the dust threshold, causing test failure.
@@ -47,6 +45,7 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 		covenantSKs, covenantPKs, err := datagen.GenRandomBTCKeyPairs(r, 5)
 		require.NoError(t, err)
 		covenantQuorum := uint32(3)
+		slashingChangeLockTime := uint16(101)
 
 		// generate staking/slashing tx
 		testStakingInfo := datagen.GenBTCStakingSlashingInfo(
@@ -59,8 +58,9 @@ func FuzzSlashingTxWithWitness(f *testing.F) {
 			covenantQuorum,
 			stakingTimeBlocks,
 			stakingValue,
-			slashingAddress.EncodeAddress(), changeAddress.EncodeAddress(),
+			slashingAddress.EncodeAddress(),
 			slashingRate,
+			slashingChangeLockTime,
 		)
 
 		slashingTx := testStakingInfo.SlashingTx
