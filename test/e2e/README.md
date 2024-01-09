@@ -9,7 +9,7 @@ approach.
 
 ### Wasm contract used for e2e testing
 
-Wasm contract located in `bytecode/babylon_contract.wasm` is compiled from most recent commit `main` branch - https://github.com/babylonchain/babylon-contract
+Wasm contract located in `bytecode/storage_contract.wasm`  is compiled from most recent commit `main` branch - https://github.com/babylonchain/storage-contract
 
 This contract uses feature specific to Babylon, through Babylon bindings library.
 
