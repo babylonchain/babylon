@@ -50,3 +50,25 @@ func (msg *MsgInsertHeaders) ValidateHeaders(powLimit *big.Int) error {
 
 	return nil
 }
+
+func (msg *MsgInsertHeaders) ReporterAddress() sdk.AccAddress {
+	sender, err := sdk.AccAddressFromBech32(msg.Signer)
+	if err != nil {
+		panic(err)
+	}
+	return sender
+}
+
+func (msg *MsgInsertHeaders) ValidateStateless() error {
+	_, err := sdk.AccAddressFromBech32(msg.Signer)
+
+	if err != nil {
+		return err
+	}
+
+	if len(msg.Headers) == 0 {
+		return fmt.Errorf("empty headers list")
+	}
+
+	return nil
+}

@@ -601,6 +601,7 @@ func NewBabylonApp(
 		appCodec,
 		runtime.NewKVStoreService(keys[btclightclienttypes.StoreKey]),
 		btcConfig,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	btcCheckpointKeeper := btccheckpointkeeper.NewKeeper(

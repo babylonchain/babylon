@@ -7,6 +7,8 @@ import (
 	storemetrics "cosmossdk.io/store/metrics"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/runtime"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
@@ -23,6 +25,10 @@ import (
 )
 
 func BTCLightClientKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
+	return BTCLightClientKeeperWithCustomParams(t, types.DefaultParams())
+}
+
+func BTCLightClientKeeperWithCustomParams(t testing.TB, p types.Params) (*keeper.Keeper, sdk.Context) {
 	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
 
 	db := dbm.NewMemDB()
@@ -39,10 +45,15 @@ func BTCLightClientKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		cdc,
 		runtime.NewKVStoreService(storeKey),
 		testCfg,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
+
+	if err := k.SetParams(ctx, p); err != nil {
+		panic(err)
+	}
 
 	return &k, ctx
 }

@@ -30,6 +30,7 @@ func DefaultGenesis() *GenesisState {
 
 	return &GenesisState{
 		BaseBtcHeader: defaultBaseHeader,
+		Params:        DefaultParams(),
 	}
 }
 
@@ -45,6 +46,10 @@ func (gs GenesisState) Validate() error {
 
 	if !isRetarget {
 		return fmt.Errorf("genesis block must be a difficulty adjustment block")
+	}
+
+	if err := gs.Params.Validate(); err != nil {
+		return fmt.Errorf("invalid params in genesis: %w", err)
 	}
 
 	return nil

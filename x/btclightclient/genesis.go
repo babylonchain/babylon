@@ -2,6 +2,7 @@ package btclightclient
 
 import (
 	"context"
+
 	"github.com/babylonchain/babylon/x/btclightclient/keeper"
 	"github.com/babylonchain/babylon/x/btclightclient/types"
 )
@@ -14,6 +15,9 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisSta
 	}
 
 	k.SetBaseBTCHeader(ctx, genState.BaseBtcHeader)
+	if err := k.SetParams(ctx, genState.Params); err != nil {
+		panic(err)
+	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
@@ -23,7 +27,9 @@ func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
 	if baseBTCHeader == nil {
 		panic("A base BTC Header has not been set")
 	}
+
 	genesis.BaseBtcHeader = *baseBTCHeader
+	genesis.Params = k.GetParams(ctx)
 
 	return genesis
 }

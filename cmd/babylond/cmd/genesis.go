@@ -71,7 +71,8 @@ Example:
 				genesisParams = TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 					genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
 					genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
+					genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.AllowedReporterAddresses,
+					genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
 					genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat,
 					genesisCliArgs.MinCommissionRate, genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders,
 					genesisCliArgs.MinUnbondingTime, genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange,
@@ -230,13 +231,14 @@ type GenesisParams struct {
 	BtcstakingParams            btcstakingtypes.Params
 	FinalityParams              finalitytypes.Params
 	BtclightclientBaseBtcHeader btclightclienttypes.BTCHeaderInfo
+	BtclightclientParams        btclightclienttypes.Params
 	BlockGasLimit               int64
 	VoteExtensionsEnableHeight  int64
 }
 
 func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint64,
 	btcFinalizationTimeout uint64, checkpointTag string, epochInterval uint64, baseBtcHeaderHex string,
-	baseBtcHeaderHeight uint64, covenantPKs []string, covenantQuorum uint32, slashingAddress string, minSlashingFee int64,
+	baseBtcHeaderHeight uint64, allowedReporters []string, covenantPKs []string, covenantQuorum uint32, slashingAddress string, minSlashingFee int64,
 	minCommissionRate sdkmath.LegacyDec, slashingRate sdkmath.LegacyDec, maxActiveFinalityProviders uint32, minUnbondingTime uint16,
 	minPubRand uint64, inflationRateChange float64,
 	inflationMin float64, inflationMax float64, goalBonded float64,
@@ -309,7 +311,15 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 	}
 	work := btclightclienttypes.CalcWork(&baseBtcHeader)
 	baseBtcHeaderInfo := btclightclienttypes.NewBTCHeaderInfo(&baseBtcHeader, baseBtcHeader.Hash(), baseBtcHeaderHeight, &work)
+
+	params, err := btclightclienttypes.NewParamsValidate(allowedReporters)
+
+	if err != nil {
+		panic(err)
+	}
+
 	genParams.BtclightclientBaseBtcHeader = *baseBtcHeaderInfo
+	genParams.BtclightclientParams = params
 
 	genParams.BtcstakingParams = btcstakingtypes.DefaultParams()
 	covenantPKsBIP340 := make([]bbn.BIP340PubKey, 0, len(covenantPKs))

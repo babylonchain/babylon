@@ -12,6 +12,7 @@ import (
 
 	babylonApp "github.com/babylonchain/babylon/app"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	btcltypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	btcstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
@@ -23,6 +24,7 @@ const (
 	flagCheckpointTag              = "checkpoint-tag"
 	flagBaseBtcHeaderHex           = "btc-base-header"
 	flagBaseBtcHeaderHeight        = "btc-base-header-height"
+	flagAllowedReporterAddresses   = "allowed-reporter-addresses"
 	flagInflationRateChange        = "inflation-rate-change"
 	flagInflationMax               = "inflation-max"
 	flagInflationMin               = "inflation-min"
@@ -51,6 +53,7 @@ type GenesisCLIArgs struct {
 	EpochInterval                uint64
 	BaseBtcHeaderHex             string
 	BaseBtcHeaderHeight          uint64
+	AllowedReporterAddresses     []string
 	InflationRateChange          float64
 	InflationMax                 float64
 	InflationMin                 float64
@@ -83,6 +86,7 @@ func addGenesisFlags(cmd *cobra.Command) {
 	// btclightclient args
 	// Genesis header for the simnet
 	cmd.Flags().String(flagBaseBtcHeaderHex, "0100000000000000000000000000000000000000000000000000000000000000000000003ba3edfd7a7b12b27ac72c3e67768f617fc81bc3888a51323a9fb8aa4b1e5e4a45068653ffff7f2002000000", "Hex of the base Bitcoin header.")
+	cmd.Flags().String(flagAllowedReporterAddresses, strings.Join(btcltypes.DefaultParams().InsertHeadersAllowList, ","), "addresses of reporters allowed to submit Bitcoin headers to babylon")
 	cmd.Flags().Uint64(flagBaseBtcHeaderHeight, 0, "Height of the base Bitcoin header.")
 	// btcstaking args
 	cmd.Flags().String(flagCovenantPks, strings.Join(btcstypes.DefaultParams().CovenantPksHex(), ","), "Bitcoin staking covenant public keys, comma separated")
@@ -117,6 +121,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 	epochInterval, _ := cmd.Flags().GetUint64(flagEpochInterval)
 	baseBtcHeaderHex, _ := cmd.Flags().GetString(flagBaseBtcHeaderHex)
 	baseBtcHeaderHeight, _ := cmd.Flags().GetUint64(flagBaseBtcHeaderHeight)
+	reporterAddresses, _ := cmd.Flags().GetString(flagAllowedReporterAddresses)
 	covenantPks, _ := cmd.Flags().GetString(flagCovenantPks)
 	covenantQuorum, _ := cmd.Flags().GetUint32(flagCovenantQuorum)
 	slashingAddress, _ := cmd.Flags().GetString(flagSlashingAddress)
@@ -139,6 +144,11 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		chainID = "chain-" + tmrand.NewRand().Str(6)
 	}
 
+	var allowedReporterAddresses []string = make([]string, 0)
+	if reporterAddresses != "" {
+		allowedReporterAddresses = strings.Split(reporterAddresses, ",")
+	}
+
 	genesisTime := time.Unix(genesisTimeUnix, 0)
 
 	return &GenesisCLIArgs{
@@ -150,6 +160,7 @@ func parseGenesisFlags(cmd *cobra.Command) *GenesisCLIArgs {
 		EpochInterval:                epochInterval,
 		BaseBtcHeaderHeight:          baseBtcHeaderHeight,
 		BaseBtcHeaderHex:             baseBtcHeaderHex,
+		AllowedReporterAddresses:     allowedReporterAddresses,
 		CovenantPKs:                  strings.Split(covenantPks, ","),
 		CovenantQuorum:               covenantQuorum,
 		SlashingAddress:              slashingAddress,
