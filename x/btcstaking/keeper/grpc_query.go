@@ -147,6 +147,12 @@ func (k Keeper) FinalityProviderCurrentPower(ctx context.Context, req *types.Que
 		// NOTE: it's possible that the voting power is not recorded at the current height,
 		// e.g., `EndBlock` is not reached yet
 		// in this case, we use the last height
+
+		// ensure curHeight > 0 thus won't over flow
+		if curHeight == 0 {
+			return &types.QueryFinalityProviderCurrentPowerResponse{Height: 0, VotingPower: 0}, nil
+		}
+
 		curHeight -= 1
 		power = k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), curHeight)
 	}
