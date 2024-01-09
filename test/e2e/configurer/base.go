@@ -88,9 +88,8 @@ func (bc *baseConfigurer) InstantiateBabylonContract() error {
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
 
 	// Instantiate the contract
-	// TODO: Get this from the chain config
 	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
-		types.BtcSimnet,
+		types.BtcRegtest,
 		types2.DefaultCheckpointTag,
 		1,
 		2,
