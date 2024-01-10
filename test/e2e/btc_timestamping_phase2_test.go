@@ -1,38 +1,16 @@
 package e2e
 
 import (
-	"encoding/json"
-	"fmt"
+	"time"
+
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
-	"time"
 )
-
-type ChannelsResponse struct {
-	Channels []struct {
-		State        string `json:"state"`
-		Ordering     string `json:"ordering"`
-		Counterparty struct {
-			PortID    string `json:"port_id"`
-			ChannelID string `json:"channel_id"`
-		} `json:"counterparty"`
-		ConnectionsHops []string `json:"connection_hops"`
-		Version         string   `json:"version"`
-		PortID          string   `json:"port_id"`
-		ChannelID       string   `json:"channel_id"`
-	}
-}
-
-type NextSequenceResponse struct {
-	NextSequenceRecv string   `json:"next_sequence_receive"`
-	Proof            []string `json:"proof"`
-	ProofHeight      struct {
-		RevisionNumber string `json:"revision_number"`
-		RevisionHeight string `json:"revision_height"`
-	} `json:"proof_height"`
-}
 
 type BTCTimestampingPhase2TestSuite struct {
 	suite.Suite
@@ -72,81 +50,84 @@ func (s *BTCTimestampingPhase2TestSuite) TearDownSuite() {
 
 func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
 	chainA := s.configurer.GetChainConfig(0)
-	chainA.WaitUntilHeight(35)
 
-	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	babylonNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+	czNode, err := s.configurer.GetChainConfig(1).GetNodeAtIndex(2)
 	s.NoError(err)
 
-	// Query checkpoint chain info for opposing chain
-	chainsInfo, err := nonValidatorNode.QueryChainsInfo([]string{initialization.ChainBID})
+	// Validate channel state and kind (Babylon side)
+	babylonChannelsResp, err := babylonNode.QueryIBCChannels()
 	s.NoError(err)
-	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
+	s.Len(babylonChannelsResp.Channels, 1)
+	babylonChannel := babylonChannelsResp.Channels[0]
+	// channel has to be open and ordered
+	s.Equal(channeltypes.OPEN, babylonChannel.State)
+	s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)
+	// the counterparty has to be the Babylon smart contract
+	s.Contains(babylonChannel.Counterparty.PortId, "wasm.")
 
-	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
-	var (
-		startEpochNum uint64 = 1
-		endEpochNum   uint64 = 3
-	)
+	// Validate channel state (CZ side)
+	czChannelsResp, err := czNode.QueryIBCChannels()
+	s.NoError(err)
+	s.Len(czChannelsResp.Channels, 2) // TODO: why 2 channels?
+	czChannel := czChannelsResp.Channels[1]
+	s.Equal(channeltypes.OPEN, czChannel.State)
+	s.Equal(channeltypes.ORDERED, czChannel.Ordering)
+	s.Equal(zctypes.PortID, czChannel.Counterparty.PortId)
 
-	nonValidatorNode.FinalizeSealedEpochs(startEpochNum, endEpochNum)
+	// Query checkpoint chain info for the consumer chain
+	listHeaderResp, err := babylonNode.QueryListHeaders(initialization.ChainBID, &query.PageRequest{Limit: 1})
+	s.NoError(err)
+	startEpochNum := listHeaderResp.Headers[0].BabylonEpoch
+	endEpochNum := startEpochNum + 2
 
-	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
+	// wait until epoch endEpochNum
+	// so that there will be endEpochNum - startEpochNum + 1 = 3
+	// BTC timestamps in Babylon contract
+	chainA.WaitUntilHeight(int64(endEpochNum*10 + 5))
+	babylonNode.FinalizeSealedEpochs(1, endEpochNum)
+
+	// ensure endEpochNum has been finalised
+	endEpoch, err := babylonNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
 	s.Equal(endEpoch.Status, ct.Finalized)
 
-	// Check we have epoch info for opposing chain and some basic assertions
-	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
-	s.NoError(err)
-	s.Equal(epochChainsInfo[0].ChainId, initialization.ChainBID)
-	s.Equal(epochChainsInfo[0].LatestHeader.BabylonEpoch, endEpochNum)
+	// there should be 3 IBC packets sent (with sequence number 1, 2, 3).
+	// Thus, the next sequence number will eventually be 4
+	s.Eventually(func() bool {
+		nextSequenceSendResp, err := babylonNode.QueryNextSequenceSend(babylonChannel.ChannelId, babylonChannel.PortId)
+		if err != nil {
+			return false
+		}
+		s.T().Logf("next sequence send at ZoneConcierge is %d", nextSequenceSendResp.NextSequenceSend)
+		return nextSequenceSendResp.NextSequenceSend >= endEpochNum-startEpochNum+1+1
+	}, time.Minute, time.Second*2)
 
-	// Check we have finalized epoch info for opposing chain and some basic assertions
-	finalizedChainsInfo, err := nonValidatorNode.QueryFinalizedChainsInfo([]string{initialization.ChainBID})
-	s.NoError(err)
+	// ensure the next receive sequence number of Babylon contract is also 3
+	s.Eventually(func() bool {
+		nextSequenceRecv, err := czNode.QueryNextSequenceReceive(babylonChannel.Counterparty.ChannelId, babylonChannel.Counterparty.PortId)
+		if err != nil {
+			return false
+		}
+		s.T().Logf("next sequence receive at Babylon contract is %d", nextSequenceRecv.NextSequenceReceive)
+		return nextSequenceRecv.NextSequenceReceive >= endEpochNum-startEpochNum+1+1
+	}, time.Minute, time.Second*2)
 
-	// TODO Add more assertion here. Maybe check proofs ?
-	s.Equal(finalizedChainsInfo[0].FinalizedChainInfo.ChainId, initialization.ChainBID)
-	s.Equal(finalizedChainsInfo[0].EpochInfo.EpochNumber, endEpochNum)
-
-	currEpoch, err := nonValidatorNode.QueryCurrentEpoch()
-	s.NoError(err)
-
-	heightAtEndedEpoch, err := nonValidatorNode.QueryLightClientHeightEpochEnd(currEpoch - 1)
-	s.NoError(err)
-
-	if heightAtEndedEpoch == 0 {
-		// we can only assert, that btc lc height is larger than 0.
-		s.FailNow(fmt.Sprintf("Light client height should be  > 0 on epoch %d", currEpoch-1))
+	// ensure the acknowledgements of IBC packets are successful
+	lastSequence := endEpochNum
+	for seq := uint64(1); seq <= lastSequence; seq++ {
+		var seqResp *channeltypes.QueryPacketAcknowledgementResponse
+		var ack channeltypes.Acknowledgement
+		s.Eventually(func() bool {
+			seqResp, err = babylonNode.QueryPacketAcknowledgement(babylonChannel.ChannelId, babylonChannel.PortId, seq)
+			s.T().Logf("acknowledgement resp of IBC packet #%d: %v, err: %v", seq, seqResp, err)
+			return err == nil
+		}, time.Minute, time.Second*2)
+		err = zctypes.ModuleCdc.Unmarshal(seqResp.Acknowledgement, &ack)
+		s.NoError(err)
+		s.T().Logf("acknowledgement of IBC packet #%d: %v", seq, ack)
+		_, ok := ack.Response.(*channeltypes.Acknowledgement_Result)
+		s.True(ok, "acknowledgement of BTC timestamp upon finalizing epoch %d: %v", endEpochNum, ack)
 	}
-
-	chainB := s.configurer.GetChainConfig(1)
-	validatorNode, err := chainB.GetDefaultNode()
-	s.NoError(err)
-
-	bz, err := validatorNode.QueryGRPCGateway("/ibc/core/channel/v1/channels", nil)
-	s.NoError(err)
-	s.T().Logf("channels: %s", bz)
-	var channelsResponse ChannelsResponse
-	err = json.Unmarshal(bz, &channelsResponse)
-	s.NoError(err)
-
-	// Validate channel state and kind
-	s.Equal("STATE_OPEN", channelsResponse.Channels[1].State)
-	s.Equal("ORDER_ORDERED", channelsResponse.Channels[1].Ordering)
-	s.Contains(channelsResponse.Channels[1].PortID, "wasm.")
-	// Define channel and port ids
-	channelID := channelsResponse.Channels[1].ChannelID
-	portID := channelsResponse.Channels[1].PortID
-
-	s.T().Log("Sleeping for 10 seconds to allow for IBC packets to be sent")
-	time.Sleep(10 * time.Second)
-
-	// Query next sequence id
-	bz, err = validatorNode.QueryGRPCGateway(fmt.Sprintf("/ibc/core/channel/v1/channels/%s/ports/%s/next_sequence", channelID, portID), nil)
-	s.NoError(err)
-	var nextSequenceResponse NextSequenceResponse
-	err = json.Unmarshal(bz, &nextSequenceResponse)
-	s.NoError(err)
-	// Check that three IBC packets have been received
-	s.Equal("4", nextSequenceResponse.NextSequenceRecv)
 }

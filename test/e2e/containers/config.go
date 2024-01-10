@@ -13,7 +13,7 @@ const (
 	BabylonContainerName = "babylonchain/babylond"
 
 	relayerRepository = "informalsystems/hermes"
-	relayerTag        = "v1.7.1"
+	relayerTag        = "master"
 )
 
 // NewImageConfig returns ImageConfig needed for running e2e test.

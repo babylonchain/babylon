@@ -243,6 +243,25 @@ func (n *NodeConfig) QueryHeaderDepth(hash string) (uint64, error) {
 	return blcResponse.Depth, nil
 }
 
+func (n *NodeConfig) QueryListHeaders(chainID string, pagination *query.PageRequest) (*zctypes.QueryListHeadersResponse, error) {
+	queryParams := url.Values{}
+	if pagination != nil {
+		queryParams.Set("pagination.key", base64.URLEncoding.EncodeToString(pagination.Key))
+		queryParams.Set("pagination.limit", strconv.Itoa(int(pagination.Limit)))
+	}
+
+	path := fmt.Sprintf("babylon/zoneconcierge/v1/headers/%s", chainID)
+	bz, err := n.QueryGRPCGateway(path, queryParams)
+	require.NoError(n.t, err)
+
+	var resp zctypes.QueryListHeadersResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) ([]*zctypes.FinalizedChainInfo, error) {
 	queryParams := url.Values{}
 	for _, chainId := range chainIDs {

@@ -9,6 +9,11 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
+// IBCTransferTestSuite tests IBC transfer end-to-end
+func TestIBCTranferTestSuite(t *testing.T) {
+	suite.Run(t, new(IBCTransferTestSuite))
+}
+
 // TestBTCTimestampingTestSuite tests BTC timestamping protocol end-to-end
 func TestBTCTimestampingTestSuite(t *testing.T) {
 	suite.Run(t, new(BTCTimestampingTestSuite))

@@ -1,13 +1,13 @@
 package configurer
 
 import (
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"testing"
 
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
+	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 )
 
 type Configurer interface {
@@ -24,6 +24,8 @@ type Configurer interface {
 	InstantiateBabylonContract() error
 
 	RunIBC() error
+
+	RunIBCTransferChannel() error
 }
 
 var (
@@ -120,6 +122,22 @@ func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configu
 			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
 		},
 		withIBC(baseSetup), // base set up with IBC
+		containerManager,
+	), nil
+}
+
+func NewIBCTransferConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	containerManager, err := containers.NewManager(isDebugLogEnabled)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA, ibcConfigChainA),
+			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB, ibcConfigChainB),
+		},
+		withIBCTransferChannel(baseSetup), // base set up with IBC
 		containerManager,
 	), nil
 }

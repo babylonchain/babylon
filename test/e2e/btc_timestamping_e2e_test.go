@@ -1,12 +1,13 @@
 package e2e
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
+
+	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -229,16 +230,23 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 }
 
 func (s *BTCTimestampingTestSuite) Test6Wasm() {
-	contractPath := "/bytecode/storage_contract.wasm"
+	contractPath := "/bytecode/babylon_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	// store the wasm code
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
+		bbn.BtcSimnet,
+		types.DefaultCheckpointTag,
+		1,
+		2,
+		"false",
+	)
 	nonValidatorNode.InstantiateWasmContract(
 		strconv.Itoa(latestWasmId),
-		`{}`,
+		initMsg,
 		initialization.ValidatorWalletName,
 	)
 	s.Eventually(func() bool {
@@ -250,24 +258,18 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	// execute contract
 	data := []byte{1, 2, 3, 4, 5}
 	dataHex := hex.EncodeToString(data)
-	dataHash := sha256.Sum256(data)
-	dataHashHex := hex.EncodeToString(dataHash[:])
+	channelId := "1"
 
-	storeMsg := fmt.Sprintf(`{"save_data":{"data":"%s"}}`, dataHex)
+	// This is just accepted and ignored atm
+	storeMsg := fmt.Sprintf(`{ "save_data": { "data": "%s" } }`, dataHex)
 	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
-	queryMsg := fmt.Sprintf(`{"check_data": {"data_hash":"%s"}}`, dataHashHex)
+	queryMsg := fmt.Sprintf(`{ "account": { "channel_id": "%s" } }`, channelId)
 	queryResult, err := nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
 	require.NoError(s.T(), err)
-	finalized := queryResult["finalized"].(bool)
-	latestFinalizedEpoch := int(queryResult["latest_finalized_epoch"].(float64))
-	saveEpoch := int(queryResult["save_epoch"].(float64))
+	accountResponse := queryResult["account"].(string)
 
-	require.False(s.T(), finalized)
-	// in previous test we already finalized epoch 3
-	require.Equal(s.T(), 3, latestFinalizedEpoch)
-	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
-	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
+	s.Equal("TODO: replace me", accountResponse)
 }
 
 func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {

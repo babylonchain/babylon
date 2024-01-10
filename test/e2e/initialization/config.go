@@ -298,7 +298,7 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		MaxValidators:     100,
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
-		UnbondingTime:     240000000000,
+		UnbondingTime:     staketypes.DefaultUnbondingTime,
 		MinCommissionRate: math.LegacyZeroDec(),
 	}
 }

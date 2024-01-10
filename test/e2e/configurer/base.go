@@ -3,8 +3,6 @@ package configurer
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/babylonchain/babylon/types"
-	types2 "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"io"
 	"net/http"
 	"os"
@@ -14,12 +12,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
+	"github.com/babylonchain/babylon/types"
+	types2 "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/stretchr/testify/require"
 )
 
 // baseConfigurer is the base implementation for the
@@ -91,7 +90,7 @@ func (bc *baseConfigurer) InstantiateBabylonContract() error {
 	// Instantiate the contract
 	// TODO: Get this from the chain config
 	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
-		types.BtcRegtest,
+		types.BtcSimnet,
 		types2.DefaultCheckpointTag,
 		1,
 		2,
@@ -122,6 +121,24 @@ func (bc *baseConfigurer) RunIBC() error {
 	for i := 0; i < len(bc.chainConfigs); i++ {
 		for j := i + 1; j < len(bc.chainConfigs); j++ {
 			if err := bc.runIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (bc *baseConfigurer) RunIBCTransferChannel() error {
+	// Run a relayer between every possible pair of chains.
+	for i := 0; i < len(bc.chainConfigs); i++ {
+		for j := i + 1; j < len(bc.chainConfigs); j++ {
+			if err := bc.runIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			if err := bc.createIBCTransferChannel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}
 		}
@@ -208,11 +225,10 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 	// transport errors.
 	time.Sleep(3 * time.Second)
 
-	// create the client, connection and channel between the two babylon chains
-	return bc.connectIBCChains(chainConfigA, chainConfigB)
+	return nil
 }
 
-func (bc *baseConfigurer) connectIBCChains(chainA *chain.Config, chainB *chain.Config) error {
+func (bc *baseConfigurer) createBabylonPhase2Channel(chainA *chain.Config, chainB *chain.Config) error {
 	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
 	require.Equal(bc.t, chainA.IBCConfig.Order, chainB.IBCConfig.Order)
 	require.Equal(bc.t, chainA.IBCConfig.Version, chainB.IBCConfig.Version)
@@ -223,6 +239,20 @@ func (bc *baseConfigurer) connectIBCChains(chainA *chain.Config, chainB *chain.C
 		"--channel-version", chainA.IBCConfig.Version,
 		"--new-client-connection", "--yes",
 	}
+	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
+	if err != nil {
+		return err
+	}
+	bc.t.Logf("connected %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	bc.t.Logf("chainA's IBC config: %v", chainA.IBCConfig)
+	bc.t.Logf("chainB's IBC config: %v", chainB.IBCConfig)
+	return nil
+}
+
+func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB *chain.Config) error {
+	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	cmd := []string{"hermes", "create", "channel", "--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, "--a-port", "transfer", "--b-port", "transfer", "--new-client-connection", "--yes"}
+	bc.t.Log(cmd)
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {
 		return err
