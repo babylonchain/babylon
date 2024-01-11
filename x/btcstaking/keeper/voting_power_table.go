@@ -107,6 +107,39 @@ func (k Keeper) GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint6
 	return sdk.BigEndianToUint64(powerBytes)
 }
 
+// GetCurrentVotingPower gets the voting power of a given finality provider at the current height
+// NOTE: it's possible that the voting power table is 1 block behind CometBFT, e.g., when `BeginBlock`
+// hasn't executed yet
+func (k Keeper) GetCurrentVotingPower(ctx context.Context, fpBTCPK []byte) (uint64, uint64) {
+	// find the last recorded voting power table via iterator
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	store := prefix.NewStore(storeAdapter, types.VotingPowerKey)
+	iter := store.ReverseIterator(nil, nil)
+	defer iter.Close()
+
+	// no voting power table is known yet, return 0
+	if !iter.Valid() {
+		return 0, 0
+	}
+
+	// there is known voting power table, find the last height
+	lastHeight := sdk.BigEndianToUint64(iter.Key())
+	storeAtHeight := prefix.NewStore(store, sdk.Uint64ToBigEndian(lastHeight))
+
+	// if the finality provider is not known, return 0 voting power
+	if !k.HasFinalityProvider(ctx, fpBTCPK) {
+		return lastHeight, 0
+	}
+
+	// find the voting power of this finality provider
+	powerBytes := storeAtHeight.Get(fpBTCPK)
+	if len(powerBytes) == 0 {
+		return lastHeight, 0
+	}
+
+	return lastHeight, sdk.BigEndianToUint64(powerBytes)
+}
+
 // HasVotingPowerTable checks if the voting power table exists at a given height
 func (k Keeper) HasVotingPowerTable(ctx context.Context, height uint64) bool {
 	store := k.votingPowerStore(ctx, height)

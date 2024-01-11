@@ -331,11 +331,12 @@ func FuzzFinalityProviderCurrentVotingPower(f *testing.F) {
 		require.Equal(t, randomHeight, resp.Height)
 		require.Equal(t, randomPower, resp.VotingPower)
 
-		// but no more
+		// test the case when the finality provider has 0 voting power
 		ctx = datagen.WithCtxHeight(ctx, randomHeight+2)
+		keeper.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), randomHeight+2, 0)
 		resp, err = keeper.FinalityProviderCurrentPower(ctx, req)
 		require.NoError(t, err)
-		require.Equal(t, randomHeight+1, resp.Height)
+		require.Equal(t, randomHeight+2, resp.Height)
 		require.Equal(t, uint64(0), resp.VotingPower)
 	})
 }

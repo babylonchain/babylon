@@ -136,28 +136,9 @@ func (k Keeper) FinalityProviderCurrentPower(ctx context.Context, req *types.Que
 		return nil, status.Errorf(codes.InvalidArgument, "failed to unmarshal finality provider BTC PK hex: %v", err)
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	power := uint64(0)
-	curHeight := uint64(sdkCtx.HeaderInfo().Height)
+	height, power := k.GetCurrentVotingPower(ctx, *fpBTCPK)
 
-	// if voting power table is recorded at the current height, use this voting power
-	if k.HasVotingPowerTable(sdkCtx, curHeight) {
-		power = k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), curHeight)
-	} else {
-		// NOTE: it's possible that the voting power is not recorded at the current height,
-		// e.g., `EndBlock` is not reached yet
-		// in this case, we use the last height
-
-		// ensure curHeight > 0 thus won't over flow
-		if curHeight == 0 {
-			return &types.QueryFinalityProviderCurrentPowerResponse{Height: 0, VotingPower: 0}, nil
-		}
-
-		curHeight -= 1
-		power = k.GetVotingPower(sdkCtx, fpBTCPK.MustMarshal(), curHeight)
-	}
-
-	return &types.QueryFinalityProviderCurrentPowerResponse{Height: curHeight, VotingPower: power}, nil
+	return &types.QueryFinalityProviderCurrentPowerResponse{Height: height, VotingPower: power}, nil
 }
 
 // ActiveFinalityProvidersAtHeight returns the active finality providers at the provided height
