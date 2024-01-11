@@ -282,10 +282,7 @@ type BTCDelegation struct {
 	// unbonding_time describes how long the funds will be locked either in unbonding output
 	// or slashing change output
 	UnbondingTime uint32 `protobuf:"varint,13,opt,name=unbonding_time,json=unbondingTime,proto3" json:"unbonding_time,omitempty"`
-	// if this object is present it means that staker requested undelegation, and whole
-	// delegation is being undelegated.
-	// TODO: Consider whether it would be better to store it in separate store, and not
-	// directly in delegation object
+	// btc_undelegation is the information about the early unbonding path of the BTC delegation
 	BtcUndelegation *BTCUndelegation `protobuf:"bytes,14,opt,name=btc_undelegation,json=btcUndelegation,proto3" json:"btc_undelegation,omitempty"`
 }
 
@@ -392,7 +389,7 @@ func (m *BTCDelegation) GetBtcUndelegation() *BTCUndelegation {
 	return nil
 }
 
-// BTCUndelegation signalizes that the delegation is being undelegated
+// BTCUndelegation contains the information about the early unbonding path of the BTC delegation
 type BTCUndelegation struct {
 	// unbonding_tx is the transaction which will transfer the funds from staking
 	// output to unbonding output. Unbonding output will usually have lower timelock

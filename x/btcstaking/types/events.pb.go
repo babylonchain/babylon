@@ -236,8 +236,9 @@ func (m *EventUnbondedBTCDelegation) GetFromState() BTCDelegationStatus {
 	return BTCDelegationStatus_PENDING
 }
 
-// EventSelectiveSlashing is the event emitted when an adversarial BTC
-// validator selectively slashes a BTC delegation
+// EventSelectiveSlashing is the event emitted when an adversarial
+// finality provider selectively slashes a BTC delegation. This will
+// result in slashing of all BTC delegations under this finality provider.
 type EventSelectiveSlashing struct {
 	// evidence is the evidence of selective slashing
 	Evidence *SelectiveSlashingEvidence `protobuf:"bytes,1,opt,name=evidence,proto3" json:"evidence,omitempty"`
