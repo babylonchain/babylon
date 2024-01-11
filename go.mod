@@ -37,7 +37,7 @@ require (
 	cosmossdk.io/x/feegrant v0.1.0
 	cosmossdk.io/x/tx v0.12.0
 	cosmossdk.io/x/upgrade v0.1.0
-	github.com/CosmWasm/wasmvm v1.5.0
+	github.com/CosmWasm/wasmvm v1.5.1
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
 	github.com/btcsuite/btcd/btcutil v1.1.3
