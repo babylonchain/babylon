@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -11,17 +12,21 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) setPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64, pr *bbn.SchnorrPubRand) {
-	store := k.pubRandStore(ctx, fpBtcPK)
-	store.Set(sdk.Uint64ToBigEndian(height), *pr)
-}
-
 // SetPubRandList sets a list of public randomness starting from a given startHeight
 // for a given finality provider
 func (k Keeper) SetPubRandList(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	cacheCtx, writeCache := sdkCtx.CacheContext()
+
+	// write to a KV store cache
+	store := k.pubRandStore(cacheCtx, fpBtcPK)
 	for i, pr := range pubRandList {
-		k.setPubRand(ctx, fpBtcPK, startHeight+uint64(i), &pr)
+		height := startHeight + uint64(i)
+		store.Set(sdk.Uint64ToBigEndian(height), pr)
 	}
+
+	// atomically write the new public randomness back to KV store
+	writeCache()
 }
 
 func (k Keeper) HasPubRand(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) bool {
