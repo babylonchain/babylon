@@ -11,7 +11,8 @@ import (
 
 // HandleHeaderWithValidCommit handles a CZ header with a valid QC
 func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
-	babylonHeader := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	babylonHeader := sdkCtx.HeaderInfo()
 	indexedHeader := types.IndexedHeader{
 		ChainId:             header.ChainId,
 		Hash:                header.AppHash,
@@ -22,6 +23,8 @@ func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, 
 		BabylonEpoch:        k.GetEpoch(ctx).EpochNumber,
 		BabylonTxHash:       txHash,
 	}
+
+	k.Logger(sdkCtx).Debug("found new IBC header", "header", indexedHeader)
 
 	var (
 		chainInfo *types.ChainInfo

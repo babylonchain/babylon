@@ -8,7 +8,20 @@ import (
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 )
 
-func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) (*types.HeaderInfo, *ibctmtypes.ClientState) {
+var _ sdk.PostDecorator = &IBCHeaderDecorator{}
+
+type IBCHeaderDecorator struct {
+	k Keeper
+}
+
+// NewIBCHeaderDecorator creates a new IBCHeaderDecorator
+func NewIBCHeaderDecorator(k Keeper) *IBCHeaderDecorator {
+	return &IBCHeaderDecorator{
+		k: k,
+	}
+}
+
+func (d *IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) (*types.HeaderInfo, *ibctmtypes.ClientState) {
 	// ensure the message is MsgUpdateClient
 	msgUpdateClient, ok := m.(*clienttypes.MsgUpdateClient)
 	if !ok {
@@ -48,18 +61,11 @@ func (d IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg) 
 	return headerInfo, cmtClientState
 }
 
-type IBCHeaderDecorator struct {
-	k Keeper
-}
-
-// NewIBCHeaderDecorator creates a new IBCHeaderDecorator
-func NewIBCHeaderDecorator(k Keeper) *IBCHeaderDecorator {
-	return &IBCHeaderDecorator{
-		k: k,
+func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
+	// only do this when finalizing a block or simulating the current tx
+	if ctx.ExecMode() != sdk.ExecModeFinalize && !simulate {
+		return next(ctx, tx, success, simulate)
 	}
-}
-
-func (d IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (newCtx sdk.Context, err error) {
 	// ignore unsuccessful tx
 	// NOTE: tx with a misbehaving header will still succeed, but will make the client to be frozen
 	if !success {

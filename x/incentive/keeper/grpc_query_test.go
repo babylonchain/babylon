@@ -92,7 +92,7 @@ func FuzzBTCTimestampingGaugeQuery(f *testing.F) {
 		// generate a list of random Gauges at random heights, then insert them to KVStore
 		epochList := []uint64{}
 		gaugeList := []*types.Gauge{}
-		numGauges := datagen.RandomInt(r, 100)
+		numGauges := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numGauges; i++ {
 			epoch := datagen.RandomInt(r, 1000000)
 			epochList = append(epochList, epoch)
