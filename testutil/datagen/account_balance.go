@@ -1,11 +1,19 @@
 package datagen
 
 import (
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonchain/babylon/app/params"
 	sec256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
+
+func GenRandomAccount() *authtypes.BaseAccount {
+	senderPrivKey := sec256k1.GenPrivKey()
+	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	return acc
+}
 
 func GenRandomAccWithBalance(n int) ([]authtypes.GenesisAccount, []banktypes.Balance) {
 	accs := make([]authtypes.GenesisAccount, n)
@@ -16,7 +24,7 @@ func GenRandomAccWithBalance(n int) ([]authtypes.GenesisAccount, []banktypes.Bal
 		accs[i] = acc
 		balance := banktypes.Balance{
 			Address: acc.GetAddress().String(),
-			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, sdk.NewInt(100000000000000))),
+			Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdkmath.NewInt(100000000000000))),
 		}
 		balances[i] = balance
 	}

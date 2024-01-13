@@ -43,7 +43,9 @@ func (bc *baseConfigurer) ClearResources() error {
 	}
 
 	for _, chainConfig := range bc.chainConfigs {
-		os.RemoveAll(chainConfig.DataDir)
+		if err := os.RemoveAll(chainConfig.DataDir); err != nil {
+			return err
+		}
 	}
 	return nil
 }

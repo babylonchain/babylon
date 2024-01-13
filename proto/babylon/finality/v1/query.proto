@@ -1,0 +1,173 @@
+syntax = "proto3";
+package babylon.finality.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "babylon/finality/v1/params.proto";
+import "babylon/finality/v1/finality.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/finality/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/params";
+  }
+
+  // ListPublicRandomness is a range query for public randomness of a given finality provider
+  rpc ListPublicRandomness(QueryListPublicRandomnessRequest) returns (QueryListPublicRandomnessResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/public_randomness_list";
+  }
+
+  // Block queries a block at a given height
+  rpc Block(QueryBlockRequest) returns (QueryBlockResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/blocks/{height}";
+  }
+
+  // ListBlocks is a range query for blocks at a given status
+  rpc ListBlocks(QueryListBlocksRequest) returns (QueryListBlocksResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/blocks";
+  }
+
+  // VotesAtHeight queries finality providers who have signed the block at given height.
+  rpc VotesAtHeight(QueryVotesAtHeightRequest) returns (QueryVotesAtHeightResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/votes/{height}";
+  }
+
+  // Evidence queries the first evidence which can be used for extracting the BTC SK
+  rpc Evidence(QueryEvidenceRequest) returns (QueryEvidenceResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/finality_providers/{fp_btc_pk_hex}/evidence";
+  }
+
+  // ListEvidences queries is a range query for evidences
+  rpc ListEvidences(QueryListEvidencesRequest) returns (QueryListEvidencesResponse) {
+    option (google.api.http).get = "/babylon/finality/v1/evidences";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryListPublicRandomnessRequest is the request type for the
+// Query/ListPublicRandomness RPC method.
+message QueryListPublicRandomnessRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListPublicRandomnessResponse is the response type for the
+// Query/ListPublicRandomness RPC method.
+message QueryListPublicRandomnessResponse {
+  // pub_rand_map is the map where the key is the height and the value
+  // is the public randomness at this height for the given finality provider
+  map<uint64, bytes> pub_rand_map = 1  [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+
+// QueriedBlockStatus is the status of blocks that the querier wants to query.
+enum QueriedBlockStatus {
+  // NON_FINALIZED means the block is not finalised
+  NON_FINALIZED = 0;
+  // FINALIZED means the block is finalized
+  FINALIZED = 1;
+  // ANY means the block can be in any status
+  ANY = 2;
+}
+
+// QueryBlockRequest is the request type for the
+// Query/Block RPC method.
+message QueryBlockRequest {
+  // height is the height of the Babylon block
+  uint64 height = 1;
+}
+
+// QueryBlockResponse is the response type for the
+// Query/Block RPC method.
+message QueryBlockResponse {
+  // block is the Babylon at the given height
+  IndexedBlock block = 1;
+}
+
+// QueryListBlocksRequest is the request type for the
+// Query/ListBlocks RPC method.
+message QueryListBlocksRequest {
+  // status indicates the status of blocks that the querier wants to query
+  QueriedBlockStatus status = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListBlocksResponse is the response type for the
+// Query/ListBlocks RPC method.
+message QueryListBlocksResponse {
+  // blocks is the list of blocks at the given status
+  repeated IndexedBlock blocks = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryVotesAtHeightRequest is the request type for the
+// Query/VotesAtHeight RPC method.
+message QueryVotesAtHeightRequest {
+  // height defines at which height to query the finality providers.
+  uint64 height = 1;
+}
+
+// QueryVotesAtHeightResponse is the response type for the
+// Query/VotesAtHeight RPC method.
+message QueryVotesAtHeightResponse {
+  // btc_pk is the Bitcoin secp256k1 PK of finality providers who have signed the block at given height.
+  // the PK follows encoding in BIP-340 spec
+  repeated bytes btc_pks = 1 [(gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey"];
+}
+
+// QueryEvidenceRequest is the request type for the
+// Query/Evidence RPC method.
+message QueryEvidenceRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK
+  // (in BIP340 format) of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryEvidenceResponse is the response type for the
+// Query/Evidence RPC method.
+message QueryEvidenceResponse {
+  Evidence evidence = 1;
+}
+
+// QueryListEvidencesRequest is the request type for the
+// Query/ListEvidences RPC method.
+message QueryListEvidencesRequest {
+  // start_height is the starting height that the querier specifies
+  // such that the RPC will only return evidences since this height
+  uint64 start_height = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryListEvidencesResponse is the response type for the
+// Query/ListEvidences RPC method.
+message QueryListEvidencesResponse {
+  // blocks is the list of evidences
+  repeated Evidence evidences = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

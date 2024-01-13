@@ -6,14 +6,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	tmjson "github.com/cometbft/cometbft/libs/json"
+	"cosmossdk.io/math"
+
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	ed25519 "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -21,8 +17,15 @@ import (
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
+
+	"github.com/babylonchain/babylon/privval"
+	bbn "github.com/babylonchain/babylon/types"
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	blctypes "github.com/babylonchain/babylon/x/btclightclient/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 
 	"github.com/babylonchain/babylon/test/e2e/util"
 )
@@ -64,9 +67,9 @@ const (
 )
 
 var (
-	StakeAmountIntA  = sdk.NewInt(StakeAmountA)
+	StakeAmountIntA  = math.NewInt(StakeAmountA)
 	StakeAmountCoinA = sdk.NewCoin(BabylonDenom, StakeAmountIntA)
-	StakeAmountIntB  = sdk.NewInt(StakeAmountB)
+	StakeAmountIntB  = math.NewInt(StakeAmountB)
 	StakeAmountCoinB = sdk.NewCoin(BabylonDenom, StakeAmountIntB)
 
 	InitBalanceStrA = fmt.Sprintf("%d%s", BabylonBalanceA, BabylonDenom)
@@ -213,6 +216,11 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 		return err
 	}
 
+	err = updateModuleGenesis(appGenState, minttypes.ModuleName, &minttypes.GenesisState{}, updateMintGenesis)
+	if err != nil {
+		return err
+	}
+
 	err = updateModuleGenesis(appGenState, staketypes.ModuleName, &staketypes.GenesisState{}, updateStakeGenesis)
 	if err != nil {
 		return err
@@ -250,16 +258,16 @@ func initGenesis(chain *internalChain, votingPeriod, expeditedVotingPeriod time.
 
 	genDoc.AppState = bz
 
-	genesisJson, err := tmjson.MarshalIndent(genDoc, "", "  ")
-	if err != nil {
-		return err
-	}
-
 	// write the updated genesis file to each validator
 	for _, val := range chain.nodes {
-		if err := util.WriteFile(filepath.Join(val.configDir(), "config", "genesis.json"), genesisJson); err != nil {
-			return err
+		path := filepath.Join(val.configDir(), "config", "genesis.json")
+
+		// We need to use genutil.ExportGenesisFile to marshal and write the genesis file
+		// to use correct json encoding.
+		if err = genutil.ExportGenesisFile(genDoc, path); err != nil {
+			return fmt.Errorf("failed to export app genesis state: %w", err)
 		}
+
 	}
 	return nil
 }
@@ -280,6 +288,10 @@ func updateBankGenesis(bankGenState *banktypes.GenesisState) {
 	})
 }
 
+func updateMintGenesis(mintGenState *minttypes.GenesisState) {
+	mintGenState.Params.MintDenom = BabylonDenom
+}
+
 func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 	stakeGenState.Params = staketypes.Params{
 		BondDenom:         BabylonDenom,
@@ -287,7 +299,7 @@ func updateStakeGenesis(stakeGenState *staketypes.GenesisState) {
 		MaxEntries:        7,
 		HistoricalEntries: 10000,
 		UnbondingTime:     240000000000,
-		MinCommissionRate: sdk.ZeroDec(),
+		MinCommissionRate: math.LegacyZeroDec(),
 	}
 }
 
@@ -360,7 +372,7 @@ func updateCheckpointingGenesis(c *internalChain) func(*checkpointingtypes.Genes
 				panic("It should be possible to build proof of possesion from validator private keys")
 			}
 
-			valPubKey, err := cryptocodec.FromTmPubKeyInterface(node.consensusKey.PubKey)
+			valPubKey, err := cryptocodec.FromCmtPubKeyInterface(node.consensusKey.PubKey)
 
 			if err != nil {
 				panic("It should be possible to retrieve validator public key")

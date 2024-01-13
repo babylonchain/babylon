@@ -1,15 +1,11 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 )
 
 const (
 	DefaultEpochInterval uint64 = 10
-)
-
-var (
-	KeyEpochInterval = []byte("EpochInterval")
 )
 
 // NewParams creates a new Params instance

@@ -1,0 +1,75 @@
+syntax = "proto3";
+package babylon.incentive;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "babylon/incentive/params.proto";
+import "babylon/incentive/incentive.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/incentive/types";
+
+// Query defines the gRPC querier service.
+service Query {
+    // Parameters queries the parameters of the module.
+    rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/params";
+    }
+    // RewardGauge queries the reward gauge of a given stakeholder address
+    rpc RewardGauges(QueryRewardGaugesRequest) returns (QueryRewardGaugesResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/address/{address}/reward_gauge";
+    }
+    // BTCStakingGauge queries the BTC staking gauge of a given height
+    rpc BTCStakingGauge(QueryBTCStakingGaugeRequest) returns (QueryBTCStakingGaugeResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/btc_staking_gauge/{height}";
+    }
+    // BTCTimestampingGauge queries the BTC timestamping gauge of a given epoch
+    rpc BTCTimestampingGauge(QueryBTCTimestampingGaugeRequest) returns (QueryBTCTimestampingGaugeResponse) {
+        option (google.api.http).get = "/babylonchain/babylon/incentive/btc_timestamping_gauge/{epoch_num}";
+    }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+    // params holds all the parameters of this module.
+    Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryRewardGaugesRequest is request type for the Query/RewardGauges RPC method.
+message QueryRewardGaugesRequest {
+    // address is the address of the stakeholder in bech32 string
+    string address = 1;
+}
+
+// QueryRewardGaugesResponse is response type for the Query/RewardGauges RPC method.
+message QueryRewardGaugesResponse {
+    // reward_gauges is the map of reward gauges, where key is the stakeholder type
+    // and value is the reward gauge holding all rewards for the stakeholder in that type
+    map<string, RewardGauge> reward_gauges = 1;
+}
+
+// QueryBTCStakingGaugeRequest is request type for the Query/BTCStakingGauge RPC method.
+message QueryBTCStakingGaugeRequest {
+    // height is the queried Babylon height
+    uint64 height = 1;
+}
+
+// QueryBTCStakingGaugeResponse is response type for the Query/BTCStakingGauge RPC method.
+message QueryBTCStakingGaugeResponse {
+    // gauge is the BTC staking gauge at the queried height 
+    Gauge gauge = 1;
+}
+
+// QueryBTCTimestampingGaugeRequest is request type for the Query/BTCTimestampingGauge RPC method.
+message QueryBTCTimestampingGaugeRequest {
+    // epoch_num is the queried epoch number
+    uint64 epoch_num = 1;
+}
+
+// QueryBTCTimestampingGaugeResponse is response type for the Query/BTCTimestampingGauge RPC method.
+message QueryBTCTimestampingGaugeResponse {
+    // gauge is the BTC timestamping gauge at the queried epoch 
+    Gauge gauge = 1;
+}

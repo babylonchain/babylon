@@ -3,13 +3,14 @@ package cmd_test
 import (
 	"context"
 	"fmt"
+	"github.com/babylonchain/babylon/app"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/require"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 
-	"github.com/babylonchain/babylon/app"
 	bbncmd "github.com/babylonchain/babylon/cmd/babylond/cmd"
 )
 
@@ -66,15 +66,15 @@ func TestAddGenesisAccountCmd(t *testing.T) {
 		},
 	}
 
+	appCodec := app.GetEncodingConfig().Codec
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			home := t.TempDir()
 			logger := log.NewNopLogger()
-			cfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+			cfg, err := genutiltest.CreateDefaultCometConfig(home)
 			require.NoError(t, err)
 
-			appCodec := app.GetEncodingConfig().Marshaler
 			err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 			require.NoError(t, err)
 

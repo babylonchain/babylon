@@ -14,11 +14,6 @@ import (
 	sdkmath "cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/types/query"
 
-	tmabcitypes "github.com/cometbft/cometbft/abci/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/stretchr/testify/require"
-
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
@@ -26,6 +21,12 @@ import (
 	etypes "github.com/babylonchain/babylon/x/epoching/types"
 	mtypes "github.com/babylonchain/babylon/x/monitor/types"
 	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	tmabcitypes "github.com/cometbft/cometbft/abci/types"
+	tmtypes "github.com/cometbft/cometbft/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
 )
 
 func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]byte, error) {
@@ -67,6 +68,25 @@ func (n *NodeConfig) QueryGRPCGateway(path string, queryParams url.Values) ([]by
 	return bz, nil
 }
 
+// QueryModuleAddress returns the address of a given module
+func (n *NodeConfig) QueryModuleAddress(name string) (sdk.AccAddress, error) {
+	path := fmt.Sprintf("/cosmos/auth/v1beta1/module_accounts/%s", name)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var resp authtypes.QueryModuleAccountByNameResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return sdk.AccAddress{}, err
+	}
+	// cast to account
+	var account sdk.AccountI
+	if err := util.EncodingConfig.InterfaceRegistry.UnpackAny(resp.Account, &account); err != nil {
+		return sdk.AccAddress{}, err
+	}
+
+	return account.GetAddress(), nil
+}
+
 // QueryBalances returns balances at the address.
 func (n *NodeConfig) QueryBalances(address string) (sdk.Coins, error) {
 	path := fmt.Sprintf("cosmos/bank/v1beta1/balances/%s", address)
@@ -87,9 +107,18 @@ func (n *NodeConfig) QuerySupplyOf(denom string) (sdkmath.Int, error) {
 
 	var supplyResp banktypes.QuerySupplyOfResponse
 	if err := util.Cdc.UnmarshalJSON(bz, &supplyResp); err != nil {
-		return sdk.NewInt(0), err
+		return sdkmath.NewInt(0), err
 	}
 	return supplyResp.Amount.Amount, nil
+}
+
+// QueryBlock gets block at a specific height
+func (n *NodeConfig) QueryBlock(height int64) (*tmtypes.Block, error) {
+	block, err := n.rpcClient.Block(context.Background(), &height)
+	if err != nil {
+		return nil, err
+	}
+	return block.Block, nil
 }
 
 // QueryHashFromBlock gets block hash at a specific height. Otherwise, error.
@@ -199,6 +228,19 @@ func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
 	}
 
 	return blcResponse.Header, nil
+}
+
+func (n *NodeConfig) QueryHeaderDepth(hash string) (uint64, error) {
+	path := fmt.Sprintf("babylon/btclightclient/v1/depth/%s", hash)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+
+	var blcResponse blc.QueryHeaderDepthResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &blcResponse); err != nil {
+		return 0, err
+	}
+
+	return blcResponse.Depth, nil
 }
 
 func (n *NodeConfig) QueryFinalizedChainsInfo(chainIDs []string) ([]*zctypes.FinalizedChainInfo, error) {

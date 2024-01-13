@@ -11,16 +11,6 @@ import (
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 )
 
-//nolint:unused
-func hashFromString(s string) *chainhash.Hash {
-	hash, e := chainhash.NewHashFromStr(s)
-	if e != nil {
-		panic("Invalid hex sting")
-	}
-
-	return hash
-}
-
 // Sanity test checking mostly btcd code, that we can realy parse bitcoin transaction
 func TestBtcTransactionParsing(t *testing.T) {
 	// Few randomly chosed btc valid btc transactions

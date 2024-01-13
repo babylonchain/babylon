@@ -8,8 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-
 	dg "github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	bbn "github.com/babylonchain/babylon/types"
@@ -25,6 +23,7 @@ type TestKeepers struct {
 	Ctx            context.Context
 	BTCLightClient *btcctypes.MockBTCLightClientKeeper
 	Checkpointing  *btcctypes.MockCheckpointingKeeper
+	Incentive      *btcctypes.MockIncentiveKeeper
 	BTCCheckpoint  *bkeeper.Keeper
 	MsgSrv         btcctypes.MsgServer
 }
@@ -41,27 +40,23 @@ func b2Hash(m *btcctypes.MsgInsertBTCSpvProof) *bbn.BTCHeaderHashBytes {
 	return m.Proofs[1].ConfirmingBtcHeader.Hash()
 }
 
-//nolint:unused
-func b2TxIdx(m *btcctypes.MsgInsertBTCSpvProof) uint32 {
-	return m.Proofs[1].BtcTransactionIndex
-}
-
 func InitTestKeepers(
 	t *testing.T,
 ) *TestKeepers {
 	lc := btcctypes.NewMockBTCLightClientKeeper()
-
 	cc := btcctypes.NewMockCheckpointingKeeper()
+	ic := btcctypes.NewMockIncentiveKeeper()
 
-	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, chaincfg.SimNetParams.PowLimit)
+	k, ctx := keepertest.NewBTCCheckpointKeeper(t, lc, cc, ic, chaincfg.SimNetParams.PowLimit)
 
 	srv := bkeeper.NewMsgServerImpl(*k)
 
 	return &TestKeepers{
 		SdkCtx:         ctx,
-		Ctx:            sdk.WrapSDKContext(ctx),
+		Ctx:            ctx,
 		BTCLightClient: lc,
 		Checkpointing:  cc,
+		Incentive:      ic,
 		BTCCheckpoint:  k,
 		MsgSrv:         srv,
 	}
@@ -97,8 +92,8 @@ func TestRejectDuplicatedSubmission(t *testing.T) {
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
 	// Now we will return depth enough for moving submission to be submitted
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(1))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(1))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(1))
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(1))
 
 	_, err := tk.insertProofMsg(msg)
 
@@ -135,48 +130,11 @@ func TestRejectUnknownToBtcLightClient(t *testing.T) {
 	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
 
 	// even if one header is known, submission should still be considered invalid
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(1))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(1))
 
 	_, err = tk.insertProofMsg(msg)
 
 	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
-}
-
-func TestRejectSubmissionsNotOnMainchain(t *testing.T) {
-	r := rand.New(rand.NewSource(time.Now().Unix()))
-	epoch := uint64(1)
-	raw, _ := dg.RandomRawCheckpointDataForEpoch(r, epoch)
-
-	blck1 := dg.CreateBlock(r, 1, 7, 7, raw.FirstPart)
-	blck2 := dg.CreateBlock(r, 2, 14, 3, raw.SecondPart)
-
-	tk := InitTestKeepers(t)
-
-	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
-
-	// both headers on fork, fail
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(-1))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(-1))
-
-	_, err := tk.insertProofMsg(msg)
-
-	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
-
-	// one header on fork, one on main chain, fail
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(0))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(-1))
-
-	_, err = tk.insertProofMsg(msg)
-
-	require.ErrorContainsf(t, err, btcctypes.ErrInvalidHeader.Error(), "Processing should return invalid header error")
-
-	// two headers on main chain, success
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(0))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(0))
-
-	_, err = tk.insertProofMsg(msg)
-
-	require.NoError(t, err, "Processing msg should succeed")
 }
 
 func TestSubmitValidNewCheckpoint(t *testing.T) {
@@ -192,8 +150,8 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
 	// Now we will return depth enough for moving submission to be submitted
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(1))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(1))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(1))
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(1))
 
 	_, err := tk.insertProofMsg(msg)
 
@@ -201,7 +159,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	ed := tk.GetEpochData(epoch)
 
-	if len(ed.Key) == 0 {
+	if len(ed.Keys) == 0 {
 		t.Errorf("There should be at least one key in epoch %d", epoch)
 	}
 
@@ -209,7 +167,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 		t.Errorf("Epoch should be in submitted state after processing message")
 	}
 
-	submissionKey := ed.Key[0]
+	submissionKey := ed.Keys[0]
 
 	submissionData := tk.getSubmissionData(*submissionKey)
 
@@ -240,7 +198,7 @@ func TestSubmitValidNewCheckpoint(t *testing.T) {
 
 	// TODO Add custom equal fo submission key and transaction key to check
 	// it is expected key
-	if len(ed1.Key) == 0 {
+	if len(ed1.Keys) == 0 {
 		t.Errorf("Unexpected missing unconfirmed submissions")
 	}
 }
@@ -258,8 +216,8 @@ func TestRejectSubmissionWithoutSubmissionsForPreviousEpoch(t *testing.T) {
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
 	// Now we will return depth enough for moving submission to be submitted
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(0))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(1))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(0))
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(1))
 
 	_, err := tk.insertProofMsg(msg)
 
@@ -283,8 +241,8 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{epoch1Block1, epoch1Block2})
 
 	// Now we will return depth enough for moving submission to be submitted
-	tk.BTCLightClient.SetDepth(epoch1Block1.HeaderBytes.Hash(), int64(5))
-	tk.BTCLightClient.SetDepth(epoch1Block2.HeaderBytes.Hash(), int64(4))
+	tk.BTCLightClient.SetDepth(epoch1Block1.HeaderBytes.Hash(), uint64(5))
+	tk.BTCLightClient.SetDepth(epoch1Block2.HeaderBytes.Hash(), uint64(4))
 
 	_, err := tk.insertProofMsg(msg)
 
@@ -297,8 +255,8 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	msg2 := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{epoch2Block1, epoch2Block2})
 
 	// Both headers are deeper than epoch 1 submission, fail
-	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(7))
-	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), int64(6))
+	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), uint64(7))
+	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), uint64(6))
 
 	_, err = tk.insertProofMsg(msg2)
 
@@ -310,8 +268,8 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	)
 
 	// one header deeper than headers of previous epoch, one fresher, fail
-	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(7))
-	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), int64(3))
+	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), uint64(7))
+	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), uint64(3))
 
 	_, err = tk.insertProofMsg(msg2)
 
@@ -323,8 +281,8 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	)
 
 	// one header on the same depth as previous epoch, one fresher, fail
-	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(4))
-	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), int64(3))
+	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), uint64(4))
+	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), uint64(3))
 
 	_, err = tk.insertProofMsg(msg2)
 
@@ -336,8 +294,8 @@ func TestRejectSubmissionWithoutAncestorsOnMainchainInPreviousEpoch(t *testing.T
 	)
 
 	// Both Headers fresher that previous epoch, succeed
-	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), int64(3))
-	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), int64(2))
+	tk.BTCLightClient.SetDepth(epoch2Block1.HeaderBytes.Hash(), uint64(3))
+	tk.BTCLightClient.SetDepth(epoch2Block2.HeaderBytes.Hash(), uint64(2))
 
 	_, err = tk.insertProofMsg(msg2)
 
@@ -350,38 +308,38 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 	tk := InitTestKeepers(t)
 
 	msg1 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(5))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), int64(4))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), uint64(5))
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), uint64(4))
 	_, err := tk.insertProofMsg(msg1)
 	require.NoError(t, err, "failed to insert submission for epoch 1")
 
 	msg1a := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg1a), int64(4))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1a), int64(5))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1a), uint64(4))
+	tk.BTCLightClient.SetDepth(b2Hash(msg1a), uint64(5))
 	_, err = tk.insertProofMsg(msg1a)
 	require.NoError(t, err, "failed to insert submission for epoch 1")
 
 	msg2 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 2)
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), int64(3))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), int64(2))
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), uint64(3))
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), uint64(2))
 	_, err = tk.insertProofMsg(msg2)
 	require.NoError(t, err, "failed to insert submission for epoch 2")
 
 	msg2a := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 2)
-	tk.BTCLightClient.SetDepth(b1Hash(msg2a), int64(3))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2a), int64(2))
+	tk.BTCLightClient.SetDepth(b1Hash(msg2a), uint64(3))
+	tk.BTCLightClient.SetDepth(b2Hash(msg2a), uint64(2))
 	_, err = tk.insertProofMsg(msg2a)
 	require.NoError(t, err, "failed to insert submission for epoch 2")
 
 	msg3 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 3)
-	tk.BTCLightClient.SetDepth(b1Hash(msg3), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg3), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg3), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg3), uint64(0))
 	_, err = tk.insertProofMsg(msg3)
 	require.NoError(t, err, "failed to insert submission for epoch 3")
 
 	msg3a := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 3)
-	tk.BTCLightClient.SetDepth(b1Hash(msg3a), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg3a), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg3a), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg3a), uint64(0))
 	_, err = tk.insertProofMsg(msg3a)
 	require.NoError(t, err, "failed to insert submission for epoch 3")
 
@@ -389,14 +347,14 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 		// all 3 epoch must have two  submissions
 		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
-		require.Len(t, ed.Key, 2)
+		require.Len(t, ed.Keys, 2)
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
 	}
 
 	// Due to reorg one submission from epoch 1 lands on fork, which means it is no
 	// longer vaiable. It should be pruned. Other subbmissions should be left
 	// intact
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), -1)
+	tk.BTCLightClient.DeleteHeader(b2Hash(msg1))
 
 	tk.onTipChange()
 
@@ -406,17 +364,17 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 
 		if i == 1 {
 			// forked submission got pruned
-			require.Len(t, ed.Key, 1)
+			require.Len(t, ed.Keys, 1)
 		} else {
 			// other submissions still have parent so they are left intact
-			require.Len(t, ed.Key, 2)
+			require.Len(t, ed.Keys, 2)
 		}
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
 	}
 
 	// second submission from epoch 1 got orphaned. Clear it, and submissions from
 	// child epochs
-	tk.BTCLightClient.SetDepth(b2Hash(msg1a), -1)
+	tk.BTCLightClient.DeleteHeader(b2Hash(msg1a))
 
 	tk.onTipChange()
 
@@ -424,7 +382,7 @@ func TestClearChildEpochsWhenNoParenNotOnMainChain(t *testing.T) {
 		// all 3 epoch must have two  submissions
 		ed := tk.GetEpochData(uint64(i))
 		require.NotNil(t, ed)
-		require.Len(t, ed.Key, 0)
+		require.Len(t, ed.Keys, 0)
 		require.EqualValues(t, ed.Status, btcctypes.Submitted)
 	}
 }
@@ -436,43 +394,43 @@ func TestLeaveOnlyBestSubmissionWhenEpochFinalized(t *testing.T) {
 	wDeep := defaultParams.CheckpointFinalizationTimeout
 
 	msg1 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), uint64(0))
 	_, err := tk.insertProofMsg(msg1)
 	require.NoError(t, err, "failed to insert submission")
 
 	msg2 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), uint64(0))
 	_, err = tk.insertProofMsg(msg2)
 	require.NoError(t, err, "failed to insert submission")
 
 	msg3 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg3), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg3), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg3), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg3), uint64(0))
 	_, err = tk.insertProofMsg(msg3)
 	require.NoError(t, err, "failed to insert submission")
 
 	ed := tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 3)
+	require.Len(t, ed.Keys, 3)
 
 	// deepest submission is submission in msg3
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(wDeep))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), int64(wDeep+1))
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), int64(wDeep+2))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), int64(wDeep+3))
-	tk.BTCLightClient.SetDepth(b1Hash(msg3), int64(wDeep+4))
-	tk.BTCLightClient.SetDepth(b2Hash(msg3), int64(wDeep+5))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), wDeep)
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), wDeep+1)
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), wDeep+2)
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), wDeep+3)
+	tk.BTCLightClient.SetDepth(b1Hash(msg3), wDeep+4)
+	tk.BTCLightClient.SetDepth(b2Hash(msg3), wDeep+5)
 
 	tk.onTipChange()
 
 	ed = tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 1)
+	require.Len(t, ed.Keys, 1)
 	require.Equal(t, ed.Status, btcctypes.Finalized)
 
-	finalSubKey := ed.Key[0]
+	finalSubKey := ed.Keys[0]
 
 	require.Equal(t, finalSubKey.Key[0].Hash, b1Hash(msg3))
 	require.Equal(t, finalSubKey.Key[1].Hash, b2Hash(msg3))
@@ -485,36 +443,36 @@ func TestTxIdxShouldBreakTies(t *testing.T) {
 	wDeep := defaultParams.CheckpointFinalizationTimeout
 
 	msg1 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), uint64(0))
 	_, err := tk.insertProofMsg(msg1)
 	require.NoError(t, err, "failed to insert submission")
 
 	msg2 := dg.GenerateMessageWithRandomSubmitterForEpoch(r, 1)
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), int64(1))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), int64(0))
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), uint64(1))
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), uint64(0))
 	_, err = tk.insertProofMsg(msg2)
 	require.NoError(t, err, "failed to insert submission")
 
 	ed := tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 2)
+	require.Len(t, ed.Keys, 2)
 
 	// Both submissions have the same depth the most fresh block i.e
 	// it is the same block
 	// When finalizing the one with lower TxIx should be treated as better
-	tk.BTCLightClient.SetDepth(b1Hash(msg1), int64(wDeep))
-	tk.BTCLightClient.SetDepth(b2Hash(msg1), int64(wDeep+1))
-	tk.BTCLightClient.SetDepth(b1Hash(msg2), int64(wDeep))
-	tk.BTCLightClient.SetDepth(b2Hash(msg2), int64(wDeep+3))
+	tk.BTCLightClient.SetDepth(b1Hash(msg1), wDeep)
+	tk.BTCLightClient.SetDepth(b2Hash(msg1), wDeep+1)
+	tk.BTCLightClient.SetDepth(b1Hash(msg2), wDeep)
+	tk.BTCLightClient.SetDepth(b2Hash(msg2), wDeep+3)
 
 	tk.onTipChange()
 
 	ed = tk.GetEpochData(uint64(1))
 	require.NotNil(t, ed)
-	require.Len(t, ed.Key, 1)
+	require.Len(t, ed.Keys, 1)
 	require.Equal(t, ed.Status, btcctypes.Finalized)
-	finalSubKey := ed.Key[0]
+	finalSubKey := ed.Keys[0]
 
 	// There is small chance that we can draw the same transactions indexes, which
 	// cannot happend in real life i.e in real life if block has the same depth
@@ -543,8 +501,8 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
 	// Now we will return depth enough for moving submission to confirmed
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(1))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(1))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(1))
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(1))
 
 	_, err := tk.insertProofMsg(msg)
 
@@ -555,7 +513,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	// TODO customs Equality for submission keys
 	ed := tk.GetEpochData(epoch)
 
-	if len(ed.Key) != 1 {
+	if len(ed.Keys) != 1 {
 		t.Errorf("Unexpected missing submissions")
 	}
 
@@ -564,8 +522,8 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	}
 
 	// Now we will return depth enough for moving submission to confirmed
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(kDeep))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(kDeep))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), kDeep)
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), kDeep)
 
 	// fire tip change callback
 	tk.onTipChange()
@@ -573,7 +531,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 	// we are looking for
 	ed = tk.GetEpochData(epoch)
 
-	if len(ed.Key) != 1 {
+	if len(ed.Keys) != 1 {
 		t.Errorf("Unexpected missing submission")
 	}
 
@@ -581,8 +539,8 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 		t.Errorf("Epoch should be in submitted stated")
 	}
 
-	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(wDeep))
-	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(wDeep))
+	tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), wDeep)
+	tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), wDeep)
 
 	tk.onTipChange()
 
@@ -594,7 +552,7 @@ func TestStateTransitionOfValidSubmission(t *testing.T) {
 }
 
 func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 20)
+	dg.AddRandomSeedsToFuzzer(f, 20)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -629,9 +587,9 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 				msg := dg.GenerateMessageWithRandomSubmitter([]*dg.BlockCreationResult{blck1, blck2})
 
 				if epoch <= uint64(numFinalizedEpochs) {
-					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(finalizationDepth))
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), uint64(finalizationDepth))
 					finalizationDepth = finalizationDepth - 1
-					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(finalizationDepth))
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), uint64(finalizationDepth))
 
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
@@ -639,21 +597,21 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 					}
 					finalizationDepth = finalizationDepth - 1
 				} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
-					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(confirmationDepth))
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), confirmationDepth)
 					confirmationDepth = confirmationDepth - 1
-					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(confirmationDepth))
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), confirmationDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
-						bestSumbissionInfos[epoch] = uint64(confirmationDepth)
+						bestSumbissionInfos[epoch] = confirmationDepth
 					}
 					confirmationDepth = confirmationDepth - 1
 				} else {
-					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), int64(sumbissionDepth))
+					tk.BTCLightClient.SetDepth(blck1.HeaderBytes.Hash(), sumbissionDepth)
 					sumbissionDepth = sumbissionDepth - 1
-					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), int64(sumbissionDepth))
+					tk.BTCLightClient.SetDepth(blck2.HeaderBytes.Hash(), sumbissionDepth)
 					// first submission is always deepest one, and second block is the most recent one
 					if j == 1 {
-						bestSumbissionInfos[epoch] = uint64(sumbissionDepth)
+						bestSumbissionInfos[epoch] = sumbissionDepth
 					}
 					sumbissionDepth = sumbissionDepth - 1
 				}
@@ -682,7 +640,7 @@ func FuzzConfirmAndDinalizeManyEpochs(f *testing.F) {
 			if epoch <= uint64(numFinalizedEpochs) {
 				require.Equal(t, ed.Status, btcctypes.Finalized)
 				// finalized epochs should have only best submission
-				require.Equal(t, len(ed.Key), 1)
+				require.Equal(t, len(ed.Keys), 1)
 			} else if epoch <= uint64(numFinalizedEpochs+numConfirmedEpochs) {
 				require.Equal(t, ed.Status, btcctypes.Confirmed)
 			} else {

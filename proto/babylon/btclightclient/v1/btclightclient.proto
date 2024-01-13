@@ -22,5 +22,5 @@ message BTCHeaderInfo {
             "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
   uint64 height = 3;
   bytes work = 4
-      [ (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Uint" ];
+      [ (gogoproto.customtype) = "cosmossdk.io/math.Uint" ];
 }

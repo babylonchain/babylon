@@ -1,21 +1,21 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
-func (k Keeper) setChainInfo(ctx sdk.Context, chainInfo *types.ChainInfo) {
+func (k Keeper) setChainInfo(ctx context.Context, chainInfo *types.ChainInfo) {
 	store := k.chainInfoStore(ctx)
 	store.Set([]byte(chainInfo.ChainId), k.cdc.MustMarshal(chainInfo))
 }
 
-func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo, error) {
+func (k Keeper) InitChainInfo(ctx context.Context, chainID string) (*types.ChainInfo, error) {
 	if len(chainID) == 0 {
 		return nil, fmt.Errorf("chainID is empty")
 	}
@@ -40,7 +40,7 @@ func (k Keeper) InitChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo
 // HasChainInfo returns whether the chain info exists for a given ID
 // Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
 // we can only check its existence every time, and return an empty one if it's not initialised yet.
-func (k Keeper) HasChainInfo(ctx sdk.Context, chainID string) bool {
+func (k Keeper) HasChainInfo(ctx context.Context, chainID string) bool {
 	store := k.chainInfoStore(ctx)
 	return store.Has([]byte(chainID))
 }
@@ -48,7 +48,7 @@ func (k Keeper) HasChainInfo(ctx sdk.Context, chainID string) bool {
 // GetChainInfo returns the ChainInfo struct for a chain with a given ID
 // Since IBC does not provide API that allows to initialise chain info right before creating an IBC connection,
 // we can only check its existence every time, and return an empty one if it's not initialised yet.
-func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo, error) {
+func (k Keeper) GetChainInfo(ctx context.Context, chainID string) (*types.ChainInfo, error) {
 	if !k.HasChainInfo(ctx, chainID) {
 		return nil, types.ErrChainInfoNotFound
 	}
@@ -66,7 +66,7 @@ func (k Keeper) GetChainInfo(ctx sdk.Context, chainID string) (*types.ChainInfo,
 // Note that this function is triggered only upon receiving headers from the relayer,
 // and only a subset of headers in CZ are relayed. Thus TimestampedHeadersCount is not
 // equal to the total number of headers in CZ.
-func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) updateLatestHeader(ctx context.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
@@ -87,7 +87,7 @@ func (k Keeper) updateLatestHeader(ctx sdk.Context, chainID string, header *type
 // - If there is a fork header at the same height, add this fork to the set of latest fork headers
 // - If this fork header is newer than the previous one, replace the old fork headers with this fork header
 // - If this fork header is older than the current latest fork, ignore
-func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) tryToUpdateLatestForkHeader(ctx context.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return errorsmod.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
@@ -118,7 +118,7 @@ func (k Keeper) tryToUpdateLatestForkHeader(ctx sdk.Context, chainID string, hea
 }
 
 // GetAllChainIDs gets all chain IDs that integrate Babylon
-func (k Keeper) GetAllChainIDs(ctx sdk.Context) []string {
+func (k Keeper) GetAllChainIDs(ctx context.Context) []string {
 	chainIDs := []string{}
 	iter := k.chainInfoStore(ctx).Iterator(nil, nil)
 	defer iter.Close()
@@ -135,7 +135,7 @@ func (k Keeper) GetAllChainIDs(ctx sdk.Context) []string {
 // prefix: ChainInfoKey
 // key: chainID
 // value: ChainInfo
-func (k Keeper) chainInfoStore(ctx sdk.Context) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	return prefix.NewStore(store, types.ChainInfoKey)
+func (k Keeper) chainInfoStore(ctx context.Context) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	return prefix.NewStore(storeAdapter, types.ChainInfoKey)
 }

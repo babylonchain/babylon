@@ -25,7 +25,7 @@ type BabylonData struct {
 
 type RawBtcCheckpoint struct {
 	Epoch            uint64
-	LastCommitHash   []byte
+	BlockHash        []byte
 	BitMap           []byte
 	SubmitterAddress []byte
 	BlsSig           []byte
@@ -43,7 +43,7 @@ const (
 	// 4bytes tag + 4 bits version + 4 bits part index
 	headerLength = TagLength + 1
 
-	LastCommitHashLength = 32
+	BlockHashLength = 32
 
 	BitMapLength = 13
 
@@ -61,11 +61,11 @@ const (
 	// 8 bytes are for 64bit unsigned epoch number
 	EpochLength = 8
 
-	firstPartLength = headerLength + LastCommitHashLength + AddressLength + EpochLength + BitMapLength
+	firstPartLength = headerLength + BlockHashLength + AddressLength + EpochLength + BitMapLength
 
 	secondPartLength = headerLength + BlsSigLength + firstPartHashLength
 
-	RawBTCCheckpointLength = EpochLength + LastCommitHashLength + BitMapLength + BlsSigLength + AddressLength
+	RawBTCCheckpointLength = EpochLength + BlockHashLength + BitMapLength + BlsSigLength + AddressLength
 )
 
 func getVerHalf(version FormatVersion, halfNumber uint8) uint8 {
@@ -96,7 +96,7 @@ func encodeFirstOpRetrun(
 	tag BabylonTag,
 	version FormatVersion,
 	epoch uint64,
-	lastCommitHash []byte,
+	appHash []byte,
 	bitMap []byte,
 	submitterAddress []byte,
 ) []byte {
@@ -107,7 +107,7 @@ func encodeFirstOpRetrun(
 
 	serializedBytes = append(serializedBytes, U64ToBEBytes(epoch)...)
 
-	serializedBytes = append(serializedBytes, lastCommitHash...)
+	serializedBytes = append(serializedBytes, appHash...)
 
 	serializedBytes = append(serializedBytes, bitMap...)
 
@@ -154,8 +154,8 @@ func EncodeCheckpointData(
 		return nil, nil, errors.New("invalid format version")
 	}
 
-	if len(rawBTCCheckpoint.LastCommitHash) != LastCommitHashLength {
-		return nil, nil, errors.New("lastCommitHash should have 32 bytes")
+	if len(rawBTCCheckpoint.BlockHash) != BlockHashLength {
+		return nil, nil, errors.New("appHash should have 32 bytes")
 	}
 
 	if len(rawBTCCheckpoint.BitMap) != BitMapLength {
@@ -174,7 +174,7 @@ func EncodeCheckpointData(
 		tag,
 		version,
 		rawBTCCheckpoint.Epoch,
-		rawBTCCheckpoint.LastCommitHash,
+		rawBTCCheckpoint.BlockHash,
 		rawBTCCheckpoint.BitMap,
 		rawBTCCheckpoint.SubmitterAddress,
 	)
@@ -211,7 +211,7 @@ func parseHeader(
 
 	header := formatHeader{
 		tag:     BabylonTag(tagBytes),
-		version: FormatVersion((verHalf & 0xf)),
+		version: FormatVersion(verHalf & 0xf),
 		part:    verHalf >> 4,
 	}
 
@@ -220,7 +220,7 @@ func parseHeader(
 
 func (header *formatHeader) validateHeader(
 	expectedTag BabylonTag,
-	supportedVersion FormatVersion,
+	_ FormatVersion,
 	expectedPart uint8,
 ) error {
 	if !bytes.Equal(header.tag, expectedTag) {
@@ -304,7 +304,7 @@ func IsBabylonCheckpointData(
 	return nil, errors.New("not valid babylon data")
 }
 
-// DecodeRawCheckpoint extracts epoch, lastCommitHash, bitmap, and blsSig from a
+// DecodeRawCheckpoint extracts epoch, appHash, bitmap, and blsSig from a
 // flat byte array and compose them into a RawCheckpoint struct
 func DecodeRawCheckpoint(version FormatVersion, btcCkptBytes []byte) (*RawBtcCheckpoint, error) {
 	if version > CurrentVersion {
@@ -318,14 +318,14 @@ func DecodeRawCheckpoint(version FormatVersion, btcCkptBytes []byte) (*RawBtcChe
 	var b bytes.Buffer
 	b.Write(btcCkptBytes)
 	epochBytes := b.Next(EpochLength)
-	lchBytes := b.Next(LastCommitHashLength)
+	appHashBytes := b.Next(BlockHashLength)
 	bitmapBytes := b.Next(BitMapLength)
 	addressBytes := b.Next(AddressLength)
 	blsSigBytes := b.Next(BlsSigLength)
 
 	rawCheckpoint := &RawBtcCheckpoint{
 		Epoch:            binary.BigEndian.Uint64(epochBytes),
-		LastCommitHash:   lchBytes,
+		BlockHash:        appHashBytes,
 		BitMap:           bitmapBytes,
 		SubmitterAddress: addressBytes,
 		BlsSig:           blsSigBytes,

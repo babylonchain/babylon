@@ -1,6 +1,10 @@
 package initialization
 
-import "fmt"
+import (
+	"fmt"
+
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+)
 
 type ChainMeta struct {
 	DataDir string `json:"dataDir"`
@@ -12,7 +16,8 @@ type Node struct {
 	ConfigDir     string `json:"configDir"`
 	Mnemonic      string `json:"mnemonic"`
 	PublicAddress string `json:"publicAddress"`
-	PublicKey     string `json:"publicKey"`
+	SecretKey     cryptotypes.PrivKey
+	PublicKey     []byte `json:"publicKey"`
 	PeerId        string `json:"peerId"`
 	IsValidator   bool   `json:"isValidator"`
 }

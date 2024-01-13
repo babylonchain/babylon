@@ -1,15 +1,17 @@
 package types
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
 
 const (
@@ -18,18 +20,18 @@ const (
 	BitmapBits = 104 // 104 bits for 104 validators at top
 )
 
-type LastCommitHash []byte
+type BlockHash []byte
 
 type BlsSigHash []byte
 
 type RawCkptHash []byte
 
-func NewCheckpoint(epochNum uint64, lch LastCommitHash) *RawCheckpoint {
+func NewCheckpoint(epochNum uint64, blockHash BlockHash) *RawCheckpoint {
 	return &RawCheckpoint{
-		EpochNum:       epochNum,
-		LastCommitHash: &lch,
-		Bitmap:         bitmap.New(BitmapBits), // 13 bytes, holding 100 validators
-		BlsMultiSig:    nil,
+		EpochNum:    epochNum,
+		BlockHash:   &blockHash,
+		Bitmap:      bitmap.New(BitmapBits), // 13 bytes, holding 100 validators
+		BlsMultiSig: nil,
 	}
 }
 
@@ -97,7 +99,7 @@ func (cm *RawCheckpointWithMeta) Accumulate(
 
 	// accumulate voting power and update status when the threshold is reached
 	cm.PowerSum += uint64(val.Power)
-	if int64(cm.PowerSum) > totalPower/3 {
+	if int64(cm.PowerSum)*3 > totalPower*2 {
 		cm.Status = Sealed
 	}
 
@@ -110,8 +112,9 @@ func (cm *RawCheckpointWithMeta) IsMoreMatureThanStatus(status CheckpointStatus)
 
 // RecordStateUpdate appends a new state update to the raw ckpt with meta
 // where the time/height are captured by the current ctx
-func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx sdk.Context, status CheckpointStatus) {
-	height, time := ctx.BlockHeight(), ctx.BlockTime()
+func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx context.Context, status CheckpointStatus) {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	height, time := sdkCtx.HeaderInfo().Height, sdkCtx.HeaderInfo().Time
 	stateUpdate := &CheckpointStateUpdate{
 		State:       status,
 		BlockHeight: uint64(height),
@@ -120,74 +123,54 @@ func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx sdk.Context, status Check
 	cm.Lifecycle = append(cm.Lifecycle, stateUpdate)
 }
 
-func NewLastCommitHashFromHex(s string) (LastCommitHash, error) {
-	bz, err := hex.DecodeString(s)
-	if err != nil {
-		return nil, err
-	}
-
-	var lch LastCommitHash
-
-	err = lch.Unmarshal(bz)
-	if err != nil {
-		return nil, err
-	}
-
-	return lch, nil
-}
-
-func (lch *LastCommitHash) Unmarshal(bz []byte) error {
+func (bh *BlockHash) Unmarshal(bz []byte) error {
 	if len(bz) != HashSize {
-		return errors.New("invalid lastCommitHash length")
+		return errors.New("invalid appHash length")
 	}
-	*lch = bz
+	*bh = bz
 	return nil
 }
 
-func (lch *LastCommitHash) Size() (n int) {
-	if lch == nil {
+func (bh *BlockHash) Size() (n int) {
+	if bh == nil {
 		return 0
 	}
-	return len(*lch)
+	return len(*bh)
 }
 
-func (lch *LastCommitHash) Equal(l LastCommitHash) bool {
-	return lch.String() == l.String()
+func (bh *BlockHash) Equal(l BlockHash) bool {
+	return bh.String() == l.String()
 }
 
-func (lch *LastCommitHash) String() string {
-	return hex.EncodeToString(*lch)
+func (bh *BlockHash) String() string {
+	return hex.EncodeToString(*bh)
 }
 
-func (lch *LastCommitHash) MustMarshal() []byte {
-	bz, err := lch.Marshal()
+func (bh *BlockHash) MustMarshal() []byte {
+	bz, err := bh.Marshal()
 	if err != nil {
 		panic(err)
 	}
 	return bz
 }
 
-func (lch *LastCommitHash) Marshal() ([]byte, error) {
-	return *lch, nil
+func (bh *BlockHash) Marshal() ([]byte, error) {
+	return *bh, nil
 }
 
-func (lch LastCommitHash) MarshalTo(data []byte) (int, error) {
-	copy(data, lch)
+func (bh BlockHash) MarshalTo(data []byte) (int, error) {
+	copy(data, bh)
 	return len(data), nil
 }
 
-func (lch *LastCommitHash) ValidateBasic() error {
-	if lch == nil {
-		return errors.New("invalid lastCommitHash")
+func (bh *BlockHash) ValidateBasic() error {
+	if bh == nil {
+		return errors.New("invalid block hash")
 	}
-	if len(*lch) != HashSize {
-		return errors.New("invalid lastCommitHash")
+	if len(*bh) != HashSize {
+		return errors.New("invalid block hash")
 	}
 	return nil
-}
-
-func RawCkptToBytes(cdc codec.BinaryCodec, ckpt *RawCheckpoint) []byte {
-	return cdc.MustMarshal(ckpt)
 }
 
 // ValidateBasic does sanity checks on a raw checkpoint
@@ -195,7 +178,7 @@ func (ckpt RawCheckpoint) ValidateBasic() error {
 	if ckpt.Bitmap == nil {
 		return ErrInvalidRawCheckpoint.Wrapf("bitmap cannot be empty")
 	}
-	err := ckpt.LastCommitHash.ValidateBasic()
+	err := ckpt.BlockHash.ValidateBasic()
 	if err != nil {
 		return ErrInvalidRawCheckpoint.Wrapf(err.Error())
 	}
@@ -215,4 +198,15 @@ func BytesToCkptWithMeta(cdc codec.BinaryCodec, bz []byte) (*RawCheckpointWithMe
 	ckptWithMeta := new(RawCheckpointWithMeta)
 	err := cdc.Unmarshal(bz, ckptWithMeta)
 	return ckptWithMeta, err
+}
+
+func (ve *VoteExtension) ToBLSSig() *BlsSig {
+	blockHash := BlockHash(ve.BlockHash)
+	return &BlsSig{
+		EpochNum:         ve.EpochNum,
+		BlockHash:        &blockHash,
+		BlsSig:           ve.BlsSig,
+		SignerAddress:    ve.Signer,
+		ValidatorAddress: ve.ValidatorAddress,
+	}
 }

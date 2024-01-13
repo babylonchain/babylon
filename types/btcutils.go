@@ -1,14 +1,16 @@
 package types
 
 import (
+	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 	"time"
 
 	"github.com/btcsuite/btcd/blockchain"
-	"github.com/btcsuite/btcd/wire"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/wire"
 )
 
 // ValidateBTCHeader
@@ -37,18 +39,6 @@ func ValidateBTCHeader(header *wire.BlockHeader, powLimit *big.Int) error {
 	return nil
 }
 
-func GetBaseBTCHeaderHex() string {
-	// TODO: get this from a configuration file
-	hex := "00006020c6c5a20e29da938a252c945411eba594cbeba021a1e20000000000000000000039e4bd0cd0b5232bb380a9576fcfe7d8fb043523f7a158187d9473e44c1740e6b4fa7c62ba01091789c24c22"
-	return hex
-}
-
-func GetBaseBTCHeaderHeight() uint64 {
-	// TODO: get this from a configuration file
-	height := uint64(736056)
-	return height
-}
-
 func GetMaxDifficulty() big.Int {
 	// Maximum btc difficulty possible
 	// Use it to set the difficulty bits of blocks as well as the upper PoW limit
@@ -62,11 +52,45 @@ func GetMaxDifficulty() big.Int {
 	return *maxDifficulty
 }
 
-func GetBaseBTCHeaderBytes() BTCHeaderBytes {
-	hex := GetBaseBTCHeaderHex()
-	headerBytes, err := NewBTCHeaderBytesFromHex(hex)
-	if err != nil {
-		panic("Base BTC header hex cannot be converted to bytes")
+func NewBTCTxFromBytes(txBytes []byte) (*wire.MsgTx, error) {
+	var msgTx wire.MsgTx
+	rbuf := bytes.NewReader(txBytes)
+	if err := msgTx.Deserialize(rbuf); err != nil {
+		return nil, err
 	}
-	return headerBytes
+
+	return &msgTx, nil
+}
+
+func NewBTCTxFromHex(txHex string) (*wire.MsgTx, []byte, error) {
+	txBytes, err := hex.DecodeString(txHex)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	parsed, err := NewBTCTxFromBytes(txBytes)
+
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return parsed, txBytes, nil
+}
+
+func SerializeBTCTx(tx *wire.MsgTx) ([]byte, error) {
+	var txBuf bytes.Buffer
+	if err := tx.Serialize(&txBuf); err != nil {
+		return nil, err
+	}
+	return txBuf.Bytes(), nil
+}
+
+func GetOutputIdxInBTCTx(tx *wire.MsgTx, output *wire.TxOut) (uint32, error) {
+	for i, txOut := range tx.TxOut {
+		if bytes.Equal(txOut.PkScript, output.PkScript) && txOut.Value == output.Value {
+			return uint32(i), nil
+		}
+	}
+
+	return 0, fmt.Errorf("output not found")
 }

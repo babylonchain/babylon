@@ -91,10 +91,10 @@ var (
 	}
 )
 
-// New returns a new Configurer.
+// NewBTCTimestampingConfigurer returns a new Configurer for BTC timestamping service.
 // TODO currently only one configuration is available. Consider testing upgrades
 // when necessary
-func New(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+func NewBTCTimestampingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 	containerManager, err := containers.NewManager(isDebugLogEnabled)
 	if err != nil {
 		return nil, err
@@ -106,6 +106,23 @@ func New(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
 			chain.New(t, containerManager, initialization.ChainBID, validatorConfigsChainB),
 		},
 		withIBC(baseSetup), // base set up with IBC
+		containerManager,
+	), nil
+}
+
+// NewBTCStakingConfigurer returns a new Configurer for BTC staking service
+func NewBTCStakingConfigurer(t *testing.T, isDebugLogEnabled bool) (Configurer, error) {
+	containerManager, err := containers.NewManager(isDebugLogEnabled)
+	if err != nil {
+		return nil, err
+	}
+
+	return NewCurrentBranchConfigurer(t,
+		[]*chain.Config{
+			// we only need 1 chain for testing BTC staking
+			chain.New(t, containerManager, initialization.ChainAID, validatorConfigsChainA),
+		},
+		baseSetup, // base set up
 		containerManager,
 	), nil
 }

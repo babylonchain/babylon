@@ -5,8 +5,6 @@ import (
 	fmt "fmt"
 	"math/big"
 
-	errorsmod "cosmossdk.io/errors"
-
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,7 +16,7 @@ var (
 	_ sdk.Msg = (*MsgUpdateParams)(nil)
 )
 
-// Parse and Validate transactions which should contain OP_RETURN data.
+// ParseTwoProofs Parse and Validate transactions which should contain OP_RETURN data.
 // OP_RETURN bytes are not validated in any way. It is up to the caller attach
 // semantic meaning and validity to those bytes.
 // Returned ParsedProofs are in same order as raw proofs
@@ -109,43 +107,8 @@ func ParseSubmission(
 	return sub, nil
 }
 
-func (m *MsgInsertBTCSpvProof) ValidateBasic() error {
-	// m.Proofs are validated in ante-handler
-	_, err := sdk.AccAddressFromBech32(m.Submitter)
-
-	if err != nil {
-		return sdkerrors.ErrInvalidAddress.Wrapf("invalid submitter address: %s", err)
-	}
-
-	return nil
-}
-
-func (m *MsgInsertBTCSpvProof) GetSigners() []sdk.AccAddress {
-	// cosmos-sdk modules usually ignore possible error here, we panic for the sake
-	// of informing something terrible had happend
-
-	submitter, err := sdk.AccAddressFromBech32(m.Submitter)
-	if err != nil {
-		// Panic, since the GetSigners method is called after ValidateBasic
-		// which performs the same check.
-		panic(err)
-	}
-
-	return []sdk.AccAddress{submitter}
-}
-
-// GetSigners returns the expected signers for a MsgUpdateParams message.
-func (m *MsgUpdateParams) GetSigners() []sdk.AccAddress {
-	addr, _ := sdk.AccAddressFromBech32(m.Authority)
-	return []sdk.AccAddress{addr}
-}
-
 // ValidateBasic does a sanity check on the provided data.
 func (m *MsgUpdateParams) ValidateBasic() error {
-	if _, err := sdk.AccAddressFromBech32(m.Authority); err != nil {
-		return errorsmod.Wrap(err, "invalid authority address")
-	}
-
 	if err := m.Params.Validate(); err != nil {
 		return err
 	}

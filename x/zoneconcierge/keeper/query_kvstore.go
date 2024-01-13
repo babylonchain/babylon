@@ -3,10 +3,9 @@ package keeper
 import (
 	"fmt"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/crypto/merkle"
+	storetypes "cosmossdk.io/store/types"
+
 	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 )
 
 // QueryStore queries a KV pair in the KVStore, where
@@ -25,28 +24,18 @@ func (k Keeper) QueryStore(moduleStoreKey string, key []byte, queryHeight int64)
 	path := fmt.Sprintf("/%s/key", moduleStoreKey)
 
 	// query the KV with Merkle proof
-	resp := k.storeQuerier.Query(abci.RequestQuery{
+	resp, err := k.storeQuerier.Query(&storetypes.RequestQuery{
 		Path:   path,
 		Data:   key,
 		Height: queryHeight - 1, // NOTE: the inclusion proof corresponds to the NEXT header
 		Prove:  true,
 	})
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	if resp.Code != 0 {
 		return nil, nil, nil, fmt.Errorf("query (with path %s) failed with response: %v", path, resp)
 	}
 
 	return resp.Key, resp.Value, resp.ProofOps, nil
-}
-
-// VerifyStore verifies whether a KV pair is committed to the Merkle root, with the assistance of a Merkle proof
-// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/store/rootmulti/proof_test.go)
-func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, proof *tmcrypto.ProofOps) error {
-	prt := rootmulti.DefaultProofRuntime()
-
-	keypath := merkle.KeyPath{}
-	keypath = keypath.AppendKey([]byte(moduleStoreKey), merkle.KeyEncodingURL)
-	keypath = keypath.AppendKey(key, merkle.KeyEncodingURL)
-	keypathStr := keypath.String()
-
-	return prt.VerifyAbsence(proof, root, keypathStr) // TODO: verify value rather than just existence
 }

@@ -20,6 +20,15 @@ func NewQueryContainsRequest(hash string) (*QueryContainsRequest, error) {
 	return res, nil
 }
 
+func NewQueryHeaderDepthRequest(hash string) (*QueryHeaderDepthRequest, error) {
+	_, err := types.NewBTCHeaderHashBytesFromHex(hash)
+	if err != nil {
+		return nil, err
+	}
+	res := &QueryHeaderDepthRequest{Hash: hash}
+	return res, nil
+}
+
 func NewQueryMainChainRequest(req *query.PageRequest) *QueryMainChainRequest {
 	return &QueryMainChainRequest{Pagination: req}
 }

@@ -1,28 +1,31 @@
 package keeper
 
 import (
+	"context"
+	"cosmossdk.io/store/prefix"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type RegistrationState struct {
 	cdc codec.BinaryCodec
 	// addrToBlsKeys maps validator addresses to BLS public keys
-	addrToBlsKeys sdk.KVStore
+	addrToBlsKeys storetypes.KVStore
 	// blsKeysToAddr maps BLS public keys to validator addresses
-	blsKeysToAddr sdk.KVStore
+	blsKeysToAddr storetypes.KVStore
 }
 
-func (k Keeper) RegistrationState(ctx sdk.Context) RegistrationState {
+func (k Keeper) RegistrationState(ctx context.Context) RegistrationState {
 	// Build the RegistrationState storage
-	store := ctx.KVStore(k.storeKey)
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return RegistrationState{
 		cdc:           k.cdc,
-		addrToBlsKeys: prefix.NewStore(store, types.AddrToBlsKeyPrefix),
-		blsKeysToAddr: prefix.NewStore(store, types.BlsKeyToAddrPrefix),
+		addrToBlsKeys: prefix.NewStore(storeAdapter, types.AddrToBlsKeyPrefix),
+		blsKeysToAddr: prefix.NewStore(storeAdapter, types.BlsKeyToAddrPrefix),
 	}
 }
 

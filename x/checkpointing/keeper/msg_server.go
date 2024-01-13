@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -22,20 +21,6 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 }
 
 var _ types.MsgServer = msgServer{}
-
-// AddBlsSig adds BLS sig messages and changes a raw checkpoint status to SEALED if sufficient voting power is accumulated
-func (m msgServer) AddBlsSig(goCtx context.Context, msg *types.MsgAddBlsSig) (*types.MsgAddBlsSigResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
-	ctx.Logger().Info(fmt.Sprintf("received BLS sig for epoch %d from %s", msg.BlsSig.EpochNum, msg.GetSigners()))
-
-	err := m.k.addBlsSig(ctx, msg.BlsSig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &types.MsgAddBlsSigResponse{}, nil
-}
 
 // WrappedCreateValidator registers validator's BLS public key
 // and forwards corresponding MsgCreateValidator message to

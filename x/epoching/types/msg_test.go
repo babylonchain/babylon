@@ -1,9 +1,11 @@
 package types_test
 
 import (
-	appparams "github.com/babylonchain/babylon/app/params"
 	"testing"
 	"time"
+
+	sdkmath "cosmossdk.io/math"
+	appparams "github.com/babylonchain/babylon/app/params"
 
 	"github.com/stretchr/testify/require"
 
@@ -22,15 +24,10 @@ import (
 var (
 	pk1      = ed25519.GenPrivKey().PubKey()
 	pk2      = ed25519.GenPrivKey().PubKey()
-	pk3      = ed25519.GenPrivKey().PubKey()
 	valAddr1 = sdk.ValAddress(pk1.Address())
 	valAddr2 = sdk.ValAddress(pk2.Address())
-	valAddr3 = sdk.ValAddress(pk3.Address())
 
-	emptyAddr sdk.ValAddress
-
-	coinPos  = sdk.NewInt64Coin(appparams.DefaultBondDenom, 1000)
-	coinZero = sdk.NewInt64Coin(appparams.DefaultBondDenom, 0)
+	coinPos = sdk.NewInt64Coin(appparams.DefaultBondDenom, 1000)
 )
 
 func TestMsgDecode(t *testing.T) {
@@ -49,7 +46,7 @@ func TestMsgDecode(t *testing.T) {
 	require.True(t, pk1.Equals(pkUnmarshaled.(*ed25519.PubKey)))
 
 	// create unwrapped msg
-	msgUnwrapped := stakingtypes.NewMsgDelegate(sdk.AccAddress(valAddr1), valAddr2, coinPos)
+	msgUnwrapped := stakingtypes.NewMsgDelegate(sdk.AccAddress(valAddr1).String(), valAddr2.String(), coinPos)
 
 	// wrap and marshal msg
 	msg := types.NewMsgWrappedDelegate(msgUnwrapped)
@@ -68,8 +65,8 @@ func TestMsgDecode(t *testing.T) {
 	var qmsgUnmarshaled sdk.Msg
 	var msgCreateValUnmarshaled sdk.Msg
 
-	commission1 := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
-	msgcreateval1, err := stakingtypes.NewMsgCreateValidator(valAddr1, pk1, coinPos, stakingtypes.Description{}, commission1, sdk.OneInt())
+	commission1 := stakingtypes.NewCommissionRates(sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec(), sdkmath.LegacyZeroDec())
+	msgcreateval1, err := stakingtypes.NewMsgCreateValidator(valAddr1.String(), pk1, coinPos, stakingtypes.Description{}, commission1, sdkmath.OneInt())
 	require.NoError(t, err)
 	qmsg, err := types.NewQueuedMessage(1, time.Now(), []byte("tx id 1"), msgcreateval1)
 	require.NoError(t, err)
@@ -89,106 +86,4 @@ func TestMsgDecode(t *testing.T) {
 	require.True(t, ok)
 	require.Equal(t, qmsg.MsgId, qmsg2.MsgId)
 	require.True(t, msgcreateval1.Pubkey.Equal(msgcreateval2.Pubkey))
-}
-
-// test ValidateBasic for MsgWrappedDelegate
-func TestMsgWrappedDelegate(t *testing.T) {
-	tests := []struct {
-		name          string
-		delegatorAddr sdk.AccAddress
-		validatorAddr sdk.ValAddress
-		bond          sdk.Coin
-		expectPass    bool
-	}{
-		{"basic good", sdk.AccAddress(valAddr1), valAddr2, coinPos, true},
-		{"no wrapped msg", nil, nil, coinPos, false},
-		{"self bond", sdk.AccAddress(valAddr1), valAddr1, coinPos, true},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, coinPos, false},
-		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, coinPos, false},
-		{"empty bond", sdk.AccAddress(valAddr1), valAddr2, coinZero, false},
-		{"nil bold", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false},
-	}
-
-	for _, tc := range tests {
-		var msg *types.MsgWrappedDelegate
-		if tc.delegatorAddr == nil {
-			msg = types.NewMsgWrappedDelegate(nil)
-		} else {
-			msgUnwrapped := stakingtypes.NewMsgDelegate(tc.delegatorAddr, tc.validatorAddr, tc.bond)
-			msg = types.NewMsgWrappedDelegate(msgUnwrapped)
-		}
-		if tc.expectPass {
-			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
-		} else {
-			require.Error(t, msg.ValidateBasic(), "test: %v", tc.name)
-		}
-	}
-}
-
-// test ValidateBasic for MsgWrappedBeginRedelegate
-func TestMsgWrappedBeginRedelegate(t *testing.T) {
-	tests := []struct {
-		name             string
-		delegatorAddr    sdk.AccAddress
-		validatorSrcAddr sdk.ValAddress
-		validatorDstAddr sdk.ValAddress
-		amount           sdk.Coin
-		expectPass       bool
-	}{
-		{"regular", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), true},
-		{"no wrapped msg", nil, nil, nil, coinPos, false},
-		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 0), false},
-		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, valAddr3, sdk.Coin{}, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
-		{"empty source validator", sdk.AccAddress(valAddr1), emptyAddr, valAddr3, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
-		{"empty destination validator", sdk.AccAddress(valAddr1), valAddr2, emptyAddr, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
-	}
-
-	for _, tc := range tests {
-		var msg *types.MsgWrappedBeginRedelegate
-		if tc.delegatorAddr == nil {
-			msg = types.NewMsgWrappedBeginRedelegate(nil)
-		} else {
-			msgUnwrapped := stakingtypes.NewMsgBeginRedelegate(tc.delegatorAddr, tc.validatorSrcAddr, tc.validatorDstAddr, tc.amount)
-			msg = types.NewMsgWrappedBeginRedelegate(msgUnwrapped)
-		}
-		if tc.expectPass {
-			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
-		} else {
-			require.Error(t, msg.ValidateBasic(), "test: %v", tc.name)
-		}
-	}
-}
-
-// test ValidateBasic for MsgWrappedUndelegate
-func TestMsgWrappedUndelegate(t *testing.T) {
-	tests := []struct {
-		name          string
-		delegatorAddr sdk.AccAddress
-		validatorAddr sdk.ValAddress
-		amount        sdk.Coin
-		expectPass    bool
-	}{
-		{"regular", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), true},
-		{"no wrapped msg", nil, nil, coinPos, false},
-		{"zero amount", sdk.AccAddress(valAddr1), valAddr2, sdk.NewInt64Coin(appparams.DefaultBondDenom, 0), false},
-		{"nil amount", sdk.AccAddress(valAddr1), valAddr2, sdk.Coin{}, false},
-		{"empty delegator", sdk.AccAddress(emptyAddr), valAddr1, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
-		{"empty validator", sdk.AccAddress(valAddr1), emptyAddr, sdk.NewInt64Coin(appparams.DefaultBondDenom, 1), false},
-	}
-
-	for _, tc := range tests {
-		var msg *types.MsgWrappedUndelegate
-		if tc.delegatorAddr == nil {
-			msg = types.NewMsgWrappedUndelegate(nil)
-		} else {
-			msgUnwrapped := stakingtypes.NewMsgUndelegate(tc.delegatorAddr, tc.validatorAddr, tc.amount)
-			msg = types.NewMsgWrappedUndelegate(msgUnwrapped)
-		}
-		if tc.expectPass {
-			require.NoError(t, msg.ValidateBasic(), "test: %v", tc.name)
-		} else {
-			require.Error(t, msg.ValidateBasic(), "test: %v", tc.name)
-		}
-	}
 }

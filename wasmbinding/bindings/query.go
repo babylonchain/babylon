@@ -14,7 +14,7 @@ type BtcHeaderByHash struct {
 }
 
 type BtcHeaderByHeight struct {
-	Height uint64 `json:"height,omitempty"`
+	Height uint64 `json:"height"`
 }
 
 type CurrentEpochResponse struct {

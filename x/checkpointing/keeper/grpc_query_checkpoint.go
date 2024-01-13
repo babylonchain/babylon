@@ -160,7 +160,7 @@ func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLa
 }
 
 // GetLastCheckpointedEpoch returns the last epoch number that associates with a checkpoint
-func (k Keeper) GetLastCheckpointedEpoch(ctx sdk.Context) (uint64, error) {
+func (k Keeper) GetLastCheckpointedEpoch(ctx context.Context) (uint64, error) {
 	curEpoch := k.GetEpoch(ctx).EpochNumber
 	if curEpoch <= 0 {
 		return 0, fmt.Errorf("current epoch should be more than 0")

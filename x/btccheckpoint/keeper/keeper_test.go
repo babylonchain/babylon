@@ -49,8 +49,8 @@ func TestKeeper_GetSubmissionBtcInfo(t *testing.T) {
 				{Index: tt.args.Key2.TxIdx, Hash: hash2},
 			}}
 
-			k.BTCLightClient.SetDepth(hash1, int64(tt.args.Key1.Depth))
-			k.BTCLightClient.SetDepth(hash2, int64(tt.args.Key2.Depth))
+			k.BTCLightClient.SetDepth(hash1, tt.args.Key1.Depth)
+			k.BTCLightClient.SetDepth(hash2, tt.args.Key2.Depth)
 
 			info, err := k.BTCCheckpoint.GetSubmissionBtcInfo(k.SdkCtx, sk)
 
@@ -90,8 +90,8 @@ func FuzzGetSubmissionBtcInfo(f *testing.F) {
 			{Index: txidx2, Hash: hash2},
 		}}
 
-		k.BTCLightClient.SetDepth(hash1, int64(depth1))
-		k.BTCLightClient.SetDepth(hash2, int64(depth2))
+		k.BTCLightClient.SetDepth(hash1, uint64(depth1))
+		k.BTCLightClient.SetDepth(hash2, uint64(depth2))
 
 		info, err := k.BTCCheckpoint.GetSubmissionBtcInfo(k.SdkCtx, sk)
 		require.NoError(t, err)

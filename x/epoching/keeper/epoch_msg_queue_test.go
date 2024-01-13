@@ -1,17 +1,19 @@
 package keeper_test
 
 import (
-	"github.com/babylonchain/babylon/testutil/datagen"
 	"math/rand"
 	"testing"
 
-	appparams "github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	"github.com/babylonchain/babylon/x/epoching/types"
+
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+
+	appparams "github.com/babylonchain/babylon/app/params"
 )
 
 var (
@@ -24,15 +26,13 @@ func FuzzEnqueueMsg(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelper(t)
-		ctx, keeper := helper.Ctx, helper.EpochingKeeper
+		helper := testhelper.NewHelper(t)
+		ctx, keeper := helper.Ctx, helper.App.EpochingKeeper
 		// ensure that the epoch msg queue is correct at the genesis
 		require.Empty(t, keeper.GetCurrentEpochMsgs(ctx))
 		require.Equal(t, uint64(0), keeper.GetCurrentQueueLength(ctx))
 
-		// enter the 1st block and thus epoch 1
-		// Note that the genesis block does not trigger BeginBlock or EndBlock
-		ctx = helper.GenAndApplyEmptyBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 		// ensure that the epoch msg queue is correct at epoch 1
@@ -67,8 +67,11 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
-		ctx, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ctx, keeper, genAccs := helper.Ctx, helper.App.EpochingKeeper, helper.GenAccs
 		params := keeper.GetParams(ctx)
 
 		// get genesis account's address, whose holder will be the delegator
@@ -76,8 +79,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx = helper.BeginBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -103,12 +105,10 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewDels, int64(len(epochMsgs)))
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// go to BeginBlock of block 11, and thus entering epoch 2
 		for i := uint64(0); i < params.EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -119,7 +119,7 @@ func FuzzHandleQueuedMsg_MsgWrappedDelegate(f *testing.F) {
 		// ensure the voting power has been added w.r.t. the newly delegated tokens
 		valPower2, err := keeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
-		addedPower := helper.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewDels))
+		addedPower := helper.App.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewDels))
 		require.Equal(t, valPower+addedPower, valPower2)
 	})
 }
@@ -131,22 +131,24 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
-		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ctx, keeper, genAccs := helper.Ctx, helper.App.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		valSet1 := helper.EpochingKeeper.GetCurrentValidatorSet(helper.Ctx)
+		valSet1 := helper.App.EpochingKeeper.GetCurrentValidatorSet(helper.Ctx)
 		val := valSet1[0].Addr // validator to be undelegated
-		valPower, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
+		valPower, err := helper.App.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
 
 		// ensure the validator's lifecycle data is generated
@@ -168,12 +170,10 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewUndels, int64(len(epochMsgs)))
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -182,13 +182,14 @@ func FuzzHandleQueuedMsg_MsgWrappedUndelegate(f *testing.F) {
 		require.Empty(t, keeper.GetCurrentEpochMsgs(ctx))
 
 		// ensure the voting power has been reduced w.r.t. the unbonding tokens
-		valPower2, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
+		valPower2, err := helper.App.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val)
 		require.NoError(t, err)
-		reducedPower := helper.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewUndels))
+		reducedPower := helper.App.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewUndels))
 		require.Equal(t, valPower-reducedPower, valPower2)
 
 		// ensure the genesis account has these unbonding tokens
-		unbondingDels := helper.StakingKeeper.GetAllUnbondingDelegations(ctx, genAddr)
+		unbondingDels, err := helper.App.StakingKeeper.GetAllUnbondingDelegations(ctx, genAddr)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(unbondingDels)) // there is only 1 type of tokens
 
 		// from cosmos v47, all undelegations made at the same height are represented
@@ -205,27 +206,29 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelperWithValSet(t)
-		_, keeper, genAccs := helper.Ctx, helper.EpochingKeeper, helper.GenAccs
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ctx, keeper, genAccs := helper.Ctx, helper.App.EpochingKeeper, helper.GenAccs
 
 		// get genesis account's address, whose holder will be the delegator
 		require.NotNil(t, genAccs)
 		require.NotEmpty(t, genAccs)
 		genAddr := genAccs[0].GetAddress()
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
+		// at epoch 1 right now
 		epoch := keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		valSet1 := helper.EpochingKeeper.GetCurrentValidatorSet(ctx)
+		valSet1 := helper.App.EpochingKeeper.GetCurrentValidatorSet(ctx)
 
 		// 2 validators, where the operator will redelegate some token from val1 to val2
 		val1 := valSet1[0].Addr
-		val1Power, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val1)
+		val1Power, err := helper.App.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val1)
 		require.NoError(t, err)
 		val2 := valSet1[1].Addr
-		val2Power, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val2)
+		val2Power, err := helper.App.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val2)
 		require.NoError(t, err)
 		require.Equal(t, val1Power, val2Power)
 
@@ -249,12 +252,10 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		epochMsgs := keeper.GetCurrentEpochMsgs(ctx)
 		require.Equal(t, numNewRedels, int64(len(epochMsgs)))
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
 		// enter epoch 2
 		for i := uint64(0); i < keeper.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
 		}
 		epoch = keeper.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)
@@ -266,18 +267,19 @@ func FuzzHandleQueuedMsg_MsgWrappedBeginRedelegate(f *testing.F) {
 		// Note that in Cosmos SDK, redelegation happens upon the next `EndBlock`, rather than waiting for 14 days.
 		// This is because redelegation does not affect PoS security: upon redelegation requests, no token is leaving the system.
 		// SImilarly, in Babylon, redelegation happens unconditionally upon `EndEpoch`, rather than depending on checkpoint status.
-		val1Power2, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val1)
+		val1Power2, err := helper.App.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val1)
 		require.NoError(t, err)
-		val2Power2, err := helper.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val2)
+		val2Power2, err := helper.App.EpochingKeeper.GetCurrentValidatorVotingPower(ctx, val2)
 		require.NoError(t, err)
-		redelegatedPower := helper.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewRedels))
+		redelegatedPower := helper.App.StakingKeeper.TokensToConsensusPower(ctx, coinWithOnePower.Amount.MulRaw(numNewRedels))
 		// ensure the voting power of val1 has reduced
 		require.Equal(t, val1Power-redelegatedPower, val1Power2)
 		// ensure the voting power of val2 has increased
 		require.Equal(t, val2Power+redelegatedPower, val2Power2)
 
 		// ensure the genesis account has these redelegating tokens
-		redelegations := helper.StakingKeeper.GetAllRedelegations(ctx, genAddr, val1, val2)
+		redelegations, err := helper.App.StakingKeeper.GetAllRedelegations(ctx, genAddr, val1, val2)
+		require.NoError(t, err)
 		require.Equal(t, 1, len(redelegations))                              // there is only 1 type of tokens
 		require.Equal(t, numNewRedels, int64(len(redelegations[0].Entries))) // there are numNewRedels entries
 		for _, entry := range redelegations[0].Entries {

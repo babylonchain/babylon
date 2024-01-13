@@ -2,9 +2,9 @@ package app
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
+	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	ibctestingtypes "github.com/cosmos/ibc-go/v8/testing/types"
 )
 
 // The following functions are required by ibctesting
@@ -23,5 +23,5 @@ func (app *BabylonApp) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 }
 
 func (app *BabylonApp) GetTxConfig() client.TxConfig {
-	return GetEncodingConfig().TxConfig
+	return app.TxConfig()
 }

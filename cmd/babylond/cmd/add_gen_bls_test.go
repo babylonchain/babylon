@@ -6,16 +6,23 @@ import (
 	"path/filepath"
 	"testing"
 
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/server/config"
+
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 
-	tmconfig "github.com/cometbft/cometbft/config"
+	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
+	authmodulev1 "cosmossdk.io/api/cosmos/auth/module/v1"
+	"cosmossdk.io/core/appconfig"
+	"cosmossdk.io/depinject"
+	"cosmossdk.io/log"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/testutil/configurator"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
@@ -30,21 +37,59 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
+func newConfig() depinject.Config {
+	return configurator.NewAppConfig(
+		func(config *configurator.Config) {
+			config.ModuleConfigs["auth"] = &appv1alpha1.ModuleConfig{
+				Name: "auth",
+				Config: appconfig.WrapAny(&authmodulev1.Module{
+					Bech32Prefix: "bbn", // overwrite prefix here
+					ModuleAccountPermissions: []*authmodulev1.ModuleAccountPermission{
+						{Account: "fee_collector"},
+						{Account: "distribution"},
+						{Account: "mint", Permissions: []string{"minter"}},
+						{Account: "bonded_tokens_pool", Permissions: []string{"burner", "staking"}},
+						{Account: "not_bonded_tokens_pool", Permissions: []string{"burner", "staking"}},
+						{Account: "gov", Permissions: []string{"burner"}},
+						{Account: "nft"},
+					},
+				}),
+			}
+		},
+		configurator.ParamsModule(),
+		configurator.BankModule(),
+		configurator.GenutilModule(),
+		configurator.StakingModule(),
+		configurator.ConsensusModule(),
+		configurator.TxModule(),
+	)
+}
+
 // test adding genesis BLS keys without gentx
 // error is expected
 func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 	home := t.TempDir()
 	logger := log.NewNopLogger()
-	tmcfg, err := genutiltest.CreateDefaultTendermintConfig(home)
+	cmtcfg, err := genutiltest.CreateDefaultCometConfig(home)
 	require.NoError(t, err)
 
-	appCodec := app.GetEncodingConfig().Marshaler
-	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+	db := dbm.NewMemDB()
+	signer, err := app.SetupTestPrivSigner()
+	require.NoError(t, err)
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+		Logger:             logger,
+		DB:                 db,
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            app.EmptyAppOptions{},
+	})
+	gentxModule := bbn.BasicModuleManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+	appCodec := bbn.AppCodec()
 
 	err = genutiltest.ExecInitCmd(testMbm, home, appCodec)
 	require.NoError(t, err)
 
-	serverCtx := server.NewContext(viper.New(), tmcfg, logger)
+	serverCtx := server.NewContext(viper.New(), cmtcfg, logger)
 	clientCtx := client.Context{}.WithCodec(appCodec).WithHomeDir(home)
 	cfg := serverCtx.Config
 	cfg.SetRoot(clientCtx.HomeDir)
@@ -70,20 +115,29 @@ func Test_AddGenBlsCmdWithoutGentx(t *testing.T) {
 // test adding genesis BLS keys with gentx
 // error is expected if adding duplicate
 func Test_AddGenBlsCmdWithGentx(t *testing.T) {
-	min := network.MinimumAppConfig()
-	cfg, _ := network.DefaultConfigWithAppConfig(min)
-	config.SetConfigTemplate(config.DefaultConfigTemplate)
-	cfg.NumValidators = 1
+	db := dbm.NewMemDB()
+	signer, err := app.SetupTestPrivSigner()
+	require.NoError(t, err)
+	bbn := app.NewBabylonAppWithCustomOptions(t, false, signer, app.SetupOptions{
+		Logger:             log.NewNopLogger(),
+		DB:                 db,
+		InvCheckPeriod:     0,
+		SkipUpgradeHeights: map[int64]bool{},
+		AppOpts:            app.EmptyAppOptions{},
+	})
 
+	gentxModule := bbn.BasicModuleManager[genutiltypes.ModuleName].(genutil.AppModuleBasic)
+	config.SetConfigTemplate(config.DefaultConfigTemplate)
+	cfg, _ := network.DefaultConfigWithAppConfig(newConfig())
+	cfg.NumValidators = 1
 	testNetwork, err := network.New(t, t.TempDir(), cfg)
 	require.NoError(t, err)
 	defer testNetwork.Cleanup()
 
 	_, err = testNetwork.WaitForHeight(1)
 	require.NoError(t, err)
-	gentxModule := app.ModuleBasics[genutiltypes.ModuleName].(genutil.AppModuleBasic)
 
-	targetCfg := tmconfig.DefaultConfig()
+	targetCfg := cmtconfig.DefaultConfig()
 	targetCfg.SetRoot(filepath.Join(testNetwork.Validators[0].Dir, "simd"))
 	targetGenesisFile := targetCfg.GenesisFile()
 	targetCtx := testNetwork.Validators[0].ClientCtx
@@ -91,13 +145,12 @@ func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 		v := testNetwork.Validators[i]
 		// build and create genesis BLS key
 		genBlsCmd := cmd.GenBlsCmd()
-		nodeCfg := tmconfig.DefaultConfig()
+		nodeCfg := cmtconfig.DefaultConfig()
 		homeDir := filepath.Join(v.Dir, "simd")
 		nodeCfg.SetRoot(homeDir)
 		keyPath := nodeCfg.PrivValidatorKeyFile()
 		statePath := nodeCfg.PrivValidatorStateFile()
 		filePV := privval.GenWrappedFilePV(keyPath, statePath)
-		defer filePV.Clean(keyPath, statePath)
 		filePV.SetAccAddress(v.Address)
 		_, err = cli.ExecTestCLICmd(v.ClientCtx, genBlsCmd, []string{fmt.Sprintf("--%s=%s", flags.FlagHome, homeDir)})
 		require.NoError(t, err)
@@ -120,5 +173,6 @@ func Test_AddGenBlsCmdWithGentx(t *testing.T) {
 		require.NotEmpty(t, checkpointingGenState.GenesisKeys)
 		gks := checkpointingGenState.GetGenesisKeys()
 		require.Equal(t, genKey, gks[i])
+		filePV.Clean(keyPath, statePath)
 	}
 }

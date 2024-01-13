@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -11,17 +12,11 @@ import (
 	"github.com/babylonchain/babylon/types"
 )
 
-func SendMsgToTendermint(clientCtx client.Context, msg sdk.Msg) (*sdk.TxResponse, error) {
-	return SendMsgsToTendermint(clientCtx, []sdk.Msg{msg})
+func SendMsgToComet(ctx context.Context, clientCtx client.Context, msg sdk.Msg) (*sdk.TxResponse, error) {
+	return SendMsgsToComet(ctx, clientCtx, []sdk.Msg{msg})
 }
 
-func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResponse, error) {
-	for _, msg := range msgs {
-		if err := msg.ValidateBasic(); err != nil {
-			return nil, err
-		}
-	}
-
+func SendMsgsToComet(ctx context.Context, clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResponse, error) {
 	gasPrice, gasAdjustment := types.MustGetGasSettings(clientCtx.HomeDir, clientCtx.Viper)
 	txf := sdktx.Factory{}.
 		WithTxConfig(clientCtx.TxConfig).
@@ -32,7 +27,7 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 		WithGasPrices(gasPrice).
 		WithGasAdjustment(gasAdjustment)
 
-	return BroadcastTx(clientCtx, txf, msgs...)
+	return BroadcastTx(ctx, clientCtx, txf, msgs...)
 }
 
 // BroadcastTx attempts to generate, sign and broadcast a transaction with the
@@ -40,7 +35,7 @@ func SendMsgsToTendermint(clientCtx client.Context, msgs []sdk.Msg) (*sdk.TxResp
 // It will return an error upon failure.
 // The code is based on cosmos-sdk: https://github.com/cosmos/cosmos-sdk/blob/7781cdb3d20bc7ebac017452897ce1e6ab3903ef/client/tx/tx.go#L65
 // it treats non-zero response code as errors
-func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
+func BroadcastTx(ctx context.Context, clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (*sdk.TxResponse, error) {
 	txf, err := prepareFactory(clientCtx, txf)
 	if err != nil {
 		return nil, err
@@ -64,7 +59,7 @@ func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (
 
 	tx.SetFeeGranter(clientCtx.GetFeeGranterAddress())
 
-	err = sdktx.Sign(txf, clientCtx.GetFromName(), tx, true)
+	err = sdktx.Sign(ctx, txf, clientCtx.GetFromName(), tx, true)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +69,7 @@ func BroadcastTx(clientCtx client.Context, txf sdktx.Factory, msgs ...sdk.Msg) (
 		return nil, err
 	}
 
-	// broadcast to a Tendermint node
+	// broadcast to a comet node
 	res, err := clientCtx.BroadcastTx(txBytes)
 	if err != nil {
 		return nil, err
