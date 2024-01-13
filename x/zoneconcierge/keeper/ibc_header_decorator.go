@@ -64,7 +64,7 @@ func (d *IBCHeaderDecorator) getHeaderAndClientState(ctx sdk.Context, m sdk.Msg)
 func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, success bool, next sdk.PostHandler) (sdk.Context, error) {
 	// only do this when finalizing a block or simulating the current tx
 	if ctx.ExecMode() != sdk.ExecModeFinalize && !simulate {
-		return next(ctx, tx, success, simulate)
+		return next(ctx, tx, simulate, success)
 	}
 	// ignore unsuccessful tx
 	// NOTE: tx with a misbehaving header will still succeed, but will make the client to be frozen
