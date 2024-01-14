@@ -22,7 +22,7 @@ type RawCheckpointSubmission struct {
 	CheckpointData btctxformatter.RawBtcCheckpoint
 }
 
-// SubmissionBtcInfo encapsualte important information about submission posistion
+// SubmissionBtcInfo encapsulate important information about submission position
 // on btc ledger
 type SubmissionBtcInfo struct {
 	SubmissionKey SubmissionKey

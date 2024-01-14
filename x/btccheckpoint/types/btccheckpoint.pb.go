@@ -321,7 +321,7 @@ func (m *TransactionInfo) GetProof() []byte {
 }
 
 // TODO: Determine if we should keep any block number or depth info.
-// On one hand it may be usefull to determine if block is stable or not, on
+// On one hand it may be useful to determine if block is stable or not, on
 // other depth/block number info, without context (i.e info about chain) is
 // pretty useless and blockshash in enough to retrieve is from lightclient
 type SubmissionData struct {
@@ -329,7 +329,7 @@ type SubmissionData struct {
 	VigilanteAddresses *CheckpointAddresses `protobuf:"bytes,1,opt,name=vigilante_addresses,json=vigilanteAddresses,proto3" json:"vigilante_addresses,omitempty"`
 	// txs_info is the two `TransactionInfo`s corresponding to the submission
 	// It is used for
-	// - recovering address of sender of btc transction to payup the reward.
+	// - recovering address of sender of btc transaction to payup the reward.
 	// - allowing the ZoneConcierge module to prove the checkpoint is submitted to
 	// BTC
 	TxsInfo []*TransactionInfo `protobuf:"bytes,2,rep,name=txs_info,json=txsInfo,proto3" json:"txs_info,omitempty"`
@@ -391,7 +391,7 @@ func (m *SubmissionData) GetEpoch() uint64 {
 }
 
 // Data stored in db and indexed by epoch number
-// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
+// TODO: Add btc blockheight at epooch end, when adding handling of epoching
 // callbacks
 type EpochData struct {
 	// List of all received checkpoints during this epoch, sorted by order of
