@@ -5,7 +5,7 @@ Bringing Bitcoin security to Cosmos and beyond.
 [![Website](https://badgen.net/badge/icon/website?label=)](https://babylonchain.io)
 [![Whitepaper](https://badgen.net/badge/icon/whitepaper?label=)](https://arxiv.org/abs/2207.08392)
 [![Twitter](https://badgen.net/badge/icon/twitter?icon=twitter&label)](https://twitter.com/babylon_chain)
-[![Discord](https://badgen.net/badge/icon/discord?icon=discord&label)](https://discord.gg/babylonchain)
+[![Discord](https://badgen.net/badge/icon/discord?icon=discord&label)](https://discord.com/invite/babylonglobal)
 [![Medium](https://badgen.net/badge/icon/medium?icon=medium&label)](https://medium.com/babylonchain-io)
 
 ## Build and install
@@ -35,7 +35,7 @@ For the most up-to-date documentation please visit [docs.babylonchain.io](https:
 
 ## Joining the testnet
 
-Please follow the instructions on the [Joining the Testnet documentation page](https://docs.babylonchain.io/docs/testnet/overview).
+Please follow the instructions on the [Joining the Testnet documentation page](https://docs.babylonchain.io/docs/user-guides/btc-timestamping-testnet/overview).
 
 ## Contributing
 

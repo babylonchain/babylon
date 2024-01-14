@@ -143,9 +143,9 @@ import (
 const (
 	appName = "BabylonApp"
 
-	// Custom prefix for application enviromental variables.
+	// Custom prefix for application environmental variables.
 	// From cosmos version 0.46 is is possible to have custom prefix for application
-	// enviromental variables - https://github.com/cosmos/cosmos-sdk/pull/10950
+	// environmental variables - https://github.com/cosmos/cosmos-sdk/pull/10950
 	BabylonAppEnvPrefix = ""
 
 	// TODO review possible capabilities
