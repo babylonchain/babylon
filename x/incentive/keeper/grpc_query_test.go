@@ -89,12 +89,16 @@ func FuzzBTCTimestampingGaugeQuery(f *testing.F) {
 
 		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
 
-		// generate a list of random Gauges at random heights, then insert them to KVStore
-		epochList := []uint64{}
-		gaugeList := []*types.Gauge{}
+		// initialise the 1st gauge
+		epochList := []uint64{datagen.RandomInt(r, 1000) + 1}
+		gaugeList := []*types.Gauge{datagen.GenRandomGauge(r)}
+		keeper.SetBTCTimestampingGauge(ctx, epochList[0], gaugeList[0])
+
+		// generate a list of random gauges at random heights, then insert them to KVStore
 		numGauges := datagen.RandomInt(r, 100) + 1
-		for i := uint64(0); i < numGauges; i++ {
-			epoch := datagen.RandomInt(r, 1000000)
+		for i := uint64(1); i < numGauges; i++ {
+			// increment a random number of epochs
+			epoch := epochList[i-1] + datagen.RandomInt(r, 1000) + 1
 			epochList = append(epochList, epoch)
 			gauge := datagen.GenRandomGauge(r)
 			gaugeList = append(gaugeList, gauge)
@@ -108,7 +112,12 @@ func FuzzBTCTimestampingGaugeQuery(f *testing.F) {
 			}
 			resp, err := keeper.BTCTimestampingGauge(ctx, req)
 			require.NoError(t, err)
-			require.True(t, resp.Gauge.Coins.Equal(gaugeList[i].Coins))
+			require.True(t, resp.Gauge.Coins.Equal(gaugeList[i].Coins),
+				"epoch: %d\nresp.Gauge.Coins: %s\ngaugeList[i].Coins: %s\n",
+				epochList[i],
+				resp.Gauge.Coins.Sort().String(),
+				gaugeList[i].Coins.Sort().String(),
+			)
 		}
 	})
 }
