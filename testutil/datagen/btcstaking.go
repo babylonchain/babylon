@@ -361,7 +361,7 @@ func GenBTCUnbondingSlashingInfo(
 		fpPKs,
 		covenantPKs,
 		covenantQuorum,
-		stakingTimeBlocks,
+		slashingChangeLockTime,
 		btcutil.Amount(stakingValue),
 		btcNet,
 	)

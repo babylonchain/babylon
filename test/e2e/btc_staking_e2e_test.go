@@ -162,7 +162,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 		covenantBTCPKs,
 		covenantQuorum,
 		wire.NewOutPoint(&stkTxHash, datagen.StakingOutIdx),
-		unbondingTime,
+		stakingTimeBlocks,
 		unbondingValue,
 		params.SlashingAddress,
 		params.SlashingRate,
