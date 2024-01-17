@@ -1,4 +1,4 @@
-FROM debian:bullseye-slim
+FROM debian:bullseye-slim AS build-env
 
 RUN apt-get update && apt-get install -y git make jq gcc make wget
 
@@ -28,9 +28,13 @@ ENV RELAYER_TAG v2.4.2
 RUN git clone https://github.com/cosmos/relayer.git
 RUN cd relayer && git fetch origin && git checkout ${RELAYER_TAG} && make install && cd -
 
-# Clean up
-RUN rm -rf /work
+FROM debian:bullseye-slim AS run
+# Create a user
+RUN addgroup --system rly && adduser --system --gid 101 rly
 
-ENTRYPOINT ["/go/bin/rly"]
-CMD []
-STOPSIGNAL SIGTERM
+COPY --from=build-env /go/bin/rly /usr/bin/rly
+
+# Set home directory and user
+WORKDIR /home/rly
+RUN chown -R rly /home/rly
+USER rly
