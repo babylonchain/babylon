@@ -1,4 +1,4 @@
-all: babylond
+all: babylond cosmos-relayer
 
 babylond: babylond-rmi
 	docker build --tag babylonchain/babylond -f babylond/Dockerfile \
@@ -7,4 +7,11 @@ babylond: babylond-rmi
 babylond-rmi:
 	docker rmi babylonchain/babylond 2>/dev/null; true
 
-.PHONY: all babylond babylond-rmi
+cosmos-relayer: cosmos-relayer-rmi
+	docker build --tag babylonchain/cosmos-relayer -f cosmos-relayer/Dockerfile \
+				$(shell git rev-parse --show-toplevel)/contrib/images/cosmos-relayer
+
+cosmos-relayer-rmi:
+	docker rmi babylonchain/cosmos-relayer 2>/dev/null; true
+
+.PHONY: all babylond cosmos-relayer babylond-rmi cosmos-relayer-rmi
