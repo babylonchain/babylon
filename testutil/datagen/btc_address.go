@@ -17,10 +17,23 @@ func GenRandomPkHash(r *rand.Rand) []byte {
 }
 
 func GenRandomBTCAddress(r *rand.Rand, net *chaincfg.Params) (btcutil.Address, error) {
-	addr, err := btcutil.NewAddressPubKeyHash(GenRandomPkHash(r), net)
-	if err != nil {
-		return nil, err
+	var (
+		addr btcutil.Address
+		err  error
+	)
+
+	for {
+		addr, err = btcutil.NewAddressPubKeyHash(GenRandomPkHash(r), net)
+		if err != nil {
+			// something is wrong in pkhash or net, return error
+			return nil, err
+		}
+		if _, err := btcutil.DecodeAddress(addr.EncodeAddress(), net); err == nil {
+			// this is a legit address, use it
+			break
+		}
 	}
+
 	return addr, nil
 }
 
