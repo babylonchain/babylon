@@ -2,14 +2,17 @@
 
 set -ex
 
-# initialize Hermes relayer configuration
-mkdir -p /root/.hermes/
-touch /root/.hermes/config.toml
+RELAYER_CONF_DIR=/root/.hermes
 
-echo $BBN_A_E2E_VAL_MNEMONIC > /root/.hermes/BBN_A_MNEMONIC.txt
-echo $BBN_B_E2E_VAL_MNEMONIC > /root/.hermes/BBN_B_MNEMONIC.txt
-# setup Hermes relayer configuration
-tee /root/.hermes/config.toml <<EOF
+# Initialize Hermes relayer configuration
+mkdir -p $RELAYER_CONF_DIR
+RELAYER_CONF=$RELAYER_CONF_DIR/config.toml
+
+echo $BBN_A_E2E_VAL_MNEMONIC >$RELAYER_CONF_DIR/BBN_A_MNEMONIC.txt
+echo $BBN_B_E2E_VAL_MNEMONIC >$RELAYER_CONF_DIR/BBN_B_MNEMONIC.txt
+
+# Setup Hermes relayer configuration
+cat <<EOF >$RELAYER_CONF
 [global]
 log_level = 'debug'
 [mode]
@@ -68,9 +71,9 @@ trusting_period = '14days'
 trust_threshold = { numerator = '1', denominator = '3' }
 EOF
 
-# import keys
-hermes keys add --chain ${BBN_A_E2E_CHAIN_ID} --key-name "val01-bbn-a" --mnemonic-file /root/.hermes/BBN_A_MNEMONIC.txt
-hermes keys add --chain ${BBN_B_E2E_CHAIN_ID} --key-name "val01-bbn-b" --mnemonic-file /root/.hermes/BBN_B_MNEMONIC.txt
+# Import keys
+hermes keys add --chain ${BBN_A_E2E_CHAIN_ID} --key-name "val01-bbn-a" --mnemonic-file $RELAYER_CONF_DIR/BBN_A_MNEMONIC.txt
+hermes keys add --chain ${BBN_B_E2E_CHAIN_ID} --key-name "val01-bbn-b" --mnemonic-file $RELAYER_CONF_DIR/BBN_B_MNEMONIC.txt
 
-# start Hermes relayer
+# Start Hermes relayer
 hermes start
