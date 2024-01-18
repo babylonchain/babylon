@@ -7,7 +7,7 @@ import "tendermint/abci/types.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
-// RawCheckpoint wraps the BLS multi sig with meta data
+// RawCheckpoint wraps the BLS multi sig with metadata
 message RawCheckpoint {
   option (gogoproto.equal) = true;
 
@@ -25,7 +25,7 @@ message RawCheckpoint {
             "github.com/babylonchain/babylon/crypto/bls12381.Signature" ];
 }
 
-// RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+// RawCheckpointWithMeta wraps the raw checkpoint with metadata.
 message RawCheckpointWithMeta {
   option (gogoproto.equal) = true;
 
@@ -47,6 +47,8 @@ message RawCheckpointWithMeta {
 // InjectedCheckpoint wraps the checkpoint and the extended votes
 message InjectedCheckpoint {
   RawCheckpointWithMeta ckpt = 1;
+  // extended_commit_info is the commit info including the vote extensions
+  // from the previous proposal
   tendermint.abci.ExtendedCommitInfo extended_commit_info = 2;
 }
 
@@ -81,7 +83,7 @@ message CheckpointStateUpdate {
   google.protobuf.Timestamp block_time = 3 [ (gogoproto.stdtime) = true ];
 }
 
-// BlsSig wraps the BLS sig with meta data.
+// BlsSig wraps the BLS sig with metadata.
 message BlsSig {
   option (gogoproto.equal) = false;
 

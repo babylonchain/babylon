@@ -4932,7 +4932,7 @@ paths:
                       from individual BLS
 
                       sigs
-                title: RawCheckpoint wraps the BLS multi sig with meta data
+                title: RawCheckpoint wraps the BLS multi sig with metadata
             description: |-
               QueryLastCheckpointWithStatusResponse is the response type for the
               Query/LastCheckpointWithStatus RPC method.
@@ -5015,7 +5015,7 @@ paths:
                           from individual BLS
 
                           sigs
-                    title: RawCheckpoint wraps the BLS multi sig with meta data
+                    title: RawCheckpoint wraps the BLS multi sig with metadata
                   status:
                     type: string
                     enum:
@@ -5096,7 +5096,7 @@ paths:
                       height) of this
 
                       transition.
-                description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+                description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
             description: >-
               QueryRawCheckpointResponse is the response type for the
               Query/RawCheckpoint
@@ -5181,7 +5181,7 @@ paths:
                             aggregated from individual BLS
 
                             sigs
-                      title: RawCheckpoint wraps the BLS multi sig with meta data
+                      title: RawCheckpoint wraps the BLS multi sig with metadata
                     status:
                       type: string
                       enum:
@@ -5419,7 +5419,7 @@ paths:
                             aggregated from individual BLS
 
                             sigs
-                      title: RawCheckpoint wraps the BLS multi sig with meta data
+                      title: RawCheckpoint wraps the BLS multi sig with metadata
                     status:
                       type: string
                       enum:
@@ -13581,7 +13581,7 @@ definitions:
               individual BLS
 
               sigs
-        title: RawCheckpoint wraps the BLS multi sig with meta data
+        title: RawCheckpoint wraps the BLS multi sig with metadata
     description: |-
       QueryLastCheckpointWithStatusResponse is the response type for the
       Query/LastCheckpointWithStatus RPC method.
@@ -13620,7 +13620,7 @@ definitions:
                     individual BLS
 
                     sigs
-              title: RawCheckpoint wraps the BLS multi sig with meta data
+              title: RawCheckpoint wraps the BLS multi sig with metadata
             status:
               type: string
               enum:
@@ -13701,7 +13701,7 @@ definitions:
                 this
 
                 transition.
-          description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+          description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
         title: the order is going from the newest to oldest based on the epoch number
       pagination:
         description: pagination defines the pagination in the response.
@@ -13758,7 +13758,7 @@ definitions:
                   individual BLS
 
                   sigs
-            title: RawCheckpoint wraps the BLS multi sig with meta data
+            title: RawCheckpoint wraps the BLS multi sig with metadata
           status:
             type: string
             enum:
@@ -13837,7 +13837,7 @@ definitions:
               this
 
               transition.
-        description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+        description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
     description: >-
       QueryRawCheckpointResponse is the response type for the
       Query/RawCheckpoint
@@ -13878,7 +13878,7 @@ definitions:
                     individual BLS
 
                     sigs
-              title: RawCheckpoint wraps the BLS multi sig with meta data
+              title: RawCheckpoint wraps the BLS multi sig with metadata
             status:
               type: string
               enum:
@@ -13959,7 +13959,7 @@ definitions:
                 this
 
                 transition.
-          description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+          description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
         title: the order is going from the newest to oldest based on the epoch number
       pagination:
         description: pagination defines the pagination in the response.
@@ -14029,7 +14029,7 @@ definitions:
           BLS
 
           sigs
-    title: RawCheckpoint wraps the BLS multi sig with meta data
+    title: RawCheckpoint wraps the BLS multi sig with metadata
   babylon.checkpointing.v1.RawCheckpointWithMeta:
     type: object
     properties:
@@ -14060,7 +14060,7 @@ definitions:
               individual BLS
 
               sigs
-        title: RawCheckpoint wraps the BLS multi sig with meta data
+        title: RawCheckpoint wraps the BLS multi sig with metadata
       status:
         type: string
         enum:
@@ -14131,7 +14131,7 @@ definitions:
           lifecycle defines the lifecycle of this checkpoint, i.e., each state
           transition and the time (in both timestamp and block height) of this
           transition.
-    description: RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+    description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
   babylon.checkpointing.v1.ValidatorWithBlsKey:
     type: object
     properties:

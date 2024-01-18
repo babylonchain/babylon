@@ -160,7 +160,7 @@ func (m *FinalityProvider) GetSlashedBtcHeight() uint64 {
 	return 0
 }
 
-// FinalityProviderWithMeta wraps the FinalityProvider with meta data.
+// FinalityProviderWithMeta wraps the FinalityProvider with metadata.
 type FinalityProviderWithMeta struct {
 	// btc_pk is the Bitcoin secp256k1 PK of thisfinality provider
 	// the PK follows encoding in BIP-340 spec

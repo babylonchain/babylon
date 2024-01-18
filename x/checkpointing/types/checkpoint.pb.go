@@ -70,7 +70,7 @@ func (CheckpointStatus) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_73996df9c6aabde4, []int{0}
 }
 
-// RawCheckpoint wraps the BLS multi sig with meta data
+// RawCheckpoint wraps the BLS multi sig with metadata
 type RawCheckpoint struct {
 	// epoch_num defines the epoch number the raw checkpoint is for
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
@@ -131,7 +131,7 @@ func (m *RawCheckpoint) GetBitmap() []byte {
 	return nil
 }
 
-// RawCheckpointWithMeta wraps the raw checkpoint with meta data.
+// RawCheckpointWithMeta wraps the raw checkpoint with metadata.
 type RawCheckpointWithMeta struct {
 	Ckpt *RawCheckpoint `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
 	// status defines the status of the checkpoint
@@ -209,7 +209,9 @@ func (m *RawCheckpointWithMeta) GetLifecycle() []*CheckpointStateUpdate {
 
 // InjectedCheckpoint wraps the checkpoint and the extended votes
 type InjectedCheckpoint struct {
-	Ckpt               *RawCheckpointWithMeta    `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
+	Ckpt *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
+	// extended_commit_info is the commit info including the vote extensions
+	// from the previous proposal
 	ExtendedCommitInfo *types.ExtendedCommitInfo `protobuf:"bytes,2,opt,name=extended_commit_info,json=extendedCommitInfo,proto3" json:"extended_commit_info,omitempty"`
 }
 
@@ -326,7 +328,7 @@ func (m *CheckpointStateUpdate) GetBlockTime() *time.Time {
 	return nil
 }
 
-// BlsSig wraps the BLS sig with meta data.
+// BlsSig wraps the BLS sig with metadata.
 type BlsSig struct {
 	// epoch_num defines the epoch number that the BLS sig is signed on
 	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`

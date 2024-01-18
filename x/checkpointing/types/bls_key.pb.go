@@ -171,9 +171,12 @@ func (m *ValidatorWithBlsKeySet) GetValSet() []*ValidatorWithBlsKey {
 // ValidatorWithBlsKey couples validator address, voting power, and its bls
 // public key
 type ValidatorWithBlsKey struct {
+	// validator_address is the address of the validator
 	ValidatorAddress string `protobuf:"bytes,1,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
-	BlsPubKey        []byte `protobuf:"bytes,2,opt,name=bls_pub_key,json=blsPubKey,proto3" json:"bls_pub_key,omitempty"`
-	VotingPower      uint64 `protobuf:"varint,3,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
+	// bls_pub_key is the BLS public key of the validator
+	BlsPubKey []byte `protobuf:"bytes,2,opt,name=bls_pub_key,json=blsPubKey,proto3" json:"bls_pub_key,omitempty"`
+	// voting_power is the voting power of the validator at the given epoch
+	VotingPower uint64 `protobuf:"varint,3,opt,name=voting_power,json=votingPower,proto3" json:"voting_power,omitempty"`
 }
 
 func (m *ValidatorWithBlsKey) Reset()         { *m = ValidatorWithBlsKey{} }
@@ -232,12 +235,18 @@ func (m *ValidatorWithBlsKey) GetVotingPower() uint64 {
 
 // VoteExtension defines the structure used to create a BLS vote extension.
 type VoteExtension struct {
-	Signer           string                                                     `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	ValidatorAddress string                                                     `protobuf:"bytes,2,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
-	BlockHash        []byte                                                     `protobuf:"bytes,3,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
-	EpochNum         uint64                                                     `protobuf:"varint,4,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
-	Height           uint64                                                     `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
-	BlsSig           *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,6,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
+	// signer is the address of the vote extension signer
+	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
+	// validator_address is the address of the validator
+	ValidatorAddress string `protobuf:"bytes,2,opt,name=validator_address,json=validatorAddress,proto3" json:"validator_address,omitempty"`
+	// block_hash is the hash of the block that the vote extension is signed over
+	BlockHash []byte `protobuf:"bytes,3,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
+	// epoch_num is the epoch number of the vote extension
+	EpochNum uint64 `protobuf:"varint,4,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
+	// height is the height of the vote extension
+	Height uint64 `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
+	// bls_sig is the BLS signature
+	BlsSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,6,opt,name=bls_sig,json=blsSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_sig,omitempty"`
 }
 
 func (m *VoteExtension) Reset()         { *m = VoteExtension{} }
