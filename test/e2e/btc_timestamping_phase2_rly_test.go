@@ -12,14 +12,14 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type BTCTimestampingPhase2TestSuite struct {
+type BTCTimestampingPhase2RlyTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
 }
 
-func (s *BTCTimestampingPhase2TestSuite) SetupSuite() {
-	s.T().Log("setting up phase 2 integration test suite...")
+func (s *BTCTimestampingPhase2RlyTestSuite) SetupSuite() {
+	s.T().Log("setting up phase 2 go relayer integration test suite...")
 	var (
 		err error
 	)
@@ -32,7 +32,7 @@ func (s *BTCTimestampingPhase2TestSuite) SetupSuite() {
 	// 2. Start both networks.
 	// 3. Store and instantiate babylon contract on chain B.
 	// 3. Execute various e2e tests, excluding IBC
-	s.configurer, err = configurer.NewBTCTimestampingPhase2Configurer(s.T(), true)
+	s.configurer, err = configurer.NewBTCTimestampingPhase2RlyConfigurer(s.T(), true)
 
 	s.Require().NoError(err)
 
@@ -43,12 +43,12 @@ func (s *BTCTimestampingPhase2TestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *BTCTimestampingPhase2TestSuite) TearDownSuite() {
+func (s *BTCTimestampingPhase2RlyTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	s.Require().NoError(err)
 }
 
-func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
+func (s *BTCTimestampingPhase2RlyTestSuite) Test1IbcCheckpointingPhase2Rly() {
 	chainA := s.configurer.GetChainConfig(0)
 
 	babylonNode, err := chainA.GetNodeAtIndex(2)
@@ -70,7 +70,7 @@ func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
 	// Validate channel state (CZ side)
 	czChannelsResp, err := czNode.QueryIBCChannels()
 	s.NoError(err)
-	s.Len(czChannelsResp.Channels, 2) // TODO: why 2 channels?
+	s.Len(czChannelsResp.Channels, 1)
 	czChannel := czChannelsResp.Channels[0]
 	s.Equal(channeltypes.OPEN, czChannel.State)
 	s.Equal(channeltypes.ORDERED, czChannel.Ordering)

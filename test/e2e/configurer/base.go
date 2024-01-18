@@ -116,11 +116,11 @@ func (bc *baseConfigurer) InstantiateBabylonContract() error {
 	return nil
 }
 
-func (bc *baseConfigurer) RunIBC() error {
+func (bc *baseConfigurer) RunHermesRelayerIBC() error {
 	// Run a relayer between every possible pair of chains.
 	for i := 0; i < len(bc.chainConfigs); i++ {
 		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.runIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}
 			if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
@@ -131,11 +131,27 @@ func (bc *baseConfigurer) RunIBC() error {
 	return nil
 }
 
+func (bc *baseConfigurer) RunCosmosRelayerIBC() error {
+	// Run a relayer between every possible pair of chains.
+	for i := 0; i < len(bc.chainConfigs); i++ {
+		for j := i + 1; j < len(bc.chainConfigs); j++ {
+			if err := bc.runCosmosIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			//if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+			//	return err
+			//}
+		}
+	}
+	// Launches a relayer between chain A (babylond) and chain B (wasmd)
+	return nil
+}
+
 func (bc *baseConfigurer) RunIBCTransferChannel() error {
 	// Run a relayer between every possible pair of chains.
 	for i := 0; i < len(bc.chainConfigs); i++ {
 		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.runIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}
 			if err := bc.createIBCTransferChannel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
@@ -146,7 +162,7 @@ func (bc *baseConfigurer) RunIBCTransferChannel() error {
 	return nil
 }
 
-func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
+func (bc *baseConfigurer) runHermesIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
 	bc.t.Log("starting Hermes relayer container...")
 
 	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-hermes-")
@@ -220,6 +236,96 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 		"hermes relayer not healthy")
 
 	bc.t.Logf("started Hermes relayer container: %s", hermesResource.Container.ID)
+
+	// XXX: Give time to both networks to start, otherwise we might see gRPC
+	// transport errors.
+	time.Sleep(3 * time.Second)
+
+	return nil
+}
+
+func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
+	bc.t.Log("Starting Cosmos relayer container...")
+
+	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-cosmos-")
+	if err != nil {
+		return err
+	}
+
+	rlyCfgPath := path.Join(tmpDir, "rly")
+
+	if err := os.MkdirAll(rlyCfgPath, 0o755); err != nil {
+		return err
+	}
+
+	_, err = util.CopyFile(
+		filepath.Join("./scripts/", "rly_bootstrap.sh"),
+		filepath.Join(rlyCfgPath, "rly_bootstrap.sh"),
+	)
+	if err != nil {
+		return err
+	}
+
+	// we are using non validator nodes as validator are constantly sending bls
+	// transactions, which makes relayer operations failing
+	relayerNodeA := chainConfigA.NodeConfigs[2]
+	relayerNodeB := chainConfigB.NodeConfigs[2]
+
+	rlyResource, err := bc.containerManager.RunRlyResource(
+		chainConfigA.Id,
+		relayerNodeA.Name,
+		relayerNodeA.Mnemonic,
+		chainConfigA.IBCConfig.PortID,
+		chainConfigB.Id,
+		relayerNodeB.Name,
+		relayerNodeB.Mnemonic,
+		chainConfigB.IBCConfig.PortID,
+		rlyCfgPath)
+	if err != nil {
+		return err
+	}
+
+	// TODO: Adapt to Cosmos relayer
+	/*
+		endpoint := fmt.Sprintf("http://%s/state", rlyResource.GetHostPort("3031/tcp"))
+
+		require.Eventually(bc.t, func() bool {
+			resp, err := http.Get(endpoint)
+			if err != nil {
+				return false
+			}
+
+			defer resp.Body.Close()
+
+			bz, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return false
+			}
+
+			var respBody map[string]interface{}
+			if err := json.Unmarshal(bz, &respBody); err != nil {
+				return false
+			}
+
+			status, ok := respBody["status"].(string)
+			require.True(bc.t, ok)
+			result, ok := respBody["result"].(map[string]interface{})
+			require.True(bc.t, ok)
+
+			chains, ok := result["chains"].([]interface{})
+			require.True(bc.t, ok)
+
+			return status == "success" && len(chains) == 2
+		},
+			5*time.Minute,
+			time.Second,
+			"cosmos relayer not healthy")
+	*/
+	// Wait for the relayer to connect to the chains
+	bc.t.Logf("waiting for Cosmos relayer setup...")
+	time.Sleep(1 * time.Minute)
+
+	bc.t.Logf("started Cosmos relayer container: %s", rlyResource.Container.ID)
 
 	// XXX: Give time to both networks to start, otherwise we might see gRPC
 	// transport errors.

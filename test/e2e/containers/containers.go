@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	hermesContainerName = "hermes-relayer"
+	hermesContainerName        = "hermes-relayer"
+	cosmosRelayerContainerName = "rly-relayer"
 	// The maximum number of times debug logs are printed to console
 	// per CLI command.
 	maxDebugLogsPerCommand = 3
@@ -35,10 +36,10 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager instance and initializes
-// all Docker specific utilies. Returns an error if initialiation fails.
-func NewManager(isDebugLogEnabled bool) (docker *Manager, err error) {
+// all Docker specific utilities. Returns an error if initialization fails.
+func NewManager(isDebugLogEnabled bool, isCosmosRelayer bool) (docker *Manager, err error) {
 	docker = &Manager{
-		ImageConfig:       NewImageConfig(),
+		ImageConfig:       NewImageConfig(isCosmosRelayer),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
 	}
@@ -237,6 +238,54 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 	}
 	m.resources[hermesContainerName] = hermesResource
 	return hermesResource, nil
+}
+
+// RunRlyResource runs a Cosmos relayer container. Returns the container resource and error if any.
+// the name of the cosmos container is "<chain A id>-<chain B id>-relayer"
+func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemonic, chainAIbcPort, chainBID, osmoBRelayerNodeName, osmoBValMnemonic, chainBIbcPort string, rlyCfgPath string) (*dockertest.Resource, error) {
+	rlyResource, err := m.pool.RunWithOptions(
+		&dockertest.RunOptions{
+			Name:       cosmosRelayerContainerName,
+			Repository: m.RelayerRepository,
+			Tag:        m.RelayerTag,
+			NetworkID:  m.network.Network.ID,
+			Cmd: []string{
+				"start",
+			},
+			User: "root:root",
+			Mounts: []string{
+				fmt.Sprintf("%s/:/root/rly", rlyCfgPath),
+			},
+			//ExposedPorts: []string{
+			//	"3031",
+			//},
+			//PortBindings: map[docker.Port][]docker.PortBinding{
+			//	"3031/tcp": {{HostIP: "", HostPort: "3031"}},
+			//},
+			//Platform: "linux/x86_64",
+			Env: []string{
+				fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", chainAID),
+				fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", chainBID),
+				fmt.Sprintf("BBN_A_E2E_VAL_MNEMONIC=%s", osmoAValMnemonic),
+				fmt.Sprintf("BBN_B_E2E_VAL_MNEMONIC=%s", osmoBValMnemonic),
+				fmt.Sprintf("BBN_A_E2E_VAL_HOST=%s", osmoARelayerNodeName),
+				fmt.Sprintf("BBN_B_E2E_VAL_HOST=%s", osmoBRelayerNodeName),
+				fmt.Sprintf("CHAIN_A_IBC_PORT=%s", chainAIbcPort),
+				fmt.Sprintf("CHAIN_B_IBC_PORT=%s", chainBIbcPort),
+			},
+			Entrypoint: []string{
+				"sh",
+				"-c",
+				"chmod +x /root/rly/rly_bootstrap.sh && /root/rly/rly_bootstrap.sh",
+			},
+		},
+		noRestart,
+	)
+	if err != nil {
+		return nil, err
+	}
+	m.resources[cosmosRelayerContainerName] = rlyResource
+	return rlyResource, nil
 }
 
 // RunNodeResource runs a node container. Assings containerName to the container.
