@@ -21,12 +21,12 @@ service Msg {
     rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
-// MsgAddFinalitySig defines a message for adding a vote
+// MsgAddFinalitySig defines a message for adding a finality vote
 message MsgAddFinalitySig {
     option (cosmos.msg.v1.signer) = "signer";
 
     string signer = 1;
-    // fp_btc_pk is the BTC Pk of the finality provider that casts this vote
+    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
     bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // block_height is the height of the voted block
     uint64 block_height = 3;
@@ -46,7 +46,7 @@ message MsgCommitPubRandList {
     option (cosmos.msg.v1.signer) = "signer";
 
     string signer = 1;
-    // fp_btc_pk is the BTC Pk of the finality provider that commits the public randomness
+    // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
     bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // start_height is the start block height of the list of public randomness
     uint64 start_height = 3;

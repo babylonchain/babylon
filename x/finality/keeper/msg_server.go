@@ -73,7 +73,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 		return nil, bstypes.ErrFpAlreadySlashed
 	}
 
-	// ensure the finality providerhas voting power at this height
+	// ensure the finality provider has voting power at this height
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
 	}

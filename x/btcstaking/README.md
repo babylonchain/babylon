@@ -30,6 +30,8 @@ providers and BTC delegations under them. This includes:
 - [Events](#events)
 - [Queries](#queries)
 
+<!-- TODO: a section about module parameters -->
+
 ## Concepts
 
 Babylon's Bitcoin Staking protocol allows bitcoin holders to *trustlessly* stake
@@ -130,14 +132,14 @@ message FinalityProvider {
 
 ### BTC delegations
 
-The BTC delegation storage at `x/btcstaking/keeper/btc_delegations.go` maintains
-all BTC delegations. The key is the staking transaction hash corresponding to
-the BTC delegation, and the value is a `BTCDelegation` object. The
-`BTCDelegation` [structure](../../proto/babylon/btcstaking/v1/btcstaking.proto)
-includes information of a BTC delegation and a structure `BTCUndelegation` that
-includes information of its early unbonding path. The staking transaction's hash
-uniquely identifies a `BTCDelegation` as creating a BTC delegation requires the
-staker to submit a staking transaction to Bitcoin.
+The [BTC delegation storage](./keeper/btc_delegations.go) maintains all BTC
+delegations. The key is the staking transaction hash corresponding to the BTC
+delegation, and the value is a `BTCDelegation` object. The `BTCDelegation`
+[structure](../../proto/babylon/btcstaking/v1/btcstaking.proto) includes
+information of a BTC delegation and a structure `BTCUndelegation` that includes
+information of its early unbonding path. The staking transaction's hash uniquely
+identifies a `BTCDelegation` as creating a BTC delegation requires the staker to
+submit a staking transaction to Bitcoin.
 
 ```protobuf
 
@@ -223,9 +225,9 @@ message BTCUndelegation {
 The [BTC delegation index storage](./keeper/btc_delegators.go) maintains an
 index between the BTC delegator and its BTC delegations. The key is the BTC
 delegator's Bitcoin secp256k1 public key in BIP-340 format, and the value is a
-`BTCDelegatorDelegationIndex` object containing staking transaction hashes of
-the delegator's BTC delegations. The `BTCDelegatorDelegationIndex` is defined at
-`proto/babylon/btcstaking/v1/btcstaking.proto`.
+`BTCDelegatorDelegationIndex`
+[object](../../proto/babylon/btcstaking/v1/btcstaking.proto) that contains
+staking transaction hashes of the delegator's BTC delegations.
 
 ```protobuf
 // BTCDelegatorDelegationIndex is a list of staking tx hashes of BTC delegations from the same delegator.
@@ -610,7 +612,7 @@ message SelectiveSlashingEvidence {
 
 ## Queries
 
-The BTC staking module provides a set of queries about the status of
-checkpointed consumer chains, listed at
-[docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/ZoneConcierge).
+The BTC staking module provides a set of queries about the status of finality
+providers and BTC delegations, listed at
+[docs.babylonchain.io](https://docs.babylonchain.io/docs/developer-guides/grpcrestapi#tag/BTCStaking).
 <!-- TODO: update Babylon doc website -->

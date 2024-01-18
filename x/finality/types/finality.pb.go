@@ -24,7 +24,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// IndexedBlock is the block with some indexed info
+// IndexedBlock is the necessary metadata and finalization status of a block
 type IndexedBlock struct {
 	// height is the height of the block
 	Height uint64 `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
@@ -92,7 +92,7 @@ func (m *IndexedBlock) GetFinalized() bool {
 // Evidence is the evidence that a finality provider has signed finality
 // signatures with correct public randomness on two conflicting Babylon headers
 type Evidence struct {
-	// fp_btc_pk is the BTC Pk of the finality provider that casts this vote
+	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
 	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// block_height is the height of the conflicting blocks
 	BlockHeight uint64 `protobuf:"varint,2,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`

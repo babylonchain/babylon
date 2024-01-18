@@ -31,10 +31,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// MsgAddFinalitySig defines a message for adding a vote
+// MsgAddFinalitySig defines a message for adding a finality vote
 type MsgAddFinalitySig struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	// fp_btc_pk is the BTC Pk of the finality provider that casts this vote
+	// fp_btc_pk is the BTC PK of the finality provider that casts this vote
 	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// block_height is the height of the voted block
 	BlockHeight uint64 `protobuf:"varint,3,opt,name=block_height,json=blockHeight,proto3" json:"block_height,omitempty"`

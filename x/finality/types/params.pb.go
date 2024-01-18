@@ -25,7 +25,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 // Params defines the parameters for the module.
 type Params struct {
-	// min_pub_rand is the minimum number of public randomoness each
+	// min_pub_rand is the minimum number of public randomness each
 	// message should commit
 	MinPubRand uint64 `protobuf:"varint,1,opt,name=min_pub_rand,json=minPubRand,proto3" json:"min_pub_rand,omitempty"`
 }

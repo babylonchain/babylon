@@ -1148,6 +1148,56 @@ paths:
           type: boolean
       tags:
         - Query
+  /babylon/btclightclient/v1/params:
+    get:
+      summary: Params queries the parameters of the module.
+      operationId: BtcLightClientParams
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              params:
+                description: params holds all the parameters of this module.
+                type: object
+                properties:
+                  insert_headers_allow_list:
+                    type: array
+                    items:
+                      type: string
+                    title: >-
+                      List of addresses which are allowed to insert headers to
+                      btc light client
+
+                      if the list is empty, any address can insert headers
+            description: >-
+              QueryParamsResponse is the response type for the Query/Params RPC
+              method.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
   /babylon/btclightclient/v1/tip:
     get:
       summary: Tip return best header on canonical chain
@@ -10561,6 +10611,19 @@ definitions:
        - Total work spent on the header. This is the sum of the work corresponding
        to the header Bits field
          and the total work of the header.
+  babylon.btclightclient.v1.Params:
+    type: object
+    properties:
+      insert_headers_allow_list:
+        type: array
+        items:
+          type: string
+        title: >-
+          List of addresses which are allowed to insert headers to btc light
+          client
+
+          if the list is empty, any address can insert headers
+    description: Params defines the parameters for the module.
   babylon.btclightclient.v1.QueryBaseHeaderResponse:
     type: object
     properties:
@@ -10715,6 +10778,23 @@ definitions:
     description: >-
       QueryMainChainResponse is response type for the Query/MainChain RPC
       method.
+  babylon.btclightclient.v1.QueryParamsResponse:
+    type: object
+    properties:
+      params:
+        description: params holds all the parameters of this module.
+        type: object
+        properties:
+          insert_headers_allow_list:
+            type: array
+            items:
+              type: string
+            title: >-
+              List of addresses which are allowed to insert headers to btc light
+              client
+
+              if the list is empty, any address can insert headers
+    description: QueryParamsResponse is the response type for the Query/Params RPC method.
   babylon.btclightclient.v1.QueryTipResponse:
     type: object
     properties:

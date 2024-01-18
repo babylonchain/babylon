@@ -5,7 +5,7 @@ option go_package = "github.com/babylonchain/babylon/x/finality/types";
 
 import "gogoproto/gogo.proto";
 
-// IndexedBlock is the block with some indexed info
+// IndexedBlock is the necessary metadata and finalization status of a block
 message IndexedBlock {
     // height is the height of the block
     uint64 height = 1;
@@ -19,7 +19,7 @@ message IndexedBlock {
 // Evidence is the evidence that a finality provider has signed finality
 // signatures with correct public randomness on two conflicting Babylon headers
 message Evidence {
-    // fp_btc_pk is the BTC Pk of the finality provider that casts this vote
+    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
     bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
     // block_height is the height of the conflicting blocks
     uint64 block_height = 2;
