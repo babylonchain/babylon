@@ -146,7 +146,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 		err = zctypes.VerifyEpochSealed(epoch, rawCkpt, proof)
 
 		if subsetPower*3 <= valSet.GetTotalPower()*2 { // BLS sig does not reach a quorum
-			require.LessOrEqual(t, numSubSet, numVals*2/3)
+			require.LessOrEqual(t, numSubSet*3, numVals*2)
 			require.Error(t, err)
 			require.NotErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		} else { // BLS sig has a valid quorum

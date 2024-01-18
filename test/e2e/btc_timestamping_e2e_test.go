@@ -14,7 +14,6 @@ import (
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
 	itypes "github.com/babylonchain/babylon/x/incentive/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -233,41 +232,58 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
-	require.NoError(s.T(), err)
-	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
+	s.NoError(err)
+
+	// store the wasm code
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
+	s.Eventually(func() bool {
+		newLatestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+		if latestWasmId+1 > newLatestWasmId {
+			return false
+		}
+		latestWasmId = newLatestWasmId
+		return true
+	}, time.Second*10, time.Second)
+
+	// instantiate the wasm contract
+	var contracts []string
 	nonValidatorNode.InstantiateWasmContract(
 		strconv.Itoa(latestWasmId),
 		`{}`,
 		initialization.ValidatorWalletName,
 	)
-	nonValidatorNode.WaitForNextBlock()
-	contracts, err := nonValidatorNode.QueryContractsFromId(1)
-	s.NoError(err)
-	s.Require().Len(contracts, 1, "Wrong number of contracts for the counter")
+	s.Eventually(func() bool {
+		contracts, err = nonValidatorNode.QueryContractsFromId(latestWasmId)
+		return err == nil && len(contracts) == 1
+	}, time.Second*10, time.Second)
 	contractAddr := contracts[0]
 
+	// execute contract
 	data := []byte{1, 2, 3, 4, 5}
 	dataHex := hex.EncodeToString(data)
 	dataHash := sha256.Sum256(data)
 	dataHashHex := hex.EncodeToString(dataHash[:])
-
 	storeMsg := fmt.Sprintf(`{"save_data":{"data":"%s"}}`, dataHex)
 	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
+
+	// the data is eventually included in the contract
 	queryMsg := fmt.Sprintf(`{"check_data": {"data_hash":"%s"}}`, dataHashHex)
-	queryResult, err := nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
-	require.NoError(s.T(), err)
+	var queryResult map[string]interface{}
+	s.Eventually(func() bool {
+		queryResult, err = nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
+		return err == nil
+	}, time.Second*10, time.Second)
+
 	finalized := queryResult["finalized"].(bool)
 	latestFinalizedEpoch := int(queryResult["latest_finalized_epoch"].(float64))
 	saveEpoch := int(queryResult["save_epoch"].(float64))
 
-	require.False(s.T(), finalized)
+	s.False(finalized)
 	// in previous test we already finalized epoch 3
-	require.Equal(s.T(), 3, latestFinalizedEpoch)
+	s.Equal(3, latestFinalizedEpoch)
 	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
-	require.Greater(s.T(), saveEpoch, latestFinalizedEpoch)
+	s.Greater(saveEpoch, latestFinalizedEpoch)
 }
 
 func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
