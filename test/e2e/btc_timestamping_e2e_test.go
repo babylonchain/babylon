@@ -284,14 +284,19 @@ func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
 	s.T().Logf("incentive module account's balance: %s", incentiveBalance.String())
 	s.True(incentiveBalance.IsAllPositive())
 
-	// ensure BTC staking gauge at the current height is non-empty
+	// ensure BTC staking gauge at the current height is eventually non-empty
+	// NOTE: sometimes incentive module's BeginBlock is not triggered yet. If this
+	// happens, we might need to wait for some time.
 	curHeight, err := nonValidatorNode.QueryCurrentHeight()
 	s.NoError(err)
-	btcStakingGauge, err := nonValidatorNode.QueryBTCStakingGauge(uint64(curHeight))
-	s.NoError(err)
-	s.T().Logf("BTC staking gauge at current height %d: %s", curHeight, btcStakingGauge.String())
-	s.True(len(btcStakingGauge.Coins) >= 1)
-	s.True(btcStakingGauge.Coins[0].Amount.IsPositive())
+	s.Eventually(func() bool {
+		btcStakingGauge, err := nonValidatorNode.QueryBTCStakingGauge(uint64(curHeight))
+		if err != nil {
+			return false
+		}
+		s.T().Logf("BTC staking gauge at current height %d: %s", curHeight, btcStakingGauge.String())
+		return len(btcStakingGauge.Coins) >= 1 && btcStakingGauge.Coins[0].Amount.IsPositive()
+	}, time.Second*10, time.Second)
 
 	// ensure BTC timestamping gauge at the current epoch is non-empty
 	curEpoch, err := nonValidatorNode.QueryCurrentEpoch()
@@ -299,11 +304,15 @@ func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
 	// at the 1st block of an epoch, the gauge does not exist since incentive's BeginBlock
 	// at this block accumulates rewards for BTC timestamping gauge for the previous block
 	// need to wait for a block to ensure the gauge is created
-	nonValidatorNode.WaitForNextBlock()
-	btcTimestampingGauge, err := nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
-	s.NoError(err)
-	s.T().Logf("BTC timestamping gauge at current epoch %d: %s", curEpoch, btcTimestampingGauge.String())
-	s.NotEmpty(btcTimestampingGauge.Coins)
+	var btcTimestampingGauge *itypes.Gauge
+	s.Eventually(func() bool {
+		btcTimestampingGauge, err = nonValidatorNode.QueryBTCTimestampingGauge(curEpoch)
+		if err != nil {
+			return false
+		}
+		s.T().Logf("BTC timestamping gauge at current epoch %d: %s", curEpoch, btcTimestampingGauge.String())
+		return !btcTimestampingGauge.Coins.Empty()
+	}, time.Second*10, time.Second)
 
 	// wait for 1 block to see if BTC timestamp gauge has accumulated
 	nonValidatorNode.WaitForNextBlock()
