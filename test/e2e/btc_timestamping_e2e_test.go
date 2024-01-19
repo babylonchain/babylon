@@ -1,13 +1,12 @@
 package e2e
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
 	"strconv"
 	"time"
-
-	"github.com/babylonchain/babylon/x/btccheckpoint/types"
 
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
@@ -230,7 +229,7 @@ func (s *BTCTimestampingTestSuite) Test5WithdrawReward() {
 }
 
 func (s *BTCTimestampingTestSuite) Test6Wasm() {
-	contractPath := "/bytecode/babylon_contract.wasm"
+	contractPath := "/bytecode/storage_contract.wasm"
 	chainA := s.configurer.GetChainConfig(0)
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
@@ -246,7 +245,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	)
 	nonValidatorNode.InstantiateWasmContract(
 		strconv.Itoa(latestWasmId),
-		initMsg,
+		`{}`,
 		initialization.ValidatorWalletName,
 	)
 	s.Eventually(func() bool {
