@@ -133,6 +133,11 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	s.NoError(err)
 	s.Equal(endEpoch.Status, ct.Finalized)
 
+	// Wait for a some time to ensure that the checkpoint is included in the chain
+	time.Sleep(20 * time.Second)
+	// Wait for next block
+	nonValidatorNode.WaitForNextBlock()
+
 	// Check we have epoch info for opposing chain and some basic assertions
 	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
 	s.NoError(err)
@@ -236,13 +241,18 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 
 	// store the wasm code
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
-	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
-		bbn.BtcSimnet,
-		types.DefaultCheckpointTag,
-		1,
-		2,
-		"false",
-	)
+	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
+	s.Eventually(func() bool {
+		newLatestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+		if latestWasmId+1 > newLatestWasmId {
+			return false
+		}
+		latestWasmId = newLatestWasmId
+		return true
+	}, time.Second*20, time.Second)
+
+	// instantiate the wasm contract
+	var contracts []string
 	nonValidatorNode.InstantiateWasmContract(
 		strconv.Itoa(latestWasmId),
 		`{}`,
