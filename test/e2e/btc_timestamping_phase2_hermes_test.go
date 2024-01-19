@@ -49,6 +49,7 @@ func (s *BTCTimestampingPhase2TestSuite) TearDownSuite() {
 }
 
 func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2() {
+	s.T().Skip("skipping IBC checkpointing phase 2 test: Hermes relayer is not ready yet")
 	chainA := s.configurer.GetChainConfig(0)
 
 	babylonNode, err := chainA.GetNodeAtIndex(2)
