@@ -323,7 +323,7 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 	*/
 	// Wait for the relayer to connect to the chains
 	bc.t.Logf("waiting for Cosmos relayer setup...")
-	time.Sleep(45 * time.Second)
+	time.Sleep(30 * time.Second)
 
 	bc.t.Logf("started Cosmos relayer container: %s", rlyResource.Container.ID)
 
