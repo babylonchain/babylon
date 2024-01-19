@@ -391,7 +391,10 @@ proto-lint:
 build-docker:
 	$(MAKE) -C contrib/images babylond
 
-.PHONY: build-docker
+build-cosmos-relayer-docker:
+	$(MAKE) -C contrib/images cosmos-relayer
+
+.PHONY: build-docker build-cosmos-relayer-docker
 
 ###############################################################################
 ###                                Localnet                                 ###

@@ -15,7 +15,7 @@ const (
 	hermesRelayerRepository = "informalsystems/hermes"
 	hermesRelayerTag        = "master"
 	cosmosRelayerRepository = "babylonchain/cosmos-relayer"
-	cosmosRelayerTag        = "v2.4.2"
+	cosmosRelayerTag        = "main"
 )
 
 // NewImageConfig returns ImageConfig needed for running e2e test.
