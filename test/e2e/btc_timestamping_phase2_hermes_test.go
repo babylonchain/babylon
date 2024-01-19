@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-type BTCTimestampingPhase2TestSuite struct {
+type BTCTimestampingPhase2HermesTestSuite struct {
 	suite.Suite
 
 	configurer configurer.Configurer
 }
 
-func (s *BTCTimestampingPhase2TestSuite) SetupSuite() {
+func (s *BTCTimestampingPhase2HermesTestSuite) SetupSuite() {
 	s.T().Log("setting up phase 2 integration test suite...")
 	var (
 		err error
@@ -43,12 +43,12 @@ func (s *BTCTimestampingPhase2TestSuite) SetupSuite() {
 	s.Require().NoError(err)
 }
 
-func (s *BTCTimestampingPhase2TestSuite) TearDownSuite() {
+func (s *BTCTimestampingPhase2HermesTestSuite) TearDownSuite() {
 	err := s.configurer.ClearResources()
 	s.Require().NoError(err)
 }
 
-func (s *BTCTimestampingPhase2TestSuite) Test1IbcCheckpointingPhase2Hermes() {
+func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes() {
 	chainA := s.configurer.GetChainConfig(0)
 
 	babylonNode, err := chainA.GetNodeAtIndex(2)
