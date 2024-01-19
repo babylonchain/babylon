@@ -20,7 +20,7 @@ global:
     memo: ""
     light-cache-size: 10
 chains:
-    $BBN_A_E2E_CHAIN_ID:
+    bbn-a:
         type: cosmos
         value:
             key-directory: $RELAYER_CONF_DIR/keys/$BBN_A_E2E_CHAIN_ID
@@ -45,7 +45,7 @@ chains:
             min-loop-duration: 0s
             extension-options: []
             feegrants: null
-    $BBN_B_E2E_CHAIN_ID:
+    bbn-b:
         type: cosmos
         value:
             key-directory: $RELAYER_CONF_DIR/keys/$BBN_B_E2E_CHAIN_ID
@@ -71,33 +71,23 @@ chains:
             extension-options: []
             feegrants: null
 paths:
-    babylond:
+    bbna-bbnb:
         src:
             chain-id: $BBN_A_E2E_CHAIN_ID
-            # client-id: 07-tendermint-0
-            # connection-id: connection-0
-            # port-id: $CHAIN_A_IBC_PORT
-            # order: ordered
-            # version: zoneconcierge-1
         dst:
             chain-id: $BBN_B_E2E_CHAIN_ID
-            # client-id: 07-tendermint-0
-            # connection-id: connection-0
-            # port-id: $CHAIN_B_IBC_PORT
-            # order: ordered
-            # version: zoneconcierge-1
         src-channel-filter:
             rule: ""
             channel-list: []
 EOF
 
 # Import keys
-rly --home $RELAYER_CONF_DIR keys restore ${BBN_A_E2E_CHAIN_ID} val01-bbn-a "$BBN_A_E2E_VAL_MNEMONIC"
-rly --home $RELAYER_CONF_DIR keys restore ${BBN_B_E2E_CHAIN_ID} val01-bbn-b "$BBN_B_E2E_VAL_MNEMONIC"
-sleep 10
+rly -d --home $RELAYER_CONF_DIR keys restore bbn-a val01-bbn-a "$BBN_A_E2E_VAL_MNEMONIC"
+rly -d --home $RELAYER_CONF_DIR keys restore bbn-b val01-bbn-b "$BBN_B_E2E_VAL_MNEMONIC"
+sleep 3
 
 # Start Cosmos relayer
-rly --home $RELAYER_CONF_DIR tx link babylond --src-port ${CHAIN_A_IBC_PORT} --dst-port ${CHAIN_B_IBC_PORT} --order ordered --version zoneconcierge-1
-sleep 10
+rly -d --home $RELAYER_CONF_DIR tx link bbna-bbnb --src-port ${CHAIN_A_IBC_PORT} --dst-port ${CHAIN_B_IBC_PORT} --order ordered --version zoneconcierge-1
+sleep 3
 
-rly --home $RELAYER_CONF_DIR start babylond --debug-addr ""
+rly -d --home $RELAYER_CONF_DIR start bbna-bbnb --debug-addr ""
