@@ -1781,12 +1781,19 @@ paths:
                     epoch_number:
                       type: string
                       format: uint64
+                      title: epoch_number is the number of this epoch
                     current_epoch_interval:
                       type: string
                       format: uint64
+                      title: >-
+                        current_epoch_interval is the epoch interval at the time
+                        of this epoch
                     first_block_height:
                       type: string
                       format: uint64
+                      title: >-
+                        first_block_height is the height of the first block in
+                        this epoch
                     last_block_time:
                       type: string
                       format: date-time
@@ -2134,12 +2141,19 @@ paths:
                   epoch_number:
                     type: string
                     format: uint64
+                    title: epoch_number is the number of this epoch
                   current_epoch_interval:
                     type: string
                     format: uint64
+                    title: >-
+                      current_epoch_interval is the epoch interval at the time
+                      of this epoch
                   first_block_height:
                     type: string
                     format: uint64
+                    title: >-
+                      first_block_height is the height of the first block in
+                      this epoch
                   last_block_time:
                     type: string
                     format: date-time
@@ -2824,7 +2838,7 @@ paths:
                     QueuedMessage is a message that can change the validator set
                     and is delayed
 
-                    to the epoch boundary
+                    to the end of an epoch
                 title: msgs is the list of messages queued in the current epoch
               pagination:
                 title: pagination defines the pagination in the response
@@ -3890,7 +3904,7 @@ paths:
                           QueuedMessage is a message that can change the
                           validator set and is delayed
 
-                          to the epoch boundary
+                          to the end of an epoch
                   title: >-
                     QueuedMessageList is a message that contains a list of
                     staking-related
@@ -4694,12 +4708,17 @@ paths:
                   properties:
                     validator_address:
                       type: string
+                      title: validator_address is the address of the validator
                     bls_pub_key:
                       type: string
                       format: byte
+                      title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
                       format: uint64
+                      title: >-
+                        voting_power is the voting power of the validator at the
+                        given epoch
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
                     and its bls
@@ -5313,8 +5332,8 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with meta
-                    data.
+                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
                   epoch number
@@ -5551,8 +5570,8 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with meta
-                    data.
+                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
                   epoch number
@@ -7384,12 +7403,19 @@ paths:
                   epoch_number:
                     type: string
                     format: uint64
+                    title: epoch_number is the number of this epoch
                   current_epoch_interval:
                     type: string
                     format: uint64
+                    title: >-
+                      current_epoch_interval is the epoch interval at the time
+                      of this epoch
                   first_block_height:
                     type: string
                     format: uint64
+                    title: >-
+                      first_block_height is the height of the first block in
+                      this epoch
                   last_block_time:
                     type: string
                     format: date-time
@@ -7536,12 +7562,21 @@ paths:
                           properties:
                             validator_address:
                               type: string
+                              title: >-
+                                validator_address is the address of the
+                                validator
                             bls_pub_key:
                               type: string
                               format: byte
+                              title: >-
+                                bls_pub_key is the BLS public key of the
+                                validator
                             voting_power:
                               type: string
                               format: uint64
+                              title: >-
+                                voting_power is the voting power of the
+                                validator at the given epoch
                           title: >-
                             ValidatorWithBlsKey couples validator address,
                             voting power, and its bls
@@ -8120,12 +8155,19 @@ paths:
                         epoch_number:
                           type: string
                           format: uint64
+                          title: epoch_number is the number of this epoch
                         current_epoch_interval:
                           type: string
                           format: uint64
+                          title: >-
+                            current_epoch_interval is the epoch interval at the
+                            time of this epoch
                         first_block_height:
                           type: string
                           format: uint64
+                          title: >-
+                            first_block_height is the height of the first block
+                            in this epoch
                         last_block_time:
                           type: string
                           format: date-time
@@ -8274,12 +8316,21 @@ paths:
                                 properties:
                                   validator_address:
                                     type: string
+                                    title: >-
+                                      validator_address is the address of the
+                                      validator
                                   bls_pub_key:
                                     type: string
                                     format: byte
+                                    title: >-
+                                      bls_pub_key is the BLS public key of the
+                                      validator
                                   voting_power:
                                     type: string
                                     format: uint64
+                                    title: >-
+                                      voting_power is the voting power of the
+                                      validator at the given epoch
                                 title: >-
                                   ValidatorWithBlsKey couples validator address,
                                   voting power, and its bls
@@ -10947,12 +10998,15 @@ definitions:
       epoch_number:
         type: string
         format: uint64
+        title: epoch_number is the number of this epoch
       current_epoch_interval:
         type: string
         format: uint64
+        title: current_epoch_interval is the epoch interval at the time of this epoch
       first_block_height:
         type: string
         format: uint64
+        title: first_block_height is the height of the first block in this epoch
       last_block_time:
         type: string
         format: date-time
@@ -11086,12 +11140,17 @@ definitions:
           epoch_number:
             type: string
             format: uint64
+            title: epoch_number is the number of this epoch
           current_epoch_interval:
             type: string
             format: uint64
+            title: >-
+              current_epoch_interval is the epoch interval at the time of this
+              epoch
           first_block_height:
             type: string
             format: uint64
+            title: first_block_height is the height of the first block in this epoch
           last_block_time:
             type: string
             format: date-time
@@ -11542,7 +11601,7 @@ definitions:
             QueuedMessage is a message that can change the validator set and is
             delayed
 
-            to the epoch boundary
+            to the end of an epoch
         title: msgs is the list of messages queued in the current epoch
       pagination:
         title: pagination defines the pagination in the response
@@ -11634,12 +11693,19 @@ definitions:
             epoch_number:
               type: string
               format: uint64
+              title: epoch_number is the number of this epoch
             current_epoch_interval:
               type: string
               format: uint64
+              title: >-
+                current_epoch_interval is the epoch interval at the time of this
+                epoch
             first_block_height:
               type: string
               format: uint64
+              title: >-
+                first_block_height is the height of the first block in this
+                epoch
             last_block_time:
               type: string
               format: date-time
@@ -12142,7 +12208,7 @@ definitions:
                   QueuedMessage is a message that can change the validator set
                   and is delayed
 
-                  to the epoch boundary
+                  to the end of an epoch
           title: >-
             QueuedMessageList is a message that contains a list of
             staking-related
@@ -12625,7 +12691,7 @@ definitions:
       QueuedMessage is a message that can change the validator set and is
       delayed
 
-      to the epoch boundary
+      to the end of an epoch
   babylon.epoching.v1.QueuedMessageList:
     type: object
     properties:
@@ -13041,7 +13107,7 @@ definitions:
             QueuedMessage is a message that can change the validator set and is
             delayed
 
-            to the epoch boundary
+            to the end of an epoch
     title: |-
       QueuedMessageList is a message that contains a list of staking-related
       messages queued for an epoch
@@ -13575,12 +13641,17 @@ definitions:
           properties:
             validator_address:
               type: string
+              title: validator_address is the address of the validator
             bls_pub_key:
               type: string
               format: byte
+              title: bls_pub_key is the BLS public key of the validator
             voting_power:
               type: string
               format: uint64
+              title: >-
+                voting_power is the voting power of the validator at the given
+                epoch
           title: >-
             ValidatorWithBlsKey couples validator address, voting power, and its
             bls
@@ -14217,12 +14288,15 @@ definitions:
     properties:
       validator_address:
         type: string
+        title: validator_address is the address of the validator
       bls_pub_key:
         type: string
         format: byte
+        title: bls_pub_key is the BLS public key of the validator
       voting_power:
         type: string
         format: uint64
+        title: voting_power is the voting power of the validator at the given epoch
     title: |-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
@@ -14589,12 +14663,17 @@ definitions:
           epoch_number:
             type: string
             format: uint64
+            title: epoch_number is the number of this epoch
           current_epoch_interval:
             type: string
             format: uint64
+            title: >-
+              current_epoch_interval is the epoch interval at the time of this
+              epoch
           first_block_height:
             type: string
             format: uint64
+            title: first_block_height is the height of the first block in this epoch
           last_block_time:
             type: string
             format: date-time
@@ -14725,12 +14804,17 @@ definitions:
                   properties:
                     validator_address:
                       type: string
+                      title: validator_address is the address of the validator
                     bls_pub_key:
                       type: string
                       format: byte
+                      title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
                       format: uint64
+                      title: >-
+                        voting_power is the voting power of the validator at the
+                        given epoch
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
                     and its bls
@@ -15033,12 +15117,17 @@ definitions:
           properties:
             validator_address:
               type: string
+              title: validator_address is the address of the validator
             bls_pub_key:
               type: string
               format: byte
+              title: bls_pub_key is the BLS public key of the validator
             voting_power:
               type: string
               format: uint64
+              title: >-
+                voting_power is the voting power of the validator at the given
+                epoch
           title: >-
             ValidatorWithBlsKey couples validator address, voting power, and its
             bls
@@ -15156,12 +15245,17 @@ definitions:
               properties:
                 validator_address:
                   type: string
+                  title: validator_address is the address of the validator
                 bls_pub_key:
                   type: string
                   format: byte
+                  title: bls_pub_key is the BLS public key of the validator
                 voting_power:
                   type: string
                   format: uint64
+                  title: >-
+                    voting_power is the voting power of the validator at the
+                    given epoch
               title: >-
                 ValidatorWithBlsKey couples validator address, voting power, and
                 its bls
@@ -15905,12 +15999,17 @@ definitions:
           epoch_number:
             type: string
             format: uint64
+            title: epoch_number is the number of this epoch
           current_epoch_interval:
             type: string
             format: uint64
+            title: >-
+              current_epoch_interval is the epoch interval at the time of this
+              epoch
           first_block_height:
             type: string
             format: uint64
+            title: first_block_height is the height of the first block in this epoch
           last_block_time:
             type: string
             format: date-time
@@ -16041,12 +16140,17 @@ definitions:
                   properties:
                     validator_address:
                       type: string
+                      title: validator_address is the address of the validator
                     bls_pub_key:
                       type: string
                       format: byte
+                      title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
                       format: uint64
+                      title: >-
+                        voting_power is the voting power of the validator at the
+                        given epoch
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
                     and its bls
@@ -16387,12 +16491,19 @@ definitions:
                 epoch_number:
                   type: string
                   format: uint64
+                  title: epoch_number is the number of this epoch
                 current_epoch_interval:
                   type: string
                   format: uint64
+                  title: >-
+                    current_epoch_interval is the epoch interval at the time of
+                    this epoch
                 first_block_height:
                   type: string
                   format: uint64
+                  title: >-
+                    first_block_height is the height of the first block in this
+                    epoch
                 last_block_time:
                   type: string
                   format: date-time
@@ -16531,12 +16642,17 @@ definitions:
                         properties:
                           validator_address:
                             type: string
+                            title: validator_address is the address of the validator
                           bls_pub_key:
                             type: string
                             format: byte
+                            title: bls_pub_key is the BLS public key of the validator
                           voting_power:
                             type: string
                             format: uint64
+                            title: >-
+                              voting_power is the voting power of the validator
+                              at the given epoch
                         title: >-
                           ValidatorWithBlsKey couples validator address, voting
                           power, and its bls

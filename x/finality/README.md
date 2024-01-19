@@ -332,9 +332,9 @@ message MsgUpdateParams {
 
 ## EndBlocker
 
-Upon `EndBlocker`, the Finality module of each Babylon node will execute the
-following *if the BTC staking protocol is activated (i.e., there has been >=1
-active BTC delegations)*:
+Upon `EndBlocker`, the Finality module of each Babylon node will [execute the
+following](./abci.go) *if the BTC staking protocol is activated (i.e., there has
+been >=1 active BTC delegations)*:
 
 1. Index the current block, i.e., extract its height and `AppHash`, construct an
    `IndexedBlock` object, and save it to the indexed block storage.
