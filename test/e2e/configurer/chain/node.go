@@ -72,8 +72,8 @@ func (n *NodeConfig) Run() error {
 			n.t.Logf("started node container: %s", n.Name)
 			return true
 		},
-		2*time.Minute,
-		time.Second,
+		3*time.Minute,
+		2*time.Second,
 		"bbn node failed to produce blocks",
 	)
 
