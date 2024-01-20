@@ -23,9 +23,10 @@ const (
 )
 
 var (
-	HeadersObjectPrefix = []byte{0x01} // reserve this namespace mapping: Height -> BTCHeaderInfo
-	HashToHeightPrefix  = []byte{0x02} // reserve this namespace mapping: Hash -> Height
-	ParamsKey           = []byte{0x03} // key for params
+	HeadersObjectPrefix  = []byte{0x01} // reserve this namespace mapping: Height -> BTCHeaderInfo
+	HashToHeightPrefix   = []byte{0x02} // reserve this namespace mapping: Hash -> Height
+	LastRollbackPointKey = []byte{0x03} // the point of the last reorg
+	ParamsKey            = []byte{0x04} // key for params
 )
 
 func HeadersObjectKey(height uint64) []byte {

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
@@ -33,6 +34,7 @@ func (h Hooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) er
 	h.k.setFinalizedEpoch(ctx, epoch)
 
 	headersToBroadcast := h.k.getHeadersToBroadcast(ctx)
+
 	// send BTC timestamp to all open channels with ZoneConcierge
 	h.k.BroadcastBTCTimestamps(ctx, epoch, headersToBroadcast)
 

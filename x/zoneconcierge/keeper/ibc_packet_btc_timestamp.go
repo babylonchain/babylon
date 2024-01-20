@@ -182,6 +182,13 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 		}
 	}
 
+	// if initHeader is nil, then this means a large reorg happens such that all headers
+	// in the last segment are reverted. In this case, get all headers since the last
+	// rollback point
+	if initHeader == nil {
+		initHeader = k.btclcKeeper.GetLastRollbackPoint(ctx)
+	}
+
 	headersToSend := k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)
 
 	return headersToSend

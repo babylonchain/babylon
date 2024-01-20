@@ -79,6 +79,9 @@ func (k Keeper) insertHeaders(
 
 	// if we have rollback, first delete all headers up to the rollback point
 	if result.RollbackInfo != nil {
+		// update the last rollback point
+		headerState.setLastRollbackPoint(result.RollbackInfo.HeaderToRollbackTo)
+		// roll back to the height
 		headerState.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
 		// trigger rollback event
 		k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)
@@ -146,6 +149,10 @@ func (k Keeper) MainChainDepth(ctx context.Context, headerHashBytes *bbn.BTCHead
 
 func (k Keeper) GetTipInfo(ctx context.Context) *types.BTCHeaderInfo {
 	return k.headersState(ctx).GetTip()
+}
+
+func (k Keeper) GetLastRollbackPoint(ctx context.Context) *types.BTCHeaderInfo {
+	return k.headersState(ctx).GetLastRollbackPoint()
 }
 
 // GetHeaderByHash returns header with given hash, if it does not exists returns nil

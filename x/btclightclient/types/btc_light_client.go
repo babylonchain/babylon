@@ -336,7 +336,7 @@ type RollbackInfo struct {
 
 type InsertResult struct {
 	HeadersToInsert []*BTCHeaderInfo
-	// if rollback is not nil, it means that we need to rollback to the header provided header
+	// if rollback is not nil, it means that we need to rollback to the provided header
 	RollbackInfo *RollbackInfo
 }
 
