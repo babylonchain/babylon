@@ -66,7 +66,8 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 
 		// finalise a random epoch
 		epochNum := datagen.RandomInt(r, 10)
-		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		err := hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		require.NoError(t, err)
 		// assert the last segment is the entire known BTC header chain
 		lastSegment := zcKeeper.GetLastSentSegment(ctx)
 		for i := range lastSegment.BtcHeaders {
@@ -86,7 +87,8 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 			btcTip.Height,
 			chainLength,
 		)
-		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		require.NoError(t, err)
 		// assert the last segment is since the header after the last tip
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
 		for i := range lastSegment.BtcHeaders {
@@ -109,7 +111,8 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 			reorgPoint,
 			chainLength,
 		)
-		hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
+		require.NoError(t, err)
 		// assert the last segment is since the block after the reorg point
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
 		for i := range lastSegment.BtcHeaders {
