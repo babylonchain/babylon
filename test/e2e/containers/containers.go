@@ -216,7 +216,6 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 			PortBindings: map[docker.Port][]docker.PortBinding{
 				"3031/tcp": {{HostIP: "", HostPort: "3031"}},
 			},
-			Platform: "linux/x86_64",
 			Env: []string{
 				fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", chainAID),
 				fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", chainBID),
@@ -256,13 +255,6 @@ func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemoni
 			Mounts: []string{
 				fmt.Sprintf("%s/:/root/rly", rlyCfgPath),
 			},
-			//ExposedPorts: []string{
-			//	"3031",
-			//},
-			//PortBindings: map[docker.Port][]docker.PortBinding{
-			//	"3031/tcp": {{HostIP: "", HostPort: "3031"}},
-			//},
-			//Platform: "linux/x86_64",
 			Env: []string{
 				fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", chainAID),
 				fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", chainBID),
@@ -307,7 +299,6 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 			"babylond start --home /home/babylon/babylondata",
 		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
-		Platform:     "linux/x86_64",
 		Mounts: []string{
 			fmt.Sprintf("%s/:/home/babylon/babylondata", valCondifDir),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),
