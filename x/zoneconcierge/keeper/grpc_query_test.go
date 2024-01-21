@@ -376,6 +376,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 				Ckpt: randomRawCkpt,
 			}, nil,
 		).AnyTimes()
+		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		btccKeeper.EXPECT().GetBestSubmission(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(
 			btcctypes.Finalized,
 			&btcctypes.SubmissionKey{
@@ -393,6 +394,7 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		btclcKeeper := zctypes.NewMockBTCLightClientKeeper(ctrl)
 		mockBTCHeaderInfo := datagen.GenRandomBTCHeaderInfo(r)
 		btclcKeeper.EXPECT().GetMainChainFrom(gomock.Any(), gomock.Any()).Return([]*btclightclienttypes.BTCHeaderInfo{mockBTCHeaderInfo}).AnyTimes()
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockBTCHeaderInfo).AnyTimes()
 
 		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper)
 		hooks := zcKeeper.Hooks()
