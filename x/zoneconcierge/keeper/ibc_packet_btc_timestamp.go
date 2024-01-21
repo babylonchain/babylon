@@ -162,11 +162,16 @@ func (k Keeper) createBTCTimestamp(
 // - either the whole known chain if we did not broadcast any headers yet
 // - headers from the child of the most recent header we sent which is still in the main chain up to the current tip
 func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHeaderInfo {
+
 	lastSegment := k.GetLastSentSegment(ctx)
 
 	if lastSegment == nil {
-		// we did not send any headers yet, so we need to sent whole known chain
-		return k.btclcKeeper.GetMainChainFrom(ctx, 0)
+		// we did not send any headers yet, so we need to send the last w+1 BTC headers
+		// where w+1 is imposed by Babylon contract. This ensures that the first BTC header
+		// in Babylon contract will be w-deep
+		wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+		startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - wValue
+		return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
 	}
 
 	// we already sent some headers, so we need to send headers from the child of the most recent header we sent

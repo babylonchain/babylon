@@ -54,7 +54,8 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		hooks := zcKeeper.Hooks()
 
 		// insert a random number of BTC headers to BTC light client
-		chainLength := datagen.RandomInt(r, 10) + 1
+		wValue := babylonApp.BtcCheckpointKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+		chainLength := datagen.RandomInt(r, 10) + wValue
 		genRandomChain(
 			t,
 			r,
@@ -68,13 +69,14 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		epochNum := datagen.RandomInt(r, 10)
 		err := hooks.AfterRawCheckpointFinalized(ctx, epochNum)
 		require.NoError(t, err)
-		// assert the last segment is the entire known BTC header chain
-		lastSegment := zcKeeper.GetLastSentSegment(ctx)
-		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint64(i)), lastSegment.BtcHeaders[i])
-		}
 		// current tip
 		btcTip := btclcKeeper.GetTipInfo(ctx)
+		// assert the last segment is the last w+1 BTC headers
+		lastSegment := zcKeeper.GetLastSentSegment(ctx)
+		require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
+		for i := range lastSegment.BtcHeaders {
+			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint64(i)), lastSegment.BtcHeaders[i])
+		}
 
 		// finalise another epoch, during which a small number of new BTC headers are inserted
 		epochNum += 1
