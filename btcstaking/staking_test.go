@@ -7,13 +7,14 @@ import (
 	"testing"
 
 	sdkmath "cosmossdk.io/math"
-
 	"github.com/babylonchain/babylon/btcstaking"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
+	"github.com/btcsuite/btcd/mempool"
+	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/stretchr/testify/require"
 )
@@ -108,12 +109,24 @@ func FuzzGeneratingValidStakingSlashingTx(f *testing.F) {
 		// Check case with some random fee
 		fee := int64(r.Intn(1000) + minFee)
 		testSlashingTx(r, t, stakingTx, stakingOutputIdx, slashingRate, fee, sd.StakerKey, slashingLockTime)
-
 	})
 }
 
 func genRandomBTCAddress(r *rand.Rand) (*btcutil.AddressPubKeyHash, error) {
 	return btcutil.NewAddressPubKeyHash(datagen.GenRandomByteArray(r, 20), &chaincfg.MainNetParams)
+}
+
+func taprootOutputWithValue(t *testing.T, r *rand.Rand, value btcutil.Amount) *wire.TxOut {
+	bytes := datagen.GenRandomByteArray(r, 32)
+	addrr, err := btcutil.NewAddressTaproot(bytes, &chaincfg.MainNetParams)
+	require.NoError(t, err)
+	return outputFromAddressAndValue(t, addrr, value)
+}
+
+func outputFromAddressAndValue(t *testing.T, addr btcutil.Address, value btcutil.Amount) *wire.TxOut {
+	pkScript, err := txscript.PayToAddrScript(addr)
+	require.NoError(t, err)
+	return wire.NewTxOut(int64(value), pkScript)
 }
 
 func testSlashingTx(
@@ -126,8 +139,6 @@ func testSlashingTx(
 	stakerPk *btcec.PublicKey,
 	slashingChangeLockTime uint16,
 ) {
-	dustThreshold := 546 // in satoshis
-
 	// Generate random slashing and change addresses
 	slashingAddress, err := genRandomBTCAddress(r)
 	require.NoError(t, err)
@@ -159,10 +170,14 @@ func testSlashingTx(
 		slashingAmount := stakingAmount.MulF64(slashingRateFloat64)
 		changeAmount := stakingAmount - slashingAmount - btcutil.Amount(fee)
 
+		// check if the created outputs are not dust
+		slashingOutput := outputFromAddressAndValue(t, slashingAddress, slashingAmount)
+		changeOutput := taprootOutputWithValue(t, r, changeAmount)
+
 		if changeAmount <= 0 {
 			require.Error(t, err)
 			require.ErrorIs(t, err, btcstaking.ErrInsufficientChangeAmount)
-		} else if changeAmount <= btcutil.Amount(dustThreshold) || slashingAmount <= btcutil.Amount(dustThreshold) {
+		} else if mempool.IsDust(slashingOutput, mempool.DefaultMinRelayTxFee) || mempool.IsDust(changeOutput, mempool.DefaultMinRelayTxFee) {
 			require.Error(t, err)
 			require.ErrorIs(t, err, btcstaking.ErrDustOutputFound)
 		} else {
