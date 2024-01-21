@@ -1,12 +1,13 @@
 package keeper
 
 import (
+	"context"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetGenBlsKeys registers BLS keys with each validator at genesis
-func (k Keeper) SetGenBlsKeys(ctx sdk.Context, genKeys []*types.GenesisKey) {
+func (k Keeper) SetGenBlsKeys(ctx context.Context, genKeys []*types.GenesisKey) {
 	for _, key := range genKeys {
 		addr, err := sdk.ValAddressFromBech32(key.ValidatorAddress)
 		if err != nil {

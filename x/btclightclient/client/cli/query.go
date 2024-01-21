@@ -11,7 +11,7 @@ import (
 )
 
 // GetQueryCmd returns the cli query commands for this module
-func GetQueryCmd(queryRoute string) *cobra.Command {
+func GetQueryCmd(_ string) *cobra.Command {
 	// Group btclightclient queries under a subcommand
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -26,6 +26,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	cmd.AddCommand(CmdMainChain())
 	cmd.AddCommand(CmdTip())
 	cmd.AddCommand(CmdBaseHeader())
+	cmd.AddCommand(CmdHeaderDepth())
 
 	return cmd
 }
@@ -56,6 +57,7 @@ func CmdHashes() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "hashes")
 
 	return cmd
 }
@@ -114,6 +116,7 @@ func CmdMainChain() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "main-chain")
 
 	return cmd
 }
@@ -155,6 +158,34 @@ func CmdBaseHeader() *cobra.Command {
 
 			params := types.NewQueryBaseHeaderRequest()
 			res, err := queryClient.BaseHeader(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdHeaderDepth() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "header-depth [hex-hash]",
+		Short: "check main chain depth of the header with the given hash",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			depthRequest, err := types.NewQueryHeaderDepthRequest(args[0])
+			if err != nil {
+				return err
+			}
+			res, err := queryClient.HeaderDepth(context.Background(), depthRequest)
 			if err != nil {
 				return err
 			}

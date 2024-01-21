@@ -1,0 +1,250 @@
+syntax = "proto3";
+package babylon.btcstaking.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "babylon/btcstaking/v1/params.proto";
+import "babylon/btcstaking/v1/btcstaking.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/params";
+  }
+
+  // FinalityProviders queries all finality providers
+  rpc FinalityProviders(QueryFinalityProvidersRequest) returns (QueryFinalityProvidersResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers";
+  }
+
+  // FinalityProvider info about one finality provider
+  rpc FinalityProvider(QueryFinalityProviderRequest) returns (QueryFinalityProviderResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/finality_provider";
+  }
+
+  // BTCDelegations queries all BTC delegations under a given status
+  rpc BTCDelegations(QueryBTCDelegationsRequest) returns (QueryBTCDelegationsResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations";
+  }
+
+  // ActiveFinalityProvidersAtHeight queries finality providers with non zero voting power at given height.
+  rpc ActiveFinalityProvidersAtHeight(QueryActiveFinalityProvidersAtHeightRequest) returns (QueryActiveFinalityProvidersAtHeightResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{height}";
+  }
+
+  // FinalityProviderPowerAtHeight queries the voting power of a finality provider at a given height
+  rpc FinalityProviderPowerAtHeight(QueryFinalityProviderPowerAtHeightRequest) returns (QueryFinalityProviderPowerAtHeightResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/power/{height}";
+  }
+
+  // FinalityProviderCurrentPower queries the voting power of a finality provider at the current height
+  rpc FinalityProviderCurrentPower(QueryFinalityProviderCurrentPowerRequest) returns (QueryFinalityProviderCurrentPowerResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/power";
+  }
+
+  // ActivatedHeight queries the height when BTC staking protocol is activated, i.e., the first height when
+  // there exists 1 finality provider with voting power
+  rpc ActivatedHeight(QueryActivatedHeightRequest) returns (QueryActivatedHeightResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/activated_height";
+  }
+
+  // FinalityProviderDelegations queries all BTC delegations of the given finality provider
+  rpc FinalityProviderDelegations(QueryFinalityProviderDelegationsRequest) returns (QueryFinalityProviderDelegationsResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/finality_providers/{fp_btc_pk_hex}/delegations";
+  }
+
+  // BTCDelegation retrieves delegation by corresponding staking tx hash
+  rpc BTCDelegation(QueryBTCDelegationRequest) returns (QueryBTCDelegationResponse) {
+    option (google.api.http).get = "/babylon/btcstaking/v1/btc_delegations/{staking_tx_hash_hex}";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryFinalityProvidersRequest is the request type for the
+// Query/FinalityProviders RPC method.
+message QueryFinalityProvidersRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryFinalityProvidersResponse is the response type for the
+// Query/FinalityProviders RPC method.
+message QueryFinalityProvidersResponse {
+  // finality_providers contains all the finality providers
+  repeated FinalityProvider finality_providers = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+
+// QueryFinalityProviderRequest requests information about a finality provider
+message QueryFinalityProviderRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryFinalityProviderResponse contains information about a finality provider
+message QueryFinalityProviderResponse {
+  // finality_provider contains the FinalityProvider
+  FinalityProvider finality_provider = 1;
+}
+
+// QueryBTCDelegationsRequest is the request type for the
+// Query/BTCDelegations RPC method.
+message QueryBTCDelegationsRequest {
+  // status is the queried status for BTC delegations
+  BTCDelegationStatus status = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryBTCDelegationsResponse is the response type for the
+// Query/BTCDelegations RPC method.
+message QueryBTCDelegationsResponse {
+  // btc_delegations contains all the queried BTC delegations under the given status
+  repeated BTCDelegation btc_delegations = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryFinalityProviderPowerAtHeightRequest is the request type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+message QueryFinalityProviderPowerAtHeightRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string fp_btc_pk_hex = 1;
+
+  // height is used for querying the given finality provider's voting power at this height
+  uint64 height = 2;
+}
+
+// QueryFinalityProviderPowerAtHeightResponse is the response type for the
+// Query/FinalityProviderPowerAtHeight RPC method.
+message QueryFinalityProviderPowerAtHeightResponse {
+  // voting_power is the voting power of the finality provider
+  uint64 voting_power = 1;
+}
+
+// QueryFinalityProviderCurrentPowerRequest is the request type for the
+// Query/FinalityProviderCurrentPower RPC method.
+message QueryFinalityProviderCurrentPowerRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality provider that
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string fp_btc_pk_hex = 1;
+}
+
+// QueryFinalityProviderCurrentPowerResponse is the response type for the
+// Query/FinalityProviderCurrentPower RPC method.
+message QueryFinalityProviderCurrentPowerResponse {
+  // height is the current height
+  uint64 height = 1;
+  // voting_power is the voting power of the finality provider
+  uint64 voting_power = 2;
+}
+
+// QueryActiveFinalityProvidersAtHeightRequest is the request type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+message QueryActiveFinalityProvidersAtHeightRequest {
+  // height defines at which Babylon height to query the finality providers info.
+  uint64 height = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryActiveFinalityProvidersAtHeightResponse is the response type for the
+// Query/ActiveFinalityProvidersAtHeight RPC method.
+message QueryActiveFinalityProvidersAtHeightResponse {
+  // finality_providers contains all the queried finality providersn.
+  repeated FinalityProviderWithMeta finality_providers = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryActivatedHeightRequest is the request type for the Query/ActivatedHeight RPC method.
+message QueryActivatedHeightRequest {}
+
+// QueryActivatedHeightResponse is the response type for the Query/ActivatedHeight RPC method.
+message QueryActivatedHeightResponse {
+  uint64 height = 1;
+}
+
+// QueryFinalityProviderDelegationsRequest is the request type for the
+// Query/FinalityProviderDelegations RPC method.
+message QueryFinalityProviderDelegationsRequest {
+  // fp_btc_pk_hex is the hex str of Bitcoin secp256k1 PK of the finality providerthat
+  // this BTC delegation delegates to
+  // the PK follows encoding in BIP-340 spec
+  string fp_btc_pk_hex = 1;
+
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryFinalityProviderDelegationsResponse is the response type for the
+// Query/FinalityProviderDelegations RPC method.
+message QueryFinalityProviderDelegationsResponse {
+  // btc_delegator_delegations contains all the queried BTC delegations.
+  repeated BTCDelegatorDelegations btc_delegator_delegations = 1;
+
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryBTCDelegationRequest is the request type to retrieve a BTC delegation by
+// staking tx hash
+message QueryBTCDelegationRequest {
+  // Hash of staking transaction in btc format
+  string staking_tx_hash_hex = 1;
+}
+
+// QueryBTCDelegationResponse is response type matching QueryBTCDelegationRequest
+// and containing BTC delegation information
+message QueryBTCDelegationResponse {
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
+  // this BTC delegation delegates to
+  repeated bytes fp_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // start_height is the start BTC height of the BTC delegation
+  // it is the start BTC height of the timelock
+  uint64 start_height = 3;
+  // end_height is the end height of the BTC delegation
+  // it is the end BTC height of the timelock - w
+  uint64 end_height = 4;
+  // total_sat is the total amount of BTC stakes in this delegation
+  // quantified in satoshi
+  uint64 total_sat = 5;
+  // staking_tx_hex is the hex string of staking tx
+  string staking_tx_hex = 6;
+  // covenant_sigs is a list of adaptor signatures on the slashing tx
+  // by each covenant member
+  // It will be a part of the witness for the staking tx output.
+  repeated CovenantAdaptorSignatures covenant_sigs = 7;
+  // whether this delegation is active
+  bool active = 8;
+  // unbonding_time used in unbonding output timelock path and in slashing transactions
+  // change outputs
+  uint32 unbonding_time = 9;
+  // undelegation_info is the undelegation info of this delegation.
+  BTCUndelegationInfo undelegation_info = 10;
+}

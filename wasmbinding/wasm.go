@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
-	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
 	bbn "github.com/babylonchain/babylon/types"
@@ -168,7 +167,7 @@ func RegisterCustomPlugins(
 		Custom: CustomQuerier(wasmQueryPlugin),
 	})
 
-	return []wasm.Option{
+	return []wasmkeeper.Option{
 		queryPluginOpt,
 	}
 }

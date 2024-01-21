@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	"github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/types"
@@ -10,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Semantically valid checkpoint submission with:
+// RawCheckpointSubmission Semantically valid checkpoint submission with:
 // - valid submitter address
 // - at least 2 parsed proof
 // Modelling proofs as separate Proof1 and Proof2, as this is more explicit than
@@ -81,22 +82,22 @@ func toTransactionKey(p *ParsedProof) TransactionKey {
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
+func (s *RawCheckpointSubmission) GetSubmissionKey() SubmissionKey {
 	var keys []*TransactionKey
-	k1 := toTransactionKey(&rsc.Proof1)
+	k1 := toTransactionKey(&s.Proof1)
 	keys = append(keys, &k1)
-	k2 := toTransactionKey(&rsc.Proof2)
+	k2 := toTransactionKey(&s.Proof2)
 	keys = append(keys, &k2)
 	return SubmissionKey{
 		Key: keys,
 	}
 }
 
-func (rsc *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
+func (s *RawCheckpointSubmission) GetSubmissionData(epochNum uint64, txsInfo []*TransactionInfo) SubmissionData {
 	return SubmissionData{
 		VigilanteAddresses: &CheckpointAddresses{
-			Reporter:  rsc.Reporter.Bytes(),
-			Submitter: rsc.CheckpointData.SubmitterAddress,
+			Reporter:  s.Reporter.Bytes(),
+			Submitter: s.CheckpointData.SubmitterAddress,
 		},
 		TxsInfo: txsInfo,
 		Epoch:   epochNum,
@@ -116,14 +117,14 @@ func (sk *SubmissionKey) GetKeyBlockHashes() []*types.BTCHeaderHashBytes {
 
 func NewEmptyEpochData() EpochData {
 	return EpochData{
-		Key:    []*SubmissionKey{},
+		Keys:   []*SubmissionKey{},
 		Status: Submitted,
 	}
 }
 
 func (s *EpochData) AppendKey(k SubmissionKey) {
 	key := &k
-	s.Key = append(s.Key, key)
+	s.Keys = append(s.Keys, key)
 }
 
 // HappenedAfter returns true if `this` submission happened after `that` submission
@@ -161,6 +162,37 @@ func NewTransactionInfo(txKey *TransactionKey, txBytes []byte, proof []byte) *Tr
 	}
 }
 
+func NewTransactionInfoFromSpvProof(proof *BTCSpvProof) *TransactionInfo {
+	return &TransactionInfo{
+		Key: &TransactionKey{
+			Index: proof.BtcTransactionIndex,
+			Hash:  proof.ConfirmingBtcHeader.Hash(),
+		},
+		Transaction: proof.BtcTransaction,
+		Proof:       proof.MerkleNodes,
+	}
+}
+
+func NewTransactionInfoFromHex(txInfoHex string) (*TransactionInfo, error) {
+	txInfoBytes, err := hex.DecodeString(txInfoHex)
+	if err != nil {
+		return nil, err
+	}
+	var txInfo TransactionInfo
+	if err := txInfo.Unmarshal(txInfoBytes); err != nil {
+		return nil, err
+	}
+	return &txInfo, nil
+}
+
+func (ti *TransactionInfo) ToHexStr() (string, error) {
+	txInfoBytes, err := ti.Marshal()
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(txInfoBytes), nil
+}
+
 func (ti *TransactionInfo) ValidateBasic() error {
 	if ti.Key == nil {
 		return fmt.Errorf("key in TransactionInfo is nil")
@@ -171,6 +203,34 @@ func (ti *TransactionInfo) ValidateBasic() error {
 	if ti.Proof == nil {
 		return fmt.Errorf("proof in TransactionInfo is nil")
 	}
+	return nil
+}
+
+// VerifyInclusion verifies the tx is included in a given BTC header that satisfies the given PoW limit
+// TODO: given that TransactionInfo is now used in btcstaking module as well,
+// probably we need to move it out from btccheckpoint
+func (ti *TransactionInfo) VerifyInclusion(btcHeader *types.BTCHeaderBytes, powLimit *big.Int) error {
+	if err := ti.ValidateBasic(); err != nil {
+		return err
+	}
+	if !ti.Key.Hash.Eq(btcHeader.Hash()) {
+		return fmt.Errorf("the given btcHeader is different from that in TransactionInfo")
+	}
+
+	tx, err := ParseTransaction(ti.Transaction)
+	if err != nil {
+		return err
+	}
+
+	header := btcHeader.ToBlockHeader()
+	if err := types.ValidateBTCHeader(header, powLimit); err != nil {
+		return err
+	}
+
+	if !verify(tx, &header.MerkleRoot, ti.Proof, ti.Key.Index) {
+		return fmt.Errorf("header failed validation due to failed proof")
+	}
+
 	return nil
 }
 

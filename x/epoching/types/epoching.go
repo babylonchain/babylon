@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
@@ -9,7 +10,6 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -17,12 +17,12 @@ import (
 // The relationship between block and epoch is as follows, assuming epoch interval of 5:
 // 0 | 1 2 3 4 5 | 6 7 8 9 10 |
 // 0 |     1     |     2      |
-func NewEpoch(epochNumber uint64, epochInterval uint64, firstBlockHeight uint64, lastBlockHeader *tmproto.Header) Epoch {
+func NewEpoch(epochNumber uint64, epochInterval uint64, firstBlockHeight uint64, lastBlockTime *time.Time) Epoch {
 	return Epoch{
 		EpochNumber:          epochNumber,
 		CurrentEpochInterval: epochInterval,
 		FirstBlockHeight:     firstBlockHeight,
-		LastBlockHeader:      lastBlockHeader,
+		LastBlockTime:        lastBlockTime,
 		// NOTE: SealerHeader will be set in the next epoch
 	}
 }
@@ -34,6 +34,10 @@ func (e Epoch) GetLastBlockHeight() uint64 {
 	return e.FirstBlockHeight + e.CurrentEpochInterval - 1
 }
 
+func (e Epoch) GetSealerBlockHeight() uint64 {
+	return e.GetLastBlockHeight() + 1
+}
+
 func (e Epoch) GetSecondBlockHeight() uint64 {
 	if e.EpochNumber == 0 {
 		panic("should not be called when epoch number is zero")
@@ -41,19 +45,30 @@ func (e Epoch) GetSecondBlockHeight() uint64 {
 	return e.FirstBlockHeight + 1
 }
 
-func (e Epoch) IsLastBlock(ctx sdk.Context) bool {
-	return e.GetLastBlockHeight() == uint64(ctx.BlockHeight())
+func (e Epoch) IsLastBlock(ctx context.Context) bool {
+	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 }
 
-func (e Epoch) IsFirstBlock(ctx sdk.Context) bool {
-	return e.FirstBlockHeight == uint64(ctx.BlockHeight())
+func (e Epoch) IsLastBlockByHeight(height int64) bool {
+	return e.GetLastBlockHeight() == uint64(height)
 }
 
-func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
+func (e Epoch) IsFirstBlock(ctx context.Context) bool {
+	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+}
+
+func (e Epoch) IsSecondBlock(ctx context.Context) bool {
 	if e.EpochNumber == 0 {
 		return false
 	}
-	return e.GetSecondBlockHeight() == uint64(ctx.BlockHeight())
+	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+}
+
+func (e Epoch) IsVoteExtensionProposal(ctx context.Context) bool {
+	if e.EpochNumber == 0 {
+		return false
+	}
+	return e.IsFirstBlockOfNextEpoch(ctx)
 }
 
 // IsFirstBlockOfNextEpoch checks whether the current block is the first block of
@@ -61,18 +76,19 @@ func (e Epoch) IsSecondBlock(ctx sdk.Context) bool {
 // CONTRACT: IsFirstBlockOfNextEpoch can only be called by the epoching module
 // once upon the first block of a new epoch
 // other modules should use IsFirstBlock instead.
-func (e Epoch) IsFirstBlockOfNextEpoch(ctx sdk.Context) bool {
+func (e Epoch) IsFirstBlockOfNextEpoch(ctx context.Context) bool {
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if e.EpochNumber == 0 {
-		return ctx.BlockHeight() == 1
+		return sdkCtx.HeaderInfo().Height == 1
 	} else {
-		height := uint64(ctx.BlockHeight())
+		height := uint64(sdkCtx.HeaderInfo().Height)
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
 }
 
 // WithinBoundary checks whether the given height is within this epoch or not
 func (e Epoch) WithinBoundary(height uint64) bool {
-	if height < e.FirstBlockHeight || height > uint64(e.LastBlockHeader.Height) {
+	if height < e.FirstBlockHeight || height > uint64(e.GetLastBlockHeight()) {
 		return false
 	} else {
 		return true
@@ -90,8 +106,7 @@ func (e Epoch) ValidateBasic() error {
 // NewQueuedMessage creates a new QueuedMessage from a wrapped msg
 // i.e., wrapped -> unwrapped -> QueuedMessage
 func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg sdk.Msg) (QueuedMessage, error) {
-	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, ...) inside isQueuedMessage_Msg
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
+	// marshal the actual msg (MsgDelegate, MsgBeginRedelegate, MsgUndelegate, MsgCancelUnbondingDelegation) inside isQueuedMessage_Msg
 	var qmsg isQueuedMessage_Msg
 	var msgBytes []byte
 	var err error
@@ -117,6 +132,13 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 		qmsg = &QueuedMessage_MsgUndelegate{
 			MsgUndelegate: msgWithType.Msg,
 		}
+	case *MsgWrappedCancelUnbondingDelegation:
+		if msgBytes, err = msgWithType.Msg.Marshal(); err != nil {
+			return QueuedMessage{}, err
+		}
+		qmsg = &QueuedMessage_MsgCancelUnbondingDelegation{
+			MsgCancelUnbondingDelegation: msgWithType.Msg,
+		}
 	case *stakingtypes.MsgCreateValidator:
 		if msgBytes, err = msgWithType.Marshal(); err != nil {
 			return QueuedMessage{}, err
@@ -138,15 +160,6 @@ func NewQueuedMessage(blockHeight uint64, blockTime time.Time, txid []byte, msg 
 	return queuedMsg, nil
 }
 
-func (qm QueuedMessage) GetSigners() []sdk.AccAddress {
-	return qm.UnwrapToSdkMsg().GetSigners()
-}
-
-func (qm QueuedMessage) ValidateBasic() error {
-	return qm.UnwrapToSdkMsg().ValidateBasic()
-
-}
-
 // UnpackInterfaces implements UnpackInterfacesMessage.UnpackInterfaces
 func (qm QueuedMessage) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error {
 	var pubKey cryptotypes.PubKey
@@ -159,7 +172,6 @@ func (qm QueuedMessage) UnpackInterfaces(unpacker codectypes.AnyUnpacker) error 
 
 func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 	var unwrappedMsgWithType sdk.Msg
-	// TODO (non-urgent): after we bump to Cosmos SDK v0.46, add MsgCancelUnbondingDelegation
 	switch unwrappedMsg := qm.Msg.(type) {
 	case *QueuedMessage_MsgCreateValidator:
 		unwrappedMsgWithType = unwrappedMsg.MsgCreateValidator
@@ -169,6 +181,8 @@ func (qm *QueuedMessage) UnwrapToSdkMsg() sdk.Msg {
 		unwrappedMsgWithType = unwrappedMsg.MsgUndelegate
 	case *QueuedMessage_MsgBeginRedelegate:
 		unwrappedMsgWithType = unwrappedMsg.MsgBeginRedelegate
+	case *QueuedMessage_MsgCancelUnbondingDelegation:
+		unwrappedMsgWithType = unwrappedMsg.MsgCancelUnbondingDelegation
 	default:
 		panic(errorsmod.Wrap(ErrInvalidQueuedMessageType, qm.String()))
 	}

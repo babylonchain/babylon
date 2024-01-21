@@ -16,7 +16,7 @@ func TestGenesis(t *testing.T) {
 		Params: types.Params{IbcPacketTimeoutSeconds: 100},
 	}
 
-	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil, nil)
+	k, ctx := keepertest.ZoneConciergeKeeper(t, nil, nil, nil, nil)
 	zoneconcierge.InitGenesis(ctx, *k, genesisState)
 	got := zoneconcierge.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)

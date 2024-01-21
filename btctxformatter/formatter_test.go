@@ -8,17 +8,17 @@ import (
 )
 
 func randNBytes(n int) []byte {
-	bytes := make([]byte, n)
-	cprand.Read(bytes) //nolint:errcheck // This is a test.
-	return bytes
+	bz := make([]byte, n)
+	cprand.Read(bz) //nolint:errcheck // This is a test.
+	return bz
 }
 
 func FuzzEncodingDecoding(f *testing.F) {
-	f.Add(uint64(5), randNBytes(TagLength), randNBytes(LastCommitHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
-	f.Add(uint64(20), randNBytes(TagLength), randNBytes(LastCommitHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
-	f.Add(uint64(2000), randNBytes(TagLength), randNBytes(LastCommitHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
+	f.Add(uint64(5), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
+	f.Add(uint64(20), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
+	f.Add(uint64(2000), randNBytes(TagLength), randNBytes(BlockHashLength), randNBytes(BitMapLength), randNBytes(BlsSigLength), randNBytes(AddressLength))
 
-	f.Fuzz(func(t *testing.T, epoch uint64, tag []byte, lastCommitHash []byte, bitMap []byte, blsSig []byte, address []byte) {
+	f.Fuzz(func(t *testing.T, epoch uint64, tag []byte, appHash []byte, bitMap []byte, blsSig []byte, address []byte) {
 
 		if len(tag) < TagLength {
 			t.Skip("Tag should have 4 bytes")
@@ -28,7 +28,7 @@ func FuzzEncodingDecoding(f *testing.F) {
 
 		rawBTCCkpt := &RawBtcCheckpoint{
 			Epoch:            epoch,
-			LastCommitHash:   lastCommitHash,
+			BlockHash:        appHash,
 			BitMap:           bitMap,
 			SubmitterAddress: blsSig,
 			BlsSig:           address,
@@ -78,8 +78,8 @@ func FuzzEncodingDecoding(f *testing.F) {
 			t.Errorf("Epoch should match. Expected: %v. Got: %v", epoch, ckpt.Epoch)
 		}
 
-		if !bytes.Equal(lastCommitHash, ckpt.LastCommitHash) {
-			t.Errorf("LastCommitHash should match. Expected: %v. Got: %v", lastCommitHash, ckpt.LastCommitHash)
+		if !bytes.Equal(appHash, ckpt.BlockHash) {
+			t.Errorf("BlockHash should match. Expected: %v. Got: %v", appHash, ckpt.BlockHash)
 		}
 
 		if !bytes.Equal(bitMap, ckpt.BitMap) {
@@ -99,7 +99,7 @@ func FuzzDecodingWontPanic(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, bytes []byte, tagIdx uint8) {
 		tag := []byte{0, 1, 2, 3}
-		decoded, err := IsBabylonCheckpointData(BabylonTag(tag), CurrentVersion, bytes)
+		decoded, err := IsBabylonCheckpointData(tag, CurrentVersion, bytes)
 
 		if err == nil {
 			if decoded.Index != 0 && decoded.Index != 1 {

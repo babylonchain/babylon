@@ -1,0 +1,40 @@
+syntax = "proto3";
+package babylon.finality.v1;
+
+option go_package = "github.com/babylonchain/babylon/x/finality/types";
+
+import "gogoproto/gogo.proto";
+
+// IndexedBlock is the necessary metadata and finalization status of a block
+message IndexedBlock {
+    // height is the height of the block
+    uint64 height = 1;
+    // app_hash is the AppHash of the block
+    bytes app_hash = 2;
+    // finalized indicates whether the IndexedBlock is finalised by 2/3
+    // finality providers or not
+    bool finalized = 3;
+}
+
+// Evidence is the evidence that a finality provider has signed finality
+// signatures with correct public randomness on two conflicting Babylon headers
+message Evidence {
+    // fp_btc_pk is the BTC PK of the finality provider that casts this vote
+    bytes fp_btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // block_height is the height of the conflicting blocks
+    uint64 block_height = 2;
+    // pub_rand is the public randomness the finality provider has committed to
+    bytes pub_rand = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrPubRand" ];
+    // canonical_app_hash is the AppHash of the canonical block
+    bytes canonical_app_hash = 4;
+    // fork_app_hash is the AppHash of the fork block
+    bytes fork_app_hash = 5;
+    // canonical_finality_sig is the finality signature to the canonical block
+    // where finality signature is an EOTS signature, i.e.,
+    // the `s` in a Schnorr signature `(r, s)`
+    // `r` is the public randomness that is already committed by the finality provider
+    bytes canonical_finality_sig = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+    // fork_finality_sig is the finality signature to the fork block
+    // where finality signature is an EOTS signature
+    bytes fork_finality_sig = 7 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.SchnorrEOTSSig" ];
+}

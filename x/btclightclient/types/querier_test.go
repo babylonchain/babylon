@@ -12,10 +12,10 @@ import (
 )
 
 func TestNewQueryHashesRequest(t *testing.T) {
-	headerBytes := bbn.GetBaseBTCHeaderBytes()
-	headerHashBytes := headerBytes.Hash()
+	baseHeader := types.SimnetGenesisBlock()
+
 	req := query.PageRequest{
-		Key: headerHashBytes.MustMarshal(),
+		Key: baseHeader.Hash.MustMarshal(),
 	}
 	newQueryHashes := types.NewQueryHashesRequest(&req)
 	if newQueryHashes == nil {
@@ -55,9 +55,10 @@ func FuzzNewQueryContainsRequest(f *testing.F) {
 }
 
 func TestNewQueryMainChainRequest(t *testing.T) {
-	headerBytes := bbn.GetBaseBTCHeaderBytes()
+	baseHeader := types.SimnetGenesisBlock()
+
 	req := query.PageRequest{
-		Key: headerBytes.MustMarshal(),
+		Key: baseHeader.Header.MustMarshal(),
 	}
 	newQueryMainChain := types.NewQueryMainChainRequest(&req)
 	if newQueryMainChain == nil {

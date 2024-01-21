@@ -1,16 +1,18 @@
 package keeper
 
 import (
+	"context"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/runtime"
 
 	sdkerrors "cosmossdk.io/errors"
+	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // FindClosestHeader finds the IndexedHeader that is closest to (but not after) the given height
-func (k Keeper) FindClosestHeader(ctx sdk.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
+func (k Keeper) FindClosestHeader(ctx context.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
 	chainInfo, err := k.GetChainInfo(ctx, chainID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get chain info for chain with ID %s: %w", chainID, err)
@@ -37,7 +39,7 @@ func (k Keeper) FindClosestHeader(ctx sdk.Context, chainID string, height uint64
 	return &header, nil
 }
 
-func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
+func (k Keeper) GetHeader(ctx context.Context, chainID string, height uint64) (*types.IndexedHeader, error) {
 	store := k.canonicalChainStore(ctx, chainID)
 	heightBytes := sdk.Uint64ToBigEndian(height)
 	if !store.Has(heightBytes) {
@@ -49,7 +51,7 @@ func (k Keeper) GetHeader(ctx sdk.Context, chainID string, height uint64) (*type
 	return &header, nil
 }
 
-func (k Keeper) insertHeader(ctx sdk.Context, chainID string, header *types.IndexedHeader) error {
+func (k Keeper) insertHeader(ctx context.Context, chainID string, header *types.IndexedHeader) error {
 	if header == nil {
 		return sdkerrors.Wrapf(types.ErrInvalidHeader, "header is nil")
 	}
@@ -63,9 +65,9 @@ func (k Keeper) insertHeader(ctx sdk.Context, chainID string, header *types.Inde
 // prefix: CanonicalChainKey || chainID
 // key: height
 // value: IndexedHeader
-func (k Keeper) canonicalChainStore(ctx sdk.Context, chainID string) prefix.Store {
-	store := ctx.KVStore(k.storeKey)
-	canonicalChainStore := prefix.NewStore(store, types.CanonicalChainKey)
+func (k Keeper) canonicalChainStore(ctx context.Context, chainID string) prefix.Store {
+	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
+	canonicalChainStore := prefix.NewStore(storeAdapter, types.CanonicalChainKey)
 	chainIDBytes := []byte(chainID)
 	return prefix.NewStore(canonicalChainStore, chainIDBytes)
 }

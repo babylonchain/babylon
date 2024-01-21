@@ -14,7 +14,7 @@ import (
 func (m BlsSig) Hash() BlsSigHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.LastCommitHash.MustMarshal(),
+		m.BlockHash.MustMarshal(),
 		m.BlsSig.MustMarshal(),
 		[]byte(m.SignerAddress),
 	}
@@ -24,7 +24,7 @@ func (m BlsSig) Hash() BlsSigHash {
 func (m RawCheckpoint) Hash() RawCkptHash {
 	fields := [][]byte{
 		sdk.Uint64ToBigEndian(m.EpochNum),
-		m.LastCommitHash.MustMarshal(),
+		m.BlockHash.MustMarshal(),
 		m.BlsMultiSig.MustMarshal(),
 		m.Bitmap,
 	}
@@ -36,9 +36,9 @@ func (m RawCheckpoint) HashStr() string {
 }
 
 // SignedMsg is the message corresponding to the BLS sig in this raw checkpoint
-// Its value should be (epoch_number || last_commit_hash)
+// Its value should be (epoch_number || app_hash)
 func (m RawCheckpoint) SignedMsg() []byte {
-	return append(sdk.Uint64ToBigEndian(m.EpochNum), *m.LastCommitHash...)
+	return append(sdk.Uint64ToBigEndian(m.EpochNum), *m.BlockHash...)
 }
 
 func hash(fields [][]byte) []byte {
@@ -78,8 +78,8 @@ func FromBTCCkptBytesToRawCkpt(btcCkptBytes []byte) (*RawCheckpoint, error) {
 }
 
 func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpoint, error) {
-	var lch LastCommitHash
-	err := lch.Unmarshal(btcCkpt.LastCommitHash)
+	var blockHash BlockHash
+	err := blockHash.Unmarshal(btcCkpt.BlockHash)
 	if err != nil {
 		return nil, err
 	}
@@ -89,17 +89,17 @@ func FromBTCCkptToRawCkpt(btcCkpt *btctxformatter.RawBtcCheckpoint) (*RawCheckpo
 		return nil, err
 	}
 	rawCheckpoint := &RawCheckpoint{
-		EpochNum:       btcCkpt.Epoch,
-		LastCommitHash: &lch,
-		Bitmap:         btcCkpt.BitMap,
-		BlsMultiSig:    &blsSig,
+		EpochNum:    btcCkpt.Epoch,
+		BlockHash:   &blockHash,
+		Bitmap:      btcCkpt.BitMap,
+		BlsMultiSig: &blsSig,
 	}
 
 	return rawCheckpoint, nil
 }
 
 func FromRawCkptToBTCCkpt(rawCkpt *RawCheckpoint, address []byte) (*btctxformatter.RawBtcCheckpoint, error) {
-	lchBytes, err := rawCkpt.LastCommitHash.Marshal()
+	appHashBytes, err := rawCkpt.BlockHash.Marshal()
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func FromRawCkptToBTCCkpt(rawCkpt *RawCheckpoint, address []byte) (*btctxformatt
 
 	btcCkpt := &btctxformatter.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
-		LastCommitHash:   lchBytes,
+		BlockHash:        appHashBytes,
 		BitMap:           rawCkpt.Bitmap,
 		SubmitterAddress: address,
 		BlsSig:           blsSigBytes,

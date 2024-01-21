@@ -31,6 +31,89 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+type QueryParamsRequest struct {
+}
+
+func (m *QueryParamsRequest) Reset()         { *m = QueryParamsRequest{} }
+func (m *QueryParamsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryParamsRequest) ProtoMessage()    {}
+func (*QueryParamsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3961270631e52721, []int{0}
+}
+func (m *QueryParamsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryParamsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryParamsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryParamsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryParamsRequest.Merge(m, src)
+}
+func (m *QueryParamsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryParamsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryParamsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+type QueryParamsResponse struct {
+	// params holds all the parameters of this module.
+	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
+}
+
+func (m *QueryParamsResponse) Reset()         { *m = QueryParamsResponse{} }
+func (m *QueryParamsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryParamsResponse) ProtoMessage()    {}
+func (*QueryParamsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3961270631e52721, []int{1}
+}
+func (m *QueryParamsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryParamsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryParamsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryParamsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryParamsResponse.Merge(m, src)
+}
+func (m *QueryParamsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryParamsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryParamsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryParamsResponse proto.InternalMessageInfo
+
+func (m *QueryParamsResponse) GetParams() Params {
+	if m != nil {
+		return m.Params
+	}
+	return Params{}
+}
+
 // QueryHashesRequest is request type for the Query/Hashes RPC method.
 // It involves retrieving all hashes that are maintained by the module.
 type QueryHashesRequest struct {
@@ -41,7 +124,7 @@ func (m *QueryHashesRequest) Reset()         { *m = QueryHashesRequest{} }
 func (m *QueryHashesRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryHashesRequest) ProtoMessage()    {}
 func (*QueryHashesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{0}
+	return fileDescriptor_3961270631e52721, []int{2}
 }
 func (m *QueryHashesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -87,7 +170,7 @@ func (m *QueryHashesResponse) Reset()         { *m = QueryHashesResponse{} }
 func (m *QueryHashesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryHashesResponse) ProtoMessage()    {}
 func (*QueryHashesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{1}
+	return fileDescriptor_3961270631e52721, []int{3}
 }
 func (m *QueryHashesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -133,7 +216,7 @@ func (m *QueryContainsRequest) Reset()         { *m = QueryContainsRequest{} }
 func (m *QueryContainsRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryContainsRequest) ProtoMessage()    {}
 func (*QueryContainsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{2}
+	return fileDescriptor_3961270631e52721, []int{4}
 }
 func (m *QueryContainsRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -171,7 +254,7 @@ func (m *QueryContainsResponse) Reset()         { *m = QueryContainsResponse{} }
 func (m *QueryContainsResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryContainsResponse) ProtoMessage()    {}
 func (*QueryContainsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{3}
+	return fileDescriptor_3961270631e52721, []int{5}
 }
 func (m *QueryContainsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -217,7 +300,7 @@ func (m *QueryContainsBytesRequest) Reset()         { *m = QueryContainsBytesReq
 func (m *QueryContainsBytesRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryContainsBytesRequest) ProtoMessage()    {}
 func (*QueryContainsBytesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{4}
+	return fileDescriptor_3961270631e52721, []int{6}
 }
 func (m *QueryContainsBytesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -263,7 +346,7 @@ func (m *QueryContainsBytesResponse) Reset()         { *m = QueryContainsBytesRe
 func (m *QueryContainsBytesResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryContainsBytesResponse) ProtoMessage()    {}
 func (*QueryContainsBytesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{5}
+	return fileDescriptor_3961270631e52721, []int{7}
 }
 func (m *QueryContainsBytesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -309,7 +392,7 @@ func (m *QueryMainChainRequest) Reset()         { *m = QueryMainChainRequest{} }
 func (m *QueryMainChainRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryMainChainRequest) ProtoMessage()    {}
 func (*QueryMainChainRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{6}
+	return fileDescriptor_3961270631e52721, []int{8}
 }
 func (m *QueryMainChainRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -355,7 +438,7 @@ func (m *QueryMainChainResponse) Reset()         { *m = QueryMainChainResponse{}
 func (m *QueryMainChainResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryMainChainResponse) ProtoMessage()    {}
 func (*QueryMainChainResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{7}
+	return fileDescriptor_3961270631e52721, []int{9}
 }
 func (m *QueryMainChainResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -406,7 +489,7 @@ func (m *QueryTipRequest) Reset()         { *m = QueryTipRequest{} }
 func (m *QueryTipRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryTipRequest) ProtoMessage()    {}
 func (*QueryTipRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{8}
+	return fileDescriptor_3961270631e52721, []int{10}
 }
 func (m *QueryTipRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -444,7 +527,7 @@ func (m *QueryTipResponse) Reset()         { *m = QueryTipResponse{} }
 func (m *QueryTipResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryTipResponse) ProtoMessage()    {}
 func (*QueryTipResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{9}
+	return fileDescriptor_3961270631e52721, []int{11}
 }
 func (m *QueryTipResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -489,7 +572,7 @@ func (m *QueryBaseHeaderRequest) Reset()         { *m = QueryBaseHeaderRequest{}
 func (m *QueryBaseHeaderRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBaseHeaderRequest) ProtoMessage()    {}
 func (*QueryBaseHeaderRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{10}
+	return fileDescriptor_3961270631e52721, []int{12}
 }
 func (m *QueryBaseHeaderRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -528,7 +611,7 @@ func (m *QueryBaseHeaderResponse) Reset()         { *m = QueryBaseHeaderResponse
 func (m *QueryBaseHeaderResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBaseHeaderResponse) ProtoMessage()    {}
 func (*QueryBaseHeaderResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_3961270631e52721, []int{11}
+	return fileDescriptor_3961270631e52721, []int{13}
 }
 func (m *QueryBaseHeaderResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -564,7 +647,101 @@ func (m *QueryBaseHeaderResponse) GetHeader() *BTCHeaderInfo {
 	return nil
 }
 
+// QueryMainChainDepthRequest is the request type for the Query/MainChainDepth RPC
+// it contains hex encoded hash of btc block header as parameter
+type QueryHeaderDepthRequest struct {
+	Hash string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+}
+
+func (m *QueryHeaderDepthRequest) Reset()         { *m = QueryHeaderDepthRequest{} }
+func (m *QueryHeaderDepthRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryHeaderDepthRequest) ProtoMessage()    {}
+func (*QueryHeaderDepthRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3961270631e52721, []int{14}
+}
+func (m *QueryHeaderDepthRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryHeaderDepthRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryHeaderDepthRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryHeaderDepthRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryHeaderDepthRequest.Merge(m, src)
+}
+func (m *QueryHeaderDepthRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryHeaderDepthRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryHeaderDepthRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryHeaderDepthRequest proto.InternalMessageInfo
+
+func (m *QueryHeaderDepthRequest) GetHash() string {
+	if m != nil {
+		return m.Hash
+	}
+	return ""
+}
+
+// QueryMainChainDepthResponse is the response type for the Query/MainChainDepth RPC
+// it contains depth of the block in main chain
+type QueryHeaderDepthResponse struct {
+	Depth uint64 `protobuf:"varint,1,opt,name=depth,proto3" json:"depth,omitempty"`
+}
+
+func (m *QueryHeaderDepthResponse) Reset()         { *m = QueryHeaderDepthResponse{} }
+func (m *QueryHeaderDepthResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryHeaderDepthResponse) ProtoMessage()    {}
+func (*QueryHeaderDepthResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_3961270631e52721, []int{15}
+}
+func (m *QueryHeaderDepthResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryHeaderDepthResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryHeaderDepthResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryHeaderDepthResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryHeaderDepthResponse.Merge(m, src)
+}
+func (m *QueryHeaderDepthResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryHeaderDepthResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryHeaderDepthResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryHeaderDepthResponse proto.InternalMessageInfo
+
+func (m *QueryHeaderDepthResponse) GetDepth() uint64 {
+	if m != nil {
+		return m.Depth
+	}
+	return 0
+}
+
 func init() {
+	proto.RegisterType((*QueryParamsRequest)(nil), "babylon.btclightclient.v1.QueryParamsRequest")
+	proto.RegisterType((*QueryParamsResponse)(nil), "babylon.btclightclient.v1.QueryParamsResponse")
 	proto.RegisterType((*QueryHashesRequest)(nil), "babylon.btclightclient.v1.QueryHashesRequest")
 	proto.RegisterType((*QueryHashesResponse)(nil), "babylon.btclightclient.v1.QueryHashesResponse")
 	proto.RegisterType((*QueryContainsRequest)(nil), "babylon.btclightclient.v1.QueryContainsRequest")
@@ -577,6 +754,8 @@ func init() {
 	proto.RegisterType((*QueryTipResponse)(nil), "babylon.btclightclient.v1.QueryTipResponse")
 	proto.RegisterType((*QueryBaseHeaderRequest)(nil), "babylon.btclightclient.v1.QueryBaseHeaderRequest")
 	proto.RegisterType((*QueryBaseHeaderResponse)(nil), "babylon.btclightclient.v1.QueryBaseHeaderResponse")
+	proto.RegisterType((*QueryHeaderDepthRequest)(nil), "babylon.btclightclient.v1.QueryHeaderDepthRequest")
+	proto.RegisterType((*QueryHeaderDepthResponse)(nil), "babylon.btclightclient.v1.QueryHeaderDepthResponse")
 }
 
 func init() {
@@ -584,51 +763,59 @@ func init() {
 }
 
 var fileDescriptor_3961270631e52721 = []byte{
-	// 694 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x96, 0xb1, 0x4f, 0x14, 0x4f,
-	0x14, 0xc7, 0x19, 0xf8, 0xfd, 0x0e, 0x7c, 0x68, 0xd4, 0x11, 0x15, 0x36, 0x66, 0xc5, 0x45, 0xe0,
-	0x04, 0xd9, 0xe1, 0x0e, 0x35, 0x14, 0x16, 0xe6, 0x48, 0x14, 0x0b, 0x13, 0xbc, 0x5c, 0xa5, 0x26,
-	0x66, 0xf6, 0x1c, 0x77, 0x37, 0x81, 0x9d, 0x85, 0x19, 0x88, 0xd7, 0x5a, 0x58, 0x1b, 0xed, 0x2c,
-	0x2c, 0x4c, 0x6c, 0xad, 0x6c, 0xfc, 0x0f, 0x2c, 0x49, 0x6c, 0x8c, 0x85, 0x31, 0xe0, 0x1f, 0x62,
-	0x76, 0xe6, 0x1d, 0xc7, 0x1d, 0x72, 0xb7, 0x44, 0x1a, 0xc2, 0xee, 0xbc, 0xef, 0xfb, 0x7e, 0xe6,
-	0x65, 0xbe, 0xb3, 0x07, 0x93, 0x01, 0x0f, 0x1a, 0xab, 0x32, 0x61, 0x81, 0xae, 0xaf, 0xc6, 0x61,
-	0x94, 0xfd, 0x15, 0x89, 0x66, 0x5b, 0x25, 0xb6, 0xbe, 0x29, 0x36, 0x1a, 0x7e, 0xba, 0x21, 0xb5,
-	0xa4, 0x63, 0x58, 0xe6, 0xb7, 0x97, 0xf9, 0x5b, 0x25, 0x67, 0x24, 0x94, 0xa1, 0x34, 0x55, 0x2c,
-	0xfb, 0xcf, 0x0a, 0x9c, 0x4b, 0xa1, 0x94, 0xe1, 0xaa, 0x60, 0x3c, 0x8d, 0x19, 0x4f, 0x12, 0xa9,
-	0xb9, 0x8e, 0x65, 0xa2, 0x70, 0x75, 0xa6, 0x2e, 0xd5, 0x9a, 0x54, 0x2c, 0xe0, 0x4a, 0x58, 0x1f,
-	0xb6, 0x55, 0x0a, 0x84, 0xe6, 0x25, 0x96, 0xf2, 0x30, 0x4e, 0x4c, 0x31, 0xd6, 0xfa, 0x87, 0x13,
-	0x76, 0xc0, 0x98, 0x7a, 0xef, 0x09, 0xd0, 0x87, 0x59, 0xc7, 0x65, 0xae, 0x22, 0xa1, 0xaa, 0x62,
-	0x7d, 0x53, 0x28, 0x4d, 0xef, 0x02, 0xb4, 0x3a, 0x8f, 0x92, 0x71, 0x52, 0x1c, 0x2e, 0x4f, 0xf9,
-	0x16, 0xc3, 0xcf, 0x30, 0x7c, 0xbb, 0x5d, 0xc4, 0xf0, 0x57, 0x78, 0x28, 0x50, 0x5b, 0xdd, 0xa7,
-	0xf4, 0x3e, 0x13, 0x38, 0xd7, 0xd6, 0x5e, 0xa5, 0x32, 0x51, 0x82, 0xd6, 0xa0, 0x10, 0x99, 0x37,
-	0xa3, 0x64, 0x7c, 0xa0, 0x78, 0xb2, 0x72, 0xfb, 0xc7, 0xcf, 0xcb, 0x8b, 0x61, 0xac, 0xa3, 0xcd,
-	0xc0, 0xaf, 0xcb, 0x35, 0x86, 0x9b, 0xa8, 0x47, 0x3c, 0x4e, 0x9a, 0x0f, 0x4c, 0x37, 0x52, 0xa1,
-	0xfc, 0x4a, 0x6d, 0x69, 0x59, 0xf0, 0x67, 0x62, 0x23, 0x6b, 0x59, 0x69, 0x68, 0xa1, 0xaa, 0xd8,
-	0x8b, 0xde, 0x6b, 0xa3, 0xee, 0x37, 0xd4, 0xd3, 0x3d, 0xa9, 0x2d, 0x52, 0x1b, 0x76, 0x04, 0x23,
-	0x86, 0x7a, 0x49, 0x26, 0x9a, 0xc7, 0xc9, 0xde, 0x58, 0x56, 0xe0, 0xbf, 0xcc, 0xca, 0x0c, 0xe4,
-	0x5f, 0xa1, 0x4d, 0x27, 0x6f, 0x01, 0xce, 0x77, 0x38, 0xe1, 0x84, 0x1c, 0x18, 0xaa, 0xe3, 0x3b,
-	0x63, 0x37, 0x54, 0xdd, 0x7b, 0xf6, 0x18, 0x8c, 0xb5, 0x89, 0x6c, 0x43, 0x64, 0xa4, 0xfb, 0x19,
-	0xd1, 0x65, 0x11, 0x9c, 0xbf, 0x09, 0x72, 0x58, 0x3d, 0x45, 0xbe, 0x07, 0x3c, 0x4e, 0x96, 0xb2,
-	0x8d, 0x1d, 0xf7, 0x09, 0xf9, 0x48, 0xe0, 0x42, 0xa7, 0x03, 0x72, 0x55, 0x60, 0x30, 0x32, 0x43,
-	0xb3, 0xa7, 0x64, 0xb8, 0x5c, 0xf4, 0x0f, 0xcd, 0x55, 0x6b, 0xc2, 0xf7, 0x93, 0xe7, 0xb2, 0xda,
-	0x14, 0x1e, 0xdf, 0x91, 0x38, 0x0b, 0xa7, 0x0d, 0x66, 0x2d, 0x4e, 0x71, 0x1b, 0x5e, 0x0d, 0xce,
-	0xb4, 0x5e, 0x21, 0xf3, 0x1d, 0x28, 0x58, 0x6b, 0x1c, 0x49, 0x7e, 0x64, 0xd4, 0x79, 0xa3, 0x38,
-	0x8f, 0x0a, 0x57, 0xc2, 0x2e, 0x37, 0xfd, 0x1e, 0xc3, 0xc5, 0x03, 0x2b, 0xc7, 0x65, 0x5b, 0xfe,
-	0x32, 0x08, 0xff, 0x9b, 0xee, 0xf4, 0x0d, 0x81, 0x82, 0x8d, 0x2b, 0x9d, 0xeb, 0xd2, 0xe6, 0xe0,
-	0xad, 0xe1, 0xf8, 0x79, 0xcb, 0x2d, 0xb5, 0x77, 0xed, 0xe5, 0xb7, 0xdf, 0x6f, 0xfb, 0x27, 0xe8,
-	0x15, 0x76, 0xf8, 0xa5, 0x85, 0xd1, 0x7e, 0x47, 0x60, 0xa8, 0x79, 0x7a, 0x29, 0xeb, 0xe5, 0xd3,
-	0x91, 0x5b, 0x67, 0x3e, 0xbf, 0x00, 0xd1, 0x66, 0x0d, 0xda, 0x24, 0x9d, 0xe8, 0x82, 0xd6, 0x0c,
-	0x09, 0xfd, 0x44, 0xe0, 0x54, 0x5b, 0xb4, 0xe8, 0x8d, 0xbc, 0x86, 0xfb, 0xa3, 0xeb, 0xdc, 0x3c,
-	0xa2, 0x0a, 0x59, 0xe7, 0x0d, 0xeb, 0x0c, 0x2d, 0xe6, 0x60, 0xb5, 0x78, 0xef, 0x09, 0x9c, 0xd8,
-	0xcb, 0x1b, 0xed, 0x39, 0x9d, 0xce, 0xf0, 0x3b, 0xa5, 0x23, 0x28, 0x10, 0xf2, 0xba, 0x81, 0x9c,
-	0xa2, 0x57, 0xbb, 0x40, 0xae, 0xf1, 0xd8, 0xde, 0x9e, 0xf4, 0x15, 0x81, 0x81, 0x5a, 0x9c, 0xd2,
-	0x99, 0x5e, 0x46, 0xad, 0x38, 0x3a, 0xb3, 0xb9, 0x6a, 0x11, 0x67, 0xca, 0xe0, 0x8c, 0x53, 0xb7,
-	0x0b, 0x8e, 0x8e, 0x53, 0xfa, 0x81, 0x00, 0xb4, 0xf2, 0x46, 0x7b, 0x6e, 0xfc, 0x40, 0x6a, 0x9d,
-	0xf2, 0x51, 0x24, 0x48, 0x37, 0x67, 0xe8, 0xa6, 0xe9, 0x64, 0x17, 0xba, 0xec, 0xf2, 0xb2, 0xd9,
-	0xad, 0xac, 0x7c, 0xdd, 0x71, 0xc9, 0xf6, 0x8e, 0x4b, 0x7e, 0xed, 0xb8, 0xe4, 0xf5, 0xae, 0xdb,
-	0xb7, 0xbd, 0xeb, 0xf6, 0x7d, 0xdf, 0x75, 0xfb, 0x1e, 0xdd, 0xea, 0xf5, 0x79, 0x7a, 0xd1, 0xd9,
-	0xd9, 0x7c, 0xaf, 0x82, 0x82, 0xf9, 0x71, 0xb0, 0xf0, 0x27, 0x00, 0x00, 0xff, 0xff, 0x88, 0x96,
-	0xa9, 0x76, 0xf0, 0x08, 0x00, 0x00,
+	// 823 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x96, 0xcf, 0x4f, 0x13, 0x4d,
+	0x18, 0xc7, 0xbb, 0xfc, 0xe8, 0x0b, 0xc3, 0xfb, 0xe6, 0xd5, 0xb1, 0x6a, 0xd9, 0x98, 0x02, 0x8b,
+	0x94, 0x02, 0xb2, 0x43, 0x8b, 0x1a, 0x0e, 0x26, 0x9a, 0x62, 0x14, 0x0f, 0x26, 0xb5, 0x69, 0x3c,
+	0xa8, 0x89, 0x99, 0x96, 0x71, 0x77, 0x13, 0xba, 0xb3, 0x74, 0x17, 0x62, 0x63, 0xbc, 0x78, 0xf0,
+	0x6c, 0xf4, 0xe6, 0xc1, 0x83, 0x89, 0xf1, 0xe6, 0xc9, 0x3f, 0x82, 0x23, 0x89, 0x17, 0xe3, 0x81,
+	0x18, 0xf0, 0x8f, 0xf0, 0x68, 0x76, 0xe6, 0xd9, 0xb6, 0xdb, 0x42, 0x77, 0x1b, 0xb9, 0x10, 0x76,
+	0xe6, 0xf9, 0x3e, 0xdf, 0xcf, 0x3c, 0xcc, 0x7e, 0x59, 0x34, 0x57, 0xa5, 0xd5, 0xe6, 0x16, 0xb7,
+	0x49, 0xd5, 0xab, 0x6d, 0x59, 0x86, 0xe9, 0xff, 0x64, 0xb6, 0x47, 0x76, 0xf3, 0x64, 0x7b, 0x87,
+	0x35, 0x9a, 0xba, 0xd3, 0xe0, 0x1e, 0xc7, 0x93, 0x50, 0xa6, 0x87, 0xcb, 0xf4, 0xdd, 0xbc, 0x9a,
+	0x32, 0xb8, 0xc1, 0x45, 0x15, 0xf1, 0x7f, 0x93, 0x02, 0xf5, 0x92, 0xc1, 0xb9, 0xb1, 0xc5, 0x08,
+	0x75, 0x2c, 0x42, 0x6d, 0x9b, 0x7b, 0xd4, 0xb3, 0xb8, 0xed, 0xc2, 0xee, 0x62, 0x8d, 0xbb, 0x75,
+	0xee, 0x92, 0x2a, 0x75, 0x99, 0xf4, 0x21, 0xbb, 0xf9, 0x2a, 0xf3, 0x68, 0x9e, 0x38, 0xd4, 0xb0,
+	0x6c, 0x51, 0x0c, 0xb5, 0xfa, 0xc9, 0x84, 0x5d, 0x30, 0xb2, 0x3e, 0x7b, 0x72, 0xbd, 0x43, 0x1b,
+	0xb4, 0x0e, 0x0c, 0x5a, 0x0a, 0xe1, 0x07, 0xbe, 0x73, 0x49, 0x2c, 0x96, 0xd9, 0xf6, 0x0e, 0x73,
+	0x3d, 0xed, 0x21, 0x3a, 0x17, 0x5a, 0x75, 0x1d, 0x6e, 0xbb, 0x0c, 0xdf, 0x44, 0x49, 0x29, 0x4e,
+	0x2b, 0xd3, 0x4a, 0x6e, 0xa2, 0x30, 0xa3, 0x9f, 0x38, 0x10, 0x5d, 0x4a, 0x8b, 0x23, 0x7b, 0x07,
+	0x53, 0x89, 0x32, 0xc8, 0xb4, 0x27, 0xe0, 0xb6, 0x41, 0x5d, 0x93, 0x05, 0x6e, 0xf8, 0x0e, 0x42,
+	0xed, 0xf3, 0x42, 0xeb, 0xac, 0x2e, 0x87, 0xa3, 0xfb, 0xc3, 0xd1, 0xe5, 0x1f, 0x01, 0x86, 0xa3,
+	0x97, 0xa8, 0xc1, 0x40, 0x5b, 0xee, 0x50, 0x6a, 0x5f, 0x15, 0xc0, 0x0e, 0xda, 0x03, 0x76, 0x05,
+	0x25, 0x4d, 0xb1, 0x92, 0x56, 0xa6, 0x87, 0x73, 0xff, 0x16, 0x6f, 0xfc, 0x38, 0x98, 0x5a, 0x33,
+	0x2c, 0xcf, 0xdc, 0xa9, 0xea, 0x35, 0x5e, 0x27, 0x70, 0x88, 0x9a, 0x49, 0x2d, 0x3b, 0x78, 0x20,
+	0x5e, 0xd3, 0x61, 0xae, 0x5e, 0xac, 0xac, 0x6f, 0x30, 0xba, 0xc9, 0x1a, 0x7e, 0xcb, 0x62, 0xd3,
+	0x63, 0x6e, 0x19, 0x7a, 0xe1, 0xbb, 0x21, 0xea, 0x21, 0x41, 0x3d, 0x1f, 0x49, 0x2d, 0x91, 0x42,
+	0xd8, 0x26, 0x4a, 0x09, 0xea, 0x75, 0x6e, 0x7b, 0xd4, 0xb2, 0x5b, 0x63, 0x29, 0xa1, 0x11, 0xdf,
+	0x4a, 0x0c, 0xe4, 0x6f, 0xa1, 0x45, 0x27, 0x6d, 0x15, 0x9d, 0xef, 0x72, 0x82, 0x09, 0xa9, 0x68,
+	0xac, 0x06, 0x6b, 0xc2, 0x6e, 0xac, 0xdc, 0x7a, 0xd6, 0x08, 0x9a, 0x0c, 0x89, 0x64, 0x43, 0x60,
+	0xc4, 0x9d, 0x8c, 0xe0, 0xb2, 0x86, 0xd4, 0xe3, 0x04, 0x31, 0xac, 0x9e, 0x02, 0xdf, 0x7d, 0x6a,
+	0xd9, 0xeb, 0xfe, 0xc1, 0x4e, 0xfb, 0x86, 0x7c, 0x52, 0xd0, 0x85, 0x6e, 0x07, 0xe0, 0x2a, 0xa2,
+	0x7f, 0x4c, 0x31, 0x34, 0x79, 0x4b, 0x26, 0x0a, 0xb9, 0x3e, 0x97, 0xbb, 0x35, 0xe1, 0x7b, 0xf6,
+	0x33, 0x5e, 0x0e, 0x84, 0xa7, 0x77, 0x25, 0xce, 0xa2, 0xff, 0x05, 0x66, 0xc5, 0x72, 0x82, 0x57,
+	0xb2, 0x82, 0xce, 0xb4, 0x97, 0x80, 0xf9, 0x16, 0x4a, 0x4a, 0x6b, 0x18, 0x49, 0x7c, 0x64, 0xd0,
+	0x69, 0x69, 0x98, 0x47, 0x91, 0xba, 0x4c, 0x6e, 0x07, 0x7e, 0x8f, 0xd1, 0xc5, 0x9e, 0x9d, 0x53,
+	0xb3, 0x5d, 0x86, 0xe6, 0x72, 0xeb, 0x36, 0x73, 0x3c, 0xf3, 0xb8, 0x1b, 0x35, 0x0e, 0x37, 0x6a,
+	0x05, 0xa5, 0x7b, 0xcb, 0x01, 0x26, 0x85, 0x46, 0x37, 0xfd, 0x05, 0x21, 0x18, 0x29, 0xcb, 0x87,
+	0xc2, 0xef, 0x71, 0x34, 0x2a, 0x24, 0xf8, 0xad, 0x82, 0x92, 0x32, 0x8b, 0xf0, 0x72, 0x1f, 0xce,
+	0xde, 0x10, 0x54, 0xf5, 0xb8, 0xe5, 0x92, 0x44, 0x5b, 0x78, 0xf5, 0xed, 0xd7, 0xbb, 0xa1, 0x59,
+	0x3c, 0x43, 0xa2, 0xb2, 0x57, 0x40, 0xc9, 0x90, 0x8a, 0x86, 0x0a, 0x65, 0x65, 0x34, 0x54, 0x38,
+	0xfb, 0x62, 0x41, 0x41, 0xa0, 0xbd, 0x57, 0xd0, 0x58, 0xf0, 0xce, 0x62, 0x12, 0xe5, 0xd3, 0x95,
+	0x56, 0xea, 0x4a, 0x7c, 0x01, 0xa0, 0x2d, 0x09, 0xb4, 0x39, 0x3c, 0xdb, 0x07, 0x2d, 0x88, 0x06,
+	0xfc, 0x45, 0x41, 0xff, 0x85, 0x02, 0x05, 0x5f, 0x8d, 0x6b, 0xd8, 0x19, 0x58, 0xea, 0xb5, 0x01,
+	0x55, 0xc0, 0xba, 0x22, 0x58, 0x17, 0x71, 0x2e, 0x06, 0xab, 0xc4, 0xfb, 0xa0, 0xa0, 0xf1, 0x56,
+	0xca, 0xe0, 0xc8, 0xe9, 0x74, 0x47, 0x9e, 0x9a, 0x1f, 0x40, 0x01, 0x90, 0x57, 0x04, 0x64, 0x16,
+	0x5f, 0xee, 0x03, 0x59, 0xa7, 0x96, 0xfc, 0x9f, 0x81, 0x5f, 0x2b, 0x68, 0xb8, 0x62, 0x39, 0x78,
+	0x31, 0xca, 0xa8, 0x1d, 0x42, 0xea, 0x52, 0xac, 0x5a, 0xc0, 0xc9, 0x0a, 0x9c, 0x69, 0x9c, 0xe9,
+	0x83, 0xe3, 0x59, 0x0e, 0xfe, 0xa8, 0x20, 0xd4, 0x4e, 0x19, 0x1c, 0x79, 0xf0, 0x9e, 0xac, 0x52,
+	0x0b, 0x83, 0x48, 0x80, 0x6e, 0x59, 0xd0, 0xcd, 0xe3, 0xb9, 0x3e, 0x74, 0x7e, 0x64, 0xcb, 0xc4,
+	0xc2, 0x9f, 0x15, 0x34, 0xd1, 0x11, 0x3f, 0x38, 0xd2, 0xb2, 0x37, 0xda, 0xd4, 0xd5, 0x81, 0x34,
+	0xc0, 0x49, 0x04, 0xe7, 0x02, 0x9e, 0xef, 0xc3, 0x29, 0x32, 0x8f, 0xbc, 0xf0, 0xdf, 0xe3, 0x97,
+	0xc5, 0xd2, 0xde, 0x61, 0x46, 0xd9, 0x3f, 0xcc, 0x28, 0x3f, 0x0f, 0x33, 0xca, 0x9b, 0xa3, 0x4c,
+	0x62, 0xff, 0x28, 0x93, 0xf8, 0x7e, 0x94, 0x49, 0x3c, 0xba, 0x1e, 0xf5, 0xf9, 0xf0, 0xbc, 0xbb,
+	0xb7, 0xf8, 0x9e, 0xa8, 0x26, 0xc5, 0xa7, 0xe2, 0xea, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x25,
+	0x1e, 0x8e, 0x7d, 0x26, 0x0b, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -643,6 +830,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
+	// Params queries the parameters of the module.
+	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// Hashes retrieves the hashes maintained by the module.
 	Hashes(ctx context.Context, in *QueryHashesRequest, opts ...grpc.CallOption) (*QueryHashesResponse, error)
 	// Contains checks whether a hash is maintained by the module.
@@ -659,6 +848,9 @@ type QueryClient interface {
 	// BaseHeader returns the base BTC header of the chain. This header is defined
 	// on genesis.
 	BaseHeader(ctx context.Context, in *QueryBaseHeaderRequest, opts ...grpc.CallOption) (*QueryBaseHeaderResponse, error)
+	// HeaderDepth returns the depth of the header in main chain or error if the
+	// block is not found or it exists on fork
+	HeaderDepth(ctx context.Context, in *QueryHeaderDepthRequest, opts ...grpc.CallOption) (*QueryHeaderDepthResponse, error)
 }
 
 type queryClient struct {
@@ -667,6 +859,15 @@ type queryClient struct {
 
 func NewQueryClient(cc grpc1.ClientConn) QueryClient {
 	return &queryClient{cc}
+}
+
+func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error) {
+	out := new(QueryParamsResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btclightclient.v1.Query/Params", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *queryClient) Hashes(ctx context.Context, in *QueryHashesRequest, opts ...grpc.CallOption) (*QueryHashesResponse, error) {
@@ -723,8 +924,19 @@ func (c *queryClient) BaseHeader(ctx context.Context, in *QueryBaseHeaderRequest
 	return out, nil
 }
 
+func (c *queryClient) HeaderDepth(ctx context.Context, in *QueryHeaderDepthRequest, opts ...grpc.CallOption) (*QueryHeaderDepthResponse, error) {
+	out := new(QueryHeaderDepthResponse)
+	err := c.cc.Invoke(ctx, "/babylon.btclightclient.v1.Query/HeaderDepth", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
+	// Params queries the parameters of the module.
+	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// Hashes retrieves the hashes maintained by the module.
 	Hashes(context.Context, *QueryHashesRequest) (*QueryHashesResponse, error)
 	// Contains checks whether a hash is maintained by the module.
@@ -741,12 +953,18 @@ type QueryServer interface {
 	// BaseHeader returns the base BTC header of the chain. This header is defined
 	// on genesis.
 	BaseHeader(context.Context, *QueryBaseHeaderRequest) (*QueryBaseHeaderResponse, error)
+	// HeaderDepth returns the depth of the header in main chain or error if the
+	// block is not found or it exists on fork
+	HeaderDepth(context.Context, *QueryHeaderDepthRequest) (*QueryHeaderDepthResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
 type UnimplementedQueryServer struct {
 }
 
+func (*UnimplementedQueryServer) Params(ctx context.Context, req *QueryParamsRequest) (*QueryParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
+}
 func (*UnimplementedQueryServer) Hashes(ctx context.Context, req *QueryHashesRequest) (*QueryHashesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Hashes not implemented")
 }
@@ -765,9 +983,30 @@ func (*UnimplementedQueryServer) Tip(ctx context.Context, req *QueryTipRequest) 
 func (*UnimplementedQueryServer) BaseHeader(ctx context.Context, req *QueryBaseHeaderRequest) (*QueryBaseHeaderResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BaseHeader not implemented")
 }
+func (*UnimplementedQueryServer) HeaderDepth(ctx context.Context, req *QueryHeaderDepthRequest) (*QueryHeaderDepthResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method HeaderDepth not implemented")
+}
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
 	s.RegisterService(&_Query_serviceDesc, srv)
+}
+
+func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryParamsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Params(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btclightclient.v1.Query/Params",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Params(ctx, req.(*QueryParamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Query_Hashes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -878,10 +1117,32 @@ func _Query_BaseHeader_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_HeaderDepth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryHeaderDepthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).HeaderDepth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.btclightclient.v1.Query/HeaderDepth",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).HeaderDepth(ctx, req.(*QueryHeaderDepthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "babylon.btclightclient.v1.Query",
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "Params",
+			Handler:    _Query_Params_Handler,
+		},
 		{
 			MethodName: "Hashes",
 			Handler:    _Query_Hashes_Handler,
@@ -906,9 +1167,69 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 			MethodName: "BaseHeader",
 			Handler:    _Query_BaseHeader_Handler,
 		},
+		{
+			MethodName: "HeaderDepth",
+			Handler:    _Query_HeaderDepth_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "babylon/btclightclient/v1/query.proto",
+}
+
+func (m *QueryParamsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryParamsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryParamsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryParamsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryParamsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryParamsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	{
+		size, err := m.Params.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintQuery(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func (m *QueryHashesRequest) Marshal() (dAtA []byte, err error) {
@@ -1326,6 +1647,64 @@ func (m *QueryBaseHeaderResponse) MarshalToSizedBuffer(dAtA []byte) (int, error)
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryHeaderDepthRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryHeaderDepthRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryHeaderDepthRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryHeaderDepthResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryHeaderDepthResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryHeaderDepthResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Depth != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Depth))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -1337,6 +1716,26 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
+func (m *QueryParamsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryParamsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = m.Params.Size()
+	n += 1 + l + sovQuery(uint64(l))
+	return n
+}
+
 func (m *QueryHashesRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -1495,11 +1894,169 @@ func (m *QueryBaseHeaderResponse) Size() (n int) {
 	return n
 }
 
+func (m *QueryHeaderDepthRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryHeaderDepthResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Depth != 0 {
+		n += 1 + sovQuery(uint64(m.Depth))
+	}
+	return n
+}
+
 func sovQuery(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
+}
+func (m *QueryParamsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryParamsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryParamsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryParamsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryParamsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryParamsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Params", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.Params.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
 }
 func (m *QueryHashesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -2474,6 +3031,157 @@ func (m *QueryBaseHeaderResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryHeaderDepthRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryHeaderDepthRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryHeaderDepthRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryHeaderDepthResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryHeaderDepthResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryHeaderDepthResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Depth", wireType)
+			}
+			m.Depth = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Depth |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

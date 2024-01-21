@@ -11,7 +11,9 @@ option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
 // Msg defines the Msg service.
 service Msg {
-  // UpdateParams updates the btccheckpoint module parameters.
+  option (cosmos.msg.v1.service) = true;
+
+  // UpdateParams updates the zoneconcierge module parameters.
   rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
@@ -25,7 +27,7 @@ message MsgUpdateParams {
     // in cosmos-proto
     string authority = 1 [(cosmos_proto.scalar) = "cosmos.AddressString"];
   
-    // params defines the epoching paramaeters parameters to update.
+    // params defines the zoneconcierge parameters to update.
     //
     // NOTE: All parameters must be supplied.
     Params params = 2 [(gogoproto.nullable) = false];
@@ -33,4 +35,3 @@ message MsgUpdateParams {
   
   // MsgUpdateParamsResponse is the response to the MsgUpdateParams message.
   message MsgUpdateParamsResponse {}
-  

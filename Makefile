@@ -149,6 +149,9 @@ mocks: $(MOCKS_DIR)
 	$(mockgen_cmd) -source=x/checkpointing/types/expected_keepers.go -package mocks -destination testutil/mocks/checkpointing_expected_keepers.go
 	$(mockgen_cmd) -source=x/checkpointing/keeper/bls_signer.go -package mocks -destination testutil/mocks/bls_signer.go
 	$(mockgen_cmd) -source=x/zoneconcierge/types/expected_keepers.go -package types -destination x/zoneconcierge/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/btcstaking/types/expected_keepers.go -package types -destination x/btcstaking/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/finality/types/expected_keepers.go -package types -destination x/finality/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/incentive/types/expected_keepers.go -package types -destination x/incentive/types/mocked_keepers.go
 .PHONY: mocks
 
 $(MOCKS_DIR):
@@ -359,7 +362,7 @@ devdoc-update:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.12.0
+protoVer=0.14.0
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 

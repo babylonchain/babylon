@@ -20,21 +20,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgWrappedDelegate{},
-	)
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
 		&MsgWrappedUndelegate{},
-	)
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
 		&MsgWrappedBeginRedelegate{},
-	)
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
 		&QueuedMessage{},
-	)
-	registry.RegisterImplementations(
-		(*sdk.Msg)(nil),
 		&MsgUpdateParams{},
 	)
 

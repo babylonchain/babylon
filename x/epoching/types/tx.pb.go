@@ -259,6 +259,87 @@ func (m *MsgWrappedBeginRedelegateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgWrappedBeginRedelegateResponse proto.InternalMessageInfo
 
+// MsgWrappedCancelUnbondingDelegation is the message for cancelling
+// an unbonding delegation
+type MsgWrappedCancelUnbondingDelegation struct {
+	Msg *types.MsgCancelUnbondingDelegation `protobuf:"bytes,1,opt,name=msg,proto3" json:"msg,omitempty"`
+}
+
+func (m *MsgWrappedCancelUnbondingDelegation) Reset()         { *m = MsgWrappedCancelUnbondingDelegation{} }
+func (m *MsgWrappedCancelUnbondingDelegation) String() string { return proto.CompactTextString(m) }
+func (*MsgWrappedCancelUnbondingDelegation) ProtoMessage()    {}
+func (*MsgWrappedCancelUnbondingDelegation) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{6}
+}
+func (m *MsgWrappedCancelUnbondingDelegation) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgWrappedCancelUnbondingDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgWrappedCancelUnbondingDelegation.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgWrappedCancelUnbondingDelegation) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgWrappedCancelUnbondingDelegation.Merge(m, src)
+}
+func (m *MsgWrappedCancelUnbondingDelegation) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgWrappedCancelUnbondingDelegation) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgWrappedCancelUnbondingDelegation.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgWrappedCancelUnbondingDelegation proto.InternalMessageInfo
+
+// MsgWrappedCancelUnbondingDelegationResponse is the response to the
+// MsgWrappedCancelUnbondingDelegation message
+type MsgWrappedCancelUnbondingDelegationResponse struct {
+}
+
+func (m *MsgWrappedCancelUnbondingDelegationResponse) Reset() {
+	*m = MsgWrappedCancelUnbondingDelegationResponse{}
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) String() string {
+	return proto.CompactTextString(m)
+}
+func (*MsgWrappedCancelUnbondingDelegationResponse) ProtoMessage() {}
+func (*MsgWrappedCancelUnbondingDelegationResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{7}
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgWrappedCancelUnbondingDelegationResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgWrappedCancelUnbondingDelegationResponse.Merge(m, src)
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgWrappedCancelUnbondingDelegationResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgWrappedCancelUnbondingDelegationResponse proto.InternalMessageInfo
+
 // MsgUpdateParams defines a message for updating epoching module parameters.
 type MsgUpdateParams struct {
 	// authority is the address of the governance account.
@@ -266,7 +347,7 @@ type MsgUpdateParams struct {
 	// for AddressString instead of string, but the functionality is not yet implemented
 	// in cosmos-proto
 	Authority string `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
-	// params defines the epoching paramaeters parameters to update.
+	// params defines the epoching parameters to update.
 	//
 	// NOTE: All parameters must be supplied.
 	Params Params `protobuf:"bytes,2,opt,name=params,proto3" json:"params"`
@@ -276,7 +357,7 @@ func (m *MsgUpdateParams) Reset()         { *m = MsgUpdateParams{} }
 func (m *MsgUpdateParams) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParams) ProtoMessage()    {}
 func (*MsgUpdateParams) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a5fc8fed8f4e58b6, []int{6}
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{8}
 }
 func (m *MsgUpdateParams) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -327,7 +408,7 @@ func (m *MsgUpdateParamsResponse) Reset()         { *m = MsgUpdateParamsResponse
 func (m *MsgUpdateParamsResponse) String() string { return proto.CompactTextString(m) }
 func (*MsgUpdateParamsResponse) ProtoMessage()    {}
 func (*MsgUpdateParamsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a5fc8fed8f4e58b6, []int{7}
+	return fileDescriptor_a5fc8fed8f4e58b6, []int{9}
 }
 func (m *MsgUpdateParamsResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -363,6 +444,8 @@ func init() {
 	proto.RegisterType((*MsgWrappedUndelegateResponse)(nil), "babylon.epoching.v1.MsgWrappedUndelegateResponse")
 	proto.RegisterType((*MsgWrappedBeginRedelegate)(nil), "babylon.epoching.v1.MsgWrappedBeginRedelegate")
 	proto.RegisterType((*MsgWrappedBeginRedelegateResponse)(nil), "babylon.epoching.v1.MsgWrappedBeginRedelegateResponse")
+	proto.RegisterType((*MsgWrappedCancelUnbondingDelegation)(nil), "babylon.epoching.v1.MsgWrappedCancelUnbondingDelegation")
+	proto.RegisterType((*MsgWrappedCancelUnbondingDelegationResponse)(nil), "babylon.epoching.v1.MsgWrappedCancelUnbondingDelegationResponse")
 	proto.RegisterType((*MsgUpdateParams)(nil), "babylon.epoching.v1.MsgUpdateParams")
 	proto.RegisterType((*MsgUpdateParamsResponse)(nil), "babylon.epoching.v1.MsgUpdateParamsResponse")
 }
@@ -370,40 +453,44 @@ func init() {
 func init() { proto.RegisterFile("babylon/epoching/v1/tx.proto", fileDescriptor_a5fc8fed8f4e58b6) }
 
 var fileDescriptor_a5fc8fed8f4e58b6 = []byte{
-	// 514 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0x31, 0x6f, 0xd3, 0x40,
-	0x1c, 0xc5, 0x6d, 0x82, 0x2a, 0xfa, 0x07, 0x51, 0x61, 0x22, 0x9a, 0x98, 0xc8, 0x29, 0x29, 0x08,
-	0xa8, 0xe0, 0x4c, 0x8a, 0x28, 0xa2, 0x62, 0x21, 0x62, 0x42, 0x8a, 0x84, 0x8c, 0x2a, 0x04, 0x0b,
-	0x3a, 0xdb, 0xa7, 0x8b, 0xd5, 0xda, 0x67, 0x7c, 0xd7, 0xaa, 0xd9, 0x10, 0x13, 0x23, 0x03, 0x1f,
-	0xa0, 0x1f, 0x81, 0x81, 0x0f, 0xd1, 0x81, 0xa1, 0x62, 0x62, 0x42, 0x28, 0x19, 0xe0, 0x63, 0xa0,
-	0xd8, 0x67, 0x5f, 0x70, 0x92, 0x26, 0xdd, 0x62, 0xbd, 0xf7, 0x7f, 0xbf, 0x17, 0xf9, 0xc9, 0xd0,
-	0x70, 0xb1, 0xdb, 0xdf, 0x63, 0x91, 0x4d, 0x62, 0xe6, 0xf5, 0x82, 0x88, 0xda, 0x07, 0x6d, 0x5b,
-	0x1c, 0xa2, 0x38, 0x61, 0x82, 0x19, 0x57, 0xa5, 0x8a, 0x72, 0x15, 0x1d, 0xb4, 0xcd, 0x2a, 0x65,
-	0x94, 0xa5, 0xba, 0x3d, 0xfa, 0x95, 0x59, 0xcd, 0xa6, 0xc7, 0x78, 0xc8, 0xb8, 0xcd, 0x05, 0xde,
-	0xcd, 0x62, 0x5c, 0x22, 0xb0, 0xca, 0x32, 0xd7, 0xa6, 0x91, 0x62, 0x9c, 0xe0, 0x90, 0x4b, 0x47,
-	0x3d, 0x8b, 0x78, 0x97, 0x65, 0x67, 0x0f, 0x52, 0x5a, 0x95, 0xe9, 0x21, 0x4f, 0xcf, 0x42, 0x4e,
-	0x33, 0xa1, 0xb5, 0x03, 0x46, 0x97, 0xd3, 0xd7, 0x09, 0x8e, 0x63, 0xe2, 0x3f, 0x27, 0x7b, 0x84,
-	0x62, 0x41, 0x8c, 0x47, 0x50, 0x09, 0x39, 0xad, 0xe9, 0x6b, 0xfa, 0x9d, 0x8b, 0x9b, 0xeb, 0x48,
-	0x46, 0xc9, 0x6a, 0x48, 0x56, 0x43, 0x5d, 0x4e, 0xf3, 0x0b, 0x67, 0xe4, 0xdf, 0xbe, 0xf0, 0xe9,
-	0xa8, 0xa9, 0xfd, 0x3d, 0x6a, 0x6a, 0xad, 0x06, 0x98, 0x93, 0xb1, 0x0e, 0xe1, 0x31, 0x8b, 0x38,
-	0x69, 0xbd, 0x81, 0xaa, 0x52, 0x77, 0x22, 0x3f, 0xc7, 0x3e, 0x1e, 0xc7, 0xde, 0x3a, 0x05, 0xab,
-	0x6e, 0xca, 0x60, 0x0b, 0x1a, 0xd3, 0xa2, 0x0b, 0xb4, 0x07, 0x75, 0xa5, 0x77, 0x08, 0x0d, 0x22,
-	0x87, 0x14, 0xfc, 0xa7, 0xe3, 0xfc, 0x8d, 0x53, 0xf8, 0xa5, 0xc3, 0x72, 0x89, 0x75, 0xb8, 0x31,
-	0x13, 0x52, 0x34, 0xf9, 0xa2, 0xc3, 0xca, 0xe8, 0xaf, 0xc4, 0x3e, 0x16, 0xe4, 0x65, 0xfa, 0x1e,
-	0x8d, 0x2d, 0x58, 0xc6, 0xfb, 0xa2, 0xc7, 0x92, 0x40, 0xf4, 0xd3, 0x1a, 0xcb, 0x9d, 0xda, 0x8f,
-	0x6f, 0xf7, 0xab, 0xb2, 0xc9, 0x33, 0xdf, 0x4f, 0x08, 0xe7, 0xaf, 0x44, 0x12, 0x44, 0xd4, 0x51,
-	0x56, 0xe3, 0x09, 0x2c, 0x65, 0x4b, 0xa8, 0x9d, 0x4b, 0xbb, 0x5f, 0x47, 0x53, 0x86, 0x87, 0x32,
-	0x48, 0xe7, 0xfc, 0xf1, 0xaf, 0xa6, 0xe6, 0xc8, 0x83, 0xed, 0xcb, 0x1f, 0xff, 0x7c, 0xdd, 0x50,
-	0x51, 0xad, 0x3a, 0xac, 0x96, 0x5a, 0xe5, 0x8d, 0x37, 0xbf, 0x57, 0xa0, 0xd2, 0xe5, 0xd4, 0xd8,
-	0x85, 0x95, 0xf2, 0x60, 0x6e, 0x4f, 0x05, 0x4e, 0x4e, 0xc0, 0xb4, 0x17, 0x34, 0xe6, 0x50, 0xe3,
-	0x3d, 0x5c, 0x99, 0x1c, 0xca, 0xdd, 0x39, 0x29, 0xca, 0x6a, 0xb6, 0x17, 0xb6, 0x16, 0xc8, 0x0f,
-	0x3a, 0x5c, 0x9b, 0xb1, 0x10, 0x34, 0x27, 0xad, 0xe4, 0x37, 0xb7, 0xce, 0xe6, 0x2f, 0x2a, 0xb8,
-	0x70, 0xe9, 0xbf, 0x61, 0xdc, 0x9c, 0x95, 0x33, 0xee, 0x32, 0xef, 0x2d, 0xe2, 0xca, 0x19, 0x9d,
-	0x17, 0xc7, 0x03, 0x4b, 0x3f, 0x19, 0x58, 0xfa, 0xef, 0x81, 0xa5, 0x7f, 0x1e, 0x5a, 0xda, 0xc9,
-	0xd0, 0xd2, 0x7e, 0x0e, 0x2d, 0xed, 0xed, 0x03, 0x1a, 0x88, 0xde, 0xbe, 0x8b, 0x3c, 0x16, 0xda,
-	0x32, 0xd1, 0xeb, 0xe1, 0x20, 0xca, 0x1f, 0xec, 0x43, 0xf5, 0x11, 0x12, 0xfd, 0x98, 0x70, 0x77,
-	0x29, 0xfd, 0x9a, 0x3c, 0xfc, 0x17, 0x00, 0x00, 0xff, 0xff, 0xcd, 0x69, 0x5c, 0x18, 0x0f, 0x05,
-	0x00, 0x00,
+	// 585 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x4f, 0x6f, 0x12, 0x41,
+	0x18, 0xc6, 0x77, 0x6d, 0x6d, 0xd2, 0x57, 0x63, 0x75, 0x25, 0x16, 0x56, 0xb2, 0x20, 0x68, 0x54,
+	0xb4, 0xbb, 0x52, 0xb5, 0x6a, 0xe3, 0x41, 0xd1, 0x78, 0x30, 0x21, 0x31, 0x98, 0xc6, 0xc4, 0xc4,
+	0x98, 0x59, 0x76, 0x32, 0x6c, 0x60, 0x67, 0xd6, 0x9d, 0x69, 0x53, 0x4e, 0x36, 0x9e, 0x3c, 0x7a,
+	0xf0, 0x6c, 0xfa, 0x11, 0x7a, 0xf0, 0x43, 0xf4, 0xd8, 0x78, 0xf2, 0x64, 0x0c, 0x1c, 0xea, 0x07,
+	0xf0, 0x03, 0x18, 0xf6, 0x2f, 0x02, 0x0b, 0xe8, 0x8d, 0xe1, 0x7d, 0xde, 0xe7, 0xf9, 0xc1, 0x3e,
+	0x3b, 0x90, 0x37, 0x91, 0xd9, 0xed, 0x30, 0x6a, 0x60, 0x97, 0x35, 0x5b, 0x36, 0x25, 0xc6, 0x4e,
+	0xd5, 0x10, 0xbb, 0xba, 0xeb, 0x31, 0xc1, 0x94, 0xf3, 0xe1, 0x54, 0x8f, 0xa6, 0xfa, 0x4e, 0x55,
+	0xcd, 0x10, 0x46, 0x98, 0x3f, 0x37, 0x06, 0x9f, 0x02, 0xa9, 0x5a, 0x68, 0x32, 0xee, 0x30, 0x6e,
+	0x70, 0x81, 0xda, 0x81, 0x8d, 0x89, 0x05, 0x4a, 0xbc, 0xd4, 0xe2, 0xa4, 0x24, 0x17, 0x79, 0xc8,
+	0xe1, 0xa1, 0x22, 0x17, 0x58, 0xbc, 0x0d, 0xbc, 0x83, 0x43, 0x38, 0x5a, 0x0d, 0xdd, 0x1d, 0xee,
+	0xaf, 0x39, 0x9c, 0x04, 0x83, 0xd2, 0x1b, 0x50, 0xea, 0x9c, 0xbc, 0xf2, 0x90, 0xeb, 0x62, 0xeb,
+	0x29, 0xee, 0x60, 0x82, 0x04, 0x56, 0xee, 0xc2, 0x82, 0xc3, 0x49, 0x56, 0x2e, 0xca, 0xd7, 0x4e,
+	0xad, 0x97, 0xf5, 0xd0, 0x2a, 0x44, 0xd3, 0x43, 0x34, 0xbd, 0xce, 0x49, 0xb4, 0xd1, 0x18, 0xe8,
+	0x37, 0xcf, 0x7e, 0xdc, 0x2f, 0x48, 0xbf, 0xf6, 0x0b, 0xd2, 0x87, 0xe3, 0x83, 0xca, 0xe0, 0x9b,
+	0x52, 0x1e, 0xd4, 0x71, 0xfb, 0x06, 0xe6, 0x2e, 0xa3, 0x1c, 0x97, 0x10, 0x64, 0x92, 0xe9, 0x16,
+	0xb5, 0xa2, 0xf8, 0x7b, 0xc3, 0xf1, 0x57, 0xa6, 0xc4, 0x27, 0x3b, 0x69, 0x00, 0x1a, 0xe4, 0x27,
+	0x45, 0xc4, 0x08, 0x6d, 0xc8, 0x25, 0xf3, 0x1a, 0x26, 0x36, 0x6d, 0xe0, 0x98, 0xe3, 0xe1, 0x30,
+	0x47, 0x65, 0x0a, 0xc7, 0xc8, 0x62, 0x1a, 0x4c, 0x19, 0x2e, 0xa5, 0x86, 0xc5, 0x44, 0xef, 0xa1,
+	0x9c, 0x88, 0x9e, 0x20, 0xda, 0xc4, 0x9d, 0x2d, 0x6a, 0x32, 0x6a, 0xd9, 0x34, 0xfa, 0xbb, 0x6d,
+	0x46, 0x95, 0x67, 0xc3, 0x6c, 0x77, 0xa6, 0xb0, 0xa5, 0x5a, 0xa4, 0x51, 0xae, 0xc1, 0x8d, 0x39,
+	0x00, 0x62, 0xde, 0xcf, 0x32, 0xac, 0x0c, 0x1e, 0x85, 0x6b, 0x21, 0x81, 0x5f, 0xf8, 0x7d, 0x54,
+	0x36, 0x60, 0x19, 0x6d, 0x8b, 0x16, 0xf3, 0x6c, 0xd1, 0xf5, 0x11, 0x97, 0x6b, 0xd9, 0x6f, 0x5f,
+	0xd7, 0x32, 0x21, 0xe5, 0x63, 0xcb, 0xf2, 0x30, 0xe7, 0x2f, 0x85, 0x67, 0x53, 0xd2, 0x48, 0xa4,
+	0xca, 0x03, 0x58, 0x0a, 0x1a, 0x9d, 0x3d, 0xe1, 0xff, 0xae, 0x8b, 0xfa, 0x84, 0x17, 0x48, 0x0f,
+	0x42, 0x6a, 0x8b, 0x87, 0x3f, 0x0a, 0x52, 0x23, 0x5c, 0xd8, 0x3c, 0x33, 0xe0, 0x4f, 0xac, 0x4a,
+	0x39, 0x58, 0x1d, 0xa1, 0x8a, 0x88, 0xd7, 0x7f, 0x2f, 0xc2, 0x42, 0x9d, 0x13, 0xa5, 0x0d, 0x2b,
+	0xa3, 0xc5, 0xbf, 0x3a, 0x31, 0x70, 0xbc, 0xc2, 0xaa, 0x31, 0xa7, 0x30, 0x0a, 0x55, 0xde, 0xc1,
+	0xb9, 0xf1, 0xa2, 0x5f, 0x9f, 0xe1, 0x92, 0x48, 0xd5, 0xea, 0xdc, 0xd2, 0x38, 0x72, 0x4f, 0x86,
+	0x0b, 0x29, 0xcd, 0xd6, 0x67, 0xb8, 0x8d, 0xe8, 0xd5, 0x8d, 0x7f, 0xd3, 0xc7, 0x08, 0x5f, 0x64,
+	0x28, 0xce, 0xac, 0xf2, 0xfd, 0x19, 0xe6, 0xa9, 0x9b, 0xea, 0xa3, 0xff, 0xdd, 0x8c, 0x01, 0x4d,
+	0x38, 0xfd, 0x57, 0x73, 0x2f, 0xa7, 0x39, 0x0e, 0xab, 0xd4, 0x9b, 0xf3, 0xa8, 0xa2, 0x0c, 0xf5,
+	0xe4, 0xde, 0xf1, 0x41, 0x45, 0xae, 0x3d, 0x3f, 0xec, 0x69, 0xf2, 0x51, 0x4f, 0x93, 0x7f, 0xf6,
+	0x34, 0xf9, 0x53, 0x5f, 0x93, 0x8e, 0xfa, 0x9a, 0xf4, 0xbd, 0xaf, 0x49, 0xaf, 0x6f, 0x11, 0x5b,
+	0xb4, 0xb6, 0x4d, 0xbd, 0xc9, 0x1c, 0x23, 0x34, 0x6e, 0xb6, 0x90, 0x4d, 0xa3, 0x83, 0xb1, 0x9b,
+	0x5c, 0xfa, 0xa2, 0xeb, 0x62, 0x6e, 0x2e, 0xf9, 0xb7, 0xf7, 0xed, 0x3f, 0x01, 0x00, 0x00, 0xff,
+	0xff, 0xdf, 0xdb, 0xcd, 0x7f, 0x7f, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -427,6 +514,9 @@ type MsgClient interface {
 	// WrappedBeginRedelegate defines a method for performing a redelegation of
 	// coins from a delegator and source validator to a destination validator.
 	WrappedBeginRedelegate(ctx context.Context, in *MsgWrappedBeginRedelegate, opts ...grpc.CallOption) (*MsgWrappedBeginRedelegateResponse, error)
+	// WrappedCancelUnbondingDelegation defines a method for cancelling unbonding of
+	// coins from a delegator and source validator to a destination validator.
+	WrappedCancelUnbondingDelegation(ctx context.Context, in *MsgWrappedCancelUnbondingDelegation, opts ...grpc.CallOption) (*MsgWrappedCancelUnbondingDelegationResponse, error)
 	// UpdateParams defines a method for updating epoching module parameters.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -466,6 +556,15 @@ func (c *msgClient) WrappedBeginRedelegate(ctx context.Context, in *MsgWrappedBe
 	return out, nil
 }
 
+func (c *msgClient) WrappedCancelUnbondingDelegation(ctx context.Context, in *MsgWrappedCancelUnbondingDelegation, opts ...grpc.CallOption) (*MsgWrappedCancelUnbondingDelegationResponse, error) {
+	out := new(MsgWrappedCancelUnbondingDelegationResponse)
+	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Msg/WrappedCancelUnbondingDelegation", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error) {
 	out := new(MsgUpdateParamsResponse)
 	err := c.cc.Invoke(ctx, "/babylon.epoching.v1.Msg/UpdateParams", in, out, opts...)
@@ -486,6 +585,9 @@ type MsgServer interface {
 	// WrappedBeginRedelegate defines a method for performing a redelegation of
 	// coins from a delegator and source validator to a destination validator.
 	WrappedBeginRedelegate(context.Context, *MsgWrappedBeginRedelegate) (*MsgWrappedBeginRedelegateResponse, error)
+	// WrappedCancelUnbondingDelegation defines a method for cancelling unbonding of
+	// coins from a delegator and source validator to a destination validator.
+	WrappedCancelUnbondingDelegation(context.Context, *MsgWrappedCancelUnbondingDelegation) (*MsgWrappedCancelUnbondingDelegationResponse, error)
 	// UpdateParams defines a method for updating epoching module parameters.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 }
@@ -502,6 +604,9 @@ func (*UnimplementedMsgServer) WrappedUndelegate(ctx context.Context, req *MsgWr
 }
 func (*UnimplementedMsgServer) WrappedBeginRedelegate(ctx context.Context, req *MsgWrappedBeginRedelegate) (*MsgWrappedBeginRedelegateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method WrappedBeginRedelegate not implemented")
+}
+func (*UnimplementedMsgServer) WrappedCancelUnbondingDelegation(ctx context.Context, req *MsgWrappedCancelUnbondingDelegation) (*MsgWrappedCancelUnbondingDelegationResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method WrappedCancelUnbondingDelegation not implemented")
 }
 func (*UnimplementedMsgServer) UpdateParams(ctx context.Context, req *MsgUpdateParams) (*MsgUpdateParamsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateParams not implemented")
@@ -565,6 +670,24 @@ func _Msg_WrappedBeginRedelegate_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_WrappedCancelUnbondingDelegation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgWrappedCancelUnbondingDelegation)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).WrappedCancelUnbondingDelegation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/babylon.epoching.v1.Msg/WrappedCancelUnbondingDelegation",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).WrappedCancelUnbondingDelegation(ctx, req.(*MsgWrappedCancelUnbondingDelegation))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(MsgUpdateParams)
 	if err := dec(in); err != nil {
@@ -598,6 +721,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "WrappedBeginRedelegate",
 			Handler:    _Msg_WrappedBeginRedelegate_Handler,
+		},
+		{
+			MethodName: "WrappedCancelUnbondingDelegation",
+			Handler:    _Msg_WrappedCancelUnbondingDelegation_Handler,
 		},
 		{
 			MethodName: "UpdateParams",
@@ -782,6 +909,64 @@ func (m *MsgWrappedBeginRedelegateResponse) MarshalToSizedBuffer(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgWrappedCancelUnbondingDelegation) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgWrappedCancelUnbondingDelegation) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgWrappedCancelUnbondingDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Msg != nil {
+		{
+			size, err := m.Msg.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTx(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgWrappedCancelUnbondingDelegationResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgWrappedCancelUnbondingDelegationResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgWrappedCancelUnbondingDelegationResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *MsgUpdateParams) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -914,6 +1099,28 @@ func (m *MsgWrappedBeginRedelegate) Size() (n int) {
 }
 
 func (m *MsgWrappedBeginRedelegateResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *MsgWrappedCancelUnbondingDelegation) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Msg != nil {
+		l = m.Msg.Size()
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgWrappedCancelUnbondingDelegationResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1337,6 +1544,142 @@ func (m *MsgWrappedBeginRedelegateResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgWrappedBeginRedelegateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgWrappedCancelUnbondingDelegation) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgWrappedCancelUnbondingDelegation: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgWrappedCancelUnbondingDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Msg", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Msg == nil {
+				m.Msg = &types.MsgCancelUnbondingDelegation{}
+			}
+			if err := m.Msg.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgWrappedCancelUnbondingDelegationResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgWrappedCancelUnbondingDelegationResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgWrappedCancelUnbondingDelegationResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

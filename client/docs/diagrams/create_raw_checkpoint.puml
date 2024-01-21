@@ -36,21 +36,21 @@ end note
 == Block N+2: The block that contains the Quorum Certificate of the old validators over Block N+1 ==
 
 Tendermint -> checkpointing : BeginBlock
-checkpointing -> rawckpts : Store header.LastCommitHash
+checkpointing -> rawckpts : Store header.AppHash
 note left
   LastCommitInfo in BeginBlock does not contain signatures,
-  but we are signing the LastCommitHash, the Merkle root of
+  but we are signing the AppHash, the Merkle root of
   signatures, and that is available in the Header.
 end note
 
 loop on each old validator node
-  Tendermint --> signer ++ : Observe block.header.LastCommitHash
+  Tendermint --> signer ++ : Observe block.header.AppHash
   note right
     The full block has the signatures,
     i.e. the Quorum Certificate (Q.C.),
     but all we need is the hash.
   end note
-  signer -> signer : Sign LastCommitHash
+  signer -> signer : Sign AppHash
   signer -> Tendermint -- : AddBlsSig
   Tendermint -> checkpointing ++: CheckTx
   note right
@@ -73,7 +73,7 @@ loop for each AddBlsSig tx
   checkpointing -> checkpointing : Check BLS signature over full Q.C.
   checkpointing -> staking : Get validator power at \n beginning of previous epoch
   checkpointing -> checkpointing : Check eligibility to sign BLS
-  checkpointing -> rawckpts : Get LastCommitHash for the uncheckpointed epoch
+  checkpointing -> rawckpts : Get AppHash for the uncheckpointed epoch
   checkpointing -> checkpointing : Check that Q.C. hash in ledger matches the tx
 
   alt valid transaction

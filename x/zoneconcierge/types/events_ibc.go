@@ -2,10 +2,8 @@ package types
 
 // IBC events
 const (
-	EventTypeAck     = "acknowledgement"
-	EventTypeTimeout = "timeout"
+	EventTypeAck = "acknowledgement"
 
 	AttributeKeyAckSuccess = "success"
-	AttributeKeyAck        = "acknowledgement"
 	AttributeKeyAckError   = "error"
 )

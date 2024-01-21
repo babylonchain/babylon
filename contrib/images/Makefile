@@ -7,4 +7,4 @@ babylond: babylond-rmi
 babylond-rmi:
 	docker rmi babylonchain/babylond 2>/dev/null; true
 
-.PHONY: all babylondbabylond-rmi
+.PHONY: all babylond babylond-rmi

@@ -4,10 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 )
 
 func FuzzEpochs(f *testing.F) {
@@ -16,33 +16,29 @@ func FuzzEpochs(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		helper := testepoching.NewHelper(t)
-		ctx, keeper := helper.Ctx, helper.EpochingKeeper
+		helper := testhelper.NewHelper(t)
+		ctx, keeper := helper.Ctx, helper.App.EpochingKeeper
 		// ensure that the epoch info is correct at the genesis
 		epoch := keeper.GetEpoch(ctx)
-		require.Equal(t, epoch.EpochNumber, uint64(0))
-		require.Equal(t, epoch.FirstBlockHeight, uint64(0))
+		require.Equal(t, epoch.EpochNumber, uint64(1))
+		require.Equal(t, epoch.FirstBlockHeight, uint64(1))
 
 		// set a random epoch interval
-		epochInterval := r.Uint64()%100 + 2 // the epoch interval should at at least 2
-
-		params := types.Params{
-			EpochInterval: epochInterval,
-		}
-
-		if err := keeper.SetParams(ctx, params); err != nil {
-			panic(err)
-		}
+		epochInterval := keeper.GetParams(ctx).EpochInterval
 
 		// increment a random number of new blocks
 		numIncBlocks := r.Uint64()%1000 + 1
-		for i := uint64(0); i < numIncBlocks; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+		var err error
+		for i := uint64(0); i < numIncBlocks-1; i++ {
+			// TODO: Figure out why when ctx height is 1, ApplyEmptyBlockWithVoteExtension
+			// will still give ctx height 1 once, then start to increment
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
 		}
 
 		// ensure that the epoch info is still correct
-		expectedEpochNumber := numIncBlocks / epochInterval
-		if numIncBlocks%epochInterval > 0 {
+		expectedEpochNumber := (numIncBlocks + 1) / epochInterval
+		if (numIncBlocks+1)%epochInterval > 0 {
 			expectedEpochNumber += 1
 		}
 		actualNewEpoch := keeper.GetEpoch(ctx)

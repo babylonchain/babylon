@@ -4,7 +4,7 @@ version: 2.1
 
 orbs:
   aws-ecr: circleci/aws-ecr@8.2.1
-  go: circleci/go@1.7.3
+  go: circleci/go@1.9.0
 
 
 jobs:
@@ -14,11 +14,12 @@ jobs:
     resource_class: large
     steps:
       - go/install:
-          version: "1.20"
+          version: "1.21.4"
       - checkout
       - run:
           name: Print Go environment
           command: "go env"
+      - add_ssh_keys
       - go/load-cache:
           key: go-mod-v6-{{ checksum "go.sum" }}
       - go/mod-download
@@ -32,25 +33,39 @@ jobs:
           name: Run tests
           command: |
             make test
+  e2e-test:
+    machine:
+      image: ubuntu-2204:2022.10.1
+    resource_class: large
+    steps:
+      - go/install:
+          version: "1.21.4"
+      - checkout
+      - run:
+          name: Print Go environment
+          command: "go env"
+      - add_ssh_keys
       - run:
           name: Run e2e tests
           command: |
-             make test-e2e
+            sudo ln -s /usr/local/go/bin/go /usr/bin/go
+            sudo make test-e2e
   lint:
     machine:
       image: ubuntu-2204:2022.10.1
     resource_class: large
     steps:
       - go/install:
-          version: "1.20"
+          version: "1.21.4"
       - checkout
+      - add_ssh_keys
       - run:
           name: Lint proto files
           command: make proto-lint
       - run:
           name: Lint
           command: |
-            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.52.2
+            curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.55.2
             ./bin/golangci-lint run
 
   build_docker:
@@ -59,6 +74,7 @@ jobs:
     resource_class: large
     steps:
       - checkout
+      - add_ssh_keys
       - aws-ecr/build-image:
           push-image: false
           dockerfile: Dockerfile
@@ -103,6 +119,9 @@ workflows:
   build-test:
     jobs:
       - build-test
+  e2e-test:
+    jobs:
+      - e2e-test
   lint:
     jobs:
       - lint

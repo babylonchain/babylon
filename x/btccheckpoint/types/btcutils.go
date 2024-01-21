@@ -8,9 +8,9 @@ import (
 
 	"github.com/babylonchain/babylon/types"
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
-	"github.com/btcsuite/btcd/btcutil"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 	maxOpReturnPkScriptSize = 83
 )
 
-// Parsed proof represent semantically valid:
+// ParsedProof represent semantically valid:
 // - Bitcoin Header
 // - Bitcoin Header hash
 // - Bitcoin Transaction

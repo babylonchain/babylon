@@ -9,11 +9,6 @@ import (
 	"runtime"
 	"time"
 
-	txformat "github.com/babylonchain/babylon/btctxformatter"
-
-	"github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/btcsuite/btcd/blockchain"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
@@ -21,6 +16,10 @@ import (
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	txformat "github.com/babylonchain/babylon/btctxformatter"
+	bbn "github.com/babylonchain/babylon/types"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
 
 var (
@@ -35,7 +34,7 @@ var (
 
 type testCheckpointData struct {
 	epoch            uint64
-	lastCommitHash   []byte
+	blockHash        []byte
 	bitmap           []byte
 	blsSig           []byte
 	submitterAddress []byte
@@ -303,16 +302,17 @@ type BtcHeaderWithProof struct {
 func CreateBlockWithTransaction(
 	r *rand.Rand,
 	ph *wire.BlockHeader,
-	babylonData []byte,
+	tx *wire.MsgTx,
 ) *BtcHeaderWithProof {
 
 	var transactions []*wire.MsgTx
 	// height does not matter here, as it is used only for calculation of reward
 	transactions = append(transactions, createCoinbaseTx(int32(889), &chaincfg.SimNetParams))
-	transactions = append(transactions, CreatOpReturnTransaction(r, babylonData))
+	transactions = append(transactions, tx)
 
 	randHeader := GenRandomBtcdHeader(r)
-	randHeader.Version = ph.Version
+	// for simnet, requirement for block versions to be >= 4, is enabled from initial block
+	randHeader.Version = 4
 	randHeader.PrevBlock = ph.BlockHash()
 	randHeader.Bits = ph.Bits
 	randHeader.Timestamp = ph.Timestamp.Add(50 * time.Second)
@@ -366,7 +366,7 @@ func GenRandomTx(r *rand.Rand) *wire.MsgTx {
 	return tx
 }
 
-func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *btctxformatter.RawBtcCheckpoint) {
+func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *txformat.RawBtcCheckpoint) {
 	txs := []*wire.MsgTx{GenRandomTx(r), GenRandomTx(r)}
 	builder := txscript.NewScriptBuilder()
 
@@ -374,9 +374,9 @@ func GenRandomBabylonTxPair(r *rand.Rand) ([]*wire.MsgTx, *btctxformatter.RawBtc
 	rawBTCCkpt := GetRandomRawBtcCheckpoint(r)
 	tag := GenRandomByteArray(r, 4)
 	// encode raw checkpoint to two halves
-	firstHalf, secondHalf, err := btctxformatter.EncodeCheckpointData(
-		btctxformatter.BabylonTag(tag),
-		btctxformatter.CurrentVersion,
+	firstHalf, secondHalf, err := txformat.EncodeCheckpointData(
+		txformat.BabylonTag(tag),
+		txformat.CurrentVersion,
 		rawBTCCkpt,
 	)
 	if err != nil {
@@ -459,7 +459,7 @@ func GenerateMessageWithRandomSubmitter(blockResults []*BlockCreationResult) *bt
 func getRandomCheckpointDataForEpoch(r *rand.Rand, e uint64) testCheckpointData {
 	return testCheckpointData{
 		epoch:            e,
-		lastCommitHash:   GenRandomByteArray(r, txformat.LastCommitHashLength),
+		blockHash:        GenRandomByteArray(r, txformat.BlockHashLength),
 		bitmap:           GenRandomByteArray(r, txformat.BitMapLength),
 		blsSig:           GenRandomByteArray(r, txformat.BlsSigLength),
 		submitterAddress: GenRandomByteArray(r, txformat.AddressLength),
@@ -503,7 +503,7 @@ func RandomRawCheckpointDataForEpoch(r *rand.Rand, e uint64) (*TestRawCheckpoint
 	checkpointData := getRandomCheckpointDataForEpoch(r, e)
 	rawBTCCkpt := &txformat.RawBtcCheckpoint{
 		Epoch:            checkpointData.epoch,
-		LastCommitHash:   checkpointData.lastCommitHash,
+		BlockHash:        checkpointData.blockHash,
 		BitMap:           checkpointData.bitmap,
 		SubmitterAddress: checkpointData.submitterAddress,
 		BlsSig:           checkpointData.blsSig,

@@ -14,7 +14,7 @@ type BtcHeaderByHash struct {
 }
 
 type BtcHeaderByHeight struct {
-	Height uint64 `json:"height,omitempty"`
+	Height uint64 `json:"height"`
 }
 
 type CurrentEpochResponse struct {
@@ -31,17 +31,17 @@ type FinalizedEpochInfo struct {
 }
 
 type BtcBlockHeader struct {
-	Version       int32  `json:"version,omitempty"`
+	Version       int32  `json:"version"`
 	PrevBlockhash string `json:"prev_blockhash,omitempty"`
 	MerkleRoot    string `json:"merkle_root,omitempty"`
-	Time          uint32 `json:"time,omitempty"`
-	Bits          uint32 `json:"bits,omitempty"`
-	Nonce         uint32 `json:"nonce,omitempty"`
+	Time          uint32 `json:"time"`
+	Bits          uint32 `json:"bits"`
+	Nonce         uint32 `json:"nonce"`
 }
 
 type BtcBlockHeaderInfo struct {
 	Header *BtcBlockHeader `json:"header,omitempty"`
-	Height uint64          `json:"height,omitempty"`
+	Height uint64          `json:"height"`
 }
 
 type BtcTipResponse struct {

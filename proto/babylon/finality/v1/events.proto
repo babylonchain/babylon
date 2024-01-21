@@ -1,0 +1,13 @@
+syntax = "proto3";
+package babylon.finality.v1;
+
+import "babylon/finality/v1/finality.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/finality/types";
+
+// EventSlashedFinalityProvider is the event emitted when a finality provider is slashed
+// due to signing two conflicting blocks
+message EventSlashedFinalityProvider {
+    // evidence is the evidence that the finality provider double signs
+    Evidence evidence = 1;
+}

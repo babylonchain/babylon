@@ -4,11 +4,10 @@ import (
 	"math/rand"
 	"testing"
 
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
-	tmrpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	"github.com/babylonchain/babylon/app"
+	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
@@ -32,11 +31,9 @@ func FuzzChainList(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, _, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
-
-		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
+		ctx := babylonApp.NewContext(false)
 
 		// invoke the hook a random number of times with random chain IDs
 		numHeaders := datagen.RandomInt(r, 100) + 1
@@ -51,7 +48,7 @@ func FuzzChainList(f *testing.F) {
 				allChainIDs = append(allChainIDs, chainID)
 			}
 			header := datagen.GenRandomIBCTMHeader(r, chainID, 0)
-			hooks.AfterHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
+			zcKeeper.HandleHeaderWithValidCommit(ctx, datagen.GenRandomByteArray(r, 32), datagen.HeaderToHeaderInfo(header), false)
 		}
 
 		limit := datagen.RandomInt(r, len(allChainIDs)) + 1
@@ -79,11 +76,9 @@ func FuzzChainsInfo(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, _, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
-
-		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
+		ctx := babylonApp.NewContext(false)
 
 		var (
 			chainsInfo []chainInfo
@@ -94,7 +89,7 @@ func FuzzChainsInfo(f *testing.F) {
 			chainID := datagen.GenRandomHexStr(r, 30)
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, 0, numHeaders, numForkHeaders)
+			SimulateNewHeadersAndForks(ctx, r, &zcKeeper, chainID, 0, numHeaders, numForkHeaders)
 
 			chainIDs = append(chainIDs, chainID)
 			chainsInfo = append(chainsInfo, chainInfo{
@@ -123,31 +118,30 @@ func FuzzHeader(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
-
-		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
+		ctx := babylonApp.NewContext(false)
+		czChainID := "test-chainid"
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 2
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		headers, forkHeaders := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		headers, forkHeaders := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, 0, numHeaders, numForkHeaders)
 
 		// find header at a random height and assert correctness against the expected header
 		randomHeight := datagen.RandomInt(r, int(numHeaders-1))
-		resp, err := zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChain.ChainID, Height: randomHeight})
+		resp, err := zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChainID, Height: randomHeight})
 		require.NoError(t, err)
-		require.Equal(t, headers[randomHeight].Header.LastCommitHash, resp.Header.Hash)
+		require.Equal(t, headers[randomHeight].Header.AppHash, resp.Header.Hash)
 		require.Len(t, resp.ForkHeaders.Headers, 0)
 
 		// find the last header and fork headers then assert correctness
-		resp, err = zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChain.ChainID, Height: numHeaders - 1})
+		resp, err = zcKeeper.Header(ctx, &zctypes.QueryHeaderRequest{ChainId: czChainID, Height: numHeaders - 1})
 		require.NoError(t, err)
-		require.Equal(t, headers[numHeaders-1].Header.LastCommitHash, resp.Header.Hash)
+		require.Equal(t, headers[numHeaders-1].Header.AppHash, resp.Header.Hash)
 		require.Len(t, resp.ForkHeaders.Headers, int(numForkHeaders))
 		for i := 0; i < int(numForkHeaders); i++ {
-			require.Equal(t, forkHeaders[i].Header.LastCommitHash, resp.ForkHeaders.Headers[i].Hash)
+			require.Equal(t, forkHeaders[i].Header.AppHash, resp.ForkHeaders.Headers[i].Hash)
 		}
 	})
 }
@@ -157,10 +151,11 @@ func FuzzEpochChainsInfo(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		_, babylonChain, _, babylonApp := SetupTest(t)
-		zcKeeper := babylonApp.ZoneConciergeKeeper
 
-		ctx := babylonChain.GetContext()
+		babylonApp := app.Setup(t, false)
+		zcKeeper := babylonApp.ZoneConciergeKeeper
+		ctx := babylonApp.NewContext(false)
+
 		hooks := zcKeeper.Hooks()
 
 		// generate a random number of chains
@@ -191,7 +186,7 @@ func FuzzEpochChainsInfo(f *testing.F) {
 				numForkHeaders := datagen.RandomInt(r, 10) + 1
 
 				// trigger hooks to append these headers and fork headers
-				SimulateHeadersAndForksViaHook(ctx, r, hooks, chainID, chainHeaderStartHeights[j], numHeaders, numForkHeaders)
+				SimulateNewHeadersAndForks(ctx, r, &zcKeeper, chainID, chainHeaderStartHeights[j], numHeaders, numForkHeaders)
 
 				epochToChainInfo[epochNum][chainID] = chainInfo{
 					chainID:           chainID,
@@ -255,21 +250,20 @@ func FuzzListHeaders(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
-
-		ctx := babylonChain.GetContext()
-		hooks := zcKeeper.Hooks()
+		ctx := babylonApp.NewContext(false)
+		czChainID := "test-chainid"
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		headers, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		headers, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, 0, numHeaders, numForkHeaders)
 
 		// a request with randomised pagination
 		limit := datagen.RandomInt(r, int(numHeaders)) + 1
 		req := &zctypes.QueryListHeadersRequest{
-			ChainId: czChain.ChainID,
+			ChainId: czChainID,
 			Pagination: &query.PageRequest{
 				Limit: limit,
 			},
@@ -278,7 +272,7 @@ func FuzzListHeaders(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, int(limit), len(resp.Headers))
 		for i := uint64(0); i < limit; i++ {
-			require.Equal(t, headers[i].Header.LastCommitHash, resp.Headers[i].Hash)
+			require.Equal(t, headers[i].Header.AppHash, resp.Headers[i].Hash)
 		}
 	})
 }
@@ -289,11 +283,12 @@ func FuzzListEpochHeaders(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
 		epochingKeeper := babylonApp.EpochingKeeper
+		ctx := babylonApp.NewContext(false)
+		czChainID := "test-chainid"
 
-		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
 		numReqs := datagen.RandomInt(r, 5) + 1
@@ -310,7 +305,7 @@ func FuzzListEpochHeaders(f *testing.F) {
 			epochNum := epochNumList[i]
 			// enter a random epoch
 			if i == 0 {
-				for j := uint64(0); j < epochNum; j++ {
+				for j := uint64(1); j < epochNum; j++ { // starting from epoch 1
 					epochingKeeper.IncEpoch(ctx)
 				}
 			} else {
@@ -323,7 +318,7 @@ func FuzzListEpochHeaders(f *testing.F) {
 			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
 			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
 			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
@@ -339,7 +334,7 @@ func FuzzListEpochHeaders(f *testing.F) {
 			epochNum := epochNumList[i]
 			// make request
 			req := &zctypes.QueryListEpochHeadersRequest{
-				ChainId:  czChain.ChainID,
+				ChainId:  czChainID,
 				EpochNum: epochNum,
 			}
 			resp, err := zcKeeper.ListEpochHeaders(ctx, req)
@@ -349,7 +344,7 @@ func FuzzListEpochHeaders(f *testing.F) {
 			headers := resp.Headers
 			require.Equal(t, len(expectedHeadersMap[epochNum]), len(headers))
 			for j := 0; j < len(expectedHeadersMap[epochNum]); j++ {
-				require.Equal(t, expectedHeadersMap[epochNum][j].Header.LastCommitHash, headers[j].Hash)
+				require.Equal(t, expectedHeadersMap[epochNum][j].Header.AppHash, headers[j].Hash)
 			}
 		}
 	})
@@ -394,21 +389,12 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		epochingKeeper := zctypes.NewMockEpochingKeeper(ctrl)
 		epochingKeeper.EXPECT().GetEpoch(gomock.Any()).Return(epoch).AnyTimes()
 		epochingKeeper.EXPECT().GetHistoricalEpoch(gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(epoch, nil).AnyTimes()
-		epochingKeeper.EXPECT().ProveAppHashInEpoch(gomock.Any(), gomock.Any(), gomock.Eq(epoch.EpochNumber)).Return(&tmcrypto.Proof{}, nil).AnyTimes()
 		// mock btclc keeper
 		btclcKeeper := zctypes.NewMockBTCLightClientKeeper(ctrl)
 		mockBTCHeaderInfo := datagen.GenRandomBTCHeaderInfo(r)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(mockBTCHeaderInfo).AnyTimes()
+		btclcKeeper.EXPECT().GetMainChainFrom(gomock.Any(), gomock.Any()).Return([]*btclightclienttypes.BTCHeaderInfo{mockBTCHeaderInfo}).AnyTimes()
 
-		// mock Tendermint client
-		// TODO: integration tests with Tendermint
-		tmClient := zctypes.NewMockTMClient(ctrl)
-		resTx := &tmrpctypes.ResultTx{
-			Proof: tmtypes.TxProof{},
-		}
-		tmClient.EXPECT().Tx(gomock.Any(), gomock.Any(), true).Return(resTx, nil).AnyTimes()
-
-		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper, tmClient)
+		zcKeeper, ctx := testkeeper.ZoneConciergeKeeper(t, btclcKeeper, checkpointingKeeper, btccKeeper, epochingKeeper)
 		hooks := zcKeeper.Hooks()
 
 		var (
@@ -417,13 +403,13 @@ func FuzzFinalizedChainInfo(f *testing.F) {
 		)
 		numChains := datagen.RandomInt(r, 100) + 1
 		for i := uint64(0); i < numChains; i++ {
-			czChainIDLen := datagen.RandomInt(r, 50) + 1
+			czChainIDLen := datagen.RandomInt(r, 40) + 10
 			czChainID := string(datagen.GenRandomByteArray(r, czChainIDLen))
 
 			// invoke the hook a random number of times to simulate a random number of blocks
 			numHeaders := datagen.RandomInt(r, 100) + 1
 			numForkHeaders := datagen.RandomInt(r, 10) + 1
-			SimulateHeadersAndForksViaHook(ctx, r, hooks, czChainID, 0, numHeaders, numForkHeaders)
+			SimulateNewHeadersAndForks(ctx, r, zcKeeper, czChainID, 0, numHeaders, numForkHeaders)
 
 			chainIDs = append(chainIDs, czChainID)
 			chainsInfo = append(chainsInfo, chainInfo{

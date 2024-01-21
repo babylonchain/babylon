@@ -2,6 +2,7 @@ package btclightclient
 
 import (
 	"context"
+	"cosmossdk.io/core/appmodule"
 	"encoding/json"
 	"fmt"
 
@@ -22,8 +23,10 @@ import (
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ appmodule.AppModule       = AppModule{}
+	_ appmodule.HasBeginBlocker = AppModule{}
+	_ module.HasABCIEndBlock    = AppModule{}
+	_ module.AppModuleBasic     = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -98,22 +101,16 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper        keeper.Keeper
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
+	keeper keeper.Keeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -137,14 +134,12 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the btclightclient module's genesis initialization It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, genState)
-
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
@@ -157,10 +152,20 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(_ context.Context) error {
+	return nil
+}
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
+func (am AppModule) EndBlock(_ context.Context) ([]abci.ValidatorUpdate, error) {
+	return []abci.ValidatorUpdate{}, nil
+}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() { // marker
+}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() { // marker
 }

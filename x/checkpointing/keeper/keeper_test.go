@@ -7,13 +7,11 @@ import (
 	"github.com/boljen/go-bitmap"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/babylonchain/babylon/btctxformatter"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/babylonchain/babylon/btctxformatter"
+	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testkeeper "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/testutil/mocks"
@@ -28,7 +26,7 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 1)
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, nil, nil)
 
 		// test nil raw checkpoint
 		err := ckptKeeper.AddRawCheckpoint(ctx, nil)
@@ -53,7 +51,7 @@ func FuzzKeeperAddRawCheckpoint(f *testing.F) {
 		_, err = ckptKeeper.BuildRawCheckpoint(
 			ctx,
 			mockCkptWithMeta.Ckpt.EpochNum,
-			datagen.GenRandomLastCommitHash(r),
+			datagen.GenRandomBlockHash(r),
 		)
 		require.Errorf(t, err, "raw checkpoint with the same epoch already exists")
 	})
@@ -69,7 +67,7 @@ func FuzzKeeperSetCheckpointStatus(f *testing.F) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 
 		/* new accumulating checkpoint*/
 		mockCkptWithMeta := datagen.GenRandomRawCheckpointWithMeta(r)
@@ -167,8 +165,8 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		defer ctrl.Finish()
 		ek := mocks.NewMockEpochingKeeper(ctrl)
 		ek.EXPECT().GetValidatorSet(gomock.Any(), gomock.Any()).Return(valSet).AnyTimes()
-		ek.EXPECT().GetTotalVotingPower(gomock.Any(), gomock.Any()).Return(int64(20)).AnyTimes()
-		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil, client.Context{})
+		ek.EXPECT().GetTotalVotingPower(gomock.Any(), gomock.Any()).Return(int64(10)).AnyTimes()
+		ckptKeeper, ctx, _ := testkeeper.CheckpointingKeeper(t, ek, nil)
 		for i, val := range valSet {
 			err := ckptKeeper.CreateRegistration(ctx, pubkeys[i], val.Addr)
 			require.NoError(t, err)
@@ -181,7 +179,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		localCkptWithMeta.Status = types.Sealed
 		localCkptWithMeta.PowerSum = 10
 		localCkptWithMeta.Ckpt.Bitmap = bm
-		msgBytes := types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, *localCkptWithMeta.Ckpt.LastCommitHash)
+		msgBytes := types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, *localCkptWithMeta.Ckpt.BlockHash)
 		sig := bls12381.Sign(blsPrivKey1, msgBytes)
 		localCkptWithMeta.Ckpt.BlsMultiSig = &sig
 		_ = ckptKeeper.AddRawCheckpoint(
@@ -193,7 +191,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		rawBtcCheckpoint := makeBtcCkptBytes(
 			r,
 			localCkptWithMeta.Ckpt.EpochNum,
-			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
+			localCkptWithMeta.Ckpt.BlockHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
 			localCkptWithMeta.Ckpt.BlsMultiSig.Bytes(),
 			t,
@@ -206,7 +204,7 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		rawBtcCheckpoint = makeBtcCkptBytes(
 			r,
 			localCkptWithMeta.Ckpt.EpochNum,
-			localCkptWithMeta.Ckpt.LastCommitHash.MustMarshal(),
+			localCkptWithMeta.Ckpt.BlockHash.MustMarshal(),
 			localCkptWithMeta.Ckpt.Bitmap,
 			datagen.GenRandomByteArray(r, btctxformatter.BlsSigLength),
 			t,
@@ -214,13 +212,13 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 		err = ckptKeeper.VerifyCheckpoint(ctx, *rawBtcCheckpoint)
 		require.ErrorIs(t, err, types.ErrInvalidRawCheckpoint)
 
-		// 3. check a conflicting checkpoint; signed on a random lastcommithash
-		conflictLastCommitHash := datagen.GenRandomByteArray(r, btctxformatter.LastCommitHashLength)
-		msgBytes = types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictLastCommitHash)
+		// 3. check a conflicting checkpoint; signed on a random BlockHash
+		conflictBlockHash := datagen.GenRandomByteArray(r, btctxformatter.BlockHashLength)
+		msgBytes = types.GetSignBytes(localCkptWithMeta.Ckpt.EpochNum, conflictBlockHash)
 		rawBtcCheckpoint = makeBtcCkptBytes(
 			r,
 			localCkptWithMeta.Ckpt.EpochNum,
-			conflictLastCommitHash,
+			conflictBlockHash,
 			localCkptWithMeta.Ckpt.Bitmap,
 			bls12381.Sign(blsPrivKey1, msgBytes),
 			t,
@@ -231,14 +229,14 @@ func FuzzKeeperCheckpointEpoch(f *testing.F) {
 	})
 }
 
-func makeBtcCkptBytes(r *rand.Rand, epoch uint64, lch []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {
+func makeBtcCkptBytes(r *rand.Rand, epoch uint64, appHash []byte, bitmap []byte, blsSig []byte, t *testing.T) *btctxformatter.RawBtcCheckpoint {
 	tag := datagen.GenRandomByteArray(r, btctxformatter.TagLength)
 	babylonTag := btctxformatter.BabylonTag(tag[:btctxformatter.TagLength])
 	address := datagen.GenRandomByteArray(r, btctxformatter.AddressLength)
 
 	rawBTCCkpt := &btctxformatter.RawBtcCheckpoint{
 		Epoch:            epoch,
-		LastCommitHash:   lch,
+		BlockHash:        appHash,
 		BitMap:           bitmap,
 		SubmitterAddress: address,
 		BlsSig:           blsSig,
@@ -263,7 +261,7 @@ func makeBtcCkptBytes(r *rand.Rand, epoch uint64, lch []byte, bitmap []byte, bls
 }
 
 func curStateUpdate(ctx sdk.Context, status types.CheckpointStatus) *types.CheckpointStateUpdate {
-	height, time := ctx.BlockHeight(), ctx.BlockTime()
+	height, time := ctx.HeaderInfo().Height, ctx.HeaderInfo().Time
 	return &types.CheckpointStateUpdate{
 		State:       status,
 		BlockHeight: uint64(height),

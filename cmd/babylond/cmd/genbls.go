@@ -7,7 +7,7 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/privval"
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -32,7 +32,7 @@ $ babylond genbls --home ./
 		RunE: func(cmd *cobra.Command, args []string) error {
 			homeDir, _ := cmd.Flags().GetString(flags.FlagHome)
 
-			nodeCfg := tmconfig.DefaultConfig()
+			nodeCfg := cmtconfig.DefaultConfig()
 			keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 			statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
 			if !tmos.FileExists(keyPath) {

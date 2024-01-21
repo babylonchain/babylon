@@ -2,28 +2,26 @@ package app
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	abci "github.com/cometbft/cometbft/abci/types"
+
+	"cosmossdk.io/log"
+	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/stretchr/testify/require"
 )
 
 func TestBabylonBlockedAddrs(t *testing.T) {
-	encCfg := GetEncodingConfig()
 	db := dbm.NewMemDB()
-	signer, _ := SetupPrivSigner()
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-	app := NewBabyblonAppWithCustomOptions(t, false, signer, SetupOptions{
+	signer, _ := SetupTestPrivSigner()
+	logger := log.NewTestLogger(t)
+
+	app := NewBabylonAppWithCustomOptions(t, false, signer, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
-		EncConfig:          encCfg,
-		HomePath:           DefaultNodeHome,
 		SkipUpgradeHeights: map[int64]bool{},
 		AppOpts:            EmptyAppOptions{},
 	})
@@ -43,12 +41,27 @@ func TestBabylonBlockedAddrs(t *testing.T) {
 		)
 	}
 
-	app.Commit()
+	_, err := app.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Height: 1,
+	})
+	require.NoError(t, err)
+	_, err = app.Commit()
+	require.NoError(t, err)
 
-	logger2 := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	logger2 := log.NewTestLogger(t)
 	// Making a new app object with the db, so that initchain hasn't been called
-	app2 := NewBabylonApp(logger2, db, nil, true, map[int64]bool{}, DefaultNodeHome, 0, encCfg, signer, EmptyAppOptions{}, GetWasmEnabledProposals(), EmptyWasmOpts)
-	_, err := app2.ExportAppStateAndValidators(false, []string{}, []string{})
+	app2 := NewBabylonApp(
+		logger2,
+		db,
+		nil,
+		true,
+		map[int64]bool{},
+		0,
+		signer,
+		EmptyAppOptions{},
+		EmptyWasmOpts,
+	)
+	_, err = app2.ExportAppStateAndValidators(false, []string{}, []string{})
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
 
@@ -58,26 +71,24 @@ func TestGetMaccPerms(t *testing.T) {
 }
 
 func TestUpgradeStateOnGenesis(t *testing.T) {
-	encCfg := GetEncodingConfig()
 	db := dbm.NewMemDB()
-	privSigner, err := SetupPrivSigner()
+	privSigner, err := SetupTestPrivSigner()
 	require.NoError(t, err)
-	logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+	logger := log.NewTestLogger(t)
 
-	app := NewBabyblonAppWithCustomOptions(t, false, privSigner, SetupOptions{
+	app := NewBabylonAppWithCustomOptions(t, false, privSigner, SetupOptions{
 		Logger:             logger,
 		DB:                 db,
 		InvCheckPeriod:     0,
-		EncConfig:          encCfg,
-		HomePath:           DefaultNodeHome,
 		SkipUpgradeHeights: map[int64]bool{},
 		AppOpts:            EmptyAppOptions{},
 	})
 
 	// make sure the upgrade keeper has version map in state
-	ctx := app.NewContext(false, tmproto.Header{})
-	vm := app.UpgradeKeeper.GetModuleVersionMap(ctx)
-	for v, i := range app.mm.Modules {
+	ctx := app.NewContext(false)
+	vm, err := app.UpgradeKeeper.GetModuleVersionMap(ctx)
+	require.NoError(t, err)
+	for v, i := range app.ModuleManager.Modules {
 		if i, ok := i.(module.HasConsensusVersion); ok {
 			require.Equal(t, vm[v], i.ConsensusVersion())
 		}

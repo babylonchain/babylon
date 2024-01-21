@@ -1,7 +1,7 @@
 package types
 
 import (
-	fmt "fmt"
+	"fmt"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/boljen/go-bitmap"

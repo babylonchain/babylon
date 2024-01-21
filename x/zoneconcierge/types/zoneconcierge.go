@@ -3,7 +3,34 @@ package types
 import (
 	"bytes"
 	"fmt"
+
+	"cosmossdk.io/store/rootmulti"
+	"github.com/cometbft/cometbft/crypto/merkle"
+	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )
+
+// VerifyStore verifies whether a KV pair is committed to the Merkle root, with the assistance of a Merkle proof
+// (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/store/rootmulti/proof_test.go)
+func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, proof *tmcrypto.ProofOps) error {
+	prt := rootmulti.DefaultProofRuntime()
+
+	keypath := merkle.KeyPath{}
+	keypath = keypath.AppendKey([]byte(moduleStoreKey), merkle.KeyEncodingURL)
+	keypath = keypath.AppendKey(key, merkle.KeyEncodingURL)
+	keypathStr := keypath.String()
+
+	// NOTE: the proof can specify verification rules, either only verifying the
+	// top Merkle root w.r.t. all KV pairs, or verifying every layer of Merkle root
+	// TODO: investigate how the verification rules are chosen when generating the
+	// proof
+	if err1 := prt.VerifyValue(proof, root, keypathStr, value); err1 != nil {
+		if err2 := prt.VerifyAbsence(proof, root, keypathStr); err2 != nil {
+			return fmt.Errorf("the Merkle proof does not pass any verification: err of VerifyValue: %w; err of VerifyAbsence: %w", err1, err2)
+		}
+	}
+
+	return nil
+}
 
 func (p *ProofEpochSealed) ValidateBasic() error {
 	if p.ValidatorSet == nil {
@@ -21,11 +48,14 @@ func (p *ProofEpochSealed) ValidateBasic() error {
 func (ih *IndexedHeader) ValidateBasic() error {
 	if len(ih.ChainId) == 0 {
 		return fmt.Errorf("empty ChainID")
-	} else if len(ih.Hash) == 0 {
+	}
+	if len(ih.Hash) == 0 {
 		return fmt.Errorf("empty Hash")
-	} else if ih.BabylonHeader == nil {
-		return fmt.Errorf("nil BabylonHeader")
-	} else if len(ih.BabylonTxHash) == 0 {
+	}
+	if len(ih.BabylonHeaderHash) == 0 {
+		return fmt.Errorf("empty BabylonHeader hash")
+	}
+	if len(ih.BabylonTxHash) == 0 {
 		return fmt.Errorf("empty BabylonTxHash")
 	}
 	return nil
@@ -38,13 +68,20 @@ func (ih *IndexedHeader) Equal(ih2 *IndexedHeader) bool {
 
 	if ih.ChainId != ih2.ChainId {
 		return false
-	} else if !bytes.Equal(ih.Hash, ih2.Hash) {
+	}
+	if !bytes.Equal(ih.Hash, ih2.Hash) {
 		return false
-	} else if ih.Height != ih2.Height {
+	}
+	if ih.Height != ih2.Height {
 		return false
-	} else if !bytes.Equal(ih.BabylonHeader.LastCommitHash, ih2.BabylonHeader.LastCommitHash) {
+	}
+	if !bytes.Equal(ih.BabylonHeaderHash, ih2.BabylonHeaderHash) {
 		return false
-	} else if ih.BabylonEpoch != ih2.BabylonEpoch {
+	}
+	if ih.BabylonHeaderHeight != ih2.BabylonHeaderHeight {
+		return false
+	}
+	if ih.BabylonEpoch != ih2.BabylonEpoch {
 		return false
 	}
 	return bytes.Equal(ih.BabylonTxHash, ih2.BabylonTxHash)

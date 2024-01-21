@@ -8,9 +8,9 @@ import (
 
 var (
 	ErrUnwrappedMsgType = errorsmod.Register(ModuleName, 1, `
-										invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate}
+										invalid message type in {MsgCreateValidator, MsgDelegate, MsgUndelegate, MsgBeginRedelegate, MsgCancelUnbondingDelegation}
 										messages. For creating a validator use the wrapped version under 'tx checkpointing create-validator'
-										and for the other messages use the wrapped versions under 'tx epoching {delegate,undelegate,redelegate}'`)
+										and for the other messages use the wrapped versions under 'tx epoching {delegate,undelegate,redelegate,cancel-unbond}'`)
 	ErrInvalidQueuedMessageType  = errorsmod.Register(ModuleName, 2, "invalid message type of a QueuedMessage")
 	ErrUnknownEpochNumber        = errorsmod.Register(ModuleName, 3, "the epoch number is not known in DB")
 	ErrUnknownSlashedVotingPower = errorsmod.Register(ModuleName, 5, "the slashed voting power is not known in DB. Maybe the epoch has been checkpointed?")

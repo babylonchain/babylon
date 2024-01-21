@@ -1,7 +1,7 @@
 package util
 
 import (
-	babylonApp "github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -22,7 +22,7 @@ func init() {
 }
 
 func initEncodingConfigAndCdc() (params.EncodingConfig, codec.Codec) {
-	encodingConfig := babylonApp.GetEncodingConfig()
+	encodingConfig := app.GetEncodingConfig()
 
 	encodingConfig.InterfaceRegistry.RegisterImplementations(
 		(*sdk.Msg)(nil),
@@ -34,7 +34,7 @@ func initEncodingConfigAndCdc() (params.EncodingConfig, codec.Codec) {
 		&ed25519.PubKey{},
 	)
 
-	cdc := encodingConfig.Marshaler
+	cdc := encodingConfig.Codec
 
-	return encodingConfig, cdc
+	return *encodingConfig, cdc
 }

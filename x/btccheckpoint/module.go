@@ -2,6 +2,7 @@ package btccheckpoint
 
 import (
 	"context"
+	"cosmossdk.io/core/appmodule"
 	"encoding/json"
 	"fmt"
 
@@ -22,8 +23,10 @@ import (
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ appmodule.AppModule       = AppModule{}
+	_ appmodule.HasBeginBlocker = AppModule{}
+	_ module.HasABCIEndBlock    = AppModule{}
+	_ module.AppModuleBasic     = AppModuleBasic{}
 )
 
 // ----------------------------------------------------------------------------
@@ -77,7 +80,10 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)) //nolint:errcheck // generally we don't handle errors in these registration functions
+	err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetTxCmd returns the capability module's root tx command.
@@ -98,23 +104,16 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
-	keeper        keeper.Keeper
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
-	// TODO: add dependencies to staking, slashing and evidence
+	keeper keeper.Keeper
 }
 
 func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
-	accountKeeper types.AccountKeeper,
-	bankKeeper types.BankKeeper,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -138,14 +137,12 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, genState)
-
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
@@ -158,11 +155,21 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
+func (am AppModule) BeginBlock(_ context.Context) error {
+	return nil
+}
 
 // EndBlock executes all ABCI EndBlock logic respective to the capability module. It
 // returns no validator updates.
-func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
-	EndBlocker(ctx, am.keeper, req)
-	return []abci.ValidatorUpdate{}
+func (am AppModule) EndBlock(ctx context.Context) ([]abci.ValidatorUpdate, error) {
+	EndBlocker(ctx, am.keeper)
+	return []abci.ValidatorUpdate{}, nil
+}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() { // marker
+}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() { // marker
 }

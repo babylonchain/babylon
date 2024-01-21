@@ -1,7 +1,5 @@
 package cmd
 
-// DONTCOVER
-
 import (
 	"bufio"
 	"encoding/json"
@@ -12,21 +10,27 @@ import (
 	"path/filepath"
 	"time"
 
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
+	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
+
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 
-	"github.com/babylonchain/babylon/app"
+	appparams "github.com/babylonchain/babylon/app/params"
+	bbn "github.com/babylonchain/babylon/types"
+
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
+
+	"github.com/babylonchain/babylon/app"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
-	tmconfig "github.com/cometbft/cometbft/config"
+	cmtconfig "github.com/cometbft/cometbft/config"
 	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cometbft/cometbft/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
 	"github.com/spf13/cobra"
 
@@ -97,15 +101,19 @@ Example:
 
 			genesisParams := TestnetGenesisParams(genesisCliArgs.MaxActiveValidators,
 				genesisCliArgs.BtcConfirmationDepth, genesisCliArgs.BtcFinalizationTimeout, genesisCliArgs.CheckpointTag,
-				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex,
-				genesisCliArgs.BaseBtcHeaderHeight, genesisCliArgs.InflationRateChange,
-				genesisCliArgs.InflationMin, genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded,
-				genesisCliArgs.BlocksPerYear, genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit)
+				genesisCliArgs.EpochInterval, genesisCliArgs.BaseBtcHeaderHex, genesisCliArgs.BaseBtcHeaderHeight,
+				genesisCliArgs.AllowedReporterAddresses, genesisCliArgs.CovenantPKs, genesisCliArgs.CovenantQuorum,
+				genesisCliArgs.SlashingAddress, genesisCliArgs.MinSlashingTransactionFeeSat, genesisCliArgs.MinCommissionRate,
+				genesisCliArgs.SlashingRate, genesisCliArgs.MaxActiveFinalityProviders, genesisCliArgs.MinUnbondingTime,
+				genesisCliArgs.MinPubRand, genesisCliArgs.InflationRateChange, genesisCliArgs.InflationMin,
+				genesisCliArgs.InflationMax, genesisCliArgs.GoalBonded, genesisCliArgs.BlocksPerYear,
+				genesisCliArgs.GenesisTime, genesisCliArgs.BlockGasLimit, genesisCliArgs.VoteExtensionEnableHeight)
 
 			return InitTestnet(
 				clientCtx, cmd, config, mbm, genBalIterator, outputDir, genesisCliArgs.ChainID, minGasPrices,
 				nodeDirPrefix, nodeDaemonHome, startingIPAddress, keyringBackend, algo, numValidators,
-				btcNetwork, additionalAccount, timeBetweenBlocks, genesisParams,
+				btcNetwork, additionalAccount, timeBetweenBlocks,
+				clientCtx.TxConfig.SigningContext().ValidatorAddressCodec(), genesisParams,
 			)
 		},
 	}
@@ -128,11 +136,11 @@ Example:
 
 const nodeDirPerm = 0755
 
-// Initialize the testnet
+// InitTestnet initialize the testnet
 func InitTestnet(
 	clientCtx client.Context,
 	cmd *cobra.Command,
-	nodeConfig *tmconfig.Config,
+	nodeConfig *cmtconfig.Config,
 	mbm module.BasicManager,
 	genBalIterator banktypes.GenesisBalancesIterator,
 	outputDir,
@@ -147,6 +155,7 @@ func InitTestnet(
 	btcNetwork string,
 	additionalAccount bool,
 	timeBetweenBlocks uint64,
+	valAddrCodec runtime.ValidatorAddressCodec,
 	genesisParams GenesisParams,
 ) error {
 
@@ -165,8 +174,8 @@ func InitTestnet(
 	babylonConfig.BtcConfig.Network = btcNetwork
 	// Explorer related config. Allow CORS connections.
 	babylonConfig.API.EnableUnsafeCORS = true
+	babylonConfig.GRPC.Enable = true
 	babylonConfig.GRPC.Address = "0.0.0.0:9090"
-	babylonConfig.GRPCWeb.Address = "0.0.0.0:9091"
 
 	var (
 		genAccounts []authtypes.GenesisAccount
@@ -259,7 +268,7 @@ func InitTestnet(
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
 		valTokens := sdk.TokensFromConsensusPower(100, sdk.DefaultPowerReduction)
-		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys[i].ValPubkey)
+		valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys[i].ValPubkey)
 		if err != nil {
 			return err
 		}
@@ -273,13 +282,17 @@ func InitTestnet(
 			ValPubkey: valPubkey.(*ed25519.PubKey),
 		}
 		genKeys = append(genKeys, genKey)
+		valStr, err := valAddrCodec.BytesToString(sdk.ValAddress(addr))
+		if err != nil {
+			return err
+		}
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(addr),
+			valStr,
 			valPubkey,
 			sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, valTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(sdk.OneDec(), sdk.OneDec(), sdk.OneDec()),
-			sdk.OneInt(),
+			stakingtypes.NewCommissionRates(math.LegacyOneDec(), math.LegacyOneDec(), math.LegacyOneDec()),
+			math.OneInt(),
 		)
 		if err != nil {
 			return err
@@ -299,7 +312,7 @@ func InitTestnet(
 			WithKeybase(kb).
 			WithTxConfig(clientCtx.TxConfig)
 
-		if err = tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
+		if err = tx.Sign(cmd.Context(), txFactory, nodeDirName, txBuilder, true); err != nil {
 			return err
 		}
 
@@ -355,8 +368,8 @@ func InitTestnet(
 			}
 
 			coins := sdk.Coins{
-				sdk.NewCoin("testtoken", sdk.NewInt(1000000000)),
-				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, sdk.NewInt(1000000000000)),
+				sdk.NewCoin("testtoken", math.NewInt(1000000000)),
+				sdk.NewCoin(genesisParams.NativeCoinMetadatas[0].Base, math.NewInt(1000000000000)),
 			}
 
 			genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: coins.Sort()})
@@ -403,20 +416,20 @@ func initGenFiles(
 	// set the bls keys for the checkpointing module
 	genesisParams.CheckpointingGenKeys = genKeys
 
-	genDoc := &types.GenesisDoc{}
+	genesis := &genutiltypes.AppGenesis{}
 
-	err = PrepareGenesis(clientCtx, appGenState, genDoc, genesisParams, chainID)
+	err = PrepareGenesis(clientCtx, appGenState, genesis, genesisParams, chainID)
 
 	if err != nil {
 		return err
 	}
 	// set initial validators to nil, they will be added by collectGenFiles based on
 	// genesis tranascations
-	genDoc.Validators = nil
+	genesis.Consensus.Validators = nil
 
 	// generate empty genesis files for each validator and save
 	for i := 0; i < numValidators; i++ {
-		if err := genDoc.SaveAs(genFiles[i]); err != nil {
+		if err := genesis.SaveAs(genFiles[i]); err != nil {
 			return err
 		}
 	}
@@ -424,7 +437,7 @@ func initGenFiles(
 }
 
 func collectGenFiles(
-	clientCtx client.Context, nodeConfig *tmconfig.Config, chainID string,
+	clientCtx client.Context, nodeConfig *cmtconfig.Config, chainID string,
 	nodeIDs []string, genKeys []*checkpointingtypes.GenesisKey, numValidators int,
 	outputDir, nodeDirPrefix, nodeDaemonHome string, genBalIterator banktypes.GenesisBalancesIterator,
 ) error {
@@ -443,7 +456,7 @@ func collectGenFiles(
 		nodeID, valPubKey := nodeIDs[i], genKeys[i].ValPubkey
 		initCfg := genutiltypes.NewInitConfig(chainID, gentxsDir, nodeID, valPubKey)
 
-		genDoc, err := types.GenesisDocFromFile(nodeConfig.GenesisFile())
+		_, genesis, err := genutiltypes.GenesisStateFromGenFile(nodeConfig.GenesisFile())
 		if err != nil {
 			return err
 		}
@@ -451,10 +464,12 @@ func collectGenFiles(
 		nodeAppState, err := genutil.GenAppStateFromConfig(
 			clientCtx.Codec,
 			clientCtx.TxConfig,
-			nodeConfig, initCfg,
-			*genDoc,
+			nodeConfig,
+			initCfg,
+			genesis,
 			genBalIterator,
 			genutiltypes.DefaultMessageValidator,
+			authcodec.NewBech32Codec(appparams.Bech32PrefixValAddr),
 		)
 		if err != nil {
 			return err
@@ -468,14 +483,18 @@ func collectGenFiles(
 		// overwrite each validator's genesis file to have a canonical genesis time
 		genFile := nodeConfig.GenesisFile()
 
-		newGendoc := types.GenesisDoc{
-			GenesisTime:     genTime,
-			AppState:        appState,
-			ConsensusParams: genDoc.ConsensusParams,
-			ChainID:         genDoc.ChainID,
+		newGenesis := genutiltypes.AppGenesis{
+			AppName:       genesis.AppName,
+			AppVersion:    genesis.AppVersion,
+			GenesisTime:   genTime,
+			ChainID:       genesis.ChainID,
+			InitialHeight: genesis.InitialHeight,
+			AppHash:       genesis.AppHash,
+			AppState:      appState,
+			Consensus:     genesis.Consensus,
 		}
 
-		if err := genutil.ExportGenesisFile(&newGendoc, genFile); err != nil {
+		if err := genutil.ExportGenesisFile(&newGenesis, genFile); err != nil {
 			return err
 		}
 	}

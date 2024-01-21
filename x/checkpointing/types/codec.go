@@ -14,7 +14,6 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 
 	// Register messages
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgAddBlsSig{},
 		&MsgWrappedCreateValidator{},
 	)
 	msgservice.RegisterMsgServiceDesc(registry, &_Msg_serviceDesc)

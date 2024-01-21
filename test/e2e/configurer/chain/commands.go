@@ -8,21 +8,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/types/bech32"
-
-	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
-
-	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
-
 	txformat "github.com/babylonchain/babylon/btctxformatter"
-	bbn "github.com/babylonchain/babylon/types"
-
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
-
+	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
+	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 )
 
@@ -60,7 +55,7 @@ func (n *NodeConfig) BankSend(amount string, sendAddress string, receiveAddress 
 
 func (n *NodeConfig) SendHeaderHex(headerHex string) {
 	n.LogActionF("btclightclient sending header %s", headerHex)
-	cmd := []string{"babylond", "tx", "btclightclient", "insert-header", headerHex, "--from=val", "--gas=500000"}
+	cmd := []string{"babylond", "tx", "btclightclient", "insert-headers", headerHex, "--from=val", "--gas=500000"}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully inserted header %s", headerHex)
@@ -124,10 +119,10 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		currentBtcTip, err := n.QueryTip()
 		require.NoError(n.t, err)
 
-		_, c, err := bech32.DecodeAndConvert(n.PublicAddress)
+		_, submitterAddr, err := bech32.DecodeAndConvert(n.PublicAddress)
 		require.NoError(n.t, err)
 
-		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, c)
+		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, submitterAddr)
 		require.NoError(n.t, err)
 
 		babylonTagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
@@ -140,8 +135,10 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		)
 		require.NoError(n.t, err)
 
-		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), p1)
-		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), p2)
+		tx1 := datagen.CreatOpReturnTransaction(r, p1)
+		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), tx1)
+		tx2 := datagen.CreatOpReturnTransaction(r, p2)
+		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
 
 		n.InsertHeader(&opReturn1.HeaderBytes)
 		n.InsertHeader(&opReturn2.HeaderBytes)
@@ -192,4 +189,14 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully executed")
+}
+
+// NOTE: this command will withdraw the reward of the address associated with the tx signer `from`
+func (n *NodeConfig) WithdrawReward(sType, from string) {
+	n.LogActionF("withdraw reward of type %s for tx signer %s", sType, from)
+	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
+	n.LogActionF(strings.Join(cmd, " "))
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+	n.LogActionF("successfully withdrawn")
 }

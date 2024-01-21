@@ -13,7 +13,7 @@ import (
 )
 
 func TestInitCmd(t *testing.T) {
-	rootCmd, _ := cmd.NewRootCmd()
+	rootCmd := cmd.NewRootCmd()
 	rootCmd.SetArgs([]string{
 		"init",     // Test the init cmd
 		"app-test", // Moniker
