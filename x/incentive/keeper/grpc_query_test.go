@@ -59,11 +59,13 @@ func FuzzBTCStakingGaugeQuery(f *testing.F) {
 		keeper, ctx := testkeeper.IncentiveKeeper(t, nil, nil, nil)
 
 		// generate a list of random Gauges at random heights, then insert them to KVStore
-		heightList := []uint64{}
-		gaugeList := []*types.Gauge{}
-		numGauges := datagen.RandomInt(r, 100)
-		for i := uint64(0); i < numGauges; i++ {
-			height := datagen.RandomInt(r, 1000000)
+		heightList := []uint64{datagen.RandomInt(r, 1000) + 1}
+		gaugeList := []*types.Gauge{datagen.GenRandomGauge(r)}
+		keeper.SetBTCStakingGauge(ctx, heightList[0], gaugeList[0])
+
+		numGauges := datagen.RandomInt(r, 100) + 1
+		for i := uint64(1); i < numGauges; i++ {
+			height := heightList[i-1] + datagen.RandomInt(r, 100) + 1
 			heightList = append(heightList, height)
 			gauge := datagen.GenRandomGauge(r)
 			gaugeList = append(gaugeList, gauge)
