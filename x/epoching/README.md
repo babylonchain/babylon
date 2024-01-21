@@ -1,19 +1,24 @@
 # Epoching
 
-Babylon implements the *epoched staking* to reduce and parameterize the
-frequency of updating the validator set in Babylon. In the epoched staking
-design, the blockchain is divided into epochs, each of which contains a fixed
-number of consecutive blocks. Staking-related messages that affect the validator
-set's stake distribution are delayed to the end of each epoch for execution,
-such that the stake distribution remains unchanged during each epoch.
+Babylon implements [epoched
+staking](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-039-epoched-staking.md)
+to reduce and parameterize the frequency of updating the validator set in
+Babylon. This reduces the frequency of Babylon sending checkpoints to Bitcoin,
+thereby reducing Babylon's operation cost and its footprint on Bitcoin.
 
-The Epoching module is responsible for implementing the epoched staking design,
+In the epoched staking design, the blockchain is divided into epochs, each of
+which contains a fixed number of consecutive blocks. Messages that affect the
+validator set's stake distribution are delayed to the end of each epoch for
+execution, such that the validator set remains unchanged during each epoch. The
+Epoching module is responsible for implementing the epoched staking design,
 including:
 
-- tracking the epoch number of the current blockchain;
+- tracking the current epoch number of the blockchain;
 - recording the metadata of each epoch;
-- delaying the staking-related messages to the end of each epoch; and
-- finishing all unbonding delegations till a Bitcoin-checkpointed epoch.
+- delaying the execution of messages that affect the validator set's stake
+  distribution to the end of each epoch; and
+- finishing all unbonding requests for epochs that have a Bitcoin checkpoint
+  with sufficient confirmations.
 
 ## Table of contents
 
@@ -36,7 +41,7 @@ including:
 - [EndBlocker](#endblocker)
 - [Hooks](#hooks)
   - [Hooks in the Epoching module](#hooks-in-the-epoching-module)
-  - [Bitcoin-assisted unbonding via `AfterRawCheckpointFinalized` hook](#bitcoin-assisted-unbonding-via-afterrawcheckpointfinalized-hook)
+  - [Bitcoin-assisted unbonding via the `AfterRawCheckpointFinalized` hook](#bitcoin-assisted-unbonding-via-the-afterrawcheckpointfinalized-hook)
 - [Events](#events)
 - [Queries](#queries)
 
@@ -47,27 +52,31 @@ including:
 In the Cosmos SDK, the validator set can change with every block, impacting
 stake distribution through various staking-related actions (e.g., bond/unbond,
 delegate/undelegate/redelegate, slash). This frequent updating poses challenges,
-as 1) Babylon's Bitcoin Timestamping protocol requires checkpointing the
-validator set to Bitcoin upon every validator set update, and 2) Bitcoin's
-10-minute block interval makes checkpointing every new block impractical. In
-addition, frequent validator set updates complicate the implementation of
-threshold cryptography, light clients, fair leader election, and staking
-derivatives, as highlighted in
-[ADR-039](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-039-epoched-staking.md).
+as
 
-The concept of epoched staking (aka epoching) aims to reduce the validator set
-frequency, addressing these issues. In epoching design, the blockchain is
-divided into epochs, and updating the validator set once per epoch. This
-approach, detailed in
+1. Babylon's Bitcoin Timestamping protocol requires checkpointing the validator
+   set to Bitcoin upon every validator set update;
+2. Bitcoin's 10-minute block interval makes checkpointing every new block
+   impractical; and
+3. frequent validator set updates complicate the implementation of threshold
+   cryptography, light clients, fair leader election, and staking derivatives,
+   as highlighted in
+   [ADR-039](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-039-epoched-staking.md).
+
+We introduce the concept of epoching to reduce the frequency of validator set
+update, thereby addressing the above challenges. In the epoching design, the
+blockchain is divided into epochs, and updating the validator set once per
+epoch. This approach, detailed in
 [ADR-039](https://github.com/cosmos/cosmos-sdk/blob/main/docs/architecture/adr-039-epoched-staking.md),
 has been pursued by multiple efforts (e.g.,
 [here](https://github.com/cosmos/cosmos-sdk/pull/8829),
-[here](https://github.com/cosmos/cosmos-sdk/pull/10132) and
+[here](https://github.com/cosmos/cosmos-sdk/pull/10132), and
 [here](https://github.com/cosmos/cosmos-sdk/pull/10173)) but was not fully
-implemented. Babylon has implemented its own Epoching module, catering to
-specific design goals such as checkpointing epochs. In addition, Babylon
-implements *Bitcoin-assisted unbonding*, where unbonding requests in an epoch
-will be finished upon this epoch is checkpointed on Bitcoin.
+implemented. Babylon has implemented the Epoching module, catering to specific
+design goals such as checkpointing epochs. In addition, Babylon implements
+*Bitcoin-assisted unbonding*, where unbonding requests in an epoch will be
+finished when the epoch they were created in is checkpointed on Bitcoin with
+sufficient confirmations.
 
 ### Babylon's Epoching module design
 
@@ -82,10 +91,9 @@ Specifically, the Epoching module is responsible for the following tasks:
 - Bitcoin-assisted unbonding.
 
 **Dividing the blockchain into epochs.** The epoching mechanism introduces the
-concept of epochs. The blockchain is divided into epochs, each consists of a
+concept of epochs. The blockchain is divided into epochs, each consisting of a
 fixed number of consecutive blocks. The number of blocks in an epoch is called
-epoch interval, which is a system parameter. At the moment, Babylon uses the
-epoch interval of 900 blocks, which take about 30 minutes.
+epoch interval, which is a system parameter.
 
 **Disabling functionalities of the Staking module.** Babylon disables two
 functionalities of the Staking module, namely the validator set update mechanism
@@ -98,25 +106,29 @@ set updates to once per epoch, Babylon disables the validator set update
 mechanism of the Staking module.
 
 In addition, the Staking module enforces the "21-day unbonding rule": unbonding
-validators and delegations will become unbonded after 21 days. Babylon departs
-from Cosmos SDK by employing Bitcoin-assisted unbonding, where unbonding
-validators and delegations become unbonded once the corresponding epoch has been
-checkpointed on Bitcoin. Babylon disables the 21-day unbonding mechanism to this
-end.
+validators and delegations will become unbonded after 21 days (in the default
+case). The long unbonding period aims to circumvent the [long-range
+attack](https://medium.com/babylonchain-io/why-are-unbonding-periods-so-long-on-proof-of-stake-d44e863c5cb8),
+at the cost of capital efficiency. Babylon departs from Cosmos SDK by employing
+Bitcoin-assisted unbonding, where unbonding validators and delegations become
+unbonded once the corresponding epoch has been checkpointed on Bitcoin. Babylon
+disables the 21-day unbonding mechanism to this end.
 
 In order to disable the two functionalities, Babylon disables Staking module's
 `EndBlocker` function that updates validator sets and unbonds mature validators
-upon a block ends. Instead, upon an epoch has ended, the Epoching module will
-invoke the Staking module's function that updates the validator sets. In
-addition, upon an epoch has been checkpointed to Bitcoin, the Epoching module
-will invoke the Staking module's function that unbonds mature validators.
+upon a block ends. Instead, upon an epoch that has ended, the Epoching module
+will invoke the Staking module's functionality that updates the validator set.
+In addition, upon an epoch that has been checkpointed to Bitcoin, the Epoching
+module will invoke the Staking module's functionality that unbonds mature
+validators.
 
 **Disabling messages of the Staking module.** In order to keep the validator set
 unchanged during each epoch, the Epoching module intercepts and rejects
-staking-related messages that affect validator set's stake distribution via
+staking-related messages that affect the validator set's stake distribution via
+the
 [AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler),
-but instead defines wrapped versions of them and forwards their unwrapped forms
-to the Staking module upon an epoch ends. In the [Staking
+Instead, the Epoching module defines wrapped versions of them and forwards their
+unwrapped forms to the Staking module upon the end of an epoch. In the [Staking
 module](https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/proto/cosmos/staking/v1beta1/tx.proto),
 these messages include
 
@@ -125,36 +137,33 @@ these messages include
 - `MsgBeginRedelegate` for redelegating coins from a delegator and source
   validator to a destination validator.
 - `MsgUndelegate` for undelegating from a delegator and a validator.
-- `MsgCancelUnbondingDelegation` for cancelling unbonding delegation for a
-  delegator
+- `MsgCancelUnbondingDelegation` for cancelling an unbonding delegation of a
+  delegator.
 
-Within these messages, `MsgCreateValidator`, `MsgDelegate`,
-`MsgBeginRedelegate`, `MsgUndelegate`, and `MsgCancelUnbondingDelegation` affect
-the validator set's stake distribution. The Epoching module implements an
-`AnteHandler` to reject these messages, and implements wrapped versions for them
-together with the Checkpointing module: `MsgWrappedCreateValidator`,
-`MsgWrappedDelegate`, `MsgWrappedBeginRedelegate`, and `MsgWrappedUndelegate`.
-The Epoching module receives these messages at any time, but will only process
-them at the end of each epoch.
+The above messages affect the validator set's stake distribution. The Epoching
+module implements an `AnteHandler` to reject these messages, while also
+implementing wrapped versions of them together with the Checkpointing module:
+`MsgWrappedCreateValidator`, `MsgWrappedDelegate`, `MsgWrappedBeginRedelegate`,
+and `MsgWrappedUndelegate`. The Epoching module receives these messages at any
+time, but will only process them at the end of each epoch.
 
-**Delaying wrapped messages to the end of epochs.** The Epoching module will
-handle wrapped staking-related messages at the end of each epoch. Im particular,
-the Epoching module maintains a message queue for each epoch. Upon each wrapped
-message, the Epoching module performs basic sanity checks, then enqueue the
-message to the message queue. When the epoch ends, the Epoching module will
-forward queued messages to the Staking module. Consequently, the Staking module
-receives and handles staking-related messages, thus performs validator set
-updates, at the end of each epoch.
+**Delaying wrapped messages to the end of epochs.** The Epoching module
+maintains a message queue for each epoch. Upon each wrapped message, the
+Epoching module performs basic sanity checks, then enqueues the message to the
+message queue. When the epoch ends, the Epoching module will forward queued
+messages to the Staking module. Consequently, the Staking module receives and
+handles staking-related messages, and performs validator set updates.
 
 **Bitcoin-assisted Unbonding.** Babylon implements the Bitcoin-assisted
-unbonding mechanism by invoking the Staking module upon an epoch becomes
-checkpointed. Specifically, the Staking module's `ApplyMatureUnbondings` is
-responsible for identifying and unbonding mature validators and delegations that
-have been unbonding for 21 days, and is invoked upon every block. Babylon has
-disabled the invocation of `ApplyMatureUnbondings` per block, and implements the
-state management for epochs. Upon an epoch becomes finalized, i.e., its
-checkpoint becomes deep enough in Bitcoin, the Epoching module will invoke
-`ApplyMatureUnbondings` to finish all unbonding validators and delegations.
+unbonding mechanism by invoking the Staking module upon a checkpointed epoch .
+Specifically, the Staking module's `BlockValidatorUpdates`
+[function](https://github.com/cosmos/cosmos-sdk/blob/7e6948f50cd4838a0161838a099f74e0b5b0213c/x/staking/keeper/val_state_change.go#L36-L102)
+is responsible for identifying and unbonding mature validators and delegations
+that have been unbonding for 21 days, and is invoked upon every block. Babylon
+has disabled the invocation of `BlockValidatorUpdates` per block, and implements
+the state management for epochs. When an epoch has a checkpoint that is
+sufficiently deep in Bitcoin, the Epoching module will invoke
+`BlockValidatorUpdates` to finish all unbonding validators and delegations.
 
 ## States
 
@@ -218,7 +227,7 @@ message Epoch {
 The Epoching module implements a message queue to delay the execution of
 messages that affect the validator set's stake distribution to the end of each
 epoch. This ensures that during an epoch, the validator set's stake distribution
-remain unchanged, except for slashed validators. The [epoch message queue
+will remain unchanged, except for slashed validators. The [epoch message queue
 storage](./keeper/epoch_msg_queue.go) maintains the queue of these
 staking-related messages. The key is the epoch number concatenated with the
 index of the queued message, and the value is a `QueuedMessage`
@@ -249,10 +258,10 @@ message QueuedMessage {
 }
 ```
 
-In Cosmos SDK, `MsgCreateValidator`, `MsgDelegate`, `MsgUndelegate`,
-`MsgBeginRedelegate`, `MsgCancelUnbondingDelegation` in the Staking module might
-affect the validator set, thus will be wrapped into `QueuedMessage` and be
-delayed to the end of an epoch for execution.
+In the Cosmos SDK, the `MsgCreateValidator`, `MsgDelegate`, `MsgUndelegate`,
+`MsgBeginRedelegate`, `MsgCancelUnbondingDelegation` messages of the Staking
+module might affect the validator set, and are thus wrapped into `QueuedMessage`
+objects. Their execution is delayed to the end of an epoch for execution.
 
 ### Epoch validator set
 
@@ -264,14 +273,14 @@ value is this validator's voting power (in `sdk.Int`) at this epoch.
 
 ## Messages
 
-The Epoching module implementing the epoched staking mechanism by using an
+The Epoching module implements the epoched staking mechanism by using an
 [AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler)
 to intercept messages that affect the validator set's stake distribution, and
-implemented their epoched counterparts for the validators and stakers.
+implements the messages' epoched counterparts.
 
 ### Disabling Staking module messages via AnteHandler
 
-In Cosmos SDK,
+In Cosmos SDK, the
 [AnteHandler](https://docs.cosmos.network/main/learn/advanced/baseapp#antehandler)
 is a component responsible for pre-processing transactions. It functions prior
 to the execution of transaction logic, performing crucial tasks such as
@@ -288,13 +297,6 @@ include `MsgCreateValidator`, `MsgDelegate`, `MsgUndelegate`,
 `MsgBeginRedelegate`, `MsgCancelUnbondingDelegation`.
 
 ### Epoched staking messages
-
-Babylon implements the epoched counterparts of the messages intercepted by
-`DropValidatorMsgDecorator`, including `MsgWrappedDelegate`,
-`MsgWrappedUndelegate`, `MsgWrappedBeginRedelegate`, and
-`WrappedCancelUnbondingDelegation` in the Epoching module, and
-`MsgWrappedCreateValidator` in the
-[Checkpointing](../../proto/babylon/checkpointing/v1/tx.proto) module.
 
 The epoched staking messages in the Epoching module are defined at
 [proto/babylon/epoching/v1/tx.proto](../../proto/babylon/epoching/v1/tx.proto).
@@ -342,8 +344,8 @@ The handlers of the epoched staking messages in the Epoching module are defined
 at [x/epoching/keeper/msg_server.go](./keeper/msg_server.go). Each handler
 performs the same [verification
 logics](https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/x/staking/keeper/msg_server.go)
-of the corresponding message in Cosmos SDK's Staking module, then inserts the
-message to the epoch message queue storage.
+of the corresponding message as the ones performed by the Cosmos SDK's Staking
+module, and then inserts the message to the epoch message queue storage.
 
 ### MsgUpdateParams
 
@@ -370,9 +372,9 @@ message MsgUpdateParams {
 
 ## BeginBlocker and EndBlocker
 
-Babylon disables Staking module's EndBlocker to avoid validator set updates upon
-each block. The Epoching module implements `BeginBlocker` to initialize an epoch
-upon the beginning of an epoch, and implements `EndBlocker` to execute all
+Babylon disables the Staking module's EndBlocker to avoid validator set updates
+upon each block. The Epoching module implements `BeginBlocker` to initialize an
+epoch upon the beginning of an epoch, and implements `EndBlocker` to execute all
 messages and update the validator set upon the end of an epoch.
 
 ### Disabling Staking module's EndBlocker
@@ -380,7 +382,8 @@ messages and update the validator set upon the end of an epoch.
 Cosmos SDK's Staking module [updates the validator
 set](https://github.com/cosmos/cosmos-sdk/blob/v0.50.3/x/staking/keeper/abci.go#L23C1-L24C1)
 upon `EndBlocker` of every block. In order to implement the epoching mechanism,
-Babylon disables Staking module's `EndBlocker` [as follows](../../app/app.go).
+Babylon disables the Staking module's `EndBlocker` [as
+follows](../../app/app.go).
 
 ```go
 // Babylon does not want EndBlock processing in staking
@@ -436,12 +439,12 @@ type EpochingHooks interface {
 }
 ```
 
-### Bitcoin-assisted unbonding via `AfterRawCheckpointFinalized` hook
+### Bitcoin-assisted unbonding via the `AfterRawCheckpointFinalized` hook
 
 The Epoching module subscribes to the Checkpointing module's
 `AfterRawCheckpointFinalized` [hook](../checkpointing/types/hooks.go) for
 Bitcoin-assisted unbonding. The `AfterRawCheckpointFinalized` hook is triggered
-upon a checkpoint becomes *finalized*, i.e., Bitcoin transactions of the
+upon a checkpoint becoming *finalized*, i.e., Bitcoin transactions of the
 checkpoint become `w`-deep in Bitcoin's canonical chain, where `w` is the
 `checkpoint_finalization_timeout`
 [parameter](../../proto/babylon/btccheckpoint/v1/params.proto) in the
