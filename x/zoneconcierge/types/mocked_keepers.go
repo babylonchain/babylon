@@ -546,20 +546,6 @@ func (mr *MockBTCLightClientKeeperMockRecorder) GetHeaderByHash(ctx, hash interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHeaderByHash", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetHeaderByHash), ctx, hash)
 }
 
-// GetLastRollbackPoint mocks base method.
-func (m *MockBTCLightClientKeeper) GetLastRollbackPoint(ctx context.Context) *types1.BTCHeaderInfo {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLastRollbackPoint", ctx)
-	ret0, _ := ret[0].(*types1.BTCHeaderInfo)
-	return ret0
-}
-
-// GetLastRollbackPoint indicates an expected call of GetLastRollbackPoint.
-func (mr *MockBTCLightClientKeeperMockRecorder) GetLastRollbackPoint(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastRollbackPoint", reflect.TypeOf((*MockBTCLightClientKeeper)(nil).GetLastRollbackPoint), ctx)
-}
-
 // GetMainChainFrom mocks base method.
 func (m *MockBTCLightClientKeeper) GetMainChainFrom(ctx context.Context, startHeight uint64) []*types1.BTCHeaderInfo {
 	m.ctrl.T.Helper()

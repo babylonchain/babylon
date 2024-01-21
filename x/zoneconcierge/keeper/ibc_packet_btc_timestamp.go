@@ -157,6 +157,16 @@ func (k Keeper) createBTCTimestamp(
 	return btcTimestamp, nil
 }
 
+// getDeepEnoughBTCHeaders returns the last w+1 BTC headers, in which the 1st BTC header
+// must be in the canonical chain assuming w-long reorg will never happen
+// This function will only be triggered upon a finalised epoch, where w-deep BTC checkpoint
+// is guaranteed. Thus the function is safe to be called upon generating BTC timestamps
+func (k Keeper) getDeepEnoughBTCHeaders(ctx context.Context) []*btclctypes.BTCHeaderInfo {
+	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - wValue
+	return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
+}
+
 // getHeadersToBroadcast retrieves headers to be broadcasted to all open IBC channels to ZoneConcierge
 // The header to be broadcasted are:
 // - either the whole known chain if we did not broadcast any headers yet
@@ -169,9 +179,7 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 		// we did not send any headers yet, so we need to send the last w+1 BTC headers
 		// where w+1 is imposed by Babylon contract. This ensures that the first BTC header
 		// in Babylon contract will be w-deep
-		wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-		startHeight := k.btclcKeeper.GetTipInfo(ctx).Height - wValue
-		return k.btclcKeeper.GetMainChainFrom(ctx, startHeight)
+		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
 	// we already sent some headers, so we need to send headers from the child of the most recent header we sent
@@ -187,11 +195,10 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 		}
 	}
 
-	// if initHeader is nil, then this means a large reorg happens such that all headers
-	// in the last segment are reverted. In this case, get all headers since the last
-	// rollback point
 	if initHeader == nil {
-		initHeader = k.btclcKeeper.GetLastRollbackPoint(ctx)
+		// if initHeader is nil, then this means a large reorg happens such that all headers
+		// in the last segment are reverted. In this case, send the last w+1 BTC headers
+		return k.getDeepEnoughBTCHeaders(ctx)
 	}
 
 	headersToSend := k.btclcKeeper.GetMainChainFrom(ctx, initHeader.Height+1)

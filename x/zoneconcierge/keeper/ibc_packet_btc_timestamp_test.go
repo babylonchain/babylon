@@ -115,10 +115,13 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		)
 		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
 		require.NoError(t, err)
-		// assert the last segment is since the block after the reorg point
+		// current tip
+		btcTip = btclcKeeper.GetTipInfo(ctx)
+		// assert the last segment is the last w+1 BTC headers
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
+		require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
 		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint64(i)+reorgPoint+1), lastSegment.BtcHeaders[i])
+			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint64(i)), lastSegment.BtcHeaders[i])
 		}
 	})
 }

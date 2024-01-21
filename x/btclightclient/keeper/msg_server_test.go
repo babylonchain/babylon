@@ -139,11 +139,6 @@ func FuzzMsgServerReorgChain(f *testing.F) {
 		_, err := srv.InsertHeaders(sdkCtx, msg)
 		require.NoError(t, err)
 
-		// ensure the last rollback point is updated
-		lastRollbackpoint := blcKeeper.GetLastRollbackPoint(ctx)
-		require.NotNil(t, lastRollbackpoint)
-		require.Equal(t, forkHeader, lastRollbackpoint)
-
 		extendedChainWork := forkHeader.Work.Add(*chainExtensionWork)
 		extendedChainHeight := forkHeader.Height + uint64(forkChainLen)
 

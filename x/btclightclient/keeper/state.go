@@ -16,7 +16,6 @@ import (
 
 type headersState struct {
 	cdc          codec.BinaryCodec
-	storeAdapter storetypes.KVStore
 	headers      storetypes.KVStore
 	hashToHeight storetypes.KVStore
 }
@@ -26,7 +25,6 @@ func (k Keeper) headersState(ctx context.Context) headersState {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	return headersState{
 		cdc:          k.cdc,
-		storeAdapter: storeAdapter,
 		headers:      prefix.NewStore(storeAdapter, types.HeadersObjectPrefix),
 		hashToHeight: prefix.NewStore(storeAdapter, types.HashToHeightPrefix),
 	}
@@ -53,21 +51,6 @@ func (s headersState) deleteHeader(h *types.BTCHeaderInfo) {
 	// save concrete object
 	s.headers.Delete(headersKey)
 	s.hashToHeight.Delete(heightKey)
-}
-
-func (s headersState) setLastRollbackPoint(reorgPoint *types.BTCHeaderInfo) {
-	s.storeAdapter.Set(types.LastRollbackPointKey, s.cdc.MustMarshal(reorgPoint))
-}
-
-func (s headersState) GetLastRollbackPoint() *types.BTCHeaderInfo {
-	reorgPointBytes := s.storeAdapter.Get(types.LastRollbackPointKey)
-	if len(reorgPointBytes) == 0 {
-		// reorg never happened
-		return nil
-	}
-	var reorgPoint types.BTCHeaderInfo
-	s.cdc.MustUnmarshal(reorgPointBytes, &reorgPoint)
-	return &reorgPoint
 }
 
 func (s headersState) rollBackHeadersUpTo(height uint64) {
