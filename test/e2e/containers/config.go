@@ -15,7 +15,7 @@ const (
 	hermesRelayerRepository = "informalsystems/hermes"
 	// TODO: Replace with version tag once we have a working version
 	hermesRelayerTag        = "master"
-	cosmosRelayerRepository = "babylonchain/cosmos-relayer"
+	cosmosRelayerRepository = "public.ecr.aws/t9e9i3h0/cosmos-relayer"
 	// TODO: Replace with version tag once we have a working version
 	cosmosRelayerTag = "main"
 )
