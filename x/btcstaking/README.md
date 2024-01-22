@@ -15,6 +15,7 @@ providers and BTC delegations under them. This includes:
 - [Table of contents](#table-of-contents)
 - [Concepts](#concepts)
 - [States](#states)
+  - [Parameters](#parameters)
   - [Finality providers](#finality-providers)
   - [BTC delegations](#btc-delegations)
   - [BTC delegation index](#btc-delegation-index)
@@ -29,8 +30,6 @@ providers and BTC delegations under them. This includes:
 - [BeginBlocker](#beginblocker)
 - [Events](#events)
 - [Queries](#queries)
-
-<!-- TODO: a section about module parameters -->
 
 ## Concepts
 
@@ -57,7 +56,8 @@ follows:
    1. The BTC staker submits a *staking transaction* to Bitcoin. The staking
       transaction locks its bitcoins for a long period of time and specifies
       slashing conditions.
-   2. The BTC staker constructs
+   2. The BTC staker constructs the following transactions (whose specifications
+      can be found [here](../../docs/staking-script.md)):
       - a *slashing transaction* that can spend the staking transaction once the
         finality provider is slashed,
       - an *unbonding transaction* that spends the staking transaction to start
@@ -75,7 +75,6 @@ follows:
 4. Upon each new block, the BTC Staking module will record the voting power
    table of finality providers.
 
-<!-- TODO: refer readers to the doc of bitcoin staking tx format -->
 Babylon's [Finality module](../finality) will make use of the voting power table
 maintained in the BTC Staking module to determine the finalization status of
 each block, identify equivocations of finality providers, and slash BTC
@@ -91,6 +90,48 @@ delegation unbonded immediately upon such a signature.
 
 The BTC Staking module maintains the following KV stores.
 
+### Parameters
+
+The [parameter storage](./keeper/params.go) maintains the BTC Staking module's
+parameters. The BTC Staking module's parameters are represented as a `Params`
+[object](../../proto/babylon/btcstaking/v1/params.proto) defined as follows:
+
+```protobuf
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // covenant_pks is the list of public keys held by the covenant committee
+  // each PK follows encoding in BIP-340 spec on Bitcoin
+  repeated bytes covenant_pks = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // covenant_quorum is the minimum number of signatures needed for the covenant
+  // multisignature
+  uint32 covenant_quorum = 2;
+  // slashing address is the address that the slashed BTC goes to
+  // the address is in string on Bitcoin
+  string slashing_address = 3;
+  // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
+  // in Satoshi) needed for the pre-signed slashing tx
+  int64 min_slashing_tx_fee_sat = 4;
+  // min_commission_rate is the chain-wide minimum commission rate that a finality provider can charge their delegators
+  string min_commission_rate = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  // slashing_rate determines the portion of the staked amount to be slashed,
+  // expressed as a decimal (e.g., 0.5 for 50%).
+  string slashing_rate = 6 [
+      (cosmos_proto.scalar)  = "cosmos.Dec",
+      (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+      (gogoproto.nullable)   = false
+  ];
+  // max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
+  uint32 max_active_finality_providers = 7;
+  // min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
+  uint32 min_unbonding_time = 8;
+}
+```
+
 ### Finality providers
 
 The [finality provider storage](./keeper/finality_providers.go) maintains all
@@ -99,8 +140,6 @@ key in [BIP-340](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki)
 format, and the value is a `FinalityProvider`
 [object](../../proto/babylon/btcstaking/v1/btcstaking.proto) representing a
 finality provider.
-
-<!-- TODO: convert all file paths to links -->
 
 ```protobuf
 // FinalityProvider defines a finality provider
@@ -413,7 +452,8 @@ Upon `MsgCreateBTCDelegation`, a Babylon node will execute as follows:
    5. Verify the Merkle proof of inclusion of the staking transaction against
       the BTC light client. <!-- TODO: add a  link to btccheckpoint doc -->
    6. Ensure the staking transaction and slashing transaction are valid and
-      consistent. <!-- TODO: add a  link to the staking script doc -->
+      consistent, as per the [specification](../../docs/staking-script.md) of
+      their formats.
    7. Verify the Schnorr signature on the slashing transaction signed by the BTC
       delegator.
 5. Verify the unbonding transaction and unbonding slashing transaction,
@@ -423,8 +463,8 @@ Upon `MsgCreateBTCDelegation`, a Babylon node will execute as follows:
    2. Verify the Schnorr signature on the slashing path of the unbonding
       transaction by the BTC delegator.
    3. Verify the unbonding transaction and the unbonding path's slashing
-      transaction are valid and consistent.
-      <!-- TODO: add a link to the staking script doc -->
+      transaction are valid and consistent, as per the
+      [specification](../../docs/staking-script.md) of their formats.
 6. Create a `BTCDelegation` object and save it to the BTC delegation storage and
    the BTC delegation index storage.
 

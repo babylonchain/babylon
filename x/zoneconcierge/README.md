@@ -22,6 +22,7 @@ There are two phases of integration for a consumer chain:
 
 - [Table of contents](#table-of-contents)
 - [State](#state)
+  - [Parameters](#parameters)
   - [ChainInfo](#chaininfo)
   - [EpochChainInfo](#epochchaininfo)
   - [CanonicalChain](#canonicalchain)
@@ -31,10 +32,30 @@ There are two phases of integration for a consumer chain:
 - [Interaction with consumer chains under phase 2 integration](#interaction-with-consumer-chains-under-phase-2-integration)
 - [Queries](#queries)
 
+<!-- TODO: describe the PostHandler -->
+
 ## State
 
 The Zone Concierge module keeps handling IBC headers of consumer chains, and
 maintains the following KV stores.
+
+### Parameters
+
+The [parameter storage](./keeper/params.go) maintains Zone Concierge module's
+parameters. The Zone Concierge module's parameters are represented as a `Params`
+[object](../../proto/babylon/zoneconcierge/v1/params.proto) defined as follows:
+
+```protobuf
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.equal) = true;
+  
+  // ibc_packet_timeout_seconds is the time period after which an unrelayed 
+  // IBC packet becomes timeout, measured in seconds
+  uint32 ibc_packet_timeout_seconds = 1
+      [ (gogoproto.moretags) = "yaml:\"ibc_packet_timeout_seconds\"" ];
+}
+```
 
 ### ChainInfo
 
@@ -125,6 +146,8 @@ message Params {
       [ (gogoproto.moretags) = "yaml:\"ibc_packet_timeout_seconds\"" ];
 }
 ```
+
+<!-- TODO: hooks -->
 
 ## Interaction with consumer chains under phase 1 integration
 
