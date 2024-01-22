@@ -93,25 +93,31 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		require.NoError(t, err)
 		// assert the last segment is since the header after the last tip
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
+		require.Len(t, lastSegment.BtcHeaders, int(chainLength))
 		for i := range lastSegment.BtcHeaders {
 			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, uint64(i)+btcTip.Height+1), lastSegment.BtcHeaders[i])
 		}
+
+		// remember the current tip and the segment length
+		btcTip = btclcKeeper.GetTipInfo(ctx)
+		lastSegmentLength := uint64(len(lastSegment.BtcHeaders))
 
 		// finalise another epoch, during which a number of new BTC headers with reorg are inserted
 		epochNum += 1
 		// reorg at a super random point
 		// NOTE: it's possible that the last segment is totally reverted. We want to be resilient against
 		// this, by sending the BTC headers since the last reorg point
-		reorgPoint := datagen.RandomInt(r, int(btcTip.Height+chainLength))
+		reorgPoint := datagen.RandomInt(r, int(btcTip.Height))
+		revertedChainLength := btcTip.Height - reorgPoint
 		// the fork chain needs to be longer than the canonical one
-		chainLength = btcTip.Height + chainLength - reorgPoint + datagen.RandomInt(r, 10) + 1
+		forkChainLength := revertedChainLength + datagen.RandomInt(r, 10) + 1
 		genRandomChain(
 			t,
 			r,
 			&btclcKeeper,
 			ctx,
 			reorgPoint,
-			chainLength,
+			forkChainLength,
 		)
 		err = hooks.AfterRawCheckpointFinalized(ctx, epochNum)
 		require.NoError(t, err)
@@ -119,9 +125,22 @@ func FuzzGetHeadersToBroadcast(f *testing.F) {
 		btcTip = btclcKeeper.GetTipInfo(ctx)
 		// assert the last segment is the last w+1 BTC headers
 		lastSegment = zcKeeper.GetLastSentSegment(ctx)
-		require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
-		for i := range lastSegment.BtcHeaders {
-			require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, btcTip.Height-wValue+uint64(i)), lastSegment.BtcHeaders[i])
+		if revertedChainLength >= lastSegmentLength {
+			// the entire last segment is reverted, the last w+1 BTC headers should be sent
+			require.Len(t, lastSegment.BtcHeaders, int(wValue)+1)
+			// assert the consistency of w+1 sent BTC headers
+			for i := range lastSegment.BtcHeaders {
+				expectedHeight := btcTip.Height - wValue + uint64(i)
+				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
+			}
+		} else {
+			// only a subset headers of last segment are reverted, only the new fork should be sent
+			require.Len(t, lastSegment.BtcHeaders, int(forkChainLength))
+			// assert the consistency of the sent fork BTC headers
+			for i := range lastSegment.BtcHeaders {
+				expectedHeight := btcTip.Height - forkChainLength + 1 + uint64(i)
+				require.Equal(t, btclcKeeper.GetHeaderByHeight(ctx, expectedHeight), lastSegment.BtcHeaders[i])
+			}
 		}
 	})
 }

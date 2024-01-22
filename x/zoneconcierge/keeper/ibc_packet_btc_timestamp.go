@@ -196,7 +196,7 @@ func (k Keeper) getHeadersToBroadcast(ctx context.Context) []*btclctypes.BTCHead
 	}
 
 	if initHeader == nil {
-		// if initHeader is nil, then this means a large reorg happens such that all headers
+		// if initHeader is nil, then this means a reorg happens such that all headers
 		// in the last segment are reverted. In this case, send the last w+1 BTC headers
 		return k.getDeepEnoughBTCHeaders(ctx)
 	}
