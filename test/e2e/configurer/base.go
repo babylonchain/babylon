@@ -284,51 +284,11 @@ func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainC
 		return err
 	}
 
-	// TODO: Adapt to Cosmos relayer
-	/*
-		endpoint := fmt.Sprintf("http://%s/state", rlyResource.GetHostPort("3031/tcp"))
-
-		require.Eventually(bc.t, func() bool {
-			resp, err := http.Get(endpoint)
-			if err != nil {
-				return false
-			}
-
-			defer resp.Body.Close()
-
-			bz, err := io.ReadAll(resp.Body)
-			if err != nil {
-				return false
-			}
-
-			var respBody map[string]interface{}
-			if err := json.Unmarshal(bz, &respBody); err != nil {
-				return false
-			}
-
-			status, ok := respBody["status"].(string)
-			require.True(bc.t, ok)
-			result, ok := respBody["result"].(map[string]interface{})
-			require.True(bc.t, ok)
-
-			chains, ok := result["chains"].([]interface{})
-			require.True(bc.t, ok)
-
-			return status == "success" && len(chains) == 2
-		},
-			5*time.Minute,
-			time.Second,
-			"cosmos relayer not healthy")
-	*/
 	// Wait for the relayer to connect to the chains
 	bc.t.Logf("waiting for Cosmos relayer setup...")
 	time.Sleep(30 * time.Second)
 
 	bc.t.Logf("started Cosmos relayer container: %s", rlyResource.Container.ID)
-
-	// XXX: Give time to both networks to start, otherwise we might see gRPC
-	// transport errors.
-	time.Sleep(3 * time.Second)
 
 	return nil
 }
