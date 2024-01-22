@@ -73,46 +73,6 @@ func (m *Manager) ExecHermesCmd(t *testing.T, command []string, success string) 
 	return m.ExecCmd(t, hermesContainerName, command, success)
 }
 
-// ExecDaemonCmd executes a hermes daemon command
-func (m *Manager) ExecHermesDaemonCmd(t *testing.T, command []string) error {
-	containerId := m.resources[hermesContainerName].Container.ID
-
-	var (
-		outBuf bytes.Buffer
-		errBuf bytes.Buffer
-	)
-
-	ctx := context.Background()
-
-	if m.isDebugLogEnabled {
-		t.Logf("\n\nRunning hermes relayer daemon command: \"%s\"", command)
-	}
-
-	exec, err := m.pool.Client.CreateExec(docker.CreateExecOptions{
-		Context:      ctx,
-		AttachStdout: true,
-		AttachStderr: true,
-		Container:    containerId,
-		User:         "root",
-		Cmd:          command,
-	})
-	require.NoError(t, err)
-
-	_, err = m.pool.Client.StartExecNonBlocking(exec.ID, docker.StartExecOptions{
-		Context:      ctx,
-		Detach:       false,
-		OutputStream: &outBuf,
-		ErrorStream:  &errBuf,
-	})
-	require.NoError(t, err)
-
-	if m.isDebugLogEnabled {
-		t.Logf("\nStarted hermes relayer for relaying all IBC channels")
-	}
-
-	return nil
-}
-
 // ExecCmd executes command by running it on the node container (specified by containerName)
 // success is the output of the command that needs to be observed for the command to be deemed successful.
 // It is found by checking if stdout or stderr contains the success string anywhere within it.
