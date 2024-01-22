@@ -13,9 +13,11 @@ const (
 	BabylonContainerName = "babylonchain/babylond"
 
 	hermesRelayerRepository = "informalsystems/hermes"
+	// TODO: Replace with version tag once we have a working version
 	hermesRelayerTag        = "master"
 	cosmosRelayerRepository = "babylonchain/cosmos-relayer"
-	cosmosRelayerTag        = "main"
+	// TODO: Replace with version tag once we have a working version
+	cosmosRelayerTag = "main"
 )
 
 // NewImageConfig returns ImageConfig needed for running e2e test.
