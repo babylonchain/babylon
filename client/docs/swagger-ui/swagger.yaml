@@ -4694,12 +4694,17 @@ paths:
                   properties:
                     validator_address:
                       type: string
+                      title: validator_address is the address of the validator
                     bls_pub_key:
                       type: string
                       format: byte
+                      title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
                       format: uint64
+                      title: >-
+                        voting_power is the voting power of the validator at the
+                        given epoch
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
                     and its bls
@@ -5313,8 +5318,8 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with meta
-                    data.
+                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
                   epoch number
@@ -5551,8 +5556,8 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with meta
-                    data.
+                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
                   epoch number
@@ -7536,12 +7541,21 @@ paths:
                           properties:
                             validator_address:
                               type: string
+                              title: >-
+                                validator_address is the address of the
+                                validator
                             bls_pub_key:
                               type: string
                               format: byte
+                              title: >-
+                                bls_pub_key is the BLS public key of the
+                                validator
                             voting_power:
                               type: string
                               format: uint64
+                              title: >-
+                                voting_power is the voting power of the
+                                validator at the given epoch
                           title: >-
                             ValidatorWithBlsKey couples validator address,
                             voting power, and its bls
@@ -8274,12 +8288,21 @@ paths:
                                 properties:
                                   validator_address:
                                     type: string
+                                    title: >-
+                                      validator_address is the address of the
+                                      validator
                                   bls_pub_key:
                                     type: string
                                     format: byte
+                                    title: >-
+                                      bls_pub_key is the BLS public key of the
+                                      validator
                                   voting_power:
                                     type: string
                                     format: uint64
+                                    title: >-
+                                      voting_power is the voting power of the
+                                      validator at the given epoch
                                 title: >-
                                   ValidatorWithBlsKey couples validator address,
                                   voting power, and its bls
@@ -13575,12 +13598,17 @@ definitions:
           properties:
             validator_address:
               type: string
+              title: validator_address is the address of the validator
             bls_pub_key:
               type: string
               format: byte
+              title: bls_pub_key is the BLS public key of the validator
             voting_power:
               type: string
               format: uint64
+              title: >-
+                voting_power is the voting power of the validator at the given
+                epoch
           title: >-
             ValidatorWithBlsKey couples validator address, voting power, and its
             bls
@@ -14217,12 +14245,15 @@ definitions:
     properties:
       validator_address:
         type: string
+        title: validator_address is the address of the validator
       bls_pub_key:
         type: string
         format: byte
+        title: bls_pub_key is the BLS public key of the validator
       voting_power:
         type: string
         format: uint64
+        title: voting_power is the voting power of the validator at the given epoch
     title: |-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
@@ -14725,12 +14756,17 @@ definitions:
                   properties:
                     validator_address:
                       type: string
+                      title: validator_address is the address of the validator
                     bls_pub_key:
                       type: string
                       format: byte
+                      title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
                       format: uint64
+                      title: >-
+                        voting_power is the voting power of the validator at the
+                        given epoch
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
                     and its bls
@@ -15033,12 +15069,17 @@ definitions:
           properties:
             validator_address:
               type: string
+              title: validator_address is the address of the validator
             bls_pub_key:
               type: string
               format: byte
+              title: bls_pub_key is the BLS public key of the validator
             voting_power:
               type: string
               format: uint64
+              title: >-
+                voting_power is the voting power of the validator at the given
+                epoch
           title: >-
             ValidatorWithBlsKey couples validator address, voting power, and its
             bls
@@ -15156,12 +15197,17 @@ definitions:
               properties:
                 validator_address:
                   type: string
+                  title: validator_address is the address of the validator
                 bls_pub_key:
                   type: string
                   format: byte
+                  title: bls_pub_key is the BLS public key of the validator
                 voting_power:
                   type: string
                   format: uint64
+                  title: >-
+                    voting_power is the voting power of the validator at the
+                    given epoch
               title: >-
                 ValidatorWithBlsKey couples validator address, voting power, and
                 its bls
@@ -16041,12 +16087,17 @@ definitions:
                   properties:
                     validator_address:
                       type: string
+                      title: validator_address is the address of the validator
                     bls_pub_key:
                       type: string
                       format: byte
+                      title: bls_pub_key is the BLS public key of the validator
                     voting_power:
                       type: string
                       format: uint64
+                      title: >-
+                        voting_power is the voting power of the validator at the
+                        given epoch
                   title: >-
                     ValidatorWithBlsKey couples validator address, voting power,
                     and its bls
@@ -16531,12 +16582,17 @@ definitions:
                         properties:
                           validator_address:
                             type: string
+                            title: validator_address is the address of the validator
                           bls_pub_key:
                             type: string
                             format: byte
+                            title: bls_pub_key is the BLS public key of the validator
                           voting_power:
                             type: string
                             format: uint64
+                            title: >-
+                              voting_power is the voting power of the validator
+                              at the given epoch
                         title: >-
                           ValidatorWithBlsKey couples validator address, voting
                           power, and its bls
