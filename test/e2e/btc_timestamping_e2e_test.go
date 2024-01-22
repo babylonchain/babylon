@@ -1,7 +1,6 @@
 package e2e
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -275,7 +274,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	nonValidatorNode.WaitForNextBlock()
 	queryMsg := fmt.Sprintf(`{ "account": { "channel_id": "%s" } }`, channelId)
 	queryResult, err := nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
-	require.NoError(s.T(), err)
+	s.NoError(err)
 	accountResponse := queryResult["account"].(string)
 
 	s.Equal("TODO: replace me", accountResponse)
