@@ -71,9 +71,12 @@ func (BondState) EnumDescriptor() ([]byte, []int) {
 
 // Epoch is a structure that contains the metadata of an epoch
 type Epoch struct {
-	EpochNumber          uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	// epoch_number is the number of this epoch
+	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	// current_epoch_interval is the epoch interval at the time of this epoch
 	CurrentEpochInterval uint64 `protobuf:"varint,2,opt,name=current_epoch_interval,json=currentEpochInterval,proto3" json:"current_epoch_interval,omitempty"`
-	FirstBlockHeight     uint64 `protobuf:"varint,3,opt,name=first_block_height,json=firstBlockHeight,proto3" json:"first_block_height,omitempty"`
+	// first_block_height is the height of the first block in this epoch
+	FirstBlockHeight uint64 `protobuf:"varint,3,opt,name=first_block_height,json=firstBlockHeight,proto3" json:"first_block_height,omitempty"`
 	// last_block_time is the time of the last block in this epoch.
 	// Babylon needs to remember the last header's time of each epoch to complete
 	// unbonding validators/delegations when a previous epoch's checkpoint is
@@ -176,7 +179,7 @@ func (m *Epoch) GetSealerBlockHash() []byte {
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed
-// to the epoch boundary
+// to the end of an epoch
 type QueuedMessage struct {
 	// tx_id is the ID of the tx that contains the message
 	TxId []byte `protobuf:"bytes,1,opt,name=tx_id,json=txId,proto3" json:"tx_id,omitempty"`

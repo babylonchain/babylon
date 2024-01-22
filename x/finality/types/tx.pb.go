@@ -141,7 +141,7 @@ var xxx_messageInfo_MsgAddFinalitySigResponse proto.InternalMessageInfo
 // MsgCommitPubRandList defines a message for committing a list of public randomness for EOTS
 type MsgCommitPubRandList struct {
 	Signer string `protobuf:"bytes,1,opt,name=signer,proto3" json:"signer,omitempty"`
-	// fp_btc_pk is the BTC Pk of the finality provider that commits the public randomness
+	// fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
 	FpBtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,opt,name=fp_btc_pk,json=fpBtcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk,omitempty"`
 	// start_height is the start block height of the list of public randomness
 	StartHeight uint64 `protobuf:"varint,3,opt,name=start_height,json=startHeight,proto3" json:"start_height,omitempty"`

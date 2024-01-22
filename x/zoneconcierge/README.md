@@ -31,6 +31,8 @@ There are two phases of integration for a consumer chain:
 - [Interaction with consumer chains under phase 2 integration](#interaction-with-consumer-chains-under-phase-2-integration)
 - [Queries](#queries)
 
+<!-- TODO: describe the PostHandler -->
+
 ## State
 
 The Zone Concierge module keeps handling IBC headers of consumer chains, and
@@ -125,6 +127,8 @@ message Params {
       [ (gogoproto.moretags) = "yaml:\"ibc_packet_timeout_seconds\"" ];
 }
 ```
+
+<!-- TODO: hooks -->
 
 ## Interaction with consumer chains under phase 1 integration
 
