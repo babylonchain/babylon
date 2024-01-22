@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/rand"
@@ -266,18 +267,28 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	// execute contract
 	data := []byte{1, 2, 3, 4, 5}
 	dataHex := hex.EncodeToString(data)
-	channelId := "1"
-
-	// This is just accepted and ignored atm
-	storeMsg := fmt.Sprintf(`{ "save_data": { "data": "%s" } }`, dataHex)
+	dataHash := sha256.Sum256(data)
+	dataHashHex := hex.EncodeToString(dataHash[:])
+	storeMsg := fmt.Sprintf(`{"save_data": { "data": "%s" } }`, dataHex)
 	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
-	nonValidatorNode.WaitForNextBlock()
-	queryMsg := fmt.Sprintf(`{ "account": { "channel_id": "%s" } }`, channelId)
-	queryResult, err := nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
-	s.NoError(err)
-	accountResponse := queryResult["account"].(string)
 
-	s.Equal("TODO: replace me", accountResponse)
+	// the data is eventually included in the contract
+	queryMsg := fmt.Sprintf(`{"check_data": { "data_hash": "%s" } }`, dataHashHex)
+	var queryResult map[string]interface{}
+	s.Eventually(func() bool {
+		queryResult, err = nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)
+		return err == nil
+	}, time.Second*10, time.Second)
+
+	finalized := queryResult["finalized"].(bool)
+	latestFinalizedEpoch := int(queryResult["latest_finalized_epoch"].(float64))
+	saveEpoch := int(queryResult["save_epoch"].(float64))
+
+	s.False(finalized)
+	// in previous test we already finalized epoch 3
+	s.Equal(3, latestFinalizedEpoch)
+	// data is not finalized yet, so save epoch should be strictly greater than latest finalized epoch
+	s.Greater(saveEpoch, latestFinalizedEpoch)
 }
 
 func (s *BTCTimestampingTestSuite) Test7InterceptFeeCollector() {
