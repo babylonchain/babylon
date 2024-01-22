@@ -4,10 +4,12 @@ RUN apt-get update && apt-get install -y git make jq gcc make wget
 
 WORKDIR /work
 
-ARG TARGETARCH="amd64"
+ARG TARGETARCH
 
 # Download and install Go
 ENV GOLANG_VERSION 1.21.4
+RUN echo "Target arch: ${TARGETARCH}"
+RUN echo "Go version: ${GOLANG_VERSION}"
 RUN wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz && \
     tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz && \
     rm go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz
