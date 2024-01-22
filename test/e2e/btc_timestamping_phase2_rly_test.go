@@ -115,8 +115,8 @@ func (s *BTCTimestampingPhase2RlyTestSuite) Test1IbcCheckpointingPhase2Rly() {
 	}, time.Minute, time.Second*2)
 
 	// Ensure the IBC packet acknowledgements (on chain B) are there
-	lastSequence := endEpochNum
-	for seq := uint64(1); seq < lastSequence; seq++ {
+	nextSequence := uint64(4)
+	for seq := uint64(1); seq < nextSequence; seq++ {
 		var seqResp *channeltypes.QueryPacketAcknowledgementResponse
 		s.Eventually(func() bool {
 			seqResp, err = czNode.QueryPacketAcknowledgement(czChannel.ChannelId, czChannel.PortId, seq)
