@@ -167,7 +167,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// - for all other acknowledgement messages, it uses protobuf
 	if errProto := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errProto != nil {
 		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with protobuf", "error", errProto)
-		if errJson := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errJson != nil {
+		if errJson := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); errJson != nil {
 			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json", "error", errJson)
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement with protobuf (error: %v) or json (error: %v)", errProto, errJson)
 		}

@@ -11,17 +11,19 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	cmtos "github.com/cometbft/cometbft/libs/os"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-
+	babylonApp "github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/test/e2e/util"
+	bbn "github.com/babylonchain/babylon/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	cmttypes "github.com/cometbft/cometbft/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	sdkcrypto "github.com/cosmos/cosmos-sdk/crypto"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -29,22 +31,16 @@ import (
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
 	sdksigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
-
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	bbn "github.com/babylonchain/babylon/types"
-
-	"github.com/babylonchain/babylon/test/e2e/util"
-
-	babylonApp "github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
 )
 
 type internalNode struct {
@@ -378,9 +374,9 @@ func (n *internalNode) initNodeConfigs(persistentPeers []string) error {
 	valConfig.P2P.ExternalAddress = fmt.Sprintf("%s:%d", n.moniker, 26656)
 	valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 	valConfig.StateSync.Enable = false
-	valConfig.LogLevel = "info"
+	valConfig.LogLevel = "debug"
 	valConfig.P2P.PersistentPeers = strings.Join(persistentPeers, ",")
-	valConfig.Storage.DiscardABCIResponses = true
+	valConfig.Storage.DiscardABCIResponses = false
 
 	cmtconfig.WriteConfigFile(cmtCfgPath, valConfig)
 	return nil

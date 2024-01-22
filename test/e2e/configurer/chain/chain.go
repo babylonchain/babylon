@@ -2,6 +2,7 @@ package chain
 
 import (
 	"fmt"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ type Config struct {
 	LatestProposalNumber int
 	LatestLockNumber     int
 	NodeConfigs          []*NodeConfig
+	IBCConfig            *ibctesting.ChannelConfig
 
 	LatestCodeId int
 
@@ -43,13 +45,14 @@ const (
 	waitUntilrepeatMax = 60
 )
 
-func New(t *testing.T, containerManager *containers.Manager, id string, initValidatorConfigs []*initialization.NodeConfig) *Config {
+func New(t *testing.T, containerManager *containers.Manager, id string, initValidatorConfigs []*initialization.NodeConfig, ibcConfig *ibctesting.ChannelConfig) *Config {
 	numVal := float32(len(initValidatorConfigs))
 	return &Config{
 		ChainMeta: initialization.ChainMeta{
 			Id: id,
 		},
 		ValidatorInitConfigs:  initValidatorConfigs,
+		IBCConfig:             ibcConfig,
 		VotingPeriod:          config.PropDepositBlocks + numVal*config.PropVoteBlocks + config.PropBufferBlocks,
 		ExpeditedVotingPeriod: config.PropDepositBlocks + numVal*config.PropVoteBlocks + config.PropBufferBlocks - 2,
 		t:                     t,

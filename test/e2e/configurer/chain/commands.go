@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,10 +17,23 @@ import (
 	btccheckpointtypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	blc "github.com/babylonchain/babylon/x/btclightclient/types"
 	cttypes "github.com/babylonchain/babylon/x/checkpointing/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/bech32"
 	sdkquerytypes "github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
 )
+
+func (n *NodeConfig) GetWallet(walletName string) string {
+	n.LogActionF("retrieving wallet %s", walletName)
+	cmd := []string{"babylond", "keys", "show", walletName, "--keyring-backend=test"}
+	outBuf, _, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
+	require.NoError(n.t, err)
+	re := regexp.MustCompile("bbn(.{38})")
+	walletAddr := fmt.Sprintf("%s\n", re.FindString(outBuf.String()))
+	walletAddr = strings.TrimSuffix(walletAddr, "\n")
+	n.LogActionF("wallet %s found, waller address - %s", walletName, walletAddr)
+	return walletAddr
+}
 
 // TODO for now all commands are not used and left here as an example
 // QueryParams extracts the params for a given subspace and key. This is done generically via json to avoid having to
@@ -32,6 +46,16 @@ func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 
 	err = json.Unmarshal(out.Bytes(), &result)
 	require.NoError(n.t, err)
+}
+
+func (n *NodeConfig) SendIBCTransfer(dstChain *Config, from, recipient, memo string, token sdk.Coin) {
+	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
+
+	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+
+	n.LogActionF("successfully submitted sent IBC transfer")
 }
 
 func (n *NodeConfig) FailIBCTransfer(from, recipient, amount string) {

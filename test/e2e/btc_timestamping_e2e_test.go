@@ -35,7 +35,7 @@ func (s *BTCTimestampingTestSuite) SetupSuite() {
 	//   * For each chain, set up several validator nodes
 	//   * Initialize configs and genesis for all them.
 	// 2. Start both networks.
-	// 3. Run IBC relayer betweeen the two chains.
+	// 3. Run IBC relayer between the two chains.
 	// 4. Execute various e2e tests, including IBC
 	s.configurer, err = configurer.NewBTCTimestampingConfigurer(s.T(), true)
 
@@ -116,13 +116,13 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	s.NoError(err)
 	s.Equal(chainsInfo[0].ChainId, initialization.ChainBID)
 
-	// Finalize epoch 1,2,3 , as first headers of opposing chain are in epoch 3
+	// Finalize epoch 1, 2, 3, as first headers of opposing chain are in epoch 3
 	var (
 		startEpochNum uint64 = 1
 		endEpochNum   uint64 = 3
 	)
 
-	// submitter/reporter address should not have any reward yet
+	// submitter/reporter address should not have any rewards yet
 	submitterReporterAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
 	_, err = nonValidatorNode.QueryRewardGauge(submitterReporterAddr)
 	s.Error(err)
@@ -132,6 +132,11 @@ func (s *BTCTimestampingTestSuite) Test4IbcCheckpointing() {
 	endEpoch, err := nonValidatorNode.QueryRawCheckpoint(endEpochNum)
 	s.NoError(err)
 	s.Equal(endEpoch.Status, ct.Finalized)
+
+	// Wait for a some time to ensure that the checkpoint is included in the chain
+	time.Sleep(20 * time.Second)
+	// Wait for next block
+	nonValidatorNode.WaitForNextBlock()
 
 	// Check we have epoch info for opposing chain and some basic assertions
 	epochChainsInfo, err := nonValidatorNode.QueryEpochChainsInfo(endEpochNum, []string{initialization.ChainBID})
@@ -244,7 +249,7 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 		}
 		latestWasmId = newLatestWasmId
 		return true
-	}, time.Second*10, time.Second)
+	}, time.Second*20, time.Second)
 
 	// instantiate the wasm contract
 	var contracts []string
@@ -264,11 +269,11 @@ func (s *BTCTimestampingTestSuite) Test6Wasm() {
 	dataHex := hex.EncodeToString(data)
 	dataHash := sha256.Sum256(data)
 	dataHashHex := hex.EncodeToString(dataHash[:])
-	storeMsg := fmt.Sprintf(`{"save_data":{"data":"%s"}}`, dataHex)
+	storeMsg := fmt.Sprintf(`{"save_data": { "data": "%s" } }`, dataHex)
 	nonValidatorNode.WasmExecute(contractAddr, storeMsg, initialization.ValidatorWalletName)
 
 	// the data is eventually included in the contract
-	queryMsg := fmt.Sprintf(`{"check_data": {"data_hash":"%s"}}`, dataHashHex)
+	queryMsg := fmt.Sprintf(`{"check_data": { "data_hash": "%s" } }`, dataHashHex)
 	var queryResult map[string]interface{}
 	s.Eventually(func() bool {
 		queryResult, err = nonValidatorNode.QueryWasmSmartObject(contractAddr, queryMsg)

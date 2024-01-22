@@ -231,7 +231,7 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-e2e: build-docker
+test-e2e: build-docker build-cosmos-relayer-docker
 	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 test-sim-nondeterminism:
@@ -391,7 +391,10 @@ proto-lint:
 build-docker:
 	$(MAKE) -C contrib/images babylond
 
-.PHONY: build-docker
+build-cosmos-relayer-docker:
+	$(MAKE) -C contrib/images cosmos-relayer
+
+.PHONY: build-docker build-cosmos-relayer-docker
 
 ###############################################################################
 ###                                Localnet                                 ###
