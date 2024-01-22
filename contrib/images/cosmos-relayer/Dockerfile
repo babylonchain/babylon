@@ -6,13 +6,13 @@ WORKDIR /work
 
 ARG TARGETARCH
 
-ENV MACHINE $TARGETARCH
-
 # Download and install Go
 ENV GOLANG_VERSION 1.21.4
-RUN wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-${MACHINE}.tar.gz && \
-    tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-${MACHINE}.tar.gz && \
-    rm go${GOLANG_VERSION}.linux-${MACHINE}.tar.gz
+RUN echo "Target arch: ${TARGETARCH}"
+RUN echo "Go version: ${GOLANG_VERSION}"
+RUN wget -q https://golang.org/dl/go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz && \
+    tar -C /usr/local -xzf go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz && \
+    rm go${GOLANG_VERSION}.linux-${TARGETARCH}.tar.gz
 # Set Go environment variables
 ENV PATH /usr/local/go/bin:$PATH
 ENV GOPATH /go
