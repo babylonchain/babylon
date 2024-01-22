@@ -105,8 +105,9 @@ func (s *BTCTimestampingPhase2RlyTestSuite) Test1IbcCheckpointingPhase2Rly() {
 	}, time.Minute, time.Second*2)
 
 	// ensure the next receive sequence number of Babylon contract is also 3
+	var nextSequenceRecv *channeltypes.QueryNextSequenceReceiveResponse
 	s.Eventually(func() bool {
-		nextSequenceRecv, err := czNode.QueryNextSequenceReceive(babylonChannel.Counterparty.ChannelId, babylonChannel.Counterparty.PortId)
+		nextSequenceRecv, err = czNode.QueryNextSequenceReceive(babylonChannel.Counterparty.ChannelId, babylonChannel.Counterparty.PortId)
 		if err != nil {
 			return false
 		}
@@ -115,7 +116,7 @@ func (s *BTCTimestampingPhase2RlyTestSuite) Test1IbcCheckpointingPhase2Rly() {
 	}, time.Minute, time.Second*2)
 
 	// Ensure the IBC packet acknowledgements (on chain B) are there
-	nextSequence := uint64(4)
+	nextSequence := nextSequenceRecv.NextSequenceReceive
 	for seq := uint64(1); seq < nextSequence; seq++ {
 		var seqResp *channeltypes.QueryPacketAcknowledgementResponse
 		s.Eventually(func() bool {
