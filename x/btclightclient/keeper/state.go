@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	storetypes "cosmossdk.io/store/types"
 	"fmt"
+
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"

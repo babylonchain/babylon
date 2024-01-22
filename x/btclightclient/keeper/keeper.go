@@ -79,6 +79,7 @@ func (k Keeper) insertHeaders(
 
 	// if we have rollback, first delete all headers up to the rollback point
 	if result.RollbackInfo != nil {
+		// roll back to the height
 		headerState.rollBackHeadersUpTo(result.RollbackInfo.HeaderToRollbackTo.Height)
 		// trigger rollback event
 		k.triggerRollBack(ctx, result.RollbackInfo.HeaderToRollbackTo)

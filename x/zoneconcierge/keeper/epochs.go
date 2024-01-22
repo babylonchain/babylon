@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -10,14 +11,14 @@ import (
 // GetLastSentSegment get last broadcasted btc light client segment
 func (k Keeper) GetLastSentSegment(ctx context.Context) *types.BTCChainSegment {
 	store := k.storeService.OpenKVStore(ctx)
-	has, err := store.Has(types.FinalizingBTCTipKey)
+	has, err := store.Has(types.LastSentBTCSegmentKey)
 	if err != nil {
 		panic(err)
 	}
 	if !has {
 		return nil
 	}
-	segmentBytes, err := store.Get(types.FinalizingBTCTipKey)
+	segmentBytes, err := store.Get(types.LastSentBTCSegmentKey)
 	if err != nil {
 		panic(err)
 	}
@@ -31,7 +32,7 @@ func (k Keeper) GetLastSentSegment(ctx context.Context) *types.BTCChainSegment {
 func (k Keeper) setLastSentSegment(ctx context.Context, segment *types.BTCChainSegment) {
 	store := k.storeService.OpenKVStore(ctx)
 	segmentBytes := k.cdc.MustMarshal(segment)
-	if err := store.Set(types.FinalizingBTCTipKey, segmentBytes); err != nil {
+	if err := store.Set(types.LastSentBTCSegmentKey, segmentBytes); err != nil {
 		panic(err)
 	}
 }
