@@ -29,7 +29,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), telemetry.MetricKeyBeginBlocker)
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	// record the current BlockHash
+	// record the current AppHash
 	k.RecordAppHash(ctx)
 
 	// if this block is the first block of the next epoch
@@ -38,7 +38,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 	if epoch.IsFirstBlockOfNextEpoch(ctx) {
 		// increase epoch number
 		incEpoch := k.IncEpoch(ctx)
-		// record the BlockHash referencing
+		// record the AppHash referencing
 		// the last block of the previous epoch
 		k.RecordSealerAppHashForPrevEpoch(ctx)
 		// init the msg queue of this new epoch
@@ -62,7 +62,7 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 
 	if epoch.IsLastBlock(ctx) {
 		// record the block hash of the last block
-		// of the sealing epoch
+		// of the epoch to be sealed
 		k.RecordSealerBlockHashForEpoch(ctx)
 	}
 	return nil

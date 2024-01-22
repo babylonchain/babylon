@@ -10,8 +10,11 @@ option go_package = "github.com/babylonchain/babylon/x/epoching/types";
 
 // Epoch is a structure that contains the metadata of an epoch
 message Epoch {
+  // epoch_number is the number of this epoch
   uint64 epoch_number = 1;
+  // current_epoch_interval is the epoch interval at the time of this epoch
   uint64 current_epoch_interval = 2;
+  // first_block_height is the height of the first block in this epoch
   uint64 first_block_height = 3;
   // last_block_time is the time of the last block in this epoch.
   // Babylon needs to remember the last header's time of each epoch to complete
@@ -33,7 +36,7 @@ message Epoch {
 }
 
 // QueuedMessage is a message that can change the validator set and is delayed
-// to the epoch boundary
+// to the end of an epoch
 message QueuedMessage {
   // tx_id is the ID of the tx that contains the message
   bytes tx_id = 1;

@@ -1781,12 +1781,19 @@ paths:
                     epoch_number:
                       type: string
                       format: uint64
+                      title: epoch_number is the number of this epoch
                     current_epoch_interval:
                       type: string
                       format: uint64
+                      title: >-
+                        current_epoch_interval is the epoch interval at the time
+                        of this epoch
                     first_block_height:
                       type: string
                       format: uint64
+                      title: >-
+                        first_block_height is the height of the first block in
+                        this epoch
                     last_block_time:
                       type: string
                       format: date-time
@@ -2134,12 +2141,19 @@ paths:
                   epoch_number:
                     type: string
                     format: uint64
+                    title: epoch_number is the number of this epoch
                   current_epoch_interval:
                     type: string
                     format: uint64
+                    title: >-
+                      current_epoch_interval is the epoch interval at the time
+                      of this epoch
                   first_block_height:
                     type: string
                     format: uint64
+                    title: >-
+                      first_block_height is the height of the first block in
+                      this epoch
                   last_block_time:
                     type: string
                     format: date-time
@@ -2824,7 +2838,7 @@ paths:
                     QueuedMessage is a message that can change the validator set
                     and is delayed
 
-                    to the epoch boundary
+                    to the end of an epoch
                 title: msgs is the list of messages queued in the current epoch
               pagination:
                 title: pagination defines the pagination in the response
@@ -3890,7 +3904,7 @@ paths:
                           QueuedMessage is a message that can change the
                           validator set and is delayed
 
-                          to the epoch boundary
+                          to the end of an epoch
                   title: >-
                     QueuedMessageList is a message that contains a list of
                     staking-related
@@ -7389,12 +7403,19 @@ paths:
                   epoch_number:
                     type: string
                     format: uint64
+                    title: epoch_number is the number of this epoch
                   current_epoch_interval:
                     type: string
                     format: uint64
+                    title: >-
+                      current_epoch_interval is the epoch interval at the time
+                      of this epoch
                   first_block_height:
                     type: string
                     format: uint64
+                    title: >-
+                      first_block_height is the height of the first block in
+                      this epoch
                   last_block_time:
                     type: string
                     format: date-time
@@ -8134,12 +8155,19 @@ paths:
                         epoch_number:
                           type: string
                           format: uint64
+                          title: epoch_number is the number of this epoch
                         current_epoch_interval:
                           type: string
                           format: uint64
+                          title: >-
+                            current_epoch_interval is the epoch interval at the
+                            time of this epoch
                         first_block_height:
                           type: string
                           format: uint64
+                          title: >-
+                            first_block_height is the height of the first block
+                            in this epoch
                         last_block_time:
                           type: string
                           format: date-time
@@ -10970,12 +10998,15 @@ definitions:
       epoch_number:
         type: string
         format: uint64
+        title: epoch_number is the number of this epoch
       current_epoch_interval:
         type: string
         format: uint64
+        title: current_epoch_interval is the epoch interval at the time of this epoch
       first_block_height:
         type: string
         format: uint64
+        title: first_block_height is the height of the first block in this epoch
       last_block_time:
         type: string
         format: date-time
@@ -11109,12 +11140,17 @@ definitions:
           epoch_number:
             type: string
             format: uint64
+            title: epoch_number is the number of this epoch
           current_epoch_interval:
             type: string
             format: uint64
+            title: >-
+              current_epoch_interval is the epoch interval at the time of this
+              epoch
           first_block_height:
             type: string
             format: uint64
+            title: first_block_height is the height of the first block in this epoch
           last_block_time:
             type: string
             format: date-time
@@ -11565,7 +11601,7 @@ definitions:
             QueuedMessage is a message that can change the validator set and is
             delayed
 
-            to the epoch boundary
+            to the end of an epoch
         title: msgs is the list of messages queued in the current epoch
       pagination:
         title: pagination defines the pagination in the response
@@ -11657,12 +11693,19 @@ definitions:
             epoch_number:
               type: string
               format: uint64
+              title: epoch_number is the number of this epoch
             current_epoch_interval:
               type: string
               format: uint64
+              title: >-
+                current_epoch_interval is the epoch interval at the time of this
+                epoch
             first_block_height:
               type: string
               format: uint64
+              title: >-
+                first_block_height is the height of the first block in this
+                epoch
             last_block_time:
               type: string
               format: date-time
@@ -12165,7 +12208,7 @@ definitions:
                   QueuedMessage is a message that can change the validator set
                   and is delayed
 
-                  to the epoch boundary
+                  to the end of an epoch
           title: >-
             QueuedMessageList is a message that contains a list of
             staking-related
@@ -12648,7 +12691,7 @@ definitions:
       QueuedMessage is a message that can change the validator set and is
       delayed
 
-      to the epoch boundary
+      to the end of an epoch
   babylon.epoching.v1.QueuedMessageList:
     type: object
     properties:
@@ -13064,7 +13107,7 @@ definitions:
             QueuedMessage is a message that can change the validator set and is
             delayed
 
-            to the epoch boundary
+            to the end of an epoch
     title: |-
       QueuedMessageList is a message that contains a list of staking-related
       messages queued for an epoch
@@ -14620,12 +14663,17 @@ definitions:
           epoch_number:
             type: string
             format: uint64
+            title: epoch_number is the number of this epoch
           current_epoch_interval:
             type: string
             format: uint64
+            title: >-
+              current_epoch_interval is the epoch interval at the time of this
+              epoch
           first_block_height:
             type: string
             format: uint64
+            title: first_block_height is the height of the first block in this epoch
           last_block_time:
             type: string
             format: date-time
@@ -15951,12 +15999,17 @@ definitions:
           epoch_number:
             type: string
             format: uint64
+            title: epoch_number is the number of this epoch
           current_epoch_interval:
             type: string
             format: uint64
+            title: >-
+              current_epoch_interval is the epoch interval at the time of this
+              epoch
           first_block_height:
             type: string
             format: uint64
+            title: first_block_height is the height of the first block in this epoch
           last_block_time:
             type: string
             format: date-time
@@ -16438,12 +16491,19 @@ definitions:
                 epoch_number:
                   type: string
                   format: uint64
+                  title: epoch_number is the number of this epoch
                 current_epoch_interval:
                   type: string
                   format: uint64
+                  title: >-
+                    current_epoch_interval is the epoch interval at the time of
+                    this epoch
                 first_block_height:
                   type: string
                   format: uint64
+                  title: >-
+                    first_block_height is the height of the first block in this
+                    epoch
                 last_block_time:
                   type: string
                   format: date-time

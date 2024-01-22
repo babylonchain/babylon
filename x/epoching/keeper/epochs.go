@@ -82,7 +82,7 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 	return nil
 }
 
-// RecordSealerAppHashForPrevEpoch records the BlockHash referencing
+// RecordSealerAppHashForPrevEpoch records the AppHash referencing
 // the last block of the previous epoch
 func (k Keeper) RecordSealerAppHashForPrevEpoch(ctx context.Context) *types.Epoch {
 	epoch := k.GetEpoch(ctx)
@@ -98,7 +98,7 @@ func (k Keeper) RecordSealerAppHashForPrevEpoch(ctx context.Context) *types.Epoc
 		panic(err)
 	}
 
-	// record the sealer header for the sealed epoch
+	// record the sealer AppHash for the sealed epoch
 	sealedEpoch.SealerAppHash = header.AppHash
 	k.setEpochInfo(ctx, sealedEpoch.EpochNumber, sealedEpoch)
 
