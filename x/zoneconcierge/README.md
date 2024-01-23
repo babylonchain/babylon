@@ -45,11 +45,11 @@ These headers receive Bitcoin timestamps together with the Babylon blockchain, t
 ### Problem Statement
 
 Babylon aims at providing Bitcoin security to other PoS blockchains.
-To this end, Babylon needs to checkpoint itself to Bitcoin, and checkpoint other PoS blockchains to itself.
-The {Epoching, Checkpointing, BTCCheckpoint, BTCLightclient} modules jointly provide the functionality of checkpointing Babylon to Bitcoin.
-The Zone Concierge module and the IBC modules jointly provide the functionality of checkpointing PoS blockchains to Babylon.
+To this end, Babylon checkpoints itself to Bitcoin, and checkpoints other PoS blockchains to itself.
+The {[Epoching](../epoching/), [Checkpointing](../checkpointing/), [BTCCheckpoint](../btccheckpoint/), [BTCLightclient](../btclightclient/)} modules jointly provide the functionality of checkpointing Babylon to Bitcoin.
+The Zone Concierge module and the [IBC modules](https://github.com/cosmos/ibc-go) jointly provide the functionality of checkpointing PoS blockchains to Babylon.
 
-In order to checkpoint PoS blockchains to Babylon, Babylon needs to receive and verify headers of PoS blockchains, in particular, the canonical and fork headers that have a quorum certificate, i.e., a set of signatures from validators with > 2/3 voting power.
+In order to checkpoint PoS blockchains to Babylon, Babylon needs to receive and verify headers of PoS blockchains, in particular, the canonical and fork headers that have a *quorum certificate* (a set of signatures from validators with > 2/3 total voting power).
 Checkpointing canonical headers allows Babylon to act as a canonical chain oracle.
 Checkpointing fork headers allows Babylon to identify dishonest majority attacks and slash equivocating validators.
 
@@ -71,11 +71,11 @@ under the following assumptions:
 The Zone Concierge module is responsible for checkpointing headers of PoS blockchains.
 Specifically, the Zone Concierge module
 
-- leverages IBC light clients for receiving and verifying headers from PoS blockchains;
+- leverages IBC light clients for checkpointing PoS blockchains;
 - intercepts and indexes headers from PoS blockchains; and
 - provides proofs that a header is finalized by Bitcoin.
 
-**IBC Light Client for Checkpointing PoS blockchains.** Babylon leverages the IBC light client protocol to receive and verify headers of PoS blockchains, ensuring the following security properties when the PoS blockchain has more than 2/3 honest voting power and there exists at least 1 honest relayer.
+**Leveraging IBC light clients for checkpointing PoS blockchains.** Babylon leverages the IBC light client protocol to receive and verify headers of PoS blockchains, ensuring the following security properties when the PoS blockchain has more than 2/3 honest voting power and there exists at least 1 honest relayer.
 
 - **Safety:** The IBC light client is consistent with the PoS blockchain.
 - **Liveness:** The IBC light client keeps growing.
@@ -230,7 +230,6 @@ message Params {
       [ (gogoproto.moretags) = "yaml:\"ibc_packet_timeout_seconds\"" ];
 }
 ```
-
 
 <!-- TODO: describe the PostHandler -->
 
