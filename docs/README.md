@@ -8,3 +8,5 @@ For user-facing docs, visit the [Babylon documentation page](https://docs.babylo
 
 - [Development Requirements](./dev-reqs.md)
 - [Running a node for testing purposes](./run-node.md)
+- [Babylon system architecture](./architecture.md)
+- [Staking BTC script](./staking-script.md)
