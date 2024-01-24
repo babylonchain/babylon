@@ -35,9 +35,9 @@ func (n *NodeConfig) GetWallet(walletName string) string {
 	return walletAddr
 }
 
-// TODO for now all commands are not used and left here as an example
 // QueryParams extracts the params for a given subspace and key. This is done generically via json to avoid having to
 // specify the QueryParamResponse type (which may not exist for all params).
+// TODO for now all commands are not used and left here as an example
 func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 	cmd := []string{"babylond", "query", "params", "subspace", subspace, key, "--output=json"}
 

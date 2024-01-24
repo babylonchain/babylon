@@ -31,7 +31,7 @@ type NodeConfig struct {
 	setupTime time.Time
 }
 
-// NewNodeConfig returens new initialized NodeConfig.
+// NewNodeConfig returns new initialized NodeConfig.
 func NewNodeConfig(t *testing.T, initNode *initialization.Node, initConfig *initialization.NodeConfig, chainId string, containerManager *containers.Manager) *NodeConfig {
 	return &NodeConfig{
 		Node:             *initNode,
@@ -118,7 +118,7 @@ func (n *NodeConfig) LatestBlockNumber() uint64 {
 	return uint64(status.SyncInfo.LatestBlockHeight)
 }
 
-func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errormsg string) {
+func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errorMsg string) {
 	for i := 0; i < waitUntilrepeatMax; i++ {
 		if !doneCondition() {
 			time.Sleep(waitUntilRepeatPauseTime)
@@ -126,7 +126,7 @@ func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errormsg string
 		}
 		return
 	}
-	n.t.Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errormsg)
+	n.t.Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errorMsg)
 }
 
 func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
