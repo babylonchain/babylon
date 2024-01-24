@@ -42,7 +42,7 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
 
 FROM debian:bookworm-slim AS run
 # Create a user
-RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --system --group babylon
+RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
 RUN apt update && apt install -y bash curl jq
 
 # Label should match your github repo
