@@ -45,58 +45,59 @@ These headers receive Bitcoin timestamps together with the Babylon blockchain, t
 ### Problem Statement
 
 Babylon aims at providing Bitcoin security to other PoS blockchains.
-To this end, Babylon checkpoints itself to Bitcoin, and checkpoints other PoS blockchains to itself.
+This involves two functionalities: 1) checkpointing Babylon to Bitcoin, and 2) checkpointing other PoS blockchains to Babylon.
 The {[Epoching](../epoching/), [Checkpointing](../checkpointing/), [BTCCheckpoint](../btccheckpoint/), [BTCLightclient](../btclightclient/)} modules jointly provide the functionality of checkpointing Babylon to Bitcoin.
 The Zone Concierge module and the [IBC modules](https://github.com/cosmos/ibc-go) jointly provide the functionality of checkpointing PoS blockchains to Babylon.
 
-In order to checkpoint PoS blockchains to Babylon, Babylon needs to receive and verify headers of PoS blockchains, in particular, the canonical and fork headers that have a *quorum certificate* (a set of signatures from validators with > 2/3 total voting power).
+In order to checkpoint PoS blockchains to Babylon, Babylon needs to receive headers of PoS blockchains, and maintain all headers that have a *quorum certificate* (a set of signatures from validators with > 2/3 total voting power).
 Checkpointing canonical headers allows Babylon to act as a canonical chain oracle.
-Checkpointing fork headers allows Babylon to identify dishonest majority attacks and slash equivocating validators.
+Checkpointing fork headers allows Babylon to identify dishonest majority attacks.
 
 To summarize, the Zone Concierge module aims at providing the following guarantees:
 
-- **Timestamping headers:** Babylon timestamps all PoS blockchains' headers with a valid quorum certificate from the IBC relayer, regardless whether they are on canonical chains or not.
-- **Verifiability of timestamps:** For any header, Babylon can provide a proof that the header is checkpointed by Bitcoin, where the proof is publicly verifiable assuming access to a BTC light client.
+- **Timestamping headers:** Babylon checkpoints PoS blockchains' (canonical and fork) headers with a valid quorum certificate.
+- **Verifiability of timestamps:** Babylon can provide a proof that a given header is checkpointed by Bitcoin, where the proof is publicly verifiable assuming access to a BTC light client.
 
 under the following assumptions:
 
-- BTC is always secure with the k-deep confirmation rule;
-- Babylon might have dishonest majority;
-- PoS blockchains might have dishonest majority;
+- BTC is always secure with the [k-deep confirmation rule](https://en.bitcoin.it/wiki/Confirmation);
 - There exists >=1 honest IBC relayer and >=1 vigilante {submitter, reporter}; and
-- The network is synchronous (i.e., messages are delivered within a known time bound).
+- The network is synchronous (i.e., messages are delivered within a known and finite time bound).
+
+Note that the Bitcoin timestamping protocol uses Bitcoin as a single source of truth, and does not make any assumption on the fraction of adversarial validators in Babylon or PoS blockchains.
+That is, the above statement shall hold even if Babylon and a PoS blockchain have dishonest supermajority.
+The formal security analysis of the Bitcoin timestamping protocol can be found at the [S\&P'23 paper](https://arxiv.org/pdf/2207.08392.pdf).
 
 ### Design
 
-The Zone Concierge module is responsible for checkpointing headers of PoS blockchains.
+The Zone Concierge module is responsible for checkpointing headers from PoS blockchains.
 Specifically, the Zone Concierge module
 
 - leverages IBC light clients for checkpointing PoS blockchains;
 - intercepts and indexes headers from PoS blockchains; and
-- provides proofs that a header is finalized by Bitcoin.
+- provides proofs that a header is checkpointed by Babylon and Bitcoin.
 
-**Leveraging IBC light clients for checkpointing PoS blockchains.** Babylon leverages the IBC light client protocol to receive and verify headers of PoS blockchains, ensuring the following security properties when the PoS blockchain has more than 2/3 honest voting power and there exists at least 1 honest relayer.
+**Leveraging IBC light clients for checkpointing PoS blockchains.** Babylon leverages the [IBC light client protocol](https://github.com/cosmos/ibc/tree/main/spec/client/ics-007-tendermint-client) to receive and verify headers of PoS blockchains.
+The IBC light client protocol allows a blockchain `A` to maintain a *light client* of another blockchain `B`.
+The light client contains a subset of headers in the ledger of blockchain `B`, securing the following properties when blockchain `B` has more than 2/3 honest voting power and there exists at least 1 honest IBC relayer.
 
-- **Safety:** The IBC light client is consistent with the PoS blockchain.
-- **Liveness:** The IBC light client keeps growing.
+- **Safety:** The IBC light client in blockchain `A` is consistent with the ledger of blockchain `B`.
+- **Liveness:** The IBC light client in blockchain `A` keeps growing.
 
-Verifying a header is done by a special [quorum intersection mechanism](https://arxiv.org/abs/2010.07031): upon a header from the relayer, the light client checks whether the intersected voting power bewteen the quorum certificates of the current tip and the header is more than 1/3 of the voting power in the current tip.
+Verifying a header is done by a special [quorum intersection mechanism](https://arxiv.org/abs/2010.07031): upon a header from the relayer, the light client checks whether the intersected voting power between the quorum certificates of the current tip and the header is more than 1/3 of the voting power in the current tip.
 If yes, then this ensures that there exists at least one honest validator in the header's quorum certificate, and this header is agreed by all honest validators.
-Each header of a PoS blockchain carries `AppHash`, which is the root of the Merkle IAVL tree for the PoS blockchain's database.
-The `AppHash` allows a light client to verify whether an IBC packet is included in the PoS blockchain's blockchain.
 
 Babylon leverages the IBC light client protocol to checkpoint PoS blockchains to itself.
-In particular, each header with a valid quorum certificate can be viewed as a timestamp, and Babylon can generate an inclusion proof that a given IBC header of a PoS blockchain is committed to Babylon's `AppHash`.
+In particular, each header with a valid quorum certificate can be viewed as a timestamp, and Babylon can generate an inclusion proof that a given header of a PoS blockchain is committed to Babylon's `AppHash`.
 
-**Intercepting and Indexing Headers from PoS blockchains.** In order to further timestamp headers of PoS blockchains to Babylon, the Zone Concierge module builds an index that maps each header to the current epoch, which will be eventually finalized by Bitcoin.
-To this end, the Zone Concierge module intercepts headers from IBC light clients via a `PostHandler` and indexes it, including the header's positions on the PoS blockchain and Babylon.
+**Intercepting and Indexing Headers from PoS blockchains.** In order to further checkpoint headers of PoS blockchains to Bitcoin, the Zone Concierge module builds an index recording headers' positions on Babylon's ledger, which will eventually be checkpointed by Bitcoin.
+To this end, the Zone Concierge module intercepts headers from IBC light clients via a [PostHandler](https://docs.cosmos.network/v0.50/learn/advanced/baseapp#runtx-antehandler-runmsgs-posthandler), and indexes them.
 
-Note that the Zone Concierge module intercepts all headers that have a valid quorum certificate, including both canonical headers and fork headers.
+Note that the Zone Concierge module intercepts all headers that have a valid quorum certificate, including canonical headers and fork headers.
 A fork header with a valid quorum certificate is a signal of the dishonest majority attack: the majority of validators are honest and sign conflicted headers.
-<!-- TODO: describe PostHandler -->
 
-**Providing Proofs that a Header is Finalized by Bitcoin.** To supports applications that demand a BTC-finalized PoS chain, Zone Concierge will provide proofs that the headers are indeed finalized by Bitcoin.
-The proof of a BTC-finalized header includes the following:
+**Providing Proofs that a Header is Checkpointed by Bitcoin.** To supports use cases that need to verify BTC timestamps of headers, Zone Concierge can provide proofs that the headers are indeed checkpointed all the way to Bitocin.
+The proof includes the following:
 
 - `ProofCzHeaderInEpoch`: Proof that the header of the PoS blockchain is included in an epoch of Babylon;
 - `ProofEpochSealed`: Proof that the epoch has been agreed by > 2/3 voting power of the validator set; and
@@ -108,15 +109,15 @@ The last proof is formed as Merkle proofs of two transactions that constitute a 
 
 ### Use cases
 
-The BTC-finalized PoS chain will enable a number of applications, such as raising alarms upon dishonest majority attacks and reducing the unbonding time period.
+The Bitcoin-checkpointed PoS blockchain will enable a number of applications, such as raising alarms upon dishonest majority attacks and reducing the unbonding time period.
 These use cases require new plugins in the PoS blockchains, and will be developed by Babylon team in the future.
 
 **Raising Alarms upon Dishonest Majority Attacks.** Zone Concierge timestamps fork headers that have valid quorum certificates.
-Such fork header signals an dishonest majority attack.
-Babylon can send the fork header back to the corresponding PoS blockchain, such that the PoS blockchain will get notified with this dishonest majority attack, and can decide to stall and initiate a social consensus.
+Such fork header signals a safety attack launched by the dishonest majority of validators.
+Babylon can send the fork header back to the corresponding PoS blockchain, such that the PoS blockchain will get notified with this dishonest majority attack, and can decide to stall or initiate a social consensus.
 
 **Reducing Unbonding Time.** Zone Concierge provides a Bitcoin-checkpointed prefix for a PoS blockchain.
-Such Bitcoin-checkpointed prefix resists against the long range attacks, thus unbonding requests in this prefix can be safely finished, leading to much shorter unbonding period compared to 21 days in the current design.
+Such Bitcoin-checkpointed prefix resists against the long range attacks, thus unbonding requests in this prefix can be safely finished, leading to much shorter unbonding period compared to that in existing PoS blockchains (e.g., 21 days in Cosmos SDK chains).
 
 ## State
 
