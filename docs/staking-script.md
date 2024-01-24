@@ -46,7 +46,6 @@ that were introduced through the Taproot upgrade.
 Following diagram show how different transactions described in following
 paragraphs create and spend different bitcoin outputs:
 
-
 ```mermaid
 stateDiagram-v2
     active: Staking output
@@ -84,6 +83,7 @@ staker wallet.
 ## Types of special transactions
 
 There are three special transaction types recognized by the Babylon chain:
+
 - Staking Transaction
 - Unbonding Transaction
 - Slashing Transaction
@@ -122,6 +122,7 @@ The slashing transaction is used to punish a BTC staker when they (or the
 finality provider they have delegated to) perform an offense.
 
 The requirements for a valid slashing transaction are:
+
 - it must have exactly one input pointing to either the staking output or the
   unbonding output
 - it must have exactly two outputs, the first sending the slashed fraction of
@@ -139,16 +140,19 @@ spending path.
 The key spending path is disabled by using the "Nothing Up My Sleeve"
 (NUMS) point as internal key. Chosen point is the one described in
 [BIP341](https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs)
-i.e
+i.e,
+
 ```
 H = lift_x(0x50929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0)
 ```
+
 which is a point constructed by taking the hash of the standard uncompressed
 encoding of the secp256k1 base point `G` as the X coordinate.
 
 The staking output can be spent by three script spending paths.
 
 #### 1. Timelock path
+
 The timelock path locks the staker's Bitcoin for a pre-determined number of
 Bitcoin blocks. It commits to a script of the form:
 
@@ -157,6 +161,7 @@ Bitcoin blocks. It commits to a script of the form:
 ```
 
 where:
+
 - `<Staker_PK>` is the BTC staker's public key..
 - `<Timelock_Blocks>` is the lockup period denoted in Bitcoin blocks. The
 timelock comes into effect after the Bitcoin transaction has been included in a
@@ -175,6 +180,7 @@ before the timelock expires. It commits to a script of the form:
 ```
 
 where:
+
 - `Staker_PK` is the BTC staker's public key
 - `CovenantPk1..CovenantPkN` are the lexicographically sorted public keys of the
 current covenant committee recognized by the Babylon chain
@@ -184,7 +190,6 @@ covenant committee member signatures are required.
 Signatures from a quorum of the covenant committee are required to ensure that
 this script is not used for on-demand unlocking without the stake going through
 an unbonding period. reward all covenant members for their work.
-
 
 #### 3. Slashing path
 
@@ -199,6 +204,7 @@ delegators in the case of double signing. It commits to a script:
 ```
 
 where:
+
 - `StakerPK` is the BTC staker's public key
 - `FinalityProviderPk` is the BTC public key of the finality provider to which
   the staker delegates their stake
@@ -210,6 +216,7 @@ committee member signatures are required.
 This path can only be executed with the collaboration of the BTC staker,
 finality provider, and covenant committee.
 It is used in following way:
+
 - for stake to become active, staker must publish pre signed slashing transaction
 - covenant committee validates such transaction, and publish its own signatures.
 - the only signature missing to send slashing transaction is finality provider
@@ -222,6 +229,7 @@ The main difference between the unbonding and slashing paths is the existence of
 `FinalityProviderPk` in the slashing path.
 
 This leads to following system wide repercussions:
+
 - for staking request to become active, btc holder needs to provide valid
 unbonding transaction in this staking request. This staking request will become
 active only when `CovenantThreshold` signatures will be received by Babylon
@@ -255,6 +263,7 @@ Bitcoin blocks. It commits to a script of the form:
 ```
 
 where:
+
 - Staker_PK is btc holder public key
 - Timelock_Blocks is unbonding time. It must be lower or equal 65535, but larger
 than `max(MinUnbondingTime, CheckpointFinalizationTimeout)`. `MinUnbondingTime`
@@ -273,6 +282,7 @@ delegators in the case of double signing. It commits to a script:
 ```
 
 where:
+
 - `StakerPK` is the BTC staker's public key
 - `FinalityProviderPk` is the BTC public key of the finality provider to which
   the staker delegates their stake

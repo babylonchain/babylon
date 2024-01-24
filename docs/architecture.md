@@ -164,6 +164,7 @@ Later, they can also on-demand unlock or
 withdraw their funds when their stake expires.
 The following set of standalone programs
 has been developed to enable these functionalities:
+
 - [BTC Staker Daemon](https://github.com/babylonchain/btc-staker):
   Daemon program connecting to a Bitcoin wallet and Babylon.
 - [BTC Staker Dashboard](https://github.com/babylonchain/btc-staking-dashboard):
@@ -206,6 +207,7 @@ deployed within the CZ.
 
 There are different IBC relayer implementations that can achieve
 this function. Most notably:
+
 - [Cosmos Relayer](https://github.com/cosmos/relayer):
   A fully functional relayer written in Go.
 - [Babylon Relayer](https://github.com/babylonchain/babylon-relayer/):
