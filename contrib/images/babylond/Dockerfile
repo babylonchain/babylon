@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS build-env
+FROM golang:1.21 AS build-env
 
 # Customize to your build env
 
@@ -14,8 +14,7 @@ ARG LEDGER_ENABLED="false"
 ARG COSMOS_BUILD_OPTIONS=""
 
 # Install cli tools for building and final image
-RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq
-RUN apk add --no-cache musl-dev
+RUN apt update && apt install -y make git bash gcc curl jq
 
 # Build
 WORKDIR /go/src/github.com/babylonchain/babylon
@@ -43,10 +42,10 @@ RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     LINK_STATICALLY=true \
     make build
 
-FROM alpine:3.14 AS run
+FROM debian:bookworm-slim AS run
 # Create a user
-RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
-RUN apk add bash curl jq
+RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --system --group babylon
+RUN apt update && apt install -y bash curl jq
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
