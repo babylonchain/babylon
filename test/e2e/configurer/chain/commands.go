@@ -215,9 +215,9 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	n.LogActionF("successfully executed")
 }
 
-// NOTE: this command will withdraw the reward of the address associated with the tx signer `from`
+// WithdrawReward will withdraw the rewards of the address associated with the tx signer `from`
 func (n *NodeConfig) WithdrawReward(sType, from string) {
-	n.LogActionF("withdraw reward of type %s for tx signer %s", sType, from)
+	n.LogActionF("withdraw rewards of type %s for tx signer %s", sType, from)
 	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
 	n.LogActionF(strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
