@@ -39,13 +39,12 @@ func (s *IBCTransferTestSuite) TearDownSuite() {
 
 func (s *IBCTransferTestSuite) Test1IBCTransfer() {
 	babylonChain := s.configurer.GetChainConfig(0)
-	czChain := s.configurer.GetChainConfig(1)
 
 	babylonNode, err := babylonChain.GetNodeAtIndex(2)
 	s.NoError(err)
 
 	sender := initialization.ValidatorWalletName
-	babylonNode.SendIBCTransfer(czChain, sender, sender, "", sdk.NewInt64Coin("ubbn", 1000))
+	babylonNode.SendIBCTransfer(sender, sender, "", sdk.NewInt64Coin("ubbn", 1000))
 
 	time.Sleep(1 * time.Minute)
 
