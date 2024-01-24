@@ -85,6 +85,8 @@ func (bc *baseConfigurer) InstantiateBabylonContract() error {
 	}
 	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
 	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlock()
+
 	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
 
 	// Instantiate the contract
