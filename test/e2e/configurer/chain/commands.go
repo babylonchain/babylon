@@ -35,9 +35,9 @@ func (n *NodeConfig) GetWallet(walletName string) string {
 	return walletAddr
 }
 
-// TODO for now all commands are not used and left here as an example
 // QueryParams extracts the params for a given subspace and key. This is done generically via json to avoid having to
 // specify the QueryParamResponse type (which may not exist for all params).
+// TODO for now all commands are not used and left here as an example
 func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 	cmd := []string{"babylond", "query", "params", "subspace", subspace, key, "--output=json"}
 
@@ -48,7 +48,7 @@ func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 	require.NoError(n.t, err)
 }
 
-func (n *NodeConfig) SendIBCTransfer(dstChain *Config, from, recipient, memo string, token sdk.Coin) {
+func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) {
 	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
 
 	cmd := []string{"babylond", "tx", "ibc-transfer", "transfer", "transfer", "channel-0", recipient, token.String(), fmt.Sprintf("--from=%s", from), "--memo", memo}
@@ -215,9 +215,9 @@ func (n *NodeConfig) WasmExecute(contract, execMsg, from string) {
 	n.LogActionF("successfully executed")
 }
 
-// NOTE: this command will withdraw the reward of the address associated with the tx signer `from`
+// WithdrawReward will withdraw the rewards of the address associated with the tx signer `from`
 func (n *NodeConfig) WithdrawReward(sType, from string) {
-	n.LogActionF("withdraw reward of type %s for tx signer %s", sType, from)
+	n.LogActionF("withdraw rewards of type %s for tx signer %s", sType, from)
 	cmd := []string{"babylond", "tx", "incentive", "withdraw-reward", sType, fmt.Sprintf("--from=%s", from)}
 	n.LogActionF(strings.Join(cmd, " "))
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)

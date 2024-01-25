@@ -107,7 +107,7 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	cmd := []string{"babylond", "tx", "btcstaking", "add-covenant-sigs", covPKHex, stakingTxHash}
 
 	// slashing signatures
-	slashingSigStrList := []string{}
+	var slashingSigStrList []string
 	for _, sig := range slashingSigs {
 		slashingSigStrList = append(slashingSigStrList, hex.EncodeToString(sig))
 	}
@@ -116,7 +116,7 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 
 	// on-demand unbonding stuff
 	cmd = append(cmd, unbondingSig.ToHexStr())
-	unbondingSlashingSigStrList := []string{}
+	var unbondingSlashingSigStrList []string
 	for _, sig := range unbondingSlashingSigs {
 		unbondingSlashingSigStrList = append(unbondingSlashingSigStrList, hex.EncodeToString(sig))
 	}
@@ -130,7 +130,7 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
-	n.LogActionF("successfully added covenant sigatures")
+	n.LogActionF("successfully added covenant signatures")
 }
 
 func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand, sig *bbn.BIP340Signature) {
