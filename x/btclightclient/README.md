@@ -158,7 +158,7 @@ message MsgInsertHeaders {
 ```
 
 Upon receiving a `MsgInsertHeaders` message, a Babylon node applies the following
-verIfication rules. This is a subset of the BTC
+verification rules. This is a subset of the BTC
 [protocol](https://en.bitcoin.it/wiki/Protocol_rules#.22block.22_messages) rules:
 
 - The `headers` list must not be empty.
