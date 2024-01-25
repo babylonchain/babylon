@@ -4,7 +4,8 @@ The Zone Concierge module is responsible for generating BTC timestamps of
 headers from other PoS blockchains. These BTC timestamps allow PoS blockchains
 integrating with Babylon to achieve Bitcoin security, i.e., forking the PoS
 blockchain is as hard as forking Bitcoin. The Zone Concierge module leverages
-the IBC light client protocol to receive PoS blockchains' headers.
+the IBC protocol to receive PoS blockchains' headers and provide them with
+succint and provable information about their timestamps.
 
 There are two phases of integration for a PoS blockchain:
 
@@ -13,10 +14,10 @@ There are two phases of integration for a PoS blockchain:
   functions as a canonical chain oracle for the PoS blockchain.
   [Babylonscan](https://babylonscan.io/) shows PoS blockchains with phase 1
   integration.
-- **Phase 2 integration:** In addition to phase 1, phase 2 allows a consumer
-  chain to receive BTC timestamps from Babylon via an IBC channel, such that the
-  PoS blockchain can use BTC timestamps to detect and resolve forks, as well as
-  other use cases such as Bitcoin-assisted fast unbonding.
+- **Phase 2 integration:** In addition to phase 1, phase 2 allows a PoS
+  blockchain to receive BTC timestamps from Babylon via an IBC channel, such
+  that the PoS blockchain can use BTC timestamps to detect and resolve forks, as
+  well as other use cases such as Bitcoin-assisted fast unbonding.
 
 ## Table of contents
 
