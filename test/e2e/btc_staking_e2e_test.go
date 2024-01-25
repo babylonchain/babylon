@@ -500,7 +500,12 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	// wait for a block so that above txs take effect
 	nonValidatorNode.WaitForNextBlock()
 
-	unbondedDels := nonValidatorNode.QueryUnbondedDelegations()
+	// Wait for unbonded delegations to be created
+	var unbondedDels []*bstypes.BTCDelegation
+	s.Eventually(func() bool {
+		unbondedDels = nonValidatorNode.QueryUnbondedDelegations()
+		return len(unbondedDels) > 0
+	}, time.Minute, time.Second*2)
 	s.Len(unbondedDels, 1)
 	s.Equal(stakingTxHash, unbondedDels[0].MustGetStakingTxHash())
 }
