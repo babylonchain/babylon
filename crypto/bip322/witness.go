@@ -70,7 +70,7 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) (
 // - For each element of the stack
 //   - The first byte specifies how many bytes it contains
 //   - The rest are the bytes of the element
-func simpleSigToWitness(sig []byte) ([][]byte, error) {
+func SimpleSigToWitness(sig []byte) ([][]byte, error) {
 	// For each input, the witness is encoded as a stack
 	// with one or more items. Therefore, we first read a
 	// varint which encodes the number of stack items.

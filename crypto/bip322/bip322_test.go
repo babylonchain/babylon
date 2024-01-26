@@ -9,6 +9,7 @@ import (
 	"github.com/babylonchain/babylon/crypto/bip322"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 )
@@ -20,6 +21,7 @@ var (
 	emptyBytesSig, _      = base64.StdEncoding.DecodeString("AkcwRAIgM2gBAQqvZX15ZiysmKmQpDrG83avLIT492QBzLnQIxYCIBaTpOaD20qRlEylyxFSeEA2ba9YOixpX8z46TSDtS40ASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=")
 	helloWorldBytesSig, _ = base64.StdEncoding.DecodeString("AkcwRAIgZRfIY3p7/DoVTty6YZbWS71bc5Vct9p9Fia83eRmw2QCICK/ENGfwLtptFluMGs2KsqoNSk89pO7F29zJLUx9a/sASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=")
 	testAddr              = "bc1q9vza2e8x573nczrlzms0wvx3gsqjx7vavgkx0l"
+	testAddrDecoded, _    = btcutil.DecodeAddress(testAddr, net)
 )
 
 // test vectors at https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki#message-hashing
@@ -36,19 +38,17 @@ func TestBIP322_MsgHash(t *testing.T) {
 // test vectors at https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki#transaction-hashes
 func TestBIP322_TxHashToSpend(t *testing.T) {
 	// empty str
-	toSpendTx, err := bip322.GetToSpendTx(emptyBytes, testAddr, net)
+	toSpendTx, err := bip322.GetToSpendTx(emptyBytes, testAddrDecoded)
 	require.NoError(t, err)
 	require.Equal(t, "c5680aa69bb8d860bf82d4e9cd3504b55dde018de765a91bb566283c545a99a7", toSpendTx.TxHash().String())
-	toSignTx, err := bip322.GetToSignTx(toSpendTx)
-	require.NoError(t, err)
+	toSignTx := bip322.GetToSignTx(toSpendTx)
 	require.Equal(t, "1e9654e951a5ba44c8604c4de6c67fd78a27e81dcadcfe1edf638ba3aaebaed6", toSignTx.TxHash().String())
 
 	// hello world str
-	toSpendTx, err = bip322.GetToSpendTx(helloWorldBytes, testAddr, net)
+	toSpendTx, err = bip322.GetToSpendTx(helloWorldBytes, testAddrDecoded)
 	require.NoError(t, err)
 	require.Equal(t, "b79d196740ad5217771c1098fc4a4b51e0535c32236c71f1ea4d61a2d603352b", toSpendTx.TxHash().String())
-	toSignTx, err = bip322.GetToSignTx(toSpendTx)
-	require.NoError(t, err)
+	toSignTx = bip322.GetToSignTx(toSpendTx)
 	require.Equal(t, "88737ae86f2077145f93cc4b153ae9a1cb8d56afa511988c149c5c8c9d93bddf", toSignTx.TxHash().String())
 }
 
@@ -57,17 +57,21 @@ func TestBIP322_Verify(t *testing.T) {
 	msgBase64 := "HRQD77+9dmnvv71N77+9O2/Wuzbvv73vv71a77+977+977+977+9Du+/ve+/vTgrNH/vv71lQX0="
 	// TODO: make it work with the public key??
 	address := "tb1qfwtfzdagj7efph6zfcv68ce3v48c8e9fatunur"
+	addressDecoded, err := btcutil.DecodeAddress(address, net)
+	require.NoError(t, err)
+
 	emptyBytesSig, err := base64.StdEncoding.DecodeString(sigBase64)
 	require.NoError(t, err)
 
 	msg, err := base64.StdEncoding.DecodeString(msgBase64)
 	require.NoError(t, err)
 
-	err = bip322.Verify(msg, emptyBytesSig, address, net)
+	witness, err := bip322.SimpleSigToWitness(emptyBytesSig)
+	require.NoError(t, err)
+
+	err = bip322.Verify(msg, witness, addressDecoded, net)
 	require.NoError(t, err)
 }
-
-// TODO: test signature generation
 
 func FuzzBip322ValidP2WPKHSignature(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
@@ -80,13 +84,15 @@ func FuzzBip322ValidP2WPKHSignature(f *testing.F) {
 		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
 		witness, err := bip322.SignWithP2WPKHAddress(dataToSign, privkey, net)
 		require.NoError(t, err)
+		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
+		require.NoError(t, err)
 		address, err := bip322.PubkeyToP2WPKHAddress(pubKey, net)
 		require.NoError(t, err)
 
 		err = bip322.Verify(
 			dataToSign,
-			witness,
-			address.EncodeAddress(),
+			witnessDecoded,
+			address,
 			net,
 		)
 		require.NoError(t, err)
@@ -104,13 +110,15 @@ func FuzzBip322ValidP2TrSpendSignature(f *testing.F) {
 		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
 		witness, err := bip322.SignWithP2TrSpendAddress(dataToSign, privkey, net)
 		require.NoError(t, err)
+		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
+		require.NoError(t, err)
 		address, err := bip322.PubKeyToP2TrSpendAddress(pubKey, net)
 		require.NoError(t, err)
 
 		err = bip322.Verify(
 			dataToSign,
-			witness,
-			address.EncodeAddress(),
+			witnessDecoded,
+			address,
 			net,
 		)
 		require.NoError(t, err)

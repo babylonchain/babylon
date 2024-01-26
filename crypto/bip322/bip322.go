@@ -76,23 +76,10 @@ func toSignPkScript() []byte {
 	return script
 }
 
-// addressToPkScript takes an address and creates a payment script for it
-func addressToPkScript(addr string, net *chaincfg.Params) ([]byte, error) {
-	decoded, err := btcutil.DecodeAddress(addr, net)
-	if err != nil {
-		return nil, err
-	}
-	pkScript, err := txscript.PayToAddrScript(decoded)
-	if err != nil {
-		return nil, err
-	}
-	return pkScript, nil
-}
-
 // GetToSpendTx builds a toSpend transaction based on the BIP-322 spec
 // https://github.com/bitcoin/bips/blob/e643d247c8bc086745f3031cdee0899803edea2f/bip-0322.mediawiki#full
 // It requires as input the message that is signed and the address that produced the signature
-func GetToSpendTx(msg []byte, address string, net *chaincfg.Params) (*wire.MsgTx, error) {
+func GetToSpendTx(msg []byte, address btcutil.Address) (*wire.MsgTx, error) {
 	toSpend := wire.NewMsgTx(toSpendVersion)
 	toSpend.LockTime = toSpendLockTime
 
@@ -114,10 +101,12 @@ func GetToSpendTx(msg []byte, address string, net *chaincfg.Params) (*wire.MsgTx
 
 	// Create the output
 	// The PK Script should be a pay to addr script on the provided address
-	pkScript, err := addressToPkScript(address, net)
+	pkScript, err := txscript.PayToAddrScript(address)
+
 	if err != nil {
 		return nil, err
 	}
+
 	output := wire.NewTxOut(toSpendOutputValue, pkScript)
 
 	toSpend.AddTxIn(input)
@@ -128,7 +117,7 @@ func GetToSpendTx(msg []byte, address string, net *chaincfg.Params) (*wire.MsgTx
 // GetToSignTx builds a toSign transaction based on the BIP-322 spec
 // https://github.com/bitcoin/bips/blob/e643d247c8bc086745f3031cdee0899803edea2f/bip-0322.mediawiki#full
 // It requires as input the toSpend transaction that it spends and the message signature
-func GetToSignTx(toSpend *wire.MsgTx) (*wire.MsgTx, error) {
+func GetToSignTx(toSpend *wire.MsgTx) *wire.MsgTx {
 	toSign := wire.NewMsgTx(toSignVersion)
 	toSign.LockTime = toSignLockTime
 
@@ -145,26 +134,21 @@ func GetToSignTx(toSpend *wire.MsgTx) (*wire.MsgTx, error) {
 
 	toSign.AddTxIn(input)
 	toSign.AddTxOut(output)
-	return toSign, nil
+	return toSign
 }
 
-func Verify(msg []byte, sig []byte, address string, net *chaincfg.Params) error {
-	toSpend, err := GetToSpendTx(msg, address, net)
+func Verify(
+	msg []byte,
+	witness wire.TxWitness,
+	address btcutil.Address,
+	net *chaincfg.Params) error {
+
+	toSpend, err := GetToSpendTx(msg, address)
 	if err != nil {
 		return err
 	}
 
-	// Convert the signature into a witness stack
-	witness, err := simpleSigToWitness(sig)
-
-	if err != nil {
-		return err
-	}
-
-	toSign, err := GetToSignTx(toSpend)
-	if err != nil {
-		return err
-	}
+	toSign := GetToSignTx(toSpend)
 
 	toSign.TxIn[0].Witness = witness
 
@@ -225,17 +209,13 @@ func SignWithP2WPKHAddress(
 		return nil, err
 	}
 
-	toSpend, err := GetToSpendTx(msg, witnessAddr.EncodeAddress(), net)
+	toSpend, err := GetToSpendTx(msg, witnessAddr)
 
 	if err != nil {
 		return nil, err
 	}
 
-	toSign, err := GetToSignTx(toSpend)
-
-	if err != nil {
-		return nil, err
-	}
+	toSign := GetToSignTx(toSpend)
 
 	fetcher := txscript.NewCannedPrevOutputFetcher(
 		toSpend.TxOut[0].PkScript,
@@ -268,17 +248,13 @@ func SignWithP2TrSpendAddress(
 		return nil, err
 	}
 
-	toSpend, err := GetToSpendTx(msg, witnessAddr.EncodeAddress(), net)
+	toSpend, err := GetToSpendTx(msg, witnessAddr)
 
 	if err != nil {
 		return nil, err
 	}
 
-	toSign, err := GetToSignTx(toSpend)
-
-	if err != nil {
-		return nil, err
-	}
+	toSign := GetToSignTx(toSpend)
 
 	fetcher := txscript.NewCannedPrevOutputFetcher(
 		toSpend.TxOut[0].PkScript,
