@@ -162,6 +162,11 @@ func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340P
 		return nil
 	}
 
+	// For proof of possesion we only support two types of addresses:
+	// - p2wpkh address
+	// - bip86 taproot addresses
+	// The main reason is that this is only
+
 	// rule 1: verify(sig=bip322Sig.Sig, address=bip322Sig.Address, msg=pop.BabylonSig)?
 	// TODO: temporary solution for MVP purposes.
 	// Eventually we need to use tmhash.Sum(pop.BabylonSig) rather than bbnSigHashHexBytes

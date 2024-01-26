@@ -3,9 +3,12 @@ package bip322_test
 import (
 	"encoding/base64"
 	"encoding/hex"
+	"math/rand"
 	"testing"
 
 	"github.com/babylonchain/babylon/crypto/bip322"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/stretchr/testify/require"
 )
@@ -36,7 +39,7 @@ func TestBIP322_TxHashToSpend(t *testing.T) {
 	toSpendTx, err := bip322.GetToSpendTx(emptyBytes, testAddr, net)
 	require.NoError(t, err)
 	require.Equal(t, "c5680aa69bb8d860bf82d4e9cd3504b55dde018de765a91bb566283c545a99a7", toSpendTx.TxHash().String())
-	toSignTx, err := bip322.GetToSignTx(toSpendTx, emptyBytesSig)
+	toSignTx, err := bip322.GetToSignTx(toSpendTx)
 	require.NoError(t, err)
 	require.Equal(t, "1e9654e951a5ba44c8604c4de6c67fd78a27e81dcadcfe1edf638ba3aaebaed6", toSignTx.TxHash().String())
 
@@ -44,7 +47,7 @@ func TestBIP322_TxHashToSpend(t *testing.T) {
 	toSpendTx, err = bip322.GetToSpendTx(helloWorldBytes, testAddr, net)
 	require.NoError(t, err)
 	require.Equal(t, "b79d196740ad5217771c1098fc4a4b51e0535c32236c71f1ea4d61a2d603352b", toSpendTx.TxHash().String())
-	toSignTx, err = bip322.GetToSignTx(toSpendTx, helloWorldBytesSig)
+	toSignTx, err = bip322.GetToSignTx(toSpendTx)
 	require.NoError(t, err)
 	require.Equal(t, "88737ae86f2077145f93cc4b153ae9a1cb8d56afa511988c149c5c8c9d93bddf", toSignTx.TxHash().String())
 }
@@ -65,3 +68,51 @@ func TestBIP322_Verify(t *testing.T) {
 }
 
 // TODO: test signature generation
+
+func FuzzBip322ValidP2WPKHSignature(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		privkey, err := btcec.NewPrivateKey()
+		pubKey := privkey.PubKey()
+		require.NoError(t, err)
+		dataLen := r.Int31n(200) + 1
+		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
+		witness, err := bip322.SignWithP2WPKHAddress(dataToSign, privkey, net)
+		require.NoError(t, err)
+		address, err := bip322.PubkeyToP2WPKHAddress(pubKey, net)
+		require.NoError(t, err)
+
+		err = bip322.Verify(
+			dataToSign,
+			witness,
+			address.EncodeAddress(),
+			net,
+		)
+		require.NoError(t, err)
+	})
+}
+
+func FuzzBip322ValidP2TrSpendSignature(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		privkey, err := btcec.NewPrivateKey()
+		pubKey := privkey.PubKey()
+		require.NoError(t, err)
+		dataLen := r.Int31n(200) + 1
+		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
+		witness, err := bip322.SignWithP2TrSpendAddress(dataToSign, privkey, net)
+		require.NoError(t, err)
+		address, err := bip322.PubKeyToP2TrSpendAddress(pubKey, net)
+		require.NoError(t, err)
+
+		err = bip322.Verify(
+			dataToSign,
+			witness,
+			address.EncodeAddress(),
+			net,
+		)
+		require.NoError(t, err)
+	})
+}

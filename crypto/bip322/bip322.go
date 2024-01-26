@@ -3,6 +3,8 @@ package bip322
 import (
 	"crypto/sha256"
 
+	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
@@ -126,7 +128,7 @@ func GetToSpendTx(msg []byte, address string, net *chaincfg.Params) (*wire.MsgTx
 // GetToSignTx builds a toSign transaction based on the BIP-322 spec
 // https://github.com/bitcoin/bips/blob/e643d247c8bc086745f3031cdee0899803edea2f/bip-0322.mediawiki#full
 // It requires as input the toSpend transaction that it spends and the message signature
-func GetToSignTx(toSpend *wire.MsgTx, sig []byte) (*wire.MsgTx, error) {
+func GetToSignTx(toSpend *wire.MsgTx) (*wire.MsgTx, error) {
 	toSign := wire.NewMsgTx(toSignVersion)
 	toSign.LockTime = toSignLockTime
 
@@ -134,12 +136,8 @@ func GetToSignTx(toSpend *wire.MsgTx, sig []byte) (*wire.MsgTx, error) {
 	// Given that the input is the toSpend tx we have built, the input index is 0
 	inputHash := toSpend.TxHash()
 	outPoint := wire.NewOutPoint(&inputHash, 0)
-	// Convert the signature into a witness stack
-	witness, err := simpleSigToWitness(sig)
-	if err != nil {
-		return nil, err
-	}
-	input := wire.NewTxIn(outPoint, nil, witness)
+
+	input := wire.NewTxIn(outPoint, nil, nil)
 	input.Sequence = toSignInputSeq
 
 	// Create the output
@@ -156,16 +154,25 @@ func Verify(msg []byte, sig []byte, address string, net *chaincfg.Params) error 
 		return err
 	}
 
-	toSign, err := GetToSignTx(toSpend, sig)
+	// Convert the signature into a witness stack
+	witness, err := simpleSigToWitness(sig)
+
 	if err != nil {
 		return err
 	}
+
+	toSign, err := GetToSignTx(toSpend)
+	if err != nil {
+		return err
+	}
+
+	toSign.TxIn[0].Witness = witness
 
 	// From the rules here:
 	// https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki#verification-process
 	// We only need to perform verification of whether toSign spends toSpend properly
 	// given that the signature is a simple one and we construct both toSpend and toSign
-	inputFetcher := txscript.NewCannedPrevOutputFetcher([]byte{}, 0)
+	inputFetcher := txscript.NewCannedPrevOutputFetcher(toSpend.TxOut[0].PkScript, 0)
 	sigHashes := txscript.NewTxSigHashes(toSign, inputFetcher)
 	vm, err := txscript.NewEngine(
 		toSpend.TxOut[0].PkScript, toSign, 0,
@@ -178,4 +185,116 @@ func Verify(msg []byte, sig []byte, address string, net *chaincfg.Params) error 
 	}
 
 	return vm.Execute()
+}
+
+func PubkeyToP2WPKHAddress(p *btcec.PublicKey, net *chaincfg.Params) (btcutil.Address, error) {
+	witnessAddr, err := btcutil.NewAddressWitnessPubKeyHash(
+		btcutil.Hash160(p.SerializeCompressed()),
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return witnessAddr, nil
+}
+
+func PubKeyToP2TrSpendAddress(p *btcec.PublicKey, net *chaincfg.Params) (btcutil.Address, error) {
+	tapKey := txscript.ComputeTaprootKeyNoScript(p)
+
+	address, err := btcutil.NewAddressTaproot(
+		schnorr.SerializePubKey(tapKey), net,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return address, nil
+}
+
+func SignWithP2WPKHAddress(
+	msg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params,
+) ([]byte, error) {
+	pubKey := privKey.PubKey()
+
+	witnessAddr, err := PubkeyToP2WPKHAddress(pubKey, net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	toSpend, err := GetToSpendTx(msg, witnessAddr.EncodeAddress(), net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	toSign, err := GetToSignTx(toSpend)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fetcher := txscript.NewCannedPrevOutputFetcher(
+		toSpend.TxOut[0].PkScript,
+		toSpend.TxOut[0].Value,
+	)
+
+	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
+
+	// always use compressed pubkey
+	witness, err := txscript.WitnessSignature(toSign, hashCache, 0,
+		toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript, txscript.SigHashAll, privKey, true)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return SerializeWitness(witness)
+}
+
+func SignWithP2TrSpendAddress(
+	msg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params,
+) ([]byte, error) {
+	pubKey := privKey.PubKey()
+
+	witnessAddr, err := PubKeyToP2TrSpendAddress(pubKey, net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	toSpend, err := GetToSpendTx(msg, witnessAddr.EncodeAddress(), net)
+
+	if err != nil {
+		return nil, err
+	}
+
+	toSign, err := GetToSignTx(toSpend)
+
+	if err != nil {
+		return nil, err
+	}
+
+	fetcher := txscript.NewCannedPrevOutputFetcher(
+		toSpend.TxOut[0].PkScript,
+		toSpend.TxOut[0].Value,
+	)
+
+	hashCache := txscript.NewTxSigHashes(toSign, fetcher)
+
+	witness, err := txscript.TaprootWitnessSignature(
+		toSign, hashCache, 0, toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript,
+		txscript.SigHashDefault, privKey,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return SerializeWitness(witness)
 }

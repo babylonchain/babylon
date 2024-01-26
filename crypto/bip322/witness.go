@@ -103,3 +103,32 @@ func simpleSigToWitness(sig []byte) ([][]byte, error) {
 
 	return witnessStack, nil
 }
+
+// serialization of witness copied from btcd
+func writeTxWitness(
+	w io.Writer,
+	wit [][]byte,
+) error {
+	// pver is always 0 (at least in btcd)
+	err := wire.WriteVarInt(w, 0, uint64(len(wit)))
+	if err != nil {
+		return err
+	}
+	for _, item := range wit {
+		err = wire.WriteVarBytes(w, 0, item)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func SerializeWitness(w wire.TxWitness) ([]byte, error) {
+	var buf bytes.Buffer
+
+	if err := writeTxWitness(&buf, w); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
