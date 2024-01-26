@@ -15,13 +15,11 @@ import (
 )
 
 var (
-	net                   = &chaincfg.TestNet3Params
-	emptyBytes            = []byte("")
-	helloWorldBytes       = []byte("Hello World")
-	emptyBytesSig, _      = base64.StdEncoding.DecodeString("AkcwRAIgM2gBAQqvZX15ZiysmKmQpDrG83avLIT492QBzLnQIxYCIBaTpOaD20qRlEylyxFSeEA2ba9YOixpX8z46TSDtS40ASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=")
-	helloWorldBytesSig, _ = base64.StdEncoding.DecodeString("AkcwRAIgZRfIY3p7/DoVTty6YZbWS71bc5Vct9p9Fia83eRmw2QCICK/ENGfwLtptFluMGs2KsqoNSk89pO7F29zJLUx9a/sASECx/EgAxlkQpQ9hYjgGu6EBCPMVPwVIVJqO4XCsMvViHI=")
-	testAddr              = "bc1q9vza2e8x573nczrlzms0wvx3gsqjx7vavgkx0l"
-	testAddrDecoded, _    = btcutil.DecodeAddress(testAddr, net)
+	net                = &chaincfg.TestNet3Params
+	emptyBytes         = []byte("")
+	helloWorldBytes    = []byte("Hello World")
+	testAddr           = "bc1q9vza2e8x573nczrlzms0wvx3gsqjx7vavgkx0l"
+	testAddrDecoded, _ = btcutil.DecodeAddress(testAddr, net)
 )
 
 // test vectors at https://github.com/bitcoin/bips/blob/master/bip-0322.mediawiki#message-hashing
