@@ -141,7 +141,7 @@ func initAppConfig() (string, interface{}) {
 	//   own app.toml to override, or use this default value.
 	//
 	// In app, we set the min gas prices to 0.
-	babylonConfig.MinGasPrices = "0bbn"
+	babylonConfig.MinGasPrices = "0ubbn"
 
 	return babylonTemplate, babylonConfig
 }
