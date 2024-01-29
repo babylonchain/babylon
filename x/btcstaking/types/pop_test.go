@@ -148,34 +148,38 @@ func FuzzPoP_BIP322_P2Tr_BIP86(f *testing.F) {
 }
 
 // TODO: Add more negative cases
-func TestValidBip322SigNotMatchingBip340PubKey(t *testing.T) {
-	r := rand.New(rand.NewSource(0))
+func FuzzPop_ValidBip322SigNotMatchingBip340PubKey(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
-	// generate two BTC key pairs
-	btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
 
-	_, btcPK1, err := datagen.GenRandomBTCKeyPair(r)
-	require.NoError(t, err)
-	bip340PK1 := bbn.NewBIP340PubKeyFromBTCPK(btcPK1)
+		// generate two BTC key pairs
+		btcSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
 
-	// generate Babylon key pair
-	babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
-	require.NoError(t, err)
+		_, btcPK1, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+		bip340PK1 := bbn.NewBIP340PubKeyFromBTCPK(btcPK1)
 
-	// generate valid bip322 P2WPKH pop
-	pop, err := types.NewPoPWithBIP322P2WPKHSig(babylonSK, btcSK, net)
-	require.NoError(t, err)
+		// generate Babylon key pair
+		babylonSK, babylonPK, err := datagen.GenRandomSecp256k1KeyPair(r)
+		require.NoError(t, err)
 
-	// verify bip322 pop with incorrect staker key
-	err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
-	require.Error(t, err)
+		// generate valid bip322 P2WPKH pop
+		pop, err := types.NewPoPWithBIP322P2WPKHSig(babylonSK, btcSK, net)
+		require.NoError(t, err)
 
-	// generate valid bip322 P2Tr pop
-	pop, err = types.NewPoPWithBIP322P2TRBIP86Sig(babylonSK, btcSK, net)
-	require.NoError(t, err)
+		// verify bip322 pop with incorrect staker key
+		err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
+		require.Error(t, err)
 
-	// verify bip322 pop with incorrect staker key
-	err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
-	require.Error(t, err)
+		// generate valid bip322 P2Tr pop
+		pop, err = types.NewPoPWithBIP322P2TRBIP86Sig(babylonSK, btcSK, net)
+		require.NoError(t, err)
+
+		// verify bip322 pop with incorrect staker key
+		err = pop.VerifyBIP322(babylonPK, bip340PK1, net)
+		require.Error(t, err)
+	})
 }
