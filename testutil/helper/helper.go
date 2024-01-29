@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"bytes"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -8,6 +9,7 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	protoio "github.com/cosmos/gogoproto/io"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/testutil/datagen"
@@ -92,11 +94,13 @@ func (h *Helper) NoError(err error) {
 }
 
 func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash checkpointingtypes.BlockHash, valSet *datagen.GenesisValidators) ([]abci.ExtendedVoteInfo, error) {
+	valPrivKey := valSet.GetValPrivKeys()
 	blsPrivKeys := valSet.GetBLSPrivKeys()
 	genesisKeys := valSet.GetGenesisKeys()
 	signBytes := checkpointingtypes.GetSignBytes(epochNum, blockHash)
 	extendedVotes := make([]abci.ExtendedVoteInfo, 0, len(valSet.Keys))
 	for i, sk := range blsPrivKeys {
+		// 1. set build vote extension
 		sig := bls12381.Sign(sk, signBytes)
 		ve := checkpointingtypes.VoteExtension{
 			Signer:    genesisKeys[i].ValidatorAddress,
@@ -109,10 +113,41 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 		if err != nil {
 			return nil, err
 		}
+
+		// 2. sign validator signature over the vote extension
+		cve := cmtproto.CanonicalVoteExtension{
+			Extension: veBytes,
+			Height:    int64(height),
+			Round:     int64(0),
+			ChainId:   h.App.ChainID(),
+		}
+		var cveBuffer bytes.Buffer
+		err = protoio.NewDelimitedWriter(&cveBuffer).WriteMsg(&cve)
+		if err != nil {
+			return nil, err
+		}
+		cveBytes := cveBuffer.Bytes()
+		extensionSig, err := valPrivKey[i].Sign(cveBytes)
+		if err != nil {
+			return nil, err
+		}
+
+		// 3. set up the validator of the vote extension
+		valAddress, err := sdk.ValAddressFromBech32(genesisKeys[i].ValidatorAddress)
+		if err != nil {
+			return nil, err
+		}
+		val := abci.Validator{
+			Address: valAddress.Bytes(),
+			Power:   1000,
+		}
+
+		// 4. construct the extended vote info
 		veInfo := abci.ExtendedVoteInfo{
-			VoteExtension: veBytes,
-			BlockIdFlag:   cmtproto.BlockIDFlagCommit,
-			ExtensionSignature:,
+			Validator:          val,
+			VoteExtension:      veBytes,
+			BlockIdFlag:        cmtproto.BlockIDFlagCommit,
+			ExtensionSignature: extensionSig,
 		}
 		extendedVotes = append(extendedVotes, veInfo)
 	}
