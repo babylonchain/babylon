@@ -20,6 +20,10 @@ import (
 
 type CheckStakerKey func(stakerKey *bbn.BIP340PubKey) error
 
+type Bip322Sign func(sg []byte,
+	privKey *btcec.PrivateKey,
+	net *chaincfg.Params) (btcutil.Address, []byte, error)
+
 // NewPoP generates a new proof of possession that sk_Babylon and sk_BTC are held by the same person
 // a proof of possession contains two signatures:
 // - pop.BabylonSig = sign(sk_Babylon, pk_BTC)
@@ -81,6 +85,78 @@ func NewPoPWithECDSABTCSig(babylonSK cryptotypes.PrivKey, btcSK *btcec.PrivateKe
 	pop.BtcSig = btcSig
 
 	return &pop, nil
+}
+
+func babylonSigToHexHash(babylonSig []byte) []byte {
+	babylonSigHash := tmhash.Sum(babylonSig)
+	babylonSigHashHex := hex.EncodeToString(babylonSigHash)
+	babylonSigHashHexBytes := []byte(babylonSigHashHex)
+	return babylonSigHashHexBytes
+}
+
+func newPoPWithBIP322Sig(
+	babylonSK cryptotypes.PrivKey,
+	btcSK *btcec.PrivateKey,
+	net *chaincfg.Params,
+	bip322SignFn Bip322Sign,
+) (*ProofOfPossession, error) {
+	pop := ProofOfPossession{
+		BtcSigType: BTCSigType_BIP322,
+	}
+
+	// generate pop.BabylonSig = sign(sk_Babylon, pk_BTC)
+	btcPK := btcSK.PubKey()
+	bip340PK := bbn.NewBIP340PubKeyFromBTCPK(btcPK)
+	babylonSig, err := babylonSK.Sign(*bip340PK)
+	if err != nil {
+		return nil, err
+	}
+	pop.BabylonSig = babylonSig
+
+	// TODO: temporary solution for MVP purposes.
+	// Eventually we need to use tmhash.Sum(pop.BabylonSig) rather than bbnSigHashHexBytes
+	// ref: https://github.com/babylonchain/babylon-private/issues/80
+	bbnSigHashHexBytes := babylonSigToHexHash(pop.BabylonSig)
+
+	address, witnessSignture, err := bip322SignFn(
+		bbnSigHashHexBytes,
+		btcSK,
+		net,
+	)
+
+	if err != nil {
+		return nil, err
+	}
+
+	bip322Sig := BIP322Sig{
+		Address: address.EncodeAddress(),
+		Sig:     witnessSignture,
+	}
+
+	bip322SigEncoded, err := bip322Sig.Marshal()
+
+	if err != nil {
+		return nil, err
+	}
+	pop.BtcSig = bip322SigEncoded
+
+	return &pop, nil
+}
+
+func NewPoPWithBIP322P2WPKHSig(
+	babylonSK cryptotypes.PrivKey,
+	btcSK *btcec.PrivateKey,
+	net *chaincfg.Params,
+) (*ProofOfPossession, error) {
+	return newPoPWithBIP322Sig(babylonSK, btcSK, net, bip322.SignWithP2WPKHAddress)
+}
+
+func NewPoPWithBIP322P2TRBIP86Sig(
+	babylonSK cryptotypes.PrivKey,
+	btcSK *btcec.PrivateKey,
+	net *chaincfg.Params,
+) (*ProofOfPossession, error) {
+	return newPoPWithBIP322Sig(babylonSK, btcSK, net, bip322.SignWithP2TrSpendAddress)
 }
 
 func NewPoPFromHex(popHex string) (*ProofOfPossession, error) {
@@ -254,9 +330,7 @@ func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340P
 	// TODO: temporary solution for MVP purposes.
 	// Eventually we need to use tmhash.Sum(pop.BabylonSig) rather than bbnSigHashHexBytes
 	// ref: https://github.com/babylonchain/babylon-private/issues/80
-	bbnSigHash := tmhash.Sum(pop.BabylonSig)
-	bbnSigHashHex := hex.EncodeToString(bbnSigHash)
-	bbnSigHashHexBytes := []byte(bbnSigHashHex)
+	bbnSigHashHexBytes := babylonSigToHexHash(pop.BabylonSig)
 	if err := bip322.Verify(bbnSigHashHexBytes, witness, btcAddress, net); err != nil {
 		return err
 	}

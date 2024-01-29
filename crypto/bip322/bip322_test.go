@@ -76,15 +76,12 @@ func FuzzBip322ValidP2WPKHSignature(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		privkey, err := btcec.NewPrivateKey()
-		pubKey := privkey.PubKey()
 		require.NoError(t, err)
 		dataLen := r.Int31n(200) + 1
 		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
-		witness, err := bip322.SignWithP2WPKHAddress(dataToSign, privkey, net)
+		address, witness, err := bip322.SignWithP2WPKHAddress(dataToSign, privkey, net)
 		require.NoError(t, err)
 		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
-		require.NoError(t, err)
-		address, err := bip322.PubkeyToP2WPKHAddress(pubKey, net)
 		require.NoError(t, err)
 
 		err = bip322.Verify(
@@ -102,15 +99,12 @@ func FuzzBip322ValidP2TrSpendSignature(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		privkey, err := btcec.NewPrivateKey()
-		pubKey := privkey.PubKey()
 		require.NoError(t, err)
 		dataLen := r.Int31n(200) + 1
 		dataToSign := datagen.GenRandomByteArray(r, uint64(dataLen))
-		witness, err := bip322.SignWithP2TrSpendAddress(dataToSign, privkey, net)
+		address, witness, err := bip322.SignWithP2TrSpendAddress(dataToSign, privkey, net)
 		require.NoError(t, err)
 		witnessDecoded, err := bip322.SimpleSigToWitness(witness)
-		require.NoError(t, err)
-		address, err := bip322.PubKeyToP2TrSpendAddress(pubKey, net)
 		require.NoError(t, err)
 
 		err = bip322.Verify(

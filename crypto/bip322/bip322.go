@@ -200,19 +200,19 @@ func SignWithP2WPKHAddress(
 	msg []byte,
 	privKey *btcec.PrivateKey,
 	net *chaincfg.Params,
-) ([]byte, error) {
+) (btcutil.Address, []byte, error) {
 	pubKey := privKey.PubKey()
 
 	witnessAddr, err := PubkeyToP2WPKHAddress(pubKey, net)
 
 	if err != nil {
-		return nil, err
+		return &btcutil.AddressWitnessPubKeyHash{}, nil, err
 	}
 
 	toSpend, err := GetToSpendTx(msg, witnessAddr)
 
 	if err != nil {
-		return nil, err
+		return &btcutil.AddressWitnessPubKeyHash{}, nil, err
 	}
 
 	toSign := GetToSignTx(toSpend)
@@ -229,29 +229,35 @@ func SignWithP2WPKHAddress(
 		toSpend.TxOut[0].Value, toSpend.TxOut[0].PkScript, txscript.SigHashAll, privKey, true)
 
 	if err != nil {
-		return nil, err
+		return &btcutil.AddressWitnessPubKeyHash{}, nil, err
 	}
 
-	return SerializeWitness(witness)
+	serializedWitness, err := SerializeWitness(witness)
+
+	if err != nil {
+		return &btcutil.AddressWitnessPubKeyHash{}, nil, err
+	}
+
+	return witnessAddr, serializedWitness, nil
 }
 
 func SignWithP2TrSpendAddress(
 	msg []byte,
 	privKey *btcec.PrivateKey,
 	net *chaincfg.Params,
-) ([]byte, error) {
+) (btcutil.Address, []byte, error) {
 	pubKey := privKey.PubKey()
 
 	witnessAddr, err := PubKeyToP2TrSpendAddress(pubKey, net)
 
 	if err != nil {
-		return nil, err
+		return &btcutil.AddressTaproot{}, nil, err
 	}
 
 	toSpend, err := GetToSpendTx(msg, witnessAddr)
 
 	if err != nil {
-		return nil, err
+		return &btcutil.AddressTaproot{}, nil, err
 	}
 
 	toSign := GetToSignTx(toSpend)
@@ -269,8 +275,14 @@ func SignWithP2TrSpendAddress(
 	)
 
 	if err != nil {
-		return nil, err
+		return &btcutil.AddressTaproot{}, nil, err
 	}
 
-	return SerializeWitness(witness)
+	serializedWitness, err := SerializeWitness(witness)
+
+	if err != nil {
+		return &btcutil.AddressWitnessPubKeyHash{}, nil, err
+	}
+
+	return witnessAddr, serializedWitness, nil
 }
