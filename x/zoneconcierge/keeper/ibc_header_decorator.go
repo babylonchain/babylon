@@ -1,11 +1,13 @@
 package keeper
 
 import (
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 var _ sdk.PostDecorator = &IBCHeaderDecorator{}
@@ -75,9 +77,23 @@ func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, su
 	// calculate tx hash
 	txHash := tmhash.Sum(ctx.TxBytes())
 
+	// methodology from https://github.com/osmosis-labs/osmosis/blob/bdcd251208bccff2f539b7fbff3a9b7af9aa4fb4/x/protorev/keeper/posthandler.go#L29-L30
+	// Create a cache context to execute the posthandler such that
+	// 1. If there is an error, then the cache context is discarded
+	// 2. If there is no error, then the cache context is written to the main context with no gas consumed
+	cacheCtx, write := ctx.CacheContext()
+	// CacheCtx's by default _share_ their gas meter with the parent.
+	// In our case, the cache ctx is given a new gas meter instance entirely,
+	// so gas usage is not counted towards tx gas usage.
+	//
+	// 50M is chosen as a large enough number to ensure that the posthandler will not run out of gas,
+	// but will eventually terminate in event of an accidental infinite loop with some gas usage.
+	upperGasLimitMeter := storetypes.NewGasMeter(storetypes.Gas(50_000_000))
+	cacheCtx = cacheCtx.WithGasMeter(upperGasLimitMeter)
+
 	for _, msg := range tx.GetMsgs() {
 		// try to extract the headerInfo and the client's status
-		headerInfo, clientState := d.getHeaderAndClientState(ctx, msg)
+		headerInfo, clientState := d.getHeaderAndClientState(cacheCtx, msg)
 		if headerInfo == nil {
 			continue
 		}
@@ -90,15 +106,18 @@ func (d *IBCHeaderDecorator) PostHandle(ctx sdk.Context, tx sdk.Tx, simulate, su
 		// fail, eventually failing the entire tx. All state updates due to this
 		// failed tx will be rolled back.
 		isOnFork := !clientState.FrozenHeight.IsZero()
-		d.k.HandleHeaderWithValidCommit(ctx, txHash, headerInfo, isOnFork)
+		d.k.HandleHeaderWithValidCommit(cacheCtx, txHash, headerInfo, isOnFork)
 
 		// unfreeze client (by setting FrozenHeight to zero again) if the client is frozen
 		// due to a fork header
 		if isOnFork {
 			clientState.FrozenHeight = clienttypes.ZeroHeight()
-			d.k.clientKeeper.SetClientState(ctx, headerInfo.ClientId, clientState)
+			d.k.clientKeeper.SetClientState(cacheCtx, headerInfo.ClientId, clientState)
 		}
 	}
+
+	// write back from cacheCtx to ctx without gas cost
+	write()
 
 	return next(ctx, tx, simulate, success)
 }

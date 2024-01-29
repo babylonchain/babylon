@@ -391,19 +391,18 @@ func NewBabylonApp(
 		epochingKeeper,
 	)
 
-	voteExtOp := func(bApp *baseapp.BaseApp) {
-		voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
-		voteExtHandler.SetHandlers(bApp)
-		proposalHandler := checkpointing.NewProposalHandler(logger, &checkpointingKeeper, bApp.Mempool(), bApp)
-		proposalHandler.SetHandlers(bApp)
-	}
-	baseAppOptions = append(baseAppOptions, voteExtOp)
-
 	bApp := baseapp.NewBaseApp(appName, logger, db, txConfig.TxDecoder(), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(traceStore)
 	bApp.SetVersion(version.Version)
 	bApp.SetInterfaceRegistry(interfaceRegistry)
 	bApp.SetTxEncoder(txConfig.TxEncoder())
+
+	// set handlers of vote extension
+	voteExtHandler := checkpointing.NewVoteExtensionHandler(logger, &checkpointingKeeper)
+	voteExtHandler.SetHandlers(bApp)
+	proposalHandler := checkpointing.NewProposalHandler(
+		logger, &checkpointingKeeper, bApp.Mempool(), bApp)
+	proposalHandler.SetHandlers(bApp)
 
 	tkeys := storetypes.NewTransientStoreKeys(
 		paramstypes.TStoreKey, btccheckpointtypes.TStoreKey)

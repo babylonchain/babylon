@@ -202,74 +202,64 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		// BLS signatures are sent in the last block of the previous epoch,
 		// so they should be aggregated in the first block of the new epoch
 		// and no BLS signatures are send in epoch 0
-		if !epoch.IsVoteExtensionProposal(ctx) {
-			res, err := h.defaultHandler.ProcessProposalHandler()(ctx, req)
+		if epoch.IsVoteExtensionProposal(ctx) {
+			// 1. extract the special tx containing the checkpoint
+			injectedTx, err := extractInjectedTx(req.Txs)
 			if err != nil {
-				return resReject, fmt.Errorf("failed in default ProcessProposal handler: %w", err)
+				h.logger.Error("cannot get injected tx", "err", err)
+				// should not return error here as error will cause panic
+				return resReject, nil
 			}
-			return res, nil
-		}
-
-		// 1. extract the special tx containing the checkpoint
-		injectedTx, err := getInjectedTx(req.Txs)
-		if err != nil {
-			h.logger.Error("cannot get injected tx", "err", err)
-			return resReject, nil
-		}
-		var injectedCkpt ckpttypes.InjectedCheckpoint
-		if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
-			h.logger.Error("failed to decode injected vote extension tx", "err", err)
-			// should not return error here as error will cause panic
-			return resReject, nil
-		}
-
-		// 2. verify the validity of the vote extension (2/3 majority is achieved)
-		err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
-		if err != nil {
-			// the returned err will lead to panic as something very wrong happened during consensus
-			return resReject, err
-		}
-
-		// 3. rebuild the checkpoint from vote extensions and compare it with
-		// the injected checkpoint
-		// Note: this is needed because LastBlockID is not available here so that
-		// we can't verify whether the injected checkpoint is signing the correct
-		// LastBlockID
-		ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
-		// TODO it is possible that although the checkpoints do not match but the injected
-		//  checkpoint is still valid. This indicates the existence of a fork (>1/3 malicious voting power)
-		//  and we should probably send an alarm and stall the blockchain
-		if !ckpt.Equal(injectedCkpt.Ckpt) {
-			// should not return error here as error will cause panic
-			h.logger.Error("invalid checkpoint in vote extension tx", "err", err)
-			return resReject, nil
-		}
-
-		// 4. verify the rest of the txs (copied from the default process proposal handler)
-		// https://github.com/cosmos/cosmos-sdk/blob/9814f684b9dd7e384064ca86876688c05e685e54/baseapp/abci_utils.go#L260
-		var (
-			totalTxGas  uint64
-			maxBlockGas int64
-		)
-		if b := ctx.ConsensusParams().Block; b != nil {
-			maxBlockGas = b.MaxGas
-		}
-		for _, txBytes := range req.Txs[1:] {
-			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBytes)
+			var injectedCkpt ckpttypes.InjectedCheckpoint
+			if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
+				h.logger.Error("failed to decode injected vote extension tx", "err", err)
+				// should not return error here as error will cause panic
+				return resReject, nil
+			}
+			req.Txs, err = removeInjectedTx(req.Txs)
 			if err != nil {
+				// should not return error here as error will cause panic
+				h.logger.Error("failed to remove injected tx from request: %w", err)
 				return resReject, nil
 			}
 
-			if maxBlockGas > 0 {
-				gasTx, ok := tx.(baseapp.GasTx)
-				if ok {
-					totalTxGas += gasTx.GetGas()
-				}
-
-				if totalTxGas > uint64(maxBlockGas) {
-					return resReject, nil
-				}
+			// 2. verify the validity of the vote extension (2/3 majority is achieved)
+			err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
+			if err != nil {
+				// the returned err will lead to panic as something very wrong happened during consensus
+				return resReject, err
 			}
+
+			// 3. rebuild the checkpoint from vote extensions and compare it with
+			// the injected checkpoint
+			// Note: this is needed because LastBlockID is not available here so that
+			// we can't verify whether the injected checkpoint is signing the correct
+			// LastBlockID
+			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
+			if err != nil {
+				// should not return error here as error will cause panic
+				h.logger.Error("invalid vote extensions: %w", err)
+				return resReject, nil
+			}
+			// TODO it is possible that although the checkpoints do not match but the injected
+			//  checkpoint is still valid. This indicates the existence of a fork (>1/3 malicious voting power)
+			//  and we should probably send an alarm and stall the blockchain
+			if !ckpt.Equal(injectedCkpt.Ckpt) {
+				// should not return error here as error will cause panic
+				h.logger.Error("invalid checkpoint in vote extension tx", "err", err)
+				return resReject, nil
+			}
+		}
+
+		// 4. verify the rest of the txs using the default handler
+		res, err := h.defaultHandler.ProcessProposalHandler()(ctx, req)
+		if err != nil {
+			return resReject, fmt.Errorf("failed in default ProcessProposal handler: %w", err)
+		}
+		if !res.IsAccepted() {
+			h.logger.Error("the proposal is rejected by default ProcessProposal handler",
+				"height", req.Height, "epoch", epoch.EpochNumber)
+			return resReject, nil
 		}
 
 		return resAccept, nil
@@ -293,9 +283,9 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 		}
 
 		// 1. extract the special tx containing BLS sigs
-		injectedTx, err := getInjectedTx(req.Txs)
+		injectedTx, err := extractInjectedTx(req.Txs)
 		if err != nil {
-			return res, err
+			return res, fmt.Errorf("failed to get extract injected tx from the tx set: %w", err)
 		}
 		var ckpt ckpttypes.InjectedCheckpoint
 		if err := ckpt.Unmarshal(injectedTx); err != nil {
@@ -311,9 +301,10 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func getInjectedTx(txs [][]byte) ([]byte, error) {
-	if len(txs) == 0 {
-		return nil, fmt.Errorf("the proposal does not contain the checkpoint")
+// extractInjectedTx extracts the injected tx from the tx set
+func extractInjectedTx(txs [][]byte) ([]byte, error) {
+	if len(txs) < defaultInjectedTxIndex+1 {
+		return nil, fmt.Errorf("the tx set does not contain the injected tx")
 	}
 
 	if len(txs[defaultInjectedTxIndex]) == 0 {
@@ -321,4 +312,15 @@ func getInjectedTx(txs [][]byte) ([]byte, error) {
 	}
 
 	return txs[defaultInjectedTxIndex], nil
+}
+
+// removeInjectedTx removes the injected tx from the tx set
+func removeInjectedTx(txs [][]byte) ([][]byte, error) {
+	if len(txs) < defaultInjectedTxIndex+1 {
+		return nil, fmt.Errorf("the tx set does not contain the injected tx")
+	}
+
+	txs = append(txs[:defaultInjectedTxIndex], txs[defaultInjectedTxIndex+1:]...)
+
+	return txs, nil
 }
