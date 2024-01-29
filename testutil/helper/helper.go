@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/core/header"
 	abci "github.com/cometbft/cometbft/abci/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 
@@ -108,7 +109,11 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 		if err != nil {
 			return nil, err
 		}
-		veInfo := abci.ExtendedVoteInfo{VoteExtension: veBytes}
+		veInfo := abci.ExtendedVoteInfo{
+			VoteExtension: veBytes,
+			BlockIdFlag:   cmtproto.BlockIDFlagCommit,
+			ExtensionSignature:,
+		}
 		extendedVotes = append(extendedVotes, veInfo)
 	}
 
