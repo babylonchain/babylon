@@ -70,7 +70,7 @@ func readScript(r io.Reader, pver uint32, maxAllowed uint32, fieldName string) (
 // - For each element of the stack
 //   - The first byte specifies how many bytes it contains
 //   - The rest are the bytes of the element
-func simpleSigToWitness(sig []byte) ([][]byte, error) {
+func SimpleSigToWitness(sig []byte) ([][]byte, error) {
 	// For each input, the witness is encoded as a stack
 	// with one or more items. Therefore, we first read a
 	// varint which encodes the number of stack items.
@@ -102,4 +102,33 @@ func simpleSigToWitness(sig []byte) ([][]byte, error) {
 	}
 
 	return witnessStack, nil
+}
+
+// serialization of witness copied from btcd
+func writeTxWitness(
+	w io.Writer,
+	wit [][]byte,
+) error {
+	// pver is always 0 (at least in btcd)
+	err := wire.WriteVarInt(w, 0, uint64(len(wit)))
+	if err != nil {
+		return err
+	}
+	for _, item := range wit {
+		err = wire.WriteVarBytes(w, 0, item)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func SerializeWitness(w wire.TxWitness) ([]byte, error) {
+	var buf bytes.Buffer
+
+	if err := writeTxWitness(&buf, w); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
