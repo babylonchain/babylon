@@ -4,7 +4,7 @@ module github.com/babylonchain/babylon
 
 require (
 	github.com/CosmWasm/wasmd v0.50.0
-	github.com/btcsuite/btcd v0.23.5-0.20230711222809-7faa9b266231
+	github.com/btcsuite/btcd v0.24.0
 	github.com/cometbft/cometbft v0.38.5
 	github.com/cometbft/cometbft-db v0.9.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.50.3
@@ -40,8 +40,8 @@ require (
 	github.com/CosmWasm/wasmvm v1.5.2
 	github.com/boljen/go-bitmap v0.0.0-20151001105940-23cd2fb0ce7d
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2
-	github.com/btcsuite/btcd/btcutil v1.1.3
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2
+	github.com/btcsuite/btcd/btcutil v1.1.5
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0
 	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
 	github.com/cosmos/gogoproto v1.4.11
