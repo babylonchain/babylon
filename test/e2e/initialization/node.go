@@ -135,7 +135,6 @@ func (n *internalNode) createAppConfig(nodeConfig *NodeConfig) {
 	appConfig.MinGasPrices = fmt.Sprintf("%s%s", MinGasPrice, BabylonDenom)
 	appConfig.StateSync.SnapshotInterval = nodeConfig.SnapshotInterval
 	appConfig.StateSync.SnapshotKeepRecent = nodeConfig.SnapshotKeepRecent
-	appConfig.SignerConfig.KeyName = ValidatorWalletName
 	appConfig.BtcConfig.Network = string(bbn.BtcSimnet)
 	appConfig.GRPC.Enable = true
 	appConfig.GRPC.Address = "0.0.0.0:9090"
