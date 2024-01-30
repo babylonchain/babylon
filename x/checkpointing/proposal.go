@@ -210,6 +210,9 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 				// should not return error here as error will cause panic
 				return resReject, nil
 			}
+
+			// 2. remove the special tx from the request so that
+			// the rest of the txs can be handled by the default handler
 			var injectedCkpt ckpttypes.InjectedCheckpoint
 			if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
 				h.logger.Error("failed to decode injected vote extension tx", "err", err)

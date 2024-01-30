@@ -4,16 +4,15 @@ import (
 	"testing"
 
 	"cosmossdk.io/core/header"
-	storemetrics "cosmossdk.io/store/metrics"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
@@ -40,7 +39,7 @@ func CheckpointingKeeper(t testing.TB, ek types.EpochingKeeper, signer keeper.Bl
 		ek,
 	)
 
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	return &k, ctx, cdc

@@ -3,22 +3,22 @@ package privval
 import (
 	"errors"
 
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 type ValidatorKeys struct {
-	ValPubkey tmcrypto.PubKey
+	ValPubkey cmtcrypto.PubKey
 	BlsPubkey bls12381.PublicKey
 	PoP       *types.ProofOfPossession
 
-	valPrivkey tmcrypto.PrivKey
+	valPrivkey cmtcrypto.PrivKey
 	blsPrivkey bls12381.PrivateKey
 }
 
-func NewValidatorKeys(valPrivkey tmcrypto.PrivKey, blsPrivKey bls12381.PrivateKey) (*ValidatorKeys, error) {
+func NewValidatorKeys(valPrivkey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey) (*ValidatorKeys, error) {
 	pop, err := BuildPoP(valPrivkey, blsPrivKey)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func NewValidatorKeys(valPrivkey tmcrypto.PrivKey, blsPrivKey bls12381.PrivateKe
 
 // BuildPoP builds a proof-of-possession by PoP=sign(key = BLS_sk, data = sign(key = Ed25519_sk, data = BLS_pk))
 // where valPrivKey is Ed25519_sk and blsPrivkey is BLS_sk
-func BuildPoP(valPrivKey tmcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*types.ProofOfPossession, error) {
+func BuildPoP(valPrivKey cmtcrypto.PrivKey, blsPrivkey bls12381.PrivateKey) (*types.ProofOfPossession, error) {
 	if valPrivKey == nil {
 		return nil, errors.New("validator private key is empty")
 	}

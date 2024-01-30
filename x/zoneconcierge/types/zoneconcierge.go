@@ -6,12 +6,12 @@ import (
 
 	"cosmossdk.io/store/rootmulti"
 	"github.com/cometbft/cometbft/crypto/merkle"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )
 
 // VerifyStore verifies whether a KV pair is committed to the Merkle root, with the assistance of a Merkle proof
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.46.6/store/rootmulti/proof_test.go)
-func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, proof *tmcrypto.ProofOps) error {
+func VerifyStore(root []byte, moduleStoreKey string, key []byte, value []byte, proof *cmtcrypto.ProofOps) error {
 	prt := rootmulti.DefaultProofRuntime()
 
 	keypath := merkle.KeyPath{}

@@ -11,43 +11,36 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/cosmos-sdk/runtime"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
-
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-
-	appparams "github.com/babylonchain/babylon/app/params"
-	bbn "github.com/babylonchain/babylon/types"
-
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-
-	"github.com/babylonchain/babylon/app"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-
 	cmtconfig "github.com/cometbft/cometbft/config"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	tmtime "github.com/cometbft/cometbft/types/time"
-	"github.com/spf13/cobra"
-
+	cmtos "github.com/cometbft/cometbft/libs/os"
+	cmttime "github.com/cometbft/cometbft/types/time"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/spf13/cobra"
+
+	"github.com/babylonchain/babylon/app"
+	appparams "github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	bbn "github.com/babylonchain/babylon/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 var (
@@ -442,7 +435,7 @@ func collectGenFiles(
 ) error {
 
 	var appState json.RawMessage
-	genTime := tmtime.Now()
+	genTime := cmttime.Now()
 
 	for i := 0; i < numValidators; i++ {
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
@@ -529,12 +522,12 @@ func writeFile(name string, dir string, contents []byte) error {
 	writePath := filepath.Join(dir)
 	file := filepath.Join(writePath, name)
 
-	err := tmos.EnsureDir(writePath, 0755)
+	err := cmtos.EnsureDir(writePath, 0755)
 	if err != nil {
 		return err
 	}
 
-	err = tmos.WriteFile(file, contents, 0644)
+	err = cmtos.WriteFile(file, contents, 0644)
 	if err != nil {
 		return err
 	}

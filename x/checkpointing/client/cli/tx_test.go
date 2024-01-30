@@ -2,32 +2,31 @@ package cli_test
 
 import (
 	"context"
-	sdkmath "cosmossdk.io/math"
 	"fmt"
-	"github.com/babylonchain/babylon/app"
-	"github.com/cosmos/cosmos-sdk/testutil"
-	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	"io"
 	"path/filepath"
 	"testing"
 
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-	"github.com/stretchr/testify/suite"
-
+	sdkmath "cosmossdk.io/math"
 	abci "github.com/cometbft/cometbft/abci/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	tmbytes "github.com/cometbft/cometbft/libs/bytes"
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtbytes "github.com/cometbft/cometbft/libs/bytes"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	rpcclient "github.com/cometbft/cometbft/rpc/client"
 	rpcclientmock "github.com/cometbft/cometbft/rpc/client/mock"
 	coretypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/hd"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
+	"github.com/stretchr/testify/suite"
 
+	"github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/privval"
 	testutilcli "github.com/babylonchain/babylon/testutil/cli"
@@ -44,13 +43,13 @@ func newMockCometRPC(respQuery abci.ResponseQuery) mockCometRPC {
 	return mockCometRPC{responseQuery: respQuery}
 }
 
-func (mockCometRPC) BroadcastTxSync(_ context.Context, _ tmtypes.Tx) (*coretypes.ResultBroadcastTx, error) {
+func (mockCometRPC) BroadcastTxSync(_ context.Context, _ cmttypes.Tx) (*coretypes.ResultBroadcastTx, error) {
 	return &coretypes.ResultBroadcastTx{}, nil
 }
 
 func (m mockCometRPC) ABCIQueryWithOptions(
 	_ context.Context,
-	_ string, _ tmbytes.HexBytes,
+	_ string, _ cmtbytes.HexBytes,
 	_ rpcclient.ABCIQueryOptions,
 ) (*coretypes.ResultABCIQuery, error) {
 	return &coretypes.ResultABCIQuery{Response: m.responseQuery}, nil
@@ -106,10 +105,10 @@ func (s *CLITestSuite) TestCmdWrappedCreateValidator() {
 	homeDir := s.T().TempDir()
 	nodeCfg := cmtconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
-	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
+	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
 	require.NoError(err)
 	pvStateFile := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
+	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
 	require.NoError(err)
 	wrappedPV := privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 	cmd := checkpointcli.CmdWrappedCreateValidator(authcodec.NewBech32Codec("cosmosvaloper"))

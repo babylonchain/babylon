@@ -4,10 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
 )
 
 func FuzzEpochChainInfoIndexer(f *testing.F) {
