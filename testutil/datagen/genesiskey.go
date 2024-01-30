@@ -1,7 +1,7 @@
 package datagen
 
 import (
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -22,7 +22,7 @@ type GenesisValidators struct {
 type GenesisKeyWithBLS struct {
 	checkpointingtypes.GenesisKey
 	bls12381.PrivateKey
-	tmcrypto.PrivKey
+	cmtcrypto.PrivKey
 }
 
 func (gvs *GenesisValidators) GetGenesisKeys() []*checkpointingtypes.GenesisKey {
@@ -43,8 +43,8 @@ func (gvs *GenesisValidators) GetBLSPrivKeys() []bls12381.PrivateKey {
 	return blsPrivKeys
 }
 
-func (gvs *GenesisValidators) GetValPrivKeys() []tmcrypto.PrivKey {
-	valPrivKeys := make([]tmcrypto.PrivKey, 0, len(gvs.Keys))
+func (gvs *GenesisValidators) GetValPrivKeys() []cmtcrypto.PrivKey {
+	valPrivKeys := make([]cmtcrypto.PrivKey, 0, len(gvs.Keys))
 	for _, k := range gvs.Keys {
 		valPrivKeys = append(valPrivKeys, k.PrivKey)
 	}

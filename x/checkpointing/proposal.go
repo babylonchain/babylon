@@ -216,6 +216,9 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 				// should not return error here as error will cause panic
 				return resReject, nil
 			}
+
+			// 2. remove the special tx from the request so that
+			// the rest of the txs can be handled by the default handler
 			req.Txs, err = removeInjectedTx(req.Txs)
 			if err != nil {
 				// should not return error here as error will cause panic
@@ -223,14 +226,14 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 				return resReject, nil
 			}
 
-			// 2. verify the validity of the vote extension (2/3 majority is achieved)
+			// 3. verify the validity of the vote extension (2/3 majority is achieved)
 			err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
 				return resReject, err
 			}
 
-			// 3. rebuild the checkpoint from vote extensions and compare it with
+			// 4. rebuild the checkpoint from vote extensions and compare it with
 			// the injected checkpoint
 			// Note: this is needed because LastBlockID is not available here so that
 			// we can't verify whether the injected checkpoint is signing the correct
@@ -251,7 +254,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			}
 		}
 
-		// 4. verify the rest of the txs using the default handler
+		// 5. verify the rest of the txs using the default handler
 		res, err := h.defaultHandler.ProcessProposalHandler()(ctx, req)
 		if err != nil {
 			return resReject, fmt.Errorf("failed in default ProcessProposal handler: %w", err)
