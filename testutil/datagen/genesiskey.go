@@ -1,7 +1,7 @@
 package datagen
 
 import (
-	"github.com/cometbft/cometbft/crypto/ed25519"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -22,6 +22,7 @@ type GenesisValidators struct {
 type GenesisKeyWithBLS struct {
 	checkpointingtypes.GenesisKey
 	bls12381.PrivateKey
+	cmtcrypto.PrivKey
 }
 
 func (gvs *GenesisValidators) GetGenesisKeys() []*checkpointingtypes.GenesisKey {
@@ -42,13 +43,23 @@ func (gvs *GenesisValidators) GetBLSPrivKeys() []bls12381.PrivateKey {
 	return blsPrivKeys
 }
 
+func (gvs *GenesisValidators) GetValPrivKeys() []cmtcrypto.PrivKey {
+	valPrivKeys := make([]cmtcrypto.PrivKey, 0, len(gvs.Keys))
+	for _, k := range gvs.Keys {
+		valPrivKeys = append(valPrivKeys, k.PrivKey)
+	}
+
+	return valPrivKeys
+}
+
 // GenesisValidatorSet generates a set with `numVals` genesis validators
 func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 	genesisVals := make([]*GenesisKeyWithBLS, 0, numVals)
 	for i := 0; i < numVals; i++ {
 		blsPrivKey := bls12381.GenPrivKey()
 		// create validator set with single validator
-		valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), blsPrivKey)
+		valPrivKey := cmted25519.GenPrivKey()
+		valKeys, err := privval.NewValidatorKeys(valPrivKey, blsPrivKey)
 		if err != nil {
 			return nil, err
 		}
@@ -68,6 +79,7 @@ func GenesisValidatorSet(numVals int) (*GenesisValidators, error) {
 		genesisVals = append(genesisVals, &GenesisKeyWithBLS{
 			GenesisKey: *genesisKey,
 			PrivateKey: blsPrivKey,
+			PrivKey:    valPrivKey,
 		})
 	}
 
@@ -88,6 +100,7 @@ func GenesisValidatorSetWithPrivSigner(numVals int) (*GenesisValidators, *app.Pr
 	signerVal := &GenesisKeyWithBLS{
 		GenesisKey: *signerGenesisKey,
 		PrivateKey: ps.WrappedPV.Key.BlsPrivKey,
+		PrivKey:    ps.WrappedPV.Key.PrivKey,
 	}
 	genesisVals, err := GenesisValidatorSet(numVals)
 	if err != nil {

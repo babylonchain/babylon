@@ -1,11 +1,12 @@
 package keeper
 
 import (
-	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types" //nolint:staticcheck
 	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
+
+	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 )
 
 var _ sdk.PostDecorator = &IBCHeaderDecorator{}

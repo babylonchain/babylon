@@ -5,12 +5,13 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/privval"
 	cmtconfig "github.com/cometbft/cometbft/config"
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/privval"
 )
 
 func GenBlsCmd() *cobra.Command {
@@ -35,7 +36,7 @@ $ babylond genbls --home ./
 			nodeCfg := cmtconfig.DefaultConfig()
 			keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 			statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-			if !tmos.FileExists(keyPath) {
+			if !cmtos.FileExists(keyPath) {
 				return errors.New("validator key file does not exist")
 			}
 

@@ -5,12 +5,11 @@ import (
 	"crypto/sha256"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/runtime"
-
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/store/prefix"
 	"github.com/cometbft/cometbft/crypto/merkle"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -71,7 +70,7 @@ func (k Keeper) GetAllAppHashesForEpoch(ctx context.Context, epoch *types.Epoch)
 }
 
 // ProveAppHashInEpoch generates a proof that the given appHash is in a given epoch
-func (k Keeper) ProveAppHashInEpoch(ctx context.Context, height uint64, epochNumber uint64) (*tmcrypto.Proof, error) {
+func (k Keeper) ProveAppHashInEpoch(ctx context.Context, height uint64, epochNumber uint64) (*cmtcrypto.Proof, error) {
 	// ensure height is inside this epoch
 	epoch, err := k.GetHistoricalEpoch(ctx, epochNumber)
 	if err != nil {
@@ -95,7 +94,7 @@ func (k Keeper) ProveAppHashInEpoch(ctx context.Context, height uint64, epochNum
 }
 
 // VerifyAppHashInclusion verifies whether the given appHash is in the Merkle tree w.r.t. the appHashRoot
-func VerifyAppHashInclusion(appHash []byte, appHashRoot []byte, proof *tmcrypto.Proof) error {
+func VerifyAppHashInclusion(appHash []byte, appHashRoot []byte, proof *cmtcrypto.Proof) error {
 	if len(appHash) != sha256.Size {
 		return fmt.Errorf("appHash with length %d is not a Sha256 hash", len(appHash))
 	}

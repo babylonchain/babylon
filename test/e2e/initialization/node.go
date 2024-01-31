@@ -11,12 +11,6 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	babylonApp "github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/cmd/babylond/cmd"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	"github.com/babylonchain/babylon/test/e2e/util"
-	bbn "github.com/babylonchain/babylon/types"
 	cmtconfig "github.com/cometbft/cometbft/config"
 	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
 	cmtos "github.com/cometbft/cometbft/libs/os"
@@ -41,6 +35,13 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/go-bip39"
 	"github.com/spf13/viper"
+
+	babylonApp "github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/cmd/babylond/cmd"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
+	"github.com/babylonchain/babylon/test/e2e/util"
+	bbn "github.com/babylonchain/babylon/types"
 )
 
 type internalNode struct {

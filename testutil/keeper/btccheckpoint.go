@@ -1,27 +1,26 @@
 package keeper
 
 import (
+	"math/big"
 	"testing"
 
 	"cosmossdk.io/core/header"
-	storemetrics "cosmossdk.io/store/metrics"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
-	"math/big"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
 	storetypes "cosmossdk.io/store/types"
-	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
 
 func NewBTCCheckpointKeeper(
@@ -52,7 +51,7 @@ func NewBTCCheckpointKeeper(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
 	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	// Initialize params

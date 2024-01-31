@@ -2,10 +2,11 @@ package bls12381
 
 import (
 	"crypto/rand"
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	"io"
+
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/pkg/errors"
 	blst "github.com/supranational/blst/bindings/go"
-	"io"
 )
 
 // GenKeyPair generates a random BLS key pair based on a given seed
@@ -23,7 +24,7 @@ func GenPrivKey() PrivateKey {
 }
 
 func GenPrivKeyFromSecret(secret []byte) PrivateKey {
-	seed := tmcrypto.Sha256(secret)
+	seed := cmtcrypto.Sha256(secret)
 
 	return genPrivKeyFromSeed(seed)
 }
