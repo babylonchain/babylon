@@ -1,31 +1,30 @@
 package cli
 
 import (
-	"cosmossdk.io/core/address"
-	errorsmod "cosmossdk.io/errors"
-	sdkmath "cosmossdk.io/math"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/codec"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/core/address"
+	errorsmod "cosmossdk.io/errors"
+	sdkmath "cosmossdk.io/math"
+	cmtconfig "github.com/cometbft/cometbft/config"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	"github.com/cosmos/cosmos-sdk/codec"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
+	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	flag "github.com/spf13/pflag"
 
 	"github.com/babylonchain/babylon/privval"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	cmtconfig "github.com/cometbft/cometbft/config"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	cosmoscli "github.com/cosmos/cosmos-sdk/x/staking/client/cli"
-	staketypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // validator struct to define the fields of the validator
@@ -207,7 +206,7 @@ func getValKeyFromFile(homeDir string) (*privval.ValidatorKeys, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(homeDir, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(homeDir, nodeCfg.PrivValidatorStateFile())
-	if !tmos.FileExists(keyPath) {
+	if !cmtos.FileExists(keyPath) {
 		return nil, errors.New("validator key file does not exist")
 	}
 	wrappedPV := privval.LoadWrappedFilePV(keyPath, statePath)

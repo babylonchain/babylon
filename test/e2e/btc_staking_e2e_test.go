@@ -395,7 +395,7 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	s.NotEmpty(finalizedBlocks)
 	s.Equal(appHash.Bytes(), finalizedBlocks[0].AppHash)
 
-	// ensure finality providerhas received rewards after the block is finalised
+	// ensure finality provider has received rewards after the block is finalised
 	fpRewardGauges, err := nonValidatorNode.QueryRewardGauge(fpBabylonAddr)
 	s.NoError(err)
 	fpRewardGauge, ok := fpRewardGauges[itypes.FinalityProviderType.String()]

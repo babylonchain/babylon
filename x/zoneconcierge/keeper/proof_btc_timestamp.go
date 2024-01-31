@@ -4,14 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 )
 
-func (k Keeper) ProveCZHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+func (k Keeper) ProveCZHeaderInEpoch(_ context.Context, header *types.IndexedHeader, epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
 	czHeaderKey := types.GetCZHeaderKey(header.ChainId, header.Height)
 	_, _, proof, err := k.QueryStore(types.StoreKey, czHeaderKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
@@ -21,7 +22,7 @@ func (k Keeper) ProveCZHeaderInEpoch(_ context.Context, header *types.IndexedHea
 	return proof, nil
 }
 
-func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
 	epochInfoKey := types.GetEpochInfoKey(epoch.EpochNumber)
 	_, _, proof, err := k.QueryStore(epochingtypes.StoreKey, epochInfoKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
@@ -31,7 +32,7 @@ func (k Keeper) ProveEpochInfo(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, 
 	return proof, nil
 }
 
-func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*tmcrypto.ProofOps, error) {
+func (k Keeper) ProveValSet(epoch *epochingtypes.Epoch) (*cmtcrypto.ProofOps, error) {
 	valSetKey := types.GetValSetKey(epoch.EpochNumber)
 	_, _, proof, err := k.QueryStore(checkpointingtypes.StoreKey, valSetKey, int64(epoch.GetSealerBlockHeight()))
 	if err != nil {
