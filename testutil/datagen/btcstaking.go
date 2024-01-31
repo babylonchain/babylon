@@ -244,7 +244,7 @@ type TestUnbondingSlashingInfo struct {
 
 func GenBTCStakingSlashingInfoWithOutPoint(
 	r *rand.Rand,
-	t *testing.T,
+	t testing.TB,
 	btcNet *chaincfg.Params,
 	outPoint *wire.OutPoint,
 	stakerSK *btcec.PrivateKey,
@@ -308,7 +308,7 @@ func GenBTCStakingSlashingInfoWithOutPoint(
 
 func GenBTCStakingSlashingInfo(
 	r *rand.Rand,
-	t *testing.T,
+	t testing.TB,
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
 	fpPKs []*btcec.PublicKey,
@@ -342,7 +342,7 @@ func GenBTCStakingSlashingInfo(
 
 func GenBTCUnbondingSlashingInfo(
 	r *rand.Rand,
-	t *testing.T,
+	t testing.TB,
 	btcNet *chaincfg.Params,
 	stakerSK *btcec.PrivateKey,
 	fpPKs []*btcec.PublicKey,
