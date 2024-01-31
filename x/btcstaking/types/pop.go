@@ -347,7 +347,6 @@ func VerifyBIP322SigPop(
 	}
 
 	key, err := bbn.NewBIP340PubKey(pubKeyNoCoord)
-
 	if err != nil {
 		return err
 	}
@@ -380,7 +379,6 @@ func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340P
 	bbnSigHashHexBytes := babylonSigToHexHash(pop.BabylonSig)
 
 	btcKeyBytes, err := bip340PK.Marshal()
-
 	if err != nil {
 		return err
 	}
