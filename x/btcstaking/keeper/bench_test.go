@@ -11,13 +11,8 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func BenchmarkBTCStaking_BeginBlock(b *testing.B) {
+func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
-
-	var (
-		numFPs         = 10  // 100 finality providers
-		numDelsUnderFP = 100 // 100 * 1000 = 100_000 BTC delegations
-	)
 
 	// helper
 	ctrl := gomock.NewController(b)
@@ -79,3 +74,10 @@ func BenchmarkBTCStaking_BeginBlock(b *testing.B) {
 		h.NoError(err)
 	}
 }
+
+func BenchmarkBeginBlock_10_1(b *testing.B)    { benchBeginBlock(b, 10, 1) }
+func BenchmarkBeginBlock_10_10(b *testing.B)   { benchBeginBlock(b, 10, 10) }
+func BenchmarkBeginBlock_10_100(b *testing.B)  { benchBeginBlock(b, 10, 100) }
+func BenchmarkBeginBlock_100_1(b *testing.B)   { benchBeginBlock(b, 100, 1) }
+func BenchmarkBeginBlock_100_10(b *testing.B)  { benchBeginBlock(b, 100, 10) }
+func BenchmarkBeginBlock_100_100(b *testing.B) { benchBeginBlock(b, 100, 100) }
