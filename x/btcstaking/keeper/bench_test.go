@@ -1,7 +1,10 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
+	"os"
+	"runtime/pprof"
 	"testing"
 	"time"
 
@@ -66,6 +69,18 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		}
 	}
 
+	// Start the CPU profiler
+	cpuProfileFile := fmt.Sprintf("/tmp/btcstaking-beginblock-%d-%d-cpu.pprof", numFPs, numDelsUnderFP)
+	f, err := os.Create(cpuProfileFile)
+	if err != nil {
+		b.Fatal(err)
+	}
+	defer f.Close()
+	if err := pprof.StartCPUProfile(f); err != nil {
+		b.Fatal(err)
+	}
+	defer pprof.StopCPUProfile()
+
 	// Reset timer before the benchmark loop starts
 	b.ResetTimer()
 
@@ -75,8 +90,9 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	}
 }
 
-func BenchmarkBeginBlock_10_1(b *testing.B)    { benchBeginBlock(b, 10, 1) }
-func BenchmarkBeginBlock_10_10(b *testing.B)   { benchBeginBlock(b, 10, 10) }
+func BenchmarkBeginBlock_10_1(b *testing.B)  { benchBeginBlock(b, 10, 1) }
+func BenchmarkBeginBlock_10_10(b *testing.B) { benchBeginBlock(b, 10, 10) }
+
 func BenchmarkBeginBlock_10_100(b *testing.B)  { benchBeginBlock(b, 10, 100) }
 func BenchmarkBeginBlock_100_1(b *testing.B)   { benchBeginBlock(b, 100, 1) }
 func BenchmarkBeginBlock_100_10(b *testing.B)  { benchBeginBlock(b, 100, 10) }
