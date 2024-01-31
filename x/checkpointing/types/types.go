@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	epochingtypes "github.com/babylonchain/babylon/x/epoching/types"
 )
@@ -17,7 +18,7 @@ import (
 const (
 	// HashSize is the size in bytes of a hash
 	HashSize   = sha256.Size
-	BitmapBits = 104 // 104 bits for 104 validators at top
+	BitmapBits = txformat.BitMapLength * 8 // 104 bits for 104 validators at top
 )
 
 type BlockHash []byte

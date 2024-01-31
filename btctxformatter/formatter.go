@@ -45,6 +45,9 @@ const (
 
 	BlockHashLength = 32
 
+	// BitMapLength is the number of bytes in a bitmap
+	// It is the minimal number needed for supporting 100
+	// validators in BTC timestamping, since 13*8 = 104
 	BitMapLength = 13
 
 	AddressLength = 20

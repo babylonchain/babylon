@@ -85,7 +85,7 @@ func signBLSWithBitmap(blsSKs []bls12381.PrivateKey, bm bitmap.Bitmap, msg []byt
 // Process:
 // 1. Generate a random epoch that has a legitimate-looking SealerHeader
 // 2. Generate a random validator set with BLS PKs
-// 3. Generate a BLS multisig with >1/3 random validators of the validator set
+// 3. Generate a BLS multisig with >2/3 random validators of the validator set
 // 4. Generate a checkpoint based on the above validator subset and the above sealer header
 // 5. Execute ProveEpochSealed where the mocked checkpointing keeper produces the above validator set
 // 6. Execute VerifyEpochSealed with above epoch, checkpoint and proof, and assert the outcome to be true
@@ -150,7 +150,7 @@ func FuzzProofEpochSealed_BLSSig(f *testing.F) {
 			require.Error(t, err)
 			require.NotErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		} else { // BLS sig has a valid quorum
-			require.Greater(t, numSubSet, numVals*2/3)
+			require.Greater(t, numSubSet*3, numVals*2)
 			require.Error(t, err)
 			require.ErrorIs(t, err, zctypes.ErrInvalidMerkleProof)
 		}

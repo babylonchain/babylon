@@ -10,10 +10,14 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
+const (
+	numValidators = 100 // BTC timestamping only supports 100 validators
+)
+
 func GenFullBitmap() bitmap.Bitmap {
 	bmBytes := make([]byte, txformat.BitMapLength)
 	bm := bitmap.Bitmap(bmBytes)
-	for i := 0; i < bm.Len(); i++ {
+	for i := 0; i < numValidators; i++ {
 		bitmap.Set(bm, i, true)
 	}
 	return bm
@@ -25,7 +29,7 @@ func GenRandomBitmap(r *rand.Rand) (bitmap.Bitmap, int) {
 	bmBytes := GenRandomByteArray(r, txformat.BitMapLength)
 	bm := bitmap.Bitmap(bmBytes)
 	numSubset := 0
-	for i := 0; i < bm.Len(); i++ {
+	for i := 0; i < numValidators; i++ {
 		if bitmap.Get(bm, i) {
 			numSubset++
 		}
