@@ -3,17 +3,19 @@ package cmd
 import (
 	"errors"
 	"fmt"
+	"path/filepath"
+	"strings"
+
+	cmtconfig "github.com/cometbft/cometbft/config"
+	cmtos "github.com/cometbft/cometbft/libs/os"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
+
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/privval"
-	cmtconfig "github.com/cometbft/cometbft/config"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
-	"path/filepath"
-	"strings"
 )
 
 func CreateBlsKeyCmd() *cobra.Command {
@@ -58,7 +60,7 @@ func CreateBlsKey(home string, addr sdk.AccAddress) error {
 	nodeCfg := cmtconfig.DefaultConfig()
 	keyPath := filepath.Join(home, nodeCfg.PrivValidatorKeyFile())
 	statePath := filepath.Join(home, nodeCfg.PrivValidatorStateFile())
-	if !tmos.FileExists(keyPath) {
+	if !cmtos.FileExists(keyPath) {
 		return errors.New("validator key file does not exist")
 	}
 	pv := privval.LoadWrappedFilePV(keyPath, statePath)

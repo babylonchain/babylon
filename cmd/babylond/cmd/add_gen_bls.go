@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -32,7 +32,7 @@ BLS keys in the checkpointing module's genesis state.'
 
 			// load genesis BLS key
 			genKeyFilePath := args[0]
-			if !tmos.FileExists(genKeyFilePath) {
+			if !cmtos.FileExists(genKeyFilePath) {
 				return errors.New("genesis BLS key file does not exist")
 			}
 			genKey, err := types.LoadGenesisKeyFromFile(genKeyFilePath)

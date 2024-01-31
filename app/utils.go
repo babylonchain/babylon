@@ -8,7 +8,7 @@ import (
 	"text/template"
 
 	cmtconfig "github.com/cometbft/cometbft/config"
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/client/config"
 
 	"github.com/babylonchain/babylon/privval"
@@ -40,12 +40,12 @@ type PrivSigner struct {
 func InitPrivSigner(nodeDir string) (*PrivSigner, error) {
 	nodeCfg := cmtconfig.DefaultConfig()
 	pvKeyFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorKeyFile())
-	err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
+	err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777)
 	if err != nil {
 		return nil, err
 	}
 	pvStateFile := filepath.Join(nodeDir, nodeCfg.PrivValidatorStateFile())
-	err = tmos.EnsureDir(filepath.Dir(pvStateFile), 0777)
+	err = cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777)
 	if err != nil {
 		return nil, err
 	}

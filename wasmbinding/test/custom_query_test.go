@@ -9,19 +9,19 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/wasmbinding/bindings"
 )
 
 // TODO consider doing it by enviromental variables as currently it may fail on some
@@ -202,7 +202,7 @@ func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
 func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
 	babylonApp := app.Setup(t, false)
 	ctx := babylonApp.BaseApp.NewContext(false).
-		WithBlockHeader(tmproto.Header{Height: height, Time: time.Now().UTC()})
+		WithBlockHeader(cmtproto.Header{Height: height, Time: time.Now().UTC()})
 	return babylonApp, ctx
 }
 

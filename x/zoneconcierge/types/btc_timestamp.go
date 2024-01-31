@@ -7,7 +7,7 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/btcsuite/btcd/wire"
-	tmcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
+	cmtcrypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
@@ -38,7 +38,7 @@ func GetValSetKey(epochNumber uint64) []byte {
 	return valSetKey
 }
 
-func VerifyEpochInfo(epoch *epochingtypes.Epoch, proof *tmcrypto.ProofOps) error {
+func VerifyEpochInfo(epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
 	// get the Merkle root, i.e., the BlockHash of the sealer header
 	root := epoch.SealerAppHash
 
@@ -59,7 +59,7 @@ func VerifyEpochInfo(epoch *epochingtypes.Epoch, proof *tmcrypto.ProofOps) error
 	return nil
 }
 
-func VerifyValSet(epoch *epochingtypes.Epoch, valSet *checkpointingtypes.ValidatorWithBlsKeySet, proof *tmcrypto.ProofOps) error {
+func VerifyValSet(epoch *epochingtypes.Epoch, valSet *checkpointingtypes.ValidatorWithBlsKeySet, proof *cmtcrypto.ProofOps) error {
 	valSetBytes, err := valSet.Marshal()
 	if err != nil {
 		return err
@@ -149,7 +149,7 @@ func VerifyEpochSealed(epoch *epochingtypes.Epoch, rawCkpt *checkpointingtypes.R
 	return nil
 }
 
-func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *tmcrypto.ProofOps) error {
+func VerifyCZHeaderInEpoch(header *IndexedHeader, epoch *epochingtypes.Epoch, proof *cmtcrypto.ProofOps) error {
 	// nil check
 	if header == nil {
 		return fmt.Errorf("header is nil")

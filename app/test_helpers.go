@@ -7,39 +7,38 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/docker/docker/pkg/ioutils"
-
-	"cosmossdk.io/math"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
-	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
-
 	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/ed25519"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	dbm "github.com/cosmos/cosmos-db"
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	cosmosed "github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/types"
 	simsutils "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/mempool"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/docker/docker/pkg/ioutils"
 	"github.com/stretchr/testify/require"
 
 	appparams "github.com/babylonchain/babylon/app/params"
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
 	bbn "github.com/babylonchain/babylon/types"
+	checkpointingtypes "github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 // SetupOptions defines arguments that are passed into `Simapp` constructor.
@@ -59,6 +58,10 @@ func setup(t *testing.T, ps *PrivSigner, withGenesis bool, invCheckPeriod uint) 
 	appOptions[flags.FlagHome] = nodeHome // ensure unique folder
 	appOptions[server.FlagInvCheckPeriod] = invCheckPeriod
 	appOptions["btc-config.network"] = string(bbn.BtcSimnet)
+	appOptions[server.FlagPruning] = pruningtypes.PruningOptionDefault
+	appOptions[server.FlagMempoolMaxTxs] = mempool.DefaultMaxTx
+	appOptions[flags.FlagChainID] = "chain-test"
+	baseAppOpts := server.DefaultBaseappOptions(appOptions)
 	app := NewBabylonApp(
 		log.NewNopLogger(),
 		db,
@@ -67,8 +70,9 @@ func setup(t *testing.T, ps *PrivSigner, withGenesis bool, invCheckPeriod uint) 
 		map[int64]bool{},
 		invCheckPeriod,
 		ps,
-		EmptyAppOptions{},
+		appOptions,
 		EmptyWasmOpts,
+		baseAppOpts...,
 	)
 	if withGenesis {
 		return app, app.DefaultGenesis()

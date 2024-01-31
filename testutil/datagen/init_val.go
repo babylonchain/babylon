@@ -2,15 +2,17 @@ package datagen
 
 import (
 	"fmt"
-	"github.com/babylonchain/babylon/crypto/bls12381"
-	"github.com/babylonchain/babylon/privval"
+	"path/filepath"
+
 	cfg "github.com/cometbft/cometbft/config"
-	tmed25519 "github.com/cometbft/cometbft/crypto/ed25519"
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmted25519 "github.com/cometbft/cometbft/crypto/ed25519"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/p2p"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/go-bip39"
-	"path/filepath"
+
+	"github.com/babylonchain/babylon/crypto/bls12381"
+	"github.com/babylonchain/babylon/privval"
 )
 
 // InitializeNodeValidatorFiles creates private validator and p2p configuration files.
@@ -31,12 +33,12 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 	nodeID = string(nodeKey.ID())
 
 	pvKeyFile := config.PrivValidatorKeyFile()
-	if err := tmos.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
+	if err := cmtos.EnsureDir(filepath.Dir(pvKeyFile), 0777); err != nil {
 		return "", nil, err
 	}
 
 	pvStateFile := config.PrivValidatorStateFile()
-	if err := tmos.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
+	if err := cmtos.EnsureDir(filepath.Dir(pvStateFile), 0777); err != nil {
 		return "", nil, err
 	}
 
@@ -44,7 +46,7 @@ func InitializeNodeValidatorFilesFromMnemonic(config *cfg.Config, mnemonic strin
 	if len(mnemonic) == 0 {
 		filePV = privval.LoadOrGenWrappedFilePV(pvKeyFile, pvStateFile)
 	} else {
-		privKey := tmed25519.GenPrivKeyFromSecret([]byte(mnemonic))
+		privKey := cmted25519.GenPrivKeyFromSecret([]byte(mnemonic))
 		blsPrivKey := bls12381.GenPrivKeyFromSecret([]byte(mnemonic))
 		filePV = privval.NewWrappedFilePV(privKey, blsPrivKey, pvKeyFile, pvStateFile)
 	}

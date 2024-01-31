@@ -18,20 +18,23 @@ import (
 const defaultInjectedTxIndex = 0
 
 type ProposalHandler struct {
-	logger         log.Logger
-	ckptKeeper     *keeper.Keeper
-	valStore       baseapp.ValidatorStore
-	txVerifier     baseapp.ProposalTxVerifier
-	defaultHandler *baseapp.DefaultProposalHandler
+	logger                        log.Logger
+	ckptKeeper                    *keeper.Keeper
+	valStore                      baseapp.ValidatorStore
+	txVerifier                    baseapp.ProposalTxVerifier
+	defaultPrepareProposalHandler sdk.PrepareProposalHandler
+	defaultProcessProposalHandler sdk.ProcessProposalHandler
 }
 
 func NewProposalHandler(logger log.Logger, ckptKeeper *keeper.Keeper, mp mempool.Mempool, txVerifier baseapp.ProposalTxVerifier) *ProposalHandler {
+	defaultHandler := baseapp.NewDefaultProposalHandler(mp, txVerifier)
 	return &ProposalHandler{
-		logger:         logger,
-		ckptKeeper:     ckptKeeper,
-		valStore:       ckptKeeper,
-		txVerifier:     txVerifier,
-		defaultHandler: baseapp.NewDefaultProposalHandler(mp, txVerifier),
+		logger:                        logger,
+		ckptKeeper:                    ckptKeeper,
+		valStore:                      ckptKeeper,
+		txVerifier:                    txVerifier,
+		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
+		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
 	}
 }
 
@@ -49,7 +52,7 @@ func (h *ProposalHandler) SetHandlers(bApp *baseapp.BaseApp) {
 func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (*abci.ResponsePrepareProposal, error) {
 		// call default handler first to do basic validation
-		res, err := h.defaultHandler.PrepareProposalHandler()(ctx, req)
+		res, err := h.defaultPrepareProposalHandler(ctx, req)
 		if err != nil {
 			return nil, fmt.Errorf("failed in default PrepareProposal handler: %w", err)
 		}
@@ -202,74 +205,61 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 		// BLS signatures are sent in the last block of the previous epoch,
 		// so they should be aggregated in the first block of the new epoch
 		// and no BLS signatures are send in epoch 0
-		if !epoch.IsVoteExtensionProposal(ctx) {
-			res, err := h.defaultHandler.ProcessProposalHandler()(ctx, req)
+		if epoch.IsVoteExtensionProposal(ctx) {
+			// 1. extract the special tx containing the checkpoint
+			injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
 			if err != nil {
-				return resReject, fmt.Errorf("failed in default ProcessProposal handler: %w", err)
-			}
-			return res, nil
-		}
-
-		// 1. extract the special tx containing the checkpoint
-		injectedTx, err := getInjectedTx(req.Txs)
-		if err != nil {
-			h.logger.Error("cannot get injected tx", "err", err)
-			return resReject, nil
-		}
-		var injectedCkpt ckpttypes.InjectedCheckpoint
-		if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
-			h.logger.Error("failed to decode injected vote extension tx", "err", err)
-			// should not return error here as error will cause panic
-			return resReject, nil
-		}
-
-		// 2. verify the validity of the vote extension (2/3 majority is achieved)
-		err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
-		if err != nil {
-			// the returned err will lead to panic as something very wrong happened during consensus
-			return resReject, err
-		}
-
-		// 3. rebuild the checkpoint from vote extensions and compare it with
-		// the injected checkpoint
-		// Note: this is needed because LastBlockID is not available here so that
-		// we can't verify whether the injected checkpoint is signing the correct
-		// LastBlockID
-		ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
-		// TODO it is possible that although the checkpoints do not match but the injected
-		//  checkpoint is still valid. This indicates the existence of a fork (>1/3 malicious voting power)
-		//  and we should probably send an alarm and stall the blockchain
-		if !ckpt.Equal(injectedCkpt.Ckpt) {
-			// should not return error here as error will cause panic
-			h.logger.Error("invalid checkpoint in vote extension tx", "err", err)
-			return resReject, nil
-		}
-
-		// 4. verify the rest of the txs (copied from the default process proposal handler)
-		// https://github.com/cosmos/cosmos-sdk/blob/9814f684b9dd7e384064ca86876688c05e685e54/baseapp/abci_utils.go#L260
-		var (
-			totalTxGas  uint64
-			maxBlockGas int64
-		)
-		if b := ctx.ConsensusParams().Block; b != nil {
-			maxBlockGas = b.MaxGas
-		}
-		for _, txBytes := range req.Txs[1:] {
-			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBytes)
-			if err != nil {
+				h.logger.Error("cannot get injected checkpoint", "err", err)
+				// should not return error here as error will cause panic
 				return resReject, nil
 			}
 
-			if maxBlockGas > 0 {
-				gasTx, ok := tx.(baseapp.GasTx)
-				if ok {
-					totalTxGas += gasTx.GetGas()
-				}
-
-				if totalTxGas > uint64(maxBlockGas) {
-					return resReject, nil
-				}
+			// 2. remove the special tx from the request so that
+			// the rest of the txs can be handled by the default handler
+			req.Txs, err = removeInjectedTx(req.Txs)
+			if err != nil {
+				// should not return error here as error will cause panic
+				h.logger.Error("failed to remove injected tx from request: %w", err)
+				return resReject, nil
 			}
+
+			// 3. verify the validity of the vote extension (2/3 majority is achieved)
+			err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
+			if err != nil {
+				// the returned err will lead to panic as something very wrong happened during consensus
+				return resReject, err
+			}
+
+			// 4. rebuild the checkpoint from vote extensions and compare it with
+			// the injected checkpoint
+			// Note: this is needed because LastBlockID is not available here so that
+			// we can't verify whether the injected checkpoint is signing the correct
+			// LastBlockID
+			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
+			if err != nil {
+				// should not return error here as error will cause panic
+				h.logger.Error("invalid vote extensions: %w", err)
+				return resReject, nil
+			}
+			// TODO it is possible that although the checkpoints do not match but the injected
+			//  checkpoint is still valid. This indicates the existence of a fork (>1/3 malicious voting power)
+			//  and we should probably send an alarm and stall the blockchain
+			if !ckpt.Equal(injectedCkpt.Ckpt) {
+				// should not return error here as error will cause panic
+				h.logger.Error("invalid checkpoint in vote extension tx", "err", err)
+				return resReject, nil
+			}
+		}
+
+		// 5. verify the rest of the txs using the default handler
+		res, err := h.defaultProcessProposalHandler(ctx, req)
+		if err != nil {
+			return resReject, fmt.Errorf("failed in default ProcessProposal handler: %w", err)
+		}
+		if !res.IsAccepted() {
+			h.logger.Error("the proposal is rejected by default ProcessProposal handler",
+				"height", req.Height, "epoch", epoch.EpochNumber)
+			return resReject, nil
 		}
 
 		return resAccept, nil
@@ -293,17 +283,13 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 		}
 
 		// 1. extract the special tx containing BLS sigs
-		injectedTx, err := getInjectedTx(req.Txs)
+		injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
 		if err != nil {
-			return res, err
-		}
-		var ckpt ckpttypes.InjectedCheckpoint
-		if err := ckpt.Unmarshal(injectedTx); err != nil {
-			return res, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
+			return res, fmt.Errorf("failed to get extract injected checkpoint from the tx set: %w", err)
 		}
 
 		// 2. update checkpoint
-		if err := k.SealCheckpoint(ctx, ckpt.Ckpt); err != nil {
+		if err := k.SealCheckpoint(ctx, injectedCkpt.Ckpt); err != nil {
 			return res, fmt.Errorf("failed to update checkpoint: %w", err)
 		}
 
@@ -311,14 +297,33 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 	}
 }
 
-func getInjectedTx(txs [][]byte) ([]byte, error) {
-	if len(txs) == 0 {
-		return nil, fmt.Errorf("the proposal does not contain the checkpoint")
+// extractInjectedCheckpoint extracts the injected checkpoint from the tx set
+func extractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, error) {
+	if len(txs) < defaultInjectedTxIndex+1 {
+		return nil, fmt.Errorf("the tx set does not contain the injected tx")
 	}
 
-	if len(txs[defaultInjectedTxIndex]) == 0 {
+	injectedTx := txs[defaultInjectedTxIndex]
+
+	if len(injectedTx) == 0 {
 		return nil, fmt.Errorf("err in PreBlocker: the injected vote extensions tx is empty")
 	}
 
-	return txs[defaultInjectedTxIndex], nil
+	var injectedCkpt ckpttypes.InjectedCheckpoint
+	if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
+		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
+	}
+
+	return &injectedCkpt, nil
+}
+
+// removeInjectedTx removes the injected tx from the tx set
+func removeInjectedTx(txs [][]byte) ([][]byte, error) {
+	if len(txs) < defaultInjectedTxIndex+1 {
+		return nil, fmt.Errorf("the tx set does not contain the injected tx")
+	}
+
+	txs = append(txs[:defaultInjectedTxIndex], txs[defaultInjectedTxIndex+1:]...)
+
+	return txs, nil
 }
