@@ -297,6 +297,49 @@ func isSupportedAddressAndWitness(
 	return nil, fmt.Errorf("unsupported bip322 address type. Only supported options are p2wpkh and p2tr bip86 key spending path")
 }
 
+func VerifyBIP322SigPop(
+	msg []byte,
+	address string,
+	signature []byte,
+	pubKeyNoCoord []byte,
+	net *chaincfg.Params,
+) error {
+	witness, err := bip322.SimpleSigToWitness(signature)
+	if err != nil {
+		return err
+	}
+
+	btcAddress, err := btcutil.DecodeAddress(address, net)
+	if err != nil {
+		return err
+	}
+
+	// we check whether address and witness are valid for proof of possession verification
+	// before verifying bip322 signature. This is require to avoid cases in which
+	// we receive some long running btc script to execute (like taproot script with 100 signatures)
+	stakerKeyMatchesBtcAddressFn, err := isSupportedAddressAndWitness(btcAddress, witness, net)
+	if err != nil {
+		return err
+	}
+
+	if err := bip322.Verify(msg, witness, btcAddress, net); err != nil {
+		return err
+	}
+
+	key, err := bbn.NewBIP340PubKey(pubKeyNoCoord)
+
+	if err != nil {
+		return err
+	}
+
+	// rule 3: verify bip322Sig.Address corresponds to bip340PK
+	if err := stakerKeyMatchesBtcAddressFn(key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // VerifyBIP322 verifies the validity of PoP where Bitcoin signature is in BIP-322
 // after decoding pop.BtcSig to bip322Sig which contains sig and address,
 // 1. verify whether bip322 address and witness are valid for proof of possession verification
