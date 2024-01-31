@@ -297,6 +297,16 @@ func isSupportedAddressAndWitness(
 	return nil, fmt.Errorf("unsupported bip322 address type. Only supported options are p2wpkh and p2tr bip86 key spending path")
 }
 
+// VerifyBIP322SigPop verifies bip322 `signature` over `msg` and also checks whether
+// `address` corresponds to `pubKeyNoCoord` in the given network.
+// It supports only two type of addresses:
+// 1. p2wpkh address
+// 2. p2tr address which is defined in bip88
+// Parameters:
+// - msg: message which was signed
+// - address: address which was used to sign the message
+// - signature: bip322 signature over the message
+// - pubKeyNoCoord: public key in 32 bytes format which was used to derive address
 func VerifyBIP322SigPop(
 	msg []byte,
 	address string,
@@ -304,6 +314,10 @@ func VerifyBIP322SigPop(
 	pubKeyNoCoord []byte,
 	net *chaincfg.Params,
 ) error {
+	if len(msg) == 0 || len(address) == 0 || len(signature) == 0 || len(pubKeyNoCoord) == 0 {
+		return fmt.Errorf("cannot verfiy bip322 signature. One of the required parameters is empty")
+	}
+
 	witness, err := bip322.SimpleSigToWitness(signature)
 	if err != nil {
 		return err
@@ -317,6 +331,12 @@ func VerifyBIP322SigPop(
 	// we check whether address and witness are valid for proof of possession verification
 	// before verifying bip322 signature. This is require to avoid cases in which
 	// we receive some long running btc script to execute (like taproot script with 100 signatures)
+	// for proof of possession, we only support two types of cases:
+	// 1. address is p2wpkh address
+	// 2. address is p2tr address and we are dealing with bip86 (https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki)
+	// key spending path.
+	// In those two cases we are able to link bip340PK public key to the btc address
+	// used in bip322 signature verification.
 	stakerKeyMatchesBtcAddressFn, err := isSupportedAddressAndWitness(btcAddress, witness, net)
 	if err != nil {
 		return err
@@ -342,63 +362,43 @@ func VerifyBIP322SigPop(
 
 // VerifyBIP322 verifies the validity of PoP where Bitcoin signature is in BIP-322
 // after decoding pop.BtcSig to bip322Sig which contains sig and address,
-// 1. verify whether bip322 address and witness are valid for proof of possession verification
-// 2. verify(sig=bip322Sig.Sig, address=bip322Sig.Address, msg=pop.BabylonSig)?
-// 3. verify(sig=pop.BabylonSig, pubkey=babylonPK, msg=bip340PK)?
-// 4. verify pop.Address corresponds to bip340PK in the given network
+// 1. verify whether bip322 pop signature where msg=pop.BabylonSig
+// 2. verify(sig=pop.BabylonSig, pubkey=babylonPK, msg=bip340PK)?
 func (pop *ProofOfPossession) VerifyBIP322(babylonPK cryptotypes.PubKey, bip340PK *bbn.BIP340PubKey, net *chaincfg.Params) error {
 	if pop.BtcSigType != BTCSigType_BIP322 {
 		return fmt.Errorf("the Bitcoin signature in this proof of possession is not using BIP-322 encoding")
 	}
-
 	// unmarshal pop.BtcSig to bip322Sig
 	var bip322Sig BIP322Sig
 	if err := bip322Sig.Unmarshal(pop.BtcSig); err != nil {
 		return nil
 	}
 
-	witness, err := bip322.SimpleSigToWitness(bip322Sig.Sig)
-	if err != nil {
-		return err
-	}
-
-	btcAddress, err := btcutil.DecodeAddress(bip322Sig.Address, net)
-	if err != nil {
-		return err
-	}
-
-	// we check whether address and witness are valid for proof of possession verification
-	// before verifying bip322 signature. This is require to avoid cases in which
-	// we receive some long running btc script to execute (like taproot script with 100 signatures)
-	stakerKeyMatchesBtcAddressFn, err := isSupportedAddressAndWitness(btcAddress, witness, net)
-	if err != nil {
-		return err
-	}
-
-	// for proof of possession, we only support two types of cases:
-	// 1. address is p2wpkh address
-	// 2. address is p2tr address and we are dealing with bip86 (https://github.com/bitcoin/bips/blob/master/bip-0086.mediawiki)
-	// key spending path.
-	// In those two cases we are able to link bip340PK public key to the btc address
-	// used in bip322 signature verification.
-
-	// rule 1: verify(sig=bip322Sig.Sig, address=bip322Sig.Address, msg=pop.BabylonSig)?
 	// TODO: temporary solution for MVP purposes.
 	// Eventually we need to use tmhash.Sum(pop.BabylonSig) rather than bbnSigHashHexBytes
 	// ref: https://github.com/babylonchain/babylon/issues/433
 	bbnSigHashHexBytes := babylonSigToHexHash(pop.BabylonSig)
-	if err := bip322.Verify(bbnSigHashHexBytes, witness, btcAddress, net); err != nil {
+
+	btcKeyBytes, err := bip340PK.Marshal()
+
+	if err != nil {
+		return err
+	}
+
+	// 1. Verify Bip322 proof of possession signature
+	if err := VerifyBIP322SigPop(
+		bbnSigHashHexBytes,
+		bip322Sig.Address,
+		bip322Sig.Sig,
+		btcKeyBytes,
+		net,
+	); err != nil {
 		return err
 	}
 
 	// rule 2: verify(sig=pop.BabylonSig, pubkey=pk_babylon, msg=pk_btc)?
 	if !babylonPK.VerifySignature(*bip340PK, pop.BabylonSig) {
 		return fmt.Errorf("failed to verify pop.BabylonSig")
-	}
-
-	// rule 3: verify bip322Sig.Address corresponds to bip340PK
-	if err := stakerKeyMatchesBtcAddressFn(bip340PK); err != nil {
-		return err
 	}
 
 	return nil
