@@ -54,6 +54,21 @@ func FilterTopNFinalityProviders(fps []*FinalityProviderWithMeta, n uint32) []*F
 	return fps[:n]
 }
 
+func ExistsDupBytes(btcPKs [][]byte) bool {
+	seen := make(map[string]struct{})
+
+	for _, btcPK := range btcPKs {
+		pkStr := string(btcPK)
+		if _, found := seen[pkStr]; found {
+			return true
+		} else {
+			seen[pkStr] = struct{}{}
+		}
+	}
+
+	return false
+}
+
 func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {
 	seen := make(map[string]struct{})
 

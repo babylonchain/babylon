@@ -34,7 +34,7 @@ func GenRandomMsgCommitPubRandList(r *rand.Rand, sk *btcec.PrivateKey, startHeig
 
 	msg := &ftypes.MsgCommitPubRandList{
 		Signer:      GenRandomAccount().Address,
-		FpBtcPk:     bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+		FpBtcPk:     bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()).MustMarshal(),
 		StartHeight: startHeight,
 		PubRandList: prList,
 	}

@@ -187,7 +187,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 		evidence, err := fKeeper.GetEvidence(ctx, fpBTCPK, blockHeight)
 		require.NoError(t, err)
 		require.Equal(t, msg2.BlockHeight, evidence.BlockHeight)
-		require.Equal(t, msg2.FpBtcPk.MustMarshal(), evidence.FpBtcPk.MustMarshal())
+		require.Equal(t, msg2.FpBtcPk, evidence.FpBtcPk.MustMarshal())
 		require.Equal(t, msg2.BlockAppHash, evidence.ForkAppHash)
 		require.Equal(t, msg2.FinalitySig.MustMarshal(), evidence.ForkFinalitySig.MustMarshal())
 		// extract the SK and assert the extracted SK is correct

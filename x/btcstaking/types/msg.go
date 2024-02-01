@@ -83,7 +83,7 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 		return ErrEmptyFpList
 	}
 	// Ensure list of finality provider BTC PKs is not duplicated
-	if ExistsDup(m.FpBtcPkList) {
+	if ExistsDupBytes(m.FpBtcPkList) {
 		return ErrDuplicatedFp
 	}
 

@@ -238,7 +238,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 				Signer:                        clientCtx.FromAddress.String(),
 				BabylonPk:                     &babylonPK,
 				BtcPk:                         btcPK,
-				FpBtcPkList:                   []bbn.BIP340PubKey{*fpPK},
+				FpBtcPkList:                   [][]byte{*fpPK},
 				Pop:                           pop,
 				StakingTime:                   uint32(stakingTime),
 				StakingValue:                  int64(stakingValue),
@@ -275,7 +275,7 @@ func NewAddCovenantSigsCmd() *cobra.Command {
 				return err
 			}
 
-			covPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			covPK, err := hex.DecodeString(args[0])
 			if err != nil {
 				return fmt.Errorf("invalid public key: %w", err)
 			}

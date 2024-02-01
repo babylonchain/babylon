@@ -12,6 +12,8 @@ import (
 	"github.com/babylonchain/babylon/x/finality/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type msgServer struct {
@@ -48,7 +50,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the finality provider exists
-	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk.MustMarshal())
+	fp, err := ms.BTCStakingKeeper.GetFinalityProvider(ctx, req.FpBtcPk)
 	if err != nil {
 		return nil, err
 	}
@@ -77,9 +79,12 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	if req.FpBtcPk == nil {
 		return nil, types.ErrInvalidFinalitySig.Wrap("empty finality provider BTC PK")
 	}
-	fpPK := req.FpBtcPk
-	if ms.BTCStakingKeeper.GetVotingPower(ctx, fpPK.MustMarshal(), req.BlockHeight) == 0 {
-		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %v does not have voting power at height %d", fpPK.MustMarshal(), req.BlockHeight)
+	fpPK, err := bbn.NewBIP340PubKey(req.FpBtcPk)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	if ms.BTCStakingKeeper.GetVotingPower(ctx, *fpPK, req.BlockHeight) == 0 {
+		return nil, types.ErrInvalidFinalitySig.Wrapf("the finality provider %v does not have voting power at height %d", fpPK, req.BlockHeight)
 	}
 
 	// ensure the finality provider has not cast the same vote yet
@@ -116,7 +121,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 		// construct evidence
 		evidence := &types.Evidence{
-			FpBtcPk:              req.FpBtcPk,
+			FpBtcPk:              fpPK,
 			BlockHeight:          req.BlockHeight,
 			PubRand:              pubRand,
 			CanonicalAppHash:     indexedBlock.AppHash,
@@ -132,7 +137,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 			evidence.CanonicalFinalitySig = canonicalSig
 			// slash this finality provider, including setting its voting power to
 			// zero, extracting its BTC SK, and emit an event
-			ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+			ms.slashFinalityProvider(ctx, fpPK, evidence)
 		}
 
 		// save evidence
@@ -148,12 +153,12 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 	// if this finality provider has signed the canonical block before,
 	// slash it via extracting its secret key, and emit an event
-	if ms.HasEvidence(ctx, req.FpBtcPk, req.BlockHeight) {
+	if ms.HasEvidence(ctx, fpPK, req.BlockHeight) {
 		// the finality provider has voted for a fork before!
 		// If this evidence is at the same height as this signature, slash this finality provider
 
 		// get evidence
-		evidence, err := ms.GetEvidence(ctx, req.FpBtcPk, req.BlockHeight)
+		evidence, err := ms.GetEvidence(ctx, fpPK, req.BlockHeight)
 		if err != nil {
 			panic(fmt.Errorf("failed to get evidence despite HasEvidence returns true"))
 		}
@@ -164,7 +169,7 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 		// slash this finality provider, including setting its voting power to
 		// zero, extracting its BTC SK, and emit an event
-		ms.slashFinalityProvider(ctx, req.FpBtcPk, evidence)
+		ms.slashFinalityProvider(ctx, fpPK, evidence)
 	}
 
 	return &types.MsgAddFinalitySigResponse{}, nil
@@ -182,23 +187,24 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// ensure the finality provider is registered
-	if req.FpBtcPk == nil {
-		return nil, types.ErrInvalidPubRand.Wrap("empty finality provider public key")
+	fpPK, err := bbn.NewBIP340PubKey(req.FpBtcPk)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
-	fpBTCPKBytes := req.FpBtcPk.MustMarshal()
+	fpBTCPKBytes := req.FpBtcPk
 	if !ms.BTCStakingKeeper.HasFinalityProvider(ctx, fpBTCPKBytes) {
 		return nil, bstypes.ErrFpNotFound.Wrapf("the finality provider with BTC PK %v is not registered", fpBTCPKBytes)
 	}
 
 	// this finality provider has not commit any public randomness,
 	// commit the given public randomness list and return
-	if ms.IsFirstPubRand(ctx, req.FpBtcPk) {
-		ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
+	if ms.IsFirstPubRand(ctx, fpPK) {
+		ms.SetPubRandList(ctx, fpPK, req.StartHeight, req.PubRandList)
 		return &types.MsgCommitPubRandListResponse{}, nil
 	}
 
 	// ensure height and req.StartHeight do not overlap, i.e., height < req.StartHeight
-	height, _, err := ms.GetLastPubRand(ctx, req.FpBtcPk)
+	height, _, err := ms.GetLastPubRand(ctx, fpPK)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +218,7 @@ func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommi
 	}
 
 	// all good, commit the given public randomness list
-	ms.SetPubRandList(ctx, req.FpBtcPk, req.StartHeight, req.PubRandList)
+	ms.SetPubRandList(ctx, fpPK, req.StartHeight, req.PubRandList)
 	return &types.MsgCommitPubRandListResponse{}, nil
 }
 

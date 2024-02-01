@@ -47,7 +47,7 @@ func NewCommitPubRandListCmd() *cobra.Command {
 			}
 
 			// get finality provider BTC PK
-			fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			fpBTCPK, err := hex.DecodeString(args[0])
 			if err != nil {
 				return err
 			}
@@ -107,7 +107,7 @@ func NewAddFinalitySigCmd() *cobra.Command {
 			}
 
 			// get finality provider BTC PK
-			fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(args[0])
+			fpBTCPK, err := hex.DecodeString(args[0])
 			if err != nil {
 				return err
 			}

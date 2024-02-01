@@ -27,7 +27,8 @@ message MsgAddFinalitySig {
 
     string signer = 1;
     // fp_btc_pk is the BTC PK of the finality provider that casts this vote
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // the PK should follow encoding in BIP-340 spec
+    bytes fp_btc_pk = 2;
     // block_height is the height of the voted block
     uint64 block_height = 3;
     // block_app_hash is the AppHash of the voted block
@@ -47,7 +48,8 @@ message MsgCommitPubRandList {
 
     string signer = 1;
     // fp_btc_pk is the BTC PK of the finality provider that commits the public randomness
-    bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // the PK should follow encoding in BIP-340 spec
+    bytes fp_btc_pk = 2;
     // start_height is the start block height of the list of public randomness
     uint64 start_height = 3;
     // pub_rand_list is the list of public randomness

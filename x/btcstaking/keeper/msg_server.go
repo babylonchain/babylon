@@ -142,7 +142,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// Ensure all finality providers are known to Babylon
 	for _, fpBTCPK := range req.FpBtcPkList {
 		if !ms.HasFinalityProvider(ctx, fpBTCPK) {
-			return nil, types.ErrFpNotFound.Wrapf("finality provider pk: %s", fpBTCPK.MarshalHex())
+			return nil, types.ErrFpNotFound.Wrapf("finality provider pk: %v", fpBTCPK)
 		}
 	}
 
@@ -160,7 +160,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	}
 
 	// Check if data provided in request, matches data to which staking tx is committed
-	fpPKs, err := bbn.NewBTCPKsFromBIP340PKs(req.FpBtcPkList)
+	fpPKs, err := bbn.NewBIP340PKsFromByteArray(req.FpBtcPkList)
+	if err != nil {
+		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse finality provider PK list: %v", err)
+	}
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(fpPKs)
 	if err != nil {
 		return nil, types.ErrInvalidStakingTx.Wrapf("cannot parse finality provider PK list: %v", err)
 	}
@@ -172,7 +176,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
 		delBTCPK,
-		fpPKs,
+		fpBTCPKs,
 		covenantPKs,
 		params.CovenantQuorum,
 		uint16(req.StakingTime),
@@ -266,7 +270,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		BabylonPk:        req.BabylonPk,
 		BtcPk:            delPK,
 		Pop:              req.Pop,
-		FpBtcPkList:      req.FpBtcPkList,
+		FpBtcPkList:      fpPKs,
 		StartHeight:      startHeight,
 		EndHeight:        endHeight,
 		TotalSat:         uint64(stakingInfo.StakingOutput.Value),
@@ -305,7 +309,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// building unbonding info
 	unbondingInfo, err := btcstaking.BuildUnbondingInfo(
 		newBTCDel.BtcPk.MustToBTCPK(),
-		fpPKs,
+		fpBTCPKs,
 		covenantPKs,
 		params.CovenantQuorum,
 		validatedUnbondingTime,
@@ -400,6 +404,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	pk, err := bbn.NewBIP340PubKey(req.Pk)
+
 	params := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
@@ -409,8 +415,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// ensure that the given covenant PK is in the parameter
-	if !params.HasCovenantPK(req.Pk) {
-		return nil, types.ErrInvalidCovenantPK.Wrapf("covenant pk: %s", req.Pk.MarshalHex())
+	if !params.HasCovenantPK(pk) {
+		return nil, types.ErrInvalidCovenantPK.Wrapf("covenant pk: %v", req.Pk)
 	}
 
 	// Note: we assume the order of adaptor sigs is matched to the
@@ -439,7 +445,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	err = btcDel.SlashingTx.EncVerifyAdaptorSignatures(
 		stakingInfo.StakingOutput,
 		slashingSpendInfo,
-		req.Pk,
+		pk,
 		btcDel.FpBtcPkList,
 		req.SlashingTxSigs,
 	)
@@ -477,7 +483,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		stakingInfo.StakingOutput.PkScript,
 		stakingInfo.StakingOutput.Value,
 		unbondingSpendInfo.GetPkScriptPath(),
-		req.Pk.MustToBTCPK(),
+		pk.MustToBTCPK(),
 		*req.UnbondingTxSig,
 	); err != nil {
 		return nil, types.ErrInvalidCovenantSig.Wrap(err.Error())
@@ -500,7 +506,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	err = btcDel.BtcUndelegation.SlashingTx.EncVerifyAdaptorSignatures(
 		unbondingOutput,
 		unbondingSlashingSpendInfo,
-		req.Pk,
+		pk,
 		btcDel.FpBtcPkList,
 		req.SlashingUnbondingTxSigs,
 	)
@@ -512,7 +518,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	if err := ms.AddCovenantSigsToBTCDelegation(
 		ctx,
 		req.StakingTxHash,
-		req.Pk,
+		pk,
 		req.SlashingTxSigs,
 		req.UnbondingTxSig,
 		req.SlashingUnbondingTxSigs,

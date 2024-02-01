@@ -133,13 +133,13 @@ func (n *NodeConfig) AddCovenantSigs(covPK *bbn.BIP340PubKey, stakingTxHash stri
 	n.LogActionF("successfully added covenant signatures")
 }
 
-func (n *NodeConfig) CommitPubRandList(fpBTCPK *bbn.BIP340PubKey, startHeight uint64, pubRandList []bbn.SchnorrPubRand, sig *bbn.BIP340Signature) {
+func (n *NodeConfig) CommitPubRandList(fpBTCPK []byte, startHeight uint64, pubRandList []bbn.SchnorrPubRand, sig *bbn.BIP340Signature) {
 	n.LogActionF("committing public randomness list")
 
 	cmd := []string{"babylond", "tx", "finality", "commit-pubrand-list"}
 
 	// add finality provider BTC PK to cmd
-	fpBTCPKHex := fpBTCPK.MarshalHex()
+	fpBTCPKHex := hex.EncodeToString(fpBTCPK)
 	cmd = append(cmd, fpBTCPKHex)
 
 	// add start height to cmd

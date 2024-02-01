@@ -141,6 +141,18 @@ func NewBIP340PKsFromBTCPKs(btcPKs []*btcec.PublicKey) []BIP340PubKey {
 	return pks
 }
 
+func NewBIP340PKsFromByteArray(btcPKsBytes [][]byte) ([]BIP340PubKey, error) {
+	pks := make([]BIP340PubKey, 0, len(btcPKsBytes))
+	for _, btcPKBytes := range btcPKsBytes {
+		pk, err := NewBIP340PubKey(btcPKBytes)
+		if err != nil {
+			return nil, err
+		}
+		pks = append(pks, *pk)
+	}
+	return pks, nil
+}
+
 func SortBIP340PKs(keys []BIP340PubKey) []BIP340PubKey {
 	sortedPKs := make([]BIP340PubKey, len(keys))
 	copy(sortedPKs, keys)

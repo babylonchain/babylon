@@ -20,7 +20,7 @@ var (
 func NewMsgAddFinalitySig(signer string, sk *btcec.PrivateKey, sr *eots.PrivateRand, blockHeight uint64, blockHash []byte) (*MsgAddFinalitySig, error) {
 	msg := &MsgAddFinalitySig{
 		Signer:       signer,
-		FpBtcPk:      bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()),
+		FpBtcPk:      bbn.NewBIP340PubKeyFromBTCPK(sk.PubKey()).MustMarshal(),
 		BlockHeight:  blockHeight,
 		BlockAppHash: blockHash,
 	}
@@ -40,12 +40,12 @@ func (m *MsgAddFinalitySig) MsgToSign() []byte {
 
 func (m *MsgAddFinalitySig) VerifyEOTSSig(pubRand *bbn.SchnorrPubRand) error {
 	msgToSign := m.MsgToSign()
-	pk, err := m.FpBtcPk.ToBTCPK()
+	pk, err := bbn.NewBIP340PubKey(m.FpBtcPk)
 	if err != nil {
 		return err
 	}
 
-	return eots.Verify(pk, pubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
+	return eots.Verify(pk.MustToBTCPK(), pubRand.ToFieldVal(), msgToSign, m.FinalitySig.ToModNScalar())
 }
 
 // HashToSign returns a 32-byte hash of (start_height || pub_rand_list)
@@ -68,7 +68,7 @@ func (m *MsgCommitPubRandList) VerifySig() error {
 	if err != nil {
 		return err
 	}
-	pk, err := m.FpBtcPk.ToBTCPK()
+	pk, err := bbn.NewBIP340PubKey(m.FpBtcPk)
 	if err != nil {
 		return err
 	}
@@ -79,7 +79,7 @@ func (m *MsgCommitPubRandList) VerifySig() error {
 	if err != nil {
 		return err
 	}
-	if !schnorrSig.Verify(msgHash, pk) {
+	if !schnorrSig.Verify(msgHash, pk.MustToBTCPK()) {
 		return fmt.Errorf("failed to verify signature")
 	}
 	return nil

@@ -210,7 +210,7 @@ func (h *Helper) CreateDelegationCustom(
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
 		BtcPk:                         stPk.MustMarshal(),
-		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		FpBtcPkList:                   [][]byte{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
@@ -324,7 +324,7 @@ func (h *Helper) CreateCovenantSigs(
 	for i := 0; i < len(bsParams.CovenantPks); i++ {
 		msgAddCovenantSig := &types.MsgAddCovenantSigs{
 			Signer:                  msgCreateBTCDel.Signer,
-			Pk:                      covenantSlashingTxSigs[i].CovPk,
+			Pk:                      covenantSlashingTxSigs[i].CovPk.MustMarshal(),
 			StakingTxHash:           stakingTxHash,
 			SlashingTxSigs:          covenantSlashingTxSigs[i].AdaptorSigs,
 			UnbondingTxSig:          bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),

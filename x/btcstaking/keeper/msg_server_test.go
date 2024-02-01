@@ -437,7 +437,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
-		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+		FpBtcPkList:                   [][]byte{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()).MustMarshal(),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
