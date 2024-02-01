@@ -30,9 +30,12 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	// get value of w
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
+	// metrics for {active, inactive} finality providers, {pending, active,
+	// unbonded BTC delegations}, and total staked Bitcoins
+	// NOTE: slashed finality providers and BTC delegations are recorded upon
+	// slashing events rather than here
 	var (
 		numTotalFPs          = 0
-		numSlashedFPs        = 0
 		numStakedSats uint64 = 0
 		numDels              = map[types.BTCDelegationStatus]int{
 			types.BTCDelegationStatus_PENDING:  0,
@@ -60,7 +63,6 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 		}
 		if fp.IsSlashed() {
 			// slashed finality provider is removed from finality provider set
-			numSlashedFPs++
 			continue
 		}
 
