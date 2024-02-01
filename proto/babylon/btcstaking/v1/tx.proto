@@ -48,8 +48,8 @@ message MsgCreateFinalityProvider {
   // babylon_pk is the Babylon secp256k1 PK of this finality provider
   cosmos.crypto.secp256k1.PubKey babylon_pk = 4;
   // btc_pk is the Bitcoin secp256k1 PK of this finality provider
-  // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // the PK should follow encoding in BIP-340 spec
+  bytes btc_pk = 5;
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 6;
 }
@@ -66,7 +66,8 @@ message MsgCreateBTCDelegation {
   // pop is the proof of possession of babylon_pk and btc_pk
   ProofOfPossession pop = 3;
   // btc_pk is the Bitcoin secp256k1 PK of the BTC delegator
-  bytes btc_pk = 4 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // the PK should follow encoding in BIP-340 spec
+  bytes btc_pk = 4;
   // fp_btc_pk_list is the list of Bitcoin secp256k1 PKs of the finality providers, if there is more than one
   // finality provider pk it means that delegation is re-staked
   repeated bytes fp_btc_pk_list = 5 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];

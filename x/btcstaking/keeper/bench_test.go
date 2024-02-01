@@ -38,7 +38,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 			Description: fp.Description,
 			Commission:  fp.Commission,
 			BabylonPk:   fp.BabylonPk,
-			BtcPk:       fp.BtcPk,
+			BtcPk:       fp.BtcPk.MustMarshal(),
 			Pop:         fp.Pop,
 		}
 		_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)

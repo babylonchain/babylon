@@ -96,7 +96,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 			}
 
 			// get BTC PK
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
+			btcPK, err := hex.DecodeString(args[1])
 			if err != nil {
 				return err
 			}
@@ -158,8 +158,7 @@ func NewCreateBTCDelegationCmd() *cobra.Command {
 			}
 
 			// staker pk
-			btcPK, err := bbn.NewBIP340PubKeyFromHex(args[1])
-
+			btcPK, err := hex.DecodeString(args[1])
 			if err != nil {
 				return err
 			}

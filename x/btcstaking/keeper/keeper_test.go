@@ -99,7 +99,7 @@ func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec
 		Description: fp.Description,
 		Commission:  fp.Commission,
 		BabylonPk:   fp.BabylonPk,
-		BtcPk:       fp.BtcPk,
+		BtcPk:       fp.BtcPk.MustMarshal(),
 		Pop:         fp.Pop,
 	}
 	_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, &msgNewFp)
@@ -209,7 +209,7 @@ func (h *Helper) CreateDelegationCustom(
 	msgCreateBTCDel := &types.MsgCreateBTCDelegation{
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
-		BtcPk:                         stPk,
+		BtcPk:                         stPk.MustMarshal(),
 		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),

@@ -56,8 +56,14 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	// parse BTC PK
+	btcPK, err := bbn.NewBIP340PubKey(req.BtcPk)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
 	// verify proof of possession
-	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(req.BabylonPk, btcPK, ms.btcNet); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
@@ -71,7 +77,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	}
 
 	// ensure finality provider does not already exist
-	if ms.HasFinalityProvider(ctx, *req.BtcPk) {
+	if ms.HasFinalityProvider(ctx, *btcPK) {
 		return nil, types.ErrFpRegistered
 	}
 
@@ -80,7 +86,7 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		Description: req.Description,
 		Commission:  req.Commission,
 		BabylonPk:   req.BabylonPk,
-		BtcPk:       req.BtcPk,
+		BtcPk:       btcPK,
 		Pop:         req.Pop,
 	}
 	ms.SetFinalityProvider(ctx, &fp)
@@ -102,6 +108,13 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
+	// parse BTC PK
+	delPK, err := bbn.NewBIP340PubKey(req.BtcPk)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	delBTCPK := delPK.MustToBTCPK()
+
 	params := ms.GetParams(ctx)
 	btccParams := ms.btccKeeper.GetParams(ctx)
 	kValue, wValue := btccParams.BtcConfirmationDepth, btccParams.CheckpointFinalizationTimeout
@@ -122,7 +135,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	validatedUnbondingTime := uint16(req.UnbondingTime)
 
 	// verify proof of possession
-	if err := req.Pop.Verify(req.BabylonPk, req.BtcPk, ms.btcNet); err != nil {
+	if err := req.Pop.Verify(req.BabylonPk, delPK, ms.btcNet); err != nil {
 		return nil, types.ErrInvalidProofOfPossession.Wrapf("error while validating proof of posession: %v", err)
 	}
 
@@ -156,10 +169,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		// programming error
 		panic("failed to parse covenant PKs in KVStore")
 	}
-	stakerPk := req.BtcPk.MustToBTCPK()
 
 	stakingInfo, err := btcstaking.BuildStakingInfo(
-		stakerPk,
+		delBTCPK,
 		fpPKs,
 		covenantPKs,
 		params.CovenantQuorum,
@@ -222,7 +234,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		params.MinSlashingTxFeeSat,
 		params.SlashingRate,
 		slashingAddr,
-		stakerPk,
+		delBTCPK,
 		validatedUnbondingTime,
 		ms.btcNet,
 	); err != nil {
@@ -239,7 +251,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		stakingInfo.StakingOutput.PkScript,
 		stakingInfo.StakingOutput.Value,
 		slashingSpendInfo.GetPkScriptPath(),
-		stakerPk,
+		delBTCPK,
 		req.DelegatorSlashingSig,
 	)
 	if err != nil {
@@ -252,7 +264,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// and 2) it receives a covenant signature
 	newBTCDel := &types.BTCDelegation{
 		BabylonPk:        req.BabylonPk,
-		BtcPk:            req.BtcPk,
+		BtcPk:            delPK,
 		Pop:              req.Pop,
 		FpBtcPkList:      req.FpBtcPkList,
 		StartHeight:      startHeight,
@@ -318,7 +330,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		params.MinSlashingTxFeeSat,
 		params.SlashingRate,
 		params.MustGetSlashingAddress(ms.btcNet),
-		stakerPk,
+		delBTCPK,
 		validatedUnbondingTime,
 		ms.btcNet,
 	)

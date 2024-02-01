@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"sort"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -16,8 +17,17 @@ const BIP340PubKeyLen = schnorr.PubKeyBytesLen
 
 func NewBIP340PubKey(data []byte) (*BIP340PubKey, error) {
 	var pk BIP340PubKey
+
 	err := pk.Unmarshal(data)
-	return &pk, err
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := pk.ToBTCPK(); err != nil {
+		return nil, err
+	}
+
+	return &pk, nil
 }
 
 func NewBIP340PubKeyFromHex(hexStr string) (*BIP340PubKey, error) {
@@ -84,6 +94,10 @@ func (pk BIP340PubKey) MarshalTo(data []byte) (int, error) {
 }
 
 func (pk *BIP340PubKey) Unmarshal(data []byte) error {
+	if len(data) != BIP340PubKeyLen {
+		return fmt.Errorf("malformed data for BIP340 public key")
+	}
+
 	*pk = data
 	return nil
 }

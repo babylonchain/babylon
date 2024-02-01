@@ -35,7 +35,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				Description: fp.Description,
 				Commission:  fp.Commission,
 				BabylonPk:   fp.BabylonPk,
-				BtcPk:       fp.BtcPk,
+				BtcPk:       fp.BtcPk.MustMarshal(),
 				Pop:         fp.Pop,
 			}
 			_, err = h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
@@ -56,7 +56,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 				Description: fp2.Description,
 				Commission:  fp2.Commission,
 				BabylonPk:   fp2.BabylonPk,
-				BtcPk:       fp2.BtcPk,
+				BtcPk:       fp2.BtcPk.MustMarshal(),
 				Pop:         fp2.Pop,
 			}
 			_, err := h.MsgServer.CreateFinalityProvider(h.Ctx, msg)
@@ -438,7 +438,7 @@ func TestDoNotAllowDelegationWithoutFinalityProvider(t *testing.T) {
 		Signer:                        signer,
 		BabylonPk:                     delBabylonPK.(*secp256k1.PubKey),
 		FpBtcPkList:                   []bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
-		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()),
+		BtcPk:                         bbn.NewBIP340PubKeyFromBTCPK(delSK.PubKey()).MustMarshal(),
 		Pop:                           pop,
 		StakingTime:                   uint32(stakingTimeBlocks),
 		StakingValue:                  stakingValue,
