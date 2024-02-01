@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/crypto/eots"
 	bbn "github.com/babylonchain/babylon/types"
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/finality/types"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
@@ -45,6 +47,8 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // AddFinalitySig adds a new vote to a given block
 func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinalitySig) (*types.MsgAddFinalitySigResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddFinalitySig)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the finality provider exists
@@ -172,6 +176,8 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 
 // CommitPubRandList commits a list of EOTS public randomness
 func (ms msgServer) CommitPubRandList(goCtx context.Context, req *types.MsgCommitPubRandList) (*types.MsgCommitPubRandListResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCommitPubRandList)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// ensure the request contains enough number of public randomness
