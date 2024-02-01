@@ -405,7 +405,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	pk, err := bbn.NewBIP340PubKey(req.Pk)
-
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
 	params := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists

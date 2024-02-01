@@ -18,11 +18,11 @@ const BIP340PubKeyLen = schnorr.PubKeyBytesLen
 func NewBIP340PubKey(data []byte) (*BIP340PubKey, error) {
 	var pk BIP340PubKey
 
+	// ensure the given data corresponds to a valid BTC PK
 	err := pk.Unmarshal(data)
 	if err != nil {
 		return nil, err
 	}
-
 	if _, err := pk.ToBTCPK(); err != nil {
 		return nil, err
 	}

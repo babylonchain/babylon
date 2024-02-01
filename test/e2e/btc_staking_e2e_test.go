@@ -338,8 +338,10 @@ func (s *BTCStakingTestSuite) Test3CommitPublicRandomnessAndSubmitFinalitySignat
 	// commit public randomness list
 	srList, msgCommitPubRandList, err := datagen.GenRandomMsgCommitPubRandList(r, fpBTCSK, activatedHeight, 100)
 	s.NoError(err)
+	fpBTCPK, err := bbn.NewBIP340PubKey(msgCommitPubRandList.FpBtcPk)
+	s.NoError(err)
 	nonValidatorNode.CommitPubRandList(
-		msgCommitPubRandList.FpBtcPk,
+		fpBTCPK,
 		msgCommitPubRandList.StartHeight,
 		msgCommitPubRandList.PubRandList,
 		msgCommitPubRandList.Sig,
