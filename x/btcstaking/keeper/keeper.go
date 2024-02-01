@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
+
+	corestoretypes "cosmossdk.io/core/store"
 
 	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/x/btcstaking/types"

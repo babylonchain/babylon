@@ -12,6 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	SatoshisPerBTC = 100_000_000
+)
+
 // RecordVotingPowerTable computes the voting power table at the current block height
 // and saves the power table to KVStore
 // triggered upon each EndBlock
@@ -26,10 +30,23 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	// get value of w
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
+	var (
+		numTotalFPs          = 0
+		numSlashedFPs        = 0
+		numStakedSats uint64 = 0
+		numDels              = map[types.BTCDelegationStatus]int{
+			types.BTCDelegationStatus_PENDING:  0,
+			types.BTCDelegationStatus_ACTIVE:   0,
+			types.BTCDelegationStatus_UNBONDED: 0,
+		}
+	)
+
 	// filter out all finality providers with positive voting power
 	activeFps := []*types.FinalityProviderWithMeta{}
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	for ; fpIter.Valid(); fpIter.Next() {
+		numTotalFPs++
+
 		fpBTCPKBytes := fpIter.Key()
 		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
 		if err != nil {
@@ -43,6 +60,7 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 		}
 		if fp.IsSlashed() {
 			// slashed finality provider is removed from finality provider set
+			numSlashedFPs++
 			continue
 		}
 
@@ -61,6 +79,12 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 				panic(err) // only programming error is possible
 			}
 			fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
+
+			// record metrics
+			numStakedSats += fpPower
+			for _, btcDel := range btcDels.Dels {
+				numDels[btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum)]++
+			}
 		}
 		btcDelIter.Close()
 
@@ -81,6 +105,16 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
 	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
+
+	// metrics for finality providers and total staked BTCs
+	types.RecordActiveFinalityProviders(len(activeFps))
+	types.RecordInactiveFinalityProviders(numTotalFPs - len(activeFps))
+	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
+	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
+	// metrics for BTC delegations (NOTE: slashed BTC delegations are recorded upon slashing)
+	for status, num := range numDels {
+		types.RecordBTCDelegations(num, status)
+	}
 
 	// set voting power for each active finality providers
 	for _, fp := range activeFps {
