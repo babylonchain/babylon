@@ -16,11 +16,21 @@ const (
 
 // Metrics for monitoring finality providers and BTC delegations
 const (
+	// MetricsKeyFinalityProviders is the key of the gauge recording the number
+	// of {active, inactive} finality providers, and the key of the counter
+	// recording the number of slashed finality providers
 	MetricsKeyFinalityProviders = "finality_providers"
-	MetricsKeyBTCDelegations    = "btc_delegations"
-	MetricsKeyStakedBitcoins    = "staked_bitcoins"
+	// MetricsKeyBTCDelegations is the key of the gauge recording the number of
+	// {pending, active, unbonded} BTC delegations, and the key of the counter
+	// recording the number of slashed BTC delegations
+	MetricsKeyBTCDelegations = "btc_delegations"
+	// MetricsKeyStakedBitcoins is the key of the gauge recording the total
+	// amount of Bitcoins staked under active finality providers
+	MetricsKeyStakedBitcoins = "staked_bitcoins"
 )
 
+// RecordActiveFinalityProviders records the number of active finality providers.
+// It is triggered upon recording voting power table.
 func RecordActiveFinalityProviders(num int) {
 	keys := []string{MetricsKeyFinalityProviders, "ACTIVE"}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
@@ -31,6 +41,8 @@ func RecordActiveFinalityProviders(num int) {
 	)
 }
 
+// RecordInactiveFinalityProviders records the number of inactive finality providers.
+// It is triggered upon recording voting power table.
 func RecordInactiveFinalityProviders(num int) {
 	keys := []string{MetricsKeyFinalityProviders, "INACTIVE"}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
@@ -41,6 +53,8 @@ func RecordInactiveFinalityProviders(num int) {
 	)
 }
 
+// RecordNewSlashedFinalityProvider increments the number slashed inactive finality providers.
+// It is triggered upon a finality provider becomes slashed.
 func RecordNewSlashedFinalityProvider() {
 	keys := []string{MetricsKeyFinalityProviders, "SLASHED"}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
@@ -51,6 +65,8 @@ func RecordNewSlashedFinalityProvider() {
 	)
 }
 
+// RecordBTCDelegations records the number of BTC delegations under the given status.
+// It is triggered upon recording voting power table.
 func RecordBTCDelegations(num int, status BTCDelegationStatus) {
 	keys := []string{MetricsKeyBTCDelegations, status.String()}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
@@ -61,6 +77,8 @@ func RecordBTCDelegations(num int, status BTCDelegationStatus) {
 	)
 }
 
+// RecordNewSlashedBTCDelegation increments the number of slashed BTC delegations.
+// It is triggered upon the corresponding finality provider is slashed.
 func RecordNewSlashedBTCDelegation() {
 	keys := []string{MetricsKeyBTCDelegations, "SLASHED"}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
@@ -71,6 +89,9 @@ func RecordNewSlashedBTCDelegation() {
 	)
 }
 
+// RecordMetricsKeyStakedBitcoins records the amount of Bitcoins staked under
+// all active finality providers.
+// It is triggered upon recording voting power table.
 func RecordMetricsKeyStakedBitcoins(amount float32) {
 	keys := []string{MetricsKeyStakedBitcoins}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
