@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"sort"
 
 	"github.com/btcsuite/btcd/btcec/v2"
@@ -84,6 +85,10 @@ func (pk BIP340PubKey) MarshalTo(data []byte) (int, error) {
 }
 
 func (pk *BIP340PubKey) Unmarshal(data []byte) error {
+	if len(data) != BIP340PubKeyLen {
+		return fmt.Errorf("malformed data for BIP340 public key")
+	}
+
 	*pk = data
 	return nil
 }
