@@ -51,13 +51,13 @@ func benchmarkCommitPubRandList(b *testing.B, numPubRand uint64) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		b.StopTimer() // Stop the timer to exclude measurement on GenRandomMsgCommitPubRandList
+		b.StopTimer()
 
 		startHeight := 1 + numPubRand*uint64(i)
 		_, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, startHeight, numPubRand)
 		require.NoError(b, err)
 
-		b.StartTimer() // Start the timer again to measure CommitPubRandList
+		b.StartTimer()
 
 		_, err = ms.CommitPubRandList(ctx, msg)
 		require.NoError(b, err)
