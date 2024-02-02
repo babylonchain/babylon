@@ -38,9 +38,6 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 	if len(m.BtcPk) == 0 {
 		return fmt.Errorf("empty BTC public key")
 	}
-	if _, err := m.BtcPk.ToBTCPK(); err != nil {
-		return fmt.Errorf("invalid BTC public key: %v", err)
-	}
 	if m.Pop == nil {
 		return fmt.Errorf("empty proof of possession")
 	}
@@ -63,9 +60,6 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 	}
 	if len(m.BtcPk) == 0 {
 		return fmt.Errorf("empty BTC public key")
-	}
-	if _, err := m.BtcPk.ToBTCPK(); err != nil {
-		return fmt.Errorf("invalid BTC public key: %v", err)
 	}
 	if m.StakingTx == nil {
 		return fmt.Errorf("empty staking tx info")
@@ -130,9 +124,6 @@ func (m *MsgCreateBTCDelegation) ValidateBasic() error {
 func (m *MsgAddCovenantSigs) ValidateBasic() error {
 	if m.Pk == nil {
 		return fmt.Errorf("empty BTC covenant public key")
-	}
-	if _, err := m.Pk.ToBTCPK(); err != nil {
-		return fmt.Errorf("invalid BTC public key: %v", err)
 	}
 	if m.SlashingTxSigs == nil {
 		return fmt.Errorf("empty covenant signatures on slashing tx")
