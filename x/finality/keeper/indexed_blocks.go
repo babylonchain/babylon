@@ -12,10 +12,10 @@ import (
 // IndexBlock indexes the current block, saves the corresponding indexed block
 // to KVStore
 func (k Keeper) IndexBlock(ctx context.Context) {
-	headerInfo := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
 	ib := &types.IndexedBlock{
-		Height:    uint64(headerInfo.Height),
-		AppHash:   headerInfo.AppHash,
+		Height:    uint64(header.Height),
+		AppHash:   header.AppHash,
 		Finalized: false,
 	}
 	k.SetBlock(ctx, ib)
