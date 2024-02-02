@@ -41,6 +41,7 @@ func benchmarkAddFinalitySig(b *testing.B) {
 	bsKeeper.EXPECT().GetVotingPower(gomock.Any(), gomock.Eq(fpBTCPKBytes), gomock.Any()).Return(uint64(1)).AnyTimes()
 
 	// commit enough public randomness
+	// TODO: generalise commit public randomness to allow arbitrary benchtime
 	srList, msg, err := datagen.GenRandomMsgCommitPubRandList(r, btcSK, 0, 100000)
 	require.NoError(b, err)
 	_, err = ms.CommitPubRandList(ctx, msg)

@@ -62,7 +62,11 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 
 	// tally a block
 	for i := int(activatedHeight); i < b.N; i++ {
+		b.StopTimer()
+
 		height := uint64(i)
+		// increment height in ctx
+		ctx = datagen.WithCtxHeight(ctx, height)
 		// index blocks
 		fKeeper.SetBlock(ctx, &types.IndexedBlock{
 			Height:    height,
@@ -77,6 +81,8 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 			require.NoError(b, err)
 			fKeeper.SetSig(ctx, height, votedFpPK, votedSig)
 		}
+
+		b.StartTimer()
 
 		fKeeper.TallyBlocks(ctx)
 	}
