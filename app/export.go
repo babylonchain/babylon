@@ -117,7 +117,7 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 	app.DistrKeeper.DeleteAllValidatorHistoricalRewards(ctx)
 
 	// set context height to zero
-	height := ctx.HeaderInfo().Height
+	height := ctx.BlockHeight()
 	headerInfo := ctx.HeaderInfo()
 	headerInfo.Height = 0
 	ctx = ctx.WithHeaderInfo(headerInfo)

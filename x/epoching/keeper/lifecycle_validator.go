@@ -20,7 +20,7 @@ func (k Keeper) RecordNewValState(ctx sdk.Context, valAddr sdk.ValAddress, state
 			ValLife: []*types.ValStateUpdate{},
 		}
 	}
-	height, time := ctx.HeaderInfo().Height, ctx.HeaderInfo().Time
+	height, time := ctx.BlockHeight(), ctx.HeaderInfo().Time
 	valStateUpdate := types.ValStateUpdate{
 		State:       state,
 		BlockHeight: uint64(height),

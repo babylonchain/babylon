@@ -23,7 +23,7 @@ func (k Keeper) HasSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340Pu
 }
 
 func (k Keeper) GetSig(ctx context.Context, height uint64, fpBtcPK *bbn.BIP340PubKey) (*bbn.SchnorrEOTSSig, error) {
-	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
+	if uint64(sdk.UnwrapSDKContext(ctx).BlockHeight()) < height {
 		return nil, types.ErrHeightTooHigh
 	}
 	store := k.voteStore(ctx, height)

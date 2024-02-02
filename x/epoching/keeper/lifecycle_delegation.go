@@ -21,7 +21,7 @@ func (k Keeper) RecordNewDelegationState(ctx context.Context, delAddr sdk.AccAdd
 		}
 	}
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height, time := sdkCtx.HeaderInfo().Height, sdkCtx.HeaderInfo().Time
+	height, time := sdkCtx.BlockHeight(), sdkCtx.HeaderInfo().Time
 	DelegationStateUpdate := types.DelegationStateUpdate{
 		State:       state,
 		ValAddr:     valAddr.String(),

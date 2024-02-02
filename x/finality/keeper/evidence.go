@@ -21,7 +21,7 @@ func (k Keeper) HasEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, heig
 }
 
 func (k Keeper) GetEvidence(ctx context.Context, fpBtcPK *bbn.BIP340PubKey, height uint64) (*types.Evidence, error) {
-	if uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height) < height {
+	if uint64(sdk.UnwrapSDKContext(ctx).BlockHeight()) < height {
 		return nil, types.ErrHeightTooHigh
 	}
 	store := k.evidenceStore(ctx, fpBtcPK)

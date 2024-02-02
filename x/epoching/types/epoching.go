@@ -46,7 +46,7 @@ func (e Epoch) GetSecondBlockHeight() uint64 {
 }
 
 func (e Epoch) IsLastBlock(ctx context.Context) bool {
-	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	return e.GetLastBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 }
 
 func (e Epoch) IsLastBlockByHeight(height int64) bool {
@@ -54,14 +54,14 @@ func (e Epoch) IsLastBlockByHeight(height int64) bool {
 }
 
 func (e Epoch) IsFirstBlock(ctx context.Context) bool {
-	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	return e.FirstBlockHeight == uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 }
 
 func (e Epoch) IsSecondBlock(ctx context.Context) bool {
 	if e.EpochNumber == 0 {
 		return false
 	}
-	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	return e.GetSecondBlockHeight() == uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 }
 
 func (e Epoch) IsVoteExtensionProposal(ctx context.Context) bool {
@@ -79,9 +79,9 @@ func (e Epoch) IsVoteExtensionProposal(ctx context.Context) bool {
 func (e Epoch) IsFirstBlockOfNextEpoch(ctx context.Context) bool {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if e.EpochNumber == 0 {
-		return sdkCtx.HeaderInfo().Height == 1
+		return sdkCtx.BlockHeight() == 1
 	} else {
-		height := uint64(sdkCtx.HeaderInfo().Height)
+		height := uint64(sdkCtx.BlockHeight())
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
 }

@@ -35,7 +35,7 @@ type Helper struct {
 
 func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper) *Helper {
 	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
-	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
+	ctx = ctx.WithHeaderInfo(header.Info{Height: 1}).WithBlockHeight(1)
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
 	return &Helper{

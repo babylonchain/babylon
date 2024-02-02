@@ -35,7 +35,7 @@ func (k Keeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
 // RecordAppHash stores the AppHash of the current header to KVStore
 func (k Keeper) RecordAppHash(ctx context.Context) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height := uint64(sdkCtx.HeaderInfo().Height)
+	height := uint64(sdkCtx.BlockHeight())
 	appHash := sdkCtx.HeaderInfo().AppHash
 	// HACK: the app hash for the first height is set to nil
 	// instead of the hash of an empty byte slice as intended

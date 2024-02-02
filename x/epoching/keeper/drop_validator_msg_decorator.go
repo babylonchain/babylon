@@ -27,9 +27,10 @@ func NewDropValidatorMsgDecorator(ek Keeper) *DropValidatorMsgDecorator {
 // - MsgCancelUnbondingDelegation
 func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (newCtx sdk.Context, err error) {
 	// skip if at genesis block, as genesis state contains txs that bootstrap the initial validator set
-	if ctx.HeaderInfo().Height == 0 {
+	if ctx.BlockHeight() == 0 {
 		return next(ctx, tx, simulate)
 	}
+	// BlockHeight()
 	// after genesis, if validator-related message, reject msg
 	for _, msg := range tx.GetMsgs() {
 		if qmd.IsValidatorRelatedMsg(msg) {

@@ -88,7 +88,7 @@ func (k Keeper) RecordSealerAppHashForPrevEpoch(ctx context.Context) *types.Epoc
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsFirstBlock(ctx) {
 		panic(fmt.Errorf("RecordSealerAppHashForPrevEpoch can only be invoked at the first header of a non-zero epoch. "+
-			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
+			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).BlockHeight()))
 	}
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 
@@ -112,7 +112,7 @@ func (k Keeper) RecordSealerBlockHashForEpoch(ctx context.Context) *types.Epoch 
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
 		panic(fmt.Errorf("RecordSealerBlockHashForEpoch can only be invoked at the last header of a non-zero epoch. "+
-			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
+			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).BlockHeight()))
 	}
 	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 
@@ -131,7 +131,7 @@ func (k Keeper) IncEpoch(ctx context.Context) types.Epoch {
 	incrementedEpochNumber := epochNumber + 1
 
 	epochInterval := k.GetParams(ctx).EpochInterval
-	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.HeaderInfo().Height), nil)
+	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.BlockHeight()), nil)
 	k.setEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
 
 	return newEpoch

@@ -4,7 +4,7 @@ import (
 	"context"
 	"math/rand"
 	"testing"
-
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"cosmossdk.io/core/header"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
@@ -156,7 +156,7 @@ func FuzzAddFinalitySig(f *testing.F) {
 
 		// Case 3: successful if the finality provider has voting power and has not casted this vote yet
 		// index this block first
-		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockHash})
+		ctx = ctx.WithHeaderInfo(header.Info{Height: int64(blockHeight), AppHash: blockHash}).WithBlockHeader(cmtproto.Header{Height: int64(blockHeight), AppHash: blockHash})
 		fKeeper.IndexBlock(ctx)
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
 		// add vote and it should work
