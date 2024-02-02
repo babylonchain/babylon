@@ -7,12 +7,11 @@ import (
 	"cosmossdk.io/core/header"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/cosmos/cosmos-sdk/types/query"
-	"github.com/stretchr/testify/require"
-
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	"github.com/babylonchain/babylon/x/epoching/types"
+	"github.com/cosmos/cosmos-sdk/types/query"
+	"github.com/stretchr/testify/require"
 )
 
 // FuzzParamsQuery fuzzes queryClient.Params
@@ -85,7 +84,7 @@ func FuzzCurrentEpoch(f *testing.F) {
 				Time:    randomHeader.Time,
 				ChainID: randomHeader.ChainID,
 			}
-			ctx = ctx.WithHeaderInfo(headerInfo)
+			ctx = ctx.WithHeaderInfo(headerInfo).WithBlockHeader(*randomHeader)
 			keeper.IncEpoch(ctx)
 		}
 		req := types.QueryCurrentEpochRequest{}

@@ -69,7 +69,7 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 	}
 
 	// all good, set the reward distribution cache of the current height
-	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
+	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).BlockHeight()), rdc)
 }
 
 func (k Keeper) setRewardDistCache(ctx context.Context, height uint64, rdc *types.RewardDistCache) {

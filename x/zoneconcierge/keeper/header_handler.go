@@ -12,7 +12,7 @@ import (
 // HandleHeaderWithValidCommit handles a CZ header with a valid QC
 func (k Keeper) HandleHeaderWithValidCommit(ctx context.Context, txHash []byte, header *types.HeaderInfo, isOnFork bool) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	babylonHeader := sdkCtx.HeaderInfo()
+	babylonHeader := sdkCtx.BlockHeader()
 	indexedHeader := types.IndexedHeader{
 		ChainId:             header.ChainId,
 		Hash:                header.AppHash,

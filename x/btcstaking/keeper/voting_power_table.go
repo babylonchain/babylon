@@ -18,7 +18,7 @@ import (
 func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 	// tip of Babylon and Bitcoin
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
 	if err != nil {
 		return

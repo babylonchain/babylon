@@ -41,7 +41,7 @@ func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *bstype
 
 func (k Keeper) accumulateBTCStakingReward(ctx context.Context, btcStakingReward sdk.Coins) {
 	// update BTC staking gauge
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	height := uint64(sdk.UnwrapSDKContext(ctx).BlockHeight())
 	gauge := types.NewGauge(btcStakingReward...)
 	k.SetBTCStakingGauge(ctx, height, gauge)
 

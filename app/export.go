@@ -117,10 +117,10 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 	app.DistrKeeper.DeleteAllValidatorHistoricalRewards(ctx)
 
 	// set context height to zero
-	height := ctx.HeaderInfo().Height
+	height := ctx.BlockHeight()
 	headerInfo := ctx.HeaderInfo()
 	headerInfo.Height = 0
-	ctx = ctx.WithHeaderInfo(headerInfo)
+	ctx = ctx.WithHeaderInfo(headerInfo).WithBlockHeight(0)
 
 	// reinitialize all validators
 	err = app.StakingKeeper.IterateValidators(ctx, func(_ int64, val stakingtypes.ValidatorI) (stop bool) {
@@ -169,7 +169,7 @@ func (app *BabylonApp) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedAddr
 	// reset context height
 	headerInfo = ctx.HeaderInfo()
 	headerInfo.Height = height
-	ctx = ctx.WithHeaderInfo(headerInfo)
+	ctx = ctx.WithHeaderInfo(headerInfo).WithBlockHeight(height)
 
 	/* Handle staking state. */
 

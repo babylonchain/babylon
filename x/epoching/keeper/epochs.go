@@ -34,7 +34,7 @@ func (k Keeper) getEpochInfo(ctx context.Context, epochNumber uint64) (*types.Ep
 
 // InitEpoch sets the zero epoch number to DB
 func (k Keeper) InitEpoch(ctx context.Context) {
-	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
 	if header.Height > 0 {
 		panic("InitEpoch can be invoked only at genesis")
 	}
@@ -68,7 +68,7 @@ func (k Keeper) RecordLastHeaderAndAppHashRoot(ctx context.Context) error {
 		return errorsmod.Wrapf(types.ErrInvalidHeight, "RecordLastBlockHeader can only be invoked at the last block of an epoch")
 	}
 	// record last block header
-	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
 	epoch.LastBlockTime = &header.Time
 	// calculate and record the Merkle root
 	appHashes, err := k.GetAllAppHashesForEpoch(ctx, epoch)
@@ -88,9 +88,9 @@ func (k Keeper) RecordSealerAppHashForPrevEpoch(ctx context.Context) *types.Epoc
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsFirstBlock(ctx) {
 		panic(fmt.Errorf("RecordSealerAppHashForPrevEpoch can only be invoked at the first header of a non-zero epoch. "+
-			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
+			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).BlockHeight()))
 	}
-	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
+	header := sdk.UnwrapSDKContext(ctx).BlockHeader()
 
 	// get the sealed epoch, i.e., the epoch earlier than the current epoch
 	sealedEpoch, err := k.GetHistoricalEpoch(ctx, epoch.EpochNumber-1)
@@ -112,12 +112,11 @@ func (k Keeper) RecordSealerBlockHashForEpoch(ctx context.Context) *types.Epoch 
 	epoch := k.GetEpoch(ctx)
 	if !epoch.IsLastBlock(ctx) {
 		panic(fmt.Errorf("RecordSealerBlockHashForEpoch can only be invoked at the last header of a non-zero epoch. "+
-			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).HeaderInfo().Height))
+			"current epoch: %v, current height: %d", epoch, sdk.UnwrapSDKContext(ctx).BlockHeight()))
 	}
-	header := sdk.UnwrapSDKContext(ctx).HeaderInfo()
 
 	// record the sealer block hash for the sealing epoch
-	epoch.SealerBlockHash = header.Hash
+	epoch.SealerBlockHash = sdk.UnwrapSDKContext(ctx).HeaderHash()
 	k.setEpochInfo(ctx, epoch.EpochNumber, epoch)
 
 	return epoch
@@ -131,7 +130,7 @@ func (k Keeper) IncEpoch(ctx context.Context) types.Epoch {
 	incrementedEpochNumber := epochNumber + 1
 
 	epochInterval := k.GetParams(ctx).EpochInterval
-	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.HeaderInfo().Height), nil)
+	newEpoch := types.NewEpoch(incrementedEpochNumber, epochInterval, uint64(sdkCtx.BlockHeight()), nil)
 	k.setEpochInfo(ctx, incrementedEpochNumber, &newEpoch)
 
 	return newEpoch

@@ -30,6 +30,7 @@ func (qmd DropValidatorMsgDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simu
 	if ctx.BlockHeight() == 0 {
 		return next(ctx, tx, simulate)
 	}
+	// BlockHeight()
 	// after genesis, if validator-related message, reject msg
 	for _, msg := range tx.GetMsgs() {
 		if qmd.IsValidatorRelatedMsg(msg) {

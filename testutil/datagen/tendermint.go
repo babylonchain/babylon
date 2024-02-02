@@ -56,6 +56,6 @@ func HeaderToHeaderInfo(header *ibctmtypes.Header) *zctypes.HeaderInfo {
 func WithCtxHeight(ctx sdk.Context, height uint64) sdk.Context {
 	headerInfo := ctx.HeaderInfo()
 	headerInfo.Height = int64(height)
-	ctx = ctx.WithHeaderInfo(headerInfo)
+	ctx = ctx.WithHeaderInfo(headerInfo).WithBlockHeader(cmtproto.Header{Height: int64(height)})
 	return ctx
 }

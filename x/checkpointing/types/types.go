@@ -115,7 +115,7 @@ func (cm *RawCheckpointWithMeta) IsMoreMatureThanStatus(status CheckpointStatus)
 // where the time/height are captured by the current ctx
 func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx context.Context, status CheckpointStatus) {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	height, time := sdkCtx.HeaderInfo().Height, sdkCtx.HeaderInfo().Time
+	height, time := sdkCtx.BlockHeight(), sdkCtx.BlockTime()
 	stateUpdate := &CheckpointStateUpdate{
 		State:       status,
 		BlockHeight: uint64(height),
