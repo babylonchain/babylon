@@ -261,7 +261,7 @@ func makeBtcCkptBytes(r *rand.Rand, epoch uint64, appHash []byte, bitmap []byte,
 }
 
 func curStateUpdate(ctx sdk.Context, status types.CheckpointStatus) *types.CheckpointStateUpdate {
-	height, time := ctx.BlockHeight(), ctx.HeaderInfo().Time
+	height, time := ctx.BlockHeight(), ctx.BlockTime()
 	return &types.CheckpointStateUpdate{
 		State:       status,
 		BlockHeight: uint64(height),

@@ -169,7 +169,7 @@ func (k Keeper) ApplyAndReturnValidatorSetUpdates(ctx context.Context) []abci.Va
 func (k Keeper) getAllMatureValidators(ctx sdk.Context) []sdk.ValAddress {
 	matureValAddrs := []sdk.ValAddress{}
 
-	blockTime := ctx.HeaderInfo().Time
+	blockTime := ctx.BlockTime()
 	blockHeight := ctx.BlockHeight()
 
 	// unbondingValIterator will contains all validator addresses indexed under

@@ -92,7 +92,7 @@ func (k Keeper) CheckMsgCreateValidator(ctx context.Context, msg *stakingtypes.M
 	// check if SetInitialCommission fails or not
 	commission := stakingtypes.NewCommissionWithTime(
 		msg.Commission.Rate, msg.Commission.MaxRate,
-		msg.Commission.MaxChangeRate, sdkCtx.HeaderInfo().Time,
+		msg.Commission.MaxChangeRate, sdkCtx.BlockTime(),
 	)
 	if _, err := validator.SetInitialCommission(commission); err != nil {
 		return err
