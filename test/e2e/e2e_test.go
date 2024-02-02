@@ -21,10 +21,9 @@ func TestBTCTimestampingTestSuite(t *testing.T) {
 
 // TestBTCTimestampingPhase2HermesTestSuite tests BTC timestamping phase 2 protocol end-to-end,
 // with the Hermes relayer
-// TODO: Uncomment once we have a working Hermes version / release
-//func TestBTCTimestampingPhase2HermesTestSuite(t *testing.T) {
-//	suite.Run(t, new(BTCTimestampingPhase2HermesTestSuite))
-//}
+func TestBTCTimestampingPhase2HermesTestSuite(t *testing.T) {
+	suite.Run(t, new(BTCTimestampingPhase2HermesTestSuite))
+}
 
 // TestBTCTimestampingPhase2RlyTestSuite tests BTC timestamping phase 2 protocol end-to-end,
 // with the Go relayer
