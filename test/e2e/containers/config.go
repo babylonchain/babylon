@@ -12,7 +12,7 @@ const (
 	// name of babylon container produced by running `make localnet-build-env`
 	BabylonContainerName = "babylonchain/babylond"
 
-	hermesRelayerRepository = "informalsystems/hermes"
+	hermesRelayerRepository = "babylonchain/hermes-relayer"
 	// TODO: Replace with version tag once we have a working version
 	hermesRelayerTag = "latest"
 	// Built using the `build-cosmos-relayer-docker` target on an Intel (amd64) machine and pushed to ECR
