@@ -51,19 +51,23 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 
 		// iterate all BTC delegations under this finality provider
 		// to calculate this finality provider's total voting power
-		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-		defer btcDelIter.Close()
-		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
-			if err != nil {
-				panic(err) // only programming error is possible
+		// wrap it inside a function to prevent corrupt DB state
+		// https://stackoverflow.com/questions/45617758/proper-way-to-release-resources-with-defer-in-a-loop/45620423
+		func() {
+			btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+			defer btcDelIter.Close()
+			for ; btcDelIter.Valid(); btcDelIter.Next() {
+				delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
+				if err != nil {
+					panic(err) // only programming error is possible
+				}
+				btcDels, err := k.getBTCDelegatorDelegations(ctx, fpBTCPK, delBTCPK)
+				if err != nil {
+					panic(err) // only programming error is possible
+				}
+				fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
 			}
-			btcDels, err := k.getBTCDelegatorDelegations(ctx, fpBTCPK, delBTCPK)
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
-		}
+		}()
 
 		if fpPower > 0 {
 			activeFps = append(activeFps, &types.FinalityProviderWithMeta{

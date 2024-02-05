@@ -44,25 +44,30 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 			continue
 		}
 
+		fpDistInfo := types.NewFinalityProviderDistInfo(fp)
+
 		// iterate over all BTC delegations under this finality provider to compute
 		// the finality provider's distribution info
-		fpDistInfo := types.NewFinalityProviderDistInfo(fp)
-		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-		defer btcDelIter.Close()
-		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			// unmarshal
-			var btcDelIndex types.BTCDelegatorDelegationIndex
-			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
-			// retrieve and process each of the BTC delegation
-			for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
-				stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
-				if err != nil {
-					panic(err) // only programming error is possible
+		// wrap it inside a function to prevent corrupt DB state
+		// https://stackoverflow.com/questions/45617758/proper-way-to-release-resources-with-defer-in-a-loop/45620423
+		func() {
+			btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+			defer btcDelIter.Close()
+			for ; btcDelIter.Valid(); btcDelIter.Next() {
+				// unmarshal
+				var btcDelIndex types.BTCDelegatorDelegationIndex
+				k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
+				// retrieve and process each of the BTC delegation
+				for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+					stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+					if err != nil {
+						panic(err) // only programming error is possible
+					}
+					btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+					fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 				}
-				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 			}
-		}
+		}()
 
 		// try to add this finality provider distribution info to reward distribution cache
 		rdc.AddFinalityProviderDistInfo(fpDistInfo)
