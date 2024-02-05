@@ -9,6 +9,7 @@ import (
 	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -69,6 +70,10 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// key is the finality provider's FP BTC PK hex, and value is the
 	// voting power
 	fpPowerMap := map[string]uint64{}
+	// record expired BTC delegations
+	// key is the finality provider's FP BTC PK hex and BTC delegator's BTC PK hex, 
+	// and value is the list of staking tx hashes of expired BTC delegations
+	expiredBTCDelMap := map[string]map[string][]chainhash.Hash{}
 	// prepare for recording finality providers and their BTC delegations
 	// for rewards
 	fpDistMap := map[string]*types.FinalityProviderDistInfo{}
@@ -81,8 +86,11 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			// record active finality providers
 			power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
 			if power == 0 {
-				return // skip if no voting power
+				// this BTC delegation is expired
+				expiredBTCDelMap[fpBTCPKHex][btcDel.BtcPk.MarshalHex()] = append(expiredBTCDelMapexpiredBTCDelMap[fpBTCPKHex][btcDel.BtcPk.MarshalHex()], btcDel.MustGetStakingTxHash())
+				return
 			}
+			// accumulate voting power
 			fpPowerMap[fpBTCPKHex] += power
 
 			// create fp dist info if not exist
@@ -93,6 +101,9 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			fpDistMap[fpBTCPKHex].AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 		},
 	)
+
+	// remove the expired BTC delegations from the active BTC delegation index
+	for fpBTCPKHex
 
 	// return directly if there is no active finality provider
 	if len(fpPowerMap) == 0 {

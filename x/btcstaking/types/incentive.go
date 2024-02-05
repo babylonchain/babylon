@@ -56,6 +56,7 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 
 func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
 	btcDelDistInfo := &BTCDelDistInfo{
+		BtcPk:       btcDel.BtcPk,
 		BabylonPk:   btcDel.BabylonPk,
 		VotingPower: btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
 	}

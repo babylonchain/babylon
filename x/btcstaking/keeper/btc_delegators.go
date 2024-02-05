@@ -21,32 +21,9 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 		return err
 	}
 
-	// get staking tx hash
-	stakingTxHash, err := btcDel.GetStakingTxHash()
-	if err != nil {
-		return err
-	}
-
 	// for each finality provider the delegation restakes to, update its index
-	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		var btcDelIndex = types.NewBTCDelegatorDelegationIndex()
-		if k.hasBTCDelegatorDelegations(ctx, &fpBTCPK, btcDel.BtcPk) {
-			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
-			if err != nil {
-				// this can only be a programming error
-				panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
-			}
-		}
-
-		// index staking tx hash of this BTC delegation
-		if err := btcDelIndex.Add(stakingTxHash); err != nil {
-			return types.ErrInvalidStakingTx.Wrapf(err.Error())
-		}
-		// save the index
-		store := k.btcDelegatorStore(ctx, &fpBTCPK)
-		delBTCPKBytes := btcDel.BtcPk.MustMarshal()
-		btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
-		store.Set(delBTCPKBytes, btcDelIndexBytes)
+	if err := k.indexBTCDelegation(ctx, btcDel); err != nil {
+		return err
 	}
 
 	// save this BTC delegation
@@ -77,22 +54,6 @@ func (k Keeper) updateBTCDelegation(
 	// the BTC delegation index
 	k.setBTCDelegation(ctx, btcDel)
 	return nil
-}
-
-func (k Keeper) AddUndelegationToBTCDelegation(
-	ctx context.Context,
-	stakingTxHash string,
-	ud *types.BTCUndelegation,
-) error {
-	addUndelegation := func(btcDel *types.BTCDelegation) error {
-		if btcDel.BtcUndelegation != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
-		}
-		btcDel.BtcUndelegation = ud
-		return nil
-	}
-
-	return k.updateBTCDelegation(ctx, stakingTxHash, addUndelegation)
 }
 
 // AddCovenantSigsToBTCDelegation adds covenant signatures to a BTC delegation
@@ -134,6 +95,9 @@ func (k Keeper) AddCovenantSigsToBTCDelegation(
 		if err := btcDel.BtcUndelegation.AddCovenantSigs(covPk, unbondingTxSigInfo, slashUnbondingTxSigs, quorum); err != nil {
 			return err
 		}
+		// index the newly active BTC delegation
+		// TODO: this is not the ideal place for indexing active BTC delegation
+		k.indexActiveBTCDelegation(ctx, btcDel)
 		return nil
 	}
 
@@ -150,6 +114,36 @@ func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 	}
 	store := k.btcDelegatorStore(ctx, fpBTCPK)
 	return store.Has(delBTCPKBytes)
+}
+
+// indexBTCDelegation adds the BTC delegation to the BTC delegator delegation index
+func (k Keeper) indexBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) error {
+	var err error
+	stakingTxHash := btcDel.MustGetStakingTxHash()
+
+	// for each finality provider the delegation restakes to, update its index
+	for _, fpBTCPK := range btcDel.FpBtcPkList {
+		var btcDelIndex = types.NewBTCDelegatorDelegationIndex()
+		if k.hasBTCDelegatorDelegations(ctx, &fpBTCPK, btcDel.BtcPk) {
+			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
+			if err != nil {
+				// this can only be a programming error
+				panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
+			}
+		}
+
+		// index staking tx hash of this BTC delegation
+		if err := btcDelIndex.Add(stakingTxHash); err != nil {
+			return types.ErrInvalidStakingTx.Wrapf(err.Error())
+		}
+		// save the index
+		store := k.btcDelegatorStore(ctx, &fpBTCPK)
+		delBTCPKBytes := btcDel.BtcPk.MustMarshal()
+		btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
+		store.Set(delBTCPKBytes, btcDelIndexBytes)
+	}
+
+	return nil
 }
 
 // getBTCDelegatorDelegationIndex gets the BTC delegation index with a given BTC PK under a given finality provider
