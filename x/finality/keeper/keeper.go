@@ -1,8 +1,9 @@
 package keeper
 
 import (
-	corestoretypes "cosmossdk.io/core/store"
 	"fmt"
+
+	corestoretypes "cosmossdk.io/core/store"
 
 	"cosmossdk.io/log"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -27,7 +28,6 @@ type (
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeService corestoretypes.KVStoreService,
-
 	btctakingKeeper types.BTCStakingKeeper,
 	incentiveKeeper types.IncentiveKeeper,
 	authority string,

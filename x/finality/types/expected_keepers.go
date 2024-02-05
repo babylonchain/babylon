@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+
 	bstypes "github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
@@ -12,7 +13,6 @@ type BTCStakingKeeper interface {
 	GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64
 	GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
-	RecordRewardDistCache(ctx context.Context)
 	GetRewardDistCache(ctx context.Context, height uint64) (*bstypes.RewardDistCache, error)
 	RemoveRewardDistCache(ctx context.Context, height uint64)
 }
