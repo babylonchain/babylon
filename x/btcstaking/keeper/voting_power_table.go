@@ -29,6 +29,7 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	// filter out all finality providers with positive voting power
 	activeFps := []*types.FinalityProviderWithMeta{}
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
+	defer fpIter.Close()
 	for ; fpIter.Valid(); fpIter.Next() {
 		fpBTCPKBytes := fpIter.Key()
 		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
@@ -51,6 +52,7 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 		// iterate all BTC delegations under this finality provider
 		// to calculate this finality provider's total voting power
 		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+		defer btcDelIter.Close()
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
 			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
 			if err != nil {
@@ -62,7 +64,6 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 			}
 			fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
 		}
-		btcDelIter.Close()
 
 		if fpPower > 0 {
 			activeFps = append(activeFps, &types.FinalityProviderWithMeta{
@@ -72,7 +73,6 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 			})
 		}
 	}
-	fpIter.Close()
 
 	// return directly if there is no active finality provider
 	if len(activeFps) == 0 {
