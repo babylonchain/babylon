@@ -48,6 +48,7 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 		// the finality provider's distribution info
 		fpDistInfo := types.NewFinalityProviderDistInfo(fp)
 		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+		defer btcDelIter.Close()
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
 			// unmarshal
 			var btcDelIndex types.BTCDelegatorDelegationIndex
@@ -62,7 +63,6 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 			}
 		}
-		btcDelIter.Close()
 
 		// try to add this finality provider distribution info to reward distribution cache
 		rdc.AddFinalityProviderDistInfo(fpDistInfo)
