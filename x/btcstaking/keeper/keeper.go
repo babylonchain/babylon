@@ -54,6 +54,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
+// BeginBlocker is invoked upon `BeginBlock` of the system. The function
+// iterates over all BTC delegations under non-slashed finality providers
+// to 1) record the voting power table for the current height, and 2) record
+// the reward distribution cache used for distributing rewards once the block
+// is finalised by finality providers.
 func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
