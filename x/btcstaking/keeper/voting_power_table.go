@@ -38,24 +38,28 @@ func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler f
 
 		// iterate all BTC delegations under this finality provider
 		// to calculate this finality provider's total voting power
-		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-		defer btcDelIter.Close()
-		for ; btcDelIter.Valid(); btcDelIter.Next() {
+		// wrapped in a function to close btcDelIter as soon as the function
+		// returned, see https://stackoverflow.com/questions/45617758/proper-way-to-release-resources-with-defer-in-a-loop/45620423
+		func() {
+			btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+			defer btcDelIter.Close()
+			for ; btcDelIter.Valid(); btcDelIter.Next() {
 
-			// unmarshal delegator's delegation index
-			var btcDelIndex types.BTCDelegatorDelegationIndex
-			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
+				// unmarshal delegator's delegation index
+				var btcDelIndex types.BTCDelegatorDelegationIndex
+				k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
 
-			// retrieve and process each of the BTC delegation
-			for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
-				stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
-				if err != nil {
-					panic(err) // only programming error is possible
+				// retrieve and process each of the BTC delegation
+				for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+					stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+					if err != nil {
+						panic(err) // only programming error is possible
+					}
+					btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+					handler(fp, btcDel)
 				}
-				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-				handler(fp, btcDel)
 			}
-		}
+		}()
 	}
 }
 

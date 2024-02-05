@@ -104,9 +104,9 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	// create reward distribution cache
 	rdc := types.NewRewardDistCache()
-	for _, fpDistInfo := range fpDistMap {
+	for fpBTCPKHex := range fpDistMap {
 		// try to add this finality provider distribution info to reward distribution cache
-		rdc.AddFinalityProviderDistInfo(fpDistInfo)
+		rdc.AddFinalityProviderDistInfo(fpDistMap[fpBTCPKHex])
 	}
 
 	// all good, set the reward distribution cache of the current height
