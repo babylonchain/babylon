@@ -6,7 +6,6 @@ import (
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	ct "github.com/babylonchain/babylon/x/checkpointing/types"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
 	"github.com/stretchr/testify/suite"
@@ -57,24 +56,45 @@ func (s *BTCTimestampingPhase2HermesTestSuite) Test1IbcCheckpointingPhase2Hermes
 	s.NoError(err)
 
 	// Validate channel state and kind (Babylon side)
-	babylonChannelsResp, err := babylonNode.QueryIBCChannels()
-	s.NoError(err)
-	s.Len(babylonChannelsResp.Channels, 1)
-	babylonChannel := babylonChannelsResp.Channels[0]
-	// channel has to be open and ordered
-	s.Equal(channeltypes.OPEN, babylonChannel.State)
-	s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)
-	// the counterparty has to be the Babylon smart contract
-	s.Contains(babylonChannel.Counterparty.PortId, "wasm.")
+	// Wait until the channel (Babylon side) is open
+	var babylonChannel *channeltypes.IdentifiedChannel
+	s.Eventually(func() bool {
+		babylonChannelsResp, err := babylonNode.QueryIBCChannels()
+		if err != nil {
+			return false
+		}
+		if len(babylonChannelsResp.Channels) != 1 {
+			return false
+		}
+		// channel has to be open and ordered
+		babylonChannel = babylonChannelsResp.Channels[0]
+		if babylonChannel.State != channeltypes.OPEN {
+			return false
+		}
+		s.Equal(channeltypes.ORDERED, babylonChannel.Ordering)
+		// the counterparty has to be the Babylon smart contract
+		s.Contains(babylonChannel.Counterparty.PortId, "wasm.")
+		return true
+	}, time.Minute, time.Second*2)
 
-	// Validate channel state (CZ side)
-	czChannelsResp, err := czNode.QueryIBCChannels()
-	s.NoError(err)
-	s.Len(czChannelsResp.Channels, 2) // TODO: why 2 channels?
-	czChannel := czChannelsResp.Channels[0]
-	s.Equal(channeltypes.OPEN, czChannel.State)
-	s.Equal(channeltypes.ORDERED, czChannel.Ordering)
-	s.Equal(zctypes.PortID, czChannel.Counterparty.PortId)
+	// Wait until the channel (CZ side) is open
+	var czChannel *channeltypes.IdentifiedChannel
+	s.Eventually(func() bool {
+		czChannelsResp, err := czNode.QueryIBCChannels()
+		if err != nil {
+			return false
+		}
+		if len(czChannelsResp.Channels) != 2 { // TODO: Why two channels?
+			return false
+		}
+		czChannel = czChannelsResp.Channels[0]
+		if czChannel.State != channeltypes.OPEN {
+			return false
+		}
+		s.Equal(channeltypes.ORDERED, czChannel.Ordering)
+		s.Equal(babylonChannel.PortId, czChannel.Counterparty.PortId)
+		return true
+	}, time.Minute, time.Second*2)
 
 	// Query checkpoint chain info for the consumer chain
 	listHeaderResp, err := babylonNode.QueryListHeaders(initialization.ChainBID, &query.PageRequest{Limit: 1})
