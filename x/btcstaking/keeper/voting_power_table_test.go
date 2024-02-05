@@ -86,8 +86,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 0}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
+
 		for i := uint64(0); i < numFps; i++ {
 			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
 			require.Zero(t, power)
@@ -99,8 +99,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		babylonHeight += datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
+
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
 			require.Equal(t, numBTCDels*stakingValue, power)
@@ -138,8 +138,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 2}).Times(1)
 		// index height and record power table
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
+
 		// check if the slashed finality provider's voting power becomes zero
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
@@ -171,8 +171,8 @@ func FuzzVotingPowerTable(f *testing.F) {
 		babylonHeight += datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 999}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
+
 		for _, fp := range fps {
 			power := keeper.GetVotingPower(ctx, *fp.BtcPk, babylonHeight)
 			require.Zero(t, power)
@@ -261,8 +261,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
 
 		//  only finality providers in expectedActiveFpsMap have voting power
 		for _, fp := range fpsWithMeta {
@@ -357,8 +356,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
 
 		// get maps of active/inactive finality providers
 		activeFpsMap := map[string]uint64{}
@@ -402,8 +400,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		babylonHeight += 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordVotingPowerTable(ctx)
+		keeper.BeginBlocker(ctx)
 
 		// ensure that the activated finality provider now has entered the active finality provider set
 		// i.e., has voting power

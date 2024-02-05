@@ -9,42 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) RecordRewardDistCache(ctx context.Context) {
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
-	// get BTC tip height and w, which are necessary for determining a BTC
-	// delegation's voting power
-	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		return
-	}
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-
-	fpDistMap := map[string]*types.FinalityProviderDistInfo{}
-
-	k.IterateActiveFPsAndBTCDelegations(
-		ctx,
-		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) {
-			fpBTCPKHex := fp.BtcPk.MarshalHex()
-			// create fp dist info if not exist
-			if _, ok := fpDistMap[fpBTCPKHex]; !ok {
-				fpDistMap[fpBTCPKHex] = types.NewFinalityProviderDistInfo(fp)
-			}
-			// append BTC delegation
-			fpDistMap[fpBTCPKHex].AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
-		},
-	)
-
-	// create reward distribution cache
-	rdc := types.NewRewardDistCache()
-	for _, fpDistInfo := range fpDistMap {
-		// try to add this finality provider distribution info to reward distribution cache
-		rdc.AddFinalityProviderDistInfo(fpDistInfo)
-	}
-
-	// all good, set the reward distribution cache of the current height
-	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
-}
-
 func (k Keeper) setRewardDistCache(ctx context.Context, height uint64, rdc *types.RewardDistCache) {
 	store := k.rewardDistCacheStore(ctx)
 	store.Set(sdk.Uint64ToBigEndian(height), k.cdc.MustMarshal(rdc))

@@ -122,18 +122,6 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
-// RecordRewardDistCache mocks base method.
-func (m *MockBTCStakingKeeper) RecordRewardDistCache(ctx context.Context) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RecordRewardDistCache", ctx)
-}
-
-// RecordRewardDistCache indicates an expected call of RecordRewardDistCache.
-func (mr *MockBTCStakingKeeperMockRecorder) RecordRewardDistCache(ctx interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RecordRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RecordRewardDistCache), ctx)
-}
-
 // RemoveRewardDistCache mocks base method.
 func (m *MockBTCStakingKeeper) RemoveRewardDistCache(ctx context.Context, height uint64) {
 	m.ctrl.T.Helper()

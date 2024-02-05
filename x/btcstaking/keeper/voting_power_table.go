@@ -13,62 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// RecordVotingPowerTable computes the voting power table at the current block height
-// and saves the power table to KVStore
-// triggered upon each EndBlock
-func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
-	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		panic(err) // only possible upon programming error
-	}
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-
-	// filter out all finality providers with positive voting power
-	// key is the finality provider's FP BTC PK hex, and value is the
-	// voting power
-	activeFpMap := map[string]uint64{}
-
-	k.IterateActiveFPsAndBTCDelegations(
-		ctx,
-		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) {
-			// record active finality providers
-			power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
-			if power == 0 {
-				return
-			}
-			if _, ok := activeFpMap[fp.BtcPk.MarshalHex()]; ok {
-				activeFpMap[fp.BtcPk.MarshalHex()] += power
-			} else {
-				activeFpMap[fp.BtcPk.MarshalHex()] = power
-			}
-		},
-	)
-
-	// return directly if there is no active finality provider
-	if len(activeFpMap) == 0 {
-		return
-	}
-
-	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
-	activeFps := []*types.FinalityProviderWithMeta{}
-	for btcPKHex, power := range activeFpMap {
-		btcPK, err := bbn.NewBIP340PubKeyFromHex(btcPKHex)
-		if err != nil {
-			panic(err) // only programming error
-		}
-		activeFps = append(activeFps, &types.FinalityProviderWithMeta{BtcPk: btcPK, VotingPower: power})
-	}
-	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
-
-	// set voting power for each active finality providers
-	for _, fp := range activeFps {
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
-	}
-}
-
 // IterateActiveFPsAndBTCDelegations iterates over all finality providers that are not slashed,
 // and their BTC delegations
 func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation)) {
@@ -112,6 +56,27 @@ func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler f
 				handler(fp, btcDel)
 			}
 		}
+	}
+}
+
+// setCurrentTopNVotingPower gets top N finality providers and set their current voting power to KV store
+func (k Keeper) setCurrentTopNVotingPower(ctx context.Context, fpPowerMap map[string]uint64) {
+	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
+	activeFps := []*types.FinalityProviderWithMeta{}
+	for btcPKHex, power := range fpPowerMap {
+		btcPK, err := bbn.NewBIP340PubKeyFromHex(btcPKHex)
+		if err != nil {
+			panic(err) // only programming error
+		}
+		activeFps = append(activeFps, &types.FinalityProviderWithMeta{BtcPk: btcPK, VotingPower: power})
+	}
+	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
+
+	// get current Babylon height
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	// set voting power for each active finality providers
+	for _, fp := range activeFps {
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
 	}
 }
 
