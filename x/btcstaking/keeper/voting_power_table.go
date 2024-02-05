@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -30,23 +31,18 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	// voting power
 	activeFpMap := map[string]uint64{}
 
-	k.IterateActiveFPsAndBTCDelegators(
+	k.IterateActiveFPsAndBTCDelegations(
 		ctx,
-		func(fp *types.FinalityProvider, delBTCPK *bbn.BIP340PubKey, _ *types.BTCDelegatorDelegationIndex) {
-			// get all BTC delegations
-			dels, err := k.getBTCDelegatorDelegations(ctx, fp.BtcPk, delBTCPK)
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
+		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) {
 			// record active finality providers
-			delsPower := dels.VotingPower(btcTipHeight, wValue, covenantQuorum)
-			if delsPower == 0 {
+			power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
+			if power == 0 {
 				return
 			}
 			if _, ok := activeFpMap[fp.BtcPk.MarshalHex()]; ok {
-				activeFpMap[fp.BtcPk.MarshalHex()] += delsPower
+				activeFpMap[fp.BtcPk.MarshalHex()] += power
 			} else {
-				activeFpMap[fp.BtcPk.MarshalHex()] = delsPower
+				activeFpMap[fp.BtcPk.MarshalHex()] = power
 			}
 		},
 	)
@@ -73,9 +69,9 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 	}
 }
 
-// IterateActiveFPsAndBTCDelegators iterates over all finality providers that are not slashed,
-// and their BTC delegators
-func (k Keeper) IterateActiveFPsAndBTCDelegators(ctx context.Context, handler func(fp *types.FinalityProvider, delBTCPK *bbn.BIP340PubKey, btcDelIndex *types.BTCDelegatorDelegationIndex)) {
+// IterateActiveFPsAndBTCDelegations iterates over all finality providers that are not slashed,
+// and their BTC delegations
+func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation)) {
 	// filter out all finality providers with positive voting power
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer fpIter.Close()
@@ -101,16 +97,20 @@ func (k Keeper) IterateActiveFPsAndBTCDelegators(ctx context.Context, handler fu
 		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
 		defer btcDelIter.Close()
 		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			// unmarshal delegator's BTC PK
-			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
+
 			// unmarshal delegator's delegation index
 			var btcDelIndex types.BTCDelegatorDelegationIndex
 			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
 
-			handler(fp, delBTCPK, &btcDelIndex)
+			// retrieve and process each of the BTC delegation
+			for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+				stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+				if err != nil {
+					panic(err) // only programming error is possible
+				}
+				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+				handler(fp, btcDel)
+			}
 		}
 	}
 }

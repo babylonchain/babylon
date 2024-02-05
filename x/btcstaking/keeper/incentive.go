@@ -4,9 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -21,49 +19,24 @@ func (k Keeper) RecordRewardDistCache(ctx context.Context) {
 	}
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	rdc := types.NewRewardDistCache()
+	fpDistMap := map[string]*types.FinalityProviderDistInfo{}
 
-	// iterate all finality providers to add each finality provider's distribution info
-	// to reward distribution cache
-	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
-	defer fpIter.Close()
-	for ; fpIter.Valid(); fpIter.Next() {
-		fpBTCPKBytes := fpIter.Key()
-		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
-		if err != nil {
-			// failing to unmarshal finality provider PK in KVStore is a programming error
-			panic(err)
-		}
-		fp, err := k.GetFinalityProvider(ctx, fpBTCPKBytes)
-		if err != nil {
-			// failing to get a finality provider with voting power is a programming error
-			panic(err)
-		}
-		if fp.IsSlashed() {
-			// slashed finality provider will not get any reward
-			continue
-		}
-
-		// iterate over all BTC delegations under this finality provider to compute
-		// the finality provider's distribution info
-		fpDistInfo := types.NewFinalityProviderDistInfo(fp)
-		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-		defer btcDelIter.Close()
-		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			// unmarshal
-			var btcDelIndex types.BTCDelegatorDelegationIndex
-			k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
-			// retrieve and process each of the BTC delegation
-			for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
-				stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
-				if err != nil {
-					panic(err) // only programming error is possible
-				}
-				btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
+	k.IterateActiveFPsAndBTCDelegations(
+		ctx,
+		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) {
+			fpBTCPKHex := fp.BtcPk.MarshalHex()
+			// create fp dist info if not exist
+			if _, ok := fpDistMap[fpBTCPKHex]; !ok {
+				fpDistMap[fpBTCPKHex] = types.NewFinalityProviderDistInfo(fp)
 			}
-		}
+			// append BTC delegation
+			fpDistMap[fpBTCPKHex].AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
+		},
+	)
 
+	// create reward distribution cache
+	rdc := types.NewRewardDistCache()
+	for _, fpDistInfo := range fpDistMap {
 		// try to add this finality provider distribution info to reward distribution cache
 		rdc.AddFinalityProviderDistInfo(fpDistInfo)
 	}
