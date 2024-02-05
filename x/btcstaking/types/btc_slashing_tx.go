@@ -193,6 +193,45 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignature(
 	)
 }
 
+// ParseEncVerifyAdaptorSignatures verifies a list of adaptor signatures, each
+// encrypted by a restaked validator PK and signed by the given PK, w.r.t. the
+// given funding output (in staking or unbonding tx), slashing spend info and
+// slashing tx
+// It returns a list of parsed adaptor signatures in case of successful verification
+func (tx *BTCSlashingTx) ParseEncVerifyAdaptorSignatures(
+	fundingOut *wire.TxOut,
+	slashingSpendInfo *btcstaking.SpendInfo,
+	pk *bbn.BIP340PubKey,
+	valPKs []bbn.BIP340PubKey,
+	sigs [][]byte,
+) ([]asig.AdaptorSignature, error) {
+	var adaptorSigs []asig.AdaptorSignature = make([]asig.AdaptorSignature, len(sigs))
+	for i, s := range sigs {
+		sig := s
+		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)
+		if err != nil {
+			return nil, err
+		}
+		encKey, err := asig.NewEncryptionKeyFromBTCPK(valPKs[i].MustToBTCPK())
+		if err != nil {
+			return nil, err
+		}
+		err = tx.EncVerifyAdaptorSignature(
+			fundingOut.PkScript,
+			fundingOut.Value,
+			slashingSpendInfo.GetPkScriptPath(),
+			pk.MustToBTCPK(),
+			encKey,
+			adaptorSig,
+		)
+		if err != nil {
+			return nil, ErrInvalidCovenantSig.Wrapf("err: %v", err)
+		}
+		adaptorSigs[i] = *adaptorSig
+	}
+	return adaptorSigs, nil
+}
+
 // EncVerifyAdaptorSignatures verifies a list of adaptor signatures, each
 // encrypted by a restaked validator PK and signed by the given PK, w.r.t. the
 // given funding output (in staking or unbonding tx), slashing spend info and
@@ -204,28 +243,14 @@ func (tx *BTCSlashingTx) EncVerifyAdaptorSignatures(
 	valPKs []bbn.BIP340PubKey,
 	sigs [][]byte,
 ) error {
-	for i, sig := range sigs {
-		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)
-		if err != nil {
-			return err
-		}
-		encKey, err := asig.NewEncryptionKeyFromBTCPK(valPKs[i].MustToBTCPK())
-		if err != nil {
-			return err
-		}
-		err = tx.EncVerifyAdaptorSignature(
-			fundingOut.PkScript,
-			fundingOut.Value,
-			slashingSpendInfo.GetPkScriptPath(),
-			pk.MustToBTCPK(),
-			encKey,
-			adaptorSig,
-		)
-		if err != nil {
-			return ErrInvalidCovenantSig.Wrapf("err: %v", err)
-		}
+
+	_, err := tx.ParseEncVerifyAdaptorSignatures(fundingOut, slashingSpendInfo, pk, valPKs, sigs)
+	if err != nil {
+		return err
 	}
+
 	return nil
+
 }
 
 func (tx *BTCSlashingTx) BuildSlashingTxWithWitness(

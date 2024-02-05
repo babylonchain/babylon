@@ -72,16 +72,7 @@ func (ud *BTCUndelegation) AddCovenantSigs(
 	unbondingSig *bbn.BIP340Signature,
 	slashingSigs []asig.AdaptorSignature,
 	quorum uint32,
-) error {
-	// we can ignore the covenant slashing sig if quorum is already reached
-	if ud.HasCovenantQuorums(quorum) {
-		return nil
-	}
-
-	if ud.IsSignedByCovMember(covPk) {
-		return nil
-	}
-
+) {
 	covUnbondingSigInfo := &SignatureInfo{Pk: covPk, Sig: unbondingSig}
 	ud.CovenantUnbondingSigList = append(ud.CovenantUnbondingSigList, covUnbondingSigInfo)
 
@@ -91,6 +82,4 @@ func (ud *BTCUndelegation) AddCovenantSigs(
 	}
 	slashingSigsInfo := &CovenantAdaptorSignatures{CovPk: covPk, AdaptorSigs: adaptorSigs}
 	ud.CovenantSlashingSigs = append(ud.CovenantSlashingSigs, slashingSigsInfo)
-
-	return nil
 }

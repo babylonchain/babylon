@@ -401,6 +401,16 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantPK.Wrapf("covenant pk: %s", req.Pk.MarshalHex())
 	}
 
+	if btcDel.IsSignedByCovMember(req.Pk) || btcDel.BtcUndelegation.IsSignedByCovMember(req.Pk) {
+		ms.Logger(ctx).Debug("Received duplicated covenant signature", "covenant pk", req.Pk.MarshalHex())
+		return &types.MsgAddCovenantSigsResponse{}, nil
+	}
+
+	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
+		ms.Logger(ctx).Debug("Received covenant signature after achieving quorum", "covenant pk", req.Pk.MarshalHex())
+		return &types.MsgAddCovenantSigsResponse{}, nil
+	}
+
 	// Note: we assume the order of adaptor sigs is matched to the
 	// order of finality providers in the delegation
 	// TODO: ensure the order for restaking, currently, we only have one finality provider
@@ -424,7 +434,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	err = btcDel.SlashingTx.EncVerifyAdaptorSignatures(
+	parsedSlashingAdaptorSignatures, err := btcDel.SlashingTx.ParseEncVerifyAdaptorSignatures(
 		stakingInfo.StakingOutput,
 		slashingSpendInfo,
 		req.Pk,
@@ -485,7 +495,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		// this fails, it is a programming error
 		panic(err)
 	}
-	err = btcDel.BtcUndelegation.SlashingTx.EncVerifyAdaptorSignatures(
+	parsedUnbondingSlashingAdaptorSignatures, err := btcDel.BtcUndelegation.SlashingTx.ParseEncVerifyAdaptorSignatures(
 		unbondingOutput,
 		unbondingSlashingSpendInfo,
 		req.Pk,
@@ -496,17 +506,11 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	// all good, add signatures to BTC delegation/undelegation and set it back to KVStore
-	if err := ms.AddCovenantSigsToBTCDelegation(
-		ctx,
-		req.StakingTxHash,
-		req.Pk,
-		req.SlashingTxSigs,
-		req.UnbondingTxSig,
-		req.SlashingUnbondingTxSigs,
-	); err != nil {
-		return nil, types.ErrInvalidCovenantSig.Wrapf("failed to add covenant signatures to BTC delegation: %v", err)
-	}
+	// All is fine add recieved signatures to the BTC delegation and BtcUndelegation
+	btcDel.AddCovenantSigs(req.Pk, parsedSlashingAdaptorSignatures, params.CovenantQuorum)
+	btcDel.BtcUndelegation.AddCovenantSigs(req.Pk, req.UnbondingTxSig, parsedUnbondingSlashingAdaptorSignatures, params.CovenantQuorum)
+
+	ms.setBTCDelegation(ctx, btcDel)
 
 	// notify subscriber
 	if err := ctx.EventManager().EmitTypedEvent(&types.EventActivateBTCDelegation{BtcDel: btcDel}); err != nil {
