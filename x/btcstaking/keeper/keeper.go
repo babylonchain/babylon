@@ -83,11 +83,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			if power == 0 {
 				return // skip if no voting power
 			}
-			if _, ok := fpPowerMap[fpBTCPKHex]; ok {
-				fpPowerMap[fpBTCPKHex] += power
-			} else {
-				fpPowerMap[fpBTCPKHex] = power
-			}
+			fpPowerMap[fpBTCPKHex] += power
 
 			// create fp dist info if not exist
 			if _, ok := fpDistMap[fpBTCPKHex]; !ok {
