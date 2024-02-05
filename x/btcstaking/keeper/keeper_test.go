@@ -262,12 +262,12 @@ func (h *Helper) CreateDelegation(
 	return stakingTxHash, delSK, delPK, msgCreateBTCDel
 }
 
-func (h *Helper) CreateCovenantSigs(
+func (h *Helper) GenerateCovenantSignaturesMessages(
 	r *rand.Rand,
 	covenantSKs []*btcec.PrivateKey,
 	msgCreateBTCDel *types.MsgCreateBTCDelegation,
 	del *types.BTCDelegation,
-) {
+) []*types.MsgAddCovenantSigs {
 	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
 	h.NoError(err)
 	stakingTxHash := stakingTx.TxHash().String()
@@ -321,6 +321,8 @@ func (h *Helper) CreateCovenantSigs(
 	covUnbondingSigs, err := datagen.GenCovenantUnbondingSigs(covenantSKs, stakingTx, del.StakingOutputIdx, unbondingPathInfo.GetPkScriptPath(), unbondingTx)
 	h.NoError(err)
 
+	msgs := make([]*types.MsgAddCovenantSigs, len(bsParams.CovenantPks))
+
 	for i := 0; i < len(bsParams.CovenantPks); i++ {
 		msgAddCovenantSig := &types.MsgAddCovenantSigs{
 			Signer:                  msgCreateBTCDel.Signer,
@@ -330,10 +332,29 @@ func (h *Helper) CreateCovenantSigs(
 			UnbondingTxSig:          bbn.NewBIP340SignatureFromBTCSig(covUnbondingSigs[i]),
 			SlashingUnbondingTxSigs: covenantUnbondingSlashingTxSigs[i].AdaptorSigs,
 		}
-		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgAddCovenantSig)
+		msgs[i] = msgAddCovenantSig
+	}
+	return msgs
+}
+
+func (h *Helper) CreateCovenantSigs(
+	r *rand.Rand,
+	covenantSKs []*btcec.PrivateKey,
+	msgCreateBTCDel *types.MsgCreateBTCDelegation,
+	del *types.BTCDelegation,
+) {
+	stakingTx, err := bbn.NewBTCTxFromBytes(del.StakingTx)
+	stakingTxHash := stakingTx.TxHash().String()
+
+	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+
+	h.NoError(err)
+	covenantMsgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, del)
+	for _, msg := range covenantMsgs {
+		msgCopy := msg
+		_, err := h.MsgServer.AddCovenantSigs(h.Ctx, msgCopy)
 		h.NoError(err)
 	}
-
 	/*
 		ensure covenant sig is added successfully
 	*/

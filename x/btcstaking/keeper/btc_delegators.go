@@ -127,6 +127,7 @@ func (k Keeper) AddCovenantSigsToBTCDelegation(
 		slashUnbondingTxSigs = append(slashUnbondingTxSigs, *as)
 	}
 
+	// TODO: refactor adding signatures to BTC delegation
 	addCovenantSig := func(btcDel *types.BTCDelegation) error {
 		if err := btcDel.AddCovenantSigs(covPk, slashingSigs, quorum); err != nil {
 			return err
