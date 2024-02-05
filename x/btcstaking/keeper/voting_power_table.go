@@ -15,7 +15,7 @@ import (
 
 // IterateActiveFPsAndBTCDelegations iterates over all finality providers that are not slashed,
 // and their BTC delegations
-func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation)) {
+func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool) {
 	// filter out all finality providers with positive voting power
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer fpIter.Close()
@@ -56,7 +56,10 @@ func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler f
 						panic(err) // only programming error is possible
 					}
 					btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-					handler(fp, btcDel)
+					shouldContinue := handler(fp, btcDel)
+					if !shouldContinue {
+						break
+					}
 				}
 			}
 		}()

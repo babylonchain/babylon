@@ -75,13 +75,13 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	k.IterateActiveFPsAndBTCDelegations(
 		ctx,
-		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) {
+		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool {
 			fpBTCPKHex := fp.BtcPk.MarshalHex()
 
 			// record active finality providers
 			power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
 			if power == 0 {
-				return // skip if no voting power
+				return true // skip if no voting power
 			}
 			fpPowerMap[fpBTCPKHex] += power
 
@@ -91,6 +91,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			}
 			// append BTC delegation
 			fpDistMap[fpBTCPKHex].AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
+			return true
 		},
 	)
 
