@@ -86,7 +86,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			// iterate over all BTC delegations under the finality provider
 			// in order to accumulate voting power and reward dist info for it
 			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
-				// accumulate voting power and reward distirbution cache
+				// accumulate voting power and reward distribution cache
 				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
 				return true
 			})
