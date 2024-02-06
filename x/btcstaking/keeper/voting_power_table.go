@@ -18,18 +18,14 @@ func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.Fin
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer fpIter.Close()
 	for ; fpIter.Valid(); fpIter.Next() {
-		fpBTCPKBytes := fpIter.Key()
-		fp, err := k.GetFinalityProvider(ctx, fpBTCPKBytes)
-		if err != nil {
-			// failed to get a finality provider with voting power is a programming error
-			panic(err)
-		}
+		var fp types.FinalityProvider
+		k.cdc.MustUnmarshal(fpIter.Value(), &fp)
 		if fp.IsSlashed() {
 			// slashed finality provider is removed from finality provider set
 			continue
 		}
 
-		shouldContinue := handler(fp)
+		shouldContinue := handler(&fp)
 		if !shouldContinue {
 			return
 		}

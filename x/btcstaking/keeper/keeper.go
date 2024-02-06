@@ -81,28 +81,22 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.IterateActiveFPs(
 		ctx,
 		func(fp *types.FinalityProvider) bool {
-			fpPower := uint64(0)
 			fpDistInfo := types.NewFinalityProviderDistInfo(fp)
 
 			// iterate over all BTC delegations under the finality provider
 			// in order to accumulate voting power and reward dist info for it
 			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
-				// record active finality providers
-				power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
-				if power == 0 {
-					// skip if no voting power
-					return true
-				}
-
 				// accumulate voting power and reward distirbution cache
-				fpPower += power
 				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
-
 				return true
 			})
 
-			if fpPower > 0 {
-				activeFps = append(activeFps, &types.FinalityProviderWithMeta{BtcPk: fp.BtcPk, VotingPower: fpPower})
+			if fpDistInfo.TotalVotingPower > 0 {
+				activeFP := &types.FinalityProviderWithMeta{
+					BtcPk:       fp.BtcPk,
+					VotingPower: fpDistInfo.TotalVotingPower,
+				}
+				activeFps = append(activeFps, activeFP)
 				rdc.AddFinalityProviderDistInfo(fpDistInfo)
 			}
 
