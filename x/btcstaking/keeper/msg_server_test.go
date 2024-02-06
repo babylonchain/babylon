@@ -1,13 +1,16 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"errors"
+	"math"
 	"math/rand"
 	"testing"
 	"time"
 
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
@@ -544,4 +547,129 @@ func TestCorrectUnbondingTimeInDelegation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func createNDelegationsForFinalityProvider(
+	r *rand.Rand,
+	t *testing.T,
+	fpPK *btcec.PublicKey,
+	stakingValue int64,
+	numDelegations int,
+	quorum uint32,
+) []*types.BTCDelegation {
+	var delegations []*types.BTCDelegation
+	for i := 0; i < numDelegations; i++ {
+		del := CreateDelegation(
+			r,
+			t,
+			fpPK,
+			stakingValue,
+			0,
+			math.MaxUint16,
+			math.MaxUint16,
+			quorum,
+		)
+
+		delegations = append(delegations, del)
+	}
+	return delegations
+}
+
+type ExpectedProviderData struct {
+	numDelegations int32
+	stakingValue   int32
+}
+
+func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		valSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(1)
+		require.NoError(t, err)
+
+		var expectedProviderData map[string]*ExpectedProviderData = make(map[string]*ExpectedProviderData)
+
+		// Create two test apps from the same set of validators
+		h := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+		h1 := testhelper.NewHelperWithValSet(t, valSet, privSigner)
+
+		// Default params are the same in both apps
+		covQuorum := h.App.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum
+		maxFinalityProviders := int32(h.App.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders)
+
+		// Number of finality providers from 10 to maxFinalityProviders + 10
+		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
+
+		fps := CreateNFinalityProviders(r, t, numFinalityProviders)
+
+		// Fill the databse of both apps with the same finality providers and delegations
+		for _, fp := range fps {
+			h.App.BTCStakingKeeper.SetFinalityProvider(h.Ctx, fp)
+			h1.App.BTCStakingKeeper.SetFinalityProvider(h1.Ctx, fp)
+		}
+
+		for _, fp := range fps {
+			// each finality provider has different amount of delegations with different amount
+			stakingValue := r.Int31n(200000) + 10000
+			numDelegations := r.Int31n(10)
+
+			if numDelegations > 0 {
+				expectedProviderData[fp.BtcPk.MarshalHex()] = &ExpectedProviderData{
+					numDelegations: numDelegations,
+					stakingValue:   stakingValue,
+				}
+			}
+
+			delegations := createNDelegationsForFinalityProvider(
+				r,
+				t,
+				fp.BtcPk.MustToBTCPK(),
+				int64(stakingValue),
+				int(numDelegations),
+				covQuorum,
+			)
+
+			for _, del := range delegations {
+				err := h.App.BTCStakingKeeper.AddBTCDelegation(h.Ctx, del)
+				require.NoError(t, err)
+				err = h1.App.BTCStakingKeeper.AddBTCDelegation(h1.Ctx, del)
+				require.NoError(t, err)
+			}
+		}
+
+		// Execute block for both apps
+		ctx, err := h.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+
+		ctx1, err := h1.ApplyEmptyBlockWithVoteExtension(r)
+		require.NoError(t, err)
+
+		// Given that there is no transactions and the data in db is the same
+		// app hash produced by both apps should be the same
+		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
+		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
+		require.Equal(t, appHash1, appHash2)
+
+		providersWithVotingPower := len(expectedProviderData)
+
+		var expectedNumberActiveProviders int
+
+		if providersWithVotingPower >= int(maxFinalityProviders) {
+			expectedNumberActiveProviders = int(maxFinalityProviders)
+		} else {
+			expectedNumberActiveProviders = providersWithVotingPower
+		}
+
+		// Some basic assertions to check database was filled correctly
+		// we can do assertions on only one of the apps, as their state hash is the same
+		tb := h.App.BTCStakingKeeper.GetVotingPowerTable(h.Ctx, 1)
+		require.Equal(t, expectedNumberActiveProviders, len(tb))
+
+		distcache, err := h.App.BTCStakingKeeper.GetRewardDistCache(h.Ctx, 1)
+		require.NoError(t, err)
+		//TODO Currently we do not restrict the number of finality providers receiving rewards
+		//this should be fixed at some point.
+		require.Equal(t, len(distcache.FinalityProviders), providersWithVotingPower)
+	})
 }
