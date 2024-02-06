@@ -54,46 +54,6 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	return nil
 }
 
-// updateBTCDelegation updates an existing BTC delegation w.r.t. finality provider BTC PK, delegator BTC PK,
-// and staking tx hash by using a given function
-func (k Keeper) updateBTCDelegation(
-	ctx context.Context,
-	stakingTxHashStr string,
-	modifyFn func(*types.BTCDelegation) error,
-) error {
-	// get the BTC delegation
-	btcDel, err := k.GetBTCDelegation(ctx, stakingTxHashStr)
-	if err != nil {
-		return err
-	}
-
-	// apply modification
-	if err := modifyFn(btcDel); err != nil {
-		return err
-	}
-
-	// we only need to update the actual BTC delegation object here, without touching
-	// the BTC delegation index
-	k.setBTCDelegation(ctx, btcDel)
-	return nil
-}
-
-func (k Keeper) AddUndelegationToBTCDelegation(
-	ctx context.Context,
-	stakingTxHash string,
-	ud *types.BTCUndelegation,
-) error {
-	addUndelegation := func(btcDel *types.BTCDelegation) error {
-		if btcDel.BtcUndelegation != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
-		}
-		btcDel.BtcUndelegation = ud
-		return nil
-	}
-
-	return k.updateBTCDelegation(ctx, stakingTxHash, addUndelegation)
-}
-
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given finality provider
 func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
 	fpBTCPKBytes := fpBTCPK.MustMarshal()

@@ -206,8 +206,8 @@ func (tx *BTCSlashingTx) ParseEncVerifyAdaptorSignatures(
 	sigs [][]byte,
 ) ([]asig.AdaptorSignature, error) {
 	var adaptorSigs []asig.AdaptorSignature = make([]asig.AdaptorSignature, len(sigs))
-	for i, s := range sigs {
-		sig := s
+	for i := range sigs {
+		sig := sigs[i]
 		adaptorSig, err := asig.NewAdaptorSignatureFromBytes(sig)
 		if err != nil {
 			return nil, err

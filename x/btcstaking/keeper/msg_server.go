@@ -401,7 +401,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantPK.Wrapf("covenant pk: %s", req.Pk.MarshalHex())
 	}
 
-	if btcDel.IsSignedByCovMember(req.Pk) || btcDel.BtcUndelegation.IsSignedByCovMember(req.Pk) {
+	if btcDel.IsSignedByCovMember(req.Pk) && btcDel.BtcUndelegation.IsSignedByCovMember(req.Pk) {
 		ms.Logger(ctx).Debug("Received duplicated covenant signature", "covenant pk", req.Pk.MarshalHex())
 		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
@@ -506,9 +506,13 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		return nil, types.ErrInvalidCovenantSig.Wrapf("err: %v", err)
 	}
 
-	// All is fine add recieved signatures to the BTC delegation and BtcUndelegation
-	btcDel.AddCovenantSigs(req.Pk, parsedSlashingAdaptorSignatures, params.CovenantQuorum)
-	btcDel.BtcUndelegation.AddCovenantSigs(req.Pk, req.UnbondingTxSig, parsedUnbondingSlashingAdaptorSignatures, params.CovenantQuorum)
+	// All is fine add received signatures to the BTC delegation and BtcUndelegation
+	btcDel.AddCovenantSigs(
+		req.Pk,
+		parsedSlashingAdaptorSignatures,
+		req.UnbondingTxSig,
+		parsedUnbondingSlashingAdaptorSignatures,
+	)
 
 	ms.setBTCDelegation(ctx, btcDel)
 
@@ -573,13 +577,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	err = ms.updateBTCDelegation(ctx, req.StakingTxHash, func(del *types.BTCDelegation) error {
-		del.BtcUndelegation.DelegatorUnbondingSig = req.UnbondingTxSig
-		return nil
-	})
-	if err != nil {
-		return nil, err
-	}
+	btcDel.BtcUndelegation.DelegatorUnbondingSig = req.UnbondingTxSig
+	ms.setBTCDelegation(ctx, btcDel)
 
 	// notify subscriber about this unbonded BTC delegation
 	event := &types.EventUnbondedBTCDelegation{
