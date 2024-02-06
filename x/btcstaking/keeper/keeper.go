@@ -82,8 +82,8 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// for rewards
 	fpDistMap := map[string]*types.FinalityProviderDistInfo{}
 
-	// metrics for {active, inactive} finality providers, {pending, active,
-	// unbonded BTC delegations}, and total staked Bitcoins
+	// prepare metrics for {active, inactive} finality providers,
+	// {pending, active, unbonded BTC delegations}, and total staked Bitcoins
 	// NOTE: slashed finality providers and BTC delegations are recorded upon
 	// slashing events rather than here
 	var (
@@ -125,7 +125,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		},
 	)
 
-	// metrics for finality providers and total staked BTCs
+	// record metrics for finality providers and total staked BTCs
 	numFPs := len(totalFPsMap)
 	numActiveFPs := numFPs
 	if numActiveFPs > int(params.MaxActiveFinalityProviders) {
@@ -135,7 +135,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
 	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
 	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
-	// metrics for BTC delegations (NOTE: slashed BTC delegations are recorded upon slashing)
+	// record metrics for BTC delegations (NOTE: slashed BTC delegations are recorded upon slashing)
 	for status, num := range numDelsMap {
 		types.RecordBTCDelegations(num, status)
 	}
@@ -156,7 +156,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	}
 
 	// all good, set the reward distribution cache of the current height
-	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
+	k.setCurrentRewardDistCache(ctx, rdc)
 
 	return nil
 }
