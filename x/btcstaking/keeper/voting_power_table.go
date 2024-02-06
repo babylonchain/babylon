@@ -96,27 +96,6 @@ func (k Keeper) IterateActiveFPsAndBTCDelegationsAlternative(ctx context.Context
 	}
 }
 
-// setCurrentTopNVotingPower gets top N finality providers and set their current voting power to KV store
-func (k Keeper) setCurrentTopNVotingPower(ctx context.Context, fpPowerMap map[string]uint64) {
-	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
-	activeFps := []*types.FinalityProviderWithMeta{}
-	for btcPKHex, power := range fpPowerMap {
-		btcPK, err := bbn.NewBIP340PubKeyFromHex(btcPKHex)
-		if err != nil {
-			panic(err) // only programming error
-		}
-		activeFps = append(activeFps, &types.FinalityProviderWithMeta{BtcPk: btcPK, VotingPower: power})
-	}
-	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
-
-	// get current Babylon height
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	// set voting power for each active finality providers
-	for _, fp := range activeFps {
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
-	}
-}
-
 // SetVotingPower sets the voting power of a given finality provider at a given Babylon height
 func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerStore(ctx, height)
