@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -13,19 +12,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// IterateActiveFPsAndBTCDelegations iterates over all finality providers that are not slashed,
-// and their BTC delegations
-func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool) {
+// IterateActiveFPs iterates over all finality providers that are not slashed
+func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.FinalityProvider) bool) {
 	// filter out all finality providers with positive voting power
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
 	defer fpIter.Close()
 	for ; fpIter.Valid(); fpIter.Next() {
 		fpBTCPKBytes := fpIter.Key()
-		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
-		if err != nil {
-			// failed to unmarshal finality provider PK in KVStore is a programming error
-			panic(err)
-		}
 		fp, err := k.GetFinalityProvider(ctx, fpBTCPKBytes)
 		if err != nil {
 			// failed to get a finality provider with voting power is a programming error
@@ -36,33 +29,10 @@ func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler f
 			continue
 		}
 
-		// iterate all BTC delegations under this finality provider
-		// to calculate this finality provider's total voting power
-		// wrapped in a function to close btcDelIter as soon as the function
-		// returned, see https://stackoverflow.com/questions/45617758/proper-way-to-release-resources-with-defer-in-a-loop/45620423
-		func() {
-			btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-			defer btcDelIter.Close()
-			for ; btcDelIter.Valid(); btcDelIter.Next() {
-
-				// unmarshal delegator's delegation index
-				var btcDelIndex types.BTCDelegatorDelegationIndex
-				k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
-
-				// retrieve and process each of the BTC delegation
-				for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
-					stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
-					if err != nil {
-						panic(err) // only programming error is possible
-					}
-					btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-					shouldContinue := handler(fp, btcDel)
-					if !shouldContinue {
-						break
-					}
-				}
-			}
-		}()
+		shouldContinue := handler(fp)
+		if !shouldContinue {
+			return
+		}
 	}
 }
 
