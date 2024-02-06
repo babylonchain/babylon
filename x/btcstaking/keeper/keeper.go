@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	corestoretypes "cosmossdk.io/core/store"
 
@@ -70,10 +71,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	}
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	// prepare for recording finality providers with positive voting power
-	// key is the finality provider's FP BTC PK hex, and value is the
-	// voting power
-	fpPowerMap := map[string]uint64{}
 	// prepare for recording finality providers and their BTC delegations
 	// for rewards
 	fpDistMap := map[string]*types.FinalityProviderDistInfo{}
@@ -82,13 +79,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		ctx,
 		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool {
 			fpBTCPKHex := fp.BtcPk.MarshalHex()
-
-			// record active finality providers
-			power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
-			if power == 0 {
-				return true // skip if no voting power
-			}
-			fpPowerMap[fpBTCPKHex] += power
 
 			// create fp dist info if not exist
 			if _, ok := fpDistMap[fpBTCPKHex]; !ok {
@@ -100,19 +90,34 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		},
 	)
 
-	// return directly if there is no active finality provider
-	if len(fpPowerMap) == 0 {
-		return nil
+	var distInfoSlice []*types.FinalityProviderDistInfo = make([]*types.FinalityProviderDistInfo, len(fpDistMap))
+	var i = 0
+	for _, distMap := range fpDistMap {
+		distInfoSlice[i] = distMap
+		i++
 	}
 
-	// get top N finality providers and set their voting power to KV store
-	k.setCurrentTopNVotingPower(ctx, fpPowerMap)
+	// sort the slice
+	sort.SliceStable(distInfoSlice, func(i, j int) bool {
+		return distInfoSlice[i].TotalVotingPower > distInfoSlice[j].TotalVotingPower
+	})
 
-	// create reward distribution cache
+	maxProviders := int(k.GetParams(ctx).MaxActiveFinalityProviders)
+	currentNumberOfActiveProviders := len(distInfoSlice)
+
+	var toCheck int
+	if currentNumberOfActiveProviders >= maxProviders {
+		toCheck = maxProviders
+	} else {
+		toCheck = currentNumberOfActiveProviders
+	}
+	// get current Babylon height
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	rdc := types.NewRewardDistCache()
-	for fpBTCPKHex := range fpDistMap {
-		// try to add this finality provider distribution info to reward distribution cache
-		rdc.AddFinalityProviderDistInfo(fpDistMap[fpBTCPKHex])
+	for i := 0; i < toCheck; i++ {
+		distInfo := distInfoSlice[i]
+		k.SetVotingPower(ctx, distInfo.BtcPk.MustMarshal(), babylonTipHeight, distInfo.TotalVotingPower)
+		rdc.AddFinalityProviderDistInfo(distInfo)
 	}
 
 	// all good, set the reward distribution cache of the current height

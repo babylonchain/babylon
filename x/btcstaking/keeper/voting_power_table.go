@@ -66,6 +66,36 @@ func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler f
 	}
 }
 
+func (k Keeper) IterateActiveFPsAndBTCDelegationsAlternative(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool) {
+	btcDelIter := k.btcDelegationStore(ctx).Iterator(nil, nil)
+
+	defer btcDelIter.Close()
+	for ; btcDelIter.Valid(); btcDelIter.Next() {
+		var btcDel types.BTCDelegation
+		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDel)
+
+		for _, fpPk := range btcDel.FpBtcPkList {
+			fp, err := k.GetFinalityProvider(ctx, fpPk)
+			if err != nil {
+				// failed to get a finality provider with voting power is a programming error
+				panic(err)
+			}
+			if fp.IsSlashed() {
+				// slashed finality provider is removed from finality provider set
+				continue
+			}
+
+			if !fp.IsSlashed() {
+				shouldContinue := handler(fp, &btcDel)
+
+				if !shouldContinue {
+					return
+				}
+			}
+		}
+	}
+}
+
 // setCurrentTopNVotingPower gets top N finality providers and set their current voting power to KV store
 func (k Keeper) setCurrentTopNVotingPower(ctx context.Context, fpPowerMap map[string]uint64) {
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
