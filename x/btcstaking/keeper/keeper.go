@@ -80,6 +80,12 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool {
 			fpBTCPKHex := fp.BtcPk.MarshalHex()
 
+			power := btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum)
+
+			if power == 0 {
+				return true
+			}
+
 			// create fp dist info if not exist
 			if _, ok := fpDistMap[fpBTCPKHex]; !ok {
 				fpDistMap[fpBTCPKHex] = types.NewFinalityProviderDistInfo(fp)
@@ -89,6 +95,10 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			return true
 		},
 	)
+
+	if len(fpDistMap) == 0 {
+		return nil
+	}
 
 	var distInfoSlice []*types.FinalityProviderDistInfo = make([]*types.FinalityProviderDistInfo, len(fpDistMap))
 	var i = 0
