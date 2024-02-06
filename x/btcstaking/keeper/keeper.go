@@ -71,13 +71,13 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	// prepare for recording finality providers with positive voting power
-	// key is the finality provider's FP BTC PK hex, and value is the
-	// voting power
 	activeFps := []*types.FinalityProviderWithMeta{}
 	// prepare for recording finality providers and their BTC delegations
 	// for rewards
 	rdc := types.NewRewardDistCache()
 
+	// iterate over all finality providers to find out non-slashed ones that have
+	// positive voting power
 	k.IterateActiveFPs(
 		ctx,
 		func(fp *types.FinalityProvider) bool {
@@ -119,6 +119,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	}
 
 	// set the reward distribution cache of the current height
+	// TODO: only give rewards to top N finality providers and their BTC delegations
 	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
 
 	return nil
