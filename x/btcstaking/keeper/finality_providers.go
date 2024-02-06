@@ -60,6 +60,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	covenantQuorum := k.GetParams(ctx).CovenantQuorum
 	btcDelIter := k.btcDelegatorStore(ctx, fp.BtcPk).Iterator(nil, nil)
+	defer btcDelIter.Close()
 	for ; btcDelIter.Valid(); btcDelIter.Next() {
 		// unmarshal
 		var btcDelIndex types.BTCDelegatorDelegationIndex
@@ -76,7 +77,6 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 			}
 		}
 	}
-	btcDelIter.Close()
 
 	return nil
 }
