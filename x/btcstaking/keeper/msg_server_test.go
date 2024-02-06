@@ -110,13 +110,21 @@ func FuzzCreateBTCDelegationAndAddCovenantSigs(f *testing.F) {
 		// delegation is not activated by covenant yet
 		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
-		//generate and insert new covenant signatures
-		h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
+		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+
+		for _, msg := range msgs {
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
+			h.NoError(err)
+			// check that submitting the same covenant signature does not produce an error
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
+			h.NoError(err)
+		}
 
 		// ensure the BTC delegation now has voting power
 		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
 		h.NoError(err)
 		require.True(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(h.t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 		votingPower := actualDel.VotingPower(h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height, h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
 		require.Equal(t, uint64(stakingValue), votingPower)
 	})

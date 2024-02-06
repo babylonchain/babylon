@@ -79,7 +79,7 @@ func (ud *BTCUndelegation) AddCovenantSigs(
 	}
 
 	if ud.IsSignedByCovMember(covPk) {
-		return ErrDuplicatedCovenantSig
+		return nil
 	}
 
 	covUnbondingSigInfo := &SignatureInfo{Pk: covPk, Sig: unbondingSig}

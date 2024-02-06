@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -12,44 +13,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const (
-	SatoshisPerBTC = 100_000_000
-)
-
-// RecordVotingPowerTable computes the voting power table at the current block height
-// and saves the power table to KVStore
-// triggered upon each EndBlock
-func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
-	// tip of Babylon and Bitcoin
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		return
-	}
-	// get value of w
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-
-	// metrics for {active, inactive} finality providers, {pending, active,
-	// unbonded BTC delegations}, and total staked Bitcoins
-	// NOTE: slashed finality providers and BTC delegations are recorded upon
-	// slashing events rather than here
-	var (
-		numTotalFPs          = 0
-		numStakedSats uint64 = 0
-		numDels              = map[types.BTCDelegationStatus]int{
-			types.BTCDelegationStatus_PENDING:  0,
-			types.BTCDelegationStatus_ACTIVE:   0,
-			types.BTCDelegationStatus_UNBONDED: 0,
-		}
-	)
-
+// IterateActiveFPsAndBTCDelegations iterates over all finality providers that are not slashed,
+// and their BTC delegations
+func (k Keeper) IterateActiveFPsAndBTCDelegations(ctx context.Context, handler func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool) {
 	// filter out all finality providers with positive voting power
-	activeFps := []*types.FinalityProviderWithMeta{}
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
+	defer fpIter.Close()
 	for ; fpIter.Valid(); fpIter.Next() {
-		numTotalFPs++
-
 		fpBTCPKBytes := fpIter.Key()
 		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
 		if err != nil {
@@ -66,58 +36,51 @@ func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
 			continue
 		}
 
-		fpPower := uint64(0)
-
 		// iterate all BTC delegations under this finality provider
 		// to calculate this finality provider's total voting power
-		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			btcDels, err := k.getBTCDelegatorDelegations(ctx, fpBTCPK, delBTCPK)
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
+		// wrapped in a function to close btcDelIter as soon as the function
+		// returned, see https://stackoverflow.com/questions/45617758/proper-way-to-release-resources-with-defer-in-a-loop/45620423
+		func() {
+			btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+			defer btcDelIter.Close()
+			for ; btcDelIter.Valid(); btcDelIter.Next() {
 
-			// record metrics
-			numStakedSats += fpPower
-			for _, btcDel := range btcDels.Dels {
-				numDels[btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum)]++
-			}
-		}
-		btcDelIter.Close()
+				// unmarshal delegator's delegation index
+				var btcDelIndex types.BTCDelegatorDelegationIndex
+				k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
 
-		if fpPower > 0 {
-			activeFps = append(activeFps, &types.FinalityProviderWithMeta{
-				BtcPk:       fpBTCPK,
-				VotingPower: fpPower,
-				// other fields do not matter
-			})
-		}
+				// retrieve and process each of the BTC delegation
+				for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+					stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+					if err != nil {
+						panic(err) // only programming error is possible
+					}
+					btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+					shouldContinue := handler(fp, btcDel)
+					if !shouldContinue {
+						break
+					}
+				}
+			}
+		}()
 	}
-	fpIter.Close()
+}
 
-	// return directly if there is no active finality provider
-	if len(activeFps) == 0 {
-		return
-	}
-
+// setCurrentTopNVotingPower gets top N finality providers and set their current voting power to KV store
+func (k Keeper) setCurrentTopNVotingPower(ctx context.Context, fpPowerMap map[string]uint64) {
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
+	activeFps := []*types.FinalityProviderWithMeta{}
+	for btcPKHex, power := range fpPowerMap {
+		btcPK, err := bbn.NewBIP340PubKeyFromHex(btcPKHex)
+		if err != nil {
+			panic(err) // only programming error
+		}
+		activeFps = append(activeFps, &types.FinalityProviderWithMeta{BtcPk: btcPK, VotingPower: power})
+	}
 	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
 
-	// metrics for finality providers and total staked BTCs
-	types.RecordActiveFinalityProviders(len(activeFps))
-	types.RecordInactiveFinalityProviders(numTotalFPs - len(activeFps))
-	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
-	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
-	// metrics for BTC delegations (NOTE: slashed BTC delegations are recorded upon slashing)
-	for status, num := range numDels {
-		types.RecordBTCDelegations(num, status)
-	}
-
+	// get current Babylon height
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	// set voting power for each active finality providers
 	for _, fp := range activeFps {
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)

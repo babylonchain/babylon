@@ -203,9 +203,9 @@ func (d *BTCDelegation) AddCovenantSigs(covPk *bbn.BIP340PubKey, sigs []asig.Ada
 	if d.HasCovenantQuorums(quorum) {
 		return nil
 	}
-	// ensure that this covenant member has not signed the delegation yet
+
 	if d.IsSignedByCovMember(covPk) {
-		return ErrDuplicatedCovenantSig
+		return nil
 	}
 
 	adaptorSigs := make([][]byte, 0, len(sigs))

@@ -87,8 +87,8 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-		keeper.RecordRewardDistCache(ctx)
+		err = keeper.BeginBlocker(ctx)
+		require.NoError(t, err)
 
 		// assert reward distribution cache is correct
 		rdc, err := keeper.GetRewardDistCache(ctx, babylonHeight)
