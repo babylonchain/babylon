@@ -26,6 +26,7 @@ import (
 
 	"github.com/babylonchain/babylon/app"
 	appparams "github.com/babylonchain/babylon/app/params"
+	btcstakingtypes "github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/babylonchain/babylon/x/epoching/keeper"
 	"github.com/babylonchain/babylon/x/epoching/types"
 )
@@ -232,4 +233,13 @@ func (h *Helper) CheckValidator(addr sdk.ValAddress, status stakingtypes.BondSta
 func (h *Helper) CheckDelegator(delegator sdk.AccAddress, val sdk.ValAddress, found bool) {
 	_, ok := h.App.StakingKeeper.GetDelegation(h.Ctx, delegator, val)
 	require.Equal(h.t, ok, found)
+}
+
+func (h *Helper) AddDelegation(del *btcstakingtypes.BTCDelegation) {
+	err := h.App.BTCStakingKeeper.AddBTCDelegation(h.Ctx, del)
+	h.NoError(err)
+}
+
+func (h *Helper) AddFinalityProvider(fp *btcstakingtypes.FinalityProvider) {
+	h.App.BTCStakingKeeper.SetFinalityProvider(h.Ctx, fp)
 }
