@@ -36,6 +36,16 @@ func GenRandomFinalityProvider(r *rand.Rand) (*bstypes.FinalityProvider, error) 
 	return GenRandomFinalityProviderWithBTCSK(r, btcSK)
 }
 
+func CreateNFinalityProviders(r *rand.Rand, t *testing.T, n int) []*bstypes.FinalityProvider {
+	fps := make([]*bstypes.FinalityProvider, n)
+	for i := 0; i < n; i++ {
+		fp, err := GenRandomFinalityProvider(r)
+		require.NoError(t, err)
+		fps[i] = fp
+	}
+	return fps
+}
+
 func GenRandomFinalityProviderWithBTCSK(r *rand.Rand, btcSK *btcec.PrivateKey) (*bstypes.FinalityProvider, error) {
 	bbnSK, _, err := GenRandomSecp256k1KeyPair(r)
 	if err != nil {

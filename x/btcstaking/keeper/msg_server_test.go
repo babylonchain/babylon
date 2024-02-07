@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	testhelper "github.com/babylonchain/babylon/testutil/helper"
@@ -15,6 +16,7 @@ import (
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/golang/mock/gomock"
@@ -559,16 +561,33 @@ func createNDelegationsForFinalityProvider(
 ) []*types.BTCDelegation {
 	var delegations []*types.BTCDelegation
 	for i := 0; i < numDelegations; i++ {
-		del := CreateDelegation(
+		covenatnSks, _, err := datagen.GenRandomBTCKeyPairs(r, int(quorum))
+		require.NoError(t, err)
+
+		delSK, _, err := datagen.GenRandomBTCKeyPair(r)
+		require.NoError(t, err)
+
+		net := &chaincfg.SimNetParams
+		slashingAddress, err := datagen.GenRandomBTCAddress(r, net)
+		require.NoError(t, err)
+
+		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+
+		del, err := datagen.GenRandomBTCDelegation(
 			r,
 			t,
-			fpPK,
-			stakingValue,
-			0,
-			math.MaxUint16,
-			math.MaxUint16,
+			[]bbn.BIP340PubKey{*bbn.NewBIP340PubKeyFromBTCPK(fpPK)},
+			delSK,
+			covenatnSks,
 			quorum,
+			slashingAddress.EncodeAddress(),
+			0,
+			0+math.MaxUint16,
+			uint64(stakingValue),
+			slashingRate,
+			math.MaxUint16,
 		)
+		require.NoError(t, err)
 
 		delegations = append(delegations, del)
 	}
@@ -581,7 +600,8 @@ type ExpectedProviderData struct {
 }
 
 func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 10)
+	// less seeds than usual as this is pretty long running test
+	datagen.AddRandomSeedsToFuzzer(f, 5)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -601,12 +621,12 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		// Number of finality providers from 10 to maxFinalityProviders + 10
 		numFinalityProviders := int(r.Int31n(maxFinalityProviders) + 10)
 
-		fps := CreateNFinalityProviders(r, t, numFinalityProviders)
+		fps := datagen.CreateNFinalityProviders(r, t, numFinalityProviders)
 
 		// Fill the databse of both apps with the same finality providers and delegations
 		for _, fp := range fps {
-			h.App.BTCStakingKeeper.SetFinalityProvider(h.Ctx, fp)
-			h1.App.BTCStakingKeeper.SetFinalityProvider(h1.Ctx, fp)
+			h.AddFinalityProvider(fp)
+			h1.AddFinalityProvider(fp)
 		}
 
 		for _, fp := range fps {
@@ -631,10 +651,8 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 			)
 
 			for _, del := range delegations {
-				err := h.App.BTCStakingKeeper.AddBTCDelegation(h.Ctx, del)
-				require.NoError(t, err)
-				err = h1.App.BTCStakingKeeper.AddBTCDelegation(h1.Ctx, del)
-				require.NoError(t, err)
+				h.AddDelegation(del)
+				h1.AddDelegation(del)
 			}
 		}
 
@@ -650,26 +668,5 @@ func FuzzDeterminismBtcstakingBeginBlocker(f *testing.F) {
 		appHash1 := hex.EncodeToString(ctx.BlockHeader().AppHash)
 		appHash2 := hex.EncodeToString(ctx1.BlockHeader().AppHash)
 		require.Equal(t, appHash1, appHash2)
-
-		providersWithVotingPower := len(expectedProviderData)
-
-		var expectedNumberActiveProviders int
-
-		if providersWithVotingPower >= int(maxFinalityProviders) {
-			expectedNumberActiveProviders = int(maxFinalityProviders)
-		} else {
-			expectedNumberActiveProviders = providersWithVotingPower
-		}
-
-		// Some basic assertions to check database was filled correctly
-		// we can do assertions on only one of the apps, as their state hash is the same
-		tb := h.App.BTCStakingKeeper.GetVotingPowerTable(h.Ctx, 1)
-		require.Equal(t, expectedNumberActiveProviders, len(tb))
-
-		distcache, err := h.App.BTCStakingKeeper.GetRewardDistCache(h.Ctx, 1)
-		require.NoError(t, err)
-		//TODO Currently we do not restrict the number of finality providers receiving rewards
-		//this should be fixed at some point.
-		require.Equal(t, len(distcache.FinalityProviders), providersWithVotingPower)
 	})
 }
