@@ -5,8 +5,6 @@ package types
 
 import (
 	fmt "fmt"
-	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
-	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
@@ -69,25 +67,31 @@ func (m *EventNewFinalityProvider) GetFp() *FinalityProvider {
 	return nil
 }
 
-// EventNewBTCDelegation is the event emitted when a BTC delegation is created
-// NOTE: the BTC delegation is not active thus does not have voting power yet
-// only after it receives a covenant signature it becomes activated and has voting power
-type EventNewBTCDelegation struct {
-	BtcDel *BTCDelegation `protobuf:"bytes,1,opt,name=btc_del,json=btcDel,proto3" json:"btc_del,omitempty"`
+// EventBTCDelegationStateUpdate is the event emitted when a BTC delegation's state is
+// updated. There are the following possible state transitions:
+// - non-existing -> pending, which happens upon `MsgCreateBTCDelegation`
+// - pending -> active, which happens upon `MsgAddCovenantSigs`
+// - active -> unbonded, which happens upon `MsgBTCUndelegate` or upon staking tx timelock expires
+type EventBTCDelegationStateUpdate struct {
+	// staking_tx_hash is the hash of the staking tx.
+	// It uniquely identifies a BTC delegation
+	StakingTxHash string `protobuf:"bytes,1,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
+	// new_state is the new state of this BTC delegation
+	NewState BTCDelegationStatus `protobuf:"varint,2,opt,name=new_state,json=newState,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"new_state,omitempty"`
 }
 
-func (m *EventNewBTCDelegation) Reset()         { *m = EventNewBTCDelegation{} }
-func (m *EventNewBTCDelegation) String() string { return proto.CompactTextString(m) }
-func (*EventNewBTCDelegation) ProtoMessage()    {}
-func (*EventNewBTCDelegation) Descriptor() ([]byte, []int) {
+func (m *EventBTCDelegationStateUpdate) Reset()         { *m = EventBTCDelegationStateUpdate{} }
+func (m *EventBTCDelegationStateUpdate) String() string { return proto.CompactTextString(m) }
+func (*EventBTCDelegationStateUpdate) ProtoMessage()    {}
+func (*EventBTCDelegationStateUpdate) Descriptor() ([]byte, []int) {
 	return fileDescriptor_74118427820fff75, []int{1}
 }
-func (m *EventNewBTCDelegation) XXX_Unmarshal(b []byte) error {
+func (m *EventBTCDelegationStateUpdate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *EventNewBTCDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *EventBTCDelegationStateUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_EventNewBTCDelegation.Marshal(b, m, deterministic)
+		return xxx_messageInfo_EventBTCDelegationStateUpdate.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -97,141 +101,28 @@ func (m *EventNewBTCDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *EventNewBTCDelegation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventNewBTCDelegation.Merge(m, src)
+func (m *EventBTCDelegationStateUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventBTCDelegationStateUpdate.Merge(m, src)
 }
-func (m *EventNewBTCDelegation) XXX_Size() int {
+func (m *EventBTCDelegationStateUpdate) XXX_Size() int {
 	return m.Size()
 }
-func (m *EventNewBTCDelegation) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventNewBTCDelegation.DiscardUnknown(m)
+func (m *EventBTCDelegationStateUpdate) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventBTCDelegationStateUpdate.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EventNewBTCDelegation proto.InternalMessageInfo
+var xxx_messageInfo_EventBTCDelegationStateUpdate proto.InternalMessageInfo
 
-func (m *EventNewBTCDelegation) GetBtcDel() *BTCDelegation {
-	if m != nil {
-		return m.BtcDel
-	}
-	return nil
-}
-
-// EventActivateBTCDelegation is the event emitted when covenant activates a BTC delegation
-// such that the BTC delegation starts to have voting power in its timelock period
-type EventActivateBTCDelegation struct {
-	BtcDel *BTCDelegation `protobuf:"bytes,1,opt,name=btc_del,json=btcDel,proto3" json:"btc_del,omitempty"`
-}
-
-func (m *EventActivateBTCDelegation) Reset()         { *m = EventActivateBTCDelegation{} }
-func (m *EventActivateBTCDelegation) String() string { return proto.CompactTextString(m) }
-func (*EventActivateBTCDelegation) ProtoMessage()    {}
-func (*EventActivateBTCDelegation) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74118427820fff75, []int{2}
-}
-func (m *EventActivateBTCDelegation) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *EventActivateBTCDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_EventActivateBTCDelegation.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *EventActivateBTCDelegation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventActivateBTCDelegation.Merge(m, src)
-}
-func (m *EventActivateBTCDelegation) XXX_Size() int {
-	return m.Size()
-}
-func (m *EventActivateBTCDelegation) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventActivateBTCDelegation.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EventActivateBTCDelegation proto.InternalMessageInfo
-
-func (m *EventActivateBTCDelegation) GetBtcDel() *BTCDelegation {
-	if m != nil {
-		return m.BtcDel
-	}
-	return nil
-}
-
-// EventUnbondingBTCDelegation is the event emitted when an unbonding BTC delegation
-// receives all signatures needed for becoming unbonded
-type EventUnbondedBTCDelegation struct {
-	// btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
-	// the PK follows encoding in BIP-340 spec
-	BtcPk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=btc_pk,json=btcPk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"btc_pk,omitempty"`
-	// fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
-	// this BTC delegation delegates to
-	// If there is more than 1 PKs, then this means the delegation is restaked
-	// to multiple finality providers
-	FpBtcPkList []github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,2,rep,name=fp_btc_pk_list,json=fpBtcPkList,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"fp_btc_pk_list,omitempty"`
-	// staking_tx_hash is the hash of the staking tx.
-	// (fp_pks..., del_pk, staking_tx_hash) uniquely identifies a BTC delegation
-	StakingTxHash string `protobuf:"bytes,3,opt,name=staking_tx_hash,json=stakingTxHash,proto3" json:"staking_tx_hash,omitempty"`
-	// unbonding_tx_hash is the hash of the unbonding tx.
-	UnbondingTxHash string `protobuf:"bytes,4,opt,name=unbonding_tx_hash,json=unbondingTxHash,proto3" json:"unbonding_tx_hash,omitempty"`
-	// from_state is the last state the BTC delegation was at
-	FromState BTCDelegationStatus `protobuf:"varint,5,opt,name=from_state,json=fromState,proto3,enum=babylon.btcstaking.v1.BTCDelegationStatus" json:"from_state,omitempty"`
-}
-
-func (m *EventUnbondedBTCDelegation) Reset()         { *m = EventUnbondedBTCDelegation{} }
-func (m *EventUnbondedBTCDelegation) String() string { return proto.CompactTextString(m) }
-func (*EventUnbondedBTCDelegation) ProtoMessage()    {}
-func (*EventUnbondedBTCDelegation) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74118427820fff75, []int{3}
-}
-func (m *EventUnbondedBTCDelegation) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *EventUnbondedBTCDelegation) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_EventUnbondedBTCDelegation.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *EventUnbondedBTCDelegation) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventUnbondedBTCDelegation.Merge(m, src)
-}
-func (m *EventUnbondedBTCDelegation) XXX_Size() int {
-	return m.Size()
-}
-func (m *EventUnbondedBTCDelegation) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventUnbondedBTCDelegation.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_EventUnbondedBTCDelegation proto.InternalMessageInfo
-
-func (m *EventUnbondedBTCDelegation) GetStakingTxHash() string {
+func (m *EventBTCDelegationStateUpdate) GetStakingTxHash() string {
 	if m != nil {
 		return m.StakingTxHash
 	}
 	return ""
 }
 
-func (m *EventUnbondedBTCDelegation) GetUnbondingTxHash() string {
+func (m *EventBTCDelegationStateUpdate) GetNewState() BTCDelegationStatus {
 	if m != nil {
-		return m.UnbondingTxHash
-	}
-	return ""
-}
-
-func (m *EventUnbondedBTCDelegation) GetFromState() BTCDelegationStatus {
-	if m != nil {
-		return m.FromState
+		return m.NewState
 	}
 	return BTCDelegationStatus_PENDING
 }
@@ -248,7 +139,7 @@ func (m *EventSelectiveSlashing) Reset()         { *m = EventSelectiveSlashing{}
 func (m *EventSelectiveSlashing) String() string { return proto.CompactTextString(m) }
 func (*EventSelectiveSlashing) ProtoMessage()    {}
 func (*EventSelectiveSlashing) Descriptor() ([]byte, []int) {
-	return fileDescriptor_74118427820fff75, []int{4}
+	return fileDescriptor_74118427820fff75, []int{2}
 }
 func (m *EventSelectiveSlashing) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -286,9 +177,7 @@ func (m *EventSelectiveSlashing) GetEvidence() *SelectiveSlashingEvidence {
 
 func init() {
 	proto.RegisterType((*EventNewFinalityProvider)(nil), "babylon.btcstaking.v1.EventNewFinalityProvider")
-	proto.RegisterType((*EventNewBTCDelegation)(nil), "babylon.btcstaking.v1.EventNewBTCDelegation")
-	proto.RegisterType((*EventActivateBTCDelegation)(nil), "babylon.btcstaking.v1.EventActivateBTCDelegation")
-	proto.RegisterType((*EventUnbondedBTCDelegation)(nil), "babylon.btcstaking.v1.EventUnbondedBTCDelegation")
+	proto.RegisterType((*EventBTCDelegationStateUpdate)(nil), "babylon.btcstaking.v1.EventBTCDelegationStateUpdate")
 	proto.RegisterType((*EventSelectiveSlashing)(nil), "babylon.btcstaking.v1.EventSelectiveSlashing")
 }
 
@@ -297,37 +186,28 @@ func init() {
 }
 
 var fileDescriptor_74118427820fff75 = []byte{
-	// 469 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x93, 0x41, 0x6f, 0xd3, 0x30,
-	0x18, 0x86, 0x9b, 0x8e, 0x0d, 0xe6, 0xc1, 0x26, 0x22, 0x86, 0xa2, 0x1e, 0x42, 0x15, 0xa1, 0x51,
-	0xed, 0x90, 0x6c, 0x1d, 0x82, 0x13, 0x07, 0xc2, 0x86, 0x98, 0x28, 0xa8, 0x4a, 0x07, 0x07, 0x76,
-	0x88, 0xec, 0xf4, 0x4b, 0x62, 0x35, 0xb3, 0xa3, 0xfa, 0x6b, 0x68, 0xff, 0x05, 0x3f, 0x8b, 0xe3,
-	0x8e, 0x88, 0x03, 0x42, 0xed, 0x81, 0xbf, 0x81, 0x92, 0x79, 0xa3, 0x83, 0x55, 0x20, 0xb1, 0x9b,
-	0x93, 0x3c, 0xef, 0xf3, 0xc9, 0xaf, 0x63, 0xe2, 0x30, 0xca, 0x26, 0x99, 0x14, 0x1e, 0xc3, 0x48,
-	0x21, 0x1d, 0x70, 0x91, 0x78, 0xc5, 0xae, 0x07, 0x05, 0x08, 0x54, 0x6e, 0x3e, 0x94, 0x28, 0xcd,
-	0x4d, 0xcd, 0xb8, 0xbf, 0x18, 0xb7, 0xd8, 0x6d, 0xdc, 0x4b, 0x64, 0x22, 0x2b, 0xc2, 0x2b, 0x57,
-	0x67, 0x70, 0x63, 0xeb, 0x6a, 0xe1, 0x5c, 0xb4, 0xe2, 0x9c, 0x1e, 0xb1, 0x0e, 0xca, 0x21, 0x6f,
-	0xe1, 0xe3, 0x4b, 0x2e, 0x68, 0xc6, 0x71, 0xd2, 0x1d, 0xca, 0x82, 0xf7, 0x61, 0x68, 0x3e, 0x25,
-	0xf5, 0x38, 0xb7, 0x8c, 0xa6, 0xd1, 0x5a, 0x6b, 0x3f, 0x72, 0xaf, 0x9c, 0xee, 0xfe, 0x1e, 0x0a,
-	0xea, 0x71, 0xee, 0xbc, 0x27, 0x9b, 0xe7, 0x52, 0xff, 0xe8, 0xc5, 0x3e, 0x64, 0x90, 0x50, 0xe4,
-	0x52, 0x98, 0xcf, 0xc8, 0x4d, 0x86, 0x51, 0xd8, 0x87, 0x4c, 0x6b, 0x1f, 0x2e, 0xd0, 0x5e, 0x8a,
-	0x05, 0x2b, 0x0c, 0xa3, 0x7d, 0xc8, 0x9c, 0x63, 0xd2, 0xa8, 0xbc, 0xcf, 0x23, 0xe4, 0x05, 0x45,
-	0xb8, 0x56, 0xf9, 0x8f, 0xba, 0xb6, 0xbf, 0x13, 0x4c, 0x8a, 0x3e, 0xf4, 0x2f, 0xdb, 0xdf, 0x90,
-	0x12, 0x0c, 0xf3, 0x41, 0x25, 0xbf, 0xed, 0x3f, 0xf9, 0xfa, 0xed, 0x41, 0x3b, 0xe1, 0x98, 0x8e,
-	0x98, 0x1b, 0xc9, 0x13, 0x4f, 0x8f, 0x8a, 0x52, 0xca, 0xc5, 0xf9, 0x83, 0x87, 0x93, 0x1c, 0x94,
-	0xeb, 0x1f, 0x76, 0xf7, 0x1e, 0xef, 0x74, 0x47, 0xec, 0x35, 0x4c, 0x82, 0x65, 0x86, 0x51, 0x77,
-	0x60, 0x1e, 0x93, 0xf5, 0x38, 0x0f, 0xcf, 0x8c, 0x61, 0xc6, 0x15, 0x5a, 0xf5, 0xe6, 0xd2, 0x7f,
-	0x68, 0xd7, 0xe2, 0xdc, 0x2f, 0xc5, 0x1d, 0xae, 0xd0, 0xdc, 0x22, 0x1b, 0x7a, 0xbb, 0x21, 0x8e,
-	0xc3, 0x94, 0xaa, 0xd4, 0x5a, 0x6a, 0x1a, 0xad, 0xd5, 0xe0, 0x8e, 0x7e, 0x7d, 0x34, 0x7e, 0x45,
-	0x55, 0x6a, 0x6e, 0x93, 0xbb, 0xa3, 0x6a, 0xb3, 0xf3, 0xe4, 0x8d, 0x8a, 0xdc, 0xb8, 0xf8, 0xa0,
-	0xd9, 0x43, 0x42, 0xe2, 0xa1, 0x3c, 0x09, 0x15, 0x52, 0x04, 0x6b, 0xb9, 0x69, 0xb4, 0xd6, 0xdb,
-	0xdb, 0xff, 0x52, 0x70, 0x0f, 0x29, 0x8e, 0x54, 0xb0, 0x5a, 0xa6, 0xcb, 0x35, 0x38, 0x31, 0xb9,
-	0x5f, 0x15, 0xdd, 0x83, 0x0c, 0xca, 0x93, 0x84, 0x5e, 0x46, 0x55, 0xca, 0x45, 0x62, 0x76, 0xc8,
-	0x2d, 0x28, 0x7f, 0x23, 0x11, 0x81, 0x3e, 0xc3, 0x9d, 0x05, 0x23, 0xfe, 0xc8, 0x1e, 0xe8, 0x5c,
-	0x70, 0x61, 0xf0, 0x3b, 0x9f, 0xa7, 0xb6, 0x71, 0x3a, 0xb5, 0x8d, 0xef, 0x53, 0xdb, 0xf8, 0x34,
-	0xb3, 0x6b, 0xa7, 0x33, 0xbb, 0xf6, 0x65, 0x66, 0xd7, 0x3e, 0xfc, 0xb5, 0xe1, 0xf1, 0xfc, 0xbd,
-	0xa9, 0xea, 0x66, 0x2b, 0xd5, 0x85, 0xd9, 0xfb, 0x19, 0x00, 0x00, 0xff, 0xff, 0xb8, 0x88, 0x9f,
-	0xc0, 0xab, 0x03, 0x00, 0x00,
+	// 325 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0xc1, 0x4e, 0xf2, 0x40,
+	0x14, 0x85, 0x19, 0x16, 0x7f, 0x60, 0xfe, 0xa8, 0x49, 0x13, 0x0d, 0x31, 0xb1, 0x21, 0x5d, 0x20,
+	0x71, 0xd1, 0x0a, 0x2e, 0xdc, 0xa3, 0xa8, 0x0b, 0x62, 0x4c, 0x8b, 0x1b, 0x37, 0x64, 0x5a, 0x2e,
+	0xed, 0xc4, 0x3a, 0xd3, 0x30, 0x97, 0x02, 0x6f, 0xc1, 0x63, 0xb9, 0x64, 0xe9, 0xd2, 0xc0, 0x8b,
+	0x98, 0x4e, 0x46, 0x25, 0x02, 0xcb, 0x36, 0xe7, 0x3b, 0xdf, 0x99, 0x5c, 0xea, 0x84, 0x2c, 0x9c,
+	0xa7, 0x52, 0x78, 0x21, 0x46, 0x0a, 0xd9, 0x2b, 0x17, 0xb1, 0x97, 0xb7, 0x3c, 0xc8, 0x41, 0xa0,
+	0x72, 0xb3, 0xb1, 0x44, 0x69, 0x1d, 0x9b, 0x8c, 0xfb, 0x9b, 0x71, 0xf3, 0xd6, 0x69, 0x63, 0x37,
+	0xba, 0x11, 0xd2, 0xb8, 0x13, 0xd0, 0x5a, 0xb7, 0xa8, 0x7b, 0x84, 0xe9, 0x1d, 0x17, 0x2c, 0xe5,
+	0x38, 0x7f, 0x1a, 0xcb, 0x9c, 0x0f, 0x61, 0x6c, 0x5d, 0xd3, 0xf2, 0x28, 0xab, 0x91, 0x3a, 0x69,
+	0xfe, 0x6f, 0x9f, 0xbb, 0x3b, 0x3d, 0xee, 0x5f, 0xc8, 0x2f, 0x8f, 0x32, 0x67, 0x41, 0xe8, 0x99,
+	0x6e, 0xed, 0xf4, 0x6f, 0x6e, 0x21, 0x85, 0x98, 0x21, 0x97, 0x22, 0x40, 0x86, 0xf0, 0x9c, 0x0d,
+	0x19, 0x82, 0xd5, 0xa0, 0x47, 0xa6, 0x64, 0x80, 0xb3, 0x41, 0xc2, 0x54, 0xa2, 0x3d, 0x55, 0xff,
+	0xc0, 0xfc, 0xee, 0xcf, 0x1e, 0x98, 0x4a, 0xac, 0x7b, 0x5a, 0x15, 0x30, 0x1d, 0xa8, 0x02, 0xad,
+	0x95, 0xeb, 0xa4, 0x79, 0xd8, 0xbe, 0xd8, 0xb3, 0x64, 0xcb, 0x35, 0x51, 0x7e, 0x45, 0xc0, 0x54,
+	0x6b, 0x9d, 0x11, 0x3d, 0xd1, 0x8b, 0x02, 0x48, 0x21, 0x42, 0x9e, 0x43, 0x90, 0x32, 0x95, 0x70,
+	0x11, 0x5b, 0x3d, 0x5a, 0x81, 0x62, 0xba, 0x88, 0xc0, 0xbc, 0xf5, 0x72, 0x8f, 0x61, 0x8b, 0xed,
+	0x1a, 0xce, 0xff, 0x69, 0xe8, 0xf4, 0xde, 0x57, 0x36, 0x59, 0xae, 0x6c, 0xf2, 0xb9, 0xb2, 0xc9,
+	0x62, 0x6d, 0x97, 0x96, 0x6b, 0xbb, 0xf4, 0xb1, 0xb6, 0x4b, 0x2f, 0xed, 0x98, 0x63, 0x32, 0x09,
+	0xdd, 0x48, 0xbe, 0x79, 0xa6, 0x3f, 0x4a, 0x18, 0x17, 0xdf, 0x1f, 0xde, 0x6c, 0xf3, 0x56, 0x38,
+	0xcf, 0x40, 0x85, 0xff, 0xf4, 0x91, 0xae, 0xbe, 0x02, 0x00, 0x00, 0xff, 0xff, 0xc7, 0xa5, 0x51,
+	0x18, 0x09, 0x02, 0x00, 0x00,
 }
 
 func (m *EventNewFinalityProvider) Marshal() (dAtA []byte, err error) {
@@ -365,7 +245,7 @@ func (m *EventNewFinalityProvider) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *EventNewBTCDelegation) Marshal() (dAtA []byte, err error) {
+func (m *EventBTCDelegationStateUpdate) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -375,128 +255,25 @@ func (m *EventNewBTCDelegation) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *EventNewBTCDelegation) MarshalTo(dAtA []byte) (int, error) {
+func (m *EventBTCDelegationStateUpdate) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *EventNewBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *EventBTCDelegationStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.BtcDel != nil {
-		{
-			size, err := m.BtcDel.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
+	if m.NewState != 0 {
+		i = encodeVarintEvents(dAtA, i, uint64(m.NewState))
 		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *EventActivateBTCDelegation) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *EventActivateBTCDelegation) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EventActivateBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.BtcDel != nil {
-		{
-			size, err := m.BtcDel.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *EventUnbondedBTCDelegation) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *EventUnbondedBTCDelegation) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *EventUnbondedBTCDelegation) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.FromState != 0 {
-		i = encodeVarintEvents(dAtA, i, uint64(m.FromState))
-		i--
-		dAtA[i] = 0x28
-	}
-	if len(m.UnbondingTxHash) > 0 {
-		i -= len(m.UnbondingTxHash)
-		copy(dAtA[i:], m.UnbondingTxHash)
-		i = encodeVarintEvents(dAtA, i, uint64(len(m.UnbondingTxHash)))
-		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x10
 	}
 	if len(m.StakingTxHash) > 0 {
 		i -= len(m.StakingTxHash)
 		copy(dAtA[i:], m.StakingTxHash)
 		i = encodeVarintEvents(dAtA, i, uint64(len(m.StakingTxHash)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.FpBtcPkList) > 0 {
-		for iNdEx := len(m.FpBtcPkList) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size := m.FpBtcPkList[iNdEx].Size()
-				i -= size
-				if _, err := m.FpBtcPkList[iNdEx].MarshalTo(dAtA[i:]); err != nil {
-					return 0, err
-				}
-				i = encodeVarintEvents(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x12
-		}
-	}
-	if m.BtcPk != nil {
-		{
-			size := m.BtcPk.Size()
-			i -= size
-			if _, err := m.BtcPk.MarshalTo(dAtA[i:]); err != nil {
-				return 0, err
-			}
-			i = encodeVarintEvents(dAtA, i, uint64(size))
-		}
 		i--
 		dAtA[i] = 0xa
 	}
@@ -562,58 +339,18 @@ func (m *EventNewFinalityProvider) Size() (n int) {
 	return n
 }
 
-func (m *EventNewBTCDelegation) Size() (n int) {
+func (m *EventBTCDelegationStateUpdate) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.BtcDel != nil {
-		l = m.BtcDel.Size()
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	return n
-}
-
-func (m *EventActivateBTCDelegation) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.BtcDel != nil {
-		l = m.BtcDel.Size()
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	return n
-}
-
-func (m *EventUnbondedBTCDelegation) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.BtcPk != nil {
-		l = m.BtcPk.Size()
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	if len(m.FpBtcPkList) > 0 {
-		for _, e := range m.FpBtcPkList {
-			l = e.Size()
-			n += 1 + l + sovEvents(uint64(l))
-		}
-	}
 	l = len(m.StakingTxHash)
 	if l > 0 {
 		n += 1 + l + sovEvents(uint64(l))
 	}
-	l = len(m.UnbondingTxHash)
-	if l > 0 {
-		n += 1 + l + sovEvents(uint64(l))
-	}
-	if m.FromState != 0 {
-		n += 1 + sovEvents(uint64(m.FromState))
+	if m.NewState != 0 {
+		n += 1 + sovEvents(uint64(m.NewState))
 	}
 	return n
 }
@@ -723,7 +460,7 @@ func (m *EventNewFinalityProvider) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *EventNewBTCDelegation) Unmarshal(dAtA []byte) error {
+func (m *EventBTCDelegationStateUpdate) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -746,255 +483,13 @@ func (m *EventNewBTCDelegation) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: EventNewBTCDelegation: wiretype end group for non-group")
+			return fmt.Errorf("proto: EventBTCDelegationStateUpdate: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventNewBTCDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: EventBTCDelegationStateUpdate: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BtcDel", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.BtcDel == nil {
-				m.BtcDel = &BTCDelegation{}
-			}
-			if err := m.BtcDel.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipEvents(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *EventActivateBTCDelegation) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowEvents
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: EventActivateBTCDelegation: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventActivateBTCDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BtcDel", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.BtcDel == nil {
-				m.BtcDel = &BTCDelegation{}
-			}
-			if err := m.BtcDel.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipEvents(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *EventUnbondedBTCDelegation) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowEvents
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: EventUnbondedBTCDelegation: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: EventUnbondedBTCDelegation: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field BtcPk", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_babylonchain_babylon_types.BIP340PubKey
-			m.BtcPk = &v
-			if err := m.BtcPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FpBtcPkList", wireType)
-			}
-			var byteLen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				byteLen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if byteLen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + byteLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var v github_com_babylonchain_babylon_types.BIP340PubKey
-			m.FpBtcPkList = append(m.FpBtcPkList, v)
-			if err := m.FpBtcPkList[len(m.FpBtcPkList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
-		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field StakingTxHash", wireType)
 			}
@@ -1026,43 +521,11 @@ func (m *EventUnbondedBTCDelegation) Unmarshal(dAtA []byte) error {
 			}
 			m.StakingTxHash = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field UnbondingTxHash", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowEvents
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthEvents
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthEvents
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.UnbondingTxHash = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
+		case 2:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FromState", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field NewState", wireType)
 			}
-			m.FromState = 0
+			m.NewState = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowEvents
@@ -1072,7 +535,7 @@ func (m *EventUnbondedBTCDelegation) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.FromState |= BTCDelegationStatus(b&0x7F) << shift
+				m.NewState |= BTCDelegationStatus(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
