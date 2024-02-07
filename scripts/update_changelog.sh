@@ -7,15 +7,17 @@ set -o errexit -o pipefail
 
 ORIGINAL_OPTS=$*
 # Requires getopt from util-linux 2.37.4 (brew install gnu-getopt on Mac)
-OPTS=$(getopt -l "help,since-tag:,upcoming-tag:,full,token:" -o "hu:ft" -- "$@") || exit 1
+OPTS=$(getopt -l "help,release-branch:,since-tag:,upcoming-tag:,full,token:" -o "hu:ft" -- "$@") || exit 1
 
 function print_usage() {
-    echo -e "Usage: $0 [-h|--help] [-f|--full] [--since-tag <tag>] [-u|--upcoming-tag] <tag> [-t|--token <token>]
--h, --help               Display help
--f, --full               Process changes since the beginning (by default: since latest git version tag)
---since-tag <tag>        Process changes since git version tag <tag> (by default: since latest git version tag)
--u, --upcoming-tag <tag> Add a <tag> title in CHANGELOG for the new changes
---token <token>          Pass changelog github token <token>"
+    echo -e "Usage: $0 [-h|--help] [-f|--full] [--release-branch <branch>] [--since-tag <tag>] [-u|--upcoming-tag] <tag> [-t|--token <token>]
+
+-h, --help                Display help
+-f, --full                Process changes since the beginning (by default: since latest git version tag)
+--release-branch <branch> Limit pull requests to the release branch <branch>.
+--since-tag <tag>         Process changes since git version tag <tag> (by default: since latest git version tag)
+-u, --upcoming-tag <tag>  Add a <tag> title in CHANGELOG for the new changes
+--token <token>           Pass changelog github token <token>"
 }
 
 function remove_opt() {
