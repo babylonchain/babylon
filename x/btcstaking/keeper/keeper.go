@@ -70,10 +70,8 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	}
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	// prepare for recording finality providers with positive voting power
-	activeFps := []*types.FinalityProviderWithMeta{}
 	// prepare for recording finality providers and their BTC delegations
-	// for rewards
+	// for voting power and rewards
 	rdc := types.NewRewardDistCache()
 
 	// iterate over all finality providers to find out non-slashed ones that have
@@ -92,11 +90,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			})
 
 			if fpDistInfo.TotalVotingPower > 0 {
-				activeFP := &types.FinalityProviderWithMeta{
-					BtcPk:       fp.BtcPk,
-					VotingPower: fpDistInfo.TotalVotingPower,
-				}
-				activeFps = append(activeFps, activeFP)
 				rdc.AddFinalityProviderDistInfo(fpDistInfo)
 			}
 
@@ -105,15 +98,17 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	)
 
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
-	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
-	// set voting power table
+	maxNumActiveFPs := k.GetParams(ctx).MaxActiveFinalityProviders
+	activeFps := types.FilterTopNFinalityProviders(rdc.FinalityProviders, maxNumActiveFPs)
+	// set voting power table and re-calculate total voting power of top N finality providers
+	rdc.TotalVotingPower = uint64(0)
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	for _, fp := range activeFps {
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+		rdc.TotalVotingPower += fp.TotalVotingPower
 	}
 
 	// set the reward distribution cache of the current height
-	// TODO: only give rewards to top N finality providers and their BTC delegations
 	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
 
 	return nil
