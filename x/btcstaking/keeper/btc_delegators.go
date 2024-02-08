@@ -9,7 +9,6 @@ import (
 	"cosmossdk.io/store/prefix"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 
-	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
@@ -55,90 +54,27 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	return nil
 }
 
-// updateBTCDelegation updates an existing BTC delegation w.r.t. finality provider BTC PK, delegator BTC PK,
-// and staking tx hash by using a given function
-func (k Keeper) updateBTCDelegation(
-	ctx context.Context,
-	stakingTxHashStr string,
-	modifyFn func(*types.BTCDelegation) error,
-) error {
-	// get the BTC delegation
-	btcDel, err := k.GetBTCDelegation(ctx, stakingTxHashStr)
-	if err != nil {
-		return err
-	}
-
-	// apply modification
-	if err := modifyFn(btcDel); err != nil {
-		return err
-	}
-
-	// we only need to update the actual BTC delegation object here, without touching
-	// the BTC delegation index
-	k.setBTCDelegation(ctx, btcDel)
-	return nil
-}
-
-func (k Keeper) AddUndelegationToBTCDelegation(
-	ctx context.Context,
-	stakingTxHash string,
-	ud *types.BTCUndelegation,
-) error {
-	addUndelegation := func(btcDel *types.BTCDelegation) error {
-		if btcDel.BtcUndelegation != nil {
-			return fmt.Errorf("the BTC delegation with staking tx hash %s already has valid undelegation object", stakingTxHash)
+// IterateBTCDelegations iterates all BTC delegations under a given finality provider
+func (k Keeper) IterateBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, handler func(btcDel *types.BTCDelegation) bool) {
+	btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+	defer btcDelIter.Close()
+	for ; btcDelIter.Valid(); btcDelIter.Next() {
+		// unmarshal delegator's delegation index
+		var btcDelIndex types.BTCDelegatorDelegationIndex
+		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
+		// retrieve and process each of the BTC delegation
+		for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+			stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+			if err != nil {
+				panic(err) // only programming error is possible
+			}
+			btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+			shouldContinue := handler(btcDel)
+			if !shouldContinue {
+				return
+			}
 		}
-		btcDel.BtcUndelegation = ud
-		return nil
 	}
-
-	return k.updateBTCDelegation(ctx, stakingTxHash, addUndelegation)
-}
-
-// AddCovenantSigsToBTCDelegation adds covenant signatures to a BTC delegation
-// with the given staking tx hash, including
-// - a list of adaptor signatures over slashing tx, each encrypted by a restaked finality provider's PK
-// - a Schnorr signature over unbonding tx
-// - a list of adaptor signatures over unbonding slashing tx, each encrypted by a restaked finality provider's PK
-func (k Keeper) AddCovenantSigsToBTCDelegation(
-	ctx context.Context,
-	stakingTxHash string,
-	covPk *bbn.BIP340PubKey,
-	slashingSigsByte [][]byte,
-	unbondingTxSigInfo *bbn.BIP340Signature,
-	slashUnbondingTxSigsByte [][]byte,
-) error {
-	quorum := k.GetParams(ctx).CovenantQuorum
-
-	slashingSigs := make([]asig.AdaptorSignature, 0, len(slashingSigsByte))
-	for _, s := range slashingSigsByte {
-		as, err := asig.NewAdaptorSignatureFromBytes(s)
-		if err != nil {
-			return err
-		}
-		slashingSigs = append(slashingSigs, *as)
-	}
-	slashUnbondingTxSigs := make([]asig.AdaptorSignature, 0, len(slashUnbondingTxSigsByte))
-	for _, s := range slashUnbondingTxSigsByte {
-		as, err := asig.NewAdaptorSignatureFromBytes(s)
-		if err != nil {
-			return err
-		}
-		slashUnbondingTxSigs = append(slashUnbondingTxSigs, *as)
-	}
-
-	// TODO: refactor adding signatures to BTC delegation
-	addCovenantSig := func(btcDel *types.BTCDelegation) error {
-		if err := btcDel.AddCovenantSigs(covPk, slashingSigs, quorum); err != nil {
-			return err
-		}
-		if err := btcDel.BtcUndelegation.AddCovenantSigs(covPk, unbondingTxSigInfo, slashUnbondingTxSigs, quorum); err != nil {
-			return err
-		}
-		return nil
-	}
-
-	return k.updateBTCDelegation(ctx, stakingTxHash, addCovenantSig)
 }
 
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given finality provider

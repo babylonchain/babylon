@@ -89,6 +89,21 @@ func (h *Helper) GenAndApplyCustomParams(
 	return covenantSKs, covenantPKs
 }
 
+func CreateFinalityProvider(r *rand.Rand, t *testing.T) *types.FinalityProvider {
+	fpSK, _, err := datagen.GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+	fp, err := datagen.GenRandomFinalityProviderWithBTCSK(r, fpSK)
+	require.NoError(t, err)
+
+	return &types.FinalityProvider{
+		Description: fp.Description,
+		Commission:  fp.Commission,
+		BabylonPk:   fp.BabylonPk,
+		BtcPk:       fp.BtcPk,
+		Pop:         fp.Pop,
+	}
+}
+
 func (h *Helper) CreateFinalityProvider(r *rand.Rand) (*btcec.PrivateKey, *btcec.PublicKey, *types.FinalityProvider) {
 	fpSK, fpPK, err := datagen.GenRandomBTCKeyPair(r)
 	h.NoError(err)

@@ -75,12 +75,10 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	// prepare for recording finality providers with positive voting power
-	// key is the finality provider's FP BTC PK hex, and value is the
-	// voting power
-	fpPowerMap := map[string]uint64{}
+	activeFps := []*types.FinalityProviderWithMeta{}
 	// prepare for recording finality providers and their BTC delegations
 	// for rewards
-	fpDistMap := map[string]*types.FinalityProviderDistInfo{}
+	dc := types.NewRewardDistCache()
 
 	// prepare metrics for {active, inactive} finality providers,
 	// {pending, active, unbonded BTC delegations}, and total staked Bitcoins
@@ -96,35 +94,38 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		}
 	)
 
-	k.IterateActiveFPsAndBTCDelegations(
+	// iterate over all finality providers to find out non-slashed ones that have
+	// positive voting power
+	k.IterateActiveFPs(
 		ctx,
-		func(fp *types.FinalityProvider, btcDel *types.BTCDelegation) bool {
-			fpBTCPKHex := fp.BtcPk.MarshalHex()
+		func(fp *types.FinalityProvider) bool {
+			fpDistInfo := types.NewFinalityProviderDistInfo(fp)
 
-			// record this finality provider
-			numFPs += 1
+			// iterate over all BTC delegations under the finality provider
+			// in order to accumulate voting power and reward dist info for it
+			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
+				// accumulate voting power and reward distribution cache
+				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, params.CovenantQuorum)
 
-			// record active finality providers
-			power := btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
-			if power == 0 {
-				return true // skip if no voting power
+				// record metrics
+				numStakedSats += btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
+				numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
+
+				return true
+			})
+
+			if fpDistInfo.TotalVotingPower > 0 {
+				activeFP := &types.FinalityProviderWithMeta{
+					BtcPk:       fp.BtcPk,
+					VotingPower: fpDistInfo.TotalVotingPower,
+				}
+				activeFps = append(activeFps, activeFP)
+				dc.AddFinalityProviderDistInfo(fpDistInfo)
 			}
-			fpPowerMap[fpBTCPKHex] += power
 
-			// record metrics
-			numStakedSats += power
-			numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
-
-			// create fp dist info if not exist
-			if _, ok := fpDistMap[fpBTCPKHex]; !ok {
-				fpDistMap[fpBTCPKHex] = types.NewFinalityProviderDistInfo(fp)
-			}
-			// append BTC delegation
-			fpDistMap[fpBTCPKHex].AddBTCDel(btcDel, btcTipHeight, wValue, params.CovenantQuorum)
 			return true
 		},
 	)
-
 	// record metrics for finality providers and total staked BTCs
 	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
 	types.RecordActiveFinalityProviders(numActiveFPs)
@@ -136,23 +137,17 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		types.RecordBTCDelegations(num, status)
 	}
 
-	// return directly if there is no active finality provider
-	if len(fpPowerMap) == 0 {
-		return nil
+	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
+	activeFps = types.FilterTopNFinalityProviders(activeFps, params.MaxActiveFinalityProviders)
+	// set voting power table
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	for _, fp := range activeFps {
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
 	}
 
-	// get top N finality providers and set their voting power to KV store
-	k.setCurrentTopNVotingPower(ctx, fpPowerMap)
-
-	// create reward distribution cache
-	rdc := types.NewRewardDistCache()
-	for fpBTCPKHex := range fpDistMap {
-		// try to add this finality provider distribution info to reward distribution cache
-		rdc.AddFinalityProviderDistInfo(fpDistMap[fpBTCPKHex])
-	}
-
-	// all good, set the reward distribution cache of the current height
-	k.setCurrentRewardDistCache(ctx, rdc)
+	// set the reward distribution cache of the current height
+	// TODO: only give rewards to top N finality providers and their BTC delegations
+	k.setRewardDistCache(ctx, babylonTipHeight, dc)
 
 	return nil
 }
