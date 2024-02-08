@@ -217,7 +217,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
 
 		// generate a random batch of finality providers, each with a BTC delegation with random power
-		fpsWithMeta := []*types.FinalityProviderWithMeta{}
+		fpsWithMeta := []*types.FinalityProviderDistInfo{}
 		numFps := datagen.RandomInt(r, 300) + 1
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
@@ -247,9 +247,9 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 			require.NoError(t, err)
 
 			// record voting power
-			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{
-				BtcPk:       fp.BtcPk,
-				VotingPower: stakingValue,
+			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderDistInfo{
+				BtcPk:            fp.BtcPk,
+				TotalVotingPower: stakingValue,
 			})
 		}
 
@@ -258,7 +258,7 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		expectedActiveFps := types.FilterTopNFinalityProviders(fpsWithMeta, maxActiveFpsParam)
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {
-			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.VotingPower
+			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.TotalVotingPower
 		}
 
 		// record voting power table
