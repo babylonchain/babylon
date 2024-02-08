@@ -87,7 +87,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// NOTE: slashed finality providers and BTC delegations are recorded upon
 	// slashing events rather than here
 	var (
-		totalFPsMap          = map[string]struct{}{}
+		numFPs        int    = 0
 		numStakedSats uint64 = 0
 		numDelsMap           = map[types.BTCDelegationStatus]int{
 			types.BTCDelegationStatus_PENDING:  0,
@@ -102,7 +102,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			fpBTCPKHex := fp.BtcPk.MarshalHex()
 
 			// record this finality provider
-			totalFPsMap[fpBTCPKHex] = struct{}{}
+			numFPs += 1
 
 			// record active finality providers
 			power := btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
@@ -126,7 +126,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	)
 
 	// record metrics for finality providers and total staked BTCs
-	numFPs := len(totalFPsMap)
 	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
 	types.RecordActiveFinalityProviders(numActiveFPs)
 	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
