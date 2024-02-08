@@ -37,7 +37,7 @@ func (fp *FinalityProvider) ValidateBasic() error {
 }
 
 // FilterTopNFinalityProviders returns the top n finality providers based on VotingPower.
-func FilterTopNFinalityProviders(fps []*FinalityProviderWithMeta, n uint32) []*FinalityProviderWithMeta {
+func FilterTopNFinalityProviders(fps []*FinalityProviderDistInfo, n uint32) []*FinalityProviderDistInfo {
 	numFps := uint32(len(fps))
 
 	// if the given finality provider set is no bigger than n, no need to do anything
@@ -47,7 +47,7 @@ func FilterTopNFinalityProviders(fps []*FinalityProviderWithMeta, n uint32) []*F
 
 	// Sort the finality providers slice, from higher to lower voting power
 	sort.SliceStable(fps, func(i, j int) bool {
-		return fps[i].VotingPower > fps[j].VotingPower
+		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
 
 	// Return the top n elements
