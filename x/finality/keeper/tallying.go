@@ -95,7 +95,7 @@ func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, vo
 	// remove reward distribution cache afterwards
 	k.BTCStakingKeeper.RemoveRewardDistCache(ctx, block.Height)
 	// record the last finalized height metric
-	types.RecordLastFinalizedHeight(int(block.Height))
+	types.RecordLastFinalizedHeight(block.Height)
 }
 
 // tally checks whether a block with the given finality provider set and votes reaches a quorum or not

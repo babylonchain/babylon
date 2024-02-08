@@ -127,10 +127,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	// record metrics for finality providers and total staked BTCs
 	numFPs := len(totalFPsMap)
-	numActiveFPs := numFPs
-	if numActiveFPs > int(params.MaxActiveFinalityProviders) {
-		numActiveFPs = int(params.MaxActiveFinalityProviders)
-	}
+	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
 	types.RecordActiveFinalityProviders(numActiveFPs)
 	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
 	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)

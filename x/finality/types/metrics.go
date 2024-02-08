@@ -22,7 +22,7 @@ const (
 )
 
 // RecordLastHeight records the last height. It is triggered upon `IndexBlock`
-func RecordLastHeight(height int) {
+func RecordLastHeight(height uint64) {
 	keys := []string{MetricsKeyLastHeight}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
 	telemetry.SetGaugeWithLabels(
@@ -34,7 +34,7 @@ func RecordLastHeight(height int) {
 
 // RecordLastHeight records the last finalized height. It is triggered upon
 // finalizing a block becomes finalized
-func RecordLastFinalizedHeight(height int) {
+func RecordLastFinalizedHeight(height uint64) {
 	keys := []string{MetricsKeyLastFinalizedHeight}
 	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
 	telemetry.SetGaugeWithLabels(
