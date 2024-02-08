@@ -420,7 +420,7 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	status := btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)
 	if status != types.BTCDelegationStatus_PENDING {
-		return nil, types.ErrInvalidDelegationState.Wrapf("the BTC delegation is expected to be %s, but is %s", types.BTCDelegationStatus_PENDING.String(), status.String())
+		return nil, types.ErrInvalidDelegationState.Wrapf("expected: %s, got: %s", types.BTCDelegationStatus_PENDING.String(), status.String())
 	}
 
 	// Note: we assume the order of adaptor sigs is matched to the

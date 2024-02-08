@@ -110,8 +110,8 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderD
 	return fpDistInfo, nil
 }
 
-func GenRandomBTCStakingRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
-	rdc := bstypes.NewRewardDistCache()
+func GenRandomVotingPowerDistCache(r *rand.Rand) (*bstypes.VotingPowerDistCache, error) {
+	dc := bstypes.NewVotingPowerDistCache()
 	// a random number of finality providers
 	numFps := RandomInt(r, 10) + 1
 	for i := uint64(0); i < numFps; i++ {
@@ -119,9 +119,9 @@ func GenRandomBTCStakingRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache,
 		if err != nil {
 			return nil, err
 		}
-		rdc.AddFinalityProviderDistInfo(v)
+		dc.AddFinalityProviderDistInfo(v)
 	}
-	return rdc, nil
+	return dc, nil
 }
 
 func GenRandomCheckpointAddressPair(r *rand.Rand) *btcctypes.CheckpointAddressPair {

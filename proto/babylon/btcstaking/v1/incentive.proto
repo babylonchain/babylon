@@ -7,9 +7,9 @@ import "cosmos/crypto/secp256k1/keys.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
-// RewardDistCache is the cache for voting power distribution of finality providers
+// VotingPowerDistCache is the cache for voting power distribution of finality providers
 // and their BTC delegations at a height
-message RewardDistCache {
+message VotingPowerDistCache {
     uint64 total_voting_power = 1;
     // finality_providers is a list of finality providers' voting power information
     repeated FinalityProviderDistInfo finality_providers = 2;
