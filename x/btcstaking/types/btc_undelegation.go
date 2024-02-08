@@ -67,21 +67,13 @@ func (ud *BTCUndelegation) GetCovSlashingAdaptorSig(
 // a list of adaptor signatures on the unbonding slashing tx, each encrypted
 // by a finality provider's PK this BTC delegation restakes to, from the given
 // covenant
-func (ud *BTCUndelegation) AddCovenantSigs(
+// It is up to the caller to ensure that given adaptor signatures are valid or
+// that they were not added before
+func (ud *BTCUndelegation) addCovenantSigs(
 	covPk *bbn.BIP340PubKey,
 	unbondingSig *bbn.BIP340Signature,
 	slashingSigs []asig.AdaptorSignature,
-	quorum uint32,
-) error {
-	// we can ignore the covenant slashing sig if quorum is already reached
-	if ud.HasCovenantQuorums(quorum) {
-		return nil
-	}
-
-	if ud.IsSignedByCovMember(covPk) {
-		return ErrDuplicatedCovenantSig
-	}
-
+) {
 	covUnbondingSigInfo := &SignatureInfo{Pk: covPk, Sig: unbondingSig}
 	ud.CovenantUnbondingSigList = append(ud.CovenantUnbondingSigList, covUnbondingSigInfo)
 
@@ -91,6 +83,4 @@ func (ud *BTCUndelegation) AddCovenantSigs(
 	}
 	slashingSigsInfo := &CovenantAdaptorSignatures{CovPk: covPk, AdaptorSigs: adaptorSigs}
 	ud.CovenantSlashingSigs = append(ud.CovenantSlashingSigs, slashingSigsInfo)
-
-	return nil
 }

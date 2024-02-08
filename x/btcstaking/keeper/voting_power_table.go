@@ -12,79 +12,23 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// RecordVotingPowerTable computes the voting power table at the current block height
-// and saves the power table to KVStore
-// triggered upon each EndBlock
-func (k Keeper) RecordVotingPowerTable(ctx context.Context) {
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
-	// tip of Babylon and Bitcoin
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		return
-	}
-	// get value of w
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-
+// IterateActiveFPs iterates over all finality providers that are not slashed
+func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.FinalityProvider) bool) {
 	// filter out all finality providers with positive voting power
-	activeFps := []*types.FinalityProviderWithMeta{}
 	fpIter := k.finalityProviderStore(ctx).Iterator(nil, nil)
+	defer fpIter.Close()
 	for ; fpIter.Valid(); fpIter.Next() {
-		fpBTCPKBytes := fpIter.Key()
-		fpBTCPK, err := bbn.NewBIP340PubKey(fpBTCPKBytes)
-		if err != nil {
-			// failed to unmarshal finality provider PK in KVStore is a programming error
-			panic(err)
-		}
-		fp, err := k.GetFinalityProvider(ctx, fpBTCPKBytes)
-		if err != nil {
-			// failed to get a finality provider with voting power is a programming error
-			panic(err)
-		}
+		var fp types.FinalityProvider
+		k.cdc.MustUnmarshal(fpIter.Value(), &fp)
 		if fp.IsSlashed() {
 			// slashed finality provider is removed from finality provider set
 			continue
 		}
 
-		fpPower := uint64(0)
-
-		// iterate all BTC delegations under this finality provider
-		// to calculate this finality provider's total voting power
-		btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-		for ; btcDelIter.Valid(); btcDelIter.Next() {
-			delBTCPK, err := bbn.NewBIP340PubKey(btcDelIter.Key())
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			btcDels, err := k.getBTCDelegatorDelegations(ctx, fpBTCPK, delBTCPK)
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			fpPower += btcDels.VotingPower(btcTipHeight, wValue, covenantQuorum)
+		shouldContinue := handler(&fp)
+		if !shouldContinue {
+			return
 		}
-		btcDelIter.Close()
-
-		if fpPower > 0 {
-			activeFps = append(activeFps, &types.FinalityProviderWithMeta{
-				BtcPk:       fpBTCPK,
-				VotingPower: fpPower,
-				// other fields do not matter
-			})
-		}
-	}
-	fpIter.Close()
-
-	// return directly if there is no active finality provider
-	if len(activeFps) == 0 {
-		return
-	}
-
-	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
-	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
-
-	// set voting power for each active finality providers
-	for _, fp := range activeFps {
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.VotingPower)
 	}
 }
 

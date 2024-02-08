@@ -62,8 +62,10 @@ func GenRandomWithdrawnCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 			continue
 		}
 		// a subset of the coin has been withdrawn
-		amount := coin.Amount.Uint64()
-		withdrawnAmount := RandomInt(r, int(amount)-1) + 1
+		withdrawnAmount := coin.Amount.Uint64()
+		if withdrawnAmount > 1 {
+			withdrawnAmount = RandomInt(r, int(withdrawnAmount)-1) + 1
+		}
 		withdrawnCoin := sdk.NewCoin(coin.Denom, sdkmath.NewIntFromUint64(withdrawnAmount))
 		withdrawnCoins = withdrawnCoins.Add(withdrawnCoin)
 	}

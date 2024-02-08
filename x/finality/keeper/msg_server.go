@@ -93,7 +93,9 @@ func (ms msgServer) AddFinalitySig(goCtx context.Context, req *types.MsgAddFinal
 	}
 	existingSig, err := ms.GetSig(ctx, req.BlockHeight, fpPK)
 	if err == nil && existingSig.Equals(req.FinalitySig) {
-		return nil, types.ErrDuplicatedFinalitySig
+		ms.Logger(ctx).Debug("Received duplicated finiality vote", "block height", req.BlockHeight, "finality provider", req.FpBtcPk)
+		// exactly same vote alreay exists, return success to the provider
+		return &types.MsgAddFinalitySigResponse{}, nil
 	}
 
 	// ensure the finality provider has committed public randomness

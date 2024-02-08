@@ -198,25 +198,23 @@ func (d *BTCDelegation) IsSignedByCovMember(covPk *bbn.BIP340PubKey) bool {
 // AddCovenantSigs adds signatures on the slashing tx from the given
 // covenant, where each signature is an adaptor signature encrypted by
 // each finality provider's PK this BTC delegation restakes to
-func (d *BTCDelegation) AddCovenantSigs(covPk *bbn.BIP340PubKey, sigs []asig.AdaptorSignature, quorum uint32) error {
-	// we can ignore the covenant sig if quorum is already reached
-	if d.HasCovenantQuorums(quorum) {
-		return nil
-	}
-	// ensure that this covenant member has not signed the delegation yet
-	if d.IsSignedByCovMember(covPk) {
-		return ErrDuplicatedCovenantSig
-	}
-
-	adaptorSigs := make([][]byte, 0, len(sigs))
-	for _, s := range sigs {
+// It is up to the caller to ensure that given adaptor signatures are valid or
+// that they were not added before
+func (d *BTCDelegation) AddCovenantSigs(
+	covPk *bbn.BIP340PubKey,
+	stakingSlashingSigs []asig.AdaptorSignature,
+	unbondingSig *bbn.BIP340Signature,
+	unbondingSlashingSigs []asig.AdaptorSignature,
+) {
+	adaptorSigs := make([][]byte, 0, len(stakingSlashingSigs))
+	for _, s := range stakingSlashingSigs {
 		adaptorSigs = append(adaptorSigs, s.MustMarshal())
 	}
 	covSigs := &CovenantAdaptorSignatures{CovPk: covPk, AdaptorSigs: adaptorSigs}
 
 	d.CovenantSigs = append(d.CovenantSigs, covSigs)
-
-	return nil
+	// add unbonding sig and unbonding slashing adaptor sig
+	d.BtcUndelegation.addCovenantSigs(covPk, unbondingSig, unbondingSlashingSigs)
 }
 
 // GetStakingInfo returns the staking info of the BTC delegation

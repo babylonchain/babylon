@@ -167,10 +167,11 @@ func FuzzAddFinalitySig(f *testing.F) {
 		require.NoError(t, err)
 		require.Equal(t, msg.FinalitySig.MustMarshal(), sig.MustMarshal())
 
-		// Case 4: fail if duplicate vote
+		// Case 4: In case of duplicate vote return success
 		bsKeeper.EXPECT().GetFinalityProvider(gomock.Any(), gomock.Eq(fpBTCPKBytes)).Return(fp, nil).Times(1)
-		_, err = ms.AddFinalitySig(ctx, msg)
-		require.Error(t, err)
+		resp, err := ms.AddFinalitySig(ctx, msg)
+		require.NoError(t, err)
+		require.NotNil(t, resp)
 
 		// Case 5: the finality provider is slashed if it votes for a fork
 		blockHash2 := datagen.GenRandomByteArray(r, 32)
