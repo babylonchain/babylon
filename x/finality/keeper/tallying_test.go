@@ -124,9 +124,9 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 			}
 		}
 		// we don't test incentive in this function
-		bsKeeper.EXPECT().GetRewardDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewRewardDistCache(), nil).Times(int(numWithQCs))
+		bsKeeper.EXPECT().GetVotingPowerDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewVotingPowerDistCache(), nil).Times(int(numWithQCs))
 		iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
-		bsKeeper.EXPECT().RemoveRewardDistCache(gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
+		bsKeeper.EXPECT().RemoveVotingPowerDistCache(gomock.Any(), gomock.Any()).Return().Times(int(numWithQCs))
 		// add mock queries to GetBTCStakingActivatedHeight
 		ctx = datagen.WithCtxHeight(ctx, activatedHeight+10-1)
 		bsKeeper.EXPECT().GetBTCStakingActivatedHeight(gomock.Any()).Return(activatedHeight, nil).Times(1)

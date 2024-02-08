@@ -32,8 +32,8 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		gauge := datagen.GenRandomGauge(r)
 		keeper.SetBTCStakingGauge(ctx, height, gauge)
 
-		// generate a random reward distribution cache
-		rdc, err := datagen.GenRandomBTCStakingRewardDistCache(r)
+		// generate a random voting power distribution cache
+		dc, err := datagen.GenRandomVotingPowerDistCache(r)
 		require.NoError(t, err)
 
 		// expected values
@@ -41,8 +41,8 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
-		for _, fp := range rdc.FinalityProviders {
-			fpPortion := rdc.GetFinalityProviderPortion(fp)
+		for _, fp := range dc.FinalityProviders {
+			fpPortion := dc.GetFinalityProviderPortion(fp)
 			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
 			if coinsForCommission.IsAllPositive() {
@@ -61,7 +61,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		}
 
 		// distribute rewards in the gauge to finality providers/delegations
-		keeper.RewardBTCStaking(ctx, height, rdc)
+		keeper.RewardBTCStaking(ctx, height, dc)
 
 		// assert consistency between reward map and reward gauge
 		for addrStr, reward := range fpRewardMap {
