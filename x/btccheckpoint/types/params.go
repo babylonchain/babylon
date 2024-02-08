@@ -2,7 +2,7 @@ package types
 
 import (
 	"encoding/hex"
-	fmt "fmt"
+	"fmt"
 
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 )

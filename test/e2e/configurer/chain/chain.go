@@ -2,6 +2,7 @@ package chain
 
 import (
 	"fmt"
+	ibctesting "github.com/cosmos/ibc-go/v8/testing"
 	"testing"
 	"time"
 
@@ -26,6 +27,7 @@ type Config struct {
 	LatestProposalNumber int
 	LatestLockNumber     int
 	NodeConfigs          []*NodeConfig
+	IBCConfig            *ibctesting.ChannelConfig
 
 	LatestCodeId int
 
@@ -43,13 +45,14 @@ const (
 	waitUntilrepeatMax = 60
 )
 
-func New(t *testing.T, containerManager *containers.Manager, id string, initValidatorConfigs []*initialization.NodeConfig) *Config {
+func New(t *testing.T, containerManager *containers.Manager, id string, initValidatorConfigs []*initialization.NodeConfig, ibcConfig *ibctesting.ChannelConfig) *Config {
 	numVal := float32(len(initValidatorConfigs))
 	return &Config{
 		ChainMeta: initialization.ChainMeta{
 			Id: id,
 		},
 		ValidatorInitConfigs:  initValidatorConfigs,
+		IBCConfig:             ibcConfig,
 		VotingPeriod:          config.PropDepositBlocks + numVal*config.PropVoteBlocks + config.PropBufferBlocks,
 		ExpeditedVotingPeriod: config.PropDepositBlocks + numVal*config.PropVoteBlocks + config.PropBufferBlocks - 2,
 		t:                     t,
@@ -61,7 +64,7 @@ func New(t *testing.T, containerManager *containers.Manager, id string, initVali
 func (c *Config) CreateNode(initNode *initialization.Node) *NodeConfig {
 	nodeConfig := &NodeConfig{
 		Node:             *initNode,
-		chainId:          c.Id,
+		chainId:          c.ChainMeta.Id,
 		containerManager: c.containerManager,
 		t:                c.t,
 	}
@@ -149,7 +152,7 @@ func (c *Config) SendIBC(dstChain *Config, recipient string, token sdk.Coin) {
 
 // GetDefaultNode returns the default node of the chain.
 // The default node is the first one created. Returns error if no
-// ndoes created.
+// nodes created.
 func (c *Config) GetDefaultNode() (*NodeConfig, error) {
 	return c.GetNodeAtIndex(defaultNodeIndex)
 }

@@ -1,7 +1,9 @@
 package keeper
 
-import sdk "github.com/cosmos/cosmos-sdk/types"
+import (
+	"context"
+)
 
-func (k *Keeper) HeadersState(ctx sdk.Context) headersState {
+func (k *Keeper) HeadersState(ctx context.Context) headersState {
 	return k.headersState(ctx)
 }

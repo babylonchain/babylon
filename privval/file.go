@@ -6,16 +6,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/crypto/codec"
-
-	tmcrypto "github.com/cometbft/cometbft/crypto"
+	cmtcrypto "github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	tmos "github.com/cometbft/cometbft/libs/os"
+	cmtjson "github.com/cometbft/cometbft/libs/json"
+	cmtos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/libs/tempfile"
 	"github.com/cometbft/cometbft/privval"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cometbft/cometbft/types"
+	"github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/babylonchain/babylon/crypto/bls12381"
@@ -35,11 +34,11 @@ const (
 // copied from github.com/cometbft/cometbft/privval/file.go"
 //
 //nolint:unused
-func voteToStep(vote *tmproto.Vote) int8 {
+func voteToStep(vote *cmtproto.Vote) int8 {
 	switch vote.Type {
-	case tmproto.PrevoteType:
+	case cmtproto.PrevoteType:
 		return stepPrevote
-	case tmproto.PrecommitType:
+	case cmtproto.PrecommitType:
 		return stepPrecommit
 	default:
 		panic(fmt.Sprintf("Unknown vote type: %v", vote.Type))
@@ -50,8 +49,8 @@ func voteToStep(vote *tmproto.Vote) int8 {
 type WrappedFilePVKey struct {
 	DelegatorAddress string              `json:"acc_address"`
 	Address          types.Address       `json:"address"`
-	PubKey           tmcrypto.PubKey     `json:"pub_key"`
-	PrivKey          tmcrypto.PrivKey    `json:"priv_key"`
+	PubKey           cmtcrypto.PubKey    `json:"pub_key"`
+	PrivKey          cmtcrypto.PrivKey   `json:"priv_key"`
 	BlsPubKey        bls12381.PublicKey  `json:"bls_pub_key"`
 	BlsPrivKey       bls12381.PrivateKey `json:"bls_priv_key"`
 
@@ -65,7 +64,7 @@ func (pvKey WrappedFilePVKey) Save() {
 		panic("cannot save PrivValidator key: filePath not set")
 	}
 
-	jsonBytes, err := tmjson.MarshalIndent(pvKey, "", "  ")
+	jsonBytes, err := cmtjson.MarshalIndent(pvKey, "", "  ")
 	if err != nil {
 		panic(err)
 	}
@@ -75,7 +74,7 @@ func (pvKey WrappedFilePVKey) Save() {
 	}
 }
 
-//-------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------
 
 // WrappedFilePV wraps FilePV with WrappedFilePVKey.
 type WrappedFilePV struct {
@@ -84,7 +83,7 @@ type WrappedFilePV struct {
 }
 
 // NewWrappedFilePV wraps FilePV
-func NewWrappedFilePV(privKey tmcrypto.PrivKey, blsPrivKey bls12381.PrivateKey, keyFilePath, stateFilePath string) *WrappedFilePV {
+func NewWrappedFilePV(privKey cmtcrypto.PrivKey, blsPrivKey bls12381.PrivateKey, keyFilePath, stateFilePath string) *WrappedFilePV {
 	filePV := privval.NewFilePV(privKey, keyFilePath, stateFilePath)
 	return &WrappedFilePV{
 		Key: WrappedFilePVKey{
@@ -122,12 +121,12 @@ func LoadWrappedFilePVEmptyState(keyFilePath, stateFilePath string) *WrappedFile
 func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *WrappedFilePV {
 	keyJSONBytes, err := os.ReadFile(keyFilePath)
 	if err != nil {
-		tmos.Exit(err.Error())
+		cmtos.Exit(err.Error())
 	}
 	pvKey := WrappedFilePVKey{}
-	err = tmjson.Unmarshal(keyJSONBytes, &pvKey)
+	err = cmtjson.Unmarshal(keyJSONBytes, &pvKey)
 	if err != nil {
-		tmos.Exit(fmt.Sprintf("Error reading PrivValidator key from %v: %v\n", keyFilePath, err))
+		cmtos.Exit(fmt.Sprintf("Error reading PrivValidator key from %v: %v\n", keyFilePath, err))
 	}
 
 	// overwrite pubkey and address for convenience
@@ -141,16 +140,16 @@ func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *Wrapp
 	if loadState {
 		stateJSONBytes, err := os.ReadFile(stateFilePath)
 		if err != nil {
-			tmos.Exit(err.Error())
+			cmtos.Exit(err.Error())
 		}
-		err = tmjson.Unmarshal(stateJSONBytes, &pvState)
+		err = cmtjson.Unmarshal(stateJSONBytes, &pvState)
 		if err != nil {
-			tmos.Exit(fmt.Sprintf("Error reading PrivValidator state from %v: %v\n", stateFilePath, err))
+			cmtos.Exit(fmt.Sprintf("Error reading PrivValidator state from %v: %v\n", stateFilePath, err))
 		}
 	}
 
 	// adding path is not needed
-	//pvState.filePath = stateFilePath
+	// pvState.filePath = stateFilePath
 
 	return &WrappedFilePV{
 		Key:           pvKey,
@@ -162,7 +161,7 @@ func loadWrappedFilePV(keyFilePath, stateFilePath string, loadState bool) *Wrapp
 // or else generates a new one and saves it to the filePaths.
 func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 	var pv *WrappedFilePV
-	if tmos.FileExists(keyFilePath) {
+	if cmtos.FileExists(keyFilePath) {
 		pv = LoadWrappedFilePV(keyFilePath, stateFilePath)
 	} else {
 		pv = GenWrappedFilePV(keyFilePath, stateFilePath)
@@ -173,7 +172,7 @@ func LoadOrGenWrappedFilePV(keyFilePath, stateFilePath string) *WrappedFilePV {
 
 // ExportGenBls writes a {address, bls_pub_key, pop, and pub_key} into a json file
 func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, err error) {
-	if !tmos.FileExists(filePath) {
+	if !cmtos.FileExists(filePath) {
 		return outputFileName, errors.New("export file path does not exist")
 	}
 
@@ -187,7 +186,7 @@ func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, e
 		return outputFileName, err
 	}
 
-	pubkey, err := codec.FromTmPubKeyInterface(validatorKey.ValPubkey)
+	pubkey, err := codec.FromCmtPubKeyInterface(validatorKey.ValPubkey)
 	if err != nil {
 		return outputFileName, err
 	}
@@ -197,7 +196,7 @@ func (pv *WrappedFilePV) ExportGenBls(filePath string) (outputFileName string, e
 		return outputFileName, err
 	}
 
-	jsonBytes, err := tmjson.MarshalIndent(genbls, "", "  ")
+	jsonBytes, err := cmtjson.MarshalIndent(genbls, "", "  ")
 	if err != nil {
 		return outputFileName, err
 	}
@@ -215,7 +214,7 @@ func (pv *WrappedFilePV) GetAddress() sdk.ValAddress {
 	}
 	addr, err := sdk.AccAddressFromBech32(pv.Key.DelegatorAddress)
 	if err != nil {
-		tmos.Exit(err.Error())
+		cmtos.Exit(err.Error())
 	}
 	return sdk.ValAddress(addr)
 }
@@ -227,11 +226,11 @@ func (pv *WrappedFilePV) SetAccAddress(addr sdk.AccAddress) {
 
 // GetPubKey returns the public key of the validator.
 // Implements PrivValidator.
-func (pv *WrappedFilePV) GetPubKey() (tmcrypto.PubKey, error) {
+func (pv *WrappedFilePV) GetPubKey() (cmtcrypto.PubKey, error) {
 	return pv.Key.PubKey, nil
 }
 
-func (pv *WrappedFilePV) GetValPrivKey() tmcrypto.PrivKey {
+func (pv *WrappedFilePV) GetValPrivKey() cmtcrypto.PrivKey {
 	return pv.Key.PrivKey
 }
 
@@ -253,6 +252,10 @@ func (pv *WrappedFilePV) GetBlsPubkey() (bls12381.PublicKey, error) {
 		return nil, checkpointingtypes.ErrBlsPrivKeyDoesNotExist
 	}
 	return blsPrivKey.PubKey(), nil
+}
+
+func (pv *WrappedFilePV) GetValidatorPubkey() (cmtcrypto.PubKey, error) {
+	return pv.GetPubKey()
 }
 
 // Save persists the FilePV to disk.

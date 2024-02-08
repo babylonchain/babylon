@@ -8,16 +8,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 
 	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
 	"github.com/babylonchain/babylon/test/e2e/containers"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
-	zctypes "github.com/babylonchain/babylon/x/zoneconcierge/types"
+	"github.com/babylonchain/babylon/types"
+	types2 "github.com/babylonchain/babylon/x/btccheckpoint/types"
+	"github.com/stretchr/testify/require"
 )
 
 // baseConfigurer is the base implementation for the
@@ -43,7 +44,9 @@ func (bc *baseConfigurer) ClearResources() error {
 	}
 
 	for _, chainConfig := range bc.chainConfigs {
-		os.RemoveAll(chainConfig.DataDir)
+		if err := os.RemoveAll(chainConfig.DataDir); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -71,11 +74,57 @@ func (bc *baseConfigurer) runValidators(chainConfig *chain.Config) error {
 	return nil
 }
 
-func (bc *baseConfigurer) RunIBC() error {
+func (bc *baseConfigurer) InstantiateBabylonContract() error {
+	// Store the contract on the second chain (B)
+	chainConfig := bc.chainConfigs[1]
+	contractPath := "/bytecode/babylon_contract.wasm"
+	nonValidatorNode, err := chainConfig.GetNodeAtIndex(2)
+	if err != nil {
+		bc.t.Logf("error getting non-validator node: %v", err)
+		return err
+	}
+	nonValidatorNode.StoreWasmCode(contractPath, initialization.ValidatorWalletName)
+	nonValidatorNode.WaitForNextBlock()
+	nonValidatorNode.WaitForNextBlock()
+
+	latestWasmId := int(nonValidatorNode.QueryLatestWasmCodeID())
+
+	// Instantiate the contract
+	initMsg := fmt.Sprintf(`{ "network": %q, "babylon_tag": %q, "btc_confirmation_depth": %d, "checkpoint_finalization_timeout": %d, "notify_cosmos_zone": %s }`,
+		types.BtcRegtest,
+		types2.DefaultCheckpointTag,
+		1,
+		2,
+		"false",
+	)
+	nonValidatorNode.InstantiateWasmContract(
+		strconv.Itoa(latestWasmId),
+		initMsg,
+		initialization.ValidatorWalletName,
+	)
+	nonValidatorNode.WaitForNextBlock()
+	contracts, err := nonValidatorNode.QueryContractsFromId(1)
+	if err != nil {
+		bc.t.Logf("error querying contracts from id: %v", err)
+		return err
+	}
+	require.Len(bc.t, contracts, 1, "Wrong number of contracts for the counter")
+	contractAddr := contracts[0]
+
+	// Set the contract address in the IBC chain config port id.
+	chainConfig.IBCConfig.PortID = fmt.Sprintf("wasm.%s", contractAddr)
+
+	return nil
+}
+
+func (bc *baseConfigurer) RunHermesRelayerIBC() error {
 	// Run a relayer between every possible pair of chains.
 	for i := 0; i < len(bc.chainConfigs); i++ {
 		for j := i + 1; j < len(bc.chainConfigs); j++ {
-			if err := bc.runIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
 				return err
 			}
 		}
@@ -83,7 +132,38 @@ func (bc *baseConfigurer) RunIBC() error {
 	return nil
 }
 
-func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
+func (bc *baseConfigurer) RunCosmosRelayerIBC() error {
+	// Run a relayer between every possible pair of chains.
+	for i := 0; i < len(bc.chainConfigs); i++ {
+		for j := i + 1; j < len(bc.chainConfigs); j++ {
+			if err := bc.runCosmosIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			//if err := bc.createBabylonPhase2Channel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+			//	return err
+			//}
+		}
+	}
+	// Launches a relayer between chain A (babylond) and chain B (wasmd)
+	return nil
+}
+
+func (bc *baseConfigurer) RunIBCTransferChannel() error {
+	// Run a relayer between every possible pair of chains.
+	for i := 0; i < len(bc.chainConfigs); i++ {
+		for j := i + 1; j < len(bc.chainConfigs); j++ {
+			if err := bc.runHermesIBCRelayer(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+			if err := bc.createIBCTransferChannel(bc.chainConfigs[i], bc.chainConfigs[j]); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (bc *baseConfigurer) runHermesIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
 	bc.t.Log("starting Hermes relayer container...")
 
 	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-hermes-")
@@ -160,21 +240,86 @@ func (bc *baseConfigurer) runIBCRelayer(chainConfigA *chain.Config, chainConfigB
 
 	// XXX: Give time to both networks to start, otherwise we might see gRPC
 	// transport errors.
-	time.Sleep(10 * time.Second)
+	time.Sleep(3 * time.Second)
 
-	// create the client, connection and channel between the two babylon chains
-	return bc.connectIBCChains(chainConfigA, chainConfigB)
+	return nil
 }
 
-func (bc *baseConfigurer) connectIBCChains(chainA *chain.Config, chainB *chain.Config) error {
+func (bc *baseConfigurer) runCosmosIBCRelayer(chainConfigA *chain.Config, chainConfigB *chain.Config) error {
+	bc.t.Log("Starting Cosmos relayer container...")
+
+	tmpDir, err := os.MkdirTemp("", "bbn-e2e-testnet-cosmos-")
+	if err != nil {
+		return err
+	}
+
+	rlyCfgPath := path.Join(tmpDir, "rly")
+
+	if err := os.MkdirAll(rlyCfgPath, 0o755); err != nil {
+		return err
+	}
+
+	_, err = util.CopyFile(
+		filepath.Join("./scripts/", "rly_bootstrap.sh"),
+		filepath.Join(rlyCfgPath, "rly_bootstrap.sh"),
+	)
+	if err != nil {
+		return err
+	}
+
+	// we are using non validator nodes as validator are constantly sending bls
+	// transactions, which makes relayer operations failing
+	relayerNodeA := chainConfigA.NodeConfigs[2]
+	relayerNodeB := chainConfigB.NodeConfigs[2]
+
+	rlyResource, err := bc.containerManager.RunRlyResource(
+		chainConfigA.Id,
+		relayerNodeA.Name,
+		relayerNodeA.Mnemonic,
+		chainConfigA.IBCConfig.PortID,
+		chainConfigB.Id,
+		relayerNodeB.Name,
+		relayerNodeB.Mnemonic,
+		chainConfigB.IBCConfig.PortID,
+		rlyCfgPath)
+	if err != nil {
+		return err
+	}
+
+	// Wait for the relayer to connect to the chains
+	bc.t.Logf("waiting for Cosmos relayer setup...")
+	time.Sleep(30 * time.Second)
+
+	bc.t.Logf("started Cosmos relayer container: %s", rlyResource.Container.ID)
+
+	return nil
+}
+
+func (bc *baseConfigurer) createBabylonPhase2Channel(chainA *chain.Config, chainB *chain.Config) error {
 	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	require.Equal(bc.t, chainA.IBCConfig.Order, chainB.IBCConfig.Order)
+	require.Equal(bc.t, chainA.IBCConfig.Version, chainB.IBCConfig.Version)
 	cmd := []string{"hermes", "create", "channel",
 		"--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, // channel ID
-		"--a-port", zctypes.PortID, "--b-port", zctypes.PortID, // port
-		"--order", zctypes.Ordering.String(), // ordering
-		"--channel-version", zctypes.Version, // version
+		"--a-port", chainA.IBCConfig.PortID, "--b-port", chainB.IBCConfig.PortID, // port
+		"--order", chainA.IBCConfig.Order.String(),
+		"--channel-version", chainA.IBCConfig.Version,
 		"--new-client-connection", "--yes",
 	}
+	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
+	if err != nil {
+		return err
+	}
+	bc.t.Logf("connected %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	bc.t.Logf("chainA's IBC config: %v", chainA.IBCConfig)
+	bc.t.Logf("chainB's IBC config: %v", chainB.IBCConfig)
+	return nil
+}
+
+func (bc *baseConfigurer) createIBCTransferChannel(chainA *chain.Config, chainB *chain.Config) error {
+	bc.t.Logf("connecting %s and %s chains via IBC", chainA.ChainMeta.Id, chainB.ChainMeta.Id)
+	cmd := []string{"hermes", "create", "channel", "--a-chain", chainA.ChainMeta.Id, "--b-chain", chainB.ChainMeta.Id, "--a-port", "transfer", "--b-port", "transfer", "--new-client-connection", "--yes"}
+	bc.t.Log(cmd)
 	_, _, err := bc.containerManager.ExecHermesCmd(bc.t, cmd, "SUCCESS")
 	if err != nil {
 		return err

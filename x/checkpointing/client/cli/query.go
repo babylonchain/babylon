@@ -64,6 +64,7 @@ func CmdRawCheckpointList() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddPaginationFlagsToCmd(cmd, "raw-checkpoint-list")
 
 	return cmd
 }

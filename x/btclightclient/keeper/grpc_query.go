@@ -13,6 +13,15 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
+func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
+}
+
 func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*types.QueryHashesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -99,12 +108,11 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	var nextKey []byte
 	if req.Pagination.Reverse {
 		var start, end uint64
-		baseHeader := k.headersState(sdkCtx).GetBaseBTCHeader()
+		baseHeader := k.headersState(sdkCtx).BaseHeader()
 		// The base header is located at the end of the mainchain
 		// which requires starting at the end
-		mainchain := k.headersState(sdkCtx).GetMainChain()
-		// Reverse the mainchain -- we want to retrieve results starting from the base header
-		bbn.Reverse(mainchain)
+		mainchain := k.GetMainChainFrom(sdkCtx, 0)
+
 		if keyHeader == nil {
 			keyHeader = baseHeader
 			start = 0
@@ -138,7 +146,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		// -1 because the depth denotes how many headers have been built on top of it
 		depth := startHeaderDepth + req.Pagination.Limit - 1
 		// Retrieve the mainchain up to the depth
-		mainchain := k.headersState(sdkCtx).GetMainChainUpTo(depth)
+		mainchain := k.GetMainChainUpTo(sdkCtx, depth)
 		// Check whether the key provided is part of the mainchain
 		if uint64(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(keyHeader) {
 			return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
@@ -175,7 +183,30 @@ func (k Keeper) BaseHeader(ctx context.Context, req *types.QueryBaseHeaderReques
 
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 
-	baseHeader := k.headersState(sdkCtx).GetBaseBTCHeader()
+	baseHeader := k.headersState(sdkCtx).BaseHeader()
 
 	return &types.QueryBaseHeaderResponse{Header: baseHeader}, nil
+}
+
+func (k Keeper) HeaderDepth(ctx context.Context, req *types.QueryHeaderDepthRequest) (*types.QueryHeaderDepthResponse, error) {
+
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	haderHash, err := bbn.NewBTCHeaderHashBytesFromHex(req.Hash)
+
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, "provided hash is not a valid hex string")
+	}
+
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
+
+	depth, err := k.MainChainDepth(sdkCtx, &haderHash)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryHeaderDepthResponse{Depth: uint64(depth)}, nil
 }

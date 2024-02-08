@@ -149,6 +149,9 @@ mocks: $(MOCKS_DIR)
 	$(mockgen_cmd) -source=x/checkpointing/types/expected_keepers.go -package mocks -destination testutil/mocks/checkpointing_expected_keepers.go
 	$(mockgen_cmd) -source=x/checkpointing/keeper/bls_signer.go -package mocks -destination testutil/mocks/bls_signer.go
 	$(mockgen_cmd) -source=x/zoneconcierge/types/expected_keepers.go -package types -destination x/zoneconcierge/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/btcstaking/types/expected_keepers.go -package types -destination x/btcstaking/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/finality/types/expected_keepers.go -package types -destination x/finality/types/mocked_keepers.go
+	$(mockgen_cmd) -source=x/incentive/types/expected_keepers.go -package types -destination x/incentive/types/mocked_keepers.go
 .PHONY: mocks
 
 $(MOCKS_DIR):
@@ -228,11 +231,7 @@ endif
 
 .PHONY: run-tests test test-all $(TEST_TARGETS)
 
-test-integration:
-	@echo "Running babylon integration test"
-	@go test github.com/babylonchain/babylon/test -v -count=1 --tags=integration -p 1
-
-test-e2e:
+test-e2e: build-docker
 	go test -mod=readonly -timeout=25m -v $(PACKAGES_E2E) -count=1 --tags=e2e
 
 test-sim-nondeterminism:
@@ -363,7 +362,7 @@ devdoc-update:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.12.0
+protoVer=0.14.0
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 
@@ -392,7 +391,10 @@ proto-lint:
 build-docker:
 	$(MAKE) -C contrib/images babylond
 
-.PHONY: build-docker
+build-cosmos-relayer-docker:
+	$(MAKE) -C contrib/images cosmos-relayer
+
+.PHONY: build-docker build-cosmos-relayer-docker
 
 ###############################################################################
 ###                                Localnet                                 ###
@@ -420,9 +422,6 @@ localnet-start: localnet-stop build-docker localnet-start-nodes
 localnet-stop:
 	docker-compose down
 
-# localnet-test-integration will spin up a localnet and run integration tests on it
-localnet-test-integration: localnet-start test-integration localnet-stop
-
 build-test-wasm:
 	docker run --rm -v "$(WASM_DIR)":/code \
 		--mount type=volume,source="$(WASM_DIR_BASE_NAME)_cache",target=/code/target \
@@ -437,7 +436,6 @@ build-test-wasm:
 init-testnet-dirs \
 localnet-start-nodes \
 localnet-start \
-localnet-test-integration \
 localnet-stop
 
 .PHONY: diagrams

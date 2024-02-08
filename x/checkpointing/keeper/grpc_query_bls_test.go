@@ -4,15 +4,17 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
-	"github.com/babylonchain/babylon/x/checkpointing/types"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
+	"cosmossdk.io/math"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	checkpointingkeeper "github.com/babylonchain/babylon/x/checkpointing/keeper"
+	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
 // FuzzQueryBLSKeySet does the following checks
@@ -24,8 +26,9 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 		// a genesis validator is generated for setup
-		helper := testepoching.NewHelper(t)
-		ek := helper.EpochingKeeper
+		helper := testhelper.NewHelper(t)
+		ctx := helper.Ctx
+		ek := helper.App.EpochingKeeper
 		ck := helper.App.CheckpointingKeeper
 		queryHelper := baseapp.NewQueryServerTestHelper(helper.Ctx, helper.App.InterfaceRegistry())
 		types.RegisterQueryServer(queryHelper, ck)
@@ -35,8 +38,6 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 		genesisBLSPubkey, err := ck.GetBlsPubKey(helper.Ctx, genesisVal.Addr)
 		require.NoError(t, err)
 
-		// BeginBlock of block 1, and thus entering epoch 1
-		ctx := helper.BeginBlock(r)
 		epoch := ek.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
@@ -53,7 +54,8 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 
 		// add n new validators via MsgWrappedCreateValidator
 		n := r.Intn(3) + 1
-		addrs := app.AddTestAddrs(helper.App, helper.Ctx, n, sdk.NewInt(100000000))
+		addrs, err := app.AddTestAddrs(helper.App, helper.Ctx, n, math.NewInt(100000000))
+		require.NoError(t, err)
 
 		wcvMsgs := make([]*types.MsgWrappedCreateValidator, n)
 		for i := 0; i < n; i++ {
@@ -64,12 +66,10 @@ func FuzzQueryBLSKeySet(f *testing.F) {
 			require.NoError(t, err)
 		}
 
-		// EndBlock of block 1
-		ctx = helper.EndBlock()
-
-		// go to BeginBlock of block 11, and thus entering epoch 2
+		// go to block 11, and thus entering epoch 2
 		for i := uint64(0); i < ek.GetParams(ctx).EpochInterval; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
 		}
 		epoch = ek.GetEpoch(ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)

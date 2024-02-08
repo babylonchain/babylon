@@ -12,18 +12,30 @@ const (
 	// name of babylon container produced by running `make localnet-build-env`
 	BabylonContainerName = "babylonchain/babylond"
 
-	relayerRepository = "informalsystems/hermes"
-	relayerTag        = "1.4.0"
+	hermesRelayerRepository = "informalsystems/hermes"
+	// TODO: Replace with version tag once we have a working version
+	hermesRelayerTag = "master"
+	// Built using the `build-cosmos-relayer-docker` target on an Intel (amd64) machine and pushed to ECR
+	cosmosRelayerRepository = "public.ecr.aws/t9e9i3h0/cosmos-relayer"
+	// TODO: Replace with version tag once we have a working version
+	cosmosRelayerTag = "main"
 )
 
-// Returns ImageConfig needed for running e2e test.
+// NewImageConfig returns ImageConfig needed for running e2e test.
 // If isUpgrade is true, returns images for running the upgrade
 // If isFork is true, utilizes provided fork height to initiate fork logic
-func NewImageConfig() ImageConfig {
-	config := ImageConfig{
-		RelayerRepository: relayerRepository,
-		RelayerTag:        relayerTag,
+func NewImageConfig(isCosmosRelayer bool) ImageConfig {
+	if isCosmosRelayer {
+		config := ImageConfig{
+			RelayerRepository: cosmosRelayerRepository,
+			RelayerTag:        cosmosRelayerTag,
+		}
+		return config
+	} else {
+		config := ImageConfig{
+			RelayerRepository: hermesRelayerRepository,
+			RelayerTag:        hermesRelayerTag,
+		}
+		return config
 	}
-
-	return config
 }

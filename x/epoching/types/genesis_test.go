@@ -7,7 +7,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/nullify"
 	"github.com/babylonchain/babylon/x/epoching"
 	"github.com/babylonchain/babylon/x/epoching/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +14,7 @@ func TestGenesis(t *testing.T) {
 	// This test requires setting up the staking module
 	// Otherwise the epoching module cannot initialise the genesis validator set
 	app := app.Setup(t, false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.BaseApp.NewContext(false)
 	keeper := app.EpochingKeeper
 
 	genesisState := types.GenesisState{

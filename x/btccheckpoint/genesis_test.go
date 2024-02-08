@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
 	simapp "github.com/babylonchain/babylon/app"
@@ -13,7 +12,7 @@ import (
 
 func TestExportGenesis(t *testing.T) {
 	app := simapp.Setup(t, false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.BaseApp.NewContext(false)
 
 	if err := app.BtcCheckpointKeeper.SetParams(ctx, types.DefaultParams()); err != nil {
 		panic(err)
@@ -25,7 +24,7 @@ func TestExportGenesis(t *testing.T) {
 
 func TestInitGenesis(t *testing.T) {
 	app := simapp.Setup(t, false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.BaseApp.NewContext(false)
 
 	genesisState := types.GenesisState{
 		Params: types.Params{

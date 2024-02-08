@@ -3,8 +3,6 @@ package btclightclient_test
 import (
 	"testing"
 
-	bbn "github.com/babylonchain/babylon/types"
-
 	keepertest "github.com/babylonchain/babylon/testutil/keeper"
 	"github.com/babylonchain/babylon/testutil/nullify"
 	"github.com/babylonchain/babylon/x/btclightclient"
@@ -13,14 +11,9 @@ import (
 )
 
 func TestGenesis(t *testing.T) {
-	headerBytes := bbn.GetBaseBTCHeaderBytes()
-	headerHeight := bbn.GetBaseBTCHeaderHeight()
-	headerHash := headerBytes.Hash()
-	headerWork := types.CalcWork(&headerBytes)
-	baseHeaderInfo := types.NewBTCHeaderInfo(&headerBytes, headerHash, headerHeight, &headerWork)
-
+	baseHeaderInfo := types.SimnetGenesisBlock()
 	genesisState := types.GenesisState{
-		BaseBtcHeader: *baseHeaderInfo,
+		BaseBtcHeader: baseHeaderInfo,
 	}
 
 	k, ctx := keepertest.BTCLightClientKeeper(t)

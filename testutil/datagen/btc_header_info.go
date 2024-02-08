@@ -1,17 +1,67 @@
 package datagen
 
 import (
+	"math/big"
+	"math/rand"
+	"time"
+
 	sdkmath "cosmossdk.io/math"
 	bbn "github.com/babylonchain/babylon/types"
 	btclightclienttypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/btcsuite/btcd/blockchain"
+	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/wire"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	"math/big"
-	"math/rand"
-	"time"
 )
+
+type RetargetInfo struct {
+	LastRetargetHeader *wire.BlockHeader
+	Params             *chaincfg.Params
+}
+
+type TimeBetweenBlocksInfo struct {
+	Time time.Duration
+}
+
+// Difficulty calculation copied from btcd
+// https://github.com/btcsuite/btcd/blob/master/blockchain/difficulty.go#L221
+func calculateAdjustedDifficulty(
+	lastRetargetHeader *wire.BlockHeader,
+	currentHeaderTimestamp time.Time,
+	params *chaincfg.Params) uint32 {
+
+	targetTimespan := int64(params.TargetTimespan / time.Second)
+	adjustmentFactor := params.RetargetAdjustmentFactor
+	minRetargetTimespan := targetTimespan / adjustmentFactor
+	maxRetargetTimespan := targetTimespan * adjustmentFactor
+
+	// Limit the amount of adjustment that can occur to the previous
+	// difficulty.
+	actualTimespan := currentHeaderTimestamp.Unix() - lastRetargetHeader.Timestamp.Unix()
+	adjustedTimespan := actualTimespan
+	if actualTimespan < minRetargetTimespan {
+		adjustedTimespan = minRetargetTimespan
+	} else if actualTimespan > maxRetargetTimespan {
+		adjustedTimespan = maxRetargetTimespan
+	}
+
+	// Calculate new target difficulty as:
+	//  currentDifficulty * (adjustedTimespan / targetTimespan)
+	// The result uses integer division which means it will be slightly
+	// rounded down.  Bitcoind also uses integer division to calculate this
+	// result.
+	oldTarget := blockchain.CompactToBig(lastRetargetHeader.Bits)
+	newTarget := new(big.Int).Mul(oldTarget, big.NewInt(adjustedTimespan))
+	newTarget.Div(newTarget, big.NewInt(targetTimespan))
+
+	// Limit new value to the proof of work limit.
+	if newTarget.Cmp(params.PowLimit) > 0 {
+		newTarget.Set(params.PowLimit)
+	}
+
+	newTargetBits := blockchain.BigToCompact(newTarget)
+	return newTargetBits
+}
 
 func GenRandomBtcdHeader(r *rand.Rand) *wire.BlockHeader {
 	version := GenRandomBTCHeaderVersion(r)
@@ -42,7 +92,7 @@ func GenRandomBTCHeaderBits(r *rand.Rand) uint32 {
 	if difficulty == 0 {
 		difficulty += 1
 	}
-	bigDifficulty := sdk.NewUint(difficulty)
+	bigDifficulty := sdkmath.NewUint(difficulty)
 
 	workBits := blockchain.BigToCompact(bigDifficulty.BigInt())
 	return workBits
@@ -145,15 +195,8 @@ func GenRandomBTCHeaderInfoWithParent(r *rand.Rand, parent *btclightclienttypes.
 // WARNING: if parent is from network with a lot of work (mainnet) it may never finish
 // use only with simnet headers
 func GenRandomValidBTCHeaderInfoWithParent(r *rand.Rand, parent btclightclienttypes.BTCHeaderInfo) *btclightclienttypes.BTCHeaderInfo {
-	randHeader := GenRandomBtcdHeader(r)
 	parentHeader := parent.Header.ToBlockHeader()
-
-	randHeader.Version = parentHeader.Version
-	randHeader.PrevBlock = parentHeader.BlockHash()
-	randHeader.Bits = parentHeader.Bits
-	randHeader.Timestamp = parentHeader.Timestamp.Add(50 * time.Second)
-	SolveBlock(randHeader)
-
+	randHeader := GenRandomBtcdValidHeader(r, parentHeader, nil, nil)
 	headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(randHeader)
 
 	accumulatedWork := btclightclienttypes.CalcWork(&headerBytes)
@@ -165,6 +208,110 @@ func GenRandomValidBTCHeaderInfoWithParent(r *rand.Rand, parent btclightclientty
 		Height: parent.Height + 1,
 		Work:   &accumulatedWork,
 	}
+}
+
+// random duration between 4 and 12mins in seconds
+func GenRandomTimeBetweenBlocks(r *rand.Rand) time.Duration {
+	return time.Duration(r.Int63n(8*60)+4*60) * time.Second
+}
+
+func GenRandomBtcdValidHeader(
+	r *rand.Rand,
+	parent *wire.BlockHeader,
+	timeAfterParent *TimeBetweenBlocksInfo,
+	retargetInfo *RetargetInfo,
+) *wire.BlockHeader {
+	randHeader := GenRandomBtcdHeader(r)
+	randHeader.Version = 4
+	randHeader.PrevBlock = parent.BlockHash()
+
+	if timeAfterParent == nil {
+		// random time after
+		randHeader.Timestamp = parent.Timestamp.Add(GenRandomTimeBetweenBlocks(r))
+	} else {
+		randHeader.Timestamp = parent.Timestamp.Add(timeAfterParent.Time)
+	}
+
+	if retargetInfo == nil {
+		// If no retarget info is provided, then we assume that the difficulty is the same as the parent
+		randHeader.Bits = parent.Bits
+	} else {
+		// If retarget info is provided, then we calculate the difficulty based on the info provided
+		randHeader.Bits = calculateAdjustedDifficulty(
+			retargetInfo.LastRetargetHeader,
+			parent.Timestamp,
+			retargetInfo.Params,
+		)
+	}
+	SolveBlock(randHeader)
+	return randHeader
+}
+
+func GenRandomValidChainStartingFrom(
+	r *rand.Rand,
+	parentHeaderHeight uint64,
+	parentHeader *wire.BlockHeader,
+	timeBetweenBlocks *TimeBetweenBlocksInfo,
+	numHeaders uint32,
+) []*wire.BlockHeader {
+	if numHeaders == 0 {
+		return []*wire.BlockHeader{}
+	}
+
+	headers := make([]*wire.BlockHeader, numHeaders)
+	for i := uint32(0); i < numHeaders; i++ {
+		if i == 0 {
+			headers[i] = GenRandomBtcdValidHeader(r, parentHeader, timeBetweenBlocks, nil)
+			continue
+		}
+
+		headers[i] = GenRandomBtcdValidHeader(r, headers[i-1], timeBetweenBlocks, nil)
+	}
+	return headers
+}
+
+func ChainToInfoChain(
+	chain []*wire.BlockHeader,
+	initialHeaderNumber uint64,
+	initialHeaderTotalWork sdkmath.Uint,
+) []*btclightclienttypes.BTCHeaderInfo {
+	if len(chain) == 0 {
+		return []*btclightclienttypes.BTCHeaderInfo{}
+	}
+
+	infoChain := make([]*btclightclienttypes.BTCHeaderInfo, len(chain))
+
+	totalDifficulty := initialHeaderTotalWork
+
+	for i, header := range chain {
+		headerWork := btclightclienttypes.CalcHeaderWork(header)
+		headerTotalDifficulty := btclightclienttypes.CumulativeWork(headerWork, totalDifficulty)
+		hash := header.BlockHash()
+		headerBytes := bbn.NewBTCHeaderBytesFromBlockHeader(header)
+		headerHash := bbn.NewBTCHeaderHashBytesFromChainhash(&hash)
+		headerNumber := initialHeaderNumber + uint64(i)
+
+		headerInfo := btclightclienttypes.NewBTCHeaderInfo(
+			&headerBytes,
+			&headerHash,
+			headerNumber,
+			&headerTotalDifficulty,
+		)
+
+		infoChain[i] = headerInfo
+
+		totalDifficulty = headerTotalDifficulty
+	}
+
+	return infoChain
+}
+
+func HeaderToHeaderBytes(headers []*wire.BlockHeader) []bbn.BTCHeaderBytes {
+	headerBytes := make([]bbn.BTCHeaderBytes, len(headers))
+	for i, header := range headers {
+		headerBytes[i] = bbn.NewBTCHeaderBytesFromBlockHeader(header)
+	}
+	return headerBytes
 }
 
 func GenRandomBTCHeaderInfoWithBits(r *rand.Rand, bits *sdkmath.Uint) *btclightclienttypes.BTCHeaderInfo {

@@ -1,6 +1,7 @@
 package types
 
 import (
+	"context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,7 +14,7 @@ func NewMultiCheckpointingHooks(hooks ...CheckpointingHooks) MultiCheckpointingH
 	return hooks
 }
 
-func (h MultiCheckpointingHooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr sdk.ValAddress) error {
+func (h MultiCheckpointingHooks) AfterBlsKeyRegistered(ctx context.Context, valAddr sdk.ValAddress) error {
 	for i := range h {
 		if err := h[i].AfterBlsKeyRegistered(ctx, valAddr); err != nil {
 			return err
@@ -22,7 +23,7 @@ func (h MultiCheckpointingHooks) AfterBlsKeyRegistered(ctx sdk.Context, valAddr 
 	return nil
 }
 
-func (h MultiCheckpointingHooks) AfterRawCheckpointConfirmed(ctx sdk.Context, epoch uint64) error {
+func (h MultiCheckpointingHooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error {
 	for i := range h {
 		if err := h[i].AfterRawCheckpointConfirmed(ctx, epoch); err != nil {
 			return err
@@ -31,14 +32,14 @@ func (h MultiCheckpointingHooks) AfterRawCheckpointConfirmed(ctx sdk.Context, ep
 	return nil
 }
 
-func (h MultiCheckpointingHooks) AfterRawCheckpointForgotten(ctx sdk.Context, ckpt *RawCheckpoint) error {
+func (h MultiCheckpointingHooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *RawCheckpoint) error {
 	for i := range h {
 		return h[i].AfterRawCheckpointForgotten(ctx, ckpt)
 	}
 	return nil
 }
 
-func (h MultiCheckpointingHooks) AfterRawCheckpointFinalized(ctx sdk.Context, epoch uint64) error {
+func (h MultiCheckpointingHooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	for i := range h {
 		if err := h[i].AfterRawCheckpointFinalized(ctx, epoch); err != nil {
 			return err
@@ -47,7 +48,7 @@ func (h MultiCheckpointingHooks) AfterRawCheckpointFinalized(ctx sdk.Context, ep
 	return nil
 }
 
-func (h MultiCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx sdk.Context, ckpt *RawCheckpoint) error {
+func (h MultiCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx context.Context, ckpt *RawCheckpoint) error {
 	for i := range h {
 		if err := h[i].AfterRawCheckpointBlsSigVerified(ctx, ckpt); err != nil {
 			return err

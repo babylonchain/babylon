@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 type msgServer struct {
@@ -25,32 +24,38 @@ func NewMsgServerImpl(keeper Keeper) types.MsgServer {
 var _ types.MsgServer = msgServer{}
 
 // WrappedDelegate handles the MsgWrappedDelegate request
-func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
+func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedDelegate) (*types.MsgWrappedDelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	valAddr, valErr := sdk.ValAddressFromBech32(msg.Msg.ValidatorAddress)
 	if valErr != nil {
 		return nil, valErr
 	}
-	if _, found := k.stk.GetValidator(ctx, valAddr); !found {
-		return nil, stakingtypes.ErrNoValidatorFound
+	if _, err := ms.stk.GetValidator(ctx, valAddr); err != nil {
+		return nil, err
 	}
 	if _, err := sdk.AccAddressFromBech32(msg.Msg.DelegatorAddress); err != nil {
 		return nil, err
 	}
-	bondDenom := k.stk.BondDenom(ctx)
+	bondDenom, err := ms.stk.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if msg.Msg.Amount.Denom != bondDenom {
 		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
 		)
 	}
 
-	blockHeight := uint64(ctx.BlockHeight())
+	blockHeight := uint64(ctx.HeaderInfo().Height)
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
 	}
-	blockTime := ctx.BlockTime()
+	blockTime := ctx.HeaderInfo().Time
 
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
@@ -58,7 +63,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 		return nil, err
 	}
 
-	k.EnqueueMsg(ctx, queuedMsg)
+	ms.EnqueueMsg(ctx, queuedMsg)
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedDelegate{
@@ -66,7 +71,7 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			Denom:            msg.Msg.Amount.GetDenom(),
-			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
@@ -77,8 +82,11 @@ func (k msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrappedD
 }
 
 // WrappedUndelegate handles the MsgWrappedUndelegate request
-func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
+func (ms msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappedUndelegate) (*types.MsgWrappedUndelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	valAddr, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorAddress)
@@ -89,21 +97,24 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 	if err != nil {
 		return nil, err
 	}
-	if _, err := k.stk.ValidateUnbondAmount(ctx, delegatorAddress, valAddr, msg.Msg.Amount.Amount); err != nil {
+	if _, err := ms.stk.ValidateUnbondAmount(ctx, delegatorAddress, valAddr, msg.Msg.Amount.Amount); err != nil {
 		return nil, err
 	}
-	bondDenom := k.stk.BondDenom(ctx)
+	bondDenom, err := ms.stk.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if msg.Msg.Amount.Denom != bondDenom {
 		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
 		)
 	}
 
-	blockHeight := uint64(ctx.BlockHeight())
+	blockHeight := uint64(ctx.HeaderInfo().Height)
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
 	}
-	blockTime := ctx.BlockTime()
+	blockTime := ctx.HeaderInfo().Time
 
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
@@ -111,7 +122,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 		return nil, err
 	}
 
-	k.EnqueueMsg(ctx, queuedMsg)
+	ms.EnqueueMsg(ctx, queuedMsg)
 
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedUndelegate{
@@ -119,7 +130,7 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 			ValidatorAddress: msg.Msg.ValidatorAddress,
 			Amount:           msg.Msg.Amount.Amount.Uint64(),
 			Denom:            msg.Msg.Amount.GetDenom(),
-			EpochBoundary:    k.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
@@ -130,8 +141,11 @@ func (k msgServer) WrappedUndelegate(goCtx context.Context, msg *types.MsgWrappe
 }
 
 // WrappedBeginRedelegate handles the MsgWrappedBeginRedelegate request
-func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
+func (ms msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgWrappedBeginRedelegate) (*types.MsgWrappedBeginRedelegateResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
 
 	// verification rules ported from staking module
 	valSrcAddr, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorSrcAddress)
@@ -142,10 +156,13 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 	if err != nil {
 		return nil, err
 	}
-	if _, err := k.stk.ValidateUnbondAmount(ctx, delegatorAddress, valSrcAddr, msg.Msg.Amount.Amount); err != nil {
+	if _, err := ms.stk.ValidateUnbondAmount(ctx, delegatorAddress, valSrcAddr, msg.Msg.Amount.Amount); err != nil {
 		return nil, err
 	}
-	bondDenom := k.stk.BondDenom(ctx)
+	bondDenom, err := ms.stk.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if msg.Msg.Amount.Denom != bondDenom {
 		return nil, errorsmod.Wrapf(
 			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
@@ -155,11 +172,11 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 		return nil, err
 	}
 
-	blockHeight := uint64(ctx.BlockHeight())
+	blockHeight := uint64(ctx.HeaderInfo().Height)
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
 	}
-	blockTime := ctx.BlockTime()
+	blockTime := ctx.HeaderInfo().Time
 
 	txid := tmhash.Sum(ctx.TxBytes())
 	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
@@ -167,7 +184,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 		return nil, err
 	}
 
-	k.EnqueueMsg(ctx, queuedMsg)
+	ms.EnqueueMsg(ctx, queuedMsg)
 	err = ctx.EventManager().EmitTypedEvents(
 		&types.EventWrappedBeginRedelegate{
 			DelegatorAddress:            msg.Msg.DelegatorAddress,
@@ -175,7 +192,7 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 			DestinationValidatorAddress: msg.Msg.ValidatorDstAddress,
 			Amount:                      msg.Msg.Amount.Amount.Uint64(),
 			Denom:                       msg.Msg.Amount.GetDenom(),
-			EpochBoundary:               k.GetEpoch(ctx).GetLastBlockHeight(),
+			EpochBoundary:               ms.GetEpoch(ctx).GetLastBlockHeight(),
 		},
 	)
 	if err != nil {
@@ -185,6 +202,74 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 	return &types.MsgWrappedBeginRedelegateResponse{}, nil
 }
 
+// WrappedCancelUnbondingDelegation handles the MsgWrappedCancelUnbondingDelegation request
+func (ms msgServer) WrappedCancelUnbondingDelegation(goCtx context.Context, msg *types.MsgWrappedCancelUnbondingDelegation) (*types.MsgWrappedCancelUnbondingDelegationResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if msg.Msg == nil {
+		return nil, types.ErrNoWrappedMsg
+	}
+
+	// verification rules ported from staking module
+	if _, err := sdk.AccAddressFromBech32(msg.Msg.DelegatorAddress); err != nil {
+		return nil, err
+	}
+
+	if _, err := sdk.ValAddressFromBech32(msg.Msg.ValidatorAddress); err != nil {
+		return nil, err
+	}
+
+	if !msg.Msg.Amount.IsValid() || !msg.Msg.Amount.Amount.IsPositive() {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"invalid amount",
+		)
+	}
+
+	if msg.Msg.CreationHeight <= 0 {
+		return nil, errorsmod.Wrap(
+			sdkerrors.ErrInvalidRequest,
+			"invalid height",
+		)
+	}
+
+	bondDenom, err := ms.stk.BondDenom(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if msg.Msg.Amount.Denom != bondDenom {
+		return nil, errorsmod.Wrapf(
+			sdkerrors.ErrInvalidRequest, "invalid coin denomination: got %s, expected %s", msg.Msg.Amount.Denom, bondDenom,
+		)
+	}
+
+	blockHeight := uint64(ctx.BlockHeader().Height)
+	if blockHeight == 0 {
+		return nil, types.ErrZeroEpochMsg
+	}
+	blockTime := ctx.BlockTime()
+	txid := tmhash.Sum(ctx.TxBytes())
+	queuedMsg, err := types.NewQueuedMessage(blockHeight, blockTime, txid, msg)
+	if err != nil {
+		return nil, err
+	}
+
+	ms.EnqueueMsg(ctx, queuedMsg)
+	err = ctx.EventManager().EmitTypedEvents(
+		&types.EventWrappedCancelUnbondingDelegation{
+			DelegatorAddress: msg.Msg.DelegatorAddress,
+			ValidatorAddress: msg.Msg.ValidatorAddress,
+			Amount:           msg.Msg.Amount.Amount.Uint64(),
+			CreationHeight:   msg.Msg.CreationHeight,
+			EpochBoundary:    ms.GetEpoch(ctx).GetLastBlockHeight(),
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.MsgWrappedCancelUnbondingDelegationResponse{}, nil
+}
+
 // UpdateParams updates the params.
 // TODO investigate when it is the best time to update the params. We can update them
 // when the epoch changes, but we can also update them during the epoch and extend
@@ -192,6 +277,9 @@ func (k msgServer) WrappedBeginRedelegate(goCtx context.Context, msg *types.MsgW
 func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
 	if ms.authority != req.Authority {
 		return nil, errorsmod.Wrapf(govtypes.ErrInvalidSigner, "invalid authority; expected %s, got %s", ms.authority, req.Authority)
+	}
+	if err := req.Params.Validate(); err != nil {
+		return nil, govtypes.ErrInvalidProposalMsg.Wrapf("invalid parameter: %v", err)
 	}
 
 	ctx := sdk.UnwrapSDKContext(goCtx)

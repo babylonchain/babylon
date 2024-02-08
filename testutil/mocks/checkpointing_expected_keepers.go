@@ -5,89 +5,16 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	types "github.com/babylonchain/babylon/x/checkpointing/types"
 	types0 "github.com/babylonchain/babylon/x/epoching/types"
+	crypto "github.com/cometbft/cometbft/proto/tendermint/crypto"
 	types1 "github.com/cosmos/cosmos-sdk/types"
-	types2 "github.com/cosmos/cosmos-sdk/x/auth/types"
-	types3 "github.com/cosmos/cosmos-sdk/x/staking/types"
+	types2 "github.com/cosmos/cosmos-sdk/x/staking/types"
 	gomock "github.com/golang/mock/gomock"
 )
-
-// MockAccountKeeper is a mock of AccountKeeper interface.
-type MockAccountKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockAccountKeeperMockRecorder
-}
-
-// MockAccountKeeperMockRecorder is the mock recorder for MockAccountKeeper.
-type MockAccountKeeperMockRecorder struct {
-	mock *MockAccountKeeper
-}
-
-// NewMockAccountKeeper creates a new mock instance.
-func NewMockAccountKeeper(ctrl *gomock.Controller) *MockAccountKeeper {
-	mock := &MockAccountKeeper{ctrl: ctrl}
-	mock.recorder = &MockAccountKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAccountKeeper) EXPECT() *MockAccountKeeperMockRecorder {
-	return m.recorder
-}
-
-// GetAccount mocks base method.
-func (m *MockAccountKeeper) GetAccount(ctx types1.Context, addr types1.AccAddress) types2.AccountI {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAccount", ctx, addr)
-	ret0, _ := ret[0].(types2.AccountI)
-	return ret0
-}
-
-// GetAccount indicates an expected call of GetAccount.
-func (mr *MockAccountKeeperMockRecorder) GetAccount(ctx, addr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAccount", reflect.TypeOf((*MockAccountKeeper)(nil).GetAccount), ctx, addr)
-}
-
-// MockBankKeeper is a mock of BankKeeper interface.
-type MockBankKeeper struct {
-	ctrl     *gomock.Controller
-	recorder *MockBankKeeperMockRecorder
-}
-
-// MockBankKeeperMockRecorder is the mock recorder for MockBankKeeper.
-type MockBankKeeperMockRecorder struct {
-	mock *MockBankKeeper
-}
-
-// NewMockBankKeeper creates a new mock instance.
-func NewMockBankKeeper(ctrl *gomock.Controller) *MockBankKeeper {
-	mock := &MockBankKeeper{ctrl: ctrl}
-	mock.recorder = &MockBankKeeperMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
-	return m.recorder
-}
-
-// SpendableCoins mocks base method.
-func (m *MockBankKeeper) SpendableCoins(ctx types1.Context, addr types1.AccAddress) types1.Coins {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SpendableCoins", ctx, addr)
-	ret0, _ := ret[0].(types1.Coins)
-	return ret0
-}
-
-// SpendableCoins indicates an expected call of SpendableCoins.
-func (mr *MockBankKeeperMockRecorder) SpendableCoins(ctx, addr interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SpendableCoins", reflect.TypeOf((*MockBankKeeper)(nil).SpendableCoins), ctx, addr)
-}
 
 // MockEpochingKeeper is a mock of EpochingKeeper interface.
 type MockEpochingKeeper struct {
@@ -113,7 +40,7 @@ func (m *MockEpochingKeeper) EXPECT() *MockEpochingKeeperMockRecorder {
 }
 
 // CheckMsgCreateValidator mocks base method.
-func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx types1.Context, msg *types3.MsgCreateValidator) error {
+func (m *MockEpochingKeeper) CheckMsgCreateValidator(ctx context.Context, msg *types2.MsgCreateValidator) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CheckMsgCreateValidator", ctx, msg)
 	ret0, _ := ret[0].(error)
@@ -127,7 +54,7 @@ func (mr *MockEpochingKeeperMockRecorder) CheckMsgCreateValidator(ctx, msg inter
 }
 
 // EnqueueMsg mocks base method.
-func (m *MockEpochingKeeper) EnqueueMsg(ctx types1.Context, msg types0.QueuedMessage) {
+func (m *MockEpochingKeeper) EnqueueMsg(ctx context.Context, msg types0.QueuedMessage) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "EnqueueMsg", ctx, msg)
 }
@@ -138,8 +65,23 @@ func (mr *MockEpochingKeeperMockRecorder) EnqueueMsg(ctx, msg interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnqueueMsg", reflect.TypeOf((*MockEpochingKeeper)(nil).EnqueueMsg), ctx, msg)
 }
 
+// GetAppHash mocks base method.
+func (m *MockEpochingKeeper) GetAppHash(ctx context.Context, height uint64) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAppHash", ctx, height)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetAppHash indicates an expected call of GetAppHash.
+func (mr *MockEpochingKeeperMockRecorder) GetAppHash(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAppHash", reflect.TypeOf((*MockEpochingKeeper)(nil).GetAppHash), ctx, height)
+}
+
 // GetEpoch mocks base method.
-func (m *MockEpochingKeeper) GetEpoch(ctx types1.Context) *types0.Epoch {
+func (m *MockEpochingKeeper) GetEpoch(ctx context.Context) *types0.Epoch {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEpoch", ctx)
 	ret0, _ := ret[0].(*types0.Epoch)
@@ -152,8 +94,23 @@ func (mr *MockEpochingKeeperMockRecorder) GetEpoch(ctx interface{}) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEpoch", reflect.TypeOf((*MockEpochingKeeper)(nil).GetEpoch), ctx)
 }
 
+// GetPubKeyByConsAddr mocks base method.
+func (m *MockEpochingKeeper) GetPubKeyByConsAddr(ctx context.Context, consAddr types1.ConsAddress) (crypto.PublicKey, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPubKeyByConsAddr", ctx, consAddr)
+	ret0, _ := ret[0].(crypto.PublicKey)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPubKeyByConsAddr indicates an expected call of GetPubKeyByConsAddr.
+func (mr *MockEpochingKeeperMockRecorder) GetPubKeyByConsAddr(ctx, consAddr interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPubKeyByConsAddr", reflect.TypeOf((*MockEpochingKeeper)(nil).GetPubKeyByConsAddr), ctx, consAddr)
+}
+
 // GetTotalVotingPower mocks base method.
-func (m *MockEpochingKeeper) GetTotalVotingPower(ctx types1.Context, epochNumber uint64) int64 {
+func (m *MockEpochingKeeper) GetTotalVotingPower(ctx context.Context, epochNumber uint64) int64 {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTotalVotingPower", ctx, epochNumber)
 	ret0, _ := ret[0].(int64)
@@ -167,7 +124,7 @@ func (mr *MockEpochingKeeperMockRecorder) GetTotalVotingPower(ctx, epochNumber i
 }
 
 // GetValidatorSet mocks base method.
-func (m *MockEpochingKeeper) GetValidatorSet(ctx types1.Context, epochNumer uint64) types0.ValidatorSet {
+func (m *MockEpochingKeeper) GetValidatorSet(ctx context.Context, epochNumer uint64) types0.ValidatorSet {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetValidatorSet", ctx, epochNumer)
 	ret0, _ := ret[0].(types0.ValidatorSet)
@@ -204,7 +161,7 @@ func (m *MockCheckpointingHooks) EXPECT() *MockCheckpointingHooksMockRecorder {
 }
 
 // AfterBlsKeyRegistered mocks base method.
-func (m *MockCheckpointingHooks) AfterBlsKeyRegistered(ctx types1.Context, valAddr types1.ValAddress) error {
+func (m *MockCheckpointingHooks) AfterBlsKeyRegistered(ctx context.Context, valAddr types1.ValAddress) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterBlsKeyRegistered", ctx, valAddr)
 	ret0, _ := ret[0].(error)
@@ -218,7 +175,7 @@ func (mr *MockCheckpointingHooksMockRecorder) AfterBlsKeyRegistered(ctx, valAddr
 }
 
 // AfterRawCheckpointBlsSigVerified mocks base method.
-func (m *MockCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx types1.Context, ckpt *types.RawCheckpoint) error {
+func (m *MockCheckpointingHooks) AfterRawCheckpointBlsSigVerified(ctx context.Context, ckpt *types.RawCheckpoint) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterRawCheckpointBlsSigVerified", ctx, ckpt)
 	ret0, _ := ret[0].(error)
@@ -232,7 +189,7 @@ func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointBlsSigVerified(c
 }
 
 // AfterRawCheckpointConfirmed mocks base method.
-func (m *MockCheckpointingHooks) AfterRawCheckpointConfirmed(ctx types1.Context, epoch uint64) error {
+func (m *MockCheckpointingHooks) AfterRawCheckpointConfirmed(ctx context.Context, epoch uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterRawCheckpointConfirmed", ctx, epoch)
 	ret0, _ := ret[0].(error)
@@ -246,7 +203,7 @@ func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointConfirmed(ctx, e
 }
 
 // AfterRawCheckpointFinalized mocks base method.
-func (m *MockCheckpointingHooks) AfterRawCheckpointFinalized(ctx types1.Context, epoch uint64) error {
+func (m *MockCheckpointingHooks) AfterRawCheckpointFinalized(ctx context.Context, epoch uint64) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterRawCheckpointFinalized", ctx, epoch)
 	ret0, _ := ret[0].(error)
@@ -260,7 +217,7 @@ func (mr *MockCheckpointingHooksMockRecorder) AfterRawCheckpointFinalized(ctx, e
 }
 
 // AfterRawCheckpointForgotten mocks base method.
-func (m *MockCheckpointingHooks) AfterRawCheckpointForgotten(ctx types1.Context, ckpt *types.RawCheckpoint) error {
+func (m *MockCheckpointingHooks) AfterRawCheckpointForgotten(ctx context.Context, ckpt *types.RawCheckpoint) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AfterRawCheckpointForgotten", ctx, ckpt)
 	ret0, _ := ret[0].(error)

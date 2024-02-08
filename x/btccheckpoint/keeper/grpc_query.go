@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	"github.com/babylonchain/babylon/x/btccheckpoint/types"
-	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"google.golang.org/grpc/codes"
@@ -15,7 +14,7 @@ import (
 
 var _ types.QueryServer = Keeper{}
 
-func (k Keeper) getCheckpointInfo(ctx sdk.Context, epochNum uint64, epochData *types.EpochData) (*types.BTCCheckpointInfo, error) {
+func (k Keeper) getCheckpointInfo(ctx context.Context, epochNum uint64, epochData *types.EpochData) (*types.BTCCheckpointInfo, error) {
 	bestSubmission := k.GetEpochBestSubmissionBtcInfo(ctx, epochData)
 
 	if bestSubmission == nil {
@@ -62,15 +61,12 @@ func (k Keeper) BtcCheckpointInfo(c context.Context, req *types.QueryBtcCheckpoi
 	return resp, nil
 }
 
-func (k Keeper) BtcCheckpointsInfo(c context.Context, req *types.QueryBtcCheckpointsInfoRequest) (*types.QueryBtcCheckpointsInfoResponse, error) {
+func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheckpointsInfoRequest) (*types.QueryBtcCheckpointsInfoResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-
-	store := ctx.KVStore(k.storeKey)
-	epochDataStore := prefix.NewStore(store, types.EpochDataPrefix)
+	epochDataStore := k.epochDataStore(ctx)
 
 	ckptInfoList := []*types.BTCCheckpointInfo{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
@@ -139,7 +135,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 
 	epochData := k.GetEpochData(ctx, checkpointEpoch)
 
-	if epochData == nil || len(epochData.Key) == 0 {
+	if epochData == nil || len(epochData.Keys) == 0 {
 
 		return &types.QueryEpochSubmissionsResponse{
 			Keys:       []*types.SubmissionKey{},
@@ -147,7 +143,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 		}, nil
 	}
 
-	numberOfKeys := uint64(len((epochData.Key)))
+	numberOfKeys := uint64(len((epochData.Keys)))
 
 	if offset >= numberOfKeys {
 		// offset larger than number of keys return empty response
@@ -164,7 +160,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 			break
 		}
 
-		responseKeys = append(responseKeys, epochData.Key[i])
+		responseKeys = append(responseKeys, epochData.Keys[i])
 	}
 
 	return &types.QueryEpochSubmissionsResponse{

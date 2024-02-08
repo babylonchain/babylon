@@ -122,7 +122,7 @@ type BTCTimestamp struct {
 	// btc_submission_key is position of two BTC txs that include the raw checkpoint of this epoch
 	BtcSubmissionKey *types3.SubmissionKey `protobuf:"bytes,5,opt,name=btc_submission_key,json=btcSubmissionKey,proto3" json:"btc_submission_key,omitempty"`
 	//
-	// Proofs that the header is finalized
+	//Proofs that the header is finalized
 	Proof *ProofFinalizedChainInfo `protobuf:"bytes,6,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 

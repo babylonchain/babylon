@@ -6,11 +6,11 @@ import (
 	"github.com/babylonchain/babylon/x/zoneconcierge/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-	channeltypes "github.com/cosmos/ibc-go/v7/modules/core/04-channel/types"
-	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	host "github.com/cosmos/ibc-go/v7/modules/core/24-host"
-	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
+	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
+	channeltypes "github.com/cosmos/ibc-go/v8/modules/core/04-channel/types"
+	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
+	host "github.com/cosmos/ibc-go/v8/modules/core/24-host"
+	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
 )
 
 type IBCModule struct {
@@ -167,7 +167,7 @@ func (im IBCModule) OnAcknowledgementPacket(
 	// - for all other acknowledgement messages, it uses protobuf
 	if errProto := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errProto != nil {
 		im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with protobuf", "error", errProto)
-		if errJson := types.ModuleCdc.Unmarshal(acknowledgement, &ack); errJson != nil {
+		if errJson := types.ModuleCdc.UnmarshalJSON(acknowledgement, &ack); errJson != nil {
 			im.keeper.Logger(ctx).Error("cannot unmarshal packet acknowledgement with json", "error", errJson)
 			return errorsmod.Wrapf(sdkerrors.ErrUnknownRequest, "cannot unmarshal packet acknowledgement with protobuf (error: %v) or json (error: %v)", errProto, errJson)
 		}

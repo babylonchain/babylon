@@ -3,12 +3,12 @@ package babylon.zoneconcierge.v1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/timestamp.proto";
-import "tendermint/types/types.proto";
 import "tendermint/crypto/proof.proto";
 import "babylon/btccheckpoint/v1/btccheckpoint.proto";
 import "babylon/checkpointing/v1/bls_key.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
 import "babylon/epoching/v1/epoching.proto";
+import "babylon/btclightclient/v1/btclightclient.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/zoneconcierge/types";
 
@@ -25,15 +25,18 @@ message IndexedHeader {
   // it is needed for CZ to unbond all mature validators/delegations
   // before this timestamp when this header is BTC-finalised
   google.protobuf.Timestamp time = 4 [ (gogoproto.stdtime) = true ];
-  // babylon_header is the header of the babylon block that includes this CZ
+  // babylon_header_hash is the hash of the babylon block that includes this CZ
   // header
-  tendermint.types.Header babylon_header = 5;
+  bytes babylon_header_hash = 5;
+  // babylon_header_height is the height of the babylon block that includes this CZ
+  // header
+  uint64 babylon_header_height = 6;
   // epoch is the epoch number of this header on Babylon ledger
-  uint64 babylon_epoch = 6;
+  uint64 babylon_epoch = 7;
   // babylon_tx_hash is the hash of the tx that includes this header
   // (babylon_block_height, babylon_tx_hash) jointly provides the position of
   // the header on Babylon ledger
-  bytes babylon_tx_hash = 7;
+  bytes babylon_tx_hash = 8;
 }
 
 // Forks is a list of non-canonical `IndexedHeader`s at the same height.
@@ -93,14 +96,14 @@ message FinalizedChainInfo {
 // - Metadata of this epoch, which includes the sealer header
 // - Raw checkpoint of this epoch
 // The verifier can perform the following verification rules:
-// - The raw checkpoint's `last_commit_hash` is same as in the sealer header
-// - More than 1/3 (in voting power) validators in the validator set of this
-// epoch have signed `last_commit_hash` of the sealer header
+// - The raw checkpoint's `app_hash` is same as in the sealer header
+// - More than 2/3 (in voting power) validators in the validator set of this
+// epoch have signed `app_hash` of the sealer header
 // - The epoch medatata is committed to the `app_hash` of the sealer header
 // - The validator set is committed to the `app_hash` of the sealer header
 message ProofEpochSealed {
   // validator_set is the validator set of the sealed epoch
-  // This validator set has generated a BLS multisig on `last_commit_hash` of
+  // This validator set has generated a BLS multisig on `app_hash` of
   // the sealer header
   repeated babylon.checkpointing.v1.ValidatorWithBlsKey validator_set = 1;
   // proof_epoch_info is the Merkle proof that the epoch's metadata is committed
@@ -118,16 +121,18 @@ message ProofFinalizedChainInfo {
     The following fields include proofs that attest the chain info is
     BTC-finalised
   */
-  // proof_tx_in_block is the proof that tx that carries the header is included
-  // in a certain Babylon block
-  tendermint.types.TxProof proof_tx_in_block = 4;
-  // proof_header_in_epoch is the proof that the Babylon header is in a certain
-  // epoch
-  tendermint.crypto.Proof proof_header_in_epoch = 5;
+  // proof_cz_header_in_epoch is the proof that the CZ header is timestamped
+  // within a certain epoch
+  tendermint.crypto.ProofOps proof_cz_header_in_epoch = 1;
   // proof_epoch_sealed is the proof that the epoch is sealed
-  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 6;
+  babylon.zoneconcierge.v1.ProofEpochSealed proof_epoch_sealed = 2;
   // proof_epoch_submitted is the proof that the epoch's checkpoint is included
   // in BTC ledger It is the two TransactionInfo in the best (i.e., earliest)
   // checkpoint submission
-  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 7;
+  repeated babylon.btccheckpoint.v1.TransactionInfo proof_epoch_submitted = 3;
+}
+
+// Btc light client chain segment grown during last finalized epoch
+message BTCChainSegment {
+  repeated babylon.btclightclient.v1.BTCHeaderInfo btc_headers = 1;
 }

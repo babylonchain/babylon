@@ -3,7 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/json"
-	fmt "fmt"
+	"fmt"
 	"sort"
 
 	"github.com/boljen/go-bitmap"
@@ -13,7 +13,7 @@ import (
 )
 
 func (v *Validator) GetValAddress() sdk.ValAddress {
-	return sdk.ValAddress(v.Addr)
+	return v.Addr
 }
 
 func (v *Validator) GetValAddressStr() string {

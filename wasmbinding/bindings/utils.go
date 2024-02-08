@@ -4,7 +4,7 @@ import (
 	lcTypes "github.com/babylonchain/babylon/x/btclightclient/types"
 )
 
-// translate BTCHeaderInfo to BtcBlockHeaderInfo
+// AsBtcBlockHeaderInfo translates BTCHeaderInfo to BtcBlockHeaderInfo
 func AsBtcBlockHeaderInfo(info *lcTypes.BTCHeaderInfo) *BtcBlockHeaderInfo {
 	if info == nil {
 		return nil

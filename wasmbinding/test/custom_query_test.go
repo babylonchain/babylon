@@ -8,18 +8,20 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmvmtypes "github.com/CosmWasm/wasmvm/types"
-	"github.com/babylonchain/babylon/app"
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/wasmbinding/bindings"
 	"github.com/cometbft/cometbft/crypto"
 	"github.com/cometbft/cometbft/crypto/ed25519"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/babylonchain/babylon/wasmbinding/bindings"
 )
 
 // TODO consider doing it by enviromental variables as currently it may fail on some
@@ -48,7 +50,7 @@ func TestQueryEpoch(t *testing.T) {
 	}
 	resp := bindings.CurrentEpochResponse{}
 	queryCustom(t, ctx, babylonApp, contractAddress, query, &resp)
-	require.Equal(t, resp.Epoch, uint64(0))
+	require.Equal(t, resp.Epoch, uint64(1))
 
 	newEpoch := babylonApp.EpochingKeeper.IncEpoch(ctx)
 
@@ -199,7 +201,8 @@ func setupAppWithContext(t *testing.T) (*app.BabylonApp, sdk.Context) {
 
 func setupAppWithContextAndCustomHeight(t *testing.T, height int64) (*app.BabylonApp, sdk.Context) {
 	babylonApp := app.Setup(t, false)
-	ctx := babylonApp.BaseApp.NewContext(false, tmproto.Header{Height: height, Time: time.Now().UTC()})
+	ctx := babylonApp.BaseApp.NewContext(false).
+		WithBlockHeader(cmtproto.Header{Height: height, Time: time.Now().UTC()})
 	return babylonApp, ctx
 }
 
@@ -234,7 +237,7 @@ func fundAccount(
 	acc sdk.AccAddress) {
 
 	err := mintCoinsTo(bbn.BankKeeper, ctx, acc, sdk.NewCoins(
-		sdk.NewCoin("ubbn", sdk.NewInt(10000000000)),
+		sdk.NewCoin("ubbn", math.NewInt(10000000000)),
 	))
 	require.NoError(t, err)
 }

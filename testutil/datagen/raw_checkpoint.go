@@ -5,11 +5,23 @@ import (
 
 	"github.com/boljen/go-bitmap"
 
-	"github.com/babylonchain/babylon/btctxformatter"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/crypto/bls12381"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
+
+const (
+	numValidators = 100 // BTC timestamping only supports 100 validators
+)
+
+func GenFullBitmap() bitmap.Bitmap {
+	bmBytes := make([]byte, txformat.BitMapLength)
+	bm := bitmap.Bitmap(bmBytes)
+	for i := 0; i < numValidators; i++ {
+		bitmap.Set(bm, i, true)
+	}
+	return bm
+}
 
 // GenRandomBitmap generates a random bitmap for the validator set
 // It returns a random bitmap and the number of validators in the subset
@@ -17,7 +29,7 @@ func GenRandomBitmap(r *rand.Rand) (bitmap.Bitmap, int) {
 	bmBytes := GenRandomByteArray(r, txformat.BitMapLength)
 	bm := bitmap.Bitmap(bmBytes)
 	numSubset := 0
-	for i := 0; i < bm.Len(); i++ {
+	for i := 0; i < numValidators; i++ {
 		if bitmap.Get(bm, i) {
 			numSubset++
 		}
@@ -25,13 +37,13 @@ func GenRandomBitmap(r *rand.Rand) (bitmap.Bitmap, int) {
 	return bm, numSubset
 }
 
-func GetRandomRawBtcCheckpoint(r *rand.Rand) *btctxformatter.RawBtcCheckpoint {
+func GetRandomRawBtcCheckpoint(r *rand.Rand) *txformat.RawBtcCheckpoint {
 	rawCkpt := GenRandomRawCheckpoint(r)
-	return &btctxformatter.RawBtcCheckpoint{
+	return &txformat.RawBtcCheckpoint{
 		Epoch:            rawCkpt.EpochNum,
-		LastCommitHash:   *rawCkpt.LastCommitHash,
+		BlockHash:        *rawCkpt.BlockHash,
 		BitMap:           rawCkpt.Bitmap,
-		SubmitterAddress: GenRandomByteArray(r, btctxformatter.AddressLength),
+		SubmitterAddress: GenRandomByteArray(r, txformat.AddressLength),
 		BlsSig:           rawCkpt.BlsMultiSig.Bytes(),
 	}
 }
@@ -46,13 +58,13 @@ func GenRandomRawCheckpointWithMeta(r *rand.Rand) *types.RawCheckpointWithMeta {
 }
 
 func GenRandomRawCheckpoint(r *rand.Rand) *types.RawCheckpoint {
-	randomHashBytes := GenRandomLastCommitHash(r)
+	randomHashBytes := GenRandomBlockHash(r)
 	randomBLSSig := GenRandomBlsMultiSig(r)
 	return &types.RawCheckpoint{
-		EpochNum:       GenRandomEpochNum(r),
-		LastCommitHash: &randomHashBytes,
-		Bitmap:         bitmap.New(types.BitmapBits),
-		BlsMultiSig:    &randomBLSSig,
+		EpochNum:    GenRandomEpochNum(r),
+		BlockHash:   &randomHashBytes,
+		Bitmap:      bitmap.New(types.BitmapBits),
+		BlsMultiSig: &randomBLSSig,
 	}
 }
 
@@ -108,10 +120,10 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 	// number of validators, at least 4
 	n := len(privKeys)
 	// ensure sufficient signers
-	signerNum := n/3 + 1
+	signerNum := n*2/3 + 1
 	epochNum := GenRandomEpochNum(r)
-	lch := GenRandomLastCommitHash(r)
-	msgBytes := types.GetSignBytes(epochNum, lch)
+	blockHash := GenRandomBlockHash(r)
+	msgBytes := types.GetSignBytes(epochNum, blockHash)
 	sigs := GenerateBLSSigs(privKeys[:signerNum], msgBytes)
 	multiSig, _ := bls12381.AggrSigList(sigs)
 	bm := bitmap.New(types.BitmapBits)
@@ -119,16 +131,16 @@ func GenerateLegitimateRawCheckpoint(r *rand.Rand, privKeys []bls12381.PrivateKe
 		bm.Set(i, true)
 	}
 	btcCheckpoint := &types.RawCheckpoint{
-		EpochNum:       epochNum,
-		LastCommitHash: &lch,
-		Bitmap:         bm,
-		BlsMultiSig:    &multiSig,
+		EpochNum:    epochNum,
+		BlockHash:   &blockHash,
+		Bitmap:      bm,
+		BlsMultiSig: &multiSig,
 	}
 
 	return btcCheckpoint
 }
 
-func GenRandomLastCommitHash(r *rand.Rand) types.LastCommitHash {
+func GenRandomBlockHash(r *rand.Rand) types.BlockHash {
 	return GenRandomByteArray(r, types.HashSize)
 }
 

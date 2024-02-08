@@ -2,6 +2,7 @@ package chain
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"regexp"
 	"strings"
@@ -30,7 +31,7 @@ type NodeConfig struct {
 	setupTime time.Time
 }
 
-// NewNodeConfig returens new initialized NodeConfig.
+// NewNodeConfig returns new initialized NodeConfig.
 func NewNodeConfig(t *testing.T, initNode *initialization.Node, initConfig *initialization.NodeConfig, chainId string, containerManager *containers.Manager) *NodeConfig {
 	return &NodeConfig{
 		Node:             *initNode,
@@ -71,8 +72,8 @@ func (n *NodeConfig) Run() error {
 			n.t.Logf("started node container: %s", n.Name)
 			return true
 		},
-		2*time.Minute,
-		time.Second,
+		3*time.Minute,
+		2*time.Second,
 		"bbn node failed to produce blocks",
 	)
 
@@ -117,7 +118,7 @@ func (n *NodeConfig) LatestBlockNumber() uint64 {
 	return uint64(status.SyncInfo.LatestBlockHeight)
 }
 
-func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errormsg string) {
+func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errorMsg string) {
 	for i := 0; i < waitUntilrepeatMax; i++ {
 		if !doneCondition() {
 			time.Sleep(waitUntilRepeatPauseTime)
@@ -125,7 +126,7 @@ func (n *NodeConfig) WaitForCondition(doneCondition func() bool, errormsg string
 		}
 		return
 	}
-	n.t.Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errormsg)
+	n.t.Errorf("node %s timed out waiting for condition. Msg: %s", n.Name, errorMsg)
 }
 
 func (n *NodeConfig) WaitUntilBtcHeight(height uint64) {
@@ -153,7 +154,7 @@ func (n *NodeConfig) extractOperatorAddressIfValidator() error {
 		return nil
 	}
 
-	cmd := []string{"babylond", "debug", "addr", n.PublicKey}
+	cmd := []string{"babylond", "debug", "addr", hex.EncodeToString(n.PublicKey)}
 	n.t.Logf("extracting validator operator addresses for validator: %s", n.Name)
 	_, errBuf, err := n.containerManager.ExecCmd(n.t, n.Name, cmd, "")
 	if err != nil {

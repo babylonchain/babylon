@@ -1,38 +1,40 @@
 package keeper
 
 import (
+	"math/big"
 	"testing"
 
-	"math/big"
-
-	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	tmdb "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"cosmossdk.io/core/header"
+	"cosmossdk.io/log"
+	"cosmossdk.io/store"
+	storemetrics "cosmossdk.io/store/metrics"
+	storetypes "cosmossdk.io/store/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/x/btccheckpoint/keeper"
+	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 )
 
 func NewBTCCheckpointKeeper(
 	t testing.TB,
 	lk btcctypes.BTCLightClientKeeper,
 	ek btcctypes.CheckpointingKeeper,
+	ik btcctypes.IncentiveKeeper,
 	powLimit *big.Int) (*keeper.Keeper, sdk.Context) {
-	storeKey := sdk.NewKVStoreKey(btcctypes.StoreKey)
-	tstoreKey := sdk.NewTransientStoreKey(btcctypes.TStoreKey)
-	memStoreKey := storetypes.NewMemoryStoreKey(btcctypes.MemStoreKey)
+	storeKey := storetypes.NewKVStoreKey(btcctypes.StoreKey)
+	tstoreKey := storetypes.NewTransientStoreKey(btcctypes.TStoreKey)
 
-	db := tmdb.NewMemDB()
-	stateStore := store.NewCommitMultiStore(db)
+	db := dbm.NewMemDB()
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
 	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
-	stateStore.MountStoreWithDB(memStoreKey, storetypes.StoreTypeMemory, nil)
 	require.NoError(t, stateStore.LoadLatestVersion())
 
 	registry := codectypes.NewInterfaceRegistry()
@@ -40,16 +42,17 @@ func NewBTCCheckpointKeeper(
 
 	k := keeper.NewKeeper(
 		cdc,
-		storeKey,
+		runtime.NewKVStoreService(storeKey),
 		tstoreKey,
-		memStoreKey,
 		lk,
 		ek,
+		ik,
 		powLimit,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, log.NewNopLogger())
+	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
+	ctx = ctx.WithHeaderInfo(header.Info{})
 
 	// Initialize params
 	if err := k.SetParams(ctx, btcctypes.DefaultParams()); err != nil {

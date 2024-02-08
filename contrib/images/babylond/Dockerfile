@@ -1,4 +1,4 @@
-FROM golang:1.20-alpine AS build-env
+FROM golang:1.21 AS build-env
 
 # Customize to your build env
 
@@ -7,15 +7,12 @@ ARG TARGETPLATFORM="linux/amd64"
 # Version to build. Default is empty
 ARG VERSION
 
-# Use muslc for static libs
-ARG BUILD_TAGS="muslc"
 ARG LEDGER_ENABLED="false"
 # Cosmos build options
 ARG COSMOS_BUILD_OPTIONS=""
 
 # Install cli tools for building and final image
-RUN apk add --update --no-cache make git bash gcc linux-headers eudev-dev ncurses-dev openssh curl jq
-RUN apk add --no-cache musl-dev
+RUN apt-get update && apt-get install -y make git bash gcc curl jq
 
 # Build
 WORKDIR /go/src/github.com/babylonchain/babylon
@@ -29,35 +26,35 @@ RUN if [ -n "${VERSION}" ]; then \
         git checkout -f ${VERSION}; \
     fi
 
-# Cosmwasm - Download correct libwasmvm version
-RUN WASMVM_VERSION=$(go list -m github.com/CosmWasm/wasmvm | cut -d ' ' -f 2) && \
-    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm_muslc.$(uname -m).a \
-        -O /lib/libwasmvm_muslc.a && \
-    # verify checksum
-    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
-    sha256sum /lib/libwasmvm_muslc.a | grep $(cat /tmp/checksums.txt | grep libwasmvm_muslc.$(uname -m) | cut -d ' ' -f 1)
-
 RUN LEDGER_ENABLED=$LEDGER_ENABLED \
     BUILD_TAGS=$BUILD_TAGS \
     COSMOS_BUILD_OPTIONS=$COSMOS_BUILD_OPTIONS \
-    LINK_STATICALLY=true \
+    LINK_STATICALLY=false \
     make build
 
-FROM alpine:3.14 AS run
+FROM debian:bookworm-slim AS run
 # Create a user
-RUN addgroup --gid 1137 -S babylon && adduser --uid 1137 -S babylon -G babylon
-RUN apk add bash curl jq
+RUN addgroup --gid 1137 --system babylon && adduser --uid 1137 --gid 1137 --system --home /home/babylon babylon
+RUN apt-get update && apt-get install -y bash curl jq wget
 
 # Label should match your github repo
 LABEL org.opencontainers.image.source="https://github.com/babylonchain/babylond:${VERSION}"
 
-# Install Libraries
-# COPY --from=build-env /usr/lib/libgcc_s.so.1 /lib/
-# COPY --from=build-env /lib/ld-musl*.so.1* /lib
+# Install libraries
+# Cosmwasm - Download correct libwasmvm version
+COPY --from=build-env /go/src/github.com/babylonchain/babylon/go.mod /tmp
+RUN WASMVM_VERSION=$(grep github.com/CosmWasm/wasmvm /tmp/go.mod | cut -d' ' -f2) && \
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/libwasmvm.$(uname -m).so \
+        -O /lib/libwasmvm.$(uname -m).so && \
+    # verify checksum
+    wget https://github.com/CosmWasm/wasmvm/releases/download/$WASMVM_VERSION/checksums.txt -O /tmp/checksums.txt && \
+    sha256sum /lib/libwasmvm.$(uname -m).so | grep $(cat /tmp/checksums.txt | grep libwasmvm.$(uname -m) | cut -d ' ' -f 1)
+RUN rm -f /tmp/go.mod
 
 COPY --from=build-env /go/src/github.com/babylonchain/babylon/build/babylond /bin/babylond
 
 # Set home directory and user
 WORKDIR /home/babylon
 RUN chown -R babylon /home/babylon
+RUN chmod g+s /home/babylon
 USER babylon

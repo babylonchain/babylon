@@ -4,9 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	ibctmtypes "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint"
+	ibctmtypes "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/app"
+	"github.com/babylonchain/babylon/testutil/datagen"
 )
 
 func FuzzEpochChainInfoIndexer(f *testing.F) {
@@ -15,29 +17,29 @@ func FuzzEpochChainInfoIndexer(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
-		epochingKeeper := babylonApp.EpochingKeeper
+		ctx := babylonApp.NewContext(false)
+		czChainID := "test-chainid"
 
-		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
 		// enter a random epoch
 		epochNum := datagen.RandomInt(r, 10)
 		for j := uint64(0); j < epochNum; j++ {
-			epochingKeeper.IncEpoch(ctx)
+			babylonApp.EpochingKeeper.IncEpoch(ctx)
 		}
 
 		// invoke the hook a random number of times to simulate a random number of blocks
 		numHeaders := datagen.RandomInt(r, 100) + 1
 		numForkHeaders := datagen.RandomInt(r, 10) + 1
-		SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, 0, numHeaders, numForkHeaders)
+		SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, 0, numHeaders, numForkHeaders)
 
 		// end this epoch
 		hooks.AfterEpochEnds(ctx, epochNum)
 
 		// check if the chain info of this epoch is recorded or not
-		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChain.ChainID, epochNum)
+		chainInfo, err := zcKeeper.GetEpochChainInfo(ctx, czChainID, epochNum)
 		require.NoError(t, err)
 		require.Equal(t, numHeaders-1, chainInfo.LatestHeader.Height)
 		require.Equal(t, numHeaders, chainInfo.TimestampedHeadersCount)
@@ -51,15 +53,14 @@ func FuzzGetEpochHeaders(f *testing.F) {
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
 
-		_, babylonChain, czChain, babylonApp := SetupTest(t)
+		babylonApp := app.Setup(t, false)
 		zcKeeper := babylonApp.ZoneConciergeKeeper
-		epochingKeeper := babylonApp.EpochingKeeper
+		ctx := babylonApp.NewContext(false)
+		czChainID := "test-chainid"
 
-		ctx := babylonChain.GetContext()
 		hooks := zcKeeper.Hooks()
 
 		numReqs := datagen.RandomInt(r, 5) + 1
-
 		epochNumList := []uint64{datagen.RandomInt(r, 10) + 1}
 		nextHeightList := []uint64{0}
 		numHeadersList := []uint64{}
@@ -72,12 +73,12 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			epochNum := epochNumList[i]
 			// enter a random epoch
 			if i == 0 {
-				for j := uint64(0); j < epochNum; j++ {
-					epochingKeeper.IncEpoch(ctx)
+				for j := uint64(1); j < epochNum; j++ { // starting from epoch 1
+					babylonApp.EpochingKeeper.IncEpoch(ctx)
 				}
 			} else {
 				for j := uint64(0); j < epochNum-epochNumList[i-1]; j++ {
-					epochingKeeper.IncEpoch(ctx)
+					babylonApp.EpochingKeeper.IncEpoch(ctx)
 				}
 			}
 
@@ -85,7 +86,7 @@ func FuzzGetEpochHeaders(f *testing.F) {
 			numHeadersList = append(numHeadersList, datagen.RandomInt(r, 100)+1)
 			numForkHeadersList = append(numForkHeadersList, datagen.RandomInt(r, 10)+1)
 			// trigger hooks to append these headers and fork headers
-			expectedHeaders, _ := SimulateHeadersAndForksViaHook(ctx, r, hooks, czChain.ChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
+			expectedHeaders, _ := SimulateNewHeadersAndForks(ctx, r, &zcKeeper, czChainID, nextHeightList[i], numHeadersList[i], numForkHeadersList[i])
 			expectedHeadersMap[epochNum] = expectedHeaders
 			// prepare nextHeight for the next request
 			nextHeightList = append(nextHeightList, nextHeightList[i]+numHeadersList[i])
@@ -100,11 +101,11 @@ func FuzzGetEpochHeaders(f *testing.F) {
 		for i := uint64(0); i < numReqs; i++ {
 			epochNum := epochNumList[i]
 			// check if the headers are same as expected
-			headers, err := zcKeeper.GetEpochHeaders(ctx, czChain.ChainID, epochNum)
+			headers, err := zcKeeper.GetEpochHeaders(ctx, czChainID, epochNum)
 			require.NoError(t, err)
 			require.Equal(t, len(expectedHeadersMap[epochNum]), len(headers))
 			for j := 0; j < len(expectedHeadersMap[epochNum]); j++ {
-				require.Equal(t, expectedHeadersMap[epochNum][j].Header.LastCommitHash, headers[j].Hash)
+				require.Equal(t, expectedHeadersMap[epochNum][j].Header.AppHash, headers[j].Hash)
 			}
 		}
 	})

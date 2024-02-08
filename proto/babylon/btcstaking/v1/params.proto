@@ -1,0 +1,42 @@
+syntax = "proto3";
+package babylon.btcstaking.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
+
+// Params defines the parameters for the module.
+message Params {
+  option (gogoproto.goproto_stringer) = false;
+
+  // covenant_pks is the list of public keys held by the covenant committee
+  // each PK follows encoding in BIP-340 spec on Bitcoin
+  repeated bytes covenant_pks = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // covenant_quorum is the minimum number of signatures needed for the covenant
+  // multisignature
+  uint32 covenant_quorum = 2;
+  // slashing address is the address that the slashed BTC goes to
+  // the address is in string on Bitcoin
+  string slashing_address = 3;
+  // min_slashing_tx_fee_sat is the minimum amount of tx fee (quantified
+  // in Satoshi) needed for the pre-signed slashing tx
+  // TODO: change to satoshi per byte?
+  int64 min_slashing_tx_fee_sat = 4;
+  // min_commission_rate is the chain-wide minimum commission rate that a finality provider can charge their delegators
+  string min_commission_rate = 5 [
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false
+  ];
+  // slashing_rate determines the portion of the staked amount to be slashed,
+  // expressed as a decimal (e.g., 0.5 for 50%).
+  string slashing_rate = 6 [
+      (cosmos_proto.scalar)  = "cosmos.Dec",
+      (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+      (gogoproto.nullable)   = false
+  ];
+  // max_active_finality_providers is the maximum number of active finality providers in the BTC staking protocol
+  uint32 max_active_finality_providers = 7;
+  // min_unbonding_time is the minimum time for unbonding transaction timelock in BTC blocks
+  uint32 min_unbonding_time = 8;
+}

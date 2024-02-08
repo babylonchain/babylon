@@ -5,14 +5,13 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/spf13/cobra"
-
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/spf13/cobra"
 
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
@@ -71,8 +70,8 @@ func ValidateGenesisCmd(mbm module.BasicManager, validator genutiltypes.MessageV
 // validateGenDoc reads a genesis file and validates that it is a correct
 // Tendermint GenesisDoc. This function does not do any cosmos-related
 // validation.
-func validateGenDoc(importGenesisFile string) (*tmtypes.GenesisDoc, error) {
-	genDoc, err := tmtypes.GenesisDocFromFile(importGenesisFile)
+func validateGenDoc(importGenesisFile string) (*cmttypes.GenesisDoc, error) {
+	genDoc, err := cmttypes.GenesisDocFromFile(importGenesisFile)
 	if err != nil {
 		return nil, fmt.Errorf("%s. Make sure that"+
 			" you have correctly migrated all Tendermint consensus params, please see the"+

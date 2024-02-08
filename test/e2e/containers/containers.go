@@ -16,7 +16,8 @@ import (
 )
 
 const (
-	hermesContainerName = "hermes-relayer"
+	hermesContainerName        = "hermes-relayer"
+	cosmosRelayerContainerName = "rly-relayer"
 	// The maximum number of times debug logs are printed to console
 	// per CLI command.
 	maxDebugLogsPerCommand = 3
@@ -35,10 +36,10 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager instance and initializes
-// all Docker specific utilies. Returns an error if initialiation fails.
-func NewManager(isDebugLogEnabled bool) (docker *Manager, err error) {
+// all Docker specific utilities. Returns an error if initialization fails.
+func NewManager(isDebugLogEnabled bool, isCosmosRelayer bool) (docker *Manager, err error) {
 	docker = &Manager{
-		ImageConfig:       NewImageConfig(),
+		ImageConfig:       NewImageConfig(isCosmosRelayer),
 		resources:         make(map[string]*dockertest.Resource),
 		isDebugLogEnabled: isDebugLogEnabled,
 	}
@@ -123,7 +124,7 @@ func (m *Manager) ExecCmd(t *testing.T, containerName string, command []string, 
 
 			errBufString := errBuf.String()
 			// Note that this does not match all errors.
-			// This only works if CLI outpurs "Error" or "error"
+			// This only works if CLI outputs "Error" or "error"
 			// to stderr.
 			if (errRegex.MatchString(errBufString) || m.isDebugLogEnabled) && maxDebugLogTriesLeft > 0 {
 				t.Log("\nstderr:")
@@ -175,7 +176,6 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 			PortBindings: map[docker.Port][]docker.PortBinding{
 				"3031/tcp": {{HostIP: "", HostPort: "3031"}},
 			},
-			Platform: "linux/x86_64",
 			Env: []string{
 				fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", chainAID),
 				fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", chainBID),
@@ -199,6 +199,47 @@ func (m *Manager) RunHermesResource(chainAID, osmoARelayerNodeName, osmoAValMnem
 	return hermesResource, nil
 }
 
+// RunRlyResource runs a Cosmos relayer container. Returns the container resource and error if any.
+// the name of the cosmos container is "<chain A id>-<chain B id>-relayer"
+func (m *Manager) RunRlyResource(chainAID, osmoARelayerNodeName, osmoAValMnemonic, chainAIbcPort, chainBID, osmoBRelayerNodeName, osmoBValMnemonic, chainBIbcPort string, rlyCfgPath string) (*dockertest.Resource, error) {
+	rlyResource, err := m.pool.RunWithOptions(
+		&dockertest.RunOptions{
+			Name:       cosmosRelayerContainerName,
+			Repository: m.RelayerRepository,
+			Tag:        m.RelayerTag,
+			NetworkID:  m.network.Network.ID,
+			Cmd: []string{
+				"start",
+			},
+			User: "root:root",
+			Mounts: []string{
+				fmt.Sprintf("%s/:/root/rly", rlyCfgPath),
+			},
+			Env: []string{
+				fmt.Sprintf("BBN_A_E2E_CHAIN_ID=%s", chainAID),
+				fmt.Sprintf("BBN_B_E2E_CHAIN_ID=%s", chainBID),
+				fmt.Sprintf("BBN_A_E2E_VAL_MNEMONIC=%s", osmoAValMnemonic),
+				fmt.Sprintf("BBN_B_E2E_VAL_MNEMONIC=%s", osmoBValMnemonic),
+				fmt.Sprintf("BBN_A_E2E_VAL_HOST=%s", osmoARelayerNodeName),
+				fmt.Sprintf("BBN_B_E2E_VAL_HOST=%s", osmoBRelayerNodeName),
+				fmt.Sprintf("CHAIN_A_IBC_PORT=%s", chainAIbcPort),
+				fmt.Sprintf("CHAIN_B_IBC_PORT=%s", chainBIbcPort),
+			},
+			Entrypoint: []string{
+				"sh",
+				"-c",
+				"chmod +x /root/rly/rly_bootstrap.sh && /root/rly/rly_bootstrap.sh",
+			},
+		},
+		noRestart,
+	)
+	if err != nil {
+		return nil, err
+	}
+	m.resources[cosmosRelayerContainerName] = rlyResource
+	return rlyResource, nil
+}
+
 // RunNodeResource runs a node container. Assings containerName to the container.
 // Mounts the container on valConfigDir volume on the running host. Returns the container resource and error if any.
 func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir string) (*dockertest.Resource, error) {
@@ -218,7 +259,6 @@ func (m *Manager) RunNodeResource(chainId string, containerName, valCondifDir st
 			"babylond start --home /home/babylon/babylondata",
 		},
 		ExposedPorts: []string{"26656", "26657", "1317", "9090"},
-		Platform:     "linux/x86_64",
 		Mounts: []string{
 			fmt.Sprintf("%s/:/home/babylon/babylondata", valCondifDir),
 			fmt.Sprintf("%s/bytecode:/bytecode", pwd),

@@ -4,11 +4,11 @@ import (
 	"math/rand"
 	"testing"
 
-	"github.com/babylonchain/babylon/testutil/datagen"
-	"github.com/babylonchain/babylon/x/epoching/keeper"
-	"github.com/babylonchain/babylon/x/epoching/testepoching"
-	"github.com/babylonchain/babylon/x/epoching/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/babylonchain/babylon/testutil/datagen"
+	testhelper "github.com/babylonchain/babylon/testutil/helper"
+	"github.com/babylonchain/babylon/x/epoching/keeper"
 )
 
 func FuzzAppHashChain(f *testing.F) {
@@ -16,40 +16,27 @@ func FuzzAppHashChain(f *testing.F) {
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
+		var err error
 
-		helper := testepoching.NewHelper(t)
-		ctx, k := helper.Ctx, helper.EpochingKeeper
+		helper := testhelper.NewHelper(t)
+		ctx, k := helper.Ctx, helper.App.EpochingKeeper
 		// ensure that the epoch info is correct at the genesis
 		epoch := k.GetEpoch(ctx)
-		require.Equal(t, epoch.EpochNumber, uint64(0))
-		require.Equal(t, epoch.FirstBlockHeight, uint64(0))
+		require.Equal(t, epoch.EpochNumber, uint64(1))
+		require.Equal(t, epoch.FirstBlockHeight, uint64(1))
 
 		// set a random epoch interval
-		epochInterval := r.Uint64()%100 + 2 // the epoch interval should at at least 2
-
-		params := types.Params{
-			EpochInterval: epochInterval,
-		}
-
-		if err := k.SetParams(ctx, params); err != nil {
-			panic(err)
-		}
+		epochInterval := k.GetParams(ctx).EpochInterval
 
 		// reach the end of the 1st epoch
-		expectedHeight := epochInterval
-		expectedAppHashs := [][]byte{}
+		expectedHeight := epochInterval - 2
 		for i := uint64(0); i < expectedHeight; i++ {
-			ctx = helper.GenAndApplyEmptyBlock(r)
-			expectedAppHashs = append(expectedAppHashs, ctx.BlockHeader().AppHash)
+			ctx, err = helper.ApplyEmptyBlockWithVoteExtension(r)
+			require.NoError(t, err)
 		}
 		// ensure epoch number is 1
 		epoch = k.GetEpoch(ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
-
-		// ensure appHashs are same as expectedAppHashs
-		appHashs, err := k.GetAllAppHashsForEpoch(ctx, epoch)
-		require.NoError(t, err)
-		require.Equal(t, expectedAppHashs, appHashs)
 
 		// ensure prover and verifier are correct
 		randomHeightInEpoch := uint64(r.Intn(int(expectedHeight)) + 1)

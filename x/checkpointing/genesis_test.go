@@ -14,12 +14,11 @@ import (
 
 	simapp "github.com/babylonchain/babylon/app"
 	"github.com/babylonchain/babylon/x/checkpointing/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 )
 
 func TestInitGenesis(t *testing.T) {
 	app := simapp.Setup(t, false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+	ctx := app.BaseApp.NewContext(false)
 	ckptKeeper := app.CheckpointingKeeper
 
 	valNum := 10
@@ -27,7 +26,7 @@ func TestInitGenesis(t *testing.T) {
 	for i := 0; i < valNum; i++ {
 		valKeys, err := privval.NewValidatorKeys(ed25519.GenPrivKey(), bls12381.GenPrivKey())
 		require.NoError(t, err)
-		valPubkey, err := cryptocodec.FromTmPubKeyInterface(valKeys.ValPubkey)
+		valPubkey, err := cryptocodec.FromCmtPubKeyInterface(valKeys.ValPubkey)
 		require.NoError(t, err)
 		genKey, err := types.NewGenesisKey(
 			sdk.ValAddress(valKeys.ValPubkey.Address()),
