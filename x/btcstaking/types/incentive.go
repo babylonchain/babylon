@@ -5,39 +5,39 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func NewRewardDistCache() *RewardDistCache {
-	return &RewardDistCache{
+func NewVotingPowerDistCache() *VotingPowerDistCache {
+	return &VotingPowerDistCache{
 		TotalVotingPower:  0,
 		FinalityProviders: []*FinalityProviderDistInfo{},
 	}
 }
 
-func (rdc *RewardDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
+func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
 	if v.TotalVotingPower > 0 {
 		// append finality provider dist info and accumulate voting power
-		rdc.FinalityProviders = append(rdc.FinalityProviders, v)
-		rdc.TotalVotingPower += v.TotalVotingPower
+		dc.FinalityProviders = append(dc.FinalityProviders, v)
+		dc.TotalVotingPower += v.TotalVotingPower
 	}
 }
 
 // FilterVotedFinalityProviders filters out finality providers that have voted according to a map of given voters
 // and update total voted power accordingly
-func (rdc *RewardDistCache) FilterVotedFinalityProviders(voterBTCPKs map[string]struct{}) {
+func (dc *VotingPowerDistCache) FilterVotedFinalityProviders(voterBTCPKs map[string]struct{}) {
 	filteredFps := []*FinalityProviderDistInfo{}
 	totalVotingPower := uint64(0)
-	for _, v := range rdc.FinalityProviders {
+	for _, v := range dc.FinalityProviders {
 		if _, ok := voterBTCPKs[v.BtcPk.MarshalHex()]; ok {
 			filteredFps = append(filteredFps, v)
 			totalVotingPower += v.TotalVotingPower
 		}
 	}
-	rdc.FinalityProviders = filteredFps
-	rdc.TotalVotingPower = totalVotingPower
+	dc.FinalityProviders = filteredFps
+	dc.TotalVotingPower = totalVotingPower
 }
 
 // GetFinalityProviderPortion returns the portion of a finality provider's voting power out of the total voting power
-func (rdc *RewardDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
-	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(rdc.TotalVotingPower)))
+func (dc *VotingPowerDistCache) GetFinalityProviderPortion(v *FinalityProviderDistInfo) sdkmath.LegacyDec {
+	return sdkmath.LegacyNewDec(int64(v.TotalVotingPower)).QuoTruncate(sdkmath.LegacyNewDec(int64(dc.TotalVotingPower)))
 }
 
 func NewFinalityProviderDistInfo(fp *FinalityProvider) *FinalityProviderDistInfo {
@@ -56,6 +56,7 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 
 func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
 	btcDelDistInfo := &BTCDelDistInfo{
+		BtcPk:       btcDel.BtcPk,
 		BabylonPk:   btcDel.BabylonPk,
 		VotingPower: btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
 	}
