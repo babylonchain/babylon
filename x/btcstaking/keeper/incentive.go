@@ -9,9 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func (k Keeper) setCurrentRewardDistCache(ctx context.Context, rdc *types.RewardDistCache) {
+func (k Keeper) setRewardDistCache(ctx context.Context, height uint64, rdc *types.RewardDistCache) {
 	store := k.rewardDistCacheStore(ctx)
-	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	store.Set(sdk.Uint64ToBigEndian(height), k.cdc.MustMarshal(rdc))
 }
 
