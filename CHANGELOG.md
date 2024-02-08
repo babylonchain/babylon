@@ -1,5 +1,9 @@
 # Changelog
 
+## [v0.8.0](https://github.com/babylonchain/babylon/tree/v0.8.0) (2024-02-08)
+
+[Full Changelog](https://github.com/babylonchain/babylon/compare/v0.8.0-rc.0...v0.8.0)
+
 ## [v0.8.0-rc.0](https://github.com/babylonchain/babylon/tree/v0.8.0-rc.0) (2024-01-22)
 
 [Full Changelog](https://github.com/babylonchain/babylon/compare/v0.7.2...v0.8.0-rc.0)
