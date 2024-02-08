@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func FuzzRecordRewardDistCache(f *testing.F) {
+func FuzzRecordVotingPowerDistCache(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -83,18 +83,18 @@ func FuzzRecordRewardDistCache(f *testing.F) {
 			}
 		}
 
-		// record reward distribution cache
+		// record voting power distribution cache
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
 		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		err = keeper.BeginBlocker(ctx)
 		require.NoError(t, err)
 
-		// assert reward distribution cache is correct
-		rdc, err := keeper.GetRewardDistCache(ctx, babylonHeight)
+		// assert voting power distribution cache is correct
+		dc, err := keeper.GetVotingPowerDistCache(ctx, babylonHeight)
 		require.NoError(t, err)
-		require.Equal(t, rdc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
-		for _, fpDistInfo := range rdc.FinalityProviders {
+		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
+		for _, fpDistInfo := range dc.FinalityProviders {
 			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
 			fp, ok := fpsWithVotingPowerMap[fpDistInfo.BabylonPk.String()]
 			require.True(t, ok)
