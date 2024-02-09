@@ -77,18 +77,6 @@ func RecordBTCDelegations(num int, status BTCDelegationStatus) {
 	)
 }
 
-// RecordNewSlashedBTCDelegation increments the number of slashed BTC delegations.
-// It is triggered upon the corresponding finality provider is slashed.
-func RecordNewSlashedBTCDelegation() {
-	keys := []string{MetricsKeyBTCDelegations, "SLASHED"}
-	labels := []metrics.Label{telemetry.NewLabel(telemetry.MetricLabelNameModule, ModuleName)}
-	telemetry.IncrCounterWithLabels(
-		keys,
-		1,
-		labels,
-	)
-}
-
 // RecordMetricsKeyStakedBitcoins records the amount of Bitcoins staked under
 // all active finality providers.
 // It is triggered upon recording voting power table.

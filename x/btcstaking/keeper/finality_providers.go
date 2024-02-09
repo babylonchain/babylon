@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -54,29 +53,6 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	}
 	fp.SlashedBtcHeight = btcTip.Height
 	k.SetFinalityProvider(ctx, fp)
-
-	// record newly slashed finality provider and BTC delegations
-	types.RecordNewSlashedFinalityProvider()
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
-	btcDelIter := k.btcDelegatorStore(ctx, fp.BtcPk).Iterator(nil, nil)
-	defer btcDelIter.Close()
-	for ; btcDelIter.Valid(); btcDelIter.Next() {
-		// unmarshal
-		var btcDelIndex types.BTCDelegatorDelegationIndex
-		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
-		// retrieve and process each of the BTC delegation
-		for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
-			stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-			if btcDel.GetStatus(btcTip.Height, wValue, covenantQuorum) == types.BTCDelegationStatus_ACTIVE {
-				types.RecordNewSlashedBTCDelegation()
-			}
-		}
-	}
 
 	return nil
 }
