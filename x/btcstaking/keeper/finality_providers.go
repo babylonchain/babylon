@@ -13,17 +13,24 @@ import (
 
 /* finality provider slash events storage */
 
+// setFinalityProviderEvent sets adds a given slashed finality provider's
+// BTC PK to finality provider events storage
 func (k Keeper) setFinalityProviderEvent(ctx context.Context, fpBTCPK []byte) {
 	store := k.finalityProviderEventStore(ctx)
 	// NOTE: value is currently never used so doesn't matter
 	store.Set(fpBTCPK, []byte("slashed"))
 }
 
+// removeFinalityProviderEvents removes all finality provider events
+// This is called after processing all finality provider events in `BeginBlocker`
 func (k Keeper) removeFinalityProviderEvents(ctx context.Context) {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	storeAdapter.Delete(types.FinalityProviderEventKey)
 }
 
+// iterateFinalityProviderEvents uses the given handler function to handle
+// all finality provider events
+// This is called in `BeginBlocker`
 func (k Keeper) iterateFinalityProviderEvents(
 	ctx context.Context,
 	handleFunc func(fpBTCPK []byte) bool,
@@ -79,13 +86,18 @@ func (k Keeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types
 // SlashFinalityProvider slashes a finality provider with the given PK
 // A slashed finality provider will not have voting power
 func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
 	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
 	if err != nil {
 		return err
 	}
+
+	// ensure finality provider is not slashed yet
 	if fp.IsSlashed() {
 		return types.ErrFpAlreadySlashed
 	}
+
+	// set finality provider to be slashed
 	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
@@ -93,6 +105,10 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	}
 	fp.SlashedBtcHeight = btcTip.Height
 	k.SetFinalityProvider(ctx, fp)
+
+	// record slashed event
+	k.setFinalityProviderEvent(ctx, fpBTCPK)
+
 	return nil
 }
 

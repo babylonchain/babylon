@@ -26,6 +26,7 @@ func (k Keeper) setBTCDelegationEvent(
 
 // removeBTCDelegationEvents removes all BTC delegation state update events
 // at a given BTC height
+// This is called after processing all BTC delegation events in `BeginBlocker`
 func (k Keeper) removeBTCDelegationEvents(ctx context.Context, btcHeight uint64) {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	store := prefix.NewStore(storeAdapter, types.BTCDelegationEventKey)
@@ -34,6 +35,7 @@ func (k Keeper) removeBTCDelegationEvents(ctx context.Context, btcHeight uint64)
 
 // iterateBTCDelegationEvents uses the given handler function to handle each
 // BTC delegation state update that happens at the given BTC height
+// This is called in `BeginBlocker`
 func (k Keeper) iterateBTCDelegationEvents(
 	ctx context.Context,
 	btcHeight uint64,
