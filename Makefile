@@ -117,14 +117,6 @@ ifeq (,$(findstring nostrip,$(BABYLON_BUILD_OPTIONS)))
   BUILD_FLAGS += -trimpath
 endif
 
-# Update changelog vars
-ifneq (,$(SINCE_TAG))
-	since_tag := --since-tag $(SINCE_TAG)
-endif
-ifneq (,$(UPCOMING_TAG))
-	upcoming_tag := --upcoming-tag $(UPCOMING_TAG)
-endif
-
 all: tools build lint test
 
 # The below include contains the tools and runsim targets.
@@ -449,8 +441,3 @@ localnet-stop
 .PHONY: diagrams
 diagrams:
 	$(MAKE) -C client/docs/diagrams
-
-.PHONY: update-changelog
-update-changelog:
-	@echo ./scripts/update_changelog.sh $(since_tag) $(upcoming_tag)
-	./scripts/update_changelog.sh $(since_tag) $(upcoming_tag)
