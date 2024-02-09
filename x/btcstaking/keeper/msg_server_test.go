@@ -179,7 +179,7 @@ func FuzzAddCovenantSigs(f *testing.F) {
 		bogusMsg := *msgs[0]
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
-		h.t.Error(err)
+		h.Error(err)
 
 		for _, msg := range msgs {
 			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
@@ -259,7 +259,7 @@ func FuzzBTCUndelegate(f *testing.F) {
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
-		h.t.Error(err)
+		h.Error(err)
 
 		// unbond
 		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
@@ -328,7 +328,7 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		bogusMsg := *msg
 		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
-		h.t.Error(err)
+		h.Error(err)
 
 		// submit evidence of selective slashing
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
