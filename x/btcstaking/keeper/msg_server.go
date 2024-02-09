@@ -12,6 +12,7 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"google.golang.org/grpc/codes"
@@ -371,6 +372,11 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		panic(fmt.Errorf("failed to set BTC delegation that has passed verification: %w", err))
 	}
 
+	// record event that the BTC delegation becomes pending at this height
+	ms.setBTCDelegationEvent(ctx, btcTip.Height, &stakingTxHash, types.BTCDelegationStatus_PENDING)
+	// record event that the BTC delegation will become unbonded at endHeight-wValue
+	ms.setBTCDelegationEvent(ctx, endHeight-wValue, &stakingTxHash, types.BTCDelegationStatus_UNBONDED)
+
 	// notify subscriber
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),
@@ -395,9 +401,13 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	params := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
 	if err != nil {
 		return nil, err
+	}
+	btcDel := ms.getBTCDelegation(ctx, *stakingTxHash)
+	if btcDel == nil {
+		return nil, types.ErrBTCDelegationNotFound
 	}
 
 	// ensure that the given covenant PK is in the parameter
@@ -528,6 +538,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	ms.setBTCDelegation(ctx, btcDel)
 
+	// record event that the BTC delegation becomes active at this height
+	ms.setBTCDelegationEvent(ctx, btcTipHeight, stakingTxHash, types.BTCDelegationStatus_ACTIVE)
+
 	// notify subscriber
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: req.StakingTxHash,
@@ -553,9 +566,13 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	bsParams := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
-	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
+	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
 	if err != nil {
 		return nil, err
+	}
+	btcDel := ms.getBTCDelegation(ctx, *stakingTxHash)
+	if btcDel == nil {
+		return nil, types.ErrBTCDelegationNotFound
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active
@@ -595,6 +612,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	// and set back
 	btcDel.BtcUndelegation.DelegatorUnbondingSig = req.UnbondingTxSig
 	ms.setBTCDelegation(ctx, btcDel)
+
+	// record event that the BTC delegation becomes unbonded at this height
+	ms.setBTCDelegationEvent(ctx, btcTip.Height, stakingTxHash, types.BTCDelegationStatus_UNBONDED)
 
 	// notify subscriber about this unbonded BTC delegation
 	event := &types.EventBTCDelegationStateUpdate{
