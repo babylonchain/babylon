@@ -70,7 +70,7 @@ func FuzzMsgCreateFinalityProvider(f *testing.F) {
 	})
 }
 
-func FuzzCreateBTCDelegationAndAddCovenantSigs(f *testing.F) {
+func FuzzCreateBTCDelegation(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
@@ -116,6 +116,70 @@ func FuzzCreateBTCDelegationAndAddCovenantSigs(f *testing.F) {
 		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
 
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+
+		for _, msg := range msgs {
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
+			h.NoError(err)
+			// check that submitting the same covenant signature does not produce an error
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
+			h.NoError(err)
+		}
+
+		// ensure the BTC delegation now has voting power
+		actualDel, err = h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		require.True(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		require.True(h.t, actualDel.BtcUndelegation.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+		votingPower := actualDel.VotingPower(h.BTCLightClientKeeper.GetTipInfo(h.Ctx).Height, h.BTCCheckpointKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout, h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum)
+		require.Equal(t, uint64(stakingValue), votingPower)
+	})
+}
+
+func FuzzAddCovenantSigs(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// mock BTC light client and BTC checkpoint modules
+		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
+
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
+
+		// generate and insert new finality provider
+		_, fpPK, _ := h.CreateFinalityProvider(r)
+
+		// generate and insert new BTC delegation
+		stakingValue := int64(2 * 10e8)
+		stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+			r,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+		)
+
+		// ensure consistency between the msg and the BTC delegation in DB
+		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
+		h.NoError(err)
+		// delegation is not activated by covenant yet
+		require.False(h.t, actualDel.HasCovenantQuorums(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum))
+
+		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+
+		// ensure the system does not panick due to a bogus covenant sig request
+		bogusMsg := *msgs[0]
+		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
+		_, err = h.MsgServer.AddCovenantSigs(h.Ctx, &bogusMsg)
+		h.t.Error(err)
 
 		for _, msg := range msgs {
 			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msg)
@@ -182,14 +246,23 @@ func FuzzBTCUndelegate(f *testing.F) {
 		status := actualDel.GetStatus(btcTip, wValue, bsParams.CovenantQuorum)
 		require.Equal(t, types.BTCDelegationStatus_ACTIVE, status)
 
-		// delegator wants to unbond
+		// construct unbonding msg
 		delUnbondingSig, err := actualDel.SignUnbondingTx(&bsParams, h.Net, delSK)
 		h.NoError(err)
-		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &types.MsgBTCUndelegate{
+		msg := &types.MsgBTCUndelegate{
 			Signer:         datagen.GenRandomAccount().Address,
 			StakingTxHash:  stakingTxHash,
 			UnbondingTxSig: bbn.NewBIP340SignatureFromBTCSig(delUnbondingSig),
-		})
+		}
+
+		// ensure the system does not panick due to a bogus unbonding msg
+		bogusMsg := *msg
+		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, &bogusMsg)
+		h.t.Error(err)
+
+		// unbond
+		_, err = h.MsgServer.BTCUndelegate(h.Ctx, msg)
 		h.NoError(err)
 
 		// ensure the BTC delegation is unbonded
@@ -244,12 +317,20 @@ func FuzzSelectiveSlashing(f *testing.F) {
 		h.NoError(err)
 		require.True(t, actualDel.HasCovenantQuorums(bsParams.CovenantQuorum))
 
-		// submit evidence of selective slashing
+		// construct message for the evidence of selective slashing
 		msg := &types.MsgSelectiveSlashingEvidence{
 			Signer:           datagen.GenRandomAccount().Address,
 			StakingTxHash:    actualDel.MustGetStakingTxHash().String(),
 			RecoveredFpBtcSk: fpSK.Serialize(),
 		}
+
+		// ensure the system does not panick due to a bogus unbonding msg
+		bogusMsg := *msg
+		bogusMsg.StakingTxHash = datagen.GenRandomBtcdHash(r).String()
+		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, &bogusMsg)
+		h.t.Error(err)
+
+		// submit evidence of selective slashing
 		_, err = h.MsgServer.SelectiveSlashingEvidence(h.Ctx, msg)
 		h.NoError(err)
 
