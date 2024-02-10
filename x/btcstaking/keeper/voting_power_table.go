@@ -32,6 +32,20 @@ func (k Keeper) IterateActiveFPs(ctx context.Context, handler func(fp *types.Fin
 	}
 }
 
+func (k Keeper) IterateBTCDels(ctx context.Context, handler func(delegation *types.BTCDelegation) bool) {
+	deldIter := k.btcDelegationStore(ctx).Iterator(nil, nil)
+	defer deldIter.Close()
+
+	for ; deldIter.Valid(); deldIter.Next() {
+		var deld types.BTCDelegation
+		k.cdc.MustUnmarshal(deldIter.Value(), &deld)
+		shouldContinue := handler(&deld)
+		if !shouldContinue {
+			return
+		}
+	}
+}
+
 // SetVotingPower sets the voting power of a given finality provider at a given Babylon height
 func (k Keeper) SetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64, power uint64) {
 	store := k.votingPowerStore(ctx, height)

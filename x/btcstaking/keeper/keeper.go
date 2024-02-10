@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	corestoretypes "cosmossdk.io/core/store"
 
@@ -59,7 +60,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // to 1) record the voting power table for the current height, and 2) record
 // the reward distribution cache used for distributing rewards once the block
 // is finalised by finality providers.
-func (k Keeper) BeginBlocker(ctx context.Context) error {
+func (k Keeper) BeginBlockeralt(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
 
@@ -116,5 +117,105 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// TODO: only give rewards to top N finality providers and their BTC delegations
 	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
 
+	return nil
+}
+
+type FpInfo struct {
+	distInfo *types.FinalityProviderDistInfo
+	slashed  bool
+}
+
+func (k Keeper) BeginBlocker(ctx context.Context) error {
+	k.IndexBTCHeight(ctx)
+
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
+	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
+	if err != nil {
+		panic(err) // only possible upon programming error
+	}
+	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+
+	finalityProviders := make(map[string]*FpInfo)
+
+	k.IterateBTCDels(ctx, func(delegation *types.BTCDelegation) bool {
+		finalityProviderKey := delegation.FpBtcPkList[0].MarshalHex()
+
+		fpData, found := finalityProviders[finalityProviderKey]
+
+		if !found {
+			provider, err := k.GetFinalityProvider(ctx, delegation.FpBtcPkList[0].MustMarshal())
+			if err != nil {
+				panic(err)
+			}
+
+			if provider.IsSlashed() {
+				fpData = &FpInfo{
+					distInfo: nil,
+					slashed:  true,
+				}
+				finalityProviders[finalityProviderKey] = fpData
+				return true
+			}
+
+			distInfo := types.NewFinalityProviderDistInfo(provider)
+
+			distInfo.AddBTCDel(delegation, btcTipHeight, wValue, covenantQuorum)
+
+			finalityProviders[finalityProviderKey] = &FpInfo{
+				distInfo: distInfo,
+				slashed:  false,
+			}
+
+			return true
+		}
+
+		if fpData.slashed {
+			return true
+		}
+
+		finalityProviders[finalityProviderKey].distInfo.AddBTCDel(delegation, btcTipHeight, wValue, covenantQuorum)
+
+		return true
+	})
+
+	var provSlice []*types.FinalityProviderDistInfo
+
+	for _, fpData := range finalityProviders {
+		fpCopy := fpData
+
+		if fpCopy.slashed {
+			continue
+		}
+
+		if fpCopy.distInfo.TotalVotingPower == 0 {
+			continue
+		}
+
+		provSlice = append(provSlice, fpCopy.distInfo)
+	}
+
+	var maxValidators = int(k.GetParams(ctx).MaxActiveFinalityProviders)
+
+	var activeValidators int
+
+	if len(provSlice) >= maxValidators {
+		activeValidators = maxValidators
+	} else {
+		activeValidators = len(provSlice)
+	}
+
+	sort.SliceStable(provSlice, func(i, j int) bool {
+		return provSlice[i].TotalVotingPower > provSlice[j].TotalVotingPower
+	})
+
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	rdc := types.NewRewardDistCache()
+
+	for i := 0; i < activeValidators; i++ {
+		k.SetVotingPower(ctx, provSlice[i].BtcPk.MustMarshal(), babylonTipHeight, provSlice[i].TotalVotingPower)
+		rdc.AddFinalityProviderDistInfo(provSlice[i])
+	}
+
+	k.setRewardDistCache(ctx, babylonTipHeight, rdc)
 	return nil
 }
