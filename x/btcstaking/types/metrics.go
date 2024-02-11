@@ -53,7 +53,7 @@ func RecordInactiveFinalityProviders(num int) {
 	)
 }
 
-// RecordNewSlashedFinalityProvider increments the number slashed inactive finality providers.
+// RecordNewSlashedFinalityProvider increments the number of slashed finality providers.
 // It is triggered upon a finality provider becomes slashed.
 func RecordNewSlashedFinalityProvider() {
 	keys := []string{MetricsKeyFinalityProviders, "SLASHED"}

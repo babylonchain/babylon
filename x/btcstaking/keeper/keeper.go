@@ -132,7 +132,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
 	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
 	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
-	// record metrics for BTC delegations (NOTE: slashed BTC delegations are recorded upon slashing)
+	// record metrics for BTC delegations
 	for status, num := range numDelsMap {
 		types.RecordBTCDelegations(num, status)
 	}
