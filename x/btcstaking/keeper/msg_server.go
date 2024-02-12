@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	"time"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
+	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"google.golang.org/grpc/codes"
@@ -49,6 +51,8 @@ func (ms msgServer) UpdateParams(goCtx context.Context, req *types.MsgUpdatePara
 
 // CreateFinalityProvider creates a finality provider
 func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.MsgCreateFinalityProvider) (*types.MsgCreateFinalityProviderResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateFinalityProvider)
+
 	// ensure the finality provider address does not already exist
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
@@ -96,6 +100,8 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 // CreateBTCDelegation creates a BTC delegation
 // TODO: refactor this handler. It's now too convoluted
 func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCreateBTCDelegation) (*types.MsgCreateBTCDelegationResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyCreateBTCDelegation)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
@@ -382,6 +388,8 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 // AddCovenantSig adds signatures from covenants to a BTC delegation
 // TODO: refactor this handler. Now it's too convoluted
 func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCovenantSigs) (*types.MsgAddCovenantSigsResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyAddCovenantSigs)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
@@ -528,6 +536,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 // this effectively proves that the BTC delegator wants to unbond and Babylon
 // will consider its BTC delegation unbonded
 func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndelegate) (*types.MsgBTCUndelegateResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeyBTCUndelegate)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	// basic stateless checks
 	if err := req.ValidateBasic(); err != nil {
@@ -598,6 +608,8 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 // SelectiveSlashingEvidence handles the evidence that a finality provider has
 // selectively slashed a BTC delegation
 func (ms msgServer) SelectiveSlashingEvidence(goCtx context.Context, req *types.MsgSelectiveSlashingEvidence) (*types.MsgSelectiveSlashingEvidenceResponse, error) {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, time.Now(), types.MetricsKeySelectiveSlashingEvidence)
+
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	bsParams := ms.GetParams(ctx)
 
