@@ -21,12 +21,19 @@ litepaper](https://badgen.net/badge/icon/BTC%20staking%20litepaper?label=)](http
 [![BTC timestamping
 whitepaper](https://badgen.net/badge/icon/BTC%20timestamping%20whitepaper?label=)](https://arxiv.org/abs/2207.08392)
 
+## System requirements
+
+This system spec has been tested by validators and found to be comfortable:
+
+- Quad Core or larger AMD or Intel (amd64) CPU
+- 32GB RAM
+- 1TB NVMe Storage
+- 100MBps bidirectional internet connection
+
+You can run Babylon on lower-spec hardware for each component, but you may find
+that it is not highly performant or prone to crashing.
+
 ## Build and install
-
-This repository contains the Golang implementation of the Babylon node. It is
-based on the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk).
-
-### Requirements
 
 To build and install, you need to have Go 1.21 available. Follow the
 instructions on the [Golang page](https://go.dev/doc/install) to do that.
