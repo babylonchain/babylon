@@ -30,7 +30,8 @@ This system spec has been tested by validators and found to be comfortable:
 - 1TB NVMe Storage
 - 100MBps bidirectional internet connection
 
-You can run Babylon on lower-spec hardware for each component, but you may find that it is not highly performant or prone to crashing.
+You can run Babylon on lower-spec hardware for each component, but you may find
+that it is not highly performant or prone to crashing.
 
 ## Build and install
 
