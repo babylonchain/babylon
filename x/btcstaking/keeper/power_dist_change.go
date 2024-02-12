@@ -103,15 +103,16 @@ func (k Keeper) setFinalityProviderEvent(ctx context.Context, fpBTCPK []byte) {
 
 // removeFinalityProviderEvents removes all finality provider events
 // This is called after processing all finality provider events in `BeginBlocker`
+// nolint:unused
 func (k Keeper) removeFinalityProviderEvents(ctx context.Context) {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	storeAdapter.Delete(types.FinalityProviderEventKey)
 }
 
-// iterateFinalityProviderEvents uses the given handler function to handle
+// IterateFinalityProviderEvents uses the given handler function to handle
 // all finality provider events
 // This is called in `BeginBlocker`
-func (k Keeper) iterateFinalityProviderEvents(
+func (k Keeper) IterateFinalityProviderEvents(
 	ctx context.Context,
 	handleFunc func(fpBTCPK []byte) bool,
 ) {
@@ -153,16 +154,17 @@ func (k Keeper) setBTCDelegationEvent(
 // removeBTCDelegationEvents removes all BTC delegation state update events
 // at a given BTC height
 // This is called after processing all BTC delegation events in `BeginBlocker`
+// nolint:unused
 func (k Keeper) removeBTCDelegationEvents(ctx context.Context, btcHeight uint64) {
 	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
 	store := prefix.NewStore(storeAdapter, types.BTCDelegationEventKey)
 	store.Delete(sdk.Uint64ToBigEndian(btcHeight))
 }
 
-// iterateBTCDelegationEvents uses the given handler function to handle each
+// IterateBTCDelegationEvents uses the given handler function to handle each
 // BTC delegation state update that happens at the given BTC height
 // This is called in `BeginBlocker`
-func (k Keeper) iterateBTCDelegationEvents(
+func (k Keeper) IterateBTCDelegationEvents(
 	ctx context.Context,
 	btcHeight uint64,
 	handleFunc func(stakingTxHash *chainhash.Hash, newState *types.BTCDelegationStatus) bool,
