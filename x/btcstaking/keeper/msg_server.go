@@ -546,16 +546,19 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	ms.setBTCDelegation(ctx, btcDel)
 
-	// record event that the BTC delegation becomes active at this height
-	ms.setBTCDelegationEvent(ctx, btcTipHeight, stakingTxHash, types.BTCDelegationStatus_ACTIVE)
-
-	// notify subscriber
-	event := &types.EventBTCDelegationStateUpdate{
-		StakingTxHash: req.StakingTxHash,
-		NewState:      types.BTCDelegationStatus_ACTIVE,
-	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+	// If reaching the covenant quorum after this msg, the BTC delegation becomes
+	// active. Then, record and emit this event
+	if len(btcDel.CovenantSigs) == int(params.CovenantQuorum) {
+		// record event that the BTC delegation becomes active at this height
+		ms.setBTCDelegationEvent(ctx, btcTipHeight, stakingTxHash, types.BTCDelegationStatus_ACTIVE)
+		// notify subscriber
+		event := &types.EventBTCDelegationStateUpdate{
+			StakingTxHash: req.StakingTxHash,
+			NewState:      types.BTCDelegationStatus_ACTIVE,
+		}
+		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
+			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
+		}
 	}
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
