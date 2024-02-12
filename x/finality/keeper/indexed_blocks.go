@@ -19,6 +19,9 @@ func (k Keeper) IndexBlock(ctx context.Context) {
 		Finalized: false,
 	}
 	k.SetBlock(ctx, ib)
+
+	// record the block height
+	types.RecordLastHeight(uint64(headerInfo.Height))
 }
 
 func (k Keeper) SetBlock(ctx context.Context, block *types.IndexedBlock) {
