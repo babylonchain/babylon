@@ -77,6 +77,29 @@ func (k Keeper) IterateBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340Pu
 	}
 }
 
+func (k Keeper) IterateBTCDelegationsHashes(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, handler func(hash *chainhash.Hash) bool) {
+	btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
+	defer btcDelIter.Close()
+	for ; btcDelIter.Valid(); btcDelIter.Next() {
+		// unmarshal delegator's delegation index
+		var btcDelIndex types.BTCDelegatorDelegationIndex
+		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
+		// retrieve and process each of the BTC delegation
+		for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
+			stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
+			if err != nil {
+				panic(err) // only programming error is possible
+			}
+
+			shouldContinue := handler(stakingTxHash)
+
+			if !shouldContinue {
+				return
+			}
+		}
+	}
+}
+
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given finality provider
 func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
 	fpBTCPKBytes := fpBTCPK.MustMarshal()

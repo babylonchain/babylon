@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/runtime"
 
 	"cosmossdk.io/store/prefix"
@@ -40,6 +41,25 @@ func (k Keeper) IterateBTCDels(ctx context.Context, handler func(delegation *typ
 		var deld types.BTCDelegation
 		k.cdc.MustUnmarshal(deldIter.Value(), &deld)
 		shouldContinue := handler(&deld)
+		if !shouldContinue {
+			return
+		}
+	}
+}
+
+func (k Keeper) IterateBTCDelsKeys(ctx context.Context, handler func(key *chainhash.Hash, delegation *types.BTCDelegation) bool) {
+	deldIter := k.btcDelegationStore(ctx).Iterator(nil, nil)
+	defer deldIter.Close()
+
+	for ; deldIter.Valid(); deldIter.Next() {
+		var deld types.BTCDelegation
+		k.cdc.MustUnmarshal(deldIter.Value(), &deld)
+		hash, err := chainhash.NewHash(deldIter.Key())
+		if err != nil {
+			panic(err)
+		}
+
+		shouldContinue := handler(hash, &deld)
 		if !shouldContinue {
 			return
 		}

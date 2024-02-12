@@ -16,7 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 )
 
-func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
+func BenchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 
 	// helper
