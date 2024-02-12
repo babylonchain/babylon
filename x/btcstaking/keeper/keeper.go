@@ -13,6 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	SatoshisPerBTC = 100_000_000
+)
+
 type (
 	Keeper struct {
 		cdc          codec.BinaryCodec
@@ -63,14 +67,26 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
 
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
+	params := k.GetParams(ctx)
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
 	if err != nil {
 		panic(err) // only possible upon programming error
 	}
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	// prepare for recording finality providers and their BTC delegations
+	// prepare metrics for {active, inactive} finality providers,
+	// {pending, active, unbonded BTC delegations}, and total staked Bitcoins
+	// NOTE: slashed finality providers and BTC delegations are recorded upon
+	// slashing events rather than here
+	var (
+		numFPs        int    = 0
+		numStakedSats uint64 = 0
+		numDelsMap           = map[types.BTCDelegationStatus]int{
+			types.BTCDelegationStatus_PENDING:  0,
+			types.BTCDelegationStatus_ACTIVE:   0,
+			types.BTCDelegationStatus_UNBONDED: 0,
+		}
+	)
 	// for voting power and rewards
 	dc := types.NewVotingPowerDistCache()
 
@@ -84,8 +100,13 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			// iterate over all BTC delegations under the finality provider
 			// in order to accumulate voting power dist info for it
 			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
-				// accumulate voting power and voting power distribution cache
-				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
+				// accumulate voting power and reward distribution cache
+				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, params.CovenantQuorum)
+
+				// record metrics
+				numStakedSats += btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
+				numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
+
 				return true
 			})
 
@@ -96,6 +117,16 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 			return true
 		},
 	)
+	// record metrics for finality providers and total staked BTCs
+	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
+	types.RecordActiveFinalityProviders(numActiveFPs)
+	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
+	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
+	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
+	// record metrics for BTC delegations
+	for status, num := range numDelsMap {
+		types.RecordBTCDelegations(num, status)
+	}
 
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
 	maxNumActiveFPs := k.GetParams(ctx).MaxActiveFinalityProviders

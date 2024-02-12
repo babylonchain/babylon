@@ -53,6 +53,10 @@ func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
+func (h *Helper) Error(err error) {
+	require.Error(h.t, err)
+}
+
 func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
 	return h.GenAndApplyCustomParams(r, 100, 0)
 }
