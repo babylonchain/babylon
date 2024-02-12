@@ -14,6 +14,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
+const (
+	SatoshisPerBTC = 100_000_000
+)
+
 type (
 	Keeper struct {
 		cdc          codec.BinaryCodec
@@ -63,7 +67,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 func (k Keeper) BeginBlocker(ctx context.Context) error {
 	k.IndexBTCHeight(ctx)
 
-	covenantQuorum := k.GetParams(ctx).CovenantQuorum
+	params := k.GetParams(ctx)
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
 	if err != nil {
 		panic(err) // only possible upon programming error
@@ -72,11 +76,18 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	distInfos := make(map[chainhash.Hash]*types.BTCDelDistInfo)
 
+	var numDelsMap = map[types.BTCDelegationStatus]int{
+		types.BTCDelegationStatus_PENDING:  0,
+		types.BTCDelegationStatus_ACTIVE:   0,
+		types.BTCDelegationStatus_UNBONDED: 0,
+	}
 	k.IterateBTCDelsKeys(ctx, func(key chainhash.Hash, btcDel *types.BTCDelegation) bool {
 		distInfo := &types.BTCDelDistInfo{
 			BabylonPk:   btcDel.BabylonPk,
-			VotingPower: btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum),
+			VotingPower: btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum),
 		}
+		numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
+
 		if distInfo.VotingPower > 0 {
 			distInfos[key] = distInfo
 		}
@@ -84,8 +95,18 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	})
 
 	activeFps := []*types.FinalityProviderWithMeta{}
+	// prepare for recording finality providers and their BTC delegations
+	// for rewards
+	dc := types.NewRewardDistCache()
 
-	rdc := types.NewRewardDistCache()
+	// prepare metrics for {active, inactive} finality providers,
+	// {pending, active, unbonded BTC delegations}, and total staked Bitcoins
+	// NOTE: slashed finality providers and BTC delegations are recorded upon
+	// slashing events rather than here
+	var (
+		numFPs        int    = 0
+		numStakedSats uint64 = 0
+	)
 
 	k.IterateActiveFPs(
 		ctx,
@@ -99,6 +120,8 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 					return true
 				}
 
+				numStakedSats += distInfo.VotingPower
+
 				fpDistInfo.AddBTCDistInfo(distInfo)
 				return true
 			})
@@ -109,15 +132,25 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 					VotingPower: fpDistInfo.TotalVotingPower,
 				}
 				activeFps = append(activeFps, activeFP)
-				rdc.AddFinalityProviderDistInfo(fpDistInfo)
+				dc.AddFinalityProviderDistInfo(fpDistInfo)
 			}
 
 			return true
 		},
 	)
+	// record metrics for finality providers and total staked BTCs
+	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
+	types.RecordActiveFinalityProviders(numActiveFPs)
+	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
+	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
+	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
+	// record metrics for BTC delegations
+	for status, num := range numDelsMap {
+		types.RecordBTCDelegations(num, status)
+	}
 
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
-	activeFps = types.FilterTopNFinalityProviders(activeFps, k.GetParams(ctx).MaxActiveFinalityProviders)
+	activeFps = types.FilterTopNFinalityProviders(activeFps, params.MaxActiveFinalityProviders)
 	// set voting power table
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	for _, fp := range activeFps {
@@ -126,7 +159,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	// set the reward distribution cache of the current height
 	// TODO: only give rewards to top N finality providers and their BTC delegations
-	k.setRewardDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), rdc)
+	k.setRewardDistCache(ctx, babylonTipHeight, dc)
 
 	return nil
 }
