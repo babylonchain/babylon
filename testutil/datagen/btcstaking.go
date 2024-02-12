@@ -2,6 +2,7 @@ package datagen
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"testing"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/btcsuite/btcd/txscript"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -250,6 +252,92 @@ type TestUnbondingSlashingInfo struct {
 	UnbondingTx   *wire.MsgTx
 	SlashingTx    *bstypes.BTCSlashingTx
 	UnbondingInfo *btcstaking.UnbondingInfo
+}
+
+func GenFakeRandomBTCDelegation(
+	r *rand.Rand,
+	t *testing.B,
+	covQuorum int,
+	finalityProviderPk *btcec.PublicKey,
+) *bstypes.BTCDelegation {
+	delSK, _, err := GenRandomBTCKeyPair(r)
+	require.NoError(t, err)
+
+	delPK := delSK.PubKey()
+	delBTCPK := bbn.NewBIP340PubKeyFromBTCPK(delPK)
+	// list of covenant PKs
+	covenantBTCPKs := []*btcec.PublicKey{}
+
+	for i := 0; i < covQuorum; i++ {
+		covenantSK, _, _ := GenRandomBTCKeyPair(r)
+		covenantBTCPKs = append(covenantBTCPKs, covenantSK.PubKey())
+	}
+	// BTC delegation Babylon key pairs
+	bbnSK, bbnPK, err := GenRandomSecp256k1KeyPair(r)
+	require.NoError(t, err)
+	secp256k1PK, ok := bbnPK.(*secp256k1.PubKey)
+	require.True(t, ok)
+	// pop
+	pop, err := bstypes.NewPoP(bbnSK, delSK)
+	require.NoError(t, err)
+	stakingValue := r.Int31n(200000) + 10000
+
+	fakeSchnorSig, err := bbn.NewBIP340Signature(GenRandomByteArray(r, 64))
+	require.NoError(t, err)
+
+	fakeBtcTx := wire.NewMsgTx(2)
+	randomHash, err := chainhash.NewHash(GenRandomByteArray(r, 32))
+	require.NoError(t, err)
+	fakeBtcTx.AddTxIn(wire.NewTxIn(wire.NewOutPoint(randomHash, 0), nil, nil))
+	fakeBtcTx.AddTxOut(wire.NewTxOut(10000, GenRandomByteArray(r, 32)))
+	fakeBtcTx.AddTxOut(wire.NewTxOut(10000, GenRandomByteArray(r, 32)))
+	serializedTx, err := bbn.SerializeBTCTx(fakeBtcTx)
+	require.NoError(t, err)
+	slashingTx, err := bstypes.NewBTCSlashingTxFromMsgTx(fakeBtcTx)
+	require.NoError(t, err)
+
+	var adaptorSigs []*bstypes.CovenantAdaptorSignatures
+	var covSig []*bstypes.SignatureInfo
+
+	for _, covPK := range covenantBTCPKs {
+		p := covPK
+		sigs := bstypes.CovenantAdaptorSignatures{
+			CovPk:       bbn.NewBIP340PubKeyFromBTCPK(p),
+			AdaptorSigs: [][]byte{GenRandomByteArray(r, 70)},
+		}
+		adaptorSigs = append(adaptorSigs, &sigs)
+		covSig = append(covSig, &bstypes.SignatureInfo{
+			Pk:  bbn.NewBIP340PubKeyFromBTCPK(p),
+			Sig: fakeSchnorSig,
+		})
+	}
+
+	del := &bstypes.BTCDelegation{
+		BabylonPk: secp256k1PK,
+		BtcPk:     delBTCPK,
+		Pop:       pop,
+		FpBtcPkList: []bbn.BIP340PubKey{
+			*bbn.NewBIP340PubKeyFromBTCPK(finalityProviderPk),
+		},
+		StartHeight:      0,
+		EndHeight:        0 + math.MaxUint16,
+		TotalSat:         uint64(stakingValue),
+		StakingOutputIdx: StakingOutIdx,
+		DelegatorSig:     fakeSchnorSig,
+		CovenantSigs:     adaptorSigs,
+		UnbondingTime:    math.MaxUint16,
+		StakingTx:        serializedTx,
+		SlashingTx:       slashingTx,
+		BtcUndelegation: &bstypes.BTCUndelegation{
+			UnbondingTx:              serializedTx,
+			SlashingTx:               slashingTx,
+			DelegatorSlashingSig:     fakeSchnorSig,
+			CovenantSlashingSigs:     adaptorSigs,
+			CovenantUnbondingSigList: covSig,
+		},
+	}
+
+	return del
 }
 
 func GenBTCStakingSlashingInfoWithOutPoint(

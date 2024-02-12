@@ -31,10 +31,11 @@ type Helper struct {
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
 	MsgServer            types.MsgServer
 	Net                  *chaincfg.Params
+	SaveDb               func()
 }
 
 func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKeeper *types.MockBtcCheckpointKeeper) *Helper {
-	k, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+	k, ctx, save := keepertest.BTCStakingKeeperDb(t, btclcKeeper, btccKeeper)
 	ctx = ctx.WithHeaderInfo(header.Info{Height: 1})
 	msgSrvr := keeper.NewMsgServerImpl(*k)
 
@@ -46,6 +47,7 @@ func NewHelper(t testing.TB, btclcKeeper *types.MockBTCLightClientKeeper, btccKe
 		BTCCheckpointKeeper:  btccKeeper,
 		MsgServer:            msgSrvr,
 		Net:                  &chaincfg.SimNetParams,
+		SaveDb:               save,
 	}
 }
 

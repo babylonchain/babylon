@@ -60,7 +60,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // to 1) record the voting power table for the current height, and 2) record
 // the reward distribution cache used for distributing rewards once the block
 // is finalised by finality providers.
-func (k Keeper) BeginBlockeralt(ctx context.Context) error {
+func (k Keeper) BeginBlockerOld(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
 
@@ -180,6 +180,8 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 
 	var provSlice []*types.FinalityProviderDistInfo
 
+	rdc := types.NewRewardDistCache()
+
 	for _, fpData := range finalityProviders {
 		fpCopy := fpData
 
@@ -190,7 +192,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 		if fpCopy.distInfo.TotalVotingPower == 0 {
 			continue
 		}
-
 		provSlice = append(provSlice, fpCopy.distInfo)
 	}
 
@@ -209,7 +210,6 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	})
 
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	rdc := types.NewRewardDistCache()
 
 	for i := 0; i < activeValidators; i++ {
 		k.SetVotingPower(ctx, provSlice[i].BtcPk.MustMarshal(), babylonTipHeight, provSlice[i].TotalVotingPower)

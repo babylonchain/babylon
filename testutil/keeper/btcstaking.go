@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"os"
 	"testing"
 
 	"cosmossdk.io/core/header"
@@ -56,4 +57,49 @@ func BTCStakingKeeper(
 	}
 
 	return &k, ctx
+}
+
+func BTCStakingKeeperDb(
+	t testing.TB,
+	btclcKeeper types.BTCLightClientKeeper,
+	btccKeeper types.BtcCheckpointKeeper,
+) (*keeper.Keeper, sdk.Context, func()) {
+	storeKey := storetypes.NewKVStoreKey(types.StoreKey)
+
+	tempDir, err := os.MkdirTemp("", "ztest-staking-db-*")
+	require.NoError(t, err)
+	db, err := dbm.NewGoLevelDB("test-staking-db", tempDir, nil)
+	require.NoError(t, err)
+
+	// register clean up function
+	t.Cleanup(func() {
+		db.Close()
+		os.RemoveAll(tempDir)
+	})
+
+	stateStore := store.NewCommitMultiStore(db, log.NewTestLogger(t), storemetrics.NewNoOpMetrics())
+	stateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, db)
+	require.NoError(t, stateStore.LoadLatestVersion())
+
+	registry := codectypes.NewInterfaceRegistry()
+	cdc := codec.NewProtoCodec(registry)
+
+	k := keeper.NewKeeper(
+		cdc,
+		runtime.NewKVStoreService(storeKey),
+		btclcKeeper,
+		btccKeeper,
+		&chaincfg.SimNetParams,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
+	ctx := sdk.NewContext(stateStore, cmtproto.Header{}, false, log.NewNopLogger())
+	ctx = ctx.WithHeaderInfo(header.Info{})
+
+	// Initialize params
+	if err := k.SetParams(ctx, types.DefaultParams()); err != nil {
+		panic(err)
+	}
+
+	return &k, ctx, func() { stateStore.Commit() }
 }
