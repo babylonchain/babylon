@@ -11,53 +11,6 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-/* finality provider slash events storage */
-
-// setFinalityProviderEvent sets adds a given slashed finality provider's
-// BTC PK to finality provider events storage
-func (k Keeper) setFinalityProviderEvent(ctx context.Context, fpBTCPK []byte) {
-	store := k.finalityProviderEventStore(ctx)
-	// NOTE: value is currently never used so doesn't matter
-	store.Set(fpBTCPK, []byte("slashed"))
-}
-
-// removeFinalityProviderEvents removes all finality provider events
-// This is called after processing all finality provider events in `BeginBlocker`
-func (k Keeper) removeFinalityProviderEvents(ctx context.Context) {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	storeAdapter.Delete(types.FinalityProviderEventKey)
-}
-
-// iterateFinalityProviderEvents uses the given handler function to handle
-// all finality provider events
-// This is called in `BeginBlocker`
-func (k Keeper) iterateFinalityProviderEvents(
-	ctx context.Context,
-	handleFunc func(fpBTCPK []byte) bool,
-) {
-	store := k.finalityProviderEventStore(ctx)
-	iter := store.Iterator(nil, nil)
-	defer iter.Close()
-	for ; iter.Valid(); iter.Next() {
-		fpBTCPK := iter.Key()
-		shouldContinue := handleFunc(fpBTCPK)
-		if !shouldContinue {
-			break
-		}
-	}
-}
-
-// finalityProviderEventStore returns the KVStore of the finality provider events
-// key: FinalityProviderEventKey
-// value: finality provider's BTC PK
-// value: event (current it can only be slashed)
-func (k Keeper) finalityProviderEventStore(ctx context.Context) prefix.Store {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	return prefix.NewStore(storeAdapter, types.FinalityProviderEventKey)
-}
-
-/* finality provider storage */
-
 // SetFinalityProvider adds the given finality provider to KVStore
 func (k Keeper) SetFinalityProvider(ctx context.Context, fp *types.FinalityProvider) {
 	store := k.finalityProviderStore(ctx)
@@ -106,7 +59,8 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	fp.SlashedBtcHeight = btcTip.Height
 	k.SetFinalityProvider(ctx, fp)
 
-	// record slashed event
+	// record slashed event. The next `BeginBlock` will consume this
+	// event for updating the finality provider set
 	k.setFinalityProviderEvent(ctx, fpBTCPK)
 
 	return nil
