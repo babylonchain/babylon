@@ -61,7 +61,13 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 
 	// record slashed event. The next `BeginBlock` will consume this
 	// event for updating the finality provider set
-	k.setFinalityProviderEvent(ctx, fpBTCPK)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, &types.EventPowerDistUpdate{
+		Ev: &types.EventPowerDistUpdate_SlashedFp{
+			SlashedFp: &types.EventPowerDistUpdate_EventSlashedFinalityProvider{
+				Pk: fp.BtcPk,
+			},
+		},
+	})
 
 	return nil
 }

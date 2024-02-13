@@ -7,7 +7,6 @@ import (
 	"github.com/babylonchain/babylon/testutil/datagen"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -39,8 +38,11 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 		h.NoError(err)
 
 		// at this point, there should be only 1 event that the finality provider is slashed
-		h.BTCStakingKeeper.IterateFinalityProviderEvents(h.Ctx, func(fpBTCPK []byte) bool {
-			require.Equal(t, fp.BtcPk.MustMarshal(), fpBTCPK)
+		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
+		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
+			slashedFPEvent := ev.GetSlashedFp()
+			require.NotNil(t, slashedFPEvent)
+			require.Equal(t, fp.BtcPk.MustMarshal(), slashedFPEvent.Pk.MustMarshal())
 			return true
 		})
 	})
@@ -86,18 +88,32 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		*/
 		// the BTC delegation is now pending
 		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IterateBTCDelegationEvents(h.Ctx, btcTipHeight, func(stakingTxHash *chainhash.Hash, newState *types.BTCDelegationStatus) bool {
-			require.Equal(t, expectedStakingTxHash, stakingTxHash.String())
-			require.Equal(t, types.BTCDelegationStatus_PENDING, *newState)
+		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
+			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
+			require.NotNil(t, btcDelStateUpdate)
+			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+			require.Equal(t, types.BTCDelegationStatus_PENDING, btcDelStateUpdate.NewState)
 			return true
 		})
-		// the BTC delegation will be unbonded at end height -w
+		// the BTC delegation will be unbonded at end height - w
 		unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
-		h.BTCStakingKeeper.IterateBTCDelegationEvents(h.Ctx, unbondedHeight, func(stakingTxHash *chainhash.Hash, newState *types.BTCDelegationStatus) bool {
-			require.Equal(t, expectedStakingTxHash, stakingTxHash.String())
-			require.Equal(t, types.BTCDelegationStatus_UNBONDED, *newState)
+		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, unbondedHeight, func(ev *types.EventPowerDistUpdate) bool {
+			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
+			require.NotNil(t, btcDelStateUpdate)
+			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+			require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
 			return true
 		})
+
+		// clear the events at tip, as per the behaviour of each `BeginBlock`
+		h.BTCStakingKeeper.ClearPowerDistUpdateEvents(h.Ctx, btcTipHeight)
+		// ensure event queue is cleared at BTC tip height
+		empty := true
+		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
+			empty = false
+			return true
+		})
+		require.True(t, empty)
 
 		// generate a quorum number of covenant signatures
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
@@ -111,9 +127,11 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 			active at the current height
 		*/
 		btcTipHeight = btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IterateBTCDelegationEvents(h.Ctx, btcTipHeight, func(stakingTxHash *chainhash.Hash, newState *types.BTCDelegationStatus) bool {
-			require.Equal(t, expectedStakingTxHash, stakingTxHash.String())
-			require.Equal(t, types.BTCDelegationStatus_ACTIVE, *newState)
+		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
+			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
+			require.NotNil(t, btcDelStateUpdate)
+			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+			require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
 			return true
 		})
 	})

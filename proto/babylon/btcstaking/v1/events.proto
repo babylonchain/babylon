@@ -1,6 +1,7 @@
 syntax = "proto3";
 package babylon.btcstaking.v1;
 
+import "gogoproto/gogo.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
@@ -27,4 +28,23 @@ message EventBTCDelegationStateUpdate {
 message EventSelectiveSlashing {
   // evidence is the evidence of selective slashing
   SelectiveSlashingEvidence evidence = 1;
+}
+
+// EventPowerDistUpdate is an event that affects voting power distirbution
+// of BTC staking protocol
+message EventPowerDistUpdate {
+  // EventSlashedFinalityProvider defines an event that a finality provider
+  // is slashed
+  // TODO: unify with existing slashing events
+  message EventSlashedFinalityProvider {
+    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  }
+
+  // ev is the event that affects voting power distribution
+  oneof ev {
+    // slashed_fp means a finality provider is slashed
+    EventSlashedFinalityProvider slashed_fp = 1;
+    // btc_del_state_update means a BTC delegation's state is updated
+    EventBTCDelegationStateUpdate btc_del_state_update = 2;
+  }
 }
