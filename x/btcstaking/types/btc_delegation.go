@@ -16,6 +16,21 @@ import (
 	"github.com/btcsuite/btcd/wire"
 )
 
+func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
+	switch statusStr {
+	case "pending":
+		return BTCDelegationStatus_PENDING, nil
+	case "active":
+		return BTCDelegationStatus_ACTIVE, nil
+	case "unbonded":
+		return BTCDelegationStatus_UNBONDED, nil
+	case "any":
+		return BTCDelegationStatus_ANY, nil
+	default:
+		return -1, fmt.Errorf("invalid status string; should be one of {pending, active, unbonding, unbonded, any}")
+	}
+}
+
 func (d *BTCDelegation) GetStakingTime() uint16 {
 	diff := d.EndHeight - d.StartHeight
 

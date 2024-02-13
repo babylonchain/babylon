@@ -8,7 +8,6 @@ import (
 	asig "github.com/babylonchain/babylon/crypto/schnorr-adaptor-signature"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func (fp *FinalityProvider) IsSlashed() bool {
@@ -127,36 +126,4 @@ func MinimumUnbondingTime(
 		uint64(stakingParams.MinUnbondingTime),
 		checkpointingParams.CheckpointFinalizationTimeout,
 	)
-}
-
-func (state *BTCDelegationStatus) ToBytes() []byte {
-	return sdk.Uint64ToBigEndian(uint64(*state))
-}
-
-func NewBTCDelegationStatus(stateBytes []byte) (BTCDelegationStatus, error) {
-	if len(stateBytes) != 8 {
-		return -1, fmt.Errorf("malformed bytes for BTC delegation status")
-	}
-	stateInt := int32(sdk.BigEndianToUint64(stateBytes))
-	switch stateInt {
-	case 0, 1, 2, 3:
-		return BTCDelegationStatus(stateInt), nil
-	default:
-		return -1, fmt.Errorf("invalid BTC delegation status bytes; should be one of {0, 1, 2, 3}")
-	}
-}
-
-func NewBTCDelegationStatusFromString(statusStr string) (BTCDelegationStatus, error) {
-	switch statusStr {
-	case "pending":
-		return BTCDelegationStatus_PENDING, nil
-	case "active":
-		return BTCDelegationStatus_ACTIVE, nil
-	case "unbonded":
-		return BTCDelegationStatus_UNBONDED, nil
-	case "any":
-		return BTCDelegationStatus_ANY, nil
-	default:
-		return -1, fmt.Errorf("invalid status string; should be one of {pending, active, unbonding, unbonded, any}")
-	}
 }

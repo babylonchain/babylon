@@ -13,7 +13,6 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/btcec/v2"
 	"github.com/btcsuite/btcd/btcutil"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -414,13 +413,9 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	params := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
-	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
-	}
-	btcDel := ms.getBTCDelegation(ctx, *stakingTxHash)
-	if btcDel == nil {
-		return nil, types.ErrBTCDelegationNotFound
 	}
 
 	// ensure that the given covenant PK is in the parameter
@@ -586,13 +581,9 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	bsParams := ms.GetParams(ctx)
 
 	// ensure BTC delegation exists
-	stakingTxHash, err := chainhash.NewHashFromStr(req.StakingTxHash)
+	btcDel, err := ms.GetBTCDelegation(ctx, req.StakingTxHash)
 	if err != nil {
 		return nil, err
-	}
-	btcDel := ms.getBTCDelegation(ctx, *stakingTxHash)
-	if btcDel == nil {
-		return nil, types.ErrBTCDelegationNotFound
 	}
 
 	// ensure the BTC delegation with the given staking tx hash is active

@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/runtime"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetFinalityProvider adds the given finality provider to KVStore
@@ -61,13 +60,8 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 
 	// record slashed event. The next `BeginBlock` will consume this
 	// event for updating the finality provider set
-	k.addPowerDistUpdateEvent(ctx, btcTip.Height, &types.EventPowerDistUpdate{
-		Ev: &types.EventPowerDistUpdate_SlashedFp{
-			SlashedFp: &types.EventPowerDistUpdate_EventSlashedFinalityProvider{
-				Pk: fp.BtcPk,
-			},
-		},
-	})
+	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
 
 	return nil
 }
