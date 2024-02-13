@@ -108,12 +108,12 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		// clear the events at tip, as per the behaviour of each `BeginBlock`
 		h.BTCStakingKeeper.ClearPowerDistUpdateEvents(h.Ctx, btcTipHeight)
 		// ensure event queue is cleared at BTC tip height
-		empty := true
+		numEvents := 0
 		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			empty = false
+			numEvents++
 			return true
 		})
-		require.True(t, empty)
+		require.Zero(t, numEvents)
 
 		// generate a quorum number of covenant signatures
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)

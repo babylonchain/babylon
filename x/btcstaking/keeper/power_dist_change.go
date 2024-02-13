@@ -119,9 +119,24 @@ func (k Keeper) addPowerDistUpdateEvent(
 // This is called after processing all BTC delegation events in `BeginBlocker`
 // nolint:unused
 func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint64) {
-	storeAdapter := runtime.KVStoreAdapter(k.storeService.OpenKVStore(ctx))
-	store := prefix.NewStore(storeAdapter, types.PowerDistUpdateKey)
-	store.Delete(sdk.Uint64ToBigEndian(btcHeight))
+	store := k.powerDistUpdateEventStore(ctx, btcHeight)
+	keys := [][]byte{}
+
+	// get all keys
+	// using an enclosure to ensure iterator is closed right after
+	// the function is done
+	func() {
+		iter := store.Iterator(nil, nil)
+		defer iter.Close()
+		for ; iter.Valid(); iter.Next() {
+			keys = append(keys, iter.Key())
+		}
+	}()
+
+	// remove all keys
+	for _, key := range keys {
+		store.Delete(key)
+	}
 }
 
 // IteratePowerDistUpdateEvents uses the given handler function to handle each
