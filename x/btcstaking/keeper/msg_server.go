@@ -389,7 +389,7 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	// record event that the BTC delegation becomes pending at this height
 	pendingEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
 	ms.addPowerDistUpdateEvent(ctx, btcTip.Height, pendingEvent)
-	// record event that the BTC delegation will become unbonded at endHeight-wValue
+	// record event that the BTC delegation will become unbonded at endHeight-w
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),
 		NewState:      types.BTCDelegationStatus_UNBONDED,

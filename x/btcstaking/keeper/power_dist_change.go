@@ -76,8 +76,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	}
 
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
-	maxNumActiveFPs := k.GetParams(ctx).MaxActiveFinalityProviders
-	activeFps := types.FilterTopNFinalityProviders(dc.FinalityProviders, maxNumActiveFPs)
+	activeFps := types.FilterTopNFinalityProviders(dc.FinalityProviders, params.MaxActiveFinalityProviders)
 	// set voting power table and re-calculate total voting power of top N finality providers
 	dc.TotalVotingPower = uint64(0)
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
