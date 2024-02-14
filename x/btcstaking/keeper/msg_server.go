@@ -6,7 +6,6 @@ import (
 	"time"
 
 	errorsmod "cosmossdk.io/errors"
-
 	sdkmath "cosmossdk.io/math"
 	"github.com/babylonchain/babylon/btcstaking"
 	bbn "github.com/babylonchain/babylon/types"
@@ -65,11 +64,12 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 		return nil, status.Errorf(codes.InvalidArgument, "invalid proof of possession: %v", err)
 	}
 
-	// ensure commission rate is at least the minimum commission rate in parameters
+	// ensure commission rate is
+	// - at least the minimum commission rate in parameters, and
+	// - at most 1
 	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
 		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
 	}
-
 	if req.Commission.GT(sdkmath.LegacyOneDec()) {
 		return nil, types.ErrCommissionGTMaxRate
 	}
@@ -95,6 +95,44 @@ func (ms msgServer) CreateFinalityProvider(goCtx context.Context, req *types.Msg
 	}
 
 	return &types.MsgCreateFinalityProviderResponse{}, nil
+}
+
+// EditFinalityProvider edits an existing finality provider
+func (ms msgServer) EditFinalityProvider(ctx context.Context, req *types.MsgEditFinalityProvider) (*types.MsgEditFinalityProviderResponse, error) {
+	// basic stateless checks
+	// NOTE: after this, description is guaranteed to be valid
+	if err := req.ValidateBasic(); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	// ensure commission rate is
+	// - at least the minimum commission rate in parameters, and
+	// - at most 1
+	if req.Commission.LT(ms.MinCommissionRate(ctx)) {
+		return nil, types.ErrCommissionLTMinRate.Wrapf("cannot set finality provider commission to less than minimum rate of %s", ms.MinCommissionRate(ctx))
+	}
+	if req.Commission.GT(sdkmath.LegacyOneDec()) {
+		return nil, types.ErrCommissionGTMaxRate
+	}
+
+	// find the finality provider with the given BTC PK
+	fp, err := ms.GetFinalityProvider(ctx, req.BtcPk)
+	if err != nil {
+		return nil, err
+	}
+
+	// ensure the signer corresponds to the finality provider's Babylon address
+	fpBabylonAddr := sdk.AccAddress(fp.BabylonPk.Address())
+	if req.Signer != fpBabylonAddr.String() {
+		return nil, status.Errorf(codes.PermissionDenied, "the signer does not correspond to the finality provider's Babylon address")
+	}
+
+	// all good, update the finality provider and set back
+	fp.Description = req.Description
+	fp.Commission = req.Commission
+	ms.SetFinalityProvider(ctx, fp)
+
+	return &types.MsgEditFinalityProviderResponse{}, nil
 }
 
 // CreateBTCDelegation creates a BTC delegation
