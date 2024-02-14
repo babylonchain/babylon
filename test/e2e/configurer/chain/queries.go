@@ -332,6 +332,17 @@ func (n *NodeConfig) QueryCurrentEpoch() (uint64, error) {
 	return epochResponse.CurrentEpoch, nil
 }
 
+func (n *NodeConfig) QueryEpochMsgs(epoch uint64) ([]*etypes.QueuedMessage, error) {
+	path := fmt.Sprintf("/babylon/epoching/v1/epochs/%d/messages", epoch)
+	bz, err := n.QueryGRPCGateway(path, url.Values{})
+	require.NoError(n.t, err)
+	var resp etypes.QueryEpochMsgsResponse
+	if err := util.Cdc.UnmarshalJSON(bz, &resp); err != nil {
+		return nil, err
+	}
+	return resp.Msgs, nil
+}
+
 func (n *NodeConfig) QueryLightClientHeightEpochEnd(epoch uint64) (uint64, error) {
 	monitorPath := fmt.Sprintf("/babylon/monitor/v1/epochs/%d", epoch)
 	bz, err := n.QueryGRPCGateway(monitorPath, url.Values{})

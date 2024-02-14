@@ -62,9 +62,24 @@ func (s *BTCTimestampingTestSuite) Test0Delegate() {
 	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
 	s.NoError(err)
 
+	// current epoch
+	epoch, err := nonValidatorNode.QueryCurrentEpoch()
+	s.NoError(err)
+
+	// delegate
 	delAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
-	valAddr := sdk.MustAccAddressFromBech32(validatorNode.PublicAddress)
+	valAddr := sdk.ValAddress(validatorNode.SecretKey.PubKey().Address())
 	nonValidatorNode.Delegate(delAddr.String(), valAddr.String(), "100bbn")
+
+	// ensure the message queue of this epoch has this delegation request
+	epochMsgs, err := nonValidatorNode.QueryEpochMsgs(epoch)
+	s.NoError(err)
+	s.Len(epochMsgs, 1)
+	msgDelegate := epochMsgs[0].GetMsgDelegate()
+	s.NotNil(msgDelegate)
+	s.Equal(delAddr, msgDelegate.DelegatorAddress)
+	s.Equal(valAddr, msgDelegate.ValidatorAddress)
+	s.Equal("100bbn", msgDelegate.Amount.String())
 }
 
 // Most simple test, just checking that two chains are up and connected through

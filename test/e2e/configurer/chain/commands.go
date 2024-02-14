@@ -49,7 +49,7 @@ func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 }
 
 func (n *NodeConfig) Delegate(delAddr string, valAddr string, coins string) {
-	n.LogActionF("delegating %s to validator %s", coins, valAddr)
+	n.LogActionF("delegating %s from %s to validator %s", coins, delAddr, valAddr)
 
 	cmd := []string{"babylond", "tx", "epoching", "delegate", valAddr, coins, fmt.Sprintf("--from=%s", delAddr)}
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	"github.com/babylonchain/babylon/x/epoching/types"
@@ -52,6 +53,7 @@ func (ms msgServer) WrappedDelegate(goCtx context.Context, msg *types.MsgWrapped
 	}
 
 	blockHeight := uint64(ctx.HeaderInfo().Height)
+	ms.Logger(ctx).Info(fmt.Sprintf("DEBUG DELEGATION block height is %d", ctx.HeaderInfo().Height))
 	if blockHeight == 0 {
 		return nil, types.ErrZeroEpochMsg
 	}
