@@ -63,7 +63,7 @@ document about its design and implementation.
 ## Joining the testnet
 
 Please follow the instructions on the [User
-Guides](https://docs.babylonchain.io/docs/user-guides/).
+Guides](https://docs.babylonchain.io/docs/user-guides/overview).
 
 ## Contributing
 
