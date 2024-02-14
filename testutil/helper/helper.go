@@ -94,6 +94,10 @@ func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
 
+func (h *Helper) Error(err error) {
+	require.Error(h.t, err)
+}
+
 func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash checkpointingtypes.BlockHash, valSet *datagen.GenesisValidators) ([]abci.ExtendedVoteInfo, error) {
 	valPrivKey := valSet.GetValPrivKeys()
 	blsPrivKeys := valSet.GetBLSPrivKeys()
