@@ -111,7 +111,7 @@ func FuzzMsgEditFinalityProvider(f *testing.F) {
 		require.Equal(t, newCommission, *editedFp.Commission)
 		require.Equal(t, newDescription, editedFp.Description)
 
-		// scenario 2: unauthorised signer
+		// scenario 2: message from an unauthorised signer should fail
 		newCommission = datagen.GenRandomCommission(r)
 		newDescription = datagen.GenRandomDescription(r)
 		msg = &types.MsgEditFinalityProvider{
