@@ -48,6 +48,16 @@ func (n *NodeConfig) QueryParams(subspace, key string, result any) {
 	require.NoError(n.t, err)
 }
 
+func (n *NodeConfig) Delegate(delAddr string, valAddr string, coins string) {
+	n.LogActionF("delegating %s to validator %s", coins, valAddr)
+
+	cmd := []string{"babylond", "tx", "epoching", "delegate", valAddr, coins, fmt.Sprintf("--from=%s", delAddr)}
+	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
+	require.NoError(n.t, err)
+
+	n.LogActionF("successfully submitted a delegation request")
+}
+
 func (n *NodeConfig) SendIBCTransfer(from, recipient, memo string, token sdk.Coin) {
 	n.LogActionF("IBC sending %s from %s to %s. memo: %s", token.Amount.String(), from, recipient, memo)
 

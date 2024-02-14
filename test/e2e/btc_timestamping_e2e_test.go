@@ -55,6 +55,20 @@ func (s *BTCTimestampingTestSuite) TearDownSuite() {
 
 // Most simple test, just checking that two chains are up and connected through
 // ibc
+func (s *BTCTimestampingTestSuite) Test0Delegate() {
+	chainA := s.configurer.GetChainConfig(0)
+	validatorNode, err := chainA.GetNodeAtIndex(0)
+	s.NoError(err)
+	nonValidatorNode, err := chainA.GetNodeAtIndex(2)
+	s.NoError(err)
+
+	delAddr := sdk.MustAccAddressFromBech32(nonValidatorNode.PublicAddress)
+	valAddr := sdk.MustAccAddressFromBech32(validatorNode.PublicAddress)
+	nonValidatorNode.Delegate(delAddr.String(), valAddr.String(), "100bbn")
+}
+
+// Most simple test, just checking that two chains are up and connected through
+// ibc
 func (s *BTCTimestampingTestSuite) Test1ConnectIbc() {
 	chainA := s.configurer.GetChainConfig(0)
 	chainB := s.configurer.GetChainConfig(1)
