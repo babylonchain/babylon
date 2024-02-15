@@ -62,11 +62,14 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 				epoch.EpochNumber, req.Height)
 		}
 
+		blockHash := ckpttypes.BlockHash(req.Hash)
+		h.ckptKeeper.Logger(ctx).Info("DEBUGGGGGGGG", "BlockHash", blockHash.String())
+
 		// 3. build vote extension
 		ve := &ckpttypes.VoteExtension{
 			Signer:           signer.String(),
 			ValidatorAddress: k.GetValidatorAddress().String(),
-			BlockHash:        req.Hash,
+			BlockHash:        []byte{},
 			EpochNum:         epoch.EpochNumber,
 			Height:           uint64(req.Height),
 			BlsSig:           &blsSig,
