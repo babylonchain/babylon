@@ -1,6 +1,7 @@
 package checkpointing
 
 import (
+	"encoding/hex"
 	"fmt"
 	"slices"
 
@@ -180,15 +181,54 @@ func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.
 	return validBLSSigs
 }
 
-// findLastBlockHash finds the last block hash from the first vote extension
-// this is a workaround that the last block hash can't be obtained from the context
-// this is also safe as the BLS sig is already verified by VerifyVoteExtension
+// findLastBlockHash iterates over all vote extensions and finds the block hash
+// that consensus has agreed upon.
+// We need to iterate over all block hashes to find the one that has achieved consensus
+// as CometBFT does not verify vote extensions once it has achieved >2/3 voting power in a block.
+// Contract: This function should only be called for Vote Extensions
+// that have been included in a previous block.
 func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInfo) ([]byte, error) {
-	var ve ckpttypes.VoteExtension
-	if err := ve.Unmarshal(extendedVotes[0].VoteExtension); err != nil {
+	// Mapping between block hashes and voting power committed to them
+	blockHashes := make(map[string]int64, 0)
+	// Iterate over vote extensions and if they have a valid structure
+	// increase the voting power of the block hash they commit to
+	for _, vote := range extendedVotes {
+		var ve ckpttypes.VoteExtension
+		if err := ve.Unmarshal(vote.VoteExtension); err != nil {
+			continue
+		}
+		// Encode the block hash using hex
+		blockHashes[hex.EncodeToString(ve.BlockHash.MustMarshal())] += vote.Validator.Power
+	}
+	var (
+		maxPower     int64 = 0
+		totalPower   int64 = 0
+		resBlockHash string
+	)
+	// Find the block hash that has the maximum voting power committed to it
+	for blockHash, power := range blockHashes {
+		if power > maxPower {
+			resBlockHash = blockHash
+			maxPower = power
+		}
+		totalPower += power
+	}
+	if len(resBlockHash) == 0 {
+		return nil, fmt.Errorf("could not find the block hash")
+	}
+	// Verify that the voting power committed to the found block hash is
+	// more than 2/3 of the total voting power.
+	if requiredVP := ((totalPower * 2) / 3) + 1; maxPower < requiredVP {
+		return nil, fmt.Errorf(
+			"insufficient cumulative voting power received to verify vote extensions; got: %d, expected: >=%d",
+			maxPower, requiredVP,
+		)
+	}
+	decoded, err := hex.DecodeString(resBlockHash)
+	if err != nil {
 		return nil, err
 	}
-	return ve.ToBLSSig().BlockHash.MustMarshal(), nil
+	return decoded, nil
 }
 
 // ProcessProposal examines the checkpoint in the injected tx of the proposal

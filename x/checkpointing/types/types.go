@@ -202,10 +202,9 @@ func BytesToCkptWithMeta(cdc codec.BinaryCodec, bz []byte) (*RawCheckpointWithMe
 }
 
 func (ve *VoteExtension) ToBLSSig() *BlsSig {
-	blockHash := BlockHash(ve.BlockHash)
 	return &BlsSig{
 		EpochNum:         ve.EpochNum,
-		BlockHash:        &blockHash,
+		BlockHash:        ve.BlockHash,
 		BlsSig:           ve.BlsSig,
 		SignerAddress:    ve.Signer,
 		ValidatorAddress: ve.ValidatorAddress,
