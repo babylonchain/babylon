@@ -43,7 +43,7 @@ that were introduced through the Taproot upgrade.
 
 ## Staking Flow
 
-Following diagram show how different transactions described in following
+Following diagram shows how different transactions described in following
 paragraphs create and spend different bitcoin outputs:
 
 ```mermaid

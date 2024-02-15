@@ -23,6 +23,7 @@ providers and BTC delegations under them. This includes:
   - [Params](#params)
 - [Messages](#messages)
   - [MsgCreateFinalityProvider](#msgcreatefinalityprovider)
+  - [MsgEditFinalityProvider](#msgeditfinalityprovider)
   - [MsgCreateBTCDelegation](#msgcreatebtcdelegation)
   - [MsgAddCovenantSigs](#msgaddcovenantsigs)
   - [MsgBTCUndelegate](#msgbtcundelegate)
@@ -362,6 +363,27 @@ message MsgCreateFinalityProvider {
 }
 ```
 
+where `Description` is adapted from Cosmos SDK's staking module and is defined
+as follows:
+
+```protobuf
+// Description defines a validator description.
+message Description {
+  option (gogoproto.equal) = true;
+
+  // moniker defines a human-readable name for the validator.
+  string moniker = 1;
+  // identity defines an optional identity signature (ex. UPort or Keybase).
+  string identity = 2;
+  // website defines an optional website link.
+  string website = 3;
+  // security_contact defines an optional email for security contact.
+  string security_contact = 4;
+  // details define other optional details.
+  string details = 5;
+}
+```
+
 Upon `MsgCreateFinalityProvider`, a Babylon node will execute as follows:
 
 1. Verify a [proof of
@@ -371,6 +393,46 @@ Upon `MsgCreateFinalityProvider`, a Babylon node will execute as follows:
    parameters and at most 100%.
 3. Ensure the finality provider does not exist already.
 4. Create a `FinalityProvider` object and save it to finality provider storage.
+
+### MsgEditFinalityProvider
+
+The `MsgEditFinalityProvider` message is used for editing the information of an
+existing finality provider, including the commission and the description. It
+needs to be submitted by using the Babylon account registered in the finality
+provider.
+
+```protobuf
+// MsgEditFinalityProvider is the message for editing an existing finality provider
+message MsgEditFinalityProvider {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  // NOTE: this signer needs to correspond to babylon_pk of the finality provider
+  string signer = 1;
+  // btc_pk is the Bitcoin secp256k1 PK of the finality provider to be edited
+  bytes btc_pk = 2;
+
+  // description defines the updated description terms for the finality provider
+  cosmos.staking.v1beta1.Description description = 3;
+  // commission defines the updated commission rate of the finality provider
+  string commission = 4 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+}
+```
+
+Upon `MsgEditFinalityProvider`, a Babylon node will execute as follows:
+
+1. Validate the formats of the description.
+2. Ensure the given commission rate is at least the `MinCommissionRate` in the
+   parameters and at most 100%.
+3. Get the finality provider with the given `btc_pk` from the finality provider
+   storage.
+4. Ensure the address `signer` corresponds to the Babylon public key
+   `babylon_pk` in the finality provider.
+5. Change the `description` and `commission` in the finality provider to the
+   values supplied in the message, and write back the finlaity provider to the
+   finality provider storage.
 
 ### MsgCreateBTCDelegation
 

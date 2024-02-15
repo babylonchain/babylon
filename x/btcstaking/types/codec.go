@@ -9,8 +9,10 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateFinalityProvider{}, "btcstaking/MsgCreateFinalityProvider", nil)
+	cdc.RegisterConcrete(&MsgEditFinalityProvider{}, "btcstaking/MsgEditFinalityProvider", nil)
 	cdc.RegisterConcrete(&MsgCreateBTCDelegation{}, "btcstaking/MsgCreateBTCDelegation", nil)
 	cdc.RegisterConcrete(&MsgAddCovenantSigs{}, "btcstaking/MsgAddCovenantSigs", nil)
+	cdc.RegisterConcrete(&MsgBTCUndelegate{}, "btcstaking/MsgBTCUndelegate", nil)
 	cdc.RegisterConcrete(&MsgUpdateParams{}, "btcstaking/MsgUpdateParams", nil)
 }
 
@@ -19,8 +21,10 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&MsgCreateFinalityProvider{},
+		&MsgEditFinalityProvider{},
 		&MsgCreateBTCDelegation{},
 		&MsgAddCovenantSigs{},
+		&MsgBTCUndelegate{},
 		&MsgUpdateParams{},
 	)
 
