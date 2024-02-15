@@ -276,7 +276,7 @@ func ValidateVoteExtensions(
 		if power < mostPower {
 			continue
 		}
-		power = mostPower
+		mostPower = power
 		mostVtExt, err = hex.DecodeString(voteExt)
 		if err != nil {
 			return nil, fmt.Errorf("bad decode vote ext %s", err.Error())
