@@ -50,7 +50,7 @@ message VoteExtension {
   // validator_address is the address of the validator
   string validator_address = 2;
   // block_hash is the hash of the block that the vote extension is signed over
-  bytes block_hash = 3;
+  bytes block_hash = 3 [ (gogoproto.customtype) = "BlockHash" ];
   // epoch_num is the epoch number of the vote extension
   uint64 epoch_num = 4;
   // height is the height of the vote extension
