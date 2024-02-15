@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/runtime"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"cosmossdk.io/store/prefix"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // SetFinalityProvider adds the given finality provider to KVStore
@@ -39,13 +38,18 @@ func (k Keeper) GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*types
 // SlashFinalityProvider slashes a finality provider with the given PK
 // A slashed finality provider will not have voting power
 func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error {
+	// ensure finality provider exists
 	fp, err := k.GetFinalityProvider(ctx, fpBTCPK)
 	if err != nil {
 		return err
 	}
+
+	// ensure finality provider is not slashed yet
 	if fp.IsSlashed() {
 		return types.ErrFpAlreadySlashed
 	}
+
+	// set finality provider to be slashed
 	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
@@ -53,6 +57,11 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	}
 	fp.SlashedBtcHeight = btcTip.Height
 	k.SetFinalityProvider(ctx, fp)
+
+	// record slashed event. The next `BeginBlock` will consume this
+	// event for updating the finality provider set
+	powerUpdateEvent := types.NewEventPowerDistUpdateWithSlashedFP(fp.BtcPk)
+	k.addPowerDistUpdateEvent(ctx, btcTip.Height, powerUpdateEvent)
 
 	return nil
 }

@@ -5,6 +5,8 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
@@ -175,10 +177,145 @@ func (m *EventSelectiveSlashing) GetEvidence() *SelectiveSlashingEvidence {
 	return nil
 }
 
+// EventPowerDistUpdate is an event that affects voting power distirbution
+// of BTC staking protocol
+type EventPowerDistUpdate struct {
+	// ev is the event that affects voting power distribution
+	//
+	// Types that are valid to be assigned to Ev:
+	//	*EventPowerDistUpdate_SlashedFp
+	//	*EventPowerDistUpdate_BtcDelStateUpdate
+	Ev isEventPowerDistUpdate_Ev `protobuf_oneof:"ev"`
+}
+
+func (m *EventPowerDistUpdate) Reset()         { *m = EventPowerDistUpdate{} }
+func (m *EventPowerDistUpdate) String() string { return proto.CompactTextString(m) }
+func (*EventPowerDistUpdate) ProtoMessage()    {}
+func (*EventPowerDistUpdate) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{3}
+}
+func (m *EventPowerDistUpdate) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventPowerDistUpdate) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventPowerDistUpdate.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventPowerDistUpdate) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventPowerDistUpdate.Merge(m, src)
+}
+func (m *EventPowerDistUpdate) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventPowerDistUpdate) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventPowerDistUpdate.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventPowerDistUpdate proto.InternalMessageInfo
+
+type isEventPowerDistUpdate_Ev interface {
+	isEventPowerDistUpdate_Ev()
+	MarshalTo([]byte) (int, error)
+	Size() int
+}
+
+type EventPowerDistUpdate_SlashedFp struct {
+	SlashedFp *EventPowerDistUpdate_EventSlashedFinalityProvider `protobuf:"bytes,1,opt,name=slashed_fp,json=slashedFp,proto3,oneof" json:"slashed_fp,omitempty"`
+}
+type EventPowerDistUpdate_BtcDelStateUpdate struct {
+	BtcDelStateUpdate *EventBTCDelegationStateUpdate `protobuf:"bytes,2,opt,name=btc_del_state_update,json=btcDelStateUpdate,proto3,oneof" json:"btc_del_state_update,omitempty"`
+}
+
+func (*EventPowerDistUpdate_SlashedFp) isEventPowerDistUpdate_Ev()         {}
+func (*EventPowerDistUpdate_BtcDelStateUpdate) isEventPowerDistUpdate_Ev() {}
+
+func (m *EventPowerDistUpdate) GetEv() isEventPowerDistUpdate_Ev {
+	if m != nil {
+		return m.Ev
+	}
+	return nil
+}
+
+func (m *EventPowerDistUpdate) GetSlashedFp() *EventPowerDistUpdate_EventSlashedFinalityProvider {
+	if x, ok := m.GetEv().(*EventPowerDistUpdate_SlashedFp); ok {
+		return x.SlashedFp
+	}
+	return nil
+}
+
+func (m *EventPowerDistUpdate) GetBtcDelStateUpdate() *EventBTCDelegationStateUpdate {
+	if x, ok := m.GetEv().(*EventPowerDistUpdate_BtcDelStateUpdate); ok {
+		return x.BtcDelStateUpdate
+	}
+	return nil
+}
+
+// XXX_OneofWrappers is for the internal use of the proto package.
+func (*EventPowerDistUpdate) XXX_OneofWrappers() []interface{} {
+	return []interface{}{
+		(*EventPowerDistUpdate_SlashedFp)(nil),
+		(*EventPowerDistUpdate_BtcDelStateUpdate)(nil),
+	}
+}
+
+// EventSlashedFinalityProvider defines an event that a finality provider
+// is slashed
+// TODO: unify with existing slashing events
+type EventPowerDistUpdate_EventSlashedFinalityProvider struct {
+	Pk *github_com_babylonchain_babylon_types.BIP340PubKey `protobuf:"bytes,1,opt,name=pk,proto3,customtype=github.com/babylonchain/babylon/types.BIP340PubKey" json:"pk,omitempty"`
+}
+
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Reset() {
+	*m = EventPowerDistUpdate_EventSlashedFinalityProvider{}
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) String() string {
+	return proto.CompactTextString(m)
+}
+func (*EventPowerDistUpdate_EventSlashedFinalityProvider) ProtoMessage() {}
+func (*EventPowerDistUpdate_EventSlashedFinalityProvider) Descriptor() ([]byte, []int) {
+	return fileDescriptor_74118427820fff75, []int{3, 0}
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider.Merge(m, src)
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_Size() int {
+	return m.Size()
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) XXX_DiscardUnknown() {
+	xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_EventPowerDistUpdate_EventSlashedFinalityProvider proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*EventNewFinalityProvider)(nil), "babylon.btcstaking.v1.EventNewFinalityProvider")
 	proto.RegisterType((*EventBTCDelegationStateUpdate)(nil), "babylon.btcstaking.v1.EventBTCDelegationStateUpdate")
 	proto.RegisterType((*EventSelectiveSlashing)(nil), "babylon.btcstaking.v1.EventSelectiveSlashing")
+	proto.RegisterType((*EventPowerDistUpdate)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate")
+	proto.RegisterType((*EventPowerDistUpdate_EventSlashedFinalityProvider)(nil), "babylon.btcstaking.v1.EventPowerDistUpdate.EventSlashedFinalityProvider")
 }
 
 func init() {
@@ -186,28 +323,36 @@ func init() {
 }
 
 var fileDescriptor_74118427820fff75 = []byte{
-	// 325 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x91, 0xc1, 0x4e, 0xf2, 0x40,
-	0x14, 0x85, 0x19, 0x16, 0x7f, 0x60, 0xfe, 0xa8, 0x49, 0x13, 0x0d, 0x31, 0xb1, 0x21, 0x5d, 0x20,
-	0x71, 0xd1, 0x0a, 0x2e, 0xdc, 0xa3, 0xa8, 0x0b, 0x62, 0x4c, 0x8b, 0x1b, 0x37, 0x64, 0x5a, 0x2e,
-	0xed, 0xc4, 0x3a, 0xd3, 0x30, 0x97, 0x02, 0x6f, 0xc1, 0x63, 0xb9, 0x64, 0xe9, 0xd2, 0xc0, 0x8b,
-	0x98, 0x4e, 0x46, 0x25, 0x02, 0xcb, 0x36, 0xe7, 0x3b, 0xdf, 0x99, 0x5c, 0xea, 0x84, 0x2c, 0x9c,
-	0xa7, 0x52, 0x78, 0x21, 0x46, 0x0a, 0xd9, 0x2b, 0x17, 0xb1, 0x97, 0xb7, 0x3c, 0xc8, 0x41, 0xa0,
-	0x72, 0xb3, 0xb1, 0x44, 0x69, 0x1d, 0x9b, 0x8c, 0xfb, 0x9b, 0x71, 0xf3, 0xd6, 0x69, 0x63, 0x37,
-	0xba, 0x11, 0xd2, 0xb8, 0x13, 0xd0, 0x5a, 0xb7, 0xa8, 0x7b, 0x84, 0xe9, 0x1d, 0x17, 0x2c, 0xe5,
-	0x38, 0x7f, 0x1a, 0xcb, 0x9c, 0x0f, 0x61, 0x6c, 0x5d, 0xd3, 0xf2, 0x28, 0xab, 0x91, 0x3a, 0x69,
-	0xfe, 0x6f, 0x9f, 0xbb, 0x3b, 0x3d, 0xee, 0x5f, 0xc8, 0x2f, 0x8f, 0x32, 0x67, 0x41, 0xe8, 0x99,
-	0x6e, 0xed, 0xf4, 0x6f, 0x6e, 0x21, 0x85, 0x98, 0x21, 0x97, 0x22, 0x40, 0x86, 0xf0, 0x9c, 0x0d,
-	0x19, 0x82, 0xd5, 0xa0, 0x47, 0xa6, 0x64, 0x80, 0xb3, 0x41, 0xc2, 0x54, 0xa2, 0x3d, 0x55, 0xff,
-	0xc0, 0xfc, 0xee, 0xcf, 0x1e, 0x98, 0x4a, 0xac, 0x7b, 0x5a, 0x15, 0x30, 0x1d, 0xa8, 0x02, 0xad,
-	0x95, 0xeb, 0xa4, 0x79, 0xd8, 0xbe, 0xd8, 0xb3, 0x64, 0xcb, 0x35, 0x51, 0x7e, 0x45, 0xc0, 0x54,
-	0x6b, 0x9d, 0x11, 0x3d, 0xd1, 0x8b, 0x02, 0x48, 0x21, 0x42, 0x9e, 0x43, 0x90, 0x32, 0x95, 0x70,
-	0x11, 0x5b, 0x3d, 0x5a, 0x81, 0x62, 0xba, 0x88, 0xc0, 0xbc, 0xf5, 0x72, 0x8f, 0x61, 0x8b, 0xed,
-	0x1a, 0xce, 0xff, 0x69, 0xe8, 0xf4, 0xde, 0x57, 0x36, 0x59, 0xae, 0x6c, 0xf2, 0xb9, 0xb2, 0xc9,
-	0x62, 0x6d, 0x97, 0x96, 0x6b, 0xbb, 0xf4, 0xb1, 0xb6, 0x4b, 0x2f, 0xed, 0x98, 0x63, 0x32, 0x09,
-	0xdd, 0x48, 0xbe, 0x79, 0xa6, 0x3f, 0x4a, 0x18, 0x17, 0xdf, 0x1f, 0xde, 0x6c, 0xf3, 0x56, 0x38,
-	0xcf, 0x40, 0x85, 0xff, 0xf4, 0x91, 0xae, 0xbe, 0x02, 0x00, 0x00, 0xff, 0xff, 0xc7, 0xa5, 0x51,
-	0x18, 0x09, 0x02, 0x00, 0x00,
+	// 463 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x93, 0x4f, 0x6f, 0xd3, 0x40,
+	0x10, 0xc5, 0x6d, 0x0b, 0xa1, 0x66, 0xcb, 0x1f, 0x61, 0x05, 0x14, 0x45, 0x60, 0x2a, 0x1f, 0x4a,
+	0xc5, 0xc1, 0x6e, 0xd3, 0x0a, 0xee, 0x26, 0x0d, 0x41, 0x54, 0x28, 0xb2, 0xcb, 0x85, 0x8b, 0xb5,
+	0x76, 0x26, 0xf6, 0x2a, 0x66, 0xd7, 0xca, 0x4e, 0x9c, 0xe4, 0x5b, 0xf4, 0x63, 0x71, 0xec, 0xb1,
+	0xe2, 0x80, 0x50, 0xf2, 0x45, 0x90, 0x37, 0xa6, 0x44, 0x6d, 0x1c, 0x6e, 0xc9, 0xe8, 0xbd, 0xf7,
+	0x7b, 0x33, 0xb6, 0x89, 0x1d, 0xd1, 0x68, 0x91, 0x09, 0xee, 0x46, 0x18, 0x4b, 0xa4, 0x63, 0xc6,
+	0x13, 0xb7, 0x38, 0x71, 0xa1, 0x00, 0x8e, 0xd2, 0xc9, 0x27, 0x02, 0x85, 0xf9, 0xbc, 0xd2, 0x38,
+	0xff, 0x34, 0x4e, 0x71, 0xd2, 0x6e, 0x26, 0x22, 0x11, 0x4a, 0xe1, 0x96, 0xbf, 0xd6, 0xe2, 0xf6,
+	0xe1, 0xf6, 0xc0, 0x0d, 0xab, 0xd2, 0xd9, 0x01, 0x69, 0x9d, 0x97, 0x90, 0x2f, 0x30, 0xeb, 0x31,
+	0x4e, 0x33, 0x86, 0x8b, 0xc1, 0x44, 0x14, 0x6c, 0x08, 0x13, 0xf3, 0x3d, 0x31, 0x46, 0x79, 0x4b,
+	0x3f, 0xd0, 0x8f, 0xf6, 0x3b, 0x6f, 0x9c, 0xad, 0x74, 0xe7, 0xae, 0xc9, 0x37, 0x46, 0xb9, 0x7d,
+	0xa5, 0x93, 0x57, 0x2a, 0xd5, 0xbb, 0xfc, 0xd0, 0x85, 0x0c, 0x12, 0x8a, 0x4c, 0xf0, 0x00, 0x29,
+	0xc2, 0xd7, 0x7c, 0x48, 0x11, 0xcc, 0x43, 0xf2, 0xb4, 0x0a, 0x09, 0x71, 0x1e, 0xa6, 0x54, 0xa6,
+	0x8a, 0xd3, 0xf0, 0x1f, 0x57, 0xe3, 0xcb, 0x79, 0x9f, 0xca, 0xd4, 0xfc, 0x48, 0x1a, 0x1c, 0x66,
+	0xa1, 0x2c, 0xad, 0x2d, 0xe3, 0x40, 0x3f, 0x7a, 0xd2, 0x79, 0x5b, 0xd3, 0xe4, 0x1e, 0x6b, 0x2a,
+	0xfd, 0x3d, 0x0e, 0x33, 0x85, 0xb5, 0x47, 0xe4, 0x85, 0x6a, 0x14, 0x40, 0x06, 0x31, 0xb2, 0x02,
+	0x82, 0x8c, 0xca, 0x94, 0xf1, 0xc4, 0xbc, 0x20, 0x7b, 0x50, 0x56, 0xe7, 0x31, 0x54, 0xbb, 0x1e,
+	0xd7, 0x10, 0xee, 0x79, 0xcf, 0x2b, 0x9f, 0x7f, 0x9b, 0x60, 0xdf, 0x18, 0xa4, 0xa9, 0x40, 0x03,
+	0x31, 0x83, 0x49, 0x97, 0x49, 0xac, 0x36, 0x66, 0x84, 0xc8, 0xd2, 0x06, 0xc3, 0xf0, 0xf6, 0xa8,
+	0xfd, 0x1a, 0xd0, 0xb6, 0x80, 0xf5, 0x30, 0x58, 0x47, 0xdc, 0xbd, 0x7a, 0x5f, 0xf3, 0x1b, 0x55,
+	0x7a, 0x2f, 0x37, 0x13, 0xd2, 0x8c, 0x30, 0x0e, 0x87, 0x90, 0xad, 0x0f, 0x17, 0x4e, 0x55, 0x82,
+	0xba, 0xdf, 0x7e, 0xe7, 0x6c, 0x17, 0xb4, 0xee, 0x81, 0xf5, 0x35, 0xff, 0x59, 0x84, 0x71, 0x17,
+	0xb2, 0x8d, 0x61, 0x7b, 0x44, 0x5e, 0xee, 0x6a, 0x65, 0xf6, 0x88, 0x91, 0x8f, 0xd5, 0xae, 0x8f,
+	0xbc, 0x77, 0x3f, 0x7f, 0xbd, 0xee, 0x24, 0x0c, 0xd3, 0x69, 0xe4, 0xc4, 0xe2, 0xbb, 0x5b, 0x95,
+	0x88, 0x53, 0xca, 0xf8, 0xdf, 0x3f, 0x2e, 0x2e, 0x72, 0x90, 0x8e, 0xf7, 0x69, 0x70, 0x7a, 0x76,
+	0x3c, 0x98, 0x46, 0x9f, 0x61, 0xe1, 0x1b, 0xf9, 0xd8, 0x7b, 0x40, 0x0c, 0x28, 0xbc, 0x8b, 0x1f,
+	0x4b, 0x4b, 0xbf, 0x5e, 0x5a, 0xfa, 0xef, 0xa5, 0xa5, 0x5f, 0xad, 0x2c, 0xed, 0x7a, 0x65, 0x69,
+	0x37, 0x2b, 0x4b, 0xfb, 0xf6, 0xdf, 0xdc, 0xf9, 0xe6, 0x67, 0xa0, 0x20, 0xd1, 0x43, 0xf5, 0xfe,
+	0x9f, 0xfe, 0x09, 0x00, 0x00, 0xff, 0xff, 0xc4, 0xc4, 0x7d, 0x08, 0x7a, 0x03, 0x00, 0x00,
 }
 
 func (m *EventNewFinalityProvider) Marshal() (dAtA []byte, err error) {
@@ -315,6 +460,115 @@ func (m *EventSelectiveSlashing) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *EventPowerDistUpdate) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventPowerDistUpdate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventPowerDistUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Ev != nil {
+		{
+			size := m.Ev.Size()
+			i -= size
+			if _, err := m.Ev.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *EventPowerDistUpdate_SlashedFp) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventPowerDistUpdate_SlashedFp) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.SlashedFp != nil {
+		{
+			size, err := m.SlashedFp.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintEvents(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+func (m *EventPowerDistUpdate_BtcDelStateUpdate) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventPowerDistUpdate_BtcDelStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.BtcDelStateUpdate != nil {
+		{
+			size, err := m.BtcDelStateUpdate.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintEvents(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Pk != nil {
+		{
+			size := m.Pk.Size()
+			i -= size
+			if _, err := m.Pk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintEvents(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintEvents(dAtA []byte, offset int, v uint64) int {
 	offset -= sovEvents(v)
 	base := offset
@@ -363,6 +617,55 @@ func (m *EventSelectiveSlashing) Size() (n int) {
 	_ = l
 	if m.Evidence != nil {
 		l = m.Evidence.Size()
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	return n
+}
+
+func (m *EventPowerDistUpdate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Ev != nil {
+		n += m.Ev.Size()
+	}
+	return n
+}
+
+func (m *EventPowerDistUpdate_SlashedFp) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SlashedFp != nil {
+		l = m.SlashedFp.Size()
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	return n
+}
+func (m *EventPowerDistUpdate_BtcDelStateUpdate) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.BtcDelStateUpdate != nil {
+		l = m.BtcDelStateUpdate.Size()
+		n += 1 + l + sovEvents(uint64(l))
+	}
+	return n
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Pk != nil {
+		l = m.Pk.Size()
 		n += 1 + l + sovEvents(uint64(l))
 	}
 	return n
@@ -623,6 +926,211 @@ func (m *EventSelectiveSlashing) Unmarshal(dAtA []byte) error {
 				m.Evidence = &SelectiveSlashingEvidence{}
 			}
 			if err := m.Evidence.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventPowerDistUpdate) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventPowerDistUpdate: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventPowerDistUpdate: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SlashedFp", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &EventPowerDistUpdate_EventSlashedFinalityProvider{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Ev = &EventPowerDistUpdate_SlashedFp{v}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BtcDelStateUpdate", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &EventBTCDelegationStateUpdate{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Ev = &EventPowerDistUpdate_BtcDelStateUpdate{v}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipEvents(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *EventPowerDistUpdate_EventSlashedFinalityProvider) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowEvents
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: EventSlashedFinalityProvider: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: EventSlashedFinalityProvider: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Pk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvents
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthEvents
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEvents
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_types.BIP340PubKey
+			m.Pk = &v
+			if err := m.Pk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

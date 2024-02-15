@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-
 	"sort"
 
 	"cosmossdk.io/math"
