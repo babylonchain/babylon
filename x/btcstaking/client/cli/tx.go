@@ -137,7 +137,7 @@ func NewCreateFinalityProvicerCmd() *cobra.Command {
 func NewEditFinalityProvicerCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit-finality-provider [btc_pk]",
-		Args:  cobra.ExactArgs(3),
+		Args:  cobra.ExactArgs(1),
 		Short: "Edit an existing finality provider",
 		Long: strings.TrimSpace(
 			`Edit an existing finality provider.`, // TODO: example
