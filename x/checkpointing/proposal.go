@@ -214,6 +214,18 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 				return resReject, nil
 			}
 
+			for i, v := range injectedCkpt.ExtendedCommitInfo.Votes {
+				var ve ckpttypes.VoteExtension
+				if err := ve.Unmarshal(v.VoteExtension); err != nil {
+					return nil, err
+				}
+				if len(ve.BlockHash) == 0 {
+					h.logger.Error("found empty block hash in the vote extension",
+						"height", req.Height, "epoch", epoch.EpochNumber,
+						"index", i)
+				}
+			}
+
 			// 2. remove the special tx from the request so that
 			// the rest of the txs can be handled by the default handler
 			req.Txs, err = removeInjectedTx(req.Txs)
