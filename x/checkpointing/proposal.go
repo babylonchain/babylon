@@ -268,8 +268,8 @@ func ValidateVoteExtensions(
 	}
 
 	var (
-		mostVtExt []byte
-		mostPower int64
+		mostVtExtStr string
+		mostPower    int64
 	)
 
 	for voteExt, power := range extensionVotes {
@@ -277,12 +277,13 @@ func ValidateVoteExtensions(
 			continue
 		}
 		mostPower = power
-		mostVtExt, err = hex.DecodeString(voteExt)
-		if err != nil {
-			return nil, fmt.Errorf("bad decode vote ext %s", err.Error())
-		}
+		mostVtExtStr = voteExt
 	}
 
+	mostVtExt, err := hex.DecodeString(mostVtExtStr)
+	if err != nil {
+		return nil, fmt.Errorf("bad decode vote ext %s", err.Error())
+	}
 	var ve ckpttypes.VoteExtension
 	if err := ve.Unmarshal(mostVtExt); err != nil {
 		return nil, err
