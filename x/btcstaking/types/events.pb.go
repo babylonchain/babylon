@@ -5,6 +5,8 @@ package types
 
 import (
 	fmt "fmt"
+	github_com_babylonchain_babylon_types "github.com/babylonchain/babylon/types"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	proto "github.com/cosmos/gogoproto/proto"
 	io "io"
 	math "math"
