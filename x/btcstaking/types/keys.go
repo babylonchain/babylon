@@ -22,6 +22,7 @@ var (
 	VotingPowerKey          = []byte{0x05} // key prefix for the voting power
 	BTCHeightKey            = []byte{0x06} // key prefix for the BTC heights
 	VotingPowerDistCacheKey = []byte{0x07} // key prefix for voting power distribution cache
+	PowerDistUpdateKey      = []byte{0x08} // key prefix for power distribution update events
 )
 
 func KeyPrefix(p string) []byte {

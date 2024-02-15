@@ -138,8 +138,6 @@ func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (
 	if err != nil {
 		return nil, err
 	}
-
-	// find BTC delegation from KV store
 	btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
 	if btcDel == nil {
 		return nil, types.ErrBTCDelegationNotFound
