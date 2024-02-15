@@ -1,13 +1,19 @@
 package checkpointing
 
 import (
+	"bytes"
+	"encoding/hex"
 	"fmt"
 	"slices"
 
 	"cosmossdk.io/log"
+	cryptoenc "github.com/cometbft/cometbft/crypto/encoding"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/mempool"
+	protoio "github.com/cosmos/gogoproto/io"
+	"github.com/cosmos/gogoproto/proto"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
@@ -74,7 +80,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		// 1. verify the validity of vote extensions (2/3 majority is achieved)
-		err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), req.LocalLastCommit)
+		voteExtension, err := ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), req.LocalLastCommit)
 		if err != nil {
 			return proposalRes, fmt.Errorf("invalid vote extensions: %w", err)
 		}
@@ -82,7 +88,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		// 2. build a checkpoint for the previous epoch
 		// Note: the epoch has not increased yet, so
 		// we can use the current epoch
-		ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, req.LocalLastCommit.Votes)
+		ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, req.LocalLastCommit.Votes, *voteExtension)
 		if err != nil {
 			return proposalRes, fmt.Errorf("failed to build checkpoint from vote extensions: %w", err)
 		}
@@ -104,11 +110,9 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 	}
 }
 
-func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epoch uint64, extendedVotes []abci.ExtendedVoteInfo) (*ckpttypes.RawCheckpointWithMeta, error) {
-	prevBlockID, err := h.findLastBlockHash(extendedVotes)
-	if err != nil {
-		return nil, err
-	}
+func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epoch uint64, extendedVotes []abci.ExtendedVoteInfo, mostVotedVoteExt ckpttypes.VoteExtension) (*ckpttypes.RawCheckpointWithMeta, error) {
+	prevBlockID := mostVotedVoteExt.ToBLSSig().BlockHash.MustMarshal()
+
 	ckpt := ckpttypes.NewCheckpointWithMeta(ckpttypes.NewCheckpoint(epoch, prevBlockID), ckpttypes.Accumulating)
 	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes)
 	vals := h.ckptKeeper.GetValidatorSet(ctx, epoch)
@@ -153,6 +157,140 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 	return ckpt, nil
 }
 
+// ValidateVoteExtensions defines a helper function for verifying vote extension
+// signatures that may be passed or manually injected into a block proposal from
+// a proposer in PrepareProposal. It returns an error if any signature is invalid
+// or if unexpected vote extensions and/or signatures are found or less than 2/3
+// power is received.
+func ValidateVoteExtensions(
+	ctx sdk.Context,
+	valStore baseapp.ValidatorStore,
+	currentHeight int64,
+	chainID string,
+	extCommit abci.ExtendedCommitInfo,
+) (mostVotedExt *ckpttypes.VoteExtension, err error) {
+	cp := ctx.ConsensusParams()
+	// Start checking vote extensions only **after** the vote extensions enable
+	// height, because when `currentHeight == VoteExtensionsEnableHeight`
+	// PrepareProposal doesn't get any vote extensions in its request.
+	extsEnabled := cp.Abci != nil && currentHeight > cp.Abci.VoteExtensionsEnableHeight && cp.Abci.VoteExtensionsEnableHeight != 0
+	marshalDelimitedFn := func(msg proto.Message) ([]byte, error) {
+		var buf bytes.Buffer
+		if err := protoio.NewDelimitedWriter(&buf).WriteMsg(msg); err != nil {
+			return nil, err
+		}
+
+		return buf.Bytes(), nil
+	}
+
+	var (
+		// Total voting power of all vote extensions.
+		totalVP int64
+		// Total voting power of all validators that submitted valid vote extensions.
+		sumVP int64
+	)
+
+	extensionVotes := make(map[string]int64, 0)
+	cache := make(map[string]struct{})
+	for _, vote := range extCommit.Votes {
+		totalVP += vote.Validator.Power
+
+		// Only check + include power if the vote is a commit vote. There must be super-majority, otherwise the
+		// previous block (the block vote is for) could not have been committed.
+		if vote.BlockIdFlag != cmtproto.BlockIDFlagCommit {
+			continue
+		}
+
+		if !extsEnabled {
+			if len(vote.VoteExtension) > 0 {
+				return nil, fmt.Errorf("vote extensions disabled; received non-empty vote extension at height %d", currentHeight)
+			}
+			if len(vote.ExtensionSignature) > 0 {
+				return nil, fmt.Errorf("vote extensions disabled; received non-empty vote extension signature at height %d", currentHeight)
+			}
+
+			continue
+		}
+
+		if len(vote.ExtensionSignature) == 0 {
+			return nil, fmt.Errorf("vote extensions enabled; received empty vote extension signature at height %d", currentHeight)
+		}
+
+		// Ensure that the validator has not already submitted a vote extension.
+		valConsAddr := sdk.ConsAddress(vote.Validator.Address)
+		if _, ok := cache[valConsAddr.String()]; ok {
+			return nil, fmt.Errorf("duplicate validator; validator %s has already submitted a vote extension", valConsAddr.String())
+		}
+		cache[valConsAddr.String()] = struct{}{}
+
+		pubKeyProto, err := valStore.GetPubKeyByConsAddr(ctx, valConsAddr)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get validator %X public key: %w", valConsAddr, err)
+		}
+
+		cmtPubKey, err := cryptoenc.PubKeyFromProto(pubKeyProto)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert validator %X public key: %w", valConsAddr, err)
+		}
+
+		cve := cmtproto.CanonicalVoteExtension{
+			Extension: vote.VoteExtension,
+			Height:    currentHeight - 1, // the vote extension was signed in the previous height
+			Round:     int64(extCommit.Round),
+			ChainId:   chainID,
+		}
+
+		extSignBytes, err := marshalDelimitedFn(&cve)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encode CanonicalVoteExtension: %w", err)
+		}
+
+		if !cmtPubKey.VerifySignature(extSignBytes, vote.ExtensionSignature) {
+			return nil, fmt.Errorf("failed to verify validator %X vote extension signature", valConsAddr)
+		}
+
+		strVoteExt := hex.EncodeToString(vote.VoteExtension)
+		extensionVotes[strVoteExt] += vote.Validator.Power
+		sumVP += vote.Validator.Power
+	}
+
+	// This check is probably unnecessary, but better safe than sorry.
+	if totalVP <= 0 {
+		return nil, fmt.Errorf("total voting power must be positive, got: %d", totalVP)
+	}
+
+	// If the sum of the voting power has not reached (2/3 + 1) we need to error.
+	if requiredVP := ((totalVP * 2) / 3) + 1; sumVP < requiredVP {
+		return nil, fmt.Errorf(
+			"insufficient cumulative voting power received to verify vote extensions; got: %d, expected: >=%d",
+			sumVP, requiredVP,
+		)
+	}
+
+	var (
+		mostVtExt []byte
+		mostPower int64
+	)
+
+	for voteExt, power := range extensionVotes {
+		if power < mostPower {
+			continue
+		}
+		power = mostPower
+		mostVtExt, err = hex.DecodeString(voteExt)
+		if err != nil {
+			return nil, fmt.Errorf("bad decode vote ext %s", err.Error())
+		}
+	}
+
+	var ve ckpttypes.VoteExtension
+	if err := ve.Unmarshal(mostVtExt); err != nil {
+		return nil, err
+	}
+
+	return &ve, nil
+}
+
 func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.ExtendedVoteInfo) []ckpttypes.BlsSig {
 	k := h.ckptKeeper
 	validBLSSigs := make([]ckpttypes.BlsSig, 0, len(extendedVotes))
@@ -178,17 +316,6 @@ func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.
 	}
 
 	return validBLSSigs
-}
-
-// findLastBlockHash finds the last block hash from the first vote extension
-// this is a workaround that the last block hash can't be obtained from the context
-// this is also safe as the BLS sig is already verified by VerifyVoteExtension
-func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInfo) ([]byte, error) {
-	var ve ckpttypes.VoteExtension
-	if err := ve.Unmarshal(extendedVotes[0].VoteExtension); err != nil {
-		return nil, err
-	}
-	return ve.ToBLSSig().BlockHash.MustMarshal(), nil
 }
 
 // ProcessProposal examines the checkpoint in the injected tx of the proposal
@@ -224,7 +351,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			}
 
 			// 3. verify the validity of the vote extension (2/3 majority is achieved)
-			err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
+			voteExtension, err := ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
 				return resReject, err
@@ -235,7 +362,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			// Note: this is needed because LastBlockID is not available here so that
 			// we can't verify whether the injected checkpoint is signing the correct
 			// LastBlockID
-			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes)
+			ckpt, err := h.buildCheckpointFromVoteExtensions(ctx, epoch.EpochNumber, injectedCkpt.ExtendedCommitInfo.Votes, *voteExtension)
 			if err != nil {
 				// should not return error here as error will cause panic
 				h.logger.Error("invalid vote extensions: %w", err)
