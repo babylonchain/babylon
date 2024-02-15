@@ -131,6 +131,74 @@ func (m *RawCheckpoint) GetBitmap() []byte {
 	return nil
 }
 
+// RawCheckpoint wraps the BLS multi sig with metadata
+type RawCheckpoint2 struct {
+	// epoch_num defines the epoch number the raw checkpoint is for
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
+	// block_hash defines the 'BlockID.Hash', which is the hash of
+	// the block that individual BLS sigs are signed on
+	BlockHash []byte `protobuf:"bytes,2,opt,name=block_hash,json=blockHash,proto3" json:"block_hash,omitempty"`
+	// bitmap defines the bitmap that indicates the signers of the BLS multi sig
+	Bitmap []byte `protobuf:"bytes,3,opt,name=bitmap,proto3" json:"bitmap,omitempty"`
+	// bls_multi_sig defines the multi sig that is aggregated from individual BLS
+	// sigs
+	BlsMultiSig *github_com_babylonchain_babylon_crypto_bls12381.Signature `protobuf:"bytes,4,opt,name=bls_multi_sig,json=blsMultiSig,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.Signature" json:"bls_multi_sig,omitempty"`
+}
+
+func (m *RawCheckpoint2) Reset()         { *m = RawCheckpoint2{} }
+func (m *RawCheckpoint2) String() string { return proto.CompactTextString(m) }
+func (*RawCheckpoint2) ProtoMessage()    {}
+func (*RawCheckpoint2) Descriptor() ([]byte, []int) {
+	return fileDescriptor_73996df9c6aabde4, []int{1}
+}
+func (m *RawCheckpoint2) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RawCheckpoint2) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RawCheckpoint2.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RawCheckpoint2) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RawCheckpoint2.Merge(m, src)
+}
+func (m *RawCheckpoint2) XXX_Size() int {
+	return m.Size()
+}
+func (m *RawCheckpoint2) XXX_DiscardUnknown() {
+	xxx_messageInfo_RawCheckpoint2.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RawCheckpoint2 proto.InternalMessageInfo
+
+func (m *RawCheckpoint2) GetEpochNum() uint64 {
+	if m != nil {
+		return m.EpochNum
+	}
+	return 0
+}
+
+func (m *RawCheckpoint2) GetBlockHash() []byte {
+	if m != nil {
+		return m.BlockHash
+	}
+	return nil
+}
+
+func (m *RawCheckpoint2) GetBitmap() []byte {
+	if m != nil {
+		return m.Bitmap
+	}
+	return nil
+}
+
 // RawCheckpointWithMeta wraps the raw checkpoint with metadata.
 type RawCheckpointWithMeta struct {
 	Ckpt *RawCheckpoint `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
@@ -150,7 +218,7 @@ func (m *RawCheckpointWithMeta) Reset()         { *m = RawCheckpointWithMeta{} }
 func (m *RawCheckpointWithMeta) String() string { return proto.CompactTextString(m) }
 func (*RawCheckpointWithMeta) ProtoMessage()    {}
 func (*RawCheckpointWithMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_73996df9c6aabde4, []int{1}
+	return fileDescriptor_73996df9c6aabde4, []int{2}
 }
 func (m *RawCheckpointWithMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -207,6 +275,82 @@ func (m *RawCheckpointWithMeta) GetLifecycle() []*CheckpointStateUpdate {
 	return nil
 }
 
+// RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+type RawCheckpointWithMeta2 struct {
+	Ckpt *RawCheckpoint2 `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
+	// status defines the status of the checkpoint
+	Status CheckpointStatus `protobuf:"varint,2,opt,name=status,proto3,enum=babylon.checkpointing.v1.CheckpointStatus" json:"status,omitempty"`
+	// bls_aggr_pk defines the aggregated BLS public key
+	BlsAggrPk *github_com_babylonchain_babylon_crypto_bls12381.PublicKey `protobuf:"bytes,3,opt,name=bls_aggr_pk,json=blsAggrPk,proto3,customtype=github.com/babylonchain/babylon/crypto/bls12381.PublicKey" json:"bls_aggr_pk,omitempty"`
+	// power_sum defines the accumulated voting power for the checkpoint
+	PowerSum uint64 `protobuf:"varint,4,opt,name=power_sum,json=powerSum,proto3" json:"power_sum,omitempty"`
+	// lifecycle defines the lifecycle of this checkpoint, i.e., each state
+	// transition and the time (in both timestamp and block height) of this
+	// transition.
+	Lifecycle []*CheckpointStateUpdate `protobuf:"bytes,5,rep,name=lifecycle,proto3" json:"lifecycle,omitempty"`
+}
+
+func (m *RawCheckpointWithMeta2) Reset()         { *m = RawCheckpointWithMeta2{} }
+func (m *RawCheckpointWithMeta2) String() string { return proto.CompactTextString(m) }
+func (*RawCheckpointWithMeta2) ProtoMessage()    {}
+func (*RawCheckpointWithMeta2) Descriptor() ([]byte, []int) {
+	return fileDescriptor_73996df9c6aabde4, []int{3}
+}
+func (m *RawCheckpointWithMeta2) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *RawCheckpointWithMeta2) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_RawCheckpointWithMeta2.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *RawCheckpointWithMeta2) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_RawCheckpointWithMeta2.Merge(m, src)
+}
+func (m *RawCheckpointWithMeta2) XXX_Size() int {
+	return m.Size()
+}
+func (m *RawCheckpointWithMeta2) XXX_DiscardUnknown() {
+	xxx_messageInfo_RawCheckpointWithMeta2.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_RawCheckpointWithMeta2 proto.InternalMessageInfo
+
+func (m *RawCheckpointWithMeta2) GetCkpt() *RawCheckpoint2 {
+	if m != nil {
+		return m.Ckpt
+	}
+	return nil
+}
+
+func (m *RawCheckpointWithMeta2) GetStatus() CheckpointStatus {
+	if m != nil {
+		return m.Status
+	}
+	return Accumulating
+}
+
+func (m *RawCheckpointWithMeta2) GetPowerSum() uint64 {
+	if m != nil {
+		return m.PowerSum
+	}
+	return 0
+}
+
+func (m *RawCheckpointWithMeta2) GetLifecycle() []*CheckpointStateUpdate {
+	if m != nil {
+		return m.Lifecycle
+	}
+	return nil
+}
+
 // InjectedCheckpoint wraps the checkpoint and the extended votes
 type InjectedCheckpoint struct {
 	Ckpt *RawCheckpointWithMeta `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
@@ -219,7 +363,7 @@ func (m *InjectedCheckpoint) Reset()         { *m = InjectedCheckpoint{} }
 func (m *InjectedCheckpoint) String() string { return proto.CompactTextString(m) }
 func (*InjectedCheckpoint) ProtoMessage()    {}
 func (*InjectedCheckpoint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_73996df9c6aabde4, []int{2}
+	return fileDescriptor_73996df9c6aabde4, []int{4}
 }
 func (m *InjectedCheckpoint) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -262,6 +406,61 @@ func (m *InjectedCheckpoint) GetExtendedCommitInfo() *types.ExtendedCommitInfo {
 	return nil
 }
 
+// InjectedCheckpoint wraps the checkpoint and the extended votes
+type InjectedCheckpoint2 struct {
+	Ckpt *RawCheckpointWithMeta2 `protobuf:"bytes,1,opt,name=ckpt,proto3" json:"ckpt,omitempty"`
+	// extended_commit_info is the commit info including the vote extensions
+	// from the previous proposal
+	ExtendedCommitInfo *types.ExtendedCommitInfo `protobuf:"bytes,2,opt,name=extended_commit_info,json=extendedCommitInfo,proto3" json:"extended_commit_info,omitempty"`
+}
+
+func (m *InjectedCheckpoint2) Reset()         { *m = InjectedCheckpoint2{} }
+func (m *InjectedCheckpoint2) String() string { return proto.CompactTextString(m) }
+func (*InjectedCheckpoint2) ProtoMessage()    {}
+func (*InjectedCheckpoint2) Descriptor() ([]byte, []int) {
+	return fileDescriptor_73996df9c6aabde4, []int{5}
+}
+func (m *InjectedCheckpoint2) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *InjectedCheckpoint2) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_InjectedCheckpoint2.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *InjectedCheckpoint2) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_InjectedCheckpoint2.Merge(m, src)
+}
+func (m *InjectedCheckpoint2) XXX_Size() int {
+	return m.Size()
+}
+func (m *InjectedCheckpoint2) XXX_DiscardUnknown() {
+	xxx_messageInfo_InjectedCheckpoint2.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_InjectedCheckpoint2 proto.InternalMessageInfo
+
+func (m *InjectedCheckpoint2) GetCkpt() *RawCheckpointWithMeta2 {
+	if m != nil {
+		return m.Ckpt
+	}
+	return nil
+}
+
+func (m *InjectedCheckpoint2) GetExtendedCommitInfo() *types.ExtendedCommitInfo {
+	if m != nil {
+		return m.ExtendedCommitInfo
+	}
+	return nil
+}
+
 // CheckpointStateUpdate defines a state transition on the checkpoint.
 type CheckpointStateUpdate struct {
 	// state defines the event of a state transition towards this state
@@ -278,7 +477,7 @@ func (m *CheckpointStateUpdate) Reset()         { *m = CheckpointStateUpdate{} }
 func (m *CheckpointStateUpdate) String() string { return proto.CompactTextString(m) }
 func (*CheckpointStateUpdate) ProtoMessage()    {}
 func (*CheckpointStateUpdate) Descriptor() ([]byte, []int) {
-	return fileDescriptor_73996df9c6aabde4, []int{3}
+	return fileDescriptor_73996df9c6aabde4, []int{6}
 }
 func (m *CheckpointStateUpdate) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -350,7 +549,7 @@ func (m *BlsSig) Reset()         { *m = BlsSig{} }
 func (m *BlsSig) String() string { return proto.CompactTextString(m) }
 func (*BlsSig) ProtoMessage()    {}
 func (*BlsSig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_73996df9c6aabde4, []int{4}
+	return fileDescriptor_73996df9c6aabde4, []int{7}
 }
 func (m *BlsSig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -403,8 +602,11 @@ func (m *BlsSig) GetValidatorAddress() string {
 func init() {
 	proto.RegisterEnum("babylon.checkpointing.v1.CheckpointStatus", CheckpointStatus_name, CheckpointStatus_value)
 	proto.RegisterType((*RawCheckpoint)(nil), "babylon.checkpointing.v1.RawCheckpoint")
+	proto.RegisterType((*RawCheckpoint2)(nil), "babylon.checkpointing.v1.RawCheckpoint2")
 	proto.RegisterType((*RawCheckpointWithMeta)(nil), "babylon.checkpointing.v1.RawCheckpointWithMeta")
+	proto.RegisterType((*RawCheckpointWithMeta2)(nil), "babylon.checkpointing.v1.RawCheckpointWithMeta2")
 	proto.RegisterType((*InjectedCheckpoint)(nil), "babylon.checkpointing.v1.InjectedCheckpoint")
+	proto.RegisterType((*InjectedCheckpoint2)(nil), "babylon.checkpointing.v1.InjectedCheckpoint2")
 	proto.RegisterType((*CheckpointStateUpdate)(nil), "babylon.checkpointing.v1.CheckpointStateUpdate")
 	proto.RegisterType((*BlsSig)(nil), "babylon.checkpointing.v1.BlsSig")
 }
@@ -414,61 +616,65 @@ func init() {
 }
 
 var fileDescriptor_73996df9c6aabde4 = []byte{
-	// 853 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x55, 0x4f, 0x6f, 0xe3, 0x44,
-	0x1c, 0x8d, 0x5b, 0x37, 0x6c, 0x26, 0xcd, 0x2a, 0x8c, 0xb6, 0x28, 0xca, 0x4a, 0x49, 0x28, 0x42,
-	0x94, 0x05, 0xd9, 0x6a, 0x56, 0x48, 0xfc, 0x11, 0x82, 0xc4, 0x4d, 0x21, 0xda, 0xa6, 0x5b, 0xd9,
-	0x09, 0x48, 0x2b, 0x21, 0x6b, 0x6c, 0x4f, 0xec, 0x21, 0xb6, 0xc7, 0xf2, 0x8c, 0xbb, 0x1b, 0xee,
-	0x48, 0xa8, 0xa7, 0xfd, 0x02, 0x95, 0x90, 0xf8, 0x02, 0x7c, 0x07, 0x2e, 0x1c, 0xf7, 0x88, 0x16,
-	0x69, 0x41, 0xed, 0x05, 0xf8, 0x14, 0x68, 0xc6, 0x4e, 0xd3, 0x6c, 0x59, 0xb1, 0xa0, 0xde, 0x26,
-	0xcf, 0xef, 0x4d, 0x66, 0xde, 0xef, 0x3d, 0x0d, 0x78, 0xdb, 0x41, 0xce, 0x3c, 0xa4, 0xb1, 0xee,
-	0x06, 0xd8, 0x9d, 0x25, 0x94, 0xc4, 0x9c, 0xc4, 0xbe, 0x7e, 0xbc, 0x7b, 0x09, 0xd0, 0x92, 0x94,
-	0x72, 0x0a, 0x1b, 0x05, 0x55, 0x5b, 0xa1, 0x6a, 0xc7, 0xbb, 0xcd, 0xb6, 0x4f, 0xa9, 0x1f, 0x62,
-	0x5d, 0xf2, 0x9c, 0x6c, 0xaa, 0x73, 0x12, 0x61, 0xc6, 0x51, 0x94, 0xe4, 0xd2, 0xe6, 0x2d, 0x9f,
-	0xfa, 0x54, 0x2e, 0x75, 0xb1, 0x2a, 0xd0, 0xdb, 0x1c, 0xc7, 0x1e, 0x4e, 0x23, 0x12, 0x73, 0x1d,
-	0x39, 0x2e, 0xd1, 0xf9, 0x3c, 0xc1, 0x2c, 0xff, 0xb8, 0xfd, 0xab, 0x02, 0x6a, 0x26, 0x7a, 0x68,
-	0x5c, 0xfc, 0x17, 0xbc, 0x0d, 0x2a, 0x38, 0xa1, 0x6e, 0x60, 0xc7, 0x59, 0xd4, 0x50, 0x3a, 0xca,
-	0x8e, 0x6a, 0xde, 0x90, 0xc0, 0x61, 0x16, 0xc1, 0x77, 0x01, 0x70, 0x42, 0xea, 0xce, 0xec, 0x00,
-	0xb1, 0xa0, 0xb1, 0xd6, 0x51, 0x76, 0x36, 0xfb, 0xb5, 0xa7, 0xcf, 0xda, 0x95, 0xbe, 0x40, 0x3f,
-	0x47, 0x2c, 0x30, 0x2b, 0xce, 0x62, 0x09, 0x5f, 0x03, 0x65, 0x87, 0xf0, 0x08, 0x25, 0x8d, 0x75,
-	0xc1, 0x34, 0x8b, 0x5f, 0x10, 0x81, 0x9a, 0x13, 0x32, 0x3b, 0xca, 0x42, 0x4e, 0x6c, 0x46, 0xfc,
-	0x86, 0x2a, 0x37, 0xfa, 0xf8, 0xe9, 0xb3, 0xf6, 0x07, 0x3e, 0xe1, 0x41, 0xe6, 0x68, 0x2e, 0x8d,
-	0xf4, 0xc2, 0x08, 0x37, 0x40, 0x24, 0xd6, 0x2f, 0x0c, 0x4c, 0xe7, 0x09, 0xa7, 0xba, 0x13, 0xb2,
-	0xdd, 0xee, 0xdd, 0xf7, 0x77, 0x35, 0x8b, 0xf8, 0x31, 0xe2, 0x59, 0x8a, 0xcd, 0xaa, 0x13, 0xb2,
-	0x91, 0xd8, 0xd2, 0x22, 0xfe, 0x87, 0xea, 0x1f, 0xdf, 0xb7, 0x95, 0xed, 0x3f, 0xd7, 0xc0, 0xd6,
-	0xca, 0xed, 0xbe, 0x24, 0x3c, 0x18, 0x61, 0x8e, 0xe0, 0x47, 0x40, 0x75, 0x67, 0x09, 0x97, 0x17,
-	0xac, 0x76, 0xdf, 0xd2, 0x5e, 0x64, 0xba, 0xb6, 0x22, 0x37, 0xa5, 0x08, 0xf6, 0x41, 0x99, 0x71,
-	0xc4, 0x33, 0x26, 0x1d, 0xb8, 0xd9, 0xbd, 0xf3, 0x62, 0xf9, 0x52, 0x6b, 0x49, 0x85, 0x59, 0x28,
-	0xe1, 0x57, 0x40, 0x9c, 0xd7, 0x46, 0xbe, 0x9f, 0xda, 0xc9, 0x2c, 0x37, 0xe8, 0xff, 0x39, 0x70,
-	0x94, 0x39, 0x21, 0x71, 0xef, 0xe1, 0xb9, 0xb0, 0x9e, 0xf5, 0x7c, 0x3f, 0x3d, 0x9a, 0x89, 0x29,
-	0x26, 0xf4, 0x21, 0x4e, 0x6d, 0x96, 0x45, 0xd2, 0x5e, 0xd5, 0xbc, 0x21, 0x01, 0x2b, 0x8b, 0xe0,
-	0x08, 0x54, 0x42, 0x32, 0xc5, 0xee, 0xdc, 0x0d, 0x71, 0x63, 0xa3, 0xb3, 0xbe, 0x53, 0xed, 0xea,
-	0x2f, 0x7b, 0x05, 0x3c, 0x49, 0x3c, 0xc4, 0xb1, 0xb9, 0xdc, 0xa1, 0xf0, 0xfa, 0x47, 0x05, 0xc0,
-	0x61, 0xfc, 0x35, 0x76, 0x39, 0xf6, 0x2e, 0xc5, 0xc9, 0x58, 0x31, 0x5a, 0x7f, 0x49, 0xa3, 0x17,
-	0x73, 0x2a, 0x0c, 0x9f, 0x80, 0x5b, 0xf8, 0x91, 0x8c, 0xb1, 0x67, 0xbb, 0x34, 0x8a, 0x08, 0xb7,
-	0x49, 0x3c, 0xa5, 0xd2, 0xfe, 0x6a, 0xf7, 0x0d, 0x6d, 0x99, 0x70, 0x4d, 0x24, 0x5c, 0x1b, 0x14,
-	0x64, 0x43, 0x72, 0x87, 0xf1, 0x94, 0x9a, 0x10, 0x5f, 0xc1, 0xb6, 0x7f, 0x52, 0xc0, 0xd6, 0x3f,
-	0xde, 0x0e, 0x7e, 0x0a, 0x36, 0xc4, 0x9c, 0xb0, 0x3c, 0xf6, 0x7f, 0x1b, 0x70, 0x2e, 0x84, 0xaf,
-	0x83, 0xcd, 0xa2, 0x29, 0x98, 0xf8, 0x01, 0x97, 0x47, 0x55, 0x45, 0x46, 0x45, 0x39, 0x24, 0x04,
-	0x3f, 0x59, 0x94, 0x49, 0xf4, 0x58, 0x26, 0xa0, 0xda, 0x6d, 0x6a, 0x79, 0xc9, 0xb5, 0x45, 0xc9,
-	0xb5, 0xf1, 0xa2, 0xe4, 0x7d, 0xf5, 0xf1, 0x6f, 0x6d, 0xa5, 0xe8, 0x97, 0x40, 0x0b, 0xe3, 0xbf,
-	0x5d, 0x03, 0xe5, 0x7e, 0xc8, 0x2c, 0xe2, 0x5f, 0x67, 0x77, 0xbf, 0x00, 0xaf, 0x88, 0x7c, 0x8a,
-	0x76, 0xae, 0x5f, 0x47, 0x3b, 0xcb, 0x4e, 0x7e, 0xc4, 0x37, 0xc1, 0x4d, 0x46, 0xfc, 0x18, 0xa7,
-	0x36, 0xf2, 0xbc, 0x14, 0x33, 0x26, 0xd3, 0x59, 0x31, 0x6b, 0x39, 0xda, 0xcb, 0x41, 0xf8, 0x0e,
-	0x78, 0xf5, 0x18, 0x85, 0xc4, 0x43, 0x9c, 0x2e, 0x99, 0x1b, 0x92, 0x59, 0xbf, 0xf8, 0x50, 0x90,
-	0xa5, 0x0f, 0xa5, 0x3b, 0x7f, 0x29, 0xa0, 0xfe, 0xfc, 0x34, 0xa0, 0x06, 0x1a, 0xc6, 0xbd, 0xa3,
-	0xb1, 0x6d, 0x8d, 0x7b, 0xe3, 0x89, 0x65, 0xf7, 0x0c, 0x63, 0x32, 0x9a, 0x1c, 0xf4, 0xc6, 0xc3,
-	0xc3, 0xcf, 0xea, 0xa5, 0x66, 0xfd, 0xe4, 0xb4, 0xb3, 0xd9, 0x73, 0xdd, 0x2c, 0xca, 0x42, 0x24,
-	0x26, 0x0a, 0xb7, 0x01, 0xbc, 0xcc, 0xb7, 0x06, 0xbd, 0x83, 0xc1, 0x5e, 0x5d, 0x69, 0x82, 0x93,
-	0xd3, 0x4e, 0xd9, 0xc2, 0x28, 0xc4, 0x1e, 0xdc, 0x01, 0x5b, 0x2b, 0x9c, 0x49, 0x7f, 0x34, 0x1c,
-	0x8f, 0x07, 0x7b, 0xf5, 0xb5, 0x66, 0xed, 0xe4, 0xb4, 0x53, 0xb1, 0x32, 0x27, 0x22, 0x9c, 0x5f,
-	0x65, 0x1a, 0xf7, 0x0f, 0xf7, 0x87, 0xe6, 0x68, 0xb0, 0x57, 0x5f, 0xcf, 0x99, 0x06, 0x8d, 0xa7,
-	0x24, 0x8d, 0xae, 0x32, 0xf7, 0x87, 0x87, 0xbd, 0x83, 0xe1, 0x83, 0xc1, 0x5e, 0x5d, 0xcd, 0x99,
-	0xfb, 0x24, 0x46, 0x21, 0xf9, 0x06, 0x7b, 0x4d, 0xf5, 0xbb, 0x1f, 0x5a, 0xa5, 0xfe, 0xfd, 0x9f,
-	0xcf, 0x5a, 0xca, 0x93, 0xb3, 0x96, 0xf2, 0xfb, 0x59, 0x4b, 0x79, 0x7c, 0xde, 0x2a, 0x3d, 0x39,
-	0x6f, 0x95, 0x7e, 0x39, 0x6f, 0x95, 0x1e, 0xbc, 0xf7, 0x6f, 0x33, 0x7a, 0xf4, 0xdc, 0x23, 0x24,
-	0x9f, 0x03, 0xa7, 0x2c, 0x03, 0x77, 0xf7, 0xef, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc9, 0x97, 0x52,
-	0x24, 0xaa, 0x06, 0x00, 0x00,
+	// 919 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x56, 0xdd, 0x6e, 0xe3, 0x44,
+	0x14, 0x8e, 0x53, 0x37, 0x6c, 0x26, 0x4d, 0x15, 0x86, 0xed, 0x2a, 0xca, 0x8a, 0x24, 0x14, 0x21,
+	0xc2, 0x82, 0x6c, 0xea, 0x15, 0x12, 0xbf, 0x82, 0xfc, 0x15, 0xa2, 0x6d, 0xba, 0x95, 0x9d, 0x80,
+	0xb4, 0x12, 0xb2, 0xc6, 0xf6, 0xc4, 0x1e, 0x62, 0x7b, 0x2c, 0x7b, 0xdc, 0xdd, 0x70, 0x8f, 0x84,
+	0x7a, 0xb5, 0x2f, 0x50, 0x09, 0x89, 0x17, 0x40, 0xbc, 0x02, 0x37, 0xdc, 0x20, 0xed, 0x25, 0x5a,
+	0xa4, 0x05, 0xb5, 0x37, 0xfc, 0xbc, 0x04, 0xf2, 0xd8, 0x69, 0x9b, 0xcd, 0x16, 0xba, 0xa8, 0x48,
+	0x5c, 0x70, 0x37, 0xf9, 0xfc, 0x9d, 0xc9, 0x39, 0xdf, 0x39, 0xfe, 0x8e, 0xc1, 0x2b, 0x06, 0x32,
+	0x66, 0x2e, 0xf5, 0x65, 0xd3, 0xc1, 0xe6, 0x34, 0xa0, 0xc4, 0x67, 0xc4, 0xb7, 0xe5, 0xfd, 0xad,
+	0x33, 0x80, 0x14, 0x84, 0x94, 0x51, 0x58, 0xcd, 0xa8, 0xd2, 0x02, 0x55, 0xda, 0xdf, 0xaa, 0x35,
+	0x6c, 0x4a, 0x6d, 0x17, 0xcb, 0x9c, 0x67, 0xc4, 0x13, 0x99, 0x11, 0x0f, 0x47, 0x0c, 0x79, 0x41,
+	0x1a, 0x5a, 0xbb, 0x6a, 0x53, 0x9b, 0xf2, 0xa3, 0x9c, 0x9c, 0x32, 0xf4, 0x3a, 0xc3, 0xbe, 0x85,
+	0x43, 0x8f, 0xf8, 0x4c, 0x46, 0x86, 0x49, 0x64, 0x36, 0x0b, 0x70, 0x94, 0x3e, 0xdc, 0xfc, 0x49,
+	0x00, 0x65, 0x15, 0xdd, 0xed, 0x9e, 0xfc, 0x17, 0xbc, 0x0e, 0x8a, 0x38, 0xa0, 0xa6, 0xa3, 0xfb,
+	0xb1, 0x57, 0x15, 0x9a, 0x42, 0x4b, 0x54, 0xaf, 0x70, 0x60, 0x37, 0xf6, 0xe0, 0x6b, 0x00, 0x18,
+	0x2e, 0x35, 0xa7, 0xba, 0x83, 0x22, 0xa7, 0x9a, 0x6f, 0x0a, 0xad, 0xb5, 0x4e, 0xf9, 0xe1, 0xa3,
+	0x46, 0xb1, 0x93, 0xa0, 0x1f, 0xa1, 0xc8, 0x51, 0x8b, 0xc6, 0xfc, 0x08, 0xaf, 0x81, 0x82, 0x41,
+	0x98, 0x87, 0x82, 0xea, 0x4a, 0xc2, 0x54, 0xb3, 0x5f, 0x10, 0x81, 0xb2, 0xe1, 0x46, 0xba, 0x17,
+	0xbb, 0x8c, 0xe8, 0x11, 0xb1, 0xab, 0x22, 0xbf, 0xe8, 0xbd, 0x87, 0x8f, 0x1a, 0x6f, 0xd9, 0x84,
+	0x39, 0xb1, 0x21, 0x99, 0xd4, 0x93, 0x33, 0x21, 0x4c, 0x07, 0x11, 0x5f, 0x3e, 0x11, 0x30, 0x9c,
+	0x05, 0x8c, 0xca, 0x86, 0x1b, 0x6d, 0x29, 0x37, 0xdf, 0xdc, 0x92, 0x34, 0x62, 0xfb, 0x88, 0xc5,
+	0x21, 0x56, 0x4b, 0x86, 0x1b, 0x0d, 0x93, 0x2b, 0x35, 0x62, 0xbf, 0x2d, 0xfe, 0xfa, 0x55, 0x43,
+	0xd8, 0xfc, 0x41, 0x00, 0xeb, 0x0b, 0xd5, 0x29, 0x7f, 0x5d, 0xde, 0xf3, 0xcb, 0xe5, 0xfd, 0xa7,
+	0xea, 0xf9, 0x2d, 0x0f, 0x36, 0x16, 0xea, 0xf9, 0x84, 0x30, 0x67, 0x88, 0x19, 0x82, 0xef, 0x00,
+	0xd1, 0x9c, 0x06, 0x8c, 0x57, 0x54, 0x52, 0x5e, 0x96, 0xce, 0x1b, 0x22, 0x69, 0x21, 0x5c, 0xe5,
+	0x41, 0xb0, 0x03, 0x0a, 0x11, 0x43, 0x2c, 0x8e, 0x78, 0xc9, 0xeb, 0xca, 0x8d, 0xf3, 0xc3, 0x4f,
+	0x63, 0x35, 0x1e, 0xa1, 0x66, 0x91, 0xf0, 0x53, 0x90, 0xe4, 0xab, 0x23, 0xdb, 0x0e, 0xf5, 0x60,
+	0x9a, 0x0a, 0xf4, 0xcf, 0x14, 0xd8, 0x8b, 0x0d, 0x97, 0x98, 0xb7, 0xf0, 0x2c, 0x91, 0x3e, 0x6a,
+	0xdb, 0x76, 0xb8, 0x37, 0x4d, 0xda, 0x16, 0xd0, 0xbb, 0x38, 0xd4, 0xa3, 0xd8, 0xe3, 0xf2, 0x8a,
+	0xea, 0x15, 0x0e, 0x68, 0xb1, 0x07, 0x87, 0xa0, 0xe8, 0x92, 0x09, 0x36, 0x67, 0xa6, 0x8b, 0xab,
+	0xab, 0xcd, 0x95, 0x56, 0x49, 0x91, 0x2f, 0x5a, 0x02, 0x1e, 0x07, 0x16, 0x62, 0x58, 0x3d, 0xbd,
+	0x21, 0xd3, 0xfa, 0x8f, 0x3c, 0xb8, 0xf6, 0x44, 0xad, 0x15, 0xf8, 0xee, 0x82, 0xd8, 0xad, 0x0b,
+	0x8a, 0xad, 0xfc, 0xaf, 0xf6, 0xf9, 0x6a, 0x7f, 0x23, 0x00, 0x38, 0xf0, 0x3f, 0xc3, 0x26, 0xc3,
+	0xd6, 0x19, 0x33, 0xea, 0x2e, 0x28, 0x2d, 0x5f, 0x50, 0xe9, 0x79, 0xa7, 0x32, 0xc1, 0xc7, 0xe0,
+	0x2a, 0xbe, 0xc7, 0x4d, 0xd0, 0xd2, 0x4d, 0xea, 0x79, 0x84, 0xe9, 0xc4, 0x9f, 0x50, 0x2e, 0x7f,
+	0x49, 0x79, 0x51, 0x3a, 0xf5, 0x47, 0x29, 0xf1, 0x47, 0xa9, 0x9f, 0x91, 0xbb, 0x9c, 0x3b, 0xf0,
+	0x27, 0x54, 0x85, 0x78, 0x09, 0xdb, 0xfc, 0x56, 0x00, 0xcf, 0x2d, 0xa7, 0xac, 0xc0, 0xde, 0x42,
+	0xce, 0xaf, 0x3f, 0x65, 0xce, 0xca, 0xbf, 0x9b, 0xf4, 0x77, 0x02, 0xd8, 0x78, 0x62, 0x4b, 0xe0,
+	0x07, 0x60, 0x35, 0x19, 0x2e, 0xcc, 0xf3, 0x7e, 0xba, 0xa9, 0x4c, 0x03, 0xe1, 0x0b, 0x60, 0x2d,
+	0x73, 0x4f, 0x4c, 0x6c, 0x87, 0xf1, 0x54, 0xc5, 0xc4, 0xc6, 0x12, 0xff, 0xe4, 0x10, 0x7c, 0x7f,
+	0x6e, 0xb0, 0xc9, 0xea, 0xe2, 0x63, 0x5b, 0x52, 0x6a, 0x52, 0xba, 0xd7, 0xa4, 0xf9, 0x5e, 0x93,
+	0x46, 0xf3, 0xbd, 0xd6, 0x11, 0xef, 0xff, 0xdc, 0x10, 0x32, 0x0b, 0x4e, 0xd0, 0x6c, 0x5a, 0xbe,
+	0xc8, 0x83, 0x42, 0xc7, 0x8d, 0x34, 0x62, 0x5f, 0xe6, 0xba, 0xfa, 0x18, 0x3c, 0x93, 0xbc, 0x54,
+	0x89, 0x81, 0xaf, 0x5c, 0x86, 0x81, 0x17, 0x8c, 0x34, 0xc5, 0x97, 0xc0, 0x7a, 0x44, 0x6c, 0x1f,
+	0x87, 0x3a, 0xb2, 0xac, 0x10, 0x47, 0x11, 0x7f, 0xa5, 0x8a, 0x6a, 0x39, 0x45, 0xdb, 0x29, 0x08,
+	0x5f, 0x05, 0xcf, 0xee, 0x23, 0x97, 0x58, 0x88, 0xd1, 0x53, 0xe6, 0x2a, 0x67, 0x56, 0x4e, 0x1e,
+	0x64, 0x64, 0xae, 0x43, 0xee, 0xc6, 0xef, 0x02, 0xa8, 0x3c, 0xde, 0x0d, 0x28, 0x81, 0x6a, 0xf7,
+	0xd6, 0xde, 0x48, 0xd7, 0x46, 0xed, 0xd1, 0x58, 0xd3, 0xdb, 0xdd, 0xee, 0x78, 0x38, 0xde, 0x69,
+	0x8f, 0x06, 0xbb, 0x1f, 0x56, 0x72, 0xb5, 0xca, 0xc1, 0x61, 0x73, 0xad, 0x6d, 0x9a, 0xb1, 0x17,
+	0xbb, 0x28, 0xe9, 0x28, 0xdc, 0x04, 0xf0, 0x2c, 0x5f, 0xeb, 0xb7, 0x77, 0xfa, 0xbd, 0x8a, 0x50,
+	0x03, 0x07, 0x87, 0xcd, 0x82, 0x86, 0x91, 0x8b, 0x2d, 0xd8, 0x02, 0x1b, 0x0b, 0x9c, 0x71, 0x67,
+	0x38, 0x18, 0x8d, 0xfa, 0xbd, 0x4a, 0xbe, 0x56, 0x3e, 0x38, 0x6c, 0x16, 0xb5, 0xd8, 0xf0, 0x08,
+	0x63, 0xcb, 0xcc, 0xee, 0xed, 0xdd, 0xed, 0x81, 0x3a, 0xec, 0xf7, 0x2a, 0x2b, 0x29, 0xb3, 0x4b,
+	0xfd, 0x09, 0x09, 0xbd, 0x65, 0xe6, 0xf6, 0x60, 0xb7, 0xbd, 0x33, 0xb8, 0xd3, 0xef, 0x55, 0xc4,
+	0x94, 0xb9, 0x4d, 0x7c, 0xe4, 0x92, 0xcf, 0xb1, 0x55, 0x13, 0xbf, 0xfc, 0xba, 0x9e, 0xeb, 0xdc,
+	0xfe, 0xfe, 0xa8, 0x2e, 0x3c, 0x38, 0xaa, 0x0b, 0xbf, 0x1c, 0xd5, 0x85, 0xfb, 0xc7, 0xf5, 0xdc,
+	0x83, 0xe3, 0x7a, 0xee, 0xc7, 0xe3, 0x7a, 0xee, 0xce, 0x1b, 0x7f, 0xd7, 0xa3, 0x7b, 0x8f, 0x7d,
+	0x77, 0xf1, 0x2f, 0x20, 0xa3, 0xc0, 0x07, 0xee, 0xe6, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff, 0x02,
+	0xf0, 0x3d, 0x77, 0x9d, 0x09, 0x00, 0x00,
 }
 
 func (this *RawCheckpoint) Equal(that interface{}) bool {
@@ -512,6 +718,43 @@ func (this *RawCheckpoint) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *RawCheckpoint2) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*RawCheckpoint2)
+	if !ok {
+		that2, ok := that.(RawCheckpoint2)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.EpochNum != that1.EpochNum {
+		return false
+	}
+	if !bytes.Equal(this.BlockHash, that1.BlockHash) {
+		return false
+	}
+	if !bytes.Equal(this.Bitmap, that1.Bitmap) {
+		return false
+	}
+	if that1.BlsMultiSig == nil {
+		if this.BlsMultiSig != nil {
+			return false
+		}
+	} else if !this.BlsMultiSig.Equal(*that1.BlsMultiSig) {
+		return false
+	}
+	return true
+}
 func (this *RawCheckpointWithMeta) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -520,6 +763,51 @@ func (this *RawCheckpointWithMeta) Equal(that interface{}) bool {
 	that1, ok := that.(*RawCheckpointWithMeta)
 	if !ok {
 		that2, ok := that.(RawCheckpointWithMeta)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if !this.Ckpt.Equal(that1.Ckpt) {
+		return false
+	}
+	if this.Status != that1.Status {
+		return false
+	}
+	if that1.BlsAggrPk == nil {
+		if this.BlsAggrPk != nil {
+			return false
+		}
+	} else if !this.BlsAggrPk.Equal(*that1.BlsAggrPk) {
+		return false
+	}
+	if this.PowerSum != that1.PowerSum {
+		return false
+	}
+	if len(this.Lifecycle) != len(that1.Lifecycle) {
+		return false
+	}
+	for i := range this.Lifecycle {
+		if !this.Lifecycle[i].Equal(that1.Lifecycle[i]) {
+			return false
+		}
+	}
+	return true
+}
+func (this *RawCheckpointWithMeta2) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*RawCheckpointWithMeta2)
+	if !ok {
+		that2, ok := that.(RawCheckpointWithMeta2)
 		if ok {
 			that1 = &that2
 		} else {
@@ -650,6 +938,60 @@ func (m *RawCheckpoint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *RawCheckpoint2) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RawCheckpoint2) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RawCheckpoint2) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.BlsMultiSig != nil {
+		{
+			size := m.BlsMultiSig.Size()
+			i -= size
+			if _, err := m.BlsMultiSig.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintCheckpoint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Bitmap) > 0 {
+		i -= len(m.Bitmap)
+		copy(dAtA[i:], m.Bitmap)
+		i = encodeVarintCheckpoint(dAtA, i, uint64(len(m.Bitmap)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.BlockHash) > 0 {
+		i -= len(m.BlockHash)
+		copy(dAtA[i:], m.BlockHash)
+		i = encodeVarintCheckpoint(dAtA, i, uint64(len(m.BlockHash)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.EpochNum != 0 {
+		i = encodeVarintCheckpoint(dAtA, i, uint64(m.EpochNum))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *RawCheckpointWithMeta) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -666,6 +1008,77 @@ func (m *RawCheckpointWithMeta) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *RawCheckpointWithMeta) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Lifecycle) > 0 {
+		for iNdEx := len(m.Lifecycle) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Lifecycle[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheckpoint(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if m.PowerSum != 0 {
+		i = encodeVarintCheckpoint(dAtA, i, uint64(m.PowerSum))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.BlsAggrPk != nil {
+		{
+			size := m.BlsAggrPk.Size()
+			i -= size
+			if _, err := m.BlsAggrPk.MarshalTo(dAtA[i:]); err != nil {
+				return 0, err
+			}
+			i = encodeVarintCheckpoint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Status != 0 {
+		i = encodeVarintCheckpoint(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.Ckpt != nil {
+		{
+			size, err := m.Ckpt.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCheckpoint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *RawCheckpointWithMeta2) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *RawCheckpointWithMeta2) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *RawCheckpointWithMeta2) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -768,6 +1181,53 @@ func (m *InjectedCheckpoint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *InjectedCheckpoint2) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *InjectedCheckpoint2) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *InjectedCheckpoint2) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.ExtendedCommitInfo != nil {
+		{
+			size, err := m.ExtendedCommitInfo.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCheckpoint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Ckpt != nil {
+		{
+			size, err := m.Ckpt.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCheckpoint(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *CheckpointStateUpdate) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -789,12 +1249,12 @@ func (m *CheckpointStateUpdate) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	var l int
 	_ = l
 	if m.BlockTime != nil {
-		n4, err4 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
-		if err4 != nil {
-			return 0, err4
+		n7, err7 := github_com_cosmos_gogoproto_types.StdTimeMarshalTo(*m.BlockTime, dAtA[i-github_com_cosmos_gogoproto_types.SizeOfStdTime(*m.BlockTime):])
+		if err7 != nil {
+			return 0, err7
 		}
-		i -= n4
-		i = encodeVarintCheckpoint(dAtA, i, uint64(n4))
+		i -= n7
+		i = encodeVarintCheckpoint(dAtA, i, uint64(n7))
 		i--
 		dAtA[i] = 0x1a
 	}
@@ -912,6 +1372,30 @@ func (m *RawCheckpoint) Size() (n int) {
 	return n
 }
 
+func (m *RawCheckpoint2) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EpochNum != 0 {
+		n += 1 + sovCheckpoint(uint64(m.EpochNum))
+	}
+	l = len(m.BlockHash)
+	if l > 0 {
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	l = len(m.Bitmap)
+	if l > 0 {
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	if m.BlsMultiSig != nil {
+		l = m.BlsMultiSig.Size()
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	return n
+}
+
 func (m *RawCheckpointWithMeta) Size() (n int) {
 	if m == nil {
 		return 0
@@ -941,7 +1425,53 @@ func (m *RawCheckpointWithMeta) Size() (n int) {
 	return n
 }
 
+func (m *RawCheckpointWithMeta2) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Ckpt != nil {
+		l = m.Ckpt.Size()
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	if m.Status != 0 {
+		n += 1 + sovCheckpoint(uint64(m.Status))
+	}
+	if m.BlsAggrPk != nil {
+		l = m.BlsAggrPk.Size()
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	if m.PowerSum != 0 {
+		n += 1 + sovCheckpoint(uint64(m.PowerSum))
+	}
+	if len(m.Lifecycle) > 0 {
+		for _, e := range m.Lifecycle {
+			l = e.Size()
+			n += 1 + l + sovCheckpoint(uint64(l))
+		}
+	}
+	return n
+}
+
 func (m *InjectedCheckpoint) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Ckpt != nil {
+		l = m.Ckpt.Size()
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	if m.ExtendedCommitInfo != nil {
+		l = m.ExtendedCommitInfo.Size()
+		n += 1 + l + sovCheckpoint(uint64(l))
+	}
+	return n
+}
+
+func (m *InjectedCheckpoint2) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1092,6 +1622,178 @@ func (m *RawCheckpoint) Unmarshal(dAtA []byte) error {
 			m.BlockHash = &v
 			if err := m.BlockHash.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Bitmap", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Bitmap = append(m.Bitmap[:0], dAtA[iNdEx:postIndex]...)
+			if m.Bitmap == nil {
+				m.Bitmap = []byte{}
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlsMultiSig", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_crypto_bls12381.Signature
+			m.BlsMultiSig = &v
+			if err := m.BlsMultiSig.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCheckpoint(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *RawCheckpoint2) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCheckpoint
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RawCheckpoint2: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RawCheckpoint2: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNum", wireType)
+			}
+			m.EpochNum = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochNum |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlockHash", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BlockHash = append(m.BlockHash[:0], dAtA[iNdEx:postIndex]...)
+			if m.BlockHash == nil {
+				m.BlockHash = []byte{}
 			}
 			iNdEx = postIndex
 		case 3:
@@ -1377,6 +2079,199 @@ func (m *RawCheckpointWithMeta) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *RawCheckpointWithMeta2) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCheckpoint
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: RawCheckpointWithMeta2: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: RawCheckpointWithMeta2: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ckpt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Ckpt == nil {
+				m.Ckpt = &RawCheckpoint2{}
+			}
+			if err := m.Ckpt.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			m.Status = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Status |= CheckpointStatus(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BlsAggrPk", wireType)
+			}
+			var byteLen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				byteLen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if byteLen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			var v github_com_babylonchain_babylon_crypto_bls12381.PublicKey
+			m.BlsAggrPk = &v
+			if err := m.BlsAggrPk.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PowerSum", wireType)
+			}
+			m.PowerSum = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.PowerSum |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Lifecycle", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Lifecycle = append(m.Lifecycle, &CheckpointStateUpdate{})
+			if err := m.Lifecycle[len(m.Lifecycle)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCheckpoint(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *InjectedCheckpoint) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1437,6 +2332,128 @@ func (m *InjectedCheckpoint) Unmarshal(dAtA []byte) error {
 			}
 			if m.Ckpt == nil {
 				m.Ckpt = &RawCheckpointWithMeta{}
+			}
+			if err := m.Ckpt.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExtendedCommitInfo", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.ExtendedCommitInfo == nil {
+				m.ExtendedCommitInfo = &types.ExtendedCommitInfo{}
+			}
+			if err := m.ExtendedCommitInfo.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCheckpoint(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *InjectedCheckpoint2) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCheckpoint
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: InjectedCheckpoint2: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: InjectedCheckpoint2: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ckpt", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCheckpoint
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthCheckpoint
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Ckpt == nil {
+				m.Ckpt = &RawCheckpointWithMeta2{}
 			}
 			if err := m.Ckpt.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err

@@ -106,7 +106,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 }
 
 func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epoch uint64, extendedVotes []abci.ExtendedVoteInfo) (*ckpttypes.RawCheckpointWithMeta, error) {
-	prevBlockID, err := h.findLastBlockHash(extendedVotes)
+	prevBlockID, err := FindLastBlockHash(extendedVotes)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (h *ProposalHandler) getValidBlsSigs(ctx sdk.Context, extendedVotes []abci.
 // as CometBFT does not verify vote extensions once it has achieved >2/3 voting power in a block.
 // Contract: This function should only be called for Vote Extensions
 // that have been included in a previous block.
-func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInfo) ([]byte, error) {
+func FindLastBlockHash(extendedVotes []abci.ExtendedVoteInfo) ([]byte, error) {
 	// Mapping between block hashes and voting power committed to them
 	blockHashes := make(map[string]int64, 0)
 	// Iterate over vote extensions and if they have a valid structure
@@ -351,7 +351,7 @@ func extractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, err
 
 	var injectedCkpt ckpttypes.InjectedCheckpoint
 	if err := injectedCkpt.Unmarshal(injectedTx); err != nil {
-		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w", err)
+		return nil, fmt.Errorf("failed to decode injected vote extension tx: %w %s", err, hex.EncodeToString(injectedTx))
 	}
 
 	return &injectedCkpt, nil
