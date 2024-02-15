@@ -109,7 +109,7 @@ func (h *Helper) getExtendedVotesFromValSet(epochNum, height uint64, blockHash c
 		sig := bls12381.Sign(sk, signBytes)
 		ve := checkpointingtypes.VoteExtension{
 			Signer:    genesisKeys[i].ValidatorAddress,
-			BlockHash: blockHash,
+			BlockHash: &blockHash,
 			EpochNum:  epochNum,
 			Height:    height,
 			BlsSig:    &sig,

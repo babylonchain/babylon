@@ -20,7 +20,7 @@ func GenRandomVoteExtension(
 		sig := GenRandomBlsMultiSig(r)
 		ve := checkpointingtypes.VoteExtension{
 			Signer:    genesisKeys[i].ValidatorAddress,
-			BlockHash: blockHash,
+			BlockHash: &blockHash,
 			EpochNum:  epochNum,
 			Height:    height,
 			BlsSig:    &sig,
