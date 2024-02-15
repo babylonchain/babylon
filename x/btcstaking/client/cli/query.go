@@ -23,12 +23,40 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
+	cmd.AddCommand(CmdFinalityProvider())
 	cmd.AddCommand(CmdFinalityProviders())
 	cmd.AddCommand(CmdBTCDelegations())
 	cmd.AddCommand(CmdFinalityProvidersAtHeight())
 	cmd.AddCommand(CmdFinalityProviderPowerAtHeight())
 	cmd.AddCommand(CmdActivatedHeight())
 	cmd.AddCommand(CmdFinalityProviderDelegations())
+
+	return cmd
+}
+
+func CmdFinalityProvider() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "finality-provider [fp_btc_pk_hex]",
+		Short: "retrieve a finality provider",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			res, err := queryClient.FinalityProvider(
+				cmd.Context(),
+				&types.QueryFinalityProviderRequest{
+					FpBtcPkHex: args[0],
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
