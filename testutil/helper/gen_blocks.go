@@ -198,12 +198,15 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	if len(ppRes.Txs) > 0 {
 		blockTxs = ppRes.Txs
 	}
-	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    ppRes.Txs,
 		Height: newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
 	}
 
 	// 4. finalize block
@@ -293,12 +296,112 @@ func (h *Helper) ApplyEmptyBlockWithInvalidBLSSig(r *rand.Rand) (sdk.Context, er
 	if len(ppRes.Txs) > 0 {
 		blockTxs = ppRes.Txs
 	}
-	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    ppRes.Txs,
 		Height: newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
+	}
+
+	// 4. finalize block
+	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Txs:                blockTxs,
+		Height:             newHeader.Height,
+		NextValidatorsHash: newHeader.NextValidatorsHash,
+		Hash:               newHeader.Hash(),
+	})
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	newHeader.AppHash = resp.AppHash
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
+		Height:  newHeader.Height,
+		AppHash: resp.AppHash,
+		Hash:    newHeader.Hash(),
+	}).WithBlockHeader(*newHeader.ToProto())
+
+	_, err = h.App.Commit()
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	return h.Ctx, nil
+}
+
+func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.Context, error) {
+	emptyCtx := sdk.Context{}
+	if h.App.LastBlockHeight() == 0 {
+		if err := h.genAndApplyEmptyBlock(); err != nil {
+			return emptyCtx, err
+		}
+	}
+	valSetWithKeys := h.GenValidators
+	prevHeight := h.App.LastBlockHeight()
+	epoch := h.App.EpochingKeeper.GetEpoch(h.Ctx)
+	newHeight := prevHeight + 1
+
+	// 1. get previous vote extensions
+	prevEpoch := epoch.EpochNumber
+	blockHash := datagen.GenRandomBlockHash(r)
+	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys)
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	// 2. create new header
+	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
+	if err != nil {
+		return emptyCtx, err
+	}
+	valhash := CalculateValHash(valSet)
+	newHeader := cmttypes.Header{
+		Height:             newHeight,
+		ValidatorsHash:     valhash,
+		NextValidatorsHash: valhash,
+		LastBlockID: cmttypes.BlockID{
+			Hash: datagen.GenRandomByteArray(r, 32),
+		},
+	}
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
+		Height: newHeader.Height,
+		Hash:   newHeader.Hash(),
+	}).WithBlockHeader(*newHeader.ToProto())
+
+	// 3. prepare proposal with previous BLS sigs
+	var blockTxs [][]byte
+	if epoch.IsVoteExtensionProposal(h.Ctx) {
+		// nullifies a subset of extended votes
+		numEmptyVoteExts := len(extendedVotes)/3 - 1
+		for i := 0; i < numEmptyVoteExts; i++ {
+			extendedVotes[i] = abci.ExtendedVoteInfo{
+				// generate random vote extension including empty one
+				VoteExtension: datagen.GenRandomByteArray(r, uint64(r.Intn(10))),
+			}
+		}
+	}
+	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
+		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
+		Height:          newHeight,
+	})
+	if err != nil {
+		return emptyCtx, err
+	}
+	blockTxs = ppRes.Txs
+
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
+		Txs:    blockTxs,
+		Height: newHeight,
+	})
+	if err != nil {
+		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
 	}
 
 	// 4. finalize block
