@@ -110,6 +110,9 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 	if err != nil {
 		return nil, err
 	}
+	// if !bytes.Equal(prevBlockID, ctx.BlockHeader().LastBlockId.Hash) {
+	// 	return nil, fmt.Errorf("expected block hash: %x, got: %x", prevBlockID, ctx.HeaderHash())
+	// }
 	ckpt := ckpttypes.NewCheckpointWithMeta(ckpttypes.NewCheckpoint(epoch, prevBlockID), ckpttypes.Accumulating)
 	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes)
 	vals := h.ckptKeeper.GetValidatorSet(ctx, epoch)
@@ -197,14 +200,10 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 		// accumulate voting power from all the votes
 		totalPower += vote.Validator.Power
 		var ve ckpttypes.VoteExtension
-		if err := ve.Unmarshal(vote.VoteExtension); err != nil {
+		if len(vote.VoteExtension) == 0 {
 			continue
 		}
-		// TODO: some validators might submit empty vote extensions yet
-		// passing the verification. Probably a Cosmos SDK bug, need to
-		// find out why
-		// Thus, we need to ensure block hash is not nil
-		if ve.BlockHash == nil {
+		if err := ve.Unmarshal(vote.VoteExtension); err != nil {
 			continue
 		}
 		// Encode the block hash using hex

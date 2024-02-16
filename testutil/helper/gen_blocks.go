@@ -378,7 +378,10 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 		// nullifies a subset of extended votes
 		numEmptyVoteExts := len(extendedVotes)/3 - 1
 		for i := 0; i < numEmptyVoteExts; i++ {
-			extendedVotes[i] = abci.ExtendedVoteInfo{}
+			extendedVotes[i] = abci.ExtendedVoteInfo{
+				// generate random vote extension including empty one
+				VoteExtension: datagen.GenRandomByteArray(r, uint64(r.Intn(10))),
+			}
 		}
 	}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
