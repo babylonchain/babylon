@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"github.com/boljen/go-bitmap"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -126,7 +127,9 @@ func (cm *RawCheckpointWithMeta) RecordStateUpdate(ctx context.Context, status C
 
 func (bh *BlockHash) Unmarshal(bz []byte) error {
 	if len(bz) != HashSize {
-		return errors.New("invalid appHash length")
+		return fmt.Errorf(
+			"invalid block hash length, expected: %d, got: %d",
+			HashSize, len(bz))
 	}
 	*bh = bz
 	return nil

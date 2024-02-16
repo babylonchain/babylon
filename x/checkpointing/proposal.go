@@ -192,17 +192,29 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 	blockHashes := make(map[string]int64, 0)
 	// Iterate over vote extensions and if they have a valid structure
 	// increase the voting power of the block hash they commit to
+	var totalPower int64 = 0
 	for _, vote := range extendedVotes {
+		// accumulate voting power from all the votes
+		totalPower += vote.Validator.Power
 		var ve ckpttypes.VoteExtension
+		if len(vote.VoteExtension) == 0 {
+			continue
+		}
 		if err := ve.Unmarshal(vote.VoteExtension); err != nil {
 			continue
 		}
+		if ve.BlockHash == nil {
+			continue
+		}
+		bHash, err := ve.BlockHash.Marshal()
+		if err != nil {
+			continue
+		}
 		// Encode the block hash using hex
-		blockHashes[hex.EncodeToString(ve.BlockHash.MustMarshal())] += vote.Validator.Power
+		blockHashes[hex.EncodeToString(bHash)] += vote.Validator.Power
 	}
 	var (
 		maxPower     int64 = 0
-		totalPower   int64 = 0
 		resBlockHash string
 	)
 	// Find the block hash that has the maximum voting power committed to it
@@ -211,7 +223,6 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 			resBlockHash = blockHash
 			maxPower = power
 		}
-		totalPower += power
 	}
 	if len(resBlockHash) == 0 {
 		return nil, fmt.Errorf("could not find the block hash")
@@ -249,7 +260,8 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			// 1. extract the special tx containing the checkpoint
 			injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
 			if err != nil {
-				h.logger.Error("cannot get injected checkpoint", "err", err)
+				h.logger.Error(
+					"processProposal: failed to extract injected checkpoint from the tx set", "err", err)
 				// should not return error here as error will cause panic
 				return resReject, nil
 			}
@@ -325,7 +337,8 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 		// 1. extract the special tx containing BLS sigs
 		injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
 		if err != nil {
-			return res, fmt.Errorf("failed to get extract injected checkpoint from the tx set: %w", err)
+			return res, fmt.Errorf(
+				"preblocker: failed to extract injected checkpoint from the tx set: %w", err)
 		}
 
 		// 2. update checkpoint
@@ -346,7 +359,7 @@ func extractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, err
 	injectedTx := txs[defaultInjectedTxIndex]
 
 	if len(injectedTx) == 0 {
-		return nil, fmt.Errorf("err in PreBlocker: the injected vote extensions tx is empty")
+		return nil, fmt.Errorf("the injected vote extensions tx is empty")
 	}
 
 	var injectedCkpt ckpttypes.InjectedCheckpoint

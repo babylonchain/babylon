@@ -14,7 +14,7 @@ import (
 // FuzzAddBLSSigVoteExtension_MultipleVals tests adding BLS signatures via VoteExtension
 // with multiple validators
 func FuzzAddBLSSigVoteExtension_MultipleVals(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 4)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -47,7 +47,7 @@ func FuzzAddBLSSigVoteExtension_MultipleVals(f *testing.F) {
 // FuzzAddBLSSigVoteExtension_InsufficientVotingPower tests adding BLS signatures
 // with insufficient voting power
 func FuzzAddBLSSigVoteExtension_InsufficientVotingPower(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 4)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -78,7 +78,7 @@ func FuzzAddBLSSigVoteExtension_InsufficientVotingPower(f *testing.F) {
 // FuzzAddBLSSigVoteExtension_InvalidBLSSig tests adding BLS signatures
 // with invalid BLS signature
 func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
-	datagen.AddRandomSeedsToFuzzer(f, 4)
+	datagen.AddRandomSeedsToFuzzer(f, 10)
 
 	f.Fuzz(func(t *testing.T, seed int64) {
 		r := rand.New(rand.NewSource(seed))
@@ -97,5 +97,41 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 				require.Error(t, err)
 			}
 		}
+	})
+}
+
+// FuzzAddBLSSigVoteExtension_EmptyVoteExtensions tests resilience against
+// empty vote extensions
+func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 10)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ek := helper.App.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+
+		epoch := ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// go to block 10, ensure the checkpoint is finalized
+		interval := ek.GetParams(helper.Ctx).EpochInterval
+		for i := uint64(0); i < interval-2; i++ {
+			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+			require.NoError(t, err)
+		}
+		// height 11, i.e., 1st block of next epoch
+		_, err = helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+		require.NoError(t, err)
+
+		epoch = ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
+
+		ckpt, err := ck.GetRawCheckpoint(helper.Ctx, epoch.EpochNumber-1)
+		require.NoError(t, err)
+		require.Equal(t, types.Sealed, ckpt.Status)
 	})
 }
