@@ -204,7 +204,7 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 			continue
 		}
 		// Encode the block hash using hex
-		blockHashes[hex.EncodeToString(ve.BlockHash.MustMarshal())] += vote.Validator.Power
+		blockHashes[hex.EncodeToString(*ve.BlockHash)] += vote.Validator.Power
 	}
 	var (
 		maxPower     int64 = 0
