@@ -367,6 +367,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 	}).WithBlockHeader(*newHeader.ToProto())
 
 	// 3. prepare proposal with previous BLS sigs
+	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
 		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
 		Height:          newHeight,
@@ -375,20 +376,26 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 		return emptyCtx, err
 	}
 
-	// nullifies a subset of extended votes
-	var injectedCkpt ckpttypes.InjectedCheckpoint
-	err = injectedCkpt.Unmarshal(ppRes.Txs[0])
-	h.NoError(err)
-	numEmptyVoteExts := len(extendedVotes)/3 - 1
-	for i := 0; i < numEmptyVoteExts; i++ {
-		injectedCkpt.ExtendedCommitInfo.Votes[i].VoteExtension = []byte{}
+	if len(ppRes.Txs) > 0 {
+		// get injected checkpoint
+		var injectedCkpt ckpttypes.InjectedCheckpoint
+		err = injectedCkpt.Unmarshal(ppRes.Txs[0])
+		h.NoError(err)
+		// nullifies a subset of extended votes
+		numEmptyVoteExts := len(extendedVotes)/3 - 1
+		for i := 0; i < numEmptyVoteExts; i++ {
+			injectedCkpt.ExtendedCommitInfo.Votes[i] = abci.ExtendedVoteInfo{}
+		}
+		injectedCkptBytes, err := injectedCkpt.Marshal()
+		h.NoError(err)
+		// write back
+		ppRes.Txs[0] = injectedCkptBytes
+
+		blockTxs = ppRes.Txs
 	}
-	injectedCkptWithEmptyVoteExts, err := injectedCkpt.Marshal()
-	h.NoError(err)
-	ppRes.Txs[0] = injectedCkptWithEmptyVoteExts
 
 	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
-		Txs:    ppRes.Txs,
+		Txs:    blockTxs,
 		Height: newHeight,
 	})
 	if err != nil {
@@ -397,7 +404,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 
 	// 4. finalize block
 	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Txs:                ppRes.Txs,
+		Txs:                blockTxs,
 		Height:             newHeader.Height,
 		NextValidatorsHash: newHeader.NextValidatorsHash,
 		Hash:               newHeader.Hash(),
