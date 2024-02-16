@@ -70,11 +70,11 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			return proposalRes, nil
 		}
 
-		panic("DEBUGGGGGGGG")
-
 		if len(req.LocalLastCommit.Votes) == 0 {
 			return proposalRes, fmt.Errorf("no extended votes received from the last block")
 		}
+
+		req.LocalLastCommit.Votes[0] = abci.ExtendedVoteInfo{}
 
 		// 1. verify the validity of vote extensions (2/3 majority is achieved)
 		err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), req.LocalLastCommit)
