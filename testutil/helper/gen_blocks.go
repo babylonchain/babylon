@@ -373,7 +373,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 	}).WithBlockHeader(*newHeader.ToProto())
 
 	// 3. prepare proposal with previous BLS sigs
-	blockTxs := [][]byte{}
+	var blockTxs [][]byte
 	if epoch.IsVoteExtensionProposal(h.Ctx) {
 		// nullifies a subset of extended votes
 		numEmptyVoteExts := len(extendedVotes)/3 - 1
