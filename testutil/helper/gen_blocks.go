@@ -198,12 +198,15 @@ func (h *Helper) ApplyEmptyBlockWithValSet(r *rand.Rand, valSetWithKeys *datagen
 	if len(ppRes.Txs) > 0 {
 		blockTxs = ppRes.Txs
 	}
-	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    ppRes.Txs,
 		Height: newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
 	}
 
 	// 4. finalize block
@@ -293,12 +296,15 @@ func (h *Helper) ApplyEmptyBlockWithInvalidBLSSig(r *rand.Rand) (sdk.Context, er
 	if len(ppRes.Txs) > 0 {
 		blockTxs = ppRes.Txs
 	}
-	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    ppRes.Txs,
 		Height: newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
 	}
 
 	// 4. finalize block
@@ -394,12 +400,15 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 		blockTxs = ppRes.Txs
 	}
 
-	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+	processRes, err := h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    blockTxs,
 		Height: newHeight,
 	})
 	if err != nil {
 		return emptyCtx, err
+	}
+	if processRes.Status == abci.ResponseProcessProposal_REJECT {
+		return emptyCtx, fmt.Errorf("rejected proposal")
 	}
 
 	// 4. finalize block
