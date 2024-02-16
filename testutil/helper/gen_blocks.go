@@ -327,6 +327,98 @@ func (h *Helper) ApplyEmptyBlockWithInvalidBLSSig(r *rand.Rand) (sdk.Context, er
 	return h.Ctx, nil
 }
 
+func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.Context, error) {
+	emptyCtx := sdk.Context{}
+	if h.App.LastBlockHeight() == 0 {
+		if err := h.genAndApplyEmptyBlock(); err != nil {
+			return emptyCtx, err
+		}
+	}
+	valSetWithKeys := h.GenValidators
+	prevHeight := h.App.LastBlockHeight()
+	epoch := h.App.EpochingKeeper.GetEpoch(h.Ctx)
+	newHeight := prevHeight + 1
+
+	// 1. get previous vote extensions
+	prevEpoch := epoch.EpochNumber
+	blockHash := datagen.GenRandomBlockHash(r)
+	extendedVotes, err := h.getExtendedVotesFromValSet(prevEpoch, uint64(prevHeight), blockHash, valSetWithKeys)
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	// 2. create new header
+	valSet, err := h.App.StakingKeeper.GetLastValidators(h.Ctx)
+	if err != nil {
+		return emptyCtx, err
+	}
+	valhash := CalculateValHash(valSet)
+	newHeader := cmttypes.Header{
+		Height:             newHeight,
+		ValidatorsHash:     valhash,
+		NextValidatorsHash: valhash,
+		LastBlockID: cmttypes.BlockID{
+			Hash: datagen.GenRandomByteArray(r, 32),
+		},
+	}
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
+		Height: newHeader.Height,
+		Hash:   newHeader.Hash(),
+	}).WithBlockHeader(*newHeader.ToProto())
+
+	// nullifies a subset of extended votes
+	numEmptyVoteExts := len(extendedVotes)/3 - 1
+	for i := 0; i < numEmptyVoteExts; i++ {
+		extendedVotes[i].VoteExtension = []byte{}
+	}
+
+	// 3. prepare proposal with previous BLS sigs
+	blockTxs := [][]byte{}
+	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
+		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
+		Height:          newHeight,
+	})
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	if len(ppRes.Txs) > 0 {
+		blockTxs = ppRes.Txs
+	}
+	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
+		Txs:    ppRes.Txs,
+		Height: newHeight,
+	})
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	// 4. finalize block
+	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
+		Txs:                blockTxs,
+		Height:             newHeader.Height,
+		NextValidatorsHash: newHeader.NextValidatorsHash,
+		Hash:               newHeader.Hash(),
+	})
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	newHeader.AppHash = resp.AppHash
+	h.Ctx = h.Ctx.WithHeaderInfo(header.Info{
+		Height:  newHeader.Height,
+		AppHash: resp.AppHash,
+		Hash:    newHeader.Hash(),
+	}).WithBlockHeader(*newHeader.ToProto())
+
+	_, err = h.App.Commit()
+	if err != nil {
+		return emptyCtx, err
+	}
+
+	return h.Ctx, nil
+}
+
 // CalculateValHash calculate validator hash and new header
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/v0.45.5/simapp/test_helpers.go#L156-L163)
 func CalculateValHash(valSet []stakingtypes.Validator) []byte {

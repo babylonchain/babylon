@@ -99,3 +99,36 @@ func FuzzAddBLSSigVoteExtension_InvalidBLSSig(f *testing.F) {
 		}
 	})
 }
+
+// FuzzAddBLSSigVoteExtension_EmptyVoteExtensions tests resilience against
+// empty vote extensions
+func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
+	datagen.AddRandomSeedsToFuzzer(f, 4)
+
+	f.Fuzz(func(t *testing.T, seed int64) {
+		r := rand.New(rand.NewSource(seed))
+		// generate the validator set with 10 validators as genesis
+		genesisValSet, privSigner, err := datagen.GenesisValidatorSetWithPrivSigner(10)
+		require.NoError(t, err)
+		helper := testhelper.NewHelperWithValSet(t, genesisValSet, privSigner)
+		ek := helper.App.EpochingKeeper
+		ck := helper.App.CheckpointingKeeper
+
+		epoch := ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(1), epoch.EpochNumber)
+
+		// go to block 11, ensure the checkpoint is finalized
+		interval := ek.GetParams(helper.Ctx).EpochInterval
+		for i := uint64(0); i < interval; i++ {
+			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+			require.NoError(t, err)
+		}
+
+		epoch = ek.GetEpoch(helper.Ctx)
+		require.Equal(t, uint64(2), epoch.EpochNumber)
+
+		ckpt, err := ck.GetRawCheckpoint(helper.Ctx, epoch.EpochNumber-1)
+		require.NoError(t, err)
+		require.Equal(t, types.Sealed, ckpt.Status)
+	})
+}
