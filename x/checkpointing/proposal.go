@@ -70,6 +70,8 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 			return proposalRes, nil
 		}
 
+		panic("DEBUGGGGGGGG")
+
 		if len(req.LocalLastCommit.Votes) == 0 {
 			return proposalRes, fmt.Errorf("no extended votes received from the last block")
 		}
