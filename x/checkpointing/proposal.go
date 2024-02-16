@@ -110,9 +110,6 @@ func (h *ProposalHandler) buildCheckpointFromVoteExtensions(ctx sdk.Context, epo
 	if err != nil {
 		return nil, err
 	}
-	// if !bytes.Equal(prevBlockID, ctx.BlockHeader().LastBlockId.Hash) {
-	// 	return nil, fmt.Errorf("expected block hash: %x, got: %x", prevBlockID, ctx.HeaderHash())
-	// }
 	ckpt := ckpttypes.NewCheckpointWithMeta(ckpttypes.NewCheckpoint(epoch, prevBlockID), ckpttypes.Accumulating)
 	validBLSSigs := h.getValidBlsSigs(ctx, extendedVotes)
 	vals := h.ckptKeeper.GetValidatorSet(ctx, epoch)
@@ -256,7 +253,8 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			// 1. extract the special tx containing the checkpoint
 			injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
 			if err != nil {
-				h.logger.Error("cannot get injected checkpoint", "err", err)
+				h.logger.Error(
+					"processProposal: failed to extract injected checkpoint from the tx set", "err", err)
 				// should not return error here as error will cause panic
 				return resReject, nil
 			}
@@ -332,7 +330,8 @@ func (h *ProposalHandler) PreBlocker() sdk.PreBlocker {
 		// 1. extract the special tx containing BLS sigs
 		injectedCkpt, err := extractInjectedCheckpoint(req.Txs)
 		if err != nil {
-			return res, fmt.Errorf("failed to get extract injected checkpoint from the tx set: %w", err)
+			return res, fmt.Errorf(
+				"preblocker: failed to extract injected checkpoint from the tx set: %w", err)
 		}
 
 		// 2. update checkpoint
@@ -353,7 +352,7 @@ func extractInjectedCheckpoint(txs [][]byte) (*ckpttypes.InjectedCheckpoint, err
 	injectedTx := txs[defaultInjectedTxIndex]
 
 	if len(injectedTx) == 0 {
-		return nil, fmt.Errorf("err in PreBlocker: the injected vote extensions tx is empty")
+		return nil, fmt.Errorf("the injected vote extensions tx is empty")
 	}
 
 	var injectedCkpt ckpttypes.InjectedCheckpoint
