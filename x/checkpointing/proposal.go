@@ -201,9 +201,9 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 		// passing the verification. Probably a Cosmos SDK bug, need to
 		// find out why
 		// Thus, we need to ensure block hash is not nil
-		if ve.BlockHash == nil {
-			continue
-		}
+		// if ve.BlockHash == nil {
+		// 	continue
+		// }
 		// Encode the block hash using hex
 		blockHashes[hex.EncodeToString(ve.BlockHash.MustMarshal())] += vote.Validator.Power
 	}

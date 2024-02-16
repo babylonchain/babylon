@@ -117,12 +117,15 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 		epoch := ek.GetEpoch(helper.Ctx)
 		require.Equal(t, uint64(1), epoch.EpochNumber)
 
-		// go to block 11, ensure the checkpoint is finalized
+		// go to block 10, ensure the checkpoint is finalized
 		interval := ek.GetParams(helper.Ctx).EpochInterval
-		for i := uint64(0); i < interval; i++ {
+		for i := uint64(0); i < interval-2; i++ {
 			_, err := helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
 			require.NoError(t, err)
 		}
+		// height 11, i.e., 1st block of next epoch
+		_, err = helper.ApplyEmptyBlockWithSomeEmptyVoteExtensions(r)
+		require.NoError(t, err)
 
 		epoch = ek.GetEpoch(helper.Ctx)
 		require.Equal(t, uint64(2), epoch.EpochNumber)

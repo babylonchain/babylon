@@ -5,13 +5,13 @@ import (
 	"math/rand"
 
 	"cosmossdk.io/core/header"
+	"github.com/babylonchain/babylon/testutil/datagen"
+	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/crypto/merkle"
 	cmttypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	"github.com/babylonchain/babylon/testutil/datagen"
 )
 
 func (h *Helper) genAndApplyEmptyBlock() error {
@@ -366,14 +366,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 		Hash:   newHeader.Hash(),
 	}).WithBlockHeader(*newHeader.ToProto())
 
-	// nullifies a subset of extended votes
-	numEmptyVoteExts := len(extendedVotes)/3 - 1
-	for i := 0; i < numEmptyVoteExts; i++ {
-		extendedVotes[i].VoteExtension = []byte{}
-	}
-
 	// 3. prepare proposal with previous BLS sigs
-	blockTxs := [][]byte{}
 	ppRes, err := h.App.PrepareProposal(&abci.RequestPrepareProposal{
 		LocalLastCommit: abci.ExtendedCommitInfo{Votes: extendedVotes},
 		Height:          newHeight,
@@ -382,9 +375,18 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 		return emptyCtx, err
 	}
 
-	if len(ppRes.Txs) > 0 {
-		blockTxs = ppRes.Txs
+	// nullifies a subset of extended votes
+	var injectedCkpt ckpttypes.InjectedCheckpoint
+	err = injectedCkpt.Unmarshal(ppRes.Txs[0])
+	h.NoError(err)
+	numEmptyVoteExts := len(extendedVotes)/3 - 1
+	for i := 0; i < numEmptyVoteExts; i++ {
+		injectedCkpt.ExtendedCommitInfo.Votes[i].VoteExtension = []byte{}
 	}
+	injectedCkptWithEmptyVoteExts, err := injectedCkpt.Marshal()
+	h.NoError(err)
+	ppRes.Txs[0] = injectedCkptWithEmptyVoteExts
+
 	_, err = h.App.ProcessProposal(&abci.RequestProcessProposal{
 		Txs:    ppRes.Txs,
 		Height: newHeight,
@@ -395,7 +397,7 @@ func (h *Helper) ApplyEmptyBlockWithSomeEmptyVoteExtensions(r *rand.Rand) (sdk.C
 
 	// 4. finalize block
 	resp, err := h.App.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Txs:                blockTxs,
+		Txs:                ppRes.Txs,
 		Height:             newHeader.Height,
 		NextValidatorsHash: newHeader.NextValidatorsHash,
 		Hash:               newHeader.Hash(),
