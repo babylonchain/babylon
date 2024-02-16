@@ -197,6 +197,13 @@ func (h *ProposalHandler) findLastBlockHash(extendedVotes []abci.ExtendedVoteInf
 		if err := ve.Unmarshal(vote.VoteExtension); err != nil {
 			continue
 		}
+		// TODO: some validators might submit empty vote extensions yet
+		// passing the verification. Probably a Cosmos SDK bug, need to
+		// find out why
+		// Thus, we need to ensure block hash is not nil
+		if ve.BlockHash == nil {
+			continue
+		}
 		// Encode the block hash using hex
 		blockHashes[hex.EncodeToString(ve.BlockHash.MustMarshal())] += vote.Validator.Power
 	}
