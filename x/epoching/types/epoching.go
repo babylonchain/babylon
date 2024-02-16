@@ -79,9 +79,9 @@ func (e Epoch) IsVoteExtensionProposal(ctx context.Context) bool {
 func (e Epoch) IsFirstBlockOfNextEpoch(ctx context.Context) bool {
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	if e.EpochNumber == 0 {
-		return sdkCtx.HeaderInfo().Height == 1
+		return sdkCtx.BlockHeight() == 1
 	} else {
-		height := uint64(sdkCtx.HeaderInfo().Height)
+		height := uint64(sdkCtx.BlockHeight())
 		return e.FirstBlockHeight+e.CurrentEpochInterval == height
 	}
 }

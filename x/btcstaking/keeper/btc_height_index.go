@@ -4,9 +4,10 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
-	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
 // IndexBTCHeight indexes the current BTC height, and saves it to KVStore
