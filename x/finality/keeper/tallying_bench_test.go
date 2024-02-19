@@ -42,7 +42,7 @@ func benchmarkTallyBlocks(b *testing.B, numFPs int) {
 	bsKeeper.EXPECT().GetVotingPowerTable(gomock.Any(), gomock.Any()).Return(fpSet).AnyTimes()
 
 	// TODO: test incentive
-	bsKeeper.EXPECT().GetVotingPowerDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewVotingPowerDistCache(), nil).AnyTimes()
+	bsKeeper.EXPECT().GetVotingPowerDistCache(gomock.Any(), gomock.Any()).Return(bstypes.NewVotingPowerDistCache()).AnyTimes()
 	iKeeper.EXPECT().RewardBTCStaking(gomock.Any(), gomock.Any(), gomock.Any()).Return().AnyTimes()
 	bsKeeper.EXPECT().RemoveVotingPowerDistCache(gomock.Any(), gomock.Any()).Return().AnyTimes()
 	// Start the CPU profiler

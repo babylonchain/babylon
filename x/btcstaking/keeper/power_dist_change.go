@@ -89,6 +89,11 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	k.setVotingPowerDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), dc)
 }
 
+func (k Keeper) UpdatePowerDist2(ctx context.Context) {
+	// height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	// dc, err := k.GetVotingPowerDistCache(ctx, height)
+}
+
 /* voting power distribution update event store */
 
 // addPowerDistUpdateEvent appends an event that affect voting power distribution

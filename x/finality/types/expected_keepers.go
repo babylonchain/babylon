@@ -13,7 +13,7 @@ type BTCStakingKeeper interface {
 	GetVotingPower(ctx context.Context, fpBTCPK []byte, height uint64) uint64
 	GetVotingPowerTable(ctx context.Context, height uint64) map[string]uint64
 	GetBTCStakingActivatedHeight(ctx context.Context) (uint64, error)
-	GetVotingPowerDistCache(ctx context.Context, height uint64) (*bstypes.VotingPowerDistCache, error)
+	GetVotingPowerDistCache(ctx context.Context, height uint64) *bstypes.VotingPowerDistCache
 	RemoveVotingPowerDistCache(ctx context.Context, height uint64)
 }
 
