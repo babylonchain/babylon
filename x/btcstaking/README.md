@@ -28,6 +28,7 @@ providers and BTC delegations under them. This includes:
   - [MsgAddCovenantSigs](#msgaddcovenantsigs)
   - [MsgBTCUndelegate](#msgbtcundelegate)
   - [MsgUpdateParams](#msgupdateparams)
+  - [MsgSelectiveSlashingEvidence](#msgselectiveslashingevidence)
 - [BeginBlocker](#beginblocker)
 - [Events](#events)
 - [Queries](#queries)
@@ -632,6 +633,52 @@ message MsgUpdateParams {
   Params params = 2 [(gogoproto.nullable) = false];
 }
 ```
+
+### MsgSelectiveSlashingEvidence
+
+The `MsgSelectiveSlashingEvidence` message is used for submitting evidences for
+selective slashing offences. In a selective slashing offence, the adversarial
+finality provider chooses a victim BTC delegation, signs its slashing
+transaction and decrypts covenant adaptor signatures to the Schnorr signatures
+using its secret key, then submits this slashing transaction to Bitcoin. By
+observing a pair of Schnorr signature and adaptor signature from covenant
+committee, anyone can extract the finality provider's secret key via the
+[adaptor signature](../../crypto/schnorr-adaptor-signature/README.md).
+
+```proto
+// MsgSelectiveSlashingEvidence is the message for handling evidence of selective slashing
+// launched by a finality provider
+message MsgSelectiveSlashingEvidence {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  string signer = 1;
+  // staking_tx_hash is the hash of the staking tx.
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 2;
+  // recovered_fp_btc_sk is the BTC SK of the finality provider who
+  // launches the selective slashing offence. The SK is recovered by
+  // using a covenant adaptor signature and the corresponding Schnorr
+  // signature
+  bytes recovered_fp_btc_sk = 3;
+}
+```
+
+Upon `MsgSelectiveSlashingEvidence`, a Babylon node will execute as follows:
+
+1. Find the BTC delegation with the given staking transaction hash.
+2. Ensure the BTC delegation is active or unbonding.
+3. Ensure the given secret key corresponds to the finality provider's public
+   key.
+4. At this point, the finality provider must have done selective slashing. Thus,
+   slash the finality provider and emit an event `EventSelectiveSlashing` about
+   this.
+
+The `MsgSelectiveSlashingEvidence` is typically reported by the [BTC staking
+tracker](https://github.com/babylonchain/vigilante-private/tree/dev/btcstaking-tracker)
+program. It keeps monitoring slashing transactions on Bitcoin. Upon each
+slashing transaction, it will try to extract the finality provider's secret key.
+If successful, it will construct a `MsgSelectiveSlashingEvidence` message and
+submit it to Babylon.
 
 ## BeginBlocker
 
