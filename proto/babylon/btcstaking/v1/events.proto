@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.btcstaking.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos/crypto/secp256k1/keys.proto";
 import "babylon/btcstaking/v1/btcstaking.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
@@ -20,6 +21,19 @@ message EventBTCDelegationStateUpdate {
   string staking_tx_hash = 1;
   // new_state is the new state of this BTC delegation
   BTCDelegationStatus new_state = 2;
+  // btc_pk is the Bitcoin secp256k1 PK of this finality provider
+  // the PK follows encoding in BIP-340 spec
+  bytes btc_pk = 3 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  // babylon_pk is the Babylon secp256k1 PK of this BTC delegation
+  cosmos.crypto.secp256k1.PubKey babylon_pk = 4;
+  // total_sat is the total amount of BTC stakes in this delegation
+  // quantified in satoshi
+  uint64 total_sat = 5;
+  // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
+  // this BTC delegation delegates to
+  // If there is more than 1 PKs, then this means the delegation is restaked
+  // to multiple finality providers
+  repeated bytes fp_btc_pk_list = 6 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
 }
 
 // EventSelectiveSlashing is the event emitted when an adversarial 

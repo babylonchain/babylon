@@ -64,6 +64,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 			return true
 		},
 	)
+
 	// record metrics for finality providers and total staked BTCs
 	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
 	types.RecordActiveFinalityProviders(numActiveFPs)
@@ -75,7 +76,13 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 		types.RecordBTCDelegations(num, status)
 	}
 
+	// record voting power distribution and cache
+	k.recordVotingPowerAndCache(ctx, dc)
+}
+
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
 	// filter out top `MaxActiveFinalityProviders` active finality providers in terms of voting power
+	params := k.GetParams(ctx)
 	activeFps := types.FilterTopNFinalityProviders(dc.FinalityProviders, params.MaxActiveFinalityProviders)
 	// set voting power table and re-calculate total voting power of top N finality providers
 	dc.TotalVotingPower = uint64(0)
@@ -90,8 +97,35 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 }
 
 func (k Keeper) UpdatePowerDist2(ctx context.Context) {
-	// height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	// dc, err := k.GetVotingPowerDistCache(ctx, height)
+	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
+	if err != nil {
+		panic(err) // only possible upon programming error
+	}
+
+	// at the end, clear all events processed in this function
+	defer k.ClearPowerDistUpdateEvents(ctx, btcTipHeight)
+
+	// get the power dist cache
+	dc := k.GetVotingPowerDistCache(ctx, height)
+	// get all power distirbution update events
+	events := k.GetAllPowerDistUpdateEvents(ctx, btcTipHeight)
+
+	if dc == nil && len(events) == 0 {
+		// no existing BTC delegation and no event, no nothing
+		return
+	} else if dc != nil && len(events) == 0 {
+		// map everything in prev height to this height
+		k.recordVotingPowerAndCache(ctx, dc)
+	} else {
+		if dc == nil {
+			dc = types.NewVotingPowerDistCache()
+		}
+		// TODO: reconcile voting power distribution cache and new events
+
+		// record voting power and cache for this height
+		k.recordVotingPowerAndCache(ctx, dc)
+	}
 }
 
 /* voting power distribution update event store */
@@ -141,6 +175,16 @@ func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint64
 	for _, key := range keys {
 		store.Delete(key)
 	}
+}
+
+// GetAllPowerDistUpdateEvents gets all voting power update events
+func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, btcHeight uint64) []*types.EventPowerDistUpdate {
+	events := []*types.EventPowerDistUpdate{}
+	k.IteratePowerDistUpdateEvents(ctx, btcHeight, func(event *types.EventPowerDistUpdate) bool {
+		events = append(events, event)
+		return true
+	})
+	return events
 }
 
 // IteratePowerDistUpdateEvents uses the given handler function to handle each

@@ -12,6 +12,96 @@ func NewVotingPowerDistCache() *VotingPowerDistCache {
 	}
 }
 
+func (dc *VotingPowerDistCache) Empty() bool {
+	return len(dc.FinalityProviders) == 0
+}
+
+// ProcessAllPowerDistUpdateEvents processes all events that affect
+// voting power distribution, including
+// - newly active BTC delegations
+// - expired BTC delegations
+// - slashed finality providers
+func (dc *VotingPowerDistCache) ProcessAllPowerDistUpdateEvents(events []*EventPowerDistUpdate) {
+	// a map where key is finality provider's BTC PK hex and value is a list of events
+	// of BTC delegations that newly have voting power under this provider
+	newBTCDels := map[string][]*EventBTCDelegationStateUpdate{}
+	// a map where key is expired BTC delegation's staking tx hash
+	expiredBTCDels := map[string]struct{}{}
+	// a map where key is slashed finality providers' BTC PK
+	slashedFPs := map[string]struct{}{}
+
+	// filter and classify all events that we care about
+	for _, event := range events {
+		switch typedEvent := event.Ev.(type) {
+		case *EventPowerDistUpdate_BtcDelStateUpdate:
+			delEvent := typedEvent.BtcDelStateUpdate
+			if delEvent.NewState == BTCDelegationStatus_ACTIVE {
+				for _, fpBTCPK := range delEvent.FpBtcPkList {
+					fpBTCPKHex := fpBTCPK.MarshalHex()
+					newBTCDels[fpBTCPKHex] = append(newBTCDels[fpBTCPKHex], delEvent)
+				}
+			} else if delEvent.NewState == BTCDelegationStatus_UNBONDED {
+				expiredBTCDels[delEvent.StakingTxHash] = struct{}{}
+			}
+		case *EventPowerDistUpdate_SlashedFp:
+			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+		}
+	}
+
+	// if no voting power update, return directly
+	noUpdate := len(newBTCDels) == 0 && len(expiredBTCDels) == 0 && len(slashedFPs) == 0
+	if noUpdate {
+		return
+	}
+
+	// at this point, there is voting power update, construct a voting power dist cache
+	newDc := NewVotingPowerDistCache()
+
+	// iterate over all finality providers to compute BTC delegations
+	dc.TotalVotingPower = 0
+	for i := range dc.FinalityProviders {
+		// initialise the finality provider
+		fp := *dc.FinalityProviders[i]
+		fp.TotalVotingPower = 0
+		fp.BtcDels = []*BTCDelDistInfo{}
+
+		// if this finality provider is slashed, continue to avoid recording it
+		fpBTCPKHex := fp.BtcPk.MarshalHex()
+		if _, ok := slashedFPs[fpBTCPKHex]; ok {
+			continue
+		}
+
+		// add all non-expired BTC delegations to the new fp
+		for j := range dc.FinalityProviders[i].BtcDels {
+			btcDel := *dc.FinalityProviders[i].BtcDels[j]
+			if _, ok := expiredBTCDels[btcDel.StakingTxHash]; !ok {
+				fp.addBTCDelDistInfo(&btcDel)
+			}
+		}
+
+		// process all new BTC delegations under this finality provider
+		if newBTCDelEvents, ok := newBTCDels[fpBTCPKHex]; ok {
+			// handle new BTC delegations for this finality provider
+			for _, e := range newBTCDelEvents {
+				fp.addBTCDelDistInfo(&BTCDelDistInfo{
+					BtcPk:       e.BtcPk,
+					BabylonPk:   e.BabylonPk,
+					VotingPower: e.TotalSat,
+				})
+			}
+			// remove the finality provider entry in newBTCDels map, so that
+			// after the for loop the rest entries in newBTCDels belongs to new
+			// finality providers with new BTC delegations
+			delete(newBTCDels, fpBTCPKHex)
+		}
+
+		// add this finality provider to the new cache
+		newDc.AddFinalityProviderDistInfo(&fp)
+	}
+
+	// TODO: process new BTC delegations under new finality providers in newBTCDels
+}
+
 func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
 	if v.TotalVotingPower > 0 {
 		// append finality provider dist info and accumulate voting power
@@ -56,9 +146,10 @@ func (v *FinalityProviderDistInfo) GetAddress() sdk.AccAddress {
 
 func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight uint64, wValue uint64, covenantQuorum uint32) {
 	btcDelDistInfo := &BTCDelDistInfo{
-		BtcPk:       btcDel.BtcPk,
-		BabylonPk:   btcDel.BabylonPk,
-		VotingPower: btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
+		BtcPk:         btcDel.BtcPk,
+		BabylonPk:     btcDel.BabylonPk,
+		StakingTxHash: btcDel.MustGetStakingTxHash().String(),
+		VotingPower:   btcDel.VotingPower(btcHeight, wValue, covenantQuorum),
 	}
 
 	if btcDelDistInfo.VotingPower > 0 {
@@ -66,6 +157,11 @@ func (v *FinalityProviderDistInfo) AddBTCDel(btcDel *BTCDelegation, btcHeight ui
 		v.BtcDels = append(v.BtcDels, btcDelDistInfo)
 		v.TotalVotingPower += btcDelDistInfo.VotingPower
 	}
+}
+
+func (v *FinalityProviderDistInfo) addBTCDelDistInfo(d *BTCDelDistInfo) {
+	v.BtcDels = append(v.BtcDels, d)
+	v.TotalVotingPower += d.VotingPower
 }
 
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of

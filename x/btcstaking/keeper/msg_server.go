@@ -419,6 +419,10 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),
 		NewState:      types.BTCDelegationStatus_PENDING,
+		BtcPk:         newBTCDel.BtcPk,
+		BabylonPk:     newBTCDel.BabylonPk,
+		TotalSat:      newBTCDel.TotalSat,
+		FpBtcPkList:   newBTCDel.FpBtcPkList,
 	}
 	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
@@ -431,6 +435,10 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),
 		NewState:      types.BTCDelegationStatus_UNBONDED,
+		BtcPk:         newBTCDel.BtcPk,
+		BabylonPk:     newBTCDel.BabylonPk,
+		TotalSat:      newBTCDel.TotalSat,
+		FpBtcPkList:   newBTCDel.FpBtcPkList,
 	})
 	ms.addPowerDistUpdateEvent(ctx, endHeight-wValue, unbondedEvent)
 
@@ -591,6 +599,10 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 		event := &types.EventBTCDelegationStateUpdate{
 			StakingTxHash: req.StakingTxHash,
 			NewState:      types.BTCDelegationStatus_ACTIVE,
+			BtcPk:         btcDel.BtcPk,
+			BabylonPk:     btcDel.BabylonPk,
+			TotalSat:      btcDel.TotalSat,
+			FpBtcPkList:   btcDel.FpBtcPkList,
 		}
 		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
@@ -666,6 +678,10 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: req.StakingTxHash,
 		NewState:      types.BTCDelegationStatus_UNBONDED,
+		BtcPk:         btcDel.BtcPk,
+		BabylonPk:     btcDel.BabylonPk,
+		TotalSat:      btcDel.TotalSat,
+		FpBtcPkList:   btcDel.FpBtcPkList,
 	}
 	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new unbonded BTC delegation: %w", err))
