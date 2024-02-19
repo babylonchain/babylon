@@ -49,21 +49,27 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		curValSet := k.GetValidatorSet(ctx, epoch.EpochNumber)
 		_, _, err := curValSet.FindValidatorWithIndex(signer)
 		if err != nil {
-			// not being a validator is not an error
-			h.logger.Info("the BLS signer is not in the validator set", "signer_address", signer.String())
-			return emptyRes, nil
+			// NOTE: the returned error will lead to panic
+			// this indicates programmatic error because ExtendVote
+			// should not be invoked if the validator is not in the
+			// active set according to:
+			// https://github.com/cometbft/cometbft/blob/a17290f6905ef714761f12c1f82409b0731e3838/consensus/state.go#L2434
+			return emptyRes, fmt.Errorf("the BLS signer %s is not in the validator set", signer.String())
 		}
 
 		// 2. sign BLS signature
 		blsSig, err := k.SignBLS(epoch.EpochNumber, req.Hash)
 		if err != nil {
-			// the returned error will lead to panic
+			// NOTE: the returned error will lead to panic
+			// this indicates misconfiguration of the BLS key
 			return emptyRes, fmt.Errorf("failed to sign BLS signature at epoch %v, height %v",
 				epoch.EpochNumber, req.Height)
 		}
 
 		var bhash ckpttypes.BlockHash
 		if err := bhash.Unmarshal(req.Hash); err != nil {
+			// NOTE: the returned error will lead to panic
+			// this indicates programmatic error in CometBFT
 			return emptyRes, fmt.Errorf("invalid CometBFT hash")
 		}
 
@@ -78,6 +84,8 @@ func (h *VoteExtensionHandler) ExtendVote() sdk.ExtendVoteHandler {
 		}
 		bz, err := ve.Marshal()
 		if err != nil {
+			// NOTE: the returned error will lead to panic
+			// this indicates programmatic error in building vote extension
 			return emptyRes, fmt.Errorf("failed to encode vote extension: %w", err)
 		}
 
