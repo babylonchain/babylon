@@ -581,7 +581,7 @@ Upon `AddCovenantSigs`, a Babylon node will execute as follows:
 
 The `MsgBTCUndelegate` message is used for unbonding bitcoins from a given
 finality provider. It is typically reported by the [BTC staking
-tracker](https://github.com/babylonchain/vigilante-private/tree/dev/btcstaking-tracker)
+tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
 program which proactively monitors unbonding transactions on Bitcoin.
 
 ```protobuf
@@ -674,7 +674,7 @@ Upon `MsgSelectiveSlashingEvidence`, a Babylon node will execute as follows:
    this.
 
 The `MsgSelectiveSlashingEvidence` is typically reported by the [BTC staking
-tracker](https://github.com/babylonchain/vigilante-private/tree/dev/btcstaking-tracker)
+tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
 program. It keeps monitoring slashing transactions on Bitcoin. Upon each
 slashing transaction, it will try to extract the finality provider's secret key.
 If successful, it will construct a `MsgSelectiveSlashingEvidence` message and
