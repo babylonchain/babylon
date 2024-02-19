@@ -639,11 +639,14 @@ message MsgUpdateParams {
 The `MsgSelectiveSlashingEvidence` message is used for submitting evidences for
 selective slashing offences. In a selective slashing offence, the adversarial
 finality provider chooses a victim BTC delegation, signs its slashing
-transaction and decrypts covenant adaptor signatures to the Schnorr signatures
-using its secret key, then submits this slashing transaction to Bitcoin. By
-observing a pair of Schnorr signature and adaptor signature from covenant
-committee, anyone can extract the finality provider's secret key via the
-[adaptor signature](../../crypto/schnorr-adaptor-signature/README.md).
+transaction, and decrypts covenant adaptor signatures to the Schnorr signatures
+using its secret key, before submitting this slashing transaction to Bitcoin. By
+observing a pair of a [Schnorr
+signature](https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki) and
+an [adaptor signature](https://bitcoinops.org/en/topics/adaptor-signatures/)
+from the covenant committee, anyone can extract the finality provider's secret
+key due to the [adaptor signature
+properties](../../crypto/schnorr-adaptor-signature/README.md).
 
 ```proto
 // MsgSelectiveSlashingEvidence is the message for handling evidence of selective slashing
@@ -675,7 +678,7 @@ Upon `MsgSelectiveSlashingEvidence`, a Babylon node will execute as follows:
 
 The `MsgSelectiveSlashingEvidence` is typically reported by the [BTC staking
 tracker](https://github.com/babylonchain/vigilante/tree/dev/btcstaking-tracker)
-program. It keeps monitoring slashing transactions on Bitcoin. Upon each
+program. It keeps monitoring for slashing transactions on Bitcoin. Upon each
 slashing transaction, it will try to extract the finality provider's secret key.
 If successful, it will construct a `MsgSelectiveSlashingEvidence` message and
 submit it to Babylon.
