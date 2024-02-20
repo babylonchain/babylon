@@ -1,6 +1,6 @@
 # Babylon Developer Docs
 
-This page contains documentation targeted at individuals that want to contribute to the Babylon repository.
+This page contains documentation for individuals who want to contribute to the Babylon repository.
 
 For user-facing docs, visit the [Babylon documentation page](https://docs.babylonchain.io).
 
