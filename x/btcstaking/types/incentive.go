@@ -7,8 +7,9 @@ import (
 
 func NewVotingPowerDistCache() *VotingPowerDistCache {
 	return &VotingPowerDistCache{
-		TotalVotingPower:  0,
-		FinalityProviders: []*FinalityProviderDistInfo{},
+		TotalVotingPower:     0,
+		FinalityProviders:    []*FinalityProviderDistInfo{},
+		TopFinalityProviders: []*FinalityProviderDistInfo{},
 	}
 }
 
@@ -18,9 +19,19 @@ func (dc *VotingPowerDistCache) Empty() bool {
 
 func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
 	if v.TotalVotingPower > 0 {
-		// append finality provider dist info and accumulate voting power
+		// append finality provider dist info
 		dc.FinalityProviders = append(dc.FinalityProviders, v)
-		dc.TotalVotingPower += v.TotalVotingPower
+	}
+}
+
+// FilterTopNFinalityProviders filters out the top n finality providers and accumulate
+// their voting power
+func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(n uint32) {
+	// filter top N finality providers
+	dc.TopFinalityProviders = FilterTopNFinalityProviders(dc.FinalityProviders, n)
+	// construct voting power
+	for _, fp := range dc.TopFinalityProviders {
+		dc.TotalVotingPower += fp.TotalVotingPower
 	}
 }
 
@@ -29,13 +40,13 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 func (dc *VotingPowerDistCache) FilterVotedFinalityProviders(voterBTCPKs map[string]struct{}) {
 	filteredFps := []*FinalityProviderDistInfo{}
 	totalVotingPower := uint64(0)
-	for _, v := range dc.FinalityProviders {
+	for _, v := range dc.TopFinalityProviders {
 		if _, ok := voterBTCPKs[v.BtcPk.MarshalHex()]; ok {
 			filteredFps = append(filteredFps, v)
 			totalVotingPower += v.TotalVotingPower
 		}
 	}
-	dc.FinalityProviders = filteredFps
+	dc.TopFinalityProviders = filteredFps
 	dc.TotalVotingPower = totalVotingPower
 }
 

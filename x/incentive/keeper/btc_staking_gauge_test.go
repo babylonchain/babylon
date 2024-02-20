@@ -33,7 +33,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		keeper.SetBTCStakingGauge(ctx, height, gauge)
 
 		// generate a random voting power distribution cache
-		dc, err := datagen.GenRandomVotingPowerDistCache(r)
+		dc, err := datagen.GenRandomVotingPowerDistCache(r, 100)
 		require.NoError(t, err)
 
 		// expected values
@@ -41,7 +41,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
-		for _, fp := range dc.FinalityProviders {
+		for _, fp := range dc.TopFinalityProviders {
 			fpPortion := dc.GetFinalityProviderPortion(fp)
 			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)
