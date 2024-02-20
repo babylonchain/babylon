@@ -71,15 +71,13 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
-		expectedStakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+		expectedStakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
 			r,
 			fpPK,
 			changeAddress.EncodeAddress(),
 			stakingValue,
 			1000,
 		)
-		actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, expectedStakingTxHash)
-		h.NoError(err)
 
 		/*
 			at this point, there should be

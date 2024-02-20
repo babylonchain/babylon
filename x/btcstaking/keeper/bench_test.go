@@ -52,7 +52,7 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 		for i := 0; i < numDelsUnderFP; i++ {
 			// generate and insert new BTC delegation
 			stakingValue := int64(2 * 10e8)
-			stakingTxHash, _, _, msgCreateBTCDel := h.CreateDelegation(
+			stakingTxHash, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
 				r,
 				fp.BtcPk.MustToBTCPK(),
 				changeAddress.EncodeAddress(),
@@ -60,8 +60,6 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 				1000,
 			)
 			// retrieve BTC delegation in DB
-			actualDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingTxHash)
-			h.NoError(err)
 			btcDelMap[stakingTxHash] = append(btcDelMap[stakingTxHash], actualDel)
 			// generate and insert new covenant signatures
 			// after that, all BTC delegations will have voting power

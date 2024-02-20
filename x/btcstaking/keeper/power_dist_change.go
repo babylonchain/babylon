@@ -19,17 +19,14 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingP
 	}
 
 	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), dc)
+	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
 }
 
 // UpdatePowerDist updates the voting power distribution of finality providers
 // and their BTC delegations
 func (k Keeper) UpdatePowerDist_OLD(ctx context.Context) {
 	params := k.GetParams(ctx)
-	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		panic(err) // only possible upon programming error
-	}
+	btcTipHeight := k.GetCurrentBTCHeight(ctx)
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	// prepare metrics for {active, inactive} finality providers,
@@ -97,15 +94,14 @@ func (k Keeper) UpdatePowerDist_OLD(ctx context.Context) {
 
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
-	if err != nil {
-		panic(err) // only possible upon programming error
-	}
+	btcTipHeight := k.GetCurrentBTCHeight(ctx)
 
 	// get the power dist cache in the last height
 	dc := k.GetVotingPowerDistCache(ctx, height-1)
-	// get all power distirbution update events
-	events := k.GetAllPowerDistUpdateEvents(ctx, btcTipHeight)
+	// get all power distribution update events during the previous tip
+	// and the current tip
+	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)
+	events := k.GetAllPowerDistUpdateEvents(ctx, lastBTCTipHeight, btcTipHeight)
 
 	// if no event exists, then map previous voting power and
 	// cache to the current height
@@ -118,7 +114,11 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	}
 
 	// clear all events that have been consumed in this function
-	defer k.ClearPowerDistUpdateEvents(ctx, btcTipHeight)
+	defer func() {
+		for i := lastBTCTipHeight; i <= btcTipHeight; i++ {
+			k.ClearPowerDistUpdateEvents(ctx, i)
+		}
+	}()
 
 	if dc == nil {
 		// no BTC staker at the prior height
@@ -314,12 +314,14 @@ func (k Keeper) ClearPowerDistUpdateEvents(ctx context.Context, btcHeight uint64
 }
 
 // GetAllPowerDistUpdateEvents gets all voting power update events
-func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, btcHeight uint64) []*types.EventPowerDistUpdate {
+func (k Keeper) GetAllPowerDistUpdateEvents(ctx context.Context, lastBTCTip uint64, curBTCTip uint64) []*types.EventPowerDistUpdate {
 	events := []*types.EventPowerDistUpdate{}
-	k.IteratePowerDistUpdateEvents(ctx, btcHeight, func(event *types.EventPowerDistUpdate) bool {
-		events = append(events, event)
-		return true
-	})
+	for i := lastBTCTip; i <= curBTCTip; i++ {
+		k.IteratePowerDistUpdateEvents(ctx, i, func(event *types.EventPowerDistUpdate) bool {
+			events = append(events, event)
+			return true
+		})
+	}
 	return events
 }
 

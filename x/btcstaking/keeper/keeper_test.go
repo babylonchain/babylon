@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"context"
 	"math/rand"
 	"testing"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/btcsuite/btcd/wire"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -25,7 +25,7 @@ import (
 type Helper struct {
 	t testing.TB
 
-	Ctx                  context.Context
+	Ctx                  sdk.Context
 	BTCStakingKeeper     *keeper.Keeper
 	BTCLightClientKeeper *types.MockBTCLightClientKeeper
 	BTCCheckpointKeeper  *types.MockBtcCheckpointKeeper
@@ -61,11 +61,19 @@ func (h *Helper) GenAndApplyParams(r *rand.Rand) ([]*btcec.PrivateKey, []*btcec.
 	return h.GenAndApplyCustomParams(r, 100, 0)
 }
 
+func (h *Helper) SetCtxHeight(height uint64) {
+	h.Ctx = datagen.WithCtxHeight(h.Ctx, height)
+}
+
 func (h *Helper) GenAndApplyCustomParams(
 	r *rand.Rand,
 	finalizationTimeout uint64,
 	minUnbondingTime uint32,
 ) ([]*btcec.PrivateKey, []*btcec.PublicKey) {
+	// mock base header
+	baseHeader := btclctypes.SimnetGenesisBlock()
+	h.BTCLightClientKeeper.EXPECT().GetBaseBTCHeader(gomock.Any()).Return(&baseHeader).AnyTimes()
+
 	// mocking stuff for BTC checkpoint keeper
 	h.BTCCheckpointKeeper.EXPECT().GetPowLimit().Return(h.Net.PowLimit).AnyTimes()
 
@@ -258,7 +266,7 @@ func (h *Helper) CreateDelegation(
 	changeAddress string,
 	stakingValue int64,
 	stakingTime uint16,
-) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation) {
+) (string, *btcec.PrivateKey, *btcec.PublicKey, *types.MsgCreateBTCDelegation, *types.BTCDelegation) {
 	bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
 	bcParams := h.BTCCheckpointKeeper.GetParams(h.Ctx)
 
@@ -278,7 +286,12 @@ func (h *Helper) CreateDelegation(
 
 	h.NoError(err)
 
-	return stakingTxHash, delSK, delPK, msgCreateBTCDel
+	stakingMsgTx, err := bbn.NewBTCTxFromBytes(msgCreateBTCDel.StakingTx.Transaction)
+	h.NoError(err)
+	btcDel, err := h.BTCStakingKeeper.GetBTCDelegation(h.Ctx, stakingMsgTx.TxHash().String())
+	h.NoError(err)
+
+	return stakingTxHash, delSK, delPK, msgCreateBTCDel, btcDel
 }
 
 func (h *Helper) GenerateCovenantSignaturesMessages(
