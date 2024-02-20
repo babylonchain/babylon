@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/runtime"
 
@@ -12,70 +11,6 @@ import (
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
-
-// AddBTCDelegation indexes the given BTC delegation in the BTC delegator store, and saves
-// it under BTC delegation store
-func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) error {
-	if err := btcDel.ValidateBasic(); err != nil {
-		return err
-	}
-
-	// get staking tx hash
-	stakingTxHash, err := btcDel.GetStakingTxHash()
-	if err != nil {
-		return err
-	}
-
-	// for each finality provider the delegation restakes to, update its index
-	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		var btcDelIndex = types.NewBTCDelegatorDelegationIndex()
-		if k.hasBTCDelegatorDelegations(ctx, &fpBTCPK, btcDel.BtcPk) {
-			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
-			if err != nil {
-				// this can only be a programming error
-				panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
-			}
-		}
-
-		// index staking tx hash of this BTC delegation
-		if err := btcDelIndex.Add(stakingTxHash); err != nil {
-			return types.ErrInvalidStakingTx.Wrapf(err.Error())
-		}
-		// save the index
-		store := k.btcDelegatorStore(ctx, &fpBTCPK)
-		delBTCPKBytes := btcDel.BtcPk.MustMarshal()
-		btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
-		store.Set(delBTCPKBytes, btcDelIndexBytes)
-	}
-
-	// save this BTC delegation
-	k.setBTCDelegation(ctx, btcDel)
-
-	return nil
-}
-
-// IterateBTCDelegations iterates all BTC delegations under a given finality provider
-func (k Keeper) IterateBTCDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, handler func(btcDel *types.BTCDelegation) bool) {
-	btcDelIter := k.btcDelegatorStore(ctx, fpBTCPK).Iterator(nil, nil)
-	defer btcDelIter.Close()
-	for ; btcDelIter.Valid(); btcDelIter.Next() {
-		// unmarshal delegator's delegation index
-		var btcDelIndex types.BTCDelegatorDelegationIndex
-		k.cdc.MustUnmarshal(btcDelIter.Value(), &btcDelIndex)
-		// retrieve and process each of the BTC delegation
-		for _, stakingTxHashBytes := range btcDelIndex.StakingTxHashList {
-			stakingTxHash, err := chainhash.NewHash(stakingTxHashBytes)
-			if err != nil {
-				panic(err) // only programming error is possible
-			}
-			btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-			shouldContinue := handler(btcDel)
-			if !shouldContinue {
-				return
-			}
-		}
-	}
-}
 
 // hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given finality provider
 func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {

@@ -27,6 +27,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).AnyTimes()
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
 		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
 		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
@@ -86,7 +87,6 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// record voting power distribution cache
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
 		err = keeper.BeginBlocker(ctx)
 		require.NoError(t, err)
 

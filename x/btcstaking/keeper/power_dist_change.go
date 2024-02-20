@@ -12,9 +12,19 @@ import (
 
 /* power distribution update */
 
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+	for _, fp := range dc.TopFinalityProviders {
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+	}
+
+	// set the voting power distribution cache of the current height
+	k.setVotingPowerDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), dc)
+}
+
 // UpdatePowerDist updates the voting power distribution of finality providers
 // and their BTC delegations
-func (k Keeper) UpdatePowerDist(ctx context.Context) {
+func (k Keeper) UpdatePowerDist_OLD(ctx context.Context) {
 	params := k.GetParams(ctx)
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
 	if err != nil {
@@ -85,28 +95,15 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	}
 }
 
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	for _, fp := range dc.TopFinalityProviders {
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
-	}
-
-	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(ctx, uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height), dc)
-}
-
-func (k Keeper) UpdatePowerDist2(ctx context.Context) {
+func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTipHeight, err := k.GetCurrentBTCHeight(ctx)
 	if err != nil {
 		panic(err) // only possible upon programming error
 	}
 
-	// at the end, clear all events processed in this function
-	defer k.ClearPowerDistUpdateEvents(ctx, btcTipHeight)
-
-	// get the power dist cache
-	dc := k.GetVotingPowerDistCache(ctx, height)
+	// get the power dist cache in the last height
+	dc := k.GetVotingPowerDistCache(ctx, height-1)
 	// get all power distirbution update events
 	events := k.GetAllPowerDistUpdateEvents(ctx, btcTipHeight)
 
@@ -120,7 +117,11 @@ func (k Keeper) UpdatePowerDist2(ctx context.Context) {
 		return
 	}
 
+	// clear all events that have been consumed in this function
+	defer k.ClearPowerDistUpdateEvents(ctx, btcTipHeight)
+
 	if dc == nil {
+		// no BTC staker at the prior height
 		dc = types.NewVotingPowerDistCache()
 	}
 
@@ -192,7 +193,6 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 	newDc := types.NewVotingPowerDistCache()
 
 	// iterate over all finality providers and apply all events
-	dc.TotalVotingPower = 0
 	for i := range dc.FinalityProviders {
 		// create a copy of the finality provider
 		fp := *dc.FinalityProviders[i]
