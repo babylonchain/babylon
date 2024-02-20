@@ -8,13 +8,13 @@ Unlocking 21 Million ₿ to Secure the Decentralized Economy
 [![Medium](https://badgen.net/badge/icon/medium?icon=medium&label)](https://medium.com/babylonchain-io)
 
 [Babylon](https://babylonchain.io) provides a suite of security-sharing
-protocols between Bitcoin and the PoS world. It provides two inter-connected
-protocols:
+protocols between Bitcoin and the PoS world. It has two inter-connected
+protocols that provide for:
 
-- **Bitcoin timestamping:** Submits succinct and verifiable timestamps of any
-  data (such as PoS blockchains) to Bitcoin.
+- **Bitcoin timestamping:** Submits succinct and verifiable timestamps of any blockchain
+  data (such as PoS) to Bitcoin.
 - **Bitcoin staking:** Enables Bitcoin holders to provide economic security to
-  any decentralized system through trustless (and self-custodian) staking.
+  any decentralized system through trustless and permissionless (and self-custodian) staking.
 
 [![BTC staking
 litepaper](https://badgen.net/badge/icon/BTC%20staking%20litepaper?label=)](https://docs.babylonchain.io/assets/files/btc_staking_litepaper-32bfea0c243773f0bfac63e148387aef.pdf)
@@ -23,15 +23,14 @@ whitepaper](https://badgen.net/badge/icon/BTC%20timestamping%20whitepaper?label=
 
 ## System requirements
 
-This system spec has been tested by validators and found to be comfortable:
+This system specs have been tested by validators and found to be working:
 
 - Quad Core or larger AMD or Intel (amd64) CPU
 - 32GB RAM
 - 1TB NVMe Storage
 - 100MBps bidirectional internet connection
 
-You can run Babylon on lower-spec hardware for each component, but you may find
-that it is not highly performant or prone to crashing.
+NOTE: You can run Babylon on lower-spec hardware, but there may be performance related issues or frequent crashes
 
 ## Build and install
 
