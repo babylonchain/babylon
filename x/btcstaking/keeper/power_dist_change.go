@@ -48,14 +48,13 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 			// iterate over all BTC delegations under the finality provider
 			// in order to accumulate voting power dist info for it
 			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
-				// accumulate voting power and reward distribution cache
 				if btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum) > 0 {
+					// accumulate voting power and reward distribution cache
 					fpDistInfo.AddBTCDel(btcDel)
+					// record metrics
+					numStakedSats += btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
+					numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
 				}
-
-				// record metrics
-				numStakedSats += btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
-				numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
 
 				return true
 			})
@@ -68,8 +67,14 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 		},
 	)
 
+	// apply active finality provider set
+	dc.ApplyActiveFinalityProviders(params.MaxActiveFinalityProviders)
+
+	// record voting power distribution and cache
+	k.recordVotingPowerAndCache(ctx, dc)
+
 	// record metrics for finality providers and total staked BTCs
-	numActiveFPs := min(numFPs, int(params.MaxActiveFinalityProviders))
+	numActiveFPs := len(dc.TopFinalityProviders)
 	types.RecordActiveFinalityProviders(numActiveFPs)
 	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
 	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
@@ -78,19 +83,12 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	for status, num := range numDelsMap {
 		types.RecordBTCDelegations(num, status)
 	}
-
-	// get active finality provider set
-	dc.ApplyActiveFinalityProviders(params.MaxActiveFinalityProviders)
-
-	// record voting power distribution and cache
-	k.recordVotingPowerAndCache(ctx, dc)
 }
 
 func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	for _, fp := range dc.TopFinalityProviders {
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
-		dc.TotalVotingPower += fp.TotalVotingPower
 	}
 
 	// set the voting power distribution cache of the current height
