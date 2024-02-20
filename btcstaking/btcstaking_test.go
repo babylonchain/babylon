@@ -37,7 +37,9 @@ func GenerateTestScenario(
 	stakingTime uint16,
 ) *TestScenario {
 	stakerPrivKey, err := btcec.NewPrivateKey()
-	require.NoError(t, err)
+if err != nil {
+    t.Fatalf("failed to generate staker private key: %v", err)
+}
 
 	finalityProviderKeys := make([]*btcec.PrivateKey, numFinalityProviderKeys)
 	for i := uint32(0); i < numFinalityProviderKeys; i++ {
