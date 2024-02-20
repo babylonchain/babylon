@@ -11,6 +11,35 @@ import (
 	"github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
+func TestVoteExtensionHandler_ExtendVote(t *testing.T) {
+	tests := []struct {
+		name        string
+		expectError bool
+	}{
+		{
+			name:        "Not in validator set",
+			expectError: true,
+		},
+		{
+			name:        "Nil BLS private key",
+			expectError: true,
+		},
+		{
+			name:        "Invalid block hash",
+			expectError: true,
+		},
+
+		// TODO: Without the the fix this panics, even though it should not
+		// {
+		// 	name:        "List with only empty vote extensions",
+		// 	votes:       GenerateNExtendedVotes(t, 4),
+		// 	expectError: true,
+		// },
+		// TODO: Add more failing scenarios and at least one successful one
+		// TODO: Add scenarios testing compatibility of prepareProposal, processProposal and preBlocker
+	}
+}
+
 // FuzzAddBLSSigVoteExtension_MultipleVals tests adding BLS signatures via VoteExtension
 // with multiple validators
 func FuzzAddBLSSigVoteExtension_MultipleVals(f *testing.F) {
