@@ -44,21 +44,17 @@ func (k Keeper) BtcCheckpointInfo(c context.Context, req *types.QueryBtcCheckpoi
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-
 	checkpointEpoch := req.GetEpochNum()
 
 	ed := k.GetEpochData(ctx, checkpointEpoch)
-
 	ckptInfo, err := k.getCheckpointInfo(ctx, checkpointEpoch, ed)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", req.EpochNum, err)
 	}
 
-	resp := &types.QueryBtcCheckpointInfoResponse{
-		Info: ckptInfo,
-	}
-	return resp, nil
+	return &types.QueryBtcCheckpointInfoResponse{
+		Info: ckptInfo.ToResponse(),
+	}, nil
 }
 
 func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheckpointsInfoRequest) (*types.QueryBtcCheckpointsInfoResponse, error) {
