@@ -113,26 +113,14 @@ message BTCCheckpointInfoResponse {
 // - the full tx content
 // - the Merkle proof that this tx is on the above position
 message TransactionInfoResponse {
-  // key is the position (txIdx, blockHash) of this tx on BTC blockchain
-  // Although it is already a part of SubmissionKey, we store it here again
-  // to make TransactionInfo self-contained.
-  // For example, storing the key allows TransactionInfo to not relay on
-  // the fact that TransactionInfo will be ordered in the same order as
-  // TransactionKeys in SubmissionKey.
-  TransactionKeyResponse key = 1;
-  // transaction is the full transaction data as str hex.
-  string transaction = 2;
-  // proof is the Merkle proof that this tx is included in the position in `key`
-  string proof = 3;
-}
-
-// TransactionKeyResponse Each provided OP_RETURN transaction can be idendtified by
-// hash of block in which transaction was included and transaction index in the block
-message TransactionKeyResponse {
   // Index Bitcoin Transaction index in block.
   uint32 index = 1;
   // Hash BTC Header hash as hex.
   string hash = 2;
+  // transaction is the full transaction data as str hex.
+  string transaction = 3;
+  // proof is the Merkle proof that this tx is included in the position in `key`
+  string proof = 4;
 }
 
 // CheckpointAddressesResponse contains the addresses of the submitter and reporter of a

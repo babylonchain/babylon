@@ -9,17 +9,10 @@ import (
 // ToResponse parses a TransactionInfo into a query response tx info struct.
 func (ti *TransactionInfo) ToResponse() *TransactionInfoResponse {
 	return &TransactionInfoResponse{
-		Key:         ti.Key.ToResponse(),
+		Index:       ti.Key.Index,
+		Hash:        ti.Key.Hash.MarshalHex(),
 		Transaction: hex.EncodeToString(ti.Transaction),
 		Proof:       hex.EncodeToString(ti.Proof),
-	}
-}
-
-// ToResponse parses a TransactionKeyResponse into a query response tx key struct.
-func (tk *TransactionKey) ToResponse() *TransactionKeyResponse {
-	return &TransactionKeyResponse{
-		Index: tk.Index,
-		Hash:  hex.EncodeToString(*tk.Hash),
 	}
 }
 
@@ -45,7 +38,7 @@ func (b BTCCheckpointInfo) ToResponse() *BTCCheckpointInfoResponse {
 	return &BTCCheckpointInfoResponse{
 		EpochNumber:                        b.EpochNumber,
 		BestSubmissionBtcBlockHeight:       b.BestSubmissionBtcBlockHeight,
-		BestSubmissionBtcBlockHash:         hex.EncodeToString(*b.BestSubmissionBtcBlockHash),
+		BestSubmissionBtcBlockHash:         b.BestSubmissionBtcBlockHash.MarshalHex(),
 		BestSubmissionTransactions:         bestSubTxs,
 		BestSubmissionVigilanteAddressList: bestSubVigAddrs,
 	}

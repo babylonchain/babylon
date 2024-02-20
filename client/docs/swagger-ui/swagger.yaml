@@ -356,38 +356,13 @@ paths:
                     items:
                       type: object
                       properties:
-                        key:
-                          description: >-
-                            key is the position (txIdx, blockHash) of this tx on
-                            BTC blockchain
-
-                            Although it is already a part of SubmissionKey, we
-                            store it here again
-
-                            to make TransactionInfo self-contained.
-
-                            For example, storing the key allows TransactionInfo
-                            to not relay on
-
-                            the fact that TransactionInfo will be ordered in the
-                            same order as
-
-                            TransactionKeys in SubmissionKey.
-                          type: object
-                          properties:
-                            index:
-                              type: integer
-                              format: int64
-                              description: Index Bitcoin Transaction index in block.
-                            hash:
-                              type: string
-                              description: Hash BTC Header hash as hex.
-                          title: >-
-                            TransactionKeyResponse Each provided OP_RETURN
-                            transaction can be idendtified by
-
-                            hash of block in which transaction was included and
-                            transaction index in the block
+                        index:
+                          type: integer
+                          format: int64
+                          description: Index Bitcoin Transaction index in block.
+                        hash:
+                          type: string
+                          description: Hash BTC Header hash as hex.
                         transaction:
                           type: string
                           description: transaction is the full transaction data as str hex.
@@ -9692,38 +9667,13 @@ definitions:
         items:
           type: object
           properties:
-            key:
-              description: >-
-                key is the position (txIdx, blockHash) of this tx on BTC
-                blockchain
-
-                Although it is already a part of SubmissionKey, we store it here
-                again
-
-                to make TransactionInfo self-contained.
-
-                For example, storing the key allows TransactionInfo to not relay
-                on
-
-                the fact that TransactionInfo will be ordered in the same order
-                as
-
-                TransactionKeys in SubmissionKey.
-              type: object
-              properties:
-                index:
-                  type: integer
-                  format: int64
-                  description: Index Bitcoin Transaction index in block.
-                hash:
-                  type: string
-                  description: Hash BTC Header hash as hex.
-              title: >-
-                TransactionKeyResponse Each provided OP_RETURN transaction can
-                be idendtified by
-
-                hash of block in which transaction was included and transaction
-                index in the block
+            index:
+              type: integer
+              format: int64
+              description: Index Bitcoin Transaction index in block.
+            hash:
+              type: string
+              description: Hash BTC Header hash as hex.
             transaction:
               type: string
               description: transaction is the full transaction data as str hex.
@@ -9879,38 +9829,13 @@ definitions:
             items:
               type: object
               properties:
-                key:
-                  description: >-
-                    key is the position (txIdx, blockHash) of this tx on BTC
-                    blockchain
-
-                    Although it is already a part of SubmissionKey, we store it
-                    here again
-
-                    to make TransactionInfo self-contained.
-
-                    For example, storing the key allows TransactionInfo to not
-                    relay on
-
-                    the fact that TransactionInfo will be ordered in the same
-                    order as
-
-                    TransactionKeys in SubmissionKey.
-                  type: object
-                  properties:
-                    index:
-                      type: integer
-                      format: int64
-                      description: Index Bitcoin Transaction index in block.
-                    hash:
-                      type: string
-                      description: Hash BTC Header hash as hex.
-                  title: >-
-                    TransactionKeyResponse Each provided OP_RETURN transaction
-                    can be idendtified by
-
-                    hash of block in which transaction was included and
-                    transaction index in the block
+                index:
+                  type: integer
+                  format: int64
+                  description: Index Bitcoin Transaction index in block.
+                hash:
+                  type: string
+                  description: Hash BTC Header hash as hex.
                 transaction:
                   type: string
                   description: transaction is the full transaction data as str hex.
@@ -10310,29 +10235,13 @@ definitions:
   babylon.btccheckpoint.v1.TransactionInfoResponse:
     type: object
     properties:
-      key:
-        description: |-
-          key is the position (txIdx, blockHash) of this tx on BTC blockchain
-          Although it is already a part of SubmissionKey, we store it here again
-          to make TransactionInfo self-contained.
-          For example, storing the key allows TransactionInfo to not relay on
-          the fact that TransactionInfo will be ordered in the same order as
-          TransactionKeys in SubmissionKey.
-        type: object
-        properties:
-          index:
-            type: integer
-            format: int64
-            description: Index Bitcoin Transaction index in block.
-          hash:
-            type: string
-            description: Hash BTC Header hash as hex.
-        title: >-
-          TransactionKeyResponse Each provided OP_RETURN transaction can be
-          idendtified by
-
-          hash of block in which transaction was included and transaction index
-          in the block
+      index:
+        type: integer
+        format: int64
+        description: Index Bitcoin Transaction index in block.
+      hash:
+        type: string
+        description: Hash BTC Header hash as hex.
       transaction:
         type: string
         description: transaction is the full transaction data as str hex.
@@ -10359,22 +10268,6 @@ definitions:
     title: |-
       Each provided OP_RETURN transaction can be idendtified by hash of block in
       which transaction was included and transaction index in the block
-  babylon.btccheckpoint.v1.TransactionKeyResponse:
-    type: object
-    properties:
-      index:
-        type: integer
-        format: int64
-        description: Index Bitcoin Transaction index in block.
-      hash:
-        type: string
-        description: Hash BTC Header hash as hex.
-    title: >-
-      TransactionKeyResponse Each provided OP_RETURN transaction can be
-      idendtified by
-
-      hash of block in which transaction was included and transaction index in
-      the block
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:
