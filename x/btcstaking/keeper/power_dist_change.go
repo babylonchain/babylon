@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cosmossdk.io/store/prefix"
+	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -48,7 +49,9 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 			// in order to accumulate voting power dist info for it
 			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
 				// accumulate voting power and reward distribution cache
-				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, params.CovenantQuorum)
+				if btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum) > 0 {
+					fpDistInfo.AddBTCDel(btcDel)
+				}
 
 				// record metrics
 				numStakedSats += btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
@@ -111,21 +114,150 @@ func (k Keeper) UpdatePowerDist2(ctx context.Context) {
 	// get all power distirbution update events
 	events := k.GetAllPowerDistUpdateEvents(ctx, btcTipHeight)
 
-	if dc == nil && len(events) == 0 {
-		// no existing BTC delegation and no event, no nothing
-		return
-	} else if dc != nil && len(events) == 0 {
-		// map everything in prev height to this height
-		k.recordVotingPowerAndCache(ctx, dc)
-	} else {
-		if dc == nil {
-			dc = types.NewVotingPowerDistCache()
+	// if no event exists, then map previous voting power and
+	// cache to the current height
+	if len(events) == 0 {
+		if dc != nil {
+			// map everything in prev height to this height
+			k.recordVotingPowerAndCache(ctx, dc)
 		}
-		// TODO: reconcile voting power distribution cache and new events
-
-		// record voting power and cache for this height
-		k.recordVotingPowerAndCache(ctx, dc)
+		return
 	}
+
+	if dc == nil {
+		dc = types.NewVotingPowerDistCache()
+	}
+
+	// TODO: reconcile voting power distribution cache and new events
+	k.processAllPowerDistUpdateEvents(ctx, dc, events)
+
+	// record voting power and cache for this height
+	k.recordVotingPowerAndCache(ctx, dc)
+}
+
+// processAllPowerDistUpdateEvents processes all events that affect
+// voting power distribution, including
+// - newly active BTC delegations
+// - newly unbonded BTC delegations
+// - slashed finality providers
+func (k Keeper) processAllPowerDistUpdateEvents(ctx context.Context, dc *types.VotingPowerDistCache, events []*types.EventPowerDistUpdate) *types.VotingPowerDistCache {
+	// a map where key is finality provider's BTC PK hex and value is a list
+	// of BTC delegations that newly become active under this provider
+	activeBTCDels := map[string][]*types.BTCDelegation{}
+	// a map where key is unbonded BTC delegation's staking tx hash
+	unbondedBTCDels := map[string]struct{}{}
+	// a map where key is slashed finality providers' BTC PK
+	slashedFPs := map[string]struct{}{}
+
+	/*
+		filter and classify all events into new/expired BTC delegations and slashed FPs
+	*/
+	for _, event := range events {
+		switch typedEvent := event.Ev.(type) {
+		case *types.EventPowerDistUpdate_BtcDelStateUpdate:
+			delEvent := typedEvent.BtcDelStateUpdate
+			if delEvent.NewState == types.BTCDelegationStatus_ACTIVE {
+				// newly active BTC delegation
+				btcDel, err := k.GetBTCDelegation(ctx, delEvent.StakingTxHash)
+				if err != nil {
+					panic(err) // only programming error
+				}
+				// add the BTC delegation to each restaked finality provider
+				for _, fpBTCPK := range btcDel.FpBtcPkList {
+					fpBTCPKHex := fpBTCPK.MarshalHex()
+					activeBTCDels[fpBTCPKHex] = append(activeBTCDels[fpBTCPKHex], btcDel)
+				}
+			} else if delEvent.NewState == types.BTCDelegationStatus_UNBONDED {
+				// add the expired BTC delegation to the map
+				unbondedBTCDels[delEvent.StakingTxHash] = struct{}{}
+			}
+		case *types.EventPowerDistUpdate_SlashedFp:
+			// slashed finality providers
+			slashedFPs[typedEvent.SlashedFp.Pk.MarshalHex()] = struct{}{}
+		}
+	}
+
+	// if no voting power update, return directly
+	noUpdate := len(activeBTCDels) == 0 && len(unbondedBTCDels) == 0 && len(slashedFPs) == 0
+	if noUpdate {
+		return dc
+	}
+
+	/*
+		At this point, there is voting power update.
+		Then, construct a voting power dist cache by reconciling the previous
+		one and all the new events.
+	*/
+	newDc := types.NewVotingPowerDistCache()
+
+	// iterate over all finality providers and apply all events
+	dc.TotalVotingPower = 0
+	for i := range dc.FinalityProviders {
+		// create a copy of the finality provider
+		fp := *dc.FinalityProviders[i]
+		fp.TotalVotingPower = 0
+		fp.BtcDels = []*types.BTCDelDistInfo{}
+
+		fpBTCPKHex := fp.BtcPk.MarshalHex()
+
+		// if this finality provider is slashed, continue to avoid recording it
+		if _, ok := slashedFPs[fpBTCPKHex]; ok {
+			continue
+		}
+
+		// add all BTC delegations that are not unbonded to the new finality provider
+		for j := range dc.FinalityProviders[i].BtcDels {
+			btcDel := *dc.FinalityProviders[i].BtcDels[j]
+			if _, ok := unbondedBTCDels[btcDel.StakingTxHash]; !ok {
+				fp.AddBTCDelDistInfo(&btcDel)
+			}
+		}
+
+		// process all new BTC delegations under this finality provider
+		if fpActiveBTCDels, ok := activeBTCDels[fpBTCPKHex]; ok {
+			// handle new BTC delegations for this finality provider
+			for _, d := range fpActiveBTCDels {
+				fp.AddBTCDel(d)
+			}
+			// remove the finality provider entry in activeBTCDels map, so that
+			// after the for loop the rest entries in activeBTCDels belongs to new
+			// finality providers with new BTC delegations
+			delete(activeBTCDels, fpBTCPKHex)
+		}
+
+		// add this finality provider to the new cache if it has voting power
+		if fp.TotalVotingPower > 0 {
+			newDc.AddFinalityProviderDistInfo(&fp)
+		}
+	}
+
+	/*
+		process new BTC delegations under new finality providers in activeBTCDels
+	*/
+	for fpBTCPKHex, fpActiveBTCDels := range activeBTCDels {
+		// get the finality provider and initialise its dist info
+		fpBTCPK, err := bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
+		if err != nil {
+			panic(err) // only programming error
+		}
+		newFP, err := k.GetFinalityProvider(ctx, *fpBTCPK)
+		if err != nil {
+			panic(err) // only programming error
+		}
+		fpDistInfo := types.NewFinalityProviderDistInfo(newFP)
+
+		// add each BTC delegation
+		for _, d := range fpActiveBTCDels {
+			fpDistInfo.AddBTCDel(d)
+		}
+
+		// add this finality provider to the new cache if it has voting power
+		if fpDistInfo.TotalVotingPower > 0 {
+			newDc.AddFinalityProviderDistInfo(fpDistInfo)
+		}
+	}
+
+	return newDc
 }
 
 /* voting power distribution update event store */

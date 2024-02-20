@@ -67,7 +67,7 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
 	// update voting power distribution
-	k.UpdatePowerDist(ctx)
+	k.UpdatePowerDist2(ctx)
 
 	return nil
 }
