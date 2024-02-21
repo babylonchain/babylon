@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
+	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	bsmodule "github.com/babylonchain/babylon/x/btcstaking"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/golang/mock/gomock"
@@ -66,6 +67,9 @@ func benchBeginBlock(b *testing.B, numFPs int, numDelsUnderFP int) {
 			h.CreateCovenantSigs(r, covenantSKs, msgCreateBTCDel, actualDel)
 		}
 	}
+
+	// mock stuff
+	h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 
 	// Start the CPU profiler
 	cpuProfileFile := fmt.Sprintf("/tmp/btcstaking-beginblock-%d-%d-cpu.pprof", numFPs, numDelsUnderFP)
