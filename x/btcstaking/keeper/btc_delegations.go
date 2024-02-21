@@ -17,7 +17,7 @@ import (
 // - indexing the given BTC delegation in the BTC delegator store,
 // - saving it under BTC delegation store, and
 // - emit events about this BTC delegation.
-func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) error {
+func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
 	}
@@ -44,22 +44,18 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 			return types.ErrInvalidStakingTx.Wrapf(err.Error())
 		}
 		// save the index
-		store := k.btcDelegatorStore(ctx, &fpBTCPK)
-		delBTCPKBytes := btcDel.BtcPk.MustMarshal()
-		btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
-		store.Set(delBTCPKBytes, btcDelIndexBytes)
+		k.setBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk, btcDelIndex)
 	}
 
 	// save this BTC delegation
 	k.setBTCDelegation(ctx, btcDel)
 
 	// notify subscriber
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	event := &types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),
 		NewState:      types.BTCDelegationStatus_PENDING,
 	}
-	if err := sdkCtx.EventManager().EmitTypedEvent(event); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
 	}
 
@@ -81,7 +77,7 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 // addCovenantSigsToBTCDelegation adds signatures from a given covenant member
 // to the given BTC delegation
 func (k Keeper) addCovenantSigsToBTCDelegation(
-	ctx context.Context,
+	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
 	covPK *bbn.BIP340PubKey,
 	parsedSlashingAdaptorSignatures []asig.AdaptorSignature,
@@ -106,8 +102,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 			StakingTxHash: btcDel.MustGetStakingTxHash().String(),
 			NewState:      types.BTCDelegationStatus_ACTIVE,
 		}
-		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		if err := sdkCtx.EventManager().EmitTypedEvent(event); err != nil {
+		if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 			panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new active BTC delegation: %w", err))
 		}
 
@@ -121,7 +116,7 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 // btcUndelegate adds the signature of the unbonding tx signed by the staker
 // to the given BTC delegation
 func (k Keeper) btcUndelegate(
-	ctx context.Context,
+	ctx sdk.Context,
 	btcDel *types.BTCDelegation,
 	unbondingTxSig *bbn.BIP340Signature,
 ) {
@@ -134,8 +129,7 @@ func (k Keeper) btcUndelegate(
 		NewState:      types.BTCDelegationStatus_UNBONDED,
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	if err := sdkCtx.EventManager().EmitTypedEvent(event); err != nil {
+	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
 		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new unbonded BTC delegation: %w", err))
 	}
 
@@ -173,6 +167,21 @@ func (k Keeper) setBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	stakingTxHash := btcDel.MustGetStakingTxHash()
 	btcDelBytes := k.cdc.MustMarshal(btcDel)
 	store.Set(stakingTxHash[:], btcDelBytes)
+}
+
+// GetBTCDelegation gets the BTC delegation with a given staking tx hash
+func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*types.BTCDelegation, error) {
+	// decode staking tx hash string
+	stakingTxHash, err := chainhash.NewHashFromStr(stakingTxHashStr)
+	if err != nil {
+		return nil, err
+	}
+	btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
+	if btcDel == nil {
+		return nil, types.ErrBTCDelegationNotFound
+	}
+
+	return btcDel, nil
 }
 
 func (k Keeper) getBTCDelegation(ctx context.Context, stakingTxHash chainhash.Hash) *types.BTCDelegation {

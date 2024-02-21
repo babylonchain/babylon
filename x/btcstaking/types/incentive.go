@@ -24,8 +24,8 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 	}
 }
 
-// FilterTopNFinalityProviders filters out the top n finality providers and accumulate
-// their voting power
+// ApplyActiveFinalityProviders filters out the top N finality providers
+// and their total voting power, and record them in the cache
 func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(n uint32) {
 	// reset total voting power
 	dc.TotalVotingPower = 0

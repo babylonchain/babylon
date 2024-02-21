@@ -213,7 +213,8 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 		}
 	}
 
-	// get top N finality providers and their total voting power
+	// filter out the top N finality providers and their total voting power, and
+	// record them in the new cache
 	newDc.ApplyActiveFinalityProviders(k.GetParams(ctx).MaxActiveFinalityProviders)
 
 	return newDc

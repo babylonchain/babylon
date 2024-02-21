@@ -46,6 +46,12 @@ func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn
 	return &btcDelIndex, nil
 }
 
+func (k Keeper) setBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDelIndex *types.BTCDelegatorDelegationIndex) {
+	store := k.btcDelegatorStore(ctx, fpBTCPK)
+	btcDelIndexBytes := k.cdc.MustMarshal(btcDelIndex)
+	store.Set(*delBTCPK, btcDelIndexBytes)
+}
+
 // getBTCDelegatorDelegations gets the BTC delegations with a given BTC PK under a given finality provider
 func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
 	btcDelIndex, err := k.getBTCDelegatorDelegationIndex(ctx, fpBTCPK, delBTCPK)
@@ -64,21 +70,6 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 		btcDels = append(btcDels, btcDel)
 	}
 	return &types.BTCDelegatorDelegations{Dels: btcDels}, nil
-}
-
-// GetBTCDelegation gets the BTC delegation with a given staking tx hash
-func (k Keeper) GetBTCDelegation(ctx context.Context, stakingTxHashStr string) (*types.BTCDelegation, error) {
-	// decode staking tx hash string
-	stakingTxHash, err := chainhash.NewHashFromStr(stakingTxHashStr)
-	if err != nil {
-		return nil, err
-	}
-	btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
-	if btcDel == nil {
-		return nil, types.ErrBTCDelegationNotFound
-	}
-
-	return btcDel, nil
 }
 
 // btcDelegatorStore returns the KVStore of the BTC delegators
