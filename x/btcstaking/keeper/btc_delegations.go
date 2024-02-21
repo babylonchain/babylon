@@ -13,8 +13,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// AddBTCDelegation indexes the given BTC delegation in the BTC delegator store, and saves
-// it under BTC delegation store
+// AddBTCDelegation adds a BTC delegation post verification to the system, including
+// - indexing the given BTC delegation in the BTC delegator store,
+// - saving it under BTC delegation store, and
+// - emit events about this BTC delegation.
 func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegation) error {
 	if err := btcDel.ValidateBasic(); err != nil {
 		return err
@@ -76,6 +78,8 @@ func (k Keeper) AddBTCDelegation(ctx context.Context, btcDel *types.BTCDelegatio
 	return nil
 }
 
+// addCovenantSigsToBTCDelegation adds signatures from a given covenant member
+// to the given BTC delegation
 func (k Keeper) addCovenantSigsToBTCDelegation(
 	ctx context.Context,
 	btcDel *types.BTCDelegation,
@@ -114,6 +118,8 @@ func (k Keeper) addCovenantSigsToBTCDelegation(
 	}
 }
 
+// btcUndelegate adds the signature of the unbonding tx signed by the staker
+// to the given BTC delegation
 func (k Keeper) btcUndelegate(
 	ctx context.Context,
 	btcDel *types.BTCDelegation,

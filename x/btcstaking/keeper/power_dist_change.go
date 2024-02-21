@@ -53,6 +53,9 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc)
+
+	// record metrics
+	k.recordMetrics(ctx, newDc)
 }
 
 func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
@@ -65,6 +68,23 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingP
 
 	// set the voting power distribution cache of the current height
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
+}
+
+func (k Keeper) recordMetrics(ctx context.Context, dc *types.VotingPowerDistCache) {
+	// number of active FPs
+	numActiveFPs := len(dc.ActiveFinalityProviders)
+	types.RecordActiveFinalityProviders(numActiveFPs)
+	// number of inactive FPs
+	numInactiveFPs := len(dc.FinalityProviders) - numActiveFPs
+	types.RecordInactiveFinalityProviders(numInactiveFPs)
+	// staked Satoshi
+	stakedSats := uint64(0)
+	for _, fp := range dc.FinalityProviders {
+		stakedSats += fp.TotalVotingPower
+	}
+	numStakedBTCs := float32(stakedSats / SatoshisPerBTC)
+	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
+	// TODO: record number of BTC delegations under different status
 }
 
 // processAllPowerDistUpdateEvents processes all events that affect
