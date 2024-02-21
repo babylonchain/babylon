@@ -60,7 +60,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		// record voting power distribution cache
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
@@ -68,7 +68,7 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		dc := h.BTCStakingKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
 		require.NotNil(t, dc)
 		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
-		for _, fpDistInfo := range dc.TopFinalityProviders {
+		for _, fpDistInfo := range dc.ActiveFinalityProviders {
 			require.Equal(t, fpDistInfo.TotalVotingPower, numBTCDels*stakingValue)
 			fp, ok := fpsWithVotingPowerMap[fpDistInfo.BabylonPk.String()]
 			require.True(t, ok)

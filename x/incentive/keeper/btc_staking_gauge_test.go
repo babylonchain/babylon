@@ -41,7 +41,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		fpRewardMap := map[string]sdk.Coins{}     // key: address, value: reward
 		btcDelRewardMap := map[string]sdk.Coins{} // key: address, value: reward
 
-		for _, fp := range dc.TopFinalityProviders {
+		for _, fp := range dc.ActiveFinalityProviders {
 			fpPortion := dc.GetFinalityProviderPortion(fp)
 			coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
 			coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)

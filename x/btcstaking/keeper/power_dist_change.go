@@ -12,86 +12,8 @@ import (
 
 /* power distribution update */
 
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
-	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
-	for _, fp := range dc.TopFinalityProviders {
-		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
-	}
-
-	// set the voting power distribution cache of the current height
-	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
-}
-
-// UpdatePowerDist updates the voting power distribution of finality providers
-// and their BTC delegations
-func (k Keeper) UpdatePowerDist_OLD(ctx context.Context) {
-	params := k.GetParams(ctx)
-	btcTipHeight := k.GetCurrentBTCHeight(ctx)
-	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-
-	// prepare metrics for {active, inactive} finality providers,
-	// {pending, active, unbonded BTC delegations}, and total staked Bitcoins
-	// NOTE: slashed finality providers and BTC delegations are recorded upon
-	// slashing events rather than here
-	var (
-		numFPs        int    = 0
-		numStakedSats uint64 = 0
-		numDelsMap           = map[types.BTCDelegationStatus]int{
-			types.BTCDelegationStatus_PENDING:  0,
-			types.BTCDelegationStatus_ACTIVE:   0,
-			types.BTCDelegationStatus_UNBONDED: 0,
-		}
-	)
-	// for voting power and rewards
-	dc := types.NewVotingPowerDistCache()
-
-	// iterate over all finality providers to find out non-slashed ones that have
-	// positive voting power
-	k.IterateActiveFPs(
-		ctx,
-		func(fp *types.FinalityProvider) bool {
-			fpDistInfo := types.NewFinalityProviderDistInfo(fp)
-
-			// iterate over all BTC delegations under the finality provider
-			// in order to accumulate voting power dist info for it
-			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
-				if btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum) > 0 {
-					// accumulate voting power and reward distribution cache
-					fpDistInfo.AddBTCDel(btcDel)
-					// record metrics
-					numStakedSats += btcDel.VotingPower(btcTipHeight, wValue, params.CovenantQuorum)
-					numDelsMap[btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)]++
-				}
-
-				return true
-			})
-
-			if fpDistInfo.TotalVotingPower > 0 {
-				dc.AddFinalityProviderDistInfo(fpDistInfo)
-			}
-
-			return true
-		},
-	)
-
-	// apply active finality provider set
-	dc.ApplyActiveFinalityProviders(params.MaxActiveFinalityProviders)
-
-	// record voting power distribution and cache
-	k.recordVotingPowerAndCache(ctx, dc)
-
-	// record metrics for finality providers and total staked BTCs
-	numActiveFPs := len(dc.TopFinalityProviders)
-	types.RecordActiveFinalityProviders(numActiveFPs)
-	types.RecordInactiveFinalityProviders(numFPs - numActiveFPs)
-	numStakedBTCs := float32(numStakedSats / SatoshisPerBTC)
-	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
-	// record metrics for BTC delegations
-	for status, num := range numDelsMap {
-		types.RecordBTCDelegations(num, status)
-	}
-}
-
+// UpdatePowerDist updates the voting power table and distribution cache.
+// This is triggered upon each `BeginBlock`
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTipHeight := k.GetCurrentBTCHeight(ctx)
@@ -133,8 +55,21 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	k.recordVotingPowerAndCache(ctx, newDc)
 }
 
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
+	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
+
+	// set voting power table for this height
+	for _, fp := range dc.ActiveFinalityProviders {
+		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+	}
+
+	// set the voting power distribution cache of the current height
+	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
+}
+
 // processAllPowerDistUpdateEvents processes all events that affect
-// voting power distribution and returns a new distribution cache, including
+// voting power distribution and returns a new distribution cache.
+// The following events will affect the voting power distribution:
 // - newly active BTC delegations
 // - newly unbonded BTC delegations
 // - slashed finality providers
@@ -188,7 +123,7 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 	/*
 		At this point, there is voting power update.
 		Then, construct a voting power dist cache by reconciling the previous
-		one and all the new events.
+		cache and all the new events.
 	*/
 	newDc := types.NewVotingPowerDistCache()
 
