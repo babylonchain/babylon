@@ -339,72 +339,40 @@ paths:
                   epoch_number:
                     type: string
                     format: uint64
-                    title: epoch number of this checkpoint
+                    description: EpochNumber of this checkpoint.
                   best_submission_btc_block_height:
                     type: string
                     format: uint64
                     title: btc height of the best submission of the epoch
                   best_submission_btc_block_hash:
                     type: string
-                    format: byte
                     title: >-
                       hash of the btc block which determines checkpoint btc
                       block height i.e.
 
-                      youngest block of best submission
+                      youngest block of best submission Hexadecimal
                   best_submission_transactions:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
-                          description: >-
-                            key is the position (txIdx, blockHash) of this tx on
-                            BTC blockchain
-
-                            Although it is already a part of SubmissionKey, we
-                            store it here again
-
-                            to make TransactionInfo self-contained.
-
-                            For example, storing the key allows TransactionInfo
-                            to not relay on
-
-                            the fact that TransactionInfo will be ordered in the
-                            same order as
-
-                            TransactionKeys in SubmissionKey.
-                          type: object
-                          properties:
-                            index:
-                              type: integer
-                              format: int64
-                            hash:
-                              type: string
-                              format: byte
-                          title: >-
-                            Each provided OP_RETURN transaction can be
-                            idendtified by hash of block in
-
-                            which transaction was included and transaction index
-                            in the block
+                        index:
+                          type: integer
+                          format: int64
+                          description: Index Bitcoin Transaction index in block.
+                        hash:
+                          type: string
+                          description: Hash BTC Header hash as hex.
                         transaction:
                           type: string
-                          format: byte
-                          title: transaction is the full transaction in bytes
+                          description: transaction is the full transaction data as str hex.
                         proof:
                           type: string
-                          format: byte
                           title: >-
                             proof is the Merkle proof that this tx is included
                             in the position in `key`
-
-                            TODO: maybe it could use here better format as we
-                            already processed and
-
-                            valideated the proof?
                       title: |-
-                        TransactionInfo is the info of a tx on Bitcoin,
+                        TransactionInfoResponse is the info of a tx on Bitcoin,
                         including
                         - the position of the tx on BTC blockchain
                         - the full tx content
@@ -417,17 +385,13 @@ paths:
                       properties:
                         submitter:
                           type: string
-                          format: byte
                           description: >-
-                            TODO: this could probably be better typed
-
                             submitter is the address of the checkpoint submitter
                             to BTC, extracted from
 
                             the checkpoint itself.
                         reporter:
                           type: string
-                          format: byte
                           title: >-
                             reporter is the address of the reporter who reported
                             the submissions,
@@ -435,17 +399,17 @@ paths:
                             calculated from submission message
                             MsgInsertBTCSpvProof itself
                       title: >-
-                        CheckpointAddresses contains the addresses of the
-                        submitter and reporter of a
+                        CheckpointAddressesResponse contains the addresses of
+                        the submitter and reporter of a
 
                         given checkpoint
                     title: list of vigilantes' addresses of the best submission
-                title: >-
-                  BTCCheckpointInfo contains all data about best submission of
-                  checkpoint for
+                description: >-
+                  BTCCheckpointInfoResponse contains all data about best
+                  submission of checkpoint for
 
                   given epoch. Best submission is the submission which is deeper
-                  in btc ledger
+                  in btc ledger.
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
@@ -9680,6 +9644,82 @@ definitions:
 
       given epoch. Best submission is the submission which is deeper in btc
       ledger
+  babylon.btccheckpoint.v1.BTCCheckpointInfoResponse:
+    type: object
+    properties:
+      epoch_number:
+        type: string
+        format: uint64
+        description: EpochNumber of this checkpoint.
+      best_submission_btc_block_height:
+        type: string
+        format: uint64
+        title: btc height of the best submission of the epoch
+      best_submission_btc_block_hash:
+        type: string
+        title: >-
+          hash of the btc block which determines checkpoint btc block height
+          i.e.
+
+          youngest block of best submission Hexadecimal
+      best_submission_transactions:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+              description: Index Bitcoin Transaction index in block.
+            hash:
+              type: string
+              description: Hash BTC Header hash as hex.
+            transaction:
+              type: string
+              description: transaction is the full transaction data as str hex.
+            proof:
+              type: string
+              title: >-
+                proof is the Merkle proof that this tx is included in the
+                position in `key`
+          title: |-
+            TransactionInfoResponse is the info of a tx on Bitcoin,
+            including
+            - the position of the tx on BTC blockchain
+            - the full tx content
+            - the Merkle proof that this tx is on the above position
+        title: the BTC checkpoint transactions of the best submission
+      best_submission_vigilante_address_list:
+        type: array
+        items:
+          type: object
+          properties:
+            submitter:
+              type: string
+              description: >-
+                submitter is the address of the checkpoint submitter to BTC,
+                extracted from
+
+                the checkpoint itself.
+            reporter:
+              type: string
+              title: >-
+                reporter is the address of the reporter who reported the
+                submissions,
+
+                calculated from submission message MsgInsertBTCSpvProof itself
+          title: >-
+            CheckpointAddressesResponse contains the addresses of the submitter
+            and reporter of a
+
+            given checkpoint
+        title: list of vigilantes' addresses of the best submission
+    description: >-
+      BTCCheckpointInfoResponse contains all data about best submission of
+      checkpoint for
+
+      given epoch. Best submission is the submission which is deeper in btc
+      ledger.
   babylon.btccheckpoint.v1.CheckpointAddresses:
     type: object
     properties:
@@ -9702,6 +9742,26 @@ definitions:
     title: >-
       CheckpointAddresses contains the addresses of the submitter and reporter
       of a
+
+      given checkpoint
+  babylon.btccheckpoint.v1.CheckpointAddressesResponse:
+    type: object
+    properties:
+      submitter:
+        type: string
+        description: >-
+          submitter is the address of the checkpoint submitter to BTC, extracted
+          from
+
+          the checkpoint itself.
+      reporter:
+        type: string
+        title: |-
+          reporter is the address of the reporter who reported the submissions,
+          calculated from submission message MsgInsertBTCSpvProof itself
+    title: >-
+      CheckpointAddressesResponse contains the addresses of the submitter and
+      reporter of a
 
       given checkpoint
   babylon.btccheckpoint.v1.Params:
@@ -9752,72 +9812,40 @@ definitions:
           epoch_number:
             type: string
             format: uint64
-            title: epoch number of this checkpoint
+            description: EpochNumber of this checkpoint.
           best_submission_btc_block_height:
             type: string
             format: uint64
             title: btc height of the best submission of the epoch
           best_submission_btc_block_hash:
             type: string
-            format: byte
             title: >-
               hash of the btc block which determines checkpoint btc block height
               i.e.
 
-              youngest block of best submission
+              youngest block of best submission Hexadecimal
           best_submission_transactions:
             type: array
             items:
               type: object
               properties:
-                key:
-                  description: >-
-                    key is the position (txIdx, blockHash) of this tx on BTC
-                    blockchain
-
-                    Although it is already a part of SubmissionKey, we store it
-                    here again
-
-                    to make TransactionInfo self-contained.
-
-                    For example, storing the key allows TransactionInfo to not
-                    relay on
-
-                    the fact that TransactionInfo will be ordered in the same
-                    order as
-
-                    TransactionKeys in SubmissionKey.
-                  type: object
-                  properties:
-                    index:
-                      type: integer
-                      format: int64
-                    hash:
-                      type: string
-                      format: byte
-                  title: >-
-                    Each provided OP_RETURN transaction can be idendtified by
-                    hash of block in
-
-                    which transaction was included and transaction index in the
-                    block
+                index:
+                  type: integer
+                  format: int64
+                  description: Index Bitcoin Transaction index in block.
+                hash:
+                  type: string
+                  description: Hash BTC Header hash as hex.
                 transaction:
                   type: string
-                  format: byte
-                  title: transaction is the full transaction in bytes
+                  description: transaction is the full transaction data as str hex.
                 proof:
                   type: string
-                  format: byte
                   title: >-
                     proof is the Merkle proof that this tx is included in the
                     position in `key`
-
-                    TODO: maybe it could use here better format as we already
-                    processed and
-
-                    valideated the proof?
               title: |-
-                TransactionInfo is the info of a tx on Bitcoin,
+                TransactionInfoResponse is the info of a tx on Bitcoin,
                 including
                 - the position of the tx on BTC blockchain
                 - the full tx content
@@ -9830,17 +9858,13 @@ definitions:
               properties:
                 submitter:
                   type: string
-                  format: byte
                   description: >-
-                    TODO: this could probably be better typed
-
                     submitter is the address of the checkpoint submitter to BTC,
                     extracted from
 
                     the checkpoint itself.
                 reporter:
                   type: string
-                  format: byte
                   title: >-
                     reporter is the address of the reporter who reported the
                     submissions,
@@ -9848,17 +9872,17 @@ definitions:
                     calculated from submission message MsgInsertBTCSpvProof
                     itself
               title: >-
-                CheckpointAddresses contains the addresses of the submitter and
-                reporter of a
+                CheckpointAddressesResponse contains the addresses of the
+                submitter and reporter of a
 
                 given checkpoint
             title: list of vigilantes' addresses of the best submission
-        title: >-
-          BTCCheckpointInfo contains all data about best submission of
+        description: >-
+          BTCCheckpointInfoResponse contains all data about best submission of
           checkpoint for
 
           given epoch. Best submission is the submission which is deeper in btc
-          ledger
+          ledger.
     title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -10204,6 +10228,30 @@ definitions:
           valideated the proof?
     title: |-
       TransactionInfo is the info of a tx on Bitcoin,
+      including
+      - the position of the tx on BTC blockchain
+      - the full tx content
+      - the Merkle proof that this tx is on the above position
+  babylon.btccheckpoint.v1.TransactionInfoResponse:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+        description: Index Bitcoin Transaction index in block.
+      hash:
+        type: string
+        description: Hash BTC Header hash as hex.
+      transaction:
+        type: string
+        description: transaction is the full transaction data as str hex.
+      proof:
+        type: string
+        title: >-
+          proof is the Merkle proof that this tx is included in the position in
+          `key`
+    title: |-
+      TransactionInfoResponse is the info of a tx on Bitcoin,
       including
       - the position of the tx on BTC blockchain
       - the full tx content
