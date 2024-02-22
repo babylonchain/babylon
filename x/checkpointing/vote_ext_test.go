@@ -137,6 +137,8 @@ func FuzzAddBLSSigVoteExtension_EmptyVoteExtensions(f *testing.F) {
 	})
 }
 
+// FuzzExtendVote_InvalidBlockHash tests the case where the
+// block hash for signing is invalid in terms of format
 func FuzzExtendVote_InvalidBlockHash(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -174,6 +176,8 @@ func FuzzExtendVote_InvalidBlockHash(f *testing.F) {
 	})
 }
 
+// FuzzExtendVote_EmptyBLSPrivKey tests the case where the
+// BLS private key of the private signer is missing
 func FuzzExtendVote_EmptyBLSPrivKey(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
@@ -209,6 +213,8 @@ func FuzzExtendVote_EmptyBLSPrivKey(f *testing.F) {
 	})
 }
 
+// FuzzExtendVote_NotInValidatorSet tests the case where the
+// private signer is not in the validator set
 func FuzzExtendVote_NotInValidatorSet(f *testing.F) {
 	datagen.AddRandomSeedsToFuzzer(f, 10)
 
