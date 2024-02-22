@@ -83,10 +83,10 @@ func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, vo
 	// set next height to finalise as height+1
 	k.setNextHeightToFinalize(ctx, block.Height+1)
 	// distribute rewards to BTC staking stakeholders w.r.t. the voting power distribution cache
-	dc := k.BTCStakingKeeper.GetVotingPowerDistCache(ctx, block.Height)
-	if dc == nil {
+	dc, err := k.BTCStakingKeeper.GetVotingPowerDistCache(ctx, block.Height)
+	if err != nil {
 		// failing to get a voting power distribution cache before distributing reward is a programming error
-		panic("voting power distribution cache at the current height is not found")
+		panic(err)
 	}
 	// filter out voted finality providers
 	dc.FilterVotedFinalityProviders(voterBTCPKs)

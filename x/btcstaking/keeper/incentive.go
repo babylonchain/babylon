@@ -14,7 +14,7 @@ func (k Keeper) setVotingPowerDistCache(ctx context.Context, height uint64, dc *
 	store.Set(sdk.Uint64ToBigEndian(height), k.cdc.MustMarshal(dc))
 }
 
-func (k Keeper) GetVotingPowerDistCache(ctx context.Context, height uint64) *types.VotingPowerDistCache {
+func (k Keeper) getVotingPowerDistCache(ctx context.Context, height uint64) *types.VotingPowerDistCache {
 	store := k.votingPowerDistCacheStore(ctx)
 	rdcBytes := store.Get(sdk.Uint64ToBigEndian(height))
 	if len(rdcBytes) == 0 {
@@ -23,6 +23,14 @@ func (k Keeper) GetVotingPowerDistCache(ctx context.Context, height uint64) *typ
 	var dc types.VotingPowerDistCache
 	k.cdc.MustUnmarshal(rdcBytes, &dc)
 	return &dc
+}
+
+func (k Keeper) GetVotingPowerDistCache(ctx context.Context, height uint64) (*types.VotingPowerDistCache, error) {
+	dc := k.getVotingPowerDistCache(ctx, height)
+	if dc == nil {
+		return nil, types.ErrVotingPowerDistCacheNotFound
+	}
+	return dc, nil
 }
 
 func (k Keeper) RemoveVotingPowerDistCache(ctx context.Context, height uint64) {

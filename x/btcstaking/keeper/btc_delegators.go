@@ -12,38 +12,26 @@ import (
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 )
 
-// hasBTCDelegatorDelegations checks if the given BTC delegator has any BTC delegations under a given finality provider
-func (k Keeper) hasBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) bool {
-	fpBTCPKBytes := fpBTCPK.MustMarshal()
-	delBTCPKBytes := delBTCPK.MustMarshal()
-
-	if !k.HasFinalityProvider(ctx, fpBTCPKBytes) {
-		return false
-	}
-	store := k.btcDelegatorStore(ctx, fpBTCPK)
-	return store.Has(delBTCPKBytes)
-}
-
 // getBTCDelegatorDelegationIndex gets the BTC delegation index with a given BTC PK under a given finality provider
-func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegationIndex, error) {
+func (k Keeper) getBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) *types.BTCDelegatorDelegationIndex {
 	fpBTCPKBytes := fpBTCPK.MustMarshal()
 	delBTCPKBytes := delBTCPK.MustMarshal()
 	store := k.btcDelegatorStore(ctx, fpBTCPK)
 
 	// ensure the finality provider exists
 	if !k.HasFinalityProvider(ctx, fpBTCPKBytes) {
-		return nil, types.ErrFpNotFound
+		return nil
 	}
 
 	// ensure BTC delegator exists
 	if !store.Has(delBTCPKBytes) {
-		return nil, types.ErrBTCDelegatorNotFound
+		return nil
 	}
 	// get and unmarshal
 	var btcDelIndex types.BTCDelegatorDelegationIndex
 	btcDelIndexBytes := store.Get(delBTCPKBytes)
 	k.cdc.MustUnmarshal(btcDelIndexBytes, &btcDelIndex)
-	return &btcDelIndex, nil
+	return &btcDelIndex
 }
 
 func (k Keeper) setBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey, btcDelIndex *types.BTCDelegatorDelegationIndex) {
@@ -53,10 +41,10 @@ func (k Keeper) setBTCDelegatorDelegationIndex(ctx context.Context, fpBTCPK *bbn
 }
 
 // getBTCDelegatorDelegations gets the BTC delegations with a given BTC PK under a given finality provider
-func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) (*types.BTCDelegatorDelegations, error) {
-	btcDelIndex, err := k.getBTCDelegatorDelegationIndex(ctx, fpBTCPK, delBTCPK)
-	if err != nil {
-		return nil, err
+func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP340PubKey, delBTCPK *bbn.BIP340PubKey) *types.BTCDelegatorDelegations {
+	btcDelIndex := k.getBTCDelegatorDelegationIndex(ctx, fpBTCPK, delBTCPK)
+	if btcDelIndex == nil {
+		return nil
 	}
 	// get BTC delegation from each staking tx hash
 	btcDels := []*types.BTCDelegation{}
@@ -69,7 +57,7 @@ func (k Keeper) getBTCDelegatorDelegations(ctx context.Context, fpBTCPK *bbn.BIP
 		btcDel := k.getBTCDelegation(ctx, *stakingTxHash)
 		btcDels = append(btcDels, btcDel)
 	}
-	return &types.BTCDelegatorDelegations{Dels: btcDels}, nil
+	return &types.BTCDelegatorDelegations{Dels: btcDels}
 }
 
 // btcDelegatorStore returns the KVStore of the BTC delegators

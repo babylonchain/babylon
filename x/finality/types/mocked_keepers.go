@@ -80,11 +80,12 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, fpBTCPK, height 
 }
 
 // GetVotingPowerDistCache mocks base method.
-func (m *MockBTCStakingKeeper) GetVotingPowerDistCache(ctx context.Context, height uint64) *types.VotingPowerDistCache {
+func (m *MockBTCStakingKeeper) GetVotingPowerDistCache(ctx context.Context, height uint64) (*types.VotingPowerDistCache, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetVotingPowerDistCache", ctx, height)
 	ret0, _ := ret[0].(*types.VotingPowerDistCache)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetVotingPowerDistCache indicates an expected call of GetVotingPowerDistCache.

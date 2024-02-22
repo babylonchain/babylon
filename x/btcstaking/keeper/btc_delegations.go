@@ -30,15 +30,11 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 
 	// for each finality provider the delegation restakes to, update its index
 	for _, fpBTCPK := range btcDel.FpBtcPkList {
-		var btcDelIndex = types.NewBTCDelegatorDelegationIndex()
-		if k.hasBTCDelegatorDelegations(ctx, &fpBTCPK, btcDel.BtcPk) {
-			btcDelIndex, err = k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
-			if err != nil {
-				// this can only be a programming error
-				panic(fmt.Errorf("failed to get BTC delegations while hasBTCDelegatorDelegations returns true"))
-			}
+		// get BTC delegation index under this finality provider
+		btcDelIndex := k.getBTCDelegatorDelegationIndex(ctx, &fpBTCPK, btcDel.BtcPk)
+		if btcDelIndex == nil {
+			btcDelIndex = types.NewBTCDelegatorDelegationIndex()
 		}
-
 		// index staking tx hash of this BTC delegation
 		if err := btcDelIndex.Add(stakingTxHash); err != nil {
 			return types.ErrInvalidStakingTx.Wrapf(err.Error())

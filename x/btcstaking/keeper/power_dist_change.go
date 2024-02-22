@@ -19,7 +19,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	btcTipHeight := k.GetCurrentBTCHeight(ctx)
 
 	// get the power dist cache in the last height
-	dc := k.GetVotingPowerDistCache(ctx, height-1)
+	dc := k.getVotingPowerDistCache(ctx, height-1)
 	// get all power distribution update events during the previous tip
 	// and the current tip
 	lastBTCTipHeight := k.GetBTCHeightAtBabylonHeight(ctx, height-1)

@@ -65,7 +65,8 @@ func FuzzRecordVotingPowerDistCache(f *testing.F) {
 		require.NoError(t, err)
 
 		// assert voting power distribution cache is correct
-		dc := h.BTCStakingKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
+		dc, err := h.BTCStakingKeeper.GetVotingPowerDistCache(h.Ctx, babylonHeight)
+		require.NoError(t, err)
 		require.NotNil(t, dc)
 		require.Equal(t, dc.TotalVotingPower, numFpsWithVotingPower*numBTCDels*stakingValue)
 		for _, fpDistInfo := range dc.ActiveFinalityProviders {
