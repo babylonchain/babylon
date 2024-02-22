@@ -70,24 +70,15 @@ func CmdEpochSubmissions() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
-
 			queryClient := types.NewQueryClient(clientCtx)
 
 			epochNum, err := strconv.ParseUint(args[0], 10, 64)
-
 			if err != nil {
 				return err
 			}
 
-			pageReq, err := client.ReadPageRequest(cmd.Flags())
-			if err != nil {
-				return err
-			}
-
-			params := types.QueryEpochSubmissionsRequest{EpochNum: epochNum, Pagination: pageReq}
-
-			res, err := queryClient.EpochSubmissions(context.Background(), &params)
-
+			req := types.QueryEpochSubmissionsRequest{EpochNum: epochNum}
+			res, err := queryClient.EpochSubmissions(context.Background(), &req)
 			if err != nil {
 				return err
 			}

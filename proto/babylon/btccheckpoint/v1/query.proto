@@ -78,17 +78,13 @@ message QueryBtcCheckpointsInfoResponse {
 message QueryEpochSubmissionsRequest {
   // Number of epoch for which submissions are requested
   uint64 epoch_num = 1;
-
-  cosmos.base.query.v1beta1.PageRequest pagination = 2;
 }
 
 // QueryEpochSubmissionsResponse defines a response to get all submissions in
 // given epoch (QueryEpochSubmissionsRequest)
 message QueryEpochSubmissionsResponse {
-  // All submissions saved during an epoch.
+  // Keys All submissions transactions key saved during an epoch.
   repeated TransactionKeyResponse keys = 1;
-
-  cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // BTCCheckpointInfoResponse contains all data about best submission of checkpoint for

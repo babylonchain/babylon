@@ -92,71 +92,27 @@ func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheck
 	return resp, nil
 }
 
-func getOffset(pageReq *query.PageRequest) uint64 {
-	if pageReq == nil {
-		return 0
-	} else {
-		return pageReq.Offset
-	}
-}
-
-func buildPageResponse(numOfKeys uint64, pageReq *query.PageRequest) *query.PageResponse {
-	if pageReq == nil {
-		return &query.PageResponse{}
-	}
-
-	if !pageReq.CountTotal {
-		return &query.PageResponse{}
-	}
-
-	return &query.PageResponse{Total: numOfKeys}
-}
-
 func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmissionsRequest) (*types.QueryEpochSubmissionsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	_, limit, err := query.ParsePagination(req.Pagination)
-	if err != nil {
-		return nil, err
-	}
-
-	checkpointEpoch := req.GetEpochNum()
-	offset := getOffset(req.Pagination)
-	epochData := k.GetEpochData(ctx, checkpointEpoch)
-
+	epochData := k.GetEpochData(ctx, req.GetEpochNum())
 	if epochData == nil || len(epochData.Keys) == 0 {
 		return &types.QueryEpochSubmissionsResponse{
-			Keys:       []*types.TransactionKeyResponse{},
-			Pagination: buildPageResponse(0, req.Pagination),
-		}, nil
-	}
-
-	numberOfKeys := uint64(len((epochData.Keys)))
-	if offset >= numberOfKeys {
-		// offset larger than number of keys return empty response
-		return &types.QueryEpochSubmissionsResponse{
-			Keys:       []*types.TransactionKeyResponse{},
-			Pagination: buildPageResponse(numberOfKeys, req.Pagination),
+			Keys: []*types.TransactionKeyResponse{},
 		}, nil
 	}
 
 	var txsKeyResp []*types.TransactionKeyResponse
-	for i := offset; i < numberOfKeys; i++ {
-		if len(txsKeyResp) == limit {
-			break
-		}
-
-		submKey := epochData.Keys[i]
+	for _, submKey := range epochData.Keys {
 		for _, txKey := range submKey.Key {
 			txsKeyResp = append(txsKeyResp, txKey.ToResponse())
 		}
 	}
 
 	return &types.QueryEpochSubmissionsResponse{
-		Keys:       txsKeyResp,
-		Pagination: buildPageResponse(numberOfKeys, req.Pagination),
+		Keys: txsKeyResp,
 	}, nil
 }
