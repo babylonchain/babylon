@@ -18,10 +18,7 @@ func (dc *VotingPowerDistCache) Empty() bool {
 }
 
 func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderDistInfo) {
-	if v.TotalVotingPower > 0 {
-		// append finality provider dist info
-		dc.FinalityProviders = append(dc.FinalityProviders, v)
-	}
+	dc.FinalityProviders = append(dc.FinalityProviders, v)
 }
 
 // ApplyActiveFinalityProviders filters out the top N finality providers

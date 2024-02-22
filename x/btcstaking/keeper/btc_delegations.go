@@ -55,10 +55,9 @@ func (k Keeper) AddBTCDelegation(ctx sdk.Context, btcDel *types.BTCDelegation) e
 		panic(fmt.Errorf("failed to emit EventBTCDelegationStateUpdate for the new pending BTC delegation: %w", err))
 	}
 
-	// record event that the BTC delegation becomes pending at this height
-	btcTip := k.btclcKeeper.GetTipInfo(ctx)
-	pendingEvent := types.NewEventPowerDistUpdateWithBTCDel(event)
-	k.addPowerDistUpdateEvent(ctx, btcTip.Height, pendingEvent)
+	// NOTE: we don't need to record events for pending BTC delegations since these
+	// do not affect voting power distribution
+
 	// record event that the BTC delegation will become unbonded at endHeight-w
 	unbondedEvent := types.NewEventPowerDistUpdateWithBTCDel(&types.EventBTCDelegationStateUpdate{
 		StakingTxHash: stakingTxHash.String(),

@@ -134,12 +134,6 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 		}
 	}
 
-	// if no voting power update, return directly
-	noUpdate := len(activeBTCDels) == 0 && len(unbondedBTCDels) == 0 && len(slashedFPs) == 0
-	if noUpdate {
-		return dc
-	}
-
 	/*
 		At this point, there is voting power update.
 		Then, construct a voting power dist cache by reconciling the previous
