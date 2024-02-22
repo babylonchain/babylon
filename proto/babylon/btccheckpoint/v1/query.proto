@@ -86,7 +86,7 @@ message QueryEpochSubmissionsRequest {
 // given epoch (QueryEpochSubmissionsRequest)
 message QueryEpochSubmissionsResponse {
   // All submissions saved during an epoch.
-  repeated SubmissionKey keys = 1;
+  repeated TransactionKeyResponse keys = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -132,4 +132,12 @@ message CheckpointAddressesResponse {
   // reporter is the address of the reporter who reported the submissions,
   // calculated from submission message MsgInsertBTCSpvProof itself
   string reporter = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
+}
+
+// Each provided OP_RETURN transaction can be idendtified by hash of block in
+// which transaction was included and transaction index in the block
+message TransactionKeyResponse {
+  uint32 index = 1;
+  // Hash is the BTCHeaderHashBytes in hex.
+  string hash = 2;
 }

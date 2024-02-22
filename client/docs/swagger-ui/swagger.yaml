@@ -461,43 +461,18 @@ paths:
                 items:
                   type: object
                   properties:
-                    key:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          index:
-                            type: integer
-                            format: int64
-                          hash:
-                            type: string
-                            format: byte
-                        title: >-
-                          Each provided OP_RETURN transaction can be idendtified
-                          by hash of block in
-
-                          which transaction was included and transaction index
-                          in the block
+                    index:
+                      type: integer
+                      format: int64
+                    hash:
+                      type: string
+                      description: Hash is the BTCHeaderHashBytes in hex.
                   title: >-
-                    Checkpoint can be composed from multiple transactions, so to
-                    identify whole
+                    Each provided OP_RETURN transaction can be idendtified by
+                    hash of block in
 
-                    submission we need list of transaction keys.
-
-                    Each submission can generally be identified by this list of
-                    (txIdx,
-
-                    blockHash) tuples. Note: this could possibly be optimized as
-                    if transactions
-
-                    were in one block they would have the same block hash and
-                    different indexes,
-
-                    but each blockhash is only 33 (1  byte for prefix encoding
-                    and 32 byte hash),
-
-                    so there should be other strong arguments for this
-                    optimization
+                    which transaction was included and transaction index in the
+                    block
                 description: All submissions saved during an epoch.
               pagination:
                 type: object
@@ -10042,41 +10017,17 @@ definitions:
         items:
           type: object
           properties:
-            key:
-              type: array
-              items:
-                type: object
-                properties:
-                  index:
-                    type: integer
-                    format: int64
-                  hash:
-                    type: string
-                    format: byte
-                title: >-
-                  Each provided OP_RETURN transaction can be idendtified by hash
-                  of block in
-
-                  which transaction was included and transaction index in the
-                  block
+            index:
+              type: integer
+              format: int64
+            hash:
+              type: string
+              description: Hash is the BTCHeaderHashBytes in hex.
           title: >-
-            Checkpoint can be composed from multiple transactions, so to
-            identify whole
+            Each provided OP_RETURN transaction can be idendtified by hash of
+            block in
 
-            submission we need list of transaction keys.
-
-            Each submission can generally be identified by this list of (txIdx,
-
-            blockHash) tuples. Note: this could possibly be optimized as if
-            transactions
-
-            were in one block they would have the same block hash and different
-            indexes,
-
-            but each blockhash is only 33 (1  byte for prefix encoding and 32
-            byte hash),
-
-            so there should be other strong arguments for this optimization
+            which transaction was included and transaction index in the block
         description: All submissions saved during an epoch.
       pagination:
         type: object
@@ -10150,43 +10101,6 @@ definitions:
 
               related to babylon
     description: QueryParamsResponse is response type for the Query/Params RPC method.
-  babylon.btccheckpoint.v1.SubmissionKey:
-    type: object
-    properties:
-      key:
-        type: array
-        items:
-          type: object
-          properties:
-            index:
-              type: integer
-              format: int64
-            hash:
-              type: string
-              format: byte
-          title: >-
-            Each provided OP_RETURN transaction can be idendtified by hash of
-            block in
-
-            which transaction was included and transaction index in the block
-    title: >-
-      Checkpoint can be composed from multiple transactions, so to identify
-      whole
-
-      submission we need list of transaction keys.
-
-      Each submission can generally be identified by this list of (txIdx,
-
-      blockHash) tuples. Note: this could possibly be optimized as if
-      transactions
-
-      were in one block they would have the same block hash and different
-      indexes,
-
-      but each blockhash is only 33 (1  byte for prefix encoding and 32 byte
-      hash),
-
-      so there should be other strong arguments for this optimization
   babylon.btccheckpoint.v1.TransactionInfo:
     type: object
     properties:
@@ -10265,6 +10179,18 @@ definitions:
       hash:
         type: string
         format: byte
+    title: |-
+      Each provided OP_RETURN transaction can be idendtified by hash of block in
+      which transaction was included and transaction index in the block
+  babylon.btccheckpoint.v1.TransactionKeyResponse:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+      hash:
+        type: string
+        description: Hash is the BTCHeaderHashBytes in hex.
     title: |-
       Each provided OP_RETURN transaction can be idendtified by hash of block in
       which transaction was included and transaction index in the block
@@ -14348,6 +14274,43 @@ definitions:
     title: |-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
+  babylon.btccheckpoint.v1.SubmissionKey:
+    type: object
+    properties:
+      key:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+            hash:
+              type: string
+              format: byte
+          title: >-
+            Each provided OP_RETURN transaction can be idendtified by hash of
+            block in
+
+            which transaction was included and transaction index in the block
+    title: >-
+      Checkpoint can be composed from multiple transactions, so to identify
+      whole
+
+      submission we need list of transaction keys.
+
+      Each submission can generally be identified by this list of (txIdx,
+
+      blockHash) tuples. Note: this could possibly be optimized as if
+      transactions
+
+      were in one block they would have the same block hash and different
+      indexes,
+
+      but each blockhash is only 33 (1  byte for prefix encoding and 32 byte
+      hash),
+
+      so there should be other strong arguments for this optimization
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:

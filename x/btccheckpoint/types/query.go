@@ -24,6 +24,14 @@ func (ca *CheckpointAddresses) ToResponse() *CheckpointAddressesResponse {
 	}
 }
 
+// ToResponse parses a TransactionKey into a query response transaction key struct.
+func (tx *TransactionKey) ToResponse() *TransactionKeyResponse {
+	return &TransactionKeyResponse{
+		Index: tx.Index,
+		Hash:  tx.Hash.MarshalHex(),
+	}
+}
+
 // ToResponse parses a BTCCheckpointInfo into a query response for btc checkpoint info struct.
 func (b BTCCheckpointInfo) ToResponse() *BTCCheckpointInfoResponse {
 	bestSubTxs := make([]*TransactionInfoResponse, len(b.BestSubmissionTransactions))

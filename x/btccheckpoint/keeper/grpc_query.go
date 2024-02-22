@@ -116,51 +116,47 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-
 	ctx := sdk.UnwrapSDKContext(c)
 
-	checkpointEpoch := req.GetEpochNum()
-
 	_, limit, err := query.ParsePagination(req.Pagination)
-
-	offset := getOffset(req.Pagination)
-
 	if err != nil {
 		return nil, err
 	}
 
+	checkpointEpoch := req.GetEpochNum()
+	offset := getOffset(req.Pagination)
 	epochData := k.GetEpochData(ctx, checkpointEpoch)
 
 	if epochData == nil || len(epochData.Keys) == 0 {
-
 		return &types.QueryEpochSubmissionsResponse{
-			Keys:       []*types.SubmissionKey{},
+			Keys:       []*types.TransactionKeyResponse{},
 			Pagination: buildPageResponse(0, req.Pagination),
 		}, nil
 	}
 
 	numberOfKeys := uint64(len((epochData.Keys)))
-
 	if offset >= numberOfKeys {
 		// offset larger than number of keys return empty response
 		return &types.QueryEpochSubmissionsResponse{
-			Keys:       []*types.SubmissionKey{},
+			Keys:       []*types.TransactionKeyResponse{},
 			Pagination: buildPageResponse(numberOfKeys, req.Pagination),
 		}, nil
 	}
 
-	var responseKeys []*types.SubmissionKey
-
+	var txsKeyResp []*types.TransactionKeyResponse
 	for i := offset; i < numberOfKeys; i++ {
-		if len(responseKeys) == limit {
+		if len(txsKeyResp) == limit {
 			break
 		}
 
-		responseKeys = append(responseKeys, epochData.Keys[i])
+		submKey := epochData.Keys[i]
+		for _, txKey := range submKey.Key {
+			txsKeyResp = append(txsKeyResp, txKey.ToResponse())
+		}
 	}
 
 	return &types.QueryEpochSubmissionsResponse{
-		Keys:       responseKeys,
+		Keys:       txsKeyResp,
 		Pagination: buildPageResponse(numberOfKeys, req.Pagination),
 	}, nil
 }
