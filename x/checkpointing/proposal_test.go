@@ -251,12 +251,6 @@ type Scenario struct {
 	Extensions   []cbftt.ExtendedVoteInfo
 }
 
-type ValidatorVithVoteExtension struct {
-	Validator     et.Validator
-	ValAddress    sdk.ValAddress
-	VoteExtension checkpointingtypes.VoteExtension
-}
-
 type ValidatorsAndExtensions struct {
 	Vals       []TestValidator
 	Extensions []checkpointingtypes.VoteExtension
@@ -350,7 +344,6 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
 					}
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
-					// empty vote extension
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
 					require.NoError(t, err)
 					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
@@ -364,6 +357,41 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 				}
 			},
 			expectError: true,
+		},
+		{
+			name: "less than 1/3 of validators provided invalid bls signature",
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
+				bh := randomBlockHash()
+				// each validator has the same voting power
+				numValidators := 9
+				invalidValidBlsSig := numValidators/3 - 1
+
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, numValidators, &bh, ec.Epoch.EpochNumber)
+
+				var signedVoteExtensions []cbftt.ExtendedVoteInfo
+				for i, val := range validatorAndExtensions.Vals {
+					validator := val
+					ek.EXPECT().GetPubKeyByConsAddr(gomock.Any(), sdk.ConsAddress(validator.ValidatorAddress(t).Bytes())).Return(validator.ProtoPubkey(), nil).AnyTimes()
+
+					if i < invalidValidBlsSig {
+						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(checkpointingtypes.ErrInvalidBlsSignature).AnyTimes()
+					} else {
+						ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
+					}
+					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
+					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
+					require.NoError(t, err)
+					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
+					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
+				}
+
+				return &Scenario{
+					TotalPower:   totalPower,
+					ValidatorSet: validatorAndExtensions.Vals,
+					Extensions:   signedVoteExtensions,
+				}
+			},
+			expectError: false,
 		},
 		{
 			name: "2/3 + 1 of validators voted for valid block hash, the rest voted for invalid block hash",
