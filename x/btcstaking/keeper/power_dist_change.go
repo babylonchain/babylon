@@ -50,7 +50,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
-	newDc := k.processAllPowerDistUpdateEvents(ctx, dc, events)
+	newDc := k.processAllPowerDistUpdateEvents(ctx, dc, events, maxActiveFps)
 
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
@@ -99,6 +99,7 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 	ctx context.Context,
 	dc *types.VotingPowerDistCache,
 	events []*types.EventPowerDistUpdate,
+	maxActiveFps uint32,
 ) *types.VotingPowerDistCache {
 	// a map where key is finality provider's BTC PK hex and value is a list
 	// of BTC delegations that newly become active under this provider
@@ -211,7 +212,7 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 
 	// filter out the top N finality providers and their total voting power, and
 	// record them in the new cache
-	newDc.ApplyActiveFinalityProviders(k.GetParams(ctx).MaxActiveFinalityProviders)
+	newDc.ApplyActiveFinalityProviders(maxActiveFps)
 
 	return newDc
 }

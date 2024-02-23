@@ -22,34 +22,34 @@ func (dc *VotingPowerDistCache) AddFinalityProviderDistInfo(v *FinalityProviderD
 
 // ApplyActiveFinalityProviders sorts all finality providers, counts the total voting
 // power of top N finality providers, and records them in cache
-func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(n uint32) {
+func (dc *VotingPowerDistCache) ApplyActiveFinalityProviders(maxActiveFPs uint32) {
 	// reset total voting power
 	dc.TotalVotingPower = 0
 	// sort finality providers
 	SortFinalityProviders(dc.FinalityProviders)
 	// calculate voting power of top N finality providers
-	numActiveFPs := dc.GetNumActiveFPs(n)
+	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
 	for i := uint32(0); i < numActiveFPs; i++ {
 		dc.TotalVotingPower += dc.FinalityProviders[i].TotalVotingPower
 	}
 }
 
-func (dc *VotingPowerDistCache) GetNumActiveFPs(n uint32) uint32 {
-	return min(n, uint32(len(dc.FinalityProviders)))
+func (dc *VotingPowerDistCache) GetNumActiveFPs(maxActiveFPs uint32) uint32 {
+	return min(maxActiveFPs, uint32(len(dc.FinalityProviders)))
 }
 
 // GetActiveFinalityProviders returns the list of active finality providers
 // i.e., top N of them in terms of voting power
-func (dc *VotingPowerDistCache) GetActiveFinalityProviders(n uint32) []*FinalityProviderDistInfo {
-	numActiveFPs := dc.GetNumActiveFPs(n)
+func (dc *VotingPowerDistCache) GetActiveFinalityProviders(maxActiveFPs uint32) []*FinalityProviderDistInfo {
+	numActiveFPs := dc.GetNumActiveFPs(maxActiveFPs)
 	return dc.FinalityProviders[:numActiveFPs]
 }
 
 // FilterVotedDistCache filters out a voting power distribution cache
 // with finality providers that have voted according to a map of given
 // voters, and their total voted power.
-func (dc *VotingPowerDistCache) FilterVotedDistCache(n uint32, voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
-	activeFPs := dc.GetActiveFinalityProviders(n)
+func (dc *VotingPowerDistCache) FilterVotedDistCache(maxActiveFPs uint32, voterBTCPKs map[string]struct{}) *VotingPowerDistCache {
+	activeFPs := dc.GetActiveFinalityProviders(maxActiveFPs)
 	filteredFps := []*FinalityProviderDistInfo{}
 	totalVotingPower := uint64(0)
 	for _, v := range activeFPs {
