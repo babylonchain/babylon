@@ -144,10 +144,18 @@ func firstEpoch() *et.Epoch {
 	}
 }
 
-func epochAndVoteExtensionCtx() (sdk.Context, *et.Epoch) {
+type EpochAndCtx struct {
+	Epoch *et.Epoch
+	Ctx   sdk.Context
+}
+
+func epochAndVoteExtensionCtx() *EpochAndCtx {
 	epoch := firstEpoch()
 	ctx := setupSdkCtx(int64(epoch.FirstBlockHeight) + int64(epoch.GetCurrentEpochInterval()))
-	return ctx, epoch
+	return &EpochAndCtx{
+		Epoch: epoch,
+		Ctx:   ctx,
+	}
 }
 
 func genVoteExt(
@@ -192,7 +200,7 @@ func requestPrepareProposal(height int64, votes []cbftt.ExtendedVoteInfo) *cbftt
 
 func randomBlockHash() checkpointingtypes.BlockHash {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	return checkpointingtypes.BlockHash(datagen.GenRandomByteArray(r, 32))
+	return datagen.GenRandomBlockHash(r)
 }
 
 // TODO There should be one function to verify the checkpoint against the validator set
@@ -238,8 +246,6 @@ func verifyCheckpoint(validators []TestValidator, rawCkpt *checkpointingtypes.Ra
 }
 
 type Scenario struct {
-	Ctx          sdk.Context
-	Epoch        *et.Epoch
 	TotalPower   int64
 	ValidatorSet []TestValidator
 	Extensions   []cbftt.ExtendedVoteInfo
@@ -283,19 +289,15 @@ func ToValidatorSet(v []TestValidator) et.ValidatorSet {
 func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 	tests := []struct {
 		name          string
-		scenarioSetup func(t *testing.T, ek *mocks.MockCheckpointingKeeper) *Scenario
+		scenarioSetup func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario
 		expectError   bool
 	}{
 		{
 			name: "Empty vote extension list ",
-			scenarioSetup: func(t *testing.T, ek *mocks.MockCheckpointingKeeper) *Scenario {
-				ctx, epoch := epochAndVoteExtensionCtx()
-				r := rand.New(rand.NewSource(time.Now().UnixNano()))
-				bh := checkpointingtypes.BlockHash(datagen.GenRandomByteArray(r, 32))
-				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, epoch.EpochNumber)
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
+				bh := randomBlockHash()
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, ec.Epoch.EpochNumber)
 				return &Scenario{
-					Ctx:          ctx,
-					Epoch:        epoch,
 					TotalPower:   totalPower,
 					ValidatorSet: validatorAndExtensions.Vals,
 					Extensions:   []cbftt.ExtendedVoteInfo{},
@@ -305,11 +307,9 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 		},
 		{
 			name: "List with only empty vote extensions",
-			scenarioSetup: func(t *testing.T, ek *mocks.MockCheckpointingKeeper) *Scenario {
-				ctx, epoch := epochAndVoteExtensionCtx()
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
 				bh := randomBlockHash()
-				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, epoch.EpochNumber)
-
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, ec.Epoch.EpochNumber)
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
 					validator := val
@@ -317,13 +317,11 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					ek.EXPECT().VerifyBLSSig(gomock.Any(), validatorAndExtensions.Extensions[i].ToBLSSig()).Return(nil).AnyTimes()
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					// empty vote extension
-					signedExtension := validator.SignVoteExtension(t, []byte{}, ctx.HeaderInfo().Height-1, ctx.ChainID())
+					signedExtension := validator.SignVoteExtension(t, []byte{}, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
 					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
 				}
 
 				return &Scenario{
-					Ctx:          ctx,
-					Epoch:        epoch,
 					TotalPower:   totalPower,
 					ValidatorSet: validatorAndExtensions.Vals,
 					Extensions:   signedVoteExtensions,
@@ -333,14 +331,13 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 		},
 		{
 			name: "1/3 of validators provided invalid bls signature",
-			scenarioSetup: func(t *testing.T, ek *mocks.MockCheckpointingKeeper) *Scenario {
-				ctx, epoch := epochAndVoteExtensionCtx()
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
 				bh := randomBlockHash()
 				// each validator has the same voting power
 				numValidators := 9
 				invalidValidBlsSig := numValidators / 3
 
-				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, numValidators, &bh, epoch.EpochNumber)
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, numValidators, &bh, ec.Epoch.EpochNumber)
 
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
@@ -356,13 +353,11 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					// empty vote extension
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
 					require.NoError(t, err)
-					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ctx.HeaderInfo().Height-1, ctx.ChainID())
+					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
 					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
 				}
 
 				return &Scenario{
-					Ctx:          ctx,
-					Epoch:        epoch,
 					TotalPower:   totalPower,
 					ValidatorSet: validatorAndExtensions.Vals,
 					Extensions:   signedVoteExtensions,
@@ -372,13 +367,12 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 		},
 		{
 			name: "2/3 + 1 of validators voted for valid block hash, the rest voted for invalid block hash",
-			scenarioSetup: func(t *testing.T, ek *mocks.MockCheckpointingKeeper) *Scenario {
-				ctx, epoch := epochAndVoteExtensionCtx()
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
 				bh := randomBlockHash()
 				bh1 := randomBlockHash()
 
-				validatorAndExtensionsValid, totalPowerValid := generateNValidatorAndVoteExtensions(t, 7, &bh, epoch.EpochNumber)
-				validatorAndExtensionsInvalid, totalPowerInvalid := generateNValidatorAndVoteExtensions(t, 2, &bh1, epoch.EpochNumber)
+				validatorAndExtensionsValid, totalPowerValid := generateNValidatorAndVoteExtensions(t, 7, &bh, ec.Epoch.EpochNumber)
+				validatorAndExtensionsInvalid, totalPowerInvalid := generateNValidatorAndVoteExtensions(t, 2, &bh1, ec.Epoch.EpochNumber)
 
 				var allvalidators []TestValidator
 				allvalidators = append(allvalidators, validatorAndExtensionsValid.Vals...)
@@ -396,13 +390,11 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := allExtensions[i].Marshal()
 					require.NoError(t, err)
-					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ctx.HeaderInfo().Height-1, ctx.ChainID())
+					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
 					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
 				}
 
 				return &Scenario{
-					Ctx:          ctx,
-					Epoch:        epoch,
 					TotalPower:   totalPowerValid + totalPowerInvalid,
 					ValidatorSet: allvalidators,
 					Extensions:   signedVoteExtensions,
@@ -412,10 +404,9 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 		},
 		{
 			name: "All valid vote extensions",
-			scenarioSetup: func(t *testing.T, ek *mocks.MockCheckpointingKeeper) *Scenario {
-				ctx, epoch := epochAndVoteExtensionCtx()
+			scenarioSetup: func(ec *EpochAndCtx, ek *mocks.MockCheckpointingKeeper) *Scenario {
 				bh := randomBlockHash()
-				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, epoch.EpochNumber)
+				validatorAndExtensions, totalPower := generateNValidatorAndVoteExtensions(t, 4, &bh, ec.Epoch.EpochNumber)
 
 				var signedVoteExtensions []cbftt.ExtendedVoteInfo
 				for i, val := range validatorAndExtensions.Vals {
@@ -425,13 +416,11 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 					ek.EXPECT().GetBlsPubKey(gomock.Any(), validator.ValidatorAddress(t)).Return(validator.BlsPubKey(), nil).AnyTimes()
 					marshaledExtension, err := validatorAndExtensions.Extensions[i].Marshal()
 					require.NoError(t, err)
-					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ctx.HeaderInfo().Height-1, ctx.ChainID())
+					signedExtension := validator.SignVoteExtension(t, marshaledExtension, ec.Ctx.HeaderInfo().Height-1, ec.Ctx.ChainID())
 					signedVoteExtensions = append(signedVoteExtensions, signedExtension)
 				}
 
 				return &Scenario{
-					Ctx:          ctx,
-					Epoch:        epoch,
 					TotalPower:   totalPower,
 					ValidatorSet: validatorAndExtensions.Vals,
 					Extensions:   signedVoteExtensions,
@@ -448,11 +437,12 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			c := gomock.NewController(t)
 			ek := mocks.NewMockCheckpointingKeeper(c)
 			mem := mempool.NoOpMempool{}
-			scenario := tt.scenarioSetup(t, ek)
+			ec := epochAndVoteExtensionCtx()
+			scenario := tt.scenarioSetup(ec, ek)
 			// Those are true for every scenario
-			ek.EXPECT().GetEpoch(gomock.Any()).Return(scenario.Epoch).AnyTimes()
-			ek.EXPECT().GetTotalVotingPower(gomock.Any(), scenario.Epoch.EpochNumber).Return(scenario.TotalPower).AnyTimes()
-			ek.EXPECT().GetValidatorSet(gomock.Any(), scenario.Epoch.EpochNumber).Return(et.NewSortedValidatorSet(ToValidatorSet(scenario.ValidatorSet))).AnyTimes()
+			ek.EXPECT().GetEpoch(gomock.Any()).Return(ec.Epoch).AnyTimes()
+			ek.EXPECT().GetTotalVotingPower(gomock.Any(), ec.Epoch.EpochNumber).Return(scenario.TotalPower).AnyTimes()
+			ek.EXPECT().GetValidatorSet(gomock.Any(), ec.Epoch.EpochNumber).Return(et.NewSortedValidatorSet(ToValidatorSet(scenario.ValidatorSet))).AnyTimes()
 
 			h := checkpointing.NewProposalHandler(
 				log.NewNopLogger(),
@@ -462,7 +452,7 @@ func TestPrepareProposalAtVoteExtensionHeight(t *testing.T) {
 			)
 			prepareProposalFn := h.PrepareProposal()
 
-			prop, err := prepareProposalFn(scenario.Ctx, requestPrepareProposal(scenario.Ctx.HeaderInfo().Height, scenario.Extensions))
+			prop, err := prepareProposalFn(ec.Ctx, requestPrepareProposal(ec.Ctx.HeaderInfo().Height, scenario.Extensions))
 			if tt.expectError {
 				require.Error(t, err)
 			} else {
