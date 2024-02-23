@@ -64,7 +64,7 @@ func CmdFinalityProvider() *cobra.Command {
 
 func CmdDelegation() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "delegatopn [staking_tx_hash_hex]",
+		Use:   "delegation [staking_tx_hash_hex]",
 		Short: "retrieve a BTC delegation",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
