@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 
 	"github.com/cosmos/cosmos-sdk/types"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 )
 
 // ToResponse parses a TransactionInfo into a query response tx info struct.
@@ -24,12 +26,19 @@ func (ca *CheckpointAddresses) ToResponse() *CheckpointAddressesResponse {
 	}
 }
 
-// ToResponse parses a TransactionKey into a query response transaction key struct.
-func (tx *TransactionKey) ToResponse() *TransactionKeyResponse {
-	return &TransactionKeyResponse{
-		Index: tx.Index,
-		Hash:  tx.Hash.MarshalHex(),
+// ToResponse parses a SubmissionKey into a query response submission key struct.
+func (sk *SubmissionKey) ToResponse() (skr *SubmissionKeyResponse, err error) {
+	if len(sk.Key) != 2 {
+		return nil, status.Errorf(codes.Internal, "bad submission key %+v, does not have 2 keys", sk)
 	}
+
+	k1, k2 := sk.Key[0], sk.Key[1]
+	return &SubmissionKeyResponse{
+		FirstTxBlockHash:  k1.Hash.MarshalHex(),
+		FirstTxIndex:      k1.Index,
+		SecondTxBlockHash: k2.Hash.MarshalHex(),
+		SecondTxIndex:     k2.Index,
+	}, nil
 }
 
 // ToResponse parses a BTCCheckpointInfo into a query response for btc checkpoint info struct.

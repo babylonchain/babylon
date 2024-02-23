@@ -84,7 +84,7 @@ message QueryEpochSubmissionsRequest {
 // given epoch (QueryEpochSubmissionsRequest)
 message QueryEpochSubmissionsResponse {
   // Keys All submissions transactions key saved during an epoch.
-  repeated TransactionKeyResponse keys = 1;
+  repeated SubmissionKeyResponse keys = 1;
 }
 
 // BTCCheckpointInfoResponse contains all data about best submission of checkpoint for
@@ -130,10 +130,19 @@ message CheckpointAddressesResponse {
   string reporter = 2 [(cosmos_proto.scalar) = "cosmos.AddressString"];
 }
 
-// Each provided OP_RETURN transaction can be idendtified by hash of block in
-// which transaction was included and transaction index in the block
-message TransactionKeyResponse {
-  uint32 index = 1;
-  // Hash is the BTCHeaderHashBytes in hex.
-  string hash = 2;
+// SubmissionKeyResponse Checkpoint can be composed from multiple transactions,
+// so to identify whole submission we need list of transaction keys.
+// Each submission can generally be identified by this list of (txIdx,
+// blockHash) tuples. Note: this could possibly be optimized as if transactions
+// were in one block they would have the same block hash and different indexes,
+// but each blockhash is only 33 (1  byte for prefix encoding and 32 byte hash),
+// so there should be other strong arguments for this optimization
+message SubmissionKeyResponse {
+  // FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+  string first_tx_block_hash  = 1;
+  uint32 first_tx_index = 2;
+
+  // SecondBlockHash is the BTCHeaderHashBytes in hex.
+  string second_tx_block_hash = 3;
+  uint32 second_tx_index = 4;
 }

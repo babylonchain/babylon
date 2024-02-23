@@ -461,18 +461,39 @@ paths:
                 items:
                   type: object
                   properties:
-                    index:
+                    first_tx_block_hash:
+                      type: string
+                      description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+                    first_tx_index:
                       type: integer
                       format: int64
-                    hash:
+                    second_tx_block_hash:
                       type: string
-                      description: Hash is the BTCHeaderHashBytes in hex.
+                      description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+                    second_tx_index:
+                      type: integer
+                      format: int64
                   title: >-
-                    Each provided OP_RETURN transaction can be idendtified by
-                    hash of block in
+                    SubmissionKeyResponse Checkpoint can be composed from
+                    multiple transactions,
 
-                    which transaction was included and transaction index in the
-                    block
+                    so to identify whole submission we need list of transaction
+                    keys.
+
+                    Each submission can generally be identified by this list of
+                    (txIdx,
+
+                    blockHash) tuples. Note: this could possibly be optimized as
+                    if transactions
+
+                    were in one block they would have the same block hash and
+                    different indexes,
+
+                    but each blockhash is only 33 (1  byte for prefix encoding
+                    and 32 byte hash),
+
+                    so there should be other strong arguments for this
+                    optimization
                 description: Keys All submissions transactions key saved during an epoch.
             title: >-
               QueryEpochSubmissionsResponse defines a response to get all
@@ -9933,17 +9954,36 @@ definitions:
         items:
           type: object
           properties:
-            index:
+            first_tx_block_hash:
+              type: string
+              description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+            first_tx_index:
               type: integer
               format: int64
-            hash:
+            second_tx_block_hash:
               type: string
-              description: Hash is the BTCHeaderHashBytes in hex.
+              description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+            second_tx_index:
+              type: integer
+              format: int64
           title: >-
-            Each provided OP_RETURN transaction can be idendtified by hash of
-            block in
+            SubmissionKeyResponse Checkpoint can be composed from multiple
+            transactions,
 
-            which transaction was included and transaction index in the block
+            so to identify whole submission we need list of transaction keys.
+
+            Each submission can generally be identified by this list of (txIdx,
+
+            blockHash) tuples. Note: this could possibly be optimized as if
+            transactions
+
+            were in one block they would have the same block hash and different
+            indexes,
+
+            but each blockhash is only 33 (1  byte for prefix encoding and 32
+            byte hash),
+
+            so there should be other strong arguments for this optimization
         description: Keys All submissions transactions key saved during an epoch.
     title: |-
       QueryEpochSubmissionsResponse defines a response to get all submissions in
@@ -9991,6 +10031,39 @@ definitions:
 
               related to babylon
     description: QueryParamsResponse is response type for the Query/Params RPC method.
+  babylon.btccheckpoint.v1.SubmissionKeyResponse:
+    type: object
+    properties:
+      first_tx_block_hash:
+        type: string
+        description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+      first_tx_index:
+        type: integer
+        format: int64
+      second_tx_block_hash:
+        type: string
+        description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+      second_tx_index:
+        type: integer
+        format: int64
+    title: >-
+      SubmissionKeyResponse Checkpoint can be composed from multiple
+      transactions,
+
+      so to identify whole submission we need list of transaction keys.
+
+      Each submission can generally be identified by this list of (txIdx,
+
+      blockHash) tuples. Note: this could possibly be optimized as if
+      transactions
+
+      were in one block they would have the same block hash and different
+      indexes,
+
+      but each blockhash is only 33 (1  byte for prefix encoding and 32 byte
+      hash),
+
+      so there should be other strong arguments for this optimization
   babylon.btccheckpoint.v1.TransactionInfo:
     type: object
     properties:
@@ -10069,18 +10142,6 @@ definitions:
       hash:
         type: string
         format: byte
-    title: |-
-      Each provided OP_RETURN transaction can be idendtified by hash of block in
-      which transaction was included and transaction index in the block
-  babylon.btccheckpoint.v1.TransactionKeyResponse:
-    type: object
-    properties:
-      index:
-        type: integer
-        format: int64
-      hash:
-        type: string
-        description: Hash is the BTCHeaderHashBytes in hex.
     title: |-
       Each provided OP_RETURN transaction can be idendtified by hash of block in
       which transaction was included and transaction index in the block

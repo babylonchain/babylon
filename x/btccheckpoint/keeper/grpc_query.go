@@ -98,21 +98,25 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	epochData := k.GetEpochData(ctx, req.GetEpochNum())
+	epoch := req.GetEpochNum()
+	epochData := k.GetEpochData(ctx, epoch)
 	if epochData == nil || len(epochData.Keys) == 0 {
 		return &types.QueryEpochSubmissionsResponse{
-			Keys: []*types.TransactionKeyResponse{},
+			Keys: []*types.SubmissionKeyResponse{},
 		}, nil
 	}
 
-	var txsKeyResp []*types.TransactionKeyResponse
-	for _, submKey := range epochData.Keys {
-		for _, txKey := range submKey.Key {
-			txsKeyResp = append(txsKeyResp, txKey.ToResponse())
+	submKeysResp := make([]*types.SubmissionKeyResponse, len(epochData.Keys))
+	for i, submKey := range epochData.Keys {
+		skr, err := submKey.ToResponse()
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
 		}
+
+		submKeysResp[i] = skr
 	}
 
 	return &types.QueryEpochSubmissionsResponse{
-		Keys: txsKeyResp,
+		Keys: submKeysResp,
 	}, nil
 }
