@@ -17,6 +17,7 @@ import (
 func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	height := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTipHeight := k.GetCurrentBTCHeight(ctx)
+	maxActiveFps := k.GetParams(ctx).MaxActiveFinalityProviders
 
 	// get the power dist cache in the last height
 	dc := k.getVotingPowerDistCache(ctx, height-1)
@@ -30,7 +31,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	if len(events) == 0 {
 		if dc != nil {
 			// map everything in prev height to this height
-			k.recordVotingPowerAndCache(ctx, dc)
+			k.recordVotingPowerAndCache(ctx, dc, maxActiveFps)
 		}
 		return
 	}
@@ -52,27 +53,28 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	newDc := k.processAllPowerDistUpdateEvents(ctx, dc, events)
 
 	// record voting power and cache for this height
-	k.recordVotingPowerAndCache(ctx, newDc)
-
+	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
 	// record metrics
-	k.recordMetrics(ctx, newDc)
+	k.recordMetrics(ctx, newDc, maxActiveFps)
 }
 
-func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache) {
+func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache, maxActiveFps uint32) {
 	babylonTipHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 
 	// set voting power table for this height
-	for _, fp := range dc.ActiveFinalityProviders {
+	for i := uint32(0); i < dc.GetNumActiveFPs(maxActiveFps); i++ {
+		fp := dc.FinalityProviders[i]
 		k.SetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonTipHeight, fp.TotalVotingPower)
+
 	}
 
 	// set the voting power distribution cache of the current height
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
 }
 
-func (k Keeper) recordMetrics(ctx context.Context, dc *types.VotingPowerDistCache) {
+func (k Keeper) recordMetrics(ctx context.Context, dc *types.VotingPowerDistCache, maxActiveFps uint32) {
 	// number of active FPs
-	numActiveFPs := len(dc.ActiveFinalityProviders)
+	numActiveFPs := int(dc.GetNumActiveFPs(maxActiveFps))
 	types.RecordActiveFinalityProviders(numActiveFPs)
 	// number of inactive FPs
 	numInactiveFPs := len(dc.FinalityProviders) - numActiveFPs

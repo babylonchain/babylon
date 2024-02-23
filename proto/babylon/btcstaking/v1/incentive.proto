@@ -13,10 +13,6 @@ message VotingPowerDistCache {
     uint64 total_voting_power = 1;
     // finality_providers is a list of finality providers' voting power information
     repeated FinalityProviderDistInfo finality_providers = 2;
-    // active_finality_providers is a list of top-`max_active_finality_providers` 
-    // finality providers' voting power information, where `max_active_finality_providers`
-    // is a parameter in BTC staking module
-    repeated FinalityProviderDistInfo active_finality_providers = 3;
 }
 
 // FinalityProviderDistInfo is the reward distribution of a finality provider and its BTC delegations
