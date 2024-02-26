@@ -428,28 +428,24 @@ paths:
                 items:
                   type: object
                   properties:
-                    key:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          index:
-                            type: integer
-                            format: int64
-                          hash:
-                            type: string
-                            format: byte
-                        title: >-
-                          Each provided OP_RETURN transaction can be idendtified
-                          by hash of block in
-
-                          which transaction was included and transaction index
-                          in the block
+                    first_tx_block_hash:
+                      type: string
+                      description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+                    first_tx_index:
+                      type: integer
+                      format: int64
+                    second_tx_block_hash:
+                      type: string
+                      description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+                    second_tx_index:
+                      type: integer
+                      format: int64
                   title: >-
-                    Checkpoint can be composed from multiple transactions, so to
-                    identify whole
+                    SubmissionKeyResponse Checkpoint can be composed from
+                    multiple transactions,
 
-                    submission we need list of transaction keys.
+                    so to identify whole submission we need list of transaction
+                    keys.
 
                     Each submission can generally be identified by this list of
                     (txIdx,
@@ -465,35 +461,7 @@ paths:
 
                     so there should be other strong arguments for this
                     optimization
-                description: All submissions saved during an epoch.
-              pagination:
-                type: object
-                properties:
-                  next_key:
-                    type: string
-                    format: byte
-                    description: |-
-                      next_key is the key to be passed to PageRequest.key to
-                      query the next page most efficiently. It will be empty if
-                      there are no more results.
-                  total:
-                    type: string
-                    format: uint64
-                    title: >-
-                      total is total number of results available if
-                      PageRequest.count_total
-
-                      was set, its value is undefined otherwise
-                description: >-
-                  PageResponse is to be embedded in gRPC response messages where
-                  the
-
-                  corresponding request message has used PageRequest.
-
-                   message SomeResponse {
-                           repeated Bar results = 1;
-                           PageResponse page = 2;
-                   }
+                description: Keys All submissions transactions key saved during an epoch.
             title: >-
               QueryEpochSubmissionsResponse defines a response to get all
               submissions in
@@ -528,62 +496,6 @@ paths:
           required: true
           type: string
           format: uint64
-        - name: pagination.key
-          description: |-
-            key is a value returned in PageResponse.next_key to begin
-            querying the next page most efficiently. Only one of offset or key
-            should be set.
-          in: query
-          required: false
-          type: string
-          format: byte
-        - name: pagination.offset
-          description: >-
-            offset is a numeric offset that can be used when key is unavailable.
-
-            It is less efficient than using key. Only one of offset or key
-            should
-
-            be set.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.limit
-          description: >-
-            limit is the total number of results to be returned in the result
-            page.
-
-            If left empty it will default to a value to be set by each app.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.count_total
-          description: >-
-            count_total is set to true  to indicate that the result set should
-            include
-
-            a count of the total number of items available for pagination in
-            UIs.
-
-            count_total is only respected when offset is used. It is ignored
-            when key
-
-            is set.
-          in: query
-          required: false
-          type: boolean
-        - name: pagination.reverse
-          description: >-
-            reverse is set to true if results are to be returned in the
-            descending order.
-
-
-            Since: cosmos-sdk 0.43
-          in: query
-          required: false
-          type: boolean
       tags:
         - Query
   /babylon/btclightclient/v1/baseheader:
@@ -9837,28 +9749,23 @@ definitions:
         items:
           type: object
           properties:
-            key:
-              type: array
-              items:
-                type: object
-                properties:
-                  index:
-                    type: integer
-                    format: int64
-                  hash:
-                    type: string
-                    format: byte
-                title: >-
-                  Each provided OP_RETURN transaction can be idendtified by hash
-                  of block in
-
-                  which transaction was included and transaction index in the
-                  block
+            first_tx_block_hash:
+              type: string
+              description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+            first_tx_index:
+              type: integer
+              format: int64
+            second_tx_block_hash:
+              type: string
+              description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+            second_tx_index:
+              type: integer
+              format: int64
           title: >-
-            Checkpoint can be composed from multiple transactions, so to
-            identify whole
+            SubmissionKeyResponse Checkpoint can be composed from multiple
+            transactions,
 
-            submission we need list of transaction keys.
+            so to identify whole submission we need list of transaction keys.
 
             Each submission can generally be identified by this list of (txIdx,
 
@@ -9872,33 +9779,7 @@ definitions:
             byte hash),
 
             so there should be other strong arguments for this optimization
-        description: All submissions saved during an epoch.
-      pagination:
-        type: object
-        properties:
-          next_key:
-            type: string
-            format: byte
-            description: |-
-              next_key is the key to be passed to PageRequest.key to
-              query the next page most efficiently. It will be empty if
-              there are no more results.
-          total:
-            type: string
-            format: uint64
-            title: >-
-              total is total number of results available if
-              PageRequest.count_total
-
-              was set, its value is undefined otherwise
-        description: |-
-          PageResponse is to be embedded in gRPC response messages where the
-          corresponding request message has used PageRequest.
-
-           message SomeResponse {
-                   repeated Bar results = 1;
-                   PageResponse page = 2;
-           }
+        description: Keys All submissions transactions key saved during an epoch.
     title: |-
       QueryEpochSubmissionsResponse defines a response to get all submissions in
       given epoch (QueryEpochSubmissionsRequest)
@@ -9945,30 +9826,26 @@ definitions:
 
               related to babylon
     description: QueryParamsResponse is response type for the Query/Params RPC method.
-  babylon.btccheckpoint.v1.SubmissionKey:
+  babylon.btccheckpoint.v1.SubmissionKeyResponse:
     type: object
     properties:
-      key:
-        type: array
-        items:
-          type: object
-          properties:
-            index:
-              type: integer
-              format: int64
-            hash:
-              type: string
-              format: byte
-          title: >-
-            Each provided OP_RETURN transaction can be idendtified by hash of
-            block in
-
-            which transaction was included and transaction index in the block
+      first_tx_block_hash:
+        type: string
+        description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+      first_tx_index:
+        type: integer
+        format: int64
+      second_tx_block_hash:
+        type: string
+        description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+      second_tx_index:
+        type: integer
+        format: int64
     title: >-
-      Checkpoint can be composed from multiple transactions, so to identify
-      whole
+      SubmissionKeyResponse Checkpoint can be composed from multiple
+      transactions,
 
-      submission we need list of transaction keys.
+      so to identify whole submission we need list of transaction keys.
 
       Each submission can generally be identified by this list of (txIdx,
 
@@ -10006,18 +9883,6 @@ definitions:
       - the position of the tx on BTC blockchain
       - the full tx content
       - the Merkle proof that this tx is on the above position
-  babylon.btccheckpoint.v1.TransactionKey:
-    type: object
-    properties:
-      index:
-        type: integer
-        format: int64
-      hash:
-        type: string
-        format: byte
-    title: |-
-      Each provided OP_RETURN transaction can be idendtified by hash of block in
-      which transaction was included and transaction index in the block
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:
@@ -14098,6 +13963,43 @@ definitions:
     title: |-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
+  babylon.btccheckpoint.v1.SubmissionKey:
+    type: object
+    properties:
+      key:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+            hash:
+              type: string
+              format: byte
+          title: >-
+            Each provided OP_RETURN transaction can be idendtified by hash of
+            block in
+
+            which transaction was included and transaction index in the block
+    title: >-
+      Checkpoint can be composed from multiple transactions, so to identify
+      whole
+
+      submission we need list of transaction keys.
+
+      Each submission can generally be identified by this list of (txIdx,
+
+      blockHash) tuples. Note: this could possibly be optimized as if
+      transactions
+
+      were in one block they would have the same block hash and different
+      indexes,
+
+      but each blockhash is only 33 (1  byte for prefix encoding and 32 byte
+      hash),
+
+      so there should be other strong arguments for this optimization
   babylon.btccheckpoint.v1.TransactionInfo:
     type: object
     properties:
@@ -14143,6 +14045,18 @@ definitions:
       - the position of the tx on BTC blockchain
       - the full tx content
       - the Merkle proof that this tx is on the above position
+  babylon.btccheckpoint.v1.TransactionKey:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+      hash:
+        type: string
+        format: byte
+    title: |-
+      Each provided OP_RETURN transaction can be idendtified by hash of block in
+      which transaction was included and transaction index in the block
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:
