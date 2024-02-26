@@ -12,7 +12,6 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/babylonchain/babylon/x/checkpointing/keeper"
 	ckpttypes "github.com/babylonchain/babylon/x/checkpointing/types"
 )
 
@@ -20,19 +19,22 @@ const defaultInjectedTxIndex = 0
 
 type ProposalHandler struct {
 	logger                        log.Logger
-	ckptKeeper                    *keeper.Keeper
-	valStore                      baseapp.ValidatorStore
+	ckptKeeper                    CheckpointingKeeper
 	txVerifier                    baseapp.ProposalTxVerifier
 	defaultPrepareProposalHandler sdk.PrepareProposalHandler
 	defaultProcessProposalHandler sdk.ProcessProposalHandler
 }
 
-func NewProposalHandler(logger log.Logger, ckptKeeper *keeper.Keeper, mp mempool.Mempool, txVerifier baseapp.ProposalTxVerifier) *ProposalHandler {
+func NewProposalHandler(
+	logger log.Logger,
+	ckptKeeper CheckpointingKeeper,
+	mp mempool.Mempool,
+	txVerifier baseapp.ProposalTxVerifier,
+) *ProposalHandler {
 	defaultHandler := baseapp.NewDefaultProposalHandler(mp, txVerifier)
 	return &ProposalHandler{
 		logger:                        logger,
 		ckptKeeper:                    ckptKeeper,
-		valStore:                      ckptKeeper,
 		txVerifier:                    txVerifier,
 		defaultPrepareProposalHandler: defaultHandler.PrepareProposalHandler(),
 		defaultProcessProposalHandler: defaultHandler.ProcessProposalHandler(),
@@ -75,7 +77,7 @@ func (h *ProposalHandler) PrepareProposal() sdk.PrepareProposalHandler {
 		}
 
 		// 1. verify the validity of vote extensions (2/3 majority is achieved)
-		err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), req.LocalLastCommit)
+		err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), req.LocalLastCommit)
 		if err != nil {
 			return proposalRes, fmt.Errorf("invalid vote extensions: %w", err)
 		}
@@ -276,7 +278,7 @@ func (h *ProposalHandler) ProcessProposal() sdk.ProcessProposalHandler {
 			}
 
 			// 3. verify the validity of the vote extension (2/3 majority is achieved)
-			err = baseapp.ValidateVoteExtensions(ctx, h.valStore, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
+			err = baseapp.ValidateVoteExtensions(ctx, h.ckptKeeper, req.Height, ctx.ChainID(), *injectedCkpt.ExtendedCommitInfo)
 			if err != nil {
 				// the returned err will lead to panic as something very wrong happened during consensus
 				return resReject, err

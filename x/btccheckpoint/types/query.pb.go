@@ -6,6 +6,7 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	_ "github.com/cosmos/cosmos-proto"
 	query "github.com/cosmos/cosmos-sdk/types/query"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
@@ -164,7 +165,7 @@ func (m *QueryBtcCheckpointInfoRequest) GetEpochNum() uint64 {
 // QueryBtcCheckpointInfoResponse is response type for the
 // Query/BtcCheckpointInfo RPC method
 type QueryBtcCheckpointInfoResponse struct {
-	Info *BTCCheckpointInfo `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
+	Info *BTCCheckpointInfoResponse `protobuf:"bytes,1,opt,name=info,proto3" json:"info,omitempty"`
 }
 
 func (m *QueryBtcCheckpointInfoResponse) Reset()         { *m = QueryBtcCheckpointInfoResponse{} }
@@ -200,7 +201,7 @@ func (m *QueryBtcCheckpointInfoResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBtcCheckpointInfoResponse proto.InternalMessageInfo
 
-func (m *QueryBtcCheckpointInfoResponse) GetInfo() *BTCCheckpointInfo {
+func (m *QueryBtcCheckpointInfoResponse) GetInfo() *BTCCheckpointInfoResponse {
 	if m != nil {
 		return m.Info
 	}
@@ -257,7 +258,7 @@ func (m *QueryBtcCheckpointsInfoRequest) GetPagination() *query.PageRequest {
 // QueryBtcCheckpointsInfoResponse is response type for the
 // Query/BtcCheckpointsInfo RPC method
 type QueryBtcCheckpointsInfoResponse struct {
-	InfoList []*BTCCheckpointInfo `protobuf:"bytes,1,rep,name=info_list,json=infoList,proto3" json:"info_list,omitempty"`
+	InfoList []*BTCCheckpointInfoResponse `protobuf:"bytes,1,rep,name=info_list,json=infoList,proto3" json:"info_list,omitempty"`
 	// pagination defines the pagination in the response
 	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
 }
@@ -295,7 +296,7 @@ func (m *QueryBtcCheckpointsInfoResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBtcCheckpointsInfoResponse proto.InternalMessageInfo
 
-func (m *QueryBtcCheckpointsInfoResponse) GetInfoList() []*BTCCheckpointInfo {
+func (m *QueryBtcCheckpointsInfoResponse) GetInfoList() []*BTCCheckpointInfoResponse {
 	if m != nil {
 		return m.InfoList
 	}
@@ -313,8 +314,7 @@ func (m *QueryBtcCheckpointsInfoResponse) GetPagination() *query.PageResponse {
 // given epoch
 type QueryEpochSubmissionsRequest struct {
 	// Number of epoch for which submissions are requested
-	EpochNum   uint64             `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
-	Pagination *query.PageRequest `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	EpochNum uint64 `protobuf:"varint,1,opt,name=epoch_num,json=epochNum,proto3" json:"epoch_num,omitempty"`
 }
 
 func (m *QueryEpochSubmissionsRequest) Reset()         { *m = QueryEpochSubmissionsRequest{} }
@@ -357,19 +357,11 @@ func (m *QueryEpochSubmissionsRequest) GetEpochNum() uint64 {
 	return 0
 }
 
-func (m *QueryEpochSubmissionsRequest) GetPagination() *query.PageRequest {
-	if m != nil {
-		return m.Pagination
-	}
-	return nil
-}
-
 // QueryEpochSubmissionsResponse defines a response to get all submissions in
 // given epoch (QueryEpochSubmissionsRequest)
 type QueryEpochSubmissionsResponse struct {
-	// All submissions saved during an epoch.
-	Keys       []*SubmissionKey    `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
-	Pagination *query.PageResponse `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// Keys All submissions transactions key saved during an epoch.
+	Keys []*SubmissionKeyResponse `protobuf:"bytes,1,rep,name=keys,proto3" json:"keys,omitempty"`
 }
 
 func (m *QueryEpochSubmissionsResponse) Reset()         { *m = QueryEpochSubmissionsResponse{} }
@@ -405,18 +397,307 @@ func (m *QueryEpochSubmissionsResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryEpochSubmissionsResponse proto.InternalMessageInfo
 
-func (m *QueryEpochSubmissionsResponse) GetKeys() []*SubmissionKey {
+func (m *QueryEpochSubmissionsResponse) GetKeys() []*SubmissionKeyResponse {
 	if m != nil {
 		return m.Keys
 	}
 	return nil
 }
 
-func (m *QueryEpochSubmissionsResponse) GetPagination() *query.PageResponse {
+// BTCCheckpointInfoResponse contains all data about best submission of checkpoint for
+// given epoch. Best submission is the submission which is deeper in btc ledger.
+type BTCCheckpointInfoResponse struct {
+	// EpochNumber of this checkpoint.
+	EpochNumber uint64 `protobuf:"varint,1,opt,name=epoch_number,json=epochNumber,proto3" json:"epoch_number,omitempty"`
+	// btc height of the best submission of the epoch
+	BestSubmissionBtcBlockHeight uint64 `protobuf:"varint,2,opt,name=best_submission_btc_block_height,json=bestSubmissionBtcBlockHeight,proto3" json:"best_submission_btc_block_height,omitempty"`
+	// hash of the btc block which determines checkpoint btc block height i.e.
+	// youngest block of best submission Hexadecimal
+	BestSubmissionBtcBlockHash string `protobuf:"bytes,3,opt,name=best_submission_btc_block_hash,json=bestSubmissionBtcBlockHash,proto3" json:"best_submission_btc_block_hash,omitempty"`
+	// the BTC checkpoint transactions of the best submission
+	BestSubmissionTransactions []*TransactionInfoResponse `protobuf:"bytes,4,rep,name=best_submission_transactions,json=bestSubmissionTransactions,proto3" json:"best_submission_transactions,omitempty"`
+	// list of vigilantes' addresses of the best submission
+	BestSubmissionVigilanteAddressList []*CheckpointAddressesResponse `protobuf:"bytes,5,rep,name=best_submission_vigilante_address_list,json=bestSubmissionVigilanteAddressList,proto3" json:"best_submission_vigilante_address_list,omitempty"`
+}
+
+func (m *BTCCheckpointInfoResponse) Reset()         { *m = BTCCheckpointInfoResponse{} }
+func (m *BTCCheckpointInfoResponse) String() string { return proto.CompactTextString(m) }
+func (*BTCCheckpointInfoResponse) ProtoMessage()    {}
+func (*BTCCheckpointInfoResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6b9a2f46ada7d854, []int{8}
+}
+func (m *BTCCheckpointInfoResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *BTCCheckpointInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_BTCCheckpointInfoResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *BTCCheckpointInfoResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_BTCCheckpointInfoResponse.Merge(m, src)
+}
+func (m *BTCCheckpointInfoResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *BTCCheckpointInfoResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_BTCCheckpointInfoResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_BTCCheckpointInfoResponse proto.InternalMessageInfo
+
+func (m *BTCCheckpointInfoResponse) GetEpochNumber() uint64 {
 	if m != nil {
-		return m.Pagination
+		return m.EpochNumber
+	}
+	return 0
+}
+
+func (m *BTCCheckpointInfoResponse) GetBestSubmissionBtcBlockHeight() uint64 {
+	if m != nil {
+		return m.BestSubmissionBtcBlockHeight
+	}
+	return 0
+}
+
+func (m *BTCCheckpointInfoResponse) GetBestSubmissionBtcBlockHash() string {
+	if m != nil {
+		return m.BestSubmissionBtcBlockHash
+	}
+	return ""
+}
+
+func (m *BTCCheckpointInfoResponse) GetBestSubmissionTransactions() []*TransactionInfoResponse {
+	if m != nil {
+		return m.BestSubmissionTransactions
 	}
 	return nil
+}
+
+func (m *BTCCheckpointInfoResponse) GetBestSubmissionVigilanteAddressList() []*CheckpointAddressesResponse {
+	if m != nil {
+		return m.BestSubmissionVigilanteAddressList
+	}
+	return nil
+}
+
+// TransactionInfoResponse is the info of a tx on Bitcoin,
+// including
+// - the position of the tx on BTC blockchain
+// - the full tx content
+// - the Merkle proof that this tx is on the above position
+type TransactionInfoResponse struct {
+	// Index Bitcoin Transaction index in block.
+	Index uint32 `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
+	// Hash BTC Header hash as hex.
+	Hash string `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
+	// transaction is the full transaction data as str hex.
+	Transaction string `protobuf:"bytes,3,opt,name=transaction,proto3" json:"transaction,omitempty"`
+	// proof is the Merkle proof that this tx is included in the position in `key`
+	Proof string `protobuf:"bytes,4,opt,name=proof,proto3" json:"proof,omitempty"`
+}
+
+func (m *TransactionInfoResponse) Reset()         { *m = TransactionInfoResponse{} }
+func (m *TransactionInfoResponse) String() string { return proto.CompactTextString(m) }
+func (*TransactionInfoResponse) ProtoMessage()    {}
+func (*TransactionInfoResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6b9a2f46ada7d854, []int{9}
+}
+func (m *TransactionInfoResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *TransactionInfoResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_TransactionInfoResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *TransactionInfoResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransactionInfoResponse.Merge(m, src)
+}
+func (m *TransactionInfoResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *TransactionInfoResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_TransactionInfoResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TransactionInfoResponse proto.InternalMessageInfo
+
+func (m *TransactionInfoResponse) GetIndex() uint32 {
+	if m != nil {
+		return m.Index
+	}
+	return 0
+}
+
+func (m *TransactionInfoResponse) GetHash() string {
+	if m != nil {
+		return m.Hash
+	}
+	return ""
+}
+
+func (m *TransactionInfoResponse) GetTransaction() string {
+	if m != nil {
+		return m.Transaction
+	}
+	return ""
+}
+
+func (m *TransactionInfoResponse) GetProof() string {
+	if m != nil {
+		return m.Proof
+	}
+	return ""
+}
+
+// CheckpointAddressesResponse contains the addresses of the submitter and reporter of a
+// given checkpoint
+type CheckpointAddressesResponse struct {
+	// submitter is the address of the checkpoint submitter to BTC, extracted from
+	// the checkpoint itself.
+	Submitter string `protobuf:"bytes,1,opt,name=submitter,proto3" json:"submitter,omitempty"`
+	// reporter is the address of the reporter who reported the submissions,
+	// calculated from submission message MsgInsertBTCSpvProof itself
+	Reporter string `protobuf:"bytes,2,opt,name=reporter,proto3" json:"reporter,omitempty"`
+}
+
+func (m *CheckpointAddressesResponse) Reset()         { *m = CheckpointAddressesResponse{} }
+func (m *CheckpointAddressesResponse) String() string { return proto.CompactTextString(m) }
+func (*CheckpointAddressesResponse) ProtoMessage()    {}
+func (*CheckpointAddressesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6b9a2f46ada7d854, []int{10}
+}
+func (m *CheckpointAddressesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *CheckpointAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_CheckpointAddressesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *CheckpointAddressesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckpointAddressesResponse.Merge(m, src)
+}
+func (m *CheckpointAddressesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *CheckpointAddressesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_CheckpointAddressesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CheckpointAddressesResponse proto.InternalMessageInfo
+
+func (m *CheckpointAddressesResponse) GetSubmitter() string {
+	if m != nil {
+		return m.Submitter
+	}
+	return ""
+}
+
+func (m *CheckpointAddressesResponse) GetReporter() string {
+	if m != nil {
+		return m.Reporter
+	}
+	return ""
+}
+
+// SubmissionKeyResponse Checkpoint can be composed from multiple transactions,
+// so to identify whole submission we need list of transaction keys.
+// Each submission can generally be identified by this list of (txIdx,
+// blockHash) tuples. Note: this could possibly be optimized as if transactions
+// were in one block they would have the same block hash and different indexes,
+// but each blockhash is only 33 (1  byte for prefix encoding and 32 byte hash),
+// so there should be other strong arguments for this optimization
+type SubmissionKeyResponse struct {
+	// FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+	FirstTxBlockHash string `protobuf:"bytes,1,opt,name=first_tx_block_hash,json=firstTxBlockHash,proto3" json:"first_tx_block_hash,omitempty"`
+	FirstTxIndex     uint32 `protobuf:"varint,2,opt,name=first_tx_index,json=firstTxIndex,proto3" json:"first_tx_index,omitempty"`
+	// SecondBlockHash is the BTCHeaderHashBytes in hex.
+	SecondTxBlockHash string `protobuf:"bytes,3,opt,name=second_tx_block_hash,json=secondTxBlockHash,proto3" json:"second_tx_block_hash,omitempty"`
+	SecondTxIndex     uint32 `protobuf:"varint,4,opt,name=second_tx_index,json=secondTxIndex,proto3" json:"second_tx_index,omitempty"`
+}
+
+func (m *SubmissionKeyResponse) Reset()         { *m = SubmissionKeyResponse{} }
+func (m *SubmissionKeyResponse) String() string { return proto.CompactTextString(m) }
+func (*SubmissionKeyResponse) ProtoMessage()    {}
+func (*SubmissionKeyResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_6b9a2f46ada7d854, []int{11}
+}
+func (m *SubmissionKeyResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SubmissionKeyResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SubmissionKeyResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SubmissionKeyResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SubmissionKeyResponse.Merge(m, src)
+}
+func (m *SubmissionKeyResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *SubmissionKeyResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SubmissionKeyResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SubmissionKeyResponse proto.InternalMessageInfo
+
+func (m *SubmissionKeyResponse) GetFirstTxBlockHash() string {
+	if m != nil {
+		return m.FirstTxBlockHash
+	}
+	return ""
+}
+
+func (m *SubmissionKeyResponse) GetFirstTxIndex() uint32 {
+	if m != nil {
+		return m.FirstTxIndex
+	}
+	return 0
+}
+
+func (m *SubmissionKeyResponse) GetSecondTxBlockHash() string {
+	if m != nil {
+		return m.SecondTxBlockHash
+	}
+	return ""
+}
+
+func (m *SubmissionKeyResponse) GetSecondTxIndex() uint32 {
+	if m != nil {
+		return m.SecondTxIndex
+	}
+	return 0
 }
 
 func init() {
@@ -428,6 +709,10 @@ func init() {
 	proto.RegisterType((*QueryBtcCheckpointsInfoResponse)(nil), "babylon.btccheckpoint.v1.QueryBtcCheckpointsInfoResponse")
 	proto.RegisterType((*QueryEpochSubmissionsRequest)(nil), "babylon.btccheckpoint.v1.QueryEpochSubmissionsRequest")
 	proto.RegisterType((*QueryEpochSubmissionsResponse)(nil), "babylon.btccheckpoint.v1.QueryEpochSubmissionsResponse")
+	proto.RegisterType((*BTCCheckpointInfoResponse)(nil), "babylon.btccheckpoint.v1.BTCCheckpointInfoResponse")
+	proto.RegisterType((*TransactionInfoResponse)(nil), "babylon.btccheckpoint.v1.TransactionInfoResponse")
+	proto.RegisterType((*CheckpointAddressesResponse)(nil), "babylon.btccheckpoint.v1.CheckpointAddressesResponse")
+	proto.RegisterType((*SubmissionKeyResponse)(nil), "babylon.btccheckpoint.v1.SubmissionKeyResponse")
 }
 
 func init() {
@@ -435,46 +720,67 @@ func init() {
 }
 
 var fileDescriptor_6b9a2f46ada7d854 = []byte{
-	// 621 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x95, 0x4d, 0x6b, 0x13, 0x4f,
-	0x1c, 0xc7, 0x33, 0xf9, 0xa7, 0xa1, 0x9d, 0xff, 0x45, 0xc7, 0x1e, 0xe2, 0xb6, 0x6e, 0xe3, 0x62,
-	0x4d, 0xd1, 0x76, 0x97, 0xb4, 0x68, 0x2d, 0x8a, 0x42, 0x8a, 0x4f, 0x28, 0x5a, 0xa3, 0x5e, 0xbc,
-	0x94, 0xd9, 0x65, 0xba, 0x59, 0x9a, 0x9d, 0xd9, 0x66, 0x66, 0x83, 0x41, 0xbc, 0xe8, 0x0b, 0x50,
-	0xf0, 0x35, 0x78, 0xf3, 0xa8, 0x57, 0xc1, 0x5b, 0x8f, 0x05, 0x2f, 0x9e, 0x44, 0x12, 0x5f, 0x88,
-	0xec, 0xec, 0x34, 0x8f, 0x0e, 0x49, 0x8a, 0xb7, 0xb0, 0xf9, 0x7e, 0x7f, 0xdf, 0xcf, 0xfe, 0x1e,
-	0x12, 0x78, 0xc1, 0xc5, 0x6e, 0xab, 0xce, 0xa8, 0xe3, 0x0a, 0xcf, 0xab, 0x11, 0x6f, 0x3f, 0x62,
-	0x01, 0x15, 0x4e, 0xb3, 0xec, 0x1c, 0xc4, 0xa4, 0xd1, 0xb2, 0xa3, 0x06, 0x13, 0x0c, 0x15, 0x94,
-	0xca, 0x1e, 0x50, 0xd9, 0xcd, 0xb2, 0x31, 0xef, 0x33, 0x9f, 0x49, 0x91, 0x93, 0x7c, 0x4a, 0xf5,
-	0xc6, 0xa2, 0xcf, 0x98, 0x5f, 0x27, 0x0e, 0x8e, 0x02, 0x07, 0x53, 0xca, 0x04, 0x16, 0x01, 0xa3,
-	0x5c, 0x7d, 0x7b, 0xc9, 0x63, 0x3c, 0x64, 0xdc, 0x71, 0x31, 0x27, 0x69, 0x8c, 0xd3, 0x2c, 0xbb,
-	0x44, 0xe0, 0xb2, 0x13, 0x61, 0x3f, 0xa0, 0x52, 0xac, 0xb4, 0xcb, 0x5a, 0xbe, 0x08, 0x37, 0x70,
-	0x78, 0x5c, 0x72, 0x55, 0x2b, 0x1b, 0x24, 0x96, 0x6a, 0x6b, 0x1e, 0xa2, 0x27, 0x49, 0xec, 0x8e,
-	0x2c, 0x51, 0x25, 0x07, 0x31, 0xe1, 0xc2, 0x7a, 0x0e, 0xcf, 0x0c, 0x3c, 0xe5, 0x11, 0xa3, 0x9c,
-	0xa0, 0x9b, 0x30, 0x9f, 0x46, 0x15, 0x40, 0x11, 0xac, 0xfc, 0xbf, 0x5e, 0xb4, 0x75, 0xcd, 0xb0,
-	0x53, 0x67, 0x25, 0x77, 0xf8, 0x73, 0x29, 0x53, 0x55, 0x2e, 0xeb, 0x06, 0x3c, 0x27, 0xcb, 0x56,
-	0x84, 0xb7, 0xdd, 0x55, 0xdf, 0xa7, 0x7b, 0x4c, 0xe5, 0xa2, 0x05, 0x38, 0x47, 0x22, 0xe6, 0xd5,
-	0x76, 0x69, 0x1c, 0xca, 0x8c, 0x5c, 0x75, 0x56, 0x3e, 0x78, 0x14, 0x87, 0x16, 0x86, 0xa6, 0xce,
-	0xad, 0xf8, 0x6e, 0xc1, 0x5c, 0x40, 0xf7, 0x98, 0xa2, 0xbb, 0xac, 0xa7, 0xab, 0x3c, 0xdb, 0x1e,
-	0x2a, 0x21, 0x8d, 0x56, 0xed, 0x6f, 0x11, 0xbc, 0x9f, 0xf0, 0x0e, 0x84, 0xbd, 0xc1, 0xa8, 0xa0,
-	0x8b, 0x76, 0x3a, 0x45, 0x3b, 0x99, 0xa2, 0x9d, 0x2e, 0x8b, 0x9a, 0xa2, 0xbd, 0x83, 0x7d, 0xa2,
-	0xbc, 0xd5, 0x3e, 0xa7, 0xf5, 0x19, 0xc0, 0x25, 0x6d, 0x94, 0x7a, 0x9d, 0x7b, 0x70, 0x2e, 0xa1,
-	0xda, 0xad, 0x07, 0x5c, 0x14, 0x40, 0xf1, 0xbf, 0x69, 0xdf, 0x69, 0x36, 0x71, 0x3f, 0x0c, 0xb8,
-	0x40, 0x77, 0x07, 0xa8, 0xb3, 0x92, 0xba, 0x34, 0x96, 0x3a, 0xc5, 0x18, 0xc0, 0x7e, 0x0b, 0xe0,
-	0xa2, 0xc4, 0xbe, 0x9d, 0x4c, 0xe5, 0x69, 0xec, 0x86, 0x01, 0xe7, 0xc9, 0x3e, 0x4f, 0x32, 0xc1,
-	0xa1, 0xe6, 0x65, 0x4f, 0xdc, 0xbc, 0x8f, 0x40, 0x2d, 0xd2, 0x28, 0x85, 0x6a, 0xdd, 0x75, 0x98,
-	0xdb, 0x27, 0x2d, 0xae, 0xba, 0x56, 0xd2, 0x77, 0xad, 0x67, 0x7e, 0x40, 0x5a, 0x55, 0x69, 0xfa,
-	0x67, 0xdd, 0x5a, 0xff, 0x36, 0x03, 0x67, 0x24, 0x27, 0x7a, 0x07, 0x60, 0x3e, 0x3d, 0x09, 0xb4,
-	0xaa, 0x87, 0x19, 0xbd, 0x44, 0x63, 0x6d, 0x42, 0x75, 0x9a, 0x6e, 0xad, 0xbc, 0xf9, 0xfe, 0xfb,
-	0x43, 0xd6, 0x42, 0x45, 0x67, 0xcc, 0x8f, 0x05, 0xfa, 0x02, 0xe0, 0xe9, 0x91, 0x4b, 0x42, 0x9b,
-	0x63, 0xe2, 0x74, 0x97, 0x6b, 0x5c, 0x9b, 0xde, 0xa8, 0x90, 0xd7, 0x24, 0x72, 0x09, 0x2d, 0xeb,
-	0x91, 0x5f, 0x75, 0x57, 0xea, 0x35, 0xfa, 0x04, 0x20, 0x1a, 0xbd, 0x19, 0x34, 0x55, 0x7e, 0xff,
-	0x45, 0x1b, 0x5b, 0x27, 0x70, 0x2a, 0xf4, 0xf3, 0x12, 0x7d, 0x01, 0x9d, 0xd5, 0xa2, 0xa3, 0xaf,
-	0x00, 0x9e, 0x1a, 0xde, 0x52, 0x74, 0x75, 0x4c, 0xa4, 0xe6, 0xb8, 0x8c, 0xcd, 0xa9, 0x7d, 0x0a,
-	0x74, 0x4b, 0x82, 0x6e, 0xa0, 0xf2, 0x44, 0x3d, 0x76, 0x78, 0xaf, 0x44, 0xe5, 0xf1, 0x61, 0xdb,
-	0x04, 0x47, 0x6d, 0x13, 0xfc, 0x6a, 0x9b, 0xe0, 0x7d, 0xc7, 0xcc, 0x1c, 0x75, 0xcc, 0xcc, 0x8f,
-	0x8e, 0x99, 0x79, 0x71, 0xc5, 0x0f, 0x44, 0x2d, 0x76, 0x6d, 0x8f, 0x85, 0xc7, 0x65, 0xbd, 0x1a,
-	0x0e, 0x68, 0x37, 0xe3, 0xe5, 0x50, 0x8a, 0x68, 0x45, 0x84, 0xbb, 0x79, 0xf9, 0xc7, 0xb3, 0xf1,
-	0x27, 0x00, 0x00, 0xff, 0xff, 0x19, 0x16, 0x59, 0xdc, 0x6f, 0x07, 0x00, 0x00,
+	// 949 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x56, 0x41, 0x6f, 0xdc, 0x44,
+	0x14, 0x8e, 0x37, 0x4e, 0x94, 0x7d, 0x69, 0xa1, 0x9d, 0x2e, 0x62, 0xb3, 0x09, 0xdb, 0xad, 0xd5,
+	0xa6, 0x11, 0x22, 0xb6, 0xb6, 0xa1, 0x2d, 0x15, 0x08, 0x89, 0x8d, 0x68, 0xa9, 0x40, 0x10, 0xdc,
+	0xc0, 0x81, 0x8b, 0x35, 0xf6, 0x4e, 0xec, 0x51, 0x76, 0x3d, 0xae, 0x67, 0x36, 0xca, 0xaa, 0xe2,
+	0xc2, 0x0d, 0x71, 0x00, 0x89, 0xbf, 0xc1, 0x11, 0x6e, 0x08, 0x89, 0x03, 0x52, 0x25, 0x2e, 0x15,
+	0x5c, 0x38, 0x21, 0x94, 0xf0, 0x43, 0x2a, 0xcf, 0xcc, 0xae, 0xbd, 0x9b, 0xb8, 0x9b, 0xf4, 0xb6,
+	0xf6, 0x7c, 0xdf, 0xf7, 0xbe, 0xf9, 0xde, 0x8b, 0x5f, 0xe0, 0xba, 0x8f, 0xfd, 0x61, 0x8f, 0xc5,
+	0x8e, 0x2f, 0x82, 0x20, 0x22, 0xc1, 0x7e, 0xc2, 0x68, 0x2c, 0x9c, 0x83, 0xb6, 0xf3, 0x78, 0x40,
+	0xd2, 0xa1, 0x9d, 0xa4, 0x4c, 0x30, 0x54, 0xd7, 0x28, 0x7b, 0x02, 0x65, 0x1f, 0xb4, 0x1b, 0xb5,
+	0x90, 0x85, 0x4c, 0x82, 0x9c, 0xec, 0x97, 0xc2, 0x37, 0x56, 0x02, 0xc6, 0xfb, 0x8c, 0x7b, 0xea,
+	0x40, 0x3d, 0xe8, 0xa3, 0xb5, 0x90, 0xb1, 0xb0, 0x47, 0x1c, 0x9c, 0x50, 0x07, 0xc7, 0x31, 0x13,
+	0x58, 0x50, 0x16, 0x8f, 0x4e, 0xdf, 0x54, 0x58, 0xc7, 0xc7, 0x9c, 0x28, 0x07, 0xce, 0x41, 0xdb,
+	0x27, 0x02, 0xb7, 0x9d, 0x04, 0x87, 0x34, 0x96, 0x60, 0x8d, 0xbd, 0x51, 0x6a, 0x3d, 0xc1, 0x29,
+	0xee, 0x6b, 0x49, 0xab, 0x06, 0xe8, 0xf3, 0x4c, 0x68, 0x47, 0xbe, 0x74, 0xc9, 0xe3, 0x01, 0xe1,
+	0xc2, 0xfa, 0x02, 0xae, 0x4c, 0xbc, 0xe5, 0x09, 0x8b, 0x39, 0x41, 0xef, 0xc3, 0xa2, 0x22, 0xd7,
+	0x8d, 0x96, 0xb1, 0xb1, 0x7c, 0xab, 0x65, 0x97, 0xdd, 0xdc, 0x56, 0xcc, 0x8e, 0xf9, 0xf4, 0xdf,
+	0xab, 0x73, 0xae, 0x66, 0x59, 0xef, 0xc1, 0x1b, 0x52, 0xb6, 0x23, 0x82, 0xed, 0x31, 0xfa, 0x61,
+	0xbc, 0xc7, 0x74, 0x5d, 0xb4, 0x0a, 0x55, 0x92, 0xb0, 0x20, 0xf2, 0xe2, 0x41, 0x5f, 0xd6, 0x30,
+	0xdd, 0x25, 0xf9, 0xe2, 0xd3, 0x41, 0xdf, 0xa2, 0xd0, 0x2c, 0x63, 0x6b, 0x7f, 0x0f, 0xc0, 0xa4,
+	0xf1, 0x1e, 0xd3, 0xee, 0xb6, 0xca, 0xdd, 0x75, 0x76, 0xb7, 0x4f, 0x97, 0x70, 0xa5, 0x80, 0x15,
+	0x9d, 0x56, 0x8a, 0x17, 0x9d, 0xde, 0x07, 0xc8, 0x23, 0xd7, 0x05, 0xd7, 0x6d, 0xdd, 0xcb, 0xac,
+	0x3f, 0xb6, 0x9a, 0x10, 0xdd, 0x1f, 0x7b, 0x07, 0x87, 0x44, 0x73, 0xdd, 0x02, 0xd3, 0xfa, 0xd5,
+	0x80, 0xab, 0xa5, 0xa5, 0xf4, 0xb5, 0x76, 0xa0, 0x9a, 0xb9, 0xf2, 0x7a, 0x94, 0x8b, 0xba, 0xd1,
+	0x9a, 0x7f, 0xd9, 0xbb, 0x2d, 0x65, 0x2a, 0x9f, 0x50, 0x2e, 0xd0, 0x83, 0x09, 0xf7, 0x15, 0xe9,
+	0xfe, 0xe6, 0x4c, 0xf7, 0x5a, 0xa6, 0x68, 0xff, 0x5d, 0x58, 0x93, 0xee, 0x3f, 0xcc, 0x9a, 0xf4,
+	0x68, 0xe0, 0xf7, 0x29, 0xe7, 0xd9, 0xc0, 0x9e, 0xa9, 0xa1, 0x5d, 0x3d, 0x0e, 0x27, 0xc9, 0xfa,
+	0xe2, 0xdb, 0x60, 0xee, 0x93, 0x21, 0xd7, 0x77, 0x76, 0xca, 0xef, 0x9c, 0x93, 0x3f, 0x26, 0xc3,
+	0xbc, 0x97, 0x19, 0xd9, 0xfa, 0x73, 0x1e, 0x56, 0x4a, 0x33, 0x41, 0xd7, 0xe0, 0xc2, 0xd8, 0xa0,
+	0x4f, 0x52, 0xed, 0x71, 0x79, 0xe4, 0xd1, 0x27, 0x29, 0xba, 0x0f, 0x2d, 0x9f, 0x70, 0xe1, 0xf1,
+	0x71, 0x11, 0xcf, 0x17, 0x81, 0xe7, 0xf7, 0x58, 0xb0, 0xef, 0x45, 0x84, 0x86, 0x91, 0x90, 0x11,
+	0x9a, 0xee, 0x5a, 0x86, 0xcb, 0xbd, 0x74, 0x44, 0xd0, 0xc9, 0x40, 0x1f, 0x49, 0x0c, 0xea, 0x40,
+	0xf3, 0x05, 0x3a, 0x98, 0x47, 0xf5, 0xf9, 0x96, 0xb1, 0x51, 0x75, 0x1b, 0x25, 0x2a, 0x98, 0x47,
+	0x88, 0xc3, 0xda, 0xb4, 0x86, 0x48, 0x71, 0xcc, 0x71, 0x20, 0xbf, 0x13, 0x75, 0x53, 0x26, 0xd5,
+	0x2e, 0x4f, 0x6a, 0x37, 0x47, 0x4f, 0xcc, 0xc6, 0x54, 0xd1, 0x02, 0x8c, 0xa3, 0x6f, 0x0d, 0x58,
+	0x9f, 0xae, 0x7a, 0x40, 0x43, 0xda, 0xc3, 0xb1, 0x20, 0x1e, 0xee, 0x76, 0x53, 0xc2, 0xb9, 0x9a,
+	0xce, 0x05, 0x59, 0xff, 0x76, 0x79, 0xfd, 0xbc, 0x0d, 0x1f, 0x28, 0x1e, 0x19, 0xb7, 0xdb, 0xb5,
+	0x26, 0x3d, 0x7c, 0x39, 0x2a, 0xa1, 0x91, 0xd9, 0xe4, 0x5a, 0x4f, 0xe0, 0xf5, 0x92, 0x2b, 0xa0,
+	0x1a, 0x2c, 0xd0, 0xb8, 0x4b, 0x0e, 0x65, 0x0f, 0x2f, 0xba, 0xea, 0x01, 0x21, 0x30, 0x65, 0xb6,
+	0x15, 0x99, 0xad, 0xfc, 0x8d, 0x5a, 0xb0, 0x5c, 0x48, 0x4d, 0xc7, 0x5e, 0x7c, 0x95, 0x69, 0x25,
+	0x29, 0x63, 0x7b, 0x75, 0x53, 0x9e, 0xa9, 0x07, 0xeb, 0x3b, 0x03, 0x56, 0x5f, 0x70, 0x01, 0x74,
+	0x07, 0xaa, 0x32, 0x22, 0x21, 0xf4, 0x24, 0x55, 0x3b, 0xf5, 0xbf, 0x7e, 0xde, 0xac, 0xe9, 0x3f,
+	0x2c, 0x4d, 0x78, 0x24, 0x52, 0x1a, 0x87, 0x6e, 0x0e, 0x45, 0x6f, 0xc3, 0x52, 0x4a, 0x12, 0x96,
+	0x66, 0xb4, 0xca, 0x0c, 0xda, 0x18, 0x69, 0xfd, 0x61, 0xc0, 0x6b, 0xa7, 0x0e, 0x3e, 0xda, 0x84,
+	0x2b, 0x7b, 0x34, 0xe5, 0xc2, 0x13, 0x87, 0xc5, 0xf1, 0x92, 0x8e, 0xdc, 0x4b, 0xf2, 0x68, 0xf7,
+	0x30, 0x1f, 0xaa, 0xeb, 0xf0, 0xca, 0x18, 0xae, 0x12, 0xac, 0xc8, 0x04, 0x2f, 0x68, 0xe4, 0x43,
+	0x19, 0xa4, 0x03, 0x35, 0x4e, 0x02, 0x16, 0x77, 0xa7, 0x54, 0x55, 0x7a, 0x97, 0xd5, 0x59, 0x51,
+	0x76, 0x1d, 0x5e, 0xcd, 0x09, 0x4a, 0xd7, 0x94, 0xba, 0x17, 0x47, 0x58, 0x29, 0x7c, 0xeb, 0xf7,
+	0x05, 0x58, 0x90, 0xdf, 0x01, 0xf4, 0xbd, 0x01, 0x8b, 0x6a, 0x71, 0xa0, 0xb7, 0xca, 0x47, 0xe8,
+	0xe4, 0xbe, 0x6a, 0x6c, 0x9e, 0x11, 0xad, 0xf2, 0xb1, 0x36, 0xbe, 0xf9, 0xfb, 0xff, 0x1f, 0x2b,
+	0x16, 0x6a, 0x39, 0x33, 0x96, 0x24, 0xfa, 0xc5, 0x80, 0xcb, 0x27, 0xf6, 0x0d, 0xba, 0x3b, 0xa3,
+	0x5c, 0xd9, 0x7e, 0x6b, 0xbc, 0x73, 0x7e, 0xa2, 0xb6, 0xbc, 0x29, 0x2d, 0xdf, 0x44, 0x37, 0xca,
+	0x2d, 0x3f, 0x19, 0x7f, 0xc8, 0xbe, 0x46, 0x3f, 0x19, 0x80, 0x4e, 0x6e, 0x14, 0x74, 0xae, 0xfa,
+	0xc5, 0x7d, 0xd7, 0xb8, 0xf7, 0x12, 0x4c, 0x6d, 0xfd, 0x9a, 0xb4, 0xbe, 0x8a, 0x56, 0x4a, 0xad,
+	0xa3, 0xdf, 0x0c, 0xb8, 0x34, 0xbd, 0x05, 0xd0, 0x9d, 0x19, 0x25, 0x4b, 0x76, 0x4e, 0xe3, 0xee,
+	0xb9, 0x79, 0xda, 0xe8, 0x3d, 0x69, 0x74, 0x0b, 0xb5, 0xcf, 0x94, 0xb1, 0x93, 0x7f, 0x0d, 0x79,
+	0xe7, 0xb3, 0xa7, 0x47, 0x4d, 0xe3, 0xd9, 0x51, 0xd3, 0xf8, 0xef, 0xa8, 0x69, 0xfc, 0x70, 0xdc,
+	0x9c, 0x7b, 0x76, 0xdc, 0x9c, 0xfb, 0xe7, 0xb8, 0x39, 0xf7, 0xd5, 0xed, 0x90, 0x8a, 0x68, 0xe0,
+	0xdb, 0x01, 0xeb, 0x8f, 0x64, 0x83, 0x08, 0xd3, 0x78, 0x5c, 0xe3, 0x70, 0xaa, 0x8a, 0x18, 0x26,
+	0x84, 0xfb, 0x8b, 0xf2, 0xdf, 0xb3, 0xad, 0xe7, 0x01, 0x00, 0x00, 0xff, 0xff, 0x07, 0x9f, 0x31,
+	0x97, 0x82, 0x0a, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -896,18 +1202,6 @@ func (m *QueryEpochSubmissionsRequest) MarshalToSizedBuffer(dAtA []byte) (int, e
 	_ = i
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
 	if m.EpochNum != 0 {
 		i = encodeVarintQuery(dAtA, i, uint64(m.EpochNum))
 		i--
@@ -936,18 +1230,6 @@ func (m *QueryEpochSubmissionsResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 	_ = i
 	var l int
 	_ = l
-	if m.Pagination != nil {
-		{
-			size, err := m.Pagination.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
-		}
-		i--
-		dAtA[i] = 0x12
-	}
 	if len(m.Keys) > 0 {
 		for iNdEx := len(m.Keys) - 1; iNdEx >= 0; iNdEx-- {
 			{
@@ -961,6 +1243,207 @@ func (m *QueryEpochSubmissionsResponse) MarshalToSizedBuffer(dAtA []byte) (int, 
 			i--
 			dAtA[i] = 0xa
 		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *BTCCheckpointInfoResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *BTCCheckpointInfoResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *BTCCheckpointInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.BestSubmissionVigilanteAddressList) > 0 {
+		for iNdEx := len(m.BestSubmissionVigilanteAddressList) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BestSubmissionVigilanteAddressList[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
+	}
+	if len(m.BestSubmissionTransactions) > 0 {
+		for iNdEx := len(m.BestSubmissionTransactions) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.BestSubmissionTransactions[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.BestSubmissionBtcBlockHash) > 0 {
+		i -= len(m.BestSubmissionBtcBlockHash)
+		copy(dAtA[i:], m.BestSubmissionBtcBlockHash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.BestSubmissionBtcBlockHash)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.BestSubmissionBtcBlockHeight != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.BestSubmissionBtcBlockHeight))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.EpochNumber != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.EpochNumber))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *TransactionInfoResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *TransactionInfoResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TransactionInfoResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Proof) > 0 {
+		i -= len(m.Proof)
+		copy(dAtA[i:], m.Proof)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Proof)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Transaction) > 0 {
+		i -= len(m.Transaction)
+		copy(dAtA[i:], m.Transaction)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Transaction)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Hash) > 0 {
+		i -= len(m.Hash)
+		copy(dAtA[i:], m.Hash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Hash)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Index != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.Index))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *CheckpointAddressesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *CheckpointAddressesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CheckpointAddressesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Reporter) > 0 {
+		i -= len(m.Reporter)
+		copy(dAtA[i:], m.Reporter)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Reporter)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Submitter) > 0 {
+		i -= len(m.Submitter)
+		copy(dAtA[i:], m.Submitter)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Submitter)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *SubmissionKeyResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SubmissionKeyResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SubmissionKeyResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.SecondTxIndex != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.SecondTxIndex))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.SecondTxBlockHash) > 0 {
+		i -= len(m.SecondTxBlockHash)
+		copy(dAtA[i:], m.SecondTxBlockHash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.SecondTxBlockHash)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.FirstTxIndex != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.FirstTxIndex))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.FirstTxBlockHash) > 0 {
+		i -= len(m.FirstTxBlockHash)
+		copy(dAtA[i:], m.FirstTxBlockHash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.FirstTxBlockHash)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -1062,10 +1545,6 @@ func (m *QueryEpochSubmissionsRequest) Size() (n int) {
 	if m.EpochNum != 0 {
 		n += 1 + sovQuery(uint64(m.EpochNum))
 	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
-		n += 1 + l + sovQuery(uint64(l))
-	}
 	return n
 }
 
@@ -1081,9 +1560,100 @@ func (m *QueryEpochSubmissionsResponse) Size() (n int) {
 			n += 1 + l + sovQuery(uint64(l))
 		}
 	}
-	if m.Pagination != nil {
-		l = m.Pagination.Size()
+	return n
+}
+
+func (m *BTCCheckpointInfoResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.EpochNumber != 0 {
+		n += 1 + sovQuery(uint64(m.EpochNumber))
+	}
+	if m.BestSubmissionBtcBlockHeight != 0 {
+		n += 1 + sovQuery(uint64(m.BestSubmissionBtcBlockHeight))
+	}
+	l = len(m.BestSubmissionBtcBlockHash)
+	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
+	}
+	if len(m.BestSubmissionTransactions) > 0 {
+		for _, e := range m.BestSubmissionTransactions {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	if len(m.BestSubmissionVigilanteAddressList) > 0 {
+		for _, e := range m.BestSubmissionVigilanteAddressList {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *TransactionInfoResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Index != 0 {
+		n += 1 + sovQuery(uint64(m.Index))
+	}
+	l = len(m.Hash)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Transaction)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Proof)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *CheckpointAddressesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Submitter)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	l = len(m.Reporter)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *SubmissionKeyResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.FirstTxBlockHash)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.FirstTxIndex != 0 {
+		n += 1 + sovQuery(uint64(m.FirstTxIndex))
+	}
+	l = len(m.SecondTxBlockHash)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.SecondTxIndex != 0 {
+		n += 1 + sovQuery(uint64(m.SecondTxIndex))
 	}
 	return n
 }
@@ -1355,7 +1925,7 @@ func (m *QueryBtcCheckpointInfoResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Info == nil {
-				m.Info = &BTCCheckpointInfo{}
+				m.Info = &BTCCheckpointInfoResponse{}
 			}
 			if err := m.Info.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
@@ -1526,7 +2096,7 @@ func (m *QueryBtcCheckpointsInfoResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.InfoList = append(m.InfoList, &BTCCheckpointInfo{})
+			m.InfoList = append(m.InfoList, &BTCCheckpointInfoResponse{})
 			if err := m.InfoList[len(m.InfoList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -1636,42 +2206,6 @@ func (m *QueryEpochSubmissionsRequest) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageRequest{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
@@ -1751,14 +2285,134 @@ func (m *QueryEpochSubmissionsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Keys = append(m.Keys, &SubmissionKey{})
+			m.Keys = append(m.Keys, &SubmissionKeyResponse{})
 			if err := m.Keys[len(m.Keys)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *BTCCheckpointInfoResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: BTCCheckpointInfoResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: BTCCheckpointInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EpochNumber", wireType)
+			}
+			m.EpochNumber = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EpochNumber |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BestSubmissionBtcBlockHeight", wireType)
+			}
+			m.BestSubmissionBtcBlockHeight = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.BestSubmissionBtcBlockHeight |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Pagination", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field BestSubmissionBtcBlockHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BestSubmissionBtcBlockHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BestSubmissionTransactions", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -1785,13 +2439,476 @@ func (m *QueryEpochSubmissionsResponse) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Pagination == nil {
-				m.Pagination = &query.PageResponse{}
-			}
-			if err := m.Pagination.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.BestSubmissionTransactions = append(m.BestSubmissionTransactions, &TransactionInfoResponse{})
+			if err := m.BestSubmissionTransactions[len(m.BestSubmissionTransactions)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field BestSubmissionVigilanteAddressList", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.BestSubmissionVigilanteAddressList = append(m.BestSubmissionVigilanteAddressList, &CheckpointAddressesResponse{})
+			if err := m.BestSubmissionVigilanteAddressList[len(m.BestSubmissionVigilanteAddressList)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *TransactionInfoResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: TransactionInfoResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: TransactionInfoResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
+			}
+			m.Index = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Index |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Transaction", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Transaction = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Proof", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Proof = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *CheckpointAddressesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: CheckpointAddressesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: CheckpointAddressesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Submitter", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Submitter = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Reporter", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Reporter = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SubmissionKeyResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SubmissionKeyResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SubmissionKeyResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FirstTxBlockHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.FirstTxBlockHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FirstTxIndex", wireType)
+			}
+			m.FirstTxIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FirstTxIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SecondTxBlockHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SecondTxBlockHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SecondTxIndex", wireType)
+			}
+			m.SecondTxIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.SecondTxIndex |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
