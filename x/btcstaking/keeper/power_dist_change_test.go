@@ -80,38 +80,20 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		)
 
 		/*
-			at this point, there should be
-			- 1 event that BTC delegation becomes pending at current BTC tip
-			- 1 event that BTC delegation will become expired at end height - w
+			at this point, there should be 1 event that BTC delegation will become expired at end height - w
 		*/
-		// the BTC delegation is now pending
+		// there exists no event at the current BTC tip
 		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
-			require.NotNil(t, btcDelStateUpdate)
-			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
-			require.Equal(t, types.BTCDelegationStatus_PENDING, btcDelStateUpdate.NewState)
-			return true
-		})
+		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTipHeight, btcTipHeight)
+		require.Len(t, events, 0)
 		// the BTC delegation will be unbonded at end height - w
 		unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, unbondedHeight, func(ev *types.EventPowerDistUpdate) bool {
-			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
-			require.NotNil(t, btcDelStateUpdate)
-			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
-			require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
-			return true
-		})
-
-		// clear the events at tip, as per the behaviour of each `BeginBlock`
-		h.BTCStakingKeeper.ClearPowerDistUpdateEvents(h.Ctx, btcTipHeight)
-		// ensure event queue is cleared at BTC tip height
-		numEvents := 0
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			numEvents++
-			return true
-		})
-		require.Zero(t, numEvents)
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
+		require.Len(t, events, 1)
+		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
+		require.NotNil(t, btcDelStateUpdate)
+		require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+		require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
 
 		// generate a quorum number of covenant signatures
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
@@ -125,12 +107,17 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 			active at the current height
 		*/
 		btcTipHeight = btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
-			require.NotNil(t, btcDelStateUpdate)
-			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
-			require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
-			return true
-		})
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTipHeight, btcTipHeight)
+		require.Len(t, events, 1)
+		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
+		require.NotNil(t, btcDelStateUpdate)
+		require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
+
+		// clear the events at tip, as per the behaviour of each `BeginBlock`
+		h.BTCStakingKeeper.ClearPowerDistUpdateEvents(h.Ctx, btcTipHeight)
+		// ensure event queue is cleared at BTC tip height
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTipHeight, btcTipHeight)
+		require.Len(t, events, 0)
 	})
 }
