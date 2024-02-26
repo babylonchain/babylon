@@ -36,17 +36,17 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 		return
 	}
 
+	if dc == nil {
+		// no BTC staker at the prior height
+		dc = types.NewVotingPowerDistCache()
+	}
+
 	// clear all events that have been consumed in this function
 	defer func() {
 		for i := lastBTCTipHeight; i <= btcTipHeight; i++ {
 			k.ClearPowerDistUpdateEvents(ctx, i)
 		}
 	}()
-
-	if dc == nil {
-		// no BTC staker at the prior height
-		dc = types.NewVotingPowerDistCache()
-	}
 
 	// reconcile old voting power distribution cache and new events
 	// to construct the new distribution
@@ -80,6 +80,8 @@ func (k Keeper) recordMetrics(ctx context.Context, dc *types.VotingPowerDistCach
 	numInactiveFPs := len(dc.FinalityProviders) - numActiveFPs
 	types.RecordInactiveFinalityProviders(numInactiveFPs)
 	// staked Satoshi
+	// TODO: some wrapper functions between Satoshis and voting power
+	// to make the 1:1 conversion clear
 	stakedSats := uint64(0)
 	for _, fp := range dc.FinalityProviders {
 		stakedSats += fp.TotalVotingPower
@@ -142,6 +144,10 @@ func (k Keeper) processAllPowerDistUpdateEvents(
 		Then, construct a voting power dist cache by reconciling the previous
 		cache and all the new events.
 	*/
+	// TODO: the algorithm needs to iterate over all BTC delegations so remains
+	// sub-optimal. Ideally we only need to iterate over all events above rather
+	// than the entire cache. This is made difficulty since BTC delegations are
+	// not keyed in the cache. Need to find a way to optimise this.
 	newDc := types.NewVotingPowerDistCache()
 
 	// iterate over all finality providers and apply all events
