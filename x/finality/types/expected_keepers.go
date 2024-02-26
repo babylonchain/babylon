@@ -7,6 +7,7 @@ import (
 )
 
 type BTCStakingKeeper interface {
+	GetParams(ctx context.Context) bstypes.Params
 	GetFinalityProvider(ctx context.Context, fpBTCPK []byte) (*bstypes.FinalityProvider, error)
 	HasFinalityProvider(ctx context.Context, fpBTCPK []byte) bool
 	SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
@@ -19,5 +20,5 @@ type BTCStakingKeeper interface {
 
 // IncentiveKeeper defines the expected interface needed to distribute rewards.
 type IncentiveKeeper interface {
-	RewardBTCStaking(ctx context.Context, height uint64, dc *bstypes.VotingPowerDistCache)
+	RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache)
 }

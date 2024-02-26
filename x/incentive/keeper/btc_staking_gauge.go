@@ -11,18 +11,18 @@ import (
 )
 
 // RewardBTCStaking distributes rewards to finality providers/delegations at a given height according
-// to the reward distribution cache
+// to the filtered reward distribution cache (that only contains voted finality providers)
 // (adapted from https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/x/distribution/keeper/allocation.go#L12-L64)
-func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, dc *bstypes.VotingPowerDistCache) {
+func (k Keeper) RewardBTCStaking(ctx context.Context, height uint64, filteredDc *bstypes.VotingPowerDistCache) {
 	gauge := k.GetBTCStakingGauge(ctx, height)
 	if gauge == nil {
 		// failing to get a reward gauge at previous height is a programming error
 		panic("failed to get a reward gauge at previous height")
 	}
 	// reward each of the finality provider and its BTC delegations in proportion
-	for _, fp := range dc.FinalityProviders {
+	for _, fp := range filteredDc.FinalityProviders {
 		// get coins that will be allocated to the finality provider and its BTC delegations
-		fpPortion := dc.GetFinalityProviderPortion(fp)
+		fpPortion := filteredDc.GetFinalityProviderPortion(fp)
 		coinsForFpsAndDels := gauge.GetCoinsPortion(fpPortion)
 		// reward the finality provider with commission
 		coinsForCommission := types.GetCoinsPortion(coinsForFpsAndDels, *fp.Commission)

@@ -218,12 +218,7 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 		if err != nil {
 			return err
 		}
-
-		curBTCDels, err := k.getBTCDelegatorDelegations(sdkCtx, fpPK, delBTCPK)
-		if err != nil {
-			return err
-		}
-
+		curBTCDels := k.getBTCDelegatorDelegations(sdkCtx, fpPK, delBTCPK)
 		btcDels = append(btcDels, curBTCDels)
 		return nil
 	})
