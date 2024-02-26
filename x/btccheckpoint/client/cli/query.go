@@ -88,7 +88,6 @@ func CmdEpochSubmissions() *cobra.Command {
 	}
 
 	flags.AddQueryFlagsToCmd(cmd)
-	flags.AddPaginationFlagsToCmd(cmd, "epoch-submissions")
 
 	return cmd
 }
