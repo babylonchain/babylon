@@ -110,7 +110,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 	for i, submKey := range epochData.Keys {
 		skr, err := types.NewSubmissionKeyResponse(*submKey)
 		if err != nil {
-			return nil, status.Error(codes.Internal, err.Error())
+			return nil, status.Errorf(codes.Internal, "this error should not happen, check DB corruption and proto files: %v", err)
 		}
 
 		submKeysResp[i] = skr
