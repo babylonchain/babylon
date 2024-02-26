@@ -90,6 +90,45 @@ func NewHelperWithValSet(t *testing.T, valSet *datagen.GenesisValidators, privSi
 	}
 }
 
+// NewHelperWithValSetNoSigner is same as NewHelperWithValSet, except that the privSigner is not
+// included in the validator set
+func NewHelperWithValSetNoSigner(t *testing.T, valSet *datagen.GenesisValidators, privSigner *app.PrivSigner) *Helper {
+	// generate the genesis account
+	signerPubKey := privSigner.WrappedPV.Key.PubKey
+	acc := authtypes.NewBaseAccount(signerPubKey.Address().Bytes(), &cosmosed.PubKey{Key: signerPubKey.Bytes()}, 0, 0)
+	privSigner.WrappedPV.Key.DelegatorAddress = acc.Address
+	// set a random validator address instead of the privSigner's
+	valSet.Keys[0].ValidatorAddress = datagen.GenRandomValidatorAddress().String()
+	// ensure the genesis account has a sufficient amount of tokens
+	balance := banktypes.Balance{
+		Address: acc.GetAddress().String(),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.DefaultBondDenom, sdk.DefaultPowerReduction.MulRaw(10000000))),
+	}
+	GenAccs := []authtypes.GenesisAccount{acc}
+
+	// setup the app and ctx
+	app := app.SetupWithGenesisValSet(t, valSet.GetGenesisKeys(), privSigner, GenAccs, balance)
+	ctx := app.BaseApp.NewContext(false).WithBlockHeight(1).WithHeaderInfo(header.Info{Height: 1}) // NOTE: height is 1
+
+	// get necessary subsets of the app/keeper
+	epochingKeeper := app.EpochingKeeper
+	querier := keeper.Querier{Keeper: epochingKeeper}
+	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
+	types.RegisterQueryServer(queryHelper, querier)
+	queryClient := types.NewQueryClient(queryHelper)
+	msgSrvr := keeper.NewMsgServerImpl(epochingKeeper)
+
+	return &Helper{
+		t,
+		ctx,
+		app,
+		msgSrvr,
+		queryClient,
+		GenAccs,
+		valSet,
+	}
+}
+
 func (h *Helper) NoError(err error) {
 	require.NoError(h.t, err)
 }
