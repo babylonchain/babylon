@@ -2,10 +2,10 @@ package keeper_test
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 
 	"github.com/babylonchain/babylon/testutil/datagen"
-	bbn "github.com/babylonchain/babylon/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/golang/mock/gomock"
@@ -249,12 +249,26 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 		// set all parameters
 		covenantSKs, _ := h.GenAndApplyParams(r)
+		// set random number of max number of finality providers
+		// in order to cover cases that number of finality providers is more or
+		// less than `MaxActiveFinalityProviders`
+		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+		bsParams.MaxActiveFinalityProviders = uint32(datagen.RandomInt(r, 20) + 10)
+		err := h.BTCStakingKeeper.SetParams(h.Ctx, bsParams)
+		h.NoError(err)
+		// change address
 		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
 		h.NoError(err)
 
-		// generate a random batch of finality providers, each with a BTC delegation with random power
+		numFps := datagen.RandomInt(r, 20) + 10
+		numActiveFPs := int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))
+
+		/*
+			Generate a random batch of finality providers, each with a BTC delegation
+			with random voting power.
+			Then, assert voting power table
+		*/
 		fpsWithMeta := []*types.FinalityProviderWithMeta{}
-		numFps := uint64(200) // there has to be more than `maxActiveFinalityProviders` finality providers
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
 			// generate and insert new finality provider
@@ -285,33 +299,71 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		h.NoError(err)
 
-		// get maps of active/inactive finality providers
-		activeFpsMap := map[string]uint64{}
-		inactiveFpsMap := map[string]uint64{}
-		for _, fp := range fpsWithMeta {
-			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, fp.BtcPk.MustMarshal(), babylonHeight)
-			if power > 0 {
-				activeFpsMap[fp.BtcPk.MarshalHex()] = power
-			} else {
-				inactiveFpsMap[fp.BtcPk.MarshalHex()] = power
-			}
+		// assert that only top `min(MaxActiveFinalityProviders, numFPs)` finality providers have voting power
+		sort.SliceStable(fpsWithMeta, func(i, j int) bool {
+			return fpsWithMeta[i].VotingPower > fpsWithMeta[j].VotingPower
+		})
+		for i := 0; i < numActiveFPs; i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Equal(t, fpsWithMeta[i].VotingPower, votingPower)
+		}
+		for i := numActiveFPs; i < int(numFps); i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Zero(t, votingPower)
 		}
 
-		// delegate a huge amount of tokens to one of the inactive finality provider
-		var activatedFpBTCPK *bbn.BIP340PubKey
-		for fpBTCPKHex := range inactiveFpsMap {
-			stakingValue := uint64(10000000)
-			activatedFpBTCPK, _ = bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
+		/*
+			Delegate more tokens to some existing finality providers
+			, and create some new finality providers
+			Then assert voting power table again
+		*/
+		// delegate more tokens to some existing finality providers
+		for i := uint64(0); i < numFps; i++ {
+			if !datagen.OneInN(r, 2) {
+				continue
+			}
+
+			stakingValue := datagen.RandomInt(r, 100000) + 100000
+			fpBTCPK := fpsWithMeta[i].BtcPk
 			_, _, _, delMsg, del := h.CreateDelegation(
 				r,
-				activatedFpBTCPK.MustToBTCPK(),
+				fpBTCPK.MustToBTCPK(),
 				changeAddress.EncodeAddress(),
 				int64(stakingValue),
 				1000,
 			)
 			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
+			// accumulate voting power for this finality provider
+			fpsWithMeta[i].VotingPower += stakingValue
+
 			break
+		}
+		// create more finality providers
+		numNewFps := datagen.RandomInt(r, 20) + 10
+		numFps += numNewFps
+		numActiveFPs = int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))
+		for i := uint64(0); i < numNewFps; i++ {
+			// generate finality provider
+			// generate and insert new finality provider
+			_, fpPK, fp := h.CreateFinalityProvider(r)
+
+			// create BTC delegation and add covenant signatures to activate it
+			stakingValue := datagen.RandomInt(r, 100000) + 100000
+			_, _, _, delMsg, del := h.CreateDelegation(
+				r,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				int64(stakingValue),
+				1000,
+			)
+			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+
+			// record voting power
+			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{
+				BtcPk:       fp.BtcPk,
+				VotingPower: stakingValue,
+			})
 		}
 
 		// record voting power table
@@ -321,9 +373,17 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		h.NoError(err)
 
-		// ensure that the activated finality provider now has entered the active finality provider set
-		// i.e., has voting power
-		power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, activatedFpBTCPK.MustMarshal(), babylonHeight)
-		require.Positive(t, power)
+		// again, assert that only top `min(MaxActiveFinalityProviders, numFPs)` finality providers have voting power
+		sort.SliceStable(fpsWithMeta, func(i, j int) bool {
+			return fpsWithMeta[i].VotingPower > fpsWithMeta[j].VotingPower
+		})
+		for i := 0; i < numActiveFPs; i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Equal(t, fpsWithMeta[i].VotingPower, votingPower)
+		}
+		for i := numActiveFPs; i < int(numFps); i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Zero(t, votingPower)
+		}
 	})
 }
