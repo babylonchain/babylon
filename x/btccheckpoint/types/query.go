@@ -26,8 +26,8 @@ func (ca *CheckpointAddresses) ToResponse() *CheckpointAddressesResponse {
 	}
 }
 
-// ToResponse parses a SubmissionKey into a query response submission key struct.
-func (sk *SubmissionKey) ToResponse() (skr *SubmissionKeyResponse, err error) {
+// NewSubmissionKeyResponse parses a SubmissionKey into a query response submission key struct.
+func NewSubmissionKeyResponse(sk SubmissionKey) (skr *SubmissionKeyResponse, err error) {
 	if len(sk.Key) != 2 {
 		return nil, status.Errorf(codes.Internal, "bad submission key %+v, does not have 2 keys", sk)
 	}

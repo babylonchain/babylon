@@ -108,7 +108,7 @@ func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmiss
 
 	submKeysResp := make([]*types.SubmissionKeyResponse, len(epochData.Keys))
 	for i, submKey := range epochData.Keys {
-		skr, err := submKey.ToResponse()
+		skr, err := types.NewSubmissionKeyResponse(*submKey)
 		if err != nil {
 			return nil, status.Error(codes.Internal, err.Error())
 		}
