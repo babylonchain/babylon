@@ -728,7 +728,7 @@ paths:
                 type: array
                 items:
                   type: string
-                  format: byte
+                description: Hashes BTC header hash as hexadecimal.
               pagination:
                 type: object
                 properties:
@@ -10393,7 +10393,7 @@ definitions:
         type: array
         items:
           type: string
-          format: byte
+        description: Hashes BTC header hash as hexadecimal.
       pagination:
         type: object
         properties:

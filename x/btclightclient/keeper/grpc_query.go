@@ -22,30 +22,33 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 	return &types.QueryParamsResponse{Params: k.GetParams(ctx)}, nil
 }
 
-func (k Keeper) Hashes(ctx context.Context, req *types.QueryHashesRequest) (*types.QueryHashesResponse, error) {
+func (k Keeper) Hashes(c context.Context, req *types.QueryHashesRequest) (*types.QueryHashesResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	var hashes []bbn.BTCHeaderHashBytes
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	ctx := sdk.UnwrapSDKContext(c)
 
 	// Ensure that the pagination key corresponds to hash bytes
-	if len(req.Pagination.Key) != 0 {
+	if req.Pagination != nil && len(req.Pagination.Key) != 0 {
 		_, err := bbn.NewBTCHeaderHashBytesFromBytes(req.Pagination.Key)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	store := k.headersState(sdkCtx).hashToHeight
+	var hashes []string
+	store := k.headersState(ctx).hashToHeight
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(key []byte, _ []byte, accumulate bool) (bool, error) {
+		btcHash, err := bbn.NewBTCHeaderHashBytesFromBytes(key)
+		if err != nil {
+			return true, err
+		}
 		if accumulate {
-			hashes = append(hashes, key)
+			hashes = append(hashes, btcHash.MarshalHex())
 		}
 		return true, nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

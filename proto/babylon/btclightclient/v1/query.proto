@@ -75,9 +75,8 @@ message QueryHashesRequest {
 
 // QueryHashesResponse is response type for the Query/Hashes RPC method.
 message QueryHashesResponse {
-  repeated bytes hashes = 1
-      [ (gogoproto.customtype) =
-            "github.com/babylonchain/babylon/types.BTCHeaderHashBytes" ];
+  // Hashes BTC header hash as hexadecimal.
+  repeated string hashes = 1;
 
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
