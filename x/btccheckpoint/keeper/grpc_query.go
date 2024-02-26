@@ -62,34 +62,33 @@ func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheck
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	ckptInfoList := []*types.BTCCheckpointInfoResponse{}
 	epochDataStore := k.epochDataStore(ctx)
-
-	ckptInfoList := []*types.BTCCheckpointInfo{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
 	pageRes, err := query.Paginate(epochDataStore, req.Pagination, func(key, value []byte) error {
-		epochNum := sdk.BigEndianToUint64(key)
 		var epochData types.EpochData
-		k.cdc.MustUnmarshal(value, &epochData)
+		if err := k.cdc.Unmarshal(value, &epochData); err != nil {
+			return fmt.Errorf("failed to decode epoch data %+v: %w", value, err)
+		}
+		epochNum := sdk.BigEndianToUint64(key)
 
 		ckptInfo, err := k.getCheckpointInfo(ctx, epochNum, &epochData)
-
 		if err != nil {
 			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", epochNum, err)
 		}
-		// append ckpt info
-		ckptInfoList = append(ckptInfoList, ckptInfo)
 
+		// append ckpt info
+		ckptInfoList = append(ckptInfoList, ckptInfo.ToResponse())
 		return nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	resp := &types.QueryBtcCheckpointsInfoResponse{
+	return &types.QueryBtcCheckpointsInfoResponse{
 		InfoList:   ckptInfoList,
 		Pagination: pageRes,
-	}
-	return resp, nil
+	}, nil
 }
 
 func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmissionsRequest) (*types.QueryEpochSubmissionsResponse, error) {
