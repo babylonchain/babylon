@@ -21,16 +21,18 @@ func (k Keeper) IndexBTCHeight(ctx context.Context) {
 	store.Set(sdk.Uint64ToBigEndian(babylonHeight), sdk.Uint64ToBigEndian(btcHeight))
 }
 
-func (k Keeper) GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight uint64) (uint64, error) {
+func (k Keeper) GetBTCHeightAtBabylonHeight(ctx context.Context, babylonHeight uint64) uint64 {
 	store := k.btcHeightStore(ctx)
 	btcHeightBytes := store.Get(sdk.Uint64ToBigEndian(babylonHeight))
 	if len(btcHeightBytes) == 0 {
-		return 0, types.ErrBTCHeightNotFound
+		// if the previous height is not indexed (which might happen at genesis),
+		// use the base header
+		return k.btclcKeeper.GetBaseBTCHeader(ctx).Height
 	}
-	return sdk.BigEndianToUint64(btcHeightBytes), nil
+	return sdk.BigEndianToUint64(btcHeightBytes)
 }
 
-func (k Keeper) GetCurrentBTCHeight(ctx context.Context) (uint64, error) {
+func (k Keeper) GetCurrentBTCHeight(ctx context.Context) uint64 {
 	babylonHeight := uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	return k.GetBTCHeightAtBabylonHeight(ctx, babylonHeight)
 }

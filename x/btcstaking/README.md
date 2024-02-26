@@ -689,8 +689,10 @@ Upon `BeginBlock`, the BTC Staking module will execute the following:
 
 1. Index the current BTC tip height. This will be used for determining the
    status of BTC delegations.
-2. Record the voting power table at the current height, by iterating all BTC
-   delegations.
+2. Record the voting power table at the current height, by reconciling the
+   voting power table at the last height with all events that affect voting
+   power distribution (including newly active BTC delegations, newly unbonded
+   BTC delegations, and slashed finality providers).
 3. If the BTC Staking protocol is activated, i.e., there exists at least 1
    active BTC delegation, then record the reward distribution w.r.t. the active
    finality providers and active BTC delegations.
@@ -706,33 +708,17 @@ at `proto/babylon/btcstaking/v1/events.proto`.
 // EventNewFinalityProvider is the event emitted when a finality provider is created
 message EventNewFinalityProvider { FinalityProvider fp = 1; }
 
-// EventNewBTCDelegation is the event emitted when a BTC delegation is created
-// NOTE: the BTC delegation is not active thus does not have voting power yet
-// only after it receives a covenant signature it becomes activated and has voting power
-message EventNewBTCDelegation { BTCDelegation btc_del = 1; }
-
-// EventActivateBTCDelegation is the event emitted when covenant activates a BTC delegation
-// such that the BTC delegation starts to have voting power in its timelock period
-message EventActivateBTCDelegation { BTCDelegation btc_del = 1; }
-
-// EventUnbondingBTCDelegation is the event emitted when an unbonding BTC delegation
-// receives all signatures needed for becoming unbonded 
-message EventUnbondedBTCDelegation { 
-  // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
-  // the PK follows encoding in BIP-340 spec
-  bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
-  // this BTC delegation delegates to
-  // If there is more than 1 PKs, then this means the delegation is restaked
-  // to multiple finality providers
-  repeated bytes fp_btc_pk_list = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+// EventBTCDelegationStateUpdate is the event emitted when a BTC delegation's state is
+// updated. There are the following possible state transitions:
+// - non-existing -> pending, which happens upon `MsgCreateBTCDelegation`
+// - pending -> active, which happens upon `MsgAddCovenantSigs`
+// - active -> unbonded, which happens upon `MsgBTCUndelegate` or upon staking tx timelock expires
+message EventBTCDelegationStateUpdate { 
   // staking_tx_hash is the hash of the staking tx.
-  // (fp_pks..., del_pk, staking_tx_hash) uniquely identifies a BTC delegation
-  string staking_tx_hash = 3;
-  // unbonding_tx_hash is the hash of the unbonding tx.
-  string unbonding_tx_hash = 4;
-  // from_state is the last state the BTC delegation was at
-  BTCDelegationStatus from_state = 5;
+  // It uniquely identifies a BTC delegation
+  string staking_tx_hash = 1;
+  // new_state is the new state of this BTC delegation
+  BTCDelegationStatus new_state = 2;
 }
 
 // EventSelectiveSlashing is the event emitted when an adversarial 
@@ -742,23 +728,24 @@ message EventSelectiveSlashing {
   // evidence is the evidence of selective slashing
   SelectiveSlashingEvidence evidence = 1;
 }
-// SelectiveSlashingEvidence is the evidence that the finality provider
-// selectively slashed a BTC delegation
-// NOTE: it's possible that a slashed finality provider exploits the
-// SelectiveSlashingEvidence endpoint while it is actually slashed due to
-// equivocation. But such behaviour does not affect the system's security
-// or gives any benefit for the adversary
-message SelectiveSlashingEvidence {
-  // staking_tx_hash is the hash of the staking tx.
-  // It uniquely identifies a BTC delegation
-  string staking_tx_hash = 1;
-  // fp_btc_pk is the BTC PK of the finality provider who
-  // launches the selective slashing offence
-  bytes fp_btc_pk = 2 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
-  // recovered_fp_btc_sk is the finality provider's BTC SK recovered from
-  // the covenant adaptor/Schnorr signature pair. It is the consequence
-  // of selective slashing.
-  bytes recovered_fp_btc_sk = 3;
+
+// EventPowerDistUpdate is an event that affects voting power distirbution
+// of BTC staking protocol
+message EventPowerDistUpdate {
+  // EventSlashedFinalityProvider defines an event that a finality provider
+  // is slashed
+  // TODO: unify with existing slashing events
+  message EventSlashedFinalityProvider {
+    bytes pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+  }
+
+  // ev is the event that affects voting power distribution
+  oneof ev {
+    // slashed_fp means a finality provider is slashed
+    EventSlashedFinalityProvider slashed_fp = 1;
+    // btc_del_state_update means a BTC delegation's state is updated
+    EventBTCDelegationStateUpdate btc_del_state_update = 2;
+  }
 }
 ```
 
