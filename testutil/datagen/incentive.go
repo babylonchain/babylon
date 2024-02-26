@@ -110,7 +110,7 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderD
 	return fpDistInfo, nil
 }
 
-func GenRandomVotingPowerDistCache(r *rand.Rand) (*bstypes.VotingPowerDistCache, error) {
+func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (*bstypes.VotingPowerDistCache, error) {
 	dc := bstypes.NewVotingPowerDistCache()
 	// a random number of finality providers
 	numFps := RandomInt(r, 10) + 1
@@ -121,6 +121,7 @@ func GenRandomVotingPowerDistCache(r *rand.Rand) (*bstypes.VotingPowerDistCache,
 		}
 		dc.AddFinalityProviderDistInfo(v)
 	}
+	dc.ApplyActiveFinalityProviders(maxFPs)
 	return dc, nil
 }
 

@@ -33,7 +33,7 @@ func FuzzRewardBTCStaking(f *testing.F) {
 		keeper.SetBTCStakingGauge(ctx, height, gauge)
 
 		// generate a random voting power distribution cache
-		dc, err := datagen.GenRandomVotingPowerDistCache(r)
+		dc, err := datagen.GenRandomVotingPowerDistCache(r, 100)
 		require.NoError(t, err)
 
 		// expected values

@@ -89,9 +89,10 @@ func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, vo
 		panic(err)
 	}
 	// filter out voted finality providers
-	dc.FilterVotedFinalityProviders(voterBTCPKs)
+	maxActiveFPs := k.BTCStakingKeeper.GetParams(ctx).MaxActiveFinalityProviders
+	filteredDc := dc.FilterVotedDistCache(maxActiveFPs, voterBTCPKs)
 	// reward voted finality providers
-	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, dc)
+	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, filteredDc)
 	// remove reward distribution cache afterwards
 	k.BTCStakingKeeper.RemoveVotingPowerDistCache(ctx, block.Height)
 	// record the last finalized height metric

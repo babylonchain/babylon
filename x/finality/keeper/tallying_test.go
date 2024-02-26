@@ -97,6 +97,7 @@ func FuzzTallying_FinalizingSomeBlocks(f *testing.F) {
 		defer ctrl.Finish()
 
 		bsKeeper := types.NewMockBTCStakingKeeper(ctrl)
+		bsKeeper.EXPECT().GetParams(gomock.Any()).Return(bstypes.Params{MaxActiveFinalityProviders: 100}).AnyTimes()
 		iKeeper := types.NewMockIncentiveKeeper(ctrl)
 		fKeeper, ctx := keepertest.FinalityKeeper(t, bsKeeper, iKeeper)
 
