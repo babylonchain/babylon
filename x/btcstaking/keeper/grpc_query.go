@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 
 	errorsmod "cosmossdk.io/errors"
 	bbn "github.com/babylonchain/babylon/types"
@@ -252,32 +251,14 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
-	// check whether it's active
-	currentTip := k.btclcKeeper.GetTipInfo(ctx)
 	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	isActive := btcDel.GetStatus(
-		currentTip.Height,
+	status := btcDel.GetStatus(
+		k.btclcKeeper.GetTipInfo(ctx).Height,
 		currentWValue,
 		k.GetParams(ctx).CovenantQuorum,
-	) == types.BTCDelegationStatus_ACTIVE
-
-	// get its undelegation info
-	undelegationInfo := &types.BTCUndelegationInfo{
-		UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
-		CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
-		CovenantSlashingSigs:     btcDel.BtcUndelegation.CovenantSlashingSigs,
-	}
+	)
 
 	return &types.QueryBTCDelegationResponse{
-		BtcPk:            btcDel.BtcPk,
-		FpBtcPkList:      btcDel.FpBtcPkList,
-		StartHeight:      btcDel.StartHeight,
-		EndHeight:        btcDel.EndHeight,
-		TotalSat:         btcDel.TotalSat,
-		StakingTxHex:     hex.EncodeToString(btcDel.StakingTx),
-		CovenantSigs:     btcDel.CovenantSigs,
-		Active:           isActive,
-		UnbondingTime:    btcDel.UnbondingTime,
-		UndelegationInfo: undelegationInfo,
+		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
 }

@@ -219,7 +219,13 @@ message QueryBTCDelegationRequest {
 // QueryBTCDelegationResponse is response type matching QueryBTCDelegationRequest
 // and containing BTC delegation information
 message QueryBTCDelegationResponse {
-    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+  // BTCDelegation represents the client needed information of an BTCDelegation.
+  BTCDelegationResponse btc_delegation = 1;
+}
+
+// BTCDelegationResponse is the client needed information from a BTCDelegation with the current status based on parameters.
+message BTCDelegationResponse {
+  // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
   // the PK follows encoding in BIP-340 spec
   bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
   // fp_btc_pk_list is the list of BIP-340 PKs of the finality providers that
@@ -242,9 +248,11 @@ message QueryBTCDelegationResponse {
   repeated CovenantAdaptorSignatures covenant_sigs = 7;
   // whether this delegation is active
   bool active = 8;
+  // descriptive status of current delegation.
+  string status_desc = 9;
   // unbonding_time used in unbonding output timelock path and in slashing transactions
   // change outputs
-  uint32 unbonding_time = 9;
+  uint32 unbonding_time = 10;
   // undelegation_info is the undelegation info of this delegation.
-  BTCUndelegationInfo undelegation_info = 10;
+  BTCUndelegationInfo undelegation_info = 11;
 }
