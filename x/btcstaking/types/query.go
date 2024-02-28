@@ -15,7 +15,6 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		EndHeight:            btcDel.EndHeight,
 		TotalSat:             btcDel.TotalSat,
 		StakingTxHex:         hex.EncodeToString(btcDel.StakingTx),
-		SlashingTxHex:        hex.EncodeToString(*btcDel.SlashingTx),
 		DelegatorSlashSigHex: btcDel.DelegatorSig.ToHexStr(),
 		CovenantSigs:         btcDel.CovenantSigs,
 		Active:               status == BTCDelegationStatus_ACTIVE,
@@ -24,10 +23,13 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		UndelegationResponse: nil,
 	}
 
-	if btcDel.BtcUndelegation == nil {
-		return resp
+	if btcDel.SlashingTx != nil {
+		resp.SlashingTxHex = hex.EncodeToString(*btcDel.SlashingTx)
 	}
-	resp.UndelegationResponse = btcDel.BtcUndelegation.ToResponse()
+
+	if btcDel.BtcUndelegation != nil {
+		resp.UndelegationResponse = btcDel.BtcUndelegation.ToResponse()
+	}
 
 	return resp
 }
@@ -36,18 +38,20 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 	resp = &BTCUndelegationResponse{
 		UnbondingTxHex:           hex.EncodeToString(ud.UnbondingTx),
-		DelegatorUnbondingSigHex: ud.DelegatorUnbondingSig.ToHexStr(),
 		CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
-
-		CovenantSlashingSigs: ud.CovenantSlashingSigs,
+		CovenantSlashingSigs:     ud.CovenantSlashingSigs,
 	}
 
-	if ud.SlashingTx == nil {
-		return resp
+	if ud.DelegatorUnbondingSig != nil {
+		resp.DelegatorUnbondingSigHex = ud.DelegatorUnbondingSig.ToHexStr()
 	}
-	slashSig := types.BIP340Signature(*ud.SlashingTx)
-	resp.SlashingTxHex = slashSig.ToHexStr()
-	resp.DelegatorSlashingSigHex = ud.DelegatorSlashingSig.ToHexStr()
+	if ud.SlashingTx != nil {
+		slashSig := types.BIP340Signature(*ud.SlashingTx)
+		resp.SlashingTxHex = slashSig.ToHexStr()
+	}
+	if ud.DelegatorSlashingSig != nil {
+		resp.DelegatorSlashingSigHex = ud.DelegatorSlashingSig.ToHexStr()
+	}
 
 	return resp
 }
