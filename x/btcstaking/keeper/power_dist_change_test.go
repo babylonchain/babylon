@@ -25,16 +25,47 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 		h := NewHelper(t, btclcKeeper, btccKeeper)
 
 		// set all parameters
-		h.GenAndApplyParams(r)
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, _, fp := h.CreateFinalityProvider(r)
+		_, fpPK, fp := h.CreateFinalityProvider(r)
 
-		// mock BTC tip info
-		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		/*
+			insert new BTC delegation and give it covenant quorum
+			ensure that it has voting power
+		*/
+		stakingValue := int64(2 * 10e8)
+		_, _, _, msgCreateBTCDel, actualDel := h.CreateDelegation(
+			r,
+			fpPK,
+			changeAddress.EncodeAddress(),
+			stakingValue,
+			1000,
+		)
+		// give it a quorum number of covenant signatures
+		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
+		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
+			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
+			h.NoError(err)
+		}
 
-		// slash the finality provider
-		err := h.BTCStakingKeeper.SlashFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
+		// execute BeginBlock
+		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
+		// ensure the finality provider has voting power at this height
+		require.Equal(t, uint64(stakingValue), h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+
+		/*
+			Slash the finality provider and execute BeginBlock
+			Then, ensure the finality provider does not have voting power anymore
+		*/
+		err = h.BTCStakingKeeper.SlashFinalityProvider(h.Ctx, fp.BtcPk.MustMarshal())
 		h.NoError(err)
 
 		// at this point, there should be only 1 event that the finality provider is slashed
@@ -45,6 +76,15 @@ func FuzzFinalityProviderEvents(f *testing.F) {
 			require.Equal(t, fp.BtcPk.MustMarshal(), slashedFPEvent.Pk.MustMarshal())
 			return true
 		})
+
+		// execute BeginBlock
+		babylonHeight += 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
+		// ensure the finality provider does not have voting power anymore
+		require.Zero(t, h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 	})
 }
 
@@ -67,7 +107,7 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		require.NoError(t, err)
 
 		// generate and insert new finality provider
-		_, fpPK, _ := h.CreateFinalityProvider(r)
+		_, fpPK, fp := h.CreateFinalityProvider(r)
 
 		// generate and insert new BTC delegation
 		stakingValue := int64(2 * 10e8)
@@ -80,57 +120,73 @@ func FuzzBTCDelegationEvents(f *testing.F) {
 		)
 
 		/*
-			at this point, there should be
-			- 1 event that BTC delegation becomes pending at current BTC tip
-			- 1 event that BTC delegation will become expired at end height - w
+			at this point, there should be 1 event that BTC delegation
+			will become expired at end height - w
 		*/
-		// the BTC delegation is now pending
-		btcTipHeight := btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
-			require.NotNil(t, btcDelStateUpdate)
-			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
-			require.Equal(t, types.BTCDelegationStatus_PENDING, btcDelStateUpdate.NewState)
-			return true
-		})
+		// there exists no event at the current BTC tip
+		btcTip := btclcKeeper.GetTipInfo(h.Ctx)
+		events := h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+		require.Len(t, events, 0)
 		// the BTC delegation will be unbonded at end height - w
 		unbondedHeight := actualDel.EndHeight - btccKeeper.GetParams(h.Ctx).CheckpointFinalizationTimeout
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, unbondedHeight, func(ev *types.EventPowerDistUpdate) bool {
-			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
-			require.NotNil(t, btcDelStateUpdate)
-			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
-			require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
-			return true
-		})
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
+		require.Len(t, events, 1)
+		btcDelStateUpdate := events[0].GetBtcDelStateUpdate()
+		require.NotNil(t, btcDelStateUpdate)
+		require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+		require.Equal(t, types.BTCDelegationStatus_UNBONDED, btcDelStateUpdate.NewState)
 
-		// clear the events at tip, as per the behaviour of each `BeginBlock`
-		h.BTCStakingKeeper.ClearPowerDistUpdateEvents(h.Ctx, btcTipHeight)
-		// ensure event queue is cleared at BTC tip height
-		numEvents := 0
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			numEvents++
-			return true
-		})
-		require.Zero(t, numEvents)
+		// ensure this finality provider does not have voting power at the current height
+		babylonHeight := datagen.RandomInt(r, 10) + 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
+		require.Zero(t, h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
 
-		// generate a quorum number of covenant signatures
+		/*
+			Generate a quorum number of covenant signatures
+			Then, there should be an event that the BTC delegation becomes
+			active at the current height
+		*/
 		msgs := h.GenerateCovenantSignaturesMessages(r, covenantSKs, msgCreateBTCDel, actualDel)
 		for i := 0; i < int(h.BTCStakingKeeper.GetParams(h.Ctx).CovenantQuorum); i++ {
 			_, err = h.MsgServer.AddCovenantSigs(h.Ctx, msgs[i])
 			h.NoError(err)
 		}
 
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+		require.Len(t, events, 1)
+		btcDelStateUpdate = events[0].GetBtcDelStateUpdate()
+		require.NotNil(t, btcDelStateUpdate)
+		require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
+		require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
+
+		// ensure this finality provider has voting power at the current height
+		babylonHeight += 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(btcTip).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
+		require.Equal(t, uint64(stakingValue), h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+
+		// ensure event queue is cleared at BTC tip height
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, btcTip.Height, btcTip.Height)
+		require.Len(t, events, 0)
+
 		/*
-			at this point, there should be an event that the BTC delegation becomes
-			active at the current height
+			BTC height reaches end height - w, such that the BTC delegation becomes expired
+			ensure the finality provider does not have voting power anymore
 		*/
-		btcTipHeight = btclcKeeper.GetTipInfo(h.Ctx).Height
-		h.BTCStakingKeeper.IteratePowerDistUpdateEvents(h.Ctx, btcTipHeight, func(ev *types.EventPowerDistUpdate) bool {
-			btcDelStateUpdate := ev.GetBtcDelStateUpdate()
-			require.NotNil(t, btcDelStateUpdate)
-			require.Equal(t, expectedStakingTxHash, btcDelStateUpdate.StakingTxHash)
-			require.Equal(t, types.BTCDelegationStatus_ACTIVE, btcDelStateUpdate.NewState)
-			return true
-		})
+		babylonHeight += 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: unbondedHeight}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
+		require.Zero(t, h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight))
+
+		// ensure the unbonded event is processed and cleared
+		events = h.BTCStakingKeeper.GetAllPowerDistUpdateEvents(h.Ctx, unbondedHeight, unbondedHeight)
+		require.Len(t, events, 0)
 	})
 }
