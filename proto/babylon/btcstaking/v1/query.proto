@@ -242,17 +242,51 @@ message BTCDelegationResponse {
   uint64 total_sat = 5;
   // staking_tx_hex is the hex string of staking tx
   string staking_tx_hex = 6;
+  // slashing_tx_hex is the hex string of slashing tx
+  string slashing_tx_hex = 7;
+  // delegator_slash_sig_hex is the signature on the slashing tx
+  // by the delegator (i.e., SK corresponding to btc_pk) as string hex.
+  // It will be a part of the witness for the staking tx output.
+  string delegator_slash_sig_hex = 8;
   // covenant_sigs is a list of adaptor signatures on the slashing tx
   // by each covenant member
   // It will be a part of the witness for the staking tx output.
-  repeated CovenantAdaptorSignatures covenant_sigs = 7;
+  repeated CovenantAdaptorSignatures covenant_sigs = 9;
   // whether this delegation is active
-  bool active = 8;
+  bool active = 10;
   // descriptive status of current delegation.
-  string status_desc = 9;
+  string status_desc = 11;
   // unbonding_time used in unbonding output timelock path and in slashing transactions
   // change outputs
-  uint32 unbonding_time = 10;
-  // undelegation_info is the undelegation info of this delegation.
-  BTCUndelegationInfo undelegation_info = 11;
+  uint32 unbonding_time = 12;
+  // undelegation_response is the undelegation info of this delegation.
+  BTCUndelegationResponse undelegation_response = 13;
+}
+
+// BTCUndelegationResponse provides all necessary info about the undeleagation
+message BTCUndelegationResponse {
+  // unbonding_tx is the transaction which will transfer the funds from staking
+  // output to unbonding output. Unbonding output will usually have lower timelock
+  // than staking output. The unbonding tx as string hex.
+  string unbonding_tx_hex = 1;
+  // delegator_unbonding_sig is the signature on the unbonding tx
+  // by the delegator (i.e., SK corresponding to btc_pk).
+  // It effectively proves that the delegator wants to unbond and thus
+  // Babylon will consider this BTC delegation unbonded. Delegator's BTC
+  // on Bitcoin will be unbonded after timelock. The unbonding delegator sig as string hex.
+  string delegator_unbonding_sig_hex = 2;
+  // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
+  // by covenant members
+  repeated SignatureInfo covenant_unbonding_sig_list = 3;
+  // slashingTxHex is the hex string of slashing tx
+  string slashing_tx_hex = 4;
+  // delegator_slashing_sig is the signature on the slashing tx
+  // by the delegator (i.e., SK corresponding to btc_pk).
+  // It will be a part of the witness for the unbonding tx output.
+  // The delegator slashing sig as string hex.
+  string delegator_slashing_sig_hex = 5;
+  // covenant_slashing_sigs is a list of adaptor signatures on the
+  // unbonding slashing tx by each covenant member
+  // It will be a part of the witness for the staking tx output.
+  repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
 }
