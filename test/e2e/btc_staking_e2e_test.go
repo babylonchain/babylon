@@ -220,9 +220,13 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
 	pendingDelResp := pendingDels.Dels[0]
-	s.Len(pendingDelResp.CovenantSigs, 0)
-	stakingTx, err := hex.DecodeString(pendingDelResp.StakingTxHex)
+	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
 	s.NoError(err)
+	s.Len(pendingDel.CovenantSigs, 0)
+
+	slashingTx := pendingDel.SlashingTx
+	stakingTx := pendingDel.StakingTx
+
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
@@ -232,8 +236,6 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDelResp.FpBtcPkList)
 	s.NoError(err)
 
-	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
-	s.NoError(err)
 	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
 	s.NoError(err)
 
@@ -249,7 +251,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 		fpBTCPKs,
 		stakingMsgTx,
 		stakingSlashingPathInfo.GetPkScriptPath(),
-		pendingDel.SlashingTx,
+		slashingTx,
 	)
 	s.NoError(err)
 
