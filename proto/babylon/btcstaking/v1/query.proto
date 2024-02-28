@@ -203,7 +203,7 @@ message QueryFinalityProviderDelegationsRequest {
 // Query/FinalityProviderDelegations RPC method.
 message QueryFinalityProviderDelegationsResponse {
   // btc_delegator_delegations contains all the queried BTC delegations.
-  repeated BTCDelegatorDelegations btc_delegator_delegations = 1;
+  repeated BTCDelegatorDelegationsResponse btc_delegator_delegations = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -289,4 +289,9 @@ message BTCUndelegationResponse {
   // unbonding slashing tx by each covenant member
   // It will be a part of the witness for the staking tx output.
   repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
+}
+
+// BTCDelegatorDelegationsResponse is a collection of BTC delegations responses from the same delegator.
+message BTCDelegatorDelegationsResponse {
+  repeated BTCDelegationResponse dels = 1;
 }

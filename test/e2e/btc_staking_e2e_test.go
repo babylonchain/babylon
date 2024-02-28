@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"encoding/hex"
 	"math"
 	"math/rand"
 	"time"
@@ -218,20 +219,21 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	s.Len(pendingDelsSet, 1)
 	pendingDels := pendingDelsSet[0]
 	s.Len(pendingDels.Dels, 1)
-	pendingDel := pendingDels.Dels[0]
-	s.Len(pendingDel.CovenantSigs, 0)
-
-	slashingTx := pendingDel.SlashingTx
-	stakingTx := pendingDel.StakingTx
+	pendingDelResp := pendingDels.Dels[0]
+	s.Len(pendingDelResp.CovenantSigs, 0)
+	stakingTx, err := hex.DecodeString(pendingDelResp.StakingTxHex)
+	s.NoError(err)
 	stakingMsgTx, err := bbn.NewBTCTxFromBytes(stakingTx)
 	s.NoError(err)
 	stakingTxHash := stakingMsgTx.TxHash().String()
 
 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDelResp.FpBtcPkList)
 	s.NoError(err)
 
+	pendingDel, err := ParseRespBTCDelToBTCDel(pendingDelResp)
+	s.NoError(err)
 	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
 	s.NoError(err)
 
@@ -247,7 +249,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 		fpBTCPKs,
 		stakingMsgTx,
 		stakingSlashingPathInfo.GetPkScriptPath(),
-		slashingTx,
+		pendingDel.SlashingTx,
 	)
 	s.NoError(err)
 
@@ -298,8 +300,11 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 	// ensure the BTC delegation has covenant sigs now
 	activeDelsSet := nonValidatorNode.QueryFinalityProviderDelegations(fp.BtcPk.MarshalHex())
 	s.Len(activeDelsSet, 1)
-	activeDels := activeDelsSet[0]
+
+	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
+	s.NoError(err)
 	s.Len(activeDels.Dels, 1)
+
 	activeDel := activeDels.Dels[0]
 	s.True(activeDel.HasCovenantQuorums(covenantQuorum))
 
@@ -482,7 +487,9 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	s.Len(activeDelsSet, 1)
 	activeDels := activeDelsSet[0]
 	s.Len(activeDels.Dels, 1)
-	activeDel := activeDels.Dels[0]
+	activeDelResp := activeDels.Dels[0]
+	activeDel, err := ParseRespBTCDelToBTCDel(activeDelResp)
+	s.NoError(err)
 	s.NotNil(activeDel.CovenantSigs)
 
 	// staking tx hash
@@ -508,4 +515,84 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	}, time.Minute, time.Second*2)
 	s.Len(unbondedDels, 1)
 	s.Equal(stakingTxHash, unbondedDels[0].MustGetStakingTxHash())
+}
+
+// ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
+func ParseRespsBTCDelToBTCDel(resp *bstypes.BTCDelegatorDelegationsResponse) (btcDels *bstypes.BTCDelegatorDelegations, err error) {
+	btcDels.Dels = make([]*bstypes.BTCDelegation, len(resp.Dels))
+	for i, delResp := range resp.Dels {
+		del, err := ParseRespBTCDelToBTCDel(delResp)
+		if err != nil {
+			return nil, err
+		}
+		btcDels.Dels[i] = del
+	}
+	return btcDels, nil
+}
+
+// ParseRespBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
+func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstypes.BTCDelegation, err error) {
+	stakingTx, err := hex.DecodeString(resp.StakingTxHex)
+	if err != nil {
+		return nil, err
+	}
+
+	delSig, err := bbn.NewBIP340SignatureFromHex(resp.DelegatorSlashSigHex)
+	if err != nil {
+		return nil, err
+	}
+
+	slashingTx, err := bstypes.NewBTCSlashingTxFromHex(resp.SlashingTxHex)
+	if err != nil {
+		return nil, err
+	}
+
+	btcDel = &bstypes.BTCDelegation{
+		// missing BabylonPk, Pop, StakingOutputIdx
+		// these fields are not sent out to the client on BTCDelegationResponse
+		BtcPk:         resp.BtcPk,
+		FpBtcPkList:   resp.FpBtcPkList,
+		StartHeight:   resp.StartHeight,
+		EndHeight:     resp.EndHeight,
+		TotalSat:      resp.TotalSat,
+		StakingTx:     stakingTx,
+		DelegatorSig:  delSig,
+		CovenantSigs:  resp.CovenantSigs,
+		UnbondingTime: resp.UnbondingTime,
+		SlashingTx:    slashingTx,
+	}
+
+	if resp.UndelegationResponse != nil {
+		ud := resp.UndelegationResponse
+		unbondTx, err := hex.DecodeString(ud.UnbondingTxHex)
+		if err != nil {
+			return nil, err
+		}
+
+		slashTx, err := bstypes.NewBTCSlashingTxFromHex(ud.SlashingTxHex)
+		if err != nil {
+			return nil, err
+		}
+
+		delUnbondingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorUnbondingSigHex)
+		if err != nil {
+			return nil, err
+		}
+
+		delSlashingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorSlashingSigHex)
+		if err != nil {
+			return nil, err
+		}
+
+		btcDel.BtcUndelegation = &bstypes.BTCUndelegation{
+			UnbondingTx:              unbondTx,
+			CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
+			CovenantSlashingSigs:     ud.CovenantSlashingSigs,
+			DelegatorUnbondingSig:    delUnbondingSig,
+			SlashingTx:               slashTx,
+			DelegatorSlashingSig:     delSlashingSig,
+		}
+	}
+
+	return btcDel, nil
 }
