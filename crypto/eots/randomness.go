@@ -1,6 +1,7 @@
 package eots
 
 import (
+	"fmt"
 	"io"
 
 	"github.com/btcsuite/btcd/btcutil/hdkeychain"
@@ -9,10 +10,10 @@ import (
 )
 
 type MasterSecretRand struct {
-	*hdkeychain.ExtendedKey
+	k *hdkeychain.ExtendedKey
 }
 type MasterPublicRand struct {
-	*hdkeychain.ExtendedKey
+	k *hdkeychain.ExtendedKey
 }
 
 type PrivateRand = secp256k1.ModNScalar
@@ -48,9 +49,16 @@ func NewMasterRandPair(randSource io.Reader) (*MasterSecretRand, *MasterPublicRa
 	return &MasterSecretRand{masterSK}, &MasterPublicRand{masterPK}, nil
 }
 
+func (msr *MasterSecretRand) Validate() error {
+	if !msr.k.IsPrivate() {
+		return fmt.Errorf("underlying key is not a private key")
+	}
+	return nil
+}
+
 func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *PublicRand, error) {
 	// get child SK, then child SK in BTC format, and finally private randomness
-	childSK, err := msr.Derive(height)
+	childSK, err := msr.k.Derive(height)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -76,8 +84,15 @@ func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *Publi
 	return privRand, pubRand, nil
 }
 
+func (mpr *MasterPublicRand) Validate() error {
+	if mpr.k.IsPrivate() {
+		return fmt.Errorf("underlying key is not a public key")
+	}
+	return nil
+}
+
 func (mpr *MasterPublicRand) DerivePubRand(height uint32) (*PublicRand, error) {
-	childPK, err := mpr.Derive(height)
+	childPK, err := mpr.k.Derive(height)
 	if err != nil {
 		return nil, err
 	}
