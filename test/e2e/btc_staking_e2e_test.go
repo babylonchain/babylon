@@ -511,13 +511,15 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 	nonValidatorNode.WaitForNextBlock()
 
 	// Wait for unbonded delegations to be created
-	var unbondedDels []*bstypes.BTCDelegation
+	var unbondedDelsResp []*bstypes.BTCDelegationResponse
 	s.Eventually(func() bool {
-		unbondedDels = nonValidatorNode.QueryUnbondedDelegations()
-		return len(unbondedDels) > 0
+		unbondedDelsResp = nonValidatorNode.QueryUnbondedDelegations()
+		return len(unbondedDelsResp) > 0
 	}, time.Minute, time.Second*2)
-	s.Len(unbondedDels, 1)
-	s.Equal(stakingTxHash, unbondedDels[0].MustGetStakingTxHash())
+	s.Len(unbondedDelsResp, 1)
+	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
+	s.NoError(err)
+	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
 }
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation

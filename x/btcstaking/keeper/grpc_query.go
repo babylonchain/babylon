@@ -80,15 +80,17 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	store := k.btcDelegationStore(ctx)
-	var btcDels []*types.BTCDelegation
+	var btcDels []*types.BTCDelegationResponse
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		var btcDel types.BTCDelegation
 		k.cdc.MustUnmarshal(value, &btcDel)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		if req.Status == types.BTCDelegationStatus_ANY || btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum) == req.Status {
+		status := btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum)
+		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
-				btcDels = append(btcDels, &btcDel)
+				resp := types.NewBTCDelegationResponse(&btcDel, status)
+				btcDels = append(btcDels, resp)
 			}
 			return true, nil
 		}
