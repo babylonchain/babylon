@@ -8,6 +8,7 @@ import (
 
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/decred/dcrd/dcrec/secp256k1/v4"
 	"github.com/stretchr/testify/require"
 	"github.com/vulpine-io/io-test/v1/pkg/iotest"
@@ -26,6 +27,10 @@ func FuzzSignAndVerify(f *testing.F) {
 		sk, err := eots.KeyGen(r)
 		require.NoError(t, err)
 		pk := eots.PubGen(sk)
+		// ensure the PK complies to Schnorr format (specified in BIP-340)
+		pkBytes := schnorr.SerializePubKey(pk)
+		pk, err = schnorr.ParsePubKey(pkBytes)
+		require.NoError(t, err)
 
 		sr, pr, err := eots.RandGen(rand.Reader)
 		require.NoError(t, err)
@@ -111,7 +116,7 @@ func FuzzExtract(f *testing.F) {
 			t.Fatal(err)
 		}
 
-		sk2, err := eots.Extract(sk.PubKey(), publicK, message1, sig1, message2, sig2)
+		sk2, err := eots.Extract(eots.PubGen(sk), publicK, message1, sig1, message2, sig2)
 		if err != nil {
 			t.Fatal(err)
 		}
