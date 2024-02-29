@@ -391,7 +391,7 @@ func (m *SubmissionData) GetEpoch() uint64 {
 }
 
 // Data stored in db and indexed by epoch number
-// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
+// TODO: Add btc blockheight at epoch end, when adding handling of epoching
 // callbacks
 type EpochData struct {
 	// keys is the list of all received checkpoints during this epoch, sorted by
