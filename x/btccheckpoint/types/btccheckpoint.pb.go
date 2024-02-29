@@ -147,7 +147,7 @@ func (m *BTCSpvProof) GetMerkleNodes() []byte {
 	return nil
 }
 
-// Each provided OP_RETURN transaction can be idendtified by hash of block in
+// Each provided OP_RETURN transaction can be identified by hash of block in
 // which transaction was included and transaction index in the block
 type TransactionKey struct {
 	Index uint32                                                    `protobuf:"varint,1,opt,name=index,proto3" json:"index,omitempty"`
@@ -262,7 +262,7 @@ type TransactionInfo struct {
 	Transaction []byte `protobuf:"bytes,2,opt,name=transaction,proto3" json:"transaction,omitempty"`
 	// proof is the Merkle proof that this tx is included in the position in `key`
 	// TODO: maybe it could use here better format as we already processed and
-	// valideated the proof?
+	// validated the proof?
 	Proof []byte `protobuf:"bytes,3,opt,name=proof,proto3" json:"proof,omitempty"`
 }
 
@@ -321,15 +321,15 @@ func (m *TransactionInfo) GetProof() []byte {
 }
 
 // TODO: Determine if we should keep any block number or depth info.
-// On one hand it may be usefull to determine if block is stable or not, on
+// On one hand it may be useful to determine if block is stable or not, on
 // other depth/block number info, without context (i.e info about chain) is
-// pretty useless and blockshash in enough to retrieve is from lightclient
+// pretty useless and blockhash in enough to retrieve is from lightclient
 type SubmissionData struct {
 	// address of the submitter and reporter
 	VigilanteAddresses *CheckpointAddresses `protobuf:"bytes,1,opt,name=vigilante_addresses,json=vigilanteAddresses,proto3" json:"vigilante_addresses,omitempty"`
 	// txs_info is the two `TransactionInfo`s corresponding to the submission
 	// It is used for
-	// - recovering address of sender of btc transction to payup the reward.
+	// - recovering address of sender of btc transaction to payup the reward.
 	// - allowing the ZoneConcierge module to prove the checkpoint is submitted to
 	// BTC
 	TxsInfo []*TransactionInfo `protobuf:"bytes,2,rep,name=txs_info,json=txsInfo,proto3" json:"txs_info,omitempty"`
@@ -391,7 +391,7 @@ func (m *SubmissionData) GetEpoch() uint64 {
 }
 
 // Data stored in db and indexed by epoch number
-// TODO: Add btc blockheight at epooch end, when adding hadnling of epoching
+// TODO: Add btc blockheight at epoch end, when adding handling of epoch
 // callbacks
 type EpochData struct {
 	// keys is the list of all received checkpoints during this epoch, sorted by
