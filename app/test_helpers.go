@@ -81,7 +81,7 @@ func setup(t *testing.T, ps *PrivSigner, withGenesis bool, invCheckPeriod uint) 
 }
 
 // NewBabylonAppWithCustomOptions initializes a new BabylonApp with custom options.
-// Created Babylon application will have one validator with hardcoed amout of tokens.
+// Created Babylon application will have one validator with hardcoed amount of tokens.
 // This is necessary as from cosmos-sdk 0.46 it is required that there is at least
 // one validator in validator set during InitGenesis abci call - https://github.com/cosmos/cosmos-sdk/pull/9697
 func NewBabylonAppWithCustomOptions(t *testing.T, isCheckTx bool, privSigner *PrivSigner, options SetupOptions) *BabylonApp {
@@ -222,7 +222,7 @@ func genesisStateWithValSet(t *testing.T,
 }
 
 // Setup initializes a new BabylonApp. A Nop logger is set in BabylonApp.
-// Created Babylon application will have one validator with hardoced amout of tokens.
+// Created Babylon application will have one validator with hardoced amount of tokens.
 // This is necessary as from cosmos-sdk 0.46 it is required that there is at least
 // one validator in validator set during InitGenesis abci call - https://github.com/cosmos/cosmos-sdk/pull/9697
 func Setup(t *testing.T, isCheckTx bool) *BabylonApp {
