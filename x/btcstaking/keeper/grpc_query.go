@@ -211,7 +211,11 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	btcDelStore := k.btcDelegatorStore(sdkCtx, fpPK)
 
-	btcDels := []*types.BTCDelegatorDelegations{}
+	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	btcHeight := k.btclcKeeper.GetTipInfo(ctx).Height
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
+
+	btcDels := []*types.BTCDelegatorDelegationsResponse{}
 	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
 		delBTCPK, err := bbn.NewBIP340PubKey(key)
 		if err != nil {
@@ -223,7 +227,19 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			return err
 		}
 
-		btcDels = append(btcDels, curBTCDels)
+		btcDelsResp := make([]*types.BTCDelegationResponse, len(curBTCDels.Dels))
+		for i, btcDel := range curBTCDels.Dels {
+			status := btcDel.GetStatus(
+				btcHeight,
+				currentWValue,
+				covenantQuorum,
+			)
+			btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
+		}
+
+		btcDels = append(btcDels, &types.BTCDelegatorDelegationsResponse{
+			Dels: btcDelsResp,
+		})
 		return nil
 	})
 	if err != nil {
