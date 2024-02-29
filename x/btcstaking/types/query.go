@@ -2,8 +2,6 @@ package types
 
 import (
 	"encoding/hex"
-
-	types "github.com/babylonchain/babylon/types"
 )
 
 // NewBTCDelegationResponse returns a new delegation response structure.
@@ -17,6 +15,7 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		StakingTxHex:         hex.EncodeToString(btcDel.StakingTx),
 		DelegatorSlashSigHex: btcDel.DelegatorSig.ToHexStr(),
 		CovenantSigs:         btcDel.CovenantSigs,
+		StakingOutputIdx:     btcDel.StakingOutputIdx,
 		Active:               status == BTCDelegationStatus_ACTIVE,
 		StatusDesc:           status.String(),
 		UnbondingTime:        btcDel.UnbondingTime,
@@ -46,8 +45,7 @@ func (ud *BTCUndelegation) ToResponse() (resp *BTCUndelegationResponse) {
 		resp.DelegatorUnbondingSigHex = ud.DelegatorUnbondingSig.ToHexStr()
 	}
 	if ud.SlashingTx != nil {
-		slashSig := types.BIP340Signature(*ud.SlashingTx)
-		resp.SlashingTxHex = slashSig.ToHexStr()
+		resp.SlashingTxHex = ud.SlashingTx.ToHexStr()
 	}
 	if ud.DelegatorSlashingSig != nil {
 		resp.DelegatorSlashingSigHex = ud.DelegatorSlashingSig.ToHexStr()

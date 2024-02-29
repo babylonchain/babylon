@@ -203,7 +203,7 @@ message QueryFinalityProviderDelegationsRequest {
 // Query/FinalityProviderDelegations RPC method.
 message QueryFinalityProviderDelegationsResponse {
   // btc_delegator_delegations contains all the queried BTC delegations.
-  repeated BTCDelegatorDelegations btc_delegator_delegations = 1;
+  repeated BTCDelegatorDelegationsResponse btc_delegator_delegations = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -252,15 +252,17 @@ message BTCDelegationResponse {
   // by each covenant member
   // It will be a part of the witness for the staking tx output.
   repeated CovenantAdaptorSignatures covenant_sigs = 9;
+  // staking_output_idx is the index of the staking output in the staking tx
+  uint32 staking_output_idx = 10;
   // whether this delegation is active
-  bool active = 10;
+  bool active = 11;
   // descriptive status of current delegation.
-  string status_desc = 11;
+  string status_desc = 12;
   // unbonding_time used in unbonding output timelock path and in slashing transactions
   // change outputs
-  uint32 unbonding_time = 12;
+  uint32 unbonding_time = 13;
   // undelegation_response is the undelegation info of this delegation.
-  BTCUndelegationResponse undelegation_response = 13;
+  BTCUndelegationResponse undelegation_response = 14;
 }
 
 // BTCUndelegationResponse provides all necessary info about the undeleagation
@@ -289,4 +291,9 @@ message BTCUndelegationResponse {
   // unbonding slashing tx by each covenant member
   // It will be a part of the witness for the staking tx output.
   repeated CovenantAdaptorSignatures covenant_slashing_sigs = 6;
+}
+
+// BTCDelegatorDelegationsResponse is a collection of BTC delegations responses from the same delegator.
+message BTCDelegatorDelegationsResponse {
+  repeated BTCDelegationResponse dels = 1;
 }
