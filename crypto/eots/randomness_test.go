@@ -7,6 +7,7 @@ import (
 
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/testutil/datagen"
+	"github.com/btcsuite/btcd/btcec/v2/schnorr"
 	"github.com/stretchr/testify/require"
 )
 
@@ -19,6 +20,10 @@ func FuzzEOTSSignAndVerify(f *testing.F) {
 		sk, err := eots.KeyGen(r)
 		require.NoError(t, err)
 		pk := eots.PubGen(sk)
+		// ensure the PK complies to Schnorr format (specified in BIP-340)
+		pkBytes := schnorr.SerializePubKey(pk)
+		pk, err = schnorr.ParsePubKey(pkBytes)
+		require.NoError(t, err)
 
 		sr, pr, err := eots.RandGen(crand.Reader)
 		require.NoError(t, err)
@@ -42,6 +47,10 @@ func FuzzBTCHeightIndex(f *testing.F) {
 		sk, err := eots.KeyGen(r)
 		require.NoError(t, err)
 		pk := eots.PubGen(sk)
+		// ensure the PK complies to Schnorr format (specified in BIP-340)
+		pkBytes := schnorr.SerializePubKey(pk)
+		pk, err = schnorr.ParsePubKey(pkBytes)
+		require.NoError(t, err)
 
 		// master randomness pair
 		msr, mpr, err := eots.NewMasterRandPair(r)
