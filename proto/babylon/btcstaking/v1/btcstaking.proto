@@ -130,22 +130,6 @@ message BTCUndelegation {
     repeated SignatureInfo covenant_unbonding_sig_list = 6;
 }
 
-
-// BTCUndelegationInfo provides all necessary info about the undeleagation
-message BTCUndelegationInfo {
-    // unbonding_tx is the transaction which will transfer the funds from staking
-    // output to unbonding output. Unbonding output will usually have lower timelock
-    // than staking output.
-    bytes unbonding_tx = 1;
-    // covenant_unbonding_sig_list is the list of signatures on the unbonding tx
-    // by covenant members
-    repeated SignatureInfo covenant_unbonding_sig_list = 2;
-    // covenant_slashing_sigs is a list of adaptor signatures on the
-    // unbonding slashing tx by each covenant member
-    // It will be a part of the witness for the staking tx output.
-    repeated CovenantAdaptorSignatures covenant_slashing_sigs = 3;
-}
-
 // BTCDelegatorDelegations is a collection of BTC delegations from the same delegator.
 message BTCDelegatorDelegations {
     repeated BTCDelegation dels = 1;

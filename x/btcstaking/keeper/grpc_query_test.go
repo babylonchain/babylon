@@ -2,6 +2,7 @@ package keeper_test
 
 import (
 	"errors"
+	"math"
 	"math/rand"
 	"testing"
 
@@ -517,12 +518,17 @@ func FuzzFinalityProviderDelegations(f *testing.F) {
 
 		babylonHeight := datagen.RandomInt(r, 10) + 1
 		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(1)
-		keeper.IndexBTCHeight(ctx)
-
 		// Generate a page request with a limit and a nil key
 		// query a page of BTC delegations and assert consistency
 		limit := datagen.RandomInt(r, len(expectedBtcDelsMap)) + 1
+
+		// FinalityProviderDelegations loads status, which calls GetTipInfo
+		finalityProviderDelegationCalls := math.Ceil(float64(numBTCDels) / float64(limit))
+		tipInfoTimesCalled := int(finalityProviderDelegationCalls + 1) // + call at IndexBTCHeight
+		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: startHeight}).Times(tipInfoTimesCalled)
+
+		keeper.IndexBTCHeight(ctx)
+
 		pagination := constructRequestWithLimit(r, limit)
 		// Generate the initial query
 		req := types.QueryFinalityProviderDelegationsRequest{

@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 
 	errorsmod "cosmossdk.io/errors"
 	bbn "github.com/babylonchain/babylon/types"
@@ -212,7 +211,11 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	btcDelStore := k.btcDelegatorStore(sdkCtx, fpPK)
 
-	btcDels := []*types.BTCDelegatorDelegations{}
+	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	btcHeight := k.btclcKeeper.GetTipInfo(ctx).Height
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
+
+	btcDels := []*types.BTCDelegatorDelegationsResponse{}
 	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
 		delBTCPK, err := bbn.NewBIP340PubKey(key)
 		if err != nil {
@@ -224,7 +227,19 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 			return err
 		}
 
-		btcDels = append(btcDels, curBTCDels)
+		btcDelsResp := make([]*types.BTCDelegationResponse, len(curBTCDels.Dels))
+		for i, btcDel := range curBTCDels.Dels {
+			status := btcDel.GetStatus(
+				btcHeight,
+				currentWValue,
+				covenantQuorum,
+			)
+			btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
+		}
+
+		btcDels = append(btcDels, &types.BTCDelegatorDelegationsResponse{
+			Dels: btcDelsResp,
+		})
 		return nil
 	})
 	if err != nil {
@@ -252,32 +267,14 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
-	// check whether it's active
-	currentTip := k.btclcKeeper.GetTipInfo(ctx)
 	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	isActive := btcDel.GetStatus(
-		currentTip.Height,
+	status := btcDel.GetStatus(
+		k.btclcKeeper.GetTipInfo(ctx).Height,
 		currentWValue,
 		k.GetParams(ctx).CovenantQuorum,
-	) == types.BTCDelegationStatus_ACTIVE
-
-	// get its undelegation info
-	undelegationInfo := &types.BTCUndelegationInfo{
-		UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
-		CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
-		CovenantSlashingSigs:     btcDel.BtcUndelegation.CovenantSlashingSigs,
-	}
+	)
 
 	return &types.QueryBTCDelegationResponse{
-		BtcPk:            btcDel.BtcPk,
-		FpBtcPkList:      btcDel.FpBtcPkList,
-		StartHeight:      btcDel.StartHeight,
-		EndHeight:        btcDel.EndHeight,
-		TotalSat:         btcDel.TotalSat,
-		StakingTxHex:     hex.EncodeToString(btcDel.StakingTx),
-		CovenantSigs:     btcDel.CovenantSigs,
-		Active:           isActive,
-		UnbondingTime:    btcDel.UnbondingTime,
-		UndelegationInfo: undelegationInfo,
+		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
 }
