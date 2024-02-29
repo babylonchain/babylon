@@ -233,7 +233,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 
 	params := nonValidatorNode.QueryBTCStakingParams()
 
-	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDelResp.FpBtcPkList)
+	fpBTCPKs, err := bbn.NewBTCPKsFromBIP340PKs(pendingDel.FpBtcPkList)
 	s.NoError(err)
 
 	stakingInfo, err := pendingDel.GetStakingInfo(params, net)
@@ -305,6 +305,7 @@ func (s *BTCStakingTestSuite) Test2SubmitCovenantSignature() {
 
 	activeDels, err := ParseRespsBTCDelToBTCDel(activeDelsSet[0])
 	s.NoError(err)
+	s.NotNil(activeDels)
 	s.Len(activeDels.Dels, 1)
 
 	activeDel := activeDels.Dels[0]
@@ -521,7 +522,13 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 
 // ParseRespsBTCDelToBTCDel parses an BTC delegation response to BTC Delegation
 func ParseRespsBTCDelToBTCDel(resp *bstypes.BTCDelegatorDelegationsResponse) (btcDels *bstypes.BTCDelegatorDelegations, err error) {
-	btcDels.Dels = make([]*bstypes.BTCDelegation, len(resp.Dels))
+	if resp == nil {
+		return nil, nil
+	}
+	btcDels = &bstypes.BTCDelegatorDelegations{
+		Dels: make([]*bstypes.BTCDelegation, len(resp.Dels)),
+	}
+
 	for i, delResp := range resp.Dels {
 		del, err := ParseRespBTCDelToBTCDel(delResp)
 		if err != nil {
@@ -550,18 +557,19 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 	}
 
 	btcDel = &bstypes.BTCDelegation{
-		// missing BabylonPk, Pop, StakingOutputIdx
+		// missing BabylonPk, Pop
 		// these fields are not sent out to the client on BTCDelegationResponse
-		BtcPk:         resp.BtcPk,
-		FpBtcPkList:   resp.FpBtcPkList,
-		StartHeight:   resp.StartHeight,
-		EndHeight:     resp.EndHeight,
-		TotalSat:      resp.TotalSat,
-		StakingTx:     stakingTx,
-		DelegatorSig:  delSig,
-		CovenantSigs:  resp.CovenantSigs,
-		UnbondingTime: resp.UnbondingTime,
-		SlashingTx:    slashingTx,
+		BtcPk:            resp.BtcPk,
+		FpBtcPkList:      resp.FpBtcPkList,
+		StartHeight:      resp.StartHeight,
+		EndHeight:        resp.EndHeight,
+		TotalSat:         resp.TotalSat,
+		StakingTx:        stakingTx,
+		DelegatorSig:     delSig,
+		StakingOutputIdx: resp.StakingOutputIdx,
+		CovenantSigs:     resp.CovenantSigs,
+		UnbondingTime:    resp.UnbondingTime,
+		SlashingTx:       slashingTx,
 	}
 
 	if resp.UndelegationResponse != nil {
@@ -576,11 +584,6 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 			return nil, err
 		}
 
-		delUnbondingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorUnbondingSigHex)
-		if err != nil {
-			return nil, err
-		}
-
 		delSlashingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorSlashingSigHex)
 		if err != nil {
 			return nil, err
@@ -590,9 +593,16 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 			UnbondingTx:              unbondTx,
 			CovenantUnbondingSigList: ud.CovenantUnbondingSigList,
 			CovenantSlashingSigs:     ud.CovenantSlashingSigs,
-			DelegatorUnbondingSig:    delUnbondingSig,
 			SlashingTx:               slashTx,
 			DelegatorSlashingSig:     delSlashingSig,
+		}
+
+		if len(ud.DelegatorUnbondingSigHex) > 0 {
+			delUnbondingSig, err := bbn.NewBIP340SignatureFromHex(ud.DelegatorUnbondingSigHex)
+			if err != nil {
+				return nil, err
+			}
+			btcDel.BtcUndelegation.DelegatorUnbondingSig = delUnbondingSig
 		}
 	}
 

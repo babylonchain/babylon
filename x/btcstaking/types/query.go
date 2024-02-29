@@ -15,6 +15,7 @@ func NewBTCDelegationResponse(btcDel *BTCDelegation, status BTCDelegationStatus)
 		StakingTxHex:         hex.EncodeToString(btcDel.StakingTx),
 		DelegatorSlashSigHex: btcDel.DelegatorSig.ToHexStr(),
 		CovenantSigs:         btcDel.CovenantSigs,
+		StakingOutputIdx:     btcDel.StakingOutputIdx,
 		Active:               status == BTCDelegationStatus_ACTIVE,
 		StatusDesc:           status.String(),
 		UnbondingTime:        btcDel.UnbondingTime,
