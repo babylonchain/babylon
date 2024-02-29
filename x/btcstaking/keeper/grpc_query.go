@@ -26,23 +26,23 @@ func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityPro
 	store := k.finalityProviderStore(ctx)
 	currBlockHeight := uint64(ctx.BlockHeight())
 
-	var finalityProvidersResp []*types.FinalityProviderResponse
+	var fpResp []*types.FinalityProviderResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		var finalityProvider types.FinalityProvider
-		if err := finalityProvider.Unmarshal(value); err != nil {
+		var fp types.FinalityProvider
+		if err := fp.Unmarshal(value); err != nil {
 			return err
 		}
 
 		votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
-		resp := types.NewFinalityProviderResponse(&finalityProvider, currBlockHeight, votingPower)
-		finalityProvidersResp = append(finalityProvidersResp, resp)
+		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight, votingPower)
+		fpResp = append(fpResp, resp)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFinalityProvidersResponse{FinalityProviders: finalityProvidersResp, Pagination: pageRes}, nil
+	return &types.QueryFinalityProvidersResponse{FinalityProviders: fpResp, Pagination: pageRes}, nil
 }
 
 // FinalityProvider returns the finality provider with the specified finality provider BTC PK
@@ -61,13 +61,21 @@ func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProv
 		return nil, err
 	}
 
-	ctx := sdk.UnwrapSDKContext(c)
-	fp, err := k.GetFinalityProvider(ctx, fpPK.MustMarshal())
+	key, err := fpPK.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFinalityProviderResponse{FinalityProvider: fp}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	fp, err := k.GetFinalityProvider(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	currBlockHeight := uint64(ctx.BlockHeight())
+	votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
+	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight, votingPower)
+	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 
 // BTCDelegations returns all BTC delegations under a given status
