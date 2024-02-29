@@ -68,15 +68,8 @@ func (msr *MasterSecretRand) DeriveRandPair(height uint32) (*PrivateRand, *Publi
 	}
 	privRand := &childBTCSK.Key
 
-	// get child PK, then child PK in BTC format, and finally private randomness
-	childPK, err := childSK.Neuter()
-	if err != nil {
-		return nil, nil, err
-	}
-	childBTCPK, err := childPK.ECPubKey()
-	if err != nil {
-		return nil, nil, err
-	}
+	// get child PK in BTC format, and then public randomness
+	childBTCPK := childBTCSK.PubKey()
 	var j secp256k1.JacobianPoint
 	childBTCPK.AsJacobian(&j)
 	pubRand := &j.X
