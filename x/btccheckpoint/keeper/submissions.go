@@ -53,7 +53,7 @@ func (k Keeper) addEpochSubmission(
 	ed := k.GetEpochData(ctx, epochNum)
 
 	// TODO: SaveEpochData and SaveSubmission should be done in one transaction.
-	// Not sure cosmos-sdk has facialities to do it.
+	// Not sure cosmos-sdk has facilities to do it.
 	// Otherwise it is possible to end up with node which updated submission list
 	// but did not save submission itself.
 
@@ -65,8 +65,8 @@ func (k Keeper) addEpochSubmission(
 	}
 
 	if ed.Status == types.Finalized {
-		// we already finlized given epoch so we do not need any more submissions
-		// TODO We should probably compare new submmission with the exisiting submission
+		// we already finalized given epoch so we do not need any more submissions
+		// TODO We should probably compare new submission with the existing submission
 		// which finalized the epoch. As it means we finalized epoch with not the best
 		// submission possible
 		return types.ErrEpochAlreadyFinalized
@@ -159,8 +159,8 @@ func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey
 			// Currently if two submissions of one checkpoint are in the same block,
 			// we pick tx with lower index as the point at which checkpoint happened.
 			// This is in line with the logic that if two submission are in the same block,
-			// they are esentially happening at the same time, so it does not really matter
-			// which index pick, and for possibble tie breaks it is better to pick lower one.
+			// they are essentially happening at the same time, so it does not really matter
+			// which index pick, and for possible tie breaks it is better to pick lower one.
 			// This means in case when we have:
 			// Checkpoint submission `x` for epoch 5, both tx in same block at height 100, with indexes 1 and 10
 			// and
@@ -190,7 +190,7 @@ func (k Keeper) GetSubmissionBtcInfo(ctx context.Context, sk types.SubmissionKey
 }
 
 func (k Keeper) GetEpochBestSubmissionBtcInfo(ctx context.Context, ed *types.EpochData) *types.SubmissionBtcInfo {
-	// there are no submissions for this epoch, so transitivly there is no best submission
+	// there are no submissions for this epoch, so transitively there is no best submission
 	if ed == nil || len(ed.Keys) == 0 {
 		return nil
 	}
