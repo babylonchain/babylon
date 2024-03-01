@@ -17,30 +17,36 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // FinalityProviders returns a paginated list of all Babylon maintained finality providers
-func (k Keeper) FinalityProviders(ctx context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
+func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.finalityProviderStore(sdkCtx)
+	ctx := sdk.UnwrapSDKContext(c)
+	store := k.finalityProviderStore(ctx)
+	currBlockHeight := uint64(ctx.BlockHeight())
 
-	var finalityProviders []*types.FinalityProvider
+	var finalityProvidersResp []*types.FinalityProviderResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		var finalityProvider types.FinalityProvider
-		k.cdc.MustUnmarshal(value, &finalityProvider)
-		finalityProviders = append(finalityProviders, &finalityProvider)
+		if err := finalityProvider.Unmarshal(value); err != nil {
+			return err
+		}
+
+		votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
+		resp := types.NewFinalityProviderResponse(&finalityProvider, currBlockHeight, votingPower)
+		finalityProvidersResp = append(finalityProvidersResp, resp)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFinalityProvidersResponse{FinalityProviders: finalityProviders, Pagination: pageRes}, nil
+	return &types.QueryFinalityProvidersResponse{FinalityProviders: finalityProvidersResp, Pagination: pageRes}, nil
 }
 
 // FinalityProvider returns the finality provider with the specified finality provider BTC PK
-func (k Keeper) FinalityProvider(ctx context.Context, req *types.QueryFinalityProviderRequest) (*types.QueryFinalityProviderResponse, error) {
+func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProviderRequest) (*types.QueryFinalityProviderResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -55,10 +61,8 @@ func (k Keeper) FinalityProvider(ctx context.Context, req *types.QueryFinalityPr
 		return nil, err
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	fp, err := k.GetFinalityProvider(sdkCtx, fpPK.MustMarshal())
-
+	ctx := sdk.UnwrapSDKContext(c)
+	fp, err := k.GetFinalityProvider(ctx, fpPK.MustMarshal())
 	if err != nil {
 		return nil, err
 	}
