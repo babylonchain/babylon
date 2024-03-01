@@ -98,3 +98,15 @@ func (mpr *MasterPublicRand) DerivePubRand(height uint32) (*PublicRand, error) {
 	pubRand := &j.X
 	return pubRand, nil
 }
+
+func NewMasterPublicRandFromBase58(s string) (*MasterPublicRand, error) {
+	k, err := hdkeychain.NewKeyFromString(s)
+	if err != nil {
+		return nil, err
+	}
+	return &MasterPublicRand{k}, nil
+}
+
+func (mpr *MasterPublicRand) MarshalBase58() string {
+	return mpr.k.String()
+}
