@@ -9,6 +9,7 @@ import (
 	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
+	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -60,7 +61,6 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // the reward distribution cache used for distributing rewards once the block
 // is finalised by finality providers.
 func (k Keeper) BeginBlocker(ctx context.Context) error {
-	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
 
 	covenantQuorum := k.GetParams(ctx).CovenantQuorum
@@ -70,24 +70,36 @@ func (k Keeper) BeginBlocker(ctx context.Context) error {
 	}
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
-	// prepare for recording finality providers with positive voting power
+	distInfos := make(map[chainhash.Hash]*types.BTCDelDistInfo)
+
+	k.IterateBTCDelsKeys(ctx, func(key chainhash.Hash, btcDel *types.BTCDelegation) bool {
+		distInfo := &types.BTCDelDistInfo{
+			BabylonPk:   btcDel.BabylonPk,
+			VotingPower: btcDel.VotingPower(btcTipHeight, wValue, covenantQuorum),
+		}
+		if distInfo.VotingPower > 0 {
+			distInfos[key] = distInfo
+		}
+		return true
+	})
+
 	activeFps := []*types.FinalityProviderWithMeta{}
-	// prepare for recording finality providers and their BTC delegations
-	// for rewards
+
 	rdc := types.NewRewardDistCache()
 
-	// iterate over all finality providers to find out non-slashed ones that have
-	// positive voting power
 	k.IterateActiveFPs(
 		ctx,
 		func(fp *types.FinalityProvider) bool {
 			fpDistInfo := types.NewFinalityProviderDistInfo(fp)
 
-			// iterate over all BTC delegations under the finality provider
-			// in order to accumulate voting power and reward dist info for it
-			k.IterateBTCDelegations(ctx, fp.BtcPk, func(btcDel *types.BTCDelegation) bool {
-				// accumulate voting power and reward distribution cache
-				fpDistInfo.AddBTCDel(btcDel, btcTipHeight, wValue, covenantQuorum)
+			k.IterateBTCDelegationsHashes(ctx, fp.BtcPk, func(hash chainhash.Hash) bool {
+				distInfo, found := distInfos[hash]
+
+				if !found {
+					return true
+				}
+
+				fpDistInfo.AddBTCDistInfo(distInfo)
 				return true
 			})
 
