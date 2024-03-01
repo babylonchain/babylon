@@ -104,6 +104,9 @@ func NewMasterPublicRandFromBase58(s string) (*MasterPublicRand, error) {
 	if err != nil {
 		return nil, err
 	}
+	if k.IsPrivate() {
+		return nil, fmt.Errorf("the given string does not correspond to a public key")
+	}
 	return &MasterPublicRand{k}, nil
 }
 
