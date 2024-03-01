@@ -16,7 +16,7 @@ import (
 
 const (
 	// Point with unknown discrete logarithm defined in: https://github.com/bitcoin/bips/blob/master/bip-0341.mediawiki#constructing-and-spending-taproot-outputs
-	// using it as internal public key efectively disables taproot key spends
+	// using it as internal public key effectively disables taproot key spends
 	unspendableKeyPath = "0250929b74c1a04954b78b4b6035e97a5e078a5a0f28ec96d547bfee9ace803ac0"
 )
 
@@ -498,7 +498,7 @@ type RelativeTimeLockTapScriptInfo struct {
 	LockTime uint16
 	// taproot address of the script
 	TapAddress btcutil.Address
-	// pkscript in output wchich commits to the given script/leaf
+	// pkscript in output which commits to the given script/leaf
 	PkScript []byte
 }
 
