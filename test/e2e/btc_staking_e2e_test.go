@@ -16,6 +16,7 @@ import (
 
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
+	"github.com/babylonchain/babylon/test/e2e/configurer/chain"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
@@ -140,8 +141,11 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	s.NoError(err)
 
 	// submit staking tx to Bitcoin and get inclusion proof
-	currentBtcTip, err := nonValidatorNode.QueryTip()
+	currentBtcTipResp, err := nonValidatorNode.QueryTip()
 	s.NoError(err)
+	currentBtcTip, err := chain.ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+	s.NoError(err)
+
 	blockWithStakingTx := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), stakingMsgTx)
 	nonValidatorNode.InsertHeader(&blockWithStakingTx.HeaderBytes)
 	// make block k-deep

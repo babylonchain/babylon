@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	sdkmath "cosmossdk.io/math"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
@@ -86,12 +87,16 @@ func (n *NodeConfig) SendHeaderHex(headerHex string) {
 }
 
 func (n *NodeConfig) InsertNewEmptyBtcHeader(r *rand.Rand) *blc.BTCHeaderInfo {
-	tip, err := n.QueryTip()
+	tipResp, err := n.QueryTip()
 	require.NoError(n.t, err)
-	n.t.Logf("Retrieved current tip of btc headerchain. Height: %d", tip.Height)
+	n.t.Logf("Retrieved current tip of btc headerchain. Height: %d", tipResp.Height)
+
+	tip, err := ParseBTCHeaderInfoResponseToInfo(tipResp)
+	require.NoError(n.t, err)
+
 	child := datagen.GenRandomValidBTCHeaderInfoWithParent(r, *tip)
 	n.SendHeaderHex(child.Header.MarshalHex())
-	n.WaitUntilBtcHeight(tip.Height + 1)
+	n.WaitUntilBtcHeight(tipResp.Height + 1)
 	return child
 }
 
@@ -140,7 +145,7 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 	for _, checkpoint := range resp.RawCheckpoints {
 		require.Equal(n.t, checkpoint.Status, cttypes.Sealed)
 
-		currentBtcTip, err := n.QueryTip()
+		currentBtcTipResp, err := n.QueryTip()
 		require.NoError(n.t, err)
 
 		_, submitterAddr, err := bech32.DecodeAndConvert(n.PublicAddress)
@@ -160,6 +165,9 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		require.NoError(n.t, err)
 
 		tx1 := datagen.CreatOpReturnTransaction(r, p1)
+		currentBtcTip, err := ParseBTCHeaderInfoResponseToInfo(currentBtcTipResp)
+		require.NoError(n.t, err)
+
 		opReturn1 := datagen.CreateBlockWithTransaction(r, currentBtcTip.Header.ToBlockHeader(), tx1)
 		tx2 := datagen.CreatOpReturnTransaction(r, p2)
 		opReturn2 := datagen.CreateBlockWithTransaction(r, opReturn1.HeaderBytes.ToBlockHeader(), tx2)
@@ -223,4 +231,25 @@ func (n *NodeConfig) WithdrawReward(sType, from string) {
 	_, _, err := n.containerManager.ExecTxCmd(n.t, n.chainId, n.Name, cmd)
 	require.NoError(n.t, err)
 	n.LogActionF("successfully withdrawn")
+}
+
+// ParseBTCHeaderInfoResponseToInfo turns an BTCHeaderInfoResponse back to BTCHeaderInfo.
+func ParseBTCHeaderInfoResponseToInfo(r *blc.BTCHeaderInfoResponse) (*blc.BTCHeaderInfo, error) {
+	header, err := bbn.NewBTCHeaderBytesFromHex(r.HeaderHex)
+	if err != nil {
+		return nil, err
+	}
+
+	hash, err := bbn.NewBTCHeaderHashBytesFromHex(r.HashHex)
+	if err != nil {
+		return nil, err
+	}
+
+	work := sdkmath.NewUintFromString(r.Work)
+	return &blc.BTCHeaderInfo{
+		Header: &header,
+		Hash:   &hash,
+		Height: r.Height,
+		Work:   &work,
+	}, nil
 }
