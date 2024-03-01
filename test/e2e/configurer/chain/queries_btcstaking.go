@@ -22,7 +22,7 @@ func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
 	return &resp.Params
 }
 
-func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProvider {
+func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)
 

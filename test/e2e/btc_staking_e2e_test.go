@@ -17,7 +17,6 @@ import (
 	"github.com/babylonchain/babylon/crypto/eots"
 	"github.com/babylonchain/babylon/test/e2e/configurer"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
-	"github.com/babylonchain/babylon/test/e2e/util"
 	"github.com/babylonchain/babylon/testutil/datagen"
 	bbn "github.com/babylonchain/babylon/types"
 	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
@@ -89,7 +88,7 @@ func (s *BTCStakingTestSuite) Test1CreateFinalityProviderAndDelegation() {
 	// query the existence of finality provider and assert equivalence
 	actualFps := nonValidatorNode.QueryFinalityProviders()
 	s.Len(actualFps, 1)
-	s.Equal(util.Cdc.MustMarshal(fp), util.Cdc.MustMarshal(actualFps[0]))
+	s.equalFinalityProviderResp(fp, actualFps[0])
 
 	/*
 		create a random BTC delegation under this finality provider
@@ -609,4 +608,14 @@ func ParseRespBTCDelToBTCDel(resp *bstypes.BTCDelegationResponse) (btcDel *bstyp
 	}
 
 	return btcDel, nil
+}
+
+func (s *BTCStakingTestSuite) equalFinalityProviderResp(fp *bstypes.FinalityProvider, fpResp *bstypes.FinalityProviderResponse) {
+	s.Equal(fp.Description, fpResp.Description)
+	s.Equal(fp.Commission, fpResp.Commission)
+	s.Equal(fp.BabylonPk, fpResp.BabylonPk)
+	s.Equal(fp.BtcPk, fpResp.BtcPk)
+	s.Equal(fp.Pop, fpResp.Pop)
+	s.Equal(fp.SlashedBabylonHeight, fpResp.SlashedBabylonHeight)
+	s.Equal(fp.SlashedBtcHeight, fpResp.SlashedBtcHeight)
 }
