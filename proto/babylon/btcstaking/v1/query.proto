@@ -103,7 +103,7 @@ message QueryFinalityProviderRequest {
 // QueryFinalityProviderResponse contains information about a finality provider
 message QueryFinalityProviderResponse {
   // finality_provider contains the FinalityProvider
-  FinalityProvider finality_provider = 1;
+  FinalityProviderResponse finality_provider = 1;
 }
 
 // QueryBTCDelegationsRequest is the request type for the
