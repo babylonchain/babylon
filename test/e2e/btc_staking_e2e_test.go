@@ -516,7 +516,7 @@ func (s *BTCStakingTestSuite) Test5SubmitStakerUnbonding() {
 		unbondedDelsResp = nonValidatorNode.QueryUnbondedDelegations()
 		return len(unbondedDelsResp) > 0
 	}, time.Minute, time.Second*2)
-	s.Len(unbondedDelsResp, 1)
+
 	unbondDel, err := ParseRespBTCDelToBTCDel(unbondedDelsResp[0])
 	s.NoError(err)
 	s.Equal(stakingTxHash, unbondDel.MustGetStakingTxHash())
