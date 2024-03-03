@@ -53,7 +53,7 @@ func (k Keeper) SlashFinalityProvider(ctx context.Context, fpBTCPK []byte) error
 	fp.SlashedBabylonHeight = uint64(sdk.UnwrapSDKContext(ctx).HeaderInfo().Height)
 	btcTip := k.btclcKeeper.GetTipInfo(ctx)
 	if btcTip == nil {
-		panic(fmt.Errorf("failed to get current BTC tip"))
+		return fmt.Errorf("failed to get current BTC tip")
 	}
 	fp.SlashedBtcHeight = btcTip.Height
 	k.SetFinalityProvider(ctx, fp)
