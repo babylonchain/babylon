@@ -77,11 +77,16 @@ func GenRandomGauge(r *rand.Rand) *itypes.Gauge {
 	return itypes.NewGauge(coins...)
 }
 
-func GenRandomBTCDelDistInfo(r *rand.Rand) *bstypes.BTCDelDistInfo {
+func GenRandomBTCDelDistInfo(r *rand.Rand) (*bstypes.BTCDelDistInfo, error) {
+	btcPK, err := GenRandomBIP340PubKey(r)
+	if err != nil {
+		return nil, err
+	}
 	return &bstypes.BTCDelDistInfo{
+		BtcPk:       btcPK,
 		BabylonPk:   GenRandomAccount().GetPubKey().(*secp256k1.PubKey),
 		VotingPower: RandomInt(r, 1000) + 1,
-	}
+	}, nil
 }
 
 func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderDistInfo, error) {
@@ -95,15 +100,18 @@ func GenRandomFinalityProviderDistInfo(r *rand.Rand) (*bstypes.FinalityProviderD
 	// add a random number of BTC delegation distribution info
 	numBTCDels := RandomInt(r, 100) + 1
 	for i := uint64(0); i < numBTCDels; i++ {
-		btcDelDistInfo := GenRandomBTCDelDistInfo(r)
+		btcDelDistInfo, err := GenRandomBTCDelDistInfo(r)
+		if err != nil {
+			return nil, err
+		}
 		fpDistInfo.BtcDels = append(fpDistInfo.BtcDels, btcDelDistInfo)
 		fpDistInfo.TotalVotingPower += btcDelDistInfo.VotingPower
 	}
 	return fpDistInfo, nil
 }
 
-func GenRandomBTCStakingRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache, error) {
-	rdc := bstypes.NewRewardDistCache()
+func GenRandomVotingPowerDistCache(r *rand.Rand, maxFPs uint32) (*bstypes.VotingPowerDistCache, error) {
+	dc := bstypes.NewVotingPowerDistCache()
 	// a random number of finality providers
 	numFps := RandomInt(r, 10) + 1
 	for i := uint64(0); i < numFps; i++ {
@@ -111,9 +119,10 @@ func GenRandomBTCStakingRewardDistCache(r *rand.Rand) (*bstypes.RewardDistCache,
 		if err != nil {
 			return nil, err
 		}
-		rdc.AddFinalityProviderDistInfo(v)
+		dc.AddFinalityProviderDistInfo(v)
 	}
-	return rdc, nil
+	dc.ApplyActiveFinalityProviders(maxFPs)
+	return dc, nil
 }
 
 func GenRandomCheckpointAddressPair(r *rand.Rand) *btcctypes.CheckpointAddressPair {

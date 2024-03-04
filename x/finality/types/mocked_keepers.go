@@ -65,19 +65,18 @@ func (mr *MockBTCStakingKeeperMockRecorder) GetFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetFinalityProvider), ctx, fpBTCPK)
 }
 
-// GetRewardDistCache mocks base method.
-func (m *MockBTCStakingKeeper) GetRewardDistCache(ctx context.Context, height uint64) (*types.RewardDistCache, error) {
+// GetParams mocks base method.
+func (m *MockBTCStakingKeeper) GetParams(ctx context.Context) types.Params {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRewardDistCache", ctx, height)
-	ret0, _ := ret[0].(*types.RewardDistCache)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "GetParams", ctx)
+	ret0, _ := ret[0].(types.Params)
+	return ret0
 }
 
-// GetRewardDistCache indicates an expected call of GetRewardDistCache.
-func (mr *MockBTCStakingKeeperMockRecorder) GetRewardDistCache(ctx, height interface{}) *gomock.Call {
+// GetParams indicates an expected call of GetParams.
+func (mr *MockBTCStakingKeeperMockRecorder) GetParams(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetRewardDistCache), ctx, height)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetParams", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetParams), ctx)
 }
 
 // GetVotingPower mocks base method.
@@ -92,6 +91,21 @@ func (m *MockBTCStakingKeeper) GetVotingPower(ctx context.Context, fpBTCPK []byt
 func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPower(ctx, fpBTCPK, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPower", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPower), ctx, fpBTCPK, height)
+}
+
+// GetVotingPowerDistCache mocks base method.
+func (m *MockBTCStakingKeeper) GetVotingPowerDistCache(ctx context.Context, height uint64) (*types.VotingPowerDistCache, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetVotingPowerDistCache", ctx, height)
+	ret0, _ := ret[0].(*types.VotingPowerDistCache)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetVotingPowerDistCache indicates an expected call of GetVotingPowerDistCache.
+func (mr *MockBTCStakingKeeperMockRecorder) GetVotingPowerDistCache(ctx, height interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetVotingPowerDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).GetVotingPowerDistCache), ctx, height)
 }
 
 // GetVotingPowerTable mocks base method.
@@ -122,16 +136,16 @@ func (mr *MockBTCStakingKeeperMockRecorder) HasFinalityProvider(ctx, fpBTCPK int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasFinalityProvider", reflect.TypeOf((*MockBTCStakingKeeper)(nil).HasFinalityProvider), ctx, fpBTCPK)
 }
 
-// RemoveRewardDistCache mocks base method.
-func (m *MockBTCStakingKeeper) RemoveRewardDistCache(ctx context.Context, height uint64) {
+// RemoveVotingPowerDistCache mocks base method.
+func (m *MockBTCStakingKeeper) RemoveVotingPowerDistCache(ctx context.Context, height uint64) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RemoveRewardDistCache", ctx, height)
+	m.ctrl.Call(m, "RemoveVotingPowerDistCache", ctx, height)
 }
 
-// RemoveRewardDistCache indicates an expected call of RemoveRewardDistCache.
-func (mr *MockBTCStakingKeeperMockRecorder) RemoveRewardDistCache(ctx, height interface{}) *gomock.Call {
+// RemoveVotingPowerDistCache indicates an expected call of RemoveVotingPowerDistCache.
+func (mr *MockBTCStakingKeeperMockRecorder) RemoveVotingPowerDistCache(ctx, height interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRewardDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RemoveRewardDistCache), ctx, height)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveVotingPowerDistCache", reflect.TypeOf((*MockBTCStakingKeeper)(nil).RemoveVotingPowerDistCache), ctx, height)
 }
 
 // SlashFinalityProvider mocks base method.
@@ -172,13 +186,13 @@ func (m *MockIncentiveKeeper) EXPECT() *MockIncentiveKeeperMockRecorder {
 }
 
 // RewardBTCStaking mocks base method.
-func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, rdc *types.RewardDistCache) {
+func (m *MockIncentiveKeeper) RewardBTCStaking(ctx context.Context, height uint64, dc *types.VotingPowerDistCache) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, rdc)
+	m.ctrl.Call(m, "RewardBTCStaking", ctx, height, dc)
 }
 
 // RewardBTCStaking indicates an expected call of RewardBTCStaking.
-func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, rdc interface{}) *gomock.Call {
+func (mr *MockIncentiveKeeperMockRecorder) RewardBTCStaking(ctx, height, dc interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, rdc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RewardBTCStaking", reflect.TypeOf((*MockIncentiveKeeper)(nil).RewardBTCStaking), ctx, height, dc)
 }
