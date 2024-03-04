@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.btclightclient.v1;
 
 import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/btclightclient/v1/params.proto";
@@ -147,5 +148,9 @@ message BTCHeaderInfoResponse {
   string hash_hex = 2;
   uint64 height = 3;
   // Work is the sdkmath.Uint as string.
-  string work = 4;
+  string work = 4 [
+    (cosmos_proto.scalar)  = "cosmos.Uint",
+    (gogoproto.customtype) = "cosmossdk.io/math.Uint",
+    (gogoproto.nullable)   = false
+  ];
 }

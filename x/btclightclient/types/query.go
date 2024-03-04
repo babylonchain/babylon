@@ -6,7 +6,7 @@ func (b *BTCHeaderInfo) ToResponse() *BTCHeaderInfoResponse {
 		HeaderHex: b.Header.MarshalHex(),
 		HashHex:   b.Hash.MarshalHex(),
 		Height:    b.Height,
-		Work:      b.Work.String(),
+		Work:      *b.Work,
 	}
 }
 

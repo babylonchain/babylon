@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	sdkmath "cosmossdk.io/math"
 	txformat "github.com/babylonchain/babylon/btctxformatter"
 	"github.com/babylonchain/babylon/test/e2e/initialization"
 	"github.com/babylonchain/babylon/test/e2e/util"
@@ -245,11 +244,10 @@ func ParseBTCHeaderInfoResponseToInfo(r *blc.BTCHeaderInfoResponse) (*blc.BTCHea
 		return nil, err
 	}
 
-	work := sdkmath.NewUintFromString(r.Work)
 	return &blc.BTCHeaderInfo{
 		Header: &header,
 		Hash:   &hash,
 		Height: r.Height,
-		Work:   &work,
+		Work:   &r.Work,
 	}, nil
 }
