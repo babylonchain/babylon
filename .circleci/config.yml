@@ -35,7 +35,7 @@ jobs:
             make test
   e2e-test:
     machine:
-      image: ubuntu-2204:2022.10.1
+      image: ubuntu-2204:2024.01.1
     resource_class: large
     steps:
       - go/install:
@@ -52,7 +52,7 @@ jobs:
             sudo make test-e2e
   lint:
     machine:
-      image: ubuntu-2204:2022.10.1
+      image: ubuntu-2204:2024.01.1
     resource_class: large
     steps:
       - go/install:
@@ -70,7 +70,7 @@ jobs:
 
   build_docker:
     machine:
-      image: ubuntu-2204:2022.10.1
+      image: ubuntu-2204:2024.01.1
     resource_class: large
     steps:
       - checkout
@@ -93,7 +93,7 @@ jobs:
 
   push_docker:
     machine:
-      image: ubuntu-2204:2022.10.1
+      image: ubuntu-2204:2024.01.1
       resource_class: large
     steps:
       - attach_workspace:
