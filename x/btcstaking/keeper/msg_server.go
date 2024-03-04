@@ -411,13 +411,9 @@ func (ms msgServer) CreateBTCDelegation(goCtx context.Context, req *types.MsgCre
 		CovenantUnbondingSigList: nil,
 	}
 
+	// add this BTC delegation, and emit corresponding events
 	if err := ms.AddBTCDelegation(ctx, newBTCDel); err != nil {
-		panic(fmt.Errorf("failed to set BTC delegation that has passed verification: %w", err))
-	}
-
-	// notify subscriber
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventNewBTCDelegation{BtcDel: newBTCDel}); err != nil {
-		panic(fmt.Errorf("failed to emit EventNewBTCDelegation: %w", err))
+		panic(fmt.Errorf("failed to add BTC delegation that has passed verification: %w", err))
 	}
 
 	return &types.MsgCreateBTCDelegationResponse{}, nil
@@ -454,6 +450,15 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 
 	if btcDel.HasCovenantQuorums(params.CovenantQuorum) {
 		ms.Logger(ctx).Debug("Received covenant signature after achieving quorum", "covenant pk", req.Pk.MarshalHex())
+		return &types.MsgAddCovenantSigsResponse{}, nil
+	}
+
+	// ensure BTC delegation is still pending, i.e., not expired
+	btcTipHeight := ms.btclcKeeper.GetTipInfo(ctx).Height
+	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	status := btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)
+	if status != types.BTCDelegationStatus_PENDING {
+		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already expired", "covenant pk", req.Pk.MarshalHex())
 		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
 
@@ -553,19 +558,15 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	}
 
 	// All is fine add received signatures to the BTC delegation and BtcUndelegation
-	btcDel.AddCovenantSigs(
+	// and emit corresponding events
+	ms.addCovenantSigsToBTCDelegation(
+		ctx,
+		btcDel,
 		req.Pk,
 		parsedSlashingAdaptorSignatures,
 		req.UnbondingTxSig,
 		parsedUnbondingSlashingAdaptorSignatures,
 	)
-
-	ms.setBTCDelegation(ctx, btcDel)
-
-	// notify subscriber
-	if err := ctx.EventManager().EmitTypedEvent(&types.EventActivateBTCDelegation{BtcDel: btcDel}); err != nil {
-		panic(fmt.Errorf("failed to emit EventActivateBTCDelegation: %w", err))
-	}
 
 	return &types.MsgAddCovenantSigsResponse{}, nil
 }
@@ -625,20 +626,7 @@ func (ms msgServer) BTCUndelegate(goCtx context.Context, req *types.MsgBTCUndele
 
 	// all good, add the signature to BTC delegation's undelegation
 	// and set back
-	btcDel.BtcUndelegation.DelegatorUnbondingSig = req.UnbondingTxSig
-	ms.setBTCDelegation(ctx, btcDel)
-
-	// notify subscriber about this unbonded BTC delegation
-	event := &types.EventUnbondedBTCDelegation{
-		BtcPk:           btcDel.BtcPk,
-		FpBtcPkList:     btcDel.FpBtcPkList,
-		StakingTxHash:   req.StakingTxHash,
-		UnbondingTxHash: unbondingMsgTx.TxHash().String(),
-		FromState:       types.BTCDelegationStatus_ACTIVE,
-	}
-	if err := ctx.EventManager().EmitTypedEvent(event); err != nil {
-		panic(fmt.Errorf("failed to emit EventUnbondedBTCDelegation: %w", err))
-	}
+	ms.btcUndelegate(ctx, btcDel, req.UnbondingTxSig)
 
 	return &types.MsgBTCUndelegateResponse{}, nil
 }

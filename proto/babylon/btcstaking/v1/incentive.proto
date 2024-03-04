@@ -7,8 +7,9 @@ import "cosmos/crypto/secp256k1/keys.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/btcstaking/types";
 
-// RewardDistCache is the cache for reward distribution of finality providers at a height
-message RewardDistCache {
+// VotingPowerDistCache is the cache for voting power distribution of finality providers
+// and their BTC delegations at a height
+message VotingPowerDistCache {
     uint64 total_voting_power = 1;
     // finality_providers is a list of finality providers' voting power information
     repeated FinalityProviderDistInfo finality_providers = 2;
@@ -32,10 +33,15 @@ message FinalityProviderDistInfo {
     repeated BTCDelDistInfo btc_dels = 5;
 }
 
-// BTCDelDistInfo contains the information related to reward distribution for a BTC delegations
+// BTCDelDistInfo contains the information related to reward distribution for a BTC delegation
 message BTCDelDistInfo {
-    // babylon_pk is the Babylon public key of the BTC delegations
-    cosmos.crypto.secp256k1.PubKey babylon_pk = 1;
+    // btc_pk is the Bitcoin secp256k1 PK of this BTC delegation
+    // the PK follows encoding in BIP-340 spec
+    bytes btc_pk = 1 [ (gogoproto.customtype) = "github.com/babylonchain/babylon/types.BIP340PubKey" ];
+    // babylon_pk is the Babylon public key of the BTC delegation
+    cosmos.crypto.secp256k1.PubKey babylon_pk = 2;
+    // staking_tx_hash is the staking tx hash of the BTC delegation
+    string staking_tx_hash = 3;
     // voting_power is the voting power of the BTC delegation
-    uint64 voting_power = 2;
+    uint64 voting_power = 4;
 }

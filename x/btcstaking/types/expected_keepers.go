@@ -10,6 +10,7 @@ import (
 )
 
 type BTCLightClientKeeper interface {
+	GetBaseBTCHeader(ctx context.Context) *btclctypes.BTCHeaderInfo
 	GetTipInfo(ctx context.Context) *btclctypes.BTCHeaderInfo
 	GetHeaderByHash(ctx context.Context, hash *bbn.BTCHeaderHashBytes) *btclctypes.BTCHeaderInfo
 }
