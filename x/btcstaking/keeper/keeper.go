@@ -13,10 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-const (
-	SatoshisPerBTC = 100_000_000
-)
-
 type (
 	Keeper struct {
 		cdc          codec.BinaryCodec

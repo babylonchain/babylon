@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/store/prefix"
 	bbn "github.com/babylonchain/babylon/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
+	"github.com/btcsuite/btcd/btcutil"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -55,7 +56,7 @@ func (k Keeper) UpdatePowerDist(ctx context.Context) {
 	// record voting power and cache for this height
 	k.recordVotingPowerAndCache(ctx, newDc, maxActiveFps)
 	// record metrics
-	k.recordMetrics(ctx, newDc, maxActiveFps)
+	k.recordMetrics(newDc, maxActiveFps)
 }
 
 func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingPowerDistCache, maxActiveFps uint32) {
@@ -72,7 +73,7 @@ func (k Keeper) recordVotingPowerAndCache(ctx context.Context, dc *types.VotingP
 	k.setVotingPowerDistCache(ctx, babylonTipHeight, dc)
 }
 
-func (k Keeper) recordMetrics(ctx context.Context, dc *types.VotingPowerDistCache, maxActiveFps uint32) {
+func (k Keeper) recordMetrics(dc *types.VotingPowerDistCache, maxActiveFps uint32) {
 	// number of active FPs
 	numActiveFPs := int(dc.GetNumActiveFPs(maxActiveFps))
 	types.RecordActiveFinalityProviders(numActiveFPs)
@@ -80,14 +81,12 @@ func (k Keeper) recordMetrics(ctx context.Context, dc *types.VotingPowerDistCach
 	numInactiveFPs := len(dc.FinalityProviders) - numActiveFPs
 	types.RecordInactiveFinalityProviders(numInactiveFPs)
 	// staked Satoshi
-	// TODO: some wrapper functions between Satoshis and voting power
-	// to make the 1:1 conversion clear
-	stakedSats := uint64(0)
+	stakedSats := btcutil.Amount(0)
 	for _, fp := range dc.FinalityProviders {
-		stakedSats += fp.TotalVotingPower
+		stakedSats += btcutil.Amount(fp.TotalVotingPower)
 	}
-	numStakedBTCs := float32(stakedSats / SatoshisPerBTC)
-	types.RecordMetricsKeyStakedBitcoins(numStakedBTCs)
+	numStakedBTCs := stakedSats.ToBTC()
+	types.RecordMetricsKeyStakedBitcoins(float32(numStakedBTCs))
 	// TODO: record number of BTC delegations under different status
 }
 
