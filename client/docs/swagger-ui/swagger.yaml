@@ -515,26 +515,24 @@ paths:
               header:
                 type: object
                 properties:
-                  header:
+                  header_hex:
                     type: string
-                    format: byte
-                  hash:
+                  hash_hex:
                     type: string
-                    format: byte
                   height:
                     type: string
                     format: uint64
                   work:
                     type: string
-                    format: byte
+                    description: Work is the sdkmath.Uint as string.
                 description: >-
-                  BTCHeaderInfo is a structure that contains all relevant
-                  information about a
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
 
-                  BTC header
-                   - Full header bytes
-                   - Header hash for easy retrieval
-                   - Height of the header in the BTC chain
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
                    - Total work spent on the header. This is the sum of the work corresponding
                    to the header Bits field
                      and the total work of the header.
@@ -856,26 +854,24 @@ paths:
                 items:
                   type: object
                   properties:
-                    header:
+                    header_hex:
                       type: string
-                      format: byte
-                    hash:
+                    hash_hex:
                       type: string
-                      format: byte
                     height:
                       type: string
                       format: uint64
                     work:
                       type: string
-                      format: byte
+                      description: Work is the sdkmath.Uint as string.
                   description: >-
-                    BTCHeaderInfo is a structure that contains all relevant
-                    information about a
+                    BTCHeaderInfoResponse is a structure that contains all
+                    relevant information about a
 
-                    BTC header
-                     - Full header bytes
-                     - Header hash for easy retrieval
-                     - Height of the header in the BTC chain
+                    BTC header response
+                     - Full header as string hex.
+                     - Header hash for easy retrieval as string hex.
+                     - Height of the header in the BTC chain.
                      - Total work spent on the header. This is the sum of the work corresponding
                      to the header Bits field
                        and the total work of the header.
@@ -1054,26 +1050,24 @@ paths:
               header:
                 type: object
                 properties:
-                  header:
+                  header_hex:
                     type: string
-                    format: byte
-                  hash:
+                  hash_hex:
                     type: string
-                    format: byte
                   height:
                     type: string
                     format: uint64
                   work:
                     type: string
-                    format: byte
+                    description: Work is the sdkmath.Uint as string.
                 description: >-
-                  BTCHeaderInfo is a structure that contains all relevant
-                  information about a
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
 
-                  BTC header
-                   - Full header bytes
-                   - Header hash for easy retrieval
-                   - Height of the header in the BTC chain
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
                    - Total work spent on the header. This is the sum of the work corresponding
                    to the header Bits field
                      and the total work of the header.
@@ -10299,29 +10293,27 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
-  babylon.btclightclient.v1.BTCHeaderInfo:
+  babylon.btclightclient.v1.BTCHeaderInfoResponse:
     type: object
     properties:
-      header:
+      header_hex:
         type: string
-        format: byte
-      hash:
+      hash_hex:
         type: string
-        format: byte
       height:
         type: string
         format: uint64
       work:
         type: string
-        format: byte
+        description: Work is the sdkmath.Uint as string.
     description: >-
-      BTCHeaderInfo is a structure that contains all relevant information about
-      a
+      BTCHeaderInfoResponse is a structure that contains all relevant
+      information about a
 
-      BTC header
-       - Full header bytes
-       - Header hash for easy retrieval
-       - Height of the header in the BTC chain
+      BTC header response
+       - Full header as string hex.
+       - Header hash for easy retrieval as string hex.
+       - Height of the header in the BTC chain.
        - Total work spent on the header. This is the sum of the work corresponding
        to the header Bits field
          and the total work of the header.
@@ -10344,26 +10336,24 @@ definitions:
       header:
         type: object
         properties:
-          header:
+          header_hex:
             type: string
-            format: byte
-          hash:
+          hash_hex:
             type: string
-            format: byte
           height:
             type: string
             format: uint64
           work:
             type: string
-            format: byte
+            description: Work is the sdkmath.Uint as string.
         description: >-
-          BTCHeaderInfo is a structure that contains all relevant information
-          about a
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
 
-          BTC header
-           - Full header bytes
-           - Header hash for easy retrieval
-           - Height of the header in the BTC chain
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
            - Total work spent on the header. This is the sum of the work corresponding
            to the header Bits field
              and the total work of the header.
@@ -10440,26 +10430,24 @@ definitions:
         items:
           type: object
           properties:
-            header:
+            header_hex:
               type: string
-              format: byte
-            hash:
+            hash_hex:
               type: string
-              format: byte
             height:
               type: string
               format: uint64
             work:
               type: string
-              format: byte
+              description: Work is the sdkmath.Uint as string.
           description: >-
-            BTCHeaderInfo is a structure that contains all relevant information
-            about a
+            BTCHeaderInfoResponse is a structure that contains all relevant
+            information about a
 
-            BTC header
-             - Full header bytes
-             - Header hash for easy retrieval
-             - Height of the header in the BTC chain
+            BTC header response
+             - Full header as string hex.
+             - Header hash for easy retrieval as string hex.
+             - Height of the header in the BTC chain.
              - Total work spent on the header. This is the sum of the work corresponding
              to the header Bits field
                and the total work of the header.
@@ -10515,26 +10503,24 @@ definitions:
       header:
         type: object
         properties:
-          header:
+          header_hex:
             type: string
-            format: byte
-          hash:
+          hash_hex:
             type: string
-            format: byte
           height:
             type: string
             format: uint64
           work:
             type: string
-            format: byte
+            description: Work is the sdkmath.Uint as string.
         description: >-
-          BTCHeaderInfo is a structure that contains all relevant information
-          about a
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
 
-          BTC header
-           - Full header bytes
-           - Header hash for easy retrieval
-           - Height of the header in the BTC chain
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
            - Total work spent on the header. This is the sum of the work corresponding
            to the header Bits field
              and the total work of the header.
@@ -14960,7 +14946,7 @@ definitions:
 
       epoch have signed `app_hash` of the sealer header
 
-      - The epoch medatata is committed to the `app_hash` of the sealer header
+      - The epoch metadata is committed to the `app_hash` of the sealer header
 
       - The validator set is committed to the `app_hash` of the sealer header
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo:

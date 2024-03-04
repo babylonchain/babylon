@@ -206,7 +206,7 @@ func (n *NodeConfig) QueryRawCheckpoints(pagination *query.PageRequest) (*ct.Que
 	return &checkpointingResponse, nil
 }
 
-func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
+func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfoResponse, error) {
 	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/baseheader", url.Values{})
 	require.NoError(n.t, err)
 
@@ -218,7 +218,7 @@ func (n *NodeConfig) QueryBtcBaseHeader() (*blc.BTCHeaderInfo, error) {
 	return blcResponse.Header, nil
 }
 
-func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfo, error) {
+func (n *NodeConfig) QueryTip() (*blc.BTCHeaderInfoResponse, error) {
 	bz, err := n.QueryGRPCGateway("babylon/btclightclient/v1/tip", url.Values{})
 	require.NoError(n.t, err)
 

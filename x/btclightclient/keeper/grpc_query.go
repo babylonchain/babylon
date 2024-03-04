@@ -77,13 +77,12 @@ func (k Keeper) ContainsBytes(ctx context.Context, req *types.QueryContainsBytes
 	return &types.QueryContainsBytesResponse{Contains: contains}, nil
 }
 
-func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest) (*types.QueryMainChainResponse, error) {
+func (k Keeper) MainChain(c context.Context, req *types.QueryMainChainRequest) (*types.QueryMainChainResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
+	ctx := sdk.UnwrapSDKContext(c)
 	if req.Pagination == nil {
 		req.Pagination = &query.PageRequest{}
 	}
@@ -98,7 +97,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "key does not correspond to a header hash")
 		}
-		keyHeader, err = k.headersState(sdkCtx).GetHeaderByHash(&headerHash)
+		keyHeader, err = k.headersState(ctx).GetHeaderByHash(&headerHash)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, "header specified by key does not exist")
 		}
@@ -108,10 +107,10 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 	var nextKey []byte
 	if req.Pagination.Reverse {
 		var start, end uint64
-		baseHeader := k.headersState(sdkCtx).BaseHeader()
+		baseHeader := k.headersState(ctx).BaseHeader()
 		// The base header is located at the end of the mainchain
 		// which requires starting at the end
-		mainchain := k.GetMainChainFrom(sdkCtx, 0)
+		mainchain := k.GetMainChainFrom(ctx, 0)
 
 		if keyHeader == nil {
 			keyHeader = baseHeader
@@ -135,7 +134,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 			nextKey = mainchain[end].Hash.MustMarshal()
 		}
 	} else {
-		tip := k.headersState(sdkCtx).GetTip()
+		tip := k.headersState(ctx).GetTip()
 		// If there is no starting key, then the starting header is the tip
 		if keyHeader == nil {
 			keyHeader = tip
@@ -146,7 +145,7 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		// -1 because the depth denotes how many headers have been built on top of it
 		depth := startHeaderDepth + req.Pagination.Limit - 1
 		// Retrieve the mainchain up to the depth
-		mainchain := k.GetMainChainUpTo(sdkCtx, depth)
+		mainchain := k.GetMainChainUpTo(ctx, depth)
 		// Check whether the key provided is part of the mainchain
 		if uint64(len(mainchain)) <= startHeaderDepth || !mainchain[startHeaderDepth].Eq(keyHeader) {
 			return nil, status.Error(codes.InvalidArgument, "header specified by key is not a part of the mainchain")
@@ -161,19 +160,17 @@ func (k Keeper) MainChain(ctx context.Context, req *types.QueryMainChainRequest)
 		NextKey: nextKey,
 	}
 	// The headers that we should return start from the depth of the start header
-	return &types.QueryMainChainResponse{Headers: headers, Pagination: pageRes}, nil
+	return &types.QueryMainChainResponse{Headers: types.ParseBTCHeadersToResponse(headers), Pagination: pageRes}, nil
 }
 
-func (k Keeper) Tip(ctx context.Context, req *types.QueryTipRequest) (*types.QueryTipResponse, error) {
+func (k Keeper) Tip(c context.Context, req *types.QueryTipRequest) (*types.QueryTipResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	tip := k.headersState(sdkCtx).GetTip()
-
-	return &types.QueryTipResponse{Header: tip}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	tip := k.headersState(ctx).GetTip()
+	return &types.QueryTipResponse{Header: tip.ToResponse()}, nil
 }
 
 func (k Keeper) BaseHeader(ctx context.Context, req *types.QueryBaseHeaderRequest) (*types.QueryBaseHeaderResponse, error) {
@@ -185,7 +182,7 @@ func (k Keeper) BaseHeader(ctx context.Context, req *types.QueryBaseHeaderReques
 
 	baseHeader := k.headersState(sdkCtx).BaseHeader()
 
-	return &types.QueryBaseHeaderResponse{Header: baseHeader}, nil
+	return &types.QueryBaseHeaderResponse{Header: baseHeader.ToResponse()}, nil
 }
 
 func (k Keeper) HeaderDepth(ctx context.Context, req *types.QueryHeaderDepthRequest) (*types.QueryHeaderDepthResponse, error) {
