@@ -458,7 +458,8 @@ func (ms msgServer) AddCovenantSigs(goCtx context.Context, req *types.MsgAddCove
 	wValue := ms.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 	status := btcDel.GetStatus(btcTipHeight, wValue, params.CovenantQuorum)
 	if status != types.BTCDelegationStatus_PENDING {
-		return nil, types.ErrInvalidDelegationState.Wrapf("expected: %s, got: %s", types.BTCDelegationStatus_PENDING.String(), status.String())
+		ms.Logger(ctx).Debug("Received covenant signature after the BTC delegation is already expired", "covenant pk", req.Pk.MarshalHex())
+		return &types.MsgAddCovenantSigsResponse{}, nil
 	}
 
 	// Note: we assume the order of adaptor sigs is matched to the
