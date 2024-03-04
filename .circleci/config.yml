@@ -10,7 +10,7 @@ orbs:
 jobs:
   build-test:
     machine:
-      image: ubuntu-2204:2022.10.1
+      image: ubuntu-2204:2024.01.1
     resource_class: large
     steps:
       - go/install:
