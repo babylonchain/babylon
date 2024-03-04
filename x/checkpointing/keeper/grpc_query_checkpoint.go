@@ -153,7 +153,7 @@ func (k Keeper) LastCheckpointWithStatus(ctx context.Context, req *types.QueryLa
 			return nil, fmt.Errorf("failed to get the raw checkpoint at epoch %v: %w", e, err)
 		}
 		if ckpt.Status == req.Status || ckpt.IsMoreMatureThanStatus(req.Status) {
-			return &types.QueryLastCheckpointWithStatusResponse{RawCheckpoint: ckpt.Ckpt}, nil
+			return &types.QueryLastCheckpointWithStatusResponse{RawCheckpoint: ckpt.Ckpt.ToResponse()}, nil
 		}
 	}
 	return nil, fmt.Errorf("cannot find checkpoint with status %v", req.Status)

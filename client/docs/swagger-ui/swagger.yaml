@@ -4816,14 +4816,14 @@ paths:
                     title: >-
                       epoch_num defines the epoch number the raw checkpoint is
                       for
-                  block_hash:
+                  block_hash_hex:
                     type: string
-                    format: byte
                     title: >-
-                      block_hash defines the 'BlockID.Hash', which is the hash
-                      of
+                      block_hash_hex defines the 'BlockID.Hash', which is the
+                      hash of
 
-                      the block that individual BLS sigs are signed on
+                      the block that individual BLS sigs are signed on as hex
+                      string
                   bitmap:
                     type: string
                     format: byte
@@ -4838,7 +4838,7 @@ paths:
                       from individual BLS
 
                       sigs
-                title: RawCheckpoint wraps the BLS multi sig with metadata
+                title: RawCheckpointResponse wraps the BLS multi sig with metadata
             description: |-
               QueryLastCheckpointWithStatusResponse is the response type for the
               Query/LastCheckpointWithStatus RPC method.
@@ -13361,12 +13361,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          block_hash:
+          block_hash_hex:
             type: string
-            format: byte
             title: |-
-              block_hash defines the 'BlockID.Hash', which is the hash of
-              the block that individual BLS sigs are signed on
+              block_hash_hex defines the 'BlockID.Hash', which is the hash of
+              the block that individual BLS sigs are signed on as hex string
           bitmap:
             type: string
             format: byte
@@ -13381,7 +13380,7 @@ definitions:
               individual BLS
 
               sigs
-        title: RawCheckpoint wraps the BLS multi sig with metadata
+        title: RawCheckpointResponse wraps the BLS multi sig with metadata
     description: |-
       QueryLastCheckpointWithStatusResponse is the response type for the
       Query/LastCheckpointWithStatus RPC method.
@@ -13830,6 +13829,33 @@ definitions:
 
           sigs
     title: RawCheckpoint wraps the BLS multi sig with metadata
+  babylon.checkpointing.v1.RawCheckpointResponse:
+    type: object
+    properties:
+      epoch_num:
+        type: string
+        format: uint64
+        title: epoch_num defines the epoch number the raw checkpoint is for
+      block_hash_hex:
+        type: string
+        title: |-
+          block_hash_hex defines the 'BlockID.Hash', which is the hash of
+          the block that individual BLS sigs are signed on as hex string
+      bitmap:
+        type: string
+        format: byte
+        title: >-
+          bitmap defines the bitmap that indicates the signers of the BLS multi
+          sig
+      bls_multi_sig:
+        type: string
+        format: byte
+        title: >-
+          bls_multi_sig defines the multi sig that is aggregated from individual
+          BLS
+
+          sigs
+    title: RawCheckpointResponse wraps the BLS multi sig with metadata
   babylon.checkpointing.v1.RawCheckpointWithMeta:
     type: object
     properties:
