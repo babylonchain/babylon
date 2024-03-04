@@ -290,6 +290,10 @@ func TestnetGenesisParams(maxActiveValidators uint32, btcConfirmationDepth uint6
 		genParams.NativeCoinMetadatas[0].Base,
 		sdkmath.NewInt(2_500_000_000),
 	))
+	genParams.GovParams.ExpeditedMinDeposit = sdk.NewCoins(sdk.NewCoin(
+		genParams.NativeCoinMetadatas[0].Base,
+		sdkmath.NewInt(2_500_000_000),
+	))
 
 	genParams.CrisisConstantFee = sdk.NewCoin(
 		genParams.NativeCoinMetadatas[0].Base,
