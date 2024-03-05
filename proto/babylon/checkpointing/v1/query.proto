@@ -214,4 +214,3 @@ message RawCheckpointWithMetaResponse {
   // transition.
   repeated CheckpointStateUpdateResponse lifecycle = 6;
 }
-
