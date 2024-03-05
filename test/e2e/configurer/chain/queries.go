@@ -175,7 +175,7 @@ func (n *NodeConfig) QueryListSnapshots() ([]*cmtabcitypes.Snapshot, error) {
 // 	return contractsResponse.Contracts, nil
 // }
 
-func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMeta, error) {
+func (n *NodeConfig) QueryRawCheckpoint(epoch uint64) (*ct.RawCheckpointWithMetaResponse, error) {
 	path := fmt.Sprintf("babylon/checkpointing/v1/raw_checkpoint/%d", epoch)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)

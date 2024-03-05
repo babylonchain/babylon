@@ -46,19 +46,18 @@ func (k Keeper) RawCheckpointList(c context.Context, req *types.QueryRawCheckpoi
 }
 
 // RawCheckpoint returns a checkpoint by epoch number
-func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpointRequest) (*types.QueryRawCheckpointResponse, error) {
+func (k Keeper) RawCheckpoint(c context.Context, req *types.QueryRawCheckpointRequest) (*types.QueryRawCheckpointResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	ckptWithMeta, err := k.CheckpointsState(sdkCtx).GetRawCkptWithMeta(req.EpochNum)
+	ctx := sdk.UnwrapSDKContext(c)
+	ckptWithMeta, err := k.CheckpointsState(ctx).GetRawCkptWithMeta(req.EpochNum)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
+	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta.ToResponse()}, nil
 }
 
 // RawCheckpoints returns checkpoints for given epoch range specified in pagination params

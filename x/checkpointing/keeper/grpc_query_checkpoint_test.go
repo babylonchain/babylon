@@ -38,7 +38,7 @@ func FuzzQueryEpoch(f *testing.F) {
 		ckptRequest := types.NewQueryRawCheckpointRequest(mockCkptWithMeta.Ckpt.EpochNum)
 		ckptResp, err := ckptKeeper.RawCheckpoint(ctx, ckptRequest)
 		require.NoError(t, err)
-		require.True(t, ckptResp.RawCheckpoint.Equal(mockCkptWithMeta))
+		require.Equal(t, ckptResp.RawCheckpoint, mockCkptWithMeta.ToResponse())
 
 		// test querying the status of a given epoch number
 		statusRequest := types.NewQueryEpochStatusRequest(mockCkptWithMeta.Ckpt.EpochNum)

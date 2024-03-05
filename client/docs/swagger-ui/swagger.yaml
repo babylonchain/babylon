@@ -4899,14 +4899,14 @@ paths:
                         title: >-
                           epoch_num defines the epoch number the raw checkpoint
                           is for
-                      block_hash:
+                      block_hash_hex:
                         type: string
-                        format: byte
                         title: >-
-                          block_hash defines the 'BlockID.Hash', which is the
-                          hash of
+                          block_hash_hex defines the 'BlockID.Hash', which is
+                          the hash of
 
-                          the block that individual BLS sigs are signed on
+                          the block that individual BLS sigs are signed on as
+                          hex string
                       bitmap:
                         type: string
                         format: byte
@@ -4921,7 +4921,9 @@ paths:
                           from individual BLS
 
                           sigs
-                    title: RawCheckpoint wraps the BLS multi sig with metadata
+                    title: >-
+                      RawCheckpointResponse wraps the BLS multi sig with
+                      metadata
                   status:
                     type: string
                     enum:
@@ -4940,6 +4942,9 @@ paths:
                        - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                        - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                     title: status defines the status of the checkpoint
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   bls_aggr_pk:
                     type: string
                     format: byte
@@ -4975,6 +4980,11 @@ paths:
                           title: >-
                             state defines the event of a state transition
                             towards this state
+                        status_desc:
+                          type: string
+                          description: >-
+                            status_desc respresents the description of status
+                            enum.
                         block_height:
                           type: string
                           format: uint64
@@ -4992,8 +5002,8 @@ paths:
 
                             update
                       description: >-
-                        CheckpointStateUpdate defines a state transition on the
-                        checkpoint.
+                        CheckpointStateUpdateResponse defines a state transition
+                        on the checkpoint.
                     description: >-
                       lifecycle defines the lifecycle of this checkpoint, i.e.,
                       each state
@@ -5002,7 +5012,9 @@ paths:
                       height) of this
 
                       transition.
-                description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+                description: >-
+                  RawCheckpointWithMetaResponse wraps the raw checkpoint with
+                  metadata.
             description: >-
               QueryRawCheckpointResponse is the response type for the
               Query/RawCheckpoint
@@ -13600,12 +13612,13 @@ definitions:
                 type: string
                 format: uint64
                 title: epoch_num defines the epoch number the raw checkpoint is for
-              block_hash:
+              block_hash_hex:
                 type: string
-                format: byte
-                title: |-
-                  block_hash defines the 'BlockID.Hash', which is the hash of
-                  the block that individual BLS sigs are signed on
+                title: >-
+                  block_hash_hex defines the 'BlockID.Hash', which is the hash
+                  of
+
+                  the block that individual BLS sigs are signed on as hex string
               bitmap:
                 type: string
                 format: byte
@@ -13620,7 +13633,7 @@ definitions:
                   individual BLS
 
                   sigs
-            title: RawCheckpoint wraps the BLS multi sig with metadata
+            title: RawCheckpointResponse wraps the BLS multi sig with metadata
           status:
             type: string
             enum:
@@ -13639,6 +13652,9 @@ definitions:
                - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
             title: status defines the status of the checkpoint
+          status_desc:
+            type: string
+            description: status_desc respresents the description of status enum.
           bls_aggr_pk:
             type: string
             format: byte
@@ -13672,6 +13688,9 @@ definitions:
                   title: >-
                     state defines the event of a state transition towards this
                     state
+                status_desc:
+                  type: string
+                  description: status_desc respresents the description of status enum.
                 block_height:
                   type: string
                   format: uint64
@@ -13689,7 +13708,7 @@ definitions:
 
                     update
               description: >-
-                CheckpointStateUpdate defines a state transition on the
+                CheckpointStateUpdateResponse defines a state transition on the
                 checkpoint.
             description: >-
               lifecycle defines the lifecycle of this checkpoint, i.e., each
@@ -13699,7 +13718,7 @@ definitions:
               this
 
               transition.
-        description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+        description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
     description: >-
       QueryRawCheckpointResponse is the response type for the
       Query/RawCheckpoint

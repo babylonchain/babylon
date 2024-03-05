@@ -93,8 +93,7 @@ message QueryRawCheckpointRequest {
 
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
-message QueryRawCheckpointResponse { RawCheckpointWithMeta raw_checkpoint = 1; }
-
+message QueryRawCheckpointResponse { RawCheckpointWithMetaResponse raw_checkpoint = 1; }
 
 // QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
 // RPC method.
