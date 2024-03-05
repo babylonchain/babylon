@@ -144,7 +144,7 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		// request the last finalized checkpoint
 		req := types.NewQueryLastCheckpointWithStatus(types.Finalized)
 		expectedResp := &types.QueryLastCheckpointWithStatusResponse{
-			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
+			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt.ToResponse(),
 		}
 		resp, err := ckptKeeper.LastCheckpointWithStatus(ctx, req)
 		require.NoError(t, err)
@@ -153,7 +153,7 @@ func FuzzQueryLastCheckpointWithStatus(f *testing.F) {
 		// request the last confirmed checkpoint
 		req = types.NewQueryLastCheckpointWithStatus(types.Confirmed)
 		expectedResp = &types.QueryLastCheckpointWithStatusResponse{
-			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt,
+			RawCheckpoint: checkpoints[int(finalizedEpoch)].Ckpt.ToResponse(),
 		}
 		resp, err = ckptKeeper.LastCheckpointWithStatus(ctx, req)
 		require.NoError(t, err)
