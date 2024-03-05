@@ -15,15 +15,15 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // RawCheckpointList returns a list of checkpoint by status in the ascending order of epoch
-func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckpointListRequest) (*types.QueryRawCheckpointListResponse, error) {
+func (k Keeper) RawCheckpointList(c context.Context, req *types.QueryRawCheckpointListRequest) (*types.QueryRawCheckpointListResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	var checkpointList []*types.RawCheckpointWithMeta
+	var checkpointList []*types.RawCheckpointWithMetaResponse
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	ctx := sdk.UnwrapSDKContext(c)
 
-	store := k.CheckpointsState(sdkCtx).checkpoints
+	store := k.CheckpointsState(ctx).checkpoints
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		ckptWithMeta, err := types.BytesToCkptWithMeta(k.cdc, value)
 		if err != nil {
@@ -31,7 +31,7 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 		}
 		if ckptWithMeta.Status == req.Status {
 			if accumulate {
-				checkpointList = append(checkpointList, ckptWithMeta)
+				checkpointList = append(checkpointList, ckptWithMeta.ToResponse())
 			}
 			return true, nil
 		}
