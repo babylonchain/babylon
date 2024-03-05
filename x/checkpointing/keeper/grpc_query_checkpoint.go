@@ -69,11 +69,11 @@ func (k Keeper) RawCheckpoints(ctx context.Context, req *types.QueryRawCheckpoin
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	store := k.CheckpointsState(sdkCtx).checkpoints
 
-	var checkpointList []*types.RawCheckpointWithMeta
+	var checkpointList []*types.RawCheckpointWithMetaResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		var ckptWithMeta types.RawCheckpointWithMeta
 		k.cdc.MustUnmarshal(value, &ckptWithMeta)
-		checkpointList = append(checkpointList, &ckptWithMeta)
+		checkpointList = append(checkpointList, ckptWithMeta.ToResponse())
 		return nil
 	})
 	if err != nil {

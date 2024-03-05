@@ -75,7 +75,7 @@ func FuzzQueryRawCheckpoints(f *testing.F) {
 		require.Equal(t, int(pageLimit), len(ckptResp.RawCheckpoints))
 		require.Nil(t, ckptResp.Pagination.NextKey)
 		for i, ckpt := range ckptResp.RawCheckpoints {
-			require.Equal(t, checkpoints[i], ckpt)
+			require.Equal(t, checkpoints[i].ToResponse(), ckpt)
 		}
 	})
 }

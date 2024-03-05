@@ -150,7 +150,10 @@ func (n *NodeConfig) FinalizeSealedEpochs(startEpoch uint64, lastEpoch uint64) {
 		_, submitterAddr, err := bech32.DecodeAndConvert(n.PublicAddress)
 		require.NoError(n.t, err)
 
-		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(checkpoint.Ckpt, submitterAddr)
+		rawCheckpoint, err := checkpoint.Ckpt.ToRawCheckpoint()
+		require.NoError(n.t, err)
+
+		btcCheckpoint, err := cttypes.FromRawCkptToBTCCkpt(rawCheckpoint, submitterAddr)
 		require.NoError(n.t, err)
 
 		babylonTagBytes, err := hex.DecodeString(initialization.BabylonOpReturnTag)
