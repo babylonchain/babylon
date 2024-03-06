@@ -14,3 +14,14 @@ func (e *Epoch) ToResponse() *EpochResponse {
 		SealerBlockHash:      hex.EncodeToString(e.SealerBlockHash),
 	}
 }
+
+// ToResponse parses a QueuedMessage into a query response queued message struct.
+func (q *QueuedMessage) ToResponse() *QueuedMessageResponse {
+	return &QueuedMessageResponse{
+		TxId:        hex.EncodeToString(q.TxId),
+		MsgId:       hex.EncodeToString(q.MsgId),
+		BlockHeight: q.BlockHeight,
+		BlockTime:   q.BlockTime,
+		Msg:         q.UnwrapToSdkMsg().String(),
+	}
+}

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"encoding/hex"
 	"math/rand"
 	"testing"
 
@@ -151,7 +152,7 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 		// enque a random number of msgs with random txids
 		for i := uint64(0); i < numMsgs; i++ {
 			txid := datagen.GenRandomByteArray(r, 32)
-			txidsMap[string(txid)] = true
+			txidsMap[hex.EncodeToString(txid)] = true
 			queuedMsg := types.QueuedMessage{
 				TxId: txid,
 				Msg:  &types.QueuedMessage_MsgDelegate{MsgDelegate: &stakingtypes.MsgDelegate{}},
@@ -170,7 +171,7 @@ func FuzzEpochMsgsQuery(f *testing.F) {
 
 		require.Equal(t, min(uint64(len(txidsMap)), limit), uint64(len(resp.Msgs)))
 		for idx := range resp.Msgs {
-			_, ok := txidsMap[string(resp.Msgs[idx].TxId)]
+			_, ok := txidsMap[resp.Msgs[idx].TxId]
 			require.True(t, ok)
 		}
 
