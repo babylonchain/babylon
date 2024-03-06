@@ -93,8 +93,7 @@ message QueryRawCheckpointRequest {
 
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
-message QueryRawCheckpointResponse { RawCheckpointWithMeta raw_checkpoint = 1; }
-
+message QueryRawCheckpointResponse { RawCheckpointWithMetaResponse raw_checkpoint = 1; }
 
 // QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
 // RPC method.
@@ -107,7 +106,7 @@ message QueryRawCheckpointsRequest {
 // RPC method.
 message QueryRawCheckpointsResponse {
   // the order is going from the newest to oldest based on the epoch number
-  repeated RawCheckpointWithMeta raw_checkpoints = 1;
+  repeated RawCheckpointWithMetaResponse raw_checkpoints = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;

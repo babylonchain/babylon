@@ -1,5 +1,7 @@
 package types
 
+import "encoding/hex"
+
 // ToResponse generates a RawCheckpointResponse struct from RawCheckpoint.
 func (r *RawCheckpoint) ToResponse() *RawCheckpointResponse {
 	return &RawCheckpointResponse{
@@ -8,6 +10,22 @@ func (r *RawCheckpoint) ToResponse() *RawCheckpointResponse {
 		Bitmap:       r.Bitmap,
 		BlsMultiSig:  r.BlsMultiSig,
 	}
+}
+
+// ToRawCheckpoint generates a RawCheckpoint struct from RawCheckpointResponse.
+func (r *RawCheckpointResponse) ToRawCheckpoint() (*RawCheckpoint, error) {
+	blockHashBz, err := hex.DecodeString(r.BlockHashHex)
+	if err != nil {
+		return nil, err
+	}
+	blockHash := BlockHash(blockHashBz)
+
+	return &RawCheckpoint{
+		EpochNum:    r.EpochNum,
+		BlockHash:   &blockHash,
+		Bitmap:      r.Bitmap,
+		BlsMultiSig: r.BlsMultiSig,
+	}, nil
 }
 
 // ToResponse generates a RawCheckpointWithMetaResponse struct from RawCheckpointWithMeta.
