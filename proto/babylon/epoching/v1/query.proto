@@ -2,6 +2,7 @@ syntax = "proto3";
 package babylon.epoching.v1;
 
 import "gogoproto/gogo.proto";
+import "google/protobuf/timestamp.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
 import "babylon/epoching/v1/params.proto";
@@ -82,7 +83,7 @@ message QueryParamsResponse {
 message QueryEpochInfoRequest { uint64 epoch_num = 1; }
 
 // QueryEpochInfoRequest is the response type for the Query/EpochInfo method
-message QueryEpochInfoResponse { babylon.epoching.v1.Epoch epoch = 1; }
+message QueryEpochInfoResponse { EpochResponse epoch = 1; }
 
 // QueryEpochInfosRequest is the request type for the Query/EpochInfos method
 message QueryEpochsInfoRequest {
@@ -92,7 +93,7 @@ message QueryEpochsInfoRequest {
 
 // QueryEpochsInfoResponse is the response type for the Query/EpochInfos method
 message QueryEpochsInfoResponse {
-  repeated babylon.epoching.v1.Epoch epochs = 1;
+  repeated EpochResponse epochs = 1;
 
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -180,4 +181,31 @@ message QueryEpochValSetResponse {
   repeated babylon.epoching.v1.Validator validators = 1;
   int64 total_voting_power = 2;
   cosmos.base.query.v1beta1.PageResponse pagination = 3;
+}
+
+// EpochResponse is a structure that contains the metadata of an epoch
+message EpochResponse {
+  // epoch_number is the number of this epoch
+  uint64 epoch_number = 1;
+  // current_epoch_interval is the epoch interval at the time of this epoch
+  uint64 current_epoch_interval = 2;
+  // first_block_height is the height of the first block in this epoch
+  uint64 first_block_height = 3;
+  // last_block_time is the time of the last block in this epoch.
+  // Babylon needs to remember the last header's time of each epoch to complete
+  // unbonding validators/delegations when a previous epoch's checkpoint is
+  // finalised. The last_block_time field is nil in the epoch's beginning, and
+  // is set upon the end of this epoch.
+  google.protobuf.Timestamp last_block_time = 4 [ (gogoproto.stdtime) = true ];
+  // app_hash_root is the Merkle root of all AppHashs in this epoch
+  // It will be used for proving a block is in an epoch as hex string.
+  string app_hash_root_hex = 5;
+  // sealer is the last block of the sealed epoch
+  // sealer_app_hash points to the sealer but stored in the 1st header
+  // of the next epoch as hex string.
+  string sealer_app_hash_hex = 6;
+  // sealer_block_hash is the hash of the sealer
+  // the validator set has generated a BLS multisig on the hash,
+  // i.e., hash of the last block in the epoch as hex string.
+  string sealer_block_hash = 7;
 }
