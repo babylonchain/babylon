@@ -9,7 +9,6 @@ import (
 	"cosmossdk.io/log"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
 	"github.com/btcsuite/btcd/chaincfg"
-	"github.com/btcsuite/btcd/chaincfg/chainhash"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -61,6 +60,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // the voting power distribution cache used for computing voting power table
 // and distributing rewards once the block is finalised by finality providers.
 func (k Keeper) BeginBlocker(ctx context.Context) error {
+	// index BTC height at the current height
 	k.IndexBTCHeight(ctx)
 	// update voting power distribution
 	k.UpdatePowerDist(ctx)

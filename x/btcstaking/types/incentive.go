@@ -100,14 +100,6 @@ func (v *FinalityProviderDistInfo) AddBTCDelDistInfo(d *BTCDelDistInfo) {
 	v.TotalVotingPower += d.VotingPower
 }
 
-func (v *FinalityProviderDistInfo) AddBTCDistInfo(info *BTCDelDistInfo) {
-	if info.VotingPower > 0 {
-		// if this BTC delegation has voting power, append it and accumulate voting power
-		v.BtcDels = append(v.BtcDels, info)
-		v.TotalVotingPower += info.VotingPower
-	}
-}
-
 // GetBTCDelPortion returns the portion of a BTC delegation's voting power out of
 // the finality provider's total voting power
 func (v *FinalityProviderDistInfo) GetBTCDelPortion(d *BTCDelDistInfo) sdkmath.LegacyDec {
