@@ -4899,14 +4899,14 @@ paths:
                         title: >-
                           epoch_num defines the epoch number the raw checkpoint
                           is for
-                      block_hash:
+                      block_hash_hex:
                         type: string
-                        format: byte
                         title: >-
-                          block_hash defines the 'BlockID.Hash', which is the
-                          hash of
+                          block_hash_hex defines the 'BlockID.Hash', which is
+                          the hash of
 
-                          the block that individual BLS sigs are signed on
+                          the block that individual BLS sigs are signed on as
+                          hex string
                       bitmap:
                         type: string
                         format: byte
@@ -4921,7 +4921,9 @@ paths:
                           from individual BLS
 
                           sigs
-                    title: RawCheckpoint wraps the BLS multi sig with metadata
+                    title: >-
+                      RawCheckpointResponse wraps the BLS multi sig with
+                      metadata
                   status:
                     type: string
                     enum:
@@ -4940,6 +4942,9 @@ paths:
                        - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                        - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                     title: status defines the status of the checkpoint
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   bls_aggr_pk:
                     type: string
                     format: byte
@@ -4975,6 +4980,11 @@ paths:
                           title: >-
                             state defines the event of a state transition
                             towards this state
+                        status_desc:
+                          type: string
+                          description: >-
+                            status_desc respresents the description of status
+                            enum.
                         block_height:
                           type: string
                           format: uint64
@@ -4992,8 +5002,8 @@ paths:
 
                             update
                       description: >-
-                        CheckpointStateUpdate defines a state transition on the
-                        checkpoint.
+                        CheckpointStateUpdateResponse defines a state transition
+                        on the checkpoint.
                     description: >-
                       lifecycle defines the lifecycle of this checkpoint, i.e.,
                       each state
@@ -5002,7 +5012,9 @@ paths:
                       height) of this
 
                       transition.
-                description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+                description: >-
+                  RawCheckpointWithMetaResponse wraps the raw checkpoint with
+                  metadata.
             description: >-
               QueryRawCheckpointResponse is the response type for the
               Query/RawCheckpoint
@@ -5065,14 +5077,14 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        block_hash:
+                        block_hash_hex:
                           type: string
-                          format: byte
                           title: >-
-                            block_hash defines the 'BlockID.Hash', which is the
-                            hash of
+                            block_hash_hex defines the 'BlockID.Hash', which is
+                            the hash of
 
-                            the block that individual BLS sigs are signed on
+                            the block that individual BLS sigs are signed on as
+                            hex string
                         bitmap:
                           type: string
                           format: byte
@@ -5087,7 +5099,9 @@ paths:
                             aggregated from individual BLS
 
                             sigs
-                      title: RawCheckpoint wraps the BLS multi sig with metadata
+                      title: >-
+                        RawCheckpointResponse wraps the BLS multi sig with
+                        metadata
                     status:
                       type: string
                       enum:
@@ -5106,6 +5120,9 @@ paths:
                          - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                          - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                       title: status defines the status of the checkpoint
+                    status_desc:
+                      type: string
+                      description: status_desc respresents the description of status enum.
                     bls_aggr_pk:
                       type: string
                       format: byte
@@ -5141,6 +5158,11 @@ paths:
                             title: >-
                               state defines the event of a state transition
                               towards this state
+                          status_desc:
+                            type: string
+                            description: >-
+                              status_desc respresents the description of status
+                              enum.
                           block_height:
                             type: string
                             format: uint64
@@ -5158,8 +5180,8 @@ paths:
 
                               update
                         description: >-
-                          CheckpointStateUpdate defines a state transition on
-                          the checkpoint.
+                          CheckpointStateUpdateResponse defines a state
+                          transition on the checkpoint.
                       description: >-
                         lifecycle defines the lifecycle of this checkpoint,
                         i.e., each state
@@ -5169,7 +5191,7 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    RawCheckpointWithMetaResponse wraps the raw checkpoint with
                     metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
@@ -5303,14 +5325,14 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        block_hash:
+                        block_hash_hex:
                           type: string
-                          format: byte
                           title: >-
-                            block_hash defines the 'BlockID.Hash', which is the
-                            hash of
+                            block_hash_hex defines the 'BlockID.Hash', which is
+                            the hash of
 
-                            the block that individual BLS sigs are signed on
+                            the block that individual BLS sigs are signed on as
+                            hex string
                         bitmap:
                           type: string
                           format: byte
@@ -5325,7 +5347,9 @@ paths:
                             aggregated from individual BLS
 
                             sigs
-                      title: RawCheckpoint wraps the BLS multi sig with metadata
+                      title: >-
+                        RawCheckpointResponse wraps the BLS multi sig with
+                        metadata
                     status:
                       type: string
                       enum:
@@ -5344,6 +5368,9 @@ paths:
                          - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                          - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                       title: status defines the status of the checkpoint
+                    status_desc:
+                      type: string
+                      description: status_desc respresents the description of status enum.
                     bls_aggr_pk:
                       type: string
                       format: byte
@@ -5379,6 +5406,11 @@ paths:
                             title: >-
                               state defines the event of a state transition
                               towards this state
+                          status_desc:
+                            type: string
+                            description: >-
+                              status_desc respresents the description of status
+                              enum.
                           block_height:
                             type: string
                             format: uint64
@@ -5396,8 +5428,8 @@ paths:
 
                               update
                         description: >-
-                          CheckpointStateUpdate defines a state transition on
-                          the checkpoint.
+                          CheckpointStateUpdateResponse defines a state
+                          transition on the checkpoint.
                       description: >-
                         lifecycle defines the lifecycle of this checkpoint,
                         i.e., each state
@@ -5407,7 +5439,7 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    RawCheckpointWithMetaResponse wraps the raw checkpoint with
                     metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
@@ -13225,7 +13257,7 @@ definitions:
     description: |-
       MsgUndelegate defines a SDK message for performing an undelegation from a
       delegate and a validator.
-  babylon.checkpointing.v1.CheckpointStateUpdate:
+  babylon.checkpointing.v1.CheckpointStateUpdateResponse:
     type: object
     properties:
       state:
@@ -13246,6 +13278,9 @@ definitions:
            - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
            - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
         title: state defines the event of a state transition towards this state
+      status_desc:
+        type: string
+        description: status_desc respresents the description of status enum.
       block_height:
         type: string
         format: uint64
@@ -13262,7 +13297,9 @@ definitions:
           state
 
           update
-    description: CheckpointStateUpdate defines a state transition on the checkpoint.
+    description: >-
+      CheckpointStateUpdateResponse defines a state transition on the
+      checkpoint.
   babylon.checkpointing.v1.CheckpointStatus:
     type: string
     enum:
@@ -13399,12 +13436,14 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                block_hash:
+                block_hash_hex:
                   type: string
-                  format: byte
-                  title: |-
-                    block_hash defines the 'BlockID.Hash', which is the hash of
-                    the block that individual BLS sigs are signed on
+                  title: >-
+                    block_hash_hex defines the 'BlockID.Hash', which is the hash
+                    of
+
+                    the block that individual BLS sigs are signed on as hex
+                    string
                 bitmap:
                   type: string
                   format: byte
@@ -13419,7 +13458,7 @@ definitions:
                     individual BLS
 
                     sigs
-              title: RawCheckpoint wraps the BLS multi sig with metadata
+              title: RawCheckpointResponse wraps the BLS multi sig with metadata
             status:
               type: string
               enum:
@@ -13438,6 +13477,9 @@ definitions:
                  - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                  - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
               title: status defines the status of the checkpoint
+            status_desc:
+              type: string
+              description: status_desc respresents the description of status enum.
             bls_aggr_pk:
               type: string
               format: byte
@@ -13473,6 +13515,9 @@ definitions:
                     title: >-
                       state defines the event of a state transition towards this
                       state
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   block_height:
                     type: string
                     format: uint64
@@ -13490,8 +13535,8 @@ definitions:
 
                       update
                 description: >-
-                  CheckpointStateUpdate defines a state transition on the
-                  checkpoint.
+                  CheckpointStateUpdateResponse defines a state transition on
+                  the checkpoint.
               description: >-
                 lifecycle defines the lifecycle of this checkpoint, i.e., each
                 state
@@ -13500,7 +13545,9 @@ definitions:
                 this
 
                 transition.
-          description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+          description: >-
+            RawCheckpointWithMetaResponse wraps the raw checkpoint with
+            metadata.
         title: the order is going from the newest to oldest based on the epoch number
       pagination:
         description: pagination defines the pagination in the response.
@@ -13537,12 +13584,13 @@ definitions:
                 type: string
                 format: uint64
                 title: epoch_num defines the epoch number the raw checkpoint is for
-              block_hash:
+              block_hash_hex:
                 type: string
-                format: byte
-                title: |-
-                  block_hash defines the 'BlockID.Hash', which is the hash of
-                  the block that individual BLS sigs are signed on
+                title: >-
+                  block_hash_hex defines the 'BlockID.Hash', which is the hash
+                  of
+
+                  the block that individual BLS sigs are signed on as hex string
               bitmap:
                 type: string
                 format: byte
@@ -13557,7 +13605,7 @@ definitions:
                   individual BLS
 
                   sigs
-            title: RawCheckpoint wraps the BLS multi sig with metadata
+            title: RawCheckpointResponse wraps the BLS multi sig with metadata
           status:
             type: string
             enum:
@@ -13576,6 +13624,9 @@ definitions:
                - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
             title: status defines the status of the checkpoint
+          status_desc:
+            type: string
+            description: status_desc respresents the description of status enum.
           bls_aggr_pk:
             type: string
             format: byte
@@ -13609,6 +13660,9 @@ definitions:
                   title: >-
                     state defines the event of a state transition towards this
                     state
+                status_desc:
+                  type: string
+                  description: status_desc respresents the description of status enum.
                 block_height:
                   type: string
                   format: uint64
@@ -13626,7 +13680,7 @@ definitions:
 
                     update
               description: >-
-                CheckpointStateUpdate defines a state transition on the
+                CheckpointStateUpdateResponse defines a state transition on the
                 checkpoint.
             description: >-
               lifecycle defines the lifecycle of this checkpoint, i.e., each
@@ -13636,7 +13690,7 @@ definitions:
               this
 
               transition.
-        description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+        description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
     description: >-
       QueryRawCheckpointResponse is the response type for the
       Query/RawCheckpoint
@@ -13657,12 +13711,14 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                block_hash:
+                block_hash_hex:
                   type: string
-                  format: byte
-                  title: |-
-                    block_hash defines the 'BlockID.Hash', which is the hash of
-                    the block that individual BLS sigs are signed on
+                  title: >-
+                    block_hash_hex defines the 'BlockID.Hash', which is the hash
+                    of
+
+                    the block that individual BLS sigs are signed on as hex
+                    string
                 bitmap:
                   type: string
                   format: byte
@@ -13677,7 +13733,7 @@ definitions:
                     individual BLS
 
                     sigs
-              title: RawCheckpoint wraps the BLS multi sig with metadata
+              title: RawCheckpointResponse wraps the BLS multi sig with metadata
             status:
               type: string
               enum:
@@ -13696,6 +13752,9 @@ definitions:
                  - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                  - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
               title: status defines the status of the checkpoint
+            status_desc:
+              type: string
+              description: status_desc respresents the description of status enum.
             bls_aggr_pk:
               type: string
               format: byte
@@ -13731,6 +13790,9 @@ definitions:
                     title: >-
                       state defines the event of a state transition towards this
                       state
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   block_height:
                     type: string
                     format: uint64
@@ -13748,8 +13810,8 @@ definitions:
 
                       update
                 description: >-
-                  CheckpointStateUpdate defines a state transition on the
-                  checkpoint.
+                  CheckpointStateUpdateResponse defines a state transition on
+                  the checkpoint.
               description: >-
                 lifecycle defines the lifecycle of this checkpoint, i.e., each
                 state
@@ -13758,7 +13820,9 @@ definitions:
                 this
 
                 transition.
-          description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+          description: >-
+            RawCheckpointWithMetaResponse wraps the raw checkpoint with
+            metadata.
         title: the order is going from the newest to oldest based on the epoch number
       pagination:
         description: pagination defines the pagination in the response.
@@ -13801,34 +13865,6 @@ definitions:
     description: |-
       QueryRecentEpochStatusCountResponse is the response type for the
       Query/EpochStatusCount RPC method.
-  babylon.checkpointing.v1.RawCheckpoint:
-    type: object
-    properties:
-      epoch_num:
-        type: string
-        format: uint64
-        title: epoch_num defines the epoch number the raw checkpoint is for
-      block_hash:
-        type: string
-        format: byte
-        title: |-
-          block_hash defines the 'BlockID.Hash', which is the hash of
-          the block that individual BLS sigs are signed on
-      bitmap:
-        type: string
-        format: byte
-        title: >-
-          bitmap defines the bitmap that indicates the signers of the BLS multi
-          sig
-      bls_multi_sig:
-        type: string
-        format: byte
-        title: >-
-          bls_multi_sig defines the multi sig that is aggregated from individual
-          BLS
-
-          sigs
-    title: RawCheckpoint wraps the BLS multi sig with metadata
   babylon.checkpointing.v1.RawCheckpointResponse:
     type: object
     properties:
@@ -13856,7 +13892,7 @@ definitions:
 
           sigs
     title: RawCheckpointResponse wraps the BLS multi sig with metadata
-  babylon.checkpointing.v1.RawCheckpointWithMeta:
+  babylon.checkpointing.v1.RawCheckpointWithMetaResponse:
     type: object
     properties:
       ckpt:
@@ -13866,12 +13902,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          block_hash:
+          block_hash_hex:
             type: string
-            format: byte
             title: |-
-              block_hash defines the 'BlockID.Hash', which is the hash of
-              the block that individual BLS sigs are signed on
+              block_hash_hex defines the 'BlockID.Hash', which is the hash of
+              the block that individual BLS sigs are signed on as hex string
           bitmap:
             type: string
             format: byte
@@ -13886,7 +13921,7 @@ definitions:
               individual BLS
 
               sigs
-        title: RawCheckpoint wraps the BLS multi sig with metadata
+        title: RawCheckpointResponse wraps the BLS multi sig with metadata
       status:
         type: string
         enum:
@@ -13905,6 +13940,9 @@ definitions:
            - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
            - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
         title: status defines the status of the checkpoint
+      status_desc:
+        type: string
+        description: status_desc respresents the description of status enum.
       bls_aggr_pk:
         type: string
         format: byte
@@ -13936,6 +13974,9 @@ definitions:
                  - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                  - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
               title: state defines the event of a state transition towards this state
+            status_desc:
+              type: string
+              description: status_desc respresents the description of status enum.
             block_height:
               type: string
               format: uint64
@@ -13952,12 +13993,14 @@ definitions:
                 the state
 
                 update
-          description: CheckpointStateUpdate defines a state transition on the checkpoint.
+          description: >-
+            CheckpointStateUpdateResponse defines a state transition on the
+            checkpoint.
         description: |-
           lifecycle defines the lifecycle of this checkpoint, i.e., each state
           transition and the time (in both timestamp and block height) of this
           transition.
-    description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+    description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
   babylon.checkpointing.v1.ValidatorWithBlsKey:
     type: object
     properties:
@@ -14069,6 +14112,34 @@ definitions:
     title: |-
       Each provided OP_RETURN transaction can be identified by hash of block in
       which transaction was included and transaction index in the block
+  babylon.checkpointing.v1.RawCheckpoint:
+    type: object
+    properties:
+      epoch_num:
+        type: string
+        format: uint64
+        title: epoch_num defines the epoch number the raw checkpoint is for
+      block_hash:
+        type: string
+        format: byte
+        title: |-
+          block_hash defines the 'BlockID.Hash', which is the hash of
+          the block that individual BLS sigs are signed on
+      bitmap:
+        type: string
+        format: byte
+        title: >-
+          bitmap defines the bitmap that indicates the signers of the BLS multi
+          sig
+      bls_multi_sig:
+        type: string
+        format: byte
+        title: >-
+          bls_multi_sig defines the multi sig that is aggregated from individual
+          BLS
+
+          sigs
+    title: RawCheckpoint wraps the BLS multi sig with metadata
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:

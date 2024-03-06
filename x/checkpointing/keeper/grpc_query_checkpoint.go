@@ -15,15 +15,15 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // RawCheckpointList returns a list of checkpoint by status in the ascending order of epoch
-func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckpointListRequest) (*types.QueryRawCheckpointListResponse, error) {
+func (k Keeper) RawCheckpointList(c context.Context, req *types.QueryRawCheckpointListRequest) (*types.QueryRawCheckpointListResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	var checkpointList []*types.RawCheckpointWithMeta
+	var checkpointList []*types.RawCheckpointWithMetaResponse
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
+	ctx := sdk.UnwrapSDKContext(c)
 
-	store := k.CheckpointsState(sdkCtx).checkpoints
+	store := k.CheckpointsState(ctx).checkpoints
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		ckptWithMeta, err := types.BytesToCkptWithMeta(k.cdc, value)
 		if err != nil {
@@ -31,7 +31,7 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 		}
 		if ckptWithMeta.Status == req.Status {
 			if accumulate {
-				checkpointList = append(checkpointList, ckptWithMeta)
+				checkpointList = append(checkpointList, ckptWithMeta.ToResponse())
 			}
 			return true, nil
 		}
@@ -46,19 +46,18 @@ func (k Keeper) RawCheckpointList(ctx context.Context, req *types.QueryRawCheckp
 }
 
 // RawCheckpoint returns a checkpoint by epoch number
-func (k Keeper) RawCheckpoint(ctx context.Context, req *types.QueryRawCheckpointRequest) (*types.QueryRawCheckpointResponse, error) {
+func (k Keeper) RawCheckpoint(c context.Context, req *types.QueryRawCheckpointRequest) (*types.QueryRawCheckpointResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	ckptWithMeta, err := k.CheckpointsState(sdkCtx).GetRawCkptWithMeta(req.EpochNum)
+	ctx := sdk.UnwrapSDKContext(c)
+	ckptWithMeta, err := k.CheckpointsState(ctx).GetRawCkptWithMeta(req.EpochNum)
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta}, nil
+	return &types.QueryRawCheckpointResponse{RawCheckpoint: ckptWithMeta.ToResponse()}, nil
 }
 
 // RawCheckpoints returns checkpoints for given epoch range specified in pagination params
@@ -70,11 +69,11 @@ func (k Keeper) RawCheckpoints(ctx context.Context, req *types.QueryRawCheckpoin
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	store := k.CheckpointsState(sdkCtx).checkpoints
 
-	var checkpointList []*types.RawCheckpointWithMeta
+	var checkpointList []*types.RawCheckpointWithMetaResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
 		var ckptWithMeta types.RawCheckpointWithMeta
 		k.cdc.MustUnmarshal(value, &ckptWithMeta)
-		checkpointList = append(checkpointList, &ckptWithMeta)
+		checkpointList = append(checkpointList, ckptWithMeta.ToResponse())
 		return nil
 	})
 	if err != nil {
