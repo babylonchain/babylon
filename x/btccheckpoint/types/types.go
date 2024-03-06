@@ -23,7 +23,7 @@ type RawCheckpointSubmission struct {
 	CheckpointData btctxformatter.RawBtcCheckpoint
 }
 
-// SubmissionBtcInfo encapsualte important information about submission posistion
+// SubmissionBtcInfo encapsulate important information about submission position
 // on btc ledger
 type SubmissionBtcInfo struct {
 	SubmissionKey SubmissionKey
@@ -133,7 +133,7 @@ func (submission *SubmissionBtcInfo) HappenedAfter(parentEpochSubmission *Submis
 }
 
 // SubmissionDepth return depth of the submission. Due to the fact that submissions
-// are splitted between several btc blocks, in Babylon subbmission depth is the depth
+// are split between several btc blocks, in Babylon submission depth is the depth
 // of the youngest btc block
 func (submission *SubmissionBtcInfo) SubmissionDepth() uint64 {
 	return submission.YoungestBlockDepth

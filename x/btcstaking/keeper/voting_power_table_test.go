@@ -2,17 +2,12 @@ package keeper_test
 
 import (
 	"math/rand"
+	"sort"
 	"testing"
 
-	sdkmath "cosmossdk.io/math"
-
 	"github.com/babylonchain/babylon/testutil/datagen"
-	keepertest "github.com/babylonchain/babylon/testutil/keeper"
-	bbn "github.com/babylonchain/babylon/types"
-	btcctypes "github.com/babylonchain/babylon/x/btccheckpoint/types"
 	btclctypes "github.com/babylonchain/babylon/x/btclightclient/types"
 	"github.com/babylonchain/babylon/x/btcstaking/types"
-	"github.com/btcsuite/btcd/chaincfg"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
 )
@@ -28,29 +23,19 @@ func FuzzVotingPowerTable(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
-		// covenant and slashing addr
-		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
-		slashingChangeLockTime := uint16(101)
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		h.NoError(err)
 
 		// generate a random batch of finality providers
 		fps := []*types.FinalityProvider{}
 		numFpsWithVotingPower := datagen.RandomInt(r, 10) + 2
 		numFps := numFpsWithVotingPower + datagen.RandomInt(r, 10)
 		for i := uint64(0); i < numFps; i++ {
-			fp, err := datagen.GenRandomFinalityProvider(r)
-			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			_, _, fp := h.CreateFinalityProvider(r)
 			fps = append(fps, fp)
 		}
 
@@ -59,93 +44,68 @@ func FuzzVotingPowerTable(f *testing.F) {
 		stakingValue := datagen.RandomInt(r, 100000) + 100000
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
 			for j := uint64(0); j < numBTCDels; j++ {
-				delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-				require.NoError(t, err)
-				btcDel, err := datagen.GenRandomBTCDelegation(
+				_, _, _, delMsg, del := h.CreateDelegation(
 					r,
-					t,
-					[]bbn.BIP340PubKey{*fps[i].BtcPk},
-					delSK,
-					covenantSKs,
-					covenantQuorum,
-					slashingAddress.EncodeAddress(),
-					1, 1000, stakingValue,
-					slashingRate,
-					slashingChangeLockTime,
+					fps[i].BtcPk.MustToBTCPK(),
+					changeAddress.EncodeAddress(),
+					int64(stakingValue),
+					1000,
 				)
-				require.NoError(t, err)
-				err = keeper.AddBTCDelegation(ctx, btcDel)
-				require.NoError(t, err)
+				h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 			}
 		}
 
 		/*
-			Case 1: BTC height is 0 that is smaller than start height 1.
-			No finality privater will have voting power
+			assert the first numFpsWithVotingPower finality providers have voting power
 		*/
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 0}).Times(1)
-		err = keeper.BeginBlocker(ctx)
-		require.NoError(t, err)
-
-		for i := uint64(0); i < numFps; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
-			require.Zero(t, power)
-		}
-
-		/*
-			Case 2: move to 1st BTC block, then assert the first numFpsWithVotingPower finality providers have voting power
-		*/
-		babylonHeight += datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		err = keeper.BeginBlocker(ctx)
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fps[i].BtcPk, babylonHeight)
 			require.Equal(t, numBTCDels*stakingValue, power)
 		}
 		for i := numFpsWithVotingPower; i < numFps; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fps[i].BtcPk, babylonHeight)
 			require.Zero(t, power)
 		}
 
 		// also, get voting power table and assert consistency
-		powerTable := keeper.GetVotingPowerTable(ctx, babylonHeight)
+		powerTable := h.BTCStakingKeeper.GetVotingPowerTable(h.Ctx, babylonHeight)
 		require.NotNil(t, powerTable)
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fps[i].BtcPk, babylonHeight)
 			require.Equal(t, powerTable[fps[i].BtcPk.MarshalHex()], power)
 		}
 		// the activation height should be the current Babylon height as well
-		activatedHeight, err := keeper.GetBTCStakingActivatedHeight(ctx)
+		activatedHeight, err := h.BTCStakingKeeper.GetBTCStakingActivatedHeight(h.Ctx)
 		require.NoError(t, err)
 		require.Equal(t, babylonHeight, activatedHeight)
 
 		/*
-			Case 3: slash a random finality provider and move on
+			slash a random finality provider and move on
 			then assert the slashed finality provider does not have voting power
 		*/
+		// move to next Babylon height
+		h.BTCLightClientKeeper = btclcKeeper
+		babylonHeight += 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
 		// slash a random finality provider
 		slashedIdx := datagen.RandomInt(r, int(numFpsWithVotingPower))
 		slashedFp := fps[slashedIdx]
-		// This will be called to get the slashed height
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		err = keeper.SlashFinalityProvider(ctx, slashedFp.BtcPk.MustMarshal())
+		err = h.BTCStakingKeeper.SlashFinalityProvider(h.Ctx, slashedFp.BtcPk.MustMarshal())
 		require.NoError(t, err)
-		// move to later Babylon height and 2nd BTC height
-		babylonHeight += datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 2}).Times(1)
 		// index height and record power table
-		err = keeper.BeginBlocker(ctx)
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
 		// check if the slashed finality provider's voting power becomes zero
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fps[i].BtcPk, babylonHeight)
 			if i == slashedIdx {
 				require.Zero(t, power)
 			} else {
@@ -153,15 +113,15 @@ func FuzzVotingPowerTable(f *testing.F) {
 			}
 		}
 		for i := numFpsWithVotingPower; i < numFps; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fps[i].BtcPk, babylonHeight)
 			require.Zero(t, power)
 		}
 
 		// also, get voting power table and assert consistency
-		powerTable = keeper.GetVotingPowerTable(ctx, babylonHeight)
+		powerTable = h.BTCStakingKeeper.GetVotingPowerTable(h.Ctx, babylonHeight)
 		require.NotNil(t, powerTable)
 		for i := uint64(0); i < numFpsWithVotingPower; i++ {
-			power := keeper.GetVotingPower(ctx, *fps[i].BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fps[i].BtcPk, babylonHeight)
 			if i == slashedIdx {
 				require.Zero(t, power)
 			}
@@ -169,21 +129,22 @@ func FuzzVotingPowerTable(f *testing.F) {
 		}
 
 		/*
-			Case 4: move to 999th BTC block, then assert none of finality providers has voting power (since end height - w < BTC height)
+			move to 999th BTC block, then assert none of finality providers has voting power (since end height - w < BTC height)
 		*/
-		babylonHeight += datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 999}).Times(1)
-		err = keeper.BeginBlocker(ctx)
+		// replace the old mocked keeper
+		babylonHeight += 1
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 999}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
 		for _, fp := range fps {
-			power := keeper.GetVotingPower(ctx, *fp.BtcPk, babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fp.BtcPk, babylonHeight)
 			require.Zero(t, power)
 		}
 
 		// the activation height should be same as before
-		activatedHeight2, err := keeper.GetBTCStakingActivatedHeight(ctx)
+		activatedHeight2, err := h.BTCStakingKeeper.GetBTCStakingActivatedHeight(h.Ctx)
 		require.NoError(t, err)
 		require.Equal(t, activatedHeight, activatedHeight2)
 	})
@@ -200,87 +161,67 @@ func FuzzVotingPowerTable_ActiveFinalityProviders(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
-		// covenant and slashing addr
-		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
-		slashingChangeLockTime := uint16(101)
-
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		h.NoError(err)
 
 		// generate a random batch of finality providers, each with a BTC delegation with random power
-		fpsWithMeta := []*types.FinalityProviderWithMeta{}
+		fpsWithMeta := []*types.FinalityProviderDistInfo{}
 		numFps := datagen.RandomInt(r, 300) + 1
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
-			fp, err := datagen.GenRandomFinalityProvider(r)
-			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			_, _, fp := h.CreateFinalityProvider(r)
 
 			// delegate to this finality provider
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			fpBTCPK := fp.BtcPk
-			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(
+			_, _, _, delMsg, del := h.CreateDelegation(
 				r,
-				t,
-				[]bbn.BIP340PubKey{*fpBTCPK},
-				delSK,
-				covenantSKs,
-				covenantQuorum,
-				slashingAddress.EncodeAddress(),
-				1, 1000, stakingValue, // timelock period: 1-1000
-				slashingRate,
-				slashingChangeLockTime,
+				fp.BtcPk.MustToBTCPK(),
+				changeAddress.EncodeAddress(),
+				int64(stakingValue),
+				1000,
 			)
-			require.NoError(t, err)
-			err = keeper.AddBTCDelegation(ctx, btcDel)
-			require.NoError(t, err)
+			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
 			// record voting power
-			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{
-				BtcPk:       fp.BtcPk,
-				VotingPower: stakingValue,
+			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderDistInfo{
+				BtcPk:            fp.BtcPk,
+				TotalVotingPower: stakingValue,
 			})
 		}
 
-		maxActiveFpsParam := keeper.GetParams(ctx).MaxActiveFinalityProviders
+		maxActiveFpsParam := h.BTCStakingKeeper.GetParams(h.Ctx).MaxActiveFinalityProviders
 		// get a map of expected active finality providers
-		expectedActiveFps := types.FilterTopNFinalityProviders(fpsWithMeta, maxActiveFpsParam)
+		types.SortFinalityProviders(fpsWithMeta)
+		expectedActiveFps := fpsWithMeta[:min(uint32(len(fpsWithMeta)), maxActiveFpsParam)]
 		expectedActiveFpsMap := map[string]uint64{}
 		for _, fp := range expectedActiveFps {
-			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.VotingPower
+			expectedActiveFpsMap[fp.BtcPk.MarshalHex()] = fp.TotalVotingPower
 		}
 
 		// record voting power table
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		err = keeper.BeginBlocker(ctx)
+		h.SetCtxHeight(babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
 		require.NoError(t, err)
 
 		//  only finality providers in expectedActiveFpsMap have voting power
 		for _, fp := range fpsWithMeta {
-			power := keeper.GetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonHeight)
+			power := h.BTCStakingKeeper.GetVotingPower(h.Ctx, fp.BtcPk.MustMarshal(), babylonHeight)
 			if expectedPower, ok := expectedActiveFpsMap[fp.BtcPk.MarshalHex()]; ok {
 				require.Equal(t, expectedPower, power)
 			} else {
-				require.Equal(t, uint64(0), power)
+				require.Zero(t, power)
 			}
 		}
 
 		// also, get voting power table and assert there is
 		// min(len(expectedActiveFps), MaxActiveFinalityProviders) active finality providers
-		powerTable := keeper.GetVotingPowerTable(ctx, babylonHeight)
+		powerTable := h.BTCStakingKeeper.GetVotingPowerTable(h.Ctx, babylonHeight)
 		expectedNumActiveFps := len(expectedActiveFpsMap)
 		if expectedNumActiveFps > int(maxActiveFpsParam) {
 			expectedNumActiveFps = int(maxActiveFpsParam)
@@ -304,51 +245,45 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 		// mock BTC light client and BTC checkpoint modules
 		btclcKeeper := types.NewMockBTCLightClientKeeper(ctrl)
 		btccKeeper := types.NewMockBtcCheckpointKeeper(ctrl)
-		btccKeeper.EXPECT().GetParams(gomock.Any()).Return(btcctypes.DefaultParams()).AnyTimes()
-		keeper, ctx := keepertest.BTCStakingKeeper(t, btclcKeeper, btccKeeper)
+		h := NewHelper(t, btclcKeeper, btccKeeper)
 
-		// covenant and slashing addr
-		covenantSKs, _, covenantQuorum := datagen.GenCovenantCommittee(r)
-		slashingAddress, err := datagen.GenRandomBTCAddress(r, &chaincfg.SimNetParams)
-		require.NoError(t, err)
-		slashingChangeLockTime := uint16(101)
+		// set all parameters
+		covenantSKs, _ := h.GenAndApplyParams(r)
+		// set random number of max number of finality providers
+		// in order to cover cases that number of finality providers is more or
+		// less than `MaxActiveFinalityProviders`
+		bsParams := h.BTCStakingKeeper.GetParams(h.Ctx)
+		bsParams.MaxActiveFinalityProviders = uint32(datagen.RandomInt(r, 20) + 10)
+		err := h.BTCStakingKeeper.SetParams(h.Ctx, bsParams)
+		h.NoError(err)
+		// change address
+		changeAddress, err := datagen.GenRandomBTCAddress(r, h.Net)
+		h.NoError(err)
 
-		// Generate a slashing rate in the range [0.1, 0.50] i.e., 10-50%.
-		// NOTE - if the rate is higher or lower, it may produce slashing or change outputs
-		// with value below the dust threshold, causing test failure.
-		// Our goal is not to test failure due to such extreme cases here;
-		// this is already covered in FuzzGeneratingValidStakingSlashingTx
-		slashingRate := sdkmath.LegacyNewDecWithPrec(int64(datagen.RandomInt(r, 41)+10), 2)
+		numFps := datagen.RandomInt(r, 20) + 10
+		numActiveFPs := int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))
 
-		// generate a random batch of finality providers, each with a BTC delegation with random power
+		/*
+			Generate a random batch of finality providers, each with a BTC delegation
+			with random voting power.
+			Then, assert voting power table
+		*/
 		fpsWithMeta := []*types.FinalityProviderWithMeta{}
-		numFps := uint64(200) // there has to be more than `maxActiveFinalityProviders` finality providers
 		for i := uint64(0); i < numFps; i++ {
 			// generate finality provider
-			fp, err := datagen.GenRandomFinalityProvider(r)
-			require.NoError(t, err)
-			keeper.SetFinalityProvider(ctx, fp)
+			// generate and insert new finality provider
+			_, fpPK, fp := h.CreateFinalityProvider(r)
 
-			// delegate to this finality provider
+			// create BTC delegation and add covenant signatures to activate it
 			stakingValue := datagen.RandomInt(r, 100000) + 100000
-			fpBTCPK := fp.BtcPk
-			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(
+			_, _, _, delMsg, del := h.CreateDelegation(
 				r,
-				t,
-				[]bbn.BIP340PubKey{*fpBTCPK},
-				delSK,
-				covenantSKs,
-				covenantQuorum,
-				slashingAddress.EncodeAddress(),
-				1, 1000, stakingValue, // timelock period: 1-1000
-				slashingRate,
-				slashingChangeLockTime,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				int64(stakingValue),
+				1000,
 			)
-			require.NoError(t, err)
-			err = keeper.AddBTCDelegation(ctx, btcDel)
-			require.NoError(t, err)
+			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
 
 			// record voting power
 			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{
@@ -359,59 +294,96 @@ func FuzzVotingPowerTable_ActiveFinalityProviderRotation(f *testing.F) {
 
 		// record voting power table
 		babylonHeight := datagen.RandomInt(r, 10) + 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		err = keeper.BeginBlocker(ctx)
-		require.NoError(t, err)
+		h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
 
-		// get maps of active/inactive finality providers
-		activeFpsMap := map[string]uint64{}
-		inactiveFpsMap := map[string]uint64{}
-		for _, fp := range fpsWithMeta {
-			power := keeper.GetVotingPower(ctx, fp.BtcPk.MustMarshal(), babylonHeight)
-			if power > 0 {
-				activeFpsMap[fp.BtcPk.MarshalHex()] = power
-			} else {
-				inactiveFpsMap[fp.BtcPk.MarshalHex()] = power
-			}
+		// assert that only top `min(MaxActiveFinalityProviders, numFPs)` finality providers have voting power
+		sort.SliceStable(fpsWithMeta, func(i, j int) bool {
+			return fpsWithMeta[i].VotingPower > fpsWithMeta[j].VotingPower
+		})
+		for i := 0; i < numActiveFPs; i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Equal(t, fpsWithMeta[i].VotingPower, votingPower)
+		}
+		for i := numActiveFPs; i < int(numFps); i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Zero(t, votingPower)
 		}
 
-		// delegate a huge amount of tokens to one of the inactive finality provider
-		var activatedFpBTCPK *bbn.BIP340PubKey
-		for fpBTCPKHex := range inactiveFpsMap {
-			stakingValue := uint64(10000000)
-			activatedFpBTCPK, _ = bbn.NewBIP340PubKeyFromHex(fpBTCPKHex)
-			delSK, _, err := datagen.GenRandomBTCKeyPair(r)
-			require.NoError(t, err)
-			btcDel, err := datagen.GenRandomBTCDelegation(
+		/*
+			Delegate more tokens to some existing finality providers
+			, and create some new finality providers
+			Then assert voting power table again
+		*/
+		// delegate more tokens to some existing finality providers
+		for i := uint64(0); i < numFps; i++ {
+			if !datagen.OneInN(r, 2) {
+				continue
+			}
+
+			stakingValue := datagen.RandomInt(r, 100000) + 100000
+			fpBTCPK := fpsWithMeta[i].BtcPk
+			_, _, _, delMsg, del := h.CreateDelegation(
 				r,
-				t,
-				[]bbn.BIP340PubKey{*activatedFpBTCPK},
-				delSK,
-				covenantSKs,
-				covenantQuorum,
-				slashingAddress.EncodeAddress(),
-				1, 1000, stakingValue, // timelock period: 1-1000
-				slashingRate,
-				slashingChangeLockTime,
+				fpBTCPK.MustToBTCPK(),
+				changeAddress.EncodeAddress(),
+				int64(stakingValue),
+				1000,
 			)
-			require.NoError(t, err)
-			err = keeper.AddBTCDelegation(ctx, btcDel)
-			require.NoError(t, err)
+			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+
+			// accumulate voting power for this finality provider
+			fpsWithMeta[i].VotingPower += stakingValue
 
 			break
+		}
+		// create more finality providers
+		numNewFps := datagen.RandomInt(r, 20) + 10
+		numFps += numNewFps
+		numActiveFPs = int(min(numFps, uint64(bsParams.MaxActiveFinalityProviders)))
+		for i := uint64(0); i < numNewFps; i++ {
+			// generate finality provider
+			// generate and insert new finality provider
+			_, fpPK, fp := h.CreateFinalityProvider(r)
+
+			// create BTC delegation and add covenant signatures to activate it
+			stakingValue := datagen.RandomInt(r, 100000) + 100000
+			_, _, _, delMsg, del := h.CreateDelegation(
+				r,
+				fpPK,
+				changeAddress.EncodeAddress(),
+				int64(stakingValue),
+				1000,
+			)
+			h.CreateCovenantSigs(r, covenantSKs, delMsg, del)
+
+			// record voting power
+			fpsWithMeta = append(fpsWithMeta, &types.FinalityProviderWithMeta{
+				BtcPk:       fp.BtcPk,
+				VotingPower: stakingValue,
+			})
 		}
 
 		// record voting power table
 		babylonHeight += 1
-		ctx = datagen.WithCtxHeight(ctx, babylonHeight)
-		btclcKeeper.EXPECT().GetTipInfo(gomock.Any()).Return(&btclctypes.BTCHeaderInfo{Height: 1}).Times(1)
-		err = keeper.BeginBlocker(ctx)
-		require.NoError(t, err)
+		h.Ctx = datagen.WithCtxHeight(h.Ctx, babylonHeight)
+		h.BTCLightClientKeeper.EXPECT().GetTipInfo(gomock.Eq(h.Ctx)).Return(&btclctypes.BTCHeaderInfo{Height: 30}).AnyTimes()
+		err = h.BTCStakingKeeper.BeginBlocker(h.Ctx)
+		h.NoError(err)
 
-		// ensure that the activated finality provider now has entered the active finality provider set
-		// i.e., has voting power
-		power := keeper.GetVotingPower(ctx, activatedFpBTCPK.MustMarshal(), babylonHeight)
-		require.Positive(t, power)
+		// again, assert that only top `min(MaxActiveFinalityProviders, numFPs)` finality providers have voting power
+		sort.SliceStable(fpsWithMeta, func(i, j int) bool {
+			return fpsWithMeta[i].VotingPower > fpsWithMeta[j].VotingPower
+		})
+		for i := 0; i < numActiveFPs; i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Equal(t, fpsWithMeta[i].VotingPower, votingPower)
+		}
+		for i := numActiveFPs; i < int(numFps); i++ {
+			votingPower := h.BTCStakingKeeper.GetVotingPower(h.Ctx, *fpsWithMeta[i].BtcPk, babylonHeight)
+			require.Zero(t, votingPower)
+		}
 	})
 }

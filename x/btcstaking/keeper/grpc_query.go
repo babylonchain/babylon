@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"encoding/hex"
 
 	errorsmod "cosmossdk.io/errors"
 	bbn "github.com/babylonchain/babylon/types"
@@ -18,30 +17,36 @@ import (
 var _ types.QueryServer = Keeper{}
 
 // FinalityProviders returns a paginated list of all Babylon maintained finality providers
-func (k Keeper) FinalityProviders(ctx context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
+func (k Keeper) FinalityProviders(c context.Context, req *types.QueryFinalityProvidersRequest) (*types.QueryFinalityProvidersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-	store := k.finalityProviderStore(sdkCtx)
+	ctx := sdk.UnwrapSDKContext(c)
+	store := k.finalityProviderStore(ctx)
+	currBlockHeight := uint64(ctx.BlockHeight())
 
-	var finalityProviders []*types.FinalityProvider
+	var fpResp []*types.FinalityProviderResponse
 	pageRes, err := query.Paginate(store, req.Pagination, func(key, value []byte) error {
-		var finalityProvider types.FinalityProvider
-		k.cdc.MustUnmarshal(value, &finalityProvider)
-		finalityProviders = append(finalityProviders, &finalityProvider)
+		var fp types.FinalityProvider
+		if err := fp.Unmarshal(value); err != nil {
+			return err
+		}
+
+		votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
+		resp := types.NewFinalityProviderResponse(&fp, currBlockHeight, votingPower)
+		fpResp = append(fpResp, resp)
 		return nil
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFinalityProvidersResponse{FinalityProviders: finalityProviders, Pagination: pageRes}, nil
+	return &types.QueryFinalityProvidersResponse{FinalityProviders: fpResp, Pagination: pageRes}, nil
 }
 
 // FinalityProvider returns the finality provider with the specified finality provider BTC PK
-func (k Keeper) FinalityProvider(ctx context.Context, req *types.QueryFinalityProviderRequest) (*types.QueryFinalityProviderResponse, error) {
+func (k Keeper) FinalityProvider(c context.Context, req *types.QueryFinalityProviderRequest) (*types.QueryFinalityProviderResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
@@ -56,15 +61,21 @@ func (k Keeper) FinalityProvider(ctx context.Context, req *types.QueryFinalityPr
 		return nil, err
 	}
 
-	sdkCtx := sdk.UnwrapSDKContext(ctx)
-
-	fp, err := k.GetFinalityProvider(sdkCtx, fpPK.MustMarshal())
-
+	key, err := fpPK.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	return &types.QueryFinalityProviderResponse{FinalityProvider: fp}, nil
+	ctx := sdk.UnwrapSDKContext(c)
+	fp, err := k.GetFinalityProvider(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	currBlockHeight := uint64(ctx.BlockHeight())
+	votingPower := k.GetVotingPower(ctx, key, currBlockHeight)
+	fpResp := types.NewFinalityProviderResponse(fp, currBlockHeight, votingPower)
+	return &types.QueryFinalityProviderResponse{FinalityProvider: fpResp}, nil
 }
 
 // BTCDelegations returns all BTC delegations under a given status
@@ -81,15 +92,17 @@ func (k Keeper) BTCDelegations(ctx context.Context, req *types.QueryBTCDelegatio
 	wValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
 
 	store := k.btcDelegationStore(ctx)
-	var btcDels []*types.BTCDelegation
+	var btcDels []*types.BTCDelegationResponse
 	pageRes, err := query.FilteredPaginate(store, req.Pagination, func(_ []byte, value []byte, accumulate bool) (bool, error) {
 		var btcDel types.BTCDelegation
 		k.cdc.MustUnmarshal(value, &btcDel)
 
 		// hit if the queried status is ANY or matches the BTC delegation status
-		if req.Status == types.BTCDelegationStatus_ANY || btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum) == req.Status {
+		status := btcDel.GetStatus(btcTipHeight, wValue, covenantQuorum)
+		if req.Status == types.BTCDelegationStatus_ANY || status == req.Status {
 			if accumulate {
-				btcDels = append(btcDels, &btcDel)
+				resp := types.NewBTCDelegationResponse(&btcDel, status)
+				btcDels = append(btcDels, resp)
 			}
 			return true, nil
 		}
@@ -212,19 +225,32 @@ func (k Keeper) FinalityProviderDelegations(ctx context.Context, req *types.Quer
 	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	btcDelStore := k.btcDelegatorStore(sdkCtx, fpPK)
 
-	btcDels := []*types.BTCDelegatorDelegations{}
+	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
+	btcHeight := k.btclcKeeper.GetTipInfo(ctx).Height
+	covenantQuorum := k.GetParams(ctx).CovenantQuorum
+
+	btcDels := []*types.BTCDelegatorDelegationsResponse{}
 	pageRes, err := query.Paginate(btcDelStore, req.Pagination, func(key, value []byte) error {
 		delBTCPK, err := bbn.NewBIP340PubKey(key)
 		if err != nil {
 			return err
 		}
 
-		curBTCDels, err := k.getBTCDelegatorDelegations(sdkCtx, fpPK, delBTCPK)
-		if err != nil {
-			return err
+		curBTCDels := k.getBTCDelegatorDelegations(sdkCtx, fpPK, delBTCPK)
+
+		btcDelsResp := make([]*types.BTCDelegationResponse, len(curBTCDels.Dels))
+		for i, btcDel := range curBTCDels.Dels {
+			status := btcDel.GetStatus(
+				btcHeight,
+				currentWValue,
+				covenantQuorum,
+			)
+			btcDelsResp[i] = types.NewBTCDelegationResponse(btcDel, status)
 		}
 
-		btcDels = append(btcDels, curBTCDels)
+		btcDels = append(btcDels, &types.BTCDelegatorDelegationsResponse{
+			Dels: btcDelsResp,
+		})
 		return nil
 	})
 	if err != nil {
@@ -252,32 +278,14 @@ func (k Keeper) BTCDelegation(ctx context.Context, req *types.QueryBTCDelegation
 		return nil, types.ErrBTCDelegationNotFound
 	}
 
-	// check whether it's active
-	currentTip := k.btclcKeeper.GetTipInfo(ctx)
 	currentWValue := k.btccKeeper.GetParams(ctx).CheckpointFinalizationTimeout
-	isActive := btcDel.GetStatus(
-		currentTip.Height,
+	status := btcDel.GetStatus(
+		k.btclcKeeper.GetTipInfo(ctx).Height,
 		currentWValue,
 		k.GetParams(ctx).CovenantQuorum,
-	) == types.BTCDelegationStatus_ACTIVE
-
-	// get its undelegation info
-	undelegationInfo := &types.BTCUndelegationInfo{
-		UnbondingTx:              btcDel.BtcUndelegation.UnbondingTx,
-		CovenantUnbondingSigList: btcDel.BtcUndelegation.CovenantUnbondingSigList,
-		CovenantSlashingSigs:     btcDel.BtcUndelegation.CovenantSlashingSigs,
-	}
+	)
 
 	return &types.QueryBTCDelegationResponse{
-		BtcPk:            btcDel.BtcPk,
-		FpBtcPkList:      btcDel.FpBtcPkList,
-		StartHeight:      btcDel.StartHeight,
-		EndHeight:        btcDel.EndHeight,
-		TotalSat:         btcDel.TotalSat,
-		StakingTxHex:     hex.EncodeToString(btcDel.StakingTx),
-		CovenantSigs:     btcDel.CovenantSigs,
-		Active:           isActive,
-		UnbondingTime:    btcDel.UnbondingTime,
-		UndelegationInfo: undelegationInfo,
+		BtcDelegation: types.NewBTCDelegationResponse(btcDel, status),
 	}, nil
 }

@@ -73,7 +73,7 @@ func (s *BTCTimestampingTestSuite) Test2BTCBaseHeader() {
 	s.NoError(err)
 	baseHeader, err := nonValidatorNode.QueryBtcBaseHeader()
 	s.NoError(err)
-	s.True(baseHeader.Hash.Eq(hardcodedHeader.Hash()))
+	s.Equal(baseHeader.HeaderHex, hardcodedHeader.MarshalHex())
 	s.Equal(hardcodedHeaderHeight, baseHeader.Height)
 }
 
@@ -94,11 +94,11 @@ func (s *BTCTimestampingTestSuite) Test3SendTx() {
 	s.Equal(tip1.Height+1, tip2.Height)
 
 	// check that light client properly updates its state
-	tip1Depth, err := nonValidatorNode.QueryHeaderDepth(tip1.Hash.MarshalHex())
+	tip1Depth, err := nonValidatorNode.QueryHeaderDepth(tip1.HashHex)
 	s.NoError(err)
 	s.Equal(tip1Depth, uint64(1))
 
-	tip2Depth, err := nonValidatorNode.QueryHeaderDepth(tip2.Hash.MarshalHex())
+	tip2Depth, err := nonValidatorNode.QueryHeaderDepth(tip2.HashHex)
 	s.NoError(err)
 	// tip should have 0 depth
 	s.Equal(tip2Depth, uint64(0))

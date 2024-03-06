@@ -2,7 +2,6 @@ package types
 
 import (
 	"fmt"
-
 	"sort"
 
 	"cosmossdk.io/math"
@@ -36,22 +35,12 @@ func (fp *FinalityProvider) ValidateBasic() error {
 	return nil
 }
 
-// FilterTopNFinalityProviders returns the top n finality providers based on VotingPower.
-func FilterTopNFinalityProviders(fps []*FinalityProviderWithMeta, n uint32) []*FinalityProviderWithMeta {
-	numFps := uint32(len(fps))
-
-	// if the given finality provider set is no bigger than n, no need to do anything
-	if numFps <= n {
-		return fps
-	}
-
-	// Sort the finality providers slice, from higher to lower voting power
+// SortFinalityProviders sorts the finality providers slice,
+// from higher to lower voting power
+func SortFinalityProviders(fps []*FinalityProviderDistInfo) {
 	sort.SliceStable(fps, func(i, j int) bool {
-		return fps[i].VotingPower > fps[j].VotingPower
+		return fps[i].TotalVotingPower > fps[j].TotalVotingPower
 	})
-
-	// Return the top n elements
-	return fps[:n]
 }
 
 func ExistsDup(btcPKs []bbn.BIP340PubKey) bool {

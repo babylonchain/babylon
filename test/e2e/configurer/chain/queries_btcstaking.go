@@ -22,7 +22,7 @@ func (n *NodeConfig) QueryBTCStakingParams() *bstypes.Params {
 	return &resp.Params
 }
 
-func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProvider {
+func (n *NodeConfig) QueryFinalityProviders() []*bstypes.FinalityProviderResponse {
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/finality_providers", url.Values{})
 	require.NoError(n.t, err)
 
@@ -45,7 +45,7 @@ func (n *NodeConfig) QueryActiveFinalityProvidersAtHeight(height uint64) []*bsty
 	return resp.FinalityProviders
 }
 
-func (n *NodeConfig) QueryFinalityProviderDelegations(fpBTCPK string) []*bstypes.BTCDelegatorDelegations {
+func (n *NodeConfig) QueryFinalityProviderDelegations(fpBTCPK string) []*bstypes.BTCDelegatorDelegationsResponse {
 	path := fmt.Sprintf("/babylon/btcstaking/v1/finality_providers/%s/delegations", fpBTCPK)
 	bz, err := n.QueryGRPCGateway(path, url.Values{})
 	require.NoError(n.t, err)
@@ -69,7 +69,7 @@ func (n *NodeConfig) QueryBtcDelegation(stakingTxHash string) *bstypes.QueryBTCD
 	return &resp
 }
 
-func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegation {
+func (n *NodeConfig) QueryUnbondedDelegations() []*bstypes.BTCDelegationResponse {
 	queryParams := url.Values{}
 	queryParams.Add("status", fmt.Sprintf("%d", bstypes.BTCDelegationStatus_UNBONDED))
 	bz, err := n.QueryGRPCGateway("/babylon/btcstaking/v1/btc_delegations", queryParams)

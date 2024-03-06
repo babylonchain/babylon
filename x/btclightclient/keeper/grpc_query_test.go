@@ -300,7 +300,7 @@ func FuzzMainChainQuery(f *testing.F) {
 				}
 				if !resp.Headers[i].Eq(mainchain[idx]) {
 					t.Errorf("%t", reverse)
-					t.Errorf("Response does not match mainchain. Expected %s got %s", mainchain[idx].Hash, resp.Headers[i].Hash)
+					t.Errorf("Response does not match mainchain. Expected %s got %s", mainchain[idx].Hash, resp.Headers[i].HashHex)
 				}
 				mcIdx += 1
 			}
@@ -356,7 +356,7 @@ func FuzzTipQuery(f *testing.F) {
 			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(chain.GetTipInfo()) {
-			t.Errorf("Invalid header returned. Expected %s, got %s", chain.GetTipInfo().Hash, resp.Header.Hash)
+			t.Errorf("Invalid header returned. Expected %s, got %s", chain.GetTipInfo().Hash, resp.Header.HeaderHex)
 		}
 	})
 }
@@ -402,7 +402,7 @@ func FuzzBaseHeaderQuery(f *testing.F) {
 			t.Fatalf("Valid input led to nil response")
 		}
 		if !resp.Header.Eq(base) {
-			t.Errorf("Invalid header returned. Expected %s, got %s", base.Hash, resp.Header.Hash)
+			t.Errorf("Invalid header returned. Expected %s, got %s", base.Hash, resp.Header.HashHex)
 		}
 	})
 }

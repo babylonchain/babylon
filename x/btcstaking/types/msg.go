@@ -14,6 +14,7 @@ import (
 var (
 	_ sdk.Msg = &MsgUpdateParams{}
 	_ sdk.Msg = &MsgCreateFinalityProvider{}
+	_ sdk.Msg = &MsgEditFinalityProvider{}
 	_ sdk.Msg = &MsgCreateBTCDelegation{}
 	_ sdk.Msg = &MsgAddCovenantSigs{}
 	_ sdk.Msg = &MsgBTCUndelegate{}
@@ -48,6 +49,29 @@ func (m *MsgCreateFinalityProvider) ValidateBasic() error {
 		return err
 	}
 	if err := m.Pop.ValidateBasic(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *MsgEditFinalityProvider) ValidateBasic() error {
+	if m.Commission == nil {
+		return fmt.Errorf("empty commission")
+	}
+	if m.Description == nil {
+		return fmt.Errorf("empty description")
+	}
+	if len(m.Description.Moniker) == 0 {
+		return fmt.Errorf("empty moniker")
+	}
+	if _, err := m.Description.EnsureLength(); err != nil {
+		return err
+	}
+	if len(m.BtcPk) != bbn.BIP340PubKeyLen {
+		return fmt.Errorf("malformed BTC PK")
+	}
+	if _, err := bbn.NewBIP340PubKey(m.BtcPk); err != nil {
 		return err
 	}
 

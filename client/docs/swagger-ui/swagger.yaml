@@ -22,72 +22,43 @@ paths:
                     epoch_number:
                       type: string
                       format: uint64
-                      title: epoch number of this checkpoint
+                      description: EpochNumber of this checkpoint.
                     best_submission_btc_block_height:
                       type: string
                       format: uint64
                       title: btc height of the best submission of the epoch
                     best_submission_btc_block_hash:
                       type: string
-                      format: byte
                       title: >-
                         hash of the btc block which determines checkpoint btc
                         block height i.e.
 
-                        youngest block of best submission
+                        youngest block of best submission Hexadecimal
                     best_submission_transactions:
                       type: array
                       items:
                         type: object
                         properties:
-                          key:
-                            description: >-
-                              key is the position (txIdx, blockHash) of this tx
-                              on BTC blockchain
-
-                              Although it is already a part of SubmissionKey, we
-                              store it here again
-
-                              to make TransactionInfo self-contained.
-
-                              For example, storing the key allows
-                              TransactionInfo to not relay on
-
-                              the fact that TransactionInfo will be ordered in
-                              the same order as
-
-                              TransactionKeys in SubmissionKey.
-                            type: object
-                            properties:
-                              index:
-                                type: integer
-                                format: int64
-                              hash:
-                                type: string
-                                format: byte
-                            title: >-
-                              Each provided OP_RETURN transaction can be
-                              idendtified by hash of block in
-
-                              which transaction was included and transaction
-                              index in the block
+                          index:
+                            type: integer
+                            format: int64
+                            description: Index Bitcoin Transaction index in block.
+                          hash:
+                            type: string
+                            description: Hash BTC Header hash as hex.
                           transaction:
                             type: string
-                            format: byte
-                            title: transaction is the full transaction in bytes
+                            description: >-
+                              transaction is the full transaction data as str
+                              hex.
                           proof:
                             type: string
-                            format: byte
                             title: >-
                               proof is the Merkle proof that this tx is included
                               in the position in `key`
-
-                              TODO: maybe it could use here better format as we
-                              already processed and
-
-                              valideated the proof?
                         title: >-
-                          TransactionInfo is the info of a tx on Bitcoin,
+                          TransactionInfoResponse is the info of a tx on
+                          Bitcoin,
 
                           including
 
@@ -105,17 +76,13 @@ paths:
                         properties:
                           submitter:
                             type: string
-                            format: byte
                             description: >-
-                              TODO: this could probably be better typed
-
                               submitter is the address of the checkpoint
                               submitter to BTC, extracted from
 
                               the checkpoint itself.
                           reporter:
                             type: string
-                            format: byte
                             title: >-
                               reporter is the address of the reporter who
                               reported the submissions,
@@ -123,17 +90,17 @@ paths:
                               calculated from submission message
                               MsgInsertBTCSpvProof itself
                         title: >-
-                          CheckpointAddresses contains the addresses of the
-                          submitter and reporter of a
+                          CheckpointAddressesResponse contains the addresses of
+                          the submitter and reporter of a
 
                           given checkpoint
                       title: list of vigilantes' addresses of the best submission
-                  title: >-
-                    BTCCheckpointInfo contains all data about best submission of
-                    checkpoint for
+                  description: >-
+                    BTCCheckpointInfoResponse contains all data about best
+                    submission of checkpoint for
 
                     given epoch. Best submission is the submission which is
-                    deeper in btc ledger
+                    deeper in btc ledger.
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -339,72 +306,40 @@ paths:
                   epoch_number:
                     type: string
                     format: uint64
-                    title: epoch number of this checkpoint
+                    description: EpochNumber of this checkpoint.
                   best_submission_btc_block_height:
                     type: string
                     format: uint64
                     title: btc height of the best submission of the epoch
                   best_submission_btc_block_hash:
                     type: string
-                    format: byte
                     title: >-
                       hash of the btc block which determines checkpoint btc
                       block height i.e.
 
-                      youngest block of best submission
+                      youngest block of best submission Hexadecimal
                   best_submission_transactions:
                     type: array
                     items:
                       type: object
                       properties:
-                        key:
-                          description: >-
-                            key is the position (txIdx, blockHash) of this tx on
-                            BTC blockchain
-
-                            Although it is already a part of SubmissionKey, we
-                            store it here again
-
-                            to make TransactionInfo self-contained.
-
-                            For example, storing the key allows TransactionInfo
-                            to not relay on
-
-                            the fact that TransactionInfo will be ordered in the
-                            same order as
-
-                            TransactionKeys in SubmissionKey.
-                          type: object
-                          properties:
-                            index:
-                              type: integer
-                              format: int64
-                            hash:
-                              type: string
-                              format: byte
-                          title: >-
-                            Each provided OP_RETURN transaction can be
-                            idendtified by hash of block in
-
-                            which transaction was included and transaction index
-                            in the block
+                        index:
+                          type: integer
+                          format: int64
+                          description: Index Bitcoin Transaction index in block.
+                        hash:
+                          type: string
+                          description: Hash BTC Header hash as hex.
                         transaction:
                           type: string
-                          format: byte
-                          title: transaction is the full transaction in bytes
+                          description: transaction is the full transaction data as str hex.
                         proof:
                           type: string
-                          format: byte
                           title: >-
                             proof is the Merkle proof that this tx is included
                             in the position in `key`
-
-                            TODO: maybe it could use here better format as we
-                            already processed and
-
-                            valideated the proof?
                       title: |-
-                        TransactionInfo is the info of a tx on Bitcoin,
+                        TransactionInfoResponse is the info of a tx on Bitcoin,
                         including
                         - the position of the tx on BTC blockchain
                         - the full tx content
@@ -417,17 +352,13 @@ paths:
                       properties:
                         submitter:
                           type: string
-                          format: byte
                           description: >-
-                            TODO: this could probably be better typed
-
                             submitter is the address of the checkpoint submitter
                             to BTC, extracted from
 
                             the checkpoint itself.
                         reporter:
                           type: string
-                          format: byte
                           title: >-
                             reporter is the address of the reporter who reported
                             the submissions,
@@ -435,17 +366,17 @@ paths:
                             calculated from submission message
                             MsgInsertBTCSpvProof itself
                       title: >-
-                        CheckpointAddresses contains the addresses of the
-                        submitter and reporter of a
+                        CheckpointAddressesResponse contains the addresses of
+                        the submitter and reporter of a
 
                         given checkpoint
                     title: list of vigilantes' addresses of the best submission
-                title: >-
-                  BTCCheckpointInfo contains all data about best submission of
-                  checkpoint for
+                description: >-
+                  BTCCheckpointInfoResponse contains all data about best
+                  submission of checkpoint for
 
                   given epoch. Best submission is the submission which is deeper
-                  in btc ledger
+                  in btc ledger.
             title: |-
               QueryBtcCheckpointInfoResponse is response type for the
               Query/BtcCheckpointInfo RPC method
@@ -497,28 +428,24 @@ paths:
                 items:
                   type: object
                   properties:
-                    key:
-                      type: array
-                      items:
-                        type: object
-                        properties:
-                          index:
-                            type: integer
-                            format: int64
-                          hash:
-                            type: string
-                            format: byte
-                        title: >-
-                          Each provided OP_RETURN transaction can be idendtified
-                          by hash of block in
-
-                          which transaction was included and transaction index
-                          in the block
+                    first_tx_block_hash:
+                      type: string
+                      description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+                    first_tx_index:
+                      type: integer
+                      format: int64
+                    second_tx_block_hash:
+                      type: string
+                      description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+                    second_tx_index:
+                      type: integer
+                      format: int64
                   title: >-
-                    Checkpoint can be composed from multiple transactions, so to
-                    identify whole
+                    SubmissionKeyResponse Checkpoint can be composed from
+                    multiple transactions,
 
-                    submission we need list of transaction keys.
+                    so to identify whole submission we need list of transaction
+                    keys.
 
                     Each submission can generally be identified by this list of
                     (txIdx,
@@ -534,35 +461,7 @@ paths:
 
                     so there should be other strong arguments for this
                     optimization
-                description: All submissions saved during an epoch.
-              pagination:
-                type: object
-                properties:
-                  next_key:
-                    type: string
-                    format: byte
-                    description: |-
-                      next_key is the key to be passed to PageRequest.key to
-                      query the next page most efficiently. It will be empty if
-                      there are no more results.
-                  total:
-                    type: string
-                    format: uint64
-                    title: >-
-                      total is total number of results available if
-                      PageRequest.count_total
-
-                      was set, its value is undefined otherwise
-                description: >-
-                  PageResponse is to be embedded in gRPC response messages where
-                  the
-
-                  corresponding request message has used PageRequest.
-
-                   message SomeResponse {
-                           repeated Bar results = 1;
-                           PageResponse page = 2;
-                   }
+                description: Keys All submissions transactions key saved during an epoch.
             title: >-
               QueryEpochSubmissionsResponse defines a response to get all
               submissions in
@@ -597,62 +496,6 @@ paths:
           required: true
           type: string
           format: uint64
-        - name: pagination.key
-          description: |-
-            key is a value returned in PageResponse.next_key to begin
-            querying the next page most efficiently. Only one of offset or key
-            should be set.
-          in: query
-          required: false
-          type: string
-          format: byte
-        - name: pagination.offset
-          description: >-
-            offset is a numeric offset that can be used when key is unavailable.
-
-            It is less efficient than using key. Only one of offset or key
-            should
-
-            be set.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.limit
-          description: >-
-            limit is the total number of results to be returned in the result
-            page.
-
-            If left empty it will default to a value to be set by each app.
-          in: query
-          required: false
-          type: string
-          format: uint64
-        - name: pagination.count_total
-          description: >-
-            count_total is set to true  to indicate that the result set should
-            include
-
-            a count of the total number of items available for pagination in
-            UIs.
-
-            count_total is only respected when offset is used. It is ignored
-            when key
-
-            is set.
-          in: query
-          required: false
-          type: boolean
-        - name: pagination.reverse
-          description: >-
-            reverse is set to true if results are to be returned in the
-            descending order.
-
-
-            Since: cosmos-sdk 0.43
-          in: query
-          required: false
-          type: boolean
       tags:
         - Query
   /babylon/btclightclient/v1/baseheader:
@@ -672,26 +515,24 @@ paths:
               header:
                 type: object
                 properties:
-                  header:
+                  header_hex:
                     type: string
-                    format: byte
-                  hash:
+                  hash_hex:
                     type: string
-                    format: byte
                   height:
                     type: string
                     format: uint64
                   work:
                     type: string
-                    format: byte
+                    description: Work is the sdkmath.Uint as string.
                 description: >-
-                  BTCHeaderInfo is a structure that contains all relevant
-                  information about a
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
 
-                  BTC header
-                   - Full header bytes
-                   - Header hash for easy retrieval
-                   - Height of the header in the BTC chain
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
                    - Total work spent on the header. This is the sum of the work corresponding
                    to the header Bits field
                      and the total work of the header.
@@ -1013,26 +854,24 @@ paths:
                 items:
                   type: object
                   properties:
-                    header:
+                    header_hex:
                       type: string
-                      format: byte
-                    hash:
+                    hash_hex:
                       type: string
-                      format: byte
                     height:
                       type: string
                       format: uint64
                     work:
                       type: string
-                      format: byte
+                      description: Work is the sdkmath.Uint as string.
                   description: >-
-                    BTCHeaderInfo is a structure that contains all relevant
-                    information about a
+                    BTCHeaderInfoResponse is a structure that contains all
+                    relevant information about a
 
-                    BTC header
-                     - Full header bytes
-                     - Header hash for easy retrieval
-                     - Height of the header in the BTC chain
+                    BTC header response
+                     - Full header as string hex.
+                     - Header hash for easy retrieval as string hex.
+                     - Height of the header in the BTC chain.
                      - Total work spent on the header. This is the sum of the work corresponding
                      to the header Bits field
                        and the total work of the header.
@@ -1211,26 +1050,24 @@ paths:
               header:
                 type: object
                 properties:
-                  header:
+                  header_hex:
                     type: string
-                    format: byte
-                  hash:
+                  hash_hex:
                     type: string
-                    format: byte
                   height:
                     type: string
                     format: uint64
                   work:
                     type: string
-                    format: byte
+                    description: Work is the sdkmath.Uint as string.
                 description: >-
-                  BTCHeaderInfo is a structure that contains all relevant
-                  information about a
+                  BTCHeaderInfoResponse is a structure that contains all
+                  relevant information about a
 
-                  BTC header
-                   - Full header bytes
-                   - Header hash for easy retrieval
-                   - Height of the header in the BTC chain
+                  BTC header response
+                   - Full header as string hex.
+                   - Header hash for easy retrieval as string hex.
+                   - Height of the header in the BTC chain.
                    - Total work spent on the header. This is the sum of the work corresponding
                    to the header Bits field
                      and the total work of the header.
@@ -1811,35 +1648,35 @@ paths:
                         epoch's beginning, and
 
                         is set upon the end of this epoch.
-                    app_hash_root:
+                    app_hash_root_hex:
                       type: string
-                      format: byte
-                      title: >-
+                      description: >-
                         app_hash_root is the Merkle root of all AppHashs in this
                         epoch
 
-                        It will be used for proving a block is in an epoch
-                    sealer_app_hash:
+                        It will be used for proving a block is in an epoch as
+                        hex string.
+                    sealer_app_hash_hex:
                       type: string
-                      format: byte
-                      title: >-
+                      description: >-
                         sealer is the last block of the sealed epoch
 
                         sealer_app_hash points to the sealer but stored in the
                         1st header
 
-                        of the next epoch
+                        of the next epoch as hex string.
                     sealer_block_hash:
                       type: string
-                      format: byte
-                      title: >-
+                      description: >-
                         sealer_block_hash is the hash of the sealer
 
                         the validator set has generated a BLS multisig on the
                         hash,
 
-                        i.e., hash of the last block in the epoch
-                  title: Epoch is a structure that contains the metadata of an epoch
+                        i.e., hash of the last block in the epoch as hex string.
+                  title: >-
+                    EpochResponse is a structure that contains the metadata of
+                    an epoch
               pagination:
                 title: pagination defines the pagination in the response
                 type: object
@@ -2171,35 +2008,35 @@ paths:
                       beginning, and
 
                       is set upon the end of this epoch.
-                  app_hash_root:
+                  app_hash_root_hex:
                     type: string
-                    format: byte
-                    title: >-
+                    description: >-
                       app_hash_root is the Merkle root of all AppHashs in this
                       epoch
 
-                      It will be used for proving a block is in an epoch
-                  sealer_app_hash:
+                      It will be used for proving a block is in an epoch as hex
+                      string.
+                  sealer_app_hash_hex:
                     type: string
-                    format: byte
-                    title: >-
+                    description: >-
                       sealer is the last block of the sealed epoch
 
                       sealer_app_hash points to the sealer but stored in the 1st
                       header
 
-                      of the next epoch
+                      of the next epoch as hex string.
                   sealer_block_hash:
                     type: string
-                    format: byte
-                    title: >-
+                    description: >-
                       sealer_block_hash is the hash of the sealer
 
                       the validator set has generated a BLS multisig on the
                       hash,
 
-                      i.e., hash of the last block in the epoch
-                title: Epoch is a structure that contains the metadata of an epoch
+                      i.e., hash of the last block in the epoch as hex string.
+                title: >-
+                  EpochResponse is a structure that contains the metadata of an
+                  epoch
             title: >-
               QueryEpochInfoRequest is the response type for the Query/EpochInfo
               method
@@ -4979,14 +4816,14 @@ paths:
                     title: >-
                       epoch_num defines the epoch number the raw checkpoint is
                       for
-                  block_hash:
+                  block_hash_hex:
                     type: string
-                    format: byte
                     title: >-
-                      block_hash defines the 'BlockID.Hash', which is the hash
-                      of
+                      block_hash_hex defines the 'BlockID.Hash', which is the
+                      hash of
 
-                      the block that individual BLS sigs are signed on
+                      the block that individual BLS sigs are signed on as hex
+                      string
                   bitmap:
                     type: string
                     format: byte
@@ -5001,7 +4838,7 @@ paths:
                       from individual BLS
 
                       sigs
-                title: RawCheckpoint wraps the BLS multi sig with metadata
+                title: RawCheckpointResponse wraps the BLS multi sig with metadata
             description: |-
               QueryLastCheckpointWithStatusResponse is the response type for the
               Query/LastCheckpointWithStatus RPC method.
@@ -5062,14 +4899,14 @@ paths:
                         title: >-
                           epoch_num defines the epoch number the raw checkpoint
                           is for
-                      block_hash:
+                      block_hash_hex:
                         type: string
-                        format: byte
                         title: >-
-                          block_hash defines the 'BlockID.Hash', which is the
-                          hash of
+                          block_hash_hex defines the 'BlockID.Hash', which is
+                          the hash of
 
-                          the block that individual BLS sigs are signed on
+                          the block that individual BLS sigs are signed on as
+                          hex string
                       bitmap:
                         type: string
                         format: byte
@@ -5084,7 +4921,9 @@ paths:
                           from individual BLS
 
                           sigs
-                    title: RawCheckpoint wraps the BLS multi sig with metadata
+                    title: >-
+                      RawCheckpointResponse wraps the BLS multi sig with
+                      metadata
                   status:
                     type: string
                     enum:
@@ -5103,6 +4942,9 @@ paths:
                        - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                        - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                     title: status defines the status of the checkpoint
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   bls_aggr_pk:
                     type: string
                     format: byte
@@ -5138,6 +4980,11 @@ paths:
                           title: >-
                             state defines the event of a state transition
                             towards this state
+                        status_desc:
+                          type: string
+                          description: >-
+                            status_desc respresents the description of status
+                            enum.
                         block_height:
                           type: string
                           format: uint64
@@ -5155,8 +5002,8 @@ paths:
 
                             update
                       description: >-
-                        CheckpointStateUpdate defines a state transition on the
-                        checkpoint.
+                        CheckpointStateUpdateResponse defines a state transition
+                        on the checkpoint.
                     description: >-
                       lifecycle defines the lifecycle of this checkpoint, i.e.,
                       each state
@@ -5165,7 +5012,9 @@ paths:
                       height) of this
 
                       transition.
-                description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+                description: >-
+                  RawCheckpointWithMetaResponse wraps the raw checkpoint with
+                  metadata.
             description: >-
               QueryRawCheckpointResponse is the response type for the
               Query/RawCheckpoint
@@ -5228,14 +5077,14 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        block_hash:
+                        block_hash_hex:
                           type: string
-                          format: byte
                           title: >-
-                            block_hash defines the 'BlockID.Hash', which is the
-                            hash of
+                            block_hash_hex defines the 'BlockID.Hash', which is
+                            the hash of
 
-                            the block that individual BLS sigs are signed on
+                            the block that individual BLS sigs are signed on as
+                            hex string
                         bitmap:
                           type: string
                           format: byte
@@ -5250,7 +5099,9 @@ paths:
                             aggregated from individual BLS
 
                             sigs
-                      title: RawCheckpoint wraps the BLS multi sig with metadata
+                      title: >-
+                        RawCheckpointResponse wraps the BLS multi sig with
+                        metadata
                     status:
                       type: string
                       enum:
@@ -5269,6 +5120,9 @@ paths:
                          - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                          - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                       title: status defines the status of the checkpoint
+                    status_desc:
+                      type: string
+                      description: status_desc respresents the description of status enum.
                     bls_aggr_pk:
                       type: string
                       format: byte
@@ -5304,6 +5158,11 @@ paths:
                             title: >-
                               state defines the event of a state transition
                               towards this state
+                          status_desc:
+                            type: string
+                            description: >-
+                              status_desc respresents the description of status
+                              enum.
                           block_height:
                             type: string
                             format: uint64
@@ -5321,8 +5180,8 @@ paths:
 
                               update
                         description: >-
-                          CheckpointStateUpdate defines a state transition on
-                          the checkpoint.
+                          CheckpointStateUpdateResponse defines a state
+                          transition on the checkpoint.
                       description: >-
                         lifecycle defines the lifecycle of this checkpoint,
                         i.e., each state
@@ -5332,7 +5191,7 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    RawCheckpointWithMetaResponse wraps the raw checkpoint with
                     metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
@@ -5466,14 +5325,14 @@ paths:
                           title: >-
                             epoch_num defines the epoch number the raw
                             checkpoint is for
-                        block_hash:
+                        block_hash_hex:
                           type: string
-                          format: byte
                           title: >-
-                            block_hash defines the 'BlockID.Hash', which is the
-                            hash of
+                            block_hash_hex defines the 'BlockID.Hash', which is
+                            the hash of
 
-                            the block that individual BLS sigs are signed on
+                            the block that individual BLS sigs are signed on as
+                            hex string
                         bitmap:
                           type: string
                           format: byte
@@ -5488,7 +5347,9 @@ paths:
                             aggregated from individual BLS
 
                             sigs
-                      title: RawCheckpoint wraps the BLS multi sig with metadata
+                      title: >-
+                        RawCheckpointResponse wraps the BLS multi sig with
+                        metadata
                     status:
                       type: string
                       enum:
@@ -5507,6 +5368,9 @@ paths:
                          - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                          - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
                       title: status defines the status of the checkpoint
+                    status_desc:
+                      type: string
+                      description: status_desc respresents the description of status enum.
                     bls_aggr_pk:
                       type: string
                       format: byte
@@ -5542,6 +5406,11 @@ paths:
                             title: >-
                               state defines the event of a state transition
                               towards this state
+                          status_desc:
+                            type: string
+                            description: >-
+                              status_desc respresents the description of status
+                              enum.
                           block_height:
                             type: string
                             format: uint64
@@ -5559,8 +5428,8 @@ paths:
 
                               update
                         description: >-
-                          CheckpointStateUpdate defines a state transition on
-                          the checkpoint.
+                          CheckpointStateUpdateResponse defines a state
+                          transition on the checkpoint.
                       description: >-
                         lifecycle defines the lifecycle of this checkpoint,
                         i.e., each state
@@ -5570,7 +5439,7 @@ paths:
 
                         transition.
                   description: >-
-                    RawCheckpointWithMeta wraps the raw checkpoint with
+                    RawCheckpointWithMetaResponse wraps the raw checkpoint with
                     metadata.
                 title: >-
                   the order is going from the newest to oldest based on the
@@ -7513,8 +7382,8 @@ paths:
                           type: string
                           format: byte
                       title: >-
-                        Each provided OP_RETURN transaction can be idendtified
-                        by hash of block in
+                        Each provided OP_RETURN transaction can be identified by
+                        hash of block in
 
                         which transaction was included and transaction index in
                         the block
@@ -7663,7 +7532,7 @@ paths:
                               format: byte
                           title: >-
                             Each provided OP_RETURN transaction can be
-                            idendtified by hash of block in
+                            identified by hash of block in
 
                             which transaction was included and transaction index
                             in the block
@@ -7697,7 +7566,7 @@ paths:
                             TODO: maybe it could use here better format as we
                             already processed and
 
-                            valideated the proof?
+                            validated the proof?
                       title: |-
                         TransactionInfo is the info of a tx on Bitcoin,
                         including
@@ -8266,7 +8135,7 @@ paths:
                                 format: byte
                             title: >-
                               Each provided OP_RETURN transaction can be
-                              idendtified by hash of block in
+                              identified by hash of block in
 
                               which transaction was included and transaction
                               index in the block
@@ -8418,7 +8287,7 @@ paths:
                                     format: byte
                                 title: >-
                                   Each provided OP_RETURN transaction can be
-                                  idendtified by hash of block in
+                                  identified by hash of block in
 
                                   which transaction was included and transaction
                                   index in the block
@@ -8452,7 +8321,7 @@ paths:
                                   TODO: maybe it could use here better format as
                                   we already processed and
 
-                                  valideated the proof?
+                                  validated the proof?
                             title: >-
                               TransactionInfo is the info of a tx on Bitcoin,
 
@@ -9568,78 +9437,46 @@ paths:
       tags:
         - Query
 definitions:
-  babylon.btccheckpoint.v1.BTCCheckpointInfo:
+  babylon.btccheckpoint.v1.BTCCheckpointInfoResponse:
     type: object
     properties:
       epoch_number:
         type: string
         format: uint64
-        title: epoch number of this checkpoint
+        description: EpochNumber of this checkpoint.
       best_submission_btc_block_height:
         type: string
         format: uint64
         title: btc height of the best submission of the epoch
       best_submission_btc_block_hash:
         type: string
-        format: byte
         title: >-
           hash of the btc block which determines checkpoint btc block height
           i.e.
 
-          youngest block of best submission
+          youngest block of best submission Hexadecimal
       best_submission_transactions:
         type: array
         items:
           type: object
           properties:
-            key:
-              description: >-
-                key is the position (txIdx, blockHash) of this tx on BTC
-                blockchain
-
-                Although it is already a part of SubmissionKey, we store it here
-                again
-
-                to make TransactionInfo self-contained.
-
-                For example, storing the key allows TransactionInfo to not relay
-                on
-
-                the fact that TransactionInfo will be ordered in the same order
-                as
-
-                TransactionKeys in SubmissionKey.
-              type: object
-              properties:
-                index:
-                  type: integer
-                  format: int64
-                hash:
-                  type: string
-                  format: byte
-              title: >-
-                Each provided OP_RETURN transaction can be idendtified by hash
-                of block in
-
-                which transaction was included and transaction index in the
-                block
+            index:
+              type: integer
+              format: int64
+              description: Index Bitcoin Transaction index in block.
+            hash:
+              type: string
+              description: Hash BTC Header hash as hex.
             transaction:
               type: string
-              format: byte
-              title: transaction is the full transaction in bytes
+              description: transaction is the full transaction data as str hex.
             proof:
               type: string
-              format: byte
               title: >-
                 proof is the Merkle proof that this tx is included in the
                 position in `key`
-
-                TODO: maybe it could use here better format as we already
-                processed and
-
-                valideated the proof?
           title: |-
-            TransactionInfo is the info of a tx on Bitcoin,
+            TransactionInfoResponse is the info of a tx on Bitcoin,
             including
             - the position of the tx on BTC blockchain
             - the full tx content
@@ -9652,56 +9489,48 @@ definitions:
           properties:
             submitter:
               type: string
-              format: byte
               description: >-
-                TODO: this could probably be better typed
-
                 submitter is the address of the checkpoint submitter to BTC,
                 extracted from
 
                 the checkpoint itself.
             reporter:
               type: string
-              format: byte
               title: >-
                 reporter is the address of the reporter who reported the
                 submissions,
 
                 calculated from submission message MsgInsertBTCSpvProof itself
           title: >-
-            CheckpointAddresses contains the addresses of the submitter and
-            reporter of a
+            CheckpointAddressesResponse contains the addresses of the submitter
+            and reporter of a
 
             given checkpoint
         title: list of vigilantes' addresses of the best submission
-    title: >-
-      BTCCheckpointInfo contains all data about best submission of checkpoint
-      for
+    description: >-
+      BTCCheckpointInfoResponse contains all data about best submission of
+      checkpoint for
 
       given epoch. Best submission is the submission which is deeper in btc
-      ledger
-  babylon.btccheckpoint.v1.CheckpointAddresses:
+      ledger.
+  babylon.btccheckpoint.v1.CheckpointAddressesResponse:
     type: object
     properties:
       submitter:
         type: string
-        format: byte
         description: >-
-          TODO: this could probably be better typed
-
           submitter is the address of the checkpoint submitter to BTC, extracted
           from
 
           the checkpoint itself.
       reporter:
         type: string
-        format: byte
         title: |-
           reporter is the address of the reporter who reported the submissions,
           calculated from submission message MsgInsertBTCSpvProof itself
     title: >-
-      CheckpointAddresses contains the addresses of the submitter and reporter
-      of a
+      CheckpointAddressesResponse contains the addresses of the submitter and
+      reporter of a
 
       given checkpoint
   babylon.btccheckpoint.v1.Params:
@@ -9752,72 +9581,40 @@ definitions:
           epoch_number:
             type: string
             format: uint64
-            title: epoch number of this checkpoint
+            description: EpochNumber of this checkpoint.
           best_submission_btc_block_height:
             type: string
             format: uint64
             title: btc height of the best submission of the epoch
           best_submission_btc_block_hash:
             type: string
-            format: byte
             title: >-
               hash of the btc block which determines checkpoint btc block height
               i.e.
 
-              youngest block of best submission
+              youngest block of best submission Hexadecimal
           best_submission_transactions:
             type: array
             items:
               type: object
               properties:
-                key:
-                  description: >-
-                    key is the position (txIdx, blockHash) of this tx on BTC
-                    blockchain
-
-                    Although it is already a part of SubmissionKey, we store it
-                    here again
-
-                    to make TransactionInfo self-contained.
-
-                    For example, storing the key allows TransactionInfo to not
-                    relay on
-
-                    the fact that TransactionInfo will be ordered in the same
-                    order as
-
-                    TransactionKeys in SubmissionKey.
-                  type: object
-                  properties:
-                    index:
-                      type: integer
-                      format: int64
-                    hash:
-                      type: string
-                      format: byte
-                  title: >-
-                    Each provided OP_RETURN transaction can be idendtified by
-                    hash of block in
-
-                    which transaction was included and transaction index in the
-                    block
+                index:
+                  type: integer
+                  format: int64
+                  description: Index Bitcoin Transaction index in block.
+                hash:
+                  type: string
+                  description: Hash BTC Header hash as hex.
                 transaction:
                   type: string
-                  format: byte
-                  title: transaction is the full transaction in bytes
+                  description: transaction is the full transaction data as str hex.
                 proof:
                   type: string
-                  format: byte
                   title: >-
                     proof is the Merkle proof that this tx is included in the
                     position in `key`
-
-                    TODO: maybe it could use here better format as we already
-                    processed and
-
-                    valideated the proof?
               title: |-
-                TransactionInfo is the info of a tx on Bitcoin,
+                TransactionInfoResponse is the info of a tx on Bitcoin,
                 including
                 - the position of the tx on BTC blockchain
                 - the full tx content
@@ -9830,17 +9627,13 @@ definitions:
               properties:
                 submitter:
                   type: string
-                  format: byte
                   description: >-
-                    TODO: this could probably be better typed
-
                     submitter is the address of the checkpoint submitter to BTC,
                     extracted from
 
                     the checkpoint itself.
                 reporter:
                   type: string
-                  format: byte
                   title: >-
                     reporter is the address of the reporter who reported the
                     submissions,
@@ -9848,17 +9641,17 @@ definitions:
                     calculated from submission message MsgInsertBTCSpvProof
                     itself
               title: >-
-                CheckpointAddresses contains the addresses of the submitter and
-                reporter of a
+                CheckpointAddressesResponse contains the addresses of the
+                submitter and reporter of a
 
                 given checkpoint
             title: list of vigilantes' addresses of the best submission
-        title: >-
-          BTCCheckpointInfo contains all data about best submission of
+        description: >-
+          BTCCheckpointInfoResponse contains all data about best submission of
           checkpoint for
 
           given epoch. Best submission is the submission which is deeper in btc
-          ledger
+          ledger.
     title: |-
       QueryBtcCheckpointInfoResponse is response type for the
       Query/BtcCheckpointInfo RPC method
@@ -9873,72 +9666,40 @@ definitions:
             epoch_number:
               type: string
               format: uint64
-              title: epoch number of this checkpoint
+              description: EpochNumber of this checkpoint.
             best_submission_btc_block_height:
               type: string
               format: uint64
               title: btc height of the best submission of the epoch
             best_submission_btc_block_hash:
               type: string
-              format: byte
               title: >-
                 hash of the btc block which determines checkpoint btc block
                 height i.e.
 
-                youngest block of best submission
+                youngest block of best submission Hexadecimal
             best_submission_transactions:
               type: array
               items:
                 type: object
                 properties:
-                  key:
-                    description: >-
-                      key is the position (txIdx, blockHash) of this tx on BTC
-                      blockchain
-
-                      Although it is already a part of SubmissionKey, we store
-                      it here again
-
-                      to make TransactionInfo self-contained.
-
-                      For example, storing the key allows TransactionInfo to not
-                      relay on
-
-                      the fact that TransactionInfo will be ordered in the same
-                      order as
-
-                      TransactionKeys in SubmissionKey.
-                    type: object
-                    properties:
-                      index:
-                        type: integer
-                        format: int64
-                      hash:
-                        type: string
-                        format: byte
-                    title: >-
-                      Each provided OP_RETURN transaction can be idendtified by
-                      hash of block in
-
-                      which transaction was included and transaction index in
-                      the block
+                  index:
+                    type: integer
+                    format: int64
+                    description: Index Bitcoin Transaction index in block.
+                  hash:
+                    type: string
+                    description: Hash BTC Header hash as hex.
                   transaction:
                     type: string
-                    format: byte
-                    title: transaction is the full transaction in bytes
+                    description: transaction is the full transaction data as str hex.
                   proof:
                     type: string
-                    format: byte
                     title: >-
                       proof is the Merkle proof that this tx is included in the
                       position in `key`
-
-                      TODO: maybe it could use here better format as we already
-                      processed and
-
-                      valideated the proof?
                 title: |-
-                  TransactionInfo is the info of a tx on Bitcoin,
+                  TransactionInfoResponse is the info of a tx on Bitcoin,
                   including
                   - the position of the tx on BTC blockchain
                   - the full tx content
@@ -9951,17 +9712,13 @@ definitions:
                 properties:
                   submitter:
                     type: string
-                    format: byte
                     description: >-
-                      TODO: this could probably be better typed
-
                       submitter is the address of the checkpoint submitter to
                       BTC, extracted from
 
                       the checkpoint itself.
                   reporter:
                     type: string
-                    format: byte
                     title: >-
                       reporter is the address of the reporter who reported the
                       submissions,
@@ -9969,17 +9726,17 @@ definitions:
                       calculated from submission message MsgInsertBTCSpvProof
                       itself
                 title: >-
-                  CheckpointAddresses contains the addresses of the submitter
-                  and reporter of a
+                  CheckpointAddressesResponse contains the addresses of the
+                  submitter and reporter of a
 
                   given checkpoint
               title: list of vigilantes' addresses of the best submission
-          title: >-
-            BTCCheckpointInfo contains all data about best submission of
+          description: >-
+            BTCCheckpointInfoResponse contains all data about best submission of
             checkpoint for
 
             given epoch. Best submission is the submission which is deeper in
-            btc ledger
+            btc ledger.
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -10018,28 +9775,23 @@ definitions:
         items:
           type: object
           properties:
-            key:
-              type: array
-              items:
-                type: object
-                properties:
-                  index:
-                    type: integer
-                    format: int64
-                  hash:
-                    type: string
-                    format: byte
-                title: >-
-                  Each provided OP_RETURN transaction can be idendtified by hash
-                  of block in
-
-                  which transaction was included and transaction index in the
-                  block
+            first_tx_block_hash:
+              type: string
+              description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+            first_tx_index:
+              type: integer
+              format: int64
+            second_tx_block_hash:
+              type: string
+              description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+            second_tx_index:
+              type: integer
+              format: int64
           title: >-
-            Checkpoint can be composed from multiple transactions, so to
-            identify whole
+            SubmissionKeyResponse Checkpoint can be composed from multiple
+            transactions,
 
-            submission we need list of transaction keys.
+            so to identify whole submission we need list of transaction keys.
 
             Each submission can generally be identified by this list of (txIdx,
 
@@ -10053,33 +9805,7 @@ definitions:
             byte hash),
 
             so there should be other strong arguments for this optimization
-        description: All submissions saved during an epoch.
-      pagination:
-        type: object
-        properties:
-          next_key:
-            type: string
-            format: byte
-            description: |-
-              next_key is the key to be passed to PageRequest.key to
-              query the next page most efficiently. It will be empty if
-              there are no more results.
-          total:
-            type: string
-            format: uint64
-            title: >-
-              total is total number of results available if
-              PageRequest.count_total
-
-              was set, its value is undefined otherwise
-        description: |-
-          PageResponse is to be embedded in gRPC response messages where the
-          corresponding request message has used PageRequest.
-
-           message SomeResponse {
-                   repeated Bar results = 1;
-                   PageResponse page = 2;
-           }
+        description: Keys All submissions transactions key saved during an epoch.
     title: |-
       QueryEpochSubmissionsResponse defines a response to get all submissions in
       given epoch (QueryEpochSubmissionsRequest)
@@ -10126,30 +9852,26 @@ definitions:
 
               related to babylon
     description: QueryParamsResponse is response type for the Query/Params RPC method.
-  babylon.btccheckpoint.v1.SubmissionKey:
+  babylon.btccheckpoint.v1.SubmissionKeyResponse:
     type: object
     properties:
-      key:
-        type: array
-        items:
-          type: object
-          properties:
-            index:
-              type: integer
-              format: int64
-            hash:
-              type: string
-              format: byte
-          title: >-
-            Each provided OP_RETURN transaction can be idendtified by hash of
-            block in
-
-            which transaction was included and transaction index in the block
+      first_tx_block_hash:
+        type: string
+        description: FirstTxBlockHash is the BTCHeaderHashBytes in hex.
+      first_tx_index:
+        type: integer
+        format: int64
+      second_tx_block_hash:
+        type: string
+        description: SecondBlockHash is the BTCHeaderHashBytes in hex.
+      second_tx_index:
+        type: integer
+        format: int64
     title: >-
-      Checkpoint can be composed from multiple transactions, so to identify
-      whole
+      SubmissionKeyResponse Checkpoint can be composed from multiple
+      transactions,
 
-      submission we need list of transaction keys.
+      so to identify whole submission we need list of transaction keys.
 
       Each submission can generally be identified by this list of (txIdx,
 
@@ -10163,63 +9885,30 @@ definitions:
       hash),
 
       so there should be other strong arguments for this optimization
-  babylon.btccheckpoint.v1.TransactionInfo:
-    type: object
-    properties:
-      key:
-        description: |-
-          key is the position (txIdx, blockHash) of this tx on BTC blockchain
-          Although it is already a part of SubmissionKey, we store it here again
-          to make TransactionInfo self-contained.
-          For example, storing the key allows TransactionInfo to not relay on
-          the fact that TransactionInfo will be ordered in the same order as
-          TransactionKeys in SubmissionKey.
-        type: object
-        properties:
-          index:
-            type: integer
-            format: int64
-          hash:
-            type: string
-            format: byte
-        title: >-
-          Each provided OP_RETURN transaction can be idendtified by hash of
-          block in
-
-          which transaction was included and transaction index in the block
-      transaction:
-        type: string
-        format: byte
-        title: transaction is the full transaction in bytes
-      proof:
-        type: string
-        format: byte
-        title: >-
-          proof is the Merkle proof that this tx is included in the position in
-          `key`
-
-          TODO: maybe it could use here better format as we already processed
-          and
-
-          valideated the proof?
-    title: |-
-      TransactionInfo is the info of a tx on Bitcoin,
-      including
-      - the position of the tx on BTC blockchain
-      - the full tx content
-      - the Merkle proof that this tx is on the above position
-  babylon.btccheckpoint.v1.TransactionKey:
+  babylon.btccheckpoint.v1.TransactionInfoResponse:
     type: object
     properties:
       index:
         type: integer
         format: int64
+        description: Index Bitcoin Transaction index in block.
       hash:
         type: string
-        format: byte
+        description: Hash BTC Header hash as hex.
+      transaction:
+        type: string
+        description: transaction is the full transaction data as str hex.
+      proof:
+        type: string
+        title: >-
+          proof is the Merkle proof that this tx is included in the position in
+          `key`
     title: |-
-      Each provided OP_RETURN transaction can be idendtified by hash of block in
-      which transaction was included and transaction index in the block
+      TransactionInfoResponse is the info of a tx on Bitcoin,
+      including
+      - the position of the tx on BTC blockchain
+      - the full tx content
+      - the Merkle proof that this tx is on the above position
   cosmos.base.query.v1beta1.PageRequest:
     type: object
     properties:
@@ -10636,29 +10325,27 @@ definitions:
                   "@type": "type.googleapis.com/google.protobuf.Duration",
                   "value": "1.212s"
                 }
-  babylon.btclightclient.v1.BTCHeaderInfo:
+  babylon.btclightclient.v1.BTCHeaderInfoResponse:
     type: object
     properties:
-      header:
+      header_hex:
         type: string
-        format: byte
-      hash:
+      hash_hex:
         type: string
-        format: byte
       height:
         type: string
         format: uint64
       work:
         type: string
-        format: byte
+        description: Work is the sdkmath.Uint as string.
     description: >-
-      BTCHeaderInfo is a structure that contains all relevant information about
-      a
+      BTCHeaderInfoResponse is a structure that contains all relevant
+      information about a
 
-      BTC header
-       - Full header bytes
-       - Header hash for easy retrieval
-       - Height of the header in the BTC chain
+      BTC header response
+       - Full header as string hex.
+       - Header hash for easy retrieval as string hex.
+       - Height of the header in the BTC chain.
        - Total work spent on the header. This is the sum of the work corresponding
        to the header Bits field
          and the total work of the header.
@@ -10681,26 +10368,24 @@ definitions:
       header:
         type: object
         properties:
-          header:
+          header_hex:
             type: string
-            format: byte
-          hash:
+          hash_hex:
             type: string
-            format: byte
           height:
             type: string
             format: uint64
           work:
             type: string
-            format: byte
+            description: Work is the sdkmath.Uint as string.
         description: >-
-          BTCHeaderInfo is a structure that contains all relevant information
-          about a
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
 
-          BTC header
-           - Full header bytes
-           - Header hash for easy retrieval
-           - Height of the header in the BTC chain
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
            - Total work spent on the header. This is the sum of the work corresponding
            to the header Bits field
              and the total work of the header.
@@ -10777,26 +10462,24 @@ definitions:
         items:
           type: object
           properties:
-            header:
+            header_hex:
               type: string
-              format: byte
-            hash:
+            hash_hex:
               type: string
-              format: byte
             height:
               type: string
               format: uint64
             work:
               type: string
-              format: byte
+              description: Work is the sdkmath.Uint as string.
           description: >-
-            BTCHeaderInfo is a structure that contains all relevant information
-            about a
+            BTCHeaderInfoResponse is a structure that contains all relevant
+            information about a
 
-            BTC header
-             - Full header bytes
-             - Header hash for easy retrieval
-             - Height of the header in the BTC chain
+            BTC header response
+             - Full header as string hex.
+             - Header hash for easy retrieval as string hex.
+             - Height of the header in the BTC chain.
              - Total work spent on the header. This is the sum of the work corresponding
              to the header Bits field
                and the total work of the header.
@@ -10852,26 +10535,24 @@ definitions:
       header:
         type: object
         properties:
-          header:
+          header_hex:
             type: string
-            format: byte
-          hash:
+          hash_hex:
             type: string
-            format: byte
           height:
             type: string
             format: uint64
           work:
             type: string
-            format: byte
+            description: Work is the sdkmath.Uint as string.
         description: >-
-          BTCHeaderInfo is a structure that contains all relevant information
-          about a
+          BTCHeaderInfoResponse is a structure that contains all relevant
+          information about a
 
-          BTC header
-           - Full header bytes
-           - Header hash for easy retrieval
-           - Height of the header in the BTC chain
+          BTC header response
+           - Full header as string hex.
+           - Header hash for easy retrieval as string hex.
+           - Height of the header in the BTC chain.
            - Total work spent on the header. This is the sum of the work corresponding
            to the header Bits field
              and the total work of the header.
@@ -10992,7 +10673,7 @@ definitions:
     title: |-
       DelegationStateUpdate is the message that records a state update of a
       delegation
-  babylon.epoching.v1.Epoch:
+  babylon.epoching.v1.EpochResponse:
     type: object
     properties:
       epoch_number:
@@ -11022,27 +10703,24 @@ definitions:
           and
 
           is set upon the end of this epoch.
-      app_hash_root:
+      app_hash_root_hex:
         type: string
-        format: byte
-        title: |-
+        description: |-
           app_hash_root is the Merkle root of all AppHashs in this epoch
-          It will be used for proving a block is in an epoch
-      sealer_app_hash:
+          It will be used for proving a block is in an epoch as hex string.
+      sealer_app_hash_hex:
         type: string
-        format: byte
-        title: |-
+        description: |-
           sealer is the last block of the sealed epoch
           sealer_app_hash points to the sealer but stored in the 1st header
-          of the next epoch
+          of the next epoch as hex string.
       sealer_block_hash:
         type: string
-        format: byte
-        title: |-
+        description: |-
           sealer_block_hash is the hash of the sealer
           the validator set has generated a BLS multisig on the hash,
-          i.e., hash of the last block in the epoch
-    title: Epoch is a structure that contains the metadata of an epoch
+          i.e., hash of the last block in the epoch as hex string.
+    title: EpochResponse is a structure that contains the metadata of an epoch
   babylon.epoching.v1.Params:
     type: object
     properties:
@@ -11167,27 +10845,24 @@ definitions:
               beginning, and
 
               is set upon the end of this epoch.
-          app_hash_root:
+          app_hash_root_hex:
             type: string
-            format: byte
-            title: |-
+            description: |-
               app_hash_root is the Merkle root of all AppHashs in this epoch
-              It will be used for proving a block is in an epoch
-          sealer_app_hash:
+              It will be used for proving a block is in an epoch as hex string.
+          sealer_app_hash_hex:
             type: string
-            format: byte
-            title: |-
+            description: |-
               sealer is the last block of the sealed epoch
               sealer_app_hash points to the sealer but stored in the 1st header
-              of the next epoch
+              of the next epoch as hex string.
           sealer_block_hash:
             type: string
-            format: byte
-            title: |-
+            description: |-
               sealer_block_hash is the hash of the sealer
               the validator set has generated a BLS multisig on the hash,
-              i.e., hash of the last block in the epoch
-        title: Epoch is a structure that contains the metadata of an epoch
+              i.e., hash of the last block in the epoch as hex string.
+        title: EpochResponse is a structure that contains the metadata of an epoch
     title: QueryEpochInfoRequest is the response type for the Query/EpochInfo method
   babylon.epoching.v1.QueryEpochMsgsResponse:
     type: object
@@ -11722,30 +11397,29 @@ definitions:
                 beginning, and
 
                 is set upon the end of this epoch.
-            app_hash_root:
+            app_hash_root_hex:
               type: string
-              format: byte
-              title: |-
+              description: >-
                 app_hash_root is the Merkle root of all AppHashs in this epoch
-                It will be used for proving a block is in an epoch
-            sealer_app_hash:
+
+                It will be used for proving a block is in an epoch as hex
+                string.
+            sealer_app_hash_hex:
               type: string
-              format: byte
-              title: >-
+              description: >-
                 sealer is the last block of the sealed epoch
 
                 sealer_app_hash points to the sealer but stored in the 1st
                 header
 
-                of the next epoch
+                of the next epoch as hex string.
             sealer_block_hash:
               type: string
-              format: byte
-              title: |-
+              description: |-
                 sealer_block_hash is the hash of the sealer
                 the validator set has generated a BLS multisig on the hash,
-                i.e., hash of the last block in the epoch
-          title: Epoch is a structure that contains the metadata of an epoch
+                i.e., hash of the last block in the epoch as hex string.
+          title: EpochResponse is a structure that contains the metadata of an epoch
       pagination:
         title: pagination defines the pagination in the response
         type: object
@@ -13576,7 +13250,7 @@ definitions:
     description: |-
       MsgUndelegate defines a SDK message for performing an undelegation from a
       delegate and a validator.
-  babylon.checkpointing.v1.CheckpointStateUpdate:
+  babylon.checkpointing.v1.CheckpointStateUpdateResponse:
     type: object
     properties:
       state:
@@ -13597,6 +13271,9 @@ definitions:
            - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
            - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
         title: state defines the event of a state transition towards this state
+      status_desc:
+        type: string
+        description: status_desc respresents the description of status enum.
       block_height:
         type: string
         format: uint64
@@ -13613,7 +13290,9 @@ definitions:
           state
 
           update
-    description: CheckpointStateUpdate defines a state transition on the checkpoint.
+    description: >-
+      CheckpointStateUpdateResponse defines a state transition on the
+      checkpoint.
   babylon.checkpointing.v1.CheckpointStatus:
     type: string
     enum:
@@ -13712,12 +13391,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          block_hash:
+          block_hash_hex:
             type: string
-            format: byte
             title: |-
-              block_hash defines the 'BlockID.Hash', which is the hash of
-              the block that individual BLS sigs are signed on
+              block_hash_hex defines the 'BlockID.Hash', which is the hash of
+              the block that individual BLS sigs are signed on as hex string
           bitmap:
             type: string
             format: byte
@@ -13732,7 +13410,7 @@ definitions:
               individual BLS
 
               sigs
-        title: RawCheckpoint wraps the BLS multi sig with metadata
+        title: RawCheckpointResponse wraps the BLS multi sig with metadata
     description: |-
       QueryLastCheckpointWithStatusResponse is the response type for the
       Query/LastCheckpointWithStatus RPC method.
@@ -13751,12 +13429,14 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                block_hash:
+                block_hash_hex:
                   type: string
-                  format: byte
-                  title: |-
-                    block_hash defines the 'BlockID.Hash', which is the hash of
-                    the block that individual BLS sigs are signed on
+                  title: >-
+                    block_hash_hex defines the 'BlockID.Hash', which is the hash
+                    of
+
+                    the block that individual BLS sigs are signed on as hex
+                    string
                 bitmap:
                   type: string
                   format: byte
@@ -13771,7 +13451,7 @@ definitions:
                     individual BLS
 
                     sigs
-              title: RawCheckpoint wraps the BLS multi sig with metadata
+              title: RawCheckpointResponse wraps the BLS multi sig with metadata
             status:
               type: string
               enum:
@@ -13790,6 +13470,9 @@ definitions:
                  - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                  - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
               title: status defines the status of the checkpoint
+            status_desc:
+              type: string
+              description: status_desc respresents the description of status enum.
             bls_aggr_pk:
               type: string
               format: byte
@@ -13825,6 +13508,9 @@ definitions:
                     title: >-
                       state defines the event of a state transition towards this
                       state
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   block_height:
                     type: string
                     format: uint64
@@ -13842,8 +13528,8 @@ definitions:
 
                       update
                 description: >-
-                  CheckpointStateUpdate defines a state transition on the
-                  checkpoint.
+                  CheckpointStateUpdateResponse defines a state transition on
+                  the checkpoint.
               description: >-
                 lifecycle defines the lifecycle of this checkpoint, i.e., each
                 state
@@ -13852,7 +13538,9 @@ definitions:
                 this
 
                 transition.
-          description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+          description: >-
+            RawCheckpointWithMetaResponse wraps the raw checkpoint with
+            metadata.
         title: the order is going from the newest to oldest based on the epoch number
       pagination:
         description: pagination defines the pagination in the response.
@@ -13889,12 +13577,13 @@ definitions:
                 type: string
                 format: uint64
                 title: epoch_num defines the epoch number the raw checkpoint is for
-              block_hash:
+              block_hash_hex:
                 type: string
-                format: byte
-                title: |-
-                  block_hash defines the 'BlockID.Hash', which is the hash of
-                  the block that individual BLS sigs are signed on
+                title: >-
+                  block_hash_hex defines the 'BlockID.Hash', which is the hash
+                  of
+
+                  the block that individual BLS sigs are signed on as hex string
               bitmap:
                 type: string
                 format: byte
@@ -13909,7 +13598,7 @@ definitions:
                   individual BLS
 
                   sigs
-            title: RawCheckpoint wraps the BLS multi sig with metadata
+            title: RawCheckpointResponse wraps the BLS multi sig with metadata
           status:
             type: string
             enum:
@@ -13928,6 +13617,9 @@ definitions:
                - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
             title: status defines the status of the checkpoint
+          status_desc:
+            type: string
+            description: status_desc respresents the description of status enum.
           bls_aggr_pk:
             type: string
             format: byte
@@ -13961,6 +13653,9 @@ definitions:
                   title: >-
                     state defines the event of a state transition towards this
                     state
+                status_desc:
+                  type: string
+                  description: status_desc respresents the description of status enum.
                 block_height:
                   type: string
                   format: uint64
@@ -13978,7 +13673,7 @@ definitions:
 
                     update
               description: >-
-                CheckpointStateUpdate defines a state transition on the
+                CheckpointStateUpdateResponse defines a state transition on the
                 checkpoint.
             description: >-
               lifecycle defines the lifecycle of this checkpoint, i.e., each
@@ -13988,7 +13683,7 @@ definitions:
               this
 
               transition.
-        description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+        description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
     description: >-
       QueryRawCheckpointResponse is the response type for the
       Query/RawCheckpoint
@@ -14009,12 +13704,14 @@ definitions:
                   type: string
                   format: uint64
                   title: epoch_num defines the epoch number the raw checkpoint is for
-                block_hash:
+                block_hash_hex:
                   type: string
-                  format: byte
-                  title: |-
-                    block_hash defines the 'BlockID.Hash', which is the hash of
-                    the block that individual BLS sigs are signed on
+                  title: >-
+                    block_hash_hex defines the 'BlockID.Hash', which is the hash
+                    of
+
+                    the block that individual BLS sigs are signed on as hex
+                    string
                 bitmap:
                   type: string
                   format: byte
@@ -14029,7 +13726,7 @@ definitions:
                     individual BLS
 
                     sigs
-              title: RawCheckpoint wraps the BLS multi sig with metadata
+              title: RawCheckpointResponse wraps the BLS multi sig with metadata
             status:
               type: string
               enum:
@@ -14048,6 +13745,9 @@ definitions:
                  - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                  - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
               title: status defines the status of the checkpoint
+            status_desc:
+              type: string
+              description: status_desc respresents the description of status enum.
             bls_aggr_pk:
               type: string
               format: byte
@@ -14083,6 +13783,9 @@ definitions:
                     title: >-
                       state defines the event of a state transition towards this
                       state
+                  status_desc:
+                    type: string
+                    description: status_desc respresents the description of status enum.
                   block_height:
                     type: string
                     format: uint64
@@ -14100,8 +13803,8 @@ definitions:
 
                       update
                 description: >-
-                  CheckpointStateUpdate defines a state transition on the
-                  checkpoint.
+                  CheckpointStateUpdateResponse defines a state transition on
+                  the checkpoint.
               description: >-
                 lifecycle defines the lifecycle of this checkpoint, i.e., each
                 state
@@ -14110,7 +13813,9 @@ definitions:
                 this
 
                 transition.
-          description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+          description: >-
+            RawCheckpointWithMetaResponse wraps the raw checkpoint with
+            metadata.
         title: the order is going from the newest to oldest based on the epoch number
       pagination:
         description: pagination defines the pagination in the response.
@@ -14153,19 +13858,18 @@ definitions:
     description: |-
       QueryRecentEpochStatusCountResponse is the response type for the
       Query/EpochStatusCount RPC method.
-  babylon.checkpointing.v1.RawCheckpoint:
+  babylon.checkpointing.v1.RawCheckpointResponse:
     type: object
     properties:
       epoch_num:
         type: string
         format: uint64
         title: epoch_num defines the epoch number the raw checkpoint is for
-      block_hash:
+      block_hash_hex:
         type: string
-        format: byte
         title: |-
-          block_hash defines the 'BlockID.Hash', which is the hash of
-          the block that individual BLS sigs are signed on
+          block_hash_hex defines the 'BlockID.Hash', which is the hash of
+          the block that individual BLS sigs are signed on as hex string
       bitmap:
         type: string
         format: byte
@@ -14180,8 +13884,8 @@ definitions:
           BLS
 
           sigs
-    title: RawCheckpoint wraps the BLS multi sig with metadata
-  babylon.checkpointing.v1.RawCheckpointWithMeta:
+    title: RawCheckpointResponse wraps the BLS multi sig with metadata
+  babylon.checkpointing.v1.RawCheckpointWithMetaResponse:
     type: object
     properties:
       ckpt:
@@ -14191,12 +13895,11 @@ definitions:
             type: string
             format: uint64
             title: epoch_num defines the epoch number the raw checkpoint is for
-          block_hash:
+          block_hash_hex:
             type: string
-            format: byte
             title: |-
-              block_hash defines the 'BlockID.Hash', which is the hash of
-              the block that individual BLS sigs are signed on
+              block_hash_hex defines the 'BlockID.Hash', which is the hash of
+              the block that individual BLS sigs are signed on as hex string
           bitmap:
             type: string
             format: byte
@@ -14211,7 +13914,7 @@ definitions:
               individual BLS
 
               sigs
-        title: RawCheckpoint wraps the BLS multi sig with metadata
+        title: RawCheckpointResponse wraps the BLS multi sig with metadata
       status:
         type: string
         enum:
@@ -14230,6 +13933,9 @@ definitions:
            - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
            - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
         title: status defines the status of the checkpoint
+      status_desc:
+        type: string
+        description: status_desc respresents the description of status enum.
       bls_aggr_pk:
         type: string
         format: byte
@@ -14261,6 +13967,9 @@ definitions:
                  - CKPT_STATUS_CONFIRMED: CONFIRMED defines a checkpoint that is k-deep on BTC.
                  - CKPT_STATUS_FINALIZED: FINALIZED defines a checkpoint that is w-deep on BTC.
               title: state defines the event of a state transition towards this state
+            status_desc:
+              type: string
+              description: status_desc respresents the description of status enum.
             block_height:
               type: string
               format: uint64
@@ -14277,12 +13986,14 @@ definitions:
                 the state
 
                 update
-          description: CheckpointStateUpdate defines a state transition on the checkpoint.
+          description: >-
+            CheckpointStateUpdateResponse defines a state transition on the
+            checkpoint.
         description: |-
           lifecycle defines the lifecycle of this checkpoint, i.e., each state
           transition and the time (in both timestamp and block height) of this
           transition.
-    description: RawCheckpointWithMeta wraps the raw checkpoint with metadata.
+    description: RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
   babylon.checkpointing.v1.ValidatorWithBlsKey:
     type: object
     properties:
@@ -14300,6 +14011,179 @@ definitions:
     title: |-
       ValidatorWithBlsKey couples validator address, voting power, and its bls
       public key
+  babylon.btccheckpoint.v1.SubmissionKey:
+    type: object
+    properties:
+      key:
+        type: array
+        items:
+          type: object
+          properties:
+            index:
+              type: integer
+              format: int64
+            hash:
+              type: string
+              format: byte
+          title: >-
+            Each provided OP_RETURN transaction can be identified by hash of
+            block in
+
+            which transaction was included and transaction index in the block
+    title: >-
+      Checkpoint can be composed from multiple transactions, so to identify
+      whole
+
+      submission we need list of transaction keys.
+
+      Each submission can generally be identified by this list of (txIdx,
+
+      blockHash) tuples. Note: this could possibly be optimized as if
+      transactions
+
+      were in one block they would have the same block hash and different
+      indexes,
+
+      but each blockhash is only 33 (1  byte for prefix encoding and 32 byte
+      hash),
+
+      so there should be other strong arguments for this optimization
+  babylon.btccheckpoint.v1.TransactionInfo:
+    type: object
+    properties:
+      key:
+        type: object
+        properties:
+          index:
+            type: integer
+            format: int64
+          hash:
+            type: string
+            format: byte
+        title: >-
+          Each provided OP_RETURN transaction can be identified by hash of block
+          in
+
+          which transaction was included and transaction index in the block
+        description: |-
+          key is the position (txIdx, blockHash) of this tx on BTC blockchain
+          Although it is already a part of SubmissionKey, we store it here again
+          to make TransactionInfo self-contained.
+          For example, storing the key allows TransactionInfo to not relay on
+          the fact that TransactionInfo will be ordered in the same order as
+          TransactionKeys in SubmissionKey.
+      transaction:
+        type: string
+        format: byte
+        title: transaction is the full transaction in bytes
+      proof:
+        type: string
+        format: byte
+        title: >-
+          proof is the Merkle proof that this tx is included in the position in
+          `key`
+
+          TODO: maybe it could use here better format as we already processed
+          and
+
+          validated the proof?
+    title: |-
+      TransactionInfo is the info of a tx on Bitcoin,
+      including
+      - the position of the tx on BTC blockchain
+      - the full tx content
+      - the Merkle proof that this tx is on the above position
+  babylon.btccheckpoint.v1.TransactionKey:
+    type: object
+    properties:
+      index:
+        type: integer
+        format: int64
+      hash:
+        type: string
+        format: byte
+    title: |-
+      Each provided OP_RETURN transaction can be identified by hash of block in
+      which transaction was included and transaction index in the block
+  babylon.checkpointing.v1.RawCheckpoint:
+    type: object
+    properties:
+      epoch_num:
+        type: string
+        format: uint64
+        title: epoch_num defines the epoch number the raw checkpoint is for
+      block_hash:
+        type: string
+        format: byte
+        title: |-
+          block_hash defines the 'BlockID.Hash', which is the hash of
+          the block that individual BLS sigs are signed on
+      bitmap:
+        type: string
+        format: byte
+        title: >-
+          bitmap defines the bitmap that indicates the signers of the BLS multi
+          sig
+      bls_multi_sig:
+        type: string
+        format: byte
+        title: >-
+          bls_multi_sig defines the multi sig that is aggregated from individual
+          BLS
+
+          sigs
+    title: RawCheckpoint wraps the BLS multi sig with metadata
+  babylon.epoching.v1.Epoch:
+    type: object
+    properties:
+      epoch_number:
+        type: string
+        format: uint64
+        title: epoch_number is the number of this epoch
+      current_epoch_interval:
+        type: string
+        format: uint64
+        title: current_epoch_interval is the epoch interval at the time of this epoch
+      first_block_height:
+        type: string
+        format: uint64
+        title: first_block_height is the height of the first block in this epoch
+      last_block_time:
+        type: string
+        format: date-time
+        description: >-
+          last_block_time is the time of the last block in this epoch.
+
+          Babylon needs to remember the last header's time of each epoch to
+          complete
+
+          unbonding validators/delegations when a previous epoch's checkpoint is
+
+          finalised. The last_block_time field is nil in the epoch's beginning,
+          and
+
+          is set upon the end of this epoch.
+      app_hash_root:
+        type: string
+        format: byte
+        title: |-
+          app_hash_root is the Merkle root of all AppHashs in this epoch
+          It will be used for proving a block is in an epoch
+      sealer_app_hash:
+        type: string
+        format: byte
+        title: |-
+          sealer is the last block of the sealed epoch
+          sealer_app_hash points to the sealer but stored in the 1st header
+          of the next epoch
+      sealer_block_hash:
+        type: string
+        format: byte
+        title: |-
+          sealer_block_hash is the hash of the sealer
+          the validator set has generated a BLS multisig on the hash,
+          i.e., hash of the last block in the epoch
+    title: Epoch is a structure that contains the metadata of an epoch
   babylon.zoneconcierge.v1.ChainInfo:
     type: object
     properties:
@@ -14756,8 +14640,8 @@ definitions:
                   type: string
                   format: byte
               title: >-
-                Each provided OP_RETURN transaction can be idendtified by hash
-                of block in
+                Each provided OP_RETURN transaction can be identified by hash of
+                block in
 
                 which transaction was included and transaction index in the
                 block
@@ -14900,7 +14784,7 @@ definitions:
                       type: string
                       format: byte
                   title: >-
-                    Each provided OP_RETURN transaction can be idendtified by
+                    Each provided OP_RETURN transaction can be identified by
                     hash of block in
 
                     which transaction was included and transaction index in the
@@ -14935,7 +14819,7 @@ definitions:
                     TODO: maybe it could use here better format as we already
                     processed and
 
-                    valideated the proof?
+                    validated the proof?
               title: |-
                 TransactionInfo is the info of a tx on Bitcoin,
                 including
@@ -15203,7 +15087,7 @@ definitions:
 
       epoch have signed `app_hash` of the sealer header
 
-      - The epoch medatata is committed to the `app_hash` of the sealer header
+      - The epoch metadata is committed to the `app_hash` of the sealer header
 
       - The validator set is committed to the `app_hash` of the sealer header
   babylon.zoneconcierge.v1.ProofFinalizedChainInfo:
@@ -15336,8 +15220,8 @@ definitions:
                   type: string
                   format: byte
               title: >-
-                Each provided OP_RETURN transaction can be idendtified by hash
-                of block in
+                Each provided OP_RETURN transaction can be identified by hash of
+                block in
 
                 which transaction was included and transaction index in the
                 block
@@ -15371,7 +15255,7 @@ definitions:
                 TODO: maybe it could use here better format as we already
                 processed and
 
-                valideated the proof?
+                validated the proof?
           title: |-
             TransactionInfo is the info of a tx on Bitcoin,
             including
@@ -16092,8 +15976,8 @@ definitions:
                   type: string
                   format: byte
               title: >-
-                Each provided OP_RETURN transaction can be idendtified by hash
-                of block in
+                Each provided OP_RETURN transaction can be identified by hash of
+                block in
 
                 which transaction was included and transaction index in the
                 block
@@ -16236,7 +16120,7 @@ definitions:
                       type: string
                       format: byte
                   title: >-
-                    Each provided OP_RETURN transaction can be idendtified by
+                    Each provided OP_RETURN transaction can be identified by
                     hash of block in
 
                     which transaction was included and transaction index in the
@@ -16271,7 +16155,7 @@ definitions:
                     TODO: maybe it could use here better format as we already
                     processed and
 
-                    valideated the proof?
+                    validated the proof?
               title: |-
                 TransactionInfo is the info of a tx on Bitcoin,
                 including
@@ -16593,7 +16477,7 @@ definitions:
                         type: string
                         format: byte
                     title: >-
-                      Each provided OP_RETURN transaction can be idendtified by
+                      Each provided OP_RETURN transaction can be identified by
                       hash of block in
 
                       which transaction was included and transaction index in
@@ -16738,7 +16622,7 @@ definitions:
                             type: string
                             format: byte
                         title: >-
-                          Each provided OP_RETURN transaction can be idendtified
+                          Each provided OP_RETURN transaction can be identified
                           by hash of block in
 
                           which transaction was included and transaction index
@@ -16773,7 +16657,7 @@ definitions:
                           TODO: maybe it could use here better format as we
                           already processed and
 
-                          valideated the proof?
+                          validated the proof?
                     title: |-
                       TransactionInfo is the info of a tx on Bitcoin,
                       including

@@ -44,21 +44,17 @@ func (k Keeper) BtcCheckpointInfo(c context.Context, req *types.QueryBtcCheckpoi
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
-
 	checkpointEpoch := req.GetEpochNum()
 
 	ed := k.GetEpochData(ctx, checkpointEpoch)
-
 	ckptInfo, err := k.getCheckpointInfo(ctx, checkpointEpoch, ed)
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", req.EpochNum, err)
 	}
 
-	resp := &types.QueryBtcCheckpointInfoResponse{
-		Info: ckptInfo,
-	}
-	return resp, nil
+	return &types.QueryBtcCheckpointInfoResponse{
+		Info: ckptInfo.ToResponse(),
+	}, nil
 }
 
 func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheckpointsInfoRequest) (*types.QueryBtcCheckpointsInfoResponse, error) {
@@ -66,105 +62,62 @@ func (k Keeper) BtcCheckpointsInfo(ctx context.Context, req *types.QueryBtcCheck
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	ckptInfoList := []*types.BTCCheckpointInfoResponse{}
 	epochDataStore := k.epochDataStore(ctx)
-
-	ckptInfoList := []*types.BTCCheckpointInfo{}
 	// iterate over epochDataStore, where key is the epoch number and value is the epoch data
 	pageRes, err := query.Paginate(epochDataStore, req.Pagination, func(key, value []byte) error {
-		epochNum := sdk.BigEndianToUint64(key)
 		var epochData types.EpochData
-		k.cdc.MustUnmarshal(value, &epochData)
+		if err := k.cdc.Unmarshal(value, &epochData); err != nil {
+			return fmt.Errorf("failed to decode epoch data %+v: %w", value, err)
+		}
+		epochNum := sdk.BigEndianToUint64(key)
 
 		ckptInfo, err := k.getCheckpointInfo(ctx, epochNum, &epochData)
-
 		if err != nil {
 			return fmt.Errorf("failed to get lowest BTC height and hash in keys of epoch %d: %w", epochNum, err)
 		}
-		// append ckpt info
-		ckptInfoList = append(ckptInfoList, ckptInfo)
 
+		// append ckpt info
+		ckptInfoList = append(ckptInfoList, ckptInfo.ToResponse())
 		return nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	resp := &types.QueryBtcCheckpointsInfoResponse{
+	return &types.QueryBtcCheckpointsInfoResponse{
 		InfoList:   ckptInfoList,
 		Pagination: pageRes,
-	}
-	return resp, nil
-}
-
-func getOffset(pageReq *query.PageRequest) uint64 {
-	if pageReq == nil {
-		return 0
-	} else {
-		return pageReq.Offset
-	}
-}
-
-func buildPageResponse(numOfKeys uint64, pageReq *query.PageRequest) *query.PageResponse {
-	if pageReq == nil {
-		return &query.PageResponse{}
-	}
-
-	if !pageReq.CountTotal {
-		return &query.PageResponse{}
-	}
-
-	return &query.PageResponse{Total: numOfKeys}
+	}, nil
 }
 
 func (k Keeper) EpochSubmissions(c context.Context, req *types.QueryEpochSubmissionsRequest) (*types.QueryEpochSubmissionsResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-
 	ctx := sdk.UnwrapSDKContext(c)
 
-	checkpointEpoch := req.GetEpochNum()
-
-	_, limit, err := query.ParsePagination(req.Pagination)
-
-	offset := getOffset(req.Pagination)
-
-	if err != nil {
-		return nil, err
-	}
-
-	epochData := k.GetEpochData(ctx, checkpointEpoch)
-
+	epoch := req.GetEpochNum()
+	epochData := k.GetEpochData(ctx, epoch)
 	if epochData == nil || len(epochData.Keys) == 0 {
-
 		return &types.QueryEpochSubmissionsResponse{
-			Keys:       []*types.SubmissionKey{},
-			Pagination: buildPageResponse(0, req.Pagination),
+			Keys: []*types.SubmissionKeyResponse{},
 		}, nil
 	}
 
-	numberOfKeys := uint64(len((epochData.Keys)))
-
-	if offset >= numberOfKeys {
-		// offset larger than number of keys return empty response
-		return &types.QueryEpochSubmissionsResponse{
-			Keys:       []*types.SubmissionKey{},
-			Pagination: buildPageResponse(numberOfKeys, req.Pagination),
-		}, nil
-	}
-
-	var responseKeys []*types.SubmissionKey
-
-	for i := offset; i < numberOfKeys; i++ {
-		if len(responseKeys) == limit {
-			break
+	submKeysResp := make([]*types.SubmissionKeyResponse, len(epochData.Keys))
+	for i, submKey := range epochData.Keys {
+		skr, err := types.NewSubmissionKeyResponse(*submKey)
+		if err != nil {
+			errMsgf := "epoch submission: this error should not happen, check DB corruption and proto files: %v"
+			k.Logger(ctx).Error(errMsgf, err)
+			return nil, status.Errorf(codes.Internal, errMsgf, err)
 		}
 
-		responseKeys = append(responseKeys, epochData.Keys[i])
+		submKeysResp[i] = skr
 	}
 
 	return &types.QueryEpochSubmissionsResponse{
-		Keys:       responseKeys,
-		Pagination: buildPageResponse(numberOfKeys, req.Pagination),
+		Keys: submKeysResp,
 	}, nil
 }

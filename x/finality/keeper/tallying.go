@@ -82,18 +82,21 @@ func (k Keeper) finalizeBlock(ctx context.Context, block *types.IndexedBlock, vo
 	k.SetBlock(ctx, block)
 	// set next height to finalise as height+1
 	k.setNextHeightToFinalize(ctx, block.Height+1)
-	// distribute rewards to BTC staking stakeholders w.r.t. the reward distribution cache
-	rdc, err := k.BTCStakingKeeper.GetRewardDistCache(ctx, block.Height)
+	// distribute rewards to BTC staking stakeholders w.r.t. the voting power distribution cache
+	dc, err := k.BTCStakingKeeper.GetVotingPowerDistCache(ctx, block.Height)
 	if err != nil {
-		// failing to get a reward distribution cache before distributing reward is a programming error
+		// failing to get a voting power distribution cache before distributing reward is a programming error
 		panic(err)
 	}
 	// filter out voted finality providers
-	rdc.FilterVotedFinalityProviders(voterBTCPKs)
+	maxActiveFPs := k.BTCStakingKeeper.GetParams(ctx).MaxActiveFinalityProviders
+	filteredDc := dc.FilterVotedDistCache(maxActiveFPs, voterBTCPKs)
 	// reward voted finality providers
-	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, rdc)
+	k.IncentiveKeeper.RewardBTCStaking(ctx, block.Height, filteredDc)
 	// remove reward distribution cache afterwards
-	k.BTCStakingKeeper.RemoveRewardDistCache(ctx, block.Height)
+	k.BTCStakingKeeper.RemoveVotingPowerDistCache(ctx, block.Height)
+	// record the last finalized height metric
+	types.RecordLastFinalizedHeight(block.Height)
 }
 
 // tally checks whether a block with the given finality provider set and votes reaches a quorum or not

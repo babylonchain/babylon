@@ -19,6 +19,8 @@ service Msg {
 
   // CreateFinalityProvider creates a new finality provider
   rpc CreateFinalityProvider(MsgCreateFinalityProvider) returns (MsgCreateFinalityProviderResponse);
+  // EditFinalityProvider edits an existing finality provider
+  rpc EditFinalityProvider(MsgEditFinalityProvider) returns (MsgEditFinalityProviderResponse);
   // CreateBTCDelegation creates a new BTC delegation
   rpc CreateBTCDelegation(MsgCreateBTCDelegation) returns (MsgCreateBTCDelegationResponse);
   // AddCovenantSigs handles signatures from a covenant member
@@ -38,9 +40,9 @@ message MsgCreateFinalityProvider {
 
   string signer = 1;
 
-  // description defines the description terms for the finality provider.
+  // description defines the description terms for the finality provider
   cosmos.staking.v1beta1.Description description = 2;
-  // commission defines the commission rate of finality provider.
+  // commission defines the commission rate of the finality provider
   string commission = 3 [
     (cosmos_proto.scalar)  = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
@@ -55,6 +57,26 @@ message MsgCreateFinalityProvider {
 }
 // MsgCreateFinalityProviderResponse is the response for MsgCreateFinalityProvider
 message MsgCreateFinalityProviderResponse {}
+
+// MsgEditFinalityProvider is the message for editing an existing finality provider
+message MsgEditFinalityProvider {
+  option (cosmos.msg.v1.signer) = "signer";
+
+  // NOTE: this signer needs to correspond to babylon_pk of the finality provider
+  string signer = 1;
+  // btc_pk is the Bitcoin secp256k1 PK of the finality provider to be edited
+  bytes btc_pk = 2;
+
+  // description defines the updated description terms for the finality provider
+  cosmos.staking.v1beta1.Description description = 3;
+  // commission defines the updated commission rate of the finality provider
+  string commission = 4 [
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec"
+  ];
+}
+// MsgEditFinalityProviderResponse is the response for MsgEditFinalityProvider
+message MsgEditFinalityProviderResponse {}
 
 // MsgCreateBTCDelegation is the message for creating a BTC delegation
 message MsgCreateBTCDelegation {

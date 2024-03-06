@@ -1,10 +1,12 @@
 syntax = "proto3";
 package babylon.checkpointing.v1;
 
-import "babylon/checkpointing/v1/bls_key.proto";
-import "cosmos/base/query/v1beta1/pagination.proto";
+import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "babylon/checkpointing/v1/bls_key.proto";
 import "babylon/checkpointing/v1/checkpoint.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
 
 option go_package = "github.com/babylonchain/babylon/x/checkpointing/types";
 
@@ -76,7 +78,7 @@ message QueryRawCheckpointListRequest {
 // Query/RawCheckpoints RPC method.
 message QueryRawCheckpointListResponse {
   // the order is going from the newest to oldest based on the epoch number
-  repeated RawCheckpointWithMeta raw_checkpoints = 1;
+  repeated RawCheckpointWithMetaResponse raw_checkpoints = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -91,8 +93,7 @@ message QueryRawCheckpointRequest {
 
 // QueryRawCheckpointResponse is the response type for the Query/RawCheckpoint
 // RPC method.
-message QueryRawCheckpointResponse { RawCheckpointWithMeta raw_checkpoint = 1; }
-
+message QueryRawCheckpointResponse { RawCheckpointWithMetaResponse raw_checkpoint = 1; }
 
 // QueryRawCheckpointsRequest is the request type for the Query/RawCheckpoints
 // RPC method.
@@ -105,7 +106,7 @@ message QueryRawCheckpointsRequest {
 // RPC method.
 message QueryRawCheckpointsResponse {
   // the order is going from the newest to oldest based on the epoch number
-  repeated RawCheckpointWithMeta raw_checkpoints = 1;
+  repeated RawCheckpointWithMetaResponse raw_checkpoints = 1;
 
   // pagination defines the pagination in the response.
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
@@ -161,5 +162,54 @@ message QueryLastCheckpointWithStatusRequest { CheckpointStatus status = 1; }
 // QueryLastCheckpointWithStatusResponse is the response type for the
 // Query/LastCheckpointWithStatus RPC method.
 message QueryLastCheckpointWithStatusResponse {
-  RawCheckpoint raw_checkpoint = 1;
+  RawCheckpointResponse raw_checkpoint = 1;
+}
+
+// RawCheckpointResponse wraps the BLS multi sig with metadata
+message RawCheckpointResponse {
+  // epoch_num defines the epoch number the raw checkpoint is for
+  uint64 epoch_num = 1;
+  // block_hash_hex defines the 'BlockID.Hash', which is the hash of
+  // the block that individual BLS sigs are signed on as hex string
+  string block_hash_hex = 2;
+  // bitmap defines the bitmap that indicates the signers of the BLS multi sig
+  bytes bitmap = 3;
+  // bls_multi_sig defines the multi sig that is aggregated from individual BLS
+  // sigs
+  bytes bls_multi_sig = 4 [
+    (gogoproto.customtype) = "github.com/babylonchain/babylon/crypto/bls12381.Signature"
+  ];
+}
+
+// CheckpointStateUpdateResponse defines a state transition on the checkpoint.
+message CheckpointStateUpdateResponse {
+  // state defines the event of a state transition towards this state
+  CheckpointStatus state = 1;
+  // status_desc respresents the description of status enum.
+  string status_desc = 2;
+  // block_height is the height of the Babylon block that triggers the state
+  // update
+  uint64 block_height = 3;
+  // block_time is the timestamp in the Babylon block that triggers the state
+  // update
+  google.protobuf.Timestamp block_time = 4 [ (gogoproto.stdtime) = true ];
+}
+
+// RawCheckpointWithMetaResponse wraps the raw checkpoint with metadata.
+message RawCheckpointWithMetaResponse {
+  RawCheckpointResponse ckpt = 1;
+  // status defines the status of the checkpoint
+  CheckpointStatus status = 2;
+  // status_desc respresents the description of status enum.
+  string status_desc = 3;
+  // bls_aggr_pk defines the aggregated BLS public key
+  bytes bls_aggr_pk = 4
+      [ (gogoproto.customtype) =
+            "github.com/babylonchain/babylon/crypto/bls12381.PublicKey" ];
+  // power_sum defines the accumulated voting power for the checkpoint
+  uint64 power_sum = 5;
+  // lifecycle defines the lifecycle of this checkpoint, i.e., each state
+  // transition and the time (in both timestamp and block height) of this
+  // transition.
+  repeated CheckpointStateUpdateResponse lifecycle = 6;
 }
