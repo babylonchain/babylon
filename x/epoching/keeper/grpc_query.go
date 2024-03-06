@@ -60,7 +60,7 @@ func (k Keeper) EpochsInfo(c context.Context, req *types.QueryEpochsInfoRequest)
 	ctx := sdk.UnwrapSDKContext(c)
 
 	epochInfoStore := k.epochInfoStore(ctx)
-	epochs := []*types.Epoch{}
+	epochs := []*types.EpochResponse{}
 	pageRes, err := query.Paginate(epochInfoStore, req.Pagination, func(key, value []byte) error {
 		// unmarshal to epoch metadata
 		var epoch types.Epoch
@@ -68,19 +68,17 @@ func (k Keeper) EpochsInfo(c context.Context, req *types.QueryEpochsInfoRequest)
 			return err
 		}
 		// append to epochs list
-		epochs = append(epochs, &epoch)
+		epochs = append(epochs, epoch.ToResponse())
 		return nil
 	})
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	resp := &types.QueryEpochsInfoResponse{
+	return &types.QueryEpochsInfoResponse{
 		Epochs:     epochs,
 		Pagination: pageRes,
-	}
-
-	return resp, nil
+	}, nil
 }
 
 // EpochMsgs handles the QueryEpochMsgsRequest query

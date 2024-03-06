@@ -93,7 +93,7 @@ message QueryEpochsInfoRequest {
 
 // QueryEpochsInfoResponse is the response type for the Query/EpochInfos method
 message QueryEpochsInfoResponse {
-  repeated babylon.epoching.v1.Epoch epochs = 1;
+  repeated EpochResponse epochs = 1;
 
   // pagination defines the pagination in the response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
